@@ -33,15 +33,17 @@ AIエージェント（Claude Code）と人間が協働してプロダクショ�
 **GitHubリポジトリから（推奨）**
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#v1.1.0"
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^1.1.0"
 ```
 
 package.json に直接記載する場合:
 ```json
 "devDependencies": {
-  "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#v1.1.0"
+  "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^1.1.0"
 }
 ```
+
+`^1.1.0` により、`1.x.x` の最新タグに自動更新されます（`2.0.0` 以上の破壊的変更はスキップ）。
 
 ### 2. 初期化
 
@@ -227,15 +229,14 @@ git push origin main --tags
 ### アップデート手順（利用側プロジェクト）
 
 ```bash
-# 1. package.json の参照タグを更新
-# "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#vX.Y.Z"
+# 最新バージョンに更新（semver範囲内）
+npm update gsdlc-harness
 
-# 2. 再インストール
-npm install
-
-# 3. スキルを最新版に更新
+# スキルを最新版に同期
 npx harness update-skills
 ```
+
+> **メジャーバージョンアップ時のみ** package.json の `semver:^X.Y.Z` を手動で更新してください。
 
 ---
 
