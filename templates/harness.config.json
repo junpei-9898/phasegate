@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "preset": "standard",
+  "project": {
+    "name": "my-project",
+    "architecture": "clean-architecture",
+    "paths": {
+      "source": [
+        "backend/src",
+        "frontend/src"
+      ],
+      "docs": {
+        "units": "docs/product/units",
+        "inception": "docs/inception",
+        "construction": "docs/product/construction"
+      }
+    },
+    "naming": {
+      "fileCase": "kebab-case",
+      "classCase": "PascalCase",
+      "unitToPath": "kebab-to-snake"
+    }
+  },
+  "layers": {
+    "L1_editor": { "enabled": true },
+    "L2_precommit": { "enabled": true },
+    "L3_ci": { "enabled": true },
+    "L4_scheduled": { "enabled": false }
+  }
+}

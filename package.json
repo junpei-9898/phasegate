@@ -1,0 +1,35 @@
+{
+  "name": "gsdlc-harness",
+  "version": "1.0.0",
+  "description": "GSDLC Harness Engineering Toolkit - Governed Software Development Life Cycle",
+  "type": "module",
+  "files": [
+    "bin/harness",
+    "scripts/harness/**/*.ts",
+    "scripts/harness/**/*.json",
+    "skills/**",
+    "package.json"
+  ],
+  "bin": {
+    "harness": "./bin/harness"
+  },
+  "scripts": {
+    "harness": "npx tsx scripts/harness/main.ts",
+    "harness:status": "npx tsx scripts/harness/main.ts harness:status",
+    "harness:enable": "npx tsx scripts/harness/main.ts enable-feature",
+    "harness:disable": "npx tsx scripts/harness/main.ts disable-feature",
+    "harness:check-phase": "npx tsx scripts/harness/main.ts harness:check-phase",
+    "harness:check-ready": "npx tsx scripts/harness/main.ts harness:check-ready",
+    "test": "vitest run --config scripts/harness/__tests__/vitest.config.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "tsx": "^4.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
+    "@types/node": "^25.3.5",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

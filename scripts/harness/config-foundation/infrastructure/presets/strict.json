@@ -1,0 +1,50 @@
+{
+  "layers": {
+    "L1": {
+      "enabled": true,
+      "rules": {}
+    },
+    "L2": {
+      "enabled": true,
+      "validators": ["phase-gate", "architecture"]
+    },
+    "L3": {
+      "enabled": true,
+      "validators": ["consistency", "test-quality"],
+      "coverageThreshold": 95
+    },
+    "L4": {
+      "enabled": true,
+      "validators": ["drift-detector", "dead-code-detector"],
+      "schedule": "0 1 * * *"
+    }
+  },
+  "quickMode": {
+    "allowedCategories": ["bugfix"],
+    "maintainedLayers": ["L1", "L2"],
+    "relaxedGates": []
+  },
+  "phaseDependencies": {
+    "preset": "default",
+    "override": false,
+    "customRules": []
+  },
+  "planningMode": {
+    "default": "interactive",
+    "perPhase": {}
+  },
+  "harnesses": {
+    "agentLessonCollection": true,
+    "cascadeUpdate": false,
+    "bundleSizeLimit": 500,
+    "deadCodeGC": true
+  },
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception"
+  },
+  "reporting": {
+    "format": "json",
+    "outputDir": "reports"
+  }
+}

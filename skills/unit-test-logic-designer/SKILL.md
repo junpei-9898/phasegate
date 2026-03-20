@@ -1,0 +1,429 @@
+---
+name: unit-test-logic-designer
+description: Unitテストケース設計を元にVitest実装ロジックを設計 - 疑似コード付きの詳細設計
+model: sonnet
+review: opus
+---
+
+# Unit Test Logic Designer
+
+Unitテストケース設計（`unit_test_design.md`）を元に、Vitest実装ロジックを詳細設計するスキル。テストケース設計フェーズとTDD実装フェーズの間に位置し、TDDで「正しくRED」になるテストコードの設計を行う。
+
+## 実行タイミング
+
+```
+テストケース設計フェーズ
+  unit-test-designer → it-test-designer → scenario-test-designer
+                          ↓
+              test-coverage-checker
+                          ↓
+┌────────────────────────────────────────┐
+│  unit-test-logic-designer（本スキル）    │ ← ここで実行
+└────────────────────────────────────────┘
+                          ↓
+  it-test-logic-designer → scenario-test-logic-designer
+                          ↓
+TDD実装フェーズ
+  story-implementor
+```
+
+## 前提条件チェック
+
+### 必須インプット（存在しなければ`[Question]`で提供を要求）
+- **ユニットテストケース設計** — `docs/product/construction/{unit}/unit_test_design.md`
+- **ドメインモデル** — `docs/product/construction/{unit}/domain_model.md`
+
+### 推奨インプット（あれば参照）
+- **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
+- **既存ユニットテスト** — `backend/test/unit/**/*.test.ts`（パターン参考）
+- **テスト規約** — `docs/principles/testing_rules.md`
+
+---
+
+## ⚠️ 上位レイヤー存在チェック
+
+**このスキルはテストケース設計完了後、TDD実装前に実行します。**
+
+### 依存する上位設計文書
+
+| ファイル | 必須 | チェック方法 |
+|---------|------|------------|
+| `docs/product/construction/{unit}/unit_test_design.md` | ✅ 必須 | ユニットテストケース設計の存在を確認 |
+| `docs/product/construction/{unit}/domain_model.md` | ✅ 必須 | ドメインモデルの存在を確認 |
+| `docs/product/construction/{unit}/coverage_report.md` | 📋 推奨 | カバレッジ検証済みか確認 |
+
+### 上位設計が存在しない場合のアクション
+
+上位設計文書が存在しない場合、**ロジック設計を開始せず**、以下を行う：
+
+1. **状況報告** — ユーザーに不足している設計文書を明示
+2. **選択肢提示** — 以下の選択肢を提示
+   - 上位設計（unit-test-designer）を先に実行する
+   - 上位設計をスキップして進める（非推奨）
+3. **ユーザー指示待ち** — 独自判断でロジック設計を開始しない
+
+---
+
+## ⚠️ 3フェーズ実行ルール
+
+**このスキルは3フェーズで実行する。**
+- **Phase 1（計画）**: Opus がスコープ・方針・不明点を整理し、人間の承認を得る
+- **Phase 2（実行）**: Sonnet 4.6 に委任して成果物を生成する（`scripts/delegate-sonnet.sh` 経由）
+- **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
+
+**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+
+---
+
+## Phase 1: 計画（plan）
+
+### 目的
+ロジック設計のスコープ・テストファイル構成・不明点を整理し、人間の承認を得る。
+
+### 出力ファイル
+`docs/inception/{unit}/unit_test_logic_plan.md`
+
+### 計画ファイルの構成
+
+```markdown
+# ユニットテストロジック設計計画: {Unit名}
+
+## 1. スコープ
+- 対象テストケース設計: unit_test_design.md
+- テストケース総数: X件
+
+## 2. テストファイル構成（計画）
+
+| テストファイル | 対象モデル | ケース数 |
+|--------------|----------|---------|
+| `{aggregate}.test.ts` | {集約名} | X |
+| `{entity}.test.ts` | {エンティティ名} | X |
+| `{value-object}.test.ts` | {値オブジェクト名} | X |
+
+## 3. モック/ファクトリ設計方針
+- ファクトリ関数の配置場所
+- 共通ヘルパーの使用方針
+
+## 4. QA（不明点・確認事項）
+
+### [Question] Q1: {質問タイトル}
+{質問の詳細と背景}
+**推奨案:** {AIの推奨案}
+
+[Answer]
+（人間が回答を記入）
+
+## 5. 前提条件・リスク
+- ...
+```
+
+### Phase 1 完了条件
+- 計画ファイルを出力した
+- 不明点がある場合は`[Question]`セクションに記載した
+- **人間にボールを渡した**
+- **ロジック設計文書はまだ作成していない**
+
+---
+
+## Phase 2: 実行（execution）
+
+### 開始条件
+- 人間がPhase 1の計画を承認した
+- QAセクションの全[Question]に[Answer]が記入されている（QAがある場合）
+
+### ワークフロー
+
+1. **テストファイル構成の決定** — ファイル配置と命名規約
+2. **各テストケースの疑似コード設計** — AAA パターンで詳細化
+3. **ファクトリ関数の設計** — テストデータ生成の共通化
+4. **モック戦略の設計** — vi.mock の使用方針
+
+### Phase 2 最低出力基準（Sonnet委任時の品質制約）
+
+以下の基準を満たさない出力は不完全とみなし、Phase 3レビューでBLOCKとする。
+
+| 基準 | 最低要件 |
+|------|---------|
+| ケース網羅 | unit_test_design.mdの全テストケースに対応する疑似コードがあること |
+| AAAパターン | 全テストケースがArrange/Act/Assertの3セクションを持つこと |
+| 具体値 | テストデータに具体的な値（プレースホルダでなく実際の値）が記載されていること |
+| ファクトリ関数 | テストデータ生成用のファクトリ関数が設計されていること |
+| import文 | 各テストファイルの必要なimport文が明記されていること |
+| テスト実行コマンド | テスト実行方法が記載されていること |
+
+### 出力ファイル
+
+| 種別 | 配置先 |
+|------|--------|
+| 成果物 | `docs/product/construction/{unit}/unit_test_logic.md` |
+
+### unit_test_logic.md の構成
+
+```markdown
+# ユニットテストロジック設計: {Unit名}
+
+## 1. テストファイル構成
+
+| ファイルパス | 対象モデル | ケース数 |
+|------------|----------|---------|
+| `backend/test/unit/{context}/domain/aggregates/{aggregate}.test.ts` | {集約名} | X |
+| `backend/test/unit/{context}/domain/entities/{entity}.test.ts` | {エンティティ名} | X |
+| `backend/test/unit/{context}/domain/value-objects/{vo}.test.ts` | {値オブジェクト名} | X |
+
+## 2. 共通ヘルパー・ファクトリ
+
+### ファクトリ関数
+
+```typescript
+// backend/test/helpers/{context}-helper.ts
+
+/**
+ * {集約名}のテスト用ファクトリ
+ */
+export function create{Aggregate}(overrides?: Partial<{Aggregate}Props>): {Aggregate} {
+  return {Aggregate}.create({
+    // デフォルト値
+    id: to{Aggregate}Id('test-001'),
+    name: 'テスト',
+    ...overrides,
+  });
+}
+```
+
+### 共通ヘルパーのインポート
+
+```typescript
+import { target, context } from '../../../../helpers/common-helper.js';
+```
+
+## 3. テストケース詳細ロジック
+
+### {集約名} テスト
+
+#### ファイル: `{aggregate}.test.ts`
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { target, context } from '../../../../helpers/common-helper.js';
+import { {Aggregate} } from '../../../../../src/{context}/domain/aggregates/{aggregate}.js';
+
+target('{Aggregate}', () => {
+  // UT-{Aggregate}-001: 不変条件テスト
+  describe('{不変条件の説明}', () => {
+    it('{期待される振る舞い}', () => {
+      // Arrange
+      const props = {
+        // テストデータ
+      };
+
+      // Act
+      const actual = {Aggregate}.create(props);
+
+      // Assert
+      expect(actual.{property}).toBe({expectedValue});
+    });
+
+    context('{特定の条件}の場合', () => {
+      it('{期待される結果}', () => {
+        // Arrange
+        const invalidProps = {
+          // 不正なデータ
+        };
+
+        // Act & Assert
+        expect(() => {Aggregate}.create(invalidProps)).toThrow({ExpectedError});
+      });
+    });
+  });
+
+  // UT-{Aggregate}-002: 状態遷移テスト
+  describe('{状態遷移の説明}', () => {
+    it('{初期状態}から{操作}で{期待状態}に遷移する', () => {
+      // Arrange
+      const aggregate = create{Aggregate}({ status: '{初期状態}' });
+
+      // Act
+      aggregate.{operation}();
+
+      // Assert
+      expect(aggregate.status).toBe('{期待状態}');
+    });
+  });
+});
+```
+
+### {値オブジェクト名} テスト
+
+#### ファイル: `{value-object}.test.ts`
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { target, context } from '../../../../helpers/common-helper.js';
+import { {ValueObject} } from '../../../../../src/{context}/domain/value-objects/{value-object}.js';
+
+target('{ValueObject}', () => {
+  // UT-VO-{Name}-001: 生成テスト
+  describe('{ValueObject}を生成する', () => {
+    it('有効な値で生成できる', () => {
+      // Arrange
+      const value = '{有効な値}';
+
+      // Act
+      const actual = {ValueObject}.create(value);
+
+      // Assert
+      expect(actual.value).toBe(value);
+    });
+
+    context('無効な値の場合', () => {
+      it.each([
+        ['空文字', ''],
+        ['null', null],
+        ['{境界値}', '{境界値の例}'],
+      ])('%sの場合エラーになる', (_, invalidValue) => {
+        // Act & Assert
+        expect(() => {ValueObject}.create(invalidValue)).toThrow();
+      });
+    });
+  });
+
+  // UT-VO-{Name}-002: 等値性テスト
+  describe('等値性', () => {
+    it('同じ値を持つ{ValueObject}は等しい', () => {
+      // Arrange
+      const vo1 = {ValueObject}.create('{値}');
+      const vo2 = {ValueObject}.create('{値}');
+
+      // Act & Assert
+      expect(vo1.equals(vo2)).toBe(true);
+    });
+  });
+});
+```
+
+## 4. モック戦略
+
+### vi.mock の使用方針
+
+```typescript
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+// 外部依存のモック
+vi.mock('../../../../../src/{context}/infrastructure/{dependency}.js', () => ({
+  {DependencyClass}: vi.fn().mockImplementation(() => ({
+    {method}: vi.fn().mockResolvedValue({mockValue}),
+  })),
+}));
+```
+
+### モック不要のケース
+- 純粋なドメインロジック（Entity, ValueObject）
+- 状態遷移ロジック
+- 計算ロジック
+
+### モック必要のケース
+- インフラ層への依存がある場合
+- 外部APIへの依存がある場合
+
+## 5. 境界値テスト一覧
+
+| ケースID | 対象 | 境界条件 | 入力例 | 期待結果 |
+|---------|------|---------|-------|---------|
+| UT-BV-001 | {ValueObject} | 最小値 | 0 | 成功 |
+| UT-BV-002 | {ValueObject} | 最小値-1 | -1 | エラー |
+| UT-BV-003 | {ValueObject} | 最大値 | 100 | 成功 |
+| UT-BV-004 | {ValueObject} | 最大値+1 | 101 | エラー |
+
+## 6. テスト実行コマンド
+
+```bash
+# 全ユニットテスト実行
+pnpm --filter backend test:unit
+
+# 特定ファイルのみ
+pnpm --filter backend test:unit -- {aggregate}.test.ts
+
+# watchモード
+pnpm --filter backend test:unit -- --watch
+```
+```
+
+---
+
+## 設計原則
+
+### 1. AAA パターンの徹底
+- **Arrange**: テストデータの準備
+- **Act**: テスト対象の実行
+- **Assert**: 結果の検証
+
+### 2. コメントによる明示
+```typescript
+// Arrange
+const data = ...;
+
+// Act
+const actual = target.method(data);
+
+// Assert
+expect(actual).toBe(expected);
+```
+
+### 3. 既存パターンの踏襲
+- `target()` と `context()` ヘルパーを使用
+- ファイル配置は既存の構造に合わせる
+- import パスは相対パスで統一
+
+### 4. 疑似コードの粒度
+- 実装エージェントが迷わないレベルの詳細さ
+- 具体的な値・型・メソッド名を記載
+- エッジケースのテストパターンを明示
+
+---
+
+---
+
+## Phase 3: レビュー（Opus review）
+
+### 実行主体
+メインセッション（Opus 4.6）が実行する。Sonnetへの再委任は行わない。
+
+### レビュー手順
+1. Sonnetが出力したファイルを読み込む
+2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+3. **スキル固有レビュー観点**を検証する
+4. 判定結果を出力する
+
+### スキル固有レビュー観点（BLOCK基準）
+- [ ] unit_test_design.mdの全テストケースIDに対応する疑似コードが存在するか
+- [ ] 疑似コードがTDDの「正しくRED」になる設計か（実装前にfailする前提のテスト）
+- [ ] target()/context()ヘルパーの使用が既存パターンと一致しているか
+- [ ] ファクトリ関数の設計がテスト間のデータ独立性を保っているか
+- [ ] import パスが相対パスで統一されているか
+
+### 判定と修正
+- **BLOCK項目にFAIL** → Opusが直接修正してから完了とする
+- **WARNのみFAIL** → Opusが直接修正してから完了とする
+- **全PASS** → 完了
+
+## 注意事項
+
+- **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う
+- 疑似コードは実装の指針となる詳細レベルで記載する
+- TDDの「RED」フェーズで正しく失敗するテストを設計する
+- 既存のテストパターン（`backend/test/unit/**/*.test.ts`）を参照してスタイルを統一する
+
+---
+
+## 次ステップへの誘導
+
+ユニットテストロジック設計完了後、以下のスキルに進んでください：
+
+1. **ITテストロジック設計** — UseCase/Repository/Controllerのテストロジック
+   - `it-test-logic-designer`
+
+2. **シナリオテストロジック設計** — E2Eテストのテストロジック
+   - `scenario-test-logic-designer`
+
+3. **TDD実装** — 全テストロジック設計完了後
+   - `story-implementor`

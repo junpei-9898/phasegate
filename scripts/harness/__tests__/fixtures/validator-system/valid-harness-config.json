@@ -1,0 +1,8 @@
+{
+  "preset": "standard",
+  "layers": {
+    "L2": { "enabled": true, "validators": ["L2-001", "L2-002", "L2-003"] },
+    "L3": { "enabled": true, "validators": ["L3-001", "L3-002", "L3-003", "L3-004"], "coverageThreshold": 90, "bundleSizeLimit": 512000 },
+    "L4": { "enabled": true, "validators": ["L4-001", "L4-002", "L4-003"] }
+  }
+}

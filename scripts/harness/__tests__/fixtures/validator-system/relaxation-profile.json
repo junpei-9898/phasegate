@@ -1,0 +1,6 @@
+{
+  "l2": { "maintained": ["L2-002"], "skipped": ["L2-001", "L2-003"] },
+  "l3": { "maintained": [], "skipped": ["L3-001", "L3-002", "L3-003", "L3-004"] },
+  "l4": { "all": false },
+  "phaseExecution": { "twoPhaseRequired": false }
+}

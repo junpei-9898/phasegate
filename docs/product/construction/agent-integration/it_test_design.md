@@ -1,0 +1,418 @@
+# ITテスト設計: agent-integration
+
+> **Unit ID**: agent-integration
+> **作成日**: 2026-03-19
+> **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
+> **参照文書**:
+> - `docs/product/construction/agent-integration/logical_design.md`
+> - `docs/product/construction/agent-integration/domain_model.md`
+> - `docs/product/units/integration_contract.md`
+> - `docs/principles/testing-rules.md`
+
+---
+
+## 1. 対象コンポーネント
+
+- **UseCase**: VerifyFallbackCapabilityUseCase, HandlePreToolUseUseCase, HandlePostToolUseUseCase, HandleStopUseCase
+- **Infrastructure Adapter**: EnvFileReentryGuardStateAdapter, HarnessConfigConfigQueryAdapter, HarnessApiCliCommandRegistryAdapter, TsMorphImportAnalyzerAdapter, ChildProcessCliExecutorAdapter
+- **Presentation Hook Adapter**: pre-tool-use-hook.ts, post-tool-use-hook.ts, stop-hook.ts
+- **統合フロー**: Hook Flow Integration（UseCase + Adapter結合）
+
+---
+
+## 2. UseCaseテストケース
+
+### 2.1 VerifyFallbackCapabilityUseCase（H11-01対応）
+
+**テスト方針**: Domainモデル（FallbackCapabilitySpec, FallbackVerificationService）は実体を使用。ImportAnalyzerPortとCliCommandRegistryPortをモックとする。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-VerifyFallback-001 | フォールバック仕様が全て有効な場合、検証が成功すること | `{ supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: true, targetFilePaths: ['src/index.ts'] }` | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=trueを返す | `{ isValid: true, violations: [], spec: FallbackCapabilitySpec }` |
+| IT-UC-VerifyFallback-002 | noAgentApiImports=falseの場合、ImportAnalyzer解析をスキップして成功すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: false }` | CliCommandRegistryPort: hasCommand=trueを返す。ImportAnalyzerPortは呼ばれない | `{ isValid: true, violations: [] }` |
+| IT-UC-VerifyFallback-003 | targetFilePathsが未指定の場合、デフォルトのコアモジュールパスで検証が成功すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }` （targetFilePaths省略） | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=true | `{ isValid: true, violations: [] }` |
+
+#### 異常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
+|---------|---------|------|----------|----------|
+| IT-UC-VerifyFallback-004 | エージェント固有APIのimportが検出された場合、violations付きで失敗すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true, targetFilePaths: ['src/agent.ts'] }` | ImportAnalyzerPort: `[{ filePath: 'src/agent.ts', agentApiImports: ['@anthropic-ai/claude-code'] }]`を返す | `{ isValid: false, violations: [HarnessError(code含む)] }` |
+| IT-UC-VerifyFallback-005 | 未登録コマンドが指定された場合、violations付きで失敗すること | `{ supportedCommands: ['harness:lint', 'harness:unknown-cmd'], noAgentApiImports: false }` | CliCommandRegistryPort: harness:lintはtrue、harness:unknown-cmdはfalse | `{ isValid: false, violations: [HarnessError] }` |
+| IT-UC-VerifyFallback-006 | supportedCommandsが空の場合、FallbackCapabilityViolationErrorがスローされること | `{ supportedCommands: [], noAgentApiImports: false }` | — | `FallbackCapabilityViolationError` のthrow |
+
+### 2.2 HandlePreToolUseUseCase（H11-02対応）
+
+**テスト方針**: Domainモデル（HookEvent, ProtectedFileList, HookToCliTranslator）は実体を使用。ConfigQueryPortをモックとする。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-HandlePreToolUse-001 | 保護対象ファイル（biome.json）への変更がブロックされること | `{ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: true, blockedFilePath: 'biome.json' }` |
+| IT-UC-HandlePreToolUse-002 | 保護対象ファイル（tsconfig.json）への変更がブロックされること | `{ toolName: 'str_replace_editor', targetFilePaths: ['tsconfig.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: true, blockedFilePath: 'tsconfig.json' }` |
+| IT-UC-HandlePreToolUse-003 | 保護対象外ファイルへの変更は通過すること | `{ toolName: 'str_replace_editor', targetFilePaths: ['src/index.ts'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: false, blockedFilePath: undefined }` |
+| IT-UC-HandlePreToolUse-004 | カスタム追加パターンに一致するファイルがブロックされること | `{ toolName: 'str_replace_editor', targetFilePaths: ['custom-protected.json'] }` | ConfigQueryPort: getProtectedFilePatterns=['custom-protected.json']を返す | `{ shouldBlock: true, blockedFilePath: 'custom-protected.json' }` |
+| IT-UC-HandlePreToolUse-005 | 複数パスのうち1件でも保護対象に一致すればブロックされること | `{ toolName: 'str_replace_editor', targetFilePaths: ['src/index.ts', 'package.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: true, blockedFilePath: 'package.json' }` |
+
+#### 異常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
+|---------|---------|------|----------|----------|
+| IT-UC-HandlePreToolUse-006 | toolNameが空文字の場合、入力バリデーションエラーになること | `{ toolName: '', targetFilePaths: ['src/index.ts'] }` | — | バリデーションエラー（HarnessError または例外） |
+| IT-UC-HandlePreToolUse-007 | targetFilePathsが空配列の場合、ブロックなしで通過すること | `{ toolName: 'str_replace_editor', targetFilePaths: [] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: false }` |
+| IT-UC-HandlePreToolUse-008 | biome.jsonブロック時、result.error.messageにブロックされたファイル名（biome.json）が含まれること | `{ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `result.shouldBlock=true` かつ HarnessErrorの`message`または`details`に `"biome.json"` が含まれること |
+
+### 2.3 HandlePostToolUseUseCase（H11-03対応）
+
+**テスト方針**: Domainモデル実体を使用。ConfigQueryPortとCliExecutorPortをモックとする。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-HandlePostToolUse-001 | PostToolUse Hookが有効な場合、harness:lint --fastが実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
+| IT-UC-HandlePostToolUse-002 | Lintが失敗した場合（exitCode=1）、executed=trueでcliResult.exitCode=1が返ること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/bad.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=1を返す | `{ executed: true, cliResult: { exitCode: 1 } }` |
+| IT-UC-HandlePostToolUse-003 | Hook無効設定の場合、HOOK_DISABLEDでスキップされること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled('post-tool-use')=false | `{ executed: false, skipReason: 'HOOK_DISABLED' }` |
+
+#### 異常系・境界値
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
+|---------|---------|------|----------|----------|
+| IT-UC-HandlePostToolUse-004 | タイムアウト超過（500ms以上）の場合、TIMEOUT_EXCEEDEDでスキップされること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: 500ms超過でTimeoutErrorをthrow | `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` |
+| IT-UC-HandlePostToolUse-005 | CliExecutorPortが実行エラーをthrowした場合、例外が伝播すること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: Errorをthrow | エラーが上位に伝播 |
+| IT-UC-HandlePostToolUse-006 | affectedFilePathsが空配列の場合、Hookが正常に実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: [] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0 | `{ executed: true }` |
+
+### 2.4 HandleStopUseCase（H11-04対応）
+
+**テスト方針**: Domainモデル（ReentryGuard, HookToCliTranslator）は実体を使用。ReentryGuardStatePortとCliExecutorPortをモックとする。ReentryGuardのライフサイクル（activate/deactivate）管理を重点的に検証する。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-HandleStop-001 | ReentryGuardが非アクティブな場合、harness:complete-checkが実行されること | `{ sessionId: 'session-001' }` | ReentryGuardStatePort: readActive=falseを返す。writeActive/clearActiveは成功。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
+| IT-UC-HandleStop-002 | complete-check成功後にdeactivateが呼ばれること（フラグがクリアされること） | `{ sessionId: 'session-002' }` | ReentryGuardStatePort: readActive=false。writeActive/clearActive成功。CliExecutorPort: exitCode=0を返す | clearActiveが呼ばれた（deactivate実行の確認） |
+| IT-UC-HandleStop-003 | ReentryGuardがアクティブな場合（再入）、REENTRY_DETECTEDでスキップされること | `{ sessionId: 'session-003' }` | ReentryGuardStatePort: readActive=trueを返す | `{ executed: false, skipReason: 'REENTRY_DETECTED' }` |
+| IT-UC-HandleStop-004 | complete-checkがFail（exitCode=1）でも、deactivateが必ず呼ばれること（try/finally保証） | `{ sessionId: 'session-004' }` | ReentryGuardStatePort: readActive=false。CliExecutorPort: exitCode=1を返す | `{ executed: true, cliResult: { exitCode: 1 } }`かつclearActiveが呼ばれた |
+
+#### 異常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
+|---------|---------|------|----------|----------|
+| IT-UC-HandleStop-005 | CLI実行中に例外が発生した場合でも、deactivateが必ず呼ばれること（finally保証） | `{ sessionId: 'session-005' }` | ReentryGuardStatePort: readActive=false。CliExecutorPort: Errorをthrow | エラーが伝播しつつ、clearActiveが呼ばれた |
+| IT-UC-HandleStop-006 | sessionIdが空文字の場合、バリデーションエラーになること | `{ sessionId: '' }` | — | バリデーションエラー |
+| IT-UC-HandleStop-007 | writeActive（activate）が失敗した場合、エラーが伝播してdeactivateは呼ばれないこと | `{ sessionId: 'session-007' }` | ReentryGuardStatePort: readActive=false、writeActiveがErrorをthrow | Errorが伝播。clearActiveは呼ばれない |
+
+---
+
+## 3. Infrastructure Adapterテストケース（Repository相当）
+
+### 3.1 EnvFileReentryGuardStateAdapter
+
+**前提**: 各テスト後に環境変数とtmpファイルをクリーンアップする。
+
+#### env戦略テスト（strategy: 'env'）
+
+| ケースID | 操作 | 入力/事前状態 | 期待結果 |
+|---------|------|-------------|---------|
+| IT-REPO-EnvFileAdapter-001 | readActive（未設定状態） | 環境変数 `HARNESS_STOP_HOOK_ACTIVE` が未設定 | `false` が返る |
+| IT-REPO-EnvFileAdapter-002 | writeActive → readActive | writeActiveを実行 | readActiveが `true` を返す |
+| IT-REPO-EnvFileAdapter-003 | writeActive → clearActive → readActive | writeActive後にclearActive | readActiveが `false` を返す |
+| IT-REPO-EnvFileAdapter-004 | clearActive（未設定状態での冪等性） | 環境変数未設定でclearActiveを呼ぶ | エラーなく完了し、readActiveが `false` を返す |
+
+#### file戦略テスト（strategy: 'file'）
+
+| ケースID | 操作 | 入力/事前状態 | 期待結果 |
+|---------|------|-------------|---------|
+| IT-REPO-EnvFileAdapter-005 | readActive（tmpファイルなし） | tmpファイルが存在しない | `false` が返る |
+| IT-REPO-EnvFileAdapter-006 | writeActive → readActive | writeActiveを実行 | tmpファイルが作成され、readActiveが `true` を返す |
+| IT-REPO-EnvFileAdapter-007 | writeActive → clearActive → readActive | writeActive後にclearActive | tmpファイルが削除され、readActiveが `false` を返す |
+| IT-REPO-EnvFileAdapter-008 | clearActive（ファイルなし状態での冪等性） | tmpファイルが存在しない状態でclearActive | エラーなく完了 |
+
+#### エラーハンドリング
+
+| ケースID | 操作 | 事前状態 | 期待結果 |
+|---------|------|---------|---------|
+| IT-REPO-EnvFileAdapter-009 | readActive（I/Oエラー時） | tmpファイルの親ディレクトリが存在しない（file戦略） | `false` が返る（安全側に倒す） |
+| IT-REPO-EnvFileAdapter-010 | writeActive（I/Oエラー時） | 書き込み権限のないパス（file戦略） | エラーがthrowされる |
+
+### 3.2 HarnessConfigConfigQueryAdapter
+
+**前提**: fixtureの `harness.config.json` を使用する。
+
+#### CRUDテスト（設定読み取り）
+
+| ケースID | 操作 | 入力/事前データ | 期待結果 |
+|---------|------|---------------|---------|
+| IT-REPO-ConfigQueryAdapter-001 | isHookEnabled('post-tool-use')（cascadeUpdate=true） | HarnessConfigV2の `harnesses.cascadeUpdate: true` を持つfixture | `true` が返る |
+| IT-REPO-ConfigQueryAdapter-002 | isHookEnabled('post-tool-use')（cascadeUpdate=false） | HarnessConfigV2の `harnesses.cascadeUpdate: false` を持つfixture | `false` が返る |
+| IT-REPO-ConfigQueryAdapter-003 | isHookEnabled('pre-tool-use')（agentLessonCollection=true） | HarnessConfigV2の `harnesses.agentLessonCollection: true` を持つfixture | `true` が返る |
+| IT-REPO-ConfigQueryAdapter-004 | getProtectedFilePatterns()（Wave 2暫定実装） | 任意のfixture | 空配列 `[]` が返る（Wave 2では追加パターンなし） |
+| IT-REPO-ConfigQueryAdapter-005 | isHookEnabled('stop')（Stopはデフォルト有効） | 任意のfixture | `true` が返る |
+
+#### エラーハンドリング
+
+| ケースID | 操作 | 事前状態 | 期待結果 |
+|---------|------|---------|---------|
+| IT-REPO-ConfigQueryAdapter-006 | harness.config.jsonが存在しない場合 | configファイルなし | エラーがthrowされる（または安全なデフォルト値が返る） |
+
+### 3.3 HarnessApiCliCommandRegistryAdapter
+
+#### CRUDテスト（コマンド存在確認）
+
+| ケースID | 操作 | 入力 | 期待結果 |
+|---------|------|------|---------|
+| IT-REPO-CliCommandRegistry-001 | hasCommand（登録済みコマンド） | `'harness:lint'` | `true` が返る |
+| IT-REPO-CliCommandRegistry-002 | hasCommand（登録済みコマンド） | `'harness:complete-check'` | `true` が返る |
+| IT-REPO-CliCommandRegistry-003 | hasCommand（未登録コマンド） | `'harness:unknown-command'` | `false` が返る |
+| IT-REPO-CliCommandRegistry-004 | listCommands（全コマンド一覧） | — | `integration_contract.md §3.1` に定義された10コマンドが返る |
+
+### 3.4 TsMorphImportAnalyzerAdapter
+
+**前提**: テスト用フィクスチャファイルを `__tests__/integration/agent-integration/fixtures/` 配下に配置する。
+
+#### CRUDテスト（Import解析）
+
+| ケースID | 操作 | 入力/フィクスチャ | 期待結果 |
+|---------|------|----------------|---------|
+| IT-REPO-ImportAnalyzer-001 | analyzeAgentApiImports（エージェント固有APIなし） | `import { readFile } from 'node:fs/promises'` のみのフィクスチャファイル | `[{ filePath: '...', agentApiImports: [] }]` |
+| IT-REPO-ImportAnalyzer-002 | analyzeAgentApiImports（エージェント固有APIあり） | `import { query } from '@anthropic-ai/claude-code'` を含むフィクスチャファイル | `[{ filePath: '...', agentApiImports: ['@anthropic-ai/claude-code'] }]` |
+| IT-REPO-ImportAnalyzer-003 | analyzeAgentApiImports（複数ファイル） | エージェントAPI有り・なし各1ファイル | 2件のImportAnalysisResultが返る（うち1件がagentApiImports非空） |
+| IT-REPO-ImportAnalyzer-004 | analyzeAgentApiImports（空パスリスト） | `targetFilePaths: []` | 空配列 `[]` が返る |
+
+#### エラーハンドリング
+
+| ケースID | 操作 | 事前状態 | 期待結果 |
+|---------|------|---------|---------|
+| IT-REPO-ImportAnalyzer-005 | analyzeAgentApiImports（存在しないファイルパス） | 存在しないパスを指定 | エラーがthrowされる（またはagentApiImports=[]として無視） |
+
+### 3.5 ChildProcessCliExecutorAdapter
+
+**前提**: 実際のCLIは起動しない。モック用スクリプト（exit codeのみを返す）を使用する。
+
+#### CRUDテスト（CLI実行）
+
+| ケースID | 操作 | 入力 | 期待結果 |
+|---------|------|------|---------|
+| IT-REPO-CliExecutor-001 | execute（exitCode=0で正常終了） | command='harness:lint', args=['--fast'], timeoutMs=500 | `{ exitCode: 0, timedOut: false }` |
+| IT-REPO-CliExecutor-002 | execute（exitCode=1でLint失敗） | command='harness:lint', args=['--fast'] | `{ exitCode: 1, timedOut: false }` |
+| IT-REPO-CliExecutor-003 | execute（stdout/stderrが取得できること） | command='harness:status', args=[] | `{ stdout: '...', stderr: '...', timedOut: false }` |
+
+#### タイムアウトテスト
+
+| ケースID | シナリオ | 期待結果 |
+|---------|---------|---------|
+| IT-REPO-CliExecutor-004 | timeoutMs以内に完了する場合、timedOut=falseが返ること | `{ timedOut: false }` |
+| IT-REPO-CliExecutor-005 | timeoutMsを超過した場合、TimeoutErrorがthrowされること（timedOut=true） | TimeoutErrorのthrowまたは `{ timedOut: true }` |
+
+---
+
+## 4. Presentation Hook Adapterテストケース（Controller/API相当）
+
+**テスト方針**: UseCaseをモックし、stdin JSONシミュレーションとexit code検証に集中する。
+Presentation層のテストは子プロセス（spawnまたはexecFile）経由でスクリプトを実行し、exit codeを検証する。
+
+### 4.1 pre-tool-use-hook.ts
+
+#### バリデーションテスト（入力JSON）
+
+| ケースID | 入力（stdin JSON） | 期待レスポンス（exit code） |
+|---------|-----------------|--------------------------|
+| IT-API-PreToolUse-001 | `{ "tool_name": "str_replace_editor", "tool_input": { "path": "biome.json" } }` | exit code 2（ブロック） |
+| IT-API-PreToolUse-002 | `{ "tool_name": "str_replace_editor", "tool_input": { "path": "src/index.ts" } }` | exit code 0（通過） |
+| IT-API-PreToolUse-003 | `{ "tool_name": "str_replace_editor", "tool_input": { "path": "package.json" } }` | exit code 2（ブロック） |
+
+#### 認証・認可テスト
+
+（認証認可機構なし。該当なし）
+
+#### 正常系
+
+| ケースID | 入力（stdin JSON） | 期待レスポンス |
+|---------|-----------------|--------------|
+| IT-API-PreToolUse-004 | 保護対象外ファイルへのアクセス | exit code 0、stderrなし |
+| IT-API-PreToolUse-005 | 保護対象ファイルへのアクセス | exit code 2、stderrにブロックメッセージあり |
+
+#### 異常系
+
+| ケースID | 入力（stdin JSON） | 期待エラー（exit code） |
+|---------|-----------------|----------------------|
+| IT-API-PreToolUse-006 | 不正なJSON（`{ invalid json` ） | exit code 2（実行エラー）、stderrにエラーメッセージ |
+| IT-API-PreToolUse-007 | tool_nameフィールドなし（`{ "tool_input": {} }`） | exit code 2（実行エラー） |
+
+### 4.2 post-tool-use-hook.ts
+
+#### バリデーションテスト（入力JSON）
+
+| ケースID | 入力（stdin JSON） | 期待エラー |
+|---------|-----------------|----------|
+| IT-API-PostToolUse-001 | 不正なJSON | exit code 2、stderrにエラーメッセージ |
+| IT-API-PostToolUse-002 | tool_nameフィールドなし | exit code 2 |
+
+#### 正常系
+
+| ケースID | 入力（stdin JSON） | 期待レスポンス |
+|---------|-----------------|--------------|
+| IT-API-PostToolUse-003 | `{ "tool_name": "str_replace_editor", "tool_response": {} }` | UseCase: `executed=true, exitCode=0` → exit code 0 |
+| IT-API-PostToolUse-004 | Lint失敗（exitCode=1）のシナリオ | UseCase: `executed=true, cliResult.exitCode=1` → exit code 1、stderrにLint失敗メッセージ |
+| IT-API-PostToolUse-005 | スキップ（HOOK_DISABLED）のシナリオ | UseCase: `executed=false, skipReason='HOOK_DISABLED'` → exit code 0、stderrにスキップ理由 |
+
+#### 境界値テスト
+
+| ケースID | 入力 | 期待エラー |
+|---------|------|----------|
+| IT-API-PostToolUse-006 | タイムアウト超過シナリオ | UseCase: `executed=false, skipReason='TIMEOUT_EXCEEDED'` → exit code 0（スキップ扱い） |
+| IT-API-PostToolUse-007 | UseCase実行エラー | exit code 2、stderrに診断情報 |
+
+### 4.3 stop-hook.ts
+
+#### バリデーションテスト（入力JSON）
+
+| ケースID | 入力（stdin JSON） | 期待エラー |
+|---------|-----------------|----------|
+| IT-API-StopHook-001 | 不正なJSON | exit code 2、stderrにエラーメッセージ |
+| IT-API-StopHook-002 | session_idフィールドなし（`{}`） | exit code 2 |
+
+#### 正常系
+
+| ケースID | 入力（stdin JSON） | 期待レスポンス |
+|---------|-----------------|--------------|
+| IT-API-StopHook-003 | `{ "session_id": "abc123" }` | UseCase: `executed=true, exitCode=0` → exit code 0 |
+| IT-API-StopHook-004 | complete-check失敗（exitCode=1）のシナリオ | UseCase: `executed=true, cliResult.exitCode=1` → exit code 1、stderrにCheck失敗メッセージ |
+| IT-API-StopHook-005 | REENTRY_DETECTED（再入検出）のシナリオ | UseCase: `executed=false, skipReason='REENTRY_DETECTED'` → exit code 0、stderrに再入検出メッセージ |
+
+#### 異常系
+
+| ケースID | 入力 | 期待エラー |
+|---------|------|----------|
+| IT-API-StopHook-006 | UseCase実行エラー | exit code 2、stderrに診断情報 |
+| IT-API-StopHook-007 | UseCase実行中に予期しない例外が発生した場合 | exit code 2（実行エラー）で安全に終了 |
+
+---
+
+## 5. 統合フローテストケース（Hook Flow Integration）
+
+**テスト方針**: EnvFileReentryGuardStateAdapter（実ファイルシステム）とDomainモデルを実体として使用。CliExecutorPortのみモック。
+テストファイル: `scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts`
+
+| ケースID | シナリオ | 事前状態 | テスト操作 | 期待結果 |
+|---------|---------|---------|-----------|---------|
+| IT-UC-HookFlow-001 | Stop Hook通常フロー：ReentryGuard inactive → activate → complete-check実行 → deactivate | フラグ未設定 | HandleStopUseCase.execute（ReentryGuardStatePort=実体、CliExecutorPort=モック） | executed=true、フラグが最終的にクリアされている |
+| IT-UC-HookFlow-002 | Stop Hook再入フロー：ReentryGuard active → REENTRY_DETECTED | フラグ設定済み（writeActiveで事前セット） | HandleStopUseCase.execute | `{ executed: false, skipReason: 'REENTRY_DETECTED' }`、フラグ状態は変化しない |
+| IT-UC-HookFlow-003 | PostToolUse Hook正常フロー：Hook有効 → harness:lint --fast実行 | ConfigQueryPort=モック（enabled=true） | HandlePostToolUseUseCase.execute（CliExecutorPort=モック） | executed=trueかつcliCommandが正しく渡される |
+| IT-UC-HookFlow-004 | PreToolUse Hook保護フロー：biome.json変更 → ブロック | ConfigQueryPort=モック（追加パターンなし） | HandlePreToolUseUseCase.execute | `{ shouldBlock: true, blockedFilePath: 'biome.json' }` |
+| IT-UC-HookFlow-005 | CLI実行エラー時のReentryGuardデアクティベート保証 | フラグ未設定 | HandleStopUseCase.execute（CliExecutorPort: Errorをthrow） | エラー伝播しつつ、フラグが最終的にクリアされている（finally保証） |
+
+---
+
+## 6. シードデータ要件
+
+| データセット | 用途 | 内容 |
+|------------|------|------|
+| `fixtures/harness-config-enabled.json` | ConfigQueryAdapter ITテスト（Hook有効設定） | `harnesses: { cascadeUpdate: true, agentLessonCollection: true }` を含む最小HarnessConfigV2 |
+| `fixtures/harness-config-disabled.json` | ConfigQueryAdapter ITテスト（Hook無効設定） | `harnesses: { cascadeUpdate: false, agentLessonCollection: false }` を含む最小HarnessConfigV2 |
+| `fixtures/no-agent-api.ts` | TsMorphImportAnalyzerAdapter ITテスト（エージェントAPIなし） | `import { readFile } from 'node:fs/promises'` のみを含むTypeScriptファイル |
+| `fixtures/with-agent-api.ts` | TsMorphImportAnalyzerAdapter ITテスト（エージェントAPIあり） | `import { query } from '@anthropic-ai/claude-code'` を含むTypeScriptファイル |
+| `fixtures/mock-cli-exit-0.ts` | ChildProcessCliExecutorAdapter ITテスト（成功） | `process.exit(0)` のみのモックCLIスクリプト |
+| `fixtures/mock-cli-exit-1.ts` | ChildProcessCliExecutorAdapter ITテスト（Lint失敗） | `process.exit(1)` のみのモックCLIスクリプト |
+| `fixtures/mock-cli-slow.ts` | ChildProcessCliExecutorAdapter タイムアウトテスト | 1000ms待機後に `process.exit(0)` するモックCLIスクリプト |
+
+**フィクスチャ配置先**: `scripts/harness/__tests__/integration/agent-integration/fixtures/`
+
+---
+
+## 7. テスト環境設定
+
+### ファイル配置
+
+```
+scripts/harness/__tests__/integration/agent-integration/
+├── fixtures/
+│   ├── harness-config-enabled.json
+│   ├── harness-config-disabled.json
+│   ├── no-agent-api.ts
+│   ├── with-agent-api.ts
+│   ├── mock-cli-exit-0.ts
+│   ├── mock-cli-exit-1.ts
+│   └── mock-cli-slow.ts
+├── env-file-reentry-guard-state-adapter.test.ts
+├── harness-config-config-query-adapter.test.ts
+├── harness-api-cli-command-registry-adapter.test.ts
+├── ts-morph-import-analyzer-adapter.test.ts
+├── child-process-cli-executor-adapter.test.ts
+└── hook-flow-integration.test.ts
+```
+
+### テストメタデータ（testing-rules.md準拠）
+
+各テストファイルには以下のメタデータコメントを記述する:
+
+```typescript
+// @unit agent-integration
+// @layer infrastructure  (またはapplication/presentation)
+// @story H11-01           (対応ストーリー)
+```
+
+### モック設定（UseCase ITテスト共通）
+
+各UseCaseテストのArrangeにて:
+
+```typescript
+// Port モック生成パターン（vi.fn()使用）
+const mockReentryGuardStatePort = {
+  readActive: vi.fn(),
+  writeActive: vi.fn(),
+  clearActive: vi.fn(),
+};
+const mockCliExecutorPort = {
+  execute: vi.fn(),
+};
+const mockConfigQueryPort = {
+  isHookEnabled: vi.fn(),
+  getProtectedFilePatterns: vi.fn(),
+};
+const mockImportAnalyzerPort = {
+  analyzeAgentApiImports: vi.fn(),
+};
+const mockCliCommandRegistryPort = {
+  hasCommand: vi.fn(),
+  listCommands: vi.fn(),
+};
+```
+
+### Adapter統合テスト設定
+
+```typescript
+// EnvFileReentryGuardStateAdapter テストセットアップ
+beforeEach(async () => {
+  // 環境変数クリーンアップ
+  delete process.env.HARNESS_STOP_HOOK_ACTIVE;
+  // tmpファイルクリーンアップは clearActive() で実施
+});
+
+afterEach(async () => {
+  // テスト後のクリーンアップ（冪等なclearActiveを使用）
+  const adapter = new EnvFileReentryGuardStateAdapter({ strategy: 'env' });
+  await adapter.clearActive();
+});
+```
+
+### テスト規約（testing-rules.md準拠）
+
+- テストケース名は全て日本語で記述する
+- AAAパターン（Arrange-Act-Assert）でコメントを明示する
+- Act結果は `actual` 変数へ代入する
+- describe構造: `target(対象メソッド名) → describe(振る舞い) → context(前提条件) → it(期待値)`
+- テスト用ファイル名はkebab-caseとする
+
+### テストフレームワーク・ツール
+
+| 種別 | 内容 |
+|------|------|
+| フレームワーク | Vitest 3.0.0 |
+| モック | `vi.fn()`, `vi.spyOn()` |
+| アサーション | `expect()` (Vitest built-in) |
+| stdin シミュレーション | Node.js `child_process.spawn` でスクリプトを子プロセス実行 |
+| ファイルシステム | `node:fs/promises`（実FS使用。インメモリ代替なし） |

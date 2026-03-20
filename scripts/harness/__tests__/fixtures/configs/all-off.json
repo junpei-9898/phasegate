@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "preset": "minimal",
+  "project": {
+    "name": "test-project",
+    "paths": {
+      "source": ["src"],
+      "docs": {
+        "units": "docs/units",
+        "inception": "docs/inception",
+        "construction": "docs/construction"
+      }
+    }
+  },
+  "layers": {
+    "L1_editor": {
+      "enabled": false
+    },
+    "L2_precommit": {
+      "enabled": false
+    },
+    "L3_ci": {
+      "enabled": false
+    },
+    "L4_scheduled": {
+      "enabled": false
+    }
+  }
+}

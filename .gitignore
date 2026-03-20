@@ -1,0 +1,7 @@
+node_modules/
+.claude/
+dist/
+reports/
+.harness/
+*-result.json
+*.log

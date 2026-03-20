@@ -1,0 +1,4 @@
+{
+  "total": { "lines": { "pct": 85 }, "statements": { "pct": 85 }, "functions": { "pct": 85 }, "branches": { "pct": 85 } },
+  "src/foo.ts": { "lines": { "pct": 85 } }
+}

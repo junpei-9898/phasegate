@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "preset": "strict",
+  "project": {
+    "name": "test-project",
+    "paths": {
+      "source": ["backend/src"],
+      "docs": {
+        "units": "docs/product/units",
+        "inception": "docs/inception",
+        "construction": "docs/product/construction"
+      }
+    }
+  }
+}

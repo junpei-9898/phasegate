@@ -1,0 +1,18 @@
+#!/bin/sh
+# GSDLC Harness CLI entry point
+# tsx を使って scripts/harness/main.ts を実行するラッパー
+
+# このスクリプトの実体ファイルの場所を解決する（シンボリックリンク対応）
+SCRIPT_PATH="$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo "$0")"
+PACKAGE_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
+MAIN_TS="$PACKAGE_DIR/scripts/harness/main.ts"
+
+# tsx を探す: npx経由の場合はnode_modules/.binがPATHに入っているので command -v で見つかる
+if command -v tsx >/dev/null 2>&1; then
+  exec tsx "$MAIN_TS" "$@"
+elif [ -f "$PACKAGE_DIR/node_modules/.bin/tsx" ]; then
+  exec "$PACKAGE_DIR/node_modules/.bin/tsx" "$MAIN_TS" "$@"
+else
+  echo "Error: tsx not found. Run: npm install" >&2
+  exit 1
+fi

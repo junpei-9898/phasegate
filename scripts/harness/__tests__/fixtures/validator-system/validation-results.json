@@ -1,0 +1,5 @@
+[
+  { "validatorId": "L2-001", "passed": true, "errors": [], "durationMs": 10, "skipped": false },
+  { "validatorId": "L2-002", "passed": true, "errors": [], "durationMs": 8, "skipped": false },
+  { "validatorId": "L3-001", "passed": true, "errors": [], "durationMs": 15, "skipped": false }
+]

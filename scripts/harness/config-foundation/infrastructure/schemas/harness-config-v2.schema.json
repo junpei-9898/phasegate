@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "layers",
+    "quickMode",
+    "phaseDependencies",
+    "planningMode",
+    "harnesses",
+    "paths",
+    "reporting"
+  ],
+  "properties": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "preset"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "preset": {
+          "type": "string",
+          "enum": ["minimal", "standard", "strict"]
+        }
+      }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "L1": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "rules": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "L2": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "validators": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "L3": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "validators": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "coverageThreshold": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "L4": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "validators": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "schedule": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "quickMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowedCategories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "maintainedLayers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "relaxedGates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "phaseDependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preset", "override", "customRules"],
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["default", "custom"]
+        },
+        "override": {
+          "type": "boolean"
+        },
+        "customRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["phase", "requires"],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requires": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "planningMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "perPhase"],
+      "properties": {
+        "default": {
+          "type": "string",
+          "enum": ["interactive", "embedded-qa"]
+        },
+        "perPhase": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["interactive", "embedded-qa"]
+          }
+        }
+      }
+    },
+    "harnesses": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agentLessonCollection": {
+          "type": "boolean"
+        },
+        "cascadeUpdate": {
+          "type": "boolean"
+        },
+        "bundleSizeLimit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deadCodeGC": {
+          "type": "boolean"
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["designDocs", "inceptionDocs"],
+      "properties": {
+        "designDocs": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inceptionDocs": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reporting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "outputDir"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputDir": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

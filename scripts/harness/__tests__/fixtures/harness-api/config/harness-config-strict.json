@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "project": {
+    "name": "harness-api-test",
+    "preset": "strict"
+  },
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "integrationTests": "scripts/harness/__tests__/integration"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "gsdlc-harness",
+    "preset": "standard"
+  },
+  "layers": {},
+  "quickMode": {},
+  "phaseDependencies": {
+    "preset": "default",
+    "override": false,
+    "customRules": []
+  },
+  "planningMode": {
+    "default": "interactive",
+    "perPhase": {}
+  },
+  "harnesses": {},
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception"
+  },
+  "reporting": {
+    "format": "json",
+    "outputDir": "reports"
+  }
+}
