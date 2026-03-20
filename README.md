@@ -33,18 +33,14 @@ AIエージェント（Claude Code）と人間が協働してプロダクショ�
 **GitHubリポジトリから（推奨）**
 
 ```bash
-npm install --save-dev github:junpei-9898/GSDLC_HARNESS
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#v1.1.0"
 ```
 
-特定のタグ・コミットを固定する場合:
-```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#v1.0.0"
-```
-
-**ローカルパス参照（同一マシンで開発する場合）**
-
-```bash
-npm install --save-dev gsdlc-harness@file:../GSDLC_HARNESS
+package.json に直接記載する場合:
+```json
+"devDependencies": {
+  "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#v1.1.0"
+}
 ```
 
 ### 2. 初期化
@@ -205,12 +201,39 @@ reports/
 
 ---
 
-## スキルのアップデート
+## バージョン管理
 
-GSDLC_HARNESSのバージョンを上げた後、各プロジェクトで以下を実行するとスキルが最新版に更新されます。
+本パッケージは **Semantic Versioning**（MAJOR.MINOR.PATCH）を採用しています。
+
+| 変更の種類 | バージョン |
+|---|---|
+| バグ修正・小改善 | PATCH（例: v1.1.0 → v1.1.1） |
+| スキル追加・新コマンド追加 | MINOR（例: v1.1.0 → v1.2.0） |
+| 破壊的変更（設定スキーマ変更等） | MAJOR（例: v1.x.x → v2.0.0） |
+
+### リリース手順（GSDLC_HARNESS側）
 
 ```bash
-npm update gsdlc-harness
+# 1. package.json のバージョンを更新
+npm version patch   # or minor / major
+
+# 2. コミット & タグ & プッシュ
+git add package.json
+git commit -m "chore: bump version to vX.Y.Z"
+git tag vX.Y.Z
+git push origin main --tags
+```
+
+### アップデート手順（利用側プロジェクト）
+
+```bash
+# 1. package.json の参照タグを更新
+# "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#vX.Y.Z"
+
+# 2. 再インストール
+npm install
+
+# 3. スキルを最新版に更新
 npx harness update-skills
 ```
 
