@@ -27,7 +27,6 @@ function loadSchema(): object {
 function createValidateFunction(): ValidateFunction {
   const ajv = new Ajv({
     allErrors: true,
-    jsonPointers: true,
   });
 
   return ajv.compile(loadSchema());
@@ -35,19 +34,20 @@ function createValidateFunction(): ValidateFunction {
 
 function buildPath(error: ErrorObject): string {
   const errorParams = error.params as Record<string, unknown>;
-  const dataPath = (error as ErrorObject & { readonly dataPath?: string }).dataPath ?? '';
+  // ajv v8 では instancePath が JSON Pointer 形式（v6 の dataPath に相当）
+  const instancePath = error.instancePath ?? '';
 
   if (error.keyword === 'required') {
     const missingProperty = String(errorParams.missingProperty ?? '');
-    return `${dataPath}/${missingProperty}` || '/';
+    return `${instancePath}/${missingProperty}` || '/';
   }
 
   if (error.keyword === 'additionalProperties') {
     const additionalProperty = String(errorParams.additionalProperty ?? '');
-    return `${dataPath}/${additionalProperty}` || '/';
+    return `${instancePath}/${additionalProperty}` || '/';
   }
 
-  return dataPath || '/';
+  return instancePath || '/';
 }
 
 function buildErrorCode(error: ErrorObject, actualPath: string): string {
