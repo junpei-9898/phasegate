@@ -41,7 +41,16 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     }
 
     const artifact = planArtifacts[0];
-    const resolvedPath = artifact.resolve(scope);
+    let resolvedPath: string;
+    try {
+      resolvedPath = artifact.resolve(scope);
+    } catch {
+      return PlanEvidence.create({
+        exists: false,
+        qaComplete: false,
+        planningModeMatch: false,
+      });
+    }
     const absolutePath = path.join(this.rootDir, resolvedPath);
 
     let content: string;

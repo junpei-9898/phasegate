@@ -43,7 +43,7 @@ target('FileSystemArtifactExistenceChecker.checkAll', () => {
         const actual = await sut.checkAll([artifact], { unitId: 'my-unit' });
 
         // Assert
-        expect(actual.get('design-doc')).toBe(true);
+        expect(actual.get('docs/units/my-unit/design.md')).toBe(true);
       });
     });
 
@@ -62,7 +62,7 @@ target('FileSystemArtifactExistenceChecker.checkAll', () => {
         const actual = await sut.checkAll([artifact], { unitId: 'my-unit' });
 
         // Assert
-        expect(actual.get('design-doc')).toBe(false);
+        expect(actual.get('docs/units/my-unit/design.md')).toBe(false);
       });
     });
 
@@ -87,8 +87,8 @@ target('FileSystemArtifactExistenceChecker.checkAll', () => {
         const actual = await sut.checkAll([existing, missing], { unitId: 'u1' });
 
         // Assert
-        expect(actual.get('design-doc')).toBe(true);
-        expect(actual.get('test-plan')).toBe(false);
+        expect(actual.get('docs/units/u1/design.md')).toBe(true);
+        expect(actual.get('docs/units/u1/test-plan.md')).toBe(false);
       });
     });
 
@@ -111,7 +111,7 @@ target('FileSystemArtifactExistenceChecker.checkAll', () => {
         });
 
         // Assert
-        expect(actual.get('story-plan')).toBe(true);
+        expect(actual.get('docs/units/u1/stories/s1_plan.md')).toBe(true);
       });
     });
   });

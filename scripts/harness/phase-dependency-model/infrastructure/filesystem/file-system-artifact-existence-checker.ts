@@ -28,10 +28,16 @@ export class FileSystemArtifactExistenceChecker
     const results = new Map<string, boolean>();
 
     for (const artifact of artifacts) {
-      const resolvedPath = artifact.resolve(scope);
+      let resolvedPath: string;
+      try {
+        resolvedPath = artifact.resolve(scope);
+      } catch {
+        results.set(artifact.path, false);
+        continue;
+      }
       const absolutePath = path.join(this.rootDir, resolvedPath);
       const exists = await this.fileExists(absolutePath);
-      results.set(artifact.name, exists);
+      results.set(resolvedPath, exists);
     }
 
     return results;
