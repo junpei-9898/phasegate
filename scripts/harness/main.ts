@@ -574,7 +574,7 @@ async function main(): Promise<void> {
       case 'ci:generate-template': {
         const mod = buildCiGovernance(rootDir);
         const presetId = parseFlag(args, '--preset') ?? 'default';
-        const templateType = parseFlag(args, '--type') ?? 'pull_request';
+        const templateType = parseFlag(args, '--type') ?? 'aidlc-gate';
         const render = hasFlag(args, '--render');
         const format = json ? 'json' : 'human';
         const result = await mod.generateCiTemplateHandler.handle({ presetId, templateType, render, format });

@@ -33,6 +33,7 @@ export class SkillStructureValidator {
 
     // Look for headings that correspond to section names
     const sectionMap: Record<string, SectionName> = {
+      // 汎用形式（英語・シンプル日本語）
       'purpose': 'purpose',
       '目的': 'purpose',
       'inputs': 'inputs',
@@ -43,6 +44,12 @@ export class SkillStructureValidator {
       '前提条件': 'prerequisites',
       'executionflow': 'executionFlow',
       '実行フロー': 'executionFlow',
+      // SKILL.md フォーマット（AIDLCスキルで実際に使用されている見出し）
+      '必須インプット': 'inputs',
+      '任意インプット': 'inputs',
+      '出力ファイル': 'outputs',
+      '前提条件チェック': 'prerequisites',
+      '⚠️ 3フェーズ実行ルール': 'executionFlow',
     };
 
     for (const line of lines) {

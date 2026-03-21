@@ -42,7 +42,8 @@ export class PlanningMode {
     }
 
     const value = config.default ?? config.mode ?? config.planningMode;
-    return PlanningMode.create(value ?? '');
+    // 値が未設定の場合はデフォルト値 'interactive' を使用する
+    return PlanningMode.create(value ?? 'interactive');
   }
 
   requiresAnsweredQa(): boolean {
