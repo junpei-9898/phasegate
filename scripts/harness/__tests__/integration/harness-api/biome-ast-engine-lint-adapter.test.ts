@@ -94,19 +94,20 @@ target('BiomeAstEngineLintAdapter', () => {
   });
 
   // ─── IT-Adapter-BiomeLint-004 ───
-  describe('スタブ未指定（デフォルト）の場合、違反なしを返すこと', () => {
+  describe('スタブ未指定（デフォルト）の場合、実際のbiome-ast-engineを呼び出すこと', () => {
     context('コンストラクタ引数なしで生成した場合', () => {
-      it('passed=true・errors=[]・warnings=[]が返される', async () => {
+      it('実際のLintスキャンが実行され、結果オブジェクトが返される', async () => {
         // Arrange
         const adapter = new BiomeAstEngineLintAdapter();
 
         // Act
         const actual = await adapter.runLint();
 
-        // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.errors).toEqual([]);
-        expect(actual.warnings).toEqual([]);
+        // Assert — スタブではなく実実装が呼ばれることを確認（passed/errors は実スキャン結果に依存）
+        expect(actual).toBeDefined();
+        expect(typeof actual.passed).toBe('boolean');
+        expect(Array.isArray(actual.errors)).toBe(true);
+        expect(Array.isArray(actual.warnings)).toBe(true);
       });
     });
   });

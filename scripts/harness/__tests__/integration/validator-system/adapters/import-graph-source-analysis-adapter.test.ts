@@ -9,7 +9,7 @@ import { ImportGraphSourceAnalysisAdapter } from '../../../../validator-system/i
 
 target('ImportGraphSourceAnalysisAdapter', () => {
   describe('getImportGraph', () => {
-    context('getImportGraphを呼んだ場合（stub実装）', () => {
+    context('getImportGraphを呼んだ場合', () => {
       it('nodesとedgesプロパティを持つオブジェクトが返る (IT-REPO-ImportGraph-001)', async () => {
         // Arrange
         const adapter = new ImportGraphSourceAnalysisAdapter();
@@ -23,8 +23,8 @@ target('ImportGraphSourceAnalysisAdapter', () => {
       });
     });
 
-    context('stub実装が空グラフを返す場合', () => {
-      it('nodes=[]かつedges=[]が返る (IT-REPO-ImportGraph-002)', async () => {
+    context('scripts/harness配下にTypeScriptファイルが存在する場合', () => {
+      it('空ではないインポートグラフが返る (IT-REPO-ImportGraph-002)', async () => {
         // Arrange
         const adapter = new ImportGraphSourceAnalysisAdapter();
 
@@ -32,8 +32,8 @@ target('ImportGraphSourceAnalysisAdapter', () => {
         const actual = await adapter.getImportGraph();
 
         // Assert
-        expect(actual.nodes).toHaveLength(0);
-        expect(actual.edges).toHaveLength(0);
+        expect(actual.nodes.length).toBeGreaterThan(0);
+        expect(actual.edges.length).toBeGreaterThan(0);
       });
     });
   });

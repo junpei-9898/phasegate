@@ -23,16 +23,31 @@ export class ApplyCascadeUpdateUseCase {
 
     for (const target of targets) {
       try {
-        const content = await this.fileSystemPort.read(target.filePath);
-        // Append story-id tag if not already present
-        const updatedContent = content.includes(target.storyIdTag)
-          ? content
-          : `${content}\n${target.storyIdTag}`;
-        await this.fileSystemPort.write(target.filePath, updatedContent);
-        updatedCount++;
-        appliedStoryIds.push(target.storyIdTag);
+        const isGlobPattern = target.filePath.includes('*');
+        const filePaths = isGlobPattern
+          ? await this.fileSystemPort.glob(target.filePath)
+          : [target.filePath];
+
+        for (const filePath of filePaths) {
+          try {
+            const content = await this.fileSystemPort.read(filePath);
+            // Append story-id tag if not already present
+            const updatedContent = content.includes(target.storyIdTag)
+              ? content
+              : `${content}\n${target.storyIdTag}`;
+            if (!input.dryRun) {
+              await this.fileSystemPort.write(filePath, updatedContent);
+            }
+            updatedCount++;
+            if (!appliedStoryIds.includes(target.storyIdTag)) {
+              appliedStoryIds.push(target.storyIdTag);
+            }
+          } catch (err) {
+            errors.push(`Failed to update ${filePath}: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
       } catch (err) {
-        errors.push(`Failed to update ${target.filePath}: ${err instanceof Error ? err.message : String(err)}`);
+        errors.push(`Failed to process ${target.filePath}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 

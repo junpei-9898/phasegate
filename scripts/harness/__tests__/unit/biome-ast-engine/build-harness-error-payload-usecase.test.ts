@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.ts';
+import { target, context } from '../../helpers/test-helpers.js';
 import type { ViolationFormatterPort } from '../../../biome-ast-engine/domain/ports/violation-formatter-port.js';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
 import { RuleName } from '../../../biome-ast-engine/domain/value-objects/rule-name.js';
 import { RuleViolation } from '../../../biome-ast-engine/domain/value-objects/rule-violation.js';
-import { BuildHarnessErrorPayloadUseCase } from '../../../biome-ast-engine/application/usecases/build-harness-error-payload-usecase.ts';
+import { BuildHarnessErrorPayloadUseCase } from '../../../biome-ast-engine/application/usecases/build-harness-error-payload-usecase.js';
 
 const createViolation = (ruleName: string) =>
   RuleViolation.create({
@@ -49,9 +49,9 @@ target('BuildHarnessErrorPayloadUseCase.execute', () => {
           createViolation('no-layer-violation'),
           createViolation('enforce-folder-structure'),
           createViolation('no-any-abuse'),
-          createViolation('no-code-duplication'),
           createViolation('no-ghost-file'),
           createViolation('no-comment-flood'),
+          createViolation('no-code-duplication'),
         ] as const;
 
         // Act

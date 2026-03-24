@@ -9,8 +9,8 @@ import { MarkdownDesignDocumentAdapter } from '../../../../validator-system/infr
 
 target('MarkdownDesignDocumentAdapter', () => {
   describe('loadDesignDocuments', () => {
-    context('存在するUnitを指定した場合（stub実装）', () => {
-      it('loadDesignDocumentsが空配列を返す（stub） (IT-REPO-DesignDoc-001)', async () => {
+    context('存在するUnitを指定した場合', () => {
+      it('domain_model.mdから構造化ドキュメントを返す (IT-REPO-DesignDoc-001)', async () => {
         // Arrange
         const adapter = new MarkdownDesignDocumentAdapter('docs/product/construction');
 
@@ -18,7 +18,9 @@ target('MarkdownDesignDocumentAdapter', () => {
         const actual = await adapter.loadDesignDocuments(['harness-error']);
 
         // Assert
-        expect(Array.isArray(actual)).toBe(true);
+        expect(actual).toHaveLength(1);
+        expect(actual[0]?.unitName).toBe('harness-error');
+        expect(actual[0]?.concepts.length).toBeGreaterThan(0);
       });
     });
 
@@ -36,7 +38,7 @@ target('MarkdownDesignDocumentAdapter', () => {
     });
 
     context('getLayerAnnotationsを呼んだ場合', () => {
-      it('空オブジェクトが返る（stub） (IT-REPO-DesignDoc-003)', async () => {
+      it('空オブジェクトが返る (IT-REPO-DesignDoc-003)', async () => {
         // Arrange
         const adapter = new MarkdownDesignDocumentAdapter('docs/product/construction');
 
@@ -49,7 +51,7 @@ target('MarkdownDesignDocumentAdapter', () => {
     });
 
     context('getElementsを呼んだ場合', () => {
-      it('空配列が返る（stub） (IT-REPO-DesignDoc-004)', async () => {
+      it('設計ドキュメントから抽出した要素名一覧が返る (IT-REPO-DesignDoc-004)', async () => {
         // Arrange
         const adapter = new MarkdownDesignDocumentAdapter('docs/product/construction');
 
@@ -57,7 +59,8 @@ target('MarkdownDesignDocumentAdapter', () => {
         const actual = await adapter.getElements(['harness-error']);
 
         // Assert
-        expect(Array.isArray(actual)).toBe(true);
+        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toContain('1. Ownership / Import-Export');
       });
     });
   });

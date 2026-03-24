@@ -19,7 +19,7 @@ import { CheckPhaseGateCommandHandler } from './presentation/cli/check-phase-gat
 const DEFAULT_REPORT_OUTPUT_DIR = '.harness/reports';
 
 const defaultPhaseConfig: PhaseConfigSection = {
-  planningMode: 'standard' as const,
+  planningMode: 'interactive' as const,
   customization: { preset: 'default' as const },
   reportingOutputDir: DEFAULT_REPORT_OUTPUT_DIR,
 };

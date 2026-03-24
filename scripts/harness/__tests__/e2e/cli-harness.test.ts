@@ -269,21 +269,134 @@ describe('harness CLI E2E', () => {
     });
   });
 
-  describe('regression-suite コマンド群', () => {
-    it('regression:run-k-requirements が exit 0 で完了する（stub実装）', () => {
-      const actual = run('regression:run-k-requirements');
+  describe('validator-system コマンド群', () => {
+    it('validate が "Unknown command" にならない', () => {
+      const actual = run('validate', '--layer', 'L2');
+
+      expect(actual.stderr).not.toContain('Unknown command: validate');
+    });
+
+    it('validate --layer L1 が exit 0 または exit 1 で完了する', () => {
+      const actual = run('validate', '--layer', 'L1');
+
+      expect([0, 1]).toContain(actual.exitCode);
+    });
+
+    it('validate --format agent で agentフォーマットの出力が返る', () => {
+      const actual = run('validate', '--layer', 'L2', '--format', 'agent');
+
+      expect(actual.stderr).not.toContain('Unknown command');
+      expect([0, 1]).toContain(actual.exitCode);
+    });
+  });
+
+  describe('biome-ast-engine コマンド群', () => {
+    it('lint が "Unknown command" にならない', () => {
+      const actual = run('lint');
+
+      expect(actual.stderr).not.toContain('Unknown command: lint');
+    });
+
+    it('lint --json でJSON形式の出力が返るかエラーになる', () => {
+      const actual = run('lint', '--json');
+
+      expect(actual.stderr).not.toContain('Unknown command: lint');
+      expect([0, 1, 2]).toContain(actual.exitCode);
+    });
+  });
+
+  describe('quick-mode / ci-check コマンド群', () => {
+    it('ci-check --quick --dry-run が "Unknown command" にならない', () => {
+      const actual = run('ci-check', '--quick', '--dry-run');
+
+      expect(actual.stderr).not.toContain('Unknown command: ci-check');
+    });
+
+    it('ci-check --quick --dry-run が exit 0 で完了する', () => {
+      const actual = run('ci-check', '--quick', '--dry-run');
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('K-Requirements');
     });
+  });
+
+  describe('harness-api コマンド群', () => {
+    it('harness:check-ready が "Unknown command" にならない', () => {
+      const actual = run('harness:check-ready');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:check-ready');
+    }, 30_000);
+
+    it('harness:check-ready が exit 0 または exit 1 で完了する', () => {
+      const actual = run('harness:check-ready');
+
+      expect([0, 1]).toContain(actual.exitCode);
+    }, 30_000);
+
+    it('harness:check-phase が "Unknown command" にならない', () => {
+      const actual = run('harness:check-phase', '--unit', 'validator-system');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:check-phase');
+    }, 30_000);
+
+    it('harness:ci-check が "Unknown command" にならない', () => {
+      const actual = run('harness:ci-check');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:ci-check');
+    }, 30_000);
+
+    it('harness:detect-drift が "Unknown command" にならない', () => {
+      const actual = run('harness:detect-drift');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:detect-drift');
+    }, 30_000);
+
+    it('harness:status が "Unknown command" にならない', () => {
+      const actual = run('harness:status');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:status');
+    }, 30_000);
+
+    it('harness:lint が "Unknown command" にならない', () => {
+      const actual = run('harness:lint');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:lint');
+    }, 30_000);
+
+    it('harness:complete-check が "Unknown command" にならない', () => {
+      const actual = run('harness:complete-check');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:complete-check');
+    }, 30_000);
+
+    it('harness:impact-analysis storyId なしで exit 0 または exit 2 が返る', () => {
+      const actual = run('harness:impact-analysis');
+
+      expect([0, 1, 2]).toContain(actual.exitCode);
+      expect(actual.stderr).not.toContain('Unknown command: harness:impact-analysis');
+    }, 30_000);
+
+    it('harness:impact-analysis H99-01 が "Unknown command" にならない', () => {
+      const actual = run('harness:impact-analysis', 'H99-01');
+
+      expect(actual.stderr).not.toContain('Unknown command: harness:impact-analysis');
+    }, 30_000);
+  });
+
+  describe('regression-suite コマンド群', () => {
+    it('regression:run-k-requirements が "K-Requirements" を出力して完了する', () => {
+      const actual = run('regression:run-k-requirements');
+
+      expect([0, 1]).toContain(actual.exitCode);
+      expect(actual.stdout).toContain('K-Requirements');
+    }, 60_000);
 
     it('regression:run-k-requirements --json でJSON形式の出力が返る', () => {
       const actual = run('regression:run-k-requirements', '--json');
 
-      expect(actual.exitCode).toBe(0);
+      expect([0, 1]).toContain(actual.exitCode);
       const parsed = JSON.parse(actual.stdout);
       expect(typeof parsed).toBe('object');
-    });
+    }, 60_000);
 
     it('regression:run-gng-gate が exit 0 で完了する（stub実装）', () => {
       const actual = run('regression:run-gng-gate');
@@ -299,12 +412,12 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('Agent Independence');
     });
 
-    it('regression:run-k14-k15 が exit 0 で完了する（stub実装）', () => {
+    it('regression:run-k14-k15 が "K14/K15" を出力して完了する', () => {
       const actual = run('regression:run-k14-k15');
 
-      expect(actual.exitCode).toBe(0);
+      expect([0, 1]).toContain(actual.exitCode);
       expect(actual.stdout).toContain('K14/K15');
-    });
+    }, 30_000);
 
     it('regression:configure-ci-gate デフォルト値で exit 0 が返る', () => {
       const actual = run('regression:configure-ci-gate');

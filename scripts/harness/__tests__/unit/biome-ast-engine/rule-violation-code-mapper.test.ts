@@ -58,30 +58,30 @@ target('mapRuleNameToCode', () => {
       });
     });
 
-    context('no-code-duplicationを指定した場合', () => {
+    context('no-ghost-fileを指定した場合', () => {
       it('L1-006が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-code-duplication');
+        const actual = mapRuleNameToCode('no-ghost-file');
 
         // Assert
         expect(actual).toBe('L1-006');
       });
     });
 
-    context('no-ghost-fileを指定した場合', () => {
+    context('no-comment-floodを指定した場合', () => {
       it('L1-007が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-ghost-file');
+        const actual = mapRuleNameToCode('no-comment-flood');
 
         // Assert
         expect(actual).toBe('L1-007');
       });
     });
 
-    context('no-comment-floodを指定した場合', () => {
+    context('no-code-duplicationを指定した場合', () => {
       it('L1-008が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-comment-flood');
+        const actual = mapRuleNameToCode('no-code-duplication');
 
         // Assert
         expect(actual).toBe('L1-008');
@@ -113,12 +113,12 @@ target('mapCodeToRuleName', () => {
     });
 
     context('L1-008を指定した場合', () => {
-      it('no-comment-floodが返される', () => {
+      it('no-code-duplicationが返される', () => {
         // Arrange & Act
         const actual = mapCodeToRuleName('L1-008');
 
         // Assert
-        expect(actual).toBe('no-comment-flood');
+        expect(actual).toBe('no-code-duplication');
       });
     });
 

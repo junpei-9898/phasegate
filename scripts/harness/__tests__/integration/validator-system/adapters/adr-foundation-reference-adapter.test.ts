@@ -9,8 +9,8 @@ import { AdrFoundationReferenceAdapter } from '../../../../validator-system/infr
 
 target('AdrFoundationReferenceAdapter', () => {
   describe('exists', () => {
-    context('ADR参照を渡した場合（stub実装）', () => {
-      it('falseが返る（stub） (IT-REPO-AdrRef-001)', async () => {
+    context('ADR参照を渡した場合', () => {
+      it('booleanが返る (IT-REPO-AdrRef-001)', async () => {
         // Arrange
         const adapter = new AdrFoundationReferenceAdapter();
 
@@ -23,7 +23,7 @@ target('AdrFoundationReferenceAdapter', () => {
     });
 
     context('存在しないADR参照を渡した場合', () => {
-      it('falseが返る（stub） (IT-REPO-AdrRef-002)', async () => {
+      it('falseが返る (IT-REPO-AdrRef-002)', async () => {
         // Arrange
         const adapter = new AdrFoundationReferenceAdapter();
 
@@ -38,21 +38,20 @@ target('AdrFoundationReferenceAdapter', () => {
 
   describe('getMetadata', () => {
     context('ADR参照を渡した場合', () => {
-      it('nullが返る（stub実装） (IT-REPO-AdrRef-003)', async () => {
+      it('存在しないADRならnullが返る (IT-REPO-AdrRef-003)', async () => {
         // Arrange
         const adapter = new AdrFoundationReferenceAdapter();
 
         // Act
-        const actual = await adapter.getMetadata('ADR-001');
+        const actual = await adapter.getMetadata('ADR-999');
 
         // Assert
-        // stub実装ではnullを返す
         expect(actual).toBeNull();
       });
     });
 
     context('存在しないADR参照を渡した場合', () => {
-      it('nullが返る（stub） (IT-REPO-AdrRef-004)', async () => {
+      it('nullが返る (IT-REPO-AdrRef-004)', async () => {
         // Arrange
         const adapter = new AdrFoundationReferenceAdapter();
 

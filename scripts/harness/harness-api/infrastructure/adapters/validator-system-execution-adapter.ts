@@ -1,11 +1,11 @@
 // validator-system-execution-adapter.ts — ValidatorSystemExecutionAdapter
-// @stub: wave2-pending - validator-system の正式インターフェース確定後に差し替え
+// Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
 
 import type { ValidatorExecutionPort } from '../../domain/ports/validator-execution-port.js';
 import type { ValidatorCheckItem } from '../../domain/value-objects/ci-check-result.js';
 import type { DriftItem } from '../../domain/value-objects/drift-report-summary.js';
 
-// Stub interface for the external validator-system module (wave2-pending)
+// Override interface preserved for testing
 export interface IValidatorSystemStub {
   runL3Validators(): Promise<ValidatorCheckItem[]>;
   runAllValidators(): Promise<ValidatorCheckItem[]>;
@@ -16,10 +16,37 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
   private readonly stub: IValidatorSystemStub;
 
   constructor(stub?: IValidatorSystemStub) {
-    this.stub = stub ?? {
-      async runL3Validators() { return []; },
-      async runAllValidators() { return []; },
-      async runDriftDetection() { return []; },
+    this.stub = stub ?? ValidatorSystemExecutionAdapter.createRealImpl();
+  }
+
+  private static createRealImpl(): IValidatorSystemStub {
+    return {
+      async runL3Validators(): Promise<ValidatorCheckItem[]> {
+        const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
+        const mod = createValidatorSystemModule();
+        const results = await mod.runL3ValidatorsUseCase.execute({ targetPaths: [] });
+        return results.map((r) => ({
+          validatorId: r.validatorId,
+          passed: r.passed,
+          errors: r.errors.map((e) => ({ code: e.code, severity: e.severity, message: e.message })),
+        }));
+      },
+
+      async runAllValidators(): Promise<ValidatorCheckItem[]> {
+        const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
+        const mod = createValidatorSystemModule();
+        const report = await mod.runFullValidationUseCase.execute({ targetPaths: [], unitName: '', currentPhase: '' });
+        return report.results.map((r) => ({
+          validatorId: r.validatorId,
+          passed: r.passed,
+          errors: r.errors.map((e) => ({ code: e.code, severity: e.severity, message: e.message })),
+        }));
+      },
+
+      async runDriftDetection(): Promise<DriftItem[]> {
+        // validator-system does not implement drift detection
+        return [];
+      },
     };
   }
 

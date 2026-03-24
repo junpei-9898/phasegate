@@ -1,0 +1,117 @@
+# GSDLC Quality Harness — 週次整合性チェックワークフロー
+#
+# 使い方:
+#   このファイルを .github/workflows/consistency-check.yml にコピーして使用する。
+#
+# 実行タイミング: 毎週月曜 09:00 UTC（手動トリガーも可）
+# 実行内容:
+#   1. harness:detect-drift   — L4 設計⇔コード乖離検出（drift-detect）
+#   2. harness:complete-check — L4 全バリデータ（drift-detect / consistency-check / dead-code）
+#   3. 乖離検出時: GitHub Issue を自動作成
+
+name: AIDLC Consistency Check (Weekly)
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # 毎週月曜 09:00 UTC
+  workflow_dispatch:       # 手動トリガー
+
+jobs:
+  consistency-check:
+    name: L4 Consistency & Drift Check
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write   # Issue 自動作成に必要
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # L4-001: Drift Detection（設計⇔コード双方向乖離）
+      - name: L4 Drift Detection
+        id: drift
+        run: |
+          set +e
+          RESULT=$(pnpm run harness harness:detect-drift --json 2>&1)
+          EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit 0   # Issue作成のため常に続行
+
+      # L4: 全バリデータ（drift-detect + consistency-check + dead-code）
+      - name: L4 Complete Check
+        id: complete
+        run: |
+          set +e
+          RESULT=$(pnpm run harness harness:complete-check --json 2>&1)
+          EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit 0   # Issue作成のため常に続行
+
+      # 乖離が検出された場合のみ Issue を作成
+      - name: Create issue on drift detected
+        if: |
+          steps.drift.outputs.exit_code != '0' ||
+          steps.complete.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const driftResult    = `${{ steps.drift.outputs.result }}`;
+            const completeResult = `${{ steps.complete.outputs.result }}`;
+            const driftFailed    = '${{ steps.drift.outputs.exit_code }}' !== '0';
+            const completeFailed = '${{ steps.complete.outputs.exit_code }}' !== '0';
+
+            const today = new Date().toISOString().slice(0, 10);
+            let body = `## 🔍 AIDLC 整合性チェック結果 — ${today}\n\n`;
+            body += '> 週次スケジュール実行により設計⇔コードの乖離が検出されました。\n\n';
+
+            if (driftFailed) {
+              body += '### L4-001 Drift Detection\n```json\n' + driftResult + '\n```\n\n';
+            }
+            if (completeFailed) {
+              body += '### L4 Complete Check\n```json\n' + completeResult + '\n```\n\n';
+            }
+
+            body += '---\n';
+            body += '### 対処方法\n';
+            body += '1. 乖離の内容を確認し、設計文書またはコードのどちらを修正すべきか判断\n';
+            body += '2. `cascade-updater` スキルで設計文書を更新、または実装を修正\n';
+            body += '3. `pnpm run harness harness:detect-drift` で再検証して乖離が解消されたことを確認\n';
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[AIDLC] 設計⇔コード乖離検出 (${today})`,
+              body,
+              labels: ['aidlc', 'drift-detected', 'automated'],
+            });
+
+      - name: Summary
+        run: |
+          DRIFT_CODE="${{ steps.drift.outputs.exit_code }}"
+          COMPLETE_CODE="${{ steps.complete.outputs.exit_code }}"
+          if [ "$DRIFT_CODE" = "0" ] && [ "$COMPLETE_CODE" = "0" ]; then
+            echo "✅ 設計⇔コード整合性: 問題なし"
+          else
+            echo "❌ 乖離を検出しました。GitHub Issue を確認してください。"
+            exit 1
+          fi

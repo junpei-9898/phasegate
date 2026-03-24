@@ -3,25 +3,29 @@
  * @unit validator-system
  *
  * ValidatorId 値オブジェクト
- * L2-001〜L4-003 の10バリデータを識別する不変値オブジェクト
+ * L1-001〜L4-003 のバリデータを識別する不変値オブジェクト
+ * Wave 2A で L1-017, L1-018, L2-013 を追加
  */
 
 export class InvalidValidatorIdError extends Error {
   readonly invalidValue: string;
   constructor(raw: string) {
-    super(`Invalid validator ID: "${raw}". Must be one of the 10 valid IDs (L2-001..L2-003, L3-001..L3-004, L4-001..L4-003).`);
+    super(`Invalid validator ID: "${raw}". Must be one of the registered valid IDs.`);
     this.name = 'InvalidValidatorIdError';
     this.invalidValue = raw;
   }
 }
 
-const VALIDATOR_ID_PATTERN = /^L[2-4]-\d{3}$/;
+const VALIDATOR_ID_PATTERN = /^L[1-4]-\d{3}$/;
 
 /** バリデータID -> バリデータ名のマップ */
 const VALIDATOR_NAME_MAP: Record<string, string> = {
+  'L1-017': 'it-test-mock-detection',
+  'L1-018': 'stub-comment-detection',
   'L2-001': 'phase-gate',
   'L2-002': 'metadata',
   'L2-003': 'test-quality',
+  'L2-013': 'cli-e2e-test-existence',
   'L3-001': 'security',
   'L3-002': 'performance',
   'L3-003': 'coverage',
@@ -41,12 +45,12 @@ const VALID_IDS = new Set(Object.keys(VALIDATOR_NAME_MAP));
 
 export class ValidatorId {
   readonly value: string;
-  readonly layer: 'L2' | 'L3' | 'L4';
+  readonly layer: 'L1' | 'L2' | 'L3' | 'L4';
   readonly sequence: string;
 
   private constructor(value: string) {
     this.value = value;
-    this.layer = value.substring(0, 2) as 'L2' | 'L3' | 'L4';
+    this.layer = value.substring(0, 2) as 'L1' | 'L2' | 'L3' | 'L4';
     this.sequence = value.substring(3);
     Object.freeze(this);
   }
@@ -69,7 +73,7 @@ export class ValidatorId {
     return new ValidatorId(id);
   }
 
-  getLayer(): 'L2' | 'L3' | 'L4' {
+  getLayer(): 'L1' | 'L2' | 'L3' | 'L4' {
     return this.layer;
   }
 

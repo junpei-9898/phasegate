@@ -8,29 +8,28 @@ import { target, context } from '../../../helpers/test-helpers.js';
 import { NyquistAcCoveragePolicyAdapter } from '../../../../validator-system/infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
 
 target('NyquistAcCoveragePolicyAdapter', () => {
-  describe('getPolicy', () => {
-    context('アダプタのgetPolicy()を呼んだ場合', () => {
-      it('policy.checkメソッドが存在するインスタンスが返る (IT-REPO-Nyquist-001)', async () => {
+  describe('checkCoverage', () => {
+    context('matrixFilePathを省略して呼ぶ場合', () => {
+      it('例外なく呼び出せること (IT-REPO-Nyquist-001)', async () => {
         // Arrange
         const adapter = new NyquistAcCoveragePolicyAdapter();
 
         // Act
-        const actual = await adapter.getPolicy();
+        const actual = await adapter.checkCoverage({ matrixFilePath: undefined });
 
         // Assert
-        expect(typeof actual.check).toBe('function');
+        expect(typeof actual.passed).toBe('boolean');
+        expect(Array.isArray(actual.errors)).toBe(true);
       });
     });
 
-    context('返されたpolicyのcheck()でmatrixを渡す場合', () => {
-      it('passed=trueかつerrors=[]が返る（stub実装） (IT-REPO-Nyquist-002)', async () => {
+    context('存在しないmatrixFilePathを渡す場合', () => {
+      it('graceful skipとしてpassed=trueかつerrors=[]が返ること (IT-REPO-Nyquist-002)', async () => {
         // Arrange
         const adapter = new NyquistAcCoveragePolicyAdapter();
-        const policy = await adapter.getPolicy();
-        const matrix = { requirements: ['AC-001', 'AC-002'], coveredBy: ['test-1', 'test-2'] };
 
         // Act
-        const actual = policy.check(matrix);
+        const actual = await adapter.checkCoverage({ matrixFilePath: '/path/to/missing-matrix.json' });
 
         // Assert
         expect(actual.passed).toBe(true);

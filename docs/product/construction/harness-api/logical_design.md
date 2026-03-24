@@ -912,15 +912,16 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **利用ライブラリ**
 
-- `validator-system` が公開するインターフェース（Wave 2完了後に確定）
-- Wave 2未完時はスタブ実装
+- `validator-system` Composition Root（`createValidatorSystemModule()`）を動的importで呼び出す
+- テスト用オーバーライド: コンストラクタに `IValidatorSystemStub` を渡すと実実装の代わりに使用される
 
-**実装方針**
+**実装方針（Wave 2A 実装済み）**
 
-- `runL3Validators()`: validator-system の L3 バリデータ一覧（`integration_contract.md §9 L3-001〜L3-004`）を順次または並列実行する。各バリデータの結果を `ValidatorCheckItem` に変換して返す
-- `runDriftDetection()`: L4-001 drift-detect バリデータを呼び出し `DriftItem[]` に変換する
-- `runAllValidators()`: L1-L4 全バリデータ（biome-ast-engine 経由のL1 + validator-system のL2-L4）を実行して集約する
+- `runL3Validators()`: `createValidatorSystemModule().runL3ValidatorsUseCase.execute({})` を呼び出し、`ValidationResultContract[]` を `ValidatorCheckItem[]` に変換して返す。L3-001〜L3-004の結果を含む
+- `runAllValidators()`: `runFullValidationUseCase.execute({})` を呼び出し全バリデータ結果を集約する
+- `runDriftDetection()`: validator-system にドリフト検出機能がないため常に `[]` を返す（将来対応）
 - バリデータが投げる例外は `ValidatorCheckItem.passed = false` + `HarnessError` に変換してラップし、再スローしない
+- 動的importを使用してCircular dependency を回避している
 
 **外部I/O**
 
@@ -938,14 +939,15 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **利用ライブラリ**
 
-- `phase-dependency-model` が公開するインターフェース（Wave 1完了済み）
-- `node:fs/promises`（Plan文書存在確認）
+- `traceability-model` Composition Root（`createTraceabilityModelModule()`）: 全ストーリーID取得
+- `phase-dependency-model` Composition Root（`createPhaseDependencyModelModule()`）: Phase Gate チェック
+- テスト用オーバーライド: コンストラクタに `IPhaseDependencyModelStub` を渡すと実実装の代わりに使用される
 
-**実装方針**
+**実装方針（Wave 2A 実装済み）**
 
-- `queryAllStories()`: `phase-dependency-model` の `PhaseGateQueryService` または等価なインターフェースを呼び出し、全ストーリーの Phase Gate 通過状態を `PhaseGateStoryResult[]` に変換する
-- `queryUnit(unitId)`: 指定Unit名に対応する `PhaseInfo` を取得する。Unit未検出時は `null` を返す（例外は投げない）
-- ファイルシステム上の `docs/inception/{unit}/` の存在確認を補助的に行う場合がある
+- `queryAllStories()`: traceability-model から全storyIdを取得し、phase-dependency-modelの `checkPhaseGateCommandHandler.execute({ targetLevel: 1, storyId })` を各storyIdに対して呼び出す。結果を `PhaseGateStoryResult[]` に変換する
+- `queryUnit(unitId)`: `checkPhaseGateCommandHandler.execute({ targetLevel: 1, unitId })` を呼び出し、`PhaseInfo` に変換する。Phase Gateチェックが失敗（exitCode: 2）または例外の場合は `null` を返す
+- 動的importを使用してCircular dependency を回避している
 
 **外部I/O**
 
@@ -962,14 +964,15 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **利用ライブラリ**
 
-- `biome-ast-engine` が公開するインターフェース（Wave 1完了済み）
-- または Biome CLI の直接実行（プロセス呼び出し）
+- `biome-ast-engine` Composition Root（`createBiomeAstEngineModule()`）: `executeLintUseCase` を直接呼び出す
+- テスト用オーバーライド: コンストラクタに `IBiomeLintStub` を渡すと実実装の代わりに使用される
 
-**実装方針**
+**実装方針（Wave 2A 実装済み）**
 
-- `runLint()`: biome-ast-engine の全L1ルール（L1-001〜L1-008）を実行する
-- `RuleViolation` Contract（`integration_contract.md §2.2`）に従って結果を受け取り、`HarnessError` に変換する
-- `passed` は `errors.length === 0` で判定する（warning は passed に影響しない）
+- `runLint()`: `createBiomeAstEngineModule(rootDir).executeLintUseCase.execute()` を呼び出す（biome-ast-engine Composition Root が `executeLintUseCase` を公開している）
+- biome-ast-engine の `RuleViolation` を adapter 内の `RuleViolation` インターフェースに変換する（フィールドマッピング: `ruleId`, `filePath`, `message`, `line`, `column`）
+- `passed` は `violations.length === 0` で判定する
+- 動的importを使用してCircular dependency を回避している
 
 **外部I/O**
 
@@ -986,15 +989,17 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **利用ライブラリ**
 
-- `nyquist-validation` が公開するインターフェース（Wave 2完了後に確定）
-- `requirement-test-matrix.json`（RequirementTestMatrix Schema準拠）
+- `traceability-model` Composition Root（`createTraceabilityModelModule()`）: 全storyId取得
+- `nyquist-validation` Composition Root（`createNyquistValidationModule()`）: インパクト分析
+- テスト用オーバーライド: コンストラクタに `INyquistImpactAnalysisStub` を渡すと実実装の代わりに使用される
 
-**実装方針**
+**実装方針（Wave 2A 実装済み）**
 
-- `analyze(storyId)`: `nyquist-validation` の ImpactAnalysis 機能を呼び出す
-- `storyId` の形式（`HXX-XX` 正規形）を検証し、形式不正時は `HarnessApiDomainError`
-- ストーリーが `requirement-test-matrix.json` に存在しない場合は `null` を返す
-- `ImpactAnalysisResult` は nyquist-validation が所有する型。Adapter はその型を透過的に返す
+- `getStoryIds()`: traceability-model から全storyIdを取得して返す
+- `analyze(storyId)`: `createNyquistValidationModule(deps).analyzeImpactUseCase.execute({ storyId, matrixFilePath: '.harness/requirement-test-matrix.json' })` を呼び出す
+- ストーリーが `requirement-test-matrix.json` に存在しない場合、または例外が発生した場合は `null` を返す（エラーは再スローしない）
+- `AnalyzeImpactOutput` を `ImpactAnalysisResult` にマッピングして返す
+- 動的importを使用してCircular dependency を回避している
 
 **外部I/O**
 

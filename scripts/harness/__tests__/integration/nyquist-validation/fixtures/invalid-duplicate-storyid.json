@@ -1,0 +1,24 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-03-19T00:00:00.000Z",
+  "stories": [
+    {
+      "storyId": "H07-01",
+      "storyMappings": [
+        {
+          "acId": "AC-1",
+          "testReferences": []
+        }
+      ]
+    },
+    {
+      "storyId": "H07-01",
+      "storyMappings": [
+        {
+          "acId": "AC-2",
+          "testReferences": []
+        }
+      ]
+    }
+  ]
+}

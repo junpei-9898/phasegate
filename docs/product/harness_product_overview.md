@@ -636,7 +636,7 @@ Quality Harnessの設計方法論を実現する30スキル。全スキルは2-P
 | **Test Engineering** | scenario-test-designer, it-test-designer, unit-test-designer, scenario-test-logic-designer, it-test-logic-designer, unit-test-logic-designer, test-coverage-checker | 7 |
 | **Implementation** | story-implementor, implementation-planner, implementation-readiness-checker, quick-implementor | 4 |
 | **Verification** | consistency-checker, cascade-updater, codex-delegator, codebase-mapper, milestone-manager, scope-manager, doc-freshness-checker, pointer-validator | 8 |
-| **Meta** | skill-creator, kimunii-perspective | 2 |
+| **Meta** | skill-creator, engineering-perspective | 2 |
 
 ### 7.2 品質ハーネス直属のスキル群
 
@@ -666,11 +666,16 @@ Quality Harnessの設計方法論を実現する30スキル。全スキルは2-P
 
 ### 7.4 CI/CDテンプレート
 
-| テンプレート | 用途 | トリガー |
-|------------|------|---------|
-| `aidlc-gate.yml` | PR検証ワークフロー（全バリデータ実行、失敗時PRコメント） | Pull Request |
-| `consistency-check.yml` | 週次設計-実装整合性チェック（乖離検出時Issue自動作成） | Scheduled (weekly) |
-| `.husky/pre-commit` | Pre-commitフックテンプレート | git commit |
+| テンプレート | 用途 | トリガー | 配置先（テンプレート） |
+|------------|------|---------|---------------------|
+| `aidlc-gate.yml` | PR検証ワークフロー（全バリデータ実行、失敗時PRコメント） | Pull Request | `docs/templates/ci/aidlc-gate.yml` |
+| `consistency-check.yml` | 週次設計-実装整合性チェック（乖離検出時Issue自動作成） | Scheduled (weekly) | `docs/templates/ci/consistency-check.yml` |
+| `.husky/pre-commit` | Pre-commitフックテンプレート | git commit | `docs/templates/hooks/pre-commit` |
+
+**導入手順**:
+1. `docs/templates/ci/aidlc-gate.yml` → `.github/workflows/aidlc-gate.yml` にコピー
+2. `docs/templates/ci/consistency-check.yml` → `.github/workflows/consistency-check.yml` にコピー
+3. `docs/templates/hooks/pre-commit` → `.husky/pre-commit` にコピーし `chmod +x` を実行
 
 ---
 

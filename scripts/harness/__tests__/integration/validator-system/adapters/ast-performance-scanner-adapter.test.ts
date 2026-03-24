@@ -10,7 +10,7 @@ import { AstPerformanceScannerAdapter } from '../../../../validator-system/infra
 target('AstPerformanceScannerAdapter', () => {
   describe('scan', () => {
     context('パフォーマンス問題のないファイル群の場合', () => {
-      it('passed=trueかつfindings=[]が返る（stub実装） (IT-REPO-Perf-001)', async () => {
+      it('存在しないファイルはgraceful skipされる (IT-REPO-Perf-001)', async () => {
         // Arrange
         const adapter = new AstPerformanceScannerAdapter();
         const targetPaths = ['src/clean.ts'] as readonly string[];

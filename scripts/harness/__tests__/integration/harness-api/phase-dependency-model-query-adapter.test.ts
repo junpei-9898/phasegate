@@ -99,19 +99,22 @@ target('PhaseDependencyModelQueryAdapter', () => {
   });
 
   // ─── IT-Adapter-PhaseQuery-005 ───
-  describe('スタブ未指定（デフォルト）の場合、空配列/nullを返すこと', () => {
+  describe('スタブ未指定（デフォルト）の場合、実際のphase-dependency-modelを呼び出すこと', () => {
     context('コンストラクタ引数なしで生成した場合', () => {
-      it('queryAllStoriesが[]を返し、queryUnitがnullを返す', async () => {
+      it('queryAllStoriesが実ストーリー一覧を返し、queryUnitが既知Unitのフェーズ情報を返す', async () => {
         // Arrange
         const adapter = new PhaseDependencyModelQueryAdapter();
 
         // Act
         const storiesResult = await adapter.queryAllStories();
-        const unitResult = await adapter.queryUnit('any-unit');
+        // biome-ast-engineは有効なUnitなのでnull以外が返される
+        const unitResult = await adapter.queryUnit('biome-ast-engine');
 
-        // Assert
-        expect(storiesResult).toEqual([]);
-        expect(unitResult).toBeNull();
+        // Assert — スタブではなく実実装が呼ばれることを確認
+        expect(Array.isArray(storiesResult)).toBe(true);
+        expect(storiesResult.length).toBeGreaterThan(0);
+        expect(unitResult).not.toBeNull();
+        expect(unitResult?.unitId).toBe('biome-ast-engine');
       });
     });
   });

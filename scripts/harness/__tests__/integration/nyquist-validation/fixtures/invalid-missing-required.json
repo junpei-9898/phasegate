@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-03-19T00:00:00.000Z",
+  "stories": [
+    {
+      "storyId": "H07-01",
+      "storyMappings": [
+        {
+          "testReferences": [
+            {
+              "filePath": "specs/h07-01.spec.ts",
+              "testType": "it",
+              "testName": "missing acId"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

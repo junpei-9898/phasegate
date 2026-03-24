@@ -4,4 +4,5 @@
  */
 export interface ApplyCascadeUpdateInput {
   readonly storyId: string;
+  readonly dryRun?: boolean;
 }

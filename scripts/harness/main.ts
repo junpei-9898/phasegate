@@ -118,6 +118,28 @@ function hasFlag(args: readonly string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+/** フラグとその値を除いた位置引数のみを返す */
+function parsePositionalArgs(
+  args: readonly string[],
+  flagsWithValues: readonly string[] = [],
+): string[] {
+  const result: string[] = [];
+  const valueFlags = new Set(flagsWithValues);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--')) {
+      if (valueFlags.has(arg)) {
+        i++; // skip flag value
+      }
+      continue;
+    }
+    result.push(arg);
+  }
+
+  return result;
+}
+
 type RenderFormat = 'human' | 'agent' | 'ci';
 
 function toRenderFormat(value: string): RenderFormat {
@@ -379,7 +401,7 @@ async function main(): Promise<void> {
       // ── traceability-model ──
       case 'validate-metadata': {
         const mod = createTraceabilityModelModule(rootDir);
-        const filePaths = args.slice(1).filter((a) => !a.startsWith('--'));
+        const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
           filePaths,
           json,
@@ -467,7 +489,12 @@ async function main(): Promise<void> {
         const format = parseFlag(args, '--format') as 'human' | 'agent' | 'ci' | undefined;
         const failOnWarning = hasFlag(args, '--fail-on-warning');
         const noL4 = hasFlag(args, '--no-l4');
-        const targetPaths = args.slice(1).filter((a) => !a.startsWith('--'));
+        const targetPaths = parsePositionalArgs(args.slice(1), [
+          '--layer',
+          '--unit',
+          '--phase',
+          '--format',
+        ]);
         const result = await mod.handlers.runValidators.execute({
           layer,
           unit,

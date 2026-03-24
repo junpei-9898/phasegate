@@ -13,13 +13,32 @@ import { ValidationResultContractMapper } from './application/mappers/validation
 import { RunL2ValidatorsUseCase } from './application/use-cases/run-l2-validators-usecase.js';
 import { RunL3ValidatorsUseCase } from './application/use-cases/run-l3-validators-usecase.js';
 import { RunL4ValidatorsUseCase } from './application/use-cases/run-l4-validators-usecase.js';
+import { RunL1ValidatorsUseCase } from './application/use-cases/run-l1-validators-usecase.js';
 import { RunQuickModeUseCase } from './application/use-cases/run-quick-mode-usecase.js';
 import { AggregateValidationResultsUseCase } from './application/use-cases/aggregate-validation-results-usecase.js';
 import { RunFullValidationUseCase } from './application/use-cases/run-full-validation-usecase.js';
 import { HarnessConfigValidatorConfigAdapter } from './infrastructure/adapters/harness-config-validator-config-adapter.js';
+import { ItTestFileAnalyzerAdapter } from './infrastructure/adapters/it-test-file-analyzer-adapter.js';
+import { SourceFileTextScannerAdapter } from './infrastructure/adapters/source-file-text-scanner-adapter.js';
+import { E2eTestFileRegistryAdapter } from './infrastructure/adapters/e2e-test-file-registry-adapter.js';
+import { CliCommandRegistryAdapter } from './infrastructure/adapters/cli-command-registry-adapter.js';
+import { PhaseDependencyPhaseGatePolicyAdapter } from './infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.js';
+import { TraceabilityMetadataPolicyAdapter } from './infrastructure/adapters/traceability-metadata-policy-adapter.js';
+import { NyquistAcCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
+import { BiomeAstTestQualityAnalyzerAdapter } from './infrastructure/adapters/biome-ast-test-quality-analyzer-adapter.js';
+import { FileSystemSecurityPatternScannerAdapter } from './infrastructure/adapters/file-system-security-pattern-scanner-adapter.js';
+import { AstPerformanceScannerAdapter } from './infrastructure/adapters/ast-performance-scanner-adapter.js';
+import { MarkdownDesignDocumentAdapter } from './infrastructure/adapters/markdown-design-document-adapter.js';
+import { BiomeAstSourceCodeAnalyzerAdapter } from './infrastructure/adapters/biome-ast-source-code-analyzer-adapter.js';
+import { AdrFoundationReferenceAdapter } from './infrastructure/adapters/adr-foundation-reference-adapter.js';
+import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/import-graph-source-analysis-adapter.js';
+import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
+import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
+import { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
 import { RunValidatorsHandler } from './presentation/handlers/run-validators-handler.js';
 import { RunQuickModeHandler } from './presentation/handlers/run-quick-mode-handler.js';
 import { ReportValidationResultsHandler } from './presentation/handlers/report-validation-results-handler.js';
+import { join } from 'node:path';
 
 /** デフォルト設定（ハードコード fallback） */
 const DEFAULT_CONFIG = {
@@ -70,6 +89,7 @@ function buildDefaultRegistry(): ValidatorRegistry {
 
 export interface ValidatorSystemModule {
   registry: ValidatorRegistry;
+  runL1ValidatorsUseCase: RunL1ValidatorsUseCase;
   runL2ValidatorsUseCase: RunL2ValidatorsUseCase;
   runL3ValidatorsUseCase: RunL3ValidatorsUseCase;
   runL4ValidatorsUseCase: RunL4ValidatorsUseCase;
@@ -89,12 +109,21 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const registry = buildDefaultRegistry();
   const executionService = new ValidatorExecutionService({ configPort });
   const contractMapper = new ValidationResultContractMapper();
+  const phaseGatePolicyPort = new PhaseDependencyPhaseGatePolicyAdapter();
+  const metadataPolicyPort = new TraceabilityMetadataPolicyAdapter();
+  const acCoveragePolicyPort = new NyquistAcCoveragePolicyAdapter();
+  const testQualityAnalyzerPort = new BiomeAstTestQualityAnalyzerAdapter();
+  const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
+  const performanceScannerPort = new AstPerformanceScannerAdapter();
 
   const runL2ValidatorsUseCase = new RunL2ValidatorsUseCase({
     validatorRegistry: registry,
     validatorExecutionService: executionService,
     validatorConfigPort: configPort,
     contractMapper,
+    phaseGatePolicyPort,
+    metadataPolicyPort,
+    testQualityAnalyzerPort,
   });
 
   const runL3ValidatorsUseCase = new RunL3ValidatorsUseCase({
@@ -102,6 +131,27 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     validatorExecutionService: executionService,
     validatorConfigPort: configPort,
     contractMapper,
+    acCoveragePolicyPort,
+    securityScannerPort,
+    performanceScannerPort,
+  });
+
+  const docsRoot = join(process.cwd(), 'docs/product/construction');
+  const markdownDesignDocumentPort = new MarkdownDesignDocumentAdapter(docsRoot);
+  const sourceCodeAnalyzerAdapter = new BiomeAstSourceCodeAnalyzerAdapter();
+  const adrReferencePort = new AdrFoundationReferenceAdapter();
+  const sourceAnalysisPort = new ImportGraphSourceAnalysisAdapter();
+
+  const driftDetectionService = new DriftDetectionService({
+    designDocumentPort: markdownDesignDocumentPort,
+    sourceCodeAnalyzerPort: sourceCodeAnalyzerAdapter,
+  });
+  const consistencyCheckService = new ConsistencyCheckService({
+    designDocumentPort: markdownDesignDocumentPort,
+    adrReferencePort,
+  });
+  const deadCodeDetectionService = new DeadCodeDetectionService({
+    sourceAnalysisPort,
   });
 
   const runL4ValidatorsUseCase = new RunL4ValidatorsUseCase({
@@ -109,6 +159,9 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     validatorExecutionService: executionService,
     validatorConfigPort: configPort,
     contractMapper,
+    driftDetectionService,
+    consistencyCheckService,
+    deadCodeDetectionService,
   });
 
   const runQuickModeUseCase = new RunQuickModeUseCase({
@@ -119,6 +172,28 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   });
 
   const aggregateValidationResultsUseCase = new AggregateValidationResultsUseCase();
+  const KNOWN_CLI_COMMANDS = [
+    'validate', 'lint', 'ci-check', 'detect-drift',
+    'harness:check-ready', 'harness:check-phase', 'harness:ci-check',
+    'harness:detect-drift', 'harness:lint', 'harness:complete-check',
+    'harness:impact-analysis', 'harness:status',
+  ];
+  const cwd = process.cwd();
+  const itTestFileAnalyzerPort = new ItTestFileAnalyzerAdapter({
+    itTestRoot: join(cwd, 'scripts/harness/__tests__/integration'),
+    // アダプター自体のテストファイルは vi.mock() を使用しているため誤検知防止で除外
+    excludePattern: /it-test-file-analyzer-adapter\.test\.ts$/,
+  });
+  const sourceFileTextScannerPort = new SourceFileTextScannerAdapter({ sourceRoot: join(cwd, 'scripts/harness') });
+  const e2eTestFileRegistryPort = new E2eTestFileRegistryAdapter({ e2eTestRoot: join(cwd, 'scripts/harness/__tests__/e2e') });
+  const cliCommandRegistryPort = new CliCommandRegistryAdapter({ commands: KNOWN_CLI_COMMANDS });
+  const runL1ValidatorsUseCase = new RunL1ValidatorsUseCase({
+    itTestFileAnalyzerPort,
+    sourceFileTextScannerPort,
+    e2eTestFileRegistryPort,
+    cliCommandRegistryPort,
+    contractMapper,
+  });
 
   const runFullValidationUseCase = new RunFullValidationUseCase({
     runL2ValidatorsUseCase,
@@ -128,13 +203,14 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   });
 
   const handlers = {
-    runValidators: new RunValidatorsHandler({ runFullValidationUseCase }),
+    runValidators: new RunValidatorsHandler({ runFullValidationUseCase, runL1ValidatorsUseCase }),
     runQuickMode: new RunQuickModeHandler({ runQuickModeUseCase }),
     reportValidationResults: new ReportValidationResultsHandler(),
   };
 
   return {
     registry,
+    runL1ValidatorsUseCase,
     runL2ValidatorsUseCase,
     runL3ValidatorsUseCase,
     runL4ValidatorsUseCase,

@@ -1,0 +1,34 @@
+# ADR-001: L1 — Biome AST による Editor-Time 品質強制
+
+## Status
+
+Accepted
+
+## Context
+
+AIエージェントが生成するコードのアーキテクチャ違反（レイヤー境界越え、メタデータ欠落、不適切なファイル配置）をプロンプトベースの指示だけで防ぐことは不可能である。プロンプト遵守率はエージェントやモデルに依存し、品質が確率的になる。
+
+## Decision
+
+Rust製 Biome の AST 解析を用いて、L1（Editor-Time）で以下の8ルールを機械的に強制する。
+
+| ルール | コード | 検出対象 |
+|--------|--------|---------|
+| require-unit-comment | L1-001 | `@unit` コメント欠落 |
+| require-layer-comment | L1-002 | `@layer` コメント欠落 |
+| no-layer-violation | L1-003 | レイヤー境界を越える import |
+| enforce-folder-structure | L1-004 | アーキテクチャ規約違反のファイル配置 |
+| no-any-abuse | L1-005 | `any` 型の乱用 |
+| no-ghost-file | L1-006 | import されないファイル |
+| no-comment-flood | L1-007 | 過剰なコメント |
+| no-code-duplication | L1-008 | 構造的に重複するコードブロック |
+
+## Consequences
+
+- エージェントのプロンプト遵守度に品質が依存しない
+- Rust 製 Biome により 50-100 倍の高速 AST 解析が可能
+- import グラフ解析によりレイヤー違反を物理的に検出
+
+## 関連要件
+
+K1（4層防御モデル）、K3（Biome AST解析）、K3.5（@unit/@layerメタデータ）

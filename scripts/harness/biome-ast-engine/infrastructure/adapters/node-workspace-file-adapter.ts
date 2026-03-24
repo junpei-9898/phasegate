@@ -30,12 +30,30 @@ export class NodeWorkspaceFileAdapter implements WorkspaceFilePort {
   }
 
   async listSourceFiles(targets?: readonly string[]): Promise<readonly FilePath[]> {
-    const baseDir = targets && targets.length > 0
-      ? targets[0]
-      : 'scripts/harness';
+    if (targets && targets.length > 0) {
+      const results: FilePath[] = [];
+      for (const target of targets) {
+        const absoluteTarget = path.resolve(this.rootDir, target);
+        if (!fs.existsSync(absoluteTarget)) continue;
+        const fileStat = await stat(absoluteTarget);
+        if (fileStat.isDirectory()) {
+          await this.walkDirectory(absoluteTarget, results);
+        } else {
+          const ext = path.extname(target);
+          if (SOURCE_EXTENSIONS.has(ext)) {
+            const relative = path.relative(this.rootDir, absoluteTarget);
+            try {
+              results.push(FilePathVO.fromWorkspaceRelative(relative));
+            } catch {
+              // invalid path — skip
+            }
+          }
+        }
+      }
+      return Object.freeze(results);
+    }
 
-    const absoluteBase = path.resolve(this.rootDir, baseDir);
-
+    const absoluteBase = path.resolve(this.rootDir, 'scripts/harness');
     if (!fs.existsSync(absoluteBase)) {
       return Object.freeze([]);
     }

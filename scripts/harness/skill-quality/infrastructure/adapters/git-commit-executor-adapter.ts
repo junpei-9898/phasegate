@@ -13,7 +13,19 @@ export class GitCommitExecutorAdapter implements CommitExecutorPort {
     try {
       execSync(`git commit -m ${JSON.stringify(message)}`, { stdio: 'pipe' });
     } catch (err) {
-      throw new SkillQualityError('GIT_COMMIT_FAILED', `git commit failed: ${err instanceof Error ? err.message : String(err)}`);
+      const rawMessage = err instanceof Error ? err.message : String(err);
+      // "nothing to commit" を検出して分かりやすいメッセージに変換
+      const isNothingToCommit =
+        rawMessage.includes('nothing to commit') ||
+        rawMessage.includes('nothing added to commit') ||
+        rawMessage.includes('no changes added to commit');
+      if (isNothingToCommit) {
+        throw new SkillQualityError(
+          'GIT_COMMIT_FAILED',
+          'git commit failed: ステージングされた変更がありません。先に git add でファイルをステージングしてください。',
+        );
+      }
+      throw new SkillQualityError('GIT_COMMIT_FAILED', `git commit failed: ${rawMessage}`);
     }
   }
 }

@@ -52,6 +52,10 @@ class NodeFileSystemAdapter implements FileSystemPort {
     const { writeFile } = await import('node:fs/promises');
     await writeFile(filePath, content, 'utf-8');
   }
+  async glob(pattern: string): Promise<readonly string[]> {
+    const { glob } = await import('tinyglobby');
+    return glob(pattern, { onlyFiles: true });
+  }
 }
 
 export function createSkillQualityHandlers() {
@@ -80,9 +84,23 @@ export function createSkillQualityHandlers() {
   const executeTddCycleUseCase = new ExecuteTddCycleUseCase(atomicCommitService);
   const checkCoverageUseCase = new CheckCoverageUseCase(requirementTestMatrixPort, coverageRunnerPort, configQueryPort);
   const runPlanCheckerLoopUseCase = new RunPlanCheckerLoopUseCase(
-    // PlanCheckExecutorPort stub - would be injected in real usage
     {
-      evaluate: async () => ({ coverageRate: 100, gaps: [], revision: 'N/A' }),
+      evaluate: async (planDocument: string) => {
+        // チェックボックス形式（- [x] / - [ ]）でカバレッジを評価する
+        const checked = (planDocument.match(/- \[x\]/gi) ?? []).length;
+        const unchecked = (planDocument.match(/- \[ \]/gi) ?? []).length;
+        const total = checked + unchecked;
+        if (total === 0) {
+          return { coverageRate: 0, gaps: ['プランドキュメントにチェックボックスが見つかりません'], revision: 'N/A' };
+        }
+        const coverageRate = Math.round((checked / total) * 100);
+        const gaps = planDocument
+          .split('\n')
+          .filter((line) => /- \[ \]/.test(line))
+          .map((line) => line.replace(/^.*- \[ \]\s*/, '').trim())
+          .filter(Boolean);
+        return { coverageRate, gaps, revision: `${checked}/${total}` };
+      },
     }
   );
   const collectLessonsUseCase = new CollectLessonsUseCase(lessonCollector, lessonDeduplicator, configQueryPort);

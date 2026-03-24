@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "generatedAt", "stories"],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "stories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["storyId", "storyMappings"],
+        "properties": {
+          "storyId": {
+            "type": "string",
+            "pattern": "^H\\d{2}-\\d{2}$"
+          },
+          "storyMappings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["acId", "testReferences"],
+              "properties": {
+                "acId": {
+                  "type": "string",
+                  "pattern": "^AC-[1-9][0-9]*$"
+                },
+                "testReferences": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["filePath", "testType"],
+                    "properties": {
+                      "filePath": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "testType": {
+                        "type": "string",
+                        "enum": ["unit", "it", "scenario"]
+                      },
+                      "testName": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

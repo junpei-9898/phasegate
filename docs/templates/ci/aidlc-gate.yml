@@ -1,0 +1,97 @@
+# GSDLC Quality Harness — PR検証ワークフロー
+#
+# 使い方:
+#   このファイルを .github/workflows/aidlc-gate.yml にコピーして使用する。
+#
+# 実行タイミング: Pull Request（open / synchronize / reopen）
+# 実行内容:
+#   1. harness:lint  — L1 Biome AST ルール検証
+#   2. harness:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
+#   3. 失敗時: PR にエラーサマリーをコメント
+
+name: AIDLC Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  harness-gate:
+    name: Harness Quality Gate
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # PRコメント書き込みに必要
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # L1: Biome AST ルール
+      - name: L1 Lint (Biome AST)
+        id: lint
+        run: |
+          set +e
+          RESULT=$(pnpm run harness lint --json 2>&1)
+          EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
+
+      # L3: CI バリデータ（security / performance / coverage / nyquist）
+      - name: L3 CI Check
+        id: ci_check
+        if: always()
+        run: |
+          set +e
+          RESULT=$(pnpm run harness harness:ci-check --json 2>&1)
+          EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
+
+      # 失敗時のみ PR にコメント
+      - name: Post failure comment
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const lintResult   = `${{ steps.lint.outputs.result }}`;
+            const ciResult     = `${{ steps.ci_check.outputs.result }}`;
+            const lintFailed   = '${{ steps.lint.outputs.exit_code }}' !== '0';
+            const ciFailed     = '${{ steps.ci_check.outputs.exit_code }}' !== '0';
+
+            let body = '## ❌ AIDLC Quality Gate — 失敗\n\n';
+
+            if (lintFailed) {
+              body += '### L1 Lint エラー\n```json\n' + lintResult + '\n```\n\n';
+            }
+            if (ciFailed) {
+              body += '### L3 CI Check エラー\n```json\n' + ciResult + '\n```\n\n';
+            }
+
+            body += '---\n> 修正方法は各 `HarnessError.suggestion` および `HarnessError.fix_example` を参照してください。';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

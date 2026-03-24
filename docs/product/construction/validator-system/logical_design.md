@@ -1133,14 +1133,13 @@ export interface AggregatedValidationReport {
 
 **外部I/O**
 
-- biome-ast-engineのRuleViolation Contract（`scripts/harness/shared-kernel/biome-ast-engine.ts`）
 - ファイルシステム（テストファイル読み取り）
 
 **実装方針**
 
-- `integration_contract.md §2.2` の `RuleViolation Contract` を `HarnessError` に変換する
-- AAA（Arrange-Act-Assert）コメントの存在、`actual` 変数の使用、single-act制約を検証する
-- `describe-it` 構造・日本語テスト名・`no-domain-mock` 規約は正規表現ベースで確認する
+- テストファイルを読み取り、`testing-rules.md` 準拠チェックを正規表現ベースで実施する
+- `it()` / `test()` 呼び出しの第1引数が日本語を含まない場合に違反を報告する（Unicode範囲: U+3040-U+9FAF）
+- `expect()` を使用しているが `const actual` 宣言が存在しないファイルに違反を報告する
 - 検証失敗は `L2-003` ErrorCodeのエラーを返す
 
 ---
@@ -1173,14 +1172,14 @@ export interface AggregatedValidationReport {
 
 **外部I/O**
 
-- biome-ast-engineのRuleViolation Contract
+- ファイルシステム（ソースファイル読み取り・サイズ取得）
+- TypeScript Compiler API（`ts.createProgram`）
 - `LayerConfig.thresholds.bundleSizeLimit` の参照
 
 **実装方針**
 
-- ループ内`await`（O(n)×I/O）のパターンをAST解析で検出する
-- N+1クエリパターンを繰り返し呼び出し構造から推定する
-- `bundleSizeLimit` の閾値チェックはビルドアーティファクト（存在する場合）のサイズ確認で行う
+- TypeScript Compiler API を使用して AST を構築し、ループノード（for/while/do/for-in/for-of）の直下に `await` 式が存在するか検出する（関数・アロー関数境界を越えない）
+- `bundleSizeLimit` 閾値チェックはファイルシステムの `stat().size` で確認する
 - `enabledCondition === "strictOnly"` のルールは `strictOnly === false` 環境でスキップする
 - 検証失敗は `L3-002` ErrorCodeのエラーを返す
 
@@ -1256,9 +1255,9 @@ export interface AggregatedValidationReport {
 
 **実装方針**
 
-- biome-ast-engineの `RuleViolation Contract` ではなく、AST解析の中間成果物（エクスポート・import一覧）を取得する
-- `fast-glob` でUnit配下のソースファイルを列挙する
-- TypeScript CompilerAPIまたはbiome-ast-engineのAST APIでエクスポート識別子を収集する
+- TypeScript Compiler API（`ts.createProgram`）を使用してエクスポート識別子を AST レベルで正確に抽出する
+- エクスポートの種別（`class` / `interface` / `type` / `function` / `const`）を AST ノード型から判定する
+- Unit 配下のソースファイルを再帰列挙し、全ファイルを一度に program に渡してバッチ解析する
 - L4-001（乖離検出）とL4-003（デッドコード検出）が共通して利用する
 
 ---
@@ -1729,3 +1728,31 @@ sequenceDiagram
 - Formatterは同一 `AggregatedValidationReport` 入力に対してdeterministicな文字列を返すことを確認する
 - `RunValidatorsHandler` は `--fail-on-warning` の有無で終了コードが変わることを確認する
 - `RunQuickModeHandler` は不正な `--relaxation-profile` JSON受信時に終了コード2を返すことを確認する
+
+---
+
+## 9. 実装変更記録（Wave 2A: H08-07/H08-08/H08-09）
+
+### 9.1 ValidatorId 値オブジェクト拡張
+
+**変更日**: 2026-03-22
+**変更理由**: Wave 2A で L1-017（ITテスト内部モック検出）/ L1-018（スタブコメント残存検出）/ L2-013（CLIコマンドE2Eテスト存在チェック）の3バリデータが追加実装されたが、`ValidatorId.create()` がこれらIDを拒否していた。
+
+**変更内容**:
+- パターン `^L[2-4]-\d{3}$` → `^L[1-4]-\d{3}$` に拡張（L1レイヤー対応）
+- `layer` フィールド型を `'L2' | 'L3' | 'L4'` → `'L1' | 'L2' | 'L3' | 'L4'` に拡張
+- `VALIDATOR_NAME_MAP` に以下3エントリを追加:
+  - `'L1-017': 'it-test-mock-detection'`
+  - `'L1-018': 'stub-comment-detection'`
+  - `'L2-013': 'cli-e2e-test-existence'`
+
+**影響ファイル**: `scripts/harness/validator-system/domain/value-objects/validator-id.ts`
+
+### 9.2 テストファイルのシンタックス修正
+
+**変更日**: 2026-03-22
+**変更理由**: Wave 2A のコード生成時に、`.ts` ファイル末尾に `@story-id H08-07` が裸のJavaScript式として挿入されていた（TypeScriptパースエラーの原因）。
+
+**変更内容**: 44ファイルの末尾の裸の `@story-id H08-07` を `// @story-id H08-07`（コメント）に変換。traceability-model の `SourceMetadataParser` が期待するコメント形式（`// @story-id` または `* @story-id`）に合致する。
+
+**影響ファイル**: validator-system / nyquist-validation 配下の16ソースファイル + 28テストファイル

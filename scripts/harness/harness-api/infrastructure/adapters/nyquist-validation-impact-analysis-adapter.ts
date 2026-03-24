@@ -1,11 +1,11 @@
 // nyquist-validation-impact-analysis-adapter.ts — NyquistValidationImpactAnalysisAdapter
-// @stub: wave2-pending - nyquist-validation の正式インターフェース確定後に差し替え
+// Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
 
 import type { ImpactAnalysisPort, ImpactAnalysisResult } from '../../domain/ports/impact-analysis-port.js';
 
 const STORY_ID_REGEX = /^H\d{2}-\d{2}$/;
 
-// Stub interface for the external nyquist-validation module (wave2-pending)
+// Override interface preserved for testing
 export interface INyquistValidationStub {
   analyzeImpact(storyId: string): Promise<ImpactAnalysisResult | null>;
 }
@@ -14,8 +14,41 @@ export class NyquistValidationImpactAnalysisAdapter implements ImpactAnalysisPor
   private readonly stub: INyquistValidationStub;
 
   constructor(stub?: INyquistValidationStub) {
-    this.stub = stub ?? {
-      async analyzeImpact(_storyId: string) { return null; },
+    this.stub = stub ?? NyquistValidationImpactAnalysisAdapter.createRealImpl();
+  }
+
+  private static createRealImpl(): INyquistValidationStub {
+    const rootDir = process.cwd();
+    const matrixFilePath = '.harness/requirement-test-matrix.json';
+    return {
+      async analyzeImpact(storyId: string): Promise<ImpactAnalysisResult | null> {
+        try {
+          const { createTraceabilityModelModule } = await import('../../../traceability-model/composition-root.js');
+          const traceModule = createTraceabilityModelModule(rootDir);
+          const storyIds = await traceModule.storyCatalog.getAllStoryIds();
+
+          const { createNyquistValidationModule } = await import('../../../nyquist-validation/composition-root.js');
+          const nyquistModule = createNyquistValidationModule({
+            getStoryIds: async () => storyIds.map((s) => s.value),
+          });
+
+          const output = await nyquistModule.analyzeImpactUseCase.execute({
+            storyId,
+            matrixFilePath,
+          });
+
+          if (!output.found) return null;
+
+          const affectedFiles = output.directTests.map((t) => t.filePath);
+          return {
+            storyId: output.storyId,
+            affectedTestCases: affectedFiles,
+            affectedFiles,
+          };
+        } catch {
+          return null;
+        }
+      },
     };
   }
 

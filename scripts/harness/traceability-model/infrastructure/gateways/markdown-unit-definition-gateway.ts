@@ -11,7 +11,7 @@ import type { UnitDefinitionPort } from '../../domain/ports/unit-definition-port
 import type { ProjectRelativePathLike } from '../../domain/value-objects/chain-link.js';
 import { ProjectRelativePath } from '../../domain/value-objects/project-relative-path.js';
 
-const UNIT_ID_PATTERN = /Unit\s+ID\s*[:：]\s*(\S+)/;
+const UNIT_ID_PATTERN = /Unit\s+ID\*{0,2}\s*[:：]\s*(\S+)/;
 
 export interface MarkdownUnitDefinitionGatewayDeps {
   readonly rootDir: string;

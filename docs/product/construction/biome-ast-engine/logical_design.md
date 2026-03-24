@@ -1096,3 +1096,33 @@ interface ClockPort {
 - `VerifyEslintRemovalUseCase` + `WorkspaceInventoryAdapter` により `.eslintrc*`, `eslint.config.*`, `@typescript-eslint/*` の残存を検査する
 - `BiomeCliExecutorAdapter` を標準lint/format統合点として配置し、CLIは `harness:lint` 一系統へ集約する
 - `RuleType` から `RustPlugin` を削除し、v0の plugin/WASM 前提を論理設計レベルで廃止する
+
+---
+
+## 9. 実装変更記録（Wave 2A）
+
+### 9.1 Composition Root 公開インターフェース拡張
+
+**変更日**: 2026-03-22
+**変更理由**: `harness-api` ユニットの `BiomeAstEngineLintAdapter` がスタブを脱してリアル実装に切り替わる際、`harnessLintCommandHandler` 経由でCLIテキスト出力をパースする代わりに `executeLintUseCase` を直接呼び出す必要があった。
+
+**変更内容**: `createBiomeAstEngineModule()` の返却値に `executeLintUseCase` を追加
+
+```typescript
+// Before
+return { harnessLintCommandHandler } as const;
+
+// After
+return { harnessLintCommandHandler, executeLintUseCase } as const;
+```
+
+**影響ファイル**: `scripts/harness/biome-ast-engine/composition-root.ts`
+
+### 9.2 NodeWorkspaceFileAdapter ファイルパス対応
+
+**変更日**: 2026-03-22
+**変更理由**: `lint --target <file>` でファイルパス指定時に `readdir()` が ENOTDIR エラーをスローしていた。
+
+**変更内容**: `listSourceFiles(targets)` 内で `stat()` を使ってファイル/ディレクトリを判定し、ファイルの場合は `walkDirectory()` を呼ばずに直接追加する。
+
+**影響ファイル**: `scripts/harness/biome-ast-engine/infrastructure/adapters/node-workspace-file-adapter.ts`

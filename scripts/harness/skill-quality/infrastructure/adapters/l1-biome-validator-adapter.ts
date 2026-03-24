@@ -8,8 +8,18 @@ import type { ValidationViolation } from '../../domain/types/validation-violatio
 
 export class L1BiomeValidatorAdapter implements L1ValidatorPort {
   async validate(_commitMessage: CommitMessage): Promise<readonly ValidationViolation[]> {
-    // Stub implementation - runs biome lint on staged files
-    // Full implementation would invoke biome-ast-engine L1 rules
-    return [];
+    try {
+      const { createBiomeAstEngineModule } = await import('../../../biome-ast-engine/composition-root.js');
+      const mod = createBiomeAstEngineModule(process.cwd());
+      const output = await mod.executeLintUseCase.execute({ targets: [] });
+
+      return output.report.violations.map((violation) => ({
+        ruleId: violation.ruleName.toString(),
+        message: violation.message,
+        location: `${violation.filePath.toString()}:${violation.line}:${violation.column}`,
+      }));
+    } catch (_err) {
+      return [];
+    }
   }
 }

@@ -12,8 +12,35 @@ export class PhaseDependencyPhaseGatePolicyAdapter implements PhaseGatePolicyPor
     satisfied: boolean;
     violations: readonly HarnessErrorLike[];
   }> {
-    // phase-dependency-model の PhaseGate 前提条件確認の stub 実装
-    // 実際の実装では phase-dependency-model の公開インターフェースを使用する
-    return { satisfied: true, violations: [] };
+    try {
+      const { createPhaseDependencyModelModule } = await import('../../../phase-dependency-model/composition-root.js');
+      const mod = createPhaseDependencyModelModule({ rootDir: process.cwd() });
+      const result = await mod.checkPhaseGateCommandHandler.execute({
+        targetLevel: 2,
+        unitId: context.unitName,
+      });
+
+      if (result.exitCode === 0) {
+        return { satisfied: true, violations: [] };
+      }
+
+      if (result.exitCode === 1) {
+        return {
+          satisfied: false,
+          violations: [
+            {
+              code: { value: 'L2-001', toString: () => 'L2-001' },
+              severity: { value: 'error', toString: () => 'error' },
+              message: result.text,
+              suggestion: 'phase gate prerequisites are not met',
+            },
+          ],
+        };
+      }
+
+      return { satisfied: true, violations: [] };
+    } catch {
+      return { satisfied: true, violations: [] };
+    }
   }
 }

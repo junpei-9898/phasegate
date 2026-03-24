@@ -1108,3 +1108,16 @@ interface RecordPhaseOverrideAuditInput {
 | `phaseDependencies` 解釈 | `PhaseCustomizationPolicy`, `CustomRule` |
 | 緩和不可制約 | `nonRelaxableDependencies`, `applyCustomization()` |
 | override監査 | `PhaseGateResult.auditPayload`, `RecordPhaseOverrideAuditUseCase`, `PhaseOverrideAuditLogger` |
+
+---
+
+## 9. 実装変更記録（Wave 2A）
+
+### 9.1 Composition Root `defaultPhaseConfig` の planningMode 修正
+
+**変更日**: 2026-03-22
+**変更理由**: `createPhaseDependencyModelModule()` の `defaultPhaseConfig.planningMode` が `'standard'`（無効値）にハードコードされていた。有効値は `'interactive' | 'embedded-qa'` のみであり、デフォルト呼び出し時に `InvalidPlanningModeError` がスローされ、`harness:check-phase` / `harness:check-ready` が全件エラーになっていた。
+
+**変更内容**: `planningMode: 'standard'` → `planningMode: 'interactive'` に修正（`harness.config.json` の `planningMode.default: 'interactive'` と一致させた）
+
+**影響ファイル**: `scripts/harness/phase-dependency-model/composition-root.ts`

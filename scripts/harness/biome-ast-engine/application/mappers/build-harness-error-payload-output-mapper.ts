@@ -24,9 +24,9 @@ const RULE_CODE_BY_NAME: Readonly<Record<string, string>> = Object.freeze({
   'no-layer-violation': 'L1-003',
   'enforce-folder-structure': 'L1-004',
   'no-any-abuse': 'L1-005',
-  'no-code-duplication': 'L1-006',
-  'no-ghost-file': 'L1-007',
-  'no-comment-flood': 'L1-008',
+  'no-ghost-file': 'L1-006',
+  'no-comment-flood': 'L1-007',
+  'no-code-duplication': 'L1-008',
 });
 
 const toHarnessErrorPayloadItem = (

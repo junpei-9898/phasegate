@@ -14,7 +14,7 @@ export class ApplyCascadeUpdateHandler {
 
   async handle(args: ApplyCascadeUpdateArgs): Promise<{ exitCode: number; message: string }> {
     try {
-      const output = await this.useCase.execute({ storyId: args.storyId });
+      const output = await this.useCase.execute({ storyId: args.storyId, dryRun: args.dryRun });
       const tagsLine = output.appliedStoryIds.join(', ');
       let msg = `Updated ${output.updatedCount} files with tags: ${tagsLine}`;
 

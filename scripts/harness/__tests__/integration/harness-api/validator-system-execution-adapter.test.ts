@@ -132,9 +132,9 @@ target('ValidatorSystemExecutionAdapter', () => {
   });
 
   // ─── IT-Adapter-Validator-006 ───
-  describe('スタブ未指定（デフォルト）の場合、空配列を返すこと', () => {
+  describe('スタブ未指定（デフォルト）の場合、実際のvalidator-systemを呼び出すこと', () => {
     context('コンストラクタ引数なしで生成した場合', () => {
-      it('runL3Validators・runAllValidators・runDriftDetectionが全て空配列を返す', async () => {
+      it('runL3Validators・runAllValidatorsが実バリデーター結果を返し、runDriftDetectionが配列を返す', async () => {
         // Arrange
         const adapter = new ValidatorSystemExecutionAdapter();
 
@@ -143,10 +143,12 @@ target('ValidatorSystemExecutionAdapter', () => {
         const allResult = await adapter.runAllValidators();
         const driftResult = await adapter.runDriftDetection();
 
-        // Assert
-        expect(l3Result).toEqual([]);
-        expect(allResult).toEqual([]);
-        expect(driftResult).toEqual([]);
+        // Assert — スタブではなく実実装が呼ばれることを確認
+        expect(Array.isArray(l3Result)).toBe(true);
+        expect(Array.isArray(allResult)).toBe(true);
+        expect(Array.isArray(driftResult)).toBe(true);
+        // 実validator-systemはL3-001〜L3-004の結果を返す
+        expect(l3Result.length).toBeGreaterThan(0);
       });
     });
   });

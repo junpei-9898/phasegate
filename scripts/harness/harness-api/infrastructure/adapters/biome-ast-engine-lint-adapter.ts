@@ -1,5 +1,5 @@
 // biome-ast-engine-lint-adapter.ts — BiomeAstEngineLintAdapter
-// @stub: wave2-pending - biome-ast-engine の正式インターフェース確定後に差し替え
+// Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
 
 import type { BiomeLintPort } from '../../domain/ports/biome-lint-port.js';
 import type { HarnessError } from '../../domain/value-objects/harness-api-response.js';
@@ -18,7 +18,7 @@ interface BiomeAstEngineResult {
   violations: RuleViolation[];
 }
 
-// Stub interface for the external biome-ast-engine module (wave2-pending)
+// Override interface preserved for testing
 export interface IBiomeAstEngineStub {
   runLint(): Promise<BiomeAstEngineResult>;
 }
@@ -36,8 +36,28 @@ export class BiomeAstEngineLintAdapter implements BiomeLintPort {
   private readonly stub: IBiomeAstEngineStub;
 
   constructor(stub?: IBiomeAstEngineStub) {
-    this.stub = stub ?? {
-      async runLint() { return { violations: [] }; },
+    this.stub = stub ?? BiomeAstEngineLintAdapter.createRealImpl();
+  }
+
+  private static createRealImpl(): IBiomeAstEngineStub {
+    const rootDir = process.cwd();
+    return {
+      async runLint(): Promise<BiomeAstEngineResult> {
+        const { createBiomeAstEngineModule } = await import('../../../biome-ast-engine/composition-root.js');
+        const biomeModule = createBiomeAstEngineModule(rootDir);
+        const output = await biomeModule.executeLintUseCase.execute();
+        return {
+          violations: output.report.violations.map((v) => ({
+            filePath: v.filePath.toString(),
+            line: v.line,
+            column: v.column,
+            ruleName: v.ruleName.toString(),
+            message: v.message,
+            severity: v.severity,
+            fix_example: v.fixExample ?? undefined,
+          })),
+        };
+      },
     };
   }
 

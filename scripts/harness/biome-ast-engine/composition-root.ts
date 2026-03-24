@@ -87,5 +87,5 @@ export function createBiomeAstEngineModule(
     buildHarnessErrorPayloadUseCase,
   });
 
-  return { harnessLintCommandHandler } as const;
+  return { harnessLintCommandHandler, executeLintUseCase } as const;
 }

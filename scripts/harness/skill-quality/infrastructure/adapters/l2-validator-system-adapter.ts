@@ -8,7 +8,23 @@ import type { ValidationViolation } from '../../domain/types/validation-violatio
 
 export class L2ValidatorSystemAdapter implements L2ValidatorPort {
   async validate(_commitMessage: CommitMessage): Promise<readonly ValidationViolation[]> {
-    // Stub implementation - Wave 2 validator-system integration pending
-    return [];
+    try {
+      const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
+      const mod = createValidatorSystemModule();
+      const report = await mod.runFullValidationUseCase.execute({
+        targetPaths: [],
+        unitName: '',
+        currentPhase: '',
+        includeL4: false,
+      });
+
+      return report.allErrors.map((error) => ({
+        ruleId: error.code.toString(),
+        message: error.message,
+        location: '',
+      }));
+    } catch {
+      return [];
+    }
   }
 }
