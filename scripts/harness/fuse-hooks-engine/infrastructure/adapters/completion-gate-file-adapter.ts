@@ -3,11 +3,15 @@
  * @unit fuse-hooks-engine
  */
 
+import { exec } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { promisify } from 'node:util';
 import { CompletionGate } from '../../domain/entities/completion-gate.js';
 import type { CompletionGatePort } from '../../domain/ports/completion-gate-port.js';
 import { MagicFile } from '../../domain/value-objects/magic-file.js';
+
+const execAsync = promisify(exec);
 
 interface StoredGate {
   storyId: string;
@@ -18,8 +22,34 @@ interface StoredGate {
   failureReason: string | null;
 }
 
+export interface TestRunResult {
+  passed: boolean;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+export interface CommandEntry {
+  name: string;
+  description: string;
+}
+
+export interface CompletionGateFileAdapterOptions {
+  testCommand?: string;
+  requireTestPass?: boolean;
+}
+
 export class CompletionGateFileAdapter implements CompletionGatePort {
-  constructor(private readonly baseDir: string) {}
+  private readonly testCommand: string;
+  private readonly requireTestPass: boolean;
+
+  constructor(
+    private readonly baseDir: string,
+    options?: CompletionGateFileAdapterOptions,
+  ) {
+    this.testCommand = options?.testCommand ?? 'pnpm test';
+    this.requireTestPass = options?.requireTestPass ?? false;
+  }
 
   private get statePath(): string {
     return path.join(this.baseDir, '.harness', 'completion-state.json');
@@ -73,9 +103,48 @@ export class CompletionGateFileAdapter implements CompletionGatePort {
       if (missingField) {
         return { passed: false, failureReason: `Missing required field: ${missingField}` };
       }
-      return { passed: true, failureReason: null };
     } catch {
       return { passed: false, failureReason: 'Magic file not found' };
     }
+
+    if (this.requireTestPass) {
+      const testResult = await this.runTests();
+      if (!testResult.passed) {
+        return { passed: false, failureReason: `Tests did not pass (exit code: ${testResult.exitCode})` };
+      }
+    }
+
+    return { passed: true, failureReason: null };
+  }
+
+  async runTests(): Promise<TestRunResult> {
+    try {
+      const result = await execAsync(this.testCommand, {
+        cwd: this.baseDir,
+        timeout: 120_000,
+        shell: '/bin/sh',
+      });
+      return {
+        passed: true,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: 0,
+      };
+    } catch (error) {
+      const failure = error as { stdout?: string; stderr?: string; code?: number };
+      return {
+        passed: false,
+        stdout: failure.stdout ?? '',
+        stderr: failure.stderr ?? '',
+        exitCode: typeof failure.code === 'number' ? failure.code : 1,
+      };
+    }
+  }
+
+  getCommandEntry(): CommandEntry {
+    return {
+      name: 'harness:complete',
+      description: 'Check completion gate: verify magic file and run tests before marking story as done',
+    };
   }
 }
