@@ -32,6 +32,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "L0": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "validators": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
         "L1": {
           "type": "object",
           "additionalProperties": false,

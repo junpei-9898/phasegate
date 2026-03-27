@@ -1,29 +1,14 @@
 {
-  "version": "1.0",
-  "preset": "standard",
   "project": {
     "name": "gsdlc-harness",
-    "architecture": "clean-architecture",
-    "paths": {
-      "source": ["scripts/harness", "bin"],
-      "docs": {
-        "units": "docs/product/units",
-        "inception": "docs/inception",
-        "construction": "docs/product/construction"
-      }
-    },
-    "naming": {
-      "fileCase": "kebab-case",
-      "classCase": "PascalCase",
-      "unitToPath": "kebab-to-snake"
-    }
+    "preset": "standard"
   },
   "layers": {
-    "L0_fuse": { "enabled": false, "description": "FUSE hooks — requires fuse-native. Graceful fallback when disabled." },
-    "L1_editor": { "enabled": true },
-    "L2_precommit": { "enabled": true },
-    "L3_ci": { "enabled": true },
-    "L4_scheduled": { "enabled": false }
+    "L0": { "enabled": false },
+    "L1": { "enabled": true },
+    "L2": { "enabled": true },
+    "L3": { "enabled": true },
+    "L4": { "enabled": false }
   },
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],

@@ -17,6 +17,7 @@ export interface HarnessConfigLayers {
 
 export interface HarnessConfigV2Like {
   preset?: 'minimal' | 'standard' | 'strict';
+  project?: { preset?: 'minimal' | 'standard' | 'strict' };
   layers?: HarnessConfigLayers;
   harnesses?: {
     bundleSizeLimit?: number;
@@ -32,7 +33,7 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
   }
 
   async getLayerConfig(layer: 'L0' | 'L2' | 'L3' | 'L4'): Promise<LayerConfig> {
-    const preset = (this.config.preset ?? 'standard') as 'minimal' | 'standard' | 'strict';
+    const preset = (this.config.project?.preset ?? this.config.preset ?? 'standard') as 'minimal' | 'standard' | 'strict';
     const strictOnly = preset === 'strict';
     const layerData = this.config.layers?.[layer] ?? {};
 
