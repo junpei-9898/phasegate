@@ -5,6 +5,7 @@
  * RunValidatorsHandler — バリデータ実行 CLIハンドラー
  */
 import type { RunFullValidationUseCase } from '../../application/use-cases/run-full-validation-usecase.js';
+import type { RunL0ValidatorsUseCase } from '../../application/use-cases/run-l0-validators-usecase.js';
 import type { RunL1ValidatorsUseCase } from '../../application/use-cases/run-l1-validators-usecase.js';
 import type { AggregatedValidationReport } from '../../application/dto/aggregated-validation-report.js';
 import { HumanValidationResultFormatter } from '../formatters/human-validation-result-formatter.js';
@@ -12,7 +13,7 @@ import { AgentValidationResultFormatter } from '../formatters/agent-validation-r
 import { CiValidationResultFormatter } from '../formatters/ci-validation-result-formatter.js';
 
 export interface RunValidatorsHandlerArgs {
-  layer?: 'L1' | 'L2' | 'L3' | 'L4' | 'all';
+  layer?: 'L0' | 'L1' | 'L2' | 'L3' | 'L4' | 'all';
   validatorIds?: string[];
   targetPaths?: string[];
   unit?: string;
@@ -24,20 +25,58 @@ export interface RunValidatorsHandlerArgs {
 
 export interface RunValidatorsHandlerDeps {
   runFullValidationUseCase: RunFullValidationUseCase;
+  runL0ValidatorsUseCase?: RunL0ValidatorsUseCase;
   runL1ValidatorsUseCase?: RunL1ValidatorsUseCase;
 }
 
 export class RunValidatorsHandler {
   private readonly useCase: RunFullValidationUseCase;
+  private readonly l0UseCase: RunL0ValidatorsUseCase | undefined;
   private readonly l1UseCase: RunL1ValidatorsUseCase | undefined;
 
   constructor(deps: RunValidatorsHandlerDeps) {
     this.useCase = deps.runFullValidationUseCase;
+    this.l0UseCase = deps.runL0ValidatorsUseCase;
     this.l1UseCase = deps.runL1ValidatorsUseCase;
   }
 
   async execute(args: RunValidatorsHandlerArgs): Promise<{ output: string; exitCode: number }> {
     try {
+      if (args.layer === 'L0') {
+        const l0UseCase = this.l0UseCase;
+        if (!l0UseCase) {
+          return { output: 'L0 validators not configured', exitCode: 1 };
+        }
+        const l0Results = await l0UseCase.execute({
+          validatorIds: args.validatorIds,
+          hookConfigPath: undefined,
+        });
+        const l0Report: AggregatedValidationReport = {
+          overallPassed: l0Results.every((r) => r.passed || r.skipped),
+          totalValidators: l0Results.length,
+          passedValidators: l0Results.filter((r) => r.passed).length,
+          failedValidators: l0Results.filter((r) => !r.passed && !r.skipped).length,
+          skippedValidators: l0Results.filter((r) => r.skipped).length,
+          allErrors: l0Results.flatMap((r) => r.errors),
+          summary: {
+            totalErrors: l0Results.flatMap((r) => r.errors).filter((e) => e.severity === 'error').length,
+            totalWarnings: l0Results.flatMap((r) => r.errors).filter((e) => e.severity === 'warning').length,
+            errorsByLayer: { L2: 0, L3: 0, L4: 0 },
+          },
+          results: l0Results,
+        };
+        const format = args.format ?? 'human';
+        let output: string;
+        if (format === 'agent') {
+          output = new AgentValidationResultFormatter().format(l0Report);
+        } else if (format === 'ci') {
+          output = new CiValidationResultFormatter().format(l0Report);
+        } else {
+          output = new HumanValidationResultFormatter().format(l0Report);
+        }
+        return { output, exitCode: l0Report.overallPassed ? 0 : 1 };
+      }
+
       if (args.layer === 'L1') {
         const l1UseCase = this.l1UseCase;
         if (!l1UseCase) {

@@ -19,7 +19,7 @@ export class ValidatorExecutionError extends Error {
 
 export interface ValidatorExecutionServiceDeps {
   configPort?: {
-    getLayerConfig(layer: 'L2' | 'L3' | 'L4'): LayerConfig | Promise<LayerConfig>;
+    getLayerConfig(layer: 'L0' | 'L2' | 'L3' | 'L4'): LayerConfig | Promise<LayerConfig>;
   };
   policyPort?: PhaseGatePolicyPort | { check: (...args: unknown[]) => unknown };
   [key: string]: unknown;
@@ -132,7 +132,7 @@ export class ValidatorExecutionService {
     });
   }
 
-  private _getLayerConfigSync(layer: 'L2' | 'L3' | 'L4'): LayerConfig | undefined {
+  private _getLayerConfigSync(layer: 'L0' | 'L2' | 'L3' | 'L4'): LayerConfig | undefined {
     const port = this.deps.configPort;
     if (!port) return undefined;
     const result = port.getLayerConfig(layer);

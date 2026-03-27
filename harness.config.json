@@ -1,10 +1,35 @@
 {
+  "version": "1.0",
+  "preset": "standard",
   "project": {
     "name": "gsdlc-harness",
-    "preset": "standard"
+    "architecture": "clean-architecture",
+    "paths": {
+      "source": ["scripts/harness", "bin"],
+      "docs": {
+        "units": "docs/product/units",
+        "inception": "docs/inception",
+        "construction": "docs/product/construction"
+      }
+    },
+    "naming": {
+      "fileCase": "kebab-case",
+      "classCase": "PascalCase",
+      "unitToPath": "kebab-to-snake"
+    }
   },
-  "layers": {},
-  "quickMode": {},
+  "layers": {
+    "L0_fuse": { "enabled": false, "description": "FUSE hooks — requires fuse-native. Graceful fallback when disabled." },
+    "L1_editor": { "enabled": true },
+    "L2_precommit": { "enabled": true },
+    "L3_ci": { "enabled": true },
+    "L4_scheduled": { "enabled": false }
+  },
+  "quickMode": {
+    "allowedCategories": ["bugfix", "docs", "test", "config"],
+    "maintainedLayers": ["L1", "L2"],
+    "relaxedGates": ["phase-gate", "2-phase-execution"]
+  },
   "phaseDependencies": {
     "preset": "default",
     "override": false,
@@ -14,7 +39,12 @@
     "default": "interactive",
     "perPhase": {}
   },
-  "harnesses": {},
+  "harnesses": {
+    "agentLessonCollection": false,
+    "cascadeUpdate": false,
+    "bundleSizeLimit": 0,
+    "deadCodeGC": false
+  },
   "paths": {
     "designDocs": "docs/product/construction",
     "inceptionDocs": "docs/inception"

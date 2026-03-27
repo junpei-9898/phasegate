@@ -63,7 +63,7 @@ Commands:
 
   lint                         Run lint checks (--json, --target <path>)
 
-  validate                     Run validators (--layer L2|L3|L4|all, --unit, --format human|agent|ci)
+  validate                     Run validators (--layer L0|L2|L3|L4|all, --unit, --format human|agent|ci)
   ci-check                     CI check (--quick for quick mode, --fail-on-reject, --dry-run, --files)
 
   harness:check-ready          Check ready status (--json)
@@ -483,7 +483,7 @@ async function main(): Promise<void> {
       // ── validator-system ──
       case 'validate': {
         const mod = createValidatorSystemModule();
-        const layer = parseFlag(args, '--layer') as 'L2' | 'L3' | 'L4' | 'all' | undefined;
+        const layer = parseFlag(args, '--layer') as 'L0' | 'L2' | 'L3' | 'L4' | 'all' | undefined;
         const unit = parseFlag(args, '--unit');
         const phase = parseFlag(args, '--phase');
         const format = parseFlag(args, '--format') as 'human' | 'agent' | 'ci' | undefined;

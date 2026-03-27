@@ -8,7 +8,7 @@
 import { ValidatorId } from './validator-id.js';
 
 export interface LayerConfigProps {
-  readonly layer: 'L2' | 'L3' | 'L4';
+  readonly layer: 'L0' | 'L2' | 'L3' | 'L4';
   readonly enabled: boolean;
   readonly validatorIds: readonly string[];
   readonly thresholds: Record<string, number>;
@@ -17,7 +17,7 @@ export interface LayerConfigProps {
 }
 
 export class LayerConfig {
-  readonly layer: 'L2' | 'L3' | 'L4';
+  readonly layer: 'L0' | 'L2' | 'L3' | 'L4';
   readonly enabled: boolean;
   readonly validatorIds: readonly string[];
   readonly thresholds: Readonly<Record<string, number>>;

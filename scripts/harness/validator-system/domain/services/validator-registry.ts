@@ -48,7 +48,7 @@ export class ValidatorRegistry {
     return this.definitionList;
   }
 
-  listByLayer(layer: 'L2' | 'L3' | 'L4'): readonly ValidatorDefinition[] {
+  listByLayer(layer: 'L0' | 'L2' | 'L3' | 'L4'): readonly ValidatorDefinition[] {
     return this.definitionList.filter((def) => def.layer === layer);
   }
 

@@ -10,16 +10,17 @@ import { ValidationRule } from './validation-rule.js';
 
 export interface ValidatorDefinitionProps {
   readonly validatorId: ValidatorId;
-  readonly layer: 'L2' | 'L3' | 'L4';
+  readonly layer: 'L0' | 'L2' | 'L3' | 'L4';
   readonly name?: string;
   readonly description?: string;
   readonly rules: readonly ValidationRule[];
   readonly enabledCondition: 'always' | 'layerEnabled' | 'strictOnly';
   readonly externalPolicyRef: string | null;
-  readonly executionPhase?: 'pre-commit' | 'ci' | 'scheduled';
+  readonly executionPhase?: 'fuse-hook' | 'pre-commit' | 'ci' | 'scheduled';
 }
 
-const LAYER_TO_PHASE: Record<'L2' | 'L3' | 'L4', 'pre-commit' | 'ci' | 'scheduled'> = {
+const LAYER_TO_PHASE: Record<'L0' | 'L2' | 'L3' | 'L4', 'fuse-hook' | 'fuse-hook' | 'pre-commit' | 'ci' | 'scheduled'> = {
+  L0: 'fuse-hook',
   L2: 'pre-commit',
   L3: 'ci',
   L4: 'scheduled',
@@ -27,13 +28,13 @@ const LAYER_TO_PHASE: Record<'L2' | 'L3' | 'L4', 'pre-commit' | 'ci' | 'schedule
 
 export class ValidatorDefinition {
   readonly validatorId: ValidatorId;
-  readonly layer: 'L2' | 'L3' | 'L4';
+  readonly layer: 'L0' | 'L2' | 'L3' | 'L4';
   readonly name: string;
   readonly description: string;
   readonly rules: readonly ValidationRule[];
   readonly enabledCondition: 'always' | 'layerEnabled' | 'strictOnly';
   readonly externalPolicyRef: string | null;
-  readonly executionPhase: 'pre-commit' | 'ci' | 'scheduled';
+  readonly executionPhase: 'fuse-hook' | 'pre-commit' | 'ci' | 'scheduled';
 
   private constructor(props: ValidatorDefinitionProps) {
     this.validatorId = props.validatorId;

@@ -16,10 +16,12 @@ export class InvalidValidatorIdError extends Error {
   }
 }
 
-const VALIDATOR_ID_PATTERN = /^L[1-4]-\d{3}$/;
+const VALIDATOR_ID_PATTERN = /^L[0-4]-\d{3}$/;
 
 /** バリデータID -> バリデータ名のマップ */
 const VALIDATOR_NAME_MAP: Record<string, string> = {
+  'L0-001': 'fuse-hook-config',
+  'L0-002': 'fuse-mount-status',
   'L1-017': 'it-test-mock-detection',
   'L1-018': 'stub-comment-detection',
   'L2-001': 'phase-gate',
@@ -45,12 +47,12 @@ const VALID_IDS = new Set(Object.keys(VALIDATOR_NAME_MAP));
 
 export class ValidatorId {
   readonly value: string;
-  readonly layer: 'L1' | 'L2' | 'L3' | 'L4';
+  readonly layer: 'L0' | 'L1' | 'L2' | 'L3' | 'L4';
   readonly sequence: string;
 
   private constructor(value: string) {
     this.value = value;
-    this.layer = value.substring(0, 2) as 'L1' | 'L2' | 'L3' | 'L4';
+    this.layer = value.substring(0, 2) as 'L0' | 'L1' | 'L2' | 'L3' | 'L4';
     this.sequence = value.substring(3);
     Object.freeze(this);
   }
@@ -73,7 +75,7 @@ export class ValidatorId {
     return new ValidatorId(id);
   }
 
-  getLayer(): 'L1' | 'L2' | 'L3' | 'L4' {
+  getLayer(): 'L0' | 'L1' | 'L2' | 'L3' | 'L4' {
     return this.layer;
   }
 
