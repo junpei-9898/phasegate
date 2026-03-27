@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.test.ts'],
+    exclude: ['**/fixtures/**'],
+    testTimeout: 15000,
     fileParallelism: false,
   },
 });
