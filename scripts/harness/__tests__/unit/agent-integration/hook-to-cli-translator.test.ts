@@ -348,6 +348,139 @@ target('HookToCliTranslator', () => {
         });
       });
 
+      context('Readツールでフェーズゲート対象ファイルにアクセスする場合', () => {
+        // UT-HTC-050 (BUG-03)
+        it('toolName=Readのとき フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Read',
+            targetFilePaths: ['scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+
+      context('Grepツールでフェーズゲート対象ファイルにアクセスする場合', () => {
+        // UT-HTC-051 (BUG-03)
+        it('toolName=Grepのとき フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['domain_model.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Grep',
+            targetFilePaths: ['scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+
+      context('Globツールでフェーズゲート対象ファイルにアクセスする場合', () => {
+        // UT-HTC-052 (BUG-03)
+        it('toolName=Globのとき フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts();
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Glob',
+            targetFilePaths: ['scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+
+      context('Writeツールでフェーズゲート不合格ファイルに書き込む場合', () => {
+        // UT-HTC-053 (BUG-03 — Writeは従来通りブロックされることを確認)
+        it('toolName=Writeのとき フェーズゲートチェックが実行されshouldBlock=trueを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Write',
+            targetFilePaths: ['docs/product/construction/agent-integration/logical_design.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      context('Editツールでフェーズゲート不合格ファイルに書き込む場合', () => {
+        // UT-HTC-054 (BUG-03 — Editは従来通りブロックされることを確認)
+        it('toolName=Editのとき フェーズゲートチェックが実行されshouldBlock=trueを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['domain_model.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Edit',
+            targetFilePaths: ['docs/product/construction/agent-integration/domain_model.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
       context('__tests__配下のみが変更対象の場合', () => {
         // UT-HTC-046 / UT-BV-023
         it('__tests__配下のパスがすべてfromPath()でnullになるとき shouldBlock=falseを返すこと', async () => {

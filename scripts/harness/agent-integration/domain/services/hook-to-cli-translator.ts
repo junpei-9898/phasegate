@@ -212,13 +212,27 @@ export class AsyncHookToCliTranslator {
     throw new UnsupportedHookTypeError((hookEvent as HookEvent).hookType);
   }
 
+  private static readonly WRITE_TOOLS: ReadonlySet<string> = new Set([
+    'Write', 'Edit', 'NotebookEdit', 'str_replace_editor',
+  ]);
+
   private async translatePreToolUse(event: PreToolUseEvent): Promise<HookTranslationResult> {
+    // Step 1: Protected file check (applies to all tools)
     const additionalPatterns = await this.configQueryPort.getProtectedFilePatterns();
     const protectedFileList = ProtectedFileList.createWithAdditional(additionalPatterns);
 
     const blockedPath = event.targetFilePaths.find((fp) => protectedFileList.matches(fp));
     if (blockedPath !== undefined) {
       return HookTranslationResult.block();
+    }
+
+    // Step 2: Phase gate check (applies only to write tools)
+    if (!AsyncHookToCliTranslator.WRITE_TOOLS.has(event.toolName)) {
+      return HookTranslationResult.create({
+        shouldBlock: false,
+        cliArgs: [],
+        expectedExitCode: 0,
+      });
     }
 
     const projectPaths = await (this.configQueryPort as ConfigQueryPort & {
