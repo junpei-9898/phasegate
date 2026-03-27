@@ -2,9 +2,10 @@
 
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
-> **最終更新**: 2026-03-19（Wave 2 初版）
+> **最終更新**: 2026-03-28（v2.2.0 フェーズゲート統合拡張）
 > **Wave**: 2（品質検証レイヤー）
 > **対応ストーリー**: H11-01〜H11-04
+> **v2.2.0変更**: フェーズゲート統合拡張（WriteTargetScope, ProjectPaths, PhaseGateQueryResult, PhaseGateQueryPort追加）
 > **横断契約参照**: cross_cutting_decisions.md §2（Layer語彙）, §4（Shared Kernel最小化）, §6（集約降格）
 
 ---
@@ -20,7 +21,10 @@
 | ProtectedFileList | 値オブジェクト | PreToolUseでブロック対象とするファイルパスパターンリスト（matches()メソッド付き） |
 | HookTranslationResult | 値オブジェクト | HookEvent→CLIコマンド変換結果（shouldBlock/cliCommand?/cliArgs/expectedExitCode/skipReason?/timeoutMs?） |
 | FallbackCapabilitySpec | 値オブジェクト | CLI/FSフォールバック仕様の宣言（supportedCommands[]/noAgentApiImports） |
-| HookToCliTranslator | ドメインサービス | HookEvent→HookTranslationResult変換。Hook種別ごとの変換ルールを担う |
+| WriteTargetScope | 値オブジェクト | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持（v2.2.0追加） |
+| ProjectPaths | 値オブジェクト | `harness.config.json` の `project.paths` セクションを型安全に保持。`source: string[]`, `docs.construction: string`, `docs.inception: string`（v2.2.0追加） |
+| PhaseGateQueryResult | 値オブジェクト | フェーズゲート検査結果。`passed: boolean`, `blockers: string[]`, `warnings: string[]` を保持（v2.2.0追加） |
+| HookToCliTranslator | ドメインサービス | HookEvent→HookTranslationResult変換。Hook種別ごとの変換ルールを担う。v2.2.0でPreToolUseにStep 2（フェーズゲートチェック）追加 |
 | FallbackVerificationService | ドメインサービス | FallbackCapabilitySpecに基づくcoreモジュールのエージェント非依存性検証 |
 
 ### 他Unitから受け取るShared Kernel
@@ -28,7 +32,7 @@
 | 型名 | 所有Unit | 自Unitでの扱い | 変更可否 |
 |------|---------|---------------|---------|
 | HarnessError | harness-error | Hook Adapterのエラー出力にHarnessError型を使用 | 読取専用 |
-| HarnessConfigV2 | config-foundation | Hook有効/無効設定・保護対象ファイル設定をConfigQueryPort経由で参照 | 読取専用 |
+| HarnessConfigV2 | config-foundation | Hook有効/無効設定・保護対象ファイル設定・プロジェクトパス設定をConfigQueryPort経由で参照 | 読取専用 |
 
 ### 他Unitから受け取るCross-Unit Contract
 
@@ -37,6 +41,7 @@
 | CommandName | harness-api | HookTranslationResultのcliCommandフィールドで使用 |
 | ExitCode | harness-api | HookTranslationResultのexpectedExitCodeフィールドで使用 |
 | HarnessApiResponse | harness-api | infrastructure層でCLI実行後のレスポンス解析に使用（ドメイン層では不使用） |
+| checkPhaseGateCommandHandler | phase-dependency-model | PhaseGateQueryAdapter経由でフェーズゲート検査を実行（v2.2.0追加） |
 
 ### 他Unitへ公開する契約
 
@@ -85,6 +90,9 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | ProtectedFileList | ✓ | ✓ | patterns: string[]（1件以上必須）+ matches(filePath: string): boolean |
 | HookTranslationResult | ✓ | ✓ | shouldBlock: boolean, cliCommand?: CommandName, cliArgs: string[], expectedExitCode: ExitCode, skipReason?: SkipReason, timeoutMs?: number |
 | FallbackCapabilitySpec | ✓ | ✓ | supportedCommands: CommandName[]（1件以上必須）, noAgentApiImports: boolean |
+| WriteTargetScope | ✓ | ✓ | level: PhaseGateLevel, unitId?: string, storyId?: string。fromPath()静的ファクトリでファイルパスからスコープを推定（v2.2.0追加） |
+| ProjectPaths | ✓ | ✓ | source: string[]（1件以上必須）, docs.construction: string, docs.inception: string（v2.2.0追加） |
+| PhaseGateQueryResult | ✓ | ✓ | passed: boolean, blockers: readonly string[], warnings: readonly string[]。passed=falseの場合blockers 1件以上必須（v2.2.0追加） |
 
 ### 補助型
 
@@ -95,12 +103,13 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | PreToolUseEvent | `{ hookType: 'pre-tool-use', toolName: string, targetFilePaths: string[] }` |
 | PostToolUseEvent | `{ hookType: 'post-tool-use', toolName: string, affectedFilePaths: string[] }` |
 | StopEvent | `{ hookType: 'stop', sessionId: string }` |
+| PhaseGateLevel | `1 \| 2 \| 3`（v2.2.0追加） |
 
 ### ドメインサービス
 
 | サービス | 責務 | 参照するポート |
 |---------|------|--------------|
-| HookToCliTranslator | HookEvent → HookTranslationResult変換。Hook種別ごとの変換ルールを担う:<br>・PreToolUse: ProtectedFileList照合 → ブロック判定<br>・PostToolUse: `harness:lint` / `harness:lint --fast` コマンド指定（timeoutMs: 500）<br>・Stop: ReentryGuard.isActive()チェック → `harness:complete-check` コマンド指定 | ReentryGuardStatePort, CliCommandRegistryPort, ConfigQueryPort |
+| HookToCliTranslator | HookEvent → HookTranslationResult変換。Hook種別ごとの変換ルールを担う:<br>・PreToolUse Step 1: ProtectedFileList照合 → ブロック判定<br>・PreToolUse Step 2: WriteTargetScope推定 → PhaseGateQueryPort.checkGate() → フェーズゲートブロック判定（v2.2.0追加）<br>・PostToolUse: `harness:lint` / `harness:lint --fast` コマンド指定（timeoutMs: 500）<br>・Stop: ReentryGuard.isActive()チェック → `harness:complete-check` コマンド指定 | ReentryGuardStatePort, CliCommandRegistryPort, ConfigQueryPort, PhaseGateQueryPort |
 | FallbackVerificationService | FallbackCapabilitySpecに基づくcoreモジュールのエージェント非依存性検証。violation時にHarnessError[]を返す | ImportAnalyzerPort |
 
 ---
@@ -114,7 +123,8 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | ReentryGuardStatePort | `stop_hook_active` フラグの読み書き（環境変数 or 一時ファイル） | ReentryGuard（エンティティ） |
 | ImportAnalyzerPort | coreモジュールのimport解析（エージェント固有API参照チェック） | FallbackVerificationService |
 | CliCommandRegistryPort | harness-apiのCLI Command Registryから有効なCommandName一覧取得 | HookToCliTranslator |
-| ConfigQueryPort | HarnessConfigV2からHook有効/無効設定・保護対象ファイルパターン取得 | HookToCliTranslator |
+| ConfigQueryPort | HarnessConfigV2からHook有効/無効設定・保護対象ファイルパターン・プロジェクトパス取得。v2.2.0で `getProjectPaths(): ProjectPaths` 追加、`checkDesignDocsExist()` 削除 | HookToCliTranslator |
+| PhaseGateQueryPort | phase-dependency-modelの `checkPhaseGate()` を呼び出す契約。`checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult>`（v2.2.0追加） | HookToCliTranslator（AsyncHookToCliTranslator） |
 
 ---
 
@@ -129,13 +139,21 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | INV-3 | HookTranslationResult | `skipReason`が存在する場合、`cliCommand`はundefined |
 | INV-4 | ProtectedFileList | `patterns`は1件以上（空リストは不正） |
 | INV-5 | FallbackCapabilitySpec | `supportedCommands`は1件以上 |
+| INV-6 | WriteTargetScope | `level`は1, 2, 3のいずれか |
+| INV-7 | WriteTargetScope | `level=1`の場合、`unitId`と`storyId`はundefined |
+| INV-8 | WriteTargetScope | `level=2`の場合、`unitId`は必須かつ`storyId`はundefined |
+| INV-9 | WriteTargetScope | `level=3`の場合、`unitId`は必須 |
+| INV-10 | ProjectPaths | `source`は1件以上のエントリを持つ |
+| INV-11 | ProjectPaths | `docs.construction`と`docs.inception`は非空文字列 |
+| INV-12 | PhaseGateQueryResult | `passed=false`の場合、`blockers`は1件以上 |
 
 ### HookToCliTranslatorの変換ルール
 
 | HookEvent種別 | 変換ロジック | 出力 |
 |--------------|------------|------|
-| PreToolUseEvent | ProtectedFileList.matches(targetFilePath)がtrueならブロック | `{ shouldBlock: true, cliCommand: undefined }` |
-| PreToolUseEvent | 保護対象外ファイルの場合 | `{ shouldBlock: false, cliCommand: undefined }` |
+| PreToolUseEvent | Step 1: ProtectedFileList.matches(targetFilePath)がtrueならブロック | `{ shouldBlock: true, cliCommand: undefined }` |
+| PreToolUseEvent | Step 2: WriteTargetScope.fromPath()でスコープ推定 → PhaseGateQueryPort.checkGate()でゲート不通過ならブロック（v2.2.0追加） | `{ shouldBlock: true, cliCommand: undefined }` |
+| PreToolUseEvent | Step 2: スコープ外（fromPath()がnull）またはゲート通過の場合 | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | ConfigQueryPort.isEnabled('post-tool-use')がfalseの場合 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
 | PostToolUseEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
 | StopEvent | ReentryGuard.isActive()がtrueの場合 | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
@@ -176,10 +194,16 @@ deactivate()
   Stop        { sessionId }
          ↓
 HookToCliTranslator.translate(hookEvent)
-  ├── [PreToolUse]
-  │   ConfigQueryPort → 保護対象パターン取得
-  │   ProtectedFileList.matches(targetFilePaths) → ブロック判定
-  │   → HookTranslationResult { shouldBlock: true/false }
+  ├── [PreToolUse]（v2.2.0 2-step flow）
+  │   Step 1: ConfigQueryPort → 保護対象パターン取得
+  │           ProtectedFileList.matches(targetFilePaths) → ブロック判定
+  │           → shouldBlock=true の場合即return
+  │   Step 2: ConfigQueryPort.getProjectPaths() → ProjectPaths取得
+  │           WriteTargetScope.fromPath(filePath, projectPaths) → スコープ推定
+  │           → scope=null（スコープ外）の場合: HookTranslationResult { shouldBlock: false }
+  │           → scope!=null の場合: PhaseGateQueryPort.checkGate(scope)
+  │              → !hasPassed(): HookTranslationResult { shouldBlock: true }
+  │              → hasPassed():  HookTranslationResult { shouldBlock: false }
   │
   ├── [PostToolUse]
   │   ConfigQueryPort → Hook有効/無効チェック
@@ -231,6 +255,22 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 
 500msタイムアウトはH11-03の受け入れ基準で定義された業務要件（「PostToolUse Hookは500ms以内に完了すべき」）であり、ドメイン層での宣言的定義が適切。実際のタイムアウト制御はinfrastructure層のCliExecutorPort実装が担う。
 
+### D6: WriteTargetScopeをVOとして定義（v2.2.0）
+
+ファイルパスからフェーズゲートスコープを推定する責務を `WriteTargetScope.fromPath()` 静的ファクトリメソッドに集約した。`WriteTargetClassifier` ドメインサービスの導入は検討したが、サービス化は過剰と判断しVOの静的メソッドで十分とした。`ProjectPaths` を引数に取ることで `harness.config.json` のパス設定に動的に対応する。
+
+### D7: ConfigQueryPort.getProjectPaths()を同期メソッドとして定義（v2.2.0）
+
+`getProjectPaths()` は `ProjectPaths` を同期的に返す。理由: `harness.config.json` は起動時に1回読み込みキャッシュするため、非同期にする必要がない。`isHookEnabled()` / `getProtectedFilePatterns()` が `Promise` を返すのは歴史的経緯であり、新規メソッドでは不要な非同期性を避けた。
+
+### D8: PhaseGateQueryPortの動的importパターン（v2.2.0）
+
+`PhaseGateQueryAdapter` は `await import('../../../phase-dependency-model/composition-root.js')` で phase-dependency-model を動的にロードする。validator-system の `PhaseDependencyPhaseGatePolicyAdapter` と同じパターンを踏襲し、静的import による循環依存を回避する。import失敗時は安全側（passed=true, warning付き）にフォールバックする。
+
+### D9: AsyncHookToCliTranslatorのみにStep 2を追加（v2.2.0）
+
+同期版 `HookToCliTranslator` にはStep 2（フェーズゲートチェック）を追加しない。理由: Step 2は `PhaseGateQueryPort.checkGate()` が非同期であるため、同期版では実装不可能。同期版はユニットテストでのみ使用されており、本番のpre-tool-use hookは全て `AsyncHookToCliTranslator` 経由で実行される。
+
 ---
 
 ## 8. 品質評価（engineering-perspective）
@@ -250,8 +290,14 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 
 ### シンプルさ評価
 
-- 集約なし・エンティティ1つ・VO4つ・ドメインサービス2つのシンプルな構成
+- 集約なし・エンティティ1つ・VO7つ（v2.2.0で+3）・ドメインサービス2つの構成
 - 「薄いAdapter層」の原則に従い、バリデーションロジックはharness-api側に委譲
 - ReentryGuardのライフサイクルが1ファイルで完結する設計
+- v2.2.0の追加VO（WriteTargetScope, ProjectPaths, PhaseGateQueryResult）は既存概念との結合度が低く、フェーズゲート機能のON/OFFに影響しない
+
+### SOLID評価（v2.2.0追加分）
+
+- **OCP**: PhaseGateQueryPortの追加により、フェーズゲート検査の実装を差し替え可能。既存のProtectedFileListブロック機構に手を入れずに拡張できた
+- **ISP**: PhaseGateQueryPortは`checkGate()`の単一メソッドのみ。ConfigQueryPortに`getProjectPaths()`を追加したがインターフェース肥大化は最小限
 
 **評価結果**: 問題なし。設計を確定する。

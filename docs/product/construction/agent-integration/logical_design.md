@@ -18,7 +18,7 @@
 
 | 層 | 責務 | 主な構成要素 | 依存先 |
 |----|------|-------------|--------|
-| Domain | ReentryGuardの状態遷移管理、HookEvent→HookTranslationResult変換ルール、ProtectedFileListによるブロック判定、FallbackCapabilitySpec宣言と検証ルール | ReentryGuard（エンティティ）、値オブジェクト群、HookToCliTranslator、FallbackVerificationService、ドメインポート4本 | なし |
+| Domain | ReentryGuardの状態遷移管理、HookEvent→HookTranslationResult変換ルール、ProtectedFileListによるブロック判定、WriteTargetScopeによるフェーズゲートスコープ推定（v2.2.0）、FallbackCapabilitySpec宣言と検証ルール | ReentryGuard（エンティティ）、値オブジェクト群（v2.2.0: +WriteTargetScope/ProjectPaths/PhaseGateQueryResult）、HookToCliTranslator、FallbackVerificationService、ドメインポート5本（v2.2.0: +PhaseGateQueryPort） | なし |
 | Application | ドメインモデルを使ったユースケース調停。フォールバック検証・Hook処理・ReentryGuardライフサイクル管理の各フローをオーケストレーション | UseCase×4、DTO、Mapper | Domain |
 | Infrastructure | ドメインポート実装。ReentryGuardStatePort（環境変数/tmpファイル）、ImportAnalyzerPort（AST解析）、CliCommandRegistryPort（harness-api参照）、CliExecutorPort（CLIコマンド実行）、ConfigQueryPort（設定取得） | Adapter×5 | Application, Domain |
 | Presentation | Claude Code Hook入力受付、HookTranslationResultに基づくブロック/スキップ/CLI実行の制御。Hook登録エントリポイントの提供 | Hook Adapter×3（PreToolUse/PostToolUse/Stop） | Application, Domain |
@@ -63,11 +63,15 @@ scripts/harness/
     │   │   ├── hook-event.ts
     │   │   ├── protected-file-list.ts
     │   │   ├── hook-translation-result.ts
-    │   │   └── fallback-capability-spec.ts
+    │   │   ├── fallback-capability-spec.ts
+    │   │   ├── write-target-scope.ts          # v2.2.0追加
+    │   │   ├── project-paths.ts               # v2.2.0追加
+    │   │   └── phase-gate-query-result.ts     # v2.2.0追加
     │   ├── types/
     │   │   ├── hook-type.ts
     │   │   ├── skip-reason.ts
-    │   │   └── hook-event-payloads.ts
+    │   │   ├── hook-event-payloads.ts
+    │   │   └── phase-gate-level.ts            # v2.2.0追加
     │   ├── services/
     │   │   ├── hook-to-cli-translator.ts
     │   │   └── fallback-verification-service.ts
@@ -76,12 +80,15 @@ scripts/harness/
     │   │   ├── reentry-guard-already-active-error.ts
     │   │   ├── protected-file-list-empty-error.ts
     │   │   ├── fallback-capability-violation-error.ts
-    │   │   └── unsupported-hook-type-error.ts
+    │   │   ├── unsupported-hook-type-error.ts
+    │   │   ├── project-paths-invariant-error.ts        # v2.2.0追加
+    │   │   └── write-target-scope-invariant-error.ts   # v2.2.0追加
     │   └── ports/
     │       ├── reentry-guard-state-port.ts
     │       ├── import-analyzer-port.ts
     │       ├── cli-command-registry-port.ts
-    │       └── config-query-port.ts
+    │       ├── config-query-port.ts
+    │       └── phase-gate-query-port.ts       # v2.2.0追加
     ├── application/
     │   ├── dto/
     │   │   ├── verify-fallback-capability-input.ts
@@ -106,6 +113,7 @@ scripts/harness/
     │   │   ├── ts-morph-import-analyzer-adapter.ts
     │   │   ├── harness-api-cli-command-registry-adapter.ts
     │   │   ├── harness-config-config-query-adapter.ts
+    │   │   ├── phase-gate-query-adapter.ts    # v2.2.0追加
     │   │   └── child-process-cli-executor-adapter.ts
     │   └── ports/
     │       └── cli-executor-port.ts
@@ -127,7 +135,10 @@ scripts/harness/__tests__/
 │       │   ├── hook-event.test.ts
 │       │   ├── protected-file-list.test.ts
 │       │   ├── hook-translation-result.test.ts
-│       │   └── fallback-capability-spec.test.ts
+│       │   ├── fallback-capability-spec.test.ts
+│       │   ├── write-target-scope.test.ts         # v2.2.0追加
+│       │   ├── project-paths.test.ts              # v2.2.0追加
+│       │   └── phase-gate-query-result.test.ts    # v2.2.0追加
 │       ├── services/
 │       │   ├── hook-to-cli-translator.test.ts
 │       │   └── fallback-verification-service.test.ts
@@ -140,6 +151,7 @@ scripts/harness/__tests__/
     └── agent-integration/
         ├── env-file-reentry-guard-state-adapter.test.ts
         ├── harness-config-config-query-adapter.test.ts
+        ├── phase-gate-query-adapter.test.ts           # v2.2.0追加
         └── hook-flow-integration.test.ts
 ```
 
@@ -358,6 +370,90 @@ package-lock.json
 - `supportedCommands` が空配列の場合は `FallbackCapabilityViolationError`
 - `CommandName` に `'harness:'` プレフィックスがない場合は不正入力として弾く
 
+#### 2.2.5 WriteTargetScope（v2.2.0追加）
+
+| 属性 | 型 | 説明 | 必須 |
+|------|----|------|------|
+| level | `PhaseGateLevel` | フェーズゲートレベル（1, 2, 3） | Yes |
+| unitId | `string \| undefined` | 対象ユニットID | level=2,3のみ |
+| storyId | `string \| undefined` | 対象ストーリーID | level=3のみ（任意） |
+
+**生成ルール**
+
+- `level=1` の場合、`unitId` と `storyId` は undefined（INV-7）
+- `level=2` の場合、`unitId` は必須、`storyId` は undefined（INV-8）
+- `level=3` の場合、`unitId` は必須（INV-9）
+- `level` は 1, 2, 3 のいずれか（INV-6）
+
+**メソッド**
+
+- `static create(level, unitId?, storyId?): WriteTargetScope` — 不変条件検証付きファクトリ
+- `static fromPath(filePath: string, projectPaths: ProjectPaths): WriteTargetScope | null` — ファイルパスからスコープを推定
+- `getLevel(): PhaseGateLevel`
+- `getUnitId(): string | undefined`
+- `getStoryId(): string | undefined`
+- `equals(other: WriteTargetScope): boolean`
+
+**fromPath() パス推定ルール（R1-R8）**
+
+| ルール | パスパターン | Level | unitId | storyId |
+|--------|------------|-------|--------|---------|
+| R1 | `{source[n]}/{unitId}/**`（`__tests__/` 除く） | 3 | ✓ | — |
+| R2 | `{source[n]}/{unitId}/__tests__/**` | null | — | — |
+| R3 | `{docs.construction}/{unitId}/**` | 2 | ✓ | — |
+| R4 | `{docs.inception}/{unitId}/{storyId}/**` | 3 | ✓ | ✓ |
+| R5 | `{docs.inception}/{unitId}/**`（storyIdなし） | 2 | ✓ | — |
+| R6 | `{docs.inception}/_shared/**` | 1 | — | — |
+| R7 | Level 1 確定文書パス | 1 | — | — |
+| R8 | 上記いずれにも該当しない | null | — | — |
+
+#### 2.2.6 ProjectPaths（v2.2.0追加）
+
+| 属性 | 型 | 説明 | 必須 |
+|------|----|------|------|
+| source | `readonly string[]` | ソースコードルートパス（1件以上） | Yes |
+| docs.construction | `string` | 確定設計文書ルートパス | Yes |
+| docs.inception | `string` | 設計計画文書ルートパス | Yes |
+
+**生成ルール**
+
+- `source` は1件以上（INV-10）
+- `docs.construction` と `docs.inception` は非空文字列（INV-11）
+
+**メソッド**
+
+- `static create(source: string[], docs: { construction: string; inception: string }): ProjectPaths`
+- `getSource(): readonly string[]`
+- `getDocsConstruction(): string`
+- `getDocsInception(): string`
+- `equals(other: ProjectPaths): boolean`
+
+**デフォルト値（HarnessConfigConfigQueryAdapterでのフォールバック）**
+
+- source: `['scripts/harness']`
+- docs.construction: `'docs/product/construction'`
+- docs.inception: `'docs/inception'`
+
+#### 2.2.7 PhaseGateQueryResult（v2.2.0追加）
+
+| 属性 | 型 | 説明 | 必須 |
+|------|----|------|------|
+| passed | `boolean` | ゲート通過フラグ | Yes |
+| blockers | `readonly string[]` | ブロック理由（passed=falseの場合1件以上） | Yes |
+| warnings | `readonly string[]` | 警告メッセージ | Yes（空配列可） |
+
+**生成ルール**
+
+- `passed=false` の場合、`blockers` は1件以上必須（INV-12）
+
+**メソッド**
+
+- `static create(passed, blockers, warnings): PhaseGateQueryResult`
+- `hasPassed(): boolean`
+- `getBlockers(): readonly string[]`
+- `getWarnings(): readonly string[]`
+- `equals(other: PhaseGateQueryResult): boolean`
+
 ### 2.3 補助型定義
 
 #### HookType
@@ -387,17 +483,25 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
 - `reentryGuard: ReentryGuard`
 - `cliCommandRegistryPort: CliCommandRegistryPort`
 - `configQueryPort: ConfigQueryPort`
+- `phaseGateQueryPort: PhaseGateQueryPort`（v2.2.0追加、AsyncHookToCliTranslatorのみ）
 
 ##### `translate(hookEvent: HookEvent): Promise<HookTranslationResult>`
 
 - 入力: `hookEvent: HookEvent`
 - 出力: `Promise<HookTranslationResult>`
-- 処理フロー（PreToolUse）:
+- 処理フロー（PreToolUse — v2.2.0で2-step化）:
+  Step 1（保護ファイルチェック）:
   1. `configQueryPort.getProtectedFilePatterns()` で追加保護パターンを取得する
   2. `ProtectedFileList.createWithAdditional(additionalPatterns)` で保護リストを生成する
   3. `hookEvent.targetFilePaths` の各パスを `protectedFileList.matches()` で判定する
   4. 1件でも一致があれば `HookTranslationResult.block()` を返す
-  5. 一致がなければ `HookTranslationResult.execute(undefined, [], 0)` を返す（パス）
+  Step 2（フェーズゲートチェック — v2.2.0追加、AsyncHookToCliTranslatorのみ）:
+  5. `configQueryPort.getProjectPaths()` で `ProjectPaths` を取得する
+  6. `hookEvent.targetFilePaths` の各パスに対し `WriteTargetScope.fromPath(filePath, projectPaths)` でスコープを推定する
+  7. いずれのパスもスコープ外（null）の場合は `HookTranslationResult.create({ shouldBlock: false, ... })` を返す
+  8. スコープが検出された場合、`phaseGateQueryPort.checkGate(detectedScope)` を呼び出す
+  9. `!phaseGateResult.hasPassed()` の場合は `HookTranslationResult.block()` を返す
+  10. ゲート通過の場合は `HookTranslationResult.create({ shouldBlock: false, ... })` を返す
 - 処理フロー（PostToolUse）:
   1. `configQueryPort.isHookEnabled('post-tool-use')` で有効/無効を確認する
   2. 無効の場合は `HookTranslationResult.skip('HOOK_DISABLED')` を返す
@@ -416,8 +520,10 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
 
 | HookEvent種別 | 条件 | 変換結果 |
 |--------------|------|---------|
-| PreToolUseEvent | `protectedFileList.matches(targetFilePath)=true` | `{ shouldBlock: true }` |
-| PreToolUseEvent | 保護対象外 | `{ shouldBlock: false, cliCommand: undefined }` |
+| PreToolUseEvent | Step 1: `protectedFileList.matches(targetFilePath)=true` | `{ shouldBlock: true }` |
+| PreToolUseEvent | Step 2: `WriteTargetScope.fromPath()=null`（スコープ外） | `{ shouldBlock: false, cliCommand: undefined }` |
+| PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=false` | `{ shouldBlock: true }` |
+| PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=true` | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | `isEnabled('post-tool-use')=false` | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
 | PostToolUseEvent | 通常 | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
 | StopEvent | `reentryGuard.isActive()=true` | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
@@ -523,6 +629,7 @@ export interface CliCommandRegistryPort {
 export interface ConfigQueryPort {
   isHookEnabled(hookType: HookType): Promise<boolean>;
   getProtectedFilePatterns(): Promise<string[]>;
+  getProjectPaths(): ProjectPaths;  // v2.2.0追加（同期メソッド — D7参照）
 }
 ```
 
@@ -530,10 +637,27 @@ export interface ConfigQueryPort {
 |---------|------|------|------|
 | `isHookEnabled` | `hookType: HookType` | `Promise<boolean>` | HarnessConfigV2のHarnesses設定からHook有効/無効を読み取る |
 | `getProtectedFilePatterns` | なし | `Promise<string[]>` | HarnessConfigV2から追加保護対象ファイルパターンを返す（デフォルトパターンは除く） |
+| `getProjectPaths` | なし | `ProjectPaths` | HarnessConfigV2の`project.paths`セクションからProjectPaths VOを返す（v2.2.0追加） |
+
+**v2.2.0変更**: `checkDesignDocsExist()` を削除し、`getProjectPaths()` を追加。ハードコードされた設計文書存在チェックをconfig駆動のパス解決に置換した。
 
 **消費するShared Kernel**: `HarnessConfigV2`（config-foundation所有）
 
-### 3.5 ポート設計上のルール
+### 3.5 PhaseGateQueryPort（v2.2.0追加）
+
+```typescript
+export interface PhaseGateQueryPort {
+  checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult>;
+}
+```
+
+| メソッド | 入力 | 出力 | 説明 |
+|---------|------|------|------|
+| `checkGate` | `scope: WriteTargetScope` | `Promise<PhaseGateQueryResult>` | phase-dependency-modelの`checkPhaseGate()`を呼び出し、指定スコープのフェーズゲート通過状態を返す |
+
+**消費するCross-Unit Contract**: phase-dependency-modelの`checkPhaseGateCommandHandler`（動的import経由）
+
+### 3.6 ポート設計上のルール
 
 - Port の戻り値はDomainが理解できる値オブジェクトかプリミティブに限定する
 - `CommandName` / `ExitCode` / `HarnessApiResponse` はinfrastructure層での型参照のみに留め、Portインターフェースのシグネチャには露出しない
@@ -598,11 +722,14 @@ export interface ConfigQueryPort {
 
 ### 4.3 HandlePreToolUseUseCase（H11-02対応）
 
-**責務**: H11-02「PreToolUse Hook処理」のオーケストレーション。保護対象ファイルへの変更をブロックする。
+**責務**: H11-02「PreToolUse Hook処理」のオーケストレーション。保護対象ファイルへの変更およびフェーズゲート違反をブロックする。v2.2.0で`AsyncHookToCliTranslator`を使用する薄いオーケストレータに再構成。
 
 **コンストラクタ依存**
 
-- `hookToCliTranslator: HookToCliTranslator`
+- `configQueryPort: ConfigQueryPort`
+- `phaseGateQueryPort: PhaseGateQueryPort`（v2.2.0追加）
+
+内部で `AsyncHookToCliTranslator` を生成し、全ての変換ロジックを委譲する（D9参照）。
 
 **入力**
 
@@ -619,13 +746,16 @@ export interface ConfigQueryPort {
 |------|----|------|
 | shouldBlock | `boolean` | ブロックすべきか |
 | blockedFilePath | `string \| undefined` | ブロック対象のファイルパス（最初の一致） |
+| error | `{ message: string } \| undefined` | エラーメッセージ（v2.2.0追加） |
+| phaseGateBlockers | `string[] \| undefined` | フェーズゲートブロック理由（v2.2.0追加） |
 
 **処理フロー**
 
-1. `HookEvent.createPreToolUse(toolName, targetFilePaths)` でHookEventを生成する
-2. `hookToCliTranslator.translate(hookEvent)` を呼び出す
-3. `result.shouldBlock` が true の場合、最初にマッチしたファイルパスを `blockedFilePath` として返す
-4. `HandlePreToolUseOutput` に投影する
+1. 入力バリデーション（`toolName` 空文字チェック）
+2. `HookEvent.createPreToolUse(toolName, targetFilePaths)` でHookEventを生成する
+3. `asyncHookToCliTranslator.translate(hookEvent)` を呼び出す（Step 1 + Step 2を内部で実行）
+4. `result.shouldBlock` が true の場合、保護ファイルリストを再取得して最初にマッチしたファイルパスを `blockedFilePath` として特定する
+5. `HandlePreToolUseOutput` に投影する
 
 **例外**
 
@@ -826,13 +956,46 @@ export interface ConfigQueryPort {
 - `isHookEnabled('pre-tool-use')`: `config.harnesses.agentLessonCollection` を参照（Wave 2でのマッピング）
 - `isHookEnabled('post-tool-use')`: `config.harnesses.cascadeUpdate` を参照（Wave 2でのマッピング）
 - `getProtectedFilePatterns()`: Wave 2 ではカスタムパターンは空配列を返す（拡張ポイントとして定義のみ）
+- `getProjectPaths()`: `project.paths` セクションから `ProjectPaths` VOを同期的に返す。未設定時はデフォルト値にフォールバック（v2.2.0追加）
+
+**デフォルト値（v2.2.0）**
+
+| 設定キー | デフォルト値 |
+|---------|------------|
+| `project.paths.source` | `['scripts/harness']` |
+| `project.paths.docs.construction` | `'docs/product/construction'` |
+| `project.paths.docs.inception` | `'docs/inception'` |
 
 **設計注意点**
 
 - Hook有効/無効を `HarnessConfigV2` の既存フィールドにマッピングする暫定実装
 - Wave 3 以降で `harnesses` セクションに `hooks` サブセクションが追加された場合、このadapterの内部実装のみ差し替える
+- v2.2.0: `loadConfig()` を同期化（`fs.readFileSync`）しキャッシュ付き。`getProjectPaths()` が同期メソッドのため
 
-### 5.5 ChildProcessCliExecutorAdapter
+### 5.5 PhaseGateQueryAdapter（v2.2.0追加）
+
+**実装ポート**: `PhaseGateQueryPort`
+
+**ファイルパス**: `scripts/harness/agent-integration/infrastructure/adapters/phase-gate-query-adapter.ts`
+
+**利用するCross-Unit契約**: phase-dependency-modelの`createPhaseDependencyModelModule()`
+
+**実装方針**
+
+- validator-systemの`PhaseDependencyPhaseGatePolicyAdapter`と同じ動的importパターンを踏襲（D8参照）
+- `await import('../../../phase-dependency-model/composition-root.js')` でphase-dependency-modelをロード
+- `checkPhaseGateCommandHandler.execute({ targetLevel, unitId, storyId })` を呼び出す
+- WriteTargetScope から `targetLevel`, `unitId`, `storyId` を抽出して渡す
+- exitCode 0 → `PhaseGateQueryResult.create(true, [], [])` （通過）
+- exitCode 1 → `PhaseGateQueryResult.create(false, blockers, [])` （不通過）
+- import失敗時 → `PhaseGateQueryResult.create(true, [], ['phase-dependency-model import failed'])` （安全側フォールバック）
+
+**エラー処理**
+
+- 動的import失敗: warning付きの通過結果を返す（phase-dependency-modelが未インストールの環境でもハーネスが停止しない）
+- checkPhaseGateCommandHandler実行エラー: warning付きの通過結果を返す
+
+### 5.6 ChildProcessCliExecutorAdapter
 
 **実装ポート**: `CliExecutorPort`（infrastructure層ローカルポート）
 
@@ -932,11 +1095,13 @@ Claude Code が渡すPreToolUse Hookペイロード:
 
 1. stdin から JSON を読み取る
 2. `toolName` と `targetFilePaths` を抽出する（`tool_input.path` または複数パス）
-3. `HandlePreToolUseUseCase.execute({ toolName, targetFilePaths })` を呼び出す
-4. `output.shouldBlock=true` の場合:
-   - stderr に「ファイル保護によりブロック」のメッセージを出力する
-   - exit code 2 で終了する（Claude Code はHook exit code 2 をブロックとして解釈する）
-5. `output.shouldBlock=false` の場合:
+3. `findConfigPath()` で `harness.config.json` を探索する
+4. `HarnessConfigConfigQueryAdapter` と `PhaseGateQueryAdapter` を生成する（v2.2.0）
+5. `HandlePreToolUseUseCase.execute({ toolName, targetFilePaths })` を呼び出��
+6. `output.shouldBlock=true` の場合:
+   - stderr に「保護対象ファイルまたはフェーズゲート違反によりブロックされました」のメッセージを出力する（v2.2.0更新）
+   - exit code 2 で終了する（Claude Code はHook exit code 2 をブロック��して解釈する）
+7. `output.shouldBlock=false` の場合:
    - exit code 0 で終了する
 
 **終了コード**
