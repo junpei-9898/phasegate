@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "project": {
+    "paths": {
+      "source": ["src", "lib"],
+      "docs": {
+        "inception": "design/inception",
+        "construction": "design/construction"
+      }
+    }
+  },
+  "harnesses": {}
+}

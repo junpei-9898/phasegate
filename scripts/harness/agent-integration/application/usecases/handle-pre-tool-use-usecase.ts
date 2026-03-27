@@ -7,15 +7,16 @@
  * PreToolUse Hook処理のオーケストレーション
  */
 
+import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
 import { HookEvent } from '../../domain/value-objects/hook-event.js';
 import { ProtectedFileList } from '../../domain/value-objects/protected-file-list.js';
-import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
-import { ReentryGuard } from '../../domain/entities/reentry-guard.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
+import type { PhaseGateQueryPort } from '../../domain/ports/phase-gate-query-port.js';
 import type { HandlePreToolUseInput, HandlePreToolUseOutput } from '../dto/handle-pre-tool-use-dto.js';
 
 export interface HandlePreToolUseUseCasePorts {
   configQueryPort: ConfigQueryPort;
+  phaseGateQueryPort: PhaseGateQueryPort;
 }
 
 export class HandlePreToolUseInputValidationError extends Error {
@@ -27,10 +28,17 @@ export class HandlePreToolUseInputValidationError extends Error {
 }
 
 export class HandlePreToolUseUseCase {
+  private readonly translator: AsyncHookToCliTranslator;
   private readonly configQueryPort: ConfigQueryPort;
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
     this.configQueryPort = ports.configQueryPort;
+    this.translator = new AsyncHookToCliTranslator({
+      configQueryPort: ports.configQueryPort,
+      reentryGuard: { isActive: () => false } as never,
+      cliCommandRegistryPort: { hasCommand: async () => true },
+      phaseGateQueryPort: ports.phaseGateQueryPort,
+    });
   }
 
   async execute(input: HandlePreToolUseInput): Promise<HandlePreToolUseOutput> {
@@ -38,22 +46,26 @@ export class HandlePreToolUseUseCase {
       throw new HandlePreToolUseInputValidationError('toolNameは必須です（空文字不可）');
     }
 
-    const additionalPatterns = await this.configQueryPort.getProtectedFilePatterns();
-    const protectedFileList = ProtectedFileList.createWithAdditional(additionalPatterns);
+    const hookEvent = HookEvent.createPreToolUse(input.toolName, input.targetFilePaths);
+    const result = await this.translator.translate(hookEvent);
 
-    const blockedPath = input.targetFilePaths.find((fp) => protectedFileList.matches(fp));
+    if (result.shouldBlock) {
+      const additionalPatterns = await this.configQueryPort.getProtectedFilePatterns();
+      const protectedFileList = ProtectedFileList.createWithAdditional(additionalPatterns);
+      const blockedFilePath = input.targetFilePaths.find((filePath) => protectedFileList.matches(filePath))
+        ?? input.targetFilePaths[0];
 
-    if (blockedPath !== undefined) {
       return {
         shouldBlock: true,
-        blockedFilePath: blockedPath,
-        error: { message: `保護対象ファイルへの変更がブロックされました: ${blockedPath}` },
+        blockedFilePath,
+        error: {
+          message: blockedFilePath === undefined
+            ? '保護対象ファイルまたはフェーズゲート違反によりブロックされました'
+            : `保護対象ファイルまたはフェーズゲート違反によりブロックされました: ${blockedFilePath}`,
+        },
       };
     }
 
-    return {
-      shouldBlock: false,
-      blockedFilePath: undefined,
-    };
+    return { shouldBlock: false };
   }
 }

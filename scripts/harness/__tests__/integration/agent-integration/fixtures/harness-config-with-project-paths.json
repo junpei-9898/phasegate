@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "project": {
+    "paths": {
+      "source": ["scripts/harness"],
+      "docs": {
+        "inception": "docs/inception",
+        "construction": "docs/product/construction"
+      }
+    }
+  },
+  "harnesses": {}
+}

@@ -184,6 +184,8 @@ import { StopEvent } from '../../agent-integration/domain/value-objects/hook-eve
 import { ProtectedFileList } from '../../agent-integration/domain/value-objects/protected-file-list.js';
 import { HookTranslationResult } from '../../agent-integration/domain/value-objects/hook-translation-result.js';
 import { FallbackCapabilitySpec } from '../../agent-integration/domain/value-objects/fallback-capability-spec.js';
+import { ProjectPaths } from '../../agent-integration/domain/value-objects/project-paths.js';
+import { WriteTargetScope } from '../../agent-integration/domain/value-objects/write-target-scope.js';
 
 export const createPreToolUseEvent = (
   overrides: Partial<{ hookType: string; toolName: string; targetFilePaths: string[] }> = {}
@@ -235,6 +237,26 @@ export const createFallbackCapabilitySpec = (
     supportedCommands: ['harness:lint'],
     noAgentApiImports: true,
     ...overrides,
+  });
+
+export const createProjectPaths = (overrides?: Partial<{
+  source: string[];
+  docs: { construction: string; inception: string };
+}>) =>
+  ProjectPaths.create(
+    overrides?.source ?? ['scripts/harness'],
+    overrides?.docs ?? { construction: 'docs/product/construction', inception: 'docs/inception' },
+  );
+
+export const createWriteTargetScope = (overrides: {
+  level: 1 | 2 | 3;
+  unitId?: string;
+  storyId?: string;
+}) =>
+  WriteTargetScope.create({
+    level: overrides.level,
+    unitId: overrides.unitId,
+    storyId: overrides.storyId,
   });
 
 // ---- ci-governance ファクトリ関数 ----

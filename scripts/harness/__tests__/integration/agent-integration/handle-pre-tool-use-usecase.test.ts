@@ -5,14 +5,24 @@
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { HandlePreToolUseUseCase } from '../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js';
+import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result.js';
 
-function createHandlePreToolUseUseCase(ports: {
-  configQueryPort: {
-    isHookEnabled: ReturnType<typeof vi.fn>;
-    getProtectedFilePatterns: ReturnType<typeof vi.fn>;
+function createDefaultMockConfigQueryPort() {
+  return {
+    isHookEnabled: vi.fn(),
+    getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
+    getProjectPaths: vi.fn().mockReturnValue({
+      getSource: () => ['scripts/harness'],
+      getDocsInception: () => 'docs/inception',
+      getDocsConstruction: () => 'docs/product/construction',
+    }),
   };
-}) {
-  return new HandlePreToolUseUseCase({ configQueryPort: ports.configQueryPort });
+}
+
+function createDefaultMockPhaseGateQueryPort() {
+  return {
+    checkGate: vi.fn().mockResolvedValue(PhaseGateQueryResult.create(true, [], [])),
+  };
 }
 
 function buildPreToolUseInput(overrides: Partial<{
@@ -32,11 +42,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-001
       it('保護対象ファイル（biome.json）への変更がブロックされること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] });
 
         // Act
@@ -52,11 +63,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-002
       it('保護対象ファイル（tsconfig.json）への変更がブロックされること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['tsconfig.json'] });
 
         // Act
@@ -72,11 +84,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-003
       it('保護対象外ファイルへの変更は通過すること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['src/index.ts'] });
 
         // Act
@@ -92,11 +105,13 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-004
       it('カスタム追加パターンに一致するファイルがブロックされること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue(['custom-protected.json']),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        mockConfigQueryPort.getProtectedFilePatterns.mockResolvedValue(['custom-protected.json']);
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['custom-protected.json'] });
 
         // Act
@@ -112,11 +127,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-005
       it('複数パスのうち1件でも保護対象に一致すればブロックされること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['src/index.ts', 'package.json'] });
 
         // Act
@@ -132,11 +148,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-006
       it('toolNameが空文字の場合、入力バリデーションエラーになること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn(),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: '', targetFilePaths: ['src/index.ts'] });
 
         // Act & Assert
@@ -148,11 +165,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-007
       it('targetFilePathsが空配列の場合、ブロックなしで通過すること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: [] });
 
         // Act
@@ -167,11 +185,12 @@ target('HandlePreToolUseUseCase.execute', () => {
       // IT-UC-HandlePreToolUse-008
       it('biome.jsonブロック時、result.error.messageにブロックされたファイル名が含まれること', async () => {
         // Arrange
-        const mockConfigQueryPort = {
-          isHookEnabled: vi.fn(),
-          getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
-        };
-        const useCase = createHandlePreToolUseUseCase({ configQueryPort: mockConfigQueryPort });
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
         const input = buildPreToolUseInput({ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] });
 
         // Act
@@ -181,6 +200,155 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.shouldBlock).toBe(true);
         const errorText = JSON.stringify(actual.error ?? actual);
         expect(errorText).toContain('biome.json');
+      });
+    });
+  });
+
+  describe('フェーズゲート連携', () => {
+    context('フェーズゲートが通過するスコープへの書き込み', () => {
+      // IT-UC-HandlePreToolUse-009
+      it('フェーズゲートが通過する場合はブロックされないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['scripts/harness/validator-system/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledOnce();
+      });
+    });
+
+    context('フェーズゲートが不通過のスコープへの書き込み', () => {
+      // IT-UC-HandlePreToolUse-010
+      it('フェーズゲート違反の場合はブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical design is missing'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['scripts/harness/new-unit/domain/entities/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockedFilePath).toBe('scripts/harness/new-unit/domain/entities/foo.ts');
+        expect(actual.error?.message).toContain('フェーズゲート違反');
+      });
+    });
+
+    context('__tests__配下のファイルへの書き込み', () => {
+      // IT-UC-HandlePreToolUse-011
+      it('テストファイルはフェーズゲートチェックの対象外であること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['scripts/harness/__tests__/integration/new-unit/some.test.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+
+    context('scripts/harness外のファイルへの書き込み', () => {
+      // IT-UC-HandlePreToolUse-012
+      it('ハーネス外のファイルはフェーズゲートチェックの対象外であること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['src/app/index.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+
+    context('複数ファイルのうち先頭で検出された有効スコープがフェーズゲート違反の場合', () => {
+      // IT-UC-HandlePreToolUse-013
+      it('先頭の検出スコープに対してフェーズゲート判定が行われてブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['phase gate blocked'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['README.md', 'scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockedFilePath).toBe('README.md');
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledOnce();
+      });
+    });
+
+    context('フェーズゲート通過時の出力DTO', () => {
+      // IT-UC-HandlePreToolUse-014
+      it('通過時はphaseGateBlockersを返さずshouldBlock=falseのみ返ること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
       });
     });
   });

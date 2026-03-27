@@ -9,6 +9,7 @@
 import type { HookEvent, PreToolUseEvent, PostToolUseEvent, StopEvent } from '../value-objects/hook-event.js';
 import { HookTranslationResult } from '../value-objects/hook-translation-result.js';
 import { ProtectedFileList } from '../value-objects/protected-file-list.js';
+import { WriteTargetScope } from '../value-objects/write-target-scope.js';
 import type { ReentryGuard } from '../entities/reentry-guard.js';
 import type { CliCommandRegistryPort } from '../ports/cli-command-registry-port.js';
 import type { ConfigQueryPort } from '../ports/config-query-port.js';
@@ -164,15 +165,38 @@ export class AsyncHookToCliTranslator {
   private readonly cliCommandRegistryPort: {
     hasCommand(commandName: string): Promise<boolean>;
   };
+  private readonly phaseGateQueryPort: {
+    checkGate(scope: WriteTargetScope): Promise<{
+      hasPassed(): boolean;
+      getBlockers(): readonly string[];
+      getWarnings(): readonly string[];
+    }>;
+  };
 
   constructor(deps: {
     configQueryPort: ConfigQueryPort;
     reentryGuard: ReentryGuard;
     cliCommandRegistryPort: { hasCommand(commandName: string): Promise<boolean> };
+    phaseGateQueryPort?: {
+      checkGate(scope: WriteTargetScope): Promise<{
+        hasPassed(): boolean;
+        getBlockers(): readonly string[];
+        getWarnings(): readonly string[];
+      }>;
+    };
   }) {
     this.configQueryPort = deps.configQueryPort;
     this.reentryGuard = deps.reentryGuard;
     this.cliCommandRegistryPort = deps.cliCommandRegistryPort;
+    this.phaseGateQueryPort = deps.phaseGateQueryPort ?? {
+      async checkGate() {
+        return {
+          hasPassed: () => true,
+          getBlockers: () => [],
+          getWarnings: () => [],
+        };
+      },
+    };
   }
 
   async translate(hookEvent: HookEvent): Promise<HookTranslationResult> {
@@ -196,6 +220,27 @@ export class AsyncHookToCliTranslator {
     if (blockedPath !== undefined) {
       return HookTranslationResult.block();
     }
+
+    const projectPaths = await (this.configQueryPort as ConfigQueryPort & {
+      getProjectPaths(): unknown;
+    }).getProjectPaths();
+    const detectedScope = event.targetFilePaths
+      .map((filePath) => WriteTargetScope.fromPath(filePath, projectPaths as Parameters<typeof WriteTargetScope.fromPath>[1]))
+      .find((scope): scope is WriteTargetScope => scope !== null);
+
+    if (detectedScope === undefined) {
+      return HookTranslationResult.create({
+        shouldBlock: false,
+        cliArgs: [],
+        expectedExitCode: 0,
+      });
+    }
+
+    const phaseGateResult = await this.phaseGateQueryPort.checkGate(detectedScope);
+    if (!phaseGateResult.hasPassed()) {
+      return HookTranslationResult.block();
+    }
+
     return HookTranslationResult.create({
       shouldBlock: false,
       cliArgs: [],

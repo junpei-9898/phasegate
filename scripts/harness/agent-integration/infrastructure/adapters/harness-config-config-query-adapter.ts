@@ -6,8 +6,23 @@
  * HarnessConfigV2 の harnesses セクションから Hook 設定を読み取る
  */
 
-import * as fs from 'node:fs/promises';
+import * as fs from 'node:fs';
 import type { ConfigQueryPort, HookType } from '../../domain/ports/config-query-port.js';
+import { ProjectPaths } from '../../domain/value-objects/project-paths.js';
+
+interface ProjectDocsSection {
+  inception?: string;
+  construction?: string;
+}
+
+interface ProjectPathsSection {
+  source?: string[];
+  docs?: ProjectDocsSection;
+}
+
+interface ProjectSection {
+  paths?: ProjectPathsSection;
+}
 
 interface HarnessesSection {
   agentLessonCollection?: boolean;
@@ -18,6 +33,7 @@ interface HarnessesSection {
 
 interface HarnessConfigDocument {
   harnesses?: HarnessesSection;
+  project?: ProjectSection;
 }
 
 export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
@@ -28,18 +44,18 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     this.configPath = configPath;
   }
 
-  private async loadConfig(): Promise<HarnessConfigDocument> {
+  private loadConfig(): HarnessConfigDocument {
     if (this.cachedConfig !== null) {
       return this.cachedConfig;
     }
-    const raw = await fs.readFile(this.configPath, 'utf8');
+    const raw = fs.readFileSync(this.configPath, 'utf8');
     const doc = JSON.parse(raw) as HarnessConfigDocument;
     this.cachedConfig = doc;
     return doc;
   }
 
   async isHookEnabled(hookType: HookType): Promise<boolean> {
-    const config = await this.loadConfig();
+    const config = this.loadConfig();
     const harnesses = config.harnesses ?? {};
 
     // Wave 2 マッピング:
@@ -59,5 +75,18 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   async getProtectedFilePatterns(): Promise<string[]> {
     // Wave 2 では追加カスタムパターンなし
     return [];
+  }
+
+  getProjectPaths(): ProjectPaths {
+    const config = this.loadConfig();
+    const paths = config.project?.paths;
+
+    return ProjectPaths.create(
+      paths?.source ?? ['scripts/harness'],
+      {
+        construction: paths?.docs?.construction ?? 'docs/product/construction',
+        inception: paths?.docs?.inception ?? 'docs/inception',
+      },
+    );
   }
 }

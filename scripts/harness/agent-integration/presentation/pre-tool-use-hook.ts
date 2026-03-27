@@ -9,6 +9,7 @@
 
 import { HandlePreToolUseUseCase } from '../application/usecases/handle-pre-tool-use-usecase.js';
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
+import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -79,14 +80,15 @@ async function main(): Promise<void> {
   try {
     const configPath = await findConfigPath();
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
-    const useCase = new HandlePreToolUseUseCase({ configQueryPort });
+    const phaseGateQueryPort = new PhaseGateQueryAdapter();
+    const useCase = new HandlePreToolUseUseCase({ configQueryPort, phaseGateQueryPort });
 
     const output = await useCase.execute({ toolName, targetFilePaths });
 
     if (output.shouldBlock) {
-      process.stderr.write(
-        `ファイル保護によりブロックされました: ${output.blockedFilePath ?? '不明なファイル'}\n`
-      );
+      const msg = output.error?.message
+        ?? `ファイル保護によりブロックされました: ${output.blockedFilePath ?? '不明なファイル'}`;
+      process.stderr.write(`${msg}\n`);
       process.exit(2);
     }
 

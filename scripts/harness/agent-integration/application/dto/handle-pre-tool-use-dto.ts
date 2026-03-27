@@ -12,4 +12,5 @@ export interface HandlePreToolUseOutput {
   shouldBlock: boolean;
   blockedFilePath?: string;
   error?: { message: string };
+  phaseGateBlockers?: string[];
 }

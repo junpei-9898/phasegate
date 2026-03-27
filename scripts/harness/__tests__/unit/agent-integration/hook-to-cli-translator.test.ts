@@ -4,13 +4,18 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
-import { HookToCliTranslator } from '../../../agent-integration/domain/services/hook-to-cli-translator.js';
+import {
+  HookToCliTranslator,
+  AsyncHookToCliTranslator,
+} from '../../../agent-integration/domain/services/hook-to-cli-translator.js';
 import { CommandNotRegisteredError } from '../../../agent-integration/domain/services/hook-to-cli-translator.js';
+import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result.js';
 import {
   createPreToolUseEvent,
   createPostToolUseEvent,
   createStopEvent,
   createProtectedFileList,
+  createProjectPaths,
 } from '../../helpers/test-helpers.js';
 
 /** ポートモックビルダー */
@@ -19,27 +24,49 @@ const buildTranslatorPorts = (overrides: {
   isActive?: boolean;
   commandExists?: boolean;
   protectedPatterns?: string[];
+  phaseGateResult?: { passed: boolean; blockers: string[]; warnings: string[] };
+  projectPaths?: ReturnType<typeof createProjectPaths>;
 } = {}) => {
   const {
     isEnabled = true,
     isActive = false,
     commandExists = true,
     protectedPatterns = ['biome.json', 'tsconfig.json'],
+    phaseGateResult = { passed: true, blockers: [], warnings: [] },
+    projectPaths = createProjectPaths(),
   } = overrides;
 
   const configQueryPort = {
     isEnabled: vi.fn().mockReturnValue(isEnabled),
+    isHookEnabled: vi.fn().mockResolvedValue(isEnabled),
     getProtectedFileList: vi.fn().mockReturnValue(createProtectedFileList(protectedPatterns)),
+    getProtectedFilePatterns: vi.fn().mockResolvedValue(protectedPatterns),
+    getProjectPaths: vi.fn().mockReturnValue(projectPaths),
   };
   const reentryGuardStatePort = {
     isActive: vi.fn().mockReturnValue(isActive),
   };
   const cliCommandRegistryPort = {
     has: vi.fn().mockReturnValue(commandExists),
+    hasCommand: vi.fn().mockResolvedValue(commandExists),
     get: vi.fn().mockReturnValue(commandExists ? 'harness:lint' : undefined),
   };
+  const phaseGateQueryPort = {
+    checkGate: vi.fn().mockResolvedValue(
+      PhaseGateQueryResult.create(
+        phaseGateResult.passed,
+        phaseGateResult.blockers,
+        phaseGateResult.warnings,
+      ),
+    ),
+  };
 
-  return { configQueryPort, reentryGuardStatePort, cliCommandRegistryPort };
+  return {
+    configQueryPort,
+    reentryGuardStatePort,
+    cliCommandRegistryPort,
+    phaseGateQueryPort,
+  };
 };
 
 target('HookToCliTranslator', () => {
@@ -165,6 +192,184 @@ target('HookToCliTranslator', () => {
         const actual = () => sut.translate(event);
         // Assert
         expect(actual).toThrow(CommandNotRegisteredError);
+      });
+    });
+
+    describe('AsyncHookToCliTranslator Step 2: フェーズゲートチェックを行う', () => {
+      context('スコープ外ファイル（src/index.ts）が変更対象の場合', () => {
+        // UT-HTC-040
+        it('WriteTargetScope.fromPath()がnullのとき フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts();
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({ targetFilePaths: ['src/index.ts'] });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+
+      context('フェーズゲートに合格している設計書配下ファイルが変更対象の場合', () => {
+        // UT-HTC-041
+        it('フェーズゲートがpassed=trueのとき shouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: true, blockers: [], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['docs/product/construction/agent-integration/logical_design.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      context('フェーズゲートに不合格の設計書配下ファイルが変更対象の場合', () => {
+        // UT-HTC-042
+        it('blockersがあるとき shouldBlock=trueを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['docs/product/construction/agent-integration/logical_design.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
+          expect(actual.expectedExitCode).toBe(2);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      context('warningsのみ存在する設計書配下ファイルが変更対象の場合', () => {
+        // UT-HTC-043
+        it('passed=trueでwarningsがあっても shouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: true, blockers: [], warnings: ['unit_test_design.md推奨'] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['docs/product/construction/agent-integration/unit_test_logic.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      context('level:1の共有計画配下ファイルが変更対象の場合', () => {
+        // UT-HTC-044
+        it('level:1のWriteTargetScopeでcheckGateが呼ばれること', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts();
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['docs/inception/_shared/product_overview_plan.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(ports.phaseGateQueryPort.checkGate.mock.calls[0]?.[0]).toMatchObject({ level: 1 });
+        });
+      });
+
+      context('複数targetFilePathsのうちスコープ検出された1件が不合格の場合', () => {
+        // UT-HTC-045
+        it('最初に見つかったスコープのフェーズゲートが不合格なら shouldBlock=trueを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['domain_model.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['src/index.ts', 'docs/product/construction/agent-integration/domain_model.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      context('__tests__配下のみが変更対象の場合', () => {
+        // UT-HTC-046 / UT-BV-023
+        it('__tests__配下のパスがすべてfromPath()でnullになるとき shouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts();
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['scripts/harness/__tests__/unit/agent-integration/hook-to-cli-translator.test.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
       });
     });
   });
