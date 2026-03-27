@@ -13,7 +13,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ## 目次
 
 - [何ができるのか](#何ができるのか)
-- [アーキテクチャ — 4層防御モデル](#アーキテクチャ--4層防御モデル)
+- [アーキテクチャ — 5層防御モデル](#アーキテクチャ--5層防御モデル)
 - [前提条件](#前提条件)
 - [インストール](#インストール)
 - [セットアップ](#セットアップ)
@@ -51,10 +51,17 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 
 ---
 
-## アーキテクチャ — 4層防御モデル
+## アーキテクチャ — 5層防御モデル
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
+║  L0  FUSE HOOKS: File System Level Protection               ║
+║  ─────────────────────────────────────────────────────────  ║
+║  fuse-hook-config   .harness-hooks.yml設定検証              ║
+║  fuse-mount-status  FUSEマウント状態チェック                ║
+║                                                             ║
+║  実行: npx harness validate --layer L0                      ║
+╠══════════════════════════════════════════════════════════════╣
 ║  L1  EDITOR TIME: Biome AST Rules                           ║
 ║  ─────────────────────────────────────────────────────────  ║
 ║  require-unit-comment   require-layer-comment               ║
@@ -651,7 +658,7 @@ npx harness regression:run-k-requirements --format json
 
 | # | 要件 |
 |---|---|
-| K1 | 4層防御モデル（L1-L4） |
+| K1 | 5層防御モデル（L0-L4） |
 | K2 | Phase Gate（設計→実装の順序強制） |
 | K3 | Biome AST解析（importグラフ+循環依存検出） |
 | K3.5 | @unit/@layer/@US-XXXメタデータ |
@@ -684,7 +691,7 @@ GSDLC_HARNESS/
 │   ├── phase-dependency-model/      # フェーズ依存関係・Phase Gate
 │   ├── adr-foundation/              # ADR管理
 │   ├── biome-ast-engine/            # Biome AST解析エンジン
-│   ├── validator-system/            # L1-L4バリデータシステム
+│   ├── validator-system/            # L0-L4バリデータシステム
 │   ├── nyquist-validation/          # 要件-テストトレーサビリティ
 │   ├── harness-api/                 # harness:* コマンドCLI層
 │   ├── quick-mode/                  # Quick Mode判定・緩和実行
