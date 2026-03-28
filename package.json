@@ -1,6 +1,6 @@
 {
   "name": "gsdlc-harness",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "GSDLC Harness Engineering Toolkit - Governed Software Development Life Cycle",
   "type": "module",
   "files": [
