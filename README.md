@@ -129,7 +129,7 @@ interface HarnessError {
 本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^2.0.0"
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.3.0"
 ```
 
 `package.json` に直接記載する場合:
@@ -137,12 +137,12 @@ npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^2.0.0"
 ```json
 {
   "devDependencies": {
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^2.0.0"
+    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.3.0"
   }
 }
 ```
 
-`^2.0.0` により `2.x.x` の最新タグに自動追従します（`3.0.0` 以上の破壊的変更はスキップ）。
+`^0.3.0` により `0.3.x` の最新パッチに自動追従します（`0.4.0` 以上のマイナー変更はスキップ）。
 
 ---
 
