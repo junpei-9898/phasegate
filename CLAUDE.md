@@ -80,3 +80,19 @@ npm run test                        # テスト実行
 - `docs/principles/architecture-philosophy.md` — アーキテクチャ哲学
 - `docs/principles/testing-rules.md` — テスト規約
 - `harness.config.json` — 品質設定のSingle Source of Truth
+
+### バージョニングルール（必須）
+
+変更をコミットする際は、**必ず `package.json` の minor バージョンを上げること**。
+
+- `version` フィールド: `"0.X.0"` → `"0.(X+1).0"`
+- `devDependencies.gsdlc-harness` の semver 参照も同期更新
+- タグ `vX.Y.Z` を付与して push
+
+```bash
+# 例: v0.5.0 → v0.6.0
+# 1. package.json の version を更新
+# 2. devDependencies の gsdlc-harness semver を更新
+# 3. git tag v0.6.0
+# 4. git push origin main --tags
+```

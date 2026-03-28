@@ -14,9 +14,11 @@ import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
 interface PreToolUseHookInput {
+  cwd?: string;
   tool_name?: string;
   tool_input?: {
     path?: string;
+    file_path?: string;
     paths?: string[];
     [key: string]: unknown;
   };
@@ -69,12 +71,24 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
+  const cwd = input.cwd ?? process.cwd();
+  const toRelative = (p: string): string => {
+    if (path.isAbsolute(p)) {
+      const rel = path.relative(cwd, p);
+      return rel.startsWith('..') ? p : rel;
+    }
+    return p;
+  };
+
   const targetFilePaths: string[] = [];
+  if (input.tool_input?.file_path) {
+    targetFilePaths.push(toRelative(input.tool_input.file_path));
+  }
   if (input.tool_input?.path) {
-    targetFilePaths.push(input.tool_input.path);
+    targetFilePaths.push(toRelative(input.tool_input.path));
   }
   if (input.tool_input?.paths) {
-    targetFilePaths.push(...input.tool_input.paths);
+    targetFilePaths.push(...input.tool_input.paths.map(toRelative));
   }
 
   try {
