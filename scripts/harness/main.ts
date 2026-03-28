@@ -96,6 +96,10 @@ Commands:
   hooks:config                   Load/validate .harness-hooks.yml (validate|load [--yaml <path>])
   hooks:gate-check               Check completion gate (--story <storyId>)
 
+  fuse:mount                     Mount FUSE filesystem ([sourceDir] [mountPoint])
+  fuse:unmount                   Unmount FUSE filesystem
+  fuse:status                    Show FUSE/Hooks guard mode status (--json)
+
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
@@ -782,6 +786,38 @@ async function main(): Promise<void> {
         const mod = buildFuseHooksEngine(rootDir);
         const storyId = parseFlag(args, '--story') ?? args[1] ?? '';
         const result = await mod.completionGateHandler.handle([storyId]);
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'fuse:mount': {
+        const guardMode = resolvedConfig?.harnesses?.guardMode ?? 'hooks';
+        const mod = buildFuseHooksEngine(rootDir, { guardMode: guardMode as 'fuse' | 'hooks' | 'auto' });
+        const yamlResult = await mod.defaultHooksYamlGenerator.writeIfNotExists(rootDir);
+        if (yamlResult.created) {
+          console.log(`✓ Generated default .harness-hooks.yml at ${yamlResult.path}`);
+        }
+        const fuseArgs = args.slice(1);
+        const result = await mod.fuseDaemonHandler.handle(['mount', ...fuseArgs]);
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'fuse:unmount': {
+        const guardMode = resolvedConfig?.harnesses?.guardMode ?? 'hooks';
+        const mod = buildFuseHooksEngine(rootDir, { guardMode: guardMode as 'fuse' | 'hooks' | 'auto' });
+        const result = await mod.fuseDaemonHandler.handle(['unmount']);
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'fuse:status': {
+        const guardMode = resolvedConfig?.harnesses?.guardMode ?? 'hooks';
+        const mod = buildFuseHooksEngine(rootDir, { guardMode: guardMode as 'fuse' | 'hooks' | 'auto' });
+        const result = await mod.fuseDaemonHandler.handle(['status']);
         console.log(result.output);
         process.exit(result.exitCode);
         break;

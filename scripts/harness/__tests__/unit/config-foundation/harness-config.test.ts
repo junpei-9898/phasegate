@@ -107,6 +107,7 @@ function createMinimalFixture(): {
         cascadeUpdate: false,
         bundleSizeLimit: 0,
         deadCodeGC: false,
+      guardMode: 'hooks',
       },
       paths: {
         designDocs: 'docs/product/construction',
@@ -160,6 +161,7 @@ function createStrictFixture(): {
     cascadeUpdate: false,
     bundleSizeLimit: 500,
     deadCodeGC: true,
+    guardMode: 'hooks',
   };
 
   return fixture;

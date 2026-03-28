@@ -28,7 +28,8 @@
     "agentLessonCollection": false,
     "cascadeUpdate": false,
     "bundleSizeLimit": 0,
-    "deadCodeGC": false
+    "deadCodeGC": false,
+    "guardMode": "auto"
   },
   "paths": {
     "designDocs": "docs/product/construction",

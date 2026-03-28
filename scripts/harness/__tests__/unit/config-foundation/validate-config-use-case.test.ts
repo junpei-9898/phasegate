@@ -93,6 +93,7 @@ function createPresetDefinitions(): Readonly<
         cascadeUpdate: false,
         bundleSizeLimit: 0,
         deadCodeGC: false,
+      guardMode: 'hooks',
       },
       paths: {
         designDocs: 'docs/product/construction',
@@ -143,6 +144,7 @@ function createPresetDefinitions(): Readonly<
         cascadeUpdate: false,
         bundleSizeLimit: 0,
         deadCodeGC: false,
+      guardMode: 'hooks',
       },
       paths: {
         designDocs: 'docs/product/construction',
@@ -193,6 +195,7 @@ function createPresetDefinitions(): Readonly<
         cascadeUpdate: false,
         bundleSizeLimit: 500,
         deadCodeGC: true,
+      guardMode: 'hooks',
       },
       paths: {
         designDocs: 'docs/product/construction',
@@ -262,6 +265,7 @@ target('ValidateConfigUseCase', () => {
               cascadeUpdate: false,
               bundleSizeLimit: 0,
               deadCodeGC: false,
+            guardMode: 'hooks',
             },
             paths: {
               designDocs: 'docs/product/construction',

@@ -69,6 +69,7 @@ function createMinimalPresetDefinition(): PresetDefinition {
       cascadeUpdate: false,
       bundleSizeLimit: 0,
       deadCodeGC: false,
+    guardMode: 'hooks',
     },
     paths: {
       designDocs: 'docs/product/construction',
@@ -106,6 +107,7 @@ function createStrictPresetDefinition(): PresetDefinition {
     cascadeUpdate: false,
     bundleSizeLimit: 500,
     deadCodeGC: true,
+    guardMode: 'hooks',
   };
 
   return definition;
@@ -509,6 +511,7 @@ target('PresetResolutionService', () => {
           cascadeUpdate: true,
           bundleSizeLimit: 300,
           deadCodeGC: true,
+          guardMode: 'hooks',
         };
         const featureToggle = FeatureToggle.create(
           createFeatureName('agentLessonCollection'),

@@ -135,6 +135,7 @@ function toHarnessesDocument(
     cascadeUpdate: harnesses.cascadeUpdate,
     bundleSizeLimit: harnesses.bundleSizeLimit,
     deadCodeGC: harnesses.deadCodeGC,
+    guardMode: harnesses.guardMode,
   };
 }
 
