@@ -92,7 +92,6 @@ export interface HarnessConfigResolvedDocument {
     cascadeUpdate: boolean;
     bundleSizeLimit: number;
     deadCodeGC: boolean;
-    guardMode: 'fuse' | 'hooks' | 'auto';
   };
   paths: {
     designDocs: string;
@@ -208,7 +207,6 @@ function toHarnessesDocument(harnesses: HarnessesConfig): HarnessConfigResolvedD
     cascadeUpdate: harnesses.cascadeUpdate,
     bundleSizeLimit: harnesses.bundleSizeLimit,
     deadCodeGC: harnesses.deadCodeGC,
-    guardMode: harnesses.guardMode,
   };
 }
 

@@ -217,11 +217,6 @@
         },
         "deadCodeGC": {
           "type": "boolean"
-        },
-        "guardMode": {
-          "type": "string",
-          "enum": ["fuse", "hooks", "auto"],
-          "default": "hooks"
         }
       }
     },

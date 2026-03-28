@@ -1,6 +1,5 @@
 import { HookDefinition } from '../../../fuse-hooks-engine/domain/aggregates/hook-definition.js';
 import { CompletionGate } from '../../../fuse-hooks-engine/domain/entities/completion-gate.js';
-import { FUSEMount } from '../../../fuse-hooks-engine/domain/entities/fuse-mount.js';
 import { HookAction } from '../../../fuse-hooks-engine/domain/value-objects/hook-action.js';
 import { FilePattern } from '../../../fuse-hooks-engine/domain/value-objects/file-pattern.js';
 import { HookType } from '../../../fuse-hooks-engine/domain/value-objects/hook-type.js';
@@ -66,8 +65,6 @@ export const createOnCompleteHookDefinition = () =>
     createFilePattern({ includePatterns: ['.harness/done/*.done'] }),
     createTriggerCompletionAction(),
   )._unsafeUnwrap();
-
-export const createFuseMount = (mountPath = '/project/root') => FUSEMount.create(mountPath);
 
 export const createCompletionGate = (storyId = 'HF1-05') =>
   CompletionGate.create(storyId, createMagicFile());

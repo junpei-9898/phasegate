@@ -9,14 +9,11 @@
 import { InvalidHarnessesConfigError } from '../errors/invalid-harnesses-config-error.js';
 import type { FeatureName } from './feature-name.js';
 
-export type GuardModeValue = 'fuse' | 'hooks' | 'auto';
-
 export interface HarnessesConfigProps {
   readonly agentLessonCollection: boolean;
   readonly cascadeUpdate: boolean;
   readonly bundleSizeLimit: number;
   readonly deadCodeGC: boolean;
-  readonly guardMode?: GuardModeValue;
 }
 
 const BUNDLE_SIZE_LIMIT_DEFAULT_ENABLED_VALUE = 500;
@@ -26,7 +23,6 @@ export class HarnessesConfig {
   readonly cascadeUpdate: boolean;
   readonly bundleSizeLimit: number;
   readonly deadCodeGC: boolean;
-  readonly guardMode: GuardModeValue;
 
   constructor(props: HarnessesConfigProps) {
     if (props.bundleSizeLimit < 0) {
@@ -39,7 +35,6 @@ export class HarnessesConfig {
     this.cascadeUpdate = props.cascadeUpdate;
     this.bundleSizeLimit = props.bundleSizeLimit;
     this.deadCodeGC = props.deadCodeGC;
-    this.guardMode = props.guardMode ?? 'hooks';
   }
 
   static create(raw: HarnessesConfigProps): HarnessesConfig {
@@ -58,7 +53,6 @@ export class HarnessesConfig {
             ? BUNDLE_SIZE_LIMIT_DEFAULT_ENABLED_VALUE
             : this.bundleSizeLimit,
         deadCodeGC: this.deadCodeGC,
-        guardMode: this.guardMode,
       });
     }
 
@@ -71,7 +65,6 @@ export class HarnessesConfig {
         featureKey === 'cascadeUpdate' ? true : this.cascadeUpdate,
       bundleSizeLimit: this.bundleSizeLimit,
       deadCodeGC: featureKey === 'deadCodeGC' ? true : this.deadCodeGC,
-      guardMode: this.guardMode,
     });
   }
 
@@ -84,7 +77,6 @@ export class HarnessesConfig {
         cascadeUpdate: this.cascadeUpdate,
         bundleSizeLimit: 0,
         deadCodeGC: this.deadCodeGC,
-        guardMode: this.guardMode,
       });
     }
 
@@ -97,7 +89,6 @@ export class HarnessesConfig {
         featureKey === 'cascadeUpdate' ? false : this.cascadeUpdate,
       bundleSizeLimit: this.bundleSizeLimit,
       deadCodeGC: featureKey === 'deadCodeGC' ? false : this.deadCodeGC,
-      guardMode: this.guardMode,
     });
   }
 
@@ -116,8 +107,7 @@ export class HarnessesConfig {
       this.agentLessonCollection === other.agentLessonCollection &&
       this.cascadeUpdate === other.cascadeUpdate &&
       this.bundleSizeLimit === other.bundleSizeLimit &&
-      this.deadCodeGC === other.deadCodeGC &&
-      this.guardMode === other.guardMode
+      this.deadCodeGC === other.deadCodeGC
     );
   }
 }

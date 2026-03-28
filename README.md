@@ -55,10 +55,10 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  L0  FUSE HOOKS: File System Level Protection               ║
+║  L0  HOOKS ENGINE: Agent Hook Configuration                  ║
 ║  ─────────────────────────────────────────────────────────  ║
-║  fuse-hook-config   .harness-hooks.yml設定検証              ║
-║  fuse-mount-status  FUSEマウント状態チェック                ║
+║  hook-config        .harness-hooks.yml設定検証              ║
+║  gate-check         完了ゲートチェック                      ║
 ║                                                             ║
 ║  実行: npx harness validate --layer L0                      ║
 ╠══════════════════════════════════════════════════════════════╣
@@ -129,7 +129,7 @@ interface HarnessError {
 本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.5.0"
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.8.0"
 ```
 
 `package.json` に直接記載する場合:
@@ -137,12 +137,12 @@ npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.5.0"
 ```json
 {
   "devDependencies": {
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.5.0"
+    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.8.0"
   }
 }
 ```
 
-`^0.5.0` により `0.5.x` の最新パッチに自動追従します（`0.6.0` 以上のマイナー変更はスキップ）。
+`^0.8.0` により `0.8.x` の最新パッチに自動追従します（`0.9.0` 以上のマイナー変更はスキップ）。
 
 ---
 
@@ -335,7 +335,7 @@ npx harness <command> [options]
 | `regression:analyze-migration` | v0テスト移行分析 |
 | `regression:migrate-v0-tests` | v0テスト移行実行 |
 
-### FUSE Hooks Engine (v2以降)
+### Hooks Engine
 
 | コマンド | 説明 |
 |---|---|
@@ -766,7 +766,7 @@ GSDLC_HARNESS/
 │   ├── skill-quality/               # TDDサイクル・カバレッジ・Cascade Update
 │   ├── ci-governance/               # CI/CDテンプレート・反復エラー監視
 │   ├── regression-suite/            # K1-K15回帰テストスイート
-│   ├── fuse-hooks-engine/           # FUSE OSレベルフック (v2)
+│   ├── fuse-hooks-engine/           # Hooks Engine (.harness-hooks.yml・完了ゲート)
 │   └── phase2-extensions/           # freshness/pointer/e2e-template (v2)
 ├── skills/                          # 28スキル (npx harness init で .claude/skills/ に展開)
 ├── templates/
@@ -859,10 +859,9 @@ npx harness update-skills
 
 | バージョン | 内容 |
 |---|---|
-| **v1.6.0 (v1 MVH)** | 現在。L1-L4・28スキル・Claude Code Hooks・Nyquist Validation・K1-K15回帰テスト完備 |
-| **v2.0.0** | FUSE Hooks Engine（OS/FSレベルの強制力追加）— PreWrite/PostWrite Hook対応 |
-| **v2.1.0** | Phase 2拡張強化（doc-freshness・pointer-validator・Playwright E2Eテンプレート） |
+| **v1.6.0 (v1 MVH)** | L1-L4・28スキル・Claude Code Hooks・Nyquist Validation・K1-K15回帰テスト完備 |
+| **v2.0.0** | Hooks Engine（.harness-hooks.yml設定・完了ゲート）・Phase 2拡張（doc-freshness・pointer-validator・Playwright E2Eテンプレート） |
 
 ---
 
-*Last updated: 2026-03-24 — v2.1.0*
+*Last updated: 2026-03-29 — v0.8.0*

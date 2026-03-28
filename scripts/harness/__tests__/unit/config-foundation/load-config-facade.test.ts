@@ -48,7 +48,6 @@ function createResolvedConfig(): HarnessConfigV2 {
       cascadeUpdate: false,
       bundleSizeLimit: 0,
       deadCodeGC: false,
-    guardMode: 'hooks',
     },
     paths: {
       designDocs: 'docs/product/construction',

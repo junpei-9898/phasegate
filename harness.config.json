@@ -4,16 +4,37 @@
     "preset": "standard"
   },
   "layers": {
-    "L0": { "enabled": false },
-    "L1": { "enabled": true },
-    "L2": { "enabled": true },
-    "L3": { "enabled": true },
-    "L4": { "enabled": false }
+    "L0": {
+      "enabled": false
+    },
+    "L1": {
+      "enabled": true
+    },
+    "L2": {
+      "enabled": true
+    },
+    "L3": {
+      "enabled": true
+    },
+    "L4": {
+      "enabled": false
+    }
   },
   "quickMode": {
-    "allowedCategories": ["bugfix", "docs", "test", "config"],
-    "maintainedLayers": ["L1", "L2"],
-    "relaxedGates": ["phase-gate", "2-phase-execution"]
+    "allowedCategories": [
+      "bugfix",
+      "docs",
+      "test",
+      "config"
+    ],
+    "maintainedLayers": [
+      "L1",
+      "L2"
+    ],
+    "relaxedGates": [
+      "phase-gate",
+      "2-phase-execution"
+    ]
   },
   "phaseDependencies": {
     "preset": "default",
@@ -28,8 +49,7 @@
     "agentLessonCollection": false,
     "cascadeUpdate": false,
     "bundleSizeLimit": 0,
-    "deadCodeGC": false,
-    "guardMode": "auto"
+    "deadCodeGC": false
   },
   "paths": {
     "designDocs": "docs/product/construction",
