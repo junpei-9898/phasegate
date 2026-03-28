@@ -5,3 +5,4 @@ reports/
 .harness/
 *-result.json
 *.log
+.harness-hooks.yml
