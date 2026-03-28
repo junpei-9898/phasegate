@@ -12,7 +12,7 @@ type WriteTargetScopeProps = {
   storyId?: string;
 };
 
-const STORY_ID_PATTERN = /^[A-Z]+\d+-\d+$/;
+const WORK_ITEM_ID_PATTERN = /^[A-Z][\w]+-\d+$/;
 
 export class WriteTargetScope {
   readonly level: PhaseGateLevel;
@@ -67,17 +67,30 @@ export class WriteTargetScope {
     }
 
     const inceptionPath = projectPaths.getDocsInception();
-    const inceptionMatch = matchPrefix(normalizedPath, inceptionPath);
-    if (inceptionMatch !== null) {
-      const [unitId, storyId] = inceptionMatch;
-      if (unitId !== undefined && storyId !== undefined && STORY_ID_PATTERN.test(storyId)) {
-        return WriteTargetScope.create({ level: 3, unitId, storyId });
-      }
-    }
 
     const sharedMatch = matchPrefix(normalizedPath, `${inceptionPath}/_shared`);
     if (sharedMatch !== null || normalizedPath === normalize(`${inceptionPath}/_shared`)) {
       return WriteTargetScope.create({ level: 1 });
+    }
+
+    const inceptionMatch = matchPrefix(normalizedPath, inceptionPath);
+    if (inceptionMatch !== null) {
+      const [unitId, secondSegment, thirdSegment] = inceptionMatch;
+
+      // 横断的 issue: docs/inception/issues/{ISSUE-XXX}/ → Level 1
+      if (unitId === 'issues') {
+        return WriteTargetScope.create({ level: 1 });
+      }
+
+      // Unit固有 issue: docs/inception/{unit}/issues/{ISSUE-XXX}/ → Level 3
+      if (unitId !== undefined && secondSegment === 'issues' && thirdSegment !== undefined && WORK_ITEM_ID_PATTERN.test(thirdSegment)) {
+        return WriteTargetScope.create({ level: 3, unitId, storyId: thirdSegment });
+      }
+
+      // 既存 US パス: docs/inception/{unit}/{storyId}/ → Level 3
+      if (unitId !== undefined && secondSegment !== undefined && WORK_ITEM_ID_PATTERN.test(secondSegment)) {
+        return WriteTargetScope.create({ level: 3, unitId, storyId: secondSegment });
+      }
     }
 
     const constructionMatch = matchPrefix(normalizedPath, projectPaths.getDocsConstruction());

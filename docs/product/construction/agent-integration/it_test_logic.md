@@ -3,6 +3,7 @@
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
+> **対応Issue**: ISSUE-001
 > **参照文書**:
 > - `docs/product/construction/agent-integration/it_test_design.md`
 > - `docs/inception/agent-integration/it_test_logic_plan.md`
@@ -2105,4 +2106,857 @@ pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook-flo
 
 # @story タグでフィルタ実行（H11-04 のみ）
 pnpm vitest run --reporter=verbose --grep "H11-04" scripts/harness/__tests__/integration/agent-integration
+```
+
+---
+
+## ISSUE-001追加分
+
+> **対応Issue**: ISSUE-001（WriteTargetScope issue パス認識 + PhaseGateQueryAdapter）
+> **追加日**: 2026-03-28
+> **参照設計**:
+> - `docs/inception/issues/ISSUE-001/logical_design.md` §3.3
+> - `docs/product/construction/agent-integration/it_test_design.md` §8〜§12
+
+### 8. テストファイル構成（ISSUE-001追加分）
+
+| テストファイル | 対象コンポーネント | ケース数 |
+|---|---|---:|
+| `scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts` | HandlePreToolUseUseCase（issue パス対応） | 8 |
+| `scripts/harness/__tests__/integration/agent-integration/phase-gate-query-adapter.test.ts` | PhaseGateQueryAdapter | 6 |
+| `scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts` | HarnessConfigConfigQueryAdapter（issue パス対応） | 3 |
+| `scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts` | pre-tool-use-hook.ts（issue パス対応） | 3 |
+| `scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts` | Hook Flow Integration（issue パス対応） | 3 |
+
+### 8.1 テストヘルパー・シードデータ（ISSUE-001追加分）
+
+#### 8.1.1 追加ファクトリ・ヘルパー
+
+- `buildPreToolUseInput(overrides?)`: 既存ヘルパーをそのまま使用。`toolName: 'Write'`, `targetFilePaths: [...]` でオーバーライド。
+- `createHandlePreToolUseUseCase(ports)`: v2.2.0で `phaseGateQueryPort` を追加引数として受け取る。`WriteTargetScope`・`ProjectPaths`・`AsyncHookToCliTranslator` は実体を使用。
+
+#### 8.1.2 追加Portモックパターン
+
+```typescript
+// ISSUE-001 追加 Port モック
+const mockPhaseGateQueryPort = {
+  checkGate: vi.fn(),
+};
+
+// v2.2.0 拡張 ConfigQueryPort モック（getProjectPaths 追加）
+const mockConfigQueryPort = {
+  isHookEnabled: vi.fn(),
+  getProtectedFilePatterns: vi.fn(),
+  getProjectPaths: vi.fn(), // v2.2.0追加
+};
+```
+
+#### 8.1.3 追加fixtureファイル
+
+フィクスチャ配置先: `scripts/harness/__tests__/integration/agent-integration/fixtures/`
+
+| ファイル名 | 用途 | 内容 |
+|---|---|---|
+| `harness-config-with-project-paths.json` | ConfigQueryAdapter テスト（ProjectPaths取得） | `project: { paths: { source: ['scripts/harness'], docs: { construction: 'docs/product/construction', inception: 'docs/inception' } } }` を含むHarnessConfigV2 |
+| `harness-config-custom-paths.json` | ConfigQueryAdapter テスト（カスタムパス） | `project: { paths: { source: ['src/core', 'src/lib'], docs: { construction: 'design/construction', inception: 'design/inception' } } }` を含むHarnessConfigV2 |
+
+---
+
+### 9. HandlePreToolUseUseCase: issue パス対応テスト詳細ロジック（8件）
+
+```typescript
+// @unit agent-integration
+// @layer application
+// @issue ISSUE-001
+
+import { describe, it, expect, vi } from 'vitest';
+import { target, context } from '../../helpers/test-helpers';
+import { WriteTargetScope } from '../../../agent-integration/domain/value-objects/write-target-scope';
+import { ProjectPaths } from '../../../agent-integration/domain/value-objects/project-paths';
+
+// デフォルト ProjectPaths
+const DEFAULT_PROJECT_PATHS = ProjectPaths.create(
+  ['scripts/harness'],
+  { construction: 'docs/product/construction', inception: 'docs/inception' },
+);
+
+target('HandlePreToolUseUseCase.execute（ISSUE-001: issue パス対応）', () => {
+  describe('issue パスへの書き込みでフェーズゲートチェックを行う', () => {
+    context('Unit固有 issue パスへの Write でフェーズゲート通過の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-001
+      it('issue パスへの Write がフェーズゲートでチェックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(true, [], []),
+          ),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 3,
+            unitId: 'agent-integration',
+            storyId: 'ISSUE-001',
+          }),
+        );
+      });
+    });
+
+    context('Unit固有 issue パスへの Edit でフェーズゲート通過の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-002
+      it('issue パスへの Edit がフェーズゲートでチェックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(true, [], []),
+          ),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Edit',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalled();
+      });
+    });
+
+    context('横断的 issue パスへの Write の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-003
+      it('横断的 issue パスへの Write はフェーズゲートチェック不適用で通過すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn(),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        // 横断的 issue は Level 1 → PhaseGateQueryPort は呼び出されない
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+
+    context('issue パスへの NotebookEdit でフェーズゲート通過の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-004
+      it('issue パスへの NotebookEdit がフェーズゲートでチェックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(true, [], []),
+          ),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'NotebookEdit',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/scenario_test_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalled();
+      });
+    });
+
+    context('Read ツールでの issue パスアクセスの場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-005
+      it('Read ツールでの issue パスアクセスはフェーズゲートをスキップすること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn(),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Read',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        // Read は Step 2 対象外 → PhaseGateQueryPort は呼び出されない
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+
+    context('issue パスへの Write でフェーズゲート違反の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-006
+      it('issue パスへの Write でフェーズゲート違反時にブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical_design.md が存在しません'], []),
+          ),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.phaseGateBlockers).toContain('logical_design.md が存在しません');
+      });
+    });
+
+    context('issue パスへの Edit でフェーズゲート違反（複数blockers）の場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-007
+      it('issue パスへの Edit でフェーズゲート違反時にブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(
+              false,
+              ['logical_design.md が存在しません', 'scenario_test_design の前提が未完了'],
+              [],
+            ),
+          ),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Edit',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/scenario_test_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.phaseGateBlockers).toHaveLength(2);
+      });
+    });
+
+    context('保護対象ファイルと issue パスが同時に指定された場合', () => {
+      // IT-UC-HandlePreToolUse-ISSUE001-008
+      it('保護対象ファイルチェック（Step 1）が issue パスより優先されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn(),
+          getProtectedFilePatterns: vi.fn().mockReturnValue([]),
+          getProjectPaths: vi.fn().mockReturnValue(DEFAULT_PROJECT_PATHS),
+        };
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn(),
+        };
+        const useCase = createHandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: [
+            'biome.json',
+            'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        // Step 1 でブロック — 保護ファイルチェックが優先
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockedFilePath).toBe('biome.json');
+        // Step 2（PhaseGateQueryPort）は呼び出されない
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
+```
+
+---
+
+### 10. PhaseGateQueryAdapterテスト詳細ロジック（6件）
+
+```typescript
+// @unit agent-integration
+// @layer infrastructure
+// @issue ISSUE-001
+
+import { describe, it, expect, vi } from 'vitest';
+import { target, context } from '../../helpers/test-helpers';
+import { PhaseGateQueryAdapter } from '../../../agent-integration/infrastructure/adapters/phase-gate-query-adapter';
+import { WriteTargetScope } from '../../../agent-integration/domain/value-objects/write-target-scope';
+import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result';
+
+// モック対象: phase-dependency-model の動的 import
+const mockExecute = vi.fn();
+vi.mock('../../../phase-dependency-model/composition-root.js', () => ({
+  createPhaseDependencyModelModule: () => ({
+    checkPhaseGateCommandHandler: {
+      execute: mockExecute,
+    },
+  }),
+}));
+
+target('PhaseGateQueryAdapter', () => {
+  beforeEach(() => {
+    mockExecute.mockReset();
+  });
+
+  describe('phase-dependency-model を呼び出してフェーズゲート結果を返す', () => {
+    context('フェーズゲート通過の場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-001
+      it('フェーズゲート通過時に passed=true の PhaseGateQueryResult を返すこと', async () => {
+        // Arrange
+        mockExecute.mockResolvedValue({ exitCode: 0, text: '' });
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual).toBeInstanceOf(PhaseGateQueryResult);
+        expect(actual.hasPassed()).toBe(true);
+        expect(actual.getBlockers()).toHaveLength(0);
+      });
+    });
+
+    context('フェーズゲート不通過の場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-002
+      it('フェーズゲート不通過時に passed=false と blockers 付きの結果を返すこと', async () => {
+        // Arrange
+        mockExecute.mockResolvedValue({ exitCode: 1, text: 'logical_design.md が存在しません' });
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual).toBeInstanceOf(PhaseGateQueryResult);
+        expect(actual.hasPassed()).toBe(false);
+        expect(actual.getBlockers()).toEqual(['logical_design.md が存在しません']);
+      });
+    });
+
+    context('issue ID でのフェーズゲートチェックの場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-003
+      it('issue ID での呼び出しが正常に動作し、正しい引数が渡されること', async () => {
+        // Arrange
+        mockExecute.mockResolvedValue({ exitCode: 0, text: '' });
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual).toBeInstanceOf(PhaseGateQueryResult);
+        expect(actual.hasPassed()).toBe(true);
+        expect(mockExecute).toHaveBeenCalledWith({
+          targetLevel: 3,
+          unitId: 'agent-integration',
+          storyId: 'ISSUE-001',
+        });
+      });
+    });
+
+    context('Level 2 スコープ（storyId なし）での呼び出しの場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-004
+      it('unitId のみ（storyId なし）の Level 2 スコープで呼び出しが成功すること', async () => {
+        // Arrange
+        mockExecute.mockResolvedValue({ exitCode: 0, text: '' });
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 2, unitId: 'agent-integration' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual).toBeInstanceOf(PhaseGateQueryResult);
+        expect(actual.hasPassed()).toBe(true);
+        expect(mockExecute).toHaveBeenCalledWith({
+          targetLevel: 2,
+          unitId: 'agent-integration',
+          storyId: undefined,
+        });
+      });
+    });
+  });
+
+  describe('エラーハンドリング', () => {
+    context('phase-dependency-model の動的 import が失敗した場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-005
+      it('動的 import 失敗時に安全側（passed=true, warning 付き）にフォールバックすること', async () => {
+        // Arrange
+        // 動的 import 自体を失敗させる
+        mockExecute.mockImplementation(() => {
+          throw new Error('module not found');
+        });
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual.hasPassed()).toBe(true);
+        expect(actual.getBlockers()).toHaveLength(0);
+        expect(actual.getWarnings().length).toBeGreaterThanOrEqual(1);
+        expect(actual.getWarnings()[0]).toContain('phase-dependency-model');
+      });
+    });
+
+    context('checkPhaseGateCommandHandler 実行中にエラーが発生した場合', () => {
+      // IT-REPO-PhaseGateQueryAdapter-006
+      it('実行エラー時に安全側にフォールバックすること', async () => {
+        // Arrange
+        mockExecute.mockRejectedValue(new Error('handler execution failed'));
+        const adapter = new PhaseGateQueryAdapter();
+        const scope = WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' });
+
+        // Act
+        const actual = await adapter.checkGate(scope);
+
+        // Assert
+        expect(actual.hasPassed()).toBe(true);
+        expect(actual.getBlockers()).toHaveLength(0);
+        expect(actual.getWarnings().length).toBeGreaterThanOrEqual(1);
+      });
+    });
+  });
+});
+```
+
+---
+
+### 11. HarnessConfigConfigQueryAdapter: issue パス対応テスト詳細ロジック（3件）
+
+```typescript
+// @unit agent-integration
+// @layer infrastructure
+// @issue ISSUE-001
+
+import { describe, it, expect } from 'vitest';
+import { target, context } from '../../helpers/test-helpers';
+import path from 'node:path';
+
+const FIXTURES_DIR = path.resolve(
+  __dirname,
+  '../fixtures',
+);
+
+target('HarnessConfigConfigQueryAdapter（ISSUE-001: getProjectPaths）', () => {
+  describe('harness.config.json から ProjectPaths を読み取る', () => {
+    context('project.paths セクションを含む標準的なフィクスチャの場合', () => {
+      // IT-REPO-ConfigQueryAdapter-ISSUE001-001
+      it('getProjectPaths() がデフォルトの ProjectPaths を返すこと', () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json'),
+        });
+
+        // Act
+        const actual = adapter.getProjectPaths();
+
+        // Assert
+        expect(actual.getSource()).toEqual(['scripts/harness']);
+        expect(actual.getDocsConstruction()).toBe('docs/product/construction');
+        expect(actual.getDocsInception()).toBe('docs/inception');
+      });
+    });
+
+    context('カスタムパスを含むフィクスチャの場合', () => {
+      // IT-REPO-ConfigQueryAdapter-ISSUE001-002
+      it('getProjectPaths() でカスタムパスが正しく反映されること', () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-custom-paths.json'),
+        });
+
+        // Act
+        const actual = adapter.getProjectPaths();
+
+        // Assert
+        expect(actual.getSource()).toEqual(['src/core', 'src/lib']);
+        expect(actual.getDocsInception()).toBe('design/inception');
+        expect(actual.getDocsConstruction()).toBe('design/construction');
+      });
+    });
+
+    context('project.paths セクションが未定義のフィクスチャの場合', () => {
+      // IT-REPO-ConfigQueryAdapter-ISSUE001-003
+      it('project.paths セクションが未定義の場合にデフォルト値にフォールバックすること', () => {
+        // Arrange
+        // 既存の harness-config-enabled.json は project.paths セクションを含まない
+        const adapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-enabled.json'),
+        });
+
+        // Act
+        const actual = adapter.getProjectPaths();
+
+        // Assert
+        expect(actual.getSource()).toEqual(['scripts/harness']);
+        expect(actual.getDocsConstruction()).toBe('docs/product/construction');
+        expect(actual.getDocsInception()).toBe('docs/inception');
+      });
+    });
+  });
+});
+```
+
+---
+
+### 12. Presentation Hook Adapter: issue パス対応テスト詳細ロジック（3件）
+
+```typescript
+// @unit agent-integration
+// @layer presentation
+// @issue ISSUE-001
+
+import { describe, it, expect, vi } from 'vitest';
+import { target, context } from '../../../helpers/test-helpers';
+import { PreToolUseHookHandler } from '../../../../agent-integration/presentation/hooks/pre-tool-use-hook';
+
+target('PreToolUseHookHandler.handle（ISSUE-001: issue パス対応）', () => {
+  describe('issue パスを含む stdin JSON でフェーズゲート結果に応じた exit code を返す', () => {
+    context('Unit固有 issue パスへの Write の場合', () => {
+      // IT-API-PreToolUse-ISSUE001-001
+      it('Unit固有 issue パスへの Write がフェーズゲート結果に応じた exit code を返し、正しいパスが UseCase に渡されること', async () => {
+        // Arrange
+        // フェーズゲート通過時 → shouldBlock=false
+        const mockUseCase = {
+          execute: vi.fn().mockResolvedValue({
+            shouldBlock: false,
+          }),
+        };
+        const handler = new PreToolUseHookHandler({ handlePreToolUseUseCase: mockUseCase });
+        const stdinPayload = JSON.stringify({
+          tool_name: 'Write',
+          tool_input: {
+            file_path: 'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
+          },
+        });
+
+        // Act
+        const actual = await handler.handle(stdinPayload);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(mockUseCase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'],
+          }),
+        );
+      });
+    });
+
+    context('横断的 issue パスへの Write の場合', () => {
+      // IT-API-PreToolUse-ISSUE001-002
+      it('横断的 issue パスへの Write が exit code 0 で通過し、正しいパスが UseCase に渡されること', async () => {
+        // Arrange
+        // 横断的 issue = Level 1 → フェーズゲート対象外で shouldBlock=false
+        const mockUseCase = {
+          execute: vi.fn().mockResolvedValue({
+            shouldBlock: false,
+          }),
+        };
+        const handler = new PreToolUseHookHandler({ handlePreToolUseUseCase: mockUseCase });
+        const stdinPayload = JSON.stringify({
+          tool_name: 'Write',
+          tool_input: {
+            file_path: 'docs/inception/issues/ISSUE-001/logical_design.md',
+          },
+        });
+
+        // Act
+        const actual = await handler.handle(stdinPayload);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(mockUseCase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targetFilePaths: ['docs/inception/issues/ISSUE-001/logical_design.md'],
+          }),
+        );
+      });
+    });
+
+    context('Read ツールでの issue パスアクセスの場合', () => {
+      // IT-API-PreToolUse-ISSUE001-003
+      it('Read ツールでの issue パスアクセスが exit code 0 で通過し、正しいパスが UseCase に渡されること', async () => {
+        // Arrange
+        // Read は Step 2 対象外 → shouldBlock=false
+        const mockUseCase = {
+          execute: vi.fn().mockResolvedValue({
+            shouldBlock: false,
+          }),
+        };
+        const handler = new PreToolUseHookHandler({ handlePreToolUseUseCase: mockUseCase });
+        const stdinPayload = JSON.stringify({
+          tool_name: 'Read',
+          tool_input: {
+            file_path: 'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md',
+          },
+        });
+
+        // Act
+        const actual = await handler.handle(stdinPayload);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(mockUseCase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'],
+          }),
+        );
+      });
+    });
+  });
+});
+```
+
+---
+
+### 13. 統合フロー: issue パス対応テスト詳細ロジック（3件）
+
+```typescript
+// @unit agent-integration
+// @layer infrastructure
+// @issue ISSUE-001
+
+import { describe, it, expect, vi } from 'vitest';
+import { target, context } from '../../helpers/test-helpers';
+import path from 'node:path';
+import { HarnessConfigConfigQueryAdapter } from '../../../agent-integration/infrastructure/adapters/harness-config-config-query-adapter';
+import { HandlePreToolUseUseCase } from '../../../agent-integration/application/usecases/handle-pre-tool-use-usecase';
+import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result';
+
+const FIXTURES_DIR = path.resolve(
+  __dirname,
+  '../fixtures',
+);
+
+target('Hook Flow Integration（ISSUE-001: issue パス対応）', () => {
+  describe('UseCase + ConfigQueryAdapter 結合で issue パスフローを検証する', () => {
+    context('issue パスへの Write でフェーズゲート通過の場合', () => {
+      // IT-UC-HookFlow-ISSUE001-001
+      it('issue パスへの Write でフェーズゲート通過の End-to-End フロー', async () => {
+        // Arrange
+        const configQueryAdapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json'),
+        });
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(true, [], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: configQueryAdapter,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+
+        // Act
+        const actual = await useCase.execute({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        // WriteTargetScope が level=3, unitId='agent-integration', storyId='ISSUE-001' で解決される
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 3,
+            unitId: 'agent-integration',
+            storyId: 'ISSUE-001',
+          }),
+        );
+      });
+    });
+
+    context('issue パスへの Write でフェーズゲートブロックの場合', () => {
+      // IT-UC-HookFlow-ISSUE001-002
+      it('issue パスへの Write でフェーズゲートブロックの End-to-End フロー', async () => {
+        // Arrange
+        const configQueryAdapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json'),
+        });
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['前提文書が存在しません'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: configQueryAdapter,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+
+        // Act
+        const actual = await useCase.execute({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
+          ],
+        });
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.phaseGateBlockers).toContain('前提文書が存在しません');
+      });
+    });
+
+    context('横断的 issue パスへの Write の場合', () => {
+      // IT-UC-HookFlow-ISSUE001-003
+      it('横断的 issue パスへの Write はフェーズゲート不適用で通過するフロー', async () => {
+        // Arrange
+        const configQueryAdapter = new HarnessConfigConfigQueryAdapter({
+          configPath: path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json'),
+        });
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn(),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: configQueryAdapter,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+
+        // Act
+        const actual = await useCase.execute({
+          toolName: 'Write',
+          targetFilePaths: [
+            'docs/inception/issues/ISSUE-001/logical_design.md',
+          ],
+        });
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        // WriteTargetScope が level=1 で解決 → PhaseGateQueryPort は呼び出されない
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
+```
+
+---
+
+### 14. ISSUE-001 テスト実行コマンド
+
+```bash
+# ISSUE-001 関連テスト全体実行
+pnpm vitest run --reporter=verbose --grep "ISSUE-001" scripts/harness/__tests__/integration/agent-integration
+
+# HandlePreToolUseUseCase issue パス対応テスト
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts
+
+# PhaseGateQueryAdapter テスト
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/phase-gate-query-adapter.test.ts
+
+# HarnessConfigConfigQueryAdapter getProjectPaths テスト
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts
+
+# Presentation Hook issue パス対応テスト
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts
+
+# 統合フロー issue パス対応テスト
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts
 ```

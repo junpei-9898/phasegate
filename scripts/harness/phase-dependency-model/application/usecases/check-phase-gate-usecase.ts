@@ -43,14 +43,19 @@ export class CheckPhaseGateUseCase {
 
     phaseStructure.getPhaseNodes(targetLevel);
 
+    const scope = { unitId: input.unitId, storyId: input.storyId };
     const evidenceNodes = [1, 2, 3]
       .filter((value) => value < input.targetLevel)
       .flatMap((value) => phaseStructure.getPhaseNodes(PhaseLevel.create(value)));
-    const evidenceBundle = await this.evidenceBundleAssembler.assembleForLevel(targetLevel, evidenceNodes, {
-      unitId: input.unitId,
-      storyId: input.storyId,
-    });
-    const result = phaseStructure.checkPhaseGate(targetLevel, evidenceBundle);
+
+    // ISSUE-001: storyId提供時はLevel 3ノードもevidence収集対象に含める
+    if (input.storyId) {
+      const level3Nodes = phaseStructure.getPhaseNodes(PhaseLevel.create(3));
+      evidenceNodes.push(...level3Nodes);
+    }
+
+    const evidenceBundle = await this.evidenceBundleAssembler.assembleForLevel(targetLevel, evidenceNodes, scope);
+    const result = phaseStructure.checkPhaseGate(targetLevel, evidenceBundle, scope);
     let auditRecorded = false;
 
     if (result.auditPayload) {

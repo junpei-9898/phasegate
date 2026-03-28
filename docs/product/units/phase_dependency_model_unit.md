@@ -15,13 +15,17 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 
 ---
 
-## 2. 担当ストーリー
+## 2. 担当ストーリー / Issue
 
 | Story ID | タイトル | 優先度 |
 |----------|---------|--------|
-| H02-01 | 3層フェーズ構造定義 + phase-gateバリデータ拡張 | Must |
-| H02-02 | Planning Mode（interactive/embedded-qa）+ plan文書必須生成 | Must |
+| H02-01 | 3層フェーズ構造定義 + phase-gateバリデ��タ拡張 | Must |
+| H02-02 | Planning Mode（interactive/embedded-qa）+ plan文書��須生成 | Must |
 | H02-03 | Phase Dependencyカスタマイズ | Should |
+
+| Issue ID | タイトル | 優先度 |
+|----------|---------|--------|
+| ISSUE-001 | inception側フェーズゲート整備（Level 3成果物のコンテキスト依存チェック） | Must |
 
 ---
 
@@ -46,6 +50,14 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 - 両モードとも最終成果物として3層構造に応じた`inception/`配下に`*_plan.md`を生成する
 - phase-gateバリデータがplan文書のファイル存在でPhase 1完了を検証する（plan文書なしのPhase 2移行を拒否）
 - plan文書にQAセクション（設計判断の根拠）が含まれることを検証するテストを用意する
+
+### 3.4 inception内フェーズゲートの実効化（ISSUE-001）
+
+- storyId が提供された場合、Level 3成果物（`required: false`）をコンテキスト依存で必須チェック対象とする
+- `checkPhaseGate()` に `scope` パラメータを追加し、storyId 提供時に Level 3 ノードの解決済み成果物パスの存在を検証する
+- 既存の依存グラフ（`3:logical-designer → 3:scenario-test-designer → ... → 3:story-implementor`）が実効的に機能し、inception 内の設計順序を物理的に強制する
+- storyId 未指定時の既存動作（Level 3成果物をスキップ）は維持する
+- `Artifact.required` フィールドの意味は変更しない（storyId 未指定時のスキップ用として維持）
 
 ### 3.3 Phase Dependencyカスタマイズ（H02-03）
 

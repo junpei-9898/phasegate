@@ -2,7 +2,8 @@
 
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H02-01, H02-02, H02-03
-> **前提ドキュメント**: `logical_design.md`（同ディレクトリ）, `docs/inception/phase-dependency-model/it_test_design_plan.md`, `docs/product/units/integration_contract.md`, `docs/principles/testing-rules.md`
+> **対応Issue**: ISSUE-001
+> **前提ドキュメント**: `logical_design.md`（同ディレクトリ）, `docs/inception/phase-dependency-model/it_test_design_plan.md`, `docs/inception/issues/ISSUE-001/logical_design.md`, `docs/product/units/integration_contract.md`, `docs/principles/testing-rules.md`
 
 ---
 
@@ -464,3 +465,102 @@ Infrastructure層テストでは以下のパターンでファイルシステム
 |---------|---------|-------------|---------|
 | IT-PD-101 | 正常系 | preset=defaultかつcustomRulesで依存追加を指定した場合、既定依存が維持されたまま追加依存が適用される | preset=default + customRules追加 → 既定依存維持 + edges増加 |
 | IT-PD-102 | 正常系 | preset=defaultかつcustomRulesで依存追加を指定した場合、既定依存の削除は行われない | preset=default + customRules → 既定依存のedgesが減少しないことを確認 |
+
+---
+
+## ISSUE-001追加分
+
+> **対応Issue**: ISSUE-001（inception側フェーズゲート整備）
+> **参照設計**: `docs/inception/issues/ISSUE-001/logical_design.md` セクション3.1, 3.2, 3.4
+> **対応不変条件**: INV-8, INV-9（`domain_model.md`）
+
+### 9.1 CheckPhaseGateUseCase: scope パラメータ対応
+
+**テストファイル**: `check-phase-gate-usecase.test.ts`
+
+**コンストラクタ依存（Fake化対象）**: 既存と同一（phaseConfigProvider, evidenceBundleAssembler, auditLogger）
+
+| ケースID | カテゴリ | テストケース名 | 検証内容 |
+|---------|---------|-------------|---------|
+| IT-PD-103 | 正常系 | scope未提供でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされpassed=trueを返す（INV-9） | scope=undefined, targetLevel=3, Level 3成果物はrequired=false → artifactStatusesにLevel 3成果物が含まれない → passed=true |
+| IT-PD-104 | 正常系 | scope.storyId提供時にLevel 3チェックを実行し全成果物が存在する場合、passed=trueを返す（INV-8） | scope={ unitId:'agent-integration', storyId:'H11-05' }, targetLevel=3, 全resolve済みパスが存在 → passed=true, blockers空 |
+| IT-PD-105 | 異常系 | scope.storyId提供時にLevel 3チェックを実行しlogical_design.mdが不在の場合、passed=falseでblockersにlogical_design.md不足が含まれる（INV-8） | scope={ unitId:'agent-integration', storyId:'H11-05' }, logical_design.md不在 → passed=false, blockers非空にlogical_design.mdの欠損理由 |
+| IT-PD-106 | 異常系 | scope.storyId提供時にLevel 3チェックを実行しscenario_test_design.mdが不在の場合、passed=falseを返す（INV-8） | scope={ unitId:'agent-integration', storyId:'H11-05' }, scenario_test_design.md不在 → passed=false, blockersにscenario_test_design.md欠損 |
+| IT-PD-107 | 正常系 | scope.storyIdにissue ID（ISSUE-001）を指定した場合、US IDと同一のチェック動作をする（INV-8） | scope={ unitId:'phase-dependency-model', storyId:'ISSUE-001' }, 全成果物存在 → passed=true |
+| IT-PD-108 | 異常系 | scope.storyIdにissue ID（ISSUE-001）を指定しLevel 3成果物が不在の場合、passed=falseを返す | scope={ unitId:'phase-dependency-model', storyId:'ISSUE-001' }, logical_design.md不在 → passed=false, blockers非空 |
+| IT-PD-109 | 正常系 | scope.unitIdのみ提供（storyId未提供）でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされる（INV-9） | scope={ unitId:'agent-integration' }, storyId未指定 → Level 3 required=false成果物スキップ → passed=true |
+
+### 9.2 EvidenceBundleAssembler: Level 3 成果物の解決
+
+**テストファイル**: `check-phase-gate-usecase.test.ts` 内で統合検証
+
+**コンストラクタ依存（Fake化対象）**: 既存と同一（artifactExistenceChecker, planDocumentReader, phaseConfigProvider）
+
+| ケースID | カテゴリ | テストケース名 | 検証内容 |
+|---------|---------|-------------|---------|
+| IT-PD-110 | 正常系 | storyId提供時にassembleForLevelがLevel 3成果物の解決済みパスをartifactStatusesに含める | assembleForLevel(3, { unitId:'agent-integration', storyId:'H11-05' }) → artifactStatusesのキーに`docs/inception/agent-integration/H11-05/logical_design.md`等の解決済みパスが含まれる |
+| IT-PD-111 | 正常系 | storyId未提供時にassembleForLevelがLevel 3のrequired=false成果物をartifactStatusesに含めない | assembleForLevel(3, { unitId:'agent-integration' }) → Level 3 required=false成果物はartifactStatusesに含まれない |
+| IT-PD-112 | 正常系 | issue ID提供時にassembleForLevelがissueパス構造で成果物パスを解決する | assembleForLevel(3, { unitId:'phase-dependency-model', storyId:'ISSUE-001' }) → artifactStatusesのキーに`docs/inception/phase-dependency-model/issues/ISSUE-001/logical_design.md`等が含まれる |
+| IT-PD-113 | 正常系 | storyId提供時にArtifactExistenceCheckerPortのcheckAllが解決済みパスで呼び出される | storyId指定 → ArtifactExistenceCheckerPort.checkAll呼び出し引数にプレースホルダーなしの解決済みパスが渡される |
+
+### 9.3 Presentation: check-phase-gate コマンド
+
+**テストファイル**: `check-ready-command-handler.test.ts`, `check-phase-command-handler.test.ts`
+
+**Stub化対象**: CheckPhaseGateUseCase
+
+| ケースID | カテゴリ | テストケース名 | 検証内容 |
+|---------|---------|-------------|---------|
+| IT-PD-114 | 正常系 | --storyフラグにissue ID（ISSUE-001）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='ISSUE-001'が渡される | `check-phase-gate --level 3 --unit agent-integration --story ISSUE-001` → UseCase input.scope.storyId='ISSUE-001' |
+| IT-PD-115 | 正常系 | --storyフラグにUS ID（H11-05）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='H11-05'が渡される（既存動作維持） | `check-phase-gate --level 3 --unit agent-integration --story H11-05` → UseCase input.scope.storyId='H11-05' |
+| IT-PD-116 | 正常系 | --storyフラグ未指定の場合、CheckPhaseGateUseCaseにscope.storyIdが渡されない | `check-phase-gate --level 3 --unit agent-integration` → UseCase input.scope.storyId=undefined |
+| IT-PD-117 | 正常系 | --story指定でgate通過時にexit code 0で終了する | --story指定 + passed=true → exit code 0 |
+| IT-PD-118 | 異常系 | --story指定でgate失敗時にexit code 1で終了しblockersが表示される | --story指定 + passed=false → exit code 1 + blockerメッセージ表示 |
+
+### 9.4 Infrastructure: FileSystemArtifactExistenceChecker
+
+**テストファイル**: `file-system-artifact-existence-checker.test.ts`
+
+**実装ポート**: ArtifactExistenceCheckerPort
+
+| ケースID | カテゴリ | テストケース名 | 検証内容 |
+|---------|---------|-------------|---------|
+| IT-PD-119 | 正常系 | resolve済みパス（プレースホルダーなし）に対してファイルが存在する場合、trueを返す | 一時ディレクトリにresolve済みパス構造でファイル作成 → checkAll → Map値true |
+| IT-PD-120 | 正常系 | resolve済みパス（プレースホルダーなし）に対してファイルが存在しない場合、falseを返す | resolve済みパスにファイル未作成 → checkAll → Map値false |
+| IT-PD-121 | 正常系 | issueパス構造（issues/ISSUE-001/）のresolve済みパスに対してファイルが存在する場合、trueを返す | 一時ディレクトリに`issues/ISSUE-001/logical_design.md`作成 → checkAll → Map値true |
+| IT-PD-122 | 境界値 | resolve済みパスとプレースホルダー付きパスが混在するArtifactリストに対して正しく判定される | required=true(resolve済み) + required=false(プレースホルダー付き) → 各パスの存在に応じたMap返却 |
+
+---
+
+## テストケースサマリー
+
+| セクション | ケースID範囲 | ケース数 | 対象 |
+|-----------|------------|---------|------|
+| 3.1 CheckPhaseGateUseCase | IT-PD-001 ~ IT-PD-010 | 10 | H02-01/02/03 |
+| 3.2 BuildPhaseDependencyGraphUseCase | IT-PD-011 ~ IT-PD-016 | 6 | H02-01/02/03 |
+| 3.3 GetPhaseInfoUseCase | IT-PD-017 ~ IT-PD-023 | 7 | H02-01/02/03 |
+| 3.4 ValidateCustomizationPolicyUseCase | IT-PD-024 ~ IT-PD-028 | 5 | H02-01/02/03 |
+| 3.5 RecordPhaseOverrideAuditUseCase | IT-PD-029 ~ IT-PD-032 | 4 | H02-01/02/03 |
+| 4.1 EvidenceBundleAssembler | IT-PD-033 ~ IT-PD-037 | 5 | H02-01/02/03 |
+| 4.2 PhaseInfoResolver | IT-PD-038 ~ IT-PD-042 | 5 | H02-01/02/03 |
+| 4.3 PhaseGateResultMapper | IT-PD-043 ~ IT-PD-045 | 3 | H02-01/02/03 |
+| 5.1 FileSystemArtifactExistenceChecker | IT-PD-046 ~ IT-PD-050 | 5 | H02-01/02/03 |
+| 5.2 MarkdownPlanDocumentReader | IT-PD-051 ~ IT-PD-058 | 8 | H02-01/02/03 |
+| 5.3 HarnessConfigPhaseConfigProvider | IT-PD-059 ~ IT-PD-064 | 6 | H02-01/02/03 |
+| 5.4 PhaseOverrideAuditLogger | IT-PD-065 ~ IT-PD-067 | 3 | H02-01/02/03 |
+| 6.1 CheckPhaseCommandHandler | IT-PD-068 ~ IT-PD-072 | 5 | H02-01/02/03 |
+| 6.2 CheckReadyCommandHandler | IT-PD-073 ~ IT-PD-077 | 5 | H02-01/02/03 |
+| 6.3 PhaseGateValidatorFacade | IT-PD-078 ~ IT-PD-081 | 4 | H02-01/02/03 |
+| 6.4 PhaseInfoPresenter | IT-PD-082 ~ IT-PD-084 | 3 | H02-01/02/03 |
+| 6.5 PhaseGateResultPresenter | IT-PD-085 ~ IT-PD-087 | 3 | H02-01/02/03 |
+| 8.1 AC-PD-04補強 | IT-PD-088 ~ IT-PD-090 | 3 | H02-01/02/03 |
+| 8.2 AC-PD-03補強 | IT-PD-091 ~ IT-PD-092 | 2 | H02-01/02/03 |
+| 8.3 AC-PD-08補強 | IT-PD-093 ~ IT-PD-095 | 3 | H02-01/02/03 |
+| 8.4 AC-PD-13補強 | IT-PD-096 ~ IT-PD-098 | 3 | H02-01/02/03 |
+| 8.5 recommends補強 | IT-PD-099 ~ IT-PD-100 | 2 | H02-01/02/03 |
+| 8.6 preset+customRules補強 | IT-PD-101 ~ IT-PD-102 | 2 | H02-01/02/03 |
+| **9.1 ISSUE-001: CheckPhaseGateUseCase scope対応** | **IT-PD-103 ~ IT-PD-109** | **7** | **ISSUE-001** |
+| **9.2 ISSUE-001: EvidenceBundleAssembler Level 3解決** | **IT-PD-110 ~ IT-PD-113** | **4** | **ISSUE-001** |
+| **9.3 ISSUE-001: CLI check-phase-gate コマンド** | **IT-PD-114 ~ IT-PD-118** | **5** | **ISSUE-001** |
+| **9.4 ISSUE-001: FileSystemArtifactExistenceChecker** | **IT-PD-119 ~ IT-PD-122** | **4** | **ISSUE-001** |
+| | | **合計: 122** | |

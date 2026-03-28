@@ -2,8 +2,10 @@
 
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
+> **最終更新**: 2026-03-28（ISSUE-001 inception側フェーズゲート整備）
 > **Wave**: 1（基盤構築）
 > **対応ストーリー**: H02-01, H02-02, H02-03
+> **対応Issue**: ISSUE-001
 > **横断契約参照**: cross_cutting_decisions.md §5（所有権）, §6（集約降格）
 
 ---
@@ -113,6 +115,8 @@
 | INV-5 | PlanningMode=embedded-qa時、plan文書の対話的Q&Aが完了している | phase-gate検証時 |
 | INV-6 | カスタムルール（override: true）でも、Level間依存とTDD最低保証は緩和不可 | PhaseCustomizationPolicy適用時 |
 | INV-7 | override: trueが適用された場合、監査ペイロードが返される | PhaseCustomizationPolicy適用時 |
+| INV-8 | scope.storyId提供時、Level 3ノードの成果物をresolve(scope)で解決し、解決済みパスの存在をチェック対象とする（コンテキスト依存required） | phase-gate検証時（ISSUE-001追加） |
+| INV-9 | scope.storyId未提供時、Level 3ノードのrequired=false成果物はチェックをスキップする（既存動作維持） | phase-gate検証時（ISSUE-001追加） |
 
 ### Shared Kernelに対する前提条件
 
@@ -151,10 +155,16 @@
 PhaseStructure集約自体に状態フィールドはないが、phase-gate検証の結果は以下のフローで決定される:
 
 ```
-checkPhaseGate(targetLevel, artifacts)
-    ├── 前提Level成果物チェック
+checkPhaseGate(targetLevel, evidence, scope?)
+    ├── 前提Level成果物チェック（required=true のもの）
     │   ├── 全存在 → 次へ
     │   └── 欠損あり → PhaseGateResult(passed=false, blockers=[...])
+    ├── コンテキスト依存成果物チェック（ISSUE-001追加）
+    │   ├── scope.storyId未提供 → スキップ（既存動作維持）
+    │   └── scope.storyId提供時:
+    │       ├── Level 3ノードの成果物を resolve(scope) でパス解決
+    │       ├── 解決済みパスの存在チェック → 未完了ノードを特定
+    │       └── 未完了ノードに依存するノード → ブロック
     ├── PlanEvidence検証（Level 2以降）
     │   ├── plan文書存在 + QA充足 → 次へ
     │   └── 不足 → PhaseGateResult(passed=false, blockers=[...])
@@ -184,7 +194,7 @@ classDiagram
         -levels: Map~PhaseLevel, PhaseNode[]~
         -dependencies: PhaseDependency[]
         -customizationPolicy: PhaseCustomizationPolicy
-        +checkPhaseGate(targetLevel: PhaseLevel, evidence: Map): PhaseGateResult
+        +checkPhaseGate(targetLevel: PhaseLevel, evidence: Map, scope?: Scope): PhaseGateResult
         +getPhaseNodes(level: PhaseLevel): PhaseNode[]
         +getDependencies(from: PhaseNode): PhaseDependency[]
         +applyCustomization(policy: PhaseCustomizationPolicy): void

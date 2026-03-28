@@ -3,6 +3,7 @@
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H02-01, H02-02, H02-03
+> **対応Issue**: ISSUE-001
 > **正規ソース**: `docs/product/construction/phase-dependency-model/domain_model.md`
 
 ---
@@ -447,6 +448,81 @@ scripts/harness/__tests__/phase-dependency-model/
 
 ---
 
+## 9. ISSUE-001追加分: checkPhaseGate() コンテキスト依存チェック（INV-8, INV-9）
+
+> ISSUE-001（inception側フェーズゲート整備）により追加された不変条件 INV-8, INV-9 に対応するテストケース。
+> `checkPhaseGate(targetLevel, evidence, scope?)` の第3引数 `scope` によるコンテキスト依存動作を検証する。
+
+### 9.1 scope未提供時の既存動作維持（INV-9）
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-134 | `checkPhaseGate` | scope未提供時のLevel 3フェーズゲートを検証する | scope引数を省略した場合 | Level 3ノードのrequired=false成果物がチェックされずゲートを通過する | `phase-structure.test.ts` |
+| UT-PD-135 | `checkPhaseGate` | scope未提供時のLevel 3フェーズゲートを検証する | scope引数を省略しLevel 2の前提成果物が欠損している場合 | Level 2前提成果物の欠損によりゲートでブロックされる（Level 3 required=false成果物はスキップされるが、Level 2前提チェックは維持） | `phase-structure.test.ts` |
+
+### 9.2 scope.unitIdのみ提供（storyIdなし）時の動作（INV-9）
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-136 | `checkPhaseGate` | scope.unitIdのみ提供時のLevel 3フェーズゲートを検証する | scope.unitIdのみ提供しstoryIdが未定義の場合 | Level 3ノードのrequired=false成果物がチェックされずscope未提供時と同一動作になる | `phase-structure.test.ts` |
+| UT-PD-137 | `checkPhaseGate` | scope.unitIdのみ提供時のLevel 3フェーズゲートを検証する | scope.unitIdのみ提供しstoryIdが未定義かつLevel 2の前提成果物が欠損の場合 | Level 2前提成果物の欠損によりゲートでブロックされる | `phase-structure.test.ts` |
+
+### 9.3 scope.storyId提供時のコンテキスト依存チェック（INV-8）
+
+**resolve(scope) によるパス解決**
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-138 | `checkPhaseGate` | scope.storyId提供時のLevel 3成果物パス解決を検証する | scope={unitId:'agent-integration', storyId:'H11-05'}を提供した場合 | Level 3ノードの成果物がresolve(scope)で解決され{unitId}と{storyId}プレースホルダが実値に置換される | `phase-structure.test.ts` |
+| UT-PD-139 | `checkPhaseGate` | scope.storyId提供時のLevel 3成果物存在チェックを検証する | resolve済みパスが全て存在する場合 | 該当ノードは完了と判定されゲートを通過する | `phase-structure.test.ts` |
+| UT-PD-140 | `checkPhaseGate` | scope.storyId提供時のLevel 3成果物存在チェックを検証する | resolve済みパスが存在しない場合 | 該当ノードは未完了と判定されゲートでブロックされる | `phase-structure.test.ts` |
+
+**未完了ノードに依存するノードのブロック**
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-141 | `checkPhaseGate` | 未完了ノードに依存するノードの成果物書き込みを検証する | 前提ノードが未完了かつそのノードに依存するノードの成果物がターゲットの場合 | ゲートでブロックされblockersに未完了前提ノードの情報が含まれる | `phase-structure.test.ts` |
+| UT-PD-142 | `checkPhaseGate` | 未完了ノードに依存するノードの成果物書き込みを検証する | 前提ノードが完了済みかつそのノードに依存するノードの成果物がターゲットの場合 | ゲートを通過する | `phase-structure.test.ts` |
+
+### 9.4 依存グラフに基づくブロックテスト（INV-8 + Level 3依存グラフ）
+
+> Level 3内の依存グラフ:
+> `2:logical-designer → 3:logical-designer → 3:scenario-test-designer → 3:scenario-test-logic-designer → 3:implementation-readiness-checker → 3:story-implementor`
+
+**直接依存によるブロック**
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-143 | `checkPhaseGate` | Level 3依存グラフでlogical_design.md未作成時のブロックを検証する | scope.storyId提供時にlogical_design.mdが未作成の場合 | ゲートでブロックされblockersにlogical_design.md不足が含まれる | `phase-structure.test.ts` |
+| UT-PD-144 | `checkPhaseGate` | Level 3依存グラフでscenario_test_design.md未作成時のブロックを検証する | scope.storyId提供時にlogical_design.md作成済みだがscenario_test_design.md未作成の場合 | ゲートでブロックされblockersにscenario_test_design.md不足が含まれる | `phase-structure.test.ts` |
+| UT-PD-145 | `checkPhaseGate` | Level 3依存グラフでimplementation_readiness未完了時のブロックを検証する | scope.storyId提供時にimplementation-readiness-checker未完了の場合 | ゲートでブロックされblockersにimplementation-readiness-checker未完了が含まれる | `phase-structure.test.ts` |
+
+**推移的依存によるブロック**
+
+> 注: checkPhaseGate() APIにはターゲットノード（書き込み先）の指定がないため、推移的依存のテストは「依存チェーンの起点（logical_design.md）が欠損している場合にゲート全体がブロックされる」ことの検証として統合する。旧UT-PD-147はUT-PD-146と実質同一であったため統合。
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-146 | `checkPhaseGate` | Level 3依存グラフで推移的依存によるブロックを検証する | scope.storyId提供時にlogical_design.mdが未作成の場合 | 依存チェーン全体がブロックされblockersにlogical_design.md不足が含まれる | `phase-structure.test.ts` |
+
+**全前提成果物存在時のパス**
+
+> 注: checkPhaseGate() APIにはターゲットノード（書き込み先）の指定がないため、全前提成果物存在時のテストは1つに統合する。旧UT-PD-149はUT-PD-148と実質同一であったため統合。
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-148 | `checkPhaseGate` | Level 3依存グラフで全前提成果物が存在する場合を検証する | scope.storyId提供時に依存チェーン上の全成果物が存在する場合 | ゲートを通過する | `phase-structure.test.ts` |
+
+### 9.5 Artifact.resolve()との連携テスト（PhaseStructure内部使用）
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-150 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'agent-integration', storyId:'H11-05'})を呼び出した場合 | {unitId}が'agent-integration'に、{storyId}が'H11-05'に置換された実パスが返される | `phase-structure.test.ts` |
+| UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合 | docs/inception/phase-dependency-model/H02-01/配下の実パスが返される | `phase-structure.test.ts` |
+| UT-PD-152 | `Artifact.resolve` | scope未提供時のArtifactパス解決を検証する | scopeを省略またはstoryId未指定で呼び出した場合 | プレースホルダが未解決のままのパスが返される | `phase-structure.test.ts` |
+
+---
+
 ## テストケース総数
 
 | 分類 | ケース数 |
@@ -455,6 +531,8 @@ scripts/harness/__tests__/phase-dependency-model/
 | 値オブジェクト（9種） | 53件（UT-PD-036〜088） |
 | 境界値・異常系 | 26件（UT-PD-089〜114） |
 | カバレッジギャップ補強 | 19件（UT-PD-115〜133） |
-| **合計** | **133件** |
+| ISSUE-001追加: コンテキスト依存チェック（INV-8, INV-9） | 17件（UT-PD-134〜152、UT-PD-147/149統合により2件減） |
+| **合計** | **150件** |
 
 > 注: 境界値・異常系のケース（セクション6）は、セクション3・4のケースと一部重複する参照関係を持つ。実装時にはテストファイル内で適切なdescribe/contextグループに統合すること。
+> 注: ISSUE-001追加分（セクション9）はcheckPhaseGateのscope引数に関するテストであり、セクション3.2の既存checkPhaseGateテストと同一テストファイル内のdescribeブロックに統合可能。

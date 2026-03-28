@@ -769,3 +769,654 @@ pnpm test -- scripts/harness/__tests__/phase-dependency-model/presentation/check
 ```
 
 監査ログや一時ディレクトリを使う Adapter テストは、Vitest の `afterEach` で必ずクリーンアップを実行する前提で実装する。
+
+---
+
+## ISSUE-001追加分
+
+> **対応Issue**: ISSUE-001（inception側フェーズゲート整備）
+> **参照設計**: `docs/inception/issues/ISSUE-001/logical_design.md` セクション3.1, 3.2, 3.4
+> **対応ケースID**: IT-PD-103〜122（20件）
+
+### 7. 追加テストヘルパー・シードデータ
+
+#### 7.1 scope関連ヘルパー
+
+```ts
+function createScopeWithStory(storyId: string, unitId = "agent-integration") {
+  return createScope({ unitId, storyId });
+}
+
+function createScopeWithoutStory(unitId = "agent-integration") {
+  return createScope({ unitId });
+}
+```
+
+#### 7.2 Level 3 成果物 resolve ヘルパー
+
+```ts
+/**
+ * Level 3 成果物の解決済みパスを生成する。
+ * storyId が US ID の場合: docs/inception/{unitId}/{storyId}/...
+ * storyId が issue ID の場合: docs/inception/{unitId}/issues/{storyId}/...
+ */
+function resolveLevel3ArtifactPath(
+  unitId: string,
+  storyId: string,
+  artifactName: string,
+): string {
+  const isIssueId = storyId.startsWith("ISSUE-");
+  if (isIssueId) {
+    return `docs/inception/${unitId}/issues/${storyId}/${artifactName}`;
+  }
+  return `docs/inception/${unitId}/${storyId}/${artifactName}`;
+}
+
+function buildLevel3ResolvedArtifactStatuses(
+  unitId: string,
+  storyId: string,
+  overrides?: Record<string, boolean>,
+): Record<string, boolean> {
+  const artifacts = [
+    "logical_design.md",
+    "scenario_test_design.md",
+    "scenario_test_logic.md",
+    "tdd_implementation_plan.md",
+  ];
+  const statuses: Record<string, boolean> = {};
+  for (const artifact of artifacts) {
+    const path = resolveLevel3ArtifactPath(unitId, storyId, artifact);
+    statuses[path] = overrides?.[artifact] ?? true;
+  }
+  return statuses;
+}
+```
+
+#### 7.3 Seed 組み合わせ
+
+| Seed 名 | 内容 | 主な使用ケース |
+|---|---|---|
+| `level3AllPresentSeed(unitId, storyId)` | Level 1/2 全充足 + Level 3 resolve済み全存在 | IT-PD-104, 107 |
+| `level3LogicalMissingSeed(unitId, storyId)` | Level 1/2 全充足 + Level 3 logical_design.md 不在 | IT-PD-105, 108 |
+| `level3ScenarioMissingSeed(unitId, storyId)` | Level 1/2 全充足 + Level 3 scenario_test_design.md 不在 | IT-PD-106 |
+| `noScopeSeed()` | Level 1/2 全充足 + scope なし（Level 3 required=false スキップ） | IT-PD-103, 109 |
+
+### 8. ISSUE-001 UseCase統合テスト詳細ロジック
+
+#### 8.1 `check-phase-gate-usecase.test.ts`（IT-PD-103〜109）
+
+既存の `CheckPhaseGateUseCase.execute` target 内に `describe("ISSUE-001: scope パラメータによるLevel 3コンテキスト依存チェック")` を追加する。
+
+##### ベース疑似コード
+
+```ts
+target("CheckPhaseGateUseCase.execute", () => {
+  // ... 既存ケース (IT-PD-001〜010) ...
+
+  describe("ISSUE-001: scope パラメータによるLevel 3コンテキスト依存チェック", () => {
+    context("scope 未提供でLevel 3チェックを実行する場合", () => {
+      it("scope未提供でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされpassed=trueを返す", async () => {
+        // Arrange
+        const scope = undefined;
+        const targetLevel = PhaseLevel.from(3);
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            // Level 1/2 の成果物のみ true にする
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+          },
+          planEvidences: buildSatisfiedLevel1And2PlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    context("scope.storyId 提供時に全Level 3成果物が存在する場合", () => {
+      it("scope.storyId提供時にLevel 3チェックを実行し全成果物が存在する場合、passed=trueを返す", async () => {
+        // Arrange
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const targetLevel = PhaseLevel.from(3);
+        const level3Statuses = buildLevel3ResolvedArtifactStatuses("agent-integration", "H11-05");
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...level3Statuses,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    context("scope.storyId 提供時に logical_design.md が不在の場合", () => {
+      it("scope.storyId提供時にLevel 3チェックを実行しlogical_design.mdが不在の場合、passed=falseでblockersにlogical_design.md不足が含まれる", async () => {
+        // Arrange
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const targetLevel = PhaseLevel.from(3);
+        const level3Statuses = buildLevel3ResolvedArtifactStatuses(
+          "agent-integration", "H11-05",
+          { "logical_design.md": false },
+        );
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...level3Statuses,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+        expect(actual.blockers.some(b => b.includes("logical_design.md"))).toBe(true);
+      });
+    });
+
+    context("scope.storyId 提供時に scenario_test_design.md が不在の場合", () => {
+      it("scope.storyId提供時にLevel 3チェックを実行しscenario_test_design.mdが不在の場合、passed=falseを返す", async () => {
+        // Arrange
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const targetLevel = PhaseLevel.from(3);
+        const level3Statuses = buildLevel3ResolvedArtifactStatuses(
+          "agent-integration", "H11-05",
+          { "scenario_test_design.md": false },
+        );
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...level3Statuses,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.some(b => b.includes("scenario_test_design.md"))).toBe(true);
+      });
+    });
+
+    context("scope.storyId に issue ID を指定した場合", () => {
+      it("scope.storyIdにissue ID（ISSUE-001）を指定した場合、US IDと同一のチェック動作をする", async () => {
+        // Arrange
+        const scope = createScopeWithStory("ISSUE-001", "phase-dependency-model");
+        const targetLevel = PhaseLevel.from(3);
+        const level3Statuses = buildLevel3ResolvedArtifactStatuses("phase-dependency-model", "ISSUE-001");
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...level3Statuses,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    context("scope.storyId に issue ID を指定し Level 3 成果物が不在の場合", () => {
+      it("scope.storyIdにissue ID（ISSUE-001）を指定しLevel 3成果物が不在の場合、passed=falseを返す", async () => {
+        // Arrange
+        const scope = createScopeWithStory("ISSUE-001", "phase-dependency-model");
+        const targetLevel = PhaseLevel.from(3);
+        const level3Statuses = buildLevel3ResolvedArtifactStatuses(
+          "phase-dependency-model", "ISSUE-001",
+          { "logical_design.md": false },
+        );
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...level3Statuses,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    context("scope.unitId のみ提供（storyId 未提供）でLevel 3チェックを実行する場合", () => {
+      it("scope.unitIdのみ提供でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされる", async () => {
+        // Arrange
+        const scope = createScopeWithoutStory("agent-integration");
+        const targetLevel = PhaseLevel.from(3);
+        const { sut } = createCheckPhaseGateHarness({
+          config: { customizationPolicy: defaultPolicySeed() },
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+          },
+          planEvidences: buildSatisfiedLevel1And2PlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await sut.execute({ scope, targetLevel });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+  });
+});
+```
+
+##### ケース別詳細
+
+| ケースID | `context()` と `it()` | Arrange | Act | Assert |
+|---|---|---|---|---|
+| IT-PD-103 | `context("scope 未提供でLevel 3チェックを実行する場合")` `it("scope未提供でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされpassed=trueを返す")` | `scope=undefined`、Level 1/2 の artifactStatuses 全 true、Level 3 成果物は artifactStatuses に含めない（required=false でスキップ） | `sut.execute({ scope: undefined, targetLevel: PhaseLevel.from(3) })` | `actual.passed === true` `actual.blockers === []` |
+| IT-PD-104 | `context("scope.storyId 提供時に全Level 3成果物が存在する場合")` `it("scope.storyId提供時にLevel 3チェックを実行し全成果物が存在する場合、passed=trueを返す")` | `scope={ unitId:'agent-integration', storyId:'H11-05' }`、Level 1/2 全充足 + Level 3 resolve 済み全パスを `true` で stub | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === true` `actual.blockers === []` |
+| IT-PD-105 | `context("scope.storyId 提供時に logical_design.md が不在の場合")` `it("scope.storyId提供時にLevel 3チェックを実行しlogical_design.mdが不在の場合、passed=falseでblockersにlogical_design.md不足が含まれる")` | IT-PD-104 と同じ scope だが `logical_design.md` の resolve 済みパスを `false` にする | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === false` `actual.blockers` に `logical_design.md` の欠損理由を含む |
+| IT-PD-106 | `context("scope.storyId 提供時に scenario_test_design.md が不在の場合")` `it("scope.storyId提供時にLevel 3チェックを実行しscenario_test_design.mdが不在の場合、passed=falseを返す")` | IT-PD-104 と同じ scope だが `scenario_test_design.md` の resolve 済みパスを `false` にする | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === false` `actual.blockers` に `scenario_test_design.md` の欠損理由を含む |
+| IT-PD-107 | `context("scope.storyId に issue ID を指定した場合")` `it("scope.storyIdにissue ID（ISSUE-001）を指定した場合、US IDと同一のチェック動作をする")` | `scope={ unitId:'phase-dependency-model', storyId:'ISSUE-001' }`、Level 3 resolve 済みパスが `docs/inception/phase-dependency-model/issues/ISSUE-001/...` で全 true | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === true` `actual.blockers === []` |
+| IT-PD-108 | `context("scope.storyId に issue ID を指定し Level 3 成果物が不在の場合")` `it("scope.storyIdにissue ID（ISSUE-001）を指定しLevel 3成果物が不在の場合、passed=falseを返す")` | IT-PD-107 と同じ scope だが `logical_design.md` の resolve 済みパスを `false` にする | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === false` `actual.blockers.length > 0` |
+| IT-PD-109 | `context("scope.unitId のみ提供（storyId 未提供）でLevel 3チェックを実行する場合")` `it("scope.unitIdのみ提供でLevel 3チェックを実行した場合、Level 3のrequired=false成果物はスキップされる")` | `scope={ unitId:'agent-integration' }` storyId 未指定、Level 1/2 全充足、Level 3 は required=false でスキップ | `sut.execute({ scope, targetLevel: PhaseLevel.from(3) })` | `actual.passed === true` `actual.blockers === []` |
+
+#### 8.2 `check-phase-gate-usecase.test.ts` — EvidenceBundleAssembler（IT-PD-110〜113）
+
+既存の `EvidenceBundleAssembler.assembleForLevel` target 内に `describe("ISSUE-001: Level 3 成果物の scope 解決")` を追加する。
+
+##### ベース疑似コード
+
+```ts
+target("EvidenceBundleAssembler.assembleForLevel", () => {
+  // ... 既存ケース (IT-PD-033〜037) ...
+
+  describe("ISSUE-001: Level 3 成果物の scope 解決", () => {
+    context("storyId 提供時に Level 3 成果物の解決済みパスを収集する場合", () => {
+      it("storyId提供時にassembleForLevelがLevel 3成果物の解決済みパスをartifactStatusesに含める", async () => {
+        // Arrange
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const structure = createPhaseStructure();
+        const resolvedLogicalDesignPath = resolveLevel3ArtifactPath(
+          "agent-integration", "H11-05", "logical_design.md",
+        );
+        const { evidenceBundleAssembler, artifactExistenceChecker } = createCheckPhaseGateHarness({
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            [resolvedLogicalDesignPath]: true,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await evidenceBundleAssembler.assembleForLevel({
+          structure,
+          scope,
+          targetLevel: PhaseLevel.from(3),
+        });
+
+        // Assert
+        expect(actual.artifactStatuses.has(resolvedLogicalDesignPath)).toBe(true);
+      });
+    });
+
+    context("storyId 未提供時に Level 3 required=false 成果物をスキップする場合", () => {
+      it("storyId未提供時にassembleForLevelがLevel 3のrequired=false成果物をartifactStatusesに含めない", async () => {
+        // Arrange
+        const scope = createScopeWithoutStory("agent-integration");
+        const structure = createPhaseStructure();
+        const { evidenceBundleAssembler } = createCheckPhaseGateHarness({
+          artifactStatuses: buildSatisfiedLevel1And2ArtifactStatuses(),
+          planEvidences: buildSatisfiedLevel1And2PlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await evidenceBundleAssembler.assembleForLevel({
+          structure,
+          scope,
+          targetLevel: PhaseLevel.from(3),
+        });
+
+        // Assert
+        const level3Keys = [...actual.artifactStatuses.keys()].filter(k => k.includes("{storyId}"));
+        expect(level3Keys).toEqual([]);
+      });
+    });
+
+    context("issue ID 提供時に issue パス構造で成果物パスを解決する場合", () => {
+      it("issue ID提供時にassembleForLevelがissueパス構造で成果物パスを解決する", async () => {
+        // Arrange
+        const scope = createScopeWithStory("ISSUE-001", "phase-dependency-model");
+        const structure = createPhaseStructure();
+        const resolvedIssuePath = resolveLevel3ArtifactPath(
+          "phase-dependency-model", "ISSUE-001", "logical_design.md",
+        );
+        const { evidenceBundleAssembler } = createCheckPhaseGateHarness({
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            [resolvedIssuePath]: true,
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await evidenceBundleAssembler.assembleForLevel({
+          structure,
+          scope,
+          targetLevel: PhaseLevel.from(3),
+        });
+
+        // Assert
+        expect(actual.artifactStatuses.has(resolvedIssuePath)).toBe(true);
+      });
+    });
+
+    context("storyId 提供時に ArtifactExistenceCheckerPort が解決済みパスで呼ばれる場合", () => {
+      it("storyId提供時にArtifactExistenceCheckerPortのcheckAllが解決済みパスで呼び出される", async () => {
+        // Arrange
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const structure = createPhaseStructure();
+        const { evidenceBundleAssembler, artifactExistenceChecker } = createCheckPhaseGateHarness({
+          artifactStatuses: {
+            ...buildSatisfiedLevel1And2ArtifactStatuses(),
+            ...buildLevel3ResolvedArtifactStatuses("agent-integration", "H11-05"),
+          },
+          planEvidences: buildSatisfiedAllLevelPlanEvidences("embedded-qa"),
+        });
+
+        // Act
+        const actual = await evidenceBundleAssembler.assembleForLevel({
+          structure,
+          scope,
+          targetLevel: PhaseLevel.from(3),
+        });
+
+        // Assert
+        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({
+              resolve: expect.any(Function),
+            }),
+          ]),
+          expect.objectContaining({ storyId: 'H11-05' }),
+        );
+        // 出力の artifactStatuses から間接検証: 全キーがプレースホルダーを含まない
+        const allKeys = [...actual.artifactStatuses.keys()];
+        expect(allKeys.every((k: string) => !k.includes('{storyId}'))).toBe(true);
+      });
+    });
+  });
+});
+```
+
+##### ケース別詳細
+
+| ケースID | `context()` と `it()` | Arrange | Act | Assert |
+|---|---|---|---|---|
+| IT-PD-110 | `context("storyId 提供時に Level 3 成果物の解決済みパスを収集する場合")` `it("storyId提供時にassembleForLevelがLevel 3成果物の解決済みパスをartifactStatusesに含める")` | `scope={ unitId:'agent-integration', storyId:'H11-05' }`、stub に `docs/inception/agent-integration/H11-05/logical_design.md` を true で返す | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `actual.artifactStatuses.has("docs/inception/agent-integration/H11-05/logical_design.md") === true` |
+| IT-PD-111 | `context("storyId 未提供時に Level 3 required=false 成果物をスキップする場合")` `it("storyId未提供時にassembleForLevelがLevel 3のrequired=false成果物をartifactStatusesに含めない")` | `scope={ unitId:'agent-integration' }` storyId 未指定 | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `actual.artifactStatuses` のキーに `{storyId}` プレースホルダーを含むパスがないこと |
+| IT-PD-112 | `context("issue ID 提供時に issue パス構造で成果物パスを解決する場合")` `it("issue ID提供時にassembleForLevelがissueパス構造で成果物パスを解決する")` | `scope={ unitId:'phase-dependency-model', storyId:'ISSUE-001' }`、stub に `docs/inception/phase-dependency-model/issues/ISSUE-001/logical_design.md` を true で返す | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `actual.artifactStatuses.has("docs/inception/phase-dependency-model/issues/ISSUE-001/logical_design.md") === true` |
+| IT-PD-113 | `context("storyId 提供時に ArtifactExistenceCheckerPort が解決済みパスで呼ばれる場合")` `it("storyId提供時にArtifactExistenceCheckerPortのcheckAllが解決済みパスで呼び出される")` | `scope={ unitId:'agent-integration', storyId:'H11-05' }`、Level 3 全成果物を resolve 済みパスで stub | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `artifactExistenceChecker.checkAll` が scope 付きで呼び出され、出力の `artifactStatuses` の全キーがプレースホルダーを含まないこと（出力結果からの間接検証） |
+
+#### 8.3 Presentation: check-phase-gate コマンド（IT-PD-114〜118）
+
+##### 8.3.1 `check-ready-command-handler.test.ts` / `check-phase-command-handler.test.ts`
+
+既存の `CheckReadyCommandHandler.handle` / `CheckPhaseCommandHandler.handle` target 内に `describe("ISSUE-001: --story フラグの issue ID / US ID 受付")` を追加する。
+
+##### ベース疑似コード
+
+```ts
+target("CheckReadyCommandHandler.handle", () => {
+  // ... 既存ケース (IT-PD-073〜077) ...
+
+  describe("ISSUE-001: --story フラグの issue ID / US ID 受付", () => {
+    context("--story に issue ID を指定した場合", () => {
+      it("--storyフラグにissue ID（ISSUE-001）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='ISSUE-001'が渡される", async () => {
+        // Arrange
+        const usecase = createCheckPhaseGateUseCaseStub([{ passed: true, blockers: [], warnings: [], auditRecorded: false, targetLevel: 3 }]);
+        const presenter = new PhaseGateResultPresenter();
+        const sut = new CheckReadyCommandHandler({ usecase, presenter });
+        const argv = ["--unit", "agent-integration", "--story", "ISSUE-001"];
+
+        // Act
+        const actual = await sut.handle(argv);
+
+        // Assert
+        expect(usecase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            scope: expect.objectContaining({ storyId: "ISSUE-001" }),
+          }),
+        );
+      });
+    });
+
+    context("--story に US ID を指定した場合", () => {
+      it("--storyフラグにUS ID（H11-05）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='H11-05'が渡される", async () => {
+        // Arrange
+        const usecase = createCheckPhaseGateUseCaseStub([{ passed: true, blockers: [], warnings: [], auditRecorded: false, targetLevel: 3 }]);
+        const presenter = new PhaseGateResultPresenter();
+        const sut = new CheckReadyCommandHandler({ usecase, presenter });
+        const argv = ["--unit", "agent-integration", "--story", "H11-05"];
+
+        // Act
+        const actual = await sut.handle(argv);
+
+        // Assert
+        expect(usecase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            scope: expect.objectContaining({ storyId: "H11-05" }),
+          }),
+        );
+      });
+    });
+
+    context("--story フラグ未指定の場合", () => {
+      it("--storyフラグ未指定の場合、CheckPhaseGateUseCaseにscope.storyIdが渡されない", async () => {
+        // Arrange
+        const usecase = createCheckPhaseGateUseCaseStub([{ passed: true, blockers: [], warnings: [], auditRecorded: false, targetLevel: 3 }]);
+        const presenter = new PhaseGateResultPresenter();
+        const sut = new CheckReadyCommandHandler({ usecase, presenter });
+        const argv = ["--unit", "agent-integration"];
+
+        // Act
+        const actual = await sut.handle(argv);
+
+        // Assert
+        expect(usecase.execute).toHaveBeenCalledWith(
+          expect.objectContaining({
+            scope: expect.objectContaining({ storyId: undefined }),
+          }),
+        );
+      });
+    });
+
+    context("--story 指定で gate 通過の場合", () => {
+      it("--story指定でgate通過時にexit code 0で終了する", async () => {
+        // Arrange
+        const usecase = createCheckPhaseGateUseCaseStub([{ passed: true, blockers: [], warnings: [], auditRecorded: false, targetLevel: 3 }]);
+        const presenter = new PhaseGateResultPresenter();
+        const sut = new CheckReadyCommandHandler({ usecase, presenter });
+        const argv = ["--unit", "agent-integration", "--story", "ISSUE-001"];
+
+        // Act
+        const actual = await sut.handle(argv);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+      });
+    });
+
+    context("--story 指定で gate 失敗の場合", () => {
+      it("--story指定でgate失敗時にexit code 1で終了しblockersが表示される", async () => {
+        // Arrange
+        const usecase = createCheckPhaseGateUseCaseStub([{
+          passed: false,
+          blockers: ["missing logical_design.md"],
+          warnings: [],
+          auditRecorded: false,
+          targetLevel: 3,
+        }]);
+        const presenter = new PhaseGateResultPresenter();
+        const sut = new CheckReadyCommandHandler({ usecase, presenter });
+        const argv = ["--unit", "agent-integration", "--story", "ISSUE-001"];
+
+        // Act
+        const actual = await sut.handle(argv);
+
+        // Assert
+        expect(actual.exitCode).toBe(1);
+        expect(actual.stdout ?? actual.stderr).toContain("logical_design.md");
+      });
+    });
+  });
+});
+```
+
+##### ケース別詳細
+
+| ケースID | `context()` と `it()` | Arrange | Act | Assert |
+|---|---|---|---|---|
+| IT-PD-114 | `context("--story に issue ID を指定した場合")` `it("--storyフラグにissue ID（ISSUE-001）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='ISSUE-001'が渡される")` | usecase stub が `passed=true` DTO を返す。argv は `["--unit", "agent-integration", "--story", "ISSUE-001"]` | `handle(argv)` | `usecase.execute` 引数の `scope.storyId === "ISSUE-001"` |
+| IT-PD-115 | `context("--story に US ID を指定した場合")` `it("--storyフラグにUS ID（H11-05）を指定した場合、CheckPhaseGateUseCaseにscope.storyId='H11-05'が渡される")` | usecase stub が `passed=true` DTO を返す。argv は `["--unit", "agent-integration", "--story", "H11-05"]` | `handle(argv)` | `usecase.execute` 引数の `scope.storyId === "H11-05"` |
+| IT-PD-116 | `context("--story フラグ未指定の場合")` `it("--storyフラグ未指定の場合、CheckPhaseGateUseCaseにscope.storyIdが渡されない")` | usecase stub が `passed=true` DTO を返す。argv は `["--unit", "agent-integration"]` | `handle(argv)` | `usecase.execute` 引数の `scope.storyId === undefined` |
+| IT-PD-117 | `context("--story 指定で gate 通過の場合")` `it("--story指定でgate通過時にexit code 0で終了する")` | usecase stub が `passed=true` DTO を返す。argv に `--story ISSUE-001` を含む | `handle(argv)` | `actual.exitCode === 0` |
+| IT-PD-118 | `context("--story 指定で gate 失敗の場合")` `it("--story指定でgate失敗時にexit code 1で終了しblockersが表示される")` | usecase stub が `passed=false` + blockers 付き DTO を返す。argv に `--story ISSUE-001` を含む | `handle(argv)` | `actual.exitCode === 1` `actual.stdout` または `actual.stderr` に blocker 文言を含む |
+
+#### 8.4 Infrastructure: FileSystemArtifactExistenceChecker（IT-PD-119〜122）
+
+既存の `FileSystemArtifactExistenceChecker.checkAll` target 内に `describe("ISSUE-001: resolve 済みパスの存在チェック")` を追加する。
+
+##### ベース疑似コード
+
+```ts
+target("FileSystemArtifactExistenceChecker.checkAll", () => {
+  // ... 既存ケース (IT-PD-046〜050) ...
+
+  describe("ISSUE-001: resolve 済みパスの存在チェック", () => {
+    context("resolve 済みパスに対してファイルが存在する場合", () => {
+      it("resolve済みパス（プレースホルダーなし）に対してファイルが存在する場合、trueを返す", async () => {
+        // Arrange
+        const tempRoot = createTempDir();
+        const sut = new FileSystemArtifactExistenceChecker({ projectRoot: tempRoot });
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const resolvedPath = "docs/inception/agent-integration/H11-05/logical_design.md";
+        writeTempFile(tempRoot, resolvedPath, "# Logical Design");
+        const artifacts = [createArtifact({ path: resolvedPath, required: true })];
+
+        // Act
+        const actual = await sut.checkAll(artifacts, scope);
+
+        // Assert
+        expect(actual.get(resolvedPath)).toBe(true);
+      });
+    });
+
+    context("resolve 済みパスに対してファイルが存在しない場合", () => {
+      it("resolve済みパス（プレースホルダーなし）に対してファイルが存在しない場合、falseを返す", async () => {
+        // Arrange
+        const tempRoot = createTempDir();
+        const sut = new FileSystemArtifactExistenceChecker({ projectRoot: tempRoot });
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+        const resolvedPath = "docs/inception/agent-integration/H11-05/logical_design.md";
+        // ファイルを作成しない
+        const artifacts = [createArtifact({ path: resolvedPath, required: true })];
+
+        // Act
+        const actual = await sut.checkAll(artifacts, scope);
+
+        // Assert
+        expect(actual.get(resolvedPath)).toBe(false);
+      });
+    });
+
+    context("issue パス構造の resolve 済みパスに対してファイルが存在する場合", () => {
+      it("issueパス構造（issues/ISSUE-001/）のresolve済みパスに対してファイルが存在する場合、trueを返す", async () => {
+        // Arrange
+        const tempRoot = createTempDir();
+        const sut = new FileSystemArtifactExistenceChecker({ projectRoot: tempRoot });
+        const scope = createScopeWithStory("ISSUE-001", "phase-dependency-model");
+        const resolvedPath = "docs/inception/phase-dependency-model/issues/ISSUE-001/logical_design.md";
+        writeTempFile(tempRoot, resolvedPath, "# ISSUE-001 Logical Design");
+        const artifacts = [createArtifact({ path: resolvedPath, required: true })];
+
+        // Act
+        const actual = await sut.checkAll(artifacts, scope);
+
+        // Assert
+        expect(actual.get(resolvedPath)).toBe(true);
+      });
+    });
+
+    context("resolve 済みとプレースホルダー付きが混在する場合", () => {
+      it("resolve済みパスとプレースホルダー付きパスが混在するArtifactリストに対して正しく判定される", async () => {
+        // Arrange
+        const tempRoot = createTempDir();
+        const sut = new FileSystemArtifactExistenceChecker({ projectRoot: tempRoot });
+        const scope = createScopeWithStory("H11-05", "agent-integration");
+
+        const resolvedPath = "docs/inception/agent-integration/H11-05/logical_design.md";
+        writeTempFile(tempRoot, resolvedPath, "# Logical Design");
+
+        const unresolvedPath = "docs/inception/{unit}/{storyId}/scenario_test_design.md";
+
+        const artifacts = [
+          createArtifact({ path: resolvedPath, required: true }),
+          createArtifact({ path: unresolvedPath, required: false }),
+        ];
+
+        // Act
+        const actual = await sut.checkAll(artifacts, scope);
+
+        // Assert
+        expect(actual.get(resolvedPath)).toBe(true);
+        const unresolvedResolved = unresolvedPath
+          .replace("{unit}", "agent-integration")
+          .replace("{storyId}", "H11-05");
+        expect(actual.get(unresolvedResolved)).toBe(false);
+      });
+    });
+  });
+});
+```
+
+##### ケース別詳細
+
+| ケースID | `context()` と `it()` | Arrange | Act | Assert |
+|---|---|---|---|---|
+| IT-PD-119 | `context("resolve 済みパスに対してファイルが存在する場合")` `it("resolve済みパス（プレースホルダーなし）に対してファイルが存在する場合、trueを返す")` | 一時ディレクトリに `docs/inception/agent-integration/H11-05/logical_design.md` を作成する | `checkAll(artifacts, scope)` | `actual.get(resolvedPath) === true` |
+| IT-PD-120 | `context("resolve 済みパスに対してファイルが存在しない場合")` `it("resolve済みパス（プレースホルダーなし）に対してファイルが存在しない場合、falseを返す")` | resolve 済みパスにファイルを作成しない | `checkAll(artifacts, scope)` | `actual.get(resolvedPath) === false` |
+| IT-PD-121 | `context("issue パス構造の resolve 済みパスに対してファイルが存在する場合")` `it("issueパス構造（issues/ISSUE-001/）のresolve済みパスに対してファイルが存在する場合、trueを返す")` | 一時ディレクトリに `docs/inception/phase-dependency-model/issues/ISSUE-001/logical_design.md` を作成する | `checkAll(artifacts, scope)` | `actual.get(resolvedPath) === true` |
+| IT-PD-122 | `context("resolve 済みとプレースホルダー付きが混在する場合")` `it("resolve済みパスとプレースホルダー付きパスが混在するArtifactリストに対して正しく判定される")` | resolved（required=true、ファイル存在）と unresolved（required=false、プレースホルダー付き、resolve後のファイル不在）を混在させる | `checkAll(artifacts, scope)` | resolved パスは `true`、unresolved の resolve 後パスは `false` |
+
+### 9. ISSUE-001 テストファイル構成サマリー
+
+| テストファイル | target | 対応ケースID |
+|---|---|---|
+| `check-phase-gate-usecase.test.ts` | `CheckPhaseGateUseCase.execute` | IT-PD-103〜109 |
+| `check-phase-gate-usecase.test.ts` | `EvidenceBundleAssembler.assembleForLevel` | IT-PD-110〜113 |
+| `check-ready-command-handler.test.ts` | `CheckReadyCommandHandler.handle` | IT-PD-114〜118 |
+| `file-system-artifact-existence-checker.test.ts` | `FileSystemArtifactExistenceChecker.checkAll` | IT-PD-119〜122 |

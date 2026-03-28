@@ -351,5 +351,110 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual).toEqual({ shouldBlock: false });
       });
     });
+
+    // === ISSUE-001追加分: issueパス対応 ===
+
+    context('Unit固有issueパスへのWriteでフェーズゲートが発火する場合', () => {
+      it('PhaseGateQueryPort.checkGateがlevel=3, storyId=issueIdで呼ばれること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }),
+        );
+      });
+    });
+
+    context('横断的issueパスへのWriteの場合', () => {
+      it('Level 1スコープとしてcheckGateが呼ばれ通過すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/inception/issues/ISSUE-001/issue_description.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({ level: 1 }),
+        );
+      });
+    });
+
+    context('issueパスへのReadツール使用の場合', () => {
+      it('ReadツールはStep 2対象外のためPhaseGateQueryPortが呼ばれないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Read',
+          targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
+    });
+
+    context('issueパスでフェーズゲートが不通過の場合', () => {
+      it('shouldBlock=trueが返されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['Level 2 設計が不足しています'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Edit',
+          targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.error).toBeDefined();
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }),
+        );
+      });
+    });
   });
 });

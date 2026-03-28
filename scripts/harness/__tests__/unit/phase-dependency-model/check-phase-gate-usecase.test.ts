@@ -99,6 +99,164 @@ target('CheckPhaseGateUseCase', () => {
       });
     });
 
+    // === ISSUE-001追加分 ===
+
+    // IT-PD-103
+    context('scope未提供でLevel 3を検証する場合', () => {
+      it('Level 3のrequired=false成果物はスキップされpassed=trueを返すこと', async () => {
+        // Arrange
+        const policy = createPolicy();
+        const { artifactExistenceChecker, planDocumentReader } = createEvidencePorts();
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getReportingOutputDir: vi.fn(),
+        };
+        const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
+        const evidenceBundleAssembler = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+        const sut = new CheckPhaseGateUseCase({
+          phaseConfigProvider,
+          evidenceBundleAssembler,
+          auditLogger,
+        });
+
+        // Act
+        const actual = await sut.execute({
+          targetLevel: 3,
+          unitId: 'phase-dependency-model',
+        });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // IT-PD-104
+    context('scope.storyIdにUS IDを提供してLevel 3を検証する場合', () => {
+      it('scope情報がcheckPhaseGateに転送されること', async () => {
+        // Arrange
+        const policy = createPolicy();
+        const { artifactExistenceChecker, planDocumentReader } = createEvidencePorts();
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getReportingOutputDir: vi.fn(),
+        };
+        const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
+        const evidenceBundleAssembler = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+        const sut = new CheckPhaseGateUseCase({
+          phaseConfigProvider,
+          evidenceBundleAssembler,
+          auditLogger,
+        });
+
+        // Act
+        const actual = await sut.execute({
+          targetLevel: 3,
+          unitId: 'phase-dependency-model',
+          storyId: 'H02-01',
+        });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.targetLevel).toBe(3);
+      });
+    });
+
+    // IT-PD-107
+    context('scope.storyIdにissue IDを提供してLevel 3を検証する場合', () => {
+      it('issue IDでもUS IDと同様にscope転送されpassed=trueを返すこと', async () => {
+        // Arrange
+        const policy = createPolicy();
+        const { artifactExistenceChecker, planDocumentReader } = createEvidencePorts();
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getReportingOutputDir: vi.fn(),
+        };
+        const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
+        const evidenceBundleAssembler = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+        const sut = new CheckPhaseGateUseCase({
+          phaseConfigProvider,
+          evidenceBundleAssembler,
+          auditLogger,
+        });
+
+        // Act
+        const actual = await sut.execute({
+          targetLevel: 3,
+          unitId: 'phase-dependency-model',
+          storyId: 'ISSUE-001',
+        });
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // IT-PD-105
+    context('scope.storyId提供時にLevel 3成果物が欠損している場合', () => {
+      it('blockersが返されpassed=falseとなること', async () => {
+        // Arrange
+        const policy = createPolicy();
+        const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
+          checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
+            const results = new Map<string, boolean>();
+            for (const artifact of artifacts) {
+              const resolved = artifact.resolve(scope);
+              // Level 3 成果物は存在しない
+              results.set(resolved, !resolved.includes('{storyId}') && !resolved.includes('H02-01'));
+            }
+            return results;
+          }),
+        };
+        const planDocumentReader: PlanDocumentReaderPort = {
+          readEvidence: vi.fn().mockResolvedValue(createPlanEvidence()),
+        };
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getReportingOutputDir: vi.fn(),
+        };
+        const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
+        const evidenceBundleAssembler = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+        const sut = new CheckPhaseGateUseCase({
+          phaseConfigProvider,
+          evidenceBundleAssembler,
+          auditLogger,
+        });
+
+        // Act
+        const actual = await sut.execute({
+          targetLevel: 3,
+          unitId: 'phase-dependency-model',
+          storyId: 'H02-01',
+        });
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
     context('override監査が必要なフェーズゲートを検証する場合', () => {
       it('監査ログを分離して記録しauditRecorded=trueを返すこと', async () => {
         // Arrange

@@ -15,7 +15,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 
 ---
 
-## 2. 担当ストーリー
+## 2. 担当ストーリー / Issue
 
 | Story ID | タイトル | 優先度 |
 |----------|---------|--------|
@@ -23,6 +23,10 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 | H11-02 | Claude Code PreToolUse Hook Adapter（リンター設定保護） | Must |
 | H11-03 | Claude Code PostToolUse Hook Adapter（Biomeベース高速フォーマット+リント） | Must |
 | H11-04 | Claude Code Stop Hook Adapter（テストゲート + ci-check + 無限ループ防止） | Must |
+
+| Issue ID | タイトル | 優先度 |
+|----------|---------|--------|
+| ISSUE-001 | WriteTargetScope の issue パス認識追加 | Must |
 
 ---
 
@@ -49,6 +53,13 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 - v0のformat-typescript-hook.shと同等以上の機能をBiomeで実現
 - Hook未使用時はCLI（`harness:lint`）で同等機能が実行可能
 - Hook実行テストの存在
+
+### 3.5 WriteTargetScope の issue パス認識（ISSUE-001）
+
+- `docs/inception/{unit}/issues/{ISSUE-XXX}/` パスを認識し、Level 3 スコープ（unitId + storyId=issueId）としてマッピングする
+- issue ID は内部的に storyId フィールドで扱い、US と同一のフェーズゲートチェックを適用する
+- `docs/inception/issues/` 配下（横断的 issue）は Level 1 として扱い、フェーズゲートは適用しない
+- fromPath() のマッチロジックに `issues/` セグメント検出を追加する
 
 ### 3.4 Stop Hook Adapter（H11-04）
 

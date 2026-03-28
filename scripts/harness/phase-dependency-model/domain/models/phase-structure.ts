@@ -173,6 +173,10 @@ export class PhaseStructure {
       planEvidences: ReadonlyMap<string, PlanEvidence>;
       planningMode: PlanningMode;
     },
+    scope?: {
+      unitId?: string;
+      storyId?: string;
+    },
   ): PhaseGateResult {
     this.assertLevel(targetLevel);
 
@@ -221,6 +225,75 @@ export class PhaseStructure {
 
       if (nodeBlockersBefore === blockers.length) {
         completedNodeKeys.add(node.nodeKey());
+      }
+    }
+
+    // ISSUE-001: scope.storyId提供時のLevel 3コンテキスト依存チェック (INV-8)
+    if (scope?.storyId) {
+      const level3Nodes = this.levels.get(3) ?? [];
+
+      // Phase 1: Mark Level 3 nodes with all resolved artifacts present as completed
+      for (const node of level3Nodes) {
+        if (node.artifacts.length === 0) {
+          continue;
+        }
+
+        let nodeComplete = true;
+        for (const artifact of node.artifacts) {
+          // Evidence map may be keyed by unresolved path (artifact.path) or resolved path
+          const resolvedPath = artifact.resolve(scope);
+          const exists = evidence.artifactStatuses.get(artifact.path)
+            ?? evidence.artifactStatuses.get(resolvedPath)
+            ?? false;
+          if (!exists) {
+            nodeComplete = false;
+            break;
+          }
+        }
+
+        if (nodeComplete) {
+          completedNodeKeys.add(node.nodeKey());
+        }
+      }
+
+      // Phase 2: Mark artifact-less nodes as completed if all their requires dependencies are met
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const node of level3Nodes) {
+          if (completedNodeKeys.has(node.nodeKey())) {
+            continue;
+          }
+          if (node.artifacts.length > 0) {
+            continue;
+          }
+          // Check if all requires dependencies pointing TO this node are satisfied
+          const allDependenciesMet = this.effectiveDependencies
+            .filter((dep) => dep.to.nodeKey() === node.nodeKey() && dep.type === 'requires')
+            .every((dep) => completedNodeKeys.has(dep.from.nodeKey()));
+          if (allDependenciesMet) {
+            completedNodeKeys.add(node.nodeKey());
+            changed = true;
+          }
+        }
+      }
+
+      // Phase 3: Check Level 3 intra-level dependencies
+      for (const dependency of this.effectiveDependencies) {
+        if (dependency.from.level.value !== 3 || dependency.to.level.value !== 3) {
+          continue;
+        }
+
+        if (completedNodeKeys.has(dependency.from.nodeKey())) {
+          continue;
+        }
+
+        if (dependency.type === 'requires') {
+          blockers.push(`依存未充足です: ${dependency.from.nodeKey()} -> ${dependency.to.nodeKey()}`);
+          continue;
+        }
+
+        warnings.push(`推奨依存が未充足です: ${dependency.from.nodeKey()} -> ${dependency.to.nodeKey()}`);
       }
     }
 

@@ -1,8 +1,9 @@
 # ユニットテストロジック設計: phase-dependency-model
 
-> 対象ケース: `UT-PD-001` 〜 `UT-PD-114`
+> 対象ケース: `UT-PD-001` 〜 `UT-PD-114`, `UT-PD-134` 〜 `UT-PD-152`（ISSUE-001追加分）
 > 正規ケース定義: `docs/product/construction/phase-dependency-model/unit_test_design.md`
 > 参照: `docs/product/construction/phase-dependency-model/domain_model.md`, `docs/product/construction/phase-dependency-model/coverage_report.md`
+> 対応Issue: ISSUE-001
 
 `coverage_report.md` で指摘されている `AC-PD-03` / `AC-PD-04` / `AC-PD-08` / `AC-PD-13` などの未カバー項目は、現時点で `unit_test_design.md` に対応する `UT-PD-*` が未定義のため本書の対象外とする。本書は `unit_test_design.md` に存在するケースIDのみを実装対象とする。
 
@@ -11,7 +12,7 @@
 ## 1. テストファイル構成
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/phase-dependency-model/phase-structure.test.ts` | `PhaseStructure`, `PhaseLevel`, `Artifact`, `PhaseNode`, `PhaseDependency`, `PlanEvidence`, `PhaseGateResult` | 97 |
+| `scripts/harness/__tests__/phase-dependency-model/phase-structure.test.ts` | `PhaseStructure`, `PhaseLevel`, `Artifact`, `PhaseNode`, `PhaseDependency`, `PlanEvidence`, `PhaseGateResult` | 95 |
 | `scripts/harness/__tests__/phase-dependency-model/planning-mode.test.ts` | `PlanningMode` | 5 |
 | `scripts/harness/__tests__/phase-dependency-model/phase-customization-policy.test.ts` | `CustomRule`, `PhaseCustomizationPolicy` | 12 |
 
@@ -614,3 +615,479 @@ target('CustomRule.create', () => {
 | UT-PD-107 | `PlanEvidence.create` | `true, true, true` | 完全充足ケースとして正常生成を検証する |
 
 境界値ケースは専用ファイルへ分けず、各 target の `it.each()` に統合する。これにより `target > describe > context > it` の構造を維持しつつ、重複 Arrange を最小化できる。
+
+## ISSUE-001追加分
+
+> ISSUE-001（inception側フェーズゲート整備）により追加された不変条件 INV-8, INV-9 に対応するテストロジック。
+> `checkPhaseGate(targetLevel, evidence, scope?)` の第3引数 `scope` によるコンテキスト依存動作を検証する。
+> 対象ケース: `UT-PD-134` 〜 `UT-PD-152`（17件、UT-PD-147/149はAPI仕様に基づき統合済み）
+> テストファイル: `scripts/harness/__tests__/phase-dependency-model/phase-structure.test.ts`
+
+### 6.1 追加ヘルパー・ファクトリ
+
+| ヘルパー | 用途 | 既定値 |
+|---|---|---|
+| `createScope(overrides?)` | `checkPhaseGate()` の第3引数 `scope` を生成する | `unitId: 'agent-integration'`, `storyId: 'H11-05'` |
+| `createLevel3ArtifactStatusMap(overrides?)` | Level 3 成果物の resolve 済みパスに対する存在マップを生成する | 依存チェーン上の全成果物が存在 |
+| `resolvedPath(unitId, storyId, fileName)` | Level 3 成果物の resolve 済みパスを組み立てるユーティリティ | - |
+
+```ts
+function createScope(overrides = {}) {
+  return {
+    unitId: 'agent-integration',
+    storyId: 'H11-05',
+    ...overrides,
+  };
+}
+
+function resolvedPath(unitId: string, storyId: string, fileName: string): string {
+  return `docs/inception/${unitId}/${storyId}/${fileName}`;
+}
+
+function createLevel3ArtifactStatusMap(
+  scope: { unitId: string; storyId: string },
+  overrides: Record<string, boolean> = {},
+): Map<string, boolean> {
+  const base = new Map<string, boolean>([
+    [resolvedPath(scope.unitId, scope.storyId, 'logical_design.md'), true],
+    [resolvedPath(scope.unitId, scope.storyId, 'scenario_test_design.md'), true],
+    [resolvedPath(scope.unitId, scope.storyId, 'scenario_test_logic.md'), true],
+    [resolvedPath(scope.unitId, scope.storyId, 'tdd_implementation_plan.md'), true],
+    [resolvedPath(scope.unitId, scope.storyId, 'implementation_readiness.md'), true],
+  ]);
+  for (const [key, value] of Object.entries(overrides)) {
+    base.set(key, value);
+  }
+  return base;
+}
+```
+
+### 6.2 テストケース詳細ロジック（`phase-structure.test.ts` 追記分）
+
+#### 6.2.1 scope未提供時の既存動作維持（INV-9）: UT-PD-134〜135
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-134 | scope引数を省略した場合はLevel 3ノードのrequired=false成果物がチェックされずゲートを通過する | Level 3 対象、Level 2 前提成果物を全存在にした evidence を作る。scope は渡さない | `sut.checkPhaseGate(Level 3, evidence)` | `passed === true`, `blockers === []` |
+| UT-PD-135 | scope引数を省略しLevel 2の前提成果物が欠損している場合はゲートでブロックされる | Level 3 対象、Level 2 前提成果物の一部を `false` にする。scope は渡さない。（Level 3 required=false成果物はスキップされるが、Level 2前提チェックは維持されることを検証する） | `sut.checkPhaseGate(Level 3, evidence)` | `passed === false`, Level 2 欠損成果物が blocker に含まれる |
+
+```ts
+target('checkPhaseGate', () => {
+  describe('scope未提供時のLevel 3フェーズゲートを検証する', () => {
+    it('scope引数を省略した場合はLevel 3ノードのrequired=false成果物がチェックされずゲートを通過する', () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure();
+      const evidence = createGateEvidence({
+        artifactExistenceByPath: createPrerequisiteArtifactMap({
+          prerequisiteLevel: 2,
+          state: 'all',
+        }),
+      });
+
+      // Act
+      const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence);
+
+      // Assert
+      expect(actual.passed).toBe(true);
+      expect(actual.blockers).toEqual([]);
+    });
+
+    context('scope引数を省略しLevel 2の前提成果物が欠損している場合', () => {
+      it('ゲートでブロックされblockersにLevel 2欠損成果物が含まれる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const evidence = createGateEvidence({
+          artifactExistenceByPath: createPrerequisiteArtifactMap({
+            prerequisiteLevel: 2,
+            state: 'partial',
+          }),
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+  });
+});
+```
+
+#### 6.2.2 scope.unitIdのみ提供（storyIdなし）時の動作（INV-9）: UT-PD-136〜137
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-136 | scope.unitIdのみ提供しstoryIdが未定義の場合はLevel 3ノードのrequired=false成果物がチェックされずscope未提供時と同一動作になる | scope に `unitId` のみ設定し `storyId` を `undefined` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === true`, `blockers === []` |
+| UT-PD-137 | scope.unitIdのみ提供しstoryIdが未定義かつLevel 2の前提成果物が欠損の場合はゲートでブロックされる | scope に `unitId` のみ設定。Level 2 前提成果物の一部を `false` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false` |
+
+```ts
+describe('scope.unitIdのみ提供時のLevel 3フェーズゲートを検証する', () => {
+  it('scope.unitIdのみ提供しstoryIdが未定義の場合はLevel 3ノードのrequired=false成果物がチェックされずscope未提供時と同一動作になる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope({ storyId: undefined });
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: createPrerequisiteArtifactMap({
+        prerequisiteLevel: 2,
+        state: 'all',
+      }),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expect(actual.passed).toBe(true);
+    expect(actual.blockers).toEqual([]);
+  });
+
+  context('scope.unitIdのみ提供しstoryIdが未定義かつLevel 2の前提成果物が欠損の場合', () => {
+    it('ゲートでブロックされる', () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure();
+      const scope = createScope({ storyId: undefined });
+      const evidence = createGateEvidence({
+        artifactExistenceByPath: createPrerequisiteArtifactMap({
+          prerequisiteLevel: 2,
+          state: 'partial',
+        }),
+      });
+
+      // Act
+      const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+      // Assert
+      expect(actual.passed).toBe(false);
+    });
+  });
+});
+```
+
+#### 6.2.3 scope.storyId提供時のコンテキスト依存チェック（INV-8）: UT-PD-138〜142
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-138 | scope={unitId:'agent-integration', storyId:'H11-05'}を提供した場合はLevel 3ノードの成果物がresolve(scope)で解決され{unitId}と{storyId}プレースホルダが実値に置換される | scope を提供し、Level 3 ノードの成果物 resolve 結果を確認する | `sut.checkPhaseGate(Level 3, evidence, scope)` | resolve 済みパスが `docs/inception/agent-integration/H11-05/` を含む |
+| UT-PD-139 | resolve済みパスが全て存在する場合は該当ノードは完了と判定されゲートを通過する | 全 resolve 済みパスを `true` にした evidence を作る | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === true` |
+| UT-PD-140 | resolve済みパスが存在しない場合は該当ノードは未完了と判定されゲートでブロックされる | logical_design.md の resolve 済みパスを `false` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false` |
+| UT-PD-141 | 前提ノードが未完了の場合はゲートでブロックされblockersに未完了前提ノードの情報が含まれる | logical_design.md 未存在の evidence を作る | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false`, blocker に logical_design 不足が含まれる |
+| UT-PD-142 | 前提ノードが全て完了済みの場合はゲートを通過する | logical_design.md 含む全成果物存在の evidence を作る | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === true` |
+
+```ts
+describe('scope.storyId提供時のLevel 3成果物パス解決を検証する', () => {
+  it('scope提供時にLevel 3ノードの成果物がresolve(scope)で解決され{unitId}と{storyId}プレースホルダが実値に置換される', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope({ unitId: 'agent-integration', storyId: 'H11-05' });
+    const level3Statuses = createLevel3ArtifactStatusMap(scope);
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...level3Statuses,
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    // resolve 済みパスが evidence 内で参照されていることを間接検証
+    // (passed=true は全 resolve 済みパスが存在したことを意味する)
+    expect(actual.passed).toBe(true);
+    for (const [path] of level3Statuses) {
+      expect(path).toContain('docs/inception/agent-integration/H11-05/');
+    }
+  });
+});
+
+describe('scope.storyId提供時のLevel 3成果物存在チェックを検証する', () => {
+  it('resolve済みパスが全て存在する場合は該当ノードは完了と判定されゲートを通過する', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expect(actual.passed).toBe(true);
+  });
+
+  it('resolve済みパスが存在しない場合は該当ノードは未完了と判定されゲートでブロックされる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const logicalDesignPath = resolvedPath(scope.unitId, scope.storyId, 'logical_design.md');
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope, { [logicalDesignPath]: false }),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expect(actual.passed).toBe(false);
+  });
+});
+
+describe('未完了ノードに依存するノードの成果物書き込みを検証する', () => {
+  context('前提ノードが未完了の場合', () => {
+    it('ゲートでブロックされblockersに未完了前提ノードの情報が含まれる', () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure();
+      const scope = createScope();
+      const logicalDesignPath = resolvedPath(scope.unitId, scope.storyId, 'logical_design.md');
+      const evidence = createGateEvidence({
+        artifactExistenceByPath: new Map([
+          ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+          ...createLevel3ArtifactStatusMap(scope, { [logicalDesignPath]: false }),
+        ]),
+      });
+
+      // Act
+      const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+      // Assert
+      expect(actual.passed).toBe(false);
+      expectFailedResult(actual, ['logical_design']);
+    });
+  });
+
+  context('前提ノードが全て完了済みの場合', () => {
+    it('ゲートを通過する', () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure();
+      const scope = createScope();
+      const evidence = createGateEvidence({
+        artifactExistenceByPath: new Map([
+          ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+          ...createLevel3ArtifactStatusMap(scope),
+        ]),
+      });
+
+      // Act
+      const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+      // Assert
+      expect(actual.passed).toBe(true);
+    });
+  });
+});
+```
+
+#### 6.2.4 依存グラフに基づくブロックテスト（INV-8 + Level 3依存グラフ）: UT-PD-143〜149
+
+> Level 3 内の依存グラフ:
+> `2:logical-designer -> 3:logical-designer -> 3:scenario-test-designer -> 3:scenario-test-logic-designer -> 3:implementation-readiness-checker -> 3:story-implementor`
+
+**直接依存によるブロック**
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-143 | scope.storyId提供時にlogical_design.md未作成の場合はゲートでブロックされblockersにlogical_design.md不足が含まれる | logical_design.md を `false`、他を `true` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false`, blocker に `logical_design` が含まれる |
+| UT-PD-144 | scope.storyId提供時にlogical_design.md作成済みだがscenario_test_design.md未作成の場合はゲートでブロックされblockersにscenario_test_design.md不足が含まれる | logical_design.md を `true`、scenario_test_design.md を `false` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false`, blocker に `scenario_test_design` が含まれる |
+| UT-PD-145 | scope.storyId提供時にimplementation-readiness-checker未完了の場合はゲートでブロックされblockersにimplementation-readiness-checker未完了が含まれる | implementation_readiness.md を `false` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false`, blocker に `implementation_readiness` が含まれる |
+
+**推移的依存によるブロック**
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-146 | scope.storyId提供時にlogical_design.mdが未作成の場合は依存チェーン全体がブロックされblockersにlogical_design.md不足が含まれる | logical_design.md を `false` にする。checkPhaseGate() APIにターゲットノード指定がないため、チェーン起点の欠損がゲート全体をブロックすることを検証する | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === false`, blocker に `logical_design` が含まれる |
+
+**全前提成果物存在時のパス**
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-148 | scope.storyId提供時に依存チェーン上の全成果物が存在する場合はゲートを通過する | 全 resolve 済みパスを `true` にする | `sut.checkPhaseGate(Level 3, evidence, scope)` | `passed === true`, `blockers === []` |
+
+```ts
+describe('Level 3依存グラフでlogical_design.md未作成時のブロックを検証する', () => {
+  it('scope.storyId提供時にlogical_design.md未作成の場合はゲートでブロックされblockersにlogical_design.md不足が含まれる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const logicalDesignPath = resolvedPath(scope.unitId, scope.storyId, 'logical_design.md');
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope, { [logicalDesignPath]: false }),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expectFailedResult(actual, ['logical_design']);
+  });
+});
+
+describe('Level 3依存グラフでscenario_test_design.md未作成時のブロックを検証する', () => {
+  it('scope.storyId提供時にlogical_design.md作成済みだがscenario_test_design.md未作成の場合はゲートでブロックされblockersにscenario_test_design.md不足が含まれる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const scenarioTestDesignPath = resolvedPath(scope.unitId, scope.storyId, 'scenario_test_design.md');
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope, { [scenarioTestDesignPath]: false }),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expectFailedResult(actual, ['scenario_test_design']);
+  });
+});
+
+describe('Level 3依存グラフでimplementation_readiness未完了時のブロックを検証する', () => {
+  it('scope.storyId提供時にimplementation-readiness-checker未完了の場合はゲートでブロックされblockersにimplementation-readiness-checker未完了が含まれる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const implReadinessPath = resolvedPath(scope.unitId, scope.storyId, 'implementation_readiness.md');
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope, { [implReadinessPath]: false }),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expectFailedResult(actual, ['implementation_readiness']);
+  });
+});
+
+describe('Level 3依存グラフで推移的依存によるブロックを検証する', () => {
+  // 注: checkPhaseGate() APIにターゲットノード指定がないため、旧UT-PD-147（チェーン末端への推移的ブロック）は
+  // UT-PD-146と実質同一であり統合した。チェーン起点の欠損がゲート全体をブロックすることを検証する。
+  it('scope.storyId提供時にlogical_design.mdが未作成の場合は依存チェーン全体がブロックされblockersにlogical_design.md不足が含まれる', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const logicalDesignPath = resolvedPath(scope.unitId, scope.storyId, 'logical_design.md');
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope, { [logicalDesignPath]: false }),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expectFailedResult(actual, ['logical_design']);
+  });
+});
+
+describe('Level 3依存グラフで全前提成果物が存在する場合を検証する', () => {
+  // 注: checkPhaseGate() APIにターゲットノード指定がないため、旧UT-PD-149（チェーン末端も通過）は
+  // UT-PD-148と実質同一であり統合した。
+  it('scope.storyId提供時に依存チェーン上の全成果物が存在する場合はゲートを通過する', () => {
+    // Arrange
+    const sut = createDefaultPhaseStructure();
+    const scope = createScope();
+    const evidence = createGateEvidence({
+      artifactExistenceByPath: new Map([
+        ...createPrerequisiteArtifactMap({ prerequisiteLevel: 2, state: 'all' }),
+        ...createLevel3ArtifactStatusMap(scope),
+      ]),
+    });
+
+    // Act
+    const actual = sut.checkPhaseGate(createPhaseLevel(3), evidence, scope);
+
+    // Assert
+    expect(actual.passed).toBe(true);
+    expect(actual.blockers).toEqual([]);
+  });
+});
+```
+
+#### 6.2.5 Artifact.resolve()との連携テスト: UT-PD-150〜152
+
+| ケースID | テスト名 | Arrange | Act | Assert |
+|---|---|---|---|---|
+| UT-PD-150 | resolve({unitId:'agent-integration', storyId:'H11-05'})を呼び出した場合は{unitId}が'agent-integration'に、{storyId}が'H11-05'に置換された実パスが返される | `{storyId}` と `{unitId}` を含む path の Artifact を作る | `artifact.resolve(scope)` | `docs/inception/agent-integration/H11-05/logical_design.md` |
+| UT-PD-151 | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合はdocs/inception/phase-dependency-model/H02-01/配下の実パスが返される | 同上 | `artifact.resolve(scope)` | `docs/inception/phase-dependency-model/H02-01/` を含むパス |
+| UT-PD-152 | scopeを省略またはstoryId未指定で呼び出した場合はプレースホルダが未解決のままのパスが返される | プレースホルダ付き Artifact を作る | `artifact.resolve()` または `artifact.resolve({ unitId: 'x' })` | `{storyId}` が残存するパス |
+
+```ts
+target('Artifact.resolve', () => {
+  describe('scope提供時のArtifactパス解決を検証する', () => {
+    it('resolve({unitId:\'agent-integration\', storyId:\'H11-05\'})を呼び出した場合は{unitId}が\'agent-integration\'に{storyId}が\'H11-05\'に置換された実パスが返される', () => {
+      // Arrange
+      const artifact = createArtifact({
+        name: 'story-logical-design',
+        path: 'docs/inception/{unitId}/{storyId}/logical_design.md',
+        required: false,
+      });
+      const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+
+      // Act
+      const actual = artifact.resolve(scope);
+
+      // Assert
+      expect(actual).toBe('docs/inception/agent-integration/H11-05/logical_design.md');
+    });
+
+    it('resolve({unitId:\'phase-dependency-model\', storyId:\'H02-01\'})を呼び出した場合はdocs/inception/phase-dependency-model/H02-01/配下の実パスが返される', () => {
+      // Arrange
+      const artifact = createArtifact({
+        name: 'story-logical-design',
+        path: 'docs/inception/{unitId}/{storyId}/logical_design.md',
+        required: false,
+      });
+      const scope = { unitId: 'phase-dependency-model', storyId: 'H02-01' };
+
+      // Act
+      const actual = artifact.resolve(scope);
+
+      // Assert
+      expect(actual).toContain('docs/inception/phase-dependency-model/H02-01/');
+    });
+  });
+
+  describe('scope未提供時のArtifactパス解決を検証する', () => {
+    it('scopeを省略またはstoryId未指定で呼び出した場合はプレースホルダが未解決のままのパスが返される', () => {
+      // Arrange
+      const artifact = createArtifact({
+        name: 'story-logical-design',
+        path: 'docs/inception/{unitId}/{storyId}/logical_design.md',
+        required: false,
+      });
+
+      // Act
+      const actual = artifact.resolve();
+
+      // Assert
+      expect(actual).toContain('{storyId}');
+    });
+  });
+});
+```
+
+### 6.3 モック戦略（ISSUE-001追加分）
+
+- 既存のモック戦略を継続する。ドメイン実体はすべて実体を使い、`vi.fn()` やスタブは使わない。
+- `scope` 引数は plain object で供給する。専用のモックは不要。
+- `createLevel3ArtifactStatusMap()` で Level 3 成果物の resolve 済みパスを生成し、`createGateEvidence()` に合成する。
+- `resolvedPath()` ヘルパーは Artifact.resolve() の期待値を手動構築するユーティリティであり、テスト対象の `Artifact.resolve()` とは独立した実装とする。

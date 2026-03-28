@@ -3,6 +3,7 @@
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
+> **対応Issue**: ISSUE-001
 > **参照文書**:
 > - `docs/product/construction/agent-integration/logical_design.md`
 > - `docs/product/construction/agent-integration/domain_model.md`
@@ -416,3 +417,113 @@ afterEach(async () => {
 | アサーション | `expect()` (Vitest built-in) |
 | stdin シミュレーション | Node.js `child_process.spawn` でスクリプトを子プロセス実行 |
 | ファイルシステム | `node:fs/promises`（実FS使用。インメモリ代替なし） |
+
+---
+
+## ISSUE-001追加分
+
+> **対応Issue**: ISSUE-001（WriteTargetScope issue パス認識 + PhaseGateQueryAdapter）
+> **追加日**: 2026-03-28
+> **参照設計**: `docs/inception/issues/ISSUE-001/logical_design.md` §3.3
+
+### 8. HandlePreToolUseUseCase: issue パス対応（ISSUE-001）
+
+**テスト方針**: Domainモデル（HookEvent, ProtectedFileList, WriteTargetScope, ProjectPaths, AsyncHookToCliTranslator）は実体を使用。ConfigQueryPortとPhaseGateQueryPortをモックとする。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-HandlePreToolUse-ISSUE001-001 | issue パスへの Write がフェーズゲートでチェックされること | `{ toolName: 'Write', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate → passed=true, blockers=[] | `{ shouldBlock: false }` かつ PhaseGateQueryPort.checkGate が `{ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }` のスコープで呼び出されたこと |
+| IT-UC-HandlePreToolUse-ISSUE001-002 | issue パスへの Edit がフェーズゲートでチェックされること | `{ toolName: 'Edit', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate → passed=true, blockers=[] | `{ shouldBlock: false }` かつ PhaseGateQueryPort.checkGate が呼び出されたこと |
+| IT-UC-HandlePreToolUse-ISSUE001-003 | 横断的 issue パスへの Write はフェーズゲートチェック不適用で通過すること | `{ toolName: 'Write', targetFilePaths: ['docs/inception/issues/ISSUE-001/logical_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate未呼び出し | `{ shouldBlock: false }` かつ PhaseGateQueryPort.checkGate が呼び出されないこと（Level 1 はフェーズゲート対象外） |
+| IT-UC-HandlePreToolUse-ISSUE001-004 | issue パスへの NotebookEdit がフェーズゲートでチェックされること | `{ toolName: 'NotebookEdit', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/scenario_test_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate → passed=true, blockers=[] | `{ shouldBlock: false }` かつ PhaseGateQueryPort.checkGate が呼び出されたこと |
+| IT-UC-HandlePreToolUse-ISSUE001-005 | Read ツールでの issue パスアクセスはフェーズゲートをスキップすること | `{ toolName: 'Read', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths | `{ shouldBlock: false }` かつ PhaseGateQueryPort.checkGate が呼び出されないこと（Read は Step 2 対象外） |
+
+#### 異常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-UC-HandlePreToolUse-ISSUE001-006 | issue パスへの Write でフェーズゲート違反時にブロックされること | `{ toolName: 'Write', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate → passed=false, blockers=['logical_design.md が存在しません'] | `{ shouldBlock: true, phaseGateBlockers: ['logical_design.md が存在しません'] }` |
+| IT-UC-HandlePreToolUse-ISSUE001-007 | issue パスへの Edit でフェーズゲート違反時にブロックされること | `{ toolName: 'Edit', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/scenario_test_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[]、getProjectPaths=デフォルトProjectPaths。PhaseGateQueryPort: checkGate → passed=false, blockers=['logical_design.md が存在しません', 'scenario_test_design の前提が未完了'] | `{ shouldBlock: true, phaseGateBlockers: [...] }` |
+| IT-UC-HandlePreToolUse-ISSUE001-008 | 保護対象ファイルチェック（Step 1）が issue パスより優先されること | `{ toolName: 'Write', targetFilePaths: ['biome.json', 'docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'] }` | ConfigQueryPort: getProtectedFilePatterns=[] | `{ shouldBlock: true, blockedFilePath: 'biome.json' }` — Step 1 でブロックされ、Step 2（PhaseGateQueryPort）は呼び出されないこと |
+
+### 9. PhaseGateQueryAdapter（ISSUE-001 / v2.2.0新規）
+
+**テスト方針**: PhaseGateQueryAdapter の実体を使用。phase-dependency-model の動的 import は `vi.mock()` でモックし、`checkPhaseGateCommandHandler.execute()` のスタブ返却値を制御する。これにより Adapter 内の変換ロジック（exitCode → PhaseGateQueryResult）の正しさを検証する。ファイルシステム状態に依存しないため Flaky テストのリスクを排除する。
+
+**テストファイル**: `scripts/harness/__tests__/integration/agent-integration/phase-gate-query-adapter.test.ts`
+
+#### 正常系
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-REPO-PhaseGateQueryAdapter-001 | フェーズゲート通過時に passed=true の PhaseGateQueryResult を返すこと | `WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' })` | `checkPhaseGateCommandHandler.execute` → `{ exitCode: 0, text: '' }` | `PhaseGateQueryResult { passed: true, blockers: [], warnings: [] }` |
+| IT-REPO-PhaseGateQueryAdapter-002 | フェーズゲート不通過時に passed=false と blockers 付きの結果を返すこと | `WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'H11-05' })` | `checkPhaseGateCommandHandler.execute` → `{ exitCode: 1, text: 'logical_design.md が存在しません' }` | `PhaseGateQueryResult { passed: false, blockers: ['logical_design.md が存在しません'] }` かつ blockers.length >= 1 |
+| IT-REPO-PhaseGateQueryAdapter-003 | issue ID での呼び出しが正常に動作すること | `WriteTargetScope.create({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' })` | `checkPhaseGateCommandHandler.execute` → `{ exitCode: 0, text: '' }` | `PhaseGateQueryResult { passed: true, blockers: [], warnings: [] }` かつ `execute` が `{ targetLevel: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }` で呼ばれたこと |
+| IT-REPO-PhaseGateQueryAdapter-004 | unitId のみ（storyId なし）の Level 2 スコープで呼び出しが成功すること | `WriteTargetScope.create({ level: 2, unitId: 'agent-integration' })` | `checkPhaseGateCommandHandler.execute` → `{ exitCode: 0, text: '' }` | `PhaseGateQueryResult { passed: true }` かつ `execute` が `{ targetLevel: 2, unitId: 'agent-integration', storyId: undefined }` で呼ばれたこと |
+
+#### エラーハンドリング
+
+| ケースID | シナリオ | モック設定 | 期待結果 |
+|---------|---------|----------|---------|
+| IT-REPO-PhaseGateQueryAdapter-005 | phase-dependency-model の動的 import が失敗した場合、安全側（passed=true, warning 付き）にフォールバックすること | `vi.mock()` で動的 import を reject させる | `PhaseGateQueryResult { passed: true, blockers: [], warnings: ['phase-dependency-model not available'] }` |
+| IT-REPO-PhaseGateQueryAdapter-006 | checkPhaseGateCommandHandler 実行中にエラーが発生した場合、安全側にフォールバックすること | `checkPhaseGateCommandHandler.execute` が例外をthrow | `PhaseGateQueryResult { passed: true, blockers: [], warnings: ['phase-dependency-model not available'] }` |
+
+### 10. HarnessConfigConfigQueryAdapter: issue パス対応（ISSUE-001）
+
+**テスト方針**: HarnessConfigConfigQueryAdapterの実体を使用。フィクスチャのharness.config.jsonにproject.pathsセクションを含む設定を使用する。
+
+#### 正常系
+
+| ケースID | シナリオ | 入力/事前データ | 期待結果 |
+|---------|---------|---------------|---------|
+| IT-REPO-ConfigQueryAdapter-ISSUE001-001 | getProjectPaths() がデフォルトの ProjectPaths を返すこと | project.paths セクションを含む標準的な harness.config.json | `ProjectPaths { source: ['scripts/harness'], docs: { construction: 'docs/product/construction', inception: 'docs/inception' } }` |
+| IT-REPO-ConfigQueryAdapter-ISSUE001-002 | getProjectPaths() でカスタムパスが正しく反映されること | `project.paths.source: ['src/core', 'src/lib']`, `project.paths.docs.inception: 'design/inception'` を含むフィクスチャ | `ProjectPaths { source: ['src/core', 'src/lib'], docs: { inception: 'design/inception', ... } }` |
+| IT-REPO-ConfigQueryAdapter-ISSUE001-003 | project.paths セクションが未定義の場合にデフォルト値にフォールバックすること | project.paths セクションのない harness.config.json | デフォルトの `ProjectPaths` が返る（source: ['scripts/harness'], docs.inception: 'docs/inception', docs.construction: 'docs/product/construction'） |
+
+### 11. Presentation Hook Adapter: issue パス対応（ISSUE-001）
+
+**テスト方針**: UseCaseをモックし、PreToolUseHookHandler の stdin JSON パース → UseCase 呼び出しを検証する。exit code の検証に加え、`mockUseCase.execute` の引数を検証して、stdin から抽出された file_path が正しく UseCase に渡されていることを確認する。
+
+#### 正常系
+
+| ケースID | 入力（stdin JSON） | 期待レスポンス | 追加検証（UseCase 引数） |
+|---------|-----------------|--------------|----------------------|
+| IT-API-PreToolUse-ISSUE001-001 | `{ "tool_name": "Write", "tool_input": { "file_path": "docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md" } }` | フェーズゲート結果に応じて exit code 0（通過）または exit code 2（ブロック） | `mockUseCase.execute` が `expect.objectContaining({ targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'] })` で呼ばれたこと |
+| IT-API-PreToolUse-ISSUE001-002 | `{ "tool_name": "Write", "tool_input": { "file_path": "docs/inception/issues/ISSUE-001/logical_design.md" } }` | exit code 0（横断的 issue パス = Level 1 → フェーズゲート対象外で通過） | `mockUseCase.execute` が `expect.objectContaining({ targetFilePaths: ['docs/inception/issues/ISSUE-001/logical_design.md'] })` で呼ばれたこと |
+| IT-API-PreToolUse-ISSUE001-003 | `{ "tool_name": "Read", "tool_input": { "file_path": "docs/inception/agent-integration/issues/ISSUE-001/logical_design.md" } }` | exit code 0（Read ツールは Step 2 対象外で通過） | `mockUseCase.execute` が `expect.objectContaining({ targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'] })` で呼ばれたこと |
+
+### 12. 統合フローテストケース: issue パス対応（ISSUE-001）
+
+**テスト方針**: HarnessConfigConfigQueryAdapter（フィクスチャ設定）とDomainモデルを実体として使用。PhaseGateQueryPortのみモック。
+
+| ケースID | シナリオ | 事前状態 | テスト操作 | 期待結果 |
+|---------|---------|---------|-----------|---------|
+| IT-UC-HookFlow-ISSUE001-001 | issue パスへの Write でフェーズゲート通過の End-to-End フロー | ConfigQueryAdapter=フィクスチャ設定、PhaseGateQueryPort=モック（passed=true） | HandlePreToolUseUseCase.execute({ toolName: 'Write', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/logical_design.md'] }) | `{ shouldBlock: false }` — WriteTargetScope が level=3, unitId='agent-integration', storyId='ISSUE-001' で解決され、PhaseGateQueryPort が呼び出され、通過 |
+| IT-UC-HookFlow-ISSUE001-002 | issue パスへの Write でフェーズゲートブロックの End-to-End フロー | ConfigQueryAdapter=フィクスチャ設定、PhaseGateQueryPort=モック（passed=false, blockers=['前提文書が存在しません']） | HandlePreToolUseUseCase.execute({ toolName: 'Write', targetFilePaths: ['docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md'] }) | `{ shouldBlock: true, phaseGateBlockers: ['前提文書が存在しません'] }` |
+| IT-UC-HookFlow-ISSUE001-003 | 横断的 issue パスへの Write はフェーズゲート不適用で通過するフロー | ConfigQueryAdapter=フィクスチャ設定 | HandlePreToolUseUseCase.execute({ toolName: 'Write', targetFilePaths: ['docs/inception/issues/ISSUE-001/logical_design.md'] }) | `{ shouldBlock: false }` — WriteTargetScope が level=1 で解決され、PhaseGateQueryPort は呼び出されない |
+
+---
+
+## 13. ISSUE-001 シードデータ要件
+
+| データセット | 用途 | 内容 |
+|------------|------|------|
+| `fixtures/harness-config-with-project-paths.json` | ConfigQueryAdapter ITテスト（ProjectPaths取得） | `project: { paths: { source: ['scripts/harness'], docs: { construction: 'docs/product/construction', inception: 'docs/inception' } } }` を含むHarnessConfigV2 |
+| `fixtures/harness-config-custom-paths.json` | ConfigQueryAdapter ITテスト（カスタムパス） | `project: { paths: { source: ['src/core', 'src/lib'], docs: { construction: 'design/construction', inception: 'design/inception' } } }` を含むHarnessConfigV2 |
+
+**フィクスチャ配置先**: `scripts/harness/__tests__/integration/agent-integration/fixtures/`
+
+---
+
+## 14. ISSUE-001 テストケースサマリー
+
+| セクション | ケース数 | 対象コンポーネント | 新規/追加 |
+|-----------|---------|-------------------|----------|
+| §8 HandlePreToolUseUseCase issue パス対応 | 8 | HandlePreToolUseUseCase + AsyncHookToCliTranslator + WriteTargetScope | 追加 |
+| §9 PhaseGateQueryAdapter | 6 | PhaseGateQueryAdapter + PhaseGateQueryPort | 新規 |
+| §10 HarnessConfigConfigQueryAdapter issue パス対応 | 3 | HarnessConfigConfigQueryAdapter + ProjectPaths | 追加 |
+| §11 Presentation Hook Adapter issue パス対応 | 3 | pre-tool-use-hook.ts | 追加 |
+| §12 統合フロー issue パス対応 | 3 | HandlePreToolUseUseCase End-to-End | 追加 |
+| **合計** | **23** | | |

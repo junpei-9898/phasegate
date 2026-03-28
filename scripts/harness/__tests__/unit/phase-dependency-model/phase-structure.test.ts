@@ -228,6 +228,70 @@ const expectFailedResult = (
   }
 };
 
+/**
+ * ISSUE-001: scope提供時のLevel 3成果物を resolve して artifactStatuses に含めるヘルパー
+ */
+const createGateEvidenceWithLevel3 = (
+  sut: PhaseStructure,
+  targetLevel: PhaseLevel,
+  scope: { unitId: string; storyId: string },
+  state: 'all' | 'partial' | 'none',
+): {
+  artifactStatuses: ReadonlyMap<string, boolean>;
+  planEvidences: ReadonlyMap<string, PlanEvidence>;
+  planningMode: PlanningMode;
+} => {
+  const base = createGateEvidence(sut, targetLevel);
+  const artifactStatuses = new Map(base.artifactStatuses);
+  const level3Nodes = sut.getPhaseNodes(createPhaseLevel(3));
+  const level3Artifacts = level3Nodes.flatMap((node) => node.artifacts);
+
+  let firstResolved = true;
+  for (const artifact of level3Artifacts) {
+    const resolvedPath = artifact.resolve(scope);
+    if (state === 'all') {
+      artifactStatuses.set(resolvedPath, true);
+    } else if (state === 'none') {
+      artifactStatuses.set(resolvedPath, false);
+    } else {
+      // partial: first artifact false, rest true
+      artifactStatuses.set(resolvedPath, !firstResolved);
+      firstResolved = false;
+    }
+  }
+
+  return {
+    ...base,
+    artifactStatuses,
+  };
+};
+
+/**
+ * ISSUE-001: 特定の成果物だけ欠損させるヘルパー
+ */
+const createGateEvidenceWithLevel3Selective = (
+  sut: PhaseStructure,
+  targetLevel: PhaseLevel,
+  scope: { unitId: string; storyId: string },
+  overrides: Record<string, boolean>,
+): {
+  artifactStatuses: ReadonlyMap<string, boolean>;
+  planEvidences: ReadonlyMap<string, PlanEvidence>;
+  planningMode: PlanningMode;
+} => {
+  const base = createGateEvidenceWithLevel3(sut, targetLevel, scope, 'all');
+  const artifactStatuses = new Map(base.artifactStatuses);
+
+  for (const [path, exists] of Object.entries(overrides)) {
+    artifactStatuses.set(path, exists);
+  }
+
+  return {
+    ...base,
+    artifactStatuses,
+  };
+};
+
 const expectAuditPayload = (
   actual: PhaseStructure,
   expectedRuleCount: number,
@@ -565,6 +629,349 @@ target('PhaseStructure.checkPhaseGate', () => {
 
         // Assert
         expect(actual).toThrowError(InvalidPhaseLevelError);
+      });
+    });
+
+    // === ISSUE-001追加分: scope パラメータによるLevel 3コンテキスト依存チェック ===
+
+    // UT-PD-134
+    context('scope未提供でLevel 3を検証する場合', () => {
+      it('Level 3のrequired=false成果物はスキップされ、Level 1/2が充足していればpassed=trueを返す', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const evidence = createGateEvidence(sut, target);
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // UT-PD-135
+    context('scope未提供でLevel 2成果物が欠損している場合', () => {
+      it('Level 2欠損によりblockersが返される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const evidence = createGateEvidence(sut, target, {
+          artifactStatuses: createPrerequisiteArtifactMap(
+            sut,
+            target,
+            createPhaseLevel(2),
+            'partial',
+          ),
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    // UT-PD-136
+    context('scope.unitIdのみ提供でstoryId未指定の場合', () => {
+      it('scope未提供と同一動作でLevel 3 required=false成果物はスキップされる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const evidence = createGateEvidence(sut, target);
+        const scope = { unitId: 'agent-integration' };
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // UT-PD-137
+    context('scope.unitIdのみ提供でLevel 2欠損がある場合', () => {
+      it('Level 2欠損によりblockersが返される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const evidence = createGateEvidence(sut, target, {
+          artifactStatuses: createPrerequisiteArtifactMap(
+            sut,
+            target,
+            createPhaseLevel(2),
+            'partial',
+          ),
+        });
+        const scope = { unitId: 'agent-integration' };
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    // UT-PD-138
+    context('scope.storyId提供時にLevel 3成果物が全て存在する場合', () => {
+      it('コンテキスト依存チェックが通過しpassed=trueを返す', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'all');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // UT-PD-139
+    context('scope.storyId提供時にLevel 3成果物が一部欠損している場合', () => {
+      it('欠損成果物に依存するノードがblockersに含まれる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'partial');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    // UT-PD-140
+    context('scope.storyId提供時にLevel 3成果物が全て欠損している場合', () => {
+      it('全Level 3ノードが未完了となりblockersが返される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'none');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    // UT-PD-141
+    context('scope.storyIdにissue IDを提供した場合', () => {
+      it('US IDと同様にresolve(scope)でパスが解決されチェックが実行される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'phase-dependency-model', storyId: 'ISSUE-001' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'all');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+
+    // UT-PD-142
+    context('scope.storyIdにissue IDを提供し成果物が欠損している場合', () => {
+      it('欠損によりblockersが返される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'phase-dependency-model', storyId: 'ISSUE-001' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'none');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+
+    // UT-PD-143
+    context('logical_design.mdが欠損している場合', () => {
+      it('scenario-test-designerなど下流ノードがblockされる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3Selective(sut, target, scope, {
+          'docs/inception/agent-integration/H11-05/logical_design.md': false,
+          'docs/inception/agent-integration/H11-05/logical_design_plan.md': false,
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.some((b) => b.includes('3:logical-designer'))).toBe(true);
+      });
+    });
+
+    // UT-PD-144
+    context('scenario_test_design.mdが欠損している場合', () => {
+      it('scenario-test-logic-designerなど下流ノードがblockされる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3Selective(sut, target, scope, {
+          'docs/inception/agent-integration/H11-05/scenario_test_design.md': false,
+          'docs/inception/agent-integration/H11-05/scenario_test_plan.md': false,
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.some((b) => b.includes('3:scenario-test-designer'))).toBe(true);
+      });
+    });
+
+    // UT-PD-145
+    context('implementation-readiness-checkerの前提が未充足の場合', () => {
+      it('story-implementorがblockされる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        // scenario-test-logic を欠損させて implementation-readiness-checker を未完了にする
+        const evidence = createGateEvidenceWithLevel3Selective(sut, target, scope, {
+          'docs/inception/agent-integration/H11-05/scenario_test_logic.md': false,
+          'docs/inception/agent-integration/H11-05/scenario_test_logic_plan.md': false,
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.some((b) => b.includes('3:scenario-test-logic-designer'))).toBe(true);
+      });
+    });
+
+    // UT-PD-146
+    context('推移的依存でlogical-designerの欠損がstory-implementorまで波及する場合', () => {
+      it('推移的な依存ブロックがblockersに含まれる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3Selective(sut, target, scope, {
+          'docs/inception/agent-integration/H11-05/logical_design.md': false,
+          'docs/inception/agent-integration/H11-05/logical_design_plan.md': false,
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        // logical-designer 未完了 → 直接の下流依存がブロック
+        expect(actual.blockers.length).toBeGreaterThanOrEqual(1);
+        expect(actual.blockers.some((b) => b.includes('3:logical-designer'))).toBe(true);
+      });
+    });
+
+    // UT-PD-148
+    context('全Level 3成果物が存在しscope.storyIdが提供されている場合', () => {
+      it('依存グラフが全て充足しpassed=trueを返す', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'all');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+        expect(actual.warnings).toEqual([]);
+      });
+    });
+
+    // UT-PD-150
+    context('Artifact.resolve連携でプレースホルダが正しく置換される場合', () => {
+      it('resolve(scope)でunitIdとstoryIdが置換された解決済みパスを検証に使用する', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'my-unit', storyId: 'H99-01' };
+        const level3Nodes = sut.getPhaseNodes(createPhaseLevel(3));
+        const resolvedArtifacts = level3Nodes.flatMap((node) =>
+          node.artifacts.map((a) => a.resolve(scope)),
+        );
+
+        // Assert — 解決済みパスにプレースホルダが残っていないことを検証
+        for (const resolved of resolvedArtifacts) {
+          expect(resolved).not.toContain('{unit}');
+          expect(resolved).not.toContain('{storyId}');
+          expect(resolved).toContain('my-unit');
+          expect(resolved).toContain('H99-01');
+        }
+      });
+    });
+
+    // UT-PD-151
+    context('scope未提供時にArtifact.resolveが未解決パスを返す場合', () => {
+      it('Level 3のrequired=false成果物は未解決パスのまま維持される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const level3Nodes = sut.getPhaseNodes(createPhaseLevel(3));
+        const scope = {};
+
+        // Act & Assert
+        for (const node of level3Nodes) {
+          for (const artifact of node.artifacts) {
+            const resolved = artifact.resolve(scope);
+            // required=false なので resolve は例外を投げず、プレースホルダが残る
+            expect(resolved).toContain('{storyId}');
+          }
+        }
+      });
+    });
+
+    // UT-PD-152
+    context('unitIdのみ提供時のArtifact.resolve動作', () => {
+      it('{unit}は解決されるが{storyId}は未解決のまま残る', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const level3Nodes = sut.getPhaseNodes(createPhaseLevel(3));
+        const scope = { unitId: 'agent-integration' };
+
+        // Act & Assert
+        for (const node of level3Nodes) {
+          for (const artifact of node.artifacts) {
+            const resolved = artifact.resolve(scope);
+            expect(resolved).not.toContain('{unit}');
+            expect(resolved).toContain('{storyId}');
+            expect(resolved).toContain('agent-integration');
+          }
+        }
       });
     });
   });
