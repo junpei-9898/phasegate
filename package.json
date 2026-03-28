@@ -1,6 +1,6 @@
 {
   "name": "gsdlc-harness",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "GSDLC Harness Engineering Toolkit - Governed Software Development Life Cycle",
   "type": "module",
   "files": [
@@ -31,7 +31,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "@types/node": "^25.3.5",
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.6.0",
+    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.7.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"
   },

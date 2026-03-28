@@ -16,6 +16,7 @@ import { CompletionGateFileAdapter } from './infrastructure/adapters/completion-
 import { FallbackPreReadAdapter } from './infrastructure/adapters/fallback-pre-read-adapter.js';
 import { FallbackPreWriteAdapter } from './infrastructure/adapters/fallback-pre-write-adapter.js';
 import { FusePreReadHandlerAdapter } from './infrastructure/adapters/fuse-pre-read-handler-adapter.js';
+import { FusePhaseGateCheckAdapter } from './infrastructure/adapters/fuse-phase-gate-check-adapter.js';
 import { FusePreWriteHandlerAdapter } from './infrastructure/adapters/fuse-pre-write-handler-adapter.js';
 import { DefaultHooksYamlGenerator } from './infrastructure/adapters/default-hooks-yaml-generator.js';
 import { ShellWrapperAdapter } from './infrastructure/adapters/shell-wrapper-adapter.js';
@@ -62,8 +63,18 @@ export function buildFuseHooksEngine(baseDir: string, options?: FuseHooksEngineO
   const fuseMount = FUSEMount.create(baseDir);
 
   // Guard mode based wiring
+  const phaseGateCheck = resolvedMode === 'fuse'
+    ? new FusePhaseGateCheckAdapter({
+        rootDir: baseDir,
+        paths: {
+          source: ['scripts/harness'],
+          construction: 'docs/product/construction',
+          inception: 'docs/inception',
+        },
+      })
+    : null;
   const fuseWriteHandler = resolvedMode === 'fuse'
-    ? new FusePreWriteHandlerAdapter()
+    ? new FusePreWriteHandlerAdapter({ phaseGateCheck: phaseGateCheck ?? undefined })
     : new FallbackPreWriteAdapter();
   const fuseReadHandler = resolvedMode === 'fuse'
     ? new FusePreReadHandlerAdapter()

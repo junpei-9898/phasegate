@@ -6,6 +6,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { FuseHandlerPort, FuseHandlers } from '../../domain/ports/fuse-handler-port.js';
+import type { PhaseGateCheckPort } from '../../domain/ports/phase-gate-check-port.js';
 import type { HookEventType } from '../../domain/types/hook-event-type.js';
 import { ProtectedResourceList } from '../../domain/value-objects/protected-resource-list.js';
 import { FuseHooksEngineDomainError } from '../../domain/errors/fuse-hooks-engine-domain-error.js';
@@ -15,6 +16,7 @@ const ENOENT = -2;
 
 export interface FusePreWriteHandlerAdapterOptions {
   protectedResources?: ProtectedResourceList;
+  phaseGateCheck?: PhaseGateCheckPort;
 }
 
 interface FuseNativeOps {
@@ -30,6 +32,7 @@ interface FuseNativeOps {
 export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
   private readonly handlers = new Map<string, FuseHandlers>();
   private readonly protectedResources: ProtectedResourceList;
+  private readonly phaseGateCheck: PhaseGateCheckPort | null;
   private fuseInstance: { unmount: (cb: (err?: Error) => void) => void } | null = null;
   private _mounted = false;
 
@@ -37,6 +40,7 @@ export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
     this.protectedResources =
       options?.protectedResources ??
       ProtectedResourceList.create(['docs/principles/**'])._unsafeUnwrap();
+    this.phaseGateCheck = options?.phaseGateCheck ?? null;
   }
 
   async register(mountPath: string, handlers: FuseHandlers): Promise<void> {
@@ -76,6 +80,7 @@ export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
     }
 
     const protectedResources = this.protectedResources;
+    const phaseGateCheck = this.phaseGateCheck;
     const handlers = this.handlers;
 
     const ops: FuseNativeOps = {
@@ -99,9 +104,16 @@ export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
       },
       open(p: string, flags: number, cb: (code: number, fd?: number) => void) {
         const isWriteFlag = (flags & (fs.constants.O_WRONLY | fs.constants.O_RDWR)) !== 0;
-        if (isWriteFlag && protectedResources.matches(p.slice(1))) {
-          cb(EPERM);
-          return;
+        if (isWriteFlag) {
+          const relativePath = p.slice(1);
+          if (protectedResources.matches(relativePath)) {
+            cb(EPERM);
+            return;
+          }
+          if (phaseGateCheck && !phaseGateCheck.isWriteAllowed(relativePath).allowed) {
+            cb(EPERM);
+            return;
+          }
         }
         const realPath = path.join(sourceDir, p);
         try {
@@ -125,6 +137,10 @@ export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
           cb(EPERM);
           return;
         }
+        if (phaseGateCheck && !phaseGateCheck.isWriteAllowed(relativePath).allowed) {
+          cb(EPERM);
+          return;
+        }
         try {
           const bytesWritten = fs.writeSync(fd, buf, 0, len, pos);
           cb(bytesWritten);
@@ -135,6 +151,10 @@ export class FusePreWriteHandlerAdapter implements FuseHandlerPort {
       create(p: string, mode: number, cb: (code: number, fd?: number) => void) {
         const relativePath = p.slice(1);
         if (protectedResources.matches(relativePath)) {
+          cb(EPERM);
+          return;
+        }
+        if (phaseGateCheck && !phaseGateCheck.isWriteAllowed(relativePath).allowed) {
           cb(EPERM);
           return;
         }
