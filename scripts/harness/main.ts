@@ -22,7 +22,7 @@ import { createSkillQualityHandlers } from './skill-quality/composition-root.js'
 import { buildRegressionSuite } from './regression-suite/composition-root.js';
 import { buildFuseHooksEngine } from './fuse-hooks-engine/composition-root.js';
 import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
-import { deploySkills, getDeployedVersion, getHarnessVersion, initHarnessConfig } from './setup/skill-deployer.js';
+import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
 
 /**
@@ -288,17 +288,27 @@ async function main(): Promise<void> {
         const projectName = parseFlag(args, '--name') ?? 'my-project';
         const result = await deploySkills(harnessRoot, rootDir);
         const configResult = await initHarnessConfig(rootDir, projectName);
+        const hooksResult = await deployHookScripts(harnessRoot, rootDir);
         console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills)`);
         if (configResult.created) {
           console.log(`✓ harness.config.json created`);
         } else {
           console.log(`  harness.config.json already exists, skipped`);
         }
+        if (hooksResult.scriptsDeployed > 0) {
+          console.log(`✓ Hook scripts deployed to .claude/scripts/ (${hooksResult.scriptsDeployed} files)`);
+        }
+        if (hooksResult.settingsCreated) {
+          console.log(`✓ .claude/settings.json created`);
+        } else if (hooksResult.scriptsDeployed > 0) {
+          console.log(`  .claude/settings.json already exists, skipped`);
+        }
         console.log(`✓ Harness v${result.version} initialized`);
         console.log('');
         console.log('Next steps:');
         console.log('  1. Run the product-architect skill to start AIDLC');
         console.log('  2. Customize harness.config.json if needed');
+        console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
         process.exit(0);
         break;
       }

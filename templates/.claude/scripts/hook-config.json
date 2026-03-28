@@ -1,0 +1,5 @@
+{
+  "targetDirs": ["src"],
+  "formatter": "biome",
+  "formatterArgs": ["check", "--write"]
+}

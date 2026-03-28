@@ -15,6 +15,8 @@ const HARNESS_VERSION_FILE = '.harness-version';
 const SKILLS_SOURCE_DIR = 'skills';
 const SKILLS_TARGET_DIR = join('.claude', 'skills');
 const HARNESS_CONFIG_FILE = 'harness.config.json';
+const HOOKS_TEMPLATE_DIR = join('templates', '.claude');
+const HOOKS_TARGET_DIR = '.claude';
 
 export interface DeployResult {
   deployedSkills: string[];
@@ -103,6 +105,68 @@ export async function getDeployedVersion(projectRoot: string): Promise<VersionIn
   } catch {
     return null;
   }
+}
+
+export interface DeployHooksResult {
+  scriptsDeployed: number;
+  settingsCreated: boolean;
+}
+
+/**
+ * templates/.claude/scripts/ を対象プロジェクトの .claude/scripts/ にデプロイする。
+ * templates/.claude/settings.json も存在しなければ作成する。
+ * 既存のスクリプトは上書き、settings.json は既存があればスキップ。
+ *
+ * @param harnessRoot - harnessパッケージのルートディレクトリ
+ * @param projectRoot - デプロイ先プロジェクトのルートディレクトリ
+ */
+export async function deployHookScripts(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployHooksResult> {
+  const templateDir = join(harnessRoot, HOOKS_TEMPLATE_DIR);
+  const targetDir = join(projectRoot, HOOKS_TARGET_DIR);
+
+  // scripts/ ディレクトリをコピー
+  const scriptsSource = join(templateDir, 'scripts');
+  const scriptsTarget = join(targetDir, 'scripts');
+  let scriptsDeployed = 0;
+
+  try {
+    await fs.access(scriptsSource);
+    scriptsDeployed = await copyDirectory(scriptsSource, scriptsTarget);
+
+    // シェルスクリプトに実行権限を付与
+    const entries = await fs.readdir(scriptsTarget);
+    for (const entry of entries) {
+      if (entry.endsWith('.sh')) {
+        await fs.chmod(join(scriptsTarget, entry), 0o755);
+      }
+    }
+  } catch {
+    // テンプレートが存在しない場合はスキップ
+  }
+
+  // settings.json を作成（既存があればスキップ）
+  const settingsSource = join(templateDir, 'settings.json');
+  const settingsTarget = join(targetDir, 'settings.json');
+  let settingsCreated = false;
+
+  try {
+    await fs.access(settingsTarget);
+    // 既存あり → スキップ
+  } catch {
+    try {
+      await fs.access(settingsSource);
+      await fs.mkdir(targetDir, { recursive: true });
+      await fs.copyFile(settingsSource, settingsTarget);
+      settingsCreated = true;
+    } catch {
+      // テンプレートが存在しない場合はスキップ
+    }
+  }
+
+  return { scriptsDeployed, settingsCreated };
 }
 
 /**

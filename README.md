@@ -129,7 +129,7 @@ interface HarnessError {
 本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.3.0"
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.5.0"
 ```
 
 `package.json` に直接記載する場合:
@@ -137,12 +137,12 @@ npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.3.0"
 ```json
 {
   "devDependencies": {
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.3.0"
+    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.5.0"
   }
 }
 ```
 
-`^0.3.0` により `0.3.x` の最新パッチに自動追従します（`0.4.0` 以上のマイナー変更はスキップ）。
+`^0.5.0` により `0.5.x` の最新パッチに自動追従します（`0.6.0` 以上のマイナー変更はスキップ）。
 
 ---
 
@@ -542,9 +542,76 @@ describe('ConfigSchema', () => {
 
 | Hook | タイミング | 動作 |
 |---|---|---|
-| **PreToolUse** | ファイル書き込み前 | `.biome.json` / `tsconfig.json` / `harness.config.json` への変更をブロック |
+| **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック |
 | **PostToolUse** | ファイル書き込み後 | Biome ASTルールを自動実行、違反があれば即時フィードバック |
 | **Stop** | セッション終了前 | `harness:complete-check` (L2-L4全チェック) を実行、全グリーンでないとセッション終了を保留 |
+
+### オプション: シェルスクリプトフック
+
+`.claude/scripts/` 配下に以下のオプションフックを配置できます。
+
+```jsonc
+// .claude/settings.json に追記
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/deny-check.sh"
+        }]
+      }
+      // ... 既存の Write|Edit フック
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/format-settings-hook.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/format-typescript-hook.sh"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/analyze-errors-hook.sh"
+          }
+          // ... 既存の post-tool-use-hook.ts
+        ]
+      }
+    ]
+  }
+}
+```
+
+| スクリプト | 動作 |
+|---|---|
+| `deny-check.sh` | 危険な git/bash コマンド（`git reset --hard`, `rm -rf` 等）をブロック |
+| `format-settings-hook.sh` | `settings.json` 編集時に JSON を自動整形 |
+| `format-typescript-hook.sh` | TypeScript ファイル編集時に自動フォーマット（Biome / ESLint+Prettier 切替可能） |
+| `analyze-errors-hook.sh` | TypeScript ファイル編集時に tsc / lint エラーを検出しフィードバック |
+
+### hook-config.json
+
+`format-typescript-hook.sh` と `analyze-errors-hook.sh` は `.claude/scripts/hook-config.json` で対象ディレクトリとフォーマッタを設定します。
+
+```json
+{
+  "targetDirs": ["scripts/harness"],
+  "formatter": "biome",
+  "formatterArgs": ["check", "--write"]
+}
+```
+
+| フィールド | 説明 | デフォルト |
+|---|---|---|
+| `targetDirs` | フックが適用されるディレクトリのリスト（プロジェクトルートからの相対パス） | `[]`（空の場合スキップ） |
+| `formatter` | `"biome"` または `"eslint-prettier"` | `"biome"` |
+| `formatterArgs` | フォーマッタに渡す引数 | `["check", "--write"]` |
 
 ---
 
