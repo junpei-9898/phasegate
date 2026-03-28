@@ -129,7 +129,7 @@ interface HarnessError {
 本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.8.0"
+npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.9.0"
 ```
 
 `package.json` に直接記載する場合:
@@ -137,12 +137,12 @@ npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.8.0"
 ```json
 {
   "devDependencies": {
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.8.0"
+    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.9.0"
   }
 }
 ```
 
-`^0.8.0` により `0.8.x` の最新パッチに自動追従します（`0.9.0` 以上のマイナー変更はスキップ）。
+`^0.9.0` により `0.9.x` の最新パッチに自動追従します（`0.10.0` 以上のマイナー変更はスキップ）。
 
 ---
 
@@ -542,9 +542,34 @@ describe('ConfigSchema', () => {
 
 | Hook | タイミング | 動作 |
 |---|---|---|
-| **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック |
+| **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック。ブロック時はアクショナブルなエラーメッセージ（違反理由・不足成果物・次に使うべきスキル）を返却 |
 | **PostToolUse** | ファイル書き込み後 | Biome ASTルールを自動実行、違反があれば即時フィードバック |
 | **Stop** | セッション終了前 | `harness:complete-check` (L2-L4全チェック) を実行、全グリーンでないとセッション終了を保留 |
+
+### PreToolUse エラーメッセージ (v0.9.0)
+
+PreToolUse Hook がブロックした際、AIエージェントが自律的に正しい行動を取れるよう、具体的なエラーメッセージを返します。
+
+**フェーズゲート違反:**
+
+```
+フェーズゲート違反: scripts/harness/config-foundation/domain/test.ts
+対象スコープ: Level 3 (実装), Unit: config-foundation
+ブロック理由:
+  - 成果物が不足しています: docs/product/construction/config-foundation/domain_model.md
+  - plan文書が不足しています: 2:logical-designer
+次のアクション: /story-implementor スキルを使用して設計フェーズから開始してください。
+  実行例: /story-implementor --unit config-foundation
+```
+
+**保護ファイル:**
+
+```
+保護ファイルへの書き込みがブロックされました: package.json
+バージョン変更を含む package.json の更新は /quick-implementor スキルを使用してください。
+```
+
+対象の保護ファイルに応じて、`/quick-implementor`、`/update-config`、CLI経由の変更など適切なガイダンスが表示されます。
 
 ### オプション: シェルスクリプトフック
 
@@ -864,4 +889,4 @@ npx harness update-skills
 
 ---
 
-*Last updated: 2026-03-29 — v0.8.0*
+*Last updated: 2026-03-29 — v0.9.0*
