@@ -56,6 +56,7 @@ target('HandlePreToolUseUseCase.execute', () => {
         // Assert
         expect(actual.shouldBlock).toBe(true);
         expect(actual.blockedFilePath).toBe('biome.json');
+        expect(actual.blockReason).toBe('PROTECTED_FILE');
       });
     });
 
@@ -125,7 +126,7 @@ target('HandlePreToolUseUseCase.execute', () => {
 
     context('複数ファイルパスのうち1件が保護対象の場合', () => {
       // IT-UC-HandlePreToolUse-005
-      it('複数パスのうち1件でも保護対象に一致すればブロックされること', async () => {
+      it('複数パスのうち1件でも保護対象��一致すればブロックされ、ファイル別ガイダンスが含まれること', async () => {
         // Arrange
         const mockConfigQueryPort = createDefaultMockConfigQueryPort();
         const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
@@ -141,6 +142,9 @@ target('HandlePreToolUseUseCase.execute', () => {
         // Assert
         expect(actual.shouldBlock).toBe(true);
         expect(actual.blockedFilePath).toBe('package.json');
+        expect(actual.blockReason).toBe('PROTECTED_FILE');
+        expect(actual.error?.message).toContain('package.json');
+        expect(actual.error?.message).toContain('/quick-implementor');
       });
     });
 
@@ -230,7 +234,7 @@ target('HandlePreToolUseUseCase.execute', () => {
 
     context('フェーズゲートが不通過のスコープへの書き込み', () => {
       // IT-UC-HandlePreToolUse-010
-      it('フェーズゲート違反の場合はブロックされること', async () => {
+      it('フェーズゲート違反の場合はアクショナブルなエラーメッセージでブロックされること', async () => {
         // Arrange
         const mockConfigQueryPort = createDefaultMockConfigQueryPort();
         const mockPhaseGateQueryPort = {
@@ -252,7 +256,12 @@ target('HandlePreToolUseUseCase.execute', () => {
         // Assert
         expect(actual.shouldBlock).toBe(true);
         expect(actual.blockedFilePath).toBe('scripts/harness/new-unit/domain/entities/foo.ts');
+        expect(actual.blockReason).toBe('PHASE_GATE');
         expect(actual.error?.message).toContain('フェーズゲート違反');
+        expect(actual.error?.message).toContain('logical design is missing');
+        expect(actual.error?.message).toContain('/story-implementor');
+        expect(actual.phaseGateBlockers).toEqual(['logical design is missing']);
+        expect(actual.nextAction).toContain('/story-implementor');
       });
     });
 

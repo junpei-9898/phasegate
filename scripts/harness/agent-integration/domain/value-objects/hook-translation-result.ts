@@ -8,6 +8,18 @@
 
 export type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED';
 
+export type BlockReason = 'PROTECTED_FILE' | 'PHASE_GATE';
+
+export interface BlockMetadata {
+  readonly reason: BlockReason;
+  readonly blockedFilePath?: string;
+  readonly phaseGateBlockers?: readonly string[];
+  readonly phaseGateWarnings?: readonly string[];
+  readonly scopeLevel?: 1 | 2 | 3;
+  readonly unitId?: string;
+  readonly storyId?: string;
+}
+
 export class HookTranslationResultInvariantError extends Error {
   constructor(message: string) {
     super(message);
@@ -23,6 +35,7 @@ export interface HookTranslationResultProps {
   expectedExitCode: number;
   skipReason?: SkipReason;
   timeoutMs?: number;
+  blockMetadata?: BlockMetadata;
 }
 
 export class HookTranslationResult {
@@ -32,6 +45,7 @@ export class HookTranslationResult {
   readonly expectedExitCode: number;
   readonly skipReason: SkipReason | undefined;
   readonly timeoutMs: number | undefined;
+  readonly blockMetadata: BlockMetadata | undefined;
 
   private constructor(props: HookTranslationResultProps) {
     this.shouldBlock = props.shouldBlock;
@@ -40,6 +54,7 @@ export class HookTranslationResult {
     this.expectedExitCode = props.expectedExitCode;
     this.skipReason = props.skipReason;
     this.timeoutMs = props.timeoutMs;
+    this.blockMetadata = props.blockMetadata;
   }
 
   static create(props: HookTranslationResultProps): HookTranslationResult {
@@ -58,11 +73,12 @@ export class HookTranslationResult {
     return new HookTranslationResult(props);
   }
 
-  static block(): HookTranslationResult {
+  static block(metadata?: BlockMetadata): HookTranslationResult {
     return new HookTranslationResult({
       shouldBlock: true,
       cliArgs: [],
       expectedExitCode: 2,
+      blockMetadata: metadata,
     });
   }
 
@@ -106,6 +122,7 @@ export class HookTranslationResult {
     if (this.expectedExitCode !== other.expectedExitCode) return false;
     if (this.skipReason !== other.skipReason) return false;
     if (this.timeoutMs !== other.timeoutMs) return false;
+    if (this.blockMetadata?.reason !== other.blockMetadata?.reason) return false;
     return true;
   }
 }

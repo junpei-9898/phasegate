@@ -83,6 +83,8 @@ target('HookToCliTranslator', () => {
         // Assert
         expect(actual.shouldBlock).toBe(true);
         expect(actual.cliCommand).toBeUndefined();
+        expect(actual.blockMetadata?.reason).toBe('PROTECTED_FILE');
+        expect(actual.blockMetadata?.blockedFilePath).toBe('biome.json');
       });
 
       // UT-HTC-002
@@ -246,10 +248,10 @@ target('HookToCliTranslator', () => {
 
       context('フェーズゲートに不合格の設計書配下ファイルが変更対象の場合', () => {
         // UT-HTC-042
-        it('blockersがあるとき shouldBlock=trueを返すこと', async () => {
+        it('blockersがあるとき shouldBlock=trueとフェーズゲートメタデータを返すこと', async () => {
           // Arrange
           const ports = buildTranslatorPorts({
-            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: ['推奨依存未充足'] },
           });
           const sut = new AsyncHookToCliTranslator({
             configQueryPort: ports.configQueryPort as any,
@@ -267,6 +269,11 @@ target('HookToCliTranslator', () => {
           // Assert
           expect(actual.shouldBlock).toBe(true);
           expect(actual.expectedExitCode).toBe(2);
+          expect(actual.blockMetadata?.reason).toBe('PHASE_GATE');
+          expect(actual.blockMetadata?.phaseGateBlockers).toEqual(['logical_design.md未作成']);
+          expect(actual.blockMetadata?.phaseGateWarnings).toEqual(['推奨依存未充足']);
+          expect(actual.blockMetadata?.unitId).toBe('agent-integration');
+          expect(actual.blockMetadata?.scopeLevel).toBe(2);
           expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
         });
       });

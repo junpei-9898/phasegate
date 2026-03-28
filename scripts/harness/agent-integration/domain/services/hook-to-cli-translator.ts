@@ -87,7 +87,10 @@ export class HookToCliTranslator {
 
     const blockedPath = event.targetFilePaths.find((fp) => protectedFileList.matches(fp));
     if (blockedPath !== undefined) {
-      return HookTranslationResult.block();
+      return HookTranslationResult.block({
+        reason: 'PROTECTED_FILE',
+        blockedFilePath: blockedPath,
+      });
     }
     return HookTranslationResult.create({
       shouldBlock: false,
@@ -223,7 +226,10 @@ export class AsyncHookToCliTranslator {
 
     const blockedPath = event.targetFilePaths.find((fp) => protectedFileList.matches(fp));
     if (blockedPath !== undefined) {
-      return HookTranslationResult.block();
+      return HookTranslationResult.block({
+        reason: 'PROTECTED_FILE',
+        blockedFilePath: blockedPath,
+      });
     }
 
     // Step 2: Phase gate check (applies only to write tools)
@@ -252,7 +258,14 @@ export class AsyncHookToCliTranslator {
 
     const phaseGateResult = await this.phaseGateQueryPort.checkGate(detectedScope);
     if (!phaseGateResult.hasPassed()) {
-      return HookTranslationResult.block();
+      return HookTranslationResult.block({
+        reason: 'PHASE_GATE',
+        phaseGateBlockers: [...phaseGateResult.getBlockers()],
+        phaseGateWarnings: [...phaseGateResult.getWarnings()],
+        scopeLevel: detectedScope.level,
+        unitId: detectedScope.unitId,
+        storyId: detectedScope.storyId,
+      });
     }
 
     return HookTranslationResult.create({
