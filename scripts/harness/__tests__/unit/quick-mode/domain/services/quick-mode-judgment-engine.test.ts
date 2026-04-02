@@ -53,7 +53,7 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/harness.config.json',
+            filePath: 'scripts/harness/quick-mode/phasegate.config.json',
             changeKind: 'MODIFY',
           }),
         ];

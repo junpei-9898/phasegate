@@ -45,7 +45,7 @@ export interface HarnessApiModule {
 }
 
 export function createHarnessApiModule(options: HarnessApiModuleOptions = {}): HarnessApiModule {
-  const configPath = options.configPath ?? 'harness.config.json';
+  const configPath = options.configPath ?? 'phasegate.config.json';
 
   // Infrastructure adapters
   const validatorExecutionPort = new ValidatorSystemExecutionAdapter();

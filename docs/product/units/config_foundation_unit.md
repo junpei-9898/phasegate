@@ -3,13 +3,13 @@
 > **Unit ID**: config-foundation
 > **作成日**: 2026-03-12
 > **Wave**: 1（基盤構築）
-> **対応Epic**: H-04 harness.config.json v2
+> **対応Epic**: H-04 phasegate.config.json v2
 
 ---
 
 ## 1. 概要
 
-harness.config.json v2のスキーマ設計・バリデーション・Preset System・機能切替を担うUnit。GSDLC v1の全Unitが依存する品質設定基盤を提供し、`HarnessConfigV2`型をShared Kernelとして公開する。
+phasegate.config.json v2のスキーマ設計・バリデーション・Preset System・機能切替を担うUnit。Phasegate v1の全Unitが依存する品質設定基盤を提供し、`HarnessConfigV2`型をShared Kernelとして公開する。
 
 v0ではオーケストレーション設定（orchestration/sessionセクション）やv1→v2マイグレーション（US-027/028/030）を含んでいたが、v1ではこれらをOrchestrationパッケージに移管し、**品質設定のSingle Source of Truth**に特化する。新たにPreset System（minimal/standard/strict）によるProgressive Disclosureを実現し、プロジェクトの成熟度に応じた段階的品質ゲート強化を可能にする。
 
@@ -19,7 +19,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 
 | Story ID | タイトル | 優先度 |
 |----------|---------|--------|
-| H04-01 | harness.config.json v2スキーマ定義 | Must |
+| H04-01 | phasegate.config.json v2スキーマ定義 | Must |
 | H04-02 | Preset System定義と切替 | Must |
 | H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | Must |
 
@@ -27,7 +27,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 
 ## 3. 機能要件
 
-### 3.1 harness.config.json v2スキーマ（H04-01）
+### 3.1 phasegate.config.json v2スキーマ（H04-01）
 
 - v2スキーマに以下のトップレベルセクションを含む: `project` / `layers` / `quickMode` / `phaseDependencies` / `planningMode` / `paths` / `reporting` / `harnesses`
 - `layers`セクションでL1-L4の有効/無効・バリデータ構成・閾値が設定可能
@@ -89,7 +89,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 | K# | 要件 | 本Unitでの対応 |
 |----|------|---------------|
 | K1 | 4層防御モデル（L1-L4） | `layers`セクションでL1-L4の有効/無効・バリデータ構成を設定可能にする |
-| K13 | harness.config.json | 品質設定のSingle Source of Truthとしてv2スキーマを定義・バリデーション |
+| K13 | phasegate.config.json | 品質設定のSingle Source of Truthとしてv2スキーマを定義・バリデーション |
 | K14 | Phase Dependency Model | `phaseDependencies`セクションでphase-dependency-modelの設定を格納。Level間依存の緩和禁止制約をスキーマレベルで表現する |
 
 ---

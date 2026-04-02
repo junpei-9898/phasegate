@@ -160,7 +160,7 @@ Quick Mode でも維持するハーネス:
 
 **GSD機能**: quality/balanced/budget でエージェントごとにモデル選択
 
-**採用方針**: AIDLC harness.config.json に `modelProfile` セクションを追加。
+**採用方針**: AIDLC phasegate.config.json に `modelProfile` セクションを追加。
 
 ```json
 {
@@ -225,10 +225,10 @@ test(auth/US-001): add confirmation token validation tests
 | K7 | **Document Split** (inception/product) | **非交渉** | inception=一時的、product=累積的。GSD2.0の`.planning/`はフラットで劣る |
 | K8 | **Cascade Updater** | **非交渉** (メカニズム改善可) | 概念は維持。GSD依存追跡で「影響範囲特定」ステップの自動化は可 |
 | K9 | **Agent-Lesson System** | **非交渉** (ユニーク革新) | GSD2.0にも主流フレームワークにも同等機能なし |
-| K10 | **Security/Performance検出** | 維持推奨 | 3rd-partyツール代替可だが、harness.config.json統合とHarnessError統一形式に価値あり |
+| K10 | **Security/Performance検出** | 維持推奨 | 3rd-partyツール代替可だが、phasegate.config.json統合とHarnessError統一形式に価値あり |
 | K11 | **Drift Detection** | **非交渉** (検出範囲拡張可) | 双方向検出（設計にあるがコードにない / コードにあるが設計にない）。GSD完了追跡との連携で強化可 |
 | K12 | **Consistency Checker** | 維持 (drift detectorと役割整理要) | drift-detector = コードレベル整合性。consistency-checker = 文書間レイヤー整合性に特化 |
-| K13 | **harness.config.json** | **非交渉** | 単一設定ファイル。GSD設定もここに統合 |
+| K13 | **phasegate.config.json** | **非交渉** | 単一設定ファイル。GSD設定もここに統合 |
 
 ---
 
@@ -332,10 +332,10 @@ AIDLC: docs/inception/ + docs/product/ (階層構造)
 
 ```
 GSD: .planning/config.json
-AIDLC: harness.config.json
+AIDLC: phasegate.config.json
 
 融合方針:
-harness.config.json にGSD設定を統合
+phasegate.config.json にGSD設定を統合
 
 {
   // AIDLC既存
@@ -414,7 +414,7 @@ harness.config.json にGSD設定を統合
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │              Configuration (Unified)                     │
-│  harness.config.json                                     │
+│  phasegate.config.json                                     │
 │  (AIDLC harness + GSD orchestration + session)           │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -498,12 +498,12 @@ Project Start
 |---|------|------|
 | 1 | **npmパッケージ非依存**: GSD2.0のnpmパッケージは使わず概念のみ自前実装 | 外部依存リスク回避、AIDLC自己完結性の維持 |
 | 2 | **`.planning/` 不使用**: GSD由来のアーティファクトはすべて `docs/inception/` に配置 | folder_management_rules.md 準拠 |
-| 3 | **設定ファイル統一**: GSD設定は `harness.config.json` に統合、別config.json不可 | Single Source of Truth |
+| 3 | **設定ファイル統一**: GSD設定は `phasegate.config.json` に統合、別config.json不可 | Single Source of Truth |
 | 4 | **yolo/skip-permissions 不採用**: AIDLCのdeny listとhooksは不可侵 | セキュリティ境界 |
 | 5 | **2-phase execution 維持**: 設計スキルの人間承認ゲートは絶対維持 | AI安全性の最後の砦 |
 | 6 | **プロジェクトローカル実行**: `~/.claude/` へのグローバルインストール不可 | 他プロジェクトへの影響回避 |
 | 7 | **既存コマンド体系尊重**: `/gsd:*` コマンドは露出せず、AIDLCスキル内部に統合 | UX一貫性 |
-| 8 | **デフォルトOFF**: GSD由来機能は `harness.config.json` でデフォルト無効 | Progressive adoption |
+| 8 | **デフォルトOFF**: GSD由来機能は `phasegate.config.json` でデフォルト無効 | Progressive adoption |
 
 ### 5.1 リスクマトリクス
 
@@ -511,7 +511,7 @@ Project Start
 |--------|--------|----------|--------|
 | **哲学の衝突**: GSD「速度優先」vs AIDLC「品質優先」 | 高 | 中 | AIDLCの品質ゲートを非交渉要件として確立。GSD側のyolo/skip-permissionsは採用しない |
 | **複雑度の爆発**: 26スキル + GSD実行エンジン | 高 | 高 | 段階的統合（Phase 1: コア3機能のみ）。ユーザーから見えるコマンドは簡素に保つ |
-| **設定ファイルの肥大化** | 中 | 中 | harness.config.json に統合。GSD設定はorchestrationセクション内に封じ込め |
+| **設定ファイルの肥大化** | 中 | 中 | phasegate.config.json に統合。GSD設定はorchestrationセクション内に封じ込め |
 | **ドキュメント配置の混乱** | 中 | 低 | folder_management_rules.md を更新。GSD由来ファイルの配置ルールを明記 |
 | **GSD外部依存** (npm package更新) | 中 | 中 | GSD概念のみ採用し、npmパッケージには依存しない。自前実装 |
 | **学習曲線の増大** | 中 | 高 | Quick Modeを入口に。フル機能は段階的に利用可能に |
@@ -537,7 +537,7 @@ Project Start
 | Wave並列実行 | スキル設計 + CLI | `wave-orchestrator` スキル新規作成 |
 | Session管理 | スキル設計 | STATE.md + progress コマンド |
 | Quick Mode | スキル設計 | `quick` スキル新規作成 |
-| harness.config.json拡張 | 実装 | orchestrationセクション追加 |
+| phasegate.config.json拡張 | 実装 | orchestrationセクション追加 |
 
 ### Phase 2: 強化機能
 
@@ -545,7 +545,7 @@ Project Start
 |------|---------|--------|
 | Nyquist Validation統合 | test-coverage-checker拡張 | VALIDATION.md生成 |
 | Brownfield対応 | スキル設計 | `codebase-mapper` スキル新規作成 |
-| Model Profile | harness.config.json | プロファイル設定 |
+| Model Profile | phasegate.config.json | プロファイル設定 |
 | Atomic Git Commits | story-implementor拡張 | コミット戦略の自動化 |
 | Milestone管理 | スキル設計 | `milestone-manager` スキル新規作成 |
 
@@ -682,8 +682,8 @@ Quick: /aidlc:quick (ハーネス緩和) ← GSD由来
 | `/gsd:insert-phase` | `/aidlc:scope insert` | scope-manager |
 | `/gsd:remove-phase` | `/aidlc:scope remove` | scope-manager |
 | `/gsd:debug` | (既存のデバッグフロー) | 特別なコマンド不要 |
-| `/gsd:settings` | harness.config.json直接編集 | CLIコマンド追加検討 |
-| `/gsd:set-profile` | harness.config.json | 設定変更 |
+| `/gsd:settings` | phasegate.config.json直接編集 | CLIコマンド追加検討 |
+| `/gsd:set-profile` | phasegate.config.json | 設定変更 |
 | `/gsd:health` | `harness:status` | 既存コマンドで代替 |
 | `/gsd:update` | (npmパッケージ非依存のため不要) | 自前管理 |
 

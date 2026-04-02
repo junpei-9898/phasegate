@@ -314,9 +314,9 @@ scripts/harness/__tests__/biome-ast-engine/
 
 | ID | target | describe | context | it |
 |----|--------|----------|---------|-----|
-| IT-BA-065 | getL1Config | L1設定を取得する | 正常なharness.config.jsonがある場合 | enabled/rulesが返される |
+| IT-BA-065 | getL1Config | L1設定を取得する | 正常なphasegate.config.jsonがある場合 | enabled/rulesが返される |
 | IT-BA-066 | getL1Config | L1設定を取得する | layers.L1が未定義の場合 | 既定値{ enabled: true, rules: {} }が返される |
-| IT-BA-067 | getL1Config | L1設定を取得する | harness.config.jsonが存在しない場合 | 既定値が返される |
+| IT-BA-067 | getL1Config | L1設定を取得する | phasegate.config.jsonが存在しない場合 | 既定値が返される |
 | IT-BA-068 | getL1Config | L1設定を取得する | L1.rulesに8ルール全てが定義されている場合 | 全ルール設定が返される |
 | IT-BA-069 | getL1Config | L1設定を取得する | L1.rulesが部分的に定義されている場合 | 定義済みルールの設定のみ返される |
 | IT-BA-070 | getL1Config | L1設定を取得する | L1.enabledがfalseの場合 | enabled=falseが返される |

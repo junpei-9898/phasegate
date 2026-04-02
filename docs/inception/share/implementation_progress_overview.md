@@ -1,4 +1,4 @@
-# GSDLC Quality Harness — 実装進捗と今後のロードマップ
+# Phasegate — 実装進捗と今後のロードマップ
 
 > **最終更新**: 2026-03-16
 > **対象**: Wave 1 完了時点
@@ -26,7 +26,7 @@
 | `harness list-errors` | 18個のHarnessError定義を一覧表示（human/json） | **実用可能** |
 | `harness render-errors` | HarnessError配列を人間/エージェント/CI向けにフォーマット | **実用可能** |
 | `harness validate-fix` | fix_example のコード片がパース可能か検証 | **実用可能** |
-| `harness list-features` | harness.config.json の機能トグル状態を表示 | **実用可能** |
+| `harness list-features` | phasegate.config.json の機能トグル状態を表示 | **実用可能** |
 | `harness enable-feature` / `disable-feature` | 機能トグルの切替・永続化 | **実用可能** |
 | `harness check-phase-gate` | 指定レベルのPhase Gate通過判定 | **実用可能** — ただし検査対象ファイルのセットアップが必要 |
 | `harness validate-metadata` | ファイルの @unit/@layer メタデータ検証 | **実用可能** — ただし対象ファイルを引数で指定する必要あり |
@@ -37,7 +37,7 @@
 
 | 機能 | 状態 |
 |---|---|
-| `harness.config.json` v2スキーマ | **完成** — JSON Schemaバリデーション付き |
+| `phasegate.config.json` v2スキーマ | **完成** — JSON Schemaバリデーション付き |
 | 3プリセット（minimal / standard / strict） | **完成** — プリセット解決が動作 |
 | config → 他Unit への Cross-unit 注入 | **完成** — phase-dependency-model, biome-ast-engine に注入済み |
 
@@ -91,7 +91,7 @@ L4 SCHED   drift-detect バリデータ               ❌ 未実装
 | **HarnessError** (K5相当) | 全バリデータがADR参照+fix_example付きで統一フォーマット出力 | ✅ 定義完成。ただしfix_exampleの充実度はバリデータ実装に依存 |
 | **Traceability Model** (K3.5) | 実装→Unit→設計→US→計画の逆引きチェーン | ✅ ドメインモデル+ゲートウェイ完成。バリデータ（L1/L2/L3/L4）との統合は未 |
 | **Phase Dependency Model** (K2, K14) | 3層フェーズ構造の機械的強制 | ✅ ドメインモデル+UseCase完成。pre-commitへの統合は未 |
-| **harness.config.json v2** (K13) | 品質設定のSingle Source of Truth | ✅ 完成。スキーマ+プリセット+バリデーション+Cross-unit注入 |
+| **phasegate.config.json v2** (K13) | 品質設定のSingle Source of Truth | ✅ 完成。スキーマ+プリセット+バリデーション+Cross-unit注入 |
 | **2-Phase Execution** (K6) | 設計スキルのPhase 1→承認→Phase 2 | ⚠️ スキルシステム側で実装済み（ハーネス外） |
 | **Quick Mode** | 軽微変更向けのハーネス緩和 | ❌ 未実装 |
 | **Nyquist Validation** | 要件→テスト双方向トレーサビリティ | ❌ 未実装 |

@@ -59,7 +59,7 @@
 
 | 依存先 | 種別 | 内容 |
 |--------|------|------|
-| config-foundation | 設定 | harness.config.json v2のsessionセクション（stateFile / roadmapFileパス）を参照 |
+| config-foundation | 設定 | phasegate.config.json v2のsessionセクション（stateFile / roadmapFileパス）を参照 |
 
 ---
 

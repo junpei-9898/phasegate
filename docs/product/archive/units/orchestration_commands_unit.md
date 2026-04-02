@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-GSDLC v1の5メインコマンド（`/gsdlc:init-project`, `/gsdlc:design`, `/gsdlc:plan`, `/gsdlc:execute`, `/gsdlc:verify`）のオーケストレーションSKILL.mdを定義するUnit。各コマンドは既存の設計・実装・検証スキル群を正しい順序で逐次実行するフローを標準化する。v1では単一executor版として定義し、Phase 2でWave並列実行に拡張予定。
+Phasegate v1の5メインコマンド（`/gsdlc:init-project`, `/gsdlc:design`, `/gsdlc:plan`, `/gsdlc:execute`, `/gsdlc:verify`）のオーケストレーションSKILL.mdを定義するUnit。各コマンドは既存の設計・実装・検証スキル群を正しい順序で逐次実行するフローを標準化する。v1では単一executor版として定義し、Phase 2でWave並列実行に拡張予定。
 
 ---
 
@@ -94,7 +94,7 @@ Phase 4: 検証・整合フロー定義。
 
 | 依存先 | 種別 | 内容 |
 |--------|------|------|
-| config-foundation | 設定 | harness.config.json v2のorchestrationセクション参照 |
+| config-foundation | 設定 | phasegate.config.json v2のorchestrationセクション参照 |
 | skill-enhancement | 基盤 | story-implementor FCP（US-045）、test-coverage-checker Nyquist（US-046）、readiness-checker Plan-Checker（US-047）の強化完了が前提 |
 | context-engineering | 参照 | context-priority.json（US-001）、コンテキストバジェットガイドライン（US-003） |
 | nyquist-validation | 参照 | requirement-test-matrix.json（US-005）、VALIDATION.md（US-009） |

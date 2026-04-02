@@ -111,7 +111,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 | K1 | 4層防御モデル（L1-L4） | CLI/FSフォールバック保証により、Hook無しでもL1-L4全層が機能することを検証 |
 | K3 | Biome AST解析 | PostToolUse Hook AdapterがBiome直接呼び出しで高速フォーマット+リントを実行 |
 | K6 | 2-Phase Execution | Stop Hook Adapterが`harness:complete-check`経由で2-Phase Execution遵守を検証 |
-| K13 | harness.config.json | Hook設定（有効/無効、保護対象ファイル等）はharness.config.jsonから参照 |
+| K13 | phasegate.config.json | Hook設定（有効/無効、保護対象ファイル等）はphasegate.config.jsonから参照 |
 
 ---
 

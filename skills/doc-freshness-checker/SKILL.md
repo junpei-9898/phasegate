@@ -12,7 +12,7 @@ review: opus
 
 ## 前提条件
 
-- `harness.config.json` に `docFreshnessThresholds` が設定されていること（未設定時はデフォルト値使用）
+- `phasegate.config.json` に `docFreshnessThresholds` が設定されていること（未設定時はデフォルト値使用）
 - git リポジトリ内で実行すること（最終更新日は `git log` で判定）
 
 ---
@@ -35,7 +35,7 @@ review: opus
 
 ## チェック対象スコープ
 - ディレクトリ: {デフォルト: docs/product/construction/}
-- 閾値: {harness.config.json の値 or デフォルト 30日}
+- 閾値: {phasegate.config.json の値 or デフォルト 30日}
 
 ## 実行コマンド
 pnpm run p2:check-freshness [--dir {path}] [--threshold {days}]
@@ -108,7 +108,7 @@ pnpm run p2:check-freshness
 
 ---
 
-## harness.config.json 設定例
+## phasegate.config.json 設定例
 
 ```json
 {

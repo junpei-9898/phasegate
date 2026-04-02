@@ -1,4 +1,4 @@
-# GSDLC Harness 機能棚卸し・価値評価
+# Phasegate 機能棚卸し・価値評価
 
 > **作成日**: 2026-03-25
 > **目的**: ハーネスの「実際に動く機能」と「設計文書のみの機能」を棚卸しし、コアバリューの実現状況を評価する
@@ -8,7 +8,7 @@
 
 ## 1. コアバリューの定義
 
-GSDLC Harnessの存在意義は **「AIエージェントが設計プロセスをスキップして実装に入ることを機械的に防止し、設計→実装の品質フローを強制すること」** にある。
+Phasegateの存在意義は **「AIエージェントが設計プロセスをスキップして実装に入ることを機械的に防止し、設計→実装の品質フローを強制すること」** にある。
 
 ### コアバリューの3要素
 
@@ -26,7 +26,7 @@ GSDLC Harnessの存在意義は **「AIエージェントが設計プロセス�
 
 | # | Unit | 主要機能 | 実装状態 |
 |---|------|---------|---------|
-| 1 | **config-foundation** | harness.config.json の読み取り・スキーマ検証 | ✅ 完全動作 |
+| 1 | **config-foundation** | phasegate.config.json の読み取り・スキーマ検証 | ✅ 完全動作 |
 | 2 | **harness-error** | エラー定義カタログ・レンダリング | ✅ 完全動作 |
 | 3 | **traceability-model** | ストーリーカタログ・メタデータ検証 | ✅ 完全動作 |
 | 4 | **phase-dependency-model** | 15フェーズノード・17依存関係・checkPhaseGate() | ✅ 完全動作 |
@@ -162,7 +162,7 @@ GSDLC Harnessの存在意義は **「AIエージェントが設計プロセス�
 | L2バリデータ経由のチェック | ✅ 動作 | `npx harness validate --layer L2` |
 | **pre-tool-use hookによるリアルタイムブロック** | ⚠️ **ハードコード実装** | `scripts/harness/{unit}/` パスと `logical_design.md`, `domain_model.md` のみ。phase-dependency-model未連携 |
 | **設計文書への書き込み順序制約** | ❌ **未実装** | domain_model → logical_design → test_design の順序チェックなし |
-| **設定駆動（他PJ対応）** | ❌ **未対応** | パスがハードコード。harness.config.jsonのproject.paths未使用 |
+| **設定駆動（他PJ対応）** | ❌ **未対応** | パスがハードコード。phasegate.config.jsonのproject.paths未使用 |
 
 **評価**: phase-dependency-modelの**ロジック層は完成**しているが、**強制層（pre-tool-use hook）との統合が不十分**。CLIコマンドとして使えるが、AIエージェントの書き込み操作をリアルタイムでブロックする仕組みが壊れている。
 
@@ -237,7 +237,7 @@ GSDLC Harnessの存在意義は **「AIエージェントが設計プロセス�
   → 強制力: 自動（Write/Editのたびに発火）
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   レイヤー0: 設定・基盤
-  → harness.config.json、Shared Kernel
+  → phasegate.config.json、Shared Kernel
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -279,7 +279,7 @@ GSDLC Harnessの存在意義は **「AIエージェントが設計プロセス�
 1. **堅牢な検証ロジック** — phase-dependency-modelの17依存関係、12バリデータ、28スキル
 2. **クリーンアーキテクチャ基盤** — 19 Unitが適切に分離、ポート/アダプタパターンで疎結合
 3. **CLIツールキット** — 50+コマンドで検証を手動実行可能
-4. **設定駆動の設計** — harness.config.jsonでプロジェクトごとのカスタマイズ可能
+4. **設定駆動の設計** — phasegate.config.jsonでプロジェクトごとのカスタマイズ可能
 
 ### 欠けているもの（ギャップ）
 
@@ -295,7 +295,7 @@ GSDLC Harnessの存在意義は **「AIエージェントが設計プロセス�
 domain_model_phase_gate_integration_plan.md（Phase 1完了）で提案した:
 - WriteTargetScope（新VO）: ファイルパスからスコープを動的推定
 - PhaseGateQueryPort（新ポート）: phase-dependency-model統合
-- ProjectPaths（新VO）: harness.config.jsonのpaths設定活用
+- ProjectPaths（新VO）: phasegate.config.jsonのpaths設定活用
 
 これが実装されると:
   ギャップ1 ✅ リアルタイム強制の統合 → 解決

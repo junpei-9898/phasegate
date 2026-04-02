@@ -11,7 +11,7 @@ L4 dead-codeバリデータ（L4-003）の実行機能。
 - 未使用エクスポート（exportされているが他ファイルからimportされていない）の検出
 - 到達不能コード（条件分岐で到達し得ないブロック）の検出
 - 検出時のHarnessError（L4-003）に `adr_ref` + `fix_example` + 対象ファイルパス・行番号を含める
-- strictプリセットでのみ有効（deadCodeGC機能としてharness.config.jsonで制御）
+- strictプリセットでのみ有効（deadCodeGC機能としてphasegate.config.jsonで制御）
 
 ## 2. シナリオテストケース
 

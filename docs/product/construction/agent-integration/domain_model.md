@@ -24,7 +24,7 @@
 | HookTranslationResult | 値オブジェクト | HookEvent→CLIコマンド変換結果（shouldBlock/cliCommand?/cliArgs/expectedExitCode/skipReason?/timeoutMs?） |
 | FallbackCapabilitySpec | 値オブジェクト | CLI/FSフォールバック仕様の宣言（supportedCommands[]/noAgentApiImports） |
 | WriteTargetScope | 値オブジェクト | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。storyId は US ID または issue ID を格納する（v2.2.0追加、ISSUE-001で issue パス対応） |
-| ProjectPaths | 値オブジェクト | `harness.config.json` の `project.paths` セクションを型安全に保持。`source: string[]`, `docs.construction: string`, `docs.inception: string`（v2.2.0追加） |
+| ProjectPaths | 値オブジェクト | `phasegate.config.json` の `project.paths` セクションを型安全に保持。`source: string[]`, `docs.construction: string`, `docs.inception: string`（v2.2.0追加） |
 | PhaseGateQueryResult | 値オブジェクト | フェーズゲート検査結果。`passed: boolean`, `blockers: string[]`, `warnings: string[]` を保持（v2.2.0追加） |
 | HookToCliTranslator | ドメインサービス | HookEvent→HookTranslationResult変換。Hook種別ごとの変換ルールを担う。v2.2.0でPreToolUseにStep 2（フェーズゲートチェック）追加 |
 | FallbackVerificationService | ドメインサービス | FallbackCapabilitySpecに基づくcoreモジュールのエージェント非依存性検証 |
@@ -266,11 +266,11 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 
 ### D6: WriteTargetScopeをVOとして定義（v2.2.0）
 
-ファイルパスからフェーズゲートスコープを推定する責務を `WriteTargetScope.fromPath()` 静的ファクトリメソッドに集約した。`WriteTargetClassifier` ドメインサービスの導入は検討したが、サービス化は過剰と判断しVOの静的メソッドで十分とした。`ProjectPaths` を引数に取ることで `harness.config.json` のパス設定に動的に対応する。
+ファイルパスからフェーズゲートスコープを推定する責務を `WriteTargetScope.fromPath()` 静的ファクトリメソッドに集約した。`WriteTargetClassifier` ドメインサービスの導入は検討したが、サービス化は過剰と判断しVOの静的メソッドで十分とした。`ProjectPaths` を引数に取ることで `phasegate.config.json` のパス設定に動的に対応する。
 
 ### D7: ConfigQueryPort.getProjectPaths()を同期メソッドとして定義（v2.2.0）
 
-`getProjectPaths()` は `ProjectPaths` を同期的に返す。理由: `harness.config.json` は起動時に1回読み込みキャッシュするため、非同期にする必要がない。`isHookEnabled()` / `getProtectedFilePatterns()` が `Promise` を返すのは歴史的経緯であり、新規メソッドでは不要な非同期性を避けた。
+`getProjectPaths()` は `ProjectPaths` を同期的に返す。理由: `phasegate.config.json` は起動時に1回読み込みキャッシュするため、非同期にする必要がない。`isHookEnabled()` / `getProtectedFilePatterns()` が `Promise` を返すのは歴史的経緯であり、新規メソッドでは不要な非同期性を避けた。
 
 ### D8: PhaseGateQueryPortの動的importパターン（v2.2.0）
 

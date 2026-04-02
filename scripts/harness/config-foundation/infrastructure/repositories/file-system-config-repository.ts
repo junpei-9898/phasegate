@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import type { ConfigRepositoryPort } from '../../domain/ports/config-repository-port.js';
 
-const DEFAULT_CONFIG_FILE_NAME = 'harness.config.json';
+const DEFAULT_CONFIG_FILE_NAME = 'phasegate.config.json';
 
 export class ConfigNotFoundError extends Error {
   readonly configPath: string;

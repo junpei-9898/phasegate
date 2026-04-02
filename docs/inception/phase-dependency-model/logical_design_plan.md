@@ -89,7 +89,7 @@ scripts/harness/
 
 ### 2.4 構造定義の保持方針
 
-3層フェーズ構造のノード一覧とデフォルト依存関係は、本Unit所有の静的定義としてコード化する。`harness.config.json` では構造そのものを差し替えず、`phaseDependencies.customRules` で追加依存のみを注入できる形に限定する。これにより、Level間依存とTDD最低保証を設定ファイルで破壊できない設計にする。
+3層フェーズ構造のノード一覧とデフォルト依存関係は、本Unit所有の静的定義としてコード化する。`phasegate.config.json` では構造そのものを差し替えず、`phaseDependencies.customRules` で追加依存のみを注入できる形に限定する。これにより、Level間依存とTDD最低保証を設定ファイルで破壊できない設計にする。
 
 ---
 

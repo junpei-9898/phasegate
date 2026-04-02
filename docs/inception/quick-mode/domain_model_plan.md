@@ -11,7 +11,7 @@
 
 - **対象Unit**: quick-mode
 - **担当ストーリー**:
-  - H10-01: Quick Mode設定（harness.config.json quickModeセクション）
+  - H10-01: Quick Mode設定（phasegate.config.json quickModeセクション）
   - H10-02: Quick Mode判定エンジン
   - H10-03: Quick Modeバリデータ緩和実行
   - H10-04: quick-implementor SKILL.md
@@ -110,7 +110,7 @@ validator-systemはこのProfileを受け取り、バリデータ選択実行の
 | `bugfix` | 既存実装ファイルの修正（domain/以外）|
 | `docs` | `docs/`配下のファイル変更 |
 | `test` | `__tests__/`配下・`*.test.ts`・`*.spec.ts`の変更 |
-| `config` | `*.config.json`・`*.config.ts`・`harness.config.json`の変更 |
+| `config` | `*.config.json`・`*.config.ts`・`phasegate.config.json`の変更 |
 | `feature` | 新規実装ファイル追加（domain/・port/以外）|
 | `domain` | `domain/`配下のファイル追加・変更 |
 | `api` | Port/Adapterインターフェースファイルの変更 |

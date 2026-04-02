@@ -9,7 +9,7 @@ H13-01はCI/CDテンプレート生成機能を実装する。具体的には以
 - `aidlc-gate.yml` テンプレート: PR時にL1-L3バリデータを実行（triggerCondition: pull_request）
 - `consistency-check.yml` テンプレート: 週次でL4バリデータを実行（triggerCondition: schedule）
 - `.husky/pre-commit` テンプレート: commit時にL2バリデータを実行（triggerCondition: pre-commit）
-- 各テンプレートはharness.config.jsonのPreset設定（minimal/standard/strict）を参照
+- 各テンプレートはphasegate.config.jsonのPreset設定（minimal/standard/strict）を参照
 
 CLIコマンド: `ci:generate-template --preset {presetId} --type {templateType}`
 Presentation: `scripts/harness/ci-governance/presentation/handlers/generate-ci-template-handler.ts`

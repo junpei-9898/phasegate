@@ -1,4 +1,4 @@
-# ADR-007: harness.config.json を品質設定の Single Source of Truth とする
+# ADR-007: phasegate.config.json を品質設定の Single Source of Truth とする
 
 ## Status
 
@@ -10,7 +10,7 @@ Accepted
 
 ## Decision
 
-`harness.config.json` を品質設定の唯一の真実源とする。
+`phasegate.config.json` を品質設定の唯一の真実源とする。
 
 ### スキーマ構成（v2）
 
@@ -23,7 +23,7 @@ Accepted
 
 ### パッケージ分離
 
-- `harness.config.json`: 品質設定のみ（Quality Harness 管轄）
+- `phasegate.config.json`: 品質設定のみ（Quality Harness 管轄）
 - `orchestration.config.json`: オーケストレーション設定（別パッケージ管轄）
 
 Ownership が完全に分離され、設定の混在を防止する。
@@ -36,4 +36,4 @@ Ownership が完全に分離され、設定の混在を防止する。
 
 ## 関連要件
 
-K13（harness.config.json）
+K13（phasegate.config.json）

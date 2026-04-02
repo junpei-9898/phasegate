@@ -1095,7 +1095,7 @@ Claude Code が渡すPreToolUse Hookペイロード:
 
 1. stdin から JSON を読み取る
 2. `toolName` と `targetFilePaths` を抽出する（`tool_input.path` または複数パス）
-3. `findConfigPath()` で `harness.config.json` を探索する
+3. `findConfigPath()` で `phasegate.config.json` を探索する
 4. `HarnessConfigConfigQueryAdapter` と `PhaseGateQueryAdapter` を生成する（v2.2.0）
 5. `HandlePreToolUseUseCase.execute({ toolName, targetFilePaths })` を呼び出��
 6. `output.shouldBlock=true` の場合:
@@ -1454,7 +1454,7 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 ### 9.4 Infrastructure層テスト方針
 
 - `EnvFileReentryGuardStateAdapter` は `env` 戦略と `file` 戦略の双方を統合テストで検証する
-- `HarnessConfigConfigQueryAdapter` は fixture の `harness.config.json` を使い、Hook有効/無効の判定を検証する
+- `HarnessConfigConfigQueryAdapter` は fixture の `phasegate.config.json` を使い、Hook有効/無効の判定を検証する
 
 ### 9.5 Presentation層テスト方針
 

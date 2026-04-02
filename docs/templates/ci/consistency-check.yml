@@ -1,4 +1,4 @@
-# GSDLC Quality Harness — 週次整合性チェックワークフロー
+# Phasegate — 週次整合性チェックワークフロー
 #
 # 使い方:
 #   このファイルを .github/workflows/consistency-check.yml にコピーして使用する。

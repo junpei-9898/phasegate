@@ -1,4 +1,4 @@
-# GSDLC_HARNESS v1 スコープ・要件・制約・リスク分析書
+# phasegate v1 スコープ・要件・制約・リスク分析書
 
 > **ステータス**: Draft
 > **作成日**: 2026-03-10
@@ -34,7 +34,7 @@
 | **MVH-06** | Stop Hookテストゲート | ギャップ5-2 | 「完了」宣言時にテスト全グリーンを強制するゲート |
 | **MVH-07** | ADR初期整備 | ギャップ1-1 | 最低10件のADR + テンプレート。archgateパターンの基盤 |
 | **MVH-08** | ライフサイクル管理 | GAP-3 (Important) | マイルストーン定義 + 状態追跡。milestones.json + state.json |
-| **MVH-09** | harness.config.json v2 | 統合分析§3.4 F5 | orchestrationセクション + sessionセクション追加。GSD由来設定の統合先 |
+| **MVH-09** | phasegate.config.json v2 | 統合分析§3.4 F5 | orchestrationセクション + sessionセクション追加。GSD由来設定の統合先 |
 | **MVH-10** | 非交渉要件K1-K13の完全維持 | 統合分析§3.2 | 4層防御、Phase Gate、ESLint AST、テスト品質等13機能を損なわない |
 
 ### 1.3 Phase 2 延期スコープ（v1後）
@@ -87,7 +87,7 @@
 
 | REQ-ID | 要件 | 優先度 | 検証方法 |
 |--------|------|--------|----------|
-| **REQ-QM-001** | harness.config.jsonに`quick_mode`セクションを追加し、Quick Mode対象条件を定義できること | Must | 設定スキーマバリデーション |
+| **REQ-QM-001** | phasegate.config.jsonに`quick_mode`セクションを追加し、Quick Mode対象条件を定義できること | Must | 設定スキーマバリデーション |
 | **REQ-QM-002** | Quick Modeでは、architecture/dependency/securityバリデータのみ実行し、phase-gateをスキップすること | Must | バリデータ実行ログ検証 |
 | **REQ-QM-003** | Quick Mode対象を明確に定義すること: テストファイルのみの変更、docs配下の修正、typo修正、リファクタリング（既存テスト全グリーン前提） | Must | 対象判定ロジックの自動テスト |
 | **REQ-QM-004** | Quick Mode対象外を明確に定義すること: 新規ドメインモデル追加、API契約変更、新機能追加 | Must | 除外判定ロジックの自動テスト |
@@ -116,7 +116,7 @@
 | REQ-ID | 要件 | 優先度 | 検証方法 |
 |--------|------|--------|----------|
 | **REQ-AD-001** | ADRテンプレートを整備し、タイトル/ステータス/コンテキスト/決定/結果/代替案の構造を定義すること | Must | テンプレートファイル存在チェック |
-| **REQ-AD-002** | 以下10件のADRを初期作成すること: (1)フェーズゲート採用理由 (2)4層防御モデル設計根拠 (3)ESLint AST解析選定 (4)2-Phase Execution設計 (5)inception/product分離設計 (6)harness.config.json統一設定 (7)DDD設計スキル群の設計哲学 (8)GSD2.0概念採用・npmパッケージ棄却 (9)Quick Mode導入とフェーズゲート緩和 (10)Nyquist検証層導入 | Must | ADRファイル存在・構造検証 |
+| **REQ-AD-002** | 以下10件のADRを初期作成すること: (1)フェーズゲート採用理由 (2)4層防御モデル設計根拠 (3)ESLint AST解析選定 (4)2-Phase Execution設計 (5)inception/product分離設計 (6)phasegate.config.json統一設定 (7)DDD設計スキル群の設計哲学 (8)GSD2.0概念採用・npmパッケージ棄却 (9)Quick Mode導入とフェーズゲート緩和 (10)Nyquist検証層導入 | Must | ADRファイル存在・構造検証 |
 | **REQ-AD-003** | ADRにステータス（Proposed/Accepted/Deprecated/Superseded）を付与し、機械的に有効性を判別可能にすること | Must | ADRフロントマター検証 |
 
 ### 2.7 ライフサイクル管理要件
@@ -132,9 +132,9 @@
 
 | REQ-ID | 要件 | 優先度 | 検証方法 |
 |--------|------|--------|----------|
-| **REQ-CF-001** | harness.config.jsonをv2にバージョンアップし、`orchestration`セクションを追加すること | Must | 設定スキーマバリデーション |
-| **REQ-CF-002** | harness.config.json v2に`session`セクションを追加し、stateFile/roadmapFileのパスを設定可能にすること | Must | 設定スキーマバリデーション |
-| **REQ-CF-003** | GSD由来機能はharness.config.jsonでデフォルト無効（`enabled: false`）とし、Progressive adoptionを支援すること | Must | デフォルト値検証 |
+| **REQ-CF-001** | phasegate.config.jsonをv2にバージョンアップし、`orchestration`セクションを追加すること | Must | 設定スキーマバリデーション |
+| **REQ-CF-002** | phasegate.config.json v2に`session`セクションを追加し、stateFile/roadmapFileのパスを設定可能にすること | Must | 設定スキーマバリデーション |
+| **REQ-CF-003** | GSD由来機能はphasegate.config.jsonでデフォルト無効（`enabled: false`）とし、Progressive adoptionを支援すること | Must | デフォルト値検証 |
 | **REQ-CF-004** | v1設定からv2設定への自動マイグレーションツール（`harness:migrate-config`）を提供すること | Should | マイグレーション実行テスト |
 
 ### 2.9 非交渉要件（K1-K13維持）
@@ -153,7 +153,7 @@
 | **REQ-K-010** | K10: Security/Performance | シークレット・SQLインジェクション・N+1検出が維持されること | 既存テスト |
 | **REQ-K-011** | K11: Drift Detection | 設計-実装乖離の双方向検出が維持されること | 既存テスト |
 | **REQ-K-012** | K12: Consistency Checker | 文書間レイヤー整合性チェックが維持されること | 既存テスト |
-| **REQ-K-013** | K13: harness.config.json | 単一設定ファイルの原則が維持されること（v2拡張は可） | 設定ファイル構造検証 |
+| **REQ-K-013** | K13: phasegate.config.json | 単一設定ファイルの原則が維持されること（v2拡張は可） | 設定ファイル構造検証 |
 
 ---
 
@@ -167,12 +167,12 @@
 |--------|------|--------------|----------|
 | **GNG-1** | npmパッケージ非依存 | 設計レビュー + CI | package.jsonにGSD関連パッケージが存在しないこと |
 | **GNG-2** | `.planning/`不使用 | CI | `.planning/`ディレクトリが存在しないこと |
-| **GNG-3** | 設定ファイル統一 | 設計レビュー | GSD由来の設定がすべてharness.config.json内にあること |
+| **GNG-3** | 設定ファイル統一 | 設計レビュー | GSD由来の設定がすべてphasegate.config.json内にあること |
 | **GNG-4** | yolo/skip-permissions不採用 | コードレビュー | deny listとhooksが完全に維持されていること |
 | **GNG-5** | 2-Phase Execution維持 | 全スキルSKILL.md検証 | 設計スキルの人間承認ゲートが存在すること |
 | **GNG-6** | プロジェクトローカル実行 | CI | `~/.claude/`へのグローバル書き込みがないこと |
 | **GNG-7** | 既存コマンド体系尊重 | UXレビュー | `/gsd:*`コマンドが露出していないこと |
-| **GNG-8** | デフォルトOFF | harness.config.json検証 | GSD由来機能のデフォルト値がすべてfalse/disabledであること |
+| **GNG-8** | デフォルトOFF | phasegate.config.json検証 | GSD由来機能のデフォルト値がすべてfalse/disabledであること |
 
 ### 3.2 技術的制約
 
@@ -223,7 +223,7 @@
 | **R-01** | **哲学の衝突**: GSD「速度優先」とAIDLC「品質優先」の設計判断が矛盾し、一貫性のないハーネスになる | 高 | 高 | **9 (Critical)** | (1) 統合分析書§5.2の哲学的トレードオフ解決方針を厳守 (2) 「品質ゲート付き速度最適化」を設計原則としてADR化 (3) 全PRでAIDLC品質基準との整合性レビューを必須化 |
 | **R-02** | **非交渉要件(K1-K13)の意図しない破壊**: v1機能追加の副作用で既存バリデータやフェーズゲートが動作しなくなる | 高 | 中 | **6 (High)** | (1) 既存143テストの全グリーンをCIゲート化 (2) K要件ごとの回帰テスト追加（REQ-K-001〜013） (3) v1機能は既存コードの修正を最小化し、拡張ポイントで追加 |
 | **R-03** | **複雑度の爆発**: 26スキル + 10件のMVH機能追加で、ハーネス自体が理解不能になる | 中 | 高 | **6 (High)** | (1) MVH機能を独立モジュールとして実装（既存コードとの結合度を最小化） (2) 各モジュールに独立したテストスイートを持たせる (3) 00_harness_engineering_overview.mdをv1対応で更新 |
-| **R-04** | **設定ファイルの肥大化**: harness.config.json v2が複雑化し、設定ミスが多発する | 中 | 中 | **4 (Medium)** | (1) orchestration/sessionセクションにJSONスキーマバリデーションを適用 (2) デフォルト値を慎重に設計（GSD由来はデフォルトOFF） (3) `harness:validate-config`コマンドで設定の正当性チェック |
+| **R-04** | **設定ファイルの肥大化**: phasegate.config.json v2が複雑化し、設定ミスが多発する | 中 | 中 | **4 (Medium)** | (1) orchestration/sessionセクションにJSONスキーマバリデーションを適用 (2) デフォルト値を慎重に設計（GSD由来はデフォルトOFF） (3) `harness:validate-config`コマンドで設定の正当性チェック |
 | **R-05** | **Quick Modeの悪用**: Quick Modeを本来フル設計フローが必要な変更に使用し、品質が劣化する | 高 | 低 | **3 (Medium)** | (1) Quick Mode対象外の明確な定義（REQ-QM-004） (2) Quick Mode使用時にもarchitecture/dependency/securityバリデータは必ず実行 (3) Quick Mode使用頻度の監視（L4 Scheduled） |
 | **R-06** | **学習曲線の増大**: v1の新概念（コンテキストバジェット、Nyquist、Quick Mode等）が多すぎて採用障壁になる | 中 | 高 | **6 (High)** | (1) Quick Modeを入口としたProgressive Disclosure (2) 各機能の独立したガイドドキュメント (3) `harness:status`コマンドで現在有効な機能を一覧表示 |
 | **R-07** | **テスト負債の増加**: v1新機能のテストが不十分で、将来のリファクタリングを阻害する | 中 | 高 | **6 (High)** | (1) 新機能ごとに最低10テストを必須とするルール (2) テストカバレッジ90%閾値の維持（CIゲート） (3) requirement-test-matrixをv1自身にも適用（dogfooding） |
@@ -253,7 +253,7 @@
 | **KPI-03** | テストカバレッジ | **90%以上** （既存基準維持） | istanbul/nyc |
 | **KPI-04** | Go/No-Go Gate通過 | **8/8 全通過** | GNG-1〜8の検証 |
 | **KPI-05** | ADR作成数 | **10件以上** | `docs/ADR/`内のファイル数 |
-| **KPI-06** | harness.config.json v2 JSONスキーマバリデーション | **エラー0件** | スキーマバリデーションテスト |
+| **KPI-06** | phasegate.config.json v2 JSONスキーマバリデーション | **エラー0件** | スキーマバリデーションテスト |
 | **KPI-07** | 非交渉要件(K1-K13)の回帰テスト | **13/13 全通過** | REQ-K-001〜013の検証 |
 | **KPI-08** | Quick Mode判定精度 | **対象/対象外の判定成功率95%以上** | Quick Mode判定テストスイート |
 | **KPI-09** | コンテキストバジェット定義率 | **全26スキルの100%** | SKILL.md構造検証 |

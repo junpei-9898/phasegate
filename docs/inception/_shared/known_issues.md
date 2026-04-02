@@ -1,10 +1,10 @@
 ---
-title: GSDLC Harness — 既知の問題・スタブ台帳
+title: Phasegate — 既知の問題・スタブ台帳
 updated: 2026-03-22
 status: active
 ---
 
-# GSDLC Harness 既知の問題・スタブ台帳
+# Phasegate 既知の問題・スタブ台帳
 
 全機能の実CLI動作確認（2026-03-22）で発見した問題・スタブ残存の記録。
 各項目に「発見」→「修正済み／未修正」のステータスを記載する。

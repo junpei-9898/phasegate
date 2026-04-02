@@ -17,7 +17,7 @@
 現在のpre-tool-use hookは以下の問題を持つ：
 1. ソースコードパス（`scripts/harness/{unit}/`）がハードコードされ、他PJで使えない
 2. 設計文書への書き込み順序制約（domain_model → logical_design → test_design）がチェックされていない
-3. `harness.config.json` の `project.paths` 設定が活用されていない
+3. `phasegate.config.json` の `project.paths` 設定が活用されていない
 4. `phase-dependency-model` が既に持つ17の依存関係定義と `checkPhaseGate()` APIが未活用
 
 ### 境界
@@ -46,8 +46,8 @@
 
 | 概念 | 分類 | 説明 |
 |------|------|------|
-| **WriteTargetScope** | 値オブジェクト（新規） | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。`harness.config.json` の `project.paths` を使って動的にパス判定する |
-| **ProjectPaths** | 値オブジェクト（新規） | `harness.config.json` の `project.paths` セクションを型安全に保持する。`source: string[]`, `docs.construction: string`, `docs.inception: string` |
+| **WriteTargetScope** | 値オブジェクト（新規） | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。`phasegate.config.json` の `project.paths` を使って動的にパス判定する |
+| **ProjectPaths** | 値オブジェクト（新規） | `phasegate.config.json` の `project.paths` セクションを型安全に保持する。`source: string[]`, `docs.construction: string`, `docs.inception: string` |
 | **PhaseGateQueryPort** | ポート（新規） | phase-dependency-model の `checkPhaseGate()` を呼び出す契約。`checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult>` |
 
 ### 追加しない概念
@@ -133,7 +133,7 @@ pre-tool-use hookは毎回のWrite/Editで発火する。`checkPhaseGate()` は�
 | 項目 | 内容 |
 |------|------|
 | **前提** | phase-dependency-model の公開API（`createPhaseDependencyModelModule`, `checkPhaseGateCommandHandler`）は安定しており、Breaking Changeなし |
-| **前提** | `harness.config.json` の `project.paths` セクションは全PJで設定されている |
+| **前提** | `phasegate.config.json` の `project.paths` セクションは全PJで設定されている |
 | **リスク** | storyIdの推定精度 — `docs/inception/{unit}/{storyId}/` のstoryIdはディレクトリ名から推定するため、命名規則に依存 |
 | **リスク** | 循環依存 — agent-integration → phase-dependency-model の依存追加。動的importで疎結合を維持するが、テスト時のモック戦略が必要 |
 | **緩和策** | `PhaseGateQueryPort` をドメインポートとして定義し、インフラ層の動的importで実装。ユニットテストではモック注入 |

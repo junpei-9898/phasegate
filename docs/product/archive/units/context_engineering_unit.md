@@ -64,7 +64,7 @@ AIエージェントのコンテキストウィンドウを効率的に管理す
 
 | 依存先 | 種別 | 内容 |
 |--------|------|------|
-| config-foundation | 設定 | harness.config.json v2のorchestration.contextStrategy設定を参照 |
+| config-foundation | 設定 | phasegate.config.json v2のorchestration.contextStrategy設定を参照 |
 
 ---
 

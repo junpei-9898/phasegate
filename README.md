@@ -1,6 +1,6 @@
-# GSDLC Quality Harness
+# Phasegate
 
-**Governed Software Development Life Cycle — AI-Agnostic Quality Defense Toolkit**
+**Phasegate — AI-Agnostic Quality Defense Toolkit**
 
 AIエージェント（Claude Code, Codex, Cursor, その他）が生成するコードと設計の構造的整合性を、エージェント非依存で機械的に保証し続けるポータブルな品質防御ツールキットです。
 
@@ -17,7 +17,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 - [前提条件](#前提条件)
 - [インストール](#インストール)
 - [セットアップ](#セットアップ)
-- [harness.config.json](#harnessconfigjson)
+- [phasegate.config.json](#harnessconfigjson)
 - [CLIコマンドリファレンス](#cliコマンドリファレンス)
 - [AIDLCプロセス — スキル実行順序](#aidlcプロセス--スキル実行順序)
 - [スキル一覧 (28スキル)](#スキル一覧-28スキル)
@@ -129,7 +129,7 @@ interface HarnessError {
 本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
 
 ```bash
-npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.9.0"
+npm install --save-dev "github:junpei-9898/phasegate#semver:^0.9.0"
 ```
 
 `package.json` に直接記載する場合:
@@ -137,7 +137,7 @@ npm install --save-dev "github:junpei-9898/GSDLC_HARNESS#semver:^0.9.0"
 ```json
 {
   "devDependencies": {
-    "gsdlc-harness": "github:junpei-9898/GSDLC_HARNESS#semver:^0.9.0"
+    "phasegate": "github:junpei-9898/phasegate#semver:^0.9.0"
   }
 }
 ```
@@ -156,15 +156,15 @@ npx harness init --name <プロジェクト名>
 
 実行されること:
 - `.claude/skills/` に28スキルを展開
-- プロジェクトルートに `harness.config.json` を生成
+- プロジェクトルートに `phasegate.config.json` を生成
 
 ### 2. 設計原則ドキュメントをコピー
 
 ```bash
 # プロジェクトの docs/ 配下にコピー
-cp node_modules/gsdlc-harness/docs/folder_management_rules.md docs/
+cp node_modules/phasegate/docs/folder_management_rules.md docs/
 mkdir -p docs/principles
-cp node_modules/gsdlc-harness/docs/principles/*.md docs/principles/
+cp node_modules/phasegate/docs/principles/*.md docs/principles/
 ```
 
 ### 3. プロダクト概要を作成
@@ -186,13 +186,13 @@ claude  # プロジェクトルートで起動
 
 ```bash
 # ハーネスを更新後、スキルを最新版に同期
-npm update gsdlc-harness
+npm update phasegate
 npx harness update-skills
 ```
 
 ---
 
-## harness.config.json
+## phasegate.config.json
 
 プロジェクトルートに配置する品質設定のSingle Source of Truth。
 
@@ -261,7 +261,7 @@ npx harness <command> [options]
 
 | コマンド | 説明 |
 |---|---|
-| `init --name <name>` | スキル展開 + harness.config.json 生成 |
+| `init --name <name>` | スキル展開 + phasegate.config.json 生成 |
 | `update-skills` | スキルを最新版に再デプロイ |
 | `list-features` | 利用可能な機能一覧 |
 | `enable-feature <name>` | 機能を有効化 |
@@ -657,7 +657,7 @@ npx harness ci-check --quick
 | Phase Gate | 必須 | **緩和** |
 | 2-Phase Execution | 必須 | **緩和** |
 
-`harness.config.json` でQuick Modeの適用条件を定義します。
+`phasegate.config.json` でQuick Modeの適用条件を定義します。
 
 ```jsonc
 {
@@ -678,7 +678,7 @@ npx harness ci-check --quick
 
 ## プリセット
 
-`harness.config.json` の `preset` フィールドで段階的に品質レベルを選択できます。
+`phasegate.config.json` の `preset` フィールドで段階的に品質レベルを選択できます。
 
 | プリセット | 用途 | 有効レイヤー | カバレッジ閾値 |
 |---|---|---|---|
@@ -763,7 +763,7 @@ npx harness regression:run-k-requirements --format json
 | K10 | Security/Performance検出 |
 | K11 | Drift Detection（双方向） |
 | K12 | Consistency Checker |
-| K13 | harness.config.json（品質設定SSOT） |
+| K13 | phasegate.config.json（品質設定SSOT） |
 | K14 | Phase Dependency Model（3層フェーズ構造） |
 | K15 | Plan文書の必須生成 |
 
@@ -774,11 +774,11 @@ npx harness regression:run-k-requirements --format json
 ### ハーネスの内部構造
 
 ```
-GSDLC_HARNESS/
+phasegate/
 ├── scripts/harness/
 │   ├── main.ts                      # CLIエントリポイント
 │   ├── harness-error/               # HarnessError定義・ADR参照
-│   ├── config-foundation/           # harness.config.json 解析・スキーマ
+│   ├── config-foundation/           # phasegate.config.json 解析・スキーマ
 │   ├── traceability-model/          # @unit/@layer/@story メタデータ管理
 │   ├── phase-dependency-model/      # フェーズ依存関係・Phase Gate
 │   ├── adr-foundation/              # ADR管理
@@ -795,7 +795,7 @@ GSDLC_HARNESS/
 │   └── phase2-extensions/           # freshness/pointer/e2e-template (v2)
 ├── skills/                          # 28スキル (npx harness init で .claude/skills/ に展開)
 ├── templates/
-│   └── harness.config.json          # 設定テンプレート
+│   └── phasegate.config.json          # 設定テンプレート
 └── docs/
     ├── principles/                  # アーキテクチャ哲学・テスト規約
     └── product/                     # ハーネス自身の設計文書
@@ -805,7 +805,7 @@ GSDLC_HARNESS/
 
 ```
 your-project/
-├── harness.config.json              # 品質設定（ハーネスのSSoT）
+├── phasegate.config.json              # 品質設定（ハーネスのSSoT）
 ├── docs/
 │   ├── folder_management_rules.md   # ドキュメント配置ルール
 │   ├── principles/
@@ -870,7 +870,7 @@ git push origin main --tags
 
 ```bash
 # semver範囲内で最新版に更新
-npm update gsdlc-harness
+npm update phasegate
 
 # スキルを最新版に同期
 npx harness update-skills

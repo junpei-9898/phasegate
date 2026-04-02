@@ -1207,18 +1207,18 @@ target('HarnessConfigValidatorConfigAdapter', () => {
       });
     });
 
-    context('harness.config.jsonが存在しない場合', () => {
+    context('phasegate.config.jsonが存在しない場合', () => {
       // IT-REPO-HCAdapter-007
       it('HarnessConfigReadError相当のエラーがthrowされる', async () => {
         // Arrange
-        const adapter = new HarnessConfigValidatorConfigAdapter({ configPath: '/nonexistent/harness.config.json' });
+        const adapter = new HarnessConfigValidatorConfigAdapter({ configPath: '/nonexistent/phasegate.config.json' });
 
         // Act & Assert
         await expect(adapter.getLayerConfig('L2')).rejects.toThrow();
       });
     });
 
-    context('harness.config.jsonが不正なJSONの場合', () => {
+    context('phasegate.config.jsonが不正なJSONの場合', () => {
       // IT-REPO-HCAdapter-008
       it('パースエラーがthrowされる', async () => {
         // Arrange

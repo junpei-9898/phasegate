@@ -1,4 +1,4 @@
-# GSDLC Quality Harness — PR検証ワークフロー
+# Phasegate — PR検証ワークフロー
 #
 # 使い方:
 #   このファイルを .github/workflows/aidlc-gate.yml にコピーして使用する。

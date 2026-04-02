@@ -34,13 +34,13 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 - `aidlc-gate.yml`テンプレートの作成。PR時にL1-L3バリデータを実行
 - `consistency-check.yml`テンプレートの作成。週次でL4バリデータを実行
 - `.husky/pre-commit`テンプレートの作成。commit時にL2バリデータを実行
-- 各テンプレートがharness.config.jsonのプリセット設定を参照
+- 各テンプレートがphasegate.config.jsonのプリセット設定を参照
 
 ### 3.2 反復エラー自動エスカレーション（H13-02）
 
 - 同一HarnessError codeの繰り返し（閾値: 3回以上）の検出
 - 反復検出時の自動エスカレーション（ログ出力 + 警告メッセージ）の実行
-- エスカレーション閾値のharness.config.jsonによる設定
+- エスカレーション閾値のphasegate.config.jsonによる設定
 - 反復検出のリセット条件（エラー解消時）の定義
 
 ### 3.3 AGENTS.mdポインタ型移行（H13-03）
@@ -105,7 +105,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 |----|------|---------------|
 | K1 | 4層防御モデル（L1-L4） | CI/CDテンプレートによりL1-L4バリデータのCIパイプライン・gitフックへの標準的な組み込みを実現 |
 | K9 | Agent-Lesson System | skill-qualityからのlesson artifactをAGENTS.mdに集約・反映。AGENTS.md Schemaの所有によりlesson構造の一貫性を保証 |
-| K13 | harness.config.json | CI/CDテンプレートがharness.config.jsonのプリセット設定を参照し、品質設定のSingle Source of Truthを維持 |
+| K13 | phasegate.config.json | CI/CDテンプレートがphasegate.config.jsonのプリセット設定を参照し、品質設定のSingle Source of Truthを維持 |
 
 ---
 
@@ -125,10 +125,10 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 
 ## 8. 実装上の制約・注意事項
 
-- **CI/CDテンプレートのPreset連動**: 各テンプレートはharness.config.jsonのプリセット設定（minimal/standard/strict）に基づいて実行対象バリデータを動的に決定する。テンプレート内にバリデータID一覧をハードコードしない。Preset解決はconfig-foundationのPreset ID Registryを通じて行う
+- **CI/CDテンプレートのPreset連動**: 各テンプレートはphasegate.config.jsonのプリセット設定（minimal/standard/strict）に基づいて実行対象バリデータを動的に決定する。テンプレート内にバリデータID一覧をハードコードしない。Preset解決はconfig-foundationのPreset ID Registryを通じて行う
 - **反復エラーの発生履歴管理**: エラー発生履歴は`.harness/error-history.json`等のローカルファイルで管理する。セッション間で永続化し、エラー解消時にリセットする。ファイルシステムベースの管理により、エージェント非依存性を維持
 - **AGENTS.mdポインタ型の実在性検証**: ポインタが参照するコマンド（`harness:status`等）はharness-apiのCLI Command Registryに登録されていること、参照するファイルはファイルシステム上に存在することを検証する。Dead Pointer（参照先なし）を許容しない
 - **lesson artifact集約のべき等性**: 同一lessonの重複集約を防止する。LessonAggregatorはlesson artifactのlessonIdで重複を検出し、既存エントリの更新または新規追加を判断する
 - **AGENTS.md行数削減目標**: ポインタ型移行後のAGENTS.mdは移行前比50%以上の行数削減を達成すること。これは移行のKPIとして回帰テストで検証する
 - **テンプレートの拡張性**: CI/CDテンプレートはGitHub Actions前提で作成するが、将来の他CIプラットフォーム対応（GitLab CI等）を考慮し、バリデータ実行部分をプラットフォーム非依存のスクリプト呼び出しに抽象化する
-- **エスカレーション閾値のデフォルト値**: harness.config.jsonで未設定の場合、デフォルト閾値は3回。GSD由来機能のデフォルト無効原則に基づき、反復エラー検出機能自体はデフォルトで有効（検出は品質保証の基本機能）だが、外部通知（Issue作成等）はデフォルト無効
+- **エスカレーション閾値のデフォルト値**: phasegate.config.jsonで未設定の場合、デフォルト閾値は3回。GSD由来機能のデフォルト無効原則に基づき、反復エラー検出機能自体はデフォルトで有効（検出は品質保証の基本機能）だが、外部通知（Issue作成等）はデフォルト無効

@@ -146,19 +146,19 @@
 
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
-| IT-REPO-HCAdapter-001 | getLayerConfig("L2") | `"L2"` | harness.config.json: L2設定あり（enabled=true, validators:["L2-001","L2-002","L2-003"]） | `LayerConfig { layer:"L2", enabled:true, validatorIds:[...], thresholds:{}, strictOnly:false }` |
-| IT-REPO-HCAdapter-002 | getLayerConfig("L3") | `"L3"` | harness.config.json: L3設定（preset="standard", coverageThreshold=90） | `LayerConfig { layer:"L3", thresholds:{ coverageThreshold:90 }, strictOnly:false }` |
-| IT-REPO-HCAdapter-003 | getLayerConfig("L4") | `"L4"` | harness.config.json: L4設定あり | `LayerConfig { layer:"L4", enabled:true }` |
-| IT-REPO-HCAdapter-004 | preset="strict"の場合strictOnly=trueが返る | `"L3"` | harness.config.json: preset="strict" | `LayerConfig.strictOnly=true` |
-| IT-REPO-HCAdapter-005 | preset="minimal"の場合L3がdisabledになる | `"L3"` | harness.config.json: preset="minimal"（L3 enabled=false） | `LayerConfig.enabled=false` |
-| IT-REPO-HCAdapter-006 | harnesses.bundleSizeLimitがL3-002のthresholdsにマッピングされる | `"L3"` | harness.config.json: harnesses.bundleSizeLimit=512000 | `LayerConfig.thresholds.bundleSizeLimit=512000` |
+| IT-REPO-HCAdapter-001 | getLayerConfig("L2") | `"L2"` | phasegate.config.json: L2設定あり（enabled=true, validators:["L2-001","L2-002","L2-003"]） | `LayerConfig { layer:"L2", enabled:true, validatorIds:[...], thresholds:{}, strictOnly:false }` |
+| IT-REPO-HCAdapter-002 | getLayerConfig("L3") | `"L3"` | phasegate.config.json: L3設定（preset="standard", coverageThreshold=90） | `LayerConfig { layer:"L3", thresholds:{ coverageThreshold:90 }, strictOnly:false }` |
+| IT-REPO-HCAdapter-003 | getLayerConfig("L4") | `"L4"` | phasegate.config.json: L4設定あり | `LayerConfig { layer:"L4", enabled:true }` |
+| IT-REPO-HCAdapter-004 | preset="strict"の場合strictOnly=trueが返る | `"L3"` | phasegate.config.json: preset="strict" | `LayerConfig.strictOnly=true` |
+| IT-REPO-HCAdapter-005 | preset="minimal"の場合L3がdisabledになる | `"L3"` | phasegate.config.json: preset="minimal"（L3 enabled=false） | `LayerConfig.enabled=false` |
+| IT-REPO-HCAdapter-006 | harnesses.bundleSizeLimitがL3-002のthresholdsにマッピングされる | `"L3"` | phasegate.config.json: harnesses.bundleSizeLimit=512000 | `LayerConfig.thresholds.bundleSizeLimit=512000` |
 
 #### エラーハンドリング
 
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
-| IT-REPO-HCAdapter-007 | harness.config.jsonが存在しない場合、エラーが返る | `"L2"` | ファイルなし | エラーがthrowされる（HarnessConfigReadError相当） |
-| IT-REPO-HCAdapter-008 | harness.config.jsonが不正なJSONの場合、パースエラーが返る | `"L2"` | 不正JSON | エラーがthrowされる |
+| IT-REPO-HCAdapter-007 | phasegate.config.jsonが存在しない場合、エラーが返る | `"L2"` | ファイルなし | エラーがthrowされる（HarnessConfigReadError相当） |
+| IT-REPO-HCAdapter-008 | phasegate.config.jsonが不正なJSONの場合、パースエラーが返る | `"L2"` | 不正JSON | エラーがthrowされる |
 
 ---
 

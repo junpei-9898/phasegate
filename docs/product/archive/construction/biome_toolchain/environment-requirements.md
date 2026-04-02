@@ -213,7 +213,7 @@ strip = true                               # デバッグ情報削除
 ### 3.1 ディレクトリ階層
 
 ```
-root (GSDLC_HARNESS)
+root (phasegate)
 │
 ├── package.json                          # ルート共通依存
 ├── pnpm-workspace.yaml                   # モノレポ設定
@@ -272,7 +272,7 @@ root (GSDLC_HARNESS)
 
 - `scripts/harness/core/` → **変更なし**（基盤ファイルシステム API）
 - `metadata-parser.ts` → **再利用**（@unit/@layer コメント解析で活用）
-- `config-loader.ts` → **参考**（harness.config.json + biome.json のローダ構造）
+- `config-loader.ts` → **参考**（phasegate.config.json + biome.json のローダ構造）
 
 **置き換える要件**:
 

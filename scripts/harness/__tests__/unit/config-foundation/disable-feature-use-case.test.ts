@@ -205,7 +205,7 @@ target('DisableFeatureUseCase', () => {
         const document = createSourceDocumentWithBundleSizeLimit();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn().mockResolvedValue(undefined),
@@ -235,12 +235,12 @@ target('DisableFeatureUseCase', () => {
         // Act
         const actual = await useCase.execute(
           'bundleSizeLimit',
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
         );
 
         // Assert
         expect(configRepository.save).toHaveBeenCalledWith(
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
           expect.objectContaining({
             harnesses: {
               bundleSizeLimit: 0,
@@ -250,7 +250,7 @@ target('DisableFeatureUseCase', () => {
         expect(actual).toEqual({
           feature: 'bundleSizeLimit',
           enabled: false,
-          configPath: '/tmp/harness.config.json',
+          configPath: '/tmp/phasegate.config.json',
         });
       });
     });

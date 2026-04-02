@@ -15,7 +15,7 @@
 | テストフレームワーク | Vitest 3.0.0 | v0継承 |
 | パッケージマネージャ | pnpm | v0継承 |
 | CI/CD | GitHub Actions | v0継承（aidlc-gate.yml） |
-| 設定ファイル | harness.config.json (JSON) | Single Source of Truth（K13） |
+| 設定ファイル | phasegate.config.json (JSON) | Single Source of Truth（K13） |
 | Git Hooks | Claude Code Hooks / Husky | v0継承 + v1拡張 |
 
 ---
@@ -334,7 +334,7 @@ CLI Command Registryへの新規コマンド登録API。Future Unitが新たなC
 
 ### 6.3 config-foundation: L0セクション追加用スキーマ拡張
 
-harness.config.json v2スキーマにL0設定セクション（FUSE Hooks Engine用）を追加するための拡張ポイント。`layers.L0`セクションの追加を想定。
+phasegate.config.json v2スキーマにL0設定セクション（FUSE Hooks Engine用）を追加するための拡張ポイント。`layers.L0`セクションの追加を想定。
 
 ### 6.4 phase2-extensions: L4バリデータ追加
 
@@ -359,7 +359,7 @@ doc-freshness-checker、pointer-validatorをL4バリデータとして追加。v
 | K10 | Security/Performance検出 | **validator-system** | harness-api (ci-check実行) |
 | K11 | Drift Detection | **validator-system** | harness-api (detect-driftコマンド) |
 | K12 | Consistency Checker | **validator-system** | — |
-| K13 | harness.config.json | **config-foundation** | harness-api (status表示), validator-system (閾値参照) |
+| K13 | phasegate.config.json | **config-foundation** | harness-api (status表示), validator-system (閾値参照) |
 | K14 | Phase Dependency Model | **phase-dependency-model** | config-foundation (phaseDependencies設定), validator-system (phase-gate検証) |
 | K15 | Plan文書の必須生成 | **phase-dependency-model** | validator-system (phase-gate: plan文書存在チェック) |
 
@@ -367,7 +367,7 @@ doc-freshness-checker、pointer-validatorをL4バリデータとして追加。v
 
 ## 8. 認証認可
 
-GSDLC Quality Harnessはローカル開発ツールキットであり、認証認可機構は持たない。
+Phasegateはローカル開発ツールキットであり、認証認可機構は持たない。
 
 - **ファイルアクセス制御**: FUSE Hooks Engineによる物理的なファイルI/Oインターセプション（L0、Future）
 - **コマンド制御**: Claude Code deny-check.sh / シェルラッパーによる破壊的コマンドブロック

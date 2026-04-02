@@ -100,7 +100,7 @@ v0のfuse-hooks-engine Unit（US-040〜044）を前身とし、v1ではFuture Ph
 |----------------|---------|---------------|---------------------|
 | L0バリデータ登録インターフェース | validator-system | FUSE PreWrite/PreReadバリデータをL0として登録 | ValidatorRegistryにプラグイン方式でL0バリデータを追加登録できるAPI |
 | CLIコマンド拡張ポイント | harness-api | `harness:complete`コマンドの追加登録 | CommandRegistryへの新規コマンド登録API |
-| L0セクション追加用スキーマ拡張 | config-foundation | harness.config.json v2にL0設定セクションを追加 | `layers.L0`セクション追加を想定したスキーマ拡張ポイント |
+| L0セクション追加用スキーマ拡張 | config-foundation | phasegate.config.json v2にL0設定セクションを追加 | `layers.L0`セクション追加を想定したスキーマ拡張ポイント |
 
 ### 5.3 実装時依存
 
@@ -117,7 +117,7 @@ v0のfuse-hooks-engine Unit（US-040〜044）を前身とし、v1ではFuture Ph
 |----|------|---------------|
 | K1 | 4層防御モデル（将来拡張） | L0（OS-level enforcement）を追加し、L1-L4の上位防御層として機能。FUSEによるエージェント非依存の強制力を実現。ただしL0はオプショナルであり、v1のL1-L4で品質保証は完結する |
 | K6 | 2-Phase Execution | 完了ゲート（Magic File + CLI）が2-Phase Execution遵守を物理的に強制 |
-| K13 | harness.config.json | v1側のconfig-foundationにL0セクション追加用のスキーマ拡張ポイントを確保。実際のL0設定追加はFuture Phase実装時に行う |
+| K13 | phasegate.config.json | v1側のconfig-foundationにL0セクション追加用のスキーマ拡張ポイントを確保。実際のL0設定追加はFuture Phase実装時に行う |
 
 ---
 

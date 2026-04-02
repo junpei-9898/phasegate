@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-K1-K15の全非交渉要件の回帰テスト、v0の143テスト仕様のv1再実装、Go/No-Go Gate品質側条件の回帰テスト、およびCIゲート統合を担当するUnit。GSDLC Quality Harnessの品質基盤が機能追加や変更の副作用で破壊されないことを継続的に保証する。
+K1-K15の全非交渉要件の回帰テスト、v0の143テスト仕様のv1再実装、Go/No-Go Gate品質側条件の回帰テスト、およびCIゲート統合を担当するUnit。Phasegateの品質基盤が機能追加や変更の副作用で破壊されないことを継続的に保証する。
 
 v0のregression-suiteを継承・拡張したUnitである。v1ではH-14（K1-K15回帰保証）とH-15（v0テスト資産移行）を統合し、**Phase A（H-14: Wave 2後半から設計・一部実装開始可能）**と**Phase B（H-15: 全v1 Unit実装完了後に着手）**の内部マイルストーンで段階的に構築する。
 
@@ -151,7 +151,7 @@ v0のregression-suiteを継承・拡張したUnitである。v1ではH-14（K1-K
 | K10 | Security/Performance検出 | Security・Performance検出の回帰テスト |
 | K11 | Drift Detection | Drift Detectionの回帰テスト |
 | K12 | Consistency Checker | Consistency Checkerの回帰テスト |
-| K13 | harness.config.json | Config単一原則の回帰テスト |
+| K13 | phasegate.config.json | Config単一原則の回帰テスト |
 | K14 | Phase Dependency Model | Phase Dependency Modelの3層構造・Level間依存強制の回帰テスト |
 | K15 | Plan文書の必須生成 | plan文書なしのPhase 2移行拒否の回帰テスト |
 

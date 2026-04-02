@@ -1,4 +1,4 @@
-# GSDLC Quality Harness — Product Overview
+# Phasegate — Product Overview
 
 > **Version**: v1.0 (Draft)
 > **作成日**: 2026-03-11
@@ -12,7 +12,7 @@
 
 ### 1.1 What This Is
 
-**GSDLC Quality Harnessは、AIエージェントが生成するコードと設計の構造的整合性を、エージェント非依存で機械的に保証し続けるポータブルな品質防御ツールキットである。**
+**Phasegateは、AIエージェントが生成するコードと設計の構造的整合性を、エージェント非依存で機械的に保証し続けるポータブルな品質防御ツールキットである。**
 
 どのAIエージェント — Claude Code, GSD-2, Codex, Cursor, あるいは将来登場する任意のエージェント — で開発しても、このハーネスをプロジェクトに導入すれば、設計意図とコードの構造的整合性が壊れない。これがQuality Harnessの唯一かつ最大の約束である。
 
@@ -43,7 +43,7 @@ Quality Harnessは**「何を守るか（WHAT to enforce）」**に責任を持�
 | 2-Phase Execution / Phase Gate | コンテキスト管理（context-priority.json） |
 | @unit/@layerメタデータ | Milestone/ロードマップ管理 |
 | HarnessError定義 | Auto Mode / モデルルーティング |
-| harness.config.json（品質設定） | コスト台帳 / クラッシュ回復 |
+| phasegate.config.json（品質設定） | コスト台帳 / クラッシュ回復 |
 | Quick Mode（ハーネス緩和ルール） | タイムアウト監視 |
 | Drift Detection / Consistency Check | FUSE Hooks Engine（横断基盤として別途検討） |
 | Cascade Updater / Agent-Lesson System | |
@@ -61,7 +61,7 @@ Quality Harnessは**「何を守るか（WHAT to enforce）」**に責任を持�
                 品質強制力の深さ（コードレベル）
                 ▲
                 │
-    GSDLC       │
+    Phasegate       │
     Quality  ■  │
     Harness     │         AIDLC v0 ●
                 │
@@ -92,7 +92,7 @@ Quality Harnessはエージェントの上に乗るのではなく、エージ�
 
 ---
 
-## 3. v0からの進化 — AIDLC v0 → GSDLC Quality Harness
+## 3. v0からの進化 — AIDLC v0 → Phasegate
 
 ### 3.1 進化のナラティブ
 
@@ -101,7 +101,7 @@ Quality Harnessはエージェントの上に乗るのではなく、エージ�
 v1では、この品質保証の核心を**ポータブルなハーネスとして再構築**する。v0はClaude Code専用の統合環境だったが、v1 Quality Harnessはどのエージェントにも接続可能な独立パッケージとなる。
 
 ```
-v0 (AIDLC)                    v1 (GSDLC Quality Harness)
+v0 (AIDLC)                    v1 (Phasegate)
 ──────────────────────────    ─────────────────────────────────
 品質 ████████████              品質 ████████████  ← 維持（K1-K13全保持）
 移植性 ██                      移植性 █████████   ← エージェント非依存化
@@ -346,7 +346,7 @@ src/domain/               domain_model.md                US-001/
 - 適用: バグ修正、ドキュメント修正、テスト追加、設定変更
 - 除外（フルハーネス必須）: 新機能追加、API契約変更、新ドメインモデル追加
 
-### 5.5 harness.config.json（品質設定）
+### 5.5 phasegate.config.json（品質設定）
 
 ```jsonc
 {
@@ -413,7 +413,7 @@ src/domain/               domain_model.md                US-001/
 }
 ```
 
-**設定ファイル分離**: harness.config.jsonは品質設定のみを管理する。オーケストレーションパッケージは独自の`orchestration.config.json`を使用し、harness.config.jsonにはオーケストレーション設定を一切含まない。ownershipは完全に分離される。
+**設定ファイル分離**: phasegate.config.jsonは品質設定のみを管理する。オーケストレーションパッケージは独自の`orchestration.config.json`を使用し、phasegate.config.jsonにはオーケストレーション設定を一切含まない。ownershipは完全に分離される。
 
 ### 5.6 Phase Dependency Model（フェーズ依存モデル）
 
@@ -565,7 +565,7 @@ Phase Dependency Modelは3つのスコープレベルで構成される。各レ
 
 #### PJカスタマイズ
 
-デフォルトフローは全プロジェクト共通だが、PJ固有の事情（既存システムへの段階導入、特定フェーズの省略等）に対応するため、`harness.config.json`の`phaseDependencies`でカスタマイズできる。
+デフォルトフローは全プロジェクト共通だが、PJ固有の事情（既存システムへの段階導入、特定フェーズの省略等）に対応するため、`phasegate.config.json`の`phaseDependencies`でカスタマイズできる。
 
 **カスタマイズの制約**:
 - デフォルトフローへの**追加**（依存の強化）は自由
@@ -578,6 +578,148 @@ Phase Dependency Modelは3つのスコープレベルで構成される。各レ
 FUSE Hooks Engineはv1スコープ外の横断基盤として別途検討される。Quality Harnessの観点では、FUSE Hooks Engineが提供するL0（Pre-write enforcement）はL1-L4の強制力を物理レベルに引き上げるものであり、ルール自体は変わらない。
 
 **Fallback原則**: FUSE未使用時でもL1-L4の4層防御でCore Valueは完全に維持される。FUSEは強制力の物理レベルを上げるオプショナルな増強であり、FUSEの有無によって検証されるルールセットに差異は生じない。
+
+### 5.8 Design Dependency Graph & Impact Analysis（将来構想）
+
+> **ステータス**: 将来拡張予定。v1スコープ外。現時点ではPhase Gate（K2/K14）+ drift-detect（K11）の組み合わせで設計-実装間の整合性は確保されている。本機能はプロジェクト規模の拡大や横断的要件変更の頻度増加に応じて実装を検討する。
+
+設計文書間の依存関係を明示的にグラフ化し、変更が発生した際の影響範囲を**事前に予測**する仕組み。既存のPhase Gate（順序強制）・drift-detect（事後検出）が「縦方向」の品質を守るのに対し、本機能は「横方向」の変更波及を予測する。
+
+> **着想元**: CoDD（Coherence-Driven Development）の依存グラフベース変更影響分析。CoDDの`codd impact`が持つ「変更時にどこが壊れるか」の事前予測能力を、Quality Harnessの既存トレーサビリティモデル上に構築する。
+
+#### 設計意図
+
+既存の `drift-detect`（L4）は「設計とコードの乖離」を**事後検出**する。しかし、「要件や設計が変わった時にどの設計書が影響を受けるか」を**事前に知る**仕組みが欠けている。Impact Analysisはこのギャップを埋める。
+
+| 機能 | 性質 | 役割 |
+|---|---|---|
+| `drift-detect` (L4) | 事後検出 | 「壊れた」を見つける |
+| `impact-analyzer` (新設) | 事前予測 | 「壊れそう」を教える |
+| `cascade-updater` | 自動更新 | Green帯域の設計書を自動更新する |
+| `consistency-checker` (L4) | 整合性検証 | cascade-updater実行後の整合性を検証 |
+
+4つは補完関係であり、既存機能を置き換えるものではない。
+
+#### 依存グラフの構築
+
+`product/construction/{unit}/`配下の設計文書に、フロントマターで依存関係を宣言する。
+
+```yaml
+---
+harness:
+  node_id: "{unit}:{doc_type}"           # e.g., "config_foundation:domain_model"
+  depends_on:
+    - id: "{unit}:logical_design"
+      relation: "derives_from"            # derives_from | implements | verifies | constrains
+    - id: "_shared:user_stories"
+      relation: "implements"
+---
+```
+
+**依存関係の種類（relation）**:
+
+| relation | 意味 | 影響伝播の方向 | 重み |
+|---|---|---|---|
+| `derives_from` | 上流の設計から導出される | 上流変更時に下流が影響 | 0.9 |
+| `implements` | 要件・仕様を実装する | 要件変更時に実装が影響 | 0.85 |
+| `verifies` | テスト設計が検証対象を参照 | 検証対象変更時にテストが影響 | 0.8 |
+| `constrains` | 制約として参照される | 制約変更時にすべての参照先が影響 | 0.5 |
+
+**node_idの命名規則**:
+- `{unit名}:{doc_type}` の形式（例: `config_foundation:domain_model`）
+- `doc_type`はファイル名から拡張子を除いたもの（例: `domain_model.md` → `domain_model`）
+- 横断的ドキュメントは `_shared:{doc_type}` を使用（例: `_shared:user_stories`）
+
+**Phase Dependency Modelとの関係**:
+- Phase Dependency Modelは「フェーズの実行順序」を強制する（Phase Gate）
+- Design Dependency Graphは「設計文書間の意味的依存」を追跡する（Impact Analysis）
+- 両者は相互補完。Phase Dependency Modelの3層構造が依存グラフの骨格を提供する
+- 依存宣言はPhase Dependency Modelに従う方向でのみ許可される（Level 2→Level 1、Level内の上流→下流）
+
+**フロントマターの適用範囲**:
+- `product/construction/{unit}/`配下の累積設計文書にのみ付与する
+- `inception/`配下の一時的計画文書には付与**しない**（Document Split原則の維持）
+- `product/units/`配下のUnit定義にはオプショナルで付与可能
+
+#### `harness:impact` コマンド
+
+```bash
+# 最新のgit diffから影響範囲を分析
+pnpm harness:impact
+
+# 特定ファイルの変更による影響範囲を分析
+pnpm harness:impact --file docs/product/construction/config_foundation/domain_model.md
+
+# 特定コミットとの差分から影響範囲を分析
+pnpm harness:impact --diff HEAD~1
+```
+
+出力は3帯域（信頼度帯域）で分類される:
+
+| 帯域 | 信頼度 | アクション | 人間の関与 |
+|---|---|---|---|
+| **Green** | 高（≥0.8） | cascade-updaterによる自動更新候補 | `autoUpdateOnGreen: true`時は不要 |
+| **Amber** | 中（0.4-0.8） | HarnessImpactReportに表示。人間のレビューが必要 | 必須 |
+| **Gray** | 低（<0.4） | 参考情報。間接的な影響の可能性 | 任意 |
+
+**信頼度の計算**:
+- 直接依存（depth=1）: `confidence = 基本スコア × relation重み`
+- 間接依存（depth≥2）: `confidence = 基本スコア × relation重み × 減衰率^(depth-1)`
+- 減衰率はデフォルト0.7。`phasegate.config.json`で調整可能
+- `depthLimit`（デフォルト5）を超える間接依存はGray帯域として報告
+
+#### HarnessImpactReport
+
+```typescript
+interface HarnessImpactReport {
+  changedFiles: string[];
+  timestamp: string;
+  bands: {
+    green: ImpactEntry[];
+    amber: ImpactEntry[];
+    gray: ImpactEntry[];
+  };
+  summary: {
+    totalAffected: number;
+    autoUpdatable: number;    // Green帯域の数
+    reviewRequired: number;   // Amber帯域の数
+    informational: number;    // Gray帯域の数
+  };
+}
+
+interface ImpactEntry {
+  nodeId: string;           // e.g., "config_foundation:logical_design"
+  filePath: string;         // e.g., "docs/product/construction/config_foundation/logical_design.md"
+  depth: number;            // 依存グラフ上の距離
+  confidence: number;       // 0.0 - 1.0
+  relation: string;         // derives_from | implements | verifies | constrains
+  action: "auto-update" | "review-required" | "informational";
+}
+```
+
+**設計意図**: HarnessImpactReportはHarnessErrorと同様に、AIエージェントが自律的に読み取って行動できるフォーマットを目指す。Green帯域のエントリにはcascade-updaterへの引き渡しが、Amber帯域にはconsistency-checkerとの照合が自動で行える。
+
+#### 既存バリデータとの統合パイプライン
+
+```
+変更発生
+  │
+  ▼
+harness:impact（事前予測）
+  │
+  ├──→ Green帯域 → cascade-updater（自動更新）→ consistency-checker（整合性検証）
+  │
+  ├──→ Amber帯域 → 人間レビュー → 手動更新 → consistency-checker
+  │
+  └──→ Gray帯域 → ログ記録（参考情報）
+  
+定期実行
+  │
+  ▼
+drift-detect（事後検出）
+  │
+  └──→ impact-analyzerが予測した影響と実際の乖離を照合（精度フィードバック）
+```
 
 ---
 
@@ -620,6 +762,7 @@ FUSE Hooks Engineはv1スコープ外の横断基盤として別途検討され�
 | `drift-detect` | 設計にあるがコードにない/コードにあるが設計にない双方向乖離 | L4-001 |
 | `consistency-check` | 文書間のレイヤー整合性の破綻 | L4-002 |
 | `dead-code` | 未使用エクスポート、到達不能コード | L4-003 |
+| `impact-analyzer`（将来構想） | 設計文書の変更による影響範囲の事前予測。Design Dependency Graphを辿り、Green/Amber/Gray帯域で分類したHarnessImpactReportを生成。v1スコープ外 | L4-004 |
 
 ---
 
@@ -698,7 +841,7 @@ Quality Harnessの設計方法論を実現する30スキル。全スキルは2-P
 | K10 | **Security/Performance検出** | ハードコード秘密、SQLインジェクション、ループ内await、N+1検出、bundleSizeLimit |
 | K11 | **Drift Detection** | 設計にあるがコードにない / コードにあるが設計にない双方向検出 |
 | K12 | **Consistency Checker** | 文書間レイヤー整合性チェック |
-| K13 | **harness.config.json** | 品質設定のSingle Source of Truth（オーケストレーション設定は`orchestration.config.json`に分離） |
+| K13 | **phasegate.config.json** | 品質設定のSingle Source of Truth（オーケストレーション設定は`orchestration.config.json`に分離） |
 | K14 | **Phase Dependency Model** | 設計フェーズ間の前提条件を機械的に強制。Unit設計なしのDomain設計、テスト設計なしの実装を物理的に拒否。デフォルトフローは全PJ共通、カスタマイズは明示的override必須 |
 | K15 | **Plan文書の必須生成** | Planning Modeがinteractiveであれembedded-qaであれ、全フェーズのPhase 1は`inception/`配下に`*_plan.md`を生成して完了する。plan文書なしのPhase 2移行は不可。設計判断の根拠（QAセクション）のトレーサビリティを保証 |
 
@@ -716,9 +859,10 @@ Quality Harnessは単独で機能するが、オーケストレーションパ�
 | **harness:check-phase** | 指定Unitの現在フェーズを返却 | オーケストレーターのフェーズ遷移判定に使用 |
 | **harness:ci-check** | 全L3バリデータの実行結果を返却 | CIパイプラインのPass/Fail判定に使用 |
 | **harness:detect-drift** | 設計-実装乖離レポートを返却 | 検証フェーズの自動実行トリガーに使用 |
+| **harness:impact** | 変更影響分析レポート（Green/Amber/Gray信頼度帯域付きHarnessImpactReport）を返却 | cascade-updaterの自動更新トリガー、human reviewの要否判定に使用 |
 | **harness:status** | ハーネス全体の健全性サマリを返却 | ダッシュボード表示・進捗判定に使用 |
 | **HarnessError** | 統一エラーフォーマット（ADR参照+修正コード例付き） | エージェントの自動リトライ時のコンテキストとして注入 |
-| **harness.config.json** | 品質設定スキーマ（品質設定のみ） | オーケストレーターがプリセット（minimal/standard/strict）を読み取り |
+| **phasegate.config.json** | 品質設定スキーマ（品質設定のみ） | オーケストレーターがプリセット（minimal/standard/strict）を読み取り |
 
 ### 9.2 GSD-2統合ポイント
 
@@ -748,7 +892,7 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | **Nyquist検証層**（requirement-test-matrix.json + test-coverage-checker拡張） | 要件→テストトレーサビリティの体系的保証 |
 | **Quick Mode**（quick-implementor + ハーネス緩和ルール） | ユーザビリティ。1行修正にフルハーネスは過剰 |
 | **HarnessErrorフォーマット拡充**（全バリデータにADR参照+修正コード例） | エージェント自己修正率の飛躍的向上 |
-| **harness.config.json v2**（品質設定の整理・スキーマ確定） | 品質設定のSingle Source of Truth |
+| **phasegate.config.json v2**（品質設定の整理・スキーマ確定） | 品質設定のSingle Source of Truth |
 | **ADR初期作成**（10件以上）+ archgateパターン | 設計判断の根拠を機械可読に |
 | **K1-K15非交渉要件の完全維持** | Core Value |
 | **Go/No-Go Gate 8条件の回帰テスト整備** | リリース判定の絶対条件 |
@@ -783,7 +927,7 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | リスク | 深刻度 | 確率 | 軽減策 |
 |--------|--------|------|--------|
 | Biome移行時のv0ルール互換性破損 | 高 | 中 | v0 ESLintルールの出力を回帰テストとして保存。Biome版で同一結果を保証 |
-| Quick Modeの適用範囲拡大圧力（「これもQuickでいいのでは」） | 高 | 高 | Quick Mode適用条件をharness.config.jsonに明示。新ドメインモデル・API変更は自動拒否 |
+| Quick Modeの適用範囲拡大圧力（「これもQuickでいいのでは」） | 高 | 高 | Quick Mode適用条件をphasegate.config.jsonに明示。新ドメインモデル・API変更は自動拒否 |
 | HarnessError fix_exampleの品質劣化 | 中 | 中 | fix_example自体をテスト資産としてバリデーション。不正な修正例はCI検出 |
 | K要件の意図しない破壊（パッケージ分離時） | 高 | 中 | K要件チェックリスト必須。各機能変更時にK1-K13影響評価 |
 | エージェント非依存性の形骸化（特定エージェントの機能に依存する実装） | 中 | 中 | バリデータはファイルシステムのみを見る原則を徹底。エージェント固有APIへの依存を禁止 |
@@ -801,7 +945,7 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | **FUSE Hooks Engineはv1スコープ外** | 横断基盤として別途検討。L1-L4でCore Valueは維持可能 | Decided |
 | **HarnessErrorにfix_example必須化** | AIエージェントの自己修正率がエラーメッセージの質に直結する | Decided |
 | **Quick Mode適用条件の厳格な定義** | 「便利だから」で品質ゲートを緩和する圧力への防波堤 | Decided |
-| **設定ファイル分離（harness.config.json / orchestration.config.json）** | パッケージ分離に伴い、品質設定とオーケストレーション設定を別ファイルに完全分離。ownershipの曖昧さを排除 | Decided |
+| **設定ファイル分離（phasegate.config.json / orchestration.config.json）** | パッケージ分離に伴い、品質設定とオーケストレーション設定を別ファイルに完全分離。ownershipの曖昧さを排除 | Decided |
 | **GSD-2 Truths/Artifacts検証パターンのNyquist統合** | 概念的に同一の検証（要件→成果物トレーサビリティ）を二重実装しない | Decided |
 | **成果物駆動の状態導出をハーネス検査状態管理に応用** | GSD-2の優れたパターンを品質ハーネスの文脈で再利用 | Decided |
 | **バリデータ無限ループ防止（GSD-2スタック検出の応用）** | 同一HarnessErrorの繰り返し検出時に自動エスカレーション | Pending |

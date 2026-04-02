@@ -214,7 +214,7 @@ scripts/harness/__tests__/
 | `'bugfix'` | 既存実装ファイルの修正（domain/以外, changeKind=MODIFY） |
 | `'docs'` | `docs/` 配下のファイル変更 |
 | `'test'` | `__tests__/` 配下 or `*.test.ts` or `*.spec.ts` |
-| `'config'` | `*.config.json` / `*.config.ts` / `harness.config.json` |
+| `'config'` | `*.config.json` / `*.config.ts` / `phasegate.config.json` |
 | `'feature'` | 新規実装ファイル追加（domain/ / port/ 以外, changeKind=CREATE） |
 | `'domain'` | `domain/` 配下のファイル（CREATE / MODIFY / DELETE） |
 | `'api'` | Port/Adapterインターフェースファイル（`*port.ts`, `*adapter.ts`） |
@@ -705,7 +705,7 @@ interface QuickModeDecisionContract {
 
 **実装方針**
 
-- `harness.config.json` を読み取り、`HarnessConfigV2` 型として JSON パースする
+- `phasegate.config.json` を読み取り、`HarnessConfigV2` 型として JSON パースする
 - `HarnessConfigV2.quickMode` セクションを取得する
 - `quickMode` セクションが存在しない場合はデフォルト値（`allowedCategories: ['bugfix', 'docs', 'test', 'config']`, `maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001']`, `relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4']`）を使用する
 - `QuickModeConfig.create()` に変換して返す
@@ -714,7 +714,7 @@ interface QuickModeDecisionContract {
 
 | I/O | 詳細 |
 |-----|------|
-| 入力 | `harness.config.json`（workspace root） |
+| 入力 | `phasegate.config.json`（workspace root） |
 | 出力 | `QuickModeConfig` |
 | 失敗 | ファイル不在: `HarnessConfigNotFoundError` / JSON パース失敗: `HarnessConfigParseError` |
 
@@ -1128,7 +1128,7 @@ sequenceDiagram
 ### 10.4 Infrastructure層テスト方針
 
 - `GitDiffChangedFilesAdapter`: git diff 出力の fixture（M/A/D/R 各パターン）を用い、`ChangedFile` 変換を検証する
-- `HarnessConfigQuickModeConfigAdapter`: `quickMode` セクション有り / 無しの `harness.config.json` fixture を用い、デフォルト値のフォールバックを検証する
+- `HarnessConfigQuickModeConfigAdapter`: `quickMode` セクション有り / 無しの `phasegate.config.json` fixture を用い、デフォルト値のフォールバックを検証する
 - `ValidatorSystemValidatorIdRegistryAdapter`: 静的定義の ID 一覧が `integration_contract.md §9` と一致することを検証する
 
 ### 10.5 Presentation層テスト方針

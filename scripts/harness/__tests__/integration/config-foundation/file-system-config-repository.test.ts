@@ -21,7 +21,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           const document = createValidSourceDocument();
           writeJsonFile(configPath, document);
 
@@ -40,7 +40,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           const nestedDirectory = path.join(tempDir, 'sub', 'sub2');
           const previousCwd = process.cwd();
           const document = createValidSourceDocument();
@@ -67,7 +67,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           writeJsonFile(configPath, createValidSourceDocument());
 
           // Act
@@ -85,7 +85,7 @@ target('FileSystemConfigRepository', () => {
         const repository = new FileSystemConfigRepository();
 
         // Act
-        const actual = repository.load('/nonexistent/path/harness.config.json');
+        const actual = repository.load('/nonexistent/path/phasegate.config.json');
 
         // Assert
         await expect(actual).rejects.toBeInstanceOf(ConfigNotFoundError);
@@ -97,7 +97,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           writeBrokenJsonFile(configPath, '{ invalid json');
 
           // Act
@@ -116,7 +116,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           const document = createValidSourceDocument();
 
           // Act
@@ -134,7 +134,7 @@ target('FileSystemConfigRepository', () => {
         await withTempDir(async (tempDir) => {
           // Arrange
           const repository = new FileSystemConfigRepository();
-          const configPath = path.join(tempDir, 'harness.config.json');
+          const configPath = path.join(tempDir, 'phasegate.config.json');
           writeJsonFile(configPath, { legacy: true });
           const nextDocument = createValidSourceDocument({
             project: {

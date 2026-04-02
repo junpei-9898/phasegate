@@ -109,14 +109,14 @@ CLIハンドラの依存はUseCaseスタブに差し替える。`target()` と `
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-001 | `configPathを指定した場合` | `sourceDocument = createValidSourceDocument()`。`configRepository.load.mockResolvedValue({ path: '/tmp/harness.config.json', document: sourceDocument })`。`schemaValidator.validate.mockReturnValue([])`。 | `const actual = await sut.execute('/tmp/harness.config.json')` | `load` が指定パスで呼ばれること。`validate` が raw document に対して1回呼ばれること。`actual.sourcePath === '/tmp/harness.config.json'`。`actual.config.project` と `actual.config.layers` が解決済みDTOとして返ること。 |
-| IT-CF-002 | `configPathを省略した場合` | `configRepository.load.mockResolvedValue({ path: '/discovered/path/harness.config.json', document: createValidSourceDocument() })`。`schemaValidator.validate.mockReturnValue([])`。 | `const actual = await sut.execute()` | `load` が `undefined` で呼ばれること。`actual.sourcePath` が探索結果の絶対パスと一致すること。 |
-| IT-CF-003 | `standard Presetに個別上書きがある場合` | `sourceDocument = createStandardPresetDocument({ layers: { L3: { coverageThreshold: 95 } } })`。`load` はこの document を返す。`validate` は空配列を返す。 | `const actual = await sut.execute('/tmp/harness.config.json')` | `actual.config.layers.L3.coverageThreshold === 95`。Preset値ではなく source 差分が優先されること。 |
-| IT-CF-004 | `minimal Presetを読み込む場合` | `sourceDocument = createMinimalPresetDocument()`。`load` と `validate` を正常設定。 | `const actual = await sut.execute('/tmp/harness.config.json')` | `actual.config.harnesses.agentLessonCollection === false`。`cascadeUpdate === false`。`bundleSizeLimit === 0`。`deadCodeGC === false`。 |
-| IT-CF-005 | `スキーマ検証でエラーが返る場合` | `load` は valid document を返す。`schemaValidator.validate.mockReturnValue([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('/tmp/harness.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'ConfigValidationError', errorCode: 'L1-001' })`。Preset解決処理へ進まないこと。 |
+| IT-CF-001 | `configPathを指定した場合` | `sourceDocument = createValidSourceDocument()`。`configRepository.load.mockResolvedValue({ path: '/tmp/phasegate.config.json', document: sourceDocument })`。`schemaValidator.validate.mockReturnValue([])`。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | `load` が指定パスで呼ばれること。`validate` が raw document に対して1回呼ばれること。`actual.sourcePath === '/tmp/phasegate.config.json'`。`actual.config.project` と `actual.config.layers` が解決済みDTOとして返ること。 |
+| IT-CF-002 | `configPathを省略した場合` | `configRepository.load.mockResolvedValue({ path: '/discovered/path/phasegate.config.json', document: createValidSourceDocument() })`。`schemaValidator.validate.mockReturnValue([])`。 | `const actual = await sut.execute()` | `load` が `undefined` で呼ばれること。`actual.sourcePath` が探索結果の絶対パスと一致すること。 |
+| IT-CF-003 | `standard Presetに個別上書きがある場合` | `sourceDocument = createStandardPresetDocument({ layers: { L3: { coverageThreshold: 95 } } })`。`load` はこの document を返す。`validate` は空配列を返す。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | `actual.config.layers.L3.coverageThreshold === 95`。Preset値ではなく source 差分が優先されること。 |
+| IT-CF-004 | `minimal Presetを読み込む場合` | `sourceDocument = createMinimalPresetDocument()`。`load` と `validate` を正常設定。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | `actual.config.harnesses.agentLessonCollection === false`。`cascadeUpdate === false`。`bundleSizeLimit === 0`。`deadCodeGC === false`。 |
+| IT-CF-005 | `スキーマ検証でエラーが返る場合` | `load` は valid document を返す。`schemaValidator.validate.mockReturnValue([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('/tmp/phasegate.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'ConfigValidationError', errorCode: 'L1-001' })`。Preset解決処理へ進まないこと。 |
 | IT-CF-006 | `設定ファイルが存在しない場合` | `configRepository.load.mockRejectedValue(new ConfigNotFoundError('/tmp/missing.json'))`。 | `const action = sut.execute('/tmp/missing.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。`schemaValidator.validate` が呼ばれないこと。 |
-| IT-CF-007 | `project.presetが不正な場合` | `load` は `createInvalidPresetDocument()` を返す。`schemaValidator.validate.mockReturnValue([])`。 | `const action = sut.execute('/tmp/harness.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'InvalidPresetError', errorCode: 'L1-002' })`。 |
-| IT-CF-008 | `Preset定義が壊れている場合` | `load` は valid document。`validate` は空配列。`sut` 生成時に `presetDefinitions = createBrokenPresetDefinitions()` を渡す。 | `const action = sut.execute('/tmp/harness.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'ConfigMergeError', errorCode: 'L1-008' })`。 |
+| IT-CF-007 | `project.presetが不正な場合` | `load` は `createInvalidPresetDocument()` を返す。`schemaValidator.validate.mockReturnValue([])`。 | `const action = sut.execute('/tmp/phasegate.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'InvalidPresetError', errorCode: 'L1-002' })`。 |
+| IT-CF-008 | `Preset定義が壊れている場合` | `load` は valid document。`validate` は空配列。`sut` 生成時に `presetDefinitions = createBrokenPresetDefinitions()` を渡す。 | `const action = sut.execute('/tmp/phasegate.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'ConfigMergeError', errorCode: 'L1-008' })`。 |
 
 ### 3.2 ValidateConfigUseCase
 
@@ -146,7 +146,7 @@ const sourceDocument = createValidSourceDocument({
 });
 
 configRepository.load.mockResolvedValue({
-  path: '/tmp/harness.config.json',
+  path: '/tmp/phasegate.config.json',
   document: sourceDocument,
 });
 schemaValidator.validate
@@ -158,13 +158,13 @@ configRepository.save.mockResolvedValue(undefined);
 
 | ケースID | `context()` | Arrange差分 | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-015 | `boolean機能を有効化する場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/harness.config.json')` | `actual` が `{ feature: 'agentLessonCollection', enabled: true, configPath: '/tmp/harness.config.json' }` を含むこと。`save` が1回呼ばれること。 |
-| IT-CF-016 | `bundleSizeLimitを有効化する場合` | `sourceDocument.harnesses.bundleSizeLimit = 0` を明示。 | `const actual = await sut.execute('bundleSizeLimit', '/tmp/harness.config.json')` | `configRepository.save.mock.calls[0][1].harnesses.bundleSizeLimit === 500`。`actual.enabled === true`。 |
-| IT-CF-017 | `保存前再検証を確認する場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/harness.config.json')` | `schemaValidator.validate` が2回呼ばれること。1回目は load 直後の raw document、2回目は更新後の `aggregate.toSourceDocument()`。 |
-| IT-CF-018 | `保存時にsourceDocumentをそのまま渡す場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/harness.config.json')` | `configRepository.save` の第1引数が `/tmp/harness.config.json`。第2引数が更新済み sourceDocument で、resolved DTO ではないこと。 |
-| IT-CF-019 | `未知の機能名を指定した場合` | `featureRegistryPort.listAvailable.mockResolvedValue(createAvailableFeatures())`。他は正常。 | `const action = sut.execute('unknownFeature', '/tmp/harness.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'UnsupportedFeatureError', errorCode: 'L1-004' })`。エラーに利用可能機能一覧が含まれること。`save` は呼ばれないこと。 |
-| IT-CF-020 | `保存前再検証で不整合が出る場合` | `schemaValidator.validate.mockReturnValueOnce([]).mockReturnValueOnce([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('agentLessonCollection', '/tmp/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。`configRepository.save` が呼ばれないこと。 |
-| IT-CF-021 | `保存に失敗する場合` | `configRepository.save.mockRejectedValue(new ConfigPersistenceError('/tmp/harness.config.json'))`。 | `const action = sut.execute('agentLessonCollection', '/tmp/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
+| IT-CF-015 | `boolean機能を有効化する場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/phasegate.config.json')` | `actual` が `{ feature: 'agentLessonCollection', enabled: true, configPath: '/tmp/phasegate.config.json' }` を含むこと。`save` が1回呼ばれること。 |
+| IT-CF-016 | `bundleSizeLimitを有効化する場合` | `sourceDocument.harnesses.bundleSizeLimit = 0` を明示。 | `const actual = await sut.execute('bundleSizeLimit', '/tmp/phasegate.config.json')` | `configRepository.save.mock.calls[0][1].harnesses.bundleSizeLimit === 500`。`actual.enabled === true`。 |
+| IT-CF-017 | `保存前再検証を確認する場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/phasegate.config.json')` | `schemaValidator.validate` が2回呼ばれること。1回目は load 直後の raw document、2回目は更新後の `aggregate.toSourceDocument()`。 |
+| IT-CF-018 | `保存時にsourceDocumentをそのまま渡す場合` | 共通Arrangeのまま。 | `const actual = await sut.execute('agentLessonCollection', '/tmp/phasegate.config.json')` | `configRepository.save` の第1引数が `/tmp/phasegate.config.json`。第2引数が更新済み sourceDocument で、resolved DTO ではないこと。 |
+| IT-CF-019 | `未知の機能名を指定した場合` | `featureRegistryPort.listAvailable.mockResolvedValue(createAvailableFeatures())`。他は正常。 | `const action = sut.execute('unknownFeature', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'UnsupportedFeatureError', errorCode: 'L1-004' })`。エラーに利用可能機能一覧が含まれること。`save` は呼ばれないこと。 |
+| IT-CF-020 | `保存前再検証で不整合が出る場合` | `schemaValidator.validate.mockReturnValueOnce([]).mockReturnValueOnce([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('agentLessonCollection', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。`configRepository.save` が呼ばれないこと。 |
+| IT-CF-021 | `保存に失敗する場合` | `configRepository.save.mockRejectedValue(new ConfigPersistenceError('/tmp/phasegate.config.json'))`。 | `const action = sut.execute('agentLessonCollection', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
 | IT-CF-022 | `設定読込に失敗する場合` | `configRepository.load.mockRejectedValue(new ConfigNotFoundError('/tmp/missing.json'))`。 | `const action = sut.execute('agentLessonCollection', '/tmp/missing.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。`featureRegistryPort.listAvailable` と `save` が呼ばれないこと。 |
 
 ### 3.4 DisableFeatureUseCase
@@ -173,13 +173,13 @@ configRepository.save.mockResolvedValue(undefined);
 
 | ケースID | `context()` | Arrange差分 | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-023 | `boolean機能を無効化する場合` | `sourceDocument.harnesses.deadCodeGC = true`。 | `const actual = await sut.execute('deadCodeGC', '/tmp/harness.config.json')` | `actual.feature === 'deadCodeGC'`。`actual.enabled === false`。`save` が1回呼ばれること。 |
-| IT-CF-024 | `bundleSizeLimitを無効化する場合` | `sourceDocument.harnesses.bundleSizeLimit = 500`。 | `const actual = await sut.execute('bundleSizeLimit', '/tmp/harness.config.json')` | `configRepository.save.mock.calls[0][1].harnesses.bundleSizeLimit === 0`。 |
-| IT-CF-025 | `無効化後に再検証する場合` | 正常Arrangeのまま。 | `const actual = await sut.execute('deadCodeGC', '/tmp/harness.config.json')` | `schemaValidator.validate` が2回呼ばれること。 |
-| IT-CF-026 | `戻り値へconfigPathを含める場合` | 正常Arrangeのまま。 | `const actual = await sut.execute('deadCodeGC', '/tmp/harness.config.json')` | `actual.configPath === '/tmp/harness.config.json'`。 |
-| IT-CF-027 | `未知の機能名を指定した場合` | `featureRegistryPort.listAvailable.mockResolvedValue(createAvailableFeatures())`。 | `const action = sut.execute('unknownFeature', '/tmp/harness.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'UnsupportedFeatureError', errorCode: 'L1-004' })`。`save` は呼ばれないこと。 |
-| IT-CF-028 | `再検証エラーが出た場合` | `schemaValidator.validate.mockReturnValueOnce([]).mockReturnValueOnce([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('deadCodeGC', '/tmp/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。`save` が呼ばれないこと。 |
-| IT-CF-029 | `保存に失敗する場合` | `configRepository.save.mockRejectedValue(new ConfigPersistenceError('/tmp/harness.config.json'))`。 | `const action = sut.execute('deadCodeGC', '/tmp/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
+| IT-CF-023 | `boolean機能を無効化する場合` | `sourceDocument.harnesses.deadCodeGC = true`。 | `const actual = await sut.execute('deadCodeGC', '/tmp/phasegate.config.json')` | `actual.feature === 'deadCodeGC'`。`actual.enabled === false`。`save` が1回呼ばれること。 |
+| IT-CF-024 | `bundleSizeLimitを無効化する場合` | `sourceDocument.harnesses.bundleSizeLimit = 500`。 | `const actual = await sut.execute('bundleSizeLimit', '/tmp/phasegate.config.json')` | `configRepository.save.mock.calls[0][1].harnesses.bundleSizeLimit === 0`。 |
+| IT-CF-025 | `無効化後に再検証する場合` | 正常Arrangeのまま。 | `const actual = await sut.execute('deadCodeGC', '/tmp/phasegate.config.json')` | `schemaValidator.validate` が2回呼ばれること。 |
+| IT-CF-026 | `戻り値へconfigPathを含める場合` | 正常Arrangeのまま。 | `const actual = await sut.execute('deadCodeGC', '/tmp/phasegate.config.json')` | `actual.configPath === '/tmp/phasegate.config.json'`。 |
+| IT-CF-027 | `未知の機能名を指定した場合` | `featureRegistryPort.listAvailable.mockResolvedValue(createAvailableFeatures())`。 | `const action = sut.execute('unknownFeature', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toMatchObject({ name: 'UnsupportedFeatureError', errorCode: 'L1-004' })`。`save` は呼ばれないこと。 |
+| IT-CF-028 | `再検証エラーが出た場合` | `schemaValidator.validate.mockReturnValueOnce([]).mockReturnValueOnce([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('deadCodeGC', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。`save` が呼ばれないこと。 |
+| IT-CF-029 | `保存に失敗する場合` | `configRepository.save.mockRejectedValue(new ConfigPersistenceError('/tmp/phasegate.config.json'))`。 | `const action = sut.execute('deadCodeGC', '/tmp/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
 
 ### 3.5 ListAvailableFeaturesUseCase
 
@@ -187,10 +187,10 @@ configRepository.save.mockResolvedValue(undefined);
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-030 | `strict Presetの設定を読む場合` | `sourceDocument = createStrictPresetDocument({ harnesses: { cascadeUpdate: false } })`。`load` はこの document を返す。`validate` は空配列。`featureRegistryPort.listAvailable` は4機能を返す。 | `const actual = await sut.execute('/tmp/harness.config.json')` | `actual.length === 4`。各 `name` が固定順。`agentLessonCollection === true`、`bundleSizeLimit === true`、`deadCodeGC === true`、`cascadeUpdate === false`。 |
-| IT-CF-031 | `minimal Presetの設定を読む場合` | `sourceDocument = createMinimalPresetDocument()`。 | `const actual = await sut.execute('/tmp/harness.config.json')` | 全要素の `enabled === false`。 |
-| IT-CF-032 | `strict Presetで一部だけ有効な場合` | `sourceDocument = createStrictPresetDocument({ harnesses: { cascadeUpdate: false } })`。 | `const actual = await sut.execute('/tmp/harness.config.json')` | `actual` から `name` ごとの真偽を連想配列化し、期待値と一致させる。 |
-| IT-CF-033 | `スキーマ検証でエラーが出る場合` | `load` は valid document。`schemaValidator.validate.mockReturnValue([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('/tmp/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。 |
+| IT-CF-030 | `strict Presetの設定を読む場合` | `sourceDocument = createStrictPresetDocument({ harnesses: { cascadeUpdate: false } })`。`load` はこの document を返す。`validate` は空配列。`featureRegistryPort.listAvailable` は4機能を返す。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | `actual.length === 4`。各 `name` が固定順。`agentLessonCollection === true`、`bundleSizeLimit === true`、`deadCodeGC === true`、`cascadeUpdate === false`。 |
+| IT-CF-031 | `minimal Presetの設定を読む場合` | `sourceDocument = createMinimalPresetDocument()`。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | 全要素の `enabled === false`。 |
+| IT-CF-032 | `strict Presetで一部だけ有効な場合` | `sourceDocument = createStrictPresetDocument({ harnesses: { cascadeUpdate: false } })`。 | `const actual = await sut.execute('/tmp/phasegate.config.json')` | `actual` から `name` ごとの真偽を連想配列化し、期待値と一致させる。 |
+| IT-CF-033 | `スキーマ検証でエラーが出る場合` | `load` は valid document。`schemaValidator.validate.mockReturnValue([createHarnessError({ errorCode: 'L1-001' })])`。 | `const action = sut.execute('/tmp/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。 |
 | IT-CF-034 | `設定ファイルが存在しない場合` | `configRepository.load.mockRejectedValue(new ConfigNotFoundError('/tmp/missing.json'))`。 | `const action = sut.execute('/tmp/missing.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。 |
 
 ## 4. Adapter統合テスト詳細ロジック
@@ -201,11 +201,11 @@ configRepository.save.mockResolvedValue(undefined);
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-035 | `configPathを指定した場合` | tmpDir配下に `harness.config.json` を生成し、有効JSONを書き込む。 | `const actual = await repository.load(configPath)` | `actual.path` が絶対パス。`actual.document` が元の JSON と深く等しい。 |
-| IT-CF-036 | `configPathを省略した場合` | `tmpDir/harness.config.json` を作る。`tmpDir/sub/sub2` を作り、Arrange で `process.chdir(tmpDir/sub/sub2)`。 | `const actual = await repository.load()` | `actual.path` が `tmpDir/harness.config.json` の絶対パス。親方向探索が動くこと。Assert 後に元の cwd へ戻す。 |
+| IT-CF-035 | `configPathを指定した場合` | tmpDir配下に `phasegate.config.json` を生成し、有効JSONを書き込む。 | `const actual = await repository.load(configPath)` | `actual.path` が絶対パス。`actual.document` が元の JSON と深く等しい。 |
+| IT-CF-036 | `configPathを省略した場合` | `tmpDir/phasegate.config.json` を作る。`tmpDir/sub/sub2` を作り、Arrange で `process.chdir(tmpDir/sub/sub2)`。 | `const actual = await repository.load()` | `actual.path` が `tmpDir/phasegate.config.json` の絶対パス。親方向探索が動くこと。Assert 後に元の cwd へ戻す。 |
 | IT-CF-037 | `loadが返すpath形式を確認する場合` | IT-CF-035 と同様。 | `const actual = await repository.load(configPath)` | `path.isAbsolute(actual.path) === true`。 |
-| IT-CF-038 | `対象ファイルが存在しない場合` | 存在しない絶対パスを渡す。 | `const action = repository.load('/nonexistent/path/harness.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。 |
-| IT-CF-039 | `JSONが壊れている場合` | 壊れたJSONテキストを書いた `harness.config.json` を用意する。 | `const action = repository.load(configPath)` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
+| IT-CF-038 | `対象ファイルが存在しない場合` | 存在しない絶対パスを渡す。 | `const action = repository.load('/nonexistent/path/phasegate.config.json')` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。 |
+| IT-CF-039 | `JSONが壊れている場合` | 壊れたJSONテキストを書いた `phasegate.config.json` を用意する。 | `const action = repository.load(configPath)` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
 | IT-CF-040 | `新規保存する場合` | tmpDir配下の保存先パスと valid document を用意する。 | `await repository.save(configPath, document)` | `fs.readFile` で読み戻した文字列が `JSON.stringify(document, null, 2) + '\\n'` と一致する。 |
 | IT-CF-041 | `既存ファイルを上書きする場合` | 旧JSONを書いたファイルを事前作成する。 | `await repository.save(existingPath, newDocument)` | 読み戻し結果が `newDocument` に更新される。旧内容が残らない。 |
 | IT-CF-042 | `書込みに失敗する場合` | 読み取り専用ファイルまたは `fs.promises.writeFile` spy で `EACCES` を発生させる。 | `const action = repository.save(path, document)` | `await expect(action).rejects.toBeInstanceOf(ConfigPersistenceError)`。 |
@@ -254,22 +254,22 @@ configRepository.save.mockResolvedValue(undefined);
 | IT-CF-059 | `引数がない場合` | `createCliSpies()` を呼ぶ。UseCaseは呼ばれない前提。 | `await handler.execute([])` | `console.log` にUsage文字列が出る。`process.exit` は呼ばれないか、呼ぶ実装なら `0` を使わないことを確認する。 |
 | IT-CF-060 | `--listを指定した場合` | `listUseCase.execute.mockResolvedValue([{ name: 'agentLessonCollection', enabled: false }, ...])`。 | `await handler.execute(['--list'])` | `console.log` の先頭に `Available features:` が出る。各行が出力される。`process.exit(0)`。 |
 | IT-CF-061 | `--listで状態表示を確認する場合` | `listUseCase.execute.mockResolvedValue([{ name: 'agentLessonCollection', enabled: true }, { name: 'cascadeUpdate', enabled: false }, ...])`。 | `await handler.execute(['--list'])` | 出力行に `[enabled]` と `[disabled]` が期待通り含まれる。 |
-| IT-CF-062 | `有効な機能名を指定した場合` | `enableUseCase.execute.mockResolvedValue({ feature: 'agentLessonCollection', enabled: true, configPath: '/path/to/harness.config.json' })`。 | `await handler.execute(['agentLessonCollection'])` | `console.log` に `Enabled feature: agentLessonCollection` と `Updated: /path/to/harness.config.json` が出る。`process.exit(0)`。 |
+| IT-CF-062 | `有効な機能名を指定した場合` | `enableUseCase.execute.mockResolvedValue({ feature: 'agentLessonCollection', enabled: true, configPath: '/path/to/phasegate.config.json' })`。 | `await handler.execute(['agentLessonCollection'])` | `console.log` に `Enabled feature: agentLessonCollection` と `Updated: /path/to/phasegate.config.json` が出る。`process.exit(0)`。 |
 | IT-CF-063 | `未知機能を指定した場合` | `enableUseCase.execute.mockRejectedValue(new UnsupportedFeatureError('unknownFeature', createAvailableFeatures()))`。 | `await handler.execute(['unknownFeature'])` | `console.error` に `Unknown feature: unknownFeature`。利用可能一覧が出る。`process.exit(1)`。 |
 | IT-CF-064 | `UseCaseが一般エラーを返す場合` | `enableUseCase.execute.mockRejectedValue(new Error('unexpected'))`。 | `await handler.execute(['agentLessonCollection'])` | `console.error` にエラーメッセージ。`process.exit(2)`。 |
 | IT-CF-065 | `UnsupportedFeatureErrorの候補一覧表示を確認する場合` | IT-CF-063 と同じエラーを使う。 | `await handler.execute(['invalidName'])` | `Available features:` 行に4機能名が含まれる。 |
-| IT-CF-066 | `ConfigPersistenceErrorが返る場合` | `enableUseCase.execute.mockRejectedValue(new ConfigPersistenceError('/path/to/harness.config.json'))`。 | `await handler.execute(['agentLessonCollection'])` | `process.exit(2)`。保存失敗を `console.error` へ出す。 |
+| IT-CF-066 | `ConfigPersistenceErrorが返る場合` | `enableUseCase.execute.mockRejectedValue(new ConfigPersistenceError('/path/to/phasegate.config.json'))`。 | `await handler.execute(['agentLessonCollection'])` | `process.exit(2)`。保存失敗を `console.error` へ出す。 |
 
 ### 4.6 DisableFeatureCommandHandler
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
 | IT-CF-067 | `--listを指定した場合` | `listUseCase.execute.mockResolvedValue([{ name: 'deadCodeGC', enabled: true }, ...])`。 | `await handler.execute(['--list'])` | `Available features:` が出力され、`process.exit(0)`。 |
-| IT-CF-068 | `有効な機能名を指定した場合` | `disableUseCase.execute.mockResolvedValue({ feature: 'deadCodeGC', enabled: false, configPath: '/path/to/harness.config.json' })`。 | `await handler.execute(['deadCodeGC'])` | `Disabled feature: deadCodeGC` と `Updated: /path/to/harness.config.json` が出る。`process.exit(0)`。 |
+| IT-CF-068 | `有効な機能名を指定した場合` | `disableUseCase.execute.mockResolvedValue({ feature: 'deadCodeGC', enabled: false, configPath: '/path/to/phasegate.config.json' })`。 | `await handler.execute(['deadCodeGC'])` | `Disabled feature: deadCodeGC` と `Updated: /path/to/phasegate.config.json` が出る。`process.exit(0)`。 |
 | IT-CF-069 | `未知機能を指定した場合` | `disableUseCase.execute.mockRejectedValue(new UnsupportedFeatureError('unknownFeature', createAvailableFeatures()))`。 | `await handler.execute(['unknownFeature'])` | `Unknown feature: unknownFeature` と候補一覧が出る。`process.exit(1)`。 |
 | IT-CF-070 | `一般エラーが返る場合` | `disableUseCase.execute.mockRejectedValue(new Error('unexpected'))`。 | `await handler.execute(['deadCodeGC'])` | `console.error` が呼ばれ、`process.exit(2)`。 |
 | IT-CF-071 | `引数がない場合` | `createCliSpies()` を呼ぶ。 | `await handler.execute([])` | Usage文字列が `console.log` に出る。 |
-| IT-CF-072 | `ConfigPersistenceErrorが返る場合` | `disableUseCase.execute.mockRejectedValue(new ConfigPersistenceError('/path/to/harness.config.json'))`。 | `await handler.execute(['deadCodeGC'])` | `process.exit(2)`。 |
+| IT-CF-072 | `ConfigPersistenceErrorが返る場合` | `disableUseCase.execute.mockRejectedValue(new ConfigPersistenceError('/path/to/phasegate.config.json'))`。 | `await handler.execute(['deadCodeGC'])` | `process.exit(2)`。 |
 
 ### 4.7 ListAvailableFeaturesCommandHandler
 
@@ -286,7 +286,7 @@ configRepository.save.mockResolvedValue(undefined);
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
-| IT-CF-077 | `有効な設定ファイルを指定した場合` | tmpDir に valid `harness.config.json` を書く。 | `const actual = await loadConfig(configPath)` | `actual.project.name` と `actual.project.preset` が入力と一致する。`actual.layers` と `actual.harnesses` が解決済み構造を持つ。 |
+| IT-CF-077 | `有効な設定ファイルを指定した場合` | tmpDir に valid `phasegate.config.json` を書く。 | `const actual = await loadConfig(configPath)` | `actual.project.name` と `actual.project.preset` が入力と一致する。`actual.layers` と `actual.harnesses` が解決済み構造を持つ。 |
 | IT-CF-078 | `存在しない設定ファイルを指定した場合` | 存在しない絶対パスを用意する。 | `const action = loadConfig(missingPath)` | `await expect(action).rejects.toBeInstanceOf(ConfigNotFoundError)`。 |
 | IT-CF-079 | `スキーマ不正ファイルを指定した場合` | `project` を欠いた invalid JSON を tmpDir に書く。 | `const action = loadConfig(configPath)` | `await expect(action).rejects.toBeInstanceOf(ConfigValidationError)`。 |
 

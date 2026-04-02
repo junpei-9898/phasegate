@@ -79,9 +79,9 @@
 ### E-06: ADR・ドキュメント管理基盤（US-020~022）→ 維持
 - ほぼ変更なし
 
-### E-08 一部: harness.config.json v2（US-029~030）→ 要改修
+### E-08 一部: phasegate.config.json v2（US-029~030）→ 要改修
 - US-029: 「GSD由来機能のデフォルト無効化」→ Harness側の設定に限定
-- US-030: v1→v2マイグレーション → harness.config.jsonのみを対象に
+- US-030: v1→v2マイグレーション → phasegate.config.jsonのみを対象に
 - **議論点**: orchestration.config.jsonへの分離はOrchestration側USか？
   → US-030の「分離」機能自体がどちらの責務か要整理
 
@@ -118,7 +118,7 @@ harness_product_overview.mdに定義されているがアーカイブUSでカバ
 ### 4.1 Phase Dependency Model（§5.6, K14）
 - 3層フェーズ構造（Level 1/2/3）の定義と前提条件の機械的強制
 - phase-gateバリデータの拡張（レベル間依存検証）
-- phaseDependencies設定（harness.config.json）
+- phaseDependencies設定（phasegate.config.json）
 - カスタマイズ制約の実装
 
 ### 4.2 Planning Mode（§5.6, K15）
@@ -151,7 +151,7 @@ harness_product_overview.mdに定義されているがアーカイブUSでカバ
 - consistency-check.yml（週次検証）
 - .husky/pre-commit テンプレート
 
-### 4.7 harness.config.json v2 新セクション
+### 4.7 phasegate.config.json v2 新セクション
 - phaseDependencies（§5.6）
 - planningMode（§5.6）
 - paths（designDocs, inceptionDocs）
@@ -185,7 +185,7 @@ harness_product_overview.mdに定義されているがアーカイブUSでカバ
 
 ### Q4: Preset Systemの独立US化
 - minimal/standard/strictはconfig v2の一部か、独立機能か
-- 提案: harness.config.json v2のUSに含める
+- 提案: phasegate.config.json v2のUSに含める
 
 ### Q5: E-13 US-045の分割方法
 - Atomic Commits（Harness）とFresh Context（Orchestration）の分離
@@ -204,7 +204,7 @@ harness_product_overview.mdに定義されているがアーカイブUSでカバ
 | H-04 | Nyquist検証層 | E-02 | 改修 |
 | H-05 | Quick Mode | E-03 | 軽微改修 |
 | H-06 | HarnessError体系 | E-10 | 改修 |
-| H-07 | harness.config.json v2 | E-08一部 | 改修 |
+| H-07 | phasegate.config.json v2 | E-08一部 | 改修 |
 | H-08 | Harness API | 新規 | 新規 |
 | H-09 | ADR基盤 | E-06 | 維持 |
 | H-10 | CI/CDテンプレート | 新規 | 新規 |

@@ -219,7 +219,7 @@ target('EnableFeatureUseCase', () => {
         const document = createMinimalSourceDocument();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn().mockResolvedValue(undefined),
@@ -249,12 +249,12 @@ target('EnableFeatureUseCase', () => {
         // Act
         const actual = await useCase.execute(
           'agentLessonCollection',
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
         );
 
         // Assert
         expect(configRepository.save).toHaveBeenCalledWith(
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
           expect.objectContaining({
             harnesses: {
               agentLessonCollection: true,
@@ -264,7 +264,7 @@ target('EnableFeatureUseCase', () => {
         expect(actual).toEqual({
           feature: 'agentLessonCollection',
           enabled: true,
-          configPath: '/tmp/harness.config.json',
+          configPath: '/tmp/phasegate.config.json',
         });
       });
     });
@@ -275,7 +275,7 @@ target('EnableFeatureUseCase', () => {
         const document = createMinimalSourceDocument();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn().mockResolvedValue(undefined),
@@ -308,7 +308,7 @@ target('EnableFeatureUseCase', () => {
         // Act
         const actual = useCase.execute(
           'agentLessonCollection',
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
         );
 
         // Assert
@@ -323,7 +323,7 @@ target('EnableFeatureUseCase', () => {
         const document = createMinimalSourceDocument();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn().mockResolvedValue(undefined),
@@ -344,7 +344,7 @@ target('EnableFeatureUseCase', () => {
         });
 
         // Act
-        const actual = useCase.execute('deadCodeGC', '/tmp/harness.config.json');
+        const actual = useCase.execute('deadCodeGC', '/tmp/phasegate.config.json');
 
         // Assert
         await expect(actual).rejects.toThrowError(UnsupportedFeatureError);

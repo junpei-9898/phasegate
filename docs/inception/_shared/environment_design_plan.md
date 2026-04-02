@@ -39,7 +39,7 @@
 - `package.json` はまだ `eslint`, `@typescript-eslint/*` を保持しており、Wave 1 v1の論理設計と乖離している
 - `package-lock.json` は存在するが、`pnpm-lock.yaml` は未作成
 - `tsconfig.json` の `include: ["scripts/harness/**/*.ts"]` はv1の配置方針と整合している
-- `harness.config.json` は `version: "1.0"` のテンプレートであり、`HarnessConfigV2` 構造へは未移行
+- `phasegate.config.json` は `version: "1.0"` のテンプレートであり、`HarnessConfigV2` 構造へは未移行
 
 ## 3. 設計セクション方針
 
@@ -47,7 +47,7 @@
 
 - archive版からv1のUnit構成へ合わせ、環境契約の対象を6 Unitへ更新する
 - `scripts/harness/eslint-rules/` と `package.json` のESLint依存を、biome-ast-engine中心の構成へ段階移行する
-- `harness.config.json` の現行テンプレートを `HarnessConfigV2` の構造契約へ移行する
+- `phasegate.config.json` の現行テンプレートを `HarnessConfigV2` の構造契約へ移行する
 - `package-lock.json` ベース運用から `pnpm-lock.yaml` ベース運用へ切り替えるかを明示する
 - 互換入口として残すファイルと、v1で新設するディレクトリを区別して記録する
 
@@ -159,4 +159,4 @@ archive版の環境契約には、v1の論理設計に存在しない biome 拡�
 | 旧ESLint構成が残ったまま新ディレクトリを導入すると、同一責務が二重化する | 高 | マイグレーション台帳に「残置」と「削除予定」を分けて記録する |
 | Biome CLIのJSON出力差分が将来発生すると診断吸収部が壊れる | 中 | biome-ast-engine の infrastructure adapter にパース責務を閉じ込める |
 | TypeScript Compiler API 利用箇所が複数Unitに分散し、実行時間と障害点が増える | 中 | harness-error / biome-ast-engine の fixture テストを独立させ、Application層から直接呼ばせない |
-| `harness.config.json` が v1テンプレートのままだと `HarnessConfigV2` を前提とするUnit統合が進められない | 中 | config-foundation の構造契約と移行手順をPhase 2の先頭で固定する |
+| `phasegate.config.json` が v1テンプレートのままだと `HarnessConfigV2` を前提とするUnit統合が進められない | 中 | config-foundation の構造契約と移行手順をPhase 2の先頭で固定する |

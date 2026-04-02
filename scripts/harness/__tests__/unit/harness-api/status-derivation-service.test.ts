@@ -20,7 +20,7 @@ target('StatusDerivationService', () => {
         { layer: 'L3', present: true },
       ]);
       const presetInfo = { name: 'standard' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       // Act
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
@@ -41,7 +41,7 @@ target('StatusDerivationService', () => {
         { layer: 'L3', present: false },
       ]);
       const presetInfo = { name: 'standard' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       // Act
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
@@ -62,7 +62,7 @@ target('StatusDerivationService', () => {
         { layer: 'L4', present: true },
       ]);
       const presetInfo = { name: 'strict' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const, 'L4' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       // Act
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
@@ -81,7 +81,7 @@ target('StatusDerivationService', () => {
       const svc = new StatusDerivationService();
       const scanResult = makeScanResult([{ layer: 'L1', present: true }]);
       const presetInfo = { name: 'minimal' as const, enabledLayers: ['L1' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       // Act
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
@@ -128,7 +128,7 @@ target('StatusDerivationService', () => {
         { layer: 'L3', present: true }, { layer: 'L4', present: true },
       ]);
       const presetInfo = { name: 'strict' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const, 'L4' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       const summary = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
       // Act
@@ -143,7 +143,7 @@ target('StatusDerivationService', () => {
       const svc = new StatusDerivationService();
       const scanResult = makeScanResult([{ layer: 'L1', present: true }]);
       const presetInfo = { name: 'standard' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const] };
-      const configSummary = { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
       const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
       const summary = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
       // Act

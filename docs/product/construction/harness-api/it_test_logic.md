@@ -1681,8 +1681,8 @@ target('FileSystemArtifactScannerAdapter', () => {
   });
 
   // ─── IT-REPO-ArtifactScan-004 ───
-  describe('harness.config.jsonのpathsを参照してスキャン対象を決定すること', () => {
-    context('テスト用harness.config.json（paths.designDocs=docs/product/construction）を参照する場合', () => {
+  describe('phasegate.config.jsonのpathsを参照してスキャン対象を決定すること', () => {
+    context('テスト用phasegate.config.json（paths.designDocs=docs/product/construction）を参照する場合', () => {
       it('scannedPathsにdesignDocsパスが含まれる', async () => {
         // Arrange
         const configFixturePath = path.resolve(
@@ -1743,7 +1743,7 @@ target('HarnessConfigQueryAdapter', () => {
 
   // ─── IT-REPO-ConfigQuery-001 ───
   describe('getPresetInfo実行（standard）', () => {
-    context('project.preset=standardのharness.config.jsonを参照する場合', () => {
+    context('project.preset=standardのphasegate.config.jsonを参照する場合', () => {
       it('PresetInfo{name:standard, enabledLayers:[L1,L2,L3]}が返される', async () => {
         // Arrange
         const configPath = path.join(CONFIG_FIXTURES, 'harness-config-standard.json');
@@ -1761,7 +1761,7 @@ target('HarnessConfigQueryAdapter', () => {
 
   // ─── IT-REPO-ConfigQuery-002 ───
   describe('getPresetInfo実行（strict）', () => {
-    context('project.preset=strictのharness.config.jsonを参照する場合', () => {
+    context('project.preset=strictのphasegate.config.jsonを参照する場合', () => {
       it('PresetInfo{name:strict, enabledLayers:[L1,L2,L3,L4]}が返される', async () => {
         // Arrange
         const configPath = path.join(CONFIG_FIXTURES, 'harness-config-strict.json');
@@ -1799,12 +1799,12 @@ target('HarnessConfigQueryAdapter', () => {
   });
 
   // ─── IT-REPO-ConfigQuery-004 ───
-  describe('harness.config.jsonが存在しない場合に例外をスローすること', () => {
+  describe('phasegate.config.jsonが存在しない場合に例外をスローすること', () => {
     context('存在しないconfigPathを持つadapterを使用する場合', () => {
       it('Errorがスローされる', async () => {
         // Arrange
         const adapter = new HarnessConfigQueryAdapter({
-          configPath: '/non-existent-path/harness.config.json',
+          configPath: '/non-existent-path/phasegate.config.json',
         });
 
         // Act & Assert

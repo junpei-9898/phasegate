@@ -69,7 +69,7 @@ target('LoadConfigFacade', () => {
         const loadResolvedConfigUseCase = {
           execute: vi.fn().mockResolvedValue({
             config,
-            sourcePath: '/tmp/harness.config.json',
+            sourcePath: '/tmp/phasegate.config.json',
           }),
         };
         const facade = new LoadConfigFacade({
@@ -77,11 +77,11 @@ target('LoadConfigFacade', () => {
         });
 
         // Act
-        const actual = await facade.load('/tmp/harness.config.json');
+        const actual = await facade.load('/tmp/phasegate.config.json');
 
         // Assert
         expect(loadResolvedConfigUseCase.execute).toHaveBeenCalledWith(
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
         );
         expect(actual).toEqual(config);
       });

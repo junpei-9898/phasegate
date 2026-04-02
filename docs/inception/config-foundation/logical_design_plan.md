@@ -13,7 +13,7 @@
 
 | Story ID | タイトル | この計画で扱う内容 |
 |----------|---------|-------------------|
-| H04-01 | harness.config.json v2スキーマ定義 | `HarnessConfigV2` の論理構造、JSONスキーマ検証、Shared Kernel公開境界 |
+| H04-01 | phasegate.config.json v2スキーマ定義 | `HarnessConfigV2` の論理構造、JSONスキーマ検証、Shared Kernel公開境界 |
 | H04-02 | Preset System定義と切替 | `minimal` / `standard` / `strict` の定義、Preset解決、個別上書き |
 | H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | デフォルト無効原則、機能一覧取得、CLIトグル操作 |
 
@@ -63,7 +63,7 @@ domain ← application ← presentation
 | パッケージ管理 | pnpm |
 | テスト | Vitest |
 | スキーマ検証 | AJV系JSONスキーマバリデータ |
-| 設定フォーマット | `harness.config.json`（2スペースJSON） |
+| 設定フォーマット | `phasegate.config.json`（2スペースJSON） |
 | 共有契約 | `HarnessConfigV2`, Preset ID Registry, `HarnessError` |
 
 補足方針:
@@ -117,7 +117,7 @@ scripts/harness/
 
 #### 集約・値オブジェクト設計の中心
 
-- 集約は `HarnessConfig` の単一集約とし、`harness.config.json` 全体の整合性境界を担う
+- 集約は `HarnessConfig` の単一集約とし、`phasegate.config.json` 全体の整合性境界を担う
 - 値オブジェクトは `ProjectConfig`, `Preset`, `LayersConfig`, `L1Config` - `L4Config`, `QuickModeConfig`, `PhaseDependenciesConfig`, `PlanningModeConfig`, `HarnessesConfig`, `FeatureToggle`, `FeatureName`, `PathsConfig`, `ReportingConfig` を軸に整理する
 - `phaseDependencies` / `planningMode` は構造のみを保持し、意味論を持ち込まない
 
@@ -160,7 +160,7 @@ Application層は「集約の取得・操作・永続化の調整役」に限定
 
 | アダプター | 実装対象 | 技術選定 |
 |-----------|---------|---------|
-| `FileSystemConfigRepository` | `ConfigRepositoryPort` | `node:fs/promises` による `harness.config.json` 読込・保存 |
+| `FileSystemConfigRepository` | `ConfigRepositoryPort` | `node:fs/promises` による `phasegate.config.json` 読込・保存 |
 | `AjvConfigSchemaValidator` | `ConfigSchemaValidatorPort` | AJV系バリデータで `harness-config-v2.schema.json` を検証 |
 | `StaticFeatureRegistryAdapter` | `FeatureRegistryPort` | Wave 1では `harnesses` セクションキーを起点に機能一覧を返す |
 | `CompositeFeatureRegistryAdapter` | `FeatureRegistryPort` の発展形 | Wave 2以降に Validator ID Registry との合流を許容する差し替え点 |
@@ -194,7 +194,7 @@ Presentation方針:
 
 | ポート | 主メソッド | 用途 |
 |--------|-----------|------|
-| `ConfigRepositoryPort` | `load(configPath?: string): Promise<unknown>`, `save(configPath: string, document: unknown): Promise<void>` | `harness.config.json` の読込・保存 |
+| `ConfigRepositoryPort` | `load(configPath?: string): Promise<unknown>`, `save(configPath: string, document: unknown): Promise<void>` | `phasegate.config.json` の読込・保存 |
 | `ConfigSchemaValidatorPort` | `validate(document: unknown): readonly HarnessError[]` | v2 JSONスキーマ適合性検証 |
 | `FeatureRegistryPort` | `listAvailable(): readonly string[]` | `harness:enable/disable` で扱える機能名一覧の供給 |
 

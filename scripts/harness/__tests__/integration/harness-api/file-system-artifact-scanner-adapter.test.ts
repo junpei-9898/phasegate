@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { target, context } from '../../helpers/test-helpers.js';
 import { FileSystemArtifactScannerAdapter } from '../../../harness-api/infrastructure/adapters/file-system-artifact-scanner-adapter.js';
 
-// Vitest runs from project root (GSDLC_HARNESS), so fixtures path is relative to cwd
+// Vitest runs from project root (phasegate), so fixtures path is relative to cwd
 const FIXTURE_BASE = path.resolve(
   process.cwd(),
   'scripts/harness/__tests__/fixtures/harness-api/artifact-scan'

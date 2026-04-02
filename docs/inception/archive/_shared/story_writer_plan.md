@@ -20,7 +20,7 @@
 
 | 文書 | 内容 | 参照セクション |
 |------|------|--------------|
-| `product_overview.md` | GSDLC Harness v1の全体設計・アーキテクチャ・スコープ・非交渉要件 | §9 スコープと要件、§7 スキルシステム、§4 アーキテクチャ |
+| `product_overview.md` | Phasegate v1の全体設計・アーキテクチャ・スコープ・非交渉要件 | §9 スコープと要件、§7 スキルシステム、§4 アーキテクチャ |
 | `v1_scope_requirements_risk.md` | MVHスコープ定義・全要件一覧（REQ-*）・制約・リスク | §1 MVHスコープ、§2 要件一覧（2.1〜2.9） |
 | `product_vision.md` | プロダクトビジョン・Core Value・5原則・非交渉要件 | §2 What This Is、§3 Core Value |
 
@@ -35,7 +35,7 @@
 | E-05 | 品質ハーネス強化（Hooks拡張） | リンター設定保護Hook、Stop Hookテストゲート、無限ループ防止、ci-check統合 | MVH-05, MVH-06 | 4 |
 | E-06 | ADR・ドキュメント管理基盤 | ADRテンプレート、初期10件ADR作成、ステータス管理 | MVH-07 | 3 |
 | E-07 | ライフサイクル管理 | milestones.json/state.json導入、harness:progressコマンド、マイルストーン自動監査 | MVH-08 | 4 |
-| E-08 | harness.config.json v2（設定統合） | orchestration/sessionセクション追加、デフォルトOFF、マイグレーションツール | MVH-09 | 4 |
+| E-08 | phasegate.config.json v2（設定統合） | orchestration/sessionセクション追加、デフォルトOFF、マイグレーションツール | MVH-09 | 4 |
 | E-09 | 非交渉要件K1-K13回帰保証 | K1-K13回帰テスト整備、v0テスト仕様引き継ぎ+v1再実装のCIゲート化 | MVH-10 | 3 |
 | E-10 | HarnessError拡充・AGENTS.md改善 | HarnessErrorへのADR参照+修正コード例統一、AGENTS.mdポインタ型移行 | product_overview §9.1 | 2 |
 | E-11 | ESLint→Biome全面移行 | v0の4カスタムESLintルールをBiomeプラグインとして移植、PostToolUse Hook高速化、L1バリデータをBiomeベースに再構築 | product_overview §9.1, K3 | 4 |
@@ -67,7 +67,7 @@ E-14 (v0テスト移行) ← E-11 (Biome移行) に依存。Biome移行完了後
 | **AIエージェント（Executor）** | Claude Code, Codex等。設計・実装スキルを自律的に実行する主要な作業者 | フレッシュなコンテキスト（200K）、明確な設計文書、品質ゲートの自動遵守、セッション継続性 |
 | **AIオーケストレーター** | Wave並列実行、セッション管理を担う制御層エージェント（※v1ではWave並列は未実装、セッション管理のみ） | Executor生成/破棄、コンテキストバジェット管理、セッション状態永続化 |
 | **CI/CDシステム** | 自動検証パイプライン。L3バリデータ群を実行する非人間アクター | テストカバレッジ90%+、セキュリティ/パフォーマンス検出、Nyquist検証 |
-| **ハーネス管理者（DevOps）** | harness.config.jsonの設定、プリセット選択、Hooks有効化/無効化を行う | Progressive Adoption、環境別設定、ハーネス自体の運用保守 |
+| **ハーネス管理者（DevOps）** | phasegate.config.jsonの設定、プリセット選択、Hooks有効化/無効化を行う | Progressive Adoption、環境別設定、ハーネス自体の運用保守 |
 
 ### ストーリーでのアクター表記方針
 
@@ -185,12 +185,12 @@ REQ-XX-XXX, ...
 | US-025 | 開発者として、harness:progressで進捗を可視化したい | REQ-LC-003 |
 | US-026 | 品質管理者として、マイルストーン完了時に自動監査を実行したい | REQ-LC-004 |
 
-### E-08: harness.config.json v2（設定統合）
+### E-08: phasegate.config.json v2（設定統合）
 
 | Story ID | ストーリー概要 | 対応要件 |
 |----------|--------------|---------|
-| US-027 | ハーネス管理者として、harness.config.json v2にorchestrationセクションを追加したい | REQ-CF-001 |
-| US-028 | ハーネス管理者として、harness.config.json v2にsessionセクションを追加したい | REQ-CF-002 |
+| US-027 | ハーネス管理者として、phasegate.config.json v2にorchestrationセクションを追加したい | REQ-CF-001 |
+| US-028 | ハーネス管理者として、phasegate.config.json v2にsessionセクションを追加したい | REQ-CF-002 |
 | US-029 | ハーネス管理者として、GSD由来機能をデフォルト無効にしたい | REQ-CF-003 |
 | US-030 | ハーネス利用者として、harness:migrate-configでv1→v2自動マイグレーションしたい | REQ-CF-004 |
 
@@ -251,7 +251,7 @@ REQ-XX-XXX, ...
 
 ### [Question] Q1: 既存143テストとv1コードベースの関係
 
-v0の既存143テスト（バリデータ・CLIコマンド・Biomeルール）は「継承」と記載（product_overview 7.6節）。しかしGSDLC_HARNESSは新規リポジトリであり、v0テストの移行方針が不明確。
+v0の既存143テスト（バリデータ・CLIコマンド・Biomeルール）は「継承」と記載（product_overview 7.6節）。しかしphasegateは新規リポジトリであり、v0テストの移行方針が不明確。
 
 - (a) v0テストをそのままコピーし、v1で拡張する
 - (b) v0テストの仕様のみ引き継ぎ、v1で再実装する

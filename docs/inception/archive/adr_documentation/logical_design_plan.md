@@ -68,7 +68,7 @@ Port (Interface) ← Infrastructure (Secondary Adapter)
 | テストフレームワーク | Vitest |
 | パッケージマネージャ | pnpm |
 | CI/CD | GitHub Actions |
-| 設定ファイル | harness.config.json (JSON) |
+| 設定ファイル | phasegate.config.json (JSON) |
 | YAMLパース | gray-matter（統合契約・ドメインモデルで言及） |
 
 ### 2.4 ディレクトリ構成方針
@@ -202,7 +202,7 @@ Unit定義で「ADRテンプレート」が言及されている。`docs/ADR/tem
 - ドメインモデル（`docs/product/construction/adr_documentation/domain_model.md`）が確定済みであること -- 確認済み
 - 統合契約（`docs/product/units/integration_contract.md`）のADRフロントマター仕様（Section 4.8）が確定済みであること -- 確認済み
 - 本Unitは外部依存なし（Wave 1基盤Unit）のため、他Unitの設計完了を待つ必要がない
-- ADRファイルの配置先は`docs/ADR/`固定（harness.config.jsonで変更不可）
+- ADRファイルの配置先は`docs/ADR/`固定（phasegate.config.jsonで変更不可）
 
 ### リスク
 | # | リスク | 影響 | 緩和策 |

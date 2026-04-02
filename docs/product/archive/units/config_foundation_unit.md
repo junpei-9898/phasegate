@@ -3,13 +3,13 @@
 > **Unit ID**: config-foundation
 > **作成日**: 2026-03-10
 > **Wave**: 1（基盤構築）
-> **対応Epic**: E-08 harness.config.json v2（設定統合）
+> **対応Epic**: E-08 phasegate.config.json v2（設定統合）
 
 ---
 
 ## 1. 概要
 
-harness.config.json v2のスキーマ設計・バリデーション・マイグレーションを担うUnit。GSDLC v1の全Unitが依存する設定基盤を提供する。GSD由来の新セクション（orchestration、session）をv1スキーマに統合しつつ、Progressive adoption（デフォルトOFF）を実現する。
+phasegate.config.json v2のスキーマ設計・バリデーション・マイグレーションを担うUnit。Phasegate v1の全Unitが依存する設定基盤を提供する。GSD由来の新セクション（orchestration、session）をv1スキーマに統合しつつ、Progressive adoption（デフォルトOFF）を実現する。
 
 ---
 
@@ -26,7 +26,7 @@ harness.config.json v2のスキーマ設計・バリデーション・マイグ�
 
 ## 3. 機能要件
 
-### 3.1 harness.config.json v2スキーマ
+### 3.1 phasegate.config.json v2スキーマ
 
 - `orchestration`セクション: mode / parallelization / modelProfile / contextStrategy / commitStrategy / workflow
 - `session`セクション: stateFile / roadmapFile のパス設定
@@ -48,7 +48,7 @@ harness.config.json v2のスキーマ設計・バリデーション・マイグ�
 
 ## 4. データモデル概要
 
-- **harness.config.json v2**: 既存v1スキーマ + orchestration + session セクション
+- **phasegate.config.json v2**: 既存v1スキーマ + orchestration + session セクション
 - **JSONスキーマ定義**: v2スキーマのバリデーション用スキーマファイル
 
 ---
@@ -65,7 +65,7 @@ harness.config.json v2のスキーマ設計・バリデーション・マイグ�
 
 | 種別 | 名称 | 利用Unit |
 |------|------|---------|
-| 設定ファイル | harness.config.json v2スキーマ | 全Unit |
+| 設定ファイル | phasegate.config.json v2スキーマ | 全Unit |
 | CLI | `harness:enable` / `harness:disable` | 全Unit |
 | CLI | `harness:migrate-config` | 外部利用者 |
 | モジュール | config-loader（v2スキーマ読み込み） | 全Unit |

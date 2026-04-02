@@ -13,7 +13,7 @@
 - **対象ストーリー数**: 62（v1: 54, Future: 8）
 - **Epic数**: 17（H-01〜H-15 + H-F1〜H-F2）
 - **Wave構成**: Wave 1（基盤構築 18 US）/ Wave 2（コア品質機構 22 US）/ Wave 3（拡張・運用・保証 14 US）/ Future（8 US）
-- **プロダクト**: GSDLC Quality Harness — エージェント非依存の品質防御ツールキット
+- **プロダクト**: Phasegate — エージェント非依存の品質防御ツールキット
 - **コアドメイン**: 4層防御モデル（L1-L4）、Phase Dependency Model、Traceability Model
 
 ---
@@ -73,7 +73,7 @@
 | 1 | **biome-ast-engine** | H-01 | 3 | H01-01, H01-02, H01-03 | L1 Biomeプラグイン（コア4ルール + AIアンチパターン4ルール）、CI統合、ESLint完全除去 |
 | 2 | **phase-dependency-model** | H-02 | 3 | H02-01, H02-02, H02-03 | 3層フェーズ構造定義、Planning Mode、phase-gateバリデータ拡張、Phase Dependencyカスタマイズ |
 | 3 | **traceability-model** | H-03 | 3 | H03-01, H03-02, H03-03 | @unit/@layer/@US-XXX/@storyメタデータ体系、L2 metadataバリデータ、逆引きチェーン検証 |
-| 4 | **config-foundation** | H-04 | 3 | H04-01, H04-02, H04-03 | harness.config.json v2スキーマ、Preset System（minimal/standard/strict）、harness:enable/disable |
+| 4 | **config-foundation** | H-04 | 3 | H04-01, H04-02, H04-03 | phasegate.config.json v2スキーマ、Preset System（minimal/standard/strict）、harness:enable/disable |
 | 5 | **adr-foundation** | H-05 | 3 | H05-01, H05-02, H05-03 | ADRテンプレート、初期ADR 11件作成、ステータス管理、フロントマターバリデーション |
 | 6 | **harness-error** | H-06 | 3 | H06-01, H06-02, H06-03 | HarnessError統一フォーマット、fix_example品質保証、severity権限契約 |
 

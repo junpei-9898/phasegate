@@ -1,7 +1,7 @@
 # TDD実装計画: H10-01 (quick-mode)
 
 ## 1. スコープ
-- 対象ストーリー: H10-01 Quick Mode設定（harness.config.json quickModeセクション）
+- 対象ストーリー: H10-01 Quick Mode設定（phasegate.config.json quickModeセクション）
 - 影響する層: Domain / Application / Infrastructure
 
 ## 2. 前提条件検証

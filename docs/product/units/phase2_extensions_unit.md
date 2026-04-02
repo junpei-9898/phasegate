@@ -32,7 +32,7 @@ v1完了後のPhase 2で追加するL4拡張バリデータおよびE2Eテスト
 ### 3.1 doc-freshness-checker（HF2-01）
 
 - 設計文書の最終更新日からの経過日数を検出するL4バリデータ
-- 閾値（日数）がharness.config.jsonで設定可能
+- 閾値（日数）がphasegate.config.jsonで設定可能
 - 閾値超過時のHarnessErrorにadr_ref + 推奨アクション（文書レビュー・更新の推奨）を含む
 - validator-systemのL4バリデータ拡張インターフェースを使用して登録
 
@@ -55,7 +55,7 @@ v1完了後のPhase 2で追加するL4拡張バリデータおよびE2Eテスト
 ## 4. ドメインモデル概要
 
 - **DocFreshnessRule（集約ルート）**: 設計文書の鮮度検証ルール。対象ファイルパターン・閾値日数・関連ADR参照を保持
-- **FreshnessThreshold（値オブジェクト）**: 鮮度閾値（日数）。harness.config.jsonから読み込み
+- **FreshnessThreshold（値オブジェクト）**: 鮮度閾値（日数）。phasegate.config.jsonから読み込み
 - **DocumentAge（値オブジェクト）**: 設計文書の最終更新日からの経過日数。Git履歴またはファイルメタデータから算出
 - **PointerRule（集約ルート）**: ポインタ検証ルール。検証対象ドキュメントパターン・ポインタ抽出正規表現を保持
 - **Pointer（値オブジェクト）**: ドキュメント内のファイルパス参照またはコマンド参照。参照元ファイル・行番号・参照先パスを保持
@@ -104,7 +104,7 @@ v1完了後のPhase 2で追加するL4拡張バリデータおよびE2Eテスト
 |----|------|---------------|
 | K1 | 4層防御モデル（L1-L4） | doc-freshness-checker・pointer-validatorをL4（consistency/drift）バリデータとして追加。既存の4層構造を拡張 |
 | K6 | 2-Phase Execution | doc-freshness-checkerが設計文書の鮮度を検証し、設計-実装間の乖離リスクを事前検出。Phase依存の遵守を間接的に支援 |
-| K13 | harness.config.json | 閾値設定（鮮度日数等）・バリデータ有効/無効をharness.config.json v2で管理 |
+| K13 | phasegate.config.json | 閾値設定（鮮度日数等）・バリデータ有効/無効をphasegate.config.json v2で管理 |
 | K4 | テスト品質ルール | E2Eテスト戦略テンプレートにより、E2Eテストの設計・実装に一貫した方法論を提供 |
 
 ---

@@ -9,9 +9,9 @@
 
 ## 1. 概要
 
-phase-dependency-modelは、GSDLC Quality Harnessにおける設計フェーズ間の前提条件を機械的に強制するUnit。3層フェーズ構造（Level 1: Product全体設計 / Level 2: Unit横断設計 / Level 3: ストーリー実装）を定義し、phase-gateバリデータをレベル間依存検証に拡張することで、上位設計なしの下位設計・実装を物理的に拒否する。
+phase-dependency-modelは、Phasegateにおける設計フェーズ間の前提条件を機械的に強制するUnit。3層フェーズ構造（Level 1: Product全体設計 / Level 2: Unit横断設計 / Level 3: ストーリー実装）を定義し、phase-gateバリデータをレベル間依存検証に拡張することで、上位設計なしの下位設計・実装を物理的に拒否する。
 
-v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文書の必須生成）に対応し、2つのPlanning Mode（interactive/embedded-qa）の定義、plan文書の必須生成検証、harness.config.jsonによるPhase Dependencyカスタマイズ機構を提供する。設計→設計および設計→実装の順序がコードレベルで強制されることにより、AIエージェントが上位設計を飛ばして実装に着手する行為を防止する。
+v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文書の必須生成）に対応し、2つのPlanning Mode（interactive/embedded-qa）の定義、plan文書の必須生成検証、phasegate.config.jsonによるPhase Dependencyカスタマイズ機構を提供する。設計→設計および設計→実装の順序がコードレベルで強制されることにより、AIエージェントが上位設計を飛ばして実装に着手する行為を防止する。
 
 ---
 
@@ -61,7 +61,7 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 
 ### 3.3 Phase Dependencyカスタマイズ（H02-03）
 
-- harness.config.jsonに`phaseDependencies`セクション（preset/override/customRules）を追加する
+- phasegate.config.jsonに`phaseDependencies`セクション（preset/override/customRules）を追加する
 - デフォルトフローへの依存追加（強化）を`customRules`で設定可能にする
 - デフォルトフローからの依存削除（緩和）には`override: true`の明示を必要とする
 - `story-implementor`前のテスト設計フェーズ存在を緩和不可にする（TDD最低保証）
@@ -98,7 +98,7 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 | 契約 | 方向 | 相手Unit | 内容 |
 |------|------|---------|------|
 | Phase Dependency 3層構造 | 提供 | validator-system | phase-gateバリデータがphase-dependency-modelの3層構造定義を参照してLevel間依存を検証する |
-| phaseDependencies設定スキーマ | 提供 | config-foundation | harness.config.json v2スキーマにphaseDependenciesセクションの定義を提供する |
+| phaseDependencies設定スキーマ | 提供 | config-foundation | phasegate.config.json v2スキーマにphaseDependenciesセクションの定義を提供する |
 | plan文書存在チェック | 提供 | validator-system | Phase 1完了判定のためのplan文書存在チェックロジックを提供する |
 
 ---
@@ -120,14 +120,14 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 |------|------|---------|------|
 | ドメインモデル | PhaseStructure（3層定義） | validator-system | 3層フェーズ構造の定義（Level/フェーズ/成果物）を公開 |
 | バリデーション | PhaseGateValidator | validator-system | Level間依存検証、Level内順序検証、plan文書存在検証のインターフェース |
-| 設定スキーマ | phaseDependencies | config-foundation | harness.config.json v2に追加するphaseDependenciesセクションのスキーマ定義 |
+| 設定スキーマ | phaseDependencies | config-foundation | phasegate.config.json v2に追加するphaseDependenciesセクションのスキーマ定義 |
 | ドメインモデル | PlanningMode定義 | harness-api | interactiveモード/embedded-qaモードの仕様定義 |
 
 ---
 
 ## 8. 実装上の制約・注意事項
 
-- **Level間依存の緩和禁止**: Level 2→Level 1、Level 3→Level 2の依存はカスタマイズで緩和不可。この制約はハードコードされ、harness.config.jsonの設定で上書きできない
+- **Level間依存の緩和禁止**: Level 2→Level 1、Level 3→Level 2の依存はカスタマイズで緩和不可。この制約はハードコードされ、phasegate.config.jsonの設定で上書きできない
 - **TDD最低保証**: story-implementor前のテスト設計フェーズ存在は緩和不可。Quick Modeであっても、テスト設計なしの実装着手を許容しない
 - **Quick Modeとの関係**: Quick Mode（quick-mode Unit）は「どのバリデータを実行するか」を制御し、本UnitのPhase Dependency（設計順序）は「設計→実装の前提条件」を制御する。Quick Modeが緩和するのはバリデータ実行範囲（L3/L4の一部スキップ）であり、Level間依存（K14）やplan文書必須（K15）は緩和不可。2-Phase Execution（K6）の緩和はquick-mode Unitの`relaxedGates`で定義される範囲に限定される
 - **成果物駆動の検証**: phase-gateバリデータはファイルシステム上の成果物（plan文書、設計文書）の存在で状態を判定する。データベースやステートファイルに依存しない

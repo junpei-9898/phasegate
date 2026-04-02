@@ -123,9 +123,9 @@ beforeEach(() => {
 | `git-diff-fixture-delete.txt` | `"D\tsrc/old-feature.ts\n"` | IT-REPO-Git-003 |
 | `git-diff-fixture-rename.txt` | `"R100\tsrc/old.ts\tsrc/new.ts\n"` | IT-REPO-Git-004 |
 | `git-diff-fixture-mixed.txt` | `"M\tsrc/a.ts\nA\tsrc/b.ts\nD\tsrc/c.ts\n"` | IT-REPO-Git-005 |
-| `harness-config-with-quickmode.json` | quickModeセクションを含む harness.config.json | IT-REPO-Config-001, 003 |
-| `harness-config-without-quickmode.json` | quickModeセクションなしの harness.config.json | IT-REPO-Config-002 |
-| `harness-config-invalid-quickmode.json` | allowedCategoriesに'domain'を含む／空配列のharness.config.json | IT-REPO-Config-006, 007 |
+| `harness-config-with-quickmode.json` | quickModeセクションを含む phasegate.config.json | IT-REPO-Config-001, 003 |
+| `harness-config-without-quickmode.json` | quickModeセクションなしの phasegate.config.json | IT-REPO-Config-002 |
+| `harness-config-invalid-quickmode.json` | allowedCategoriesに'domain'を含む／空配列のphasegate.config.json | IT-REPO-Config-006, 007 |
 | `quick-mode-decision-approved.fixture.ts` | eligible=trueのQuickModeDecisionContract固定値（`createApprovedDecision()` 出力） | Formatter系テスト共通 |
 | `quick-mode-decision-rejected.fixture.ts` | eligible=false（MIXED_CHANGES）のQuickModeDecisionContract固定値 | Formatter系テスト共通 |
 

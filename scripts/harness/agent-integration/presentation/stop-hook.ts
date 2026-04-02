@@ -29,7 +29,7 @@ async function readStdin(): Promise<string> {
 async function findConfigPath(): Promise<string> {
   let dir = process.cwd();
   while (true) {
-    const candidate = path.join(dir, 'harness.config.json');
+    const candidate = path.join(dir, 'phasegate.config.json');
     try {
       await fs.access(candidate);
       return candidate;
@@ -39,7 +39,7 @@ async function findConfigPath(): Promise<string> {
       dir = parent;
     }
   }
-  return path.join(process.cwd(), 'harness.config.json');
+  return path.join(process.cwd(), 'phasegate.config.json');
 }
 
 async function main(): Promise<void> {

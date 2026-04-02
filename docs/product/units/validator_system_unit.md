@@ -51,7 +51,7 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 
 ### 3.3 L3 coverageバリデータ（H08-03）
 
-- harness.config.jsonのcoverageThresholdを読み取り閾値検証を実行
+- phasegate.config.jsonのcoverageThresholdを読み取り閾値検証を実行
 - standardプリセット（90%）での閾値検証
 - strictプリセット（95%）での閾値検証
 - 閾値未達時のHarnessError（L3-003）に現在のカバレッジ値と不足分を含める
@@ -76,7 +76,7 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 - 未使用エクスポート（exportされているが他ファイルからimportされていない）の検出
 - 到達不能コード（条件分岐で到達し得ないブロック）の検出
 - 検出時のHarnessError（L4-003）に`adr_ref` + `fix_example` + 対象ファイルパス・行番号を含める
-- strictプリセットでのみ有効（deadCodeGC機能としてharness.config.jsonで制御）
+- strictプリセットでのみ有効（deadCodeGC機能としてphasegate.config.jsonで制御）
 
 ---
 

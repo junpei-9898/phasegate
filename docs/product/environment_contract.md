@@ -21,7 +21,7 @@ v0アーカイブ契約からWave 1 v1環境へ移行するための差分を、
 | M-005 | 新規ランタイム依存追加 | `package.json` | `ajv`, `gray-matter`, `@biomejs/biome` を追加する。`@biomejs/biome` は `^1.5.0` を採用する。 |
 | M-006 | 6 Unitディレクトリ新設 | `scripts/harness/` | `config-foundation`, `harness-error`, `phase-dependency-model`, `traceability-model`, `adr-foundation`, `biome-ast-engine` の6 Unitを4層構成で新設する。 |
 | M-007 | Shared Kernel公開面新設 | `scripts/harness/shared-kernel/` | Shared Kernel は `harness-error.ts`, `harness-config.ts`, `story-id.ts` の3ファイルのみ新設する。 |
-| M-008 | `harness.config.json` スキーマ移行 | `harness.config.json` | 現行 `version: "1.0"` から `HarnessConfigV2` 契約へ移行する。構造所有は config-foundation、意味論は各対応Unitが担う。 |
+| M-008 | `phasegate.config.json` スキーマ移行 | `phasegate.config.json` | 現行 `version: "1.0"` から `HarnessConfigV2` 契約へ移行する。構造所有は config-foundation、意味論は各対応Unitが担う。 |
 | M-009 | Biome設定新設 | `biome.json` | v1標準 lint/format 設定として新規作成する。対象は `scripts/harness/**/*.ts` とし、追加ビルド拡張は含めない。 |
 | M-010 | 互換入口の縮退維持 | `scripts/harness/cli/`, `scripts/harness/core/`, `scripts/harness/validators/`, `scripts/harness/cli/ci-check.ts`, `scripts/harness/cli/detect-drift.ts`, `scripts/harness/cli/collect-lessons.ts`, `scripts/harness/cli/detect-dead-code.ts` | `enable.ts`, `disable.ts`, `check-phase.ts`, `check-ready.ts`, `ci-check.ts`, `detect-drift.ts`, `collect-lessons.ts`, `detect-dead-code.ts`, `core/config-loader.ts`, `core/error-reporter.ts`, `core/metadata-parser.ts`, `validators/metadata.ts`, `validators/phase-gate.ts` は v1内部実装へ委譲する薄い互換入口として残す。 |
 | M-011 | Wave 2+3 Unitディレクトリ新設 | `scripts/harness/` | `validator-system`, `nyquist-validation`, `quick-mode`, `harness-api`, `agent-integration`, `skill-quality`, `ci-governance`, `regression-suite` の8Unitを4層構成で新設する |
@@ -42,20 +42,20 @@ v0アーカイブ契約からWave 1 v1環境へ移行するための差分を、
 
 | Unit | 配置先パス | エントリポイント | CLIコマンド | 外部依存 | 設定ファイル |
 |------|------------|------------------|-------------|----------|--------------|
-| config-foundation | `scripts/harness/config-foundation/` | `scripts/harness/shared-kernel/harness-config.ts`, `scripts/harness/cli/enable.ts`, `scripts/harness/cli/disable.ts` | `harness:enable`, `harness:disable` | `ajv` | `harness.config.json`, `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json`, `scripts/harness/config-foundation/infrastructure/presets/*.json` |
+| config-foundation | `scripts/harness/config-foundation/` | `scripts/harness/shared-kernel/harness-config.ts`, `scripts/harness/cli/enable.ts`, `scripts/harness/cli/disable.ts` | `harness:enable`, `harness:disable` | `ajv` | `phasegate.config.json`, `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json`, `scripts/harness/config-foundation/infrastructure/presets/*.json` |
 | harness-error | `scripts/harness/harness-error/` | `scripts/harness/shared-kernel/harness-error.ts` | 単独トップレベルCLIなし。内部Presentationとして `render-harness-errors`, `validate-fix-example`, `list-error-definitions`, `assert-severity-contract` を持つ | `typescript`（Compiler API、devDependency） | `scripts/harness/harness-error/infrastructure/registry/*.ts` |
-| phase-dependency-model | `scripts/harness/phase-dependency-model/` | `scripts/harness/cli/check-phase.ts`, `scripts/harness/cli/check-ready.ts`, `scripts/harness/validators/phase-gate.ts` | `harness:check-phase`, `harness:check-ready` | なし | `harness.config.json` |
+| phase-dependency-model | `scripts/harness/phase-dependency-model/` | `scripts/harness/cli/check-phase.ts`, `scripts/harness/cli/check-ready.ts`, `scripts/harness/validators/phase-gate.ts` | `harness:check-phase`, `harness:check-ready` | なし | `phasegate.config.json` |
 | traceability-model | `scripts/harness/traceability-model/` | `scripts/harness/traceability-model/index.ts`, `scripts/harness/shared-kernel/story-id.ts` | 単独CLIなし | なし | なし |
 | adr-foundation | `scripts/harness/adr-foundation/` | `scripts/harness/adr-foundation/index.ts` | 内部運用CLI: `adr:create-template`, `adr:seed-initial`, `adr:list`, `adr:show`, `adr:search-archgate`, `adr:validate`, `adr:change-status` | `gray-matter` | `docs/ADR/*.md`, `docs/ADR/template.md` |
-| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `scripts/harness/biome-ast-engine/index.ts`, `scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts` | `harness:lint` | `@biomejs/biome`, `typescript`（Compiler API、devDependency） | `biome.json`, `harness.config.json`, `package.json`, `pnpm-lock.yaml` |
-| validator-system | `scripts/harness/validator-system/` | `scripts/harness/shared-kernel/validator-system.ts` | harness-api経由（単独CLI所有なし）。内部Presentation: `run-l2-validators`, `run-l3-validators`, `run-l4-validators` | なし（biome-ast-engine, nyquist-validation, phase-dependency-model をポート経由参照） | `harness.config.json` |
+| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `scripts/harness/biome-ast-engine/index.ts`, `scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts` | `harness:lint` | `@biomejs/biome`, `typescript`（Compiler API、devDependency） | `biome.json`, `phasegate.config.json`, `package.json`, `pnpm-lock.yaml` |
+| validator-system | `scripts/harness/validator-system/` | `scripts/harness/shared-kernel/validator-system.ts` | harness-api経由（単独CLI所有なし）。内部Presentation: `run-l2-validators`, `run-l3-validators`, `run-l4-validators` | なし（biome-ast-engine, nyquist-validation, phase-dependency-model をポート経由参照） | `phasegate.config.json` |
 | nyquist-validation | `scripts/harness/nyquist-validation/` | `scripts/harness/nyquist-validation/index.ts` | harness-api経由（単独CLIなし）。`harness:impact-analysis` はharness-api経由 | なし | `docs/contracts/requirement-test-matrix.schema.json`, `requirement-test-matrix.json`（プロジェクトルート） |
-| quick-mode | `scripts/harness/quick-mode/` | `scripts/harness/shared-kernel/quick-mode.ts` | harness-api経由（単独CLIなし）。内部: `quick-mode-check` | なし | `harness.config.json` |
-| harness-api | `scripts/harness/harness-api/` | `scripts/harness/shared-kernel/harness-api.ts` | `harness:check-ready`, `harness:check-phase`, `harness:ci-check`, `harness:detect-drift`, `harness:status`, `harness:lint`, `harness:complete-check`, `harness:impact-analysis` | なし（他Unit をポート経由参照） | `harness.config.json` |
-| agent-integration | `scripts/harness/agent-integration/` | `scripts/harness/agent-integration/presentation/{pre-tool-use-hook,post-tool-use-hook,stop-hook}.ts` | Claude Code Hook（CLI直接呼び出しなし）。`.claude/settings.json`のhooks設定でtsx経由登録 | なし（biome-ast-engine AST解析はImportAnalyzerPortポート経由） | `harness.config.json`, `.claude/settings.json` |
-| skill-quality | `scripts/harness/skill-quality/` | `scripts/harness/skill-quality/index.ts` | harness-api経由。内部: `harness:collect-lessons`（v0互換から移行） | なし | `harness.config.json`, `docs/contracts/lesson-artifact.schema.json` |
-| ci-governance | `scripts/harness/ci-governance/` | `scripts/harness/ci-governance/index.ts` | `harness:ci-template` | `js-yaml` | `harness.config.json`, `docs/contracts/lesson-artifact.schema.json`, `.harness/error-history.json` |
-| regression-suite | `scripts/harness/regression-suite/` | `scripts/harness/__tests__/regression/` | 単独CLIなし。Vitestテストスイート（k-requirements, gng-gate, agent-independence, v0-migration）として実行 | なし | `harness.config.json`, `scripts/harness/regression-suite/infrastructure/seeds/v0_v1_test_mapping.md` |
+| quick-mode | `scripts/harness/quick-mode/` | `scripts/harness/shared-kernel/quick-mode.ts` | harness-api経由（単独CLIなし）。内部: `quick-mode-check` | なし | `phasegate.config.json` |
+| harness-api | `scripts/harness/harness-api/` | `scripts/harness/shared-kernel/harness-api.ts` | `harness:check-ready`, `harness:check-phase`, `harness:ci-check`, `harness:detect-drift`, `harness:status`, `harness:lint`, `harness:complete-check`, `harness:impact-analysis` | なし（他Unit をポート経由参照） | `phasegate.config.json` |
+| agent-integration | `scripts/harness/agent-integration/` | `scripts/harness/agent-integration/presentation/{pre-tool-use-hook,post-tool-use-hook,stop-hook}.ts` | Claude Code Hook（CLI直接呼び出しなし）。`.claude/settings.json`のhooks設定でtsx経由登録 | なし（biome-ast-engine AST解析はImportAnalyzerPortポート経由） | `phasegate.config.json`, `.claude/settings.json` |
+| skill-quality | `scripts/harness/skill-quality/` | `scripts/harness/skill-quality/index.ts` | harness-api経由。内部: `harness:collect-lessons`（v0互換から移行） | なし | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json` |
+| ci-governance | `scripts/harness/ci-governance/` | `scripts/harness/ci-governance/index.ts` | `harness:ci-template` | `js-yaml` | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json`, `.harness/error-history.json` |
+| regression-suite | `scripts/harness/regression-suite/` | `scripts/harness/__tests__/regression/` | 単独CLIなし。Vitestテストスイート（k-requirements, gng-gate, agent-independence, v0-migration）として実行 | なし | `phasegate.config.json`, `scripts/harness/regression-suite/infrastructure/seeds/v0_v1_test_mapping.md` |
 
 Shared Kernel公開面は以下の**6ファイル**に拡張する（Wave 1の3ファイルに追記）：
 
@@ -72,7 +72,7 @@ scripts/harness/shared-kernel/
 ### §2.2 統合ディレクトリ構造（確定版）
 
 ```text
-GSDLC_HARNESS/
+phasegate/
 ├── scripts/harness/
 │   ├── config-foundation/
 │   │   ├── domain/
@@ -185,7 +185,7 @@ GSDLC_HARNESS/
 │       └── requirement-test-matrix.schema.json
 ├── .harness/               (Wave 3 新規)
 │   └── error-history.json
-├── harness.config.json
+├── phasegate.config.json
 ├── biome.json
 ├── package.json
 ├── pnpm-lock.yaml
@@ -206,9 +206,9 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
 
 ```json
 {
-  "name": "gsdlc-harness",
+  "name": "phasegate",
   "version": "1.0.0",
-  "description": "GSDLC Harness Engineering Toolkit - Governed Software Development Life Cycle",
+  "description": "Phasegate Engineering Toolkit - Phasegate",
   "private": true,
   "type": "module",
   "scripts": {
@@ -369,7 +369,7 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
 | C-10 | テストは `scripts/harness/__tests__/{unit-name}/` 配下へ配置し、AAA、`actual` 命名、日本語テスト名、ドメインモック禁止を適用する。 |
 | C-11 | Shared Kernelは `HarnessError`, `HarnessConfigV2`, `StoryId` の3型だけを公開し、他Unitは内部実装ディレクトリを直接importしない。 |
 | C-12 | `traceability-model` は単独Presentation層を持たない。外部公開は `index.ts` と `shared-kernel/story-id.ts` のみとする。 |
-| C-13 | `harness.config.json` は移行完了後に `HarnessConfigV2` を唯一の構造契約とし、`phaseDependencies` と `planningMode` の意味論は対応Unit側が所有する。 |
+| C-13 | `phasegate.config.json` は移行完了後に `HarnessConfigV2` を唯一の構造契約とし、`phaseDependencies` と `planningMode` の意味論は対応Unit側が所有する。 |
 | C-14 | `fast-glob` は validator-system, nyquist-validation, harness-api の infrastructure 層のファイルスキャン用途に限定し、domain/application/presentation 層から直接利用しない。 |
 | C-15 | `js-yaml` は ci-governance の infrastructure 層に限定して使用し、他Unit から直接利用しない。 |
 | C-16 | `ts-morph` は agent-integration の infrastructure 層（ImportAnalyzerPort実装）に限定して使用し、他Unit から直接利用しない。 |
@@ -389,7 +389,7 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
 - [ ] Node.js 20系LTS が利用可能である
 - [ ] `pnpm` が利用可能である
 - [ ] `corepack enable` 済み、または同等の pnpm 実行環境が整っている
-- [ ] プロジェクトルートが `GSDLC_HARNESS` である
+- [ ] プロジェクトルートが `phasegate` である
 
 ### §6.2 依存インストール
 

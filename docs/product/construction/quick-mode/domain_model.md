@@ -121,7 +121,7 @@
 | `bugfix` | 既存実装ファイルの修正（domain/以外, changeKind=MODIFY） |
 | `docs` | `docs/`配下のファイル変更 |
 | `test` | `__tests__/`配下 or `*.test.ts` or `*.spec.ts` |
-| `config` | `*.config.json` or `*.config.ts` or `harness.config.json` |
+| `config` | `*.config.json` or `*.config.ts` or `phasegate.config.json` |
 | `feature` | 新規実装ファイル追加（domain/・port/以外, changeKind=CREATE） |
 | `domain` | `domain/`配下のファイル（CREATE/MODIFY/DELETE） |
 | `api` | Port/Adapterインターフェースファイル（`*port.ts`, `*adapter.ts`） |

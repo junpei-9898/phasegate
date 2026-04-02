@@ -1,4 +1,4 @@
-# GSDLC Harness — Product Overview
+# Phasegate — Product Overview
 
 > **Version**: v1.0 (Draft)
 > **作成日**: 2026-03-10
@@ -11,7 +11,7 @@
 
 ### 1.1 正式名称
 
-**GSDLC** = **G**overned **S**oftware **D**evelopment **L**ife**C**ycle
+**Phasegate** = **G**overned **S**oftware **D**evelopment **L**ife**C**ycle
 
 | 要素 | 意味 | 由来 |
 |------|------|------|
@@ -23,7 +23,7 @@
 
 ### 1.2 What This Is
 
-**GSDLC Harnessは、AIエージェントによるソフトウェア開発の全ライフサイクルを、品質ゲート付きで自律的にオーケストレーションするエンジニアリングツールキットである。** DDD設計方法論と5層品質防御（L0-L4）を核に持ち、FUSE Hooks Engineによる決定論的ガバナンスとWave並列実行によって、設計から実装・検証までを安全かつ高速に駆動する。
+**Phasegateは、AIエージェントによるソフトウェア開発の全ライフサイクルを、品質ゲート付きで自律的にオーケストレーションするエンジニアリングツールキットである。** DDD設計方法論と5層品質防御（L0-L4）を核に持ち、FUSE Hooks Engineによる決定論的ガバナンスとWave並列実行によって、設計から実装・検証までを安全かつ高速に駆動する。
 
 **対象ユーザー**: AIエージェント（Claude Code, Codex等）を活用してプロダクション品質のソフトウェアを構築するエンジニアリングチーム。「AIにコードを書かせたいが、品質を妥協したくない」チームのためのもの。
 
@@ -55,10 +55,10 @@ v1で追加される全ての機能（Wave並列実行、コンテキスト管�
 
 一方、GSD2.0フレームワークは正反対の強みを持っていた。コンテキストエンジニアリング、Wave並列実行、セッション管理。速度は出るが、品質の担保は開発者の自己規律に委ねられていた。
 
-**GSDLC v1は、この二つの世界を一つにする。** GSD2.0の「オーケストレーションエンジン」をAIDLCの「品質エンフォーサー」の内側に組み込む。
+**Phasegate v1は、この二つの世界を一つにする。** GSD2.0の「オーケストレーションエンジン」をAIDLCの「品質エンフォーサー」の内側に組み込む。
 
 ```
-v0 (AIDLC)        v1 (GSDLC)
+v0 (AIDLC)        v1 (Phasegate)
 品質 ████████████   品質 ████████████  ← 維持
 速度 ████           速度 ██████████    ← Wave並列で強化
 効率 ███            効率 █████████     ← コンテキスト管理で強化
@@ -70,7 +70,7 @@ v0 (AIDLC)        v1 (GSDLC)
 **「GSD2.0の概念のみを自前実装し、AIDLCの品質保証層と設計方法論を維持する」**
 
 - GSD2.0のnpmパッケージには依存しない
-- GSD2.0のコマンド体系（`/gsd:*`）は露出せず、GSDLCスキル内部に統合
+- GSD2.0のコマンド体系（`/gsd:*`）は露出せず、Phasegateスキル内部に統合
 - AIDLCのK1-K13非交渉要件（+K3.5）は絶対維持
 
 ---
@@ -122,7 +122,7 @@ FUSE Hooks EngineはこのExecutable Governanceに**物理的強制力**を与�
 - **入口**: `/gsdlc:quick` で即座にアドホックタスクを実行
 - **標準**: `/gsdlc:execute <unit>` でWave並列実行が自動的に動く
 - **詳細**: 個別スキル（domain-designer等）を直接呼び出せる
-- **設定**: `harness.config.json` で全パラメータを制御
+- **設定**: `phasegate.config.json` で全パラメータを制御
 
 ---
 
@@ -203,7 +203,7 @@ FUSE Hooks EngineはこのExecutable Governanceに**物理的強制力**を与�
 ╠═══════════════════════════════════════════════════════════════════════╣
 ║  Layer 5: CONFIGURATION                                              ║
 ║  ─────────────────────────────────────────────────────────────────── ║
-║  harness.config.json (Single Source of Truth)                        ║
+║  phasegate.config.json (Single Source of Truth)                        ║
 ║  ├── project / layers / harnesses / paths / reporting    ← AIDLC    ║
 ║  ├── orchestration { mode, parallelization, modelProfile,            ║
 ║  │     contextStrategy, commitStrategy, workflow }       ← GSD統合  ║
@@ -258,7 +258,7 @@ FUSE Hooks Engine: 横断的にLayer 2-4を強化（レイヤーではなく基�
 │  ・Quick Mode（ハーネス緩和ルール判定）                   │
 │  ・スコープ変更管理（add/insert/remove phase）           │
 └─────────────────────────────────────────────────────────┘
-      ↕ 共有: harness.config.json, HarnessError, Hooks
+      ↕ 共有: phasegate.config.json, HarnessError, Hooks
 ┌─────────────────────────────────────────────────────────┐
 │  AIDLCが担う領域 (WHAT to build & quality to enforce)    │
 │  ─────────────────────────────────────────────────────  │
@@ -408,7 +408,7 @@ FUSE Hooks Engine: 横断的にLayer 2-4を強化（レイヤーではなく基�
 | `/gsdlc:pause` | 作業中断。STATE.mdに進捗・コンテキスト保存 |
 | `/gsdlc:resume` | 作業再開。STATE.mdからコンテキスト復元 + 起動ルーチン実行 |
 | `/gsdlc:map-codebase` | 既存コードベース分析（Brownfield対応） |
-| `/gsdlc:settings` | harness.config.json設定変更 |
+| `/gsdlc:settings` | phasegate.config.json設定変更 |
 
 **起動ルーチン**（`/gsdlc:resume` 内部で自動実行）:
 1. 作業ディレクトリ確認 + Git状態チェック
@@ -490,7 +490,7 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
                 品質保証の深さ
                 ▲
                 │
-        GSDLC ■ │
+        Phasegate ■ │
                 │         AIDLC v0 ●
                 │
                 │              BMAD ●
@@ -502,14 +502,14 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
                 └──────────────────────► 実行効率・速度
 ```
 
-**GSDLCのユニークポジション**: 「コードレベルのアーキテクチャ強制力を持つ、唯一のAI開発オーケストレーションフレームワーク」
+**Phasegateのユニークポジション**: 「コードレベルのアーキテクチャ強制力を持つ、唯一のAI開発オーケストレーションフレームワーク」
 
-| 比較対象 | 相手の強み | GSDLCとの違い |
+| 比較対象 | 相手の強み | Phasegateとの違い |
 |---------|-----------|-------------|
-| **GSD2.0** | コンテキスト管理、Wave並列、セッション管理 | GSDLCはGSDの実行概念を品質ゲートの中に封じ込める |
-| **BMAD** | ロールベースのエージェント設計 | GSDLCは「プロンプトで願う」のではなく「コードで強制する」 |
-| **Speckit** | 仕様駆動開発、型安全な仕様管理 | GSDLCは仕様から実行・検証まで全ライフサイクルをカバー |
-| **Taskmaster** | タスク分解と依存管理 | GSDLCはタスク管理の上位に設計方法論と品質ハーネスを持つ |
+| **GSD2.0** | コンテキスト管理、Wave並列、セッション管理 | PhasegateはGSDの実行概念を品質ゲートの中に封じ込める |
+| **BMAD** | ロールベースのエージェント設計 | Phasegateは「プロンプトで願う」のではなく「コードで強制する」 |
+| **Speckit** | 仕様駆動開発、型安全な仕様管理 | Phasegateは仕様から実行・検証まで全ライフサイクルをカバー |
+| **Taskmaster** | タスク分解と依存管理 | Phasegateはタスク管理の上位に設計方法論と品質ハーネスを持つ |
 
 ---
 
@@ -524,7 +524,7 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
 | **v1必須** | Quick Mode（ハーネス緩和版ad-hocタスク実行） | ユーザビリティ |
 | **v1必須** | セッション継続性（pause/resume + STATE.md） | ワークフロー改善 |
 | **v1必須** | ライフサイクル管理（milestone + ROADMAP.md + progress） | プロジェクト可視化 |
-| **v1必須** | harness.config.json v2（orchestrationセクション統合） | 設定統一 |
+| **v1必須** | phasegate.config.json v2（orchestrationセクション統合） | 設定統一 |
 | **v1必須** | ADR初期作成（10件以上） + archgateパターン | ベストプラクティス |
 | **v1必須** | リンター設定保護Hook + Stop Hookテストゲート | ベストプラクティス |
 | **v1必須** | HarnessErrorフォーマット拡充（ADR参照+修正コード例） | エージェント自己修正率向上 |
@@ -551,22 +551,22 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
 |---|------|------|
 | 1 | **npmパッケージ非依存**: GSD概念のみ自前実装 | 外部依存リスク回避 |
 | 2 | **`.planning/` 不使用**: GSD由来アーティファクトは `docs/inception/` に配置 | folder_management_rules準拠 |
-| 3 | **設定ファイル統一**: GSD設定は `harness.config.json` に統合 | Single Source of Truth |
+| 3 | **設定ファイル統一**: GSD設定は `phasegate.config.json` に統合 | Single Source of Truth |
 | 4 | **yolo/skip-permissions 不採用**: deny listとhooksは不可侵 | セキュリティ境界 |
 | 5 | **2-Phase Execution維持**: 設計スキルの人間承認ゲートは絶対維持 | AI安全性の最後の砦 |
 | 6 | **プロジェクトローカル実行**: `~/.claude/` へのグローバルインストール不可 | 他PJへの影響回避 |
-| 7 | **既存コマンド体系尊重**: `/gsd:*` コマンドは露出せずGSDLCスキル内部に統合 | UX一貫性 |
-| 8 | **デフォルトOFF**: GSD由来機能は `harness.config.json` でデフォルト無効 | Progressive adoption |
+| 7 | **既存コマンド体系尊重**: `/gsd:*` コマンドは露出せずPhasegateスキル内部に統合 | UX一貫性 |
+| 8 | **デフォルトOFF**: GSD由来機能は `phasegate.config.json` でデフォルト無効 | Progressive adoption |
 
 ---
 
 ## 10. 非交渉要件（v0からの不変契約）
 
-以下はGSDLC v1においていかなる統合・最適化・簡素化の圧力にも屈してはならない要件である。
+以下はPhasegate v1においていかなる統合・最適化・簡素化の圧力にも屈してはならない要件である。
 
 | # | 要件 | 根拠 |
 |---|------|------|
-| K1 | **5層防御モデル** (L0-L4, L0はFUSE利用時) | GSDLCの差別化要因そのもの |
+| K1 | **5層防御モデル** (L0-L4, L0はFUSE利用時) | Phasegateの差別化要因そのもの |
 | K2 | **Phase Gate** | 設計→実装の順序をコードレベルで強制 |
 | K3 | **Biome AST解析**（v0 ESLintから移行） | importグラフ解析+循環依存検出。プロンプトでは代替不可能 |
 | K3.5 | **@unit/@layerメタデータ** | 全ソースファイルのUnit・Layer帰属を強制。コード⇔設計トレーサビリティの基盤 |
@@ -579,7 +579,7 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
 | K10 | **Security/Performance検出** | ハードコード秘密、SQLインジェクション、ループ内await、N+1検出、bundleSizeLimit |
 | K11 | **Drift Detection** | 設計にあるがコードにない / コードにあるが設計にない双方向検出 |
 | K12 | **Consistency Checker** | 文書間レイヤー整合性チェック |
-| K13 | **harness.config.json** | 単一設定ファイル。GSD設定もここに統合 |
+| K13 | **phasegate.config.json** | 単一設定ファイル。GSD設定もここに統合 |
 
 ---
 
@@ -612,7 +612,7 @@ v0で確立した143テスト（バリデータ・CLIコマンド・Biomeルー�
 
 ## 13. FUSE Hooks Engine — Fallback設計
 
-FUSE Hooks Engineはオプショナルな横断基盤である。FUSE利用不可能な環境でもGSDLCの全機能は動作する。
+FUSE Hooks Engineはオプショナルな横断基盤である。FUSE利用不可能な環境でもPhasegateの全機能は動作する。
 
 | 機能 | FUSE利用時（決定論的） | FUSE未使用時（プロンプト+既存ツール） |
 |------|----------------------|--------------------------------------|
@@ -637,7 +637,7 @@ FUSE Hooks Engineはオプショナルな横断基盤である。FUSE利用不�
 - Quick Mode（quick-implementor + ハーネス緩和ルール）
 - セッション管理（session-manager + STATE.md + pause/resume + 起動ルーチン）
 - ライフサイクル管理（milestone-manager + ROADMAP.md + progress）
-- harness.config.json v2（orchestrationセクション）
+- phasegate.config.json v2（orchestrationセクション）
 - ADR初期作成（10件）+ リンター設定保護Hook + Stop Hookテストゲート
 - HarnessErrorフォーマット拡充（ADR参照 + 修正コード例を全バリデータに統一）
 - AGENTS.md改善（バリデータ一覧→`harness:status`実行方式、ADR参照リンク追加）
@@ -694,7 +694,7 @@ v0の`folder_management_rules.md`を継承し、GSD由来アーティファク�
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | GSD npmパッケージ非依存 | 外部依存リスク回避、自己完結性の維持 | — Pending |
-| GSDLC命名（Governed SDLC） | GSD精神 + AIDLC品質哲学のダブルミーニング | — Pending |
+| Phasegate命名（Governed SDLC） | GSD精神 + AIDLC品質哲学のダブルミーニング | — Pending |
 | Wave並列をPhase 2に延期 | 設計複雑度が高く、v1 MVHではコンテキスト管理を優先 | — Pending |
 | yolo/skip-permissions不採用 | AIDLC安全哲学との根本的対立 | — Pending |
 | `.planning/`不使用 | folder_management_rules.mdとの二重化防止 | — Pending |

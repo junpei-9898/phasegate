@@ -1,4 +1,4 @@
-# GSDLC Quality Harness v1 — ユーザーストーリー一覧
+# Phasegate v1 — ユーザーストーリー一覧
 
 > **ステータス**: Phase 2（実行）— codex 1stレビュー済み・指摘反映済み
 > **作成日**: 2026-03-12
@@ -16,7 +16,7 @@
 | H-01 | Biome AST解析基盤 | 3 | 1 |
 | H-02 | Phase Dependency Model | 3 | 1 |
 | H-03 | Traceability Model | 3 | 1 |
-| H-04 | harness.config.json v2 | 3 | 1 |
+| H-04 | phasegate.config.json v2 | 3 | 1 |
 | H-05 | ADR基盤 | 3 | 1 |
 | H-06 | HarnessError体系 | 3 | 1 |
 | H-07 | Nyquist検証層 | 4 | 2 |
@@ -161,12 +161,12 @@ K6（2-Phase Execution）, K15（Plan文書の必須生成）
 **優先度**: Should
 
 **As a** ハーネス管理者,
-**I want to** harness.config.jsonの`phaseDependencies`セクションでフェーズ依存のカスタマイズ（依存の追加・緩和）を設定したい,
+**I want to** phasegate.config.jsonの`phaseDependencies`セクションでフェーズ依存のカスタマイズ（依存の追加・緩和）を設定したい,
 **so that** PJ固有の事情（既存システムへの段階導入、特定フェーズの省略等）に対応できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: harness.config.jsonに`phaseDependencies`セクション（preset/override/customRules）が追加されている
+- [ ] AC-1: phasegate.config.jsonに`phaseDependencies`セクション（preset/override/customRules）が追加されている
 - [ ] AC-2: デフォルトフローへの依存追加（強化）が`customRules`で設定可能である
 - [ ] AC-3: デフォルトフローからの依存削除（緩和）には`override: true`の明示が必要である
 - [ ] AC-4: `story-implementor`前のテスト設計フェーズ存在が緩和不可である（TDD最低保証）
@@ -239,34 +239,34 @@ K3.5（@unit/@layer/@story-idメタデータ）
 
 ---
 
-## H-04: harness.config.json v2
+## H-04: phasegate.config.json v2
 
-### H04-01: harness.config.json v2スキーマ定義
+### H04-01: phasegate.config.json v2スキーマ定義
 
-**Epic**: H-04 harness.config.json v2
+**Epic**: H-04 phasegate.config.json v2
 **旧US**: US-029改修
 **優先度**: Must
 
 **As a** ハーネス管理者,
-**I want to** harness.config.json v2のスキーマ（project/layers/quickMode/phaseDependencies/planningMode/paths/reporting/harnesses）を定義したい,
+**I want to** phasegate.config.json v2のスキーマ（project/layers/quickMode/phaseDependencies/planningMode/paths/reporting/harnesses）を定義したい,
 **so that** 品質設定のSingle Source of Truthが確立され、全バリデータが統一的に設定を参照できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: harness.config.json v2のJSONスキーマが定義され、`project`/`layers`/`quickMode`/`phaseDependencies`/`planningMode`/`paths`/`reporting`/`harnesses`セクションが含まれる
+- [ ] AC-1: phasegate.config.json v2のJSONスキーマが定義され、`project`/`layers`/`quickMode`/`phaseDependencies`/`planningMode`/`paths`/`reporting`/`harnesses`セクションが含まれる
 - [ ] AC-2: `layers`セクションでL1-L4の有効/無効・バリデータ構成・閾値が設定可能である
 - [ ] AC-3: `quickMode`セクションでallowedCategories/maintainedLayers/relaxedGatesが設定可能である
 - [ ] AC-4: JSONスキーマバリデーションが通過するサンプル設定ファイルが作成されている
 - [ ] AC-5: 無効なスキーマの設定ファイルに対してバリデーションエラーが検出される
 
 #### 対応非交渉要件
-K13（harness.config.json）
+K13（phasegate.config.json）
 
 ---
 
 ### H04-02: Preset System定義と切替
 
-**Epic**: H-04 harness.config.json v2
+**Epic**: H-04 phasegate.config.json v2
 **旧US**: 新規
 **優先度**: Must
 
@@ -286,7 +286,7 @@ K13（harness.config.json）
 
 ### H04-03: GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替
 
-**Epic**: H-04 harness.config.json v2
+**Epic**: H-04 phasegate.config.json v2
 **旧US**: US-029一部
 **優先度**: Must
 
@@ -296,7 +296,7 @@ K13（harness.config.json）
 
 #### 受け入れ基準
 
-- [ ] AC-1: harness.config.json内のGSD由来品質機能がデフォルトで`enabled: false`である
+- [ ] AC-1: phasegate.config.json内のGSD由来品質機能がデフォルトで`enabled: false`である
 - [ ] AC-2: `harness:enable <feature>`コマンドで個別機能を有効化できる
 - [ ] AC-3: `harness:disable <feature>`コマンドで個別機能を無効化できる
 - [ ] AC-4: `harness:enable --list`で有効化/無効化可能な機能名一覧が表示される
@@ -344,7 +344,7 @@ K13（harness.config.json）
   - FUSE Hooks Engineはv1スコープ外
   - HarnessErrorにfix_example必須化
   - Quick Mode適用条件の厳格定義
-  - 設定ファイル分離（harness.config.json / orchestration.config.json）
+  - 設定ファイル分離（phasegate.config.json / orchestration.config.json）
   - Nyquist統合（GSD-2 Truths/Artifacts検証パターン）
   - 成果物駆動の状態導出
   - スタック検出（バリデータ無限ループ防止）
@@ -583,7 +583,7 @@ K10（Security/Performance検出）
 
 #### 受け入れ基準
 
-- [ ] AC-1: coverageバリデータがharness.config.jsonのcoverageThresholdを読み取り、閾値検証を実行する
+- [ ] AC-1: coverageバリデータがphasegate.config.jsonのcoverageThresholdを読み取り、閾値検証を実行する
 - [ ] AC-2: standardプリセット（90%）での閾値検証が正常に動作する
 - [ ] AC-3: strictプリセット（95%）での閾値検証が正常に動作する
 - [ ] AC-4: 閾値未達時のHarnessError（L3-003）に現在のカバレッジ値と不足分が含まれる
@@ -650,7 +650,7 @@ K12（Consistency Checker）
 - [ ] AC-1: dead-codeバリデータが未使用エクスポート（export されているが他ファイルからimportされていない）を検出する
 - [ ] AC-2: dead-codeバリデータが到達不能コード（条件分岐で到達し得ないブロック）を検出する
 - [ ] AC-3: 検出時のHarnessError（L4-003）にadr_ref + fix_example + 対象ファイルパス・行番号が含まれる
-- [ ] AC-4: strictプリセットでのみ有効（deadCodeGC機能としてharness.config.jsonで制御）
+- [ ] AC-4: strictプリセットでのみ有効（deadCodeGC機能としてphasegate.config.jsonで制御）
 
 ---
 
@@ -735,19 +735,19 @@ K12（Consistency Checker）
 
 ## H-10: Quick Mode
 
-### H10-01: Quick Mode設定（harness.config.json quickModeセクション）
+### H10-01: Quick Mode設定（phasegate.config.json quickModeセクション）
 
 **Epic**: H-10 Quick Mode
 **旧US**: US-010
 **優先度**: Must
 
 **As a** ハーネス管理者,
-**I want to** harness.config.jsonの`quickMode`セクション（allowedCategories/maintainedLayers/relaxedGates）でQuick Modeの対象条件を定義したい,
+**I want to** phasegate.config.jsonの`quickMode`セクション（allowedCategories/maintainedLayers/relaxedGates）でQuick Modeの対象条件を定義したい,
 **so that** Quick Modeの対象・対象外を明確に設定し、運用ポリシーに合わせてカスタマイズできる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: harness.config.jsonに`quickMode`セクションが追加されている
+- [ ] AC-1: phasegate.config.jsonに`quickMode`セクションが追加されている
 - [ ] AC-2: `allowedCategories`で対象カテゴリ（bugfix/docs/test/config）が設定可能である
 - [ ] AC-3: `maintainedLayers`で維持するレイヤー（デフォルト: L1, L2）が設定可能である
 - [ ] AC-4: `relaxedGates`で緩和するゲート（デフォルト: phase-gate, 2-phase-execution）が設定可能である
@@ -1039,7 +1039,7 @@ K8（Cascade Updater）
 - [ ] AC-1: `aidlc-gate.yml`テンプレートが作成され、PR時にL1-L3バリデータが実行される
 - [ ] AC-2: `consistency-check.yml`テンプレートが作成され、週次でL4バリデータが実行される
 - [ ] AC-3: `.husky/pre-commit`テンプレートが作成され、commit時にL2バリデータが実行される
-- [ ] AC-4: 各テンプレートがharness.config.jsonのプリセット設定を参照する
+- [ ] AC-4: 各テンプレートがphasegate.config.jsonのプリセット設定を参照する
 
 ---
 
@@ -1057,7 +1057,7 @@ K8（Cascade Updater）
 
 - [ ] AC-1: 同一HarnessError codeの繰り返し（閾値: 3回以上）を検出する仕組みが実装されている
 - [ ] AC-2: 反復検出時に自動エスカレーション（ログ出力+警告メッセージ）が実行される
-- [ ] AC-3: エスカレーション閾値がharness.config.jsonで設定可能である
+- [ ] AC-3: エスカレーション閾値がphasegate.config.jsonで設定可能である
 - [ ] AC-4: 反復検出のリセット条件（エラー解消時）が定義されている
 
 ---
@@ -1291,7 +1291,7 @@ K8（Cascade Updater）
 #### 受け入れ基準
 
 - [ ] AC-1: 設計文書の最終更新日からの経過日数を検出するバリデータが実装されている
-- [ ] AC-2: 閾値（日数）がharness.config.jsonで設定可能である
+- [ ] AC-2: 閾値（日数）がphasegate.config.jsonで設定可能である
 - [ ] AC-3: 閾値超過時のHarnessErrorにadr_ref + 推奨アクションが含まれる
 
 ---

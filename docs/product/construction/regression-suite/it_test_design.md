@@ -24,7 +24,7 @@
 |--------|------|------|
 | `fixtures/v0-spec-files/` | v0テスト仕様ファイル（`scripts/__tests__/xxx.test.ts` 形式）のスタブ群 | FileSystemV0SpecReaderAdapterのテスト用 |
 | `fixtures/v0_v1_test_mapping.md` | MigrationMapping Markdownテーブルのスタブ | MarkdownMigrationMappingRepositoryAdapterのテスト用 |
-| `fixtures/harness.config.json` | HarnessConfigV2スタブ（coverageThreshold=90） | HarnessConfigQueryAdapterのテスト用 |
+| `fixtures/phasegate.config.json` | HarnessConfigV2スタブ（coverageThreshold=90） | HarnessConfigQueryAdapterのテスト用 |
 | `fixtures/ci-gate-output/` | JSON出力先ディレクトリ（書き込みテスト用） | JsonCiGateResultWriterAdapterのテスト用 |
 
 ### テスト環境設定

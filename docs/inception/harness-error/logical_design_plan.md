@@ -32,7 +32,7 @@
 - `HarnessError` は Shared Kernel として **全Unit に公開する最小契約** のみを外部に露出する
 - `ErrorDefinitionRegistry`、`SeverityContractEnforcer`、`FixExampleValidatorPort` の所有権は harness-error に置く
 - `harness-api` の Response DTO や各 validator の実行ロジック自体は本Unitの所有外とし、harness-error は契約と正規化機構を提供する
-- 既存の [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/GSDLC_HARNESS/scripts/harness/core/error-reporter.ts) は移行対象とし、Phase 1 では canonical source にしない
+- 既存の [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/core/error-reporter.ts) は移行対象とし、Phase 1 では canonical source にしない
 
 ---
 
@@ -89,7 +89,7 @@ scripts/harness/
 
 - `shared-kernel/harness-error.ts` を **他Unit向け唯一の公開入口** とする
 - `harness-error/domain` には内部用のリッチな値オブジェクトを置き、他Unitへは露出しない
-- `infrastructure/legacy` に現行 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/GSDLC_HARNESS/scripts/harness/core/error-reporter.ts) や validator 固有出力との互換アダプターを置く
+- `infrastructure/legacy` に現行 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/core/error-reporter.ts) や validator 固有出力との互換アダプターを置く
 
 ### 2.4 重要な設計上の判断
 
@@ -250,11 +250,11 @@ Phase 1では専用Presentation層は持たない。理由は以下のとおり�
 
 - `docs/ADR/` fixture を使った ADR 実在確認テスト
 - fix_example 適用前後の validator 実行テスト
-- 現行 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/GSDLC_HARNESS/scripts/harness/core/error-reporter.ts) から canonical DTO への変換テスト
+- 現行 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/core/error-reporter.ts) から canonical DTO への変換テスト
 
 ### 6.4 契約テスト
 
-- Shared Kernel の公開型が [`docs/product/units/integration_contract.md`](/Users/jumpei/dev/ALIDL_HARNESS/GSDLC_HARNESS/docs/product/units/integration_contract.md) の `HarnessError` 契約と一致することを検証する
+- Shared Kernel の公開型が [`docs/product/units/integration_contract.md`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/docs/product/units/integration_contract.md) の `HarnessError` 契約と一致することを検証する
 - `severity` readonly 契約の型テストと、実行時の freeze テストを両方置く
 - fix_example 更新時に必ず `ValidateAllFixExamplesUseCase` が走る CI テストを追加する
 

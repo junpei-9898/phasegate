@@ -21,11 +21,11 @@
 | M-006 | ESLintテンプレート削除 | `scripts/harness/templates/eslint.config.js` | 削除 | 未着手 |
 | M-007 | ESLintテストのBiome対応テストへの移行 | `scripts/harness/__tests__/eslint-rules/*.test.ts` → 各Unit内テスト | 移行 | 未着手 |
 
-### 1.2 harness.config.json v1 → v2
+### 1.2 phasegate.config.json v1 → v2
 
 | # | マイグレーション | 対象 | 方向 | 状態 |
 |---|----------------|------|------|------|
-| M-008 | harness.config.json v2スキーマ定義 | `scripts/harness/config-foundation/schema/harness-config-v2.schema.json` | 新規作成 | 未着手 |
+| M-008 | phasegate.config.json v2スキーマ定義 | `scripts/harness/config-foundation/schema/harness-config-v2.schema.json` | 新規作成 | 未着手 |
 | M-009 | v1→v2自動マイグレーション | `migrate-config` CLIコマンド（`scripts/harness/cli/migrate-config.ts`） | 新規作成 | 未着手 |
 | M-010 | v1/v2共存ロジック | `scripts/harness/config-foundation/usecase/load-config-usecase.ts` で version判定 | 新規作成 | 未着手 |
 
@@ -52,7 +52,7 @@
 
 ### 2.1 Unit構成一覧
 
-GSDLC Harnessはローカル開発ツールキットであり、サーバープロセスは持たない。以下は各Unitのランタイム構成。
+Phasegateはローカル開発ツールキットであり、サーバープロセスは持たない。以下は各Unitのランタイム構成。
 
 #### config-foundation
 
@@ -62,7 +62,7 @@ GSDLC Harnessはローカル開発ツールキットであり、サーバープ�
 | エントリポイント | `index.ts`（loadConfig, toggleFeature等のファサード） |
 | CLIコマンド | `harness:enable`, `harness:disable`, `harness:migrate-config` |
 | 外部依存 | `ajv` ^10.0.0 |
-| 設定ファイル | `harness.config.json`（プロジェクトルート） |
+| 設定ファイル | `phasegate.config.json`（プロジェクトルート） |
 | スキーマファイル | `scripts/harness/config-foundation/schema/harness-config-v2.schema.json` |
 | バックアップ先 | `.harness/backups/` |
 
@@ -104,7 +104,7 @@ GSDLC Harnessはローカル開発ツールキットであり、サーバープ�
 ### 2.2 統合ディレクトリ構造（確定版）
 
 ```
-GSDLC_HARNESS/
+phasegate/
 ├── scripts/harness/                         # 全TypeScript Unit統一配置
 │   ├── config-foundation/                   # Unit: config-foundation
 │   │   ├── domain/
@@ -219,7 +219,7 @@ GSDLC_HARNESS/
 │       ├── aidlc-gate.yml                   # v0既存（維持）
 │       └── gsdlc-ci-v1.yml                  # v1新規
 │
-├── harness.config.json                      # v1→v2（config-foundation管理）
+├── phasegate.config.json                      # v1→v2（config-foundation管理）
 ├── biome.json                               # Biome統合設定（ルートに配置）
 ├── package.json                             # ルート統合（workspaces不使用）
 ├── pnpm-lock.yaml                           # pnpm統一
@@ -231,9 +231,9 @@ GSDLC_HARNESS/
 
 ```json
 {
-  "name": "gsdlc-harness",
+  "name": "phasegate",
   "version": "1.0.0",
-  "description": "GSDLC Harness Engineering Toolkit - Governed Software Development Life Cycle",
+  "description": "Phasegate Engineering Toolkit - Phasegate",
   "private": true,
   "type": "module",
   "scripts": {
@@ -344,7 +344,7 @@ GSDLC_HARNESS/
 
 ## 3. 認証・認可アーキテクチャ
 
-GSDLC Harnessはローカル開発ツールキットであり、認証・認可機構は持たない（integration_contract.md §5準拠）。
+Phasegateはローカル開発ツールキットであり、認証・認可機構は持たない（integration_contract.md §5準拠）。
 
 ### 3.1 アクセス制御（認証代替）
 
@@ -358,7 +358,7 @@ GSDLC Harnessはローカル開発ツールキットであり、認証・認可�
 
 ### 3.2 設定ファイル保護
 
-- `harness.config.json`: config-foundation Unitの`ConfigRepository`ポート経由のみで読み書き
+- `phasegate.config.json`: config-foundation Unitの`ConfigRepository`ポート経由のみで読み書き
 - `biome.json`: biome-toolchain Unitの`BiomeConfigLoader`ポート経由のみで読み取り
 - `docs/ADR/*.md`: adr-documentation Unitの`AdrRepository`ポート経由のみで読み書き
 
@@ -368,13 +368,13 @@ GSDLC Harnessはローカル開発ツールキットであり、認証・認可�
 
 ### 4.1 シード戦略
 
-GSDLC Harnessは3層シード戦略をとる（ただし認証テストデータは該当なし）。
+Phasegateは3層シード戦略をとる（ただし認証テストデータは該当なし）。
 
 | 層 | 用途 | データ | 生成タイミング |
 |----|------|--------|--------------|
 | マスター | ADR初期テンプレート | `docs/ADR/template.md` | 環境構築時に静的配置 |
 | 業務サンプル | 初期10件ADR | `seed/initial-adrs.ts` 定数定義 | `seedInitialAdrs()` UseCase実行時（Q5: A案） |
-| 設定デフォルト | harness.config.json v2テンプレート | `harness-config-v2.schema.json` の default値 | `loadConfig()` で v1検出時に自動マイグレーション |
+| 設定デフォルト | phasegate.config.json v2テンプレート | `harness-config-v2.schema.json` の default値 | `loadConfig()` で v1検出時に自動マイグレーション |
 
 ### 4.2 初期10件ADR（予定）
 
@@ -385,7 +385,7 @@ adr-documentation Unitの`seed/initial-adrs.ts`に定義。`AdrId.create()`フ�
 | ADR-001 | Phase Gate強制 |
 | ADR-002 | ヘキサゴナルアーキテクチャ採用 |
 | ADR-003 | ESLint→Biome移行 |
-| ADR-004 | harness.config.json Single Source of Truth |
+| ADR-004 | phasegate.config.json Single Source of Truth |
 | ADR-005 | FUSE Hooks Engine導入 |
 | ADR-006 | Nyquistバリデーション |
 | ADR-007 | Quick Mode設計 |
@@ -495,7 +495,7 @@ adr-documentation Unitの`seed/initial-adrs.ts`に定義。`AdrId.create()`フ�
 ### 7.1 gsdlc-ci-v1.yml（新規）
 
 ```yaml
-name: GSDLC Harness v1 CI
+name: Phasegate v1 CI
 
 on:
   push:

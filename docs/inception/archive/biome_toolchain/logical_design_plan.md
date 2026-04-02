@@ -208,9 +208,9 @@ Rust Pluginルール（no-layer-violation, enforce-folder-structure）のビル�
 
 ### [Question] Q3: no-layer-violationルールにおけるレイヤー境界定義の取得方式
 
-no-layer-violationルールはRust Pluginとして実装されるが、レイヤー境界定義（どのレイヤーからどのレイヤーへのインポートが許可されるか）をどこから取得するか。選択肢: (A) biome.json内のルール設定として定義 (B) 別の設定ファイル（harness.config.json等）から読み込み (C) Rust Plugin内にハードコード。
+no-layer-violationルールはRust Pluginとして実装されるが、レイヤー境界定義（どのレイヤーからどのレイヤーへのインポートが許可されるか）をどこから取得するか。選択肢: (A) biome.json内のルール設定として定義 (B) 別の設定ファイル（phasegate.config.json等）から読み込み (C) Rust Plugin内にハードコード。
 
-**推奨案:** (A) biome.json内のルール設定として定義する方式を推奨。理由: (1) Biomeプラグインの設定はbiome.jsonに集約すべき (2) architecture-philosophy.mdの依存方向ルール（domain -> port -> usecase -> controller）は安定しており変更頻度が低い (3) Rust Plugin API経由でルール設定を読み取れる。ただし、harness.config.jsonとの二重管理リスクは認識しておく。
+**推奨案:** (A) biome.json内のルール設定として定義する方式を推奨。理由: (1) Biomeプラグインの設定はbiome.jsonに集約すべき (2) architecture-philosophy.mdの依存方向ルール（domain -> port -> usecase -> controller）は安定しており変更頻度が低い (3) Rust Plugin API経由でルール設定を読み取れる。ただし、phasegate.config.jsonとの二重管理リスクは認識しておく。
 
 [Answer]
 推奨案にしましょう

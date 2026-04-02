@@ -196,9 +196,9 @@
 
 | target | describe | context | it |
 |--------|----------|---------|-----|
-| getL1Config | L1設定を取得する | 正常なharness.config.jsonがある場合 | enabled/rulesが返される |
+| getL1Config | L1設定を取得する | 正常なphasegate.config.jsonがある場合 | enabled/rulesが返される |
 | getL1Config | L1設定を取得する | layers.L1が未定義の場合 | 既定値{ enabled: true, rules: {} }が返される |
-| getL1Config | L1設定を取得する | harness.config.jsonが存在しない場合 | 既定値が返される |
+| getL1Config | L1設定を取得する | phasegate.config.jsonが存在しない場合 | 既定値が返される |
 
 ##### HarnessErrorFormatterAdapter
 

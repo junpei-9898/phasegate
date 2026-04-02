@@ -33,7 +33,7 @@ Quick Mode として明確に定義された条件下でのみ、ハーネスの
 
 ### 防波堤
 
-`harness.config.json` の `quickMode.allowedCategories` で適用条件を明示。条件外の変更には自動拒否する。
+`phasegate.config.json` の `quickMode.allowedCategories` で適用条件を明示。条件外の変更には自動拒否する。
 
 ## Consequences
 

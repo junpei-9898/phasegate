@@ -1118,6 +1118,6 @@ interface RecordPhaseOverrideAuditInput {
 **変更日**: 2026-03-22
 **変更理由**: `createPhaseDependencyModelModule()` の `defaultPhaseConfig.planningMode` が `'standard'`（無効値）にハードコードされていた。有効値は `'interactive' | 'embedded-qa'` のみであり、デフォルト呼び出し時に `InvalidPlanningModeError` がスローされ、`harness:check-phase` / `harness:check-ready` が全件エラーになっていた。
 
-**変更内容**: `planningMode: 'standard'` → `planningMode: 'interactive'` に修正（`harness.config.json` の `planningMode.default: 'interactive'` と一致させた）
+**変更内容**: `planningMode: 'standard'` → `planningMode: 'interactive'` に修正（`phasegate.config.json` の `planningMode.default: 'interactive'` と一致させた）
 
 **影響ファイル**: `scripts/harness/phase-dependency-model/composition-root.ts`

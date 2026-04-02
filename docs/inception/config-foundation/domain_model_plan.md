@@ -2,7 +2,7 @@
 
 ## 1. スコープ
 
-- **対象Unit**: config-foundation（H-04 harness.config.json v2）
+- **対象Unit**: config-foundation（H-04 phasegate.config.json v2）
 - **担当ストーリー**: H04-01（v2スキーマ定義）, H04-02（Preset System）, H04-03（デフォルト無効化+enable/disable）
 - **他Unitとの境界**:
   - 全Unit: HarnessConfigV2型をShared Kernelとして提供
@@ -28,7 +28,7 @@
 
 ### 集約候補と根拠
 
-1. **HarnessConfig（集約ルート）**: harness.config.jsonファイル全体を表す単一集約。設定ファイルの読み書きはファイル単位で行われ、セクション間の整合性（例: presetとlayersの整合性）を集約が保証する
+1. **HarnessConfig（集約ルート）**: phasegate.config.jsonファイル全体を表す単一集約。設定ファイルの読み書きはファイル単位で行われ、セクション間の整合性（例: presetとlayersの整合性）を集約が保証する
 
 ### v0 config-foundationからの変更点
 
@@ -41,7 +41,7 @@
 
 ## 3. 設計方針
 
-- **単一集約**: harness.config.json全体を1つのHarnessConfig集約で管理。ファイル単位I/Oの整合性境界
+- **単一集約**: phasegate.config.json全体を1つのHarnessConfig集約で管理。ファイル単位I/Oの整合性境界
 - **Preset解決**: PresetResolutionServiceがpreset名からデフォルト設定を展開し、個別上書きをdeep merge。配列は結合ではなく置換。プリセット展開後に最終バリデーションを実行
 - **スキーマバリデーション**: ConfigSchemaValidatorPort経由でJSONスキーマバリデーションを実行（ajv等の具体実装はInfrastructure層）。集約の不変条件は「Preset解決後の意味論的整合性」に集中し、構文検証はPort越しに委譲
 - **FeatureRegistry**: ACL的ドメインサービスとして実装。Wave 1では`harnesses`セクションキーのみで機能名一覧を提供。Wave 2でValidator ID Registryを合流。Portインターフェースで依存逆転

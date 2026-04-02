@@ -13,7 +13,7 @@ function buildPresetInfo(): PresetInfo {
 }
 
 function buildConfigSummary(): ConfigSummary {
-  return { configPath: 'harness.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+  return { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
 }
 
 function makeLayer(id: 'L1' | 'L2' | 'L3' | 'L4') {

@@ -14,7 +14,7 @@
 
 | 概念 | 分類 | 説明 |
 |------|------|------|
-| HarnessConfig | 集約ルート | harness.config.json全体の整合性境界 |
+| HarnessConfig | 集約ルート | phasegate.config.json全体の整合性境界 |
 | Preset | 値オブジェクト | minimal/standard/strict |
 | LayerConfig | 値オブジェクト | L1-L4の個別設定 |
 | QuickModeConfig | 値オブジェクト | Quick Mode設定 |
@@ -52,7 +52,7 @@
 
 ### 結論: 単一集約（HarnessConfig）
 
-harness.config.jsonファイル全体を1つのHarnessConfig集約で管理する。
+phasegate.config.jsonファイル全体を1つのHarnessConfig集約で管理する。
 
 ### なぜ集約にするのか
 
@@ -76,7 +76,7 @@ harness.config.jsonファイル全体を1つのHarnessConfig集約で管理す�
 
 | 集約ルート | 説明 |
 |-----------|------|
-| **HarnessConfig** | harness.config.json全体。Preset解決後の不変条件を保証する整合性境界 |
+| **HarnessConfig** | phasegate.config.json全体。Preset解決後の不変条件を保証する整合性境界 |
 
 ### 値オブジェクト
 
@@ -109,7 +109,7 @@ harness.config.jsonファイル全体を1つのHarnessConfig集約で管理す�
 
 | ポート | 方向 | 理由 |
 |--------|------|------|
-| **ConfigRepositoryPort** | 外部→ドメイン | harness.config.jsonファイルの読み書き |
+| **ConfigRepositoryPort** | 外部→ドメイン | phasegate.config.jsonファイルの読み書き |
 | **ConfigSchemaValidatorPort** | 外部→ドメイン | JSONスキーマバリデーション（ajv等） |
 | **FeatureRegistryPort** | 外部→ドメイン | 機能名一覧の段階的提供（Wave 1: harnesses keys、Wave 2: Validator ID Registry） |
 
@@ -145,7 +145,7 @@ harness.config.jsonファイル全体を1つのHarnessConfig集約で管理す�
 | デフォルト無効原則の検証 | ❌ ドメイン内 | 集約の不変条件チェック |
 | FeatureToggle操作 | ❌ ドメイン内 | 集約のコマンドメソッド |
 | JSONスキーマバリデーション | ✅ Port越し | ajv等の外部ライブラリ依存 |
-| harness.config.jsonファイルI/O | ✅ Port越し | ファイルシステムアクセス |
+| phasegate.config.jsonファイルI/O | ✅ Port越し | ファイルシステムアクセス |
 | 機能名一覧の取得 | ✅ Port越し | Wave 2でValidator ID Registryと合流 |
 
 ---

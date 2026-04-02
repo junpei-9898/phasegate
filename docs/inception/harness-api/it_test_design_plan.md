@@ -56,12 +56,12 @@
 
 | Adapter名 | 外部依存数 | テストケース概算 |
 |----------|----------|---------------|
-| ValidatorSystemExecutionAdapter | validator-system（1）+ harness.config.json（1） | 6ケース |
+| ValidatorSystemExecutionAdapter | validator-system（1）+ phasegate.config.json（1） | 6ケース |
 | PhaseDependencyModelQueryAdapter | phase-dependency-model（1）+ fs（1） | 5ケース |
 | BiomeAstEngineLintAdapter | biome-ast-engine（1）| 4ケース |
 | NyquistValidationImpactAnalysisAdapter | nyquist-validation（1）+ requirement-test-matrix.json（1） | 5ケース |
-| FileSystemArtifactScannerAdapter | fs/promises（1）+ fast-glob（1）+ harness.config.json（1） | 5ケース |
-| HarnessConfigQueryAdapter | config-foundation（1）+ harness.config.json（1） | 4ケース |
+| FileSystemArtifactScannerAdapter | fs/promises（1）+ fast-glob（1）+ phasegate.config.json（1） | 5ケース |
+| HarnessConfigQueryAdapter | config-foundation（1）+ phasegate.config.json（1） | 4ケース |
 
 ### Controller/API（CLIハンドラー）
 
@@ -91,7 +91,7 @@
 
 ### DBテストの方針
 
-- harness-apiはデータベースを持たない。外部依存はファイルシステム（`docs/`, `scripts/harness/`, `harness.config.json`）
+- harness-apiはデータベースを持たない。外部依存はファイルシステム（`docs/`, `scripts/harness/`, `phasegate.config.json`）
 - ファイルシステムへのアクセスが必要なAdapterテストは、テスト用一時ディレクトリ（`tmp/test-{uuid}/`）を利用する
 - Adapterの外部Unit依存（validator-system等）は Wave 2未完時はスタブ実装を使用する
 

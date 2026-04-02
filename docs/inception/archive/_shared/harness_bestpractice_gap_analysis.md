@@ -356,7 +356,7 @@
 
 **AIDLC_HARNESS現状**:
 - **フェーズは固定的**: Step 0→1→2→3→4→5→6→7→8の固定順序
-- フェーズゲートの設定は `harness.config.json` で静的に定義
+- フェーズゲートの設定は `phasegate.config.json` で静的に定義
 - `harness:enable` / `harness:disable` でバリデータの有効/無効は切替可能だが、フェーズの追加・挿入はできない
 - 設計プロセスの変更にはconfig/SKILL.mdの手動修正が必要
 
@@ -369,7 +369,7 @@
 **推奨アクション**:
 1. **フェーズスキップ機構の導入**（追加・挿入よりも優先度が高い）
    - 既に成果物が存在するフェーズの自動スキップ
-   - `harness.config.json` の `phase_gate.skip_if_exists: true` フラグ
+   - `phasegate.config.json` の `phase_gate.skip_if_exists: true` フラグ
 2. **プリセットベースのフェーズ構成**
    - `minimal`（domain-designer + story-implementorのみ）、`standard`（現在の全フェーズ）、`strict`（レビューフェーズ追加）のプリセット
    - 既存のプリセット機構（`scripts/harness/core/presets/`）を活用
@@ -394,7 +394,7 @@
 
 **推奨アクション**:
 1. **タスクスコープによるゲート強度の可変化**
-   - `harness.config.json` に `quick_mode` セクションを追加
+   - `phasegate.config.json` に `quick_mode` セクションを追加
    - Quick Modeでは一部バリデータ（architecture, dependency, security）のみ実行し、phase-gateをスキップ
 2. **Quick Mode対象の明確化**
    - 対象: テストファイルのみの変更、docs配下の修正、typo修正、リファクタリング（既存テストが全グリーン前提）
@@ -442,7 +442,7 @@
 - **`harness:init`** コマンドは存在するが、設定ファイル生成のみ
 - 既存コードベースの自動分析機能は未実装
 - Brownfieldプロジェクトへの導入は手動でメタデータ（`@unit`, `@layer`）を付与する必要あり
-- `harness.config.json` のプリセット（minimal/standard/strict）が段階的導入を支援するが、コードベース分析は含まない
+- `phasegate.config.json` のプリセット（minimal/standard/strict）が段階的導入を支援するが、コードベース分析は含まない
 
 **ギャップ深刻度**: **Important**
 

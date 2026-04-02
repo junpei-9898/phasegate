@@ -19,7 +19,7 @@ v0ではquick_modeセクション定義とquick-checkコマンドが中心だっ
 
 | Story ID | タイトル | 優先度 |
 |----------|---------|--------|
-| H10-01 | Quick Mode設定（harness.config.json quickModeセクション） | Must |
+| H10-01 | Quick Mode設定（phasegate.config.json quickModeセクション） | Must |
 | H10-02 | Quick Mode判定エンジン | Must |
 | H10-03 | Quick Modeバリデータ緩和実行 | Must |
 | H10-04 | quick-implementor（Quick Mode下のad-hoc実装スキル） | Should |
@@ -30,7 +30,7 @@ v0ではquick_modeセクション定義とquick-checkコマンドが中心だっ
 
 ### 3.1 Quick Mode設定（H10-01）
 
-- harness.config.jsonの`quickMode`セクションで対象条件を定義
+- phasegate.config.jsonの`quickMode`セクションで対象条件を定義
 - `allowedCategories`で対象カテゴリ（bugfix/docs/test/config）が設定可能
 - `maintainedLayers`で維持するレイヤー（デフォルト: L1, L2）が設定可能
 - `relaxedGates`で緩和するゲート（デフォルト: phase-gate, 2-phase-execution）が設定可能
@@ -104,7 +104,7 @@ v0ではquick_modeセクション定義とquick-checkコマンドが中心だっ
 | K3 | Biome AST解析 | Quick Mode時もL1全8ルール（Biome ASTルール含む）を実行。緩和なし |
 | K4 | テスト品質ルール | Quick Mode時もL2 `test-quality`バリデータを維持 |
 | K6 | 2-Phase Execution | Quick Mode対象の軽微変更に限り2-Phase Execution緩和。新ドメインモデル・API契約変更は判定エンジンで自動拒否し、フルハーネス（2-Phase Execution必須）にフォールバック |
-| K13 | harness.config.json | `quickMode`セクションでQuick Mode設定をharness.config.jsonに集約 |
+| K13 | phasegate.config.json | `quickMode`セクションでQuick Mode設定をphasegate.config.jsonに集約 |
 | K14 | Phase Dependency Model | **非緩和**: Level間依存（Level 2→Level 1、Level 3→Level 2）はQuick Modeでも絶対に緩和不可。Quick Modeが緩和するのはLevel内の一部ゲート（phase-gate, 2-phase-execution）のみ |
 | K15 | Plan文書の必須生成 | **非緩和**: Quick Mode対象の軽微変更でもplan文書なしのPhase 2移行は不可。ただしQuick Mode対象変更ではPhase 1/2構造自体が不要なため、この制約はフォールバック時にのみ適用される |
 

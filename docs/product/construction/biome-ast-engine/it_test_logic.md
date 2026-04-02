@@ -678,7 +678,7 @@ target("HarnessConfigProviderAdapter.getL1Config", () => {
 ```
 
 ##### IT-BA-065
-- `context()`: `正常なharness.config.jsonがある場合`
+- `context()`: `正常なphasegate.config.jsonがある場合`
 - `it()`: `enabled/rulesが返される`
 - `Arrange`: `layers.L1.enabled` と `layers.L1.rules` を持つ設定 fixture を返すスタブを用意する。
 - `Act`: `const actual = await adapter.getL1Config()`
@@ -692,7 +692,7 @@ target("HarnessConfigProviderAdapter.getL1Config", () => {
 - `Assert`: `actual` が既定値と一致することを確認する。
 
 ##### IT-BA-067
-- `context()`: `harness.config.jsonが存在しない場合`
+- `context()`: `phasegate.config.jsonが存在しない場合`
 - `it()`: `既定値が返される`
 - `Arrange`: 設定読取 API を「未存在」扱いで返す。
 - `Act`: `const actual = await adapter.getL1Config()`

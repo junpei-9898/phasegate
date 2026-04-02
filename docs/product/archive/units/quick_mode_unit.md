@@ -27,7 +27,7 @@
 
 ### 3.1 quick_modeセクション定義
 
-- harness.config.jsonに`quick_mode`セクション追加
+- phasegate.config.jsonに`quick_mode`セクション追加
 - 対象条件: テストファイルのみ変更 / docs配下修正 / typo修正 / リファクタリング
 - 対象外条件: 新規ドメインモデル追加 / API契約変更 / 新機能追加
 
@@ -47,7 +47,7 @@
 
 ## 4. データモデル概要
 
-- **harness.config.json quick_modeセクション**: `{ "quick_mode": { "targetConditions": string[], "excludeConditions": string[], "validators": string[] } }`
+- **phasegate.config.json quick_modeセクション**: `{ "quick_mode": { "targetConditions": string[], "excludeConditions": string[], "validators": string[] } }`
 
 ---
 
@@ -55,7 +55,7 @@
 
 | 依存先 | 種別 | 内容 |
 |--------|------|------|
-| config-foundation | 設定 | harness.config.json v2のquick_modeセクション |
+| config-foundation | 設定 | phasegate.config.json v2のquick_modeセクション |
 
 ---
 

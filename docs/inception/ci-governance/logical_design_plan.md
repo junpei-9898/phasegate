@@ -17,7 +17,7 @@
 - **AgentsMdPointerはファイルI/OをAgentsMdPortに完全委譲（D3）**: Dead Pointer禁止（INV-9）はPointerValidatorドメインサービスが担保
 - **LessonArtifact SchemaはJSONスキーマとしてCross-Unit Contract公開（D4）**: `docs/contracts/lesson-artifact.schema.json`。skill-qualityはci-governanceドメイン層を直接インポートしない
 - **EscalationAction（VO）は宣言的定義のみ（D5）**: 実行はEscalationExecutorPort（インフラ層）に委譲
-- **エスカレーション閾値デフォルト3回**: harness.config.json未設定時のデフォルト値
+- **エスカレーション閾値デフォルト3回**: phasegate.config.json未設定時のデフォルト値
 
 ## 3. 採用パターン
 - Hexagonal Architecture (Port & Adapter)

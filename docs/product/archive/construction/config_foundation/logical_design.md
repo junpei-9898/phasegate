@@ -217,7 +217,7 @@ scripts/harness/
 
 ##### `toJSON(): object`
 
-- **出力**: シリアライズ可能なプレーンオブジェクト（harness.config.jsonに書き出す形式）
+- **出力**: シリアライズ可能なプレーンオブジェクト（phasegate.config.jsonに書き出す形式）
 - **処理**: 内部の値オブジェクトを再帰的にプレーンオブジェクトに変換。`schema`や`domainEvents`は含めない
 
 ##### `pullDomainEvents(): DomainEvent[]`
@@ -578,7 +578,7 @@ interface EnvironmentVariableReader {
 
 **処理フロー**:
 
-1. `configPath`未指定の場合、プロジェクトルートから`harness.config.json`を探索
+1. `configPath`未指定の場合、プロジェクトルートから`phasegate.config.json`を探索
 2. `configRepository.exists(filePath)` で存在確認
 3. 存在しない場合: デフォルト設定で`HarnessConfig.create()`を呼び出し
 4. `configRepository.load(filePath)` で設定ファイルを読み込み
@@ -657,7 +657,7 @@ interface EnvironmentVariableReader {
 
 **処理フロー**:
 
-1. `configPath`未指定の場合、プロジェクトルートから`harness.config.json`を探索
+1. `configPath`未指定の場合、プロジェクトルートから`phasegate.config.json`を探索
 2. `configRepository.exists(filePath)` で存在確認
 3. 存在しない場合: エラー（`ConfigNotFoundError`）
 4. 組み込みJSONスキーマ（v2）を取得
@@ -687,7 +687,7 @@ interface EnvironmentVariableReader {
 成功時:
 ```
 ✓ Enabled feature: orchestration
-Updated: /path/to/harness.config.json
+Updated: /path/to/phasegate.config.json
 ```
 
 一覧表示時:
@@ -717,7 +717,7 @@ Toggleable features:
 
 ```
 ✓ Disabled feature: orchestration
-Updated: /path/to/harness.config.json
+Updated: /path/to/phasegate.config.json
 ```
 
 ### 5.3 MigrateConfigHandler
@@ -736,7 +736,7 @@ Updated: /path/to/harness.config.json
 ```
 ✓ Migration complete: v1 → v2
   Backup: .harness/backups/harness.config.1741654800000.json
-  Updated: /path/to/harness.config.json
+  Updated: /path/to/phasegate.config.json
 
   Added sections:
     - orchestration (enabled: false)
@@ -750,7 +750,7 @@ Updated: /path/to/harness.config.json
 ```
 
 **エラーハンドリング**:
-- 設定ファイル未検出 → `"harness.config.json not found. Run 'harness:init' first."` を表示してexit(1)
+- 設定ファイル未検出 → `"phasegate.config.json not found. Run 'harness:init' first."` を表示してexit(1)
 - バリデーション失敗 → エラー詳細とsuggestionを表示してexit(1)
 
 **package.json登録**:

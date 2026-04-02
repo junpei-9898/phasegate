@@ -193,7 +193,7 @@
 | IT-REPO-ArtifactScan-001 | scan実行（全成果物あり） | なし | テスト用フィクスチャーディレクトリに全レイヤーの成果物を配置（design-doc, test-file, metadata） | ArtifactScanResult.foundArtifacts全件present=true |
 | IT-REPO-ArtifactScan-002 | scan実行（L3テストファイルなし） | なし | フィクスチャーにL3統合テストファイルなし | foundArtifactsにL3のArtifactPresence.present=false が含まれる |
 | IT-REPO-ArtifactScan-003 | scan実行（空ディレクトリ） | なし | フィクスチャー: 対象ディレクトリが空 | ArtifactScanResult.foundArtifactsは空またはpresent=false |
-| IT-REPO-ArtifactScan-004 | harness.config.jsonのpathsを参照してスキャン対象を決定すること | なし | テスト用harness.config.json（paths.designDocs='docs/product/construction'）を参照 | scannedPathsにdesignDocsパスが含まれる |
+| IT-REPO-ArtifactScan-004 | phasegate.config.jsonのpathsを参照してスキャン対象を決定すること | なし | テスト用phasegate.config.json（paths.designDocs='docs/product/construction'）を参照 | scannedPathsにdesignDocsパスが含まれる |
 | IT-REPO-ArtifactScan-005 | ファイルシステムアクセス失敗時に例外をスローすること | なし | アクセス不可なパスを設定（権限なしディレクトリシミュレーション） | Errorがスローされる |
 
 ---
@@ -206,10 +206,10 @@
 
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
-| IT-REPO-ConfigQuery-001 | getPresetInfo実行（standard） | なし | テスト用harness.config.json（project.preset='standard'） | PresetInfo{name:'standard', enabledLayers:['L1','L2','L3']} |
-| IT-REPO-ConfigQuery-002 | getPresetInfo実行（strict） | なし | テスト用harness.config.json（project.preset='strict'） | PresetInfo{name:'strict', enabledLayers:['L1','L2','L3','L4']} |
-| IT-REPO-ConfigQuery-003 | getConfigSummary実行 | なし | テスト用harness.config.json（既知のパス） | ConfigSummary.configPathが正しいパス、lastModifiedがISO 8601形式 |
-| IT-REPO-ConfigQuery-004 | harness.config.jsonが存在しない場合に例外をスローすること | なし | harness.config.jsonなし | Errorがスローされる |
+| IT-REPO-ConfigQuery-001 | getPresetInfo実行（standard） | なし | テスト用phasegate.config.json（project.preset='standard'） | PresetInfo{name:'standard', enabledLayers:['L1','L2','L3']} |
+| IT-REPO-ConfigQuery-002 | getPresetInfo実行（strict） | なし | テスト用phasegate.config.json（project.preset='strict'） | PresetInfo{name:'strict', enabledLayers:['L1','L2','L3','L4']} |
+| IT-REPO-ConfigQuery-003 | getConfigSummary実行 | なし | テスト用phasegate.config.json（既知のパス） | ConfigSummary.configPathが正しいパス、lastModifiedがISO 8601形式 |
+| IT-REPO-ConfigQuery-004 | phasegate.config.jsonが存在しない場合に例外をスローすること | なし | phasegate.config.jsonなし | Errorがスローされる |
 
 ---
 
@@ -470,9 +470,9 @@
 |------------|------|------|
 | `scripts/harness/__tests__/fixtures/harness-api/artifact-scan/full-artifacts/` | FileSystemArtifactScannerAdapter IT-REPO-ArtifactScan-001 | 全レイヤーの成果物フィクスチャー（設計文書stub、テストファイルstub、メタデータstub） |
 | `scripts/harness/__tests__/fixtures/harness-api/artifact-scan/missing-l3/` | FileSystemArtifactScannerAdapter IT-REPO-ArtifactScan-002 | L3統合テストファイルなしのフィクスチャー |
-| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-standard.json` | HarnessConfigQueryAdapter IT-REPO-ConfigQuery-001 | standardプリセットのharness.config.json |
-| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-strict.json` | HarnessConfigQueryAdapter IT-REPO-ConfigQuery-002 | strictプリセットのharness.config.json |
-| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-minimal.json` | DeriveHarnessStatusUseCase IT-UC-DeriveStatus-006 | minimalプリセットのharness.config.json |
+| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-standard.json` | HarnessConfigQueryAdapter IT-REPO-ConfigQuery-001 | standardプリセットのphasegate.config.json |
+| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-strict.json` | HarnessConfigQueryAdapter IT-REPO-ConfigQuery-002 | strictプリセットのphasegate.config.json |
+| `scripts/harness/__tests__/fixtures/harness-api/config/harness-config-minimal.json` | DeriveHarnessStatusUseCase IT-UC-DeriveStatus-006 | minimalプリセットのphasegate.config.json |
 | モックPhaseGateStoryResult（インライン定義） | PhaseGateQueryPort関連テスト全般 | `[{storyId:'H09-01', passed:true, missingPhases:[]}, ...]` |
 | モックValidatorCheckItem（インライン定義） | ValidatorExecutionPort関連テスト全般 | `[{validatorId:'L3-001', passed:true, errors:[]}, ...]` |
 | モックDriftItem（インライン定義） | DetectDrift関連テスト全般 | `[{direction:'design-to-code', unit:'harness-api', element:'CliCommand', recommendation:'...'}]` |

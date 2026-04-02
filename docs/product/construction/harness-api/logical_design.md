@@ -928,7 +928,7 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 | I/O | 詳細 |
 |-----|------|
 | 読取 | `scripts/harness/` 配下のソースファイル群（validator実行対象） |
-| 読取 | `harness.config.json`（バリデータ設定） |
+| 読取 | `phasegate.config.json`（バリデータ設定） |
 | 呼出 | validator-system の実行エントリポイント |
 
 ### 5.2 PhaseDependencyModelQueryAdapter
@@ -1029,9 +1029,9 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 | L1 | ソースファイル | `scripts/harness/**/domain/` |
 | L2 | テストファイル | `scripts/harness/__tests__/unit/` |
 | L3 | 統合テストファイル | `scripts/harness/__tests__/integration/` |
-| L4 | L4バリデータ設定 | `harness.config.json` の `layers.L4.enabled` |
+| L4 | L4バリデータ設定 | `phasegate.config.json` の `layers.L4.enabled` |
 
-- スキャン対象パスは `harness.config.json` の `paths.designDocs` を参照する
+- スキャン対象パスは `phasegate.config.json` の `paths.designDocs` を参照する
 - I/O失敗時は `ArtifactScannerPort` レベルで例外を投げる（呼び出し元でラップ）
 
 **外部I/O**
@@ -1040,7 +1040,7 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 |-----|------|
 | 読取 | `docs/product/construction/` 配下のMarkdown |
 | 読取 | `scripts/harness/` 配下のTypeScript |
-| 読取 | `harness.config.json` |
+| 読取 | `phasegate.config.json` |
 
 ### 5.6 HarnessConfigQueryAdapter
 
@@ -1059,14 +1059,14 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
   - `minimal`: L1のみ有効
   - `standard`: L1-L3有効
   - `strict`: L1-L4有効
-- `getConfigSummary()`: `harness.config.json` のファイルパス・最終更新タイムスタンプ・スキーマバージョンを返す
+- `getConfigSummary()`: `phasegate.config.json` のファイルパス・最終更新タイムスタンプ・スキーマバージョンを返す
 - `getPhaseGateSummary()`: `phase-dependency-model` と連携して Phase Gate 全体集計を返す（Wave 2完了後）
 
 **外部I/O**
 
 | I/O | 詳細 |
 |-----|------|
-| 読取 | `harness.config.json` |
+| 読取 | `phasegate.config.json` |
 | 呼出 | config-foundation の ConfigQueryService |
 
 ---
@@ -1614,7 +1614,7 @@ sequenceDiagram
 - `PhaseDependencyModelQueryAdapter`: Phase Gate fixture で `queryUnit()` の `null` 返却（Unit未検出）を必ず検証する
 - `BiomeAstEngineLintAdapter`: Biome lint 結果の `RuleViolation → HarnessError` 変換を検証する
 - `FileSystemArtifactScannerAdapter`: 成果物あり/なしのファイル fixture でスキャン結果を検証する
-- `HarnessConfigQueryAdapter`: `harness.config.json` の各プリセット設定での `PresetInfo` を検証する
+- `HarnessConfigQueryAdapter`: `phasegate.config.json` の各プリセット設定での `PresetInfo` を検証する
 
 ### 8.5 Presentation層テスト方針
 

@@ -1,4 +1,4 @@
-# GSDLC Harness v1 — ユーザーストーリー一覧
+# Phasegate v1 — ユーザーストーリー一覧
 
 > **ステータス**: 確定版
 > **作成日**: 2026-03-10
@@ -18,7 +18,7 @@
 | E-05 | 品質ハーネス強化（Hooks拡張） | 4 |
 | E-06 | ADR・ドキュメント管理基盤 | 3 |
 | E-07 | ライフサイクル管理 | 4 |
-| E-08 | 設定ファイル分離（harness.config.json / orchestration.config.json） | 4 |
+| E-08 | 設定ファイル分離（phasegate.config.json / orchestration.config.json） | 4 |
 | E-09 | 非交渉要件K1-K13回帰保証 | 4 |
 | E-10 | HarnessError拡充・AGENTS.md改善 | 2 |
 | E-11 | ESLint→Biome全面移行 | 4 |
@@ -225,12 +225,12 @@ REQ-NQ-005
 **Epic**: E-03 Quick Mode
 
 **As a** ハーネス管理者,
-**I want to** harness.config.jsonに`quick_mode`セクションでQuick Mode対象条件を定義したい,
+**I want to** phasegate.config.jsonに`quick_mode`セクションでQuick Mode対象条件を定義したい,
 **so that** Quick Modeの対象・対象外を明確に設定し、運用ポリシーに合わせてカスタマイズできる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: harness.config.jsonに`quick_mode`セクションが追加されている
+- [ ] AC-1: phasegate.config.jsonに`quick_mode`セクションが追加されている
 - [ ] AC-2: 対象条件（テストファイルのみの変更、docs配下の修正、typo修正、リファクタリング）が設定可能である
 - [ ] AC-3: 対象外条件（新規ドメインモデル追加、API契約変更、新機能追加）が設定可能である
 - [ ] AC-4: JSONスキーマバリデーションが通過する
@@ -463,7 +463,7 @@ REQ-AD-001
 **Epic**: E-06 ADR・ドキュメント管理基盤
 
 **As a** ハーネス管理者,
-**I want to** GSDLCの主要な技術的意思決定を初期10件のADRとして作成したい,
+**I want to** Phasegateの主要な技術的意思決定を初期10件のADRとして作成したい,
 **so that** 設計判断の根拠が形式知として記録され、今後の意思決定の参照基盤となる。
 
 #### 受け入れ基準
@@ -474,7 +474,7 @@ REQ-AD-001
   - (3) Biome AST解析選定（ESLint→Biome全面移行）
   - (4) 2-Phase Execution設計
   - (5) inception/product分離設計
-  - (6) harness.config.json統一設定
+  - (6) phasegate.config.json統一設定
   - (7) DDD設計スキル群の設計哲学
   - (8) GSD2.0概念採用・npmパッケージ棄却
   - (9) Quick Mode導入とフェーズゲート緩和
@@ -600,14 +600,14 @@ REQ-LC-004
 
 ---
 
-## E-08: 設定ファイル分離（harness.config.json / orchestration.config.json）
+## E-08: 設定ファイル分離（phasegate.config.json / orchestration.config.json）
 
 ### US-027: orchestration.config.jsonの新設
 
-**Epic**: E-08 設定ファイル分離（harness.config.json / orchestration.config.json）
+**Epic**: E-08 設定ファイル分離（phasegate.config.json / orchestration.config.json）
 
 **As a** ハーネス管理者,
-**I want to** `orchestration.config.json`を新設し、オーケストレーション設定をharness.config.jsonから完全分離したい,
+**I want to** `orchestration.config.json`を新設し、オーケストレーション設定をphasegate.config.jsonから完全分離したい,
 **so that** Wave実行、モデルルーティング、コンテキスト戦略などのオーケストレーション設定を独立管理できる。
 
 #### 受け入れ基準
@@ -616,7 +616,7 @@ REQ-LC-004
 - [ ] AC-2: スキーマにmode/parallelization/modelProfile/contextStrategy/commitStrategy/autoSupervisor/budgetCeilingの設定項目が含まれている
 - [ ] AC-3: JSONスキーマバリデーションが通過する
 - [ ] AC-4: GSD由来の設定項目がデフォルトで無効（`enabled: false`）になっている
-- [ ] AC-5: orchestration.config.jsonはharness.config.jsonのプリセット値を読み取るが、harness.config.jsonへの書き込みは行わない
+- [ ] AC-5: orchestration.config.jsonはphasegate.config.jsonのプリセット値を読み取るが、phasegate.config.jsonへの書き込みは行わない
 
 #### 対応要件
 REQ-CF-001
@@ -625,7 +625,7 @@ REQ-CF-001
 
 ### US-028: orchestration.config.jsonへのsessionセクション追加
 
-**Epic**: E-08 設定ファイル分離（harness.config.json / orchestration.config.json）
+**Epic**: E-08 設定ファイル分離（phasegate.config.json / orchestration.config.json）
 
 **As a** ハーネス管理者,
 **I want to** orchestration.config.jsonにsessionセクションを追加したい,
@@ -645,7 +645,7 @@ REQ-CF-002
 
 ### US-029: GSD由来機能のデフォルト無効化
 
-**Epic**: E-08 harness.config.json v2（設定統合）
+**Epic**: E-08 phasegate.config.json v2（設定統合）
 
 **As a** ハーネス管理者,
 **I want to** GSD由来機能をデフォルトで無効にしたい,
@@ -668,7 +668,7 @@ REQ-CF-003
 
 ### US-030: harness:migrate-configによるv1→v2自動マイグレーション
 
-**Epic**: E-08 harness.config.json v2（設定統合）
+**Epic**: E-08 phasegate.config.json v2（設定統合）
 
 **As a** ハーネス利用者,
 **I want to** `harness:migrate-config`でv1設定からv2設定へ自動マイグレーションしたい,
@@ -677,8 +677,8 @@ REQ-CF-003
 #### 受け入れ基準
 
 - [ ] AC-1: `harness:migrate-config`コマンドが実行可能である
-- [ ] AC-2: v1形式のharness.config.jsonからv2形式のharness.config.json + orchestration.config.jsonに自動分離される
-- [ ] AC-3: 品質設定はharness.config.jsonに保持され、オーケストレーション設定はorchestration.config.jsonに分離される
+- [ ] AC-2: v1形式のphasegate.config.jsonからv2形式のphasegate.config.json + orchestration.config.jsonに自動分離される
+- [ ] AC-3: 品質設定はphasegate.config.jsonに保持され、オーケストレーション設定はorchestration.config.jsonに分離される
 - [ ] AC-4: マイグレーション前にバックアップファイルが作成される
 - [ ] AC-5: マイグレーション後の両ファイルがそれぞれのJSONスキーマバリデーションに通過する
 
@@ -740,7 +740,7 @@ REQ-K-005, REQ-K-006, REQ-K-007, REQ-K-008, REQ-K-009
 **Epic**: E-09 非交渉要件K1-K13回帰保証
 
 **As a** 品質管理者,
-**I want to** Security/Performance検出・Drift Detection・Consistency Checker・harness.config.json単一原則のv1維持を保証したい,
+**I want to** Security/Performance検出・Drift Detection・Consistency Checker・phasegate.config.json単一原則のv1維持を保証したい,
 **so that** セキュリティ・パフォーマンス・整合性に関するv0の品質基準がv1で低下しない。
 
 #### 受け入れ基準
@@ -749,7 +749,7 @@ REQ-K-005, REQ-K-006, REQ-K-007, REQ-K-008, REQ-K-009
 - [ ] AC-2: Performance検出（ループ内await、N+1、bundleSizeLimit）の回帰テストが存在する
 - [ ] AC-3: Drift Detection（設計-実装乖離の双方向検出）の回帰テストが存在する
 - [ ] AC-4: Consistency Checker（文書間レイヤー整合性チェック）の回帰テストが存在する
-- [ ] AC-5: 設定ファイル分離原則（harness.config.json + orchestration.config.json）の検証テストが存在する
+- [ ] AC-5: 設定ファイル分離原則（phasegate.config.json + orchestration.config.json）の検証テストが存在する
 
 #### 対応要件
 REQ-K-010, REQ-K-011, REQ-K-012, REQ-K-013
@@ -768,7 +768,7 @@ REQ-K-010, REQ-K-011, REQ-K-012, REQ-K-013
 
 - [ ] AC-1: GNG-1「npmパッケージ非依存」の検証テスト（package.jsonにGSD関連パッケージが存在しないこと）が存在する
 - [ ] AC-2: GNG-2「`.planning/`不使用」の検証テスト（`.planning/`ディレクトリが存在しないこと）が存在する
-- [ ] AC-3: GNG-3「設定ファイル分離」の検証テスト（品質設定がharness.config.json、オーケストレーション設定がorchestration.config.jsonにあること）が存在する
+- [ ] AC-3: GNG-3「設定ファイル分離」の検証テスト（品質設定がphasegate.config.json、オーケストレーション設定がorchestration.config.jsonにあること）が存在する
 - [ ] AC-4: GNG-4「yolo/skip-permissions不採用」の検証テスト（deny listとhooksが完全維持）が存在する
 - [ ] AC-5: GNG-5「2-Phase Execution維持」の検証テスト（設計スキルの人間承認ゲート存在）が存在する
 - [ ] AC-6: GNG-6「プロジェクトローカル実行」の検証テスト（`~/.claude/`へのグローバル書き込みがないこと）が存在する

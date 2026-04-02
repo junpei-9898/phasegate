@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-GSDLC Quality Harnessの全CLIコマンドの名前・入出力仕様・終了コードを一元的に所有するUnit。`harness:check-ready` / `harness:check-phase` / `harness:ci-check` / `harness:detect-drift` / `harness:status`に加え、`harness:lint` / `harness:complete-check`のCLIエントリポイントも本Unitが所有する。
+Phasegateの全CLIコマンドの名前・入出力仕様・終了コードを一元的に所有するUnit。`harness:check-ready` / `harness:check-phase` / `harness:ci-check` / `harness:detect-drift` / `harness:status`に加え、`harness:lint` / `harness:complete-check`のCLIエントリポイントも本Unitが所有する。
 
 v0には対応するUnitが存在しない新規Unitである。v0ではCLIコマンドが各Unitに散在し、コマンド名の重複や入出力仕様の不統一が発生していた。v1ではCLI Command Registryによりコマンド定義を集約し、agent-integrationが参照する**薄いCLI契約レイヤー**を提供する。実行ロジック自体はvalidator-system等の各Unitが所有し、harness-apiはCLIのエントリポイント・入出力変換・終了コード管理に責務を限定する。
 
@@ -109,7 +109,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 |----|------|---------------|
 | K1 | 4層防御モデル（L1-L4） | harness:statusでL1-L4各レイヤーの健全性を一覧表示。harness:complete-checkでL1-L4全層の統合チェックを提供 |
 | K11 | Drift Detection | harness:detect-driftコマンドで設計⇔コード乖離の任意タイミング検出をCLIインターフェースとして提供 |
-| K13 | harness.config.json | harness:statusでプリセット名・有効設定のサマリーを表示し、設定状態の可視化を実現 |
+| K13 | phasegate.config.json | harness:statusでプリセット名・有効設定のサマリーを表示し、設定状態の可視化を実現 |
 | K14 | Phase Dependency | harness:check-ready/check-phaseでPhase Gate通過状態の機械的判定を提供 |
 
 ---

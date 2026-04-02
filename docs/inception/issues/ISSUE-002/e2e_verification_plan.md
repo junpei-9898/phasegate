@@ -1,12 +1,12 @@
-# ISSUE-002: GSDLC_HARNESS 実世界 E2E 検証計画
+# ISSUE-002: phasegate 実世界 E2E 検証計画
 
 ## 概要
 
-GSDLC_HARNESS の各機能が、ユニットテストだけでなく**実際の Claude Code セッション上で正しく動作する**ことを手動で確認する。
+phasegate の各機能が、ユニットテストだけでなく**実際の Claude Code セッション上で正しく動作する**ことを手動で確認する。
 ISSUE-001 で PreToolUse フェーズゲート Hook の動作は確認済み。残りの機能を網羅的に検証する。
 
 **検証実施日**: 2026-03-28
-**検証環境**: Claude Code (Opus 4.6) / macOS Darwin 24.6.0 / GSDLC_HARNESS v0.5.0
+**検証環境**: Claude Code (Opus 4.6) / macOS Darwin 24.6.0 / phasegate v0.5.0
 
 ---
 
@@ -59,7 +59,7 @@ ISSUE-001 で PreToolUse フェーズゲート Hook の動作は確認済み。�
 | D-4 | `validate --layer L2` | ✅ | Phase Gate blockers を詳細表示（設計文書不足を正しく検出） |
 | D-5 | `validate --layer L3` | ✅ | L3-001 pass, L3-002 skip, L3-003 pass, L3-004 pass |
 | D-6 | `lint` | ✅ | Biome で 1686 violations 検出（大半はテストフィクスチャの L1-004） |
-| D-7 | `init` | ✅ | `/tmp` に新PJ作成: 28スキル展開 + harness.config.json 生成を確認 |
+| D-7 | `init` | ✅ | `/tmp` に新PJ作成: 28スキル展開 + phasegate.config.json 生成を確認 |
 | D-8 | `update-skills` | ✅ | init済みPJで再実行: 28スキル再デプロイ、バージョン表示を確認 |
 | D-9 | `enable-feature` / `disable-feature` | ✅ | cascadeUpdate の有効/無効切替を確認 |
 | D-10 | `list-features` | ✅ | 4機能の有効/無効状態を表示 |
@@ -149,7 +149,7 @@ ISSUE-001 で PreToolUse フェーズゲート Hook の動作は確認済み。�
 
 ### BUG-2: format-typescript-hook.sh のファイルパス抽出失敗 (B-2) — **修正済み**
 - `tool_input.target_file` を参照するが Claude Code は `tool_input.file_path` を送信
-- さらに `functions/`/`hosting/` 配下のみ対象のため GSDLC_HARNESS プロジェクトでは無効
+- さらに `functions/`/`hosting/` 配下のみ対象のため phasegate プロジェクトでは無効
 - **修正内容**: `.claude/scripts/hook-config.json` でターゲットディレクトリをリスト指定可能に改修。`file_path` フィールド対応。フォーマッタを Biome/ESLint+Prettier で切替可能に。
 
 ### BUG-3: analyze-errors-hook.sh の `functions/` 前提 (B-3) — **修正済み**

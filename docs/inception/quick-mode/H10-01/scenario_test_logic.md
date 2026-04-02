@@ -115,7 +115,7 @@ target('QuickModeJudgmentEngine.judge', () => {
 ```typescript
 target('HarnessConfigQuickModeConfigAdapter', () => {
   // SC-H10-01-005
-  it('quickModeセクションなしのharness.config.jsonでデフォルト設定が返される', () => {
+  it('quickModeセクションなしのphasegate.config.jsonでデフォルト設定が返される', () => {
     // Arrange
     const adapter = new HarnessConfigQuickModeConfigAdapter({ configPath: '/path/to/config-without-quickmode.json' });
     // Act

@@ -60,7 +60,7 @@ export class StatusDerivationService {
     };
 
     const effectiveConfigSummary: ConfigSummary = configSummary ?? {
-      configPath: 'harness.config.json',
+      configPath: 'phasegate.config.json',
       lastModified: new Date().toISOString(),
       version: '2',
     };

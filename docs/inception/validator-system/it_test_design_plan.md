@@ -57,7 +57,7 @@
 
 | Adapter名 | 外部I/O | テストケース概算 |
 |----------|---------|---------------|
-| HarnessConfigValidatorConfigAdapter | harness.config.json | 8件 |
+| HarnessConfigValidatorConfigAdapter | phasegate.config.json | 8件 |
 | PhaseDependencyPhaseGatePolicyAdapter | phase-dependency-model + FS | 8件 |
 | TraceabilityMetadataPolicyAdapter | traceability-model + FS | 10件 |
 | BiomeAstTestQualityAnalyzerAdapter | biome-ast-engine + FS | 10件 |

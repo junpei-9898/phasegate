@@ -59,7 +59,7 @@ Domain層（VO・ドメインサービス）はUnitテスト対象であり、IT
 | Adapter名 | 操作種別 | テストケース概算 |
 |----------|---------|---------------|
 | GitDiffChangedFilesAdapter | git diff実行・パース | 10〜12件（M/A/D/R各パターン + 複数ファイル + git未利用可能 + 非gitディレクトリ） |
-| HarnessConfigQuickModeConfigAdapter | harness.config.json読取 | 8〜10件（quickModeセクション有無 + デフォルトフォールバック + ファイル不在 + JSONパースエラー） |
+| HarnessConfigQuickModeConfigAdapter | phasegate.config.json読取 | 8〜10件（quickModeセクション有無 + デフォルトフォールバック + ファイル不在 + JSONパースエラー） |
 | ValidatorSystemValidatorIdRegistryAdapter | 静的ID一覧返却 | 4〜5件（ID一覧の完全性 + L1/L2/L3/L4各レイヤー件数 + 期待ID一覧との一致） |
 
 ### Controller/API（Handler / Formatter）
@@ -85,7 +85,7 @@ Domain層（VO・ドメインサービス）はUnitテスト対象であり、IT
 
 quick-modeは永続化を持たない（ステートレス判定エンジン）。DBテストは不要。Adapterテストは以下のfixtureを使用する：
 
-- `harness.config.json` fixture（quickModeセクション有無の2パターン）
+- `phasegate.config.json` fixture（quickModeセクション有無の2パターン）
 - git diff出力の fixture文字列（M/A/D/R各パターン）
 - ValidatorIdRegistry の静的定義（実装コードから直接検証）
 

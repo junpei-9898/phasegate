@@ -41,7 +41,7 @@
 | H13-01-AC-1 | `aidlc-gate.yml`テンプレートの作成（PR時にL1-L3バリデータ実行） | IT-UC-GenerateCiTemplate-001, IT-UC-RenderCiTemplate-001, IT-API-CiTemplateFlow-001 | ✅ カバー済み |
 | H13-01-AC-2 | `consistency-check.yml`テンプレートの作成（週次でL4バリデータ実行） | IT-UC-GenerateCiTemplate-002, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
 | H13-01-AC-3 | `.husky/pre-commit`テンプレートの作成（commit時にL2バリデータ実行） | IT-UC-GenerateCiTemplate-003, IT-UC-RenderCiTemplate-002, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
-| H13-01-AC-4 | 各テンプレートがharness.config.jsonのプリセット設定を参照 | UT-TG-001〜UT-TG-005（PresetConfigPort経由検証）, IT-UC-GenerateCiTemplate-001〜003 | ✅ カバー済み |
+| H13-01-AC-4 | 各テンプレートがphasegate.config.jsonのプリセット設定を参照 | UT-TG-001〜UT-TG-005（PresetConfigPort経由検証）, IT-UC-GenerateCiTemplate-001〜003 | ✅ カバー済み |
 
 ### H13-02: 反復エラー自動エスカレーション
 
@@ -49,7 +49,7 @@
 |-------|---------|-----------------|----------|
 | H13-02-AC-1 | 同一HarnessError codeの繰り返し（閾値: 3回以上）の検出 | UT-ER-006, UT-RD-003, IT-UC-RecordErrorOccurrence-002, IT-API-RepetitionFlow-001 | ✅ カバー済み |
 | H13-02-AC-2 | 反復検出時の自動エスカレーション（ログ出力 + 警告メッセージ）の実行 | UT-RD-003, IT-UC-RecordErrorOccurrence-002, IT-API-RepetitionFlow-002 | ✅ カバー済み |
-| H13-02-AC-3 | エスカレーション閾値のharness.config.jsonによる設定 | UT-ER-002（threshold=5カスタム値検証）, UT-RD-003 | ✅ カバー済み |
+| H13-02-AC-3 | エスカレーション閾値のphasegate.config.jsonによる設定 | UT-ER-002（threshold=5カスタム値検証）, UT-RD-003 | ✅ カバー済み |
 | H13-02-AC-4 | 反復検出のリセット条件（エラー解消時）の定義 | UT-ER-011〜UT-ER-013, IT-UC-ResetRepetition-001〜004, IT-API-RepetitionFlow-003 | ✅ カバー済み |
 
 ### H13-03: AGENTS.mdポインタ型移行

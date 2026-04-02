@@ -1031,7 +1031,7 @@ const FIXTURES_DIR = path.resolve(
 );
 
 target('HarnessConfigConfigQueryAdapter', () => {
-  describe('harness.config.json から Hook 設定を読み取る', () => {
+  describe('phasegate.config.json から Hook 設定を読み取る', () => {
     context('cascadeUpdate=true のフィクスチャを参照する場合', () => {
       // IT-REPO-ConfigQueryAdapter-001
       it('isHookEnabled("post-tool-use")（cascadeUpdate=true）がtrueを返すこと', async () => {
@@ -1112,9 +1112,9 @@ target('HarnessConfigConfigQueryAdapter', () => {
       });
     });
 
-    context('harness.config.json が存在しない場合', () => {
+    context('phasegate.config.json が存在しない場合', () => {
       // IT-REPO-ConfigQueryAdapter-006
-      it('harness.config.jsonが存在しない場合、エラーがthrowされること', async () => {
+      it('phasegate.config.jsonが存在しない場合、エラーがthrowされること', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter({
           configPath: path.join(FIXTURES_DIR, 'nonexistent-config.json'),
@@ -2642,7 +2642,7 @@ const FIXTURES_DIR = path.resolve(
 );
 
 target('HarnessConfigConfigQueryAdapter（ISSUE-001: getProjectPaths）', () => {
-  describe('harness.config.json から ProjectPaths を読み取る', () => {
+  describe('phasegate.config.json から ProjectPaths を読み取る', () => {
     context('project.paths セクションを含む標準的なフィクスチャの場合', () => {
       // IT-REPO-ConfigQueryAdapter-ISSUE001-001
       it('getProjectPaths() がデフォルトの ProjectPaths を返すこと', () => {

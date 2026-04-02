@@ -33,7 +33,7 @@
 | AC-PD-08 | 両Planning Modeで `inception/` 配下の `*_plan.md` 成果物を前提に扱える | UT-PD-121〜123, IT-PD-093〜095 | ✅ カバー |
 | AC-PD-09 | plan文書のファイル存在でPhase完了判定を検証する | UT-PD-007〜009, UT-PD-121〜123, IT-PD-054, IT-PD-095 | ✅ カバー |
 | AC-PD-10 | plan文書にQAセクションが含まれることを検証する | UT-PD-013〜016, IT-PD-051〜058 | ✅ カバー |
-| AC-PD-11 | `harness.config.json.phaseDependencies` を読み取り、意味論へ正規化できる | IT-PD-061〜064 | ✅ カバー |
+| AC-PD-11 | `phasegate.config.json.phaseDependencies` を読み取り、意味論へ正規化できる | IT-PD-061〜064 | ✅ カバー |
 | AC-PD-12 | `customRules` による依存追加を適用できる | UT-PD-131〜133, IT-PD-016, IT-PD-061, IT-PD-101〜102 | ✅ カバー |
 | AC-PD-13 | デフォルト依存の削除には `override: true` を要求する | UT-PD-124〜126, IT-PD-096〜098 | ✅ カバー |
 | AC-PD-14 | `story-implementor` 前のテスト設計フェーズ存在は緩和不可である | UT-PD-028 | ✅ カバー |

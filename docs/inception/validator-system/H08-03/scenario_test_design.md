@@ -8,7 +8,7 @@
 
 L3 coverageバリデータ（L3-003）の実行機能。
 
-- `harness.config.json` の `coverageThreshold` を読み取り閾値検証を実行
+- `phasegate.config.json` の `coverageThreshold` を読み取り閾値検証を実行
 - standardプリセット（90%）での閾値検証
 - strictプリセット（95%）での閾値検証
 - 閾値未達時のHarnessError（L3-003）に現在のカバレッジ値と不足分を含める

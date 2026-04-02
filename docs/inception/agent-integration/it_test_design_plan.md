@@ -75,7 +75,7 @@ ITテストでは以下のコンポーネントを対象とする。
 - **実際のファイルシステム・環境変数** を使用した統合テスト（インメモリ代替なし）
 - 各テスト後にクリーンアップ処理（tmpファイル削除、環境変数リセット）を実施
 - EnvFileReentryGuardStateAdapterは `strategy: 'env'` と `strategy: 'file'` の双方を検証
-- HarnessConfigConfigQueryAdapterはfixtureの `harness.config.json` を使用
+- HarnessConfigConfigQueryAdapterはfixtureの `phasegate.config.json` を使用
 
 ### Presentation Hook Adapter テスト方針
 
@@ -139,7 +139,7 @@ ImportAnalyzerPortの統合テストでは、エージェント固有API（`@ant
 
 - Wave 1全Unit（harness-error, config-foundation等）の型定義が確定済みであること
 - `scripts/harness/shared-kernel/harness-error.ts` が参照可能であること
-- `harness.config.json` のフィクスチャファイルが存在すること（またはテスト用に作成すること）
+- `phasegate.config.json` のフィクスチャファイルが存在すること（またはテスト用に作成すること）
 - `micromatch` パッケージが依存関係として追加済みであること
 
 ### リスク

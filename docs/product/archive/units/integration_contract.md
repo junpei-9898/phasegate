@@ -16,7 +16,7 @@
 | パッケージマネージャ | pnpm | v0継承 |
 | CI/CD | GitHub Actions | v0継承（aidlc-gate.yml） |
 | ファイルシステム | FUSE-T (macOS) / libfuse (Linux) | v1新規（E-12、オプショナル） |
-| 設定ファイル | harness.config.json (JSON) | Single Source of Truth（K13） |
+| 設定ファイル | phasegate.config.json (JSON) | Single Source of Truth（K13） |
 | フック定義 | .harness-hooks.yml (YAML) | v1新規（E-12） |
 | Git Hooks | Claude Code Hooks / Husky | v0継承 + v1拡張 |
 
@@ -148,7 +148,7 @@ interface HarnessError {
 **提供Unit**: harness-dx
 **利用Unit**: 全Unit（バリデータ出力）
 
-### 4.2 harness.config.json v2
+### 4.2 phasegate.config.json v2
 
 ```typescript
 interface HarnessConfigV2 {
@@ -288,7 +288,7 @@ superseded_by: "optional ADR reference"
 
 ## 5. 認証認可
 
-GSDLC Harnessはローカル開発ツールキットであり、認証認可機構は持たない。
+Phasegateはローカル開発ツールキットであり、認証認可機構は持たない。
 
 - **ファイルアクセス制御**: FUSE Hooks Engineによる物理的なファイルI/Oインターセプション（L0）
 - **コマンド制御**: Claude Code deny-check.sh / シェルラッパーによる破壊的コマンドブロック

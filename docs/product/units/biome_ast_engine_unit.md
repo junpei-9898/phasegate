@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-biome-ast-engineは、GSDLC Quality HarnessのL1（コードレベル）品質防御を担うUnit。v0のESLintベースの4カスタムルール（require-unit-comment, require-layer-comment, no-layer-violation, enforce-folder-structure）をBiomeプラグインとして移植し、さらにAI生成コード特有のアンチパターンを検出する4ルール（no-any-abuse, no-code-duplication, no-ghost-file, no-comment-flood）を追加実装する。
+biome-ast-engineは、PhasegateのL1（コードレベル）品質防御を担うUnit。v0のESLintベースの4カスタムルール（require-unit-comment, require-layer-comment, no-layer-violation, enforce-folder-structure）をBiomeプラグインとして移植し、さらにAI生成コード特有のアンチパターンを検出する4ルール（no-any-abuse, no-code-duplication, no-ghost-file, no-comment-flood）を追加実装する。
 
 CIパイプラインでのBiome統合とESLint関連依存の完全除去により、Rust製の高速AST解析によるエディタ保存時フィードバックからCI/CDまで一貫したL1品質チェック基盤を確立する。v0のbiome-toolchainを改名・再定義し、ツールチェーン管理からAST解析エンジンとしての責務に特化させた。
 

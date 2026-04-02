@@ -2,7 +2,7 @@
  * @layer infrastructure
  * @unit quick-mode
  *
- * harness.config.json から QuickModeConfig を取得する Adapter
+ * phasegate.config.json から QuickModeConfig を取得する Adapter
  */
 
 import * as fs from 'node:fs/promises';
@@ -11,14 +11,14 @@ import { QuickModeConfig } from '../../domain/value-objects/quick-mode-config.js
 
 export class HarnessConfigNotFoundError extends Error {
   constructor(filePath: string) {
-    super(`harness.config.json not found: ${filePath}`);
+    super(`phasegate.config.json not found: ${filePath}`);
     this.name = 'HarnessConfigNotFoundError';
   }
 }
 
 export class HarnessConfigParseError extends Error {
   constructor(message: string) {
-    super(`Failed to parse harness.config.json: ${message}`);
+    super(`Failed to parse phasegate.config.json: ${message}`);
     this.name = 'HarnessConfigParseError';
   }
 }
@@ -33,7 +33,7 @@ export class HarnessConfigQuickModeConfigAdapter {
   private readonly configPath: string;
 
   constructor(configPath?: string) {
-    this.configPath = configPath ?? path.resolve(process.cwd(), 'harness.config.json');
+    this.configPath = configPath ?? path.resolve(process.cwd(), 'phasegate.config.json');
   }
 
   async getQuickModeConfig(): Promise<QuickModeConfig> {

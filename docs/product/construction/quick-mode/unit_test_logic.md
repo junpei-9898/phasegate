@@ -383,7 +383,7 @@ target('ChangedFile', () => {
       // UT-CF-008
       it("'.json'拡張子を持つfilePathの場合に'.ts'指定ではfalseが返ること", () => {
         // Arrange
-        const sut = createChangedFile('scripts/harness/quick-mode/harness.config.json');
+        const sut = createChangedFile('scripts/harness/quick-mode/phasegate.config.json');
         // Act
         const actual = sut.hasExtension('.ts');
         // Assert
@@ -1338,7 +1338,7 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/harness.config.json',
+            filePath: 'scripts/harness/quick-mode/phasegate.config.json',
             changeKind: 'MODIFY',
           }),
         ];

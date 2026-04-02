@@ -14,7 +14,7 @@
 
 | 集約ルート | ファイル | 説明 |
 |-----------|---------|------|
-| HarnessConfig | `domain/harness-config.ts` | harness.config.json全体の整合性境界 |
+| HarnessConfig | `domain/harness-config.ts` | phasegate.config.json全体の整合性境界 |
 
 ### 値オブジェクト
 

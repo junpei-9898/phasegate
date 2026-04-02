@@ -156,9 +156,9 @@
 
 #### CRUDテスト（読取）
 
-| ケースID | 操作 | fixture入力（harness.config.json内容） | 事前データ | 期待結果 |
+| ケースID | 操作 | fixture入力（phasegate.config.json内容） | 事前データ | 期待結果 |
 |---------|------|--------------------------------------|----------|---------|
-| IT-REPO-Config-001 | quickModeセクションが存在するとき、その値でQuickModeConfigが生成される | `{ "quickMode": { "allowedCategories": ["bugfix","docs"], "maintainedLayers": ["L1","L2-002"], "relaxedGates": ["L2-001","L3-002","L3-003","L3-004","L4"] } }` を含むharness.config.json | なし | `QuickModeConfig` の `allowedCategories = ['bugfix','docs']`, `maintainedLayers = ['L1','L2-002']` |
+| IT-REPO-Config-001 | quickModeセクションが存在するとき、その値でQuickModeConfigが生成される | `{ "quickMode": { "allowedCategories": ["bugfix","docs"], "maintainedLayers": ["L1","L2-002"], "relaxedGates": ["L2-001","L3-002","L3-003","L3-004","L4"] } }` を含むphasegate.config.json | なし | `QuickModeConfig` の `allowedCategories = ['bugfix','docs']`, `maintainedLayers = ['L1','L2-002']` |
 | IT-REPO-Config-002 | quickModeセクションが存在しないとき、デフォルト設定でQuickModeConfigが生成される | `{ "project": { "name": "test", "preset": "standard" }, "layers": {}, "phaseDependencies": {} }` （quickModeなし） | なし | `QuickModeConfig` の `allowedCategories = ['bugfix','docs','test','config']`, `maintainedLayers = ['L1','L2-002','L2-003','L3-001']`, `relaxedGates = ['L2-001','L3-002','L3-003','L3-004','L4']` |
 | IT-REPO-Config-003 | quickModeセクションのallowedCategoriesが有効値（bugfix/docs/test/config）のとき正常に生成される | `{ "quickMode": { "allowedCategories": ["bugfix","docs","test","config"], "maintainedLayers": ["L1","L2-002","L2-003","L3-001"], "relaxedGates": ["L2-001","L3-002","L3-003","L3-004","L4"] } }` | なし | `QuickModeConfig` が生成され例外なし |
 
@@ -302,9 +302,9 @@
 | `git-diff-fixture-delete.txt` | IT-REPO-Git-003 | `"D\tsrc/old-feature.ts\n"` |
 | `git-diff-fixture-rename.txt` | IT-REPO-Git-004 | `"R100\tsrc/old.ts\tsrc/new.ts\n"` |
 | `git-diff-fixture-mixed.txt` | IT-REPO-Git-005 | `"M\tsrc/a.ts\nA\tsrc/b.ts\nD\tsrc/c.ts\n"` |
-| `harness-config-with-quickmode.json` | IT-REPO-Config-001, Config-003 | quickModeセクションを含む harness.config.json |
-| `harness-config-without-quickmode.json` | IT-REPO-Config-002 | quickModeセクションなしの harness.config.json（デフォルトフォールバック確認用） |
-| `harness-config-invalid-quickmode.json` | IT-REPO-Config-006, Config-007 | allowedCategoriesに'domain'を含むまたは空配列を含むharness.config.json |
+| `harness-config-with-quickmode.json` | IT-REPO-Config-001, Config-003 | quickModeセクションを含む phasegate.config.json |
+| `harness-config-without-quickmode.json` | IT-REPO-Config-002 | quickModeセクションなしの phasegate.config.json（デフォルトフォールバック確認用） |
+| `harness-config-invalid-quickmode.json` | IT-REPO-Config-006, Config-007 | allowedCategoriesに'domain'を含むまたは空配列を含むphasegate.config.json |
 | `quick-mode-decision-approved.fixture.ts` | Formatter系テスト共通 | eligible=trueのQuickModeDecisionContract固定値 |
 | `quick-mode-decision-rejected.fixture.ts` | Formatter系テスト共通 | eligible=false（MIXED_CHANGES）のQuickModeDecisionContract固定値 |
 

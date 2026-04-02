@@ -11,7 +11,7 @@
 
 ### 1.1 HarnessConfig（集約ルート）
 
-harness.config.jsonファイル全体を表す単一集約。設定ファイルの読み書きはファイル単位で行われるため、ファイル全体が整合性境界を形成する。
+phasegate.config.jsonファイル全体を表す単一集約。設定ファイルの読み書きはファイル単位で行われるため、ファイル全体が整合性境界を形成する。
 
 #### 集約ルートの責務
 
@@ -283,7 +283,7 @@ CLIツールの特性上、明示的なドメインイベント発行メカニ�
 
 | ポート | 方向 | 責務 |
 |-------|------|------|
-| ConfigRepository | 駆動される側（Secondary） | harness.config.jsonの読み込み・書き出し |
+| ConfigRepository | 駆動される側（Secondary） | phasegate.config.jsonの読み込み・書き出し |
 | ConfigSchemaValidator | 駆動される側（Secondary） | JSONスキーマに基づくバリデーション実行 |
 | BackupCreator | 駆動される側（Secondary） | マイグレーション前のファイルバックアップ作成 |
 | EnvironmentVariableReader | 駆動される側（Secondary） | 環境変数の読み取り |
@@ -292,7 +292,7 @@ CLIツールの特性上、明示的なドメインイベント発行メカニ�
 
 | アダプター | 実装対象ポート | 実装内容 |
 |-----------|-------------|---------|
-| FileSystemConfigRepository | ConfigRepository | harness.config.jsonのファイルI/O |
+| FileSystemConfigRepository | ConfigRepository | phasegate.config.jsonのファイルI/O |
 | JsonSchemaValidator | ConfigSchemaValidator | JSONスキーマライブラリによるバリデーション |
 | FileSystemBackupCreator | BackupCreator | ファイルコピーによるバックアップ |
 | ProcessEnvironmentReader | EnvironmentVariableReader | process.envからの環境変数読み取り |
@@ -494,7 +494,7 @@ classDiagram
 
 | 用語 | 定義 |
 |------|------|
-| HarnessConfig | harness.config.jsonファイル全体を表す集約ルート |
+| HarnessConfig | phasegate.config.jsonファイル全体を表す集約ルート |
 | ConfigVersion | 設定ファイルのバージョン（V1: レガシー、V2: 新スキーマ） |
 | FeatureToggleMap | スキーマから動的抽出された機能名と有効/無効状態のマッピング |
 | Preset | 設定プリセット（minimal/standard/strict） |

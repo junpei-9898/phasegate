@@ -30,7 +30,7 @@ tmp/
     │   │   └── 0002-stale.md        # 古いmtime（ageInDays=60想定）
     │   └── design/
     │       └── old-design.md        # 非常に古い（ageInDays=120想定）
-    └── harness.config.json          # freshnessRulesを含む設定ファイル
+    └── phasegate.config.json          # freshnessRulesを含む設定ファイル
 ```
 
 ### 2.2 ポインタ検証テスト用ファイル構成

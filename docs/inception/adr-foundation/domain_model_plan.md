@@ -57,7 +57,7 @@ Unit定義にarchgateマッピングの形式として`{ adr_id, enforced_by: [{
 
 v0では001から開始していた。v1で新規作成する11件のADR番号は001から始めるか、v0の続番から始めるか？
 
-**決定**: 001から開始。v1は新規プロダクト（GSDLC Quality Harness）であり、v0（AIDLC Harness）とは別のADR体系。v0参照は「AIDLC ADR-XXX」で明示的に分離。
+**決定**: 001から開始。v1は新規プロダクト（Phasegate）であり、v0（AIDLC Harness）とは別のADR体系。v0参照は「AIDLC ADR-XXX」で明示的に分離。
 
 [Answer] codexレビュー合意: 別プロダクトとして001開始が妥当。
 

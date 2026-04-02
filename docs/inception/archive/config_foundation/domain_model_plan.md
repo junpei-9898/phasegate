@@ -22,7 +22,7 @@
 
 - **config-foundationは基盤Unit**であり、他Unitに依存しない。全Unitがconfig-foundationに依存する。
 - **公開インターフェース**:
-  - 設定ファイル: harness.config.json v2スキーマ（全Unit参照）
+  - 設定ファイル: phasegate.config.json v2スキーマ（全Unit参照）
   - CLI: `harness:enable` / `harness:disable`（全Unit利用）
   - CLI: `harness:migrate-config`（外部利用者）
   - モジュール: config-loader（v2スキーマ読み込み、全Unit利用）
@@ -37,7 +37,7 @@
 
 | 業務名詞 | 出典 | 説明 |
 |---------|------|------|
-| HarnessConfig | US-027, US-028 | harness.config.json全体を表す設定オブジェクト |
+| HarnessConfig | US-027, US-028 | phasegate.config.json全体を表す設定オブジェクト |
 | OrchestrationSection | US-027 | mode / parallelization / modelProfile / contextStrategy / commitStrategy / workflow を含むセクション |
 | SessionSection | US-028 | stateFile / roadmapFile のパス設定を含むセクション |
 | ConfigSchema | US-027, US-028 | JSONスキーマバリデーション用のスキーマ定義 |
@@ -60,7 +60,7 @@
 
 #### 集約候補 1: HarnessConfig（設定集約）
 
-- **根拠**: harness.config.jsonファイル全体が1つの整合性境界を形成する。orchestrationセクションとsessionセクションは個別に変更可能だが、スキーマバリデーションは常にファイル全体に対して行われる。CLIツールの設定ファイルという特性上、ファイル単位での読み書きが自然な操作単位。
+- **根拠**: phasegate.config.jsonファイル全体が1つの整合性境界を形成する。orchestrationセクションとsessionセクションは個別に変更可能だが、スキーマバリデーションは常にファイル全体に対して行われる。CLIツールの設定ファイルという特性上、ファイル単位での読み書きが自然な操作単位。
 - **含む要素**: v1既存セクション（project, layers, harnesses, paths, reporting）+ orchestration + session + quick_mode
 - **不変条件**: JSONスキーマに適合すること。GSD由来設定のデフォルト値が`enabled: false`であること。
 
@@ -84,7 +84,7 @@
 
 CLIツールの設定ファイル管理というドメイン特性を考慮すると、Webアプリケーションのような複雑な集約分割は不要。理由:
 
-1. **操作単位がファイル**: harness.config.jsonは1ファイルとして読み書きされる。セクション単位のアトミックな更新はCLIの利用パターンに合わない。
+1. **操作単位がファイル**: phasegate.config.jsonは1ファイルとして読み書きされる。セクション単位のアトミックな更新はCLIの利用パターンに合わない。
 2. **同時実行制御が不要**: CLIツールは単一プロセスで動作するため、楽観的ロックやイベントソーシングは不要。
 3. **整合性境界がファイル全体**: スキーマバリデーションはファイル全体に対して行われ、セクション間の依存関係（例: orchestration.enabled=falseならworkflowも無効）もファイル内で完結する。
 
@@ -131,7 +131,7 @@ CLIツールの特性上、ドメインイベントの必要性は低い。た�
 
 | ポート（インターフェース） | 方向 | 実装アダプター |
 |------------------------|------|-------------|
-| ConfigRepository | 駆動される側 | FileSystemConfigRepository（harness.config.json読み書き） |
+| ConfigRepository | 駆動される側 | FileSystemConfigRepository（phasegate.config.json読み書き） |
 | ConfigSchemaValidator | 駆動される側 | JsonSchemaValidator（JSONスキーマバリデーション） |
 | BackupCreator | 駆動される側 | FileSystemBackupCreator（マイグレーション前バックアップ） |
 
@@ -158,7 +158,7 @@ US-029では「GSD由来機能をデフォルトで無効にする」とある�
 
 **選択肢**:
 - (A) ハードコードされた列挙型（FeatureName値オブジェクト内で定義）
-- (B) harness.config.jsonのスキーマから動的に抽出
+- (B) phasegate.config.jsonのスキーマから動的に抽出
 - (C) 別途features.jsonのような定義ファイルを用意
 
 **推奨案**: (A) ハードコードされた列挙型。理由: 機能名は設計時に確定しており、動的に変化しない。型安全性が高く、存在しない機能名の指定をコンパイル時に検出できる。v1の対象機能は`orchestration`と`session`の2つのみであり、列挙で管理するのが最もシンプル。
@@ -193,7 +193,7 @@ config-foundationは「config-loader（v2スキーマ読み込み）」を公開
 - (B) ファイル読み込み+パース+バリデーション+デフォルト値のマージ+プリセット解決
 - (C) (B) + 環境変数オーバーライド + ファイルパス解決
 
-**推奨案**: (B)。config-loaderは「harness.config.jsonを読み込み、バリデーション済みの完全な設定オブジェクトを返す」責務を持つ。デフォルト値のマージとプリセット解決はconfig-foundationの責務であり、利用Unitがこれを個別に行うのは重複。環境変数オーバーライド(C)はv1スコープ外。
+**推奨案**: (B)。config-loaderは「phasegate.config.jsonを読み込み、バリデーション済みの完全な設定オブジェクトを返す」責務を持つ。デフォルト値のマージとプリセット解決はconfig-foundationの責務であり、利用Unitがこれを個別に行うのは重複。環境変数オーバーライド(C)はv1スコープ外。
 
 [Answer]
 cでお願いします。v1スコープ外だとしてもドメイン設計には含めるべきです
@@ -204,8 +204,8 @@ cでお願いします。v1スコープ外だとしてもドメイン設計に�
 
 ### 前提条件
 
-1. **v1既存スキーマの継続**: v1のharness.config.jsonに含まれる既存セクション（project, layers, harnesses, paths, reporting）のスキーマは変更しない。v2は既存に追加する形で拡張する。
-2. **単一設定ファイル原則（K13）**: GSD由来の設定も含め、全設定をharness.config.jsonに統合する。別ファイルへの分離は行わない。
+1. **v1既存スキーマの継続**: v1のphasegate.config.jsonに含まれる既存セクション（project, layers, harnesses, paths, reporting）のスキーマは変更しない。v2は既存に追加する形で拡張する。
+2. **単一設定ファイル原則（K13）**: GSD由来の設定も含め、全設定をphasegate.config.jsonに統合する。別ファイルへの分離は行わない。
 3. **デフォルトOFF原則（Go/No-Go Gate #8）**: GSD由来機能は全てデフォルトで無効。既存v1利用者に影響を与えない。
 4. **プロジェクトローカル原則（Go/No-Go Gate #6）**: 設定ファイルはプロジェクトルートに配置。グローバルパスへの設定は不可。
 

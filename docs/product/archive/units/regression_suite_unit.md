@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-v0で確立した品質基準（K1-K13非交渉要件）のv1回帰テスト整備と、v0の143テスト仕様のv1再実装・CIゲート化を担うUnit。GSDLC v1の品質基盤が継続的に維持されることを自動保証する。
+v0で確立した品質基準（K1-K13非交渉要件）のv1回帰テスト整備と、v0の143テスト仕様のv1再実装・CIゲート化を担うUnit。Phasegate v1の品質基盤が継続的に維持されることを自動保証する。
 
 ---
 
@@ -48,12 +48,12 @@ v0で確立した品質基準（K1-K13非交渉要件）のv1回帰テスト整�
 - Performance検出（ループ内await、N+1、bundleSizeLimit）回帰テスト
 - Drift Detection（設計-実装乖離双方向検出）回帰テスト
 - Consistency Checker回帰テスト
-- harness.config.json単一原則検証テスト
+- phasegate.config.json単一原則検証テスト
 
 **US-055: Go/No-Go Gate 8条件回帰テスト**
 - GNG-1: npmパッケージ非依存（package.jsonにGSD関連パッケージなし）
 - GNG-2: `.planning/`不使用（ディレクトリ非存在）
-- GNG-3: 設定ファイル統一（GSD由来設定がharness.config.json内）
+- GNG-3: 設定ファイル統一（GSD由来設定がphasegate.config.json内）
 - GNG-4: yolo/skip-permissions不採用（deny list+hooks完全維持）
 - GNG-5: 2-Phase Execution維持（設計スキルの人間承認ゲート存在）
 - GNG-6: プロジェクトローカル実行（`~/.claude/`へのグローバル書き込みなし）

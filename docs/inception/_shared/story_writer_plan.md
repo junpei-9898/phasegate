@@ -75,7 +75,7 @@
 | **H-01** | **Biome AST解析基盤** | L1コア4ルールBiome移植 + AIアンチパターン4ルール + CIパイプライン統合 | 1 |
 | **H-02** | **Phase Dependency Model** | 3層フェーズ依存定義 + phase-gateバリデータ拡張 + phaseDependencies設定 | 1 |
 | **H-03** | **Traceability Model** | @unit/@layer/@US-XXX/@storyメタデータ体系 + metadataバリデータ拡張 + 逆引きチェーン検証 | 1 |
-| **H-04** | **harness.config.json v2** | 品質設定スキーマ確定 + Preset System (minimal/standard/strict) + 新セクション | 1 |
+| **H-04** | **phasegate.config.json v2** | 品質設定スキーマ確定 + Preset System (minimal/standard/strict) + 新セクション | 1 |
 | **H-05** | **ADR基盤** | ADRテンプレート + archgate + 初期ADR作成（§12 Key Decisionsベース）+ ステータス管理 | 1 |
 | **H-06** | **HarnessError体系** | 統一エラーフォーマット + ADR参照+fix_example付与 + fix_example品質保証 + severity権限契約 | 1 |
 | **H-07** | **Nyquist検証層** | requirement-test-matrix.json + AC網羅率算出 + Traceability統合 + impact-analysis | 2 |
@@ -136,7 +136,7 @@ H-F2 Phase 2拡張        ← v1完了後
 |----|---------|------|--------|
 | H02-01 | 3層フェーズ構造（Level 1/2/3）定義 + phase-gateバリデータ拡張（レベル間依存検証） | 新規（K14） | Must |
 | H02-02 | Planning Mode（interactive/embedded-qa）+ plan文書（*_plan.md）必須生成 | 新規（K15） | Must |
-| H02-03 | Phase Dependencyカスタマイズ（harness.config.json phaseDependencies + override制約） | 新規 | Should |
+| H02-03 | Phase Dependencyカスタマイズ（phasegate.config.json phaseDependencies + override制約） | 新規 | Should |
 
 #### H-03: Traceability Model（3 US）
 | US | タイトル | 旧US | 優先度 |
@@ -145,10 +145,10 @@ H-F2 Phase 2拡張        ← v1完了後
 | H03-02 | @US-XXXメタデータ + 設計文書累積更新時の付与検証（L2 metadata拡張） | 新規 | Must |
 | H03-03 | @storyメタデータ + 逆引きチェーン全体検証（実装→Unit→設計→US→計画） | 新規 | Must |
 
-#### H-04: harness.config.json v2（3 US）
+#### H-04: phasegate.config.json v2（3 US）
 | US | タイトル | 旧US | 優先度 |
 |----|---------|------|--------|
-| H04-01 | harness.config.json v2スキーマ定義（layers/quickMode/phaseDependencies/planningMode/paths/reporting/harnesses） | US-029改修 | Must |
+| H04-01 | phasegate.config.json v2スキーマ定義（layers/quickMode/phaseDependencies/planningMode/paths/reporting/harnesses） | US-029改修 | Must |
 | H04-02 | Preset System定義と切替（minimal: L1+L2 / standard: L1-L3+90% / strict: L1-L4+95%+bundleSize） | 新規 | Must |
 | H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | US-029一部 | Must |
 
@@ -194,7 +194,7 @@ H-F2 Phase 2拡張        ← v1完了後
 #### H-10: Quick Mode（4 US）
 | US | タイトル | 旧US | 優先度 |
 |----|---------|------|--------|
-| H10-01 | Quick Mode設定（harness.config.json quickModeセクション: allowedCategories/maintainedLayers/relaxedGates） | US-010 | Must |
+| H10-01 | Quick Mode設定（phasegate.config.json quickModeセクション: allowedCategories/maintainedLayers/relaxedGates） | US-010 | Must |
 | H10-02 | Quick Mode判定エンジン（対象/対象外自動分類 + 混在変更拒否 + 新ドメイン/API変更自動拒否） | 新規（codex提案） | Must |
 | H10-03 | Quick Modeバリデータ緩和実行（L1全維持 + L2選択 + L3 securityのみ + L4スキップ） | US-011 | Must |
 | H10-04 | quick-implementor（Quick Mode下のad-hoc実装スキル定義） | 新規 | Should |

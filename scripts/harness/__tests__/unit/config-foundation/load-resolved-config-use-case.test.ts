@@ -184,7 +184,7 @@ target('LoadResolvedConfigUseCase', () => {
         const expectedConfig = createMinimalResolvedDocument();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn(),
@@ -200,14 +200,14 @@ target('LoadResolvedConfigUseCase', () => {
         });
 
         // Act
-        const actual = await useCase.execute('/tmp/harness.config.json');
+        const actual = await useCase.execute('/tmp/phasegate.config.json');
 
         // Assert
-        expect(configRepository.load).toHaveBeenCalledWith('/tmp/harness.config.json');
+        expect(configRepository.load).toHaveBeenCalledWith('/tmp/phasegate.config.json');
         expect(schemaValidator.validate).toHaveBeenCalledWith(document);
         expect(actual).toEqual({
           config: expectedConfig,
-          sourcePath: '/tmp/harness.config.json',
+          sourcePath: '/tmp/phasegate.config.json',
         });
       });
     });
@@ -221,7 +221,7 @@ target('LoadResolvedConfigUseCase', () => {
         ];
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn(),
@@ -237,7 +237,7 @@ target('LoadResolvedConfigUseCase', () => {
         });
 
         // Act
-        const actual = useCase.execute('/tmp/harness.config.json');
+        const actual = useCase.execute('/tmp/phasegate.config.json');
 
         // Assert
         await expect(actual).rejects.toThrowError(ConfigValidationError);

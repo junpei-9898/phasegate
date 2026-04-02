@@ -62,7 +62,7 @@ type: project
 ## 完了済み: 設定マイグレーション・Cross-unit結線 (2026-03-16)
 
 ### 6. 設定ファイルマイグレーション ✅
-- `harness.config.json` をレガシーv1形式から HarnessConfigV2 source format に変換
+- `phasegate.config.json` をレガシーv1形式から HarnessConfigV2 source format に変換
 - v1 固有フィールド(`version`, `architecture`, `naming`, `paths.source`)を除去
 - `project.preset: "standard"` でプリセット解決が正常動作
 - スキーマバリデーション通過を E2E テストで確認（`list-features` が exit 0 で成功）

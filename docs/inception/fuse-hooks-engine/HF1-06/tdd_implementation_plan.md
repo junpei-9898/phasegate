@@ -3,10 +3,10 @@
 ## 1. スコープ
 
 ### 対象ストーリー
-**HF1-06**: harness.config.json の設定により FUSE モードと Claude Code Hooks モードを切り替え可能にする。FUSE モード選択時は実際に fuse-native でマウントが起動し、ファイルI/Oインターセプトが動作する状態にする。
+**HF1-06**: phasegate.config.json の設定により FUSE モードと Claude Code Hooks モードを切り替え可能にする。FUSE モード選択時は実際に fuse-native でマウントが起動し、ファイルI/Oインターセプトが動作する状態にする。
 
 ### 受け入れ基準
-1. `harness.config.json` に `guardMode: "fuse" | "hooks" | "auto"` を追加し、スキーマバリデーションが通ること
+1. `phasegate.config.json` に `guardMode: "fuse" | "hooks" | "auto"` を追加し、スキーマバリデーションが通ること
 2. `harness fuse:mount` CLIコマンドでFUSEマウントが起動すること
 3. `harness fuse:unmount` CLIコマンドでFUSEアンマウントが実行されること
 4. `harness fuse:status` で現在のモード・マウント状態が表示されること
@@ -17,7 +17,7 @@
 ### 影響する層
 - **Infrastructure**: composition-root.ts の配線拡張
 - **Presentation**: main.ts に fuse:mount / fuse:unmount / fuse:status コマンド追加、FuseDaemonHandler 新設
-- **Config**: harness.config.json スキーマ拡張、HarnessConfigV2 型拡張
+- **Config**: phasegate.config.json スキーマ拡張、HarnessConfigV2 型拡張
 
 ### 影響しない層（変更不要）
 - **Domain**: FUSEMount, HookEvaluationService 等は既存のまま
@@ -70,7 +70,7 @@
 ## 5. QA（不明点・確認事項）
 
 ### [Question] Q1: guardMode の配置場所
-`harness.config.json` のどのセクションに `guardMode` を配置するか？
+`phasegate.config.json` のどのセクションに `guardMode` を配置するか？
 
 **推奨案**: トップレベルの `harnesses` セクション内に追加する。理由: ハーネス機能のオン/オフ設定が既にここに集約されているため。
 
@@ -114,7 +114,7 @@
 ### 変更
 | ファイル | 変更内容 |
 |---------|---------|
-| `harness.config.json` | `harnesses.guardMode: "auto"` 追加 |
+| `phasegate.config.json` | `harnesses.guardMode: "auto"` 追加 |
 | `harness-config-v2.schema.json` | `harnesses` に `guardMode` enum 追加 |
 | `config-foundation/domain/harness-config.ts` | `HarnessConfigV2` 型に `guardMode` 追加 |
 | `fuse-hooks-engine/composition-root.ts` | guardMode に応じた配線分岐 |

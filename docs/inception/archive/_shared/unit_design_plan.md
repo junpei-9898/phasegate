@@ -9,7 +9,7 @@
 ## 1. スコープ
 
 - **対象ストーリー数**: 55（15 Epic）
-- **分析対象の業務領域**: GSDLC Harness v1の全機能領域
+- **分析対象の業務領域**: Phasegate v1の全機能領域
   - 設定基盤、品質ハーネス、オーケストレーション、セッション/ライフサイクル、ツールチェーン、FUSE Hooks Engine、オーケストレーションコマンド定義
 
 ---
@@ -19,7 +19,7 @@
 ### 凝集性の基準
 
 1. **ドメイン凝集**: 同一業務ドメイン（品質検証、設定管理、セッション管理等）に属するストーリーを同一Unitに
-2. **データ凝集**: 同じデータ構造（harness.config.json、session-state.json等）を読み書きするストーリーを同一Unitに
+2. **データ凝集**: 同じデータ構造（phasegate.config.json、session-state.json等）を読み書きするストーリーを同一Unitに
 3. **変更凝集**: 同時に変更される可能性が高いストーリーを同一Unitに
 
 ### Unit分割の判断根拠
@@ -46,7 +46,7 @@
 
 | # | Unit名 | 担当ストーリーID | ストーリー数 | 責務概要 |
 |---|--------|----------------|-------------|---------|
-| 1 | config-foundation | US-027, US-028, US-029, US-030 | 4 | harness.config.json v2スキーマ設計・マイグレーション・GSD機能フラグ管理 |
+| 1 | config-foundation | US-027, US-028, US-029, US-030 | 4 | phasegate.config.json v2スキーマ設計・マイグレーション・GSD機能フラグ管理 |
 | 2 | adr-documentation | US-020, US-021, US-022 | 3 | ADRテンプレート、初期10件ADR作成、ステータス管理 |
 | 3 | biome-toolchain | US-036, US-037, US-038, US-039 | 4 | v0 ESLintルールのBiomeプラグイン移植、PostToolUse Hook高速化、L1バリデータ再構築、CIパイプライン統合 |
 | 4 | context-engineering | US-001, US-002, US-003, US-004 | 4 | context-priority.json、SKILL.mdコンテキストバジェット、Fresh Context Protocol、Compact時優先保持 |

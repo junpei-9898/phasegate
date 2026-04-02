@@ -1265,7 +1265,7 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 
 ### LD-5: CoverageThresholdPortのフォールバック設計
 
-**論点**: `harness.config.json` が存在しない場合や設定が不完全な場合の挙動をどう定義するか。
+**論点**: `phasegate.config.json` が存在しない場合や設定が不完全な場合の挙動をどう定義するか。
 
 **決定**: `ConfigFoundationCoverageThresholdAdapter` はデフォルト値（`standard=0.90`）にフォールバックする。フォールバック発生時は `HarnessError`（severity: `warning`）を生成してログに記録する（直接エラー終了はしない）。
 

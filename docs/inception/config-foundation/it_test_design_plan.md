@@ -219,10 +219,10 @@ scripts/harness/__tests__/config-foundation/
 
 load-config FacadeはInfrastructureアダプターを組み立てるcomposition rootであり、内部でFileSystemConfigRepository、AjvConfigSchemaValidator、PresetDefinitionStore、LoadResolvedConfigUseCaseを直接生成する。テスト時にPortをモックに差し替える手段がないため、実ファイルを用いた統合寄りのテストになる。これをIT設計計画のスコープに含めてよいか。
 
-**推奨案:** load-config Facadeは実ファイル（テンポラリディレクトリに有効なharness.config.jsonを配置）を用いた統合テストとして扱う。テストケース数は最小限（正常系1、ファイル未存在1、スキーマ不正1）に留める。
+**推奨案:** load-config Facadeは実ファイル（テンポラリディレクトリに有効なphasegate.config.jsonを配置）を用いた統合テストとして扱う。テストケース数は最小限（正常系1、ファイル未存在1、スキーマ不正1）に留める。
 
 [Answer]
-推奨案を採用する。load-config Facadeは実ファイル（テンポラリディレクトリに有効なharness.config.jsonを配置）を用いた統合テストとして扱う。テストケース数は最小限（正常系1、ファイル未存在1、スキーマ不正1）に留める。
+推奨案を採用する。load-config Facadeは実ファイル（テンポラリディレクトリに有効なphasegate.config.jsonを配置）を用いた統合テストとして扱う。テストケース数は最小限（正常系1、ファイル未存在1、スキーマ不正1）に留める。
 
 ### [Question] Q2: CompositeFeatureRegistryAdapterのテスト範囲
 

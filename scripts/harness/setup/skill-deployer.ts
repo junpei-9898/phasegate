@@ -14,7 +14,7 @@ import { promises as fs } from 'node:fs';
 const HARNESS_VERSION_FILE = '.harness-version';
 const SKILLS_SOURCE_DIR = 'skills';
 const SKILLS_TARGET_DIR = join('.claude', 'skills');
-const HARNESS_CONFIG_FILE = 'harness.config.json';
+const HARNESS_CONFIG_FILE = 'phasegate.config.json';
 const HOOKS_TEMPLATE_DIR = join('templates', '.claude');
 const HOOKS_TARGET_DIR = '.claude';
 
@@ -170,8 +170,8 @@ export async function deployHookScripts(
 }
 
 /**
- * harness.config.json のデフォルトテンプレートを生成する。
- * 対象プロジェクトに harness.config.json が存在しない場合のみ作成する。
+ * phasegate.config.json のデフォルトテンプレートを生成する。
+ * 対象プロジェクトに phasegate.config.json が存在しない場合のみ作成する。
  */
 export async function initHarnessConfig(
   projectRoot: string,

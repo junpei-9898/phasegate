@@ -9,7 +9,7 @@ H11-02はClaude Code PreToolUse Hook Adapterを実装する。具体的には以
 - `biome.json`（`.biome.json`含む）、`tsconfig.json`、`package.json` の変更をブロック
 - ブロック時に変更対象ファイル名を含むエラーメッセージをstderrに出力し、exitCode=2で終了
 - ブロック対象外ファイルへの変更は正常通過（exitCode=0）
-- `harness.config.json` のHook設定（保護対象ファイルパターンの拡張）を参照
+- `phasegate.config.json` のHook設定（保護対象ファイルパターンの拡張）を参照
 
 実装: `scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts`
 UseCase: `scripts/harness/agent-integration/application/usecases/handle-pre-tool-use-usecase.ts`

@@ -169,7 +169,7 @@ export class CommandDispatchService {
         const statusSummary = this.statusDerivationService.derive({
           scanResult,
           presetInfo,
-          configSummary: { configPath: 'harness.config.json', lastModified: '', version: '2' },
+          configSummary: { configPath: 'phasegate.config.json', lastModified: '', version: '2' },
           phaseGateSummary: { totalStories: 0, passedStories: 0, pendingStories: 0 },
         });
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, statusSummary);

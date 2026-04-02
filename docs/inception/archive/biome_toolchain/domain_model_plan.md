@@ -220,7 +220,7 @@ US-039 AC-3「ESLint関連の設定ファイル・依存パッケージがプロ
 | P2 | v0の4カスタムESLintルールのソースコード・テストケースが参照可能 | ALIDL_HARNESS v0リポジトリへのアクセスが必要 |
 | P3 | `biome.json`設定ファイルで4カスタムルールの有効/無効を個別制御可能 | Biomeのプラグイン設定機構に依存 |
 | P4 | importグラフ解析がBiomeのAST APIで実現可能（特にTypeScript pathsの解決） | Biome AST APIの機能範囲に依存 |
-| P5 | harness.config.json v2のレイヤー定義セクションが参照可能（config-foundation Unitと同時Wave 1） | Wave 1並列実行時の調整が必要 |
+| P5 | phasegate.config.json v2のレイヤー定義セクションが参照可能（config-foundation Unitと同時Wave 1） | Wave 1並列実行時の調整が必要 |
 
 ### リスク
 
@@ -230,4 +230,4 @@ US-039 AC-3「ESLint関連の設定ファイル・依存パッケージがプロ
 | R2 | no-layer-violationのimportグラフ解析がBiome単体で困難 | 高 | 中 | Biome AST + TypeScriptスクリプトのハイブリッド実装をフォールバックとして準備 |
 | R3 | v0 ESLintルールとBiomeルールの挙動差異 | 中 | 高 | パリティテストスイートで差異を体系的に検出・文書化 |
 | R4 | ESLint除去による既存CIの破壊 | 高 | 低 | ESLint除去は段階的に実施。Biomeルールの全テスト通過確認後にESLint依存を削除 |
-| R5 | config-foundation Unit（Wave 1並列）との設定ファイル競合 | 中 | 中 | biome-toolchainは`biome.json`のみを管理し、`harness.config.json`への直接依存を最小化する |
+| R5 | config-foundation Unit（Wave 1並列）との設定ファイル競合 | 中 | 中 | biome-toolchainは`biome.json`のみを管理し、`phasegate.config.json`への直接依存を最小化する |

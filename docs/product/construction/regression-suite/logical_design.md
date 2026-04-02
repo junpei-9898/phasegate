@@ -782,7 +782,7 @@ scripts/harness/__tests__/regression/
 **実装方針**
 
 - `HarnessConfigV2` の `layers.L3.coverageThreshold` を `coverageThreshold` として返す
-- `harness.config.json` の読み取りはconfig-foundationのポートに委譲する
+- `phasegate.config.json` の読み取りはconfig-foundationのポートに委譲する
 
 ### 4.6 JsonCiGateResultWriterAdapter
 

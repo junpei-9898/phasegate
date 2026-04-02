@@ -50,7 +50,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
           enabledLayers: ['L1', 'L2', 'L3'],
         });
         deps.configQueryPort.getConfigSummary.mockResolvedValue({
-          configPath: 'harness.config.json',
+          configPath: 'phasegate.config.json',
           lastModified: '2026-03-19T00:00:00.000Z',
           version: '2',
         });
@@ -93,7 +93,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
           enabledLayers: ['L1', 'L2', 'L3', 'L4'],
         });
         deps.configQueryPort.getConfigSummary.mockResolvedValue({
-          configPath: 'harness.config.json',
+          configPath: 'phasegate.config.json',
           lastModified: '2026-03-19T00:00:00.000Z',
           version: '2',
         });
@@ -129,7 +129,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
           enabledLayers: ['L1'],
         });
         deps.configQueryPort.getConfigSummary.mockResolvedValue({
-          configPath: 'harness.config.json',
+          configPath: 'phasegate.config.json',
           lastModified: '2026-03-19T00:00:00.000Z',
           version: '2',
         });
@@ -171,7 +171,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
           enabledLayers: ['L1', 'L2', 'L3'],
         });
         deps.configQueryPort.getConfigSummary.mockResolvedValue({
-          configPath: 'harness.config.json',
+          configPath: 'phasegate.config.json',
           lastModified: '2026-03-19T00:00:00.000Z',
           version: '2',
         });

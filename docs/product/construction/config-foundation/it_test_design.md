@@ -101,8 +101,8 @@ scripts/harness/__tests__/config-foundation/
 
 | ケースID | テストケース名 | シナリオ | モック/スタブ設定 | 期待結果 |
 |----------|-------------|---------|-----------------|---------|
-| IT-CF-001 | 有効なraw documentからHarnessConfigV2 DTOを返すこと | configPath指定でload→スキーマ検証OK→Preset解決→DTO変換 | `configRepository.load` → `{ path: "/tmp/harness.config.json", document: validDoc }`, `schemaValidator.validate` → `[]` | `ResolvedConfigOutput` に `config: HarnessConfigV2` と `sourcePath` が含まれる |
-| IT-CF-002 | configPath未指定時にリポジトリの探索結果を使用してDTOを返すこと | configPath省略でload→解決→DTO変換 | `configRepository.load(undefined)` → `{ path: "/discovered/path/harness.config.json", document: validDoc }`, `schemaValidator.validate` → `[]` | `sourcePath` がリポジトリの探索結果パスと一致する |
+| IT-CF-001 | 有効なraw documentからHarnessConfigV2 DTOを返すこと | configPath指定でload→スキーマ検証OK→Preset解決→DTO変換 | `configRepository.load` → `{ path: "/tmp/phasegate.config.json", document: validDoc }`, `schemaValidator.validate` → `[]` | `ResolvedConfigOutput` に `config: HarnessConfigV2` と `sourcePath` が含まれる |
+| IT-CF-002 | configPath未指定時にリポジトリの探索結果を使用してDTOを返すこと | configPath省略でload→解決→DTO変換 | `configRepository.load(undefined)` → `{ path: "/discovered/path/phasegate.config.json", document: validDoc }`, `schemaValidator.validate` → `[]` | `sourcePath` がリポジトリの探索結果パスと一致する |
 | IT-CF-003 | Preset解決によりsourceDocumentの差分がresolvedDocumentに反映されること | standard PresetのdocumentにcoverageThreshold上書きを含む | `configRepository.load` → standard Preset + `coverageThreshold: 95` の差分document, `schemaValidator.validate` → `[]` | 返却DTOの `layers.L3.coverageThreshold` が `95` である |
 | IT-CF-004 | minimal Presetでデフォルト無効のGSD機能がすべてfalse/0で返ること | minimal Preset指定のdocument | `configRepository.load` → minimal document, `schemaValidator.validate` → `[]` | `harnesses.agentLessonCollection === false`, `harnesses.cascadeUpdate === false`, `harnesses.bundleSizeLimit === 0`, `harnesses.deadCodeGC === false` |
 
@@ -224,9 +224,9 @@ scripts/harness/__tests__/config-foundation/
 
 | ケースID | テストケース名 | 操作 | 入力/事前条件 | 期待結果 |
 |----------|-------------|------|-------------|---------|
-| IT-CF-035 | configPath指定時に対象ファイルを読み込んでdocumentを返すこと | `load(configPath)` | tmpDir内にharness.config.jsonを配置 | `{ path: absolutePath, document: parsedJSON }` |
-| IT-CF-036 | configPath未指定時に親ディレクトリを探索して設定ファイルを発見すること | `load()` | tmpDir/sub/sub2/ をcwdとし、tmpDir直下にharness.config.jsonを配置 | `path` がtmpDir直下のharness.config.jsonの絶対パス |
-| IT-CF-037 | 返されるpathが絶対パスであること | `load(configPath)` | tmpDir内にharness.config.jsonを配置 | `path` が `/` で始まる絶対パス |
+| IT-CF-035 | configPath指定時に対象ファイルを読み込んでdocumentを返すこと | `load(configPath)` | tmpDir内にphasegate.config.jsonを配置 | `{ path: absolutePath, document: parsedJSON }` |
+| IT-CF-036 | configPath未指定時に親ディレクトリを探索して設定ファイルを発見すること | `load()` | tmpDir/sub/sub2/ をcwdとし、tmpDir直下にphasegate.config.jsonを配置 | `path` がtmpDir直下のphasegate.config.jsonの絶対パス |
+| IT-CF-037 | 返されるpathが絶対パスであること | `load(configPath)` | tmpDir内にphasegate.config.jsonを配置 | `path` が `/` で始まる絶対パス |
 | IT-CF-038 | 設定ファイルが存在しない場合にConfigNotFoundErrorを送出すること | `load("/nonexistent/path")` | ファイルなし | `ConfigNotFoundError` |
 | IT-CF-039 | 不正なJSONの場合にConfigPersistenceErrorを送出すること | `load(configPath)` | 壊れたJSONを書き込んだファイル | `ConfigPersistenceError` |
 
@@ -291,7 +291,7 @@ scripts/harness/__tests__/config-foundation/
 | IT-CF-059 | 引数なしでUsage表示を出力すること | `[]`（引数なし） | Usage説明テキストが `console.log` に出力される |
 | IT-CF-060 | --listで利用可能機能一覧を表示しexit 0を返すこと | `["--list"]` | `Available features:` + 各機能行が出力、exit 0 |
 | IT-CF-061 | --list表示時に各機能のenabled/disabledステータスが正しく表示されること | `["--list"]` | 各行に `[enabled]` または `[disabled]` が含まれる |
-| IT-CF-062 | 有効な機能名で成功メッセージと更新パスを表示しexit 0を返すこと | `["agentLessonCollection"]` | `Enabled feature: agentLessonCollection` + `Updated: /path/to/harness.config.json` が出力、exit 0 |
+| IT-CF-062 | 有効な機能名で成功メッセージと更新パスを表示しexit 0を返すこと | `["agentLessonCollection"]` | `Enabled feature: agentLessonCollection` + `Updated: /path/to/phasegate.config.json` が出力、exit 0 |
 | IT-CF-063 | 未知機能名で利用可能一覧を表示しexit 1を返すこと | `["unknownFeature"]` | `Unknown feature: unknownFeature` + 利用可能一覧が出力、exit 1 |
 | IT-CF-064 | EnableFeatureUseCaseの実行エラー時にexit 2を返すこと | `["agentLessonCollection"]` | エラーメッセージが `console.error` に出力、exit 2 |
 | IT-CF-065 | UnsupportedFeatureError時に利用可能一覧を表示すること | `["invalidName"]` | `Available features:` に4機能名が含まれる |
@@ -302,7 +302,7 @@ scripts/harness/__tests__/config-foundation/
 | ケースID | テストケース名 | 引数 | 期待出力/終了コード |
 |----------|-------------|------|-------------------|
 | IT-CF-067 | --listで機能一覧を表示しexit 0を返すこと | `["--list"]` | `Available features:` + 各機能行が出力、exit 0 |
-| IT-CF-068 | 有効な機能名で無効化メッセージを表示しexit 0を返すこと | `["deadCodeGC"]` | `Disabled feature: deadCodeGC` + `Updated: /path/to/harness.config.json` が出力、exit 0 |
+| IT-CF-068 | 有効な機能名で無効化メッセージを表示しexit 0を返すこと | `["deadCodeGC"]` | `Disabled feature: deadCodeGC` + `Updated: /path/to/phasegate.config.json` が出力、exit 0 |
 | IT-CF-069 | 未知機能名でexit 1を返すこと | `["unknownFeature"]` | `Unknown feature: unknownFeature` + 利用可能一覧が出力、exit 1 |
 | IT-CF-070 | 実行エラー時にexit 2を返すこと | `["deadCodeGC"]` | エラーメッセージが `console.error` に出力、exit 2 |
 | IT-CF-071 | 引数なしでUsage表示を出力すること | `[]`（引数なし） | Usage説明テキストが出力される |
@@ -321,13 +321,13 @@ scripts/harness/__tests__/config-foundation/
 
 ## 6. Facadeテストケース (load-config)
 
-> QA Q1回答に基づき、load-config Facadeは実ファイル（テンポラリディレクトリに有効なharness.config.jsonを配置）を用いた統合テストとする。テストケース数は最小限の3ケースに限定する。
+> QA Q1回答に基づき、load-config Facadeは実ファイル（テンポラリディレクトリに有効なphasegate.config.jsonを配置）を用いた統合テストとする。テストケース数は最小限の3ケースに限定する。
 
-**テスト環境**: `fs.mkdtempSync()` でテンポラリディレクトリを作成し、実際のharness.config.jsonを配置する。実Infrastructure（FileSystemConfigRepository, AjvConfigSchemaValidator, PresetDefinitionStore）を使用する。
+**テスト環境**: `fs.mkdtempSync()` でテンポラリディレクトリを作成し、実際のphasegate.config.jsonを配置する。実Infrastructure（FileSystemConfigRepository, AjvConfigSchemaValidator, PresetDefinitionStore）を使用する。
 
 | ケースID | テストケース名 | シナリオ | 入力/事前条件 | 期待結果 |
 |----------|-------------|---------|-------------|---------|
-| IT-CF-077 | 有効な設定ファイルからHarnessConfigV2を返すこと | tmpDirに有効なharness.config.jsonを配置し、`loadConfig(path)` を呼ぶ | 全必須セクションを含む有効なv2 JSON | `HarnessConfigV2` が返り、`project.name` と `project.preset` が入力と一致する |
+| IT-CF-077 | 有効な設定ファイルからHarnessConfigV2を返すこと | tmpDirに有効なphasegate.config.jsonを配置し、`loadConfig(path)` を呼ぶ | 全必須セクションを含む有効なv2 JSON | `HarnessConfigV2` が返り、`project.name` と `project.preset` が入力と一致する |
 | IT-CF-078 | 設定ファイル未存在時にエラーを送出すること | 存在しないパスを指定して `loadConfig(path)` を呼ぶ | ファイルなし | `ConfigNotFoundError` が送出される |
 | IT-CF-079 | スキーマ不正時にConfigValidationErrorを送出すること | tmpDirにスキーマ不正のJSONを配置し、`loadConfig(path)` を呼ぶ | `project` セクションが欠けたJSON | `ConfigValidationError` が送出される |
 
@@ -361,7 +361,7 @@ scripts/harness/__tests__/config-foundation/
 #### Infrastructure層テスト用fixture
 
 - **テンポラリディレクトリ**: `fs.mkdtempSync(path.join(os.tmpdir(), 'cf-test-'))` で作成。`afterEach` でクリーンアップ
-- **validConfigJson**: ファクトリヘルパーで有効なharness.config.json文字列を生成
+- **validConfigJson**: ファクトリヘルパーで有効なphasegate.config.json文字列を生成
 - **invalidConfigJson**: 各バリデーションエラーパターンに対応する不正JSON
 
 #### Presentation層テスト用ヘルパー

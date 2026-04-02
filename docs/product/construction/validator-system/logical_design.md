@@ -1074,7 +1074,7 @@ export interface AggregatedValidationReport {
 **外部I/O**
 
 - `scripts/harness/shared-kernel/config-foundation.ts` からの `HarnessConfigV2` 読み取り
-- `harness.config.json` ファイルの参照（config-foundation経由）
+- `phasegate.config.json` ファイルの参照（config-foundation経由）
 
 **実装方針**
 

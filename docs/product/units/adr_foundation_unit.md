@@ -47,7 +47,7 @@ v0（adr-documentation）ではテンプレート整備・初期10件ADR・ス�
 4. FUSE Hooks Engineはv1スコープ外
 5. HarnessErrorにfix_example必須化
 6. Quick Mode適用条件の厳格定義
-7. 設定ファイル分離（harness.config.json / orchestration.config.json）
+7. 設定ファイル分離（phasegate.config.json / orchestration.config.json）
 8. Nyquist統合（GSD-2 Truths/Artifacts検証パターン）
 9. 成果物駆動の状態導出
 10. スタック検出（バリデータ無限ループ防止）
@@ -98,7 +98,7 @@ v0（adr-documentation）ではテンプレート整備・初期10件ADR・ス�
 |----|------|---------------|
 | K6 | 2-Phase Execution | ADRテンプレートに2-Phase Execution設計のADRを含む |
 | K7 | Document Split（inception/product） | ADRをinception/product分離設計のADRとして記録 |
-| K13 | harness.config.json | 設定ファイル分離のADRを含む |
+| K13 | phasegate.config.json | 設定ファイル分離のADRを含む |
 
 ---
 

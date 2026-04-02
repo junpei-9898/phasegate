@@ -75,7 +75,7 @@ OS-level FUSEによるファイルI/Oインターセプションで、AIエー�
 
 | 依存先 | 種別 | 内容 |
 |--------|------|------|
-| config-foundation | 設定 | harness.config.json v2の設定参照 |
+| config-foundation | 設定 | phasegate.config.json v2の設定参照 |
 | quality-hooks | パターン | Stop Hookテストゲート・無限ループ防止の参照実装 |
 
 ---

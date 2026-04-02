@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-GSDLC Harness v1 の Wave 1 基盤3Unit（config-foundation, adr-documentation, biome-toolchain）の環境要件を横断分析し、**統合技術スタック、ディレクトリ構造、CI/CDパイプライン、マイグレーション計画** を設計する。
+Phasegate v1 の Wave 1 基盤3Unit（config-foundation, adr-documentation, biome-toolchain）の環境要件を横断分析し、**統合技術スタック、ディレクトリ構造、CI/CDパイプライン、マイグレーション計画** を設計する。
 
 **重要決定事項**: 3Unitの論理設計が指定するディレクトリ構造に不整合がある（§5 QA参照）。Phase 2（環境契約書作成）の前に人間による判断が必要。
 
@@ -29,7 +29,7 @@ GSDLC Harness v1 の Wave 1 基盤3Unit（config-foundation, adr-documentation, 
 
 | ファイル | 配置先 | 役割 |
 |---------|-------|------|
-| `harness.config.json` | プロジェクトルート | Single Source of Truth（K13） |
+| `phasegate.config.json` | プロジェクトルート | Single Source of Truth（K13） |
 | `biome.json` | 論理設計: `packages/biome-toolchain/` | Biome統合設定 |
 | `tsconfig.json` | プロジェクトルート | TypeScript統一設定 |
 | `docs/ADR/` | プロジェクトルート | ADRドキュメント（初期10件） |
@@ -92,7 +92,7 @@ biome-toolchain の `no-layer-violation` / `enforce-folder-structure` ルール�
 ### 3.1 論理設計が指定する構造（そのまま記載）
 
 ```
-GSDLC_HARNESS/
+phasegate/
 ├── scripts/harness/                    ← v0既存 + config-foundation
 │   ├── config-foundation/              ← 論理設計指定（v0既存パターン準拠）
 │   │   ├── domain/
@@ -142,7 +142,7 @@ GSDLC_HARNESS/
 │
 ├── docs/
 │   └── ADR/                            (初期10件 + template.md)
-├── harness.config.json                 (v1→v2拡張)
+├── phasegate.config.json                 (v1→v2拡張)
 ├── package.json                        (ルート)
 └── tsconfig.json                       (ルート)
 ```

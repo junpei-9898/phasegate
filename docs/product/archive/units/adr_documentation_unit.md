@@ -38,7 +38,7 @@ Architecture Decision Records（ADR）のテンプレート整備、初期10件�
 3. Biome AST解析選定
 4. 2-Phase Execution設計
 5. inception/product分離設計
-6. harness.config.json統一設定
+6. phasegate.config.json統一設定
 7. DDD設計スキル群の設計哲学
 8. GSD2.0概念採用・npmパッケージ棄却
 9. Quick Mode導入とフェーズゲート緩和

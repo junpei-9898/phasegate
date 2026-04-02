@@ -180,7 +180,7 @@ export type { HarnessConfigV2Props } from '../config-foundation/domain/harness-c
 
 #### 2.1.1 集約責務
 
-`HarnessConfig` は `harness.config.json` 1ファイル全体を整合性境界として扱う単一集約である。責務は以下の3点に限定する。
+`HarnessConfig` は `phasegate.config.json` 1ファイル全体を整合性境界として扱う単一集約である。責務は以下の3点に限定する。
 
 1. 生の永続化ドキュメントとPreset解決済みスナップショットを同時に保持し、両者の整合を保つ
 2. `enableFeature` / `disableFeature` によって `harnesses` セクションの既定値を変更する
@@ -768,7 +768,7 @@ export interface ConfigRepositoryPort {
 
 | メソッド | 入力 | 出力 | 用途 |
 |---------|------|------|------|
-| `load` | `configPath?: string` | `Promise<{ path: string; document: unknown }>` | `harness.config.json` を読み込む。未指定時は既定探索し、保存用の実パスも返す |
+| `load` | `configPath?: string` | `Promise<{ path: string; document: unknown }>` | `phasegate.config.json` を読み込む。未指定時は既定探索し、保存用の実パスも返す |
 | `save` | `configPath: string`, `document: unknown` | `Promise<void>` | 更新済み設定を保存する |
 
 ### 3.2 ConfigSchemaValidatorPort
@@ -1021,10 +1021,10 @@ export async function loadConfig(configPath?: string): Promise<HarnessConfigV2>;
 
 実装方針:
 
-- `load` は `configPath` 指定時はそのファイル、未指定時は `process.cwd()` から親方向に `harness.config.json` を探索し、解決した絶対パスを返す
+- `load` は `configPath` 指定時はそのファイル、未指定時は `process.cwd()` から親方向に `phasegate.config.json` を探索し、解決した絶対パスを返す
 - 読込時は `JSON.parse` 失敗を `ConfigPersistenceError` に包む
 - `save` は `JSON.stringify(document, null, 2) + "\n"` で2スペースJSONを書き出す
-- 保存先は常に既存の `harness.config.json` を上書きする
+- 保存先は常に既存の `phasegate.config.json` を上書きする
 
 ### 5.2 AjvConfigSchemaValidator
 
@@ -1143,7 +1143,7 @@ export async function loadConfig(configPath?: string): Promise<HarnessConfigV2>;
 
 ```text
 Enabled feature: agentLessonCollection
-Updated: /path/to/harness.config.json
+Updated: /path/to/phasegate.config.json
 ```
 
 一覧表示時:
@@ -1189,7 +1189,7 @@ Available features: agentLessonCollection, cascadeUpdate, bundleSizeLimit, deadC
 
 ```text
 Disabled feature: deadCodeGC
-Updated: /path/to/harness.config.json
+Updated: /path/to/phasegate.config.json
 ```
 
 ### 6.3 ListAvailableFeaturesCommandHandler
@@ -1322,7 +1322,7 @@ Updated: /path/to/harness.config.json
 
 ## 8. ストーリーとの対応
 
-### H04-01: harness.config.json v2スキーマ定義
+### H04-01: phasegate.config.json v2スキーマ定義
 
 | 要求 | 対応設計 |
 |------|---------|

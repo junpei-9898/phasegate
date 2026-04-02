@@ -49,11 +49,11 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
     return ChangeCategory.fromString('docs');
   }
 
-  // config: *.config.json / *.config.ts / harness.config.json
+  // config: *.config.json / *.config.ts / phasegate.config.json
   if (
     filePath.endsWith('.config.json') ||
     filePath.endsWith('.config.ts') ||
-    filePath.endsWith('harness.config.json')
+    filePath.endsWith('phasegate.config.json')
   ) {
     return ChangeCategory.fromString('config');
   }

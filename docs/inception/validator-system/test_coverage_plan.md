@@ -55,7 +55,7 @@
 
 | AC番号 | 受け入れ基準 |
 |--------|------------|
-| H08-03-AC-1 | harness.config.jsonのcoverageThresholdを読み取り閾値検証を実行する |
+| H08-03-AC-1 | phasegate.config.jsonのcoverageThresholdを読み取り閾値検証を実行する |
 | H08-03-AC-2 | standardプリセット（90%）での閾値検証が機能する |
 | H08-03-AC-3 | strictプリセット（95%）での閾値検証が機能する |
 | H08-03-AC-4 | 閾値未達時のHarnessError（L3-003）に現在のカバレッジ値と不足分が含まれる |
@@ -86,7 +86,7 @@
 | H08-06-AC-1 | 未使用エクスポート（exportされているが他ファイルからimportされていない）が検出される |
 | H08-06-AC-2 | 到達不能コード（条件分岐で到達し得ないブロック）が検出される |
 | H08-06-AC-3 | 検出時のHarnessError（L4-003）に`adr_ref` + `fix_example` + 対象ファイルパス・行番号が含まれる |
-| H08-06-AC-4 | strictプリセットでのみ有効（deadCodeGC機能としてharness.config.jsonで制御） |
+| H08-06-AC-4 | strictプリセットでのみ有効（deadCodeGC機能としてphasegate.config.jsonで制御） |
 
 ---
 

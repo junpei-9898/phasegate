@@ -1045,7 +1045,7 @@ export interface LessonArtifactReaderPort {
 - config-foundationのShared KernelからHarnessConfigV2を取得し、Preset設定を返す
 - `listPresetValidatorIds()` はPresetに対応するレイヤー（Preset設定）のValidatorId[]を返す
 
-**外部I/O**: `harness.config.json` ファイル読み取り（config-foundation経由）
+**外部I/O**: `phasegate.config.json` ファイル読み取り（config-foundation経由）
 
 ---
 
@@ -1218,7 +1218,7 @@ ci-governanceの CLIコマンドはci-governance自身がトップレベルコ�
 | 引数 | 必須 | 説明 |
 |------|------|------|
 | `--template-type <aidlc-gate\|consistency-check\|pre-commit>` | Yes | 生成するテンプレート種別 |
-| `--preset-id <minimal\|standard\|strict>` | No | 使用するPreset ID（省略時はharness.config.jsonのプリセット） |
+| `--preset-id <minimal\|standard\|strict>` | No | 使用するPreset ID（省略時はphasegate.config.jsonのプリセット） |
 | `--dry-run` | No | ファイル書き出しを行わず生成内容を確認のみ |
 | `--format <human\|json>` | No | 出力形式（既定: human） |
 

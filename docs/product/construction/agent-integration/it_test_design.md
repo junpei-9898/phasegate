@@ -141,7 +141,7 @@
 
 ### 3.2 HarnessConfigConfigQueryAdapter
 
-**前提**: fixtureの `harness.config.json` を使用する。
+**前提**: fixtureの `phasegate.config.json` を使用する。
 
 #### CRUDテスト（設定読み取り）
 
@@ -157,7 +157,7 @@
 
 | ケースID | 操作 | 事前状態 | 期待結果 |
 |---------|------|---------|---------|
-| IT-REPO-ConfigQueryAdapter-006 | harness.config.jsonが存在しない場合 | configファイルなし | エラーがthrowされる（または安全なデフォルト値が返る） |
+| IT-REPO-ConfigQueryAdapter-006 | phasegate.config.jsonが存在しない場合 | configファイルなし | エラーがthrowされる（または安全なデフォルト値が返る） |
 
 ### 3.3 HarnessApiCliCommandRegistryAdapter
 
@@ -472,15 +472,15 @@ afterEach(async () => {
 
 ### 10. HarnessConfigConfigQueryAdapter: issue パス対応（ISSUE-001）
 
-**テスト方針**: HarnessConfigConfigQueryAdapterの実体を使用。フィクスチャのharness.config.jsonにproject.pathsセクションを含む設定を使用する。
+**テスト方針**: HarnessConfigConfigQueryAdapterの実体を使用。フィクスチャのphasegate.config.jsonにproject.pathsセクションを含む設定を使用する。
 
 #### 正常系
 
 | ケースID | シナリオ | 入力/事前データ | 期待結果 |
 |---------|---------|---------------|---------|
-| IT-REPO-ConfigQueryAdapter-ISSUE001-001 | getProjectPaths() がデフォルトの ProjectPaths を返すこと | project.paths セクションを含む標準的な harness.config.json | `ProjectPaths { source: ['scripts/harness'], docs: { construction: 'docs/product/construction', inception: 'docs/inception' } }` |
+| IT-REPO-ConfigQueryAdapter-ISSUE001-001 | getProjectPaths() がデフォルトの ProjectPaths を返すこと | project.paths セクションを含む標準的な phasegate.config.json | `ProjectPaths { source: ['scripts/harness'], docs: { construction: 'docs/product/construction', inception: 'docs/inception' } }` |
 | IT-REPO-ConfigQueryAdapter-ISSUE001-002 | getProjectPaths() でカスタムパスが正しく反映されること | `project.paths.source: ['src/core', 'src/lib']`, `project.paths.docs.inception: 'design/inception'` を含むフィクスチャ | `ProjectPaths { source: ['src/core', 'src/lib'], docs: { inception: 'design/inception', ... } }` |
-| IT-REPO-ConfigQueryAdapter-ISSUE001-003 | project.paths セクションが未定義の場合にデフォルト値にフォールバックすること | project.paths セクションのない harness.config.json | デフォルトの `ProjectPaths` が返る（source: ['scripts/harness'], docs.inception: 'docs/inception', docs.construction: 'docs/product/construction'） |
+| IT-REPO-ConfigQueryAdapter-ISSUE001-003 | project.paths セクションが未定義の場合にデフォルト値にフォールバックすること | project.paths セクションのない phasegate.config.json | デフォルトの `ProjectPaths` が返る（source: ['scripts/harness'], docs.inception: 'docs/inception', docs.construction: 'docs/product/construction'） |
 
 ### 11. Presentation Hook Adapter: issue パス対応（ISSUE-001）
 

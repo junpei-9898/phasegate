@@ -16,7 +16,7 @@
 テスト配置: `scripts/harness/__tests__/integration/regression-suite/`
 
 主な設計方針:
-- fixtures（v0-spec-files, v0_v1_test_mapping.md, harness.config.json, ci-gate-output）を使用
+- fixtures（v0-spec-files, v0_v1_test_mapping.md, phasegate.config.json, ci-gate-output）を使用
 - DIコンテナでAdapterをインジェクション、beforeEach/afterEachでフィクスチャ管理
 - vi.mock()でポートのモックを差し替え
 

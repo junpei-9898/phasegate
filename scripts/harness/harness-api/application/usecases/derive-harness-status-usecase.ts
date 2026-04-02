@@ -45,10 +45,10 @@ export class DeriveHarnessStatusUseCase {
       if (this.configQueryPort.getConfigSummary) {
         configSummary = await this.configQueryPort.getConfigSummary();
       } else {
-        configSummary = { configPath: 'harness.config.json', lastModified: new Date().toISOString(), version: '2' };
+        configSummary = { configPath: 'phasegate.config.json', lastModified: new Date().toISOString(), version: '2' };
       }
     } catch {
-      configSummary = { configPath: 'harness.config.json', lastModified: new Date().toISOString(), version: '2' };
+      configSummary = { configPath: 'phasegate.config.json', lastModified: new Date().toISOString(), version: '2' };
     }
 
     let phaseGateSummary: { totalStories: number; passedStories: number; pendingStories: number };

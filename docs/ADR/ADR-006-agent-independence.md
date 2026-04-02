@@ -16,7 +16,7 @@ Quality Harness の全バリデータは **ファイルシステムに書き込�
 
 1. バリデータはファイルパス・ファイル内容・AST のみを入力とする
 2. エージェントの種類を識別するコードを含まない
-3. `harness.config.json` はエージェント非依存の品質設定のみを管理する
+3. `phasegate.config.json` はエージェント非依存の品質設定のみを管理する
 4. CI/CD テンプレートは汎用的な Git Hook + CLI コマンドで構成する
 
 ### 検証方法
@@ -31,4 +31,4 @@ Quality Harness の全バリデータは **ファイルシステムに書き込�
 
 ## 関連要件
 
-K13（harness.config.json）
+K13（phasegate.config.json）

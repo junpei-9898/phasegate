@@ -37,7 +37,7 @@
 | H05-02 | ADR「FUSE Hooks Engineはv1スコープ外」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
 | H05-02 | ADR「HarnessErrorにfix_example必須化」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
 | H05-02 | ADR「Quick Mode適用条件の厳格定義」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
-| H05-02 | ADR「設定ファイル分離（harness.config.json / orchestration.config.json）」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
+| H05-02 | ADR「設定ファイル分離（phasegate.config.json / orchestration.config.json）」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
 | H05-02 | ADR「Nyquist統合（GSD-2 Truths/Artifacts検証パターン）」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
 | H05-02 | ADR「成果物駆動の状態導出」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |
 | H05-02 | ADR「スタック検出（バリデータ無限ループ防止）」を作成する | IT-AF-015, IT-AF-090, IT-AF-094 | カバー |

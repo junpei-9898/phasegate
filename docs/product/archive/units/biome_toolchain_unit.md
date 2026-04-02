@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-v0のESLintベースの4カスタムルールをBiomeプラグインとして移植し、PostToolUse Hook高速化、L1バリデータ再構築、CIパイプラインのBiome統合を行うUnit。GSDLC v1のコード品質基盤（L1レイヤー）を確立する。
+v0のESLintベースの4カスタムルールをBiomeプラグインとして移植し、PostToolUse Hook高速化、L1バリデータ再構築、CIパイプラインのBiome統合を行うUnit。Phasegate v1のコード品質基盤（L1レイヤー）を確立する。
 
 ---
 

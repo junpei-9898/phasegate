@@ -97,7 +97,7 @@ export const INITIAL_ADR_DEFINITIONS: readonly SeedAdrDefinition[] = [
       context:
         'A single monolithic configuration file makes it difficult to manage unit-specific settings and increases merge conflicts.',
       decision:
-        'Split configuration into separate files per concern: harness.config.json for core settings, with unit-specific overrides.',
+        'Split configuration into separate files per concern: phasegate.config.json for core settings, with unit-specific overrides.',
       consequences:
         'Configuration is modular and easier to maintain. The config loader must implement a merge strategy for layered configs.',
     },

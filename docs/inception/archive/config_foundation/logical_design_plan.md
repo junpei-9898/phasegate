@@ -62,7 +62,7 @@ Port ← Infrastructure（アダプター）
 | テストフレームワーク | Vitest |
 | パッケージマネージャ | pnpm |
 | JSONスキーマバリデーション | ajv（候補） |
-| 設定ファイル形式 | JSON（harness.config.json） |
+| 設定ファイル形式 | JSON（phasegate.config.json） |
 
 ### 2.3 ディレクトリ構造方針
 
@@ -158,7 +158,7 @@ CLIコマンドハンドラとして以下を設計する。
 
 | アダプター | 実装対象ポート | 実装概要 |
 |-----------|-------------|---------|
-| **FileSystemConfigRepository** | ConfigRepository | `fs.readFile` / `fs.writeFile` によるharness.config.jsonのI/O。JSONパース/シリアライズを含む |
+| **FileSystemConfigRepository** | ConfigRepository | `fs.readFile` / `fs.writeFile` によるphasegate.config.jsonのI/O。JSONパース/シリアライズを含む |
 | **JsonSchemaValidator** | ConfigSchemaValidator | ajv等のJSONスキーマライブラリによるバリデーション実行。v2スキーマ定義ファイルの読み込み |
 | **FileSystemBackupCreator** | BackupCreator | ファイルコピーによるバックアップ作成。バックアップ先: `{元ファイル名}.backup.{timestamp}.json` |
 | **ProcessEnvironmentReader** | EnvironmentVariableReader | `process.env` からの環境変数読み取り |

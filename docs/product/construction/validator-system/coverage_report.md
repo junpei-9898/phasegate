@@ -357,7 +357,7 @@ UT-VES-014:
 ```
 シナリオ: preset="strict"の場合、L3のcoverageThresholdが95にマッピングされる
 操作: getLayerConfig("L3")
-事前データ: harness.config.json: preset="strict"
+事前データ: phasegate.config.json: preset="strict"
 期待結果: LayerConfig.thresholds.coverageThreshold === 95
 ```
 

@@ -1,4 +1,4 @@
-# GSDLC Orchestration Engine — Product Overview
+# Phasegate Conductor — Product Overview
 
 > **Version**: v1.0 (Draft)
 > **作成日**: 2026-03-11
@@ -11,7 +11,7 @@
 
 ### 1.1 What This Is
 
-**GSDLC Orchestration Engineは、品質ハーネスの検査力を前提に、AIエージェントによる設計→実装→検証の全ライフサイクルを自律的かつ安全にオーケストレーションするエンジンである。** Wave並列実行、セッション管理、コンテキストエンジニアリング、コスト管理を統合し、「人間が承認し、機械が自律実行する」開発サイクルを駆動する。
+**Phasegate Conductorは、品質ハーネスの検査力を前提に、AIエージェントによる設計→実装→検証の全ライフサイクルを自律的かつ安全にオーケストレーションするエンジンである。** Wave並列実行、セッション管理、コンテキストエンジニアリング、コスト管理を統合し、「人間が承認し、機械が自律実行する」開発サイクルを駆動する。
 
 品質の検証・強制は品質ハーネスパッケージに完全委譲する。本パッケージは「いつ・何を・どの順序で・どのモデルで実行するか」を制御する実行エンジンである。
 
@@ -38,35 +38,35 @@ AIエージェント（Claude Code, Codex等）を活用してプロダクショ
 
 本パッケージの設計はGSD-2（Get Shit Done v2）の設計思想を大いに参考にしている。GSD-2はPi SDKベースのスタンドアロンCLIであり、AIエージェントセッションをプログラマティックに制御する先駆的な実装である。
 
-以下の概念をGSD-2から学び、GSDLCの文脈に再設計して取り込む:
+以下の概念をGSD-2から学び、Phasegateの文脈に再設計して取り込む:
 
-| # | GSD-2の概念 | GSDLCでの再設計 |
+| # | GSD-2の概念 | Phasegateでの再設計 |
 |---|------------|---------------|
 | 1 | **成果物駆動の状態導出** — `deriveState()`がmilestoneディレクトリ配下のROADMAP/PLAN/SUMMARYファイルをスキャンして状態を純粋導出し、`.gsd/STATE.md`は導出結果のキャッシュとして書き出すパターン（`state.ts`） | `docs/inception/_shared/state.md`をキャッシュとし、`docs/`配下の成果物からphaseを導出。GSD-2の`deriveState()`を設計リファレンスとする |
 | 2 | **Milestone → Slice → Task 3層階層** — 1 Taskが1コンテキストウィンドウに収まる鉄則 | Unit → UserStory → Wave構造に再マッピング。Waveは依存性分析による自動グルーピング |
 | 3 | **クラッシュ回復** — Lock file + activity log + session forensics | Lock file + JSONLセッションログによるフォレンジック回復 |
 | 4 | **Adaptive Replanning** — Slice完了後のロードマップ再評価 | Unit完了後の再評価。ただし設計変更は2-Phase承認ゲート必須（GSD-2にはこの制約なし） |
-| 5 | **Fresh Context + Pre-inlined Dispatch** — 各Taskに新鮮な200Kコンテキストを割り当て、タスクプラン、先行タスクのサマリー、依存サマリー、ロードマップ抜粋、決定事項レジスターをdispatchプロンプトにインライン注入 | `context-priority.json`による優先度制御 + Fresh Context Protocol。GSDLCでは設計文書のインライン注入に再設計（GSD-2のタスクプラン中心のinliningとは対象が異なる） |
+| 5 | **Fresh Context + Pre-inlined Dispatch** — 各Taskに新鮮な200Kコンテキストを割り当て、タスクプラン、先行タスクのサマリー、依存サマリー、ロードマップ抜粋、決定事項レジスターをdispatchプロンプトにインライン注入 | `context-priority.json`による優先度制御 + Fresh Context Protocol。Phasegateでは設計文書のインライン注入に再設計（GSD-2のタスクプラン中心のinliningとは対象が異なる） |
 | 6 | **3段階タイムアウト** — Soft（警告）/ Idle（ストール検出）/ Hard（強制停止） | 同一パターンを採用。設定は`orchestration.config.json`に定義 |
 | 7 | **Per-unit token/cost ledger** — Phase/Slice/Model別のトークン使用量・コスト追跡 | 同一パターン。コスト台帳はセッション管理に統合 |
 | 8 | **Git branch-per-slice / atomic commit** — Slice単位ブランチ + squash merge | Unit/US単位のブランチ戦略 + TDDサイクル単位のatomic commit |
 
 ### 2.2 GSD-2との違い
 
-| 観点 | GSD-2 | GSDLCオーケストレーター |
+| 観点 | GSD-2 | Phasegate Conductorオーケストレーター |
 |------|-------|----------------------|
 | **品質ガバナンス** | must-haves（Truths/Artifacts/Key Links）による軽量な機械的検証のみ。コードレベルのアーキテクチャ強制力はない | 品質ハーネスとの連携が前提。Pre-flight gate, Post-wave検証 |
 | **ランタイム** | Pi SDK（スタンドアロンCLI） | Claude Code / Codex前提（エージェント内蔵スキル） |
 | **成果物配置** | `.gsd/`ディレクトリ | `docs/`統一原則（`folder_management_rules.md`準拠） |
 | **設計承認** | なし（自律実行のみ） | 2-Phase Execution（設計は人間承認必須） |
-| **設定** | `~/.gsd/preferences.md` | `harness.config.json`（品質）+ `orchestration.config.json`（実行制御）に分離 |
+| **設定** | `~/.gsd/preferences.md` | `phasegate.config.json`（品質）+ `orchestration.config.json`（実行制御）に分離 |
 | **品質検証** | must-haves（機械的チェック） | L1-L4バリデータ群による多層防御（品質ハーネスに委譲） |
 
 ### 2.3 なぜ自前実装か
 
 GSD-2のnpmパッケージ（`gsd-pi`）には依存しない。理由:
 
-1. **ランタイム非互換**: GSD-2はPi SDK前提。GSDLCはClaude Code/Codexのスキルシステム上で動作する
+1. **ランタイム非互換**: GSD-2はPi SDK前提。PhasegateはClaude Code/Codexのスキルシステム上で動作する
 2. **品質ゲート統合**: GSD-2には品質ガバナンスの概念がなく、Wave実行とハーネス検証の連携を外付けで実現する設計は脆弱
 3. **成果物配置の哲学**: `.gsd/`と`docs/`の二重管理は`folder_management_rules.md`に違反
 4. **自己完結性**: 外部パッケージのバージョンアップに追従するリスクを回避
@@ -92,10 +92,10 @@ GSD-2のnpmパッケージ（`gsd-pi`）には依存しない。理由:
 
 | 設定ファイル | Owner | 内容 |
 |------------|-------|------|
-| `harness.config.json` | Quality Harness | L1-L4バリデータ設定、プリセット、Quick Mode条件、パス定義 |
+| `phasegate.config.json` | Quality Harness | L1-L4バリデータ設定、プリセット、Quick Mode条件、パス定義 |
 | `orchestration.config.json` | Orchestration Engine | autoSupervisor（タイムアウト）、modelProfile、budgetCeiling、session設定、Wave並列設定 |
 
-ownershipは完全に分離される。オーケストレーションはharness.config.jsonのプリセット値を**読み取る**が、**書き込まない**。ハーネスはorchestration.config.jsonに一切関与しない。
+ownershipは完全に分離される。オーケストレーションはphasegate.config.jsonのプリセット値を**読み取る**が、**書き込まない**。ハーネスはorchestration.config.jsonに一切関与しない。
 
 ---
 
@@ -192,9 +192,9 @@ GSD-2が確立したパターン — Lock file + activity log + session forensic
 └──────────────────────────────────────────────────────────────┘
 ```
 
-> **注記**: GSD-2の`discussing`フェーズはGSDLCでは独立フェーズとしない。`/gsdlc:init-project`の内部処理（要件定義・スコープ合意）として統合される。
+> **注記**: GSD-2の`discussing`フェーズはPhasegateでは独立フェーズとしない。`/gsdlc:init-project`の内部処理（要件定義・スコープ合意）として統合される。
 
-state.json（`docs/inception/_shared/state.json`）はこの状態機械の出力キャッシュであり、`docs/`配下の成果物から常に再導出可能である。GSD-2の`deriveState()`がマイルストーンディレクトリをスキャンしてROADMAP→PLAN→SUMMARYの存在からphaseを導出するのと同じパターンを、GSDLCの`docs/`構造に適用する。state.md（人間向けMarkdownビュー）はstate.jsonから生成される。
+state.json（`docs/inception/_shared/state.json`）はこの状態機械の出力キャッシュであり、`docs/`配下の成果物から常に再導出可能である。GSD-2の`deriveState()`がマイルストーンディレクトリをスキャンしてROADMAP→PLAN→SUMMARYの存在からphaseを導出するのと同じパターンを、Phasegateの`docs/`構造に適用する。state.md（人間向けMarkdownビュー）はstate.jsonから生成される。
 
 ### 4.2 Wave実行エンジン
 
@@ -648,7 +648,7 @@ GSD-2の`auto.ts`に着想を得た自律実行モード。状態機械がディ
 | オーケストレーションコマンド | init-project/design/plan/execute/verify SKILL.md定義 |
 | コスト台帳 | Per-unit token/cost ledger（表示のみ、予算制御はPhase 2） |
 | Git戦略 | Atomic commits + ブランチ戦略定義 |
-| orchestration.config.json | オーケストレーション設定ファイル定義（harness.config.jsonとは完全分離） |
+| orchestration.config.json | オーケストレーション設定ファイル定義（phasegate.config.jsonとは完全分離） |
 
 ### Phase 2: Advanced Execution
 
@@ -694,7 +694,7 @@ GSD-2の`auto.ts`に着想を得た自律実行モード。状態機械がディ
 | 品質ハーネスへの一方向依存 | オーケストレーターは品質判断を行わない。ハーネスの検証結果を受け取るだけ | Decided |
 | 成果物駆動の状態導出（GSD-2 `deriveState()`パターン） | STATE.mdをキャッシュとし、ディスク成果物からphaseを純粋導出。信頼性とクラッシュ耐性の両立 | Decided |
 | `docs/`統一原則（`.gsd/`不使用） | folder_management_rules.md準拠。`.planning/`や`.gsd/`との二重管理を防止 | Decided |
-| 設定ファイル分離（harness.config.json + orchestration.config.json） | 品質設定とオーケストレーション設定を別ファイルに完全分離。GSD-2の`preferences.md`パターンは採用しない | Decided |
+| 設定ファイル分離（phasegate.config.json + orchestration.config.json） | 品質設定とオーケストレーション設定を別ファイルに完全分離。GSD-2の`preferences.md`パターンは採用しない | Decided |
 | ファイルシステム+コマンド実行による疎結合 | オーケストレーターとハーネスの直接API結合を避け、交換可能性を維持 | Decided |
 | GSD-2をオーケストレーターとして採用する選択肢を排除しない | Pi SDKのClaude Code統合やGSD-2の品質ゲートAPI提供があれば再検討 | Decided |
 | Wave並列実行をPhase 2に延期 | 設計複雑度が高く、Phase 1ではセッション管理・コンテキスト管理を優先 | Decided |

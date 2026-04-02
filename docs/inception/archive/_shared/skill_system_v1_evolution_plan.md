@@ -1,4 +1,4 @@
-# GSDLC_HARNESS v1 スキルシステム進化計画
+# phasegate v1 スキルシステム進化計画
 
 > **目的**: v0の26スキル + GSD2.0統合による新規7スキル = 33+スキルの統合設計
 > **作成日**: 2026-03-10
@@ -180,7 +180,7 @@ phase: Phase 1 (最優先)
 |------|------|
 | **Input (必須)** | 1. `docs/inception/_shared/roadmap.md` — 実行対象ストーリー一覧 |
 |  | 2. `docs/product/user_story_mapping.md` — ストーリー間依存関係 |
-|  | 3. `harness.config.json` の `orchestration` セクション |
+|  | 3. `phasegate.config.json` の `orchestration` セクション |
 | **Input (任意)** | 1. `docs/inception/_shared/execution-waves.json` — 手動Wave定義（override） |
 |  | 2. `docs/inception/_shared/state.md` — 前回セッションの実行状態 |
 | **Output** | 1. `docs/inception/_shared/execution-waves.json` — 自動生成Wave定義 |
@@ -1007,7 +1007,7 @@ Wave 2 実行中...
 | 6 | `test-coverage-checker` Nyquist統合 | 既存改修 | なし |
 | 7 | `codebase-mapper` | 新規スキル | unit-designer |
 | 8 | `milestone-manager` | 新規スキル | session-manager |
-| 9 | harness.config.json orchestrationセクション | 設定拡張 | なし |
+| 9 | phasegate.config.json orchestrationセクション | 設定拡張 | なし |
 
 ### Phase 3: 洗練
 
@@ -1079,7 +1079,7 @@ Quick修正:         /aidlc:quick（ハーネス緩和）
                          │
 ┌────────────────────────▼────────────────────────────────┐
 │  Layer 5: Configuration (Unified)                        │
-│  harness.config.json (AIDLC + orchestration + session)   │
+│  phasegate.config.json (AIDLC + orchestration + session)   │
 │  .harness/context-priority.json                          │
 │  .harness-hooks.yml                                      │
 └─────────────────────────────────────────────────────────┘

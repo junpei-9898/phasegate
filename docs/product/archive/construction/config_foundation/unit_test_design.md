@@ -830,7 +830,7 @@ it('v1設定にv2セクションが追加されたMigrationResultが返される
   // Arrange
   const v1Json = { project: { name: 'test' }, layers: {}, harnesses: {}, paths: {}, reporting: {} };
   const schema = loadTestSchema();
-  const v1ConfigPath = FilePath.create('harness.config.json');
+  const v1ConfigPath = FilePath.create('phasegate.config.json');
   const backupPath = FilePath.create('.harness/backups/harness.config.1234567890.json');
 
   const mockConfigRepository: ConfigRepository = {
@@ -970,7 +970,7 @@ target('execute', () => {
     it('ファイルパスが解決される')
 
     context('設定ファイルパスを省略した場合', () => {
-      it('プロジェクトルートからharness.config.jsonが自動検出される')
+      it('プロジェクトルートからphasegate.config.jsonが自動検出される')
     })
     context('設定ファイルが存在しない場合', () => {
       it('デフォルト設定でHarnessConfigが生成される')
@@ -1005,7 +1005,7 @@ it('指定パスから設定ファイルが読み込まれHarnessConfigが返さ
   const usecase = new LoadConfigUseCase(mockConfigRepository, mockSchemaValidator, mockEnvReader);
 
   // Act
-  const actual = await usecase.execute('harness.config.json');
+  const actual = await usecase.execute('phasegate.config.json');
 
   // Assert
   expect(actual.getVersion().isV2()).toBe(true);
@@ -1115,7 +1115,7 @@ target('execute', () => {
       it('設定ファイル未検出時はマイグレーションに失敗する')
     })
     context('設定ファイルパスを省略した場合', () => {
-      it('プロジェクトルートからharness.config.jsonが自動検出される')
+      it('プロジェクトルートからphasegate.config.jsonが自動検出される')
     })
   })
 })
@@ -1317,7 +1317,7 @@ target('exists', () => {
 it('有効なJSONファイルからパース済みオブジェクトが返される', async () => {
   // Arrange
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'config-repo-test-'));
-  const configPath = path.join(tmpDir, 'harness.config.json');
+  const configPath = path.join(tmpDir, 'phasegate.config.json');
   const expectedData = { version: 2, project: { name: 'test' } };
   fs.writeFileSync(configPath, JSON.stringify(expectedData, null, 2), 'utf-8');
   const repository = new FileSystemConfigRepository();
@@ -1418,7 +1418,7 @@ target('createBackup', () => {
 it('.harness/backups/配下にタイムスタンプ付きバックアップが作成される', async () => {
   // Arrange
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'backup-test-'));
-  const configPath = path.join(tmpDir, 'harness.config.json');
+  const configPath = path.join(tmpDir, 'phasegate.config.json');
   fs.writeFileSync(configPath, '{"version":1}', 'utf-8');
   const creator = new FileSystemBackupCreator(tmpDir);
   const filePath = FilePath.create(configPath);

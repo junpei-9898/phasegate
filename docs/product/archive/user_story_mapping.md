@@ -269,4 +269,4 @@ Wave 3: E-13 ──→ Wave 3: E-15（スキル強化完了後にオーケスト
 | K10 | Security/Performance検出 | 既存維持 | regression-suite |
 | K11 | Drift Detection | 既存維持 | regression-suite |
 | K12 | Consistency Checker | 既存維持 | regression-suite |
-| K13 | harness.config.json | config-foundation (v2拡張) | regression-suite |
+| K13 | phasegate.config.json | config-foundation (v2拡張) | regression-suite |

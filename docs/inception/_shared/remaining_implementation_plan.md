@@ -179,14 +179,14 @@ Future B（Future A と並行可）: L4 拡張
 
 | ストーリー ID | タイトル | 優先度 | 実装内容 |
 |---|---|---|---|
-| H10-01 | Quick Mode 設定（harness.config.json quickMode セクション） | Must | allowedCategories / maintainedLayers / relaxedGates スキーマ確定 |
+| H10-01 | Quick Mode 設定（phasegate.config.json quickMode セクション） | Must | allowedCategories / maintainedLayers / relaxedGates スキーマ確定 |
 | H10-02 | Quick Mode 判定エンジン | Must | コミット対象ファイルから Quick Mode 適用可否を判定するドメインサービス |
 | H10-03 | Quick Mode バリデータ緩和実行 | Must | L3 は security のみ・phase-gate 緩和等の選択ロジック |
-| H10-04 | quick-implementor スキル | Should | SKILL.md 作成・harness.config.json quickMode 連動 |
+| H10-04 | quick-implementor スキル | Should | SKILL.md 作成・phasegate.config.json quickMode 連動 |
 
 **Wave 2C quick-mode 完了条件:**
 - H10-01〜04 全テストグリーン
-- `harness.config.json` の quickMode セクションが有効化できること
+- `phasegate.config.json` の quickMode セクションが有効化できること
 
 ---
 
@@ -350,7 +350,7 @@ Future B（Future A と並行可）: L4 拡張
 
 | ストーリー ID | タイトル | 優先度 | 実装内容 |
 |---|---|---|---|
-| HF2-01 | doc-freshness-checker（L4 拡張） | Should | 設計文書の最終更新日経過日数チェック。`harness.config.json` で閾値設定可。`npx harness p2:check-freshness` |
+| HF2-01 | doc-freshness-checker（L4 拡張） | Should | 設計文書の最終更新日経過日数チェック。`phasegate.config.json` で閾値設定可。`npx harness p2:check-freshness` |
 | HF2-02 | pointer-validator（L4 拡張） | Should | docs 内ファイルパス参照・AGENTS.md コマンドポインタの実在性検証。`npx harness p2:validate-pointers` |
 | HF2-03 | E2E テスト戦略テンプレート（Playwright 統合） | Should | `npx harness p2:generate-e2e-template` コマンド・シードデータ管理・ページオブジェクトパターン |
 

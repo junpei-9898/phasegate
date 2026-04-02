@@ -90,9 +90,9 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
     context('存在しないconfigファイルが指定された場合', () => {
       // IT-REPO-ConfigQueryAdapter-006
-      it('harness.config.jsonが存在しない場合、エラーがthrowされること', async () => {
+      it('phasegate.config.jsonが存在しない場合、エラーがthrowされること', async () => {
         // Arrange
-        const adapter = new HarnessConfigConfigQueryAdapter('/nonexistent/path/harness.config.json');
+        const adapter = new HarnessConfigConfigQueryAdapter('/nonexistent/path/phasegate.config.json');
 
         // Act & Assert
         await expect(adapter.isHookEnabled('post-tool-use')).rejects.toThrow();

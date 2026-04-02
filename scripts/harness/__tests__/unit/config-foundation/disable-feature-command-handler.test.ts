@@ -15,7 +15,7 @@ const createMockDisableFeatureUseCase = () => ({
   execute: vi.fn().mockResolvedValue({
     feature: 'bundleSizeLimit',
     enabled: false,
-    configPath: '/tmp/harness.config.json',
+    configPath: '/tmp/phasegate.config.json',
   }),
 });
 
@@ -51,7 +51,7 @@ target('DisableFeatureCommandHandler.execute', () => {
         const actual = await sut.execute({
           featureName: 'bundleSizeLimit',
           list: false,
-          configPath: '/tmp/harness.config.json',
+          configPath: '/tmp/phasegate.config.json',
         });
 
         // Assert
@@ -60,7 +60,7 @@ target('DisableFeatureCommandHandler.execute', () => {
         expect(actual.output).toContain('disabled');
         expect(disableFeatureUseCase.execute).toHaveBeenCalledWith(
           'bundleSizeLimit',
-          '/tmp/harness.config.json',
+          '/tmp/phasegate.config.json',
         );
       });
     });

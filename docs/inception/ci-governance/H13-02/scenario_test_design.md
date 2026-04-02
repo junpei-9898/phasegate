@@ -8,7 +8,7 @@ H13-02は反復エラー自動エスカレーション機能を実装する。�
 
 - 同一HarnessError code の繰り返し（閾値: デフォルト3回）の検出
 - 反復検出時の自動エスカレーション（EscalationExecutorPort経由でログ出力 + 警告メッセージ）
-- エスカレーション閾値のharness.config.jsonによる設定
+- エスカレーション閾値のphasegate.config.jsonによる設定
 - 反復検出のリセット条件（escalated=trueかつresetOnResolution=true時のみreset()可能、INV-7）
 - 発生履歴の `.harness/error-history.json` への永続化
 

@@ -206,7 +206,7 @@ target('ListAvailableFeaturesUseCase', () => {
         const document = createSourceDocument();
         const configRepository: ConfigRepositoryPort = {
           load: vi.fn().mockResolvedValue({
-            path: '/tmp/harness.config.json',
+            path: '/tmp/phasegate.config.json',
             document,
           }),
           save: vi.fn(),
@@ -233,7 +233,7 @@ target('ListAvailableFeaturesUseCase', () => {
         });
 
         // Act
-        const actual = await useCase.execute('/tmp/harness.config.json');
+        const actual = await useCase.execute('/tmp/phasegate.config.json');
 
         // Assert
         expect(actual).toEqual([

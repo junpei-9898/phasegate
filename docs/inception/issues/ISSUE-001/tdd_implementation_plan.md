@@ -89,7 +89,7 @@ checkPhaseGate(targetLevel, evidence, scope?) の変更:
 
 - [x] pnpm install 完了
 - [x] pnpm test 実行可能
-- [x] harness.config.json 存在
+- [x] phasegate.config.json 存在
 - [x] 対象Unit のソースファイル存在
 
 ## 5. QA（不明点・確認事項）

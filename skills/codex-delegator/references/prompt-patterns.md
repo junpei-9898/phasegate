@@ -9,7 +9,7 @@
 全タスクタイプで以下をプロンプト冒頭に含める:
 
 ```
-プロジェクト: GSDLC Harness
+プロジェクト: Phasegate
 アーキテクチャ: ヘキサゴナル + DDD（domain → port → usecase → controller）
 ```
 

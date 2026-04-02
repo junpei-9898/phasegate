@@ -30,7 +30,7 @@
 
 - **作成**: `fs.mkdtempSync(path.join(os.tmpdir(), 'config-it-'))` でテストごとに一意のディレクトリを作成
 - **クリーンアップ**: `afterEach` で `fs.rmSync(tmpDir, { recursive: true })` を実行
-- **ファイル配置**: 一時ディレクトリをプロジェクトルートとみなし、`harness.config.json` やスキーマファイルを配置
+- **ファイル配置**: 一時ディレクトリをプロジェクトルートとみなし、`phasegate.config.json` やスキーマファイルを配置
 
 ```typescript
 let tmpDir: string;
@@ -143,7 +143,7 @@ function loadV2Schema(): object {
 
 ```typescript
 function writeConfigFile(dir: string, config: object): string {
-  const configPath = path.join(dir, 'harness.config.json');
+  const configPath = path.join(dir, 'phasegate.config.json');
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
   return configPath;
 }
@@ -291,7 +291,7 @@ it('sessionのstateFileが絶対パスに解決される', async () => {
 
 it('デフォルト設定で設定オブジェクトが生成される', async () => {
   // Arrange
-  const nonExistentPath = path.join(tmpDir, 'nonexistent', 'harness.config.json');
+  const nonExistentPath = path.join(tmpDir, 'nonexistent', 'phasegate.config.json');
 
   // Act
   const actual = await loadConfig(nonExistentPath);
@@ -304,7 +304,7 @@ it('デフォルト設定で設定オブジェクトが生成される', async (
 
 it('設定読み込みに失敗する', async () => {
   // Arrange
-  const configPath = path.join(tmpDir, 'harness.config.json');
+  const configPath = path.join(tmpDir, 'phasegate.config.json');
   fs.writeFileSync(configPath, 'invalid json {{{', 'utf-8');
 
   // Act & Assert
@@ -645,7 +645,7 @@ it('orchestration.parallelizationをドット記法で有効化できる', async
 
 ```
 /tmp/config-it-XXXXXX/               # fs.mkdtempSync で生成
-├── harness.config.json               # テスト用設定ファイル
+├── phasegate.config.json               # テスト用設定ファイル
 └── .harness/
     └── backups/
         └── harness.config.1234567890.json  # マイグレーションバックアップ
