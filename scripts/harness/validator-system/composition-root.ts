@@ -74,8 +74,7 @@ function buildDefaultRegistry(): ValidatorRegistry {
     });
 
   const definitions = [
-    createDef('L0-001', 'L0', 'always', 'FuseHookConfigValidatorPort'),
-    createDef('L0-002', 'L0', 'always', 'FuseMountStatusPort'),
+    createDef('L0-001', 'L0', 'always'),
     createDef('L2-001', 'L2', 'always', 'PhaseGatePolicyPort'),
     createDef('L2-002', 'L2', 'always', 'MetadataPolicyPort'),
     createDef('L2-003', 'L2', 'always'),

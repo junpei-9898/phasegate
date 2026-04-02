@@ -10,9 +10,8 @@ target('RunL0ValidatorsUseCase', () => {
       // Act
       const l0Defs = mod.registry.listByLayer('L0');
       // Assert
-      expect(l0Defs).toHaveLength(2);
+      expect(l0Defs).toHaveLength(1);
       expect(l0Defs[0].validatorId.value).toBe('L0-001');
-      expect(l0Defs[1].validatorId.value).toBe('L0-002');
     });
 
     it('IT-VS-L0-002 L0バリデータが実行されて結果が返されること', async () => {
@@ -21,9 +20,8 @@ target('RunL0ValidatorsUseCase', () => {
       // Act
       const results = await mod.runL0ValidatorsUseCase.execute({});
       // Assert
-      expect(results).toHaveLength(2);
+      expect(results).toHaveLength(1);
       expect(results[0].validatorId).toBe('L0-001');
-      expect(results[1].validatorId).toBe('L0-002');
     });
 
     it('IT-VS-L0-003 L0が無効の場合は空配列が返されること', async () => {
@@ -31,7 +29,7 @@ target('RunL0ValidatorsUseCase', () => {
       const mod = createValidatorSystemModule({
         preset: 'standard',
         layers: {
-          L0: { enabled: false, validators: ['L0-001', 'L0-002'] },
+          L0: { enabled: false, validators: ['L0-001'] },
           L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
           L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'] },
           L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },

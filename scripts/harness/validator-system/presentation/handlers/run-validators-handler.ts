@@ -49,7 +49,6 @@ export class RunValidatorsHandler {
         }
         const l0Results = await l0UseCase.execute({
           validatorIds: args.validatorIds,
-          hookConfigPath: undefined,
         });
         const l0Report: AggregatedValidationReport = {
           overallPassed: l0Results.every((r) => r.passed || r.skipped),

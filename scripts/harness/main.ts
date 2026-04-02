@@ -1,7 +1,7 @@
 /**
  * @layer presentation
  *
- * GSDLC Harness CLI エントリポイント。
+ * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
  *
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
@@ -20,7 +20,6 @@ import { createHarnessApiModule } from './harness-api/composition-root.js';
 import { buildCiGovernance } from './ci-governance/composition-root.js';
 import { createSkillQualityHandlers } from './skill-quality/composition-root.js';
 import { buildRegressionSuite } from './regression-suite/composition-root.js';
-import { buildFuseHooksEngine } from './fuse-hooks-engine/composition-root.js';
 import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
 import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
@@ -42,7 +41,7 @@ function printUsage(): void {
 Usage: harness <command> [options]
 
 Setup:
-  init                         Initialize project: deploy skills + create harness.config.json
+  init                         Initialize project: deploy skills + create phasegate.config.json
                                (--name <project-name>)
   update-skills                Re-deploy skills from current harness version
 
@@ -92,9 +91,6 @@ Commands:
   regression:configure-ci-gate   Configure CI gate (--suites <ids>, --threshold <n>)
   regression:analyze-migration   Analyze V0 test migration (--dry-run)
   regression:migrate-v0-tests    Execute V0 test migration (--confirm)
-
-  hooks:config                   Load/validate .harness-hooks.yml (validate|load [--yaml <path>])
-  hooks:gate-check               Check completion gate (--story <storyId>)
 
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
@@ -287,9 +283,9 @@ async function main(): Promise<void> {
         const hooksResult = await deployHookScripts(harnessRoot, rootDir);
         console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills)`);
         if (configResult.created) {
-          console.log(`✓ harness.config.json created`);
+          console.log(`✓ phasegate.config.json created`);
         } else {
-          console.log(`  harness.config.json already exists, skipped`);
+          console.log(`  phasegate.config.json already exists, skipped`);
         }
         if (hooksResult.scriptsDeployed > 0) {
           console.log(`✓ Hook scripts deployed to .claude/scripts/ (${hooksResult.scriptsDeployed} files)`);
@@ -303,7 +299,7 @@ async function main(): Promise<void> {
         console.log('');
         console.log('Next steps:');
         console.log('  1. Run the product-architect skill to start AIDLC');
-        console.log('  2. Customize harness.config.json if needed');
+        console.log('  2. Customize phasegate.config.json if needed');
         console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
         process.exit(0);
         break;
@@ -774,26 +770,6 @@ async function main(): Promise<void> {
           : `Migration: total=${result.totalCount}, migrated=${result.migratedCount}, modified=${result.modifiedCount}, skipped=${result.skippedCount}`;
         console.log(output);
         process.exit(0);
-        break;
-      }
-
-      // ── fuse-hooks-engine ──
-      case 'hooks:config': {
-        const mod = buildFuseHooksEngine(rootDir);
-        const subcommand = args[1] ?? 'load';
-        const yamlPath = parseFlag(args, '--yaml') ?? '.harness-hooks.yml';
-        const result = await mod.hookConfigHandler.handle([subcommand, yamlPath]);
-        console.log(result.output);
-        process.exit(result.exitCode);
-        break;
-      }
-
-      case 'hooks:gate-check': {
-        const mod = buildFuseHooksEngine(rootDir);
-        const storyId = parseFlag(args, '--story') ?? args[1] ?? '';
-        const result = await mod.completionGateHandler.handle([storyId]);
-        console.log(result.output);
-        process.exit(result.exitCode);
         break;
       }
 

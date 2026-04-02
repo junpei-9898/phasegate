@@ -1,6 +1,6 @@
 /**
  * T-042: L0 バリデータ E2E検証
- * validate --layer L0 が FUSE フック設定を検証すること
+ * validate --layer L0 がバリデータを実行すること
  */
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -13,8 +13,8 @@ target('L0 Validator E2E検証', () => {
       const mod = createValidatorSystemModule();
       // Act
       const allDefs = mod.registry.getAllDefinitions();
-      // Assert — L0(2) + L2(3) + L3(4) + L4(3) = 12
-      expect(allDefs).toHaveLength(12);
+      // Assert — L0(1) + L2(3) + L3(4) + L4(3) = 11
+      expect(allDefs).toHaveLength(11);
       const layers = new Set(allDefs.map((d) => d.validatorId.layer));
       expect(layers.has('L0')).toBe(true);
       expect(layers.has('L2')).toBe(true);
@@ -28,7 +28,7 @@ target('L0 Validator E2E検証', () => {
       // Act
       const results = await mod.runL0ValidatorsUseCase.execute({});
       // Assert
-      expect(results).toHaveLength(2);
+      expect(results).toHaveLength(1);
       expect(results.every((r) => r.validatorId.startsWith('L0-'))).toBe(true);
     });
 
@@ -37,7 +37,7 @@ target('L0 Validator E2E検証', () => {
       const mod = createValidatorSystemModule({
         preset: 'standard',
         layers: {
-          L0: { enabled: false, validators: ['L0-001', 'L0-002'] },
+          L0: { enabled: false, validators: ['L0-001'] },
           L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
           L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'] },
           L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },

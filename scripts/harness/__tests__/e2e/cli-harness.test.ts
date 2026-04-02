@@ -149,50 +149,6 @@ describe('harness CLI E2E', () => {
     });
   });
 
-  describe('fuse-hooks-engine コマンド群', () => {
-    // SC-HF-001
-    it('hooks:config が "Unknown command" にならない', () => {
-      const actual = run('hooks:config');
-
-      expect(actual.stderr).not.toContain('Unknown command: hooks:config');
-    });
-
-    // SC-HF-002
-    it('hooks:config load サブコマンドがデフォルトで実行される', () => {
-      const actual = run('hooks:config');
-
-      expect([0, 2]).toContain(actual.exitCode);
-    });
-
-    // SC-HF-003
-    it('hooks:config --yaml でファイルパスを受け付ける', () => {
-      const actual = run('hooks:config', '--yaml', '.harness-hooks.yml');
-
-      expect(actual.stderr).not.toContain('Unknown command');
-    });
-
-    // SC-HF-004
-    it('hooks:gate-check が "Unknown command" にならない', () => {
-      const actual = run('hooks:gate-check');
-
-      expect(actual.stderr).not.toContain('Unknown command: hooks:gate-check');
-    });
-
-    // SC-HF-005
-    it('hooks:gate-check --story でストーリーIDを受け付ける', () => {
-      const actual = run('hooks:gate-check', '--story', 'HF1-01');
-
-      expect(actual.stderr).not.toContain('Unknown command');
-    });
-
-    // SC-HF-006
-    it('hooks:gate-check 引数なしでの動作が定義されている', () => {
-      const actual = run('hooks:gate-check');
-
-      expect([0, 2]).toContain(actual.exitCode);
-    });
-  });
-
   describe('phase2-extensions コマンド群', () => {
     // SC-P2-001
     it('p2:check-freshness が "Unknown command" にならない', () => {

@@ -6,5 +6,4 @@
  */
 export interface RunL0ValidatorsInput {
   readonly validatorIds?: readonly string[];
-  readonly hookConfigPath?: string;
 }
