@@ -727,11 +727,11 @@ Phase 3までの反応を見て以下を検討:
 - [x] `SECURITY.md` 作成 *(2026-04-02 完了)*
 - [x] `CODE_OF_CONDUCT.md` 作成 *(2026-04-02 完了)*
 - [x] `.npmignore` 作成 *(2026-04-02 完了)*
-- [ ] `.gitignore` 更新
-- [ ] `package.json` に license, repository, homepage, bugs, keywords, engines 追加
+- [x] `.gitignore` 更新 *(2026-04-02 完了)*
+- [x] `package.json` に license, repository, homepage, bugs, keywords, engines 追加 *(2026-04-02 完了)*
 - [x] devDependencies から自己参照を削除 *(2026-04-02 完了)*
-- [ ] `npm audit` 実行
-- [ ] `gitleaks detect` 実行
+- [x] `pnpm audit` 実行 — 脆弱性なし *(2026-04-02 完了)*
+- [x] `gitleaks detect` 実行 — 5件検出、全てダミー値（`lesson-abc-123-def`, `sk-abc123xyz`等）で誤検知 *(2026-04-02 完了)*
 
 ### Week 2: ドキュメント
 - [ ] 現 README.md を README.ja.md にコピー・整理

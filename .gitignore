@@ -7,3 +7,12 @@ reports/
 *-result.json
 *.log
 .harness-hooks.yml
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor swap files
+*.swp
+*.swo
+*~
