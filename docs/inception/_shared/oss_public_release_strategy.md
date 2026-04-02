@@ -722,11 +722,11 @@ Phase 3までの反応を見て以下を検討:
 ## 付録B: Phase 1 チェックリスト
 
 ### Week 1: 法的・メタデータ
-- [ ] `LICENSE` (Apache 2.0) 作成
-- [ ] `CHANGELOG.md` 作成
-- [ ] `SECURITY.md` 作成
-- [ ] `CODE_OF_CONDUCT.md` 作成
-- [ ] `.npmignore` 作成
+- [x] `LICENSE` (Apache 2.0) 作成 *(2026-04-02 完了)*
+- [x] `CHANGELOG.md` 作成 *(2026-04-02 完了)*
+- [x] `SECURITY.md` 作成 *(2026-04-02 完了)*
+- [x] `CODE_OF_CONDUCT.md` 作成 *(2026-04-02 完了)*
+- [x] `.npmignore` 作成 *(2026-04-02 完了)*
 - [ ] `.gitignore` 更新
 - [ ] `package.json` に license, repository, homepage, bugs, keywords, engines 追加
 - [x] devDependencies から自己参照を削除 *(2026-04-02 完了)*
