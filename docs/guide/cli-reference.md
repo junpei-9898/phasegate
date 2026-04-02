@@ -1,0 +1,122 @@
+# Phasegate CLI Reference
+
+Entry point:
+
+```
+npx harness <command> [options]
+```
+
+---
+
+## Setup
+
+| Command | Description |
+|---|---|
+| `init --name <name>` | Deploy skills and generate `phasegate.config.json` |
+| `update-skills` | Re-deploy skills to the latest version |
+| `list-features` | List available features |
+| `enable-feature <name>` | Enable a feature |
+| `disable-feature <name>` | Disable a feature |
+
+---
+
+## Quality Checks
+
+| Command | Options | Description |
+|---|---|---|
+| `lint` | `--target <path>` `--json` | L1 Biome AST check |
+| `validate` | `--layer L1\|L2\|L3\|L4\|all` `--unit <name>` `--format human\|agent\|ci` | L2-L4 validators |
+| `ci-check` | `--quick` `--fail-on-reject` `--dry-run` `--files` | Full CI check (L2-L4) |
+| `validate-metadata <files>` | | Validate implementation metadata |
+| `check-phase-gate` | `--level 1\|2\|3` | Phase gate check |
+
+---
+
+## Harness API
+
+Commands exposed as npm scripts (`npm run <command>`).
+
+| Command | Options | Description |
+|---|---|---|
+| `harness:status` | `--json` | Health summary |
+| `harness:check-ready` | `--json` | Phase Gate pass status for all stories |
+| `harness:check-phase` | `--unit <unitId>` `--json` | Current phase for a unit |
+| `harness:ci-check` | `--json` | All L3 validators |
+| `harness:detect-drift` | `--json` | Design-code drift report |
+| `harness:lint` | `--target <path>` `--json` | Lint via harness-api |
+| `harness:complete-check` | `--json` | L2-L4 full check |
+| `harness:impact-analysis` | `<storyId>` `--json` | Story impact analysis |
+
+---
+
+## ADR Management
+
+| Command | Options | Description |
+|---|---|---|
+| `list-adrs` | `--status Proposed\|Accepted\|Deprecated\|Superseded` | List ADRs |
+| `validate-adr` | `--all` or `<adrRef>` | Validate ADR |
+
+---
+
+## HarnessError
+
+| Command | Options | Description |
+|---|---|---|
+| `list-errors` | `--format human\|json` `--layer L0-L4` | List error definitions |
+| `render-errors` | `--format human\|agent\|ci` | Render errors |
+| `validate-fix` | `--code <code>` | Validate fix code example |
+
+---
+
+## Skill Quality
+
+| Command | Options | Description |
+|---|---|---|
+| `skill:execute-tdd-cycle` | `--unit` `--story` `--desc` `--phase RED\|GREEN\|REFACTOR` `--passed` | Run TDD cycle |
+| `skill:check-coverage` | `--story <storyId>` `--json` | Coverage check |
+| `skill:collect-lessons` | `--story <storyId>` `--sources <paths>` `--write-artifact` | Collect agent lessons |
+| `skill:apply-cascade-update` | `--story <storyId>` `--dry-run` | Cascade update to upstream docs |
+| `skill:validate-structure` | `--file <path>` `--json` | Validate skill structure |
+
+---
+
+## CI/CD
+
+| Command | Options | Description |
+|---|---|---|
+| `ci:generate-template` | `--preset <id>` `--type <type>` `--render` `--json` | Generate CI/CD template |
+| `ci:migrate-agents-md` | `--dry-run` `--validate-only` `--json` | Migrate AGENTS.md to pointer format |
+| `ci:check-repetition` | `--code <errorCode>` `--reset` `--json` | Detect repetitive errors |
+
+---
+
+## Regression Tests
+
+| Command | Description |
+|---|---|
+| `regression:run-k-requirements` | K1-K15 non-negotiable requirements |
+| `regression:run-gng-gate` | Go/No-Go Gate 3 quality conditions |
+| `regression:run-agent-guard` | Agent-independence guard |
+| `regression:run-k14-k15` | K14/K15 regression |
+| `regression:configure-ci-gate` | Configure CI gate |
+| `regression:analyze-migration` | Analyze v0 test migration |
+| `regression:migrate-v0-tests` | Execute v0 test migration |
+
+---
+
+## Hooks Engine
+
+| Command | Options | Description |
+|---|---|---|
+| `hooks:config validate` | | Validate `.harness-hooks.yml` |
+| `hooks:gate-check` | `--story <id>` | Completion gate check |
+
+---
+
+## Phase 2 Extensions
+
+| Command | Options | Description |
+|---|---|---|
+| `p2:check-freshness` | `--pattern <glob>` `--dry-run` `--format text\|json` | Design doc freshness check |
+| `p2:validate-pointers` | `--include-urls` `--format text\|json` | Validate file pointers in docs |
+| `p2:generate-e2e-template` | `--phase <phase>` `--output <path>` | Generate E2E test template |

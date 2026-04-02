@@ -1,8 +1,8 @@
 # Phasegate — OSS公開・収益化戦略書
 
 - **作成日**: 2026-04-02
-- **ステータス**: In Progress — Week 1 完了
-- **バージョン**: v1.1
+- **ステータス**: In Progress — Week 2 完了
+- **バージョン**: v1.2
 
 ---
 
@@ -734,10 +734,10 @@ Phase 3までの反応を見て以下を検討:
 - [x] `gitleaks detect` 実行 — 5件検出、全てダミー値（`lesson-abc-123-def`, `sk-abc123xyz`等）で誤検知 *(2026-04-02 完了)*
 
 ### Week 2: ドキュメント
-- [ ] 現 README.md を README.ja.md にコピー・整理
-- [ ] 英語 README.md 新規作成（~200行）
-- [ ] `docs/guide/` ディレクトリ作成
-- [ ] installation.md, configuration.md, cli-reference.md, skills-overview.md, layer-model.md, hooks-integration.md 作成
+- [x] 現 README.md を README.ja.md にコピー・整理 *(2026-04-02 完了)*
+- [x] 英語 README.md 新規作成（~250行） *(2026-04-02 完了)*
+- [x] `docs/guide/` ディレクトリ作成 *(2026-04-02 完了)*
+- [x] installation.md, configuration.md, cli-reference.md, skills-overview.md, layer-model.md, hooks-integration.md 作成 *(2026-04-02 完了)*
 
 ### Week 3: パッケージ
 - [x] リブランド実施（`phasegate` に変更済み — 2026-04-02 完了）
