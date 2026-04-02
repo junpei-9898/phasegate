@@ -1,0 +1,54 @@
+# =============================================================================
+# .npmignore — Phasegate npm publish exclusion list
+# Defense-in-depth: package.json "files" whitelists inclusions;
+# this file adds an explicit deny-list for sensitive/internal content.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Development & CI configuration
+# ---------------------------------------------------------------------------
+.github/
+.claude/
+CLAUDE.md
+tsconfig.json
+biome.json
+vitest.config.ts
+phasegate.config.json
+pnpm-lock.yaml
+
+# ---------------------------------------------------------------------------
+# Test files
+# ---------------------------------------------------------------------------
+scripts/harness/__tests__/
+
+# ---------------------------------------------------------------------------
+# Internal design documents (inception / product / contracts / templates)
+# These contain project-specific design decisions not relevant to consumers.
+# docs/ADR/ and docs/principles/ are intentionally kept for reference.
+# ---------------------------------------------------------------------------
+docs/inception/
+docs/product/
+docs/contracts/
+docs/templates/
+docs/folder_management_rules.md
+
+# ---------------------------------------------------------------------------
+# OS & editor artifacts
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------------
+# Logs & temp files
+# ---------------------------------------------------------------------------
+*.log
+*.tmp
+
+# ---------------------------------------------------------------------------
+# Git internals (should never appear, but just in case)
+# ---------------------------------------------------------------------------
+.git/
+.gitignore

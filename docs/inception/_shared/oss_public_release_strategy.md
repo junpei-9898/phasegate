@@ -1,8 +1,8 @@
 # Phasegate — OSS公開・収益化戦略書
 
 - **作成日**: 2026-04-02
-- **ステータス**: Draft
-- **バージョン**: v1.0
+- **ステータス**: In Progress — Week 1 完了
+- **バージョン**: v1.1
 
 ---
 
@@ -214,15 +214,15 @@
 
 ### Phase 1: Pre-release準備（4週間）
 
-#### Week 1: 法的・メタデータ整備（v0.10.0）
+#### Week 1: 法的・メタデータ整備（v0.11.0） ✅ 完了 (2026-04-02)
 
-| 作業 | ファイル | 内容 |
-|------|--------|------|
-| ライセンス追加 | `LICENSE` | Apache 2.0 |
-| 変更履歴 | `CHANGELOG.md` | Keep a Changelog形式。v0.1.0〜v0.9.0の主要変更 |
-| セキュリティポリシー | `SECURITY.md` | 脆弱性報告先（GitHub Security Advisories） |
-| 行動規範 | `CODE_OF_CONDUCT.md` | Contributor Covenant v2.1 |
-| npm除外設定 | `.npmignore` | 内部設計文書・テスト・開発用ファイルを除外 |
+| 作業 | ファイル | 内容 | 状態 |
+|------|--------|------|------|
+| ライセンス追加 | `LICENSE` | Apache 2.0 | ✅ |
+| 変更履歴 | `CHANGELOG.md` | Keep a Changelog形式。v0.1.0〜v0.10.0の主要変更 | ✅ |
+| セキュリティポリシー | `SECURITY.md` | 脆弱性報告先（GitHub Security Advisories） | ✅ |
+| 行動規範 | `CODE_OF_CONDUCT.md` | Contributor Covenant v2.1 | ✅ |
+| npm除外設定 | `.npmignore` | 内部設計文書・テスト・開発用ファイルを除外 | ✅ |
 
 #### Week 2: ドキュメント二層化（v0.11.0）
 
