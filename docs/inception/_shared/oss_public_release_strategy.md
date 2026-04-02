@@ -1,8 +1,8 @@
 # Phasegate — OSS公開・収益化戦略書
 
 - **作成日**: 2026-04-02
-- **ステータス**: In Progress — Week 2 完了
-- **バージョン**: v1.2
+- **ステータス**: In Progress — Week 3 完了（npm アカウント準備を除く）
+- **バージョン**: v1.3
 
 ---
 
@@ -741,10 +741,12 @@ Phase 3までの反応を見て以下を検討:
 
 ### Week 3: パッケージ
 - [x] リブランド実施（`phasegate` に変更済み — 2026-04-02 完了）
-- [ ] `npx phasegate init` コマンド実装
-- [ ] `--help` / `--version` / `skills list` / `skills info` 実装
-- [ ] `npm pack --dry-run` でサイズ確認
-- [ ] 別ディレクトリでインストールテスト
+- [x] `npx phasegate init` コマンド動作確認 *(2026-04-03 完了 — 既に実装済み)*
+- [x] `--help` / `--version` / `skills list` / `skills info` 実装 *(2026-04-03 完了)*
+- [x] `npm pack --dry-run` でサイズ確認 — 426KB（目標5MB以下クリア） *(2026-04-03 完了)*
+- [x] 別ディレクトリでインストールテスト *(2026-04-03 完了 — init/lint/--help 動作確認)*
+- [x] `files` フィールド修正 — テストファイル除外、docs/guide 追加 *(2026-04-03 完了)*
+- [x] `peerDependencies` に typescript 追加 *(2026-04-03 完了)*
 - [ ] npm アカウント準備
 
 ### Week 4: セキュリティ・最終確認

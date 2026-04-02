@@ -7,7 +7,7 @@
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
  */
 
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { createConfigFoundationModule } from './config-foundation/composition-root.js';
 import { createHarnessErrorModule } from './harness-error/composition-root.js';
 import { createTraceabilityModelModule } from './traceability-model/composition-root.js';
@@ -96,8 +96,13 @@ Commands:
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
 
+Skills:
+  skills list                  List all available skills
+  skills info <name>           Show skill details (SKILL.md)
+
 Options:
   --help                       Show this help message
+  --version                    Show version number
   --json                       Output in JSON format
 `.trim();
 
@@ -268,6 +273,13 @@ async function main(): Promise<void> {
 
   const rootDir = getProjectRoot();
   const harnessRoot = getHarnessRoot();
+
+  if (command === '--version' || command === 'version') {
+    const version = await getHarnessVersion(harnessRoot);
+    console.log(`phasegate v${version}`);
+    process.exit(0);
+  }
+
   const json = hasFlag(args, '--json');
 
   // Cross-unit wiring: 設定を先に解決し、各Unit に注入する
@@ -798,6 +810,57 @@ async function main(): Promise<void> {
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
         console.log(result.stdout);
         process.exit(result.exitCode);
+        break;
+      }
+
+      // ── skills ──
+      case 'skills': {
+        const subCommand = args[1];
+        const skillsRoot = join(harnessRoot, 'skills');
+
+        if (subCommand === 'list') {
+          const { promises: fs } = await import('node:fs');
+          const entries = await fs.readdir(skillsRoot, { withFileTypes: true });
+          const skills: string[] = [];
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              try {
+                await fs.access(join(skillsRoot, entry.name, 'SKILL.md'));
+                skills.push(entry.name);
+              } catch {
+                // skip directories without SKILL.md
+              }
+            }
+          }
+          skills.sort();
+          console.log(`Available skills (${skills.length}):\n`);
+          for (const name of skills) {
+            console.log(`  /${name}`);
+          }
+          process.exit(0);
+        }
+
+        if (subCommand === 'info') {
+          const skillName = args[2];
+          if (!skillName) {
+            console.error('Usage: harness skills info <skill-name>');
+            process.exit(2);
+          }
+          const { promises: fs } = await import('node:fs');
+          const skillMdPath = join(skillsRoot, skillName, 'SKILL.md');
+          try {
+            const content = await fs.readFile(skillMdPath, 'utf-8');
+            console.log(content);
+            process.exit(0);
+          } catch {
+            console.error(`Skill not found: ${skillName}`);
+            console.error(`Expected: ${skillMdPath}`);
+            process.exit(2);
+          }
+        }
+
+        console.error('Usage: harness skills <list|info <name>>');
+        process.exit(2);
         break;
       }
 
