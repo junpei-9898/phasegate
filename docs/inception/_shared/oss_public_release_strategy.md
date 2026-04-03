@@ -755,5 +755,5 @@ Phase 3までの反応を見て以下を検討:
 - [x] `pnpm audit` — 脆弱性なし *(2026-04-03 完了)*
 - [x] `npm pack --dry-run` — 433kB / 875ファイル、テスト漏れなし *(2026-04-03 完了)*
 - [x] Node 18/20/22 でのテスト確認 — GitHub Actions CI マトリクス追加 *(2026-04-03 完了)*
-- [ ] `npm publish --tag next` で RC 公開
-- [ ] RC の動作検証
+- [x] `npm publish --tag next` で RC 公開 — phasegate@0.15.0 published *(2026-04-03 完了)*
+- [x] RC の動作検証 — クリーン環境で init/--version/--help/skills list 全て正常 *(2026-04-03 完了)*
