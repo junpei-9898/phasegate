@@ -12,7 +12,7 @@ review: opus
 
 ## 出力物
 
-`docs/product/construction/codebase-map.md` — Unit・レイヤー分布・依存関係の可視化文書
+`{constructionDir}/codebase-map.md` — Unit・レイヤー分布・依存関係の可視化文書（パスは `phasegate.config.json` で設定）
 
 ---
 
@@ -31,7 +31,7 @@ review: opus
 # Codebase Mapper 計画
 
 ## スキャン対象
-- ソースコード: scripts/harness/
+- ソースコード: {phasegate.config.json の sourceDir}
 - 除外: __tests__/, node_modules/
 
 ## 出力粒度
@@ -41,7 +41,7 @@ review: opus
 - [ ] 循環依存検出
 
 ## 出力先
-docs/product/construction/codebase-map.md
+{constructionDir}/codebase-map.md
 
 ## QA
 [Question] Q1: ...
@@ -58,7 +58,7 @@ docs/product/construction/codebase-map.md
 
 ### Step 1: @unit/@layer アノテーションの収集
 
-Glob + Read を使い、`scripts/harness/**/*.ts`（テスト・fixture除外）から：
+Glob + Read を使い、`{sourceDir}/**/*.ts`（テスト・fixture除外）から：
 
 ```
 @unit {unit-name}
@@ -79,7 +79,7 @@ Unit間依存グラフを深さ優先探索でサイクル検出する。
 
 ### Step 4: マップ文書の生成
 
-`docs/product/construction/codebase-map.md` に出力。
+`{constructionDir}/codebase-map.md` に出力。
 
 ---
 
@@ -89,7 +89,7 @@ Unit間依存グラフを深さ優先探索でサイクル検出する。
 # Codebase Map
 
 生成日時: {date}
-スキャン対象: scripts/harness/
+スキャン対象: {sourceDir}
 総ファイル数: N（テスト除く）
 
 ---
@@ -137,8 +137,8 @@ validator-system
 ## アノテーション欠落の対処
 
 マップ生成後、`@unit`/`@layer` が欠落しているファイルが検出された場合:
-1. `L1-001`（require-unit-comment）/ `L1-002`（require-layer-comment）の違反として報告
-2. `quick-implementor` でアノテーションを追加
+1. Lintルール違反（require-unit-comment / require-layer-comment）として報告
+2. 欠落ファイル一覧を出力し、アノテーション追加を促す
 
 ---
 
@@ -146,6 +146,6 @@ validator-system
 
 | スキル/コマンド | 用途 |
 |--------------|------|
-| `pnpm run lint` | L1 archgateルールの全体スキャン |
+| `npx phasegate lint` | L1 archgateルールの全体スキャン |
 | `consistency-checker` | マップ生成後の設計文書整合性確認 |
 | `doc-freshness-checker` | マップと設計文書の鮮度を合わせて確認 |

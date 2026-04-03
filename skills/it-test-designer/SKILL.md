@@ -32,20 +32,8 @@ review: opus
 - `story-implementor` で実装が拒否される
 - `implementation-readiness-checker` でブロックされる
 
-### このスキルの位置づけ
-```
-scenario-test-designer
-        ↓
-it-test-designer（本スキル）← ITテストケース設計
-        ↓
-unit-test-designer
-        ↓
-test-coverage-checker ← カバレッジ検証
-        ↓
-テストロジック設計
-        ↓
-story-implementor ← TDD実装
-```
+### フロー上の位置
+`scenario-test-designer` → **it-test-designer（本スキル）** → `unit-test-designer` → `test-coverage-checker` → テストロジック設計 → `story-implementor`
 
 **必ず完了してから次のステップに進んでください。**
 
@@ -72,22 +60,7 @@ story-implementor ← TDD実装
    - 上位設計をスキップして進める（非推奨）
 3. **ユーザー指示待ち** — 独自判断でテスト設計を開始しない
 
-**報告テンプレート:**
-```markdown
-## ⚠️ 上位レイヤー設計が見つかりません
-
-以下の設計文書が存在しないため、ITテスト設計を開始できません：
-- `docs/product/construction/{unit}/logical_design.md` ❌ 未作成
-
-### 推奨アクション
-`logical-designer` スキルを使用して論理設計を作成してください。
-
-### 選択肢
-1. **logical-designerを先に実行する**（推奨）
-2. **このまま進める**（上位設計なしで進める場合、整合性リスクあり）
-
-どちらを選択しますか？
-```
+報告テンプレートは [references/it-test-design-template.md](references/it-test-design-template.md) セクション2 を参照。
 
 ---
 
@@ -112,44 +85,15 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 
 ### 計画ファイルの構成
 
-```markdown
-# ITテスト設計計画: {Unit名}
+計画ファイルは以下5セクションで構成する:
 
-## 1. スコープ
-- 対象Unitの論理設計
-- テスト対象コンポーネント一覧
+1. **スコープ** — 対象Unitと論理設計の範囲
+2. **テスト対象分析** — UseCase / Repository / Controller/API ごとのケース概算テーブル
+3. **テスト方針** — モック/スタブ、DB、認証・認可のテスト方針
+4. **QA** — 不明点・確認事項（`[Question]`/`[Answer]`形式）
+5. **前提条件・リスク**
 
-## 2. テスト対象分析
-
-### UseCase
-| UseCase名 | 依存Repository数 | テストケース概算 |
-|-----------|----------------|---------------|
-
-### Repository
-| Repository名 | CRUD操作数 | テストケース概算 |
-|-------------|----------|---------------|
-
-### Controller/API
-| エンドポイント | メソッド | テストケース概算 |
-|--------------|--------|---------------|
-
-## 3. テスト方針
-- モック/スタブの使用方針
-- DBテストの方針（テストDB or インメモリ）
-- 認証・認可のテスト方針
-
-## 4. QA（不明点・確認事項）
-
-### [Question] Q1: {質問タイトル}
-{質問の詳細と背景}
-**推奨案:** {AIの推奨案}
-
-[Answer]
-（人間が回答を記入）
-
-## 5. 前提条件・リスク
-- ...
-```
+詳細なテンプレートは [references/it-test-design-template.md](references/it-test-design-template.md) セクション1 を参照。
 
 ### Phase 1 完了条件
 - 計画ファイルを出力した
@@ -186,73 +130,20 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 | テスト環境設定 | DB設定・モック設定・認証設定が記載されていること |
 
 ### 出力ファイル
-
-| 種別 | 配置先 |
-|------|--------|
-| 成果物 | `docs/product/construction/{unit}/it_test_design.md` |
+`docs/product/construction/{unit}/it_test_design.md`
 
 ### it_test_design.md の構成
 
-```markdown
-# ITテスト設計: {Unit名}
+成果物は以下6セクションで構成する:
 
-## 1. 対象コンポーネント
-- UseCase: {UseCase名一覧}
-- Repository: {Repository名一覧}
-- Controller: {Controller名一覧}
+1. **対象コンポーネント** — UseCase / Repository / Controller の一覧
+2. **UseCaseテストケース** — 正常系・異常系をケースID付きテーブルで定義
+3. **Repositoryテストケース** — CRUD・トランザクションのテーブル
+4. **Controller/APIテストケース** — 認証・認可 / バリデーション / 正常系のテーブル
+5. **シードデータ要件** — テストに必要なデータセット定義
+6. **テスト環境設定** — DB・モック・認証の設定
 
-## 2. UseCaseテストケース
-
-### {UseCase名}
-
-#### 正常系
-| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
-|---------|---------|------|----------|---------|
-| IT-UC-{名}-001 | ... | ... | ... | ... |
-
-#### 異常系
-| ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
-|---------|---------|------|----------|----------|
-
-## 3. Repositoryテストケース
-
-### {Repository名}
-
-#### CRUDテスト
-| ケースID | 操作 | 入力 | 事前データ | 期待結果 |
-|---------|------|------|----------|---------|
-
-#### トランザクションテスト
-| ケースID | シナリオ | 期待結果 |
-|---------|---------|---------|
-
-## 4. Controller/APIテストケース
-
-### {エンドポイント}
-
-#### 認証・認可テスト
-| ケースID | 認証状態 | 権限 | 期待レスポンス |
-|---------|---------|------|--------------|
-
-#### バリデーションテスト
-| ケースID | 入力 | 期待エラー |
-|---------|------|----------|
-
-#### 正常系
-| ケースID | 入力 | 期待レスポンス |
-|---------|------|--------------|
-
-## 5. シードデータ要件
-| データセット | 用途 | 内容 |
-|------------|------|------|
-
-## 6. テスト環境設定
-- DB設定
-- モック設定
-- 認証設定
-```
-
----
+詳細なテンプレートは [references/it-test-design-template.md](references/it-test-design-template.md) を参照。
 
 ---
 
@@ -299,36 +190,9 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 
 ## 次ステップへの誘導
 
-ITテストケース設計完了後、以下の順序で進めてください：
+ITテストケース設計完了後、以下の順序で進める（フロー図は「スキップ禁止」セクション参照）:
 
-### テストケース設計フェーズ（続き）
-1. **ユニットテストケース設計** — Entity/ValueObjectのテストケース
-   - `unit-test-designer` スキルを実行
-
-### カバレッジ検証フェーズ
-2. **テストカバレッジ検証** — テストケース設計の網羅性チェック
-   - `test-coverage-checker` スキルを実行
-   - カバレッジ90%以上を確認
-
-### テストロジック設計フェーズ
-3. **テストロジック設計** — 各レベルの実装ロジック
-   - `unit-test-logic-designer` → `it-test-logic-designer` → `scenario-test-logic-designer`
-
-### TDD実装フェーズ
-4. **TDD実装** — Unit → IT → E2E の順序で実装
-   - `story-implementor` スキルを実行
-
-**推奨フロー図:**
-```
-scenario-test-designer
-        ↓
-it-test-designer（本スキル）
-        ↓
-unit-test-designer
-        ↓
-test-coverage-checker
-        ↓
-*-test-logic-designer（各レベル）
-        ↓
-story-implementor
-```
+1. `unit-test-designer` — ユニットテストケース設計
+2. `test-coverage-checker` — カバレッジ検証（90%以上）
+3. `*-test-logic-designer` — 各レベルのテストロジック設計
+4. `story-implementor` — TDD実装（Unit → IT → E2E）

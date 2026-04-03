@@ -1,6 +1,6 @@
 ---
 name: doc-freshness-checker
-description: 設計文書の鮮度チェック（L4バリデータ拡張）。`p2:check-freshness` CLIを使い、設計文書の最終更新日が閾値を超えていないか、コード変更と設計文書の乖離がないかを検出する。使用タイミング: 「設計文書が古くなっていないか確認して」「ドキュメントの鮮度チェックを実行して」「L4 freshness チェック」「設計とコードの乖離を調べて」など。
+description: 設計文書の鮮度チェック（L4バリデータ拡張）。`phasegate check-freshness` CLIを使い、設計文書の最終更新日が閾値を超えていないか、コード変更と設計文書の乖離がないかを検出する。使用タイミング: 「設計文書が古くなっていないか確認して」「ドキュメントの鮮度チェックを実行して」「L4 freshness チェック」「設計とコードの乖離を調べて」など。
 model: sonnet
 review: opus
 ---
@@ -8,7 +8,7 @@ review: opus
 # Doc Freshness Checker
 
 設計文書の鮮度（freshness）を検証し、古くなった文書や対応コードとの乖離を検出するスキル。
-`phase2-extensions` Unit の `p2:check-freshness` CLIをラップし、結果を解釈・対処する。
+`phasegate check-freshness` CLIをラップし、結果を解釈・対処する。
 
 ## 前提条件
 
@@ -34,11 +34,11 @@ review: opus
 # Doc Freshness チェック計画
 
 ## チェック対象スコープ
-- ディレクトリ: {デフォルト: docs/product/construction/}
+- ディレクトリ: {phasegate.config.json の constructionDir、デフォルト: docs/}
 - 閾値: {phasegate.config.json の値 or デフォルト 30日}
 
 ## 実行コマンド
-pnpm run p2:check-freshness [--dir {path}] [--threshold {days}]
+npx phasegate check-freshness [--dir {path}] [--threshold {days}]
 
 ## QA
 [Question] Q1: ...
@@ -57,11 +57,11 @@ pnpm run p2:check-freshness [--dir {path}] [--threshold {days}]
 ### Step 1: CLIの実行
 
 ```bash
-pnpm run p2:check-freshness
+npx phasegate check-freshness
 ```
 
 オプション:
-- `--dir <path>` — チェック対象ディレクトリ（デフォルト: `docs/product/construction/`）
+- `--dir <path>` — チェック対象ディレクトリ（デフォルト: `phasegate.config.json` の `constructionDir`）
 - `--threshold <days>` — 警告閾値（日数）
 
 ### Step 2: 結果の解釈

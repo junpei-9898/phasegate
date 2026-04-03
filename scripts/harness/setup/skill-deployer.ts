@@ -18,16 +18,86 @@ const HARNESS_CONFIG_FILE = 'phasegate.config.json';
 const HOOKS_TEMPLATE_DIR = join('templates', '.claude');
 const HOOKS_TARGET_DIR = '.claude';
 
+// ── Skill Category Map ──
+
+export type SkillCategory = 'core' | 'aidlc' | 'utility';
+export type SkillSet = 'core' | 'all';
+
+export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
+  core: [
+    'cascade-updater',
+    'codebase-mapper',
+    'consistency-checker',
+    'doc-freshness-checker',
+    'engineering-perspective',
+    'implementation-readiness-checker',
+    'pointer-validator',
+    'test-coverage-checker',
+  ],
+  aidlc: [
+    'domain-designer',
+    'environment-designer',
+    'implementation-planner',
+    'it-test-designer',
+    'it-test-logic-designer',
+    'logical-designer',
+    'mock-designer',
+    'product-architect',
+    'quick-implementor',
+    'scenario-test-designer',
+    'scenario-test-logic-designer',
+    'story-implementor',
+    'story-mapper',
+    'story-writer',
+    'uiux-designer',
+    'unit-designer',
+    'unit-test-designer',
+    'unit-test-logic-designer',
+  ],
+  utility: [
+    'codex-delegator',
+    'skill-creator',
+  ],
+} as const;
+
+/**
+ * 指定された SkillSet に含まれるスキル名の一覧を返す。
+ */
+export function getSkillsForSet(skillSet: SkillSet): string[] {
+  if (skillSet === 'core') {
+    return [...SKILL_CATEGORIES.core];
+  }
+  return [
+    ...SKILL_CATEGORIES.core,
+    ...SKILL_CATEGORIES.aidlc,
+    ...SKILL_CATEGORIES.utility,
+  ];
+}
+
+/**
+ * スキル名からカテゴリを逆引きする。未知のスキルは null を返す。
+ */
+export function getCategoryForSkill(skillName: string): SkillCategory | null {
+  for (const [category, skills] of Object.entries(SKILL_CATEGORIES)) {
+    if ((skills as readonly string[]).includes(skillName)) {
+      return category as SkillCategory;
+    }
+  }
+  return null;
+}
+
 export interface DeployResult {
   deployedSkills: string[];
   targetDir: string;
   version: string;
   deployedAt: string;
+  skillSet: SkillSet;
 }
 
 export interface VersionInfo {
   version: string;
   deployedAt: string;
+  skillSet?: SkillSet;
 }
 
 interface PkgJson {
@@ -65,14 +135,20 @@ async function copyDirectory(src: string, dest: string): Promise<number> {
  * @param harnessRoot - harnessパッケージのルートディレクトリ（skills/がある場所）
  * @param projectRoot - デプロイ先プロジェクトのルートディレクトリ
  */
-export async function deploySkills(harnessRoot: string, projectRoot: string): Promise<DeployResult> {
+export async function deploySkills(
+  harnessRoot: string,
+  projectRoot: string,
+  skillSet: SkillSet = 'all',
+): Promise<DeployResult> {
   const skillsSource = join(harnessRoot, SKILLS_SOURCE_DIR);
   const skillsTarget = join(projectRoot, SKILLS_TARGET_DIR);
   const version = await getHarnessVersion(harnessRoot);
   const deployedAt = new Date().toISOString();
 
   const skillDirs = await fs.readdir(skillsSource, { withFileTypes: true });
-  const skills = skillDirs.filter((d) => d.isDirectory()).map((d) => d.name);
+  const allSkills = skillDirs.filter((d) => d.isDirectory()).map((d) => d.name);
+  const allowedSkills = getSkillsForSet(skillSet);
+  const skills = allSkills.filter((s) => allowedSkills.includes(s));
 
   await fs.mkdir(skillsTarget, { recursive: true });
 
@@ -82,14 +158,14 @@ export async function deploySkills(harnessRoot: string, projectRoot: string): Pr
     await copyDirectory(srcSkillDir, destSkillDir);
   }
 
-  const versionInfo: VersionInfo = { version, deployedAt };
+  const versionInfo: VersionInfo = { version, deployedAt, skillSet };
   await fs.writeFile(
     join(skillsTarget, HARNESS_VERSION_FILE),
     JSON.stringify(versionInfo, null, 2) + '\n',
     'utf-8',
   );
 
-  return { deployedSkills: skills, targetDir: skillsTarget, version, deployedAt };
+  return { deployedSkills: skills, targetDir: skillsTarget, version, deployedAt, skillSet };
 }
 
 /**

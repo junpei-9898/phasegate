@@ -1,6 +1,6 @@
 ---
 name: pointer-validator
-description: 設計文書内のファイルポインタ（相対パス参照）の有効性を検証するスキル（L4バリデータ拡張）。`p2:validate-pointers` CLIを使い、ドキュメント内で参照されているファイルパスが実際に存在するかチェックする。使用タイミング: 「ドキュメントのリンク切れを確認して」「ポインタ検証を実行して」「broken pointer を探して」「設計文書の参照が正しいか確認して」など。
+description: 設計文書内のファイルポインタ（相対パス参照）の有効性を検証するスキル（L4バリデータ拡張）。`phasegate validate-pointers` CLIを使い、ドキュメント内で参照されているファイルパスが実際に存在するかチェックする。使用タイミング: 「ドキュメントのリンク切れを確認して」「ポインタ検証を実行して」「broken pointer を探して」「設計文書の参照が正しいか確認して」など。
 model: sonnet
 review: opus
 ---
@@ -8,7 +8,7 @@ review: opus
 # Pointer Validator
 
 設計文書内のファイルパス参照（ポインタ）の有効性を検証するスキル。
-`phase2-extensions` Unit の `p2:validate-pointers` CLIをラップし、broken pointer を検出・修正案を提示する。
+`phasegate validate-pointers` CLIをラップし、broken pointer を検出・修正案を提示する。
 
 ## CLIの動作
 
@@ -27,7 +27,7 @@ review: opus
 ### Step 1: CLIの実行
 
 ```bash
-pnpm run p2:validate-pointers
+npx phasegate validate-pointers
 ```
 
 オプション:
@@ -75,7 +75,7 @@ pnpm run p2:validate-pointers
 ## 次のアクション
 （brokenがある場合）
 1. 上記テーブルの broken pointer を修正
-2. `pnpm run p2:validate-pointers` を再実行して0件を確認
+2. `npx phasegate validate-pointers` を再実行して0件を確認
 ```
 
 ---

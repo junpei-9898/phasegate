@@ -36,6 +36,8 @@ review: opus
 
 ## 検証ワークフロー
 
+> **パス設定:** 以下のファイルパスはプレースホルダで記述。`{constructionDir}` / `{inceptionDir}` は `phasegate.config.json` のプロジェクト設定から解決される。
+
 ### Step 1: ファイル存在チェック（自動実行）
 
 **以下のファイルの存在を実際に確認する（Glob/Readツールを使用）：**
@@ -44,27 +46,26 @@ review: opus
 
 | カテゴリ | ファイルパス | 作成スキル |
 |---------|------------|----------|
-| 論理設計 | `docs/product/construction/{unit}/logical_design.md` | `logical-designer` |
-| 論理設計 | `docs/inception/{unit}/{story_id}/logical_design.md` | `logical-designer` |
-| ユニットテスト設計 | `docs/product/construction/{unit}/unit_test_design.md` | `unit-test-designer` |
-| ITテスト設計 | `docs/product/construction/{unit}/it_test_design.md` | `it-test-designer` |
-| シナリオテスト設計 | `docs/inception/{unit}/{story_id}/scenario_test_design.md` | `scenario-test-designer` |
-| カバレッジレポート | `docs/product/construction/{unit}/coverage_report.md` | `test-coverage-checker` |
+| 論理設計 | `{constructionDir}/{unit}/logical_design.md` | `logical-designer` |
+| 論理設計 | `{inceptionDir}/{unit}/{story_id}/logical_design.md` | `logical-designer` |
+| ユニットテスト設計 | `{constructionDir}/{unit}/unit_test_design.md` | `unit-test-designer` |
+| ITテスト設計 | `{constructionDir}/{unit}/it_test_design.md` | `it-test-designer` |
+| シナリオテスト設計 | `{inceptionDir}/{unit}/{story_id}/scenario_test_design.md` | `scenario-test-designer` |
+| カバレッジレポート | `{constructionDir}/{unit}/coverage_report.md` | `test-coverage-checker` |
 
 #### 推奨ファイル（なくても実装可能だが、あればより安全）
 
 | カテゴリ | ファイルパス | 作成スキル |
 |---------|------------|----------|
-| ユニットテストロジック | `docs/product/construction/{unit}/unit_test_logic.md` | `unit-test-logic-designer` |
-| ITテストロジック | `docs/product/construction/{unit}/it_test_logic.md` | `it-test-logic-designer` |
-| シナリオテストロジック | `docs/inception/{unit}/{story_id}/scenario_test_logic.md` | `scenario-test-logic-designer` |
-| UIUX設計 | `docs/product/construction/{unit}/uiux_design.md` | `uiux-designer` |
+| ユニットテストロジック | `{constructionDir}/{unit}/unit_test_logic.md` | `unit-test-logic-designer` |
+| ITテストロジック | `{constructionDir}/{unit}/it_test_logic.md` | `it-test-logic-designer` |
+| シナリオテストロジック | `{inceptionDir}/{unit}/{story_id}/scenario_test_logic.md` | `scenario-test-logic-designer` |
+| UIUX設計 | `{constructionDir}/{unit}/uiux_design.md` | `uiux-designer` |
 
-### Step 2: カバレッジレポートの内容確認
+### Step 2: カバレッジレポートの確認
 
-`coverage_report.md` が存在する場合、その内容を読み取り：
-- カバレッジ率が90%以上か確認
-- 未カバー項目がないか確認
+`coverage_report.md` が存在する場合、`test-coverage-checker` の検証結果を参照する。
+カバレッジの詳細分析は `test-coverage-checker` が担当するため、本スキルでは存在確認のみ行う。
 
 ### Step 3: 検証結果の報告
 
@@ -151,64 +152,9 @@ review: opus
 
 ---
 
-## 既存実装に対するテスト追加モード
+## 既存実装に対するテスト追加
 
-既に実装が完了しているが、テストが不足している場合に使用。
-
-### 使用方法
-
-```
-「US-XXXは実装済みだが、ユニットテスト/ITテストが不足している。テスト追加の準備状況を確認してほしい」
-```
-
-### 検証内容
-
-1. **実装済みコードの分析**
-   - `backend/src/{context}/` の実装ファイルを確認
-   - Entity/ValueObject/UseCase/Repository/Controllerを特定
-
-2. **既存テストの確認**
-   - `backend/test/unit/{context}/` のユニットテスト
-   - `backend/test/integration/{context}/` のITテスト
-   - `e2e/tests/{context}/` のE2Eテスト
-
-3. **ギャップ分析**
-   - 実装済みコンポーネントに対するテストの存在/不存在を一覧化
-
-### 出力例
-
-```markdown
-## 🔍 既存実装のテスト状況分析: US-217
-
-### 実装済みコンポーネント
-
-| コンポーネント | 種類 | ユニットテスト | ITテスト | E2Eテスト |
-|--------------|------|--------------|---------|----------|
-| WithholdingTaxProcess | Entity | ❌ なし | - | - |
-| CsvData | ValueObject | ❌ なし | - | - |
-| ParseCsvUseCase | UseCase | - | ❌ なし | - |
-| WithholdingTaxRepository | Repository | - | ❌ なし | - |
-| UploadCsvController | Controller | - | ❌ なし | - |
-| CSVアップロードフロー | E2E | - | - | ✅ あり |
-
-### 不足テストの作成に必要なスキル
-
-| 不足テスト | 対応スキル | 優先度 |
-|----------|----------|-------|
-| Entity/VOのユニットテスト | `unit-test-designer` → `unit-test-logic-designer` | 高 |
-| UseCase/Repository/ControllerのITテスト | `it-test-designer` → `it-test-logic-designer` | 高 |
-
-### 推奨フロー
-
-1. **`unit-test-designer`** → 既存Entity/VOに対するテストケース設計
-2. **`it-test-designer`** → 既存UseCase/Repository/Controllerに対するテストケース設計
-3. **`test-coverage-checker`** → カバレッジ検証
-4. **`unit-test-logic-designer`** → ユニットテストロジック設計
-5. **`it-test-logic-designer`** → ITテストロジック設計
-6. **`story-implementor`** → TDD実装（RED→GREEN）
-```
-
----
+既に実装が完了しているがテストが不足している場合は、`test-coverage-checker` の「実装済みコードへのテスト追加モード」を使用すること。本スキルはファイル存在チェックに特化し、テストギャップ分析は `test-coverage-checker` が担当する。
 
 ---
 
@@ -219,7 +165,7 @@ review: opus
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. プロジェクトのレビュー基準に沿って検証する
 3. 判定結果を出力する
 
 ### 判定と修正

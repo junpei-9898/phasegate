@@ -21,7 +21,8 @@ import { buildCiGovernance } from './ci-governance/composition-root.js';
 import { createSkillQualityHandlers } from './skill-quality/composition-root.js';
 import { buildRegressionSuite } from './regression-suite/composition-root.js';
 import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
-import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig } from './setup/skill-deployer.js';
+import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
+import type { SkillSet } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
 
 /**
@@ -290,10 +291,16 @@ async function main(): Promise<void> {
       // ── harness setup ──
       case 'init': {
         const projectName = parseFlag(args, '--name') ?? 'my-project';
-        const result = await deploySkills(harnessRoot, rootDir);
+        const skillSetRaw = parseFlag(args, '--skills') ?? 'all';
+        if (skillSetRaw !== 'core' && skillSetRaw !== 'all') {
+          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
+          process.exit(2);
+        }
+        const skillSet: SkillSet = skillSetRaw;
+        const result = await deploySkills(harnessRoot, rootDir, skillSet);
         const configResult = await initHarnessConfig(rootDir, projectName);
         const hooksResult = await deployHookScripts(harnessRoot, rootDir);
-        console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills)`);
+        console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`);
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
         } else {
@@ -310,7 +317,11 @@ async function main(): Promise<void> {
         console.log(`✓ Harness v${result.version} initialized`);
         console.log('');
         console.log('Next steps:');
-        console.log('  1. Run the product-architect skill to start AIDLC');
+        if (skillSet === 'core') {
+          console.log('  1. Core skills only — quality defense tools are ready');
+        } else {
+          console.log('  1. Run the product-architect skill to start AIDLC');
+        }
         console.log('  2. Customize phasegate.config.json if needed');
         console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
         process.exit(0);
@@ -320,14 +331,19 @@ async function main(): Promise<void> {
       case 'update-skills': {
         const deployed = await getDeployedVersion(rootDir);
         const current = await getHarnessVersion(harnessRoot);
+        const previousSkillSet: SkillSet = deployed?.skillSet ?? 'all';
+        const overrideSkillSet = parseFlag(args, '--skills');
+        const updateSkillSet: SkillSet = overrideSkillSet === 'core' || overrideSkillSet === 'all'
+          ? overrideSkillSet
+          : previousSkillSet;
         if (deployed) {
-          console.log(`Previously deployed: v${deployed.version} (${deployed.deployedAt})`);
+          console.log(`Previously deployed: v${deployed.version} (${deployed.deployedAt}, set: ${previousSkillSet})`);
         } else {
           console.log('No previously deployed skills found');
         }
         console.log(`Current harness version: v${current}`);
-        const result = await deploySkills(harnessRoot, rootDir);
-        console.log(`✓ Skills updated (${result.deployedSkills.length} skills redeployed)`);
+        const result = await deploySkills(harnessRoot, rootDir, updateSkillSet);
+        console.log(`✓ Skills updated (${result.deployedSkills.length} skills redeployed, set: ${updateSkillSet})`);
         process.exit(0);
         break;
       }
@@ -833,9 +849,28 @@ async function main(): Promise<void> {
             }
           }
           skills.sort();
-          console.log(`Available skills (${skills.length}):\n`);
+
+          const grouped: Record<string, string[]> = { core: [], aidlc: [], utility: [], unknown: [] };
           for (const name of skills) {
-            console.log(`  /${name}`);
+            const cat = getCategoryForSkill(name) ?? 'unknown';
+            grouped[cat].push(name);
+          }
+
+          console.log(`Available skills (${skills.length}):\n`);
+
+          const labels: Record<string, string> = {
+            core: 'Core — Quality Defense',
+            aidlc: 'AIDLC — Development Workflow',
+            utility: 'Utility',
+          };
+          for (const cat of ['core', 'aidlc', 'utility', 'unknown'] as const) {
+            if (grouped[cat].length === 0) continue;
+            const label = labels[cat] ?? 'Other';
+            console.log(`  [${label}] (${grouped[cat].length})`);
+            for (const name of grouped[cat]) {
+              console.log(`    /${name}`);
+            }
+            console.log('');
           }
           process.exit(0);
         }

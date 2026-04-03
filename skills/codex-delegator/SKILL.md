@@ -176,55 +176,18 @@ git diff HEAD~1
 git diff --name-only HEAD~1
 ```
 
-#### Step B.1: Tier 1 — 機械的チェック（スクリプト/grep）
+#### Step B.1: Tier 1 — 機械的チェック
 
-Claude Codeがgrep・スクリプトで自動検証する。人間の判断不要な項目を高速に処理する。
-
-| ID | 次元 | 検証方法 | 重大度 |
-|----|------|---------|--------|
-| C1 | スコープ遵守 | `git diff --name-only` と指示ファイルリストの差分比較 | BLOCK |
-| C2 | 既存破壊なし | `pnpm test` 実行（既存テスト全パス確認） | BLOCK |
-| C3 | 命名一貫性 | grep: 日本語テスト名、`actual`変数、target/context構造 | BLOCK |
-| IM3 | レイヤー違反なし | grep: domain層ファイルからinfrastructure層へのimport検出 | BLOCK |
-| IM4 | 型安全性 | grep: 正当理由なき `any` / `as` の使用検出 | WARN |
-| TE1 | ケースID突合 | 設計文書のケースIDリスト vs テストファイル内のID（diff抽出） | BLOCK |
-| DP3 | 配置ルール準拠 | `git diff --name-only` とfolder_management_rules.mdのパス照合 | BLOCK |
-
-**Tier 1 判定**:
-```
-BLOCK が1つでもFAIL → REJECT（Tier 2スキップ）→ Step Cへ
-全PASS or WARNのみ  → Tier 2へ進む
-```
+Claude Codeがgrep・スクリプトで自動検証する。共通次元（C1-C3: スコープ遵守・既存破壊なし・命名一貫性）+ タスクタイプ別次元（IM3/IM4, TE1/TE4, DP3）を適用。BLOCKが1つでもFAILならTier 2スキップで即REJECT。次元ID・検証方法の詳細は [references/review-dimensions.md](references/review-dimensions.md) の Tier 1 セクションを参照。
 
 #### Step B.2: Tier 2 — Sonnetによる設計突合チェック
 
-Agent tool（subagent_type未指定）でSonnetに以下の**最小限の入力**を渡してレビューさせる。
-
-**Tier 2への入力（これだけ）**:
+Agent tool経由でSonnetに以下の**最小限の入力**を渡す:
 1. `git diff HEAD~1` の出力（変更差分のみ）
 2. Tier 1の結果サマリ（PASS/WARN一覧）
 3. 設計文書の**該当箇所の抜粋**（全文ではない）
 
-**Tier 2 レビュー次元**:
-
-| ID | 次元 | 検証内容 | 重大度 |
-|----|------|---------|--------|
-| C4 | 完了度 | 指示項目の欠落がないか | BLOCK |
-| DD1 | 計画との整合 | diffの内容が設計文書の方針と矛盾しないか | BLOCK |
-| DD2 | アーキテクチャ原則 | ヘキサゴナル・DDD原則に沿っているか | BLOCK |
-| DD4/IM-Y | YAGNI | 指示範囲外の「改善」「リファクタ」「将来への備え」がないか | BLOCK |
-| IM5 | DRY | 新規コードに既存コードとの重複がないか | WARN |
-| TE2 | 期待値突合 | Assertionの期待値が設計文書の期待結果と一致するか | BLOCK |
-| DD3 | トレーサビリティ | 各要素がストーリー/Unit要件に紐づいているか | WARN |
-
-詳細は [references/review-dimensions.md](references/review-dimensions.md) を参照。
-
-**Tier 2 判定**:
-```
-BLOCK が1つでもFAIL → REJECT → Step Cへ
-WARN のみ FAIL      → CONDITIONAL_PASS（WARNをまとめて修正）
-全PASS               → PASS（完了）
-```
+設計との整合（DD1/DD2）、YAGNI（DD4/IM-Y）、完了度（C4）、期待値突合（TE2）等を検証。BLOCKが1つでもFAILならREJECT、WARNのみならCONDITIONAL_PASS。次元ID・検証内容・判定ロジックの詳細は [references/review-dimensions.md](references/review-dimensions.md) の Tier 2 セクションを参照。
 
 ### Step C: 修正ループ（Fix Loop）
 
@@ -238,21 +201,7 @@ WARN のみ FAIL      → CONDITIONAL_PASS（WARNをまとめて修正）
 
 #### 修正指示の構造（codex再委任時）
 
-```
-## 修正指示（Round N）
-
-### 前回レビュー結果
-- FAIL次元: {ID}: {名前}
-
-### 修正箇所
-#### [{次元ID}] {ファイルパス}:{行番号}
-- 現状: {問題の具体的記述}
-- 期待: {あるべき状態}
-- 修正方法: {具体的手順}
-
-### 制約
-- 修正対象以外のコードに手を加えないこと
-```
+修正指示テンプレート（Round N形式: FAIL次元・修正箇所・制約）は [references/prompt-patterns.md](references/prompt-patterns.md) の「修正指示テンプレート」セクションを参照。
 
 #### エスカレーション条件
 

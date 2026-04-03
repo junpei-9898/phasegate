@@ -29,17 +29,19 @@ TDD実装フェーズ
 
 ## 前提条件チェック
 
+> **パス設定:** 以下のファイルパスはプレースホルダで記述。`{constructionDir}` / `{inceptionDir}` / `{unitsDir}` は `phasegate.config.json` のプロジェクト設定から解決される。
+
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
-- **ユーザーストーリー** — `docs/product/units/{unit}.md` 内の受け入れ基準
+- **ユーザーストーリー** — `{unitsDir}/{unit}.md` 内の受け入れ基準
 - **少なくとも1つのテスト設計文書** — 以下のいずれか
-  - `docs/product/construction/{unit}/unit_test_design.md`
-  - `docs/product/construction/{unit}/it_test_design.md`
-  - `docs/inception/{unit}/{story_id}/scenario_test_design.md`
+  - `{constructionDir}/{unit}/unit_test_design.md`
+  - `{constructionDir}/{unit}/it_test_design.md`
+  - `{inceptionDir}/{unit}/{story_id}/scenario_test_design.md`
 
 ### 推奨インプット（あれば参照）
-- **ドメインモデル** — `docs/product/construction/{unit}/domain_model.md`
-- **論理設計** — `docs/product/construction/{unit}/logical_design.md`
-- **ストーリー固有論理設計** — `docs/inception/{unit}/{story_id}/logical_design.md`
+- **ドメインモデル** — `{constructionDir}/{unit}/domain_model.md`
+- **論理設計** — `{constructionDir}/{unit}/logical_design.md`
+- **ストーリー固有論理設計** — `{inceptionDir}/{unit}/{story_id}/logical_design.md`
 - **全テスト設計文書** — 網羅性検証の精度向上
 
 ---
@@ -90,7 +92,7 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 | {画面名} | `/path` | SC-001 | ✅ カバー |
 
 **チェック対象:**
-- `docs/product/construction/{unit}/uiux_design.md` が存在する場合のみ実行
+- `{constructionDir}/{unit}/uiux_design.md` が存在する場合のみ実行
 - 画面一覧の全画面にシナリオテストが対応しているか
 - data-testid一覧がシナリオテストロジックで使用されているか
 
@@ -100,10 +102,10 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 
 **このスキルは3フェーズで実行する。**
 - **Phase 1（計画）**: Opus がスコープ・方針・不明点を整理し、人間の承認を得る
-- **Phase 2（実行）**: Sonnet 4.6 に委任して成果物を生成する（`scripts/delegate-sonnet.sh` 経由）
+- **Phase 2（実行）**: プロジェクトのモデルルーティング設定に従い、実行モデルに委譲して成果物を生成する
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
-**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+**Phase 1/2/3を同時に実行してはならない。**
 
 ---
 
@@ -113,7 +115,7 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 検証対象のスコープ・検証観点を整理し、人間の承認を得る。
 
 ### 出力ファイル
-`docs/inception/{unit}/test_coverage_plan.md`
+`{inceptionDir}/{unit}/test_coverage_plan.md`
 
 ### 計画ファイルの構成
 
@@ -197,105 +199,21 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 
 | 種別 | 配置先 |
 |------|--------|
-| 成果物 | `docs/product/construction/{unit}/coverage_report.md` |
+| 成果物 | `{constructionDir}/{unit}/coverage_report.md` |
 
 ### coverage_report.md の構成
 
-```markdown
-# テストカバレッジレポート: {Unit名}
+詳細なテンプレートは [references/coverage-report-template.md](references/coverage-report-template.md) を参照。
 
-## 1. サマリー
-
-| 観点 | カバー項目数 | 未カバー項目数 | カバレッジ率 |
-|------|------------|--------------|------------|
-| 受け入れ基準 | X | Y | Z% |
-| ドメインロジック | X | Y | Z% |
-| UseCase | X | Y | Z% |
-| API | X | Y | Z% |
-| **総合** | X | Y | Z% |
-
-### 判定結果
-- ✅ 90%以上: テストロジック設計に進んで問題なし
-- ⚠️ 70-90%: 未カバー項目の確認を推奨
-- ❌ 70%未満: テストケース設計の追加が必要
-
-## 2. 受け入れ基準カバレッジ詳細
-
-| AC ID | 基準内容 | 対応テストケース | カバー状態 |
-|-------|---------|----------------|----------|
-| AC-1 | ... | SC-001, IT-UC-001 | ✅ |
-| AC-2 | ... | なし | ❌ |
-
-## 3. ドメインロジックカバレッジ詳細
-
-### 集約
-| 集約名 | 不変条件 | 対応テストケース | カバー状態 |
-|-------|---------|----------------|----------|
-
-### エンティティ
-| エンティティ名 | ビジネスルール | 対応テストケース | カバー状態 |
-|--------------|--------------|----------------|----------|
-
-### 値オブジェクト
-| 値オブジェクト名 | 制約 | 対応テストケース | カバー状態 |
-|----------------|-----|----------------|----------|
-
-## 4. UseCaseカバレッジ詳細
-
-| UseCase名 | 正常系 | 異常系 | カバー状態 |
-|----------|-------|-------|----------|
-| CreateXxxUseCase | IT-UC-001 | IT-UC-002, IT-UC-003 | ✅ |
-| UpdateXxxUseCase | なし | なし | ❌ |
-
-## 5. APIカバレッジ詳細
-
-| エンドポイント | 認証 | 認可 | バリデーション | カバー状態 |
-|--------------|-----|-----|--------------|----------|
-| POST /api/xxx | ✅ | ✅ | ✅ | ✅ |
-| PUT /api/xxx | ❌ | ❌ | ❌ | ❌ |
-
-## 6. 未カバー項目一覧
-
-### 優先度: 高（受け入れ基準に関連）
-| 項目 | 理由 | 推奨テストレベル |
-|------|------|----------------|
-| AC-2 | テストケースなし | シナリオテスト |
-
-### 優先度: 中（ドメインロジック）
-| 項目 | 理由 | 推奨テストレベル |
-|------|------|----------------|
-| Invoice.changeAmount() | 状態遷移テストなし | ユニットテスト |
-
-### 優先度: 低（網羅性向上）
-| 項目 | 理由 | 推奨テストレベル |
-|------|------|----------------|
-
-## 7. 推奨追加ケース
-
-以下のテストケースを追加することを推奨します：
-
-### ユニットテスト追加
-- UT-XXX-001: {ケース説明}
-
-### ITテスト追加
-- IT-XXX-001: {ケース説明}
-
-### シナリオテスト追加
-- SC-XXX: {ケース説明}
-
-## 8. 次のアクション
-
-カバレッジ率に応じた推奨アクション：
-
-- **90%以上の場合**: テストロジック設計フェーズに進んでください
-  - `unit-test-logic-designer` → `it-test-logic-designer` → `scenario-test-logic-designer`
-
-- **70-90%の場合**: 未カバー項目を確認し、必要に応じてテストケースを追加してください
-  - 追加後、再度 `test-coverage-checker` を実行
-
-- **70%未満の場合**: テストケース設計フェーズに戻り、漏れを補完してください
-  - `unit-test-designer` / `it-test-designer` / `scenario-test-designer` で追加設計
-```
+主要セクション:
+1. **サマリー** — 観点別カバレッジ率と判定結果（90%以上=合格/70-90%=要確認/70%未満=不合格）
+2. **受け入れ基準カバレッジ詳細** — 各ACとテストケースのマッピング
+3. **ドメインロジックカバレッジ詳細** — 集約/エンティティ/値オブジェクトの不変条件カバー状況
+4. **UseCaseカバレッジ詳細** — 正常系/異常系のカバー状況
+5. **APIカバレッジ詳細** — 認証/認可/バリデーションのカバー状況
+6. **未カバー項目一覧** — 優先度付き（高:AC関連 > 中:ドメイン > 低:網羅性）
+7. **推奨追加ケース** — テストレベル別の追加提案
+8. **次のアクション** — カバレッジ率に応じた推奨フロー
 
 ---
 
@@ -318,7 +236,7 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. プロジェクトのレビュー基準に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 
@@ -372,12 +290,12 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 **以下のディレクトリを調査し、実装済みコンポーネントを特定する：**
 
 ```
-backend/src/{context}/domain/aggregates/      → Entity/集約
-backend/src/{context}/domain/value-objects/   → ValueObject
-backend/src/{context}/domain/policies/        → Policy
-backend/src/{context}/application/usecases/   → UseCase
-backend/src/{context}/infrastructure/repositories/ → Repository
-backend/src/{context}/interfaces/controllers/ → Controller
+{sourceDir}/{context}/domain/aggregates/      → Entity/集約
+{sourceDir}/{context}/domain/value-objects/   → ValueObject
+{sourceDir}/{context}/domain/policies/        → Policy
+{sourceDir}/{context}/application/usecases/   → UseCase
+{sourceDir}/{context}/infrastructure/repositories/ → Repository
+{sourceDir}/{context}/interfaces/controllers/ → Controller
 ```
 
 #### Step 2: 既存テストの確認
@@ -385,9 +303,9 @@ backend/src/{context}/interfaces/controllers/ → Controller
 **以下のディレクトリを調査し、既存テストを特定する：**
 
 ```
-backend/test/unit/{context}/       → ユニットテスト
-backend/test/integration/{context}/ → ITテスト
-e2e/tests/{context}/               → E2Eテスト
+{testDir}/unit/{context}/       → ユニットテスト
+{testDir}/integration/{context}/ → ITテスト
+{e2eDir}/{context}/             → E2Eテスト
 ```
 
 #### Step 3: ギャップ分析
@@ -403,11 +321,11 @@ e2e/tests/{context}/               → E2Eテスト
 
 | コンポーネント | 種類 | ファイルパス |
 |--------------|------|------------|
-| {Name} | Entity | backend/src/{context}/domain/aggregates/{name}.ts |
-| {Name} | ValueObject | backend/src/{context}/domain/value-objects/{name}.ts |
-| {Name} | UseCase | backend/src/{context}/application/usecases/{name}.ts |
-| {Name} | Repository | backend/src/{context}/infrastructure/repositories/{name}.ts |
-| {Name} | Controller | backend/src/{context}/interfaces/controllers/{name}.ts |
+| {Name} | Entity | {sourceDir}/{context}/domain/aggregates/{name}.ts |
+| {Name} | ValueObject | {sourceDir}/{context}/domain/value-objects/{name}.ts |
+| {Name} | UseCase | {sourceDir}/{context}/application/usecases/{name}.ts |
+| {Name} | Repository | {sourceDir}/{context}/infrastructure/repositories/{name}.ts |
+| {Name} | Controller | {sourceDir}/{context}/interfaces/controllers/{name}.ts |
 
 ### テスト状況マトリクス
 
