@@ -126,10 +126,8 @@ interface HarnessError {
 
 ## インストール
 
-本パッケージはnpmには公開していません。GitHubリポジトリから直接インストールしてください。
-
 ```bash
-npm install --save-dev "github:junpei-9898/phasegate#semver:^0.9.0"
+npm install --save-dev phasegate
 ```
 
 `package.json` に直接記載する場合:
@@ -137,12 +135,10 @@ npm install --save-dev "github:junpei-9898/phasegate#semver:^0.9.0"
 ```json
 {
   "devDependencies": {
-    "phasegate": "github:junpei-9898/phasegate#semver:^0.9.0"
+    "phasegate": "^0.14.0"
   }
 }
 ```
-
-`^0.9.0` により `0.9.x` の最新パッチに自動追従します（`0.10.0` 以上のマイナー変更はスキップ）。
 
 ---
 

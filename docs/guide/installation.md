@@ -9,7 +9,7 @@
 ## Install from GitHub
 
 ```bash
-npm install --save-dev "github:junpei-9898/phasegate#semver:^0.11.0"
+npm install --save-dev phasegate
 ```
 
 Or add it directly to your `package.json`:
@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "github:junpei-9898/phasegate#semver:^0.11.0"
+    "phasegate": "^0.14.0"
   }
 }
 ```

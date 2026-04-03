@@ -36,7 +36,7 @@ Works with **Claude Code, Codex, Cursor, Copilot**, or any other AI agent.
 ### 1. Install
 
 ```bash
-npm install --save-dev "github:junpei-9898/phasegate#semver:^0.11.0"
+npm install --save-dev phasegate
 ```
 
 ### 2. Initialize
