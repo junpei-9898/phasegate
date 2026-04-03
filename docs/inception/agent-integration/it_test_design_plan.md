@@ -115,7 +115,7 @@ agent-integrationは認証認可機構を持たない（`integration_contract.md
 
 ### [Question] Q1: ChildProcessCliExecutorAdapterの統合テスト方針
 
-実際のCLIプロセス（`npx tsx ...`）を起動するAdapterの統合テストにおいて、harness:lintやharness:complete-checkが実際に実行可能な状態であることが前提か、それとも常にモックCLIを用意するか。
+実際のCLIプロセス（`npx tsx ...`）を起動するAdapterの統合テストにおいて、phasegate:lintやphasegate:complete-checkが実際に実行可能な状態であることが前提か、それとも常にモックCLIを用意するか。
 
 **推奨案**: Adapter単体のITテストはモックCLIスクリプト（exit code 0/1/2を返すだけのスクリプト）を用意して検証する。実際のharness CLIとの結合はE2Eテストで担保する。
 

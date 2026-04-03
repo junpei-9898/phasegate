@@ -276,65 +276,65 @@ describe('harness CLI E2E', () => {
   });
 
   describe('harness-api コマンド群', () => {
-    it('harness:check-ready が "Unknown command" にならない', () => {
-      const actual = run('harness:check-ready');
+    it('phasegate:check-ready が "Unknown command" にならない', () => {
+      const actual = run('phasegate:check-ready');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:check-ready');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:check-ready');
     }, 30_000);
 
-    it('harness:check-ready が exit 0 または exit 1 で完了する', () => {
-      const actual = run('harness:check-ready');
+    it('phasegate:check-ready が exit 0 または exit 1 で完了する', () => {
+      const actual = run('phasegate:check-ready');
 
       expect([0, 1]).toContain(actual.exitCode);
     }, 30_000);
 
-    it('harness:check-phase が "Unknown command" にならない', () => {
-      const actual = run('harness:check-phase', '--unit', 'validator-system');
+    it('phasegate:check-phase が "Unknown command" にならない', () => {
+      const actual = run('phasegate:check-phase', '--unit', 'validator-system');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:check-phase');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:check-phase');
     }, 30_000);
 
-    it('harness:ci-check が "Unknown command" にならない', () => {
-      const actual = run('harness:ci-check');
+    it('phasegate:ci-check が "Unknown command" にならない', () => {
+      const actual = run('phasegate:ci-check');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:ci-check');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:ci-check');
     }, 30_000);
 
-    it('harness:detect-drift が "Unknown command" にならない', () => {
-      const actual = run('harness:detect-drift');
+    it('phasegate:detect-drift が "Unknown command" にならない', () => {
+      const actual = run('phasegate:detect-drift');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:detect-drift');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:detect-drift');
     }, 30_000);
 
-    it('harness:status が "Unknown command" にならない', () => {
-      const actual = run('harness:status');
+    it('phasegate:status が "Unknown command" にならない', () => {
+      const actual = run('phasegate:status');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:status');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:status');
     }, 30_000);
 
-    it('harness:lint が "Unknown command" にならない', () => {
-      const actual = run('harness:lint');
+    it('phasegate:lint が "Unknown command" にならない', () => {
+      const actual = run('phasegate:lint');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:lint');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:lint');
     }, 30_000);
 
-    it('harness:complete-check が "Unknown command" にならない', () => {
-      const actual = run('harness:complete-check');
+    it('phasegate:complete-check が "Unknown command" にならない', () => {
+      const actual = run('phasegate:complete-check');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:complete-check');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:complete-check');
     }, 30_000);
 
-    it('harness:impact-analysis storyId なしで exit 0 または exit 2 が返る', () => {
-      const actual = run('harness:impact-analysis');
+    it('phasegate:impact-analysis storyId なしで exit 0 または exit 2 が返る', () => {
+      const actual = run('phasegate:impact-analysis');
 
       expect([0, 1, 2]).toContain(actual.exitCode);
-      expect(actual.stderr).not.toContain('Unknown command: harness:impact-analysis');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:impact-analysis');
     }, 30_000);
 
-    it('harness:impact-analysis H99-01 が "Unknown command" にならない', () => {
-      const actual = run('harness:impact-analysis', 'H99-01');
+    it('phasegate:impact-analysis H99-01 が "Unknown command" にならない', () => {
+      const actual = run('phasegate:impact-analysis', 'H99-01');
 
-      expect(actual.stderr).not.toContain('Unknown command: harness:impact-analysis');
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:impact-analysis');
     }, 30_000);
   });
 

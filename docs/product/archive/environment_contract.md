@@ -60,7 +60,7 @@ Phasegateはローカル開発ツールキットであり、サーバープロ�
 |------|-----|
 | 配置先 | `scripts/harness/config-foundation/` |
 | エントリポイント | `index.ts`（loadConfig, toggleFeature等のファサード） |
-| CLIコマンド | `harness:enable`, `harness:disable`, `harness:migrate-config` |
+| CLIコマンド | `phasegate:enable`, `phasegate:disable`, `phasegate:migrate-config` |
 | 外部依存 | `ajv` ^10.0.0 |
 | 設定ファイル | `phasegate.config.json`（プロジェクトルート） |
 | スキーマファイル | `scripts/harness/config-foundation/schema/harness-config-v2.schema.json` |
@@ -237,17 +237,17 @@ phasegate/
   "private": true,
   "type": "module",
   "scripts": {
-    "harness:status": "npx tsx scripts/harness/cli/status.ts",
-    "harness:enable": "npx tsx scripts/harness/cli/enable.ts",
-    "harness:disable": "npx tsx scripts/harness/cli/disable.ts",
-    "harness:init": "npx tsx scripts/harness/cli/init.ts",
-    "harness:check-phase": "npx tsx scripts/harness/cli/check-phase.ts",
-    "harness:check-ready": "npx tsx scripts/harness/cli/check-ready.ts",
-    "harness:ci-check": "npx tsx scripts/harness/cli/ci-check.ts",
-    "harness:detect-drift": "npx tsx scripts/harness/cli/detect-drift.ts",
-    "harness:collect-lessons": "npx tsx scripts/harness/cli/collect-lessons.ts",
-    "harness:detect-dead-code": "npx tsx scripts/harness/cli/detect-dead-code.ts",
-    "harness:migrate-config": "npx tsx scripts/harness/cli/migrate-config.ts",
+    "phasegate:status": "npx tsx scripts/harness/cli/status.ts",
+    "phasegate:enable": "npx tsx scripts/harness/cli/enable.ts",
+    "phasegate:disable": "npx tsx scripts/harness/cli/disable.ts",
+    "phasegate:init": "npx tsx scripts/harness/cli/init.ts",
+    "phasegate:check-phase": "npx tsx scripts/harness/cli/check-phase.ts",
+    "phasegate:check-ready": "npx tsx scripts/harness/cli/check-ready.ts",
+    "phasegate:ci-check": "npx tsx scripts/harness/cli/ci-check.ts",
+    "phasegate:detect-drift": "npx tsx scripts/harness/cli/detect-drift.ts",
+    "phasegate:collect-lessons": "npx tsx scripts/harness/cli/collect-lessons.ts",
+    "phasegate:detect-dead-code": "npx tsx scripts/harness/cli/detect-dead-code.ts",
+    "phasegate:migrate-config": "npx tsx scripts/harness/cli/migrate-config.ts",
     "biome:check": "biome check .",
     "biome:lint": "biome lint .",
     "biome:format": "biome format --write .",
@@ -279,7 +279,7 @@ phasegate/
 - ESLint関連4パッケージ削除（`eslint`, `@typescript-eslint/parser`, `@typescript-eslint/rule-tester`, `@typescript-eslint/utils`）
 - 新規dependencies追加: `ajv`, `gray-matter`, `@biomejs/biome`(exact), `fast-glob`
 - 新規devDependencies追加: `@types/gray-matter`
-- 新規scripts追加: `harness:migrate-config`, `biome:*`, `adr:*`, `build:plugins`, `test:parity`
+- 新規scripts追加: `phasegate:migrate-config`, `biome:*`, `adr:*`, `build:plugins`, `test:parity`
 
 ### 2.4 tsconfig.json（確定版）
 
@@ -468,10 +468,10 @@ adr-documentation Unitの`seed/initial-adrs.ts`に定義。`AdrId.create()`フ�
 
 ### 6.7 CLIコマンド検証
 
-- [ ] `pnpm run harness:status` 正常実行
-- [ ] `pnpm run harness:enable` 正常実行
-- [ ] `pnpm run harness:disable` 正常実行
-- [ ] `pnpm run harness:migrate-config` 正常実行（v1→v2マイグレーション）
+- [ ] `pnpm run phasegate:status` 正常実行
+- [ ] `pnpm run phasegate:enable` 正常実行
+- [ ] `pnpm run phasegate:disable` 正常実行
+- [ ] `pnpm run phasegate:migrate-config` 正常実行（v1→v2マイグレーション）
 - [ ] `pnpm run adr:list` 正常実行
 - [ ] `pnpm run adr:validate` 正常実行
 
@@ -627,9 +627,9 @@ pnpm run adr:create           # ADR新規作成
 pnpm run adr:validate         # ADR整合性検証
 
 # 設定操作
-pnpm run harness:status       # 現在の設定状態
-pnpm run harness:enable       # 機能有効化
-pnpm run harness:migrate-config  # v1→v2マイグレーション
+pnpm run phasegate:status       # 現在の設定状態
+pnpm run phasegate:enable       # 機能有効化
+pnpm run phasegate:migrate-config  # v1→v2マイグレーション
 ```
 
 ---

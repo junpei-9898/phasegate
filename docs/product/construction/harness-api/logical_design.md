@@ -462,7 +462,7 @@ FlagDef: { name: string; shortName?: string; type: 'boolean' | 'string'; descrip
 | fail | `1` | Fail時の終了コード（固定値） |
 | error | `2` | Error時の終了コード（固定値） |
 
-**バリデーションルール**: `harness:status` コマンドのみ `fail` が使われない（`domain_model.md §9 D5` 参照）。これはコマンド定義上の注記であり、型レベルでは全コマンド共通の `ExitCodeSpec` を使用する。
+**バリデーションルール**: `phasegate:status` コマンドのみ `fail` が使われない（`domain_model.md §9 D5` 参照）。これはコマンド定義上の注記であり、型レベルでは全コマンド共通の `ExitCodeSpec` を使用する。
 
 ### 2.3 ドメインサービス
 
@@ -688,7 +688,7 @@ export interface ConfigQueryPort {
 |---------|------|------|------|
 | `getPresetInfo` | なし | `Promise<PresetInfo>` | `HarnessConfigV2.project.preset` および有効レイヤー情報を返す |
 | `getConfigSummary` | なし | `Promise<ConfigSummary>` | 設定ファイルパス・最終更新日・バージョン情報を返す |
-| `getPhaseGateSummary` | なし | `Promise<PhaseGateSummary>` | Phase Gate全体集計を返す（harness:status 表示用） |
+| `getPhaseGateSummary` | なし | `Promise<PhaseGateSummary>` | Phase Gate全体集計を返す（phasegate:status 表示用） |
 
 ### 3.7 ポート設計上のルール
 
@@ -805,7 +805,7 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 ### 4.4 DecideExitCodeUseCase（H09-03）
 
-**責務**: `HarnessApiResponse.status` と `harness:status` コマンドの特殊ルールを考慮してExitCodeを決定する。
+**責務**: `HarnessApiResponse.status` と `phasegate:status` コマンドの特殊ルールを考慮してExitCodeを決定する。
 
 **対応ストーリー**: H09-03「終了コード決定」
 
@@ -831,7 +831,7 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **処理フロー**
 
-1. `commandName === 'harness:status'` かつ `status === 'fail'` の場合は `exitCode: 0` を返す（D5ルール）
+1. `commandName === 'phasegate:status'` かつ `status === 'fail'` の場合は `exitCode: 0` を返す（D5ルール）
 2. それ以外は標準ExitCode決定ルールに従う：
    - `'pass'` → `0`
    - `'fail'` → `1`
@@ -844,7 +844,7 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **設計上の注意**
 
-- `harness:status` の `fail` → `0` 変換は Domain層の `toExitCode()` ではなくこのUseCaseで行う。これにより `HarnessApiResponse.toExitCode()` の純粋性を維持する
+- `phasegate:status` の `fail` → `0` 変換は Domain層の `toExitCode()` ではなくこのUseCaseで行う。これにより `HarnessApiResponse.toExitCode()` の純粋性を維持する
 
 ### 4.5 DeriveHarnessStatusUseCase（H09-04）
 
@@ -1096,7 +1096,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/check-ready-handler.ts`
 
-**コマンド**: `harness:check-ready`
+**コマンド**: `phasegate:check-ready`
 
 **役割**: 全ストーリーの Phase Gate 通過状態を取得し、JSON で出力する。
 
@@ -1110,7 +1110,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 **処理フロー**
 
 1. フラグをパースして `CLIOutputOptions` を構築する
-2. `DispatchCommandUseCase.execute({ commandName: 'harness:check-ready', args: {}, flags: {} })` を呼ぶ
+2. `DispatchCommandUseCase.execute({ commandName: 'phasegate:check-ready', args: {}, flags: {} })` を呼ぶ
 3. `HarnessApiJsonFormatter.format(response, options)` で JSON 文字列を生成する
 4. `process.stdout.write(json + '\n')` で出力する
 5. `process.exitCode = exitCode` を設定する
@@ -1127,7 +1127,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/check-phase-handler.ts`
 
-**コマンド**: `harness:check-phase <unit>`
+**コマンド**: `phasegate:check-phase <unit>`
 
 **役割**: 指定Unitの現在フェーズ情報を返す。
 
@@ -1141,7 +1141,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 **処理フロー**
 
 1. 位置引数 `unit` を取得する。未指定の場合は `exitCode: 2` で引数エラーを返す
-2. `DispatchCommandUseCase.execute({ commandName: 'harness:check-phase', args: { unit }, flags: {} })` を呼ぶ
+2. `DispatchCommandUseCase.execute({ commandName: 'phasegate:check-phase', args: { unit }, flags: {} })` を呼ぶ
 3. `PhaseGateQueryPort.queryUnit(unit)` が `null` を返した場合は `status: 'fail'`, `exitCode: 1`
 4. JSON 形式で出力する
 
@@ -1157,7 +1157,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/ci-check-handler.ts`
 
-**コマンド**: `harness:ci-check`
+**コマンド**: `phasegate:ci-check`
 
 **役割**: L3バリデータを全件実行し、統合結果を返す。CIパイプラインの主要ゲートコマンド。
 
@@ -1170,7 +1170,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **処理フロー**
 
-1. `DispatchCommandUseCase.execute({ commandName: 'harness:ci-check', args: {}, flags: {} })` を呼ぶ
+1. `DispatchCommandUseCase.execute({ commandName: 'phasegate:ci-check', args: {}, flags: {} })` を呼ぶ
 2. `CiCheckResult.allPassed` が `false` なら `exitCode: 1`
 3. バリデータ別の Pass/Fail 詳細と `HarnessError[]` を含む JSON を出力する
 
@@ -1186,7 +1186,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/detect-drift-handler.ts`
 
-**コマンド**: `harness:detect-drift`
+**コマンド**: `phasegate:detect-drift`
 
 **役割**: 設計⇔コード双方向乖離を検出し、乖離レポートを返す。
 
@@ -1199,7 +1199,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **処理フロー**
 
-1. `DispatchCommandUseCase.execute({ commandName: 'harness:detect-drift', args: {}, flags: { json: true } })` を呼ぶ
+1. `DispatchCommandUseCase.execute({ commandName: 'phasegate:detect-drift', args: {}, flags: { json: true } })` を呼ぶ
 2. `DriftReportSummary.hasDrift()` が `true` なら `exitCode: 1`
 3. 乖離項目一覧（direction/unit/element/recommendation）を含む JSON を出力する
 
@@ -1215,7 +1215,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/status-handler.ts`
 
-**コマンド**: `harness:status`
+**コマンド**: `phasegate:status`
 
 **役割**: ハーネス全体の健全性サマリーを表示する。情報提供用コマンドであり Fail（exitCode: 1）を返さない。
 
@@ -1229,7 +1229,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 **処理フロー**
 
 1. `DeriveHarnessStatusUseCase.execute()` を内部で呼び出す
-2. `DecideExitCodeUseCase.execute({ status, commandName: 'harness:status' })` を呼ぶ（`fail` の場合も `0` を返す）
+2. `DecideExitCodeUseCase.execute({ status, commandName: 'phasegate:status' })` を呼ぶ（`fail` の場合も `0` を返す）
 3. `HarnessStatusSummary`（レイヤー健全性/Phase Gate/プリセット/設定）を JSON で出力する
 
 **終了コード**
@@ -1239,13 +1239,13 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 | 0 | 状態情報取得成功（Failも含む — 状態表示の正常完了） |
 | 2 | 実行エラー（ファイルシステム読取失敗等） |
 
-**設計上の注意**: `harness:status` は Pass/Fail のゲートコマンドではなく情報表示コマンドである。レイヤー健全性が `'unknown'` や `'fail'` であっても、それは状態として正常に表示できており、exitCode は `0` となる（domain_model.md §9 D5）。
+**設計上の注意**: `phasegate:status` は Pass/Fail のゲートコマンドではなく情報表示コマンドである。レイヤー健全性が `'unknown'` や `'fail'` であっても、それは状態として正常に表示できており、exitCode は `0` となる（domain_model.md §9 D5）。
 
 ### 6.7 LintHandler
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/lint-handler.ts`
 
-**コマンド**: `harness:lint`
+**コマンド**: `phasegate:lint`
 
 **役割**: L1 Biome ASTバリデータを実行し、コード品質違反を報告する。
 
@@ -1258,7 +1258,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **処理フロー**
 
-1. `DispatchCommandUseCase.execute({ commandName: 'harness:lint', args: {}, flags: {} })` を呼ぶ
+1. `DispatchCommandUseCase.execute({ commandName: 'phasegate:lint', args: {}, flags: {} })` を呼ぶ
 2. `HarnessApiResponse.errors.length > 0` かつ severity `'error'` が存在すれば `exitCode: 1`
 3. L1ルール別の違反一覧と `HarnessError[]` を含む JSON を出力する
 
@@ -1274,7 +1274,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/complete-check-handler.ts`
 
-**コマンド**: `harness:complete-check`
+**コマンド**: `phasegate:complete-check`
 
 **役割**: L1-L4全バリデータを統合実行する。CI/CDの最終品質ゲートとして使用される。
 
@@ -1287,7 +1287,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **処理フロー**
 
-1. `DispatchCommandUseCase.execute({ commandName: 'harness:complete-check', args: {}, flags: {} })` を呼ぶ
+1. `DispatchCommandUseCase.execute({ commandName: 'phasegate:complete-check', args: {}, flags: {} })` を呼ぶ
 2. 内部では `ValidatorExecutionPort.runAllValidators()` と `BiomeLintPort.runLint()` の両方を実行する
 3. いずれかで `error` 発生なら `exitCode: 1`
 4. L1-L4各レイヤーの実行結果を含む JSON を出力する
@@ -1304,7 +1304,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **ファイル**: `scripts/harness/harness-api/presentation/handlers/impact-analysis-handler.ts`
 
-**コマンド**: `harness:impact-analysis <HXX-XX>`
+**コマンド**: `phasegate:impact-analysis <HXX-XX>`
 
 **役割**: 指定ストーリーの変更影響テストケースを特定し、テスト実行対象を明示する。
 
@@ -1318,7 +1318,7 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 **処理フロー**
 
 1. 位置引数 `storyId` を取得する。未指定または形式不正の場合は `exitCode: 2`
-2. `DispatchCommandUseCase.execute({ commandName: 'harness:impact-analysis', args: { storyId }, flags: {} })` を呼ぶ
+2. `DispatchCommandUseCase.execute({ commandName: 'phasegate:impact-analysis', args: { storyId }, flags: {} })` を呼ぶ
 3. `ImpactAnalysisPort.analyze(storyId)` が `null` を返した場合は `status: 'fail'`, `exitCode: 1`
 4. 影響テストケース一覧を JSON で出力する
 
@@ -1381,7 +1381,7 @@ sequenceDiagram
     Handler->>Handler: JSON出力 + process.exitCode設定
 ```
 
-### 7.2 harness:check-ready フロー
+### 7.2 phasegate:check-ready フロー
 
 ```mermaid
 sequenceDiagram
@@ -1391,7 +1391,7 @@ sequenceDiagram
     participant Adapter as PhaseDependencyModelQueryAdapter
     participant PhaseDep as phase-dependency-model
 
-    Handler->>DispatchSvc: dispatch('harness:check-ready', {}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:check-ready', {}, {})
     DispatchSvc->>Port: queryAllStories()
     Port->>Adapter: queryAllStories()
     Adapter->>PhaseDep: PhaseGateQueryService.queryAll()
@@ -1404,7 +1404,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.3 harness:check-phase フロー
+### 7.3 phasegate:check-phase フロー
 
 ```mermaid
 sequenceDiagram
@@ -1414,7 +1414,7 @@ sequenceDiagram
     participant Adapter as PhaseDependencyModelQueryAdapter
 
     Handler->>Handler: 引数 unitId を取得（未指定→exitCode:2）
-    Handler->>DispatchSvc: dispatch('harness:check-phase', {unit: unitId}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:check-phase', {unit: unitId}, {})
     DispatchSvc->>Port: queryUnit(unitId)
     Port->>Adapter: queryUnit(unitId)
     Adapter-->>Port: PhaseInfo | null
@@ -1428,7 +1428,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.4 harness:ci-check フロー
+### 7.4 phasegate:ci-check フロー
 
 ```mermaid
 sequenceDiagram
@@ -1438,7 +1438,7 @@ sequenceDiagram
     participant Adapter as ValidatorSystemExecutionAdapter
     participant ValidatorSys as validator-system
 
-    Handler->>DispatchSvc: dispatch('harness:ci-check', {}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:ci-check', {}, {})
     DispatchSvc->>Port: runL3Validators()
     Port->>Adapter: runL3Validators()
     Adapter->>ValidatorSys: 実行（L3-001〜L3-004）
@@ -1451,7 +1451,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.5 harness:detect-drift フロー
+### 7.5 phasegate:detect-drift フロー
 
 ```mermaid
 sequenceDiagram
@@ -1460,7 +1460,7 @@ sequenceDiagram
     participant Port as ValidatorExecutionPort
     participant Adapter as ValidatorSystemExecutionAdapter
 
-    Handler->>DispatchSvc: dispatch('harness:detect-drift', {}, {json: true})
+    Handler->>DispatchSvc: dispatch('phasegate:detect-drift', {}, {json: true})
     DispatchSvc->>Port: runDriftDetection()
     Port->>Adapter: runDriftDetection()
     Adapter-->>Port: DriftItem[]
@@ -1471,7 +1471,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.6 harness:status フロー
+### 7.6 phasegate:status フロー
 
 ```mermaid
 sequenceDiagram
@@ -1494,13 +1494,13 @@ sequenceDiagram
     DeriveUC->>DeriveSvc: derive({scanResult, presetInfo, configSummary, phaseGateSummary})
     DeriveSvc-->>DeriveUC: HarnessStatusSummary
     DeriveUC-->>Handler: HarnessStatusSummary
-    Handler->>ExitUC: decide(status, 'harness:status')
+    Handler->>ExitUC: decide(status, 'phasegate:status')
     Note over ExitUC: fail → 0 の特殊ルール適用
     ExitUC-->>Handler: exitCode (0 or 2)
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.7 harness:lint フロー
+### 7.7 phasegate:lint フロー
 
 ```mermaid
 sequenceDiagram
@@ -1510,7 +1510,7 @@ sequenceDiagram
     participant Adapter as BiomeAstEngineLintAdapter
     participant BiomeEngine as biome-ast-engine
 
-    Handler->>DispatchSvc: dispatch('harness:lint', {}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:lint', {}, {})
     DispatchSvc->>Port: runLint()
     Port->>Adapter: runLint()
     Adapter->>BiomeEngine: 全L1ルール実行（L1-001〜L1-008）
@@ -1523,7 +1523,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.8 harness:complete-check フロー
+### 7.8 phasegate:complete-check フロー
 
 ```mermaid
 sequenceDiagram
@@ -1532,7 +1532,7 @@ sequenceDiagram
     participant ValidatorPort as ValidatorExecutionPort
     participant BiomePort as BiomeLintPort
 
-    Handler->>DispatchSvc: dispatch('harness:complete-check', {}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:complete-check', {}, {})
     par 並列実行
         DispatchSvc->>ValidatorPort: runAllValidators()
         ValidatorPort-->>DispatchSvc: ValidatorCheckItem[]
@@ -1545,7 +1545,7 @@ sequenceDiagram
     Handler->>Handler: JSON stdout + process.exitCode
 ```
 
-### 7.9 harness:impact-analysis フロー
+### 7.9 phasegate:impact-analysis フロー
 
 ```mermaid
 sequenceDiagram
@@ -1556,7 +1556,7 @@ sequenceDiagram
     participant Nyquist as nyquist-validation
 
     Handler->>Handler: 引数 storyId を取得（未指定→exitCode:2, 形式不正→exitCode:2）
-    Handler->>DispatchSvc: dispatch('harness:impact-analysis', {storyId}, {})
+    Handler->>DispatchSvc: dispatch('phasegate:impact-analysis', {storyId}, {})
     DispatchSvc->>Port: analyze(storyId)
     Port->>Adapter: analyze(storyId)
     Adapter->>Nyquist: ImpactAnalysis.analyze(storyId)
@@ -1605,7 +1605,7 @@ sequenceDiagram
 
 - `InitializeCommandRegistryUseCase`: 8コマンド全件登録の正常系と重複登録サマリーへの記録を検証する
 - `DispatchCommandUseCase`: `CommandDispatchService` をモックし、Cross-Unit Contract DTO への投影を検証する
-- `DecideExitCodeUseCase`: `harness:status` の `fail` → `0` 変換と標準ルールの両方を検証する
+- `DecideExitCodeUseCase`: `phasegate:status` の `fail` → `0` 変換と標準ルールの両方を検証する
 - `DeriveHarnessStatusUseCase`: ポートをモックし `StatusDerivationService.derive()` への委譲を検証する
 
 ### 8.4 Infrastructure層テスト方針
@@ -1700,13 +1700,13 @@ export function isHarnessApiResponse(value: unknown): value is HarnessApiRespons
 
 `domain_model.md §9 D4` の判断を継承し、論理設計でポートインターフェースを具体化する。6本のポートは全て `domain/ports/` に定義し、テスト時に全ポートをモック化できる。加えて、`CommandDispatchService` はポート呼び出しの例外を再スローせず `HarnessApiResponse.error()` に変換する責務を持つ。これにより Presentation 層は例外処理を持たない薄い境界として設計できる。
 
-### LD-5: harness:statusのExitCode設計（domain_model.md D5継承）
+### LD-5: phasegate:statusのExitCode設計（domain_model.md D5継承）
 
-`domain_model.md §9 D5` の判断を継承する。論理設計での具体化: `DecideExitCodeUseCase` が `commandName === 'harness:status' && status === 'fail'` の場合に `exitCode: 0` に補正する責務を持つ。`HarnessApiResponse.toExitCode()` は標準ルールのみを実装し、コマンド固有の補正ロジックをUseCaseに分離することで、Domain VOの純粋性を維持する。
+`domain_model.md §9 D5` の判断を継承する。論理設計での具体化: `DecideExitCodeUseCase` が `commandName === 'phasegate:status' && status === 'fail'` の場合に `exitCode: 0` に補正する責務を持つ。`HarnessApiResponse.toExitCode()` は標準ルールのみを実装し、コマンド固有の補正ロジックをUseCaseに分離することで、Domain VOの純粋性を維持する。
 
 ### LD-6: DispatchCommandUseCaseとDecideExitCodeUseCaseの分離
 
-論理設計固有の判断。コマンドディスパッチとExitCode決定を別UseCaseに分離した。理由: (1) `harness:status` の特殊ExitCodeルール（D5）はディスパッチロジックとは独立した関心事である。(2) 将来のコマンド追加時にExitCode決定ルールを個別に変更できる。(3) `DecideExitCodeUseCase` は純粋関数として設計でき、ポート依存なしに単体テスト可能となる。
+論理設計固有の判断。コマンドディスパッチとExitCode決定を別UseCaseに分離した。理由: (1) `phasegate:status` の特殊ExitCodeルール（D5）はディスパッチロジックとは独立した関心事である。(2) 将来のコマンド追加時にExitCode決定ルールを個別に変更できる。(3) `DecideExitCodeUseCase` は純粋関数として設計でき、ポート依存なしに単体テスト可能となる。
 
 ### LD-7: InitializeCommandRegistryUseCaseを独立UseCaseにする理由
 
@@ -1718,7 +1718,7 @@ export function isHarnessApiResponse(value: unknown): value is HarnessApiRespons
 
 ### LD-9: completeCheckの並列実行設計
 
-論理設計固有の判断。`harness:complete-check` では `ValidatorExecutionPort.runAllValidators()` と `BiomeLintPort.runLint()` を `Promise.all()` で並列実行する。理由: (1) 両ポートは互いに依存しないため並列実行が安全。(2) 全バリデータ直列実行に比べて実行時間を短縮できる。(3) 片方が失敗しても両方の結果を収集し集約してからFail判定する（`Promise.allSettled()` を使用する）。これにより「L1に問題があるのにL3の結果が不明」という不完全なレポートを防ぐ。
+論理設計固有の判断。`phasegate:complete-check` では `ValidatorExecutionPort.runAllValidators()` と `BiomeLintPort.runLint()` を `Promise.all()` で並列実行する。理由: (1) 両ポートは互いに依存しないため並列実行が安全。(2) 全バリデータ直列実行に比べて実行時間を短縮できる。(3) 片方が失敗しても両方の結果を収集し集約してからFail判定する（`Promise.allSettled()` を使用する）。これにより「L1に問題があるのにL3の結果が不明」という不完全なレポートを防ぐ。
 
 ### LD-10: Shared Kernelへの公開範囲の絞り込み
 

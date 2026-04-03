@@ -30,7 +30,7 @@ export class CheckPhaseHandler {
     }
 
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:check-phase',
+      commandName: 'phasegate:check-phase',
       args,
       flags,
     });

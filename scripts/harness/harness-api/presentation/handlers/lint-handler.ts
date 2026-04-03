@@ -17,7 +17,7 @@ export class LintHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:lint',
+      commandName: 'phasegate:lint',
       args,
       flags,
     });

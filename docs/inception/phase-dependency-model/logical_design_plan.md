@@ -136,7 +136,7 @@ Application層は外部ポートから証跡を取得し、Domain層へ入力を
 |-------------|-------------|------|---------|
 | `CheckPhaseGateUseCase` | H02-01, H02-02, H02-03 | target level/unit/story に必要な証跡を収集し、`PhaseStructure.checkPhaseGate` を実行する | `PhaseGateResultDto` |
 | `BuildPhaseDependencyGraphUseCase` | H02-01 | 3層フェーズ構造と依存関係をvalidator-system/regression-suite向けに公開する | `PhaseDependencyGraphDto` |
-| `GetPhaseInfoUseCase` | H02-01, H02-02 | 現在どのLevel/Phaseまで充足済みかを算出し、`harness:check-phase` 用情報を返す | `PhaseInfoDto` |
+| `GetPhaseInfoUseCase` | H02-01, H02-02 | 現在どのLevel/Phaseまで充足済みかを算出し、`phasegate:check-phase` 用情報を返す | `PhaseInfoDto` |
 | `ValidateCustomizationPolicyUseCase` | H02-03 | `HarnessConfigV2.phaseDependencies` を読み、緩和不可制約違反を早期に拒否する | `CustomizationValidationResultDto` |
 | `RecordPhaseOverrideAuditUseCase` | H02-03 | `override: true` の監査ペイロードをログ/レポート向けに永続化または出力する | `void` |
 

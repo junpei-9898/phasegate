@@ -20,7 +20,7 @@ Claude Code Hooks層（PreToolUse / Stop Hook）を拡張し、リンター設�
 | US-016 | PreToolUse Hookによるリンター設定保護 | Must |
 | US-017 | Stop Hookテストゲートの追加 | Must |
 | US-018 | Stop Hookテストゲートの無限ループ防止 | Must |
-| US-019 | Stop Hookへのharness:ci-check追加 | Should |
+| US-019 | Stop Hookへのphasegate:ci-check追加 | Should |
 
 ---
 
@@ -46,8 +46,8 @@ Claude Code Hooks層（PreToolUse / Stop Hook）を拡張し、リンター設�
 
 ### 3.4 ci-check追加（Should）
 
-- Stop Hook内で`harness:ci-check`を`pnpm test`に続けて実行
-- harness:ci-check失敗時のStop Hook失敗
+- Stop Hook内で`phasegate:ci-check`を`pnpm test`に続けて実行
+- phasegate:ci-check失敗時のStop Hook失敗
 - 無限ループ防止機構の適用
 
 ---

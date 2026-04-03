@@ -129,7 +129,7 @@ export class HandlePreToolUseUseCase {
     {
       pattern: /(?:^|\/)harness\.config\.json$/,
       message: (fp) =>
-        `保護ファイルへの書き込みがブロックされました: ${fp}\nハーネス設定は CLI 経由で変更してください: npx harness config ...`,
+        `保護ファイルへの書き込みがブロックされました: ${fp}\nハーネス設定は CLI 経由で変更してください: npx phasegate config ...`,
     },
     {
       pattern: /(?:^|\/)\.claude\/settings\.json$/,

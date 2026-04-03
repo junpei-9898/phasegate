@@ -6,7 +6,7 @@
 
 ## 1. テスト対象CLIコマンド / 機能
 
-H10-01はCLIコマンドを直接所有しない。`harness:ci-check --quick` の内部処理として呼ばれる `JudgeQuickModeEligibilityUseCase` および `HarnessConfigQuickModeConfigAdapter` が主テスト対象。
+H10-01はCLIコマンドを直接所有しない。`phasegate:ci-check --quick` の内部処理として呼ばれる `JudgeQuickModeEligibilityUseCase` および `HarnessConfigQuickModeConfigAdapter` が主テスト対象。
 
 - `HarnessConfigQuickModeConfigAdapter`: `phasegate.config.json` の `quickMode` セクションを読み取り、`QuickModeConfig` VOを生成
 - `JudgeQuickModeEligibilityUseCase`: 変更ファイル群からQuick Mode適用可否を判定

@@ -484,7 +484,7 @@ it('設定ファイルの内容は変更されない', async () => {
 ### 5.1 テストケースツリー
 
 ```
-target('harness:enable / harness:disable CLIハンドラ', () => {
+target('phasegate:enable / phasegate:disable CLIハンドラ', () => {
   describe('CLIハンドラがv1/v2の名前を判定順序に従って処理する', () => {
     it('v2機能名を指定した場合、v2パスで機能が有効化されstdoutに成功メッセージが出力される')
     it('v2機能名を指定した場合、v2パスで機能が無効化されstdoutに成功メッセージが出力される')

@@ -50,7 +50,7 @@ Wave 1 の6ユニットについて、集約境界の大枠は妥当です。`ph
   - `docs/product/user_stories.md:198` `K3.5（@unit/@layer/@US-XXXメタデータ）`
   - `docs/product/user_stories.md:202-218` `H03-02` が `@US-XXX` 前提
   - `docs/product/user_stories.md:229-238` `H03-03` が `// @story US-XXX` / `@US-XXX` / `inception/{unit}/{US-XXX}/` 前提
-  - `docs/product/user_stories.md:504-518` `harness:impact-analysis US-XXX`
+  - `docs/product/user_stories.md:504-518` `phasegate:impact-analysis US-XXX`
   - `docs/product/user_stories.md:984-998` `@US-XXX` 自動付与
 - 統合契約にも旧記法が残っています。
   - `docs/product/units/integration_contract.md:394`

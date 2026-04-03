@@ -17,7 +17,7 @@ H11-01はL1-L4全バリデータのCLI/FSフォールバック保証を実装す
 
 | テストID | シナリオ | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| SC-H11-01-001 | フォールバック仕様が有効なCLIコマンドのみを宣言している場合に検証が通ること | `supportedCommands=['harness:lint','harness:complete-check']`, `noAgentApiImports=true` + CliCommandRegistryPort: 両コマンド存在あり + ImportAnalyzerPort: エージェント固有importなし | `HarnessError[]` が空配列（検証通過） |
+| SC-H11-01-001 | フォールバック仕様が有効なCLIコマンドのみを宣言している場合に検証が通ること | `supportedCommands=['phasegate:lint','phasegate:complete-check']`, `noAgentApiImports=true` + CliCommandRegistryPort: 両コマンド存在あり + ImportAnalyzerPort: エージェント固有importなし | `HarnessError[]` が空配列（検証通過） |
 | SC-H11-01-002 | 宣言コマンドが未登録の場合に検証が失敗すること | `supportedCommands=['harness:unknown']` + CliCommandRegistryPort: コマンド存在なし | `HarnessError[]` に未登録コマンドエラーが含まれる |
 | SC-H11-01-003 | noAgentApiImports=true かつ エージェントAPIを検出した場合に検証が失敗すること | `noAgentApiImports=true` + ImportAnalyzerPort: `@anthropic-ai/claude-code` import検出 | `HarnessError[]` にエージェントAPI参照エラーが含まれる |
 | SC-H11-01-004 | noAgentApiImports=false の場合はimport検査をスキップすること | `noAgentApiImports=false` + ImportAnalyzerPort: 何も返さない（呼ばれない） | `HarnessError[]` が空配列（importチェックスキップ） |

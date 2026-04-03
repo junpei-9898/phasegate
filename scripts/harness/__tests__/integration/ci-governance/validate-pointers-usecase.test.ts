@@ -12,7 +12,7 @@ target('ValidatePointersUseCase', () => {
       context('全ExistencePortのexists()→trueが返る場合', () => {
         it('passed=true・deadPointers=[]・errors=[]が返る', async () => {
           const pointers = [
-            PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' }),
+            PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' }),
             PointerEntry.createFile({ key: 'file-1', filePath: 'docs/README.md', description: '...' }),
           ];
           const agentsMdPort = { read: vi.fn().mockResolvedValue(AgentsMdPointer.create(pointers)), write: vi.fn() };

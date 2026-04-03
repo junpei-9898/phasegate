@@ -1,7 +1,7 @@
 # TDD実装計画: H09-02 (harness-api)
 
 ## 1. スコープ
-- 対象ストーリー: H09-02 harness:ci-check
+- 対象ストーリー: H09-02 phasegate:ci-check
 - 影響する層: Domain / Application / Infrastructure / Presentation
 
 ## 2. 前提条件検証

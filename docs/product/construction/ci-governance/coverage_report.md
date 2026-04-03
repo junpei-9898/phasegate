@@ -56,7 +56,7 @@
 
 | AC ID | 基準内容 | 対応テストケースID | カバー状態 |
 |-------|---------|-----------------|----------|
-| H13-03-AC-1 | AGENTS.mdの記述的バリデータ一覧を`harness:status`実行へのポインタに置換 | IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
+| H13-03-AC-1 | AGENTS.mdの記述的バリデータ一覧を`phasegate:status`実行へのポインタに置換 | IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
 | H13-03-AC-2 | AGENTS.mdへのADR参照リンクの追加 | UT-PV-005, UT-PV-006（AdrExistencePort検証） | ✅ カバー済み |
 | H13-03-AC-3 | 移行前と比較して行数50%以上の削減 | IT-UC-MigrateAgentsMd-003, IT-UC-MigrateAgentsMd-004, IT-REPO-AgentsMdFile-003 | ✅ カバー済み |
 | H13-03-AC-4 | ポインタが参照する先（コマンド、ファイル）の実在性検証 | UT-PV-001〜UT-PV-008, IT-UC-ValidatePointers-001〜003, IT-UC-MigrateAgentsMd-006 | ✅ カバー済み |

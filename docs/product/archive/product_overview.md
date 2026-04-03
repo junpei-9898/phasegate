@@ -87,7 +87,7 @@ Gate ──── 最大速度 ──── Gate ──── 最大速度 ─�
  │    ├─ US-001         │    └─ US-003         │
  │    └─ US-002         │                      │
  └─ Pre-flight          └─ Post-wave           └─ Final
-    harness:check-ready    L2 validators          drift-detect
+    phasegate:check-ready    L2 validators          drift-detect
 ```
 
 ### 原則 2: Human Gate, Machine Execute（設計は人間承認、実行は機械自律）
@@ -135,14 +135,14 @@ FUSE Hooks EngineはこのExecutable Governanceに**物理的強制力**を与�
 ║  Layer 1: USER INTERFACE                                             ║
 ║  ─────────────────────────────────────────────────────────────────── ║
 ║  [Main Commands]           [Session]           [Harness]             ║
-║  /gsdlc:init-project       /gsdlc:pause        harness:status       ║
-║  /gsdlc:design <unit>      /gsdlc:resume        harness:check-phase  ║
-║  /gsdlc:plan <unit>        /gsdlc:progress      harness:check-ready  ║
-║  /gsdlc:execute <unit>                          harness:ci-check     ║
-║  /gsdlc:verify <unit>     [Utility]             harness:detect-drift ║
-║  /gsdlc:quick <task>       /gsdlc:map-codebase  harness:init         ║
-║  /gsdlc:progress           /gsdlc:settings      harness:enable       ║
-║  /gsdlc:milestone <act>                          harness:disable      ║
+║  /gsdlc:init-project       /gsdlc:pause        phasegate:status       ║
+║  /gsdlc:design <unit>      /gsdlc:resume        phasegate:check-phase  ║
+║  /gsdlc:plan <unit>        /gsdlc:progress      phasegate:check-ready  ║
+║  /gsdlc:execute <unit>                          phasegate:ci-check     ║
+║  /gsdlc:verify <unit>     [Utility]             phasegate:detect-drift ║
+║  /gsdlc:quick <task>       /gsdlc:map-codebase  phasegate:init         ║
+║  /gsdlc:progress           /gsdlc:settings      phasegate:enable       ║
+║  /gsdlc:milestone <act>                          phasegate:disable      ║
 ╠═══════════════════════════════════════════════════════════════════════╣
 ║  Layer 2: ORCHESTRATION ENGINE                     [GSD2.0由来]      ║
 ║  ─────────────────────────────────────────────────────────────────── ║
@@ -335,7 +335,7 @@ FUSE Hooks Engine: 横断的にLayer 2-4を強化（レイヤーではなく基�
 ┌─────────────────────────────────────────────────────────┐
 │  PHASE 3: WAVE EXECUTION                                 │
 │                                                          │
-│  PRE-FLIGHT: harness:check-ready (全story, Phase Gate)   │
+│  PRE-FLIGHT: phasegate:check-ready (全story, Phase Gate)   │
 │                                                          │
 │  ═══ Wave 1 (並列) ═══════════════════════════════════   │
 │  ┌─────────────────┐  ┌─────────────────┐               │
@@ -419,9 +419,9 @@ FUSE Hooks Engine: 横断的にLayer 2-4を強化（レイヤーではなく基�
 ### 6.3 ハーネスコマンド（既存継承+拡張）
 
 ```
-harness:status, harness:init, harness:enable, harness:disable,
-harness:check-phase, harness:check-ready, harness:ci-check,
-harness:detect-drift, harness:collect-lessons, harness:detect-dead-code
+phasegate:status, phasegate:init, phasegate:enable, phasegate:disable,
+phasegate:check-phase, phasegate:check-ready, phasegate:ci-check,
+phasegate:detect-drift, phasegate:collect-lessons, phasegate:detect-dead-code
 ```
 
 ---
@@ -640,7 +640,7 @@ FUSE Hooks Engineはオプショナルな横断基盤である。FUSE利用不�
 - phasegate.config.json v2（orchestrationセクション）
 - ADR初期作成（10件）+ リンター設定保護Hook + Stop Hookテストゲート
 - HarnessErrorフォーマット拡充（ADR参照 + 修正コード例を全バリデータに統一）
-- AGENTS.md改善（バリデータ一覧→`harness:status`実行方式、ADR参照リンク追加）
+- AGENTS.md改善（バリデータ一覧→`phasegate:status`実行方式、ADR参照リンク追加）
 
 ### Phase 2: Enhanced Execution + FUSE Hooks Engine
 

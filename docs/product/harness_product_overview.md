@@ -855,12 +855,12 @@ Quality Harnessは単独で機能するが、オーケストレーションパ�
 
 | 接点 | Harnessが提供 | オーケストレーターが利用 |
 |------|-------------|----------------------|
-| **harness:check-ready** | 全storyのPhase Gate通過状態を返却 | Wave実行のPre-flight条件として使用 |
-| **harness:check-phase** | 指定Unitの現在フェーズを返却 | オーケストレーターのフェーズ遷移判定に使用 |
-| **harness:ci-check** | 全L3バリデータの実行結果を返却 | CIパイプラインのPass/Fail判定に使用 |
-| **harness:detect-drift** | 設計-実装乖離レポートを返却 | 検証フェーズの自動実行トリガーに使用 |
+| **phasegate:check-ready** | 全storyのPhase Gate通過状態を返却 | Wave実行のPre-flight条件として使用 |
+| **phasegate:check-phase** | 指定Unitの現在フェーズを返却 | オーケストレーターのフェーズ遷移判定に使用 |
+| **phasegate:ci-check** | 全L3バリデータの実行結果を返却 | CIパイプラインのPass/Fail判定に使用 |
+| **phasegate:detect-drift** | 設計-実装乖離レポートを返却 | 検証フェーズの自動実行トリガーに使用 |
 | **harness:impact** | 変更影響分析レポート（Green/Amber/Gray信頼度帯域付きHarnessImpactReport）を返却 | cascade-updaterの自動更新トリガー、human reviewの要否判定に使用 |
-| **harness:status** | ハーネス全体の健全性サマリを返却 | ダッシュボード表示・進捗判定に使用 |
+| **phasegate:status** | ハーネス全体の健全性サマリを返却 | ダッシュボード表示・進捗判定に使用 |
 | **HarnessError** | 統一エラーフォーマット（ADR参照+修正コード例付き） | エージェントの自動リトライ時のコンテキストとして注入 |
 | **phasegate.config.json** | 品質設定スキーマ（品質設定のみ） | オーケストレーターがプリセット（minimal/standard/strict）を読み取り |
 
@@ -871,13 +871,13 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | GSD-2のパターン | Harnessが提供する品質ゲート |
 |---------------|--------------------------|
 | Truths/Artifacts検証 | Nyquist Validationと統合。Truthsを要件として、Artifactsをテスト成果物として検証 |
-| 成果物駆動の状態導出 | `harness:status`が成果物の存在からハーネス検査状態を導出 |
-| タスク実行前チェック | `harness:check-ready`がPhase Gate通過を確認 |
+| 成果物駆動の状態導出 | `phasegate:status`が成果物の存在からハーネス検査状態を導出 |
+| タスク実行前チェック | `phasegate:check-ready`がPhase Gate通過を確認 |
 
 ### 9.3 連携の原則
 
 - **Quality Harnessはオーケストレーターに依存しない**: ハーネスコマンド群は単独で実行可能
-- **オーケストレーターはQuality Harnessを迂回できない**: `harness:check-ready`がfalseを返す限り、実行フェーズに進めない
+- **オーケストレーターはQuality Harnessを迂回できない**: `phasegate:check-ready`がfalseを返す限り、実行フェーズに進めない
 - **エラーの権限**: HarnessErrorの`severity: "error"`はオーケストレーターによって警告に格下げできない
 
 ---

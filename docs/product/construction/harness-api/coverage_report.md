@@ -17,7 +17,7 @@
 | 受け入れ基準カバレッジ | **PASS** | 全17AC対応テストが存在 |
 | ドメインロジックカバレッジ | **PASS** | 全7不変条件（INV-1〜INV-7）+ D5ルールをカバー |
 | UseCaseカバレッジ | **PASS** | 4UseCase × 正常系/異常系/境界値を網羅 |
-| APIカバレッジ | **PARTIAL** | 8コマンドハンドラーのうち、harness:status D5ルール周辺に軽微な補強余地あり |
+| APIカバレッジ | **PARTIAL** | 8コマンドハンドラーのうち、phasegate:status D5ルール周辺に軽微な補強余地あり |
 | Engineering Perspective（ケント・ベック） | **PASS** | TDD粒度適切。一部改善提案あり |
 | Engineering Perspective（マーティン・ファウラー） | **WARN** | 境界値横断セクションに複合テスト候補あり |
 | Engineering Perspective（アンクル・ボブ） | **PASS** | SRP・DIP準拠確認 |
@@ -37,7 +37,7 @@
 
 harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された受け入れ基準（AC）と、対応するテストケースのマッピングを示す。
 
-### H09-01: harness:check-ready / harness:check-phase
+### H09-01: phasegate:check-ready / phasegate:check-phase
 
 | AC内容 | 対応テストケース | カバー状況 |
 |-------|---------------|---------|
@@ -46,7 +46,7 @@ harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された�
 | Phase Gate未通過storyが存在する場合、未通過story一覧を含むレスポンス | UT-CDS-002, IT-UC-DispatchCmd-008, IT-API-CheckReady-002 | ✓ COVERED |
 | 存在しないUnit名が指定された場合、適切なエラーメッセージを表示 | UT-CDS-012, IT-UC-DispatchCmd-008, IT-API-CheckPhase-004 | ✓ COVERED |
 
-### H09-02: harness:ci-check
+### H09-02: phasegate:ci-check
 
 | AC内容 | 対応テストケース | カバー状況 |
 |-------|---------------|---------|
@@ -55,7 +55,7 @@ harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された�
 | 実行結果にバリデータ別のPass/Fail詳細を含める | UT-CCR-001/002, IT-REPO-ValidatorExec-001/002, IT-API-CiCheck-001/002 | ✓ COVERED |
 | 失敗時のレスポンスにHarnessError一覧を含める | UT-HAR-006, IT-API-CiCheck-002 | ✓ COVERED |
 
-### H09-03: harness:detect-drift
+### H09-03: phasegate:detect-drift
 
 | AC内容 | 対応テストケース | カバー状況 |
 |-------|---------------|---------|
@@ -64,7 +64,7 @@ harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された�
 | 乖離が0件の場合「乖離なし」のサマリーを返却 | UT-CDS-005, IT-UC-DispatchCmd-004 | ✓ COVERED |
 | --jsonフラグでJSON形式のレポート出力（drifts[]フィールド含む） | IT-API-DetectDrift-001/002 | ✓ COVERED（--jsonフラグの振る舞い差分の検証は軽微な補強余地あり） |
 
-### H09-04: harness:status（成果物駆動状態導出）
+### H09-04: phasegate:status（成果物駆動状態導出）
 
 | AC内容 | 対応テストケース | カバー状況 |
 |-------|---------------|---------|
@@ -114,7 +114,7 @@ domain_model.md §5 に定義された不変条件・ビジネスルール。
 | ルール | 内容 | カバーテスト | 正常系 | 異常系 |
 |-------|------|------------|--------|--------|
 | ExitCode基本 | pass=0, fail=1, error=2 | UT-CDS-001〜012, IT-UC-DecideExit-001〜003 | ✓ | ✓ |
-| D5ルール | harness:statusはFail=1を返さない | UT-CDS-009/010, IT-UC-DecideExit-004/005/006, IT-API-Status-003 | ✓ | ✓ |
+| D5ルール | phasegate:statusはFail=1を返さない | UT-CDS-009/010, IT-UC-DecideExit-004/005/006, IT-API-Status-003 | ✓ | ✓ |
 
 ### 3.6 StatusDerivationServiceのルール
 
@@ -161,7 +161,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 | 異常系（ポート例外） | 1 | IT-UC-DispatchCmd-009 | ✓ COVERED |
 | 異常系（乖離検出あり） | 1 | IT-UC-DispatchCmd-010 | ✓ COVERED |
 
-**補強余地**: harness:complete-checkのDispatchCommandUseCase正常系（ValidatorExecutionPort + BiomeLintPort両方委譲）が独立したIT-UCケースとして存在しない（Cross-Layer統合フローIT-API-DispatchInteg-004でカバーされているが、UseCaseレベルでの単独検証が推奨される）。
+**補強余地**: phasegate:complete-checkのDispatchCommandUseCase正常系（ValidatorExecutionPort + BiomeLintPort両方委譲）が独立したIT-UCケースとして存在しない（Cross-Layer統合フローIT-API-DispatchInteg-004でカバーされているが、UseCaseレベルでの単独検証が推奨される）。
 
 ### 4.3 DecideExitCodeUseCase
 
@@ -224,7 +224,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 | ポート例外処理 | UT-CDS-011, IT-UC-DispatchCmd-009 | ✓ COVERED |
 | ExitCode決定 | UT-CDS-009/010, IT-UC-DecideExit-001〜006 | ✓ COVERED |
 
-**注記**: harness:statusコマンドのUT-CDS-009/010はCommandDispatchService単体レベルでのExitCode決定テストとしており、D5ルール適用のテストをDecideExitCodeUseCaseのIT-UC-DecideExit-004に委譲する設計となっている。この責務分離は適切。
+**注記**: phasegate:statusコマンドのUT-CDS-009/010はCommandDispatchService単体レベルでのExitCode決定テストとしており、D5ルール適用のテストをDecideExitCodeUseCaseのIT-UC-DecideExit-004に委譲する設計となっている。この責務分離は適切。
 
 ---
 
@@ -308,7 +308,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 
 **改善推奨点:**
 
-- `UT-BND-010`（`commandName='harness:complete-check'`のポート両方委譲確認）はドメインサービス（CommandDispatchService）の振る舞いテストと、Application UseCaseの統合確認が混在している可能性がある。UT-XXX（Unit Test）で行うべき確認とIT-XXX（Integration Test）で行うべき確認の境界が不明確なため、unit_test_logic.md で実装時の責務を明確にすることを推奨する。
+- `UT-BND-010`（`commandName='phasegate:complete-check'`のポート両方委譲確認）はドメインサービス（CommandDispatchService）の振る舞いテストと、Application UseCaseの統合確認が混在している可能性がある。UT-XXX（Unit Test）で行うべき確認とIT-XXX（Integration Test）で行うべき確認の境界が不明確なため、unit_test_logic.md で実装時の責務を明確にすることを推奨する。
 
 - `IT-API-SharedKernel-003`（TypeScript型検証）はランタイムテストではなくコンパイル時検証であり、通常のVitestテストケースとして記述することが困難な可能性がある。型テスト専用ツール（tsd, expect-type等）の利用か、コンパイル成功確認のみとするか、方針を明示することを推奨する。
 
@@ -330,7 +330,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 
 - `StatusDerivationService` テスト（UT-SDS-001〜008）は「成果物駆動の状態導出」（H09-04のコアドメイン概念）を独立したサービスとして検証しており、CommandDispatch（UT-CDS-XXX）との概念的分離が明確。エヴァンスの「ドメイン概念を実装構造に直接マッピングすること」の実践例となっている。
 
-- `IT-UC-DecideExit-004` のシナリオ説明「harness:statusでstatus='fail'でもexitCode=0を返すこと（D5ルール）」はドメインルールへの明示的な参照（D5ルール）を含んでおり、テストがドキュメントとして機能するユビキタス言語の実践例。
+- `IT-UC-DecideExit-004` のシナリオ説明「phasegate:statusでstatus='fail'でもexitCode=0を返すこと（D5ルール）」はドメインルールへの明示的な参照（D5ルール）を含んでおり、テストがドキュメントとして機能するユビキタス言語の実践例。
 
 - `IT-API-DispatchInteg-005` の「statusコマンド全フロー。ArtifactScannerPort・ConfigQueryPort・StatusDerivationServiceが連携すること」というシナリオ名は、ドメイン内の概念（ArtifactScanner、StatusDerivation）が統合文脈でも自然に使われており一貫性が高い。
 
@@ -365,7 +365,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 |-------|------|------|----------|
 | GAP-001 | ドメインルール | CommandName正規表現: `harness:1cmd`（数字始まりコマンド名）の拒否確認 | unit_test_design.md §2 CliCommandDefinition 境界値テスト |
 | GAP-002 | ドメインルール | CheckReadyResult: stories全件passed=true & allPassed=falseのケース（現行はUT-CRR-004のみ逆方向） | unit_test_design.md §2 CheckReadyResult 不変条件テスト |
-| GAP-003 | UseCase | DispatchCommandUseCase の harness:complete-check 正常系（IT-UCレベルの単独検証） | it_test_design.md §2 DispatchCommandUseCase |
+| GAP-003 | UseCase | DispatchCommandUseCase の phasegate:complete-check 正常系（IT-UCレベルの単独検証） | it_test_design.md §2 DispatchCommandUseCase |
 
 ### Priority: Medium（unit_test_logic.md設計時に補強推奨）
 
@@ -418,7 +418,7 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 ```
 ケースID: IT-UC-DispatchCmd-011（補強）
 シナリオ: complete-checkコマンドがValidatorExecutionPortとBiomeLintPortの両方を呼び出すこと
-入力: commandName='harness:complete-check', args={}, flags={}
+入力: commandName='phasegate:complete-check', args={}, flags={}
 モック設定: ValidatorExecutionPortモック: runAllValidators→全通過ValidatorCheckItem[]; BiomeLintPortモック: runLint→{passed:true}
 期待結果: response.status='pass', exitCode=0, ValidatorExecutionPort.runAllValidatorsが1回呼び出される, BiomeLintPort.runLintが1回呼び出される
 理由: complete-checkはharness-api固有の「L1+L2-L4全バリデータ統合実行」コマンドであり、UseCaseレベルでの両ポート委譲確認が設計の核心部分

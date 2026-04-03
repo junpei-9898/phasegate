@@ -43,7 +43,7 @@
 
 - [ ] AC-1: `.harness/context-priority.json`ファイルが作成でき、JSONスキーマバリデーションに通過する
 - [ ] AC-2: 各ドキュメントエントリにcritical/important/reference/archiveのいずれかの優先度を指定できる
-- [ ] AC-3: `harness:status`コマンドで現在のコンテキスト優先度設定が表示される
+- [ ] AC-3: `phasegate:status`コマンドで現在のコンテキスト優先度設定が表示される
 - [ ] AC-4: 存在しないファイルパスが指定された場合、バリデーションエラーが発生する
 
 #### 対応要件
@@ -172,17 +172,17 @@ REQ-NQ-003
 
 ---
 
-### US-008: harness:impact-analysisコマンドの新設
+### US-008: phasegate:impact-analysisコマンドの新設
 
 **Epic**: E-02 Nyquist検証層
 
 **As a** 開発者,
-**I want to** `harness:impact-analysis US-XXX`でUser Story変更時の影響テストケースを自動特定したい,
+**I want to** `phasegate:impact-analysis US-XXX`でUser Story変更時の影響テストケースを自動特定したい,
 **so that** ストーリー変更の影響範囲を迅速に把握し、必要なテストを効率的に実行できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:impact-analysis US-XXX`コマンドが実行可能である
+- [ ] AC-1: `phasegate:impact-analysis US-XXX`コマンドが実行可能である
 - [ ] AC-2: 指定されたUser Storyに紐づくテストケース一覧が出力される
 - [ ] AC-3: 存在しないUS IDが指定された場合、適切なエラーメッセージが表示される
 - [ ] AC-4: 出力にテスト種別（unit/it/scenario）が含まれる
@@ -413,19 +413,19 @@ REQ-QH-003
 
 ---
 
-### US-019: Stop Hookへのharness:ci-check追加
+### US-019: Stop Hookへのphasegate:ci-check追加
 
 **Epic**: E-05 品質ハーネス強化（Hooks拡張）
 
 **As a** 品質管理者,
-**I want to** Stop Hookに`harness:ci-check`実行を追加したい,
+**I want to** Stop Hookに`phasegate:ci-check`実行を追加したい,
 **so that** エージェント完了時にハーネスバリデーション全通過が保証される。
 
 #### 受け入れ基準
 
-- [ ] AC-1: Stop Hook内で`harness:ci-check`が`pnpm test`に続いて実行される
-- [ ] AC-2: harness:ci-check失敗時にStop Hookが失敗する
-- [ ] AC-3: 無限ループ防止機構（US-018）がharness:ci-checkにも適用される
+- [ ] AC-1: Stop Hook内で`phasegate:ci-check`が`pnpm test`に続いて実行される
+- [ ] AC-2: phasegate:ci-check失敗時にStop Hookが失敗する
+- [ ] AC-3: 無限ループ防止機構（US-018）がphasegate:ci-checkにも適用される
 - [ ] AC-4: Stop Hook統合テストが存在する
 
 #### 対応要件
@@ -656,9 +656,9 @@ REQ-CF-002
 - [ ] AC-1: orchestration.config.json内のGSD由来設定項目がデフォルトで`enabled: false`である
 - [ ] AC-2: orchestration.config.jsonのsessionセクション内のGSD由来設定項目がデフォルトで`enabled: false`である
 - [ ] AC-3: デフォルト値検証テストが存在する
-- [ ] AC-4: `harness:enable <feature>`コマンドで個別機能を有効化できる
-- [ ] AC-5: `harness:disable <feature>`コマンドで個別機能を無効化できる
-- [ ] AC-6: 有効化/無効化可能な機能名一覧が`harness:enable --list`で表示される
+- [ ] AC-4: `phasegate:enable <feature>`コマンドで個別機能を有効化できる
+- [ ] AC-5: `phasegate:disable <feature>`コマンドで個別機能を無効化できる
+- [ ] AC-6: 有効化/無効化可能な機能名一覧が`phasegate:enable --list`で表示される
 - [ ] AC-7: 存在しない機能名が指定された場合、利用可能な機能名一覧を含むエラーメッセージが表示される
 
 #### 対応要件
@@ -666,17 +666,17 @@ REQ-CF-003
 
 ---
 
-### US-030: harness:migrate-configによるv1→v2自動マイグレーション
+### US-030: phasegate:migrate-configによるv1→v2自動マイグレーション
 
 **Epic**: E-08 phasegate.config.json v2（設定統合）
 
 **As a** ハーネス利用者,
-**I want to** `harness:migrate-config`でv1設定からv2設定へ自動マイグレーションしたい,
+**I want to** `phasegate:migrate-config`でv1設定からv2設定へ自動マイグレーションしたい,
 **so that** 既存のv1設定を手動で書き換えることなく、v2フォーマットに移行できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:migrate-config`コマンドが実行可能である
+- [ ] AC-1: `phasegate:migrate-config`コマンドが実行可能である
 - [ ] AC-2: v1形式のphasegate.config.jsonからv2形式のphasegate.config.json + orchestration.config.jsonに自動分離される
 - [ ] AC-3: 品質設定はphasegate.config.jsonに保持され、オーケストレーション設定はorchestration.config.jsonに分離される
 - [ ] AC-4: マイグレーション前にバックアップファイルが作成される
@@ -813,7 +813,7 @@ product_overview §9.1
 
 #### 受け入れ基準
 
-- [ ] AC-1: AGENTS.mdの記述的バリデータ一覧が`harness:status`実行へのポインタに置換されている
+- [ ] AC-1: AGENTS.mdの記述的バリデータ一覧が`phasegate:status`実行へのポインタに置換されている
 - [ ] AC-2: AGENTS.mdにADR参照リンクが追加されている
 - [ ] AC-3: AGENTS.mdのサイズが移行前と比較して削減されている
 - [ ] AC-4: ポインタが参照する先（コマンド、ファイル）が実在することが検証可能である
@@ -1205,7 +1205,7 @@ product_overview §5 Phase 2, §6.1
 #### 受け入れ基準
 
 - [ ] AC-1: `/gsdlc:execute`のSKILL.mdが作成され、単一executor版の実行フロー（pre-flight→story-impl→post-wave）が定義されている
-- [ ] AC-2: Pre-flightゲート（harness:check-ready、全storyのPhase Gate通過確認）がフローに含まれている
+- [ ] AC-2: Pre-flightゲート（phasegate:check-ready、全storyのPhase Gate通過確認）がフローに含まれている
 - [ ] AC-3: story-implementorがFresh Context Protocol（US-045）に基づいて実行されることが定義されている
 - [ ] AC-4: Post-waveバリデーション（L2 harness validators実行）がフローに含まれている
 - [ ] AC-5: v1では単一executor逐次実行であることが明記され、Wave並列はPhase 2拡張として記載されている

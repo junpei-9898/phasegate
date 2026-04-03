@@ -706,7 +706,7 @@ pnpm test parity
 ### 9.4 既存スクリプト互換性確認
 
 - [ ] scripts/harness/ 動作確認
-  - `pnpm harness:status` → 正常出力
+  - `pnpm phasegate:status` → 正常出力
 
 - [ ] 依存関係 確認
   - `pnpm list` → eslint* パッケージ表示（削除前のみ）

@@ -6,12 +6,12 @@ export class CommandRegistry {
   private readonly commands: Map<string, CliCommandDefinition> = new Map();
 
   registerCommand(definition: CliCommandDefinition): void {
-    // INV-2: harness: プレフィックス必須
+    // INV-2: phasegate: プレフィックス必須
     if (!definition.commandName || definition.commandName.trim() === '') {
       throw new Error('HarnessApiDomainError: commandName must not be empty');
     }
-    if (!definition.commandName.startsWith('harness:')) {
-      throw new Error(`DuplicateCommandNameError: commandName must start with 'harness:': ${definition.commandName}`);
+    if (!definition.commandName.startsWith('phasegate:')) {
+      throw new Error(`DuplicateCommandNameError: commandName must start with 'phasegate:': ${definition.commandName}`);
     }
     // INV-1: 同一コマンド名の重複禁止
     if (this.commands.has(definition.commandName)) {

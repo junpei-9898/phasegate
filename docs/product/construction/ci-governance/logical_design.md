@@ -23,7 +23,7 @@
 | Domain | CiTemplate・ErrorRepetition・AgentsMdPointerの集約不変条件、TemplateConfig・EscalationAction等VOの値検証、TemplateGenerator・RepetitionDetector・PointerValidator・LessonAggregatorドメインサービス、ポート定義（10本） | 集約ルート、値オブジェクト、ドメインサービス、ポートインターフェース | なし |
 | Application | ドメインモデルを用いたユースケース調停（H13-01〜H13-03）、入出力DTOへの投影、複数ドメインサービスのオーケストレーション | UseCase、DTO、Mapper | Domain |
 | Infrastructure | ドメインポート実装、`.harness/error-history.json`ファイルI/O、YAMLテンプレートレンダリング、外部Unit（validator-system・config-foundation・harness-api・adr-foundation・skill-quality）へのアダプタ | Adapter、Renderer | Application, Domain |
-| Presentation | CLIハンドラー（`harness:ci-template`等）、出力フォーマッター、終了コード決定 | CLI handler、Formatter | Application, Domain |
+| Presentation | CLIハンドラー（`phasegate:ci-template`等）、出力フォーマッター、終了コード決定 | CLI handler、Formatter | Application, Domain |
 
 ### 1.2 依存方向
 
@@ -439,7 +439,7 @@ reset()
 |------|----|------|
 | type | `'command'` | ポインタ種別識別子 |
 | key | `string` | エントリ一意キー（INV-8） |
-| command | `string` | 実行コマンド名（例: `'harness:status'`） |
+| command | `string` | 実行コマンド名（例: `'phasegate:status'`） |
 | description | `string` | コマンドの説明 |
 
 **FilePointer**
@@ -1111,7 +1111,7 @@ export interface LessonArtifactReaderPort {
   - `'aidlc-gate'` → `.github/workflows/aidlc-gate.yml`
   - `'consistency-check'` → `.github/workflows/consistency-check.yml`
   - `'pre-commit'` → `.husky/pre-commit`
-- テンプレートのバリデータ実行部分は `harness:ci-check` / `harness:lint` 等のCLIコマンド呼び出し形式に抽象化し、プラットフォーム非依存を維持する
+- テンプレートのバリデータ実行部分は `phasegate:ci-check` / `phasegate:lint` 等のCLIコマンド呼び出し形式に抽象化し、プラットフォーム非依存を維持する
 - GitHub Actions YAMLのフォーマットは静的テンプレート文字列をベースに `TemplateConfig` の値を注入する形式とする
 
 **外部I/O**: YAML / シェルスクリプトファイル書き出し
@@ -1202,7 +1202,7 @@ export interface LessonArtifactReaderPort {
 
 ### 5.1 前提
 
-ci-governanceの CLIコマンドはci-governance自身がトップレベルコマンドの所有者となる機能（`harness:ci-template`）と、harness-apiが所有するコマンド（`harness:status`等）のポインタとして機能するものがある。本Presentation層は ci-governance 固有の CLIハンドラーとフォーマッターを提供する。
+ci-governanceの CLIコマンドはci-governance自身がトップレベルコマンドの所有者となる機能（`phasegate:ci-template`）と、harness-apiが所有するコマンド（`phasegate:status`等）のポインタとして機能するものがある。本Presentation層は ci-governance 固有の CLIハンドラーとフォーマッターを提供する。
 
 ### 5.2 GenerateCiTemplateHandler
 
@@ -1210,7 +1210,7 @@ ci-governanceの CLIコマンドはci-governance自身がトップレベルコ�
 
 **役割**
 
-- `harness:ci-template` CLIコマンドのエントリポイント
+- `phasegate:ci-template` CLIコマンドのエントリポイント
 - Preset設定から CI/CDテンプレート YAML を生成・書き出す
 
 **引数**
@@ -1449,7 +1449,7 @@ domain_model.mdのLessonAggregatorは「LessonArtifact[] → PointerEntry[]へ�
 
 ### D13: YAMLテンプレートのプラットフォーム非依存化方針
 
-`YamlTemplateRendererAdapter` は GitHub Actions 前提でYAMLを生成するが、バリデータ実行部分は `harness:ci-check` / `harness:lint` 等のCLIコマンド呼び出しに抽象化する。将来のGitLab CI等への対応は `TemplateRendererPort` の別実装を追加するだけで対応可能とする（OCP遵守）。Presentation層の `GenerateCiTemplateHandler` が `TemplateRendererPort` の選択ロジックを持ち、`--platform` 引数等で切り替えを可能にする設計予約をする（Wave 3時点では GitHub Actions のみ実装）。
+`YamlTemplateRendererAdapter` は GitHub Actions 前提でYAMLを生成するが、バリデータ実行部分は `phasegate:ci-check` / `phasegate:lint` 等のCLIコマンド呼び出しに抽象化する。将来のGitLab CI等への対応は `TemplateRendererPort` の別実装を追加するだけで対応可能とする（OCP遵守）。Presentation層の `GenerateCiTemplateHandler` が `TemplateRendererPort` の選択ロジックを持ち、`--platform` 引数等で切り替えを可能にする設計予約をする（Wave 3時点では GitHub Actions のみ実装）。
 
 ### D14: dead-pointer-check と KPI 未達のエラーレベル分離
 

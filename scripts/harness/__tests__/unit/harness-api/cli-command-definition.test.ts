@@ -6,19 +6,19 @@ import { CommandInputSpec } from '../../../harness-api/domain/value-objects/comm
 target('CliCommandDefinition', () => {
   describe('有効なコマンド名でCliCommandDefinitionを生成する', () => {
     // UT-CCD-001
-    it('harness:check-readyからCliCommandDefinitionが生成されること', () => {
+    it('phasegate:check-readyからCliCommandDefinitionが生成されること', () => {
       // Arrange
-      const input = 'harness:check-ready';
+      const input = 'phasegate:check-ready';
       // Act
       const actual = CliCommandDefinition.create(input);
       // Assert
-      expect(actual.commandName).toBe('harness:check-ready');
+      expect(actual.commandName).toBe('phasegate:check-ready');
     });
 
     // UT-CCD-002
-    it('harness:impact-analysis（args指定あり）からCliCommandDefinitionが生成されること', () => {
+    it('phasegate:impact-analysis（args指定あり）からCliCommandDefinitionが生成されること', () => {
       // Arrange
-      const input = 'harness:impact-analysis';
+      const input = 'phasegate:impact-analysis';
       const inputSpec = CommandInputSpec.create({
         args: [{ name: 'storyId', type: 'string' }],
         flags: [],
@@ -26,7 +26,7 @@ target('CliCommandDefinition', () => {
       // Act
       const actual = CliCommandDefinition.create(input, { inputSpec });
       // Assert
-      expect(actual.commandName).toBe('harness:impact-analysis');
+      expect(actual.commandName).toBe('phasegate:impact-analysis');
       expect(actual.inputSpec.args).toHaveLength(1);
     });
   });
@@ -43,7 +43,7 @@ target('CliCommandDefinition', () => {
     });
   });
 
-  context('harness:プレフィックスがない場合', () => {
+  context('phasegate:プレフィックスがない場合', () => {
     // UT-CCD-004
     it('check-readyからはエラーをthrowすること', () => {
       // Arrange
@@ -57,9 +57,9 @@ target('CliCommandDefinition', () => {
 
   context('プレフィックスのみでコマンド名部分が空の場合', () => {
     // UT-CCD-005
-    it('harness:からはエラーをthrowすること', () => {
+    it('phasegate:からはエラーをthrowすること', () => {
       // Arrange
-      const input = 'harness:';
+      const input = 'phasegate:';
       // Act
       const actual = () => CliCommandDefinition.create(input);
       // Assert
@@ -71,8 +71,8 @@ target('CliCommandDefinition', () => {
     // UT-CCD-006
     it('同一commandNameを持つ2つのCliCommandDefinitionが等価であること', () => {
       // Arrange
-      const a = CliCommandDefinition.create('harness:check-ready');
-      const b = CliCommandDefinition.create('harness:check-ready');
+      const a = CliCommandDefinition.create('phasegate:check-ready');
+      const b = CliCommandDefinition.create('phasegate:check-ready');
       // Act
       const actual = a.equals(b);
       // Assert
@@ -82,8 +82,8 @@ target('CliCommandDefinition', () => {
     // UT-CCD-007
     it('異なるcommandNameを持つ2つのCliCommandDefinitionが非等価であること', () => {
       // Arrange
-      const a = CliCommandDefinition.create('harness:check-ready');
-      const b = CliCommandDefinition.create('harness:ci-check');
+      const a = CliCommandDefinition.create('phasegate:check-ready');
+      const b = CliCommandDefinition.create('phasegate:ci-check');
       // Act
       const actual = a.equals(b);
       // Assert
@@ -95,19 +95,19 @@ target('CliCommandDefinition', () => {
     // UT-CCD-008
     it('生成後にcommandNameプロパティを変更しても反映されないこと', () => {
       // Arrange
-      const sut = CliCommandDefinition.create('harness:check-ready');
+      const sut = CliCommandDefinition.create('phasegate:check-ready');
       // Act
       // @ts-expect-error 意図的なimmutabilityテスト
-      const actual = () => { sut.commandName = 'harness:other'; };
+      const actual = () => { sut.commandName = 'phasegate:other'; };
       // Assert
-      expect(sut.commandName).toBe('harness:check-ready');
+      expect(sut.commandName).toBe('phasegate:check-ready');
       void actual;
     });
 
     // UT-CCD-009
-    it('コマンド名部分が数字始まりのharness:1cmdはエラーをthrowすること', () => {
+    it('コマンド名部分が数字始まりのphasegate:1cmdはエラーをthrowすること', () => {
       // Arrange
-      const input = 'harness:1cmd';
+      const input = 'phasegate:1cmd';
       // Act
       const actual = () => CliCommandDefinition.create(input);
       // Assert
@@ -116,9 +116,9 @@ target('CliCommandDefinition', () => {
   });
 
   // UT-BND-001
-  it('UT-BND-001: harness:のみでエラーをthrowすること', () => {
+  it('UT-BND-001: phasegate:のみでエラーをthrowすること', () => {
     // Arrange
-    const input = 'harness:';
+    const input = 'phasegate:';
     // Act
     const actual = () => CliCommandDefinition.create(input);
     // Assert

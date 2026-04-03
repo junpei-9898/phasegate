@@ -265,7 +265,7 @@
 
 - [ ] `scripts/harness/` → `scripts/phasegate/` ディレクトリリネーム（1,266ファイルのimportパス更新）
 - [ ] `bin/harness` → `bin/phasegate` CLIコマンド名変更
-- [ ] `npm run harness:*` → `npm run phasegate:*` スクリプト名変更
+- [ ] `npm run phasegate:*` → `npm run phasegate:*` スクリプト名変更
 - [ ] `tsx` ランタイム依存をなくし `dist/` にJSを事前コンパイル
 - [ ] Plugin Architecture 設計（`@phasegate/skill-core`, `@phasegate/skill-advanced`）
 - [ ] `phasegate.config.json` v2 スキーマ（JSON Schema + IDE補完）

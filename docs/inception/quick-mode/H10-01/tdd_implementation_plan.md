@@ -36,7 +36,7 @@
 ### テスト状況
 - ユニットテスト: ✅ 完了（`scripts/harness/__tests__/unit/quick-mode/domain/`）
 - 統合テスト: ✅ 完了（`scripts/harness/__tests__/integration/quick-mode/git-diff-changed-files-adapter.test.ts`, `harness-config-quick-mode-config-adapter.test.ts`）
-- E2Eテスト: ✅ 完了（harness:ci-check --quick の内部処理として検証）
+- E2Eテスト: ✅ 完了（phasegate:ci-check --quick の内部処理として検証）
 
 ## 4. QA
 なし（遡及記録）

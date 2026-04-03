@@ -6,7 +6,7 @@
 
 H13-03はAGENTS.mdのポインタ型移行機能を実装する。具体的には以下を提供する:
 
-- AGENTS.mdの記述的バリデータ一覧を `harness:status` 実行へのポインタに置換
+- AGENTS.mdの記述的バリデータ一覧を `phasegate:status` 実行へのポインタに置換
 - AGENTS.mdへのADR参照リンクの追加
 - ポインタ型移行後の行数50%以上削減（KPI）
 - ポインタが参照する先（コマンド、ファイル）の実在性検証（Dead Pointer禁止: INV-9）

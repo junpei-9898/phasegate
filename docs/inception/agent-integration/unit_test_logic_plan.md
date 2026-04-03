@@ -34,7 +34,7 @@
 - `createStopEvent(sessionId?)`: デフォルト `{ hookType: 'stop', sessionId: 'sess-001' }`
 - `createProtectedFileList(patterns?)`: デフォルト `{ patterns: ['biome.json', 'tsconfig.json'] }`
 - `createHookTranslationResult(overrides?)`: デフォルト `{ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }`
-- `createFallbackCapabilitySpec(overrides?)`: デフォルト `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }`
+- `createFallbackCapabilitySpec(overrides?)`: デフォルト `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }`
 
 ### モック方針
 

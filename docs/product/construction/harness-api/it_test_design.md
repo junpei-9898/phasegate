@@ -28,7 +28,7 @@
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
 | IT-UC-InitRegistry-001 | 8コマンドの定義を一括登録できること | 8コマンドのCliCommandDefinitionInput配列 | CommandRegistryは実体を使用 | registeredCount=8、commandNamesに全8コマンド名が含まれる、failedRegistrations=[] |
-| IT-UC-InitRegistry-002 | 登録済みコマンド名の一覧が昇順で返されること | 8コマンドのCliCommandDefinitionInput配列（順序不定） | CommandRegistryは実体を使用 | commandNamesがアルファベット昇順（harness:check-phase < harness:check-ready < ... ) |
+| IT-UC-InitRegistry-002 | 登録済みコマンド名の一覧が昇順で返されること | 8コマンドのCliCommandDefinitionInput配列（順序不定） | CommandRegistryは実体を使用 | commandNamesがアルファベット昇順（phasegate:check-phase < phasegate:check-ready < ... ) |
 
 #### 異常系
 
@@ -48,22 +48,22 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-DispatchCmd-001 | check-readyコマンドが全ストーリー通過状態を返すこと | commandName='harness:check-ready', args={}, flags={} | PhaseGateQueryPortモック: queryAllStories→3件全通過のPhaseGateStoryResult[] | response.status='pass', exitCode=0, response.data.allPassed=true |
-| IT-UC-DispatchCmd-002 | check-phaseコマンドが指定Unitのフェーズ情報を返すこと | commandName='harness:check-phase', args={unit:'harness-error'}, flags={} | PhaseGateQueryPortモック: queryUnit→PhaseInfo(currentLevel=2) | response.status='pass', exitCode=0, response.data.unitId='harness-error' |
-| IT-UC-DispatchCmd-003 | ci-checkコマンドが全L3バリデータ通過を返すこと | commandName='harness:ci-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→3件全通過のValidatorCheckItem[] | response.status='pass', exitCode=0, response.data.allPassed=true |
-| IT-UC-DispatchCmd-004 | detect-driftコマンドが乖離なしを返すこと | commandName='harness:detect-drift', args={}, flags={} | ValidatorExecutionPortモック: runDriftDetection→[] | response.status='pass', exitCode=0, response.data.totalCount=0 |
-| IT-UC-DispatchCmd-005 | lintコマンドがpass結果を返すこと | commandName='harness:lint', args={}, flags={} | BiomeLintPortモック: runLint→{passed:true, errors:[], warnings:[]} | response.status='pass', exitCode=0 |
-| IT-UC-DispatchCmd-006 | impact-analysisコマンドが影響テストケースを返すこと | commandName='harness:impact-analysis', args={storyId:'H09-01'}, flags={} | ImpactAnalysisPortモック: analyze→ImpactAnalysisResult（ダミー） | response.status='pass', exitCode=0, response.data!=null |
-| IT-UC-DispatchCmd-011 | complete-checkコマンドがValidatorExecutionPortとBiomeLintPortの両方を呼び出すこと | commandName='harness:complete-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→pass, BiomeLintPortモック: runLint→{passed:true, errors:[]} | ValidatorExecutionPortとBiomeLintPortの両方がそれぞれ1回ずつ呼び出されたことをspy確認。response.status='pass', exitCode=0 |
+| IT-UC-DispatchCmd-001 | check-readyコマンドが全ストーリー通過状態を返すこと | commandName='phasegate:check-ready', args={}, flags={} | PhaseGateQueryPortモック: queryAllStories→3件全通過のPhaseGateStoryResult[] | response.status='pass', exitCode=0, response.data.allPassed=true |
+| IT-UC-DispatchCmd-002 | check-phaseコマンドが指定Unitのフェーズ情報を返すこと | commandName='phasegate:check-phase', args={unit:'harness-error'}, flags={} | PhaseGateQueryPortモック: queryUnit→PhaseInfo(currentLevel=2) | response.status='pass', exitCode=0, response.data.unitId='harness-error' |
+| IT-UC-DispatchCmd-003 | ci-checkコマンドが全L3バリデータ通過を返すこと | commandName='phasegate:ci-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→3件全通過のValidatorCheckItem[] | response.status='pass', exitCode=0, response.data.allPassed=true |
+| IT-UC-DispatchCmd-004 | detect-driftコマンドが乖離なしを返すこと | commandName='phasegate:detect-drift', args={}, flags={} | ValidatorExecutionPortモック: runDriftDetection→[] | response.status='pass', exitCode=0, response.data.totalCount=0 |
+| IT-UC-DispatchCmd-005 | lintコマンドがpass結果を返すこと | commandName='phasegate:lint', args={}, flags={} | BiomeLintPortモック: runLint→{passed:true, errors:[], warnings:[]} | response.status='pass', exitCode=0 |
+| IT-UC-DispatchCmd-006 | impact-analysisコマンドが影響テストケースを返すこと | commandName='phasegate:impact-analysis', args={storyId:'H09-01'}, flags={} | ImpactAnalysisPortモック: analyze→ImpactAnalysisResult（ダミー） | response.status='pass', exitCode=0, response.data!=null |
+| IT-UC-DispatchCmd-011 | complete-checkコマンドがValidatorExecutionPortとBiomeLintPortの両方を呼び出すこと | commandName='phasegate:complete-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→pass, BiomeLintPortモック: runLint→{passed:true, errors:[]} | ValidatorExecutionPortとBiomeLintPortの両方がそれぞれ1回ずつ呼び出されたことをspy確認。response.status='pass', exitCode=0 |
 
 #### 異常系
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
 |---------|---------|------|----------|----------|
 | IT-UC-DispatchCmd-007 | 未登録コマンド名の場合、exitCode=2のerror responseを返すこと | commandName='harness:unknown-cmd', args={}, flags={} | CommandDispatchServiceは実体を使用（CommandRegistryに登録なし） | response.status='error', exitCode=2, response.errors.length>=1 |
-| IT-UC-DispatchCmd-008 | check-phaseで存在しないUnit名を指定した場合、exitCode=1のfail responseを返すこと | commandName='harness:check-phase', args={unit:'non-existent-unit'}, flags={} | PhaseGateQueryPortモック: queryUnit→null | response.status='fail', exitCode=1 |
-| IT-UC-DispatchCmd-009 | ポート呼び出しが例外をスローした場合、exitCode=2のerror responseを返すこと（例外は再スローしない） | commandName='harness:ci-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→throw new Error('network error') | response.status='error', exitCode=2、UseCase外に例外が伝播しない |
-| IT-UC-DispatchCmd-010 | detect-driftで乖離が検出された場合、exitCode=1のfail responseを返すこと | commandName='harness:detect-drift', args={}, flags={} | ValidatorExecutionPortモック: runDriftDetection→[DriftItem1件] | response.status='fail', exitCode=1, response.data.totalCount=1 |
+| IT-UC-DispatchCmd-008 | check-phaseで存在しないUnit名を指定した場合、exitCode=1のfail responseを返すこと | commandName='phasegate:check-phase', args={unit:'non-existent-unit'}, flags={} | PhaseGateQueryPortモック: queryUnit→null | response.status='fail', exitCode=1 |
+| IT-UC-DispatchCmd-009 | ポート呼び出しが例外をスローした場合、exitCode=2のerror responseを返すこと（例外は再スローしない） | commandName='phasegate:ci-check', args={}, flags={} | ValidatorExecutionPortモック: runL3Validators→throw new Error('network error') | response.status='error', exitCode=2、UseCase外に例外が伝播しない |
+| IT-UC-DispatchCmd-010 | detect-driftで乖離が検出された場合、exitCode=1のfail responseを返すこと | commandName='phasegate:detect-drift', args={}, flags={} | ValidatorExecutionPortモック: runDriftDetection→[DriftItem1件] | response.status='fail', exitCode=1, response.data.totalCount=1 |
 
 ---
 
@@ -75,17 +75,17 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-DecideExit-001 | status='pass'のコマンドはexitCode=0を返すこと | status='pass', commandName='harness:check-ready' | モックなし（純粋関数） | exitCode=0 |
-| IT-UC-DecideExit-002 | status='fail'の通常コマンドはexitCode=1を返すこと | status='fail', commandName='harness:ci-check' | モックなし | exitCode=1 |
-| IT-UC-DecideExit-003 | status='error'のコマンドはexitCode=2を返すこと | status='error', commandName='harness:lint' | モックなし | exitCode=2 |
+| IT-UC-DecideExit-001 | status='pass'のコマンドはexitCode=0を返すこと | status='pass', commandName='phasegate:check-ready' | モックなし（純粋関数） | exitCode=0 |
+| IT-UC-DecideExit-002 | status='fail'の通常コマンドはexitCode=1を返すこと | status='fail', commandName='phasegate:ci-check' | モックなし | exitCode=1 |
+| IT-UC-DecideExit-003 | status='error'のコマンドはexitCode=2を返すこと | status='error', commandName='phasegate:lint' | モックなし | exitCode=2 |
 
-#### 特殊ルール（harness:status D5ルール）
+#### 特殊ルール（phasegate:status D5ルール）
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-DecideExit-004 | harness:statusでstatus='fail'でもexitCode=0を返すこと（D5ルール） | status='fail', commandName='harness:status' | モックなし | exitCode=0、reason文字列にD5ルール適用の旨が含まれる |
-| IT-UC-DecideExit-005 | harness:statusでstatus='pass'はexitCode=0を返すこと | status='pass', commandName='harness:status' | モックなし | exitCode=0 |
-| IT-UC-DecideExit-006 | harness:statusでstatus='error'はexitCode=2を返すこと | status='error', commandName='harness:status' | モックなし | exitCode=2 |
+| IT-UC-DecideExit-004 | phasegate:statusでstatus='fail'でもexitCode=0を返すこと（D5ルール） | status='fail', commandName='phasegate:status' | モックなし | exitCode=0、reason文字列にD5ルール適用の旨が含まれる |
+| IT-UC-DecideExit-005 | phasegate:statusでstatus='pass'はexitCode=0を返すこと | status='pass', commandName='phasegate:status' | モックなし | exitCode=0 |
+| IT-UC-DecideExit-006 | phasegate:statusでstatus='error'はexitCode=2を返すこと | status='error', commandName='phasegate:status' | モックなし | exitCode=2 |
 
 ---
 
@@ -230,7 +230,7 @@
 
 | ケースID | 入力 | 期待エラー |
 |---------|------|----------|
-| IT-API-CheckReady-003 | 不明な引数（例: unit='xxx'）を渡した場合 | 引数無視または無視してデフォルト動作（harness:check-readyは引数不要） |
+| IT-API-CheckReady-003 | 不明な引数（例: unit='xxx'）を渡した場合 | 引数無視または無視してデフォルト動作（phasegate:check-readyは引数不要） |
 
 #### エラーハンドリングテスト
 
@@ -327,7 +327,7 @@
 | IT-API-Status-001 | 引数なし（全レイヤー健全） | DispatchCommandUseCaseモック: response={status:'pass', data:HarnessStatusSummary{...}}, exitCode=0 | stdout JSON {status:'pass', data.layers.length=4}、process.exitCode=0 |
 | IT-API-Status-002 | 引数なし（一部レイヤー健全性unknown） | DispatchCommandUseCaseモック: response={status:'pass', data:{layers:[{layerId:'L3', lastResult:'unknown'},...]}}, exitCode=0 | stdout JSON {status:'pass'}、process.exitCode=0（statusコマンドはfailでも0） |
 
-#### D5ルール検証（harness:status特殊ルール）
+#### D5ルール検証（phasegate:status特殊ルール）
 
 | ケースID | 入力 | モック設定 | 期待レスポンス |
 |---------|------|----------|--------------|
@@ -430,8 +430,8 @@
 | IT-API-DispatchInteg-001 | check-readyコマンド全フロー（Presentation→Application→Domain→Port）が正しく連携すること | CheckReadyHandlerを直接呼び出し（CLIなし） | PhaseGateQueryPortモック: 2件通過+1件未通過 | stdout JSON {status:'fail', data.allPassed:false, data.stories.length=3}、process.exitCode=1 |
 | IT-API-DispatchInteg-002 | check-phaseコマンド全フロー。CommandRegistry初期化→DispatchCommandUseCase実行が正しく連携すること | 事前にInitializeCommandRegistryUseCaseで8コマンドを登録 → CheckPhaseHandlerを呼び出し | PhaseGateQueryPortモック | 正しいPhaseInfoが返される |
 | IT-API-DispatchInteg-003 | CommandRegistryに未登録のコマンド名を指定した場合、全フローを通じてexit=2で返されること | 未登録コマンド名をDispatchCommandUseCaseに直接渡す | モックなし（CommandRegistry実体） | response.status='error', exitCode=2 |
-| IT-API-DispatchInteg-004 | complete-checkコマンド全フロー。ValidatorExecutionPortとBiomeLintPortの両方が呼ばれること | commandName='harness:complete-check' | ValidatorExecutionPortモック（runAllValidators）+ BiomeLintPortモック（runLint）、両方toHaveBeenCalledWith検証 | 両ポートが正確に1回ずつ呼ばれる |
-| IT-API-DispatchInteg-005 | statusコマンド全フロー。ArtifactScannerPort・ConfigQueryPort・StatusDerivationServiceが連携すること | commandName='harness:status' | ArtifactScannerPortモック + ConfigQueryPortモック（全メソッド） | response.status='pass' or 'error'（failはD5ルールで0）、exitCode=0 |
+| IT-API-DispatchInteg-004 | complete-checkコマンド全フロー。ValidatorExecutionPortとBiomeLintPortの両方が呼ばれること | commandName='phasegate:complete-check' | ValidatorExecutionPortモック（runAllValidators）+ BiomeLintPortモック（runLint）、両方toHaveBeenCalledWith検証 | 両ポートが正確に1回ずつ呼ばれる |
+| IT-API-DispatchInteg-005 | statusコマンド全フロー。ArtifactScannerPort・ConfigQueryPort・StatusDerivationServiceが連携すること | commandName='phasegate:status' | ArtifactScannerPortモック + ConfigQueryPortモック（全メソッド） | response.status='pass' or 'error'（failはD5ルールで0）、exitCode=0 |
 
 ---
 
@@ -445,7 +445,7 @@
 |---------|---------|------|----------|---------|
 | IT-API-StatusInteg-001 | 全成果物が揃っているstrictプリセット環境でHarnessStatusSummaryが正しく導出されること | StatusDerivationInput（パラメータなし） | ArtifactScannerPortモック: 全4レイヤー成果物あり; ConfigQueryPortモック: strict, phaseGateSummary{totalStories:5, passedStories:5} | HarnessStatusSummary.isAllLayersHealthy()=true、layers.length=4 |
 | IT-API-StatusInteg-002 | 成果物が部分的にない場合、対応するレイヤーのlastResult='unknown'が正しく導出されること | StatusDerivationInput | ArtifactScannerPortモック: L4成果物なし; ConfigQueryPortモック: strict | L4のLayerHealth.lastResult='unknown' |
-| IT-API-StatusInteg-003 | ポートがエラーを返した場合、CommandDispatchServiceがHarnessApiResponse.error()に変換すること | harness:statusコマンドのDispatchCommandUseCase全フロー | ArtifactScannerPortモック: throw new Error | response.status='error', exitCode=2 |
+| IT-API-StatusInteg-003 | ポートがエラーを返した場合、CommandDispatchServiceがHarnessApiResponse.error()に変換すること | phasegate:statusコマンドのDispatchCommandUseCase全フロー | ArtifactScannerPortモック: throw new Error | response.status='error', exitCode=2 |
 | IT-API-StatusInteg-004 | disabledレイヤーはisActionable()=falseを返すこと | StatusDerivationInput | ConfigQueryPortモック: minimal（L2-L4 disabled） | L2-L4のLayerHealth.isActionable()=false |
 
 ---

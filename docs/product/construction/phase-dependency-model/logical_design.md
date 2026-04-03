@@ -16,7 +16,7 @@
 | domain | 3層フェーズ構造の正規定義、Level間依存、Planning Mode意味論、カスタマイズ緩和不可制約の保持 | なし |
 | application | 証跡収集、設定取得、`PhaseStructure` 実行、DTO変換、override監査の調整 | domain |
 | infrastructure | ファイルシステム読取、Markdown plan解析、`HarnessConfigV2` 読取、監査ログ永続化 | application, domain |
-| presentation | `harness:check-phase` / `harness:check-ready` / `phase-gate` 呼び出し向けの入力パース・出力整形 | application, domain |
+| presentation | `phasegate:check-phase` / `phasegate:check-ready` / `phase-gate` 呼び出し向けの入力パース・出力整形 | application, domain |
 
 ### 1.2 依存方向
 
@@ -631,7 +631,7 @@ interface PhaseAuditLoggerPort {
 |---------|-------------|------|
 | `CheckPhaseGateUseCase` | H02-01, H02-02, H02-03 | phase-gate本体。Level前提、plan文書、Planning Mode、カスタマイズを統合判定 |
 | `BuildPhaseDependencyGraphUseCase` | H02-01 | validator-system / regression-suite 向けに依存グラフを公開 |
-| `GetPhaseInfoUseCase` | H02-01, H02-02 | `harness:check-phase` 用の現在フェーズ情報を返す |
+| `GetPhaseInfoUseCase` | H02-01, H02-02 | `phasegate:check-phase` 用の現在フェーズ情報を返す |
 | `ValidateCustomizationPolicyUseCase` | H02-03 | config側の phaseDependencies を意味論検証する |
 | `RecordPhaseOverrideAuditUseCase` | H02-03 | override適用の監査記録を永続化する |
 
@@ -945,7 +945,7 @@ interface RecordPhaseOverrideAuditInput {
 
 ### 6.1 CheckPhaseCommandHandler
 
-**責務**: `harness:check-phase` 向けに `GetPhaseInfoUseCase` を呼び出し、CLI/JSON応答を組み立てる。
+**責務**: `phasegate:check-phase` 向けに `GetPhaseInfoUseCase` を呼び出し、CLI/JSON応答を組み立てる。
 
 **想定引数**:
 
@@ -972,7 +972,7 @@ interface RecordPhaseOverrideAuditInput {
 
 ### 6.2 CheckReadyCommandHandler
 
-**責務**: `harness:check-ready` 向けに target level 3 の readiness を返す。
+**責務**: `phasegate:check-ready` 向けに target level 3 の readiness を返す。
 
 **想定引数**:
 
@@ -1116,7 +1116,7 @@ interface RecordPhaseOverrideAuditInput {
 ### 9.1 Composition Root `defaultPhaseConfig` の planningMode 修正
 
 **変更日**: 2026-03-22
-**変更理由**: `createPhaseDependencyModelModule()` の `defaultPhaseConfig.planningMode` が `'standard'`（無効値）にハードコードされていた。有効値は `'interactive' | 'embedded-qa'` のみであり、デフォルト呼び出し時に `InvalidPlanningModeError` がスローされ、`harness:check-phase` / `harness:check-ready` が全件エラーになっていた。
+**変更理由**: `createPhaseDependencyModelModule()` の `defaultPhaseConfig.planningMode` が `'standard'`（無効値）にハードコードされていた。有効値は `'interactive' | 'embedded-qa'` のみであり、デフォルト呼び出し時に `InvalidPlanningModeError` がスローされ、`phasegate:check-phase` / `phasegate:check-ready` が全件エラーになっていた。
 
 **変更内容**: `planningMode: 'standard'` → `planningMode: 'interactive'` に修正（`phasegate.config.json` の `planningMode.default: 'interactive'` と一致させた）
 

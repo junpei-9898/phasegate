@@ -22,19 +22,19 @@ import type { ValidatorExecutionPort } from '../../../harness-api/domain/ports/v
 ```typescript
 describe('harness-api detect-driftコマンド', () => {
   // SC-H09-03-001
-  it('harness:detect-drift が "Unknown command" にならない', () => {
+  it('phasegate:detect-drift が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:detect-drift');
+    const actual = run('phasegate:detect-drift');
     // Assert
-    expect(actual.stderr).not.toContain('Unknown command: harness:detect-drift');
+    expect(actual.stderr).not.toContain('Unknown command: phasegate:detect-drift');
   });
 
   // SC-H09-03-004
-  it('harness:detect-drift --json でJSON出力が得られる', () => {
+  it('phasegate:detect-drift --json でJSON出力が得られる', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:detect-drift', '--json');
+    const actual = run('phasegate:detect-drift', '--json');
     // Assert
     if (actual.stdout) {
       const parsed = JSON.parse(actual.stdout);
@@ -58,7 +58,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([]);
         const useCase = new DispatchCommandUseCase(ports);
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:detect-drift', args: [], flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:detect-drift', args: [], flags: {} });
         // Assert
         expect(actual.response.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
@@ -78,7 +78,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
         const useCase = new DispatchCommandUseCase(ports);
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:detect-drift', args: [], flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:detect-drift', args: [], flags: {} });
         // Assert
         expect(actual.response.status).toBe('fail');
         expect(actual.exitCode).toBe(1);

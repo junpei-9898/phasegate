@@ -13,7 +13,7 @@ const buildVerificationPorts = (overrides: {
   detectedImports?: string[];
   registeredCommands?: string[];
 } = {}) => {
-  const { detectedImports = [], registeredCommands = ['harness:lint', 'harness:complete-check'] } = overrides;
+  const { detectedImports = [], registeredCommands = ['phasegate:lint', 'phasegate:complete-check'] } = overrides;
 
   const importAnalyzerPort = {
     detectAgentApiImports: vi.fn().mockReturnValue(detectedImports),
@@ -31,9 +31,9 @@ target('FallbackVerificationService', () => {
       // UT-FVS-001
       it('エージェントAPIのimportなし・全コマンド登録済みのとき violations=[] を返すこと', () => {
         // Arrange
-        const ports = buildVerificationPorts({ detectedImports: [], registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ detectedImports: [], registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
-        const spec = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
+        const spec = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
         // Act
         const actual = sut.verify(spec);
         // Assert
@@ -43,9 +43,9 @@ target('FallbackVerificationService', () => {
       // UT-FVS-002
       it('noAgentApiImports=falseのとき importチェックをスキップし violations=[] を返すこと', () => {
         // Arrange
-        const ports = buildVerificationPorts({ detectedImports: ['@anthropic-ai/claude-code'], registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ detectedImports: ['@anthropic-ai/claude-code'], registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
-        const spec = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: false });
+        const spec = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: false });
         // Act
         const actual = sut.verify(spec);
         // Assert
@@ -96,12 +96,12 @@ target('FallbackVerificationService', () => {
 
     describe('commandName存在確認のviolationを検出する', () => {
       // UT-FVS-020
-      it('harness:unknownが未登録のとき violations に1件のHarnessErrorが含まれること', () => {
+      it('phasegate:unknownが未登録のとき violations に1件のHarnessErrorが含まれること', () => {
         // Arrange
-        const ports = buildVerificationPorts({ registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
         const spec = createFallbackCapabilitySpec({
-          supportedCommands: ['harness:lint', 'harness:unknown'],
+          supportedCommands: ['phasegate:lint', 'phasegate:unknown'],
           noAgentApiImports: false,
         });
         // Act
@@ -117,7 +117,7 @@ target('FallbackVerificationService', () => {
         const ports = buildVerificationPorts({ registeredCommands: [] });
         const sut = new FallbackVerificationService(ports);
         const spec = createFallbackCapabilitySpec({
-          supportedCommands: ['harness:lint', 'harness:complete-check'],
+          supportedCommands: ['phasegate:lint', 'phasegate:complete-check'],
           noAgentApiImports: false,
         });
         // Act
@@ -137,7 +137,7 @@ target('FallbackVerificationService', () => {
         });
         const sut = new FallbackVerificationService(ports);
         const spec = createFallbackCapabilitySpec({
-          supportedCommands: ['harness:unknown'],
+          supportedCommands: ['phasegate:unknown'],
           noAgentApiImports: true,
         });
         // Act

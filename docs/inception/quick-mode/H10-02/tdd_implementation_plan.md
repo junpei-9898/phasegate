@@ -28,7 +28,7 @@
 ### テスト状況
 - ユニットテスト: ✅ 完了（`scripts/harness/__tests__/unit/quick-mode/domain/services/validator-relaxation-service.test.ts`）
 - 統合テスト: ✅ 完了（`scripts/harness/__tests__/integration/quick-mode/validator-system-validator-id-registry-adapter.test.ts`）
-- E2Eテスト: ✅ 完了（harness:ci-check --quick フローの一部として検証）
+- E2Eテスト: ✅ 完了（phasegate:ci-check --quick フローの一部として検証）
 
 ## 4. QA
 なし（遡及記録）

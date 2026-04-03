@@ -7,7 +7,7 @@
 - **他Unitとの境界**:
   - 全Unit: HarnessConfigV2型をShared Kernelとして提供
   - phase-dependency-model: phaseDependenciesセクションのJSONスキーマ構造を所有（意味論はphase-dependency-model側）
-  - validator-system: Validator ID Registryを消費（harness:enable/disableの対象機能名）
+  - validator-system: Validator ID Registryを消費（phasegate:enable/disableの対象機能名）
   - harness-error: HarnessError型を消費（バリデーションエラー出力）
 
 ## 2. 集約候補の分析
@@ -61,7 +61,7 @@ preset: "standard"で個別にcoverageThreshold: 95%に上書きする場合、�
 
 ### [Question] Q2: FeatureRegistryの実装タイミング
 
-harness:enable/disableはValidator ID Registry（validator-system所有、Wave 2）に依存する。
+phasegate:enable/disableはValidator ID Registry（validator-system所有、Wave 2）に依存する。
 
 **決定**: 段階的実装。FeatureRegistryをPortインターフェースとして定義し、Wave 1では`harnesses`セクションキーのみ返すアダプター、Wave 2でValidator ID追加アダプターに差し替え。
 

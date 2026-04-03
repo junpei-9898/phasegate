@@ -38,7 +38,7 @@ function createMockPorts() {
 target('CommandDispatchService', () => {
   describe('dispatch: check-ready', () => {
     // UT-DS-001
-    it('harness:check-readyが全ストーリー通過のpass responseを返すこと', async () => {
+    it('phasegate:check-readyが全ストーリー通過のpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.phaseGateQueryPort.queryAllStories.mockResolvedValue([
@@ -46,14 +46,14 @@ target('CommandDispatchService', () => {
       ]);
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:check-ready', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
       expect(actual.exitCode).toBe(0);
     });
 
     // UT-DS-002
-    it('harness:check-readyが未通過ストーリーありのfail responseを返すこと', async () => {
+    it('phasegate:check-readyが未通過ストーリーありのfail responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.phaseGateQueryPort.queryAllStories.mockResolvedValue([
@@ -61,7 +61,7 @@ target('CommandDispatchService', () => {
       ]);
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:check-ready', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('fail');
       expect(actual.exitCode).toBe(1);
@@ -70,7 +70,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: check-phase', () => {
     // UT-DS-003
-    it('harness:check-phaseが存在するUnitのpass responseを返すこと', async () => {
+    it('phasegate:check-phaseが存在するUnitのpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.phaseGateQueryPort.queryUnit.mockResolvedValue({
@@ -78,19 +78,19 @@ target('CommandDispatchService', () => {
       });
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:check-phase', args: { unit: 'harness-error' }, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:check-phase', args: { unit: 'harness-error' }, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
 
     // UT-DS-004
-    it('harness:check-phaseが存在しないUnitのfail responseを返すこと', async () => {
+    it('phasegate:check-phaseが存在しないUnitのfail responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.phaseGateQueryPort.queryUnit.mockResolvedValue(null);
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:check-phase', args: { unit: 'non-existent' }, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:check-phase', args: { unit: 'non-existent' }, flags: {} });
       // Assert
       expect(actual.status).toBe('fail');
     });
@@ -98,7 +98,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: ci-check', () => {
     // UT-DS-005
-    it('harness:ci-checkが全バリデータ通過のpass responseを返すこと', async () => {
+    it('phasegate:ci-checkが全バリデータ通過のpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.validatorExecutionPort.runL3Validators.mockResolvedValue([
@@ -106,7 +106,7 @@ target('CommandDispatchService', () => {
       ]);
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:ci-check', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
@@ -114,13 +114,13 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: detect-drift', () => {
     // UT-DS-006
-    it('harness:detect-driftが乖離なしのpass responseを返すこと', async () => {
+    it('phasegate:detect-driftが乖離なしのpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([]);
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:detect-drift', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
@@ -128,13 +128,13 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: lint', () => {
     // UT-DS-007
-    it('harness:lintがpass結果のpass responseを返すこと', async () => {
+    it('phasegate:lintがpass結果のpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:lint', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:lint', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
@@ -142,7 +142,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: status', () => {
     // UT-DS-008
-    it('harness:statusがpass responseを返すこと', async () => {
+    it('phasegate:statusがpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.artifactScannerPort.scan.mockResolvedValue(
@@ -151,7 +151,7 @@ target('CommandDispatchService', () => {
       ports.configQueryPort.getPresetInfo.mockResolvedValue({ name: 'standard', enabledLayers: ['L1', 'L2', 'L3'] });
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:status', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
@@ -159,7 +159,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: impact-analysis', () => {
     // UT-DS-009
-    it('harness:impact-analysisが結果ありのpass responseを返すこと', async () => {
+    it('phasegate:impact-analysisが結果ありのpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.impactAnalysisPort.analyze.mockResolvedValue({
@@ -167,7 +167,7 @@ target('CommandDispatchService', () => {
       });
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });
@@ -180,7 +180,7 @@ target('CommandDispatchService', () => {
       const ports = createMockPorts();
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:unknown', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:unknown', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('error');
       expect(actual.exitCode).toBe(2);
@@ -195,7 +195,7 @@ target('CommandDispatchService', () => {
       ports.validatorExecutionPort.runL3Validators.mockRejectedValue(new Error('port error'));
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:ci-check', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('error');
       expect(actual.exitCode).toBe(2);
@@ -204,7 +204,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: complete-check', () => {
     // UT-DS-012
-    it('harness:complete-checkが全バリデータ+lint通過のpass responseを返すこと', async () => {
+    it('phasegate:complete-checkが全バリデータ+lint通過のpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
       ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
@@ -213,7 +213,7 @@ target('CommandDispatchService', () => {
       ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
       const svc = new CommandDispatchService(ports);
       // Act
-      const actual = await svc.dispatch({ commandName: 'harness:complete-check', args: {}, flags: {} });
+      const actual = await svc.dispatch({ commandName: 'phasegate:complete-check', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
     });

@@ -94,7 +94,7 @@ Orchestrator (15% context)
 
 ```
 AIDLC + GSD Wave実行:
-Pre-flight: harness:check-ready for ALL stories in wave
+Pre-flight: phasegate:check-ready for ALL stories in wave
 Wave 1 (parallel):
 ├── story-implementor(US-001) [fresh context + design docs]
 └── story-implementor(US-002) [fresh context + design docs]
@@ -288,7 +288,7 @@ AIDLCのtest-coverage-checkerと90%CIカバレッジゲートは「コードカ�
    - Domain Model (Entity/VO) → Unit Test
 3. `requirement-test-matrix.json` をUnit単位で生成
 4. AC→テストマッピング完全性チェックをphase-gateに追加
-5. `harness:impact-analysis US-XXX` コマンドで変更影響検出
+5. `phasegate:impact-analysis US-XXX` コマンドで変更影響検出
 6. AIDLC test-coverage-checker がNyquist検証を内包
 7. Wave実行前にVALIDATION.md を生成
 ```
@@ -455,7 +455,7 @@ Project Start
      │ Phase 3: Execute │
      │ ┌─GSD Wave Orchestrator──────┐  ← GSD実行エンジン
      │ │ Pre-flight:                │
-     │ │   harness:check-ready      │  ← AIDLC phase-gate
+     │ │   phasegate:check-ready      │  ← AIDLC phase-gate
      │ │ Wave 1 (parallel):         │
      │ │   ├─ executor(US-001)      │  ← Fresh 200K context
      │ │   └─ executor(US-002)      │     + AIDLC design docs
@@ -579,9 +579,9 @@ Project Start
 ### ハーネスコマンド (既存維持)
 
 ```
-harness:status, harness:init, harness:enable, harness:disable,
-harness:check-phase, harness:check-ready, harness:ci-check,
-harness:detect-drift, harness:collect-lessons, harness:detect-dead-code
+phasegate:status, phasegate:init, phasegate:enable, phasegate:disable,
+phasegate:check-phase, phasegate:check-ready, phasegate:ci-check,
+phasegate:detect-drift, phasegate:collect-lessons, phasegate:detect-dead-code
 ```
 
 ---
@@ -684,7 +684,7 @@ Quick: /aidlc:quick (ハーネス緩和) ← GSD由来
 | `/gsd:debug` | (既存のデバッグフロー) | 特別なコマンド不要 |
 | `/gsd:settings` | phasegate.config.json直接編集 | CLIコマンド追加検討 |
 | `/gsd:set-profile` | phasegate.config.json | 設定変更 |
-| `/gsd:health` | `harness:status` | 既存コマンドで代替 |
+| `/gsd:health` | `phasegate:status` | 既存コマンドで代替 |
 | `/gsd:update` | (npmパッケージ非依存のため不要) | 自前管理 |
 
 ## Appendix B: 新規作成が必要なスキル

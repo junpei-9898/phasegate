@@ -2,7 +2,7 @@
  * @layer presentation
  * @unit quick-mode
  *
- * harness:ci-check --quick フラグを受け取り、ExecuteQuickCiCheckUseCase を呼ぶハンドラー
+ * phasegate:ci-check --quick フラグを受け取り、ExecuteQuickCiCheckUseCase を呼ぶハンドラー
  */
 
 import { HumanQuickModeFormatter } from '../formatters/human-quick-mode-formatter.js';

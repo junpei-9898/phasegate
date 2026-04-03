@@ -15,17 +15,17 @@ export type CommandOutputType =
   | 'complete-check'
   | 'impact-analysis';
 
-const COMMAND_NAME_REGEX = /^harness:[a-z][a-z0-9-]*$/;
+const COMMAND_NAME_REGEX = /^phasegate:[a-z][a-z0-9-]*$/;
 
 const OUTPUT_TYPE_MAP: Record<string, CommandOutputType> = {
-  'harness:check-ready': 'check-ready',
-  'harness:check-phase': 'check-phase',
-  'harness:ci-check': 'ci-check',
-  'harness:detect-drift': 'detect-drift',
-  'harness:status': 'status',
-  'harness:lint': 'lint',
-  'harness:complete-check': 'complete-check',
-  'harness:impact-analysis': 'impact-analysis',
+  'phasegate:check-ready': 'check-ready',
+  'phasegate:check-phase': 'check-phase',
+  'phasegate:ci-check': 'ci-check',
+  'phasegate:detect-drift': 'detect-drift',
+  'phasegate:status': 'status',
+  'phasegate:lint': 'lint',
+  'phasegate:complete-check': 'complete-check',
+  'phasegate:impact-analysis': 'impact-analysis',
 };
 
 export interface CliCommandDefinitionProps {
@@ -68,7 +68,7 @@ export class CliCommandDefinition {
     }
   ): CliCommandDefinition {
     if (!commandName || !COMMAND_NAME_REGEX.test(commandName)) {
-      throw new Error(`InvalidCommandNameError: invalid command name '${commandName}'. Must match ^harness:[a-z][a-z0-9-]*$`);
+      throw new Error(`InvalidCommandNameError: invalid command name '${commandName}'. Must match ^phasegate:[a-z][a-z0-9-]*$`);
     }
 
     const outputType =

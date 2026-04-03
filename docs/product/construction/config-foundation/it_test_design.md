@@ -37,8 +37,8 @@
 
 | Handler | ファイル | 責務 |
 |---------|---------|------|
-| EnableFeatureCommandHandler | `presentation/cli/enable-feature-command-handler.ts` | harness:enable CLI |
-| DisableFeatureCommandHandler | `presentation/cli/disable-feature-command-handler.ts` | harness:disable CLI |
+| EnableFeatureCommandHandler | `presentation/cli/enable-feature-command-handler.ts` | phasegate:enable CLI |
+| DisableFeatureCommandHandler | `presentation/cli/disable-feature-command-handler.ts` | phasegate:disable CLI |
 | ListAvailableFeaturesCommandHandler | `presentation/cli/list-available-features-command-handler.ts` | 機能一覧表示 |
 
 ### Facade

@@ -126,7 +126,7 @@ v0のfuse-hooks-engine Unit（US-040〜044）を前身とし、v1ではFuture Ph
 | 種別 | 名称 | 利用Unit |
 |------|------|---------|
 | 設定ファイル | `.harness-hooks.yml`（宣言的フック定義） | 外部利用者（開発者） |
-| CLI | `harness:complete`（完了ゲートCLI、v1の`harness:complete-check`のFuture拡張版） | 外部利用者、agent-integration |
+| CLI | `harness:complete`（完了ゲートCLI、v1の`phasegate:complete-check`のFuture拡張版） | 外部利用者、agent-integration |
 | L0バリデーション | PreWrite/PreRead/PreBash enforcement（FUSE利用時） | 全Unit（FUSE有効環境） |
 | パターン | HookEvaluationService（フック評価ドメインサービス） | 将来の拡張Unit |
 

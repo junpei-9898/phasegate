@@ -12,7 +12,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-001
     it('supportedCommands 1件・noAgentApiImports=trueで生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint'], noAgentApiImports: true };
+      const input = { supportedCommands: ['phasegate:lint'], noAgentApiImports: true };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -22,7 +22,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-002
     it('supportedCommands 2件・noAgentApiImports=falseで生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: false };
+      const input = { supportedCommands: ['phasegate:lint', 'phasegate:complete-check'], noAgentApiImports: false };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -33,7 +33,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-003
     it('supportedCommands 1件（最小有効）で生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint'], noAgentApiImports: true };
+      const input = { supportedCommands: ['phasegate:lint'], noAgentApiImports: true };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -73,8 +73,8 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-020
     it('同一フィールドを持つ2つのFallbackCapabilitySpecが等値であること', () => {
       // Arrange
-      const a = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
-      const b = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
+      const a = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
+      const b = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
       // Act
       const actual = a.equals(b);
       // Assert

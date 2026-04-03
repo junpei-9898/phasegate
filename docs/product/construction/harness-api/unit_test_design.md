@@ -25,8 +25,8 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-CCD-001 | commandName=`harness:check-ready`, description=非空文字列, 有効なinputSpec/outputType/exitCodes | 正常に生成される |
-| UT-CCD-002 | commandName=`harness:impact-analysis`（args指定あり）, 有効なinputSpec/outputType/exitCodes | 正常に生成される |
+| UT-CCD-001 | commandName=`phasegate:check-ready`, description=非空文字列, 有効なinputSpec/outputType/exitCodes | 正常に生成される |
+| UT-CCD-002 | commandName=`phasegate:impact-analysis`（args指定あり）, 有効なinputSpec/outputType/exitCodes | 正常に生成される |
 | UT-CCD-003 | commandName=空文字列 | エラーをスロー / 生成失敗 |
 | UT-CCD-004 | commandName=`check-ready`（`harness:` プレフィックスなし） | エラーをスロー / 生成失敗 |
 | UT-CCD-005 | commandName=`harness:`（プレフィックスのみ、コマンド名部分が空） | エラーをスロー / 生成失敗 |
@@ -226,14 +226,14 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-CRG-001 | 有効なCliCommandDefinition（`harness:check-ready`）を登録 | 登録成功。listAll()で確認可能 |
+| UT-CRG-001 | 有効なCliCommandDefinition（`phasegate:check-ready`）を登録 | 登録成功。listAll()で確認可能 |
 | UT-CRG-002 | 異なる8コマンドを順番に登録 | 全件登録成功。listAll()で8件返却 |
 
 #### 不変条件テスト（INV-1 / INV-2）
 
 | ケースID | 不変条件 | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| UT-CRG-003 | INV-1: 同一CommandName重複禁止 | `harness:check-ready`を2回registerCommand | 2回目でエラーをスロー |
+| UT-CRG-003 | INV-1: 同一CommandName重複禁止 | `phasegate:check-ready`を2回registerCommand | 2回目でエラーをスロー |
 | UT-CRG-004 | INV-2: harness:プレフィックス必須 | commandName=`ci-check`のDefinitionを登録 | エラーをスロー（プレフィックスなし） |
 | UT-CRG-005 | INV-2: harness:プレフィックス必須 | commandName=空文字列 | エラーをスロー |
 
@@ -241,7 +241,7 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-CRG-006 | 登録済みのcommandName=`harness:ci-check` | 対応するCliCommandDefinitionを返す |
+| UT-CRG-006 | 登録済みのcommandName=`phasegate:ci-check` | 対応するCliCommandDefinitionを返す |
 | UT-CRG-007 | 未登録のcommandName=`harness:unknown-cmd` | エラーをスロー / undefinedを返す |
 
 #### 全件取得テスト（listAll）
@@ -260,27 +260,27 @@
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-CDS-001 | commandName=`harness:check-ready`, args={}, flags={} | PhaseGateQueryPort.queryAllStories() → 全passed=true | HarnessApiResponse\<CheckReadyResult\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-002 | commandName=`harness:check-ready` | PhaseGateQueryPort.queryAllStories() → 一部passed=false | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
-| UT-CDS-003 | commandName=`harness:check-phase`, args={unit: `harness-error`} | PhaseGateQueryPort.queryUnit(`harness-error`) → PhaseInfo | HarnessApiResponse\<PhaseInfo\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-004 | commandName=`harness:ci-check` | ValidatorExecutionPort.runL3Validators() → 全passed=true | HarnessApiResponse\<CiCheckResult\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-005 | commandName=`harness:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[]=[] | HarnessApiResponse\<DriftReportSummary\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-006 | commandName=`harness:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[1件以上] | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
-| UT-CDS-007 | commandName=`harness:lint` | BiomeLintPort.runLint() → pass | HarnessApiResponse（status=`pass`, data=undefined, exitCode=0）を返す |
-| UT-CDS-008 | commandName=`harness:impact-analysis`, args={storyId: `H09-01`} | ImpactAnalysisPort.analyze(`H09-01`) → ImpactAnalysisResult | HarnessApiResponse\<ImpactAnalysisResult\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-001 | commandName=`phasegate:check-ready`, args={}, flags={} | PhaseGateQueryPort.queryAllStories() → 全passed=true | HarnessApiResponse\<CheckReadyResult\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-002 | commandName=`phasegate:check-ready` | PhaseGateQueryPort.queryAllStories() → 一部passed=false | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
+| UT-CDS-003 | commandName=`phasegate:check-phase`, args={unit: `harness-error`} | PhaseGateQueryPort.queryUnit(`harness-error`) → PhaseInfo | HarnessApiResponse\<PhaseInfo\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-004 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runL3Validators() → 全passed=true | HarnessApiResponse\<CiCheckResult\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-005 | commandName=`phasegate:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[]=[] | HarnessApiResponse\<DriftReportSummary\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-006 | commandName=`phasegate:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[1件以上] | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
+| UT-CDS-007 | commandName=`phasegate:lint` | BiomeLintPort.runLint() → pass | HarnessApiResponse（status=`pass`, data=undefined, exitCode=0）を返す |
+| UT-CDS-008 | commandName=`phasegate:impact-analysis`, args={storyId: `H09-01`} | ImpactAnalysisPort.analyze(`H09-01`) → ImpactAnalysisResult | HarnessApiResponse\<ImpactAnalysisResult\>（status=`pass`, exitCode=0）を返す |
 
 #### ExitCode決定ルールテスト
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-CDS-009 | commandName=`harness:status` | ArtifactScannerPort.scan() → ArtifactScanResult（正常）, ConfigQueryPort → 設定取得成功 | exitCode=0（statusコマンドはfail=1を返さない §9-D5） |
-| UT-CDS-010 | commandName=`harness:status` | ArtifactScannerPort.scan() → LayerHealth全件lastResult=`unknown` | exitCode=0（unknownでも正常取得＝exitCode=0 §9-D5） |
+| UT-CDS-009 | commandName=`phasegate:status` | ArtifactScannerPort.scan() → ArtifactScanResult（正常）, ConfigQueryPort → 設定取得成功 | exitCode=0（statusコマンドはfail=1を返さない §9-D5） |
+| UT-CDS-010 | commandName=`phasegate:status` | ArtifactScannerPort.scan() → LayerHealth全件lastResult=`unknown` | exitCode=0（unknownでも正常取得＝exitCode=0 §9-D5） |
 
 #### 異常系（ポートエラー・未登録コマンド）
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-CDS-011 | commandName=`harness:ci-check` | ValidatorExecutionPort.runL3Validators() → 例外スロー | HarnessApiResponse（status=`error`, errors=[1件以上], exitCode=2）を返す |
+| UT-CDS-011 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runL3Validators() → 例外スロー | HarnessApiResponse（status=`error`, errors=[1件以上], exitCode=2）を返す |
 | UT-CDS-012 | commandName=`harness:unknown-command`（未登録） | — | エラーをスロー / HarnessApiResponse（status=`error`, exitCode=2）を返す |
 
 ---
@@ -327,7 +327,7 @@
 | UT-BND-007 | LayerHealth.lastResult | lastResult=`fail`（有効値確認） | 正常に生成される |
 | UT-BND-008 | ExitCodeSpec | pass=0, fail=1, error=2（全て有効値） | 正常に生成される |
 | UT-BND-009 | CommandRegistry.findByName | 1件も登録されていない状態でfindByName | エラーをスロー / 未登録として扱われる |
-| UT-BND-010 | CommandDispatchService | commandName=`harness:complete-check` | ValidatorExecutionPort + BiomeLintPort 両方に委譲される（完全チェック） |
+| UT-BND-010 | CommandDispatchService | commandName=`phasegate:complete-check` | ValidatorExecutionPort + BiomeLintPort 両方に委譲される（完全チェック） |
 | UT-BND-011 | StatusDerivationService | ArtifactScanResultの全成果物present=false | 全LayerHealth.lastResult=`unknown` |
 | UT-BND-012 | PhaseInfo.currentLevel | currentLevel=-1（負数） | エラーをスロー / 生成失敗 |
 

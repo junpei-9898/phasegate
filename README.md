@@ -42,7 +42,7 @@ npm install --save-dev phasegate
 ### 2. Initialize
 
 ```bash
-npx harness init --name my-project
+npx phasegate init --name my-project
 ```
 
 This deploys 28 skills to `.claude/skills/` and generates `phasegate.config.json`.
@@ -202,7 +202,7 @@ All hook errors use the `HarnessError` format with ADR references and fix exampl
 ## CLI Reference
 
 ```bash
-npx harness <command> [options]
+npx phasegate <command> [options]
 ```
 
 | Command | Description |
@@ -212,8 +212,8 @@ npx harness <command> [options]
 | `validate --layer <L1-L4\|all>` | Run validators for specified layer |
 | `ci-check` | Full CI check (L2-L4) |
 | `update-skills` | Update skills to latest version |
-| `harness:status` | Display overall harness health summary |
-| `harness:check-phase --unit <id>` | Check current phase for a Unit |
+| `phasegate:status` | Display overall harness health summary |
+| `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
 
 See the [Japanese README](README.ja.md) for the complete CLI reference.

@@ -1077,7 +1077,7 @@ target("CommentDensityParser.parse", () => {
 
 ```ts
 target("HarnessLintCommandHandler.execute", () => {
-  describe("harness:lintコマンドを実行する", () => {
+  describe("phasegate:lintコマンドを実行する", () => {
     // UseCase はモック、stdout/stderr は capture する
   });
 });

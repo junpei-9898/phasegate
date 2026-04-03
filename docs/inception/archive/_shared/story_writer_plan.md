@@ -140,7 +140,7 @@ REQ-XX-XXX, ...
 | US-005 | 品質管理者として、requirement-test-matrix.jsonでAC→テストケースマッピングを定義したい | REQ-NQ-001 |
 | US-006 | 開発者として、phase-gateにACマッピング完了チェックが含まれてほしい | REQ-NQ-002 |
 | US-007 | 品質管理者として、test-coverage-checkerで要件カバレッジ（AC網羅率）を算出したい | REQ-NQ-003 |
-| US-008 | 開発者として、harness:impact-analysisでUS変更時の影響テストを自動特定したい | REQ-NQ-004 |
+| US-008 | 開発者として、phasegate:impact-analysisでUS変更時の影響テストを自動特定したい | REQ-NQ-004 |
 | US-009 | オーケストレーターとして、実行前にVALIDATION.mdを自動生成したい | REQ-NQ-005 |
 
 ### E-03: Quick Mode
@@ -166,7 +166,7 @@ REQ-XX-XXX, ...
 | US-016 | ハーネス管理者として、PreToolUse Hookでリンター設定ファイルの変更をブロックしたい | REQ-QH-001 |
 | US-017 | 品質管理者として、Stop Hookにpnpm test全グリーンのテストゲートを追加したい | REQ-QH-002 |
 | US-018 | ハーネス開発者として、Stop Hookテストゲートに無限ループ防止機構を実装したい | REQ-QH-003 |
-| US-019 | 品質管理者として、Stop Hookにharness:ci-check実行を追加したい | REQ-QH-004 |
+| US-019 | 品質管理者として、Stop Hookにphasegate:ci-check実行を追加したい | REQ-QH-004 |
 
 ### E-06: ADR・ドキュメント管理基盤
 
@@ -192,7 +192,7 @@ REQ-XX-XXX, ...
 | US-027 | ハーネス管理者として、phasegate.config.json v2にorchestrationセクションを追加したい | REQ-CF-001 |
 | US-028 | ハーネス管理者として、phasegate.config.json v2にsessionセクションを追加したい | REQ-CF-002 |
 | US-029 | ハーネス管理者として、GSD由来機能をデフォルト無効にしたい | REQ-CF-003 |
-| US-030 | ハーネス利用者として、harness:migrate-configでv1→v2自動マイグレーションしたい | REQ-CF-004 |
+| US-030 | ハーネス利用者として、phasegate:migrate-configでv1→v2自動マイグレーションしたい | REQ-CF-004 |
 
 ### E-09: 非交渉要件K1-K13回帰保証
 
@@ -312,9 +312,9 @@ jsonでお願い
 
 ### [Question] Q6: AGENTS.md改善の具体像
 
-「コマンド実行方式」の具体的なイメージが不明確。バリデータ一覧を`harness:status`実行で動的取得する意味か？
+「コマンド実行方式」の具体的なイメージが不明確。バリデータ一覧を`phasegate:status`実行で動的取得する意味か？
 
-**推奨案:** ポインタ型（「詳細は`harness:status`を実行せよ」形式）への移行。具体的な構造はストーリー実装計画（Phase 3）で設計する。
+**推奨案:** ポインタ型（「詳細は`phasegate:status`を実行せよ」形式）への移行。具体的な構造はストーリー実装計画（Phase 3）で設計する。
 
 [Answer]
 docs/inception/_shared 配下にいくつか参考にできるファイルを追加しておいたので、そこを調査して適切な仕様に寄せてください。

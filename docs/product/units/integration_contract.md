@@ -126,7 +126,7 @@ domain層は外部に依存しない。application層はdomain層のみに依存
 | **AGENTS.md Schema** | ci-governance | regression-suite | AGENTS.mdの最終文書構造定義（ポインタ型） |
 | **LessonArtifact Schema** | ci-governance | skill-quality (Agent-Lesson出力フォーマット) | lesson artifactのJSON構造定義。skill-qualityがこのスキーマに準拠してartifactを出力し、ci-governanceが消費してAGENTS.mdに集約反映 |
 | **ADR Frontmatter Schema** | adr-foundation | harness-error (adr_ref), ci-governance (ADRリンク), validator-system (adr_ref検証) | ADRフロントマターのYAML構造 |
-| **CLI Command Registry** | harness-api | agent-integration, ci-governance (ポインタ実在検証), Future: fuse-hooks-engine, phase2-extensions | 全CLIコマンド名・入出力仕様・終了コード定義（`harness:lint`、`harness:complete-check`含む）。Future Unitはコマンド拡張ポイントとして消費 |
+| **CLI Command Registry** | harness-api | agent-integration, ci-governance (ポインタ実在検証), Future: fuse-hooks-engine, phase2-extensions | 全CLIコマンド名・入出力仕様・終了コード定義（`phasegate:lint`、`phasegate:complete-check`含む）。Future Unitはコマンド拡張ポイントとして消費 |
 | **Phase Dependency 3層構造** | phase-dependency-model | validator-system (L2 phase-gate), regression-suite (K2/K14回帰テスト) | Level 1→2→3の前提条件・成果物定義 |
 | **@unit/@layerメタデータ仕様** | traceability-model | biome-ast-engine (L1), validator-system (L2 metadata), skill-quality (Cascade Updater), regression-suite | メタデータアノテーション仕様 |
 | **AcCoverageGatePolicy** | nyquist-validation | validator-system (L2 phase-gateバリデータが実行) | ACマッピング完了判定ロジック |
@@ -148,7 +148,7 @@ interface HarnessApiResponse<T = unknown> {
 }
 ```
 
-> **共通envelope + payload型パターン**: 全コマンドのJSON出力は共通envelope `{ status, errors[], summary }` を持ちつつ、コマンド固有のpayload型を `data` フィールドに格納する。例: `harness:check-phase` → `data: PhaseInfo`、`harness:detect-drift` → `data: DriftReportSummary`、`harness:ci-check` → `data: CiCheckResult`。
+> **共通envelope + payload型パターン**: 全コマンドのJSON出力は共通envelope `{ status, errors[], summary }` を持ちつつ、コマンド固有のpayload型を `data` フィールドに格納する。例: `phasegate:check-phase` → `data: PhaseInfo`、`phasegate:detect-drift` → `data: DriftReportSummary`、`phasegate:ci-check` → `data: CiCheckResult`。
 
 #### RequirementTestMatrix Schema
 
@@ -191,23 +191,23 @@ archgate:                                              # optional: ADR→Harness
 
 | コマンド | 説明 | 入力 | 出力 | 終了コード |
 |---------|------|------|------|-----------|
-| `harness:check-ready` | 全storyのPhase Gate通過状態を返却 | なし | HarnessApiResponse（Phase Gate通過状態） | 0: 全通過 / 1: 未通過あり / 2: エラー |
-| `harness:check-phase <unit>` | 指定Unitの現在フェーズを返却 | Unit名 | PhaseInfo（Level/スキル名） | 0: 正常 / 1: Unit未検出 / 2: エラー |
-| `harness:ci-check` | 全L3バリデータの統合実行 | なし | CiCheckResult（バリデータ別Pass/Fail + HarnessError一覧） | 0: Pass / 1: Fail / 2: エラー |
-| `harness:detect-drift` | 設計⇔コード双方向乖離検出 | `--json`（オプション） | DriftReportSummary（方向/unit/要素/推奨アクション） | 0: 乖離なし / 1: 乖離あり / 2: エラー |
-| `harness:status` | ハーネス全体の健全性サマリー | なし | HarnessStatusSummary（L1-L4健全性/Phase Gate/Preset/設定） | 0: 正常 / 2: エラー |
-| `harness:lint` | L1 Biomeバリデータ実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
-| `harness:complete-check` | L1-L4全バリデータ統合実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
-| `harness:impact-analysis <HXX-XX>` | 変更影響テストケース特定 | ストーリーID（HXX-XX形式） | ImpactAnalysisResult | 0: 正常 / 1: ストーリー未検出 / 2: エラー |
+| `phasegate:check-ready` | 全storyのPhase Gate通過状態を返却 | なし | HarnessApiResponse（Phase Gate通過状態） | 0: 全通過 / 1: 未通過あり / 2: エラー |
+| `phasegate:check-phase <unit>` | 指定Unitの現在フェーズを返却 | Unit名 | PhaseInfo（Level/スキル名） | 0: 正常 / 1: Unit未検出 / 2: エラー |
+| `phasegate:ci-check` | 全L3バリデータの統合実行 | なし | CiCheckResult（バリデータ別Pass/Fail + HarnessError一覧） | 0: Pass / 1: Fail / 2: エラー |
+| `phasegate:detect-drift` | 設計⇔コード双方向乖離検出 | `--json`（オプション） | DriftReportSummary（方向/unit/要素/推奨アクション） | 0: 乖離なし / 1: 乖離あり / 2: エラー |
+| `phasegate:status` | ハーネス全体の健全性サマリー | なし | HarnessStatusSummary（L1-L4健全性/Phase Gate/Preset/設定） | 0: 正常 / 2: エラー |
+| `phasegate:lint` | L1 Biomeバリデータ実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
+| `phasegate:complete-check` | L1-L4全バリデータ統合実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
+| `phasegate:impact-analysis <HXX-XX>` | 変更影響テストケース特定 | ストーリーID（HXX-XX形式） | ImpactAnalysisResult | 0: 正常 / 1: ストーリー未検出 / 2: エラー |
 
-> **実行ロジック所有**: `harness:lint` → biome-ast-engine、`harness:ci-check` / `harness:complete-check` / `harness:detect-drift` → validator-system + biome-ast-engine、`harness:status` → config-foundation + validator-system、`harness:impact-analysis` → nyquist-validation
+> **実行ロジック所有**: `phasegate:lint` → biome-ast-engine、`phasegate:ci-check` / `phasegate:complete-check` / `phasegate:detect-drift` → validator-system + biome-ast-engine、`phasegate:status` → config-foundation + validator-system、`phasegate:impact-analysis` → nyquist-validation
 
 ### 3.2 config-foundation所有コマンド
 
 | コマンド | 説明 | 入力 | 出力 | 終了コード |
 |---------|------|------|------|-----------|
-| `harness:enable <feature>` | GSD由来品質機能の個別有効化 | 機能名 | 有効化結果メッセージ | 0: 成功 / 1: 機能名不明 / 2: エラー |
-| `harness:disable <feature>` | GSD由来品質機能の個別無効化 | 機能名 | 無効化結果メッセージ | 0: 成功 / 1: 機能名不明 / 2: エラー |
+| `phasegate:enable <feature>` | GSD由来品質機能の個別有効化 | 機能名 | 有効化結果メッセージ | 0: 成功 / 1: 機能名不明 / 2: エラー |
+| `phasegate:disable <feature>` | GSD由来品質機能の個別無効化 | 機能名 | 無効化結果メッセージ | 0: 成功 / 1: 機能名不明 / 2: エラー |
 
 ### 3.3 終了コード規約（全コマンド共通）
 
@@ -279,7 +279,7 @@ Wave 3（拡張・運用・保証）
 │                ←── validator-system（L1+L2 Atomic commit前チェック） │
 │                ※ AGENTS.mdに直接書かず、lesson artifactを出力       │
 │                                                                      │
-│  ci-governance ←── harness-api（harness:statusポインタ）            │
+│  ci-governance ←── harness-api（phasegate:statusポインタ）            │
 │                ←── harness-error（反復エラー検出）                  │
 │                ←── adr-foundation（ADR参照リンク）                  │
 │                ←── skill-quality（lesson artifact消費→AGENTS.md集約）│
@@ -348,7 +348,7 @@ doc-freshness-checker、pointer-validatorをL4バリデータとして追加。v
 |----|------|-------------|-----------------|
 | K1 | 4層防御モデル（L1-L4）。将来L0（FUSE）追加時は5層に拡張 | **validator-system** | biome-ast-engine (L1), config-foundation (layers設定), harness-api (status/complete-check) |
 | K2 | Phase Gate | **phase-dependency-model** | validator-system (L2 phase-gate実行), harness-api (check-ready/check-phase) |
-| K3 | Biome AST解析 | **biome-ast-engine** | harness-api (harness:lint), agent-integration (harness:lint経由) |
+| K3 | Biome AST解析 | **biome-ast-engine** | harness-api (phasegate:lint), agent-integration (phasegate:lint経由) |
 | K3.5 | @unit/@layer/@story-idメタデータ | **traceability-model** | biome-ast-engine (L1 require-*-comment), validator-system (L2 metadata), skill-quality (Cascade Updater) |
 | K4 | テスト品質ルール | **validator-system** | — |
 | K5 | DDD設計スキル群 | **skill-quality** | — |

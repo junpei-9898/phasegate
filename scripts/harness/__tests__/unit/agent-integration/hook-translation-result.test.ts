@@ -25,7 +25,7 @@ target('HookTranslationResult', () => {
       // Arrange
       const input = {
         shouldBlock: false,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: ['--fast'],
         expectedExitCode: 0,
         timeoutMs: 500,
@@ -33,7 +33,7 @@ target('HookTranslationResult', () => {
       // Act
       const actual = HookTranslationResult.create(input);
       // Assert
-      expect(actual.cliCommand).toBe('harness:lint');
+      expect(actual.cliCommand).toBe('phasegate:lint');
       expect(actual.timeoutMs).toBe(500);
     });
 
@@ -60,7 +60,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-005
     it('timeoutMs省略時にundefinedになること', () => {
       // Arrange
-      const input = { shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 };
       // Act
       const actual = HookTranslationResult.create(input);
       // Assert
@@ -72,7 +72,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-010 / UT-BV-005
     it('HarnessErrorがthrowされること', () => {
       // Arrange
-      const input = { shouldBlock: true, cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: true, cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 };
       // Act
       const actual = () => HookTranslationResult.create(input);
       // Assert
@@ -82,7 +82,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-011
     it('エラーメッセージに「shouldBlock=trueのときcliCommandは設定不可」等の識別情報が含まれること', () => {
       // Arrange
-      const input = { shouldBlock: true, cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: true, cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 };
       let caughtError: Error | undefined;
       // Act
       try {
@@ -103,7 +103,7 @@ target('HookTranslationResult', () => {
       const input = {
         shouldBlock: false,
         skipReason: 'HOOK_DISABLED' as const,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: [],
         expectedExitCode: 0,
       };
@@ -119,7 +119,7 @@ target('HookTranslationResult', () => {
       const input = {
         shouldBlock: false,
         skipReason: 'HOOK_DISABLED' as const,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: [],
         expectedExitCode: 0,
       };
@@ -140,8 +140,8 @@ target('HookTranslationResult', () => {
     // UT-HTR-030
     it('同一フィールドを持つ2つのHookTranslationResultが等値であること', () => {
       // Arrange
-      const a = createHookTranslationResult({ cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
-      const b = createHookTranslationResult({ cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
+      const a = createHookTranslationResult({ cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
+      const b = createHookTranslationResult({ cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
       // Act
       const actual = a.equals(b);
       // Assert

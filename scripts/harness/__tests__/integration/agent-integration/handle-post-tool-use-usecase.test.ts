@@ -37,7 +37,7 @@ target('HandlePostToolUseUseCase.execute', () => {
   describe('PostToolUse Hook の CLI 実行制御を行う', () => {
     context('Hook 有効かつ CLI が正常終了する場合', () => {
       // IT-UC-HandlePostToolUse-001
-      it('PostToolUse Hookが有効な場合、harness:lint --fastが実行されること', async () => {
+      it('PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -121,7 +121,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           getProtectedFilePatterns: vi.fn(),
         };
         const mockCliExecutorPort = {
-          execute: vi.fn().mockRejectedValue(new TimeoutError('harness:lint', 500)),
+          execute: vi.fn().mockRejectedValue(new TimeoutError('phasegate:lint', 500)),
         };
         const useCase = createHandlePostToolUseUseCase({
           configQueryPort: mockConfigQueryPort,

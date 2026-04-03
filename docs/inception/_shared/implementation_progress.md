@@ -183,14 +183,14 @@
 | H08-07〜09 ユニットテスト・ITテスト実装 | — | ✅ 2026-03-21（11ファイル追加、388テスト→2650テスト） |
 | スタブ #4 stub実装コメント除去 | — | ✅ 2026-03-21（optional deps パターンへ置換） |
 | `pnpm test` 全グリーン確認 | — | ✅ 2650テスト全グリーン（2026-03-21） |
-| `npx harness validate --layer L1` で L1-017/L1-018/L2-013 有効確認 | — | ✅ 13件全PASS確認（2026-03-21） |
+| `npx phasegate validate --layer L1` で L1-017/L1-018/L2-013 有効確認 | — | ✅ 13件全PASS確認（2026-03-21） |
 
 **Wave 2A 完了条件チェックリスト**
 - [x] H08-01〜09 テストグリーン（H08-07〜09 ✅ 2026-03-21）
 - [x] スタブ #1〜#9 全スタブコメント消去済み（#4 optional deps パターンへ移行 ✅ 2026-03-21）
 - [x] H07-01〜04 テストグリーン（82 IT テスト・プレゼンテーション層含む全機能 ✅ 2026-03-21）
 - [ ] `requirement-test-matrix.json` 生成確認（Wave 2B で対応）
-- [x] L1-017/L1-018/L2-013 が `npx harness validate --layer L1` で有効（✅ 2026-03-21）
+- [x] L1-017/L1-018/L2-013 が `npx phasegate validate --layer L1` で有効（✅ 2026-03-21）
 
 ---
 
@@ -253,7 +253,7 @@
 | consistency-checker 実行（harness-api） | `consistency-checker` | ⬜ meta-tooling 項目 |
 | cascade-updater（必要時） | `cascade-updater` | ✅ 2026-03-21（logical_design.md §5 全アダプタ RealDeps パターン追記済み） |
 | `pnpm test` 全グリーン確認 | — | ✅ 2594テスト全グリーン（2026-03-21） |
-| `npx harness validate` 全PASS確認 | — | ✅ 13件全PASS（2026-03-21） |
+| `npx phasegate validate` 全PASS確認 | — | ✅ 13件全PASS（2026-03-21） |
 
 **Wave 2B 完了条件チェックリスト**
 - [x] H09-01〜04 全テストグリーン（2594件 ✅ 2026-03-21）
@@ -261,11 +261,11 @@
 - [x] `main.ts` `buildHarnessApiModule()` で全 harness:* コマンドへ実依存注入（✅ 2026-03-21）
 - [x] `CommandDispatchService` INV-5 空配列クラッシュ修正（✅ 2026-03-21 — 空時は "No L3 validators configured" pass を返す）
 - [x] `docs/product/construction/harness-api/logical_design.md` 実装整合更新（✅ 2026-03-21）
-- [ ] `npx harness harness:check-ready` / `harness:check-phase <unit>` 正常動作（環境要件あり・実行確認推奨）
-- [ ] `npx harness harness:ci-check` フルモード動作（環境要件あり・実行確認推奨）
-- [ ] `npx harness harness:detect-drift` JSON 出力動作（環境要件あり・実行確認推奨）
-- [ ] `npx harness harness:status` Phase Gate サマリー返却動作（環境要件あり・実行確認推奨）
-- [ ] `npx harness harness:impact-analysis <HXX-XX>` 正常動作（`requirement-test-matrix.json` が存在する環境で確認推奨）
+- [ ] `npx phasegate phasegate:check-ready` / `phasegate:check-phase <unit>` 正常動作（環境要件あり・実行確認推奨）
+- [ ] `npx phasegate phasegate:ci-check` フルモード動作（環境要件あり・実行確認推奨）
+- [ ] `npx phasegate phasegate:detect-drift` JSON 出力動作（環境要件あり・実行確認推奨）
+- [ ] `npx phasegate phasegate:status` Phase Gate サマリー返却動作（環境要件あり・実行確認推奨）
+- [ ] `npx phasegate phasegate:impact-analysis <HXX-XX>` 正常動作（`requirement-test-matrix.json` が存在する環境で確認推奨）
 
 ---
 
@@ -325,7 +325,7 @@
 | consistency-checker 実行（quick-mode / agent-integration） | `consistency-checker` | ⬜ meta-tooling 項目 |
 | cascade-updater（必要時） | `cascade-updater` | ➖ 不要（設計乖離なし・追記事項なし） |
 | `pnpm test` 全グリーン確認 | — | ✅ 2594テスト全グリーン（2026-03-21） |
-| `npx harness validate` 全PASS確認 | — | ✅ 13件全PASS（2026-03-21） |
+| `npx phasegate validate` 全PASS確認 | — | ✅ 13件全PASS（2026-03-21） |
 
 **Wave 2C 完了条件チェックリスト**
 - [x] H10-01〜04 全テストグリーン（✅ 2026-03-21）
@@ -457,7 +457,7 @@
 **Wave 3B 完了条件チェックリスト**
 - [x] H13-01〜03 全テストグリーン（✅ 2026-03-21）
 - [x] スタブ #19 スタブコメント消去済み（✅ 2026-03-21）
-- [ ] `npx harness ci:generate-template` が 3 種テンプレート生成（環境要件あり・未確認）
+- [ ] `npx phasegate ci:generate-template` が 3 種テンプレート生成（環境要件あり・未確認）
 - [x] H14-01〜03 全テストグリーン（✅ 2026-03-21）
 - [ ] 4 回帰テストコマンドが `0/0 passed` 以外の結果返却（Vitest統合テスト環境要件あり）
 
@@ -517,7 +517,7 @@
 **Wave 3C 完了条件チェックリスト（= v1 MVH 完成）**
 - [x] H15-01〜02 全テストグリーン（✅ 2026-03-21）
 - [x] スタブ #20 スタブコメント消去済み（✅ 2026-03-21）
-- [ ] `npx harness regression:configure-ci-gate` が CI ゲート設定可（環境要件あり・未確認）
+- [ ] `npx phasegate regression:configure-ci-gate` が CI ゲート設定可（環境要件あり・未確認）
 - [x] K1-K15 非交渉要件回帰テストコマンド正常動作（✅ E2Eテスト全PASS 2026-03-21）
 
 ---

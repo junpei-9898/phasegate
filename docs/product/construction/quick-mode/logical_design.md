@@ -21,7 +21,7 @@
 | Domain | `QuickModeJudgmentEngine` による変更分類・拒否ルール評価、`ValidatorRelaxationService` による緩和プロファイル生成、各値オブジェクトの不変条件保持 | 値オブジェクト、ドメインサービス、ドメインポート | なし |
 | Application | ストーリー単位のユースケース調停。ChangedFile[] の受け取りから `QuickModeDecision` の組立まで。Shared Kernel DTOへの投影 | UseCase、DTO、Mapper | Domain |
 | Infrastructure | ドメインポートの実装。git diff解析による `ChangedFile[]` 供給、`HarnessConfigV2` からの設定読み取り、`ValidatorIdRegistry` への問い合わせ | Adapter | Application, Domain |
-| Presentation | `harness:ci-check --quick` の引数解析、Quick Mode判定結果の出力整形、終了コード決定。harness-api から呼ばれる薄い境界 | CLI handler、formatter | Application, Domain |
+| Presentation | `phasegate:ci-check --quick` の引数解析、Quick Mode判定結果の出力整形、終了コード決定。harness-api から呼ばれる薄い境界 | CLI handler、formatter | Application, Domain |
 
 ### 1.2 依存方向
 
@@ -618,7 +618,7 @@ interface ValidatorRelaxationProfileContract {
 
 ### 4.4 ExecuteQuickCiCheckUseCase（H10-03対応）
 
-**責務**: `harness:ci-check --quick` の実行フロー全体を調停する。H10-01（適用可否判定）→ H10-02（緩和プロファイル生成）→ validator-system への緩和指示の流れを統合する。
+**責務**: `phasegate:ci-check --quick` の実行フロー全体を調停する。H10-01（適用可否判定）→ H10-02（緩和プロファイル生成）→ validator-system への緩和指示の流れを統合する。
 
 **コンストラクタ依存**
 
@@ -748,7 +748,7 @@ interface QuickModeDecisionContract {
 
 ### 6.1 前提
 
-quick-mode は `integration_contract.md §3.1` のトップレベル CLI コマンドの所有者ではない。`harness:ci-check --quick` コマンドは harness-api が所有し、本 Unit の Presentation 層はその内部から呼ばれる CLI handler / formatter を提供する。
+quick-mode は `integration_contract.md §3.1` のトップレベル CLI コマンドの所有者ではない。`phasegate:ci-check --quick` コマンドは harness-api が所有し、本 Unit の Presentation 層はその内部から呼ばれる CLI handler / formatter を提供する。
 
 ### 6.2 CiCheckQuickModeHandler
 
@@ -756,7 +756,7 @@ quick-mode は `integration_contract.md §3.1` のトップレベル CLI コマ�
 
 **役割**
 
-- `harness:ci-check --quick` フラグを受け取り、`ExecuteQuickCiCheckUseCase` を呼ぶ入口
+- `phasegate:ci-check --quick` フラグを受け取り、`ExecuteQuickCiCheckUseCase` を呼ぶ入口
 - 判定結果（`QuickModeDecisionContract`）を指定フォーマットで出力する
 - 終了コードを決定する
 
@@ -867,11 +867,11 @@ sequenceDiagram
     UC2-->>CLI: Readonly<ValidatorRelaxationProfileContract>
 ```
 
-### 7.3 H10-03: harness:ci-check --quick 統合フロー
+### 7.3 H10-03: phasegate:ci-check --quick 統合フロー
 
 ```mermaid
 sequenceDiagram
-    participant HarnessApi as harness-api<br/>harness:ci-check --quick
+    participant HarnessApi as harness-api<br/>phasegate:ci-check --quick
     participant CLI as Presentation<br/>CiCheckQuickModeHandler
     participant UC3 as Application<br/>ExecuteQuickCiCheckUseCase
     participant UC1 as Application<br/>JudgeQuickModeEligibilityUseCase
@@ -960,7 +960,7 @@ sequenceDiagram
 **根拠**:
 - `domain_model.md D4` の判断を UseCase 設計レベルで具体化する
 - `eligible=false` の判定が先に分かれば、コストの高い `ValidatorRelaxationService.build()` を呼ぶ必要がない（早期終了の最適化）
-- `harness:status` コマンド（harness-api 所有）が eligibility だけを表示したいユースケースに対し、`JudgeQuickModeEligibilityUseCase` を単独で呼べる柔軟性を持つ
+- `phasegate:status` コマンド（harness-api 所有）が eligibility だけを表示したいユースケースに対し、`JudgeQuickModeEligibilityUseCase` を単独で呼べる柔軟性を持つ
 - `ExecuteQuickCiCheckUseCase`（H10-03）が2つの UseCase を調停することで、Application 層の責務分担が明確になる
 - 論理設計の追加判断: `BuildRelaxationProfileUseCase` は `QuickModeNotEligibleError` を明示的に投げることで、`eligible=false` の eligibility を渡した場合の誤用を型安全に防止する
 
@@ -1073,7 +1073,7 @@ sequenceDiagram
 - 生成されるプロファイルは `INV-P1` 〜 `INV-P6` を全て満たすこと
 - デフォルト設定の場合: L1全維持 / L2-001スキップ・L2-002+L2-003維持 / L3-001維持・L3-002〜L3-004スキップ / L4全スキップ
 
-### 9.3 H10-03 harness:ci-check --quick統合
+### 9.3 H10-03 phasegate:ci-check --quick統合
 
 **対象コンポーネント**:
 
@@ -1086,11 +1086,11 @@ sequenceDiagram
 
 **受入条件の要点**:
 
-- `harness:ci-check --quick` が呼ばれた際に H10-01 → H10-02 の順で処理を実行する
+- `phasegate:ci-check --quick` が呼ばれた際に H10-01 → H10-02 の順で処理を実行する
 - `eligible=false` の場合は `--fail-on-reject` フラグに応じて終了コード1を返す
 - `eligible=true` かつ `dryRun=false` の場合は validator-system に緩和プロファイルを渡す
 - `--format human|agent|json` に応じて判定結果を整形して stdout に出力する
-- `QuickModeDecisionContract` は harness-api の `harness:status` コマンドが消費する型と互換性を持つこと
+- `QuickModeDecisionContract` は harness-api の `phasegate:status` コマンドが消費する型と互換性を持つこと
 
 ---
 

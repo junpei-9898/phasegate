@@ -20,7 +20,7 @@
 | domain | 8ルールの不変定義、importグラフ不変条件、違反判定、LintReport集約結果の構築 | なし |
 | application | 設定取得、解析対象ファイル収集、AST解析とBiome CLI実行の調停、ドメインサービス実行、CLI向けDTO組み立て | domain |
 | infrastructure | TypeScript AST解析、ファイルI/O、Biome CLI実行、HarnessConfigV2読取、HarnessError変換、ESLint残存検査 | application, domain |
-| presentation | `harness:lint` の引数解釈、UseCase呼び出し、JSON/テキスト出力、終了コード決定 | application |
+| presentation | `phasegate:lint` の引数解釈、UseCase呼び出し、JSON/テキスト出力、終了コード決定 | application |
 
 ### 1.2 依存方向
 
@@ -968,7 +968,7 @@ interface ClockPort {
 
 **実装ファイル**: `presentation/cli/harness-lint-command-handler.ts`
 
-**対応コマンド**: `pnpm harness:lint`
+**対応コマンド**: `pnpm phasegate:lint`
 
 **入力引数**:
 
@@ -1094,7 +1094,7 @@ interface ClockPort {
 ### 8.3 H01-03: v0 ESLintからの移行
 
 - `VerifyEslintRemovalUseCase` + `WorkspaceInventoryAdapter` により `.eslintrc*`, `eslint.config.*`, `@typescript-eslint/*` の残存を検査する
-- `BiomeCliExecutorAdapter` を標準lint/format統合点として配置し、CLIは `harness:lint` 一系統へ集約する
+- `BiomeCliExecutorAdapter` を標準lint/format統合点として配置し、CLIは `phasegate:lint` 一系統へ集約する
 - `RuleType` から `RustPlugin` を削除し、v0の plugin/WASM 前提を論理設計レベルで廃止する
 
 ---

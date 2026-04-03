@@ -45,7 +45,7 @@ export const context = describe;
 
 // ─── harness-api ファクトリ ───────────────────────────────────────────
 
-export const createCliCommandDefinition = (commandName = 'harness:check-ready') =>
+export const createCliCommandDefinition = (commandName = 'phasegate:check-ready') =>
   CliCommandDefinition.create(commandName);
 
 export const createHarnessApiResponse = <T>(
@@ -125,19 +125,19 @@ import { target, context } from '../../helpers/test-helpers';
 target('CliCommandDefinition', () => {
   describe('有効なコマンド名でCliCommandDefinitionを生成する', () => {
     // UT-CCD-001
-    it('harness:check-readyからCliCommandDefinitionが生成されること', () => {
+    it('phasegate:check-readyからCliCommandDefinitionが生成されること', () => {
       // Arrange
-      const input = 'harness:check-ready';
+      const input = 'phasegate:check-ready';
       // Act
       const actual = CliCommandDefinition.create(input);
       // Assert
-      expect(actual.commandName).toBe('harness:check-ready');
+      expect(actual.commandName).toBe('phasegate:check-ready');
     });
 
     // UT-CCD-002
-    it('harness:impact-analysis（args指定あり）からCliCommandDefinitionが生成されること', () => {
+    it('phasegate:impact-analysis（args指定あり）からCliCommandDefinitionが生成されること', () => {
       // Arrange
-      const input = 'harness:impact-analysis';
+      const input = 'phasegate:impact-analysis';
       const inputSpec = CommandInputSpec.create({
         args: [{ name: 'storyId', type: 'string' }],
         flags: [],
@@ -145,7 +145,7 @@ target('CliCommandDefinition', () => {
       // Act
       const actual = CliCommandDefinition.create(input, { inputSpec });
       // Assert
-      expect(actual.commandName).toBe('harness:impact-analysis');
+      expect(actual.commandName).toBe('phasegate:impact-analysis');
       expect(actual.inputSpec.args).toHaveLength(1);
     });
   });
@@ -190,8 +190,8 @@ target('CliCommandDefinition', () => {
     // UT-CCD-006
     it('同一commandNameを持つ2つのCliCommandDefinitionが等価であること', () => {
       // Arrange
-      const a = CliCommandDefinition.create('harness:check-ready');
-      const b = CliCommandDefinition.create('harness:check-ready');
+      const a = CliCommandDefinition.create('phasegate:check-ready');
+      const b = CliCommandDefinition.create('phasegate:check-ready');
       // Act
       const actual = a.equals(b);
       // Assert
@@ -201,8 +201,8 @@ target('CliCommandDefinition', () => {
     // UT-CCD-007
     it('異なるcommandNameを持つ2つのCliCommandDefinitionが非等価であること', () => {
       // Arrange
-      const a = CliCommandDefinition.create('harness:check-ready');
-      const b = CliCommandDefinition.create('harness:ci-check');
+      const a = CliCommandDefinition.create('phasegate:check-ready');
+      const b = CliCommandDefinition.create('phasegate:ci-check');
       // Act
       const actual = a.equals(b);
       // Assert
@@ -214,13 +214,13 @@ target('CliCommandDefinition', () => {
     // UT-CCD-008
     it('生成後にcommandNameプロパティを変更しても反映されないこと', () => {
       // Arrange
-      const sut = CliCommandDefinition.create('harness:check-ready');
+      const sut = CliCommandDefinition.create('phasegate:check-ready');
       // Act
       // @ts-expect-error 意図的なimmutabilityテスト
       const actual = () => { sut.commandName = 'harness:other'; };
       // Assert
       // TypeScript strict + Object.freeze または readonly によって書き換え不可
-      expect(sut.commandName).toBe('harness:check-ready');
+      expect(sut.commandName).toBe('phasegate:check-ready');
     });
 
     // UT-CCD-009
@@ -966,16 +966,16 @@ target('CommandRegistry', () => {
   target('registerCommand', () => {
     describe('有効なCliCommandDefinitionを登録する', () => {
       // UT-CRG-001
-      it('harness:check-readyを登録するとlistAll()で確認できること', () => {
+      it('phasegate:check-readyを登録するとlistAll()で確認できること', () => {
         // Arrange
         const registry = new CommandRegistry();
-        const cmd = createCliCommandDefinition('harness:check-ready');
+        const cmd = createCliCommandDefinition('phasegate:check-ready');
         // Act
         registry.registerCommand(cmd);
         const actual = registry.listAll();
         // Assert
         expect(actual).toHaveLength(1);
-        expect(actual[0].commandName).toBe('harness:check-ready');
+        expect(actual[0].commandName).toBe('phasegate:check-ready');
       });
 
       // UT-CRG-002
@@ -983,9 +983,9 @@ target('CommandRegistry', () => {
         // Arrange
         const registry = new CommandRegistry();
         const commandNames = [
-          'harness:check-ready', 'harness:check-phase', 'harness:ci-check',
-          'harness:detect-drift', 'harness:lint', 'harness:impact-analysis',
-          'harness:status', 'harness:complete-check',
+          'phasegate:check-ready', 'phasegate:check-phase', 'phasegate:ci-check',
+          'phasegate:detect-drift', 'phasegate:lint', 'phasegate:impact-analysis',
+          'phasegate:status', 'phasegate:complete-check',
         ];
         // Act
         for (const name of commandNames) {
@@ -999,10 +999,10 @@ target('CommandRegistry', () => {
 
     describe('不変条件テスト', () => {
       // UT-CRG-003 (INV-1: 同一CommandName重複禁止)
-      it('同一harness:check-readyを2回登録すると2回目でエラーをthrowすること', () => {
+      it('同一phasegate:check-readyを2回登録すると2回目でエラーをthrowすること', () => {
         // Arrange
         const registry = new CommandRegistry();
-        const cmd = createCliCommandDefinition('harness:check-ready');
+        const cmd = createCliCommandDefinition('phasegate:check-ready');
         registry.registerCommand(cmd);
         // Act
         const actual = () => registry.registerCommand(cmd);
@@ -1034,15 +1034,15 @@ target('CommandRegistry', () => {
 
   target('findByName', () => {
     // UT-CRG-006
-    it('登録済みのharness:ci-checkに対応するCliCommandDefinitionを返すこと', () => {
+    it('登録済みのphasegate:ci-checkに対応するCliCommandDefinitionを返すこと', () => {
       // Arrange
       const registry = new CommandRegistry();
-      const cmd = createCliCommandDefinition('harness:ci-check');
+      const cmd = createCliCommandDefinition('phasegate:ci-check');
       registry.registerCommand(cmd);
       // Act
-      const actual = registry.findByName('harness:ci-check');
+      const actual = registry.findByName('phasegate:ci-check');
       // Assert
-      expect(actual.commandName).toBe('harness:ci-check');
+      expect(actual.commandName).toBe('phasegate:ci-check');
     });
 
     // UT-CRG-007
@@ -1061,9 +1061,9 @@ target('CommandRegistry', () => {
     it('3件登録後にlistAll()で3件返却されること', () => {
       // Arrange
       const registry = new CommandRegistry();
-      registry.registerCommand(createCliCommandDefinition('harness:check-ready'));
-      registry.registerCommand(createCliCommandDefinition('harness:ci-check'));
-      registry.registerCommand(createCliCommandDefinition('harness:lint'));
+      registry.registerCommand(createCliCommandDefinition('phasegate:check-ready'));
+      registry.registerCommand(createCliCommandDefinition('phasegate:ci-check'));
+      registry.registerCommand(createCliCommandDefinition('phasegate:lint'));
       // Act
       const actual = registry.listAll();
       // Assert
@@ -1096,7 +1096,7 @@ const buildPorts = (overrides: Partial<CommandDispatchPorts> = {}): CommandDispa
 
 target('CommandDispatchService', () => {
   target('dispatch', () => {
-    describe('harness:check-ready: 全stories passed=trueの場合', () => {
+    describe('phasegate:check-ready: 全stories passed=trueの場合', () => {
       // UT-CDS-001
       it('status=pass, exitCode=0のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1106,14 +1106,14 @@ target('CommandDispatchService', () => {
         ]);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:check-ready', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
       });
     });
 
-    context('harness:check-ready: 一部passed=falseの場合', () => {
+    context('phasegate:check-ready: 一部passed=falseの場合', () => {
       // UT-CDS-002
       it('status=fail, exitCode=1のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1124,14 +1124,14 @@ target('CommandDispatchService', () => {
         ]);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:check-ready', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('fail');
         expect(actual.exitCode).toBe(1);
       });
     });
 
-    describe('harness:check-phase: 有効なunitId指定', () => {
+    describe('phasegate:check-phase: 有効なunitId指定', () => {
       // UT-CDS-003
       it('status=pass, exitCode=0でPhaseInfoが返ること', async () => {
         // Arrange
@@ -1140,14 +1140,14 @@ target('CommandDispatchService', () => {
         (ports.phaseGateQueryPort.queryUnit as ReturnType<typeof vi.fn>).mockResolvedValue(phaseInfo);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:check-phase', args: { unit: 'harness-error' }, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:check-phase', args: { unit: 'harness-error' }, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.data).toEqual(phaseInfo);
       });
     });
 
-    describe('harness:ci-check: 全validators passed=true', () => {
+    describe('phasegate:ci-check: 全validators passed=true', () => {
       // UT-CDS-004
       it('status=pass, exitCode=0のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1157,14 +1157,14 @@ target('CommandDispatchService', () => {
         ]);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:ci-check', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
       });
     });
 
-    describe('harness:detect-drift: 乖離なし', () => {
+    describe('phasegate:detect-drift: 乖離なし', () => {
       // UT-CDS-005
       it('status=pass, exitCode=0のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1172,14 +1172,14 @@ target('CommandDispatchService', () => {
         (ports.validatorExecutionPort.runDriftDetection as ReturnType<typeof vi.fn>).mockResolvedValue([]);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:detect-drift', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
       });
     });
 
-    context('harness:detect-drift: 1件以上の乖離あり', () => {
+    context('phasegate:detect-drift: 1件以上の乖離あり', () => {
       // UT-CDS-006
       it('status=fail, exitCode=1のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1189,14 +1189,14 @@ target('CommandDispatchService', () => {
         ]);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:detect-drift', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('fail');
         expect(actual.exitCode).toBe(1);
       });
     });
 
-    describe('harness:lint: 正常終了', () => {
+    describe('phasegate:lint: 正常終了', () => {
       // UT-CDS-007
       it('status=pass, data=undefined, exitCode=0のHarnessApiResponseを返すこと', async () => {
         // Arrange
@@ -1204,7 +1204,7 @@ target('CommandDispatchService', () => {
         (ports.biomeLintPort.runLint as ReturnType<typeof vi.fn>).mockResolvedValue({ passed: true });
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:lint', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:lint', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.data).toBeUndefined();
@@ -1212,7 +1212,7 @@ target('CommandDispatchService', () => {
       });
     });
 
-    describe('harness:impact-analysis: 有効なstoryId指定', () => {
+    describe('phasegate:impact-analysis: 有効なstoryId指定', () => {
       // UT-CDS-008
       it('status=pass, exitCode=0でImpactAnalysisResultが返ること', async () => {
         // Arrange
@@ -1221,7 +1221,7 @@ target('CommandDispatchService', () => {
         (ports.impactAnalysisPort.analyze as ReturnType<typeof vi.fn>).mockResolvedValue(impactResult);
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
         // Assert
         expect(actual.status).toBe('pass');
         expect(actual.data).toEqual(impactResult);
@@ -1230,7 +1230,7 @@ target('CommandDispatchService', () => {
 
     describe('ExitCode決定ルールテスト（§9-D5）', () => {
       // UT-CDS-009
-      it('harness:status: 正常スキャンでexitCode=0を返すこと', async () => {
+      it('phasegate:status: 正常スキャンでexitCode=0を返すこと', async () => {
         // Arrange
         const ports = buildPorts();
         const scanResult = createArtifactScanResult({
@@ -1242,13 +1242,13 @@ target('CommandDispatchService', () => {
         (ports.configQueryPort.getConfig as ReturnType<typeof vi.fn>).mockResolvedValue(buildConfigSummary());
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:status', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
         // Assert
         expect(actual.exitCode).toBe(0);
       });
 
       // UT-CDS-010
-      it('harness:status: LayerHealth全件lastResult=unknownでもexitCode=0を返すこと', async () => {
+      it('phasegate:status: LayerHealth全件lastResult=unknownでもexitCode=0を返すこと', async () => {
         // Arrange
         const ports = buildPorts();
         const scanResult = createArtifactScanResult({
@@ -1260,7 +1260,7 @@ target('CommandDispatchService', () => {
         (ports.configQueryPort.getConfig as ReturnType<typeof vi.fn>).mockResolvedValue(buildConfigSummary());
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:status', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
         // Assert
         expect(actual.exitCode).toBe(0);
       });
@@ -1268,7 +1268,7 @@ target('CommandDispatchService', () => {
 
     describe('異常系', () => {
       // UT-CDS-011
-      it('harness:ci-check でポートが例外をthrowした場合 status=error, exitCode=2のHarnessApiResponseを返すこと', async () => {
+      it('phasegate:ci-check でポートが例外をthrowした場合 status=error, exitCode=2のHarnessApiResponseを返すこと', async () => {
         // Arrange
         const ports = buildPorts();
         (ports.validatorExecutionPort.runL3Validators as ReturnType<typeof vi.fn>).mockRejectedValue(
@@ -1276,7 +1276,7 @@ target('CommandDispatchService', () => {
         );
         const sut = new CommandDispatchService(ports);
         // Act
-        const actual = await sut.dispatch({ commandName: 'harness:ci-check', args: {}, flags: {} });
+        const actual = await sut.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
         // Assert
         expect(actual.status).toBe('error');
         expect(actual.errors.length).toBeGreaterThanOrEqual(1);
@@ -1298,7 +1298,7 @@ target('CommandDispatchService', () => {
 });
 ```
 
-境界値: UT-BND-010（harness:complete-check で両ポートへの委譲確認）をこのファイル末尾に追加する。
+境界値: UT-BND-010（phasegate:complete-check で両ポートへの委譲確認）をこのファイル末尾に追加する。
 
 ---
 
@@ -1512,7 +1512,7 @@ const ports = buildPorts(); // 全ポートを vi.fn() で初期化
 | UT-BND-007 | `layer-health.test.ts` | lastResult=`fail` | 正常に生成される（有効値確認） |
 | UT-BND-008 | `exit-code-spec.test.ts` | pass=0, fail=1, error=2 | 正常に生成される（UT-ECS-001と統合済み） |
 | UT-BND-009 | `command-registry.test.ts` | 1件も登録されていない状態でfindByName | エラーをthrow / 未登録として扱われる |
-| UT-BND-010 | `command-dispatch-service.test.ts` | harness:complete-check | ValidatorExecutionPort + BiomeLintPort 両方に委譲 |
+| UT-BND-010 | `command-dispatch-service.test.ts` | phasegate:complete-check | ValidatorExecutionPort + BiomeLintPort 両方に委譲 |
 | UT-BND-011 | `status-derivation-service.test.ts` | 全成果物present=false | 全LayerHealth.lastResult=`unknown` |
 | UT-BND-012 | `phase-info.test.ts` | currentLevel=-1（負数） | エラーをthrow |
 
@@ -1520,14 +1520,14 @@ const ports = buildPorts(); // 全ポートを vi.fn() で初期化
 
 ```typescript
 // UT-BND-010
-it('harness:complete-checkがValidatorExecutionPortとBiomeLintPortの両方に委譲すること', async () => {
+it('phasegate:complete-checkがValidatorExecutionPortとBiomeLintPortの両方に委譲すること', async () => {
   // Arrange
   const ports = buildPorts();
   (ports.validatorExecutionPort.runCompleteCheck as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   (ports.biomeLintPort.runLint as ReturnType<typeof vi.fn>).mockResolvedValue({ passed: true });
   const sut = new CommandDispatchService(ports);
   // Act
-  const actual = await sut.dispatch({ commandName: 'harness:complete-check', args: {}, flags: {} });
+  const actual = await sut.dispatch({ commandName: 'phasegate:complete-check', args: {}, flags: {} });
   // Assert
   expect(ports.validatorExecutionPort.runCompleteCheck).toHaveBeenCalledOnce();
   expect(ports.biomeLintPort.runLint).toHaveBeenCalledOnce();

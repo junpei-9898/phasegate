@@ -47,29 +47,29 @@ status: active
 
 ## 2. 修正済みスタブ（Wave 2完了後の実装差し替え）
 
-### STUB-01: `harness:lint` — `BiomeAstEngineLintAdapter` 常に空violations返却
-- **発見**: `harness:lint` が常に violations=0 を返していた（直接 `lint` コマンドは実動作）
+### STUB-01: `phasegate:lint` — `BiomeAstEngineLintAdapter` 常に空violations返却
+- **発見**: `phasegate:lint` が常に violations=0 を返していた（直接 `lint` コマンドは実動作）
 - **原因**: `BiomeAstEngineLintAdapter` のデフォルトが `{ violations: [] }` を返すスタブ
 - **修正**: デフォルト実装を `createBiomeAstEngineModule(process.cwd()).executeLintUseCase.execute()` に差し替え
 - **影響ファイル**:
   - `scripts/harness/harness-api/infrastructure/adapters/biome-ast-engine-lint-adapter.ts`
   - `scripts/harness/biome-ast-engine/composition-root.ts`（`executeLintUseCase` エクスポート追加）
 
-### STUB-02: `harness:ci-check` / `harness:complete-check` / `harness:detect-drift` — `ValidatorSystemExecutionAdapter` 常に空配列返却
+### STUB-02: `phasegate:ci-check` / `phasegate:complete-check` / `phasegate:detect-drift` — `ValidatorSystemExecutionAdapter` 常に空配列返却
 - **発見**: 全バリデータ結果が空で返るため実質チェックなし
 - **原因**: `ValidatorSystemExecutionAdapter` のデフォルトスタブが `[]` を返す
 - **修正**: デフォルト実装を `createValidatorSystemModule()` の各UseCaseに差し替え
 - **影響ファイル**:
   - `scripts/harness/harness-api/infrastructure/adapters/validator-system-execution-adapter.ts`
 
-### STUB-03: `harness:impact-analysis` — `NyquistValidationImpactAnalysisAdapter` 常にnull返却
-- **発見**: `harness:impact-analysis` が常に impact なしを返していた
+### STUB-03: `phasegate:impact-analysis` — `NyquistValidationImpactAnalysisAdapter` 常にnull返却
+- **発見**: `phasegate:impact-analysis` が常に impact なしを返していた
 - **原因**: `NyquistValidationImpactAnalysisAdapter` のデフォルトスタブが `null` を返す
 - **修正**: `createNyquistValidationModule(deps).analyzeImpactUseCase.execute()` に差し替え
 - **影響ファイル**:
   - `scripts/harness/harness-api/infrastructure/adapters/nyquist-validation-impact-analysis-adapter.ts`
 
-### STUB-04: `harness:check-phase` / `harness:check-ready` — `PhaseDependencyModelQueryAdapter` 常に空返却
+### STUB-04: `phasegate:check-phase` / `phasegate:check-ready` — `PhaseDependencyModelQueryAdapter` 常に空返却
 - **発見**: phase gate情報が常に空だった
 - **原因**: `PhaseDependencyModelQueryAdapter` のデフォルトスタブが `[]` / `null` を返す
 - **修正**: `createPhaseDependencyModelModule(config).checkPhaseGateUseCase.execute()` に差し替え
@@ -88,8 +88,8 @@ status: active
 
 ## 3. 修正済みバグ（継続修正・Wave 1〜2A）
 
-### BUG-05: `harness:check-phase` / `harness:check-ready` — InvalidPlanningModeErrorでクラッシュ
-- **発見**: `harness:check-phase <unit>` が "Error: phase gate check failed unexpectedly" で失敗
+### BUG-05: `phasegate:check-phase` / `phasegate:check-ready` — InvalidPlanningModeErrorでクラッシュ
+- **発見**: `phasegate:check-phase <unit>` が "Error: phase gate check failed unexpectedly" で失敗
 - **原因**: `phase-dependency-model/composition-root.ts` の `defaultPhaseConfig.planningMode` が `'standard'`（無効値）にハードコードされていた。有効値は `'interactive' | 'embedded-qa'`
 - **修正**: `planningMode: 'standard'` → `planningMode: 'interactive'` に変更
 - **影響ファイル**:

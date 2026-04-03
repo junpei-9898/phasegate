@@ -33,7 +33,7 @@ export class YamlTemplateRendererAdapter implements TemplateRendererPort {
         '#!/bin/sh',
         '. "$(dirname "$0")/_/husky.sh"',
         '',
-        `npx harness lint --validators ${config.targetValidatorIds.join(',')}`,
+        `npx phasegate lint --validators ${config.targetValidatorIds.join(',')}`,
       ].join('\n');
     }
 
@@ -47,7 +47,7 @@ export class YamlTemplateRendererAdapter implements TemplateRendererPort {
       `    runs-on: ubuntu-latest`,
       `    steps:`,
       `      - uses: actions/checkout@v4`,
-      `      - run: npx harness lint --validators ${config.targetValidatorIds.join(',')}`,
+      `      - run: npx phasegate lint --validators ${config.targetValidatorIds.join(',')}`,
     ].filter((l) => l !== '').join('\n');
   }
 }

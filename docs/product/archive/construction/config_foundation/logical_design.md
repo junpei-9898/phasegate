@@ -750,12 +750,12 @@ Updated: /path/to/phasegate.config.json
 ```
 
 **エラーハンドリング**:
-- 設定ファイル未検出 → `"phasegate.config.json not found. Run 'harness:init' first."` を表示してexit(1)
+- 設定ファイル未検出 → `"phasegate.config.json not found. Run 'phasegate:init' first."` を表示してexit(1)
 - バリデーション失敗 → エラー詳細とsuggestionを表示してexit(1)
 
 **package.json登録**:
 ```
-"harness:migrate-config": "npx tsx scripts/harness/cli/migrate-config.ts"
+"phasegate:migrate-config": "npx tsx scripts/harness/cli/migrate-config.ts"
 ```
 
 ---
@@ -1238,12 +1238,12 @@ target('execute', () => {
 **テストケース例（MigrateConfigHandler）**:
 
 ```
-target('harness:migrate-config', () => {
+target('phasegate:migrate-config', () => {
   describe('v1→v2マイグレーションCLIコマンド', () => {
     it('マイグレーション成功時にバックアップパスと更新パスが表示される', ...)
 
     context('設定ファイルが見つからない場合', () => {
-      it('エラーメッセージとharness:initへの案内が表示される', ...)
+      it('エラーメッセージとphasegate:initへの案内が表示される', ...)
     })
     context('--dry-runフラグが指定された場合', () => {
       it('ファイル書き込みが行われずにマイグレーション結果のみ表示される', ...)
@@ -1329,12 +1329,12 @@ target('extractCustomProperty', () => {
 | AC-1: orchestrationのデフォルトOFF | Domain: INV-2、JSONスキーマdefault、OrchestrationConfig |
 | AC-2: sessionのデフォルトOFF | Domain: INV-2、JSONスキーマdefault、SessionConfig |
 | AC-3: デフォルト値検証テスト | テスト設計§9.2（HarnessConfig集約テスト） |
-| AC-4: harness:enable | Controller: EnableFeatureHandler、UseCase: EnableFeatureUseCase |
-| AC-5: harness:disable | Controller: DisableFeatureHandler、UseCase: DisableFeatureUseCase |
-| AC-6: harness:enable --list | Controller: EnableFeatureHandler（--listフラグ）、UseCase: ListToggleableFeaturesUseCase |
+| AC-4: phasegate:enable | Controller: EnableFeatureHandler、UseCase: EnableFeatureUseCase |
+| AC-5: phasegate:disable | Controller: DisableFeatureHandler、UseCase: DisableFeatureUseCase |
+| AC-6: phasegate:enable --list | Controller: EnableFeatureHandler（--listフラグ）、UseCase: ListToggleableFeaturesUseCase |
 | AC-7: 不正機能名エラー | Domain: InvalidFeatureNameError、Controller: エラーハンドリング |
 
-### US-030: harness:migrate-configによるv1→v2自動マイグレーション
+### US-030: phasegate:migrate-configによるv1→v2自動マイグレーション
 
 | AC | 対応する設計要素 |
 |----|---------------|

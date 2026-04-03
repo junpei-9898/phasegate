@@ -69,7 +69,7 @@
 
 | コマンド/エンドポイント | メソッド | テストケース概算 |
 |---------------------|--------|---------------|
-| HarnessLintCommandHandler（`harness:lint`） | execute | 10 |
+| HarnessLintCommandHandler（`phasegate:lint`） | execute | 10 |
 | LintCommandParser | parse | 6 |
 | LintCliPresenter | format | 6 |
 
@@ -260,15 +260,15 @@
 
 | target | describe | context | it |
 |--------|----------|---------|-----|
-| execute | harness:lintコマンドを実行する | 違反なし・ESLint残存なしの場合 | 終了コード0が返される |
-| execute | harness:lintコマンドを実行する | ルール違反がある場合 | 終了コード1が返される |
-| execute | harness:lintコマンドを実行する | ESLint残存がある場合 | 終了コード1が返される |
-| execute | harness:lintコマンドを実行する | 設定読取失敗の場合 | 終了コード2が返される |
-| execute | harness:lintコマンドを実行する | --jsonフラグが指定された場合 | HarnessApiResponse形式のJSONが出力される |
-| execute | harness:lintコマンドを実行する | --targetフラグが指定された場合 | 対象ファイルが限定される |
-| execute | harness:lintコマンドを実行する | --skip-eslint-removal-checkが指定された場合 | VerifyEslintRemovalUseCaseが呼ばれない |
-| execute | harness:lintコマンドを実行する | 不正フラグが指定された場合 | Usageが出力され終了コード2が返される |
-| execute | harness:lintコマンドを実行する | 不正フラグが指定された場合 | UseCaseが呼び出されない |
+| execute | phasegate:lintコマンドを実行する | 違反なし・ESLint残存なしの場合 | 終了コード0が返される |
+| execute | phasegate:lintコマンドを実行する | ルール違反がある場合 | 終了コード1が返される |
+| execute | phasegate:lintコマンドを実行する | ESLint残存がある場合 | 終了コード1が返される |
+| execute | phasegate:lintコマンドを実行する | 設定読取失敗の場合 | 終了コード2が返される |
+| execute | phasegate:lintコマンドを実行する | --jsonフラグが指定された場合 | HarnessApiResponse形式のJSONが出力される |
+| execute | phasegate:lintコマンドを実行する | --targetフラグが指定された場合 | 対象ファイルが限定される |
+| execute | phasegate:lintコマンドを実行する | --skip-eslint-removal-checkが指定された場合 | VerifyEslintRemovalUseCaseが呼ばれない |
+| execute | phasegate:lintコマンドを実行する | 不正フラグが指定された場合 | Usageが出力され終了コード2が返される |
+| execute | phasegate:lintコマンドを実行する | 不正フラグが指定された場合 | UseCaseが呼び出されない |
 
 #### LintCommandParser テスト設計概要
 

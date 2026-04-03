@@ -38,7 +38,7 @@ function getProjectRoot(): string {
 
 function printUsage(): void {
   const usage = `
-Usage: harness <command> [options]
+Usage: phasegate <command> [options]
 
 Setup:
   init                         Initialize project: deploy skills + create phasegate.config.json
@@ -65,14 +65,14 @@ Commands:
   validate                     Run validators (--layer L0|L2|L3|L4|all, --unit, --format human|agent|ci)
   ci-check                     CI check (--quick for quick mode, --fail-on-reject, --dry-run, --files)
 
-  harness:check-ready          Check ready status (--json)
-  harness:check-phase          Check phase gate (--unit <unitId>, --json)
-  harness:ci-check             Full CI check (--json)
-  harness:detect-drift         Detect design/code drift (--json)
-  harness:status               Harness overall status (--json)
-  harness:lint                 Lint via harness-api (--target <path>, --json)
-  harness:complete-check       Complete L2-L4 check (--json)
-  harness:impact-analysis      Impact analysis for story (<storyId>, --json)
+  phasegate:check-ready         Check ready status (--json)
+  phasegate:check-phase         Check phase gate (--unit <unitId>, --json)
+  phasegate:ci-check            Full CI check (--json)
+  phasegate:detect-drift         Detect design/code drift (--json)
+  phasegate:status              Phasegate overall status (--json)
+  phasegate:lint                Lint via harness-api (--target <path>, --json)
+  phasegate:complete-check       Complete L2-L4 check (--json)
+  phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
 
   ci:generate-template         Generate CI template (--preset <id>, --type <type>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
@@ -547,7 +547,7 @@ async function main(): Promise<void> {
       }
 
       // ── harness-api ──
-      case 'harness:check-ready': {
+      case 'phasegate:check-ready': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -555,7 +555,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:check-phase': {
+      case 'phasegate:check-phase': {
         const mod = createHarnessApiModule();
         const unit = parseFlag(args, '--unit') ?? args[1] ?? '';
         const flags: Record<string, boolean | string> = {};
@@ -564,7 +564,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:ci-check': {
+      case 'phasegate:ci-check': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -572,7 +572,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:detect-drift': {
+      case 'phasegate:detect-drift': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -580,7 +580,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:status': {
+      case 'phasegate:status': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -588,7 +588,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:lint': {
+      case 'phasegate:lint': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -598,7 +598,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:complete-check': {
+      case 'phasegate:complete-check': {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -606,7 +606,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'harness:impact-analysis': {
+      case 'phasegate:impact-analysis': {
         const mod = createHarnessApiModule();
         const storyId = args[1] && !args[1].startsWith('--') ? args[1] : (parseFlag(args, '--story-id') ?? '');
         const flags: Record<string, boolean | string> = {};
@@ -843,7 +843,7 @@ async function main(): Promise<void> {
         if (subCommand === 'info') {
           const skillName = args[2];
           if (!skillName) {
-            console.error('Usage: harness skills info <skill-name>');
+            console.error('Usage: phasegate skills info <skill-name>');
             process.exit(2);
           }
           const { promises: fs } = await import('node:fs');
@@ -859,7 +859,7 @@ async function main(): Promise<void> {
           }
         }
 
-        console.error('Usage: harness skills <list|info <name>>');
+        console.error('Usage: phasegate skills <list|info <name>>');
         process.exit(2);
         break;
       }

@@ -11,11 +11,11 @@
 
 - **対象Unit**: harness-api
 - **担当ストーリー**:
-  - H09-01: harness:check-ready / harness:check-phase
-  - H09-02: harness:ci-check
-  - H09-03: harness:detect-drift
-  - H09-04: harness:status（成果物駆動状態導出）
-  - （追加）harness:lint / harness:complete-check / harness:impact-analysis のCLIエントリポイント所有
+  - H09-01: phasegate:check-ready / phasegate:check-phase
+  - H09-02: phasegate:ci-check
+  - H09-03: phasegate:detect-drift
+  - H09-04: phasegate:status（成果物駆動状態導出）
+  - （追加）phasegate:lint / phasegate:complete-check / phasegate:impact-analysis のCLIエントリポイント所有
 - **他Unitとの境界**:
   - validator-system: ValidationResultを消費（ci-check/detect-drift/complete-check実行ロジック）
   - config-foundation: HarnessConfigV2からPreset・有効設定を参照（status表示）
@@ -88,7 +88,7 @@ harness-apiはステートレスなCLIエントリポイント層であり、集
 
 ```
 CliCommandDefinition {
-  commandName: CommandName              // "harness:check-ready" 等
+  commandName: CommandName              // "phasegate:check-ready" 等
   description: string
   inputSpec: CommandInputSpec           // 引数・フラグ定義
   outputType: CommandOutputType         // "check-ready" | "check-phase" | ... （payload型識別子）
@@ -120,7 +120,7 @@ CommandInputSpec・ExitCodeSpec も補助VOとして定義。
 | complete-check | — （HarnessApiResponse共通envelopeのみ） | なし |
 | impact-analysis | ImpactAnalysisResult | nyquist-validationから消費（Shared Kernelではなく参照） |
 
-### 3.5 ArtifactScannerパターン（harness:status成果物駆動）
+### 3.5 ArtifactScannerパターン（phasegate:status成果物駆動）
 
 `HarnessStatusSummary`生成に使用する中間VOとして `ArtifactScanResult` を定義する。
 
@@ -168,7 +168,7 @@ ExitCode = 0 | 1 | 2
 
 **結論**: ポートインターフェースをドメイン層で定義し、CommandDispatchServiceはポートを通じて外部実行を委譲する。
 
-### Q3: harness:status の「成果物駆動の状態導出」ロジックをどこに置くか
+### Q3: phasegate:status の「成果物駆動の状態導出」ロジックをどこに置くか
 
 **質問**: H09-04では「DBやステートファイルではなく、ファイルシステム上の成果物の存在から状態を導出する」とある。このスキャンと導出ロジックはドメイン層かインフラ層か？
 
@@ -194,7 +194,7 @@ ExitCode = 0 | 1 | 2
 | PhaseGateQueryPort | 外部→ドメイン | phase-dependency-model経由のPhase Gate通過状態照会 | CommandDispatchService |
 | BiomeLintPort | 外部→ドメイン | biome-ast-engineのlint実行委譲 | CommandDispatchService |
 | ImpactAnalysisPort | 外部→ドメイン | nyquist-validationのImpactAnalysisResult取得 | CommandDispatchService |
-| ArtifactScannerPort | 外部→ドメイン | ファイルシステム上の成果物スキャン（harness:status用） | StatusDerivationService |
+| ArtifactScannerPort | 外部→ドメイン | ファイルシステム上の成果物スキャン（phasegate:status用） | StatusDerivationService |
 | ConfigQueryPort | 外部→ドメイン | HarnessConfigV2のPreset・有効設定取得 | StatusDerivationService |
 
 ---
@@ -212,7 +212,7 @@ ExitCode = 0 | 1 | 2
 | CiCheckResult | 値オブジェクト | L3バリデータ統合実行結果（validatorResults[] + allPassed） |
 | DriftReportSummary | 値オブジェクト | 乖離レポートCLI出力形式（drifts[] + totalCount） |
 | HarnessStatusSummary | 値オブジェクト | ハーネス全体健全性サマリー（layers/phaseGateSummary/presetInfo/config） |
-| ArtifactScanResult | 値オブジェクト | 成果物スキャン中間結果（harness:status導出用） |
+| ArtifactScanResult | 値オブジェクト | 成果物スキャン中間結果（phasegate:status導出用） |
 | LayerHealth | 値オブジェクト | L1-L4各レイヤーの健全性（layerId/enabled/lastResult?） |
 | CommandInputSpec | 値オブジェクト | コマンド入力仕様（args/flags定義） |
 | ExitCodeSpec | 値オブジェクト | 終了コード定義（pass:0/fail:1/error:2） |
@@ -224,7 +224,7 @@ ExitCode = 0 | 1 | 2
 
 | 型 | 説明 |
 |---|------|
-| CommandName | `string`（"harness:check-ready" 等、`harness:` プレフィックス必須） |
+| CommandName | `string`（"phasegate:check-ready" 等、`harness:` プレフィックス必須） |
 | ExitCode | `0 \| 1 \| 2` |
 | CommandOutputType | `'check-ready' \| 'check-phase' \| 'ci-check' \| 'detect-drift' \| 'status' \| 'lint' \| 'complete-check' \| 'impact-analysis'` |
 

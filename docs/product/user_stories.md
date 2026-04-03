@@ -284,22 +284,22 @@ K13（phasegate.config.json）
 
 ---
 
-### H04-03: GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替
+### H04-03: GSD由来品質機能のデフォルト無効化 + phasegate:enable/disable機能切替
 
 **Epic**: H-04 phasegate.config.json v2
 **旧US**: US-029一部
 **優先度**: Must
 
 **As a** ハーネス利用者,
-**I want to** GSD由来の品質機能をデフォルトで無効にし、`harness:enable`/`harness:disable`コマンドで個別に有効化・無効化したい,
+**I want to** GSD由来の品質機能をデフォルトで無効にし、`phasegate:enable`/`phasegate:disable`コマンドで個別に有効化・無効化したい,
 **so that** 既存プロジェクトへの影響なくProgressive adoptionを実現し、Go/No-Go Gate #8（デフォルトOFF）を遵守できる。
 
 #### 受け入れ基準
 
 - [ ] AC-1: phasegate.config.json内のGSD由来品質機能がデフォルトで`enabled: false`である
-- [ ] AC-2: `harness:enable <feature>`コマンドで個別機能を有効化できる
-- [ ] AC-3: `harness:disable <feature>`コマンドで個別機能を無効化できる
-- [ ] AC-4: `harness:enable --list`で有効化/無効化可能な機能名一覧が表示される
+- [ ] AC-2: `phasegate:enable <feature>`コマンドで個別機能を有効化できる
+- [ ] AC-3: `phasegate:disable <feature>`コマンドで個別機能を無効化できる
+- [ ] AC-4: `phasegate:enable --list`で有効化/無効化可能な機能名一覧が表示される
 - [ ] AC-5: 存在しない機能名が指定された場合、利用可能な機能名一覧を含むエラーメッセージが表示される
 
 ---
@@ -501,19 +501,19 @@ K13（phasegate.config.json）
 
 ---
 
-### H07-04: harness:impact-analysis HXX-XXコマンド
+### H07-04: phasegate:impact-analysis HXX-XXコマンド
 
 **Epic**: H-07 Nyquist検証層
 **旧US**: US-008
 **優先度**: Should
 
 **As a** 開発者,
-**I want to** `harness:impact-analysis HXX-XX`コマンドで指定ストーリーに紐づく影響テストケースを自動特定したい,
+**I want to** `phasegate:impact-analysis HXX-XX`コマンドで指定ストーリーに紐づく影響テストケースを自動特定したい,
 **so that** ストーリー変更の影響範囲を迅速に把握し、必要なテストを効率的に実行できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:impact-analysis HXX-XX`コマンドが実行可能であり、正常時は終了コード0、ストーリー未検出時は終了コード1を返す
+- [ ] AC-1: `phasegate:impact-analysis HXX-XX`コマンドが実行可能であり、正常時は終了コード0、ストーリー未検出時は終了コード1を返す
 - [ ] AC-2: 指定USに紐づくテストケース一覧がrequirement-test-matrix.jsonから特定・出力される
 - [ ] AC-3: 存在しないストーリーIDが指定された場合、適切なエラーメッセージが表示される
 - [ ] AC-4: 出力にテスト種別（unit/it/scenario）とファイルパスが含まれる
@@ -656,76 +656,76 @@ K12（Consistency Checker）
 
 ## H-09: Harness API
 
-### H09-01: harness:check-ready / harness:check-phase
+### H09-01: phasegate:check-ready / phasegate:check-phase
 
 **Epic**: H-09 Harness API
 **旧US**: 新規
 **優先度**: Must
 
 **As a** オーケストレーター（またはCLIユーザー）,
-**I want to** `harness:check-ready`で全storyのPhase Gate通過状態を、`harness:check-phase`で指定Unitの現在フェーズを取得したい,
+**I want to** `phasegate:check-ready`で全storyのPhase Gate通過状態を、`phasegate:check-phase`で指定Unitの現在フェーズを取得したい,
 **so that** 実行フェーズへの移行判定やフェーズ遷移判定を機械的に行える。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:check-ready`コマンドが全storyのPhase Gate通過状態をJSON形式で返却する
-- [ ] AC-2: `harness:check-phase <unit>`コマンドが指定Unitの現在フェーズ（Level/スキル名）を返却する
-- [ ] AC-3: Phase Gate未通過のstoryが存在する場合、`harness:check-ready`が未通過story一覧を含むレスポンスを返す
+- [ ] AC-1: `phasegate:check-ready`コマンドが全storyのPhase Gate通過状態をJSON形式で返却する
+- [ ] AC-2: `phasegate:check-phase <unit>`コマンドが指定Unitの現在フェーズ（Level/スキル名）を返却する
+- [ ] AC-3: Phase Gate未通過のstoryが存在する場合、`phasegate:check-ready`が未通過story一覧を含むレスポンスを返す
 - [ ] AC-4: 存在しないUnit名が指定された場合、適切なエラーメッセージが表示される
 
 ---
 
-### H09-02: harness:ci-check
+### H09-02: phasegate:ci-check
 
 **Epic**: H-09 Harness API
 **旧US**: US-019一部
 **優先度**: Must
 
 **As a** 品質管理者,
-**I want to** `harness:ci-check`コマンドで全L3バリデータの統合実行結果を取得したい,
+**I want to** `phasegate:ci-check`コマンドで全L3バリデータの統合実行結果を取得したい,
 **so that** CIパイプラインのPass/Fail判定を一つのコマンドで実行できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:ci-check`コマンドが全L3バリデータ（security/performance/coverage/nyquist）を順次実行する
+- [ ] AC-1: `phasegate:ci-check`コマンドが全L3バリデータ（security/performance/coverage/nyquist）を順次実行する
 - [ ] AC-2: 全バリデータ通過時にPass判定、1つでも失敗時にFail判定を返す
 - [ ] AC-3: 実行結果にバリデータ別のPass/Fail詳細が含まれる
 - [ ] AC-4: 失敗時のレスポンスにHarnessError一覧が含まれる
 
 ---
 
-### H09-03: harness:detect-drift
+### H09-03: phasegate:detect-drift
 
 **Epic**: H-09 Harness API
 **旧US**: 新規
 **優先度**: Must
 
 **As a** 品質管理者,
-**I want to** `harness:detect-drift`コマンドで設計-実装乖離レポートを取得したい,
+**I want to** `phasegate:detect-drift`コマンドで設計-実装乖離レポートを取得したい,
 **so that** 設計とコードの乖離を任意のタイミングで確認でき、検証フェーズの自動実行トリガーとして利用できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:detect-drift`コマンドが設計→コード方向とコード→設計方向の双方向乖離を検出する
+- [ ] AC-1: `phasegate:detect-drift`コマンドが設計→コード方向とコード→設計方向の双方向乖離を検出する
 - [ ] AC-2: 乖離レポートにUnit名・乖離方向・対象要素の詳細が含まれる
 - [ ] AC-3: 乖離が0件の場合、「乖離なし」のサマリーが返却される
 - [ ] AC-4: `--json`フラグでJSON形式のレポート出力が可能であり、出力スキーマに`drifts[]`（方向/unit/要素/推奨アクション）フィールドが含まれる
 
 ---
 
-### H09-04: harness:status（成果物駆動状態導出）
+### H09-04: phasegate:status（成果物駆動状態導出）
 
 **Epic**: H-09 Harness API
 **旧US**: 新規（codex提案）
 **優先度**: Must
 
 **As a** ハーネス利用者,
-**I want to** `harness:status`コマンドでファイルシステム上の成果物（設計文書、テストファイル、メタデータ）の存在からハーネス全体の健全性サマリを取得したい,
+**I want to** `phasegate:status`コマンドでファイルシステム上の成果物（設計文書、テストファイル、メタデータ）の存在からハーネス全体の健全性サマリを取得したい,
 **so that** ハーネスの現在の状態を一目で把握でき、ダッシュボード表示・進捗判定に利用できる。
 
 #### 受け入れ基準
 
-- [ ] AC-1: `harness:status`コマンドがファイルシステム上の成果物の存在からハーネス検査状態を導出する（成果物駆動の状態導出）
+- [ ] AC-1: `phasegate:status`コマンドがファイルシステム上の成果物の存在からハーネス検査状態を導出する（成果物駆動の状態導出）
 - [ ] AC-2: レスポンスにL1-L4各レイヤーの健全性（有効/無効/最終実行結果）が含まれる
 - [ ] AC-3: レスポンスにPhase Gate通過状態のサマリーが含まれる
 - [ ] AC-4: レスポンスにプリセット名と有効な設定のサマリーが含まれる
@@ -869,7 +869,7 @@ K12（Consistency Checker）
 
 - [ ] AC-1: PostToolUse Hook AdapterがBiome（`biome check`/`biome format`）を使用してフォーマット+リントを実行する
 - [ ] AC-2: v0のformat-typescript-hook.shと同等以上の機能がBiomeで実現されている
-- [ ] AC-3: Hook未使用時はCLI（`harness:lint`相当）で同等の機能が実行可能である
+- [ ] AC-3: Hook未使用時はCLI（`phasegate:lint`相当）で同等の機能が実行可能である
 - [ ] AC-4: Hook実行テストが存在する
 
 ---
@@ -881,16 +881,16 @@ K12（Consistency Checker）
 **優先度**: Must
 
 **As a** 品質管理者,
-**I want to** Claude Code Stop Hook Adapterにテストゲート（全テストグリーン必須）+ harness:ci-check + 無限ループ防止（stop_hook_activeフラグ）を統合したい,
+**I want to** Claude Code Stop Hook Adapterにテストゲート（全テストグリーン必須）+ phasegate:ci-check + 無限ループ防止（stop_hook_activeフラグ）を統合したい,
 **so that** Claude Code使用時にエージェントの完了宣言前にテスト全通過+ハーネスバリデーション全通過が保証される。
 
 #### 受け入れ基準
 
 - [ ] AC-1: Stop Hook Adapter実行時に`pnpm test`が自動実行され、失敗時にエージェントの完了が阻止される
-- [ ] AC-2: テスト通過後に`harness:ci-check`が実行され、失敗時にエージェントの完了が阻止される
+- [ ] AC-2: テスト通過後に`phasegate:ci-check`が実行され、失敗時にエージェントの完了が阻止される
 - [ ] AC-3: `stop_hook_active`フラグで再入を検出し、無限ループ（テスト失敗→再試行→テスト失敗）を防止する
 - [ ] AC-4: 再入検出時にStop Hookがスキップされ、適切な警告メッセージが表示される
-- [ ] AC-5: Hook未使用時はCLI（`harness:complete-check`相当）で同等の完了チェックが実行可能である
+- [ ] AC-5: Hook未使用時はCLI（`phasegate:complete-check`相当）で同等の完了チェックが実行可能である
 
 ---
 
@@ -1074,7 +1074,7 @@ K8（Cascade Updater）
 
 #### 受け入れ基準
 
-- [ ] AC-1: AGENTS.mdの記述的バリデータ一覧が`harness:status`実行へのポインタに置換されている
+- [ ] AC-1: AGENTS.mdの記述的バリデータ一覧が`phasegate:status`実行へのポインタに置換されている
 - [ ] AC-2: AGENTS.mdにADR参照リンクが追加されている
 - [ ] AC-3: AGENTS.mdの行数が移行前と比較して50%以上削減されている
 - [ ] AC-4: ポインタが参照する先（コマンド、ファイル）が実在することが検証可能である

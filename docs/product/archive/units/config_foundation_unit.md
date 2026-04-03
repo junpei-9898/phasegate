@@ -20,7 +20,7 @@ phasegate.config.json v2のスキーマ設計・バリデーション・マイ�
 | US-027 | orchestrationセクションの追加 | Must |
 | US-028 | sessionセクションの追加 | Must |
 | US-029 | GSD由来機能のデフォルト無効化 | Must |
-| US-030 | harness:migrate-configによるv1→v2自動マイグレーション | Should |
+| US-030 | phasegate:migrate-configによるv1→v2自動マイグレーション | Should |
 
 ---
 
@@ -36,11 +36,11 @@ phasegate.config.json v2のスキーマ設計・バリデーション・マイ�
 ### 3.2 デフォルト無効化
 
 - GSD由来の全設定項目が`enabled: false`をデフォルト値とする
-- `harness:enable`コマンドで個別機能を有効化可能
+- `phasegate:enable`コマンドで個別機能を有効化可能
 
 ### 3.3 v1→v2マイグレーション
 
-- `harness:migrate-config`コマンド
+- `phasegate:migrate-config`コマンド
 - v1形式の保持 + v2セクション追加
 - マイグレーション前のバックアップ自動作成
 
@@ -66,6 +66,6 @@ phasegate.config.json v2のスキーマ設計・バリデーション・マイ�
 | 種別 | 名称 | 利用Unit |
 |------|------|---------|
 | 設定ファイル | phasegate.config.json v2スキーマ | 全Unit |
-| CLI | `harness:enable` / `harness:disable` | 全Unit |
-| CLI | `harness:migrate-config` | 外部利用者 |
+| CLI | `phasegate:enable` / `phasegate:disable` | 全Unit |
+| CLI | `phasegate:migrate-config` | 外部利用者 |
 | モジュール | config-loader（v2スキーマ読み込み） | 全Unit |

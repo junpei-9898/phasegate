@@ -16,15 +16,15 @@
 | US-027 | orchestrationセクションの追加 | Must |
 | US-028 | sessionセクションの追加 | Must |
 | US-029 | GSD由来機能のデフォルト無効化 | Must |
-| US-030 | harness:migrate-configによるv1→v2自動マイグレーション | Should |
+| US-030 | phasegate:migrate-configによるv1→v2自動マイグレーション | Should |
 
 ### 他Unitとの境界
 
 - **config-foundationは基盤Unit**であり、他Unitに依存しない。全Unitがconfig-foundationに依存する。
 - **公開インターフェース**:
   - 設定ファイル: phasegate.config.json v2スキーマ（全Unit参照）
-  - CLI: `harness:enable` / `harness:disable`（全Unit利用）
-  - CLI: `harness:migrate-config`（外部利用者）
+  - CLI: `phasegate:enable` / `phasegate:disable`（全Unit利用）
+  - CLI: `phasegate:migrate-config`（外部利用者）
   - モジュール: config-loader（v2スキーマ読み込み、全Unit利用）
 - **境界の原則**: config-foundationは「設定の読み込み・バリデーション・マイグレーション」のみを担う。設定値の「解釈」や「実行」は各利用Unitの責務。例えば、orchestration.modeの値を読み取るのはconfig-foundation、その値に基づいてWave並列実行を制御するのはorchestration-commandsの責務。
 - **Shared Kernelとの関係**: v2スキーマの型定義（`HarnessConfigV2`インターフェース）はShared Kernelとして全Unitから参照される。
@@ -66,7 +66,7 @@
 
 #### 集約候補 2: FeatureToggle（機能トグル）
 
-- **根拠**: US-029の`harness:enable`/`harness:disable`コマンドが操作する「機能の有効/無効状態」は、HarnessConfig内に格納されるが、独自の振る舞い（一覧表示、存在チェック、トグル操作）を持つ。ただし、状態はHarnessConfigに永続化されるため、独立した集約ではなくHarnessConfigの振る舞いの一部として扱う方が適切と考える。
+- **根拠**: US-029の`phasegate:enable`/`phasegate:disable`コマンドが操作する「機能の有効/無効状態」は、HarnessConfig内に格納されるが、独自の振る舞い（一覧表示、存在チェック、トグル操作）を持つ。ただし、状態はHarnessConfigに永続化されるため、独立した集約ではなくHarnessConfigの振る舞いの一部として扱う方が適切と考える。
 - **判断**: HarnessConfig集約の振る舞いとして統合。独立集約にしない。
 
 #### 集約候補 3: ConfigMigration（設定マイグレーション）
@@ -125,7 +125,7 @@ CLIツールの特性上、ドメインイベントの必要性は低い。た�
 | イベント | トリガー | 用途 |
 |---------|---------|------|
 | ConfigMigrated | マイグレーション完了時 | ログ記録、通知 |
-| FeatureToggled | harness:enable/disable実行時 | 他Unit通知（将来） |
+| FeatureToggled | phasegate:enable/disable実行時 | 他Unit通知（将来） |
 
 ### ポートとアダプター
 
@@ -152,9 +152,9 @@ orchestrationセクションにはmode / parallelization / modelProfile / contex
 
 ---
 
-### [Question] Q2: harness:enable / harness:disable の対象機能名の定義方法
+### [Question] Q2: phasegate:enable / phasegate:disable の対象機能名の定義方法
 
-US-029では「GSD由来機能をデフォルトで無効にする」とあるが、`harness:enable <feature>` の `<feature>` として許可される機能名をどこで定義すべきか。
+US-029では「GSD由来機能をデフォルトで無効にする」とあるが、`phasegate:enable <feature>` の `<feature>` として許可される機能名をどこで定義すべきか。
 
 **選択肢**:
 - (A) ハードコードされた列挙型（FeatureName値オブジェクト内で定義）

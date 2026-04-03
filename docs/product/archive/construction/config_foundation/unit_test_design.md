@@ -1136,7 +1136,7 @@ UseCaseをモックする。`process.argv`をテスト前に設定し、`console
 **モック戦略**: `EnableFeatureUseCase` / `ListToggleableFeaturesUseCase` をモック
 
 ```
-target('harness:enable', () => {
+target('phasegate:enable', () => {
   describe('機能有効化CLIコマンド', () => {
     it('機能名を指定した場合、有効化成功メッセージが表示される')
     it('更新されたファイルパスが表示される')
@@ -1191,7 +1191,7 @@ it('機能名を指定した場合、有効化成功メッセージが表示さ�
 **モック戦略**: `DisableFeatureUseCase` をモック
 
 ```
-target('harness:disable', () => {
+target('phasegate:disable', () => {
   describe('機能無効化CLIコマンド', () => {
     it('機能名を指定した場合、無効化成功メッセージが表示される')
     it('更新されたファイルパスが表示される')
@@ -1219,13 +1219,13 @@ target('harness:disable', () => {
 **モック戦略**: `MigrateConfigUseCase` をモック
 
 ```
-target('harness:migrate-config', () => {
+target('phasegate:migrate-config', () => {
   describe('v1→v2マイグレーションCLIコマンド', () => {
     it('マイグレーション成功時にバックアップパスと更新パスが表示される')
     it('追加されたセクション一覧が表示される')
 
     context('設定ファイルが見つからない場合', () => {
-      it('エラーメッセージとharness:initへの案内が表示される')
+      it('エラーメッセージとphasegate:initへの案内が表示される')
       it('exit(1)で終了する')
     })
     context('--dry-runフラグが指定された場合', () => {

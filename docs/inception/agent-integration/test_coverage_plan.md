@@ -50,18 +50,18 @@ unit_test_design.md および it_test_design.md に記述されたテストケ�
 
 ### H11-03: PostToolUse Hook Adapter
 
-- AC-8: 正規経路として `harness:lint --fast` を呼び出す
+- AC-8: 正規経路として `phasegate:lint --fast` を呼び出す
 - AC-9: 500msタイムアウト内での完了を保証
-- AC-10: Hook未使用時はCLI（`harness:lint`）で同等機能が実行可能
+- AC-10: Hook未使用時はCLI（`phasegate:lint`）で同等機能が実行可能
 - AC-11: Hook実行テストの存在
 
 ### H11-04: Stop Hook Adapter
 
-- AC-12: `harness:complete-check` を呼び出す（`pnpm test` + L1-L4全バリデータ）
-- AC-13: `harness:complete-check` がfailを返した場合、エージェント完了を阻止
+- AC-12: `phasegate:complete-check` を呼び出す（`pnpm test` + L1-L4全バリデータ）
+- AC-13: `phasegate:complete-check` がfailを返した場合、エージェント完了を阻止
 - AC-14: `stop_hook_active` フラグで再入を検出し、無限ループを防止
 - AC-15: 再入検出時にStop Hookをスキップし、適切な警告メッセージを表示
-- AC-16: Hook未使用時はCLI（`harness:complete-check`相当）で同等の完了チェックが実行可能
+- AC-16: Hook未使用時はCLI（`phasegate:complete-check`相当）で同等の完了チェックが実行可能
 
 ---
 

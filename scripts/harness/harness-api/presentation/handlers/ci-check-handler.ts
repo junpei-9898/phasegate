@@ -17,7 +17,7 @@ export class CiCheckHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:ci-check',
+      commandName: 'phasegate:ci-check',
       args,
       flags,
     });

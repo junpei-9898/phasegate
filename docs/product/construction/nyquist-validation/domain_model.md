@@ -187,7 +187,7 @@ uncoveredAcIds = testReferences.length === 0のAcMappingのacId一覧
 ## 7. Data Flow
 
 ```
-[harness:ci-check / harness:impact-analysis コマンド]
+[phasegate:ci-check / phasegate:impact-analysis コマンド]
          ↓
 MatrixFilePort → requirement-test-matrix.json 読み込み
          ↓
@@ -202,12 +202,12 @@ RequirementTestMatrix.create(validatedData) → 集約インスタンス
          │   AcCoverageGatePolicy.check(matrix) → passed/false + HarnessError[]
          │   → validator-systemのValidatorExecutionServiceが呼び出し
          │
-         ├── [harness:ci-check 用]
+         ├── [phasegate:ci-check 用]
          │   CoverageCalculationService.calculate(matrix) → CoverageResult
          │   CoverageThresholdPort → threshold設定取得
          │   → harness-apiのci-checkコマンドが出力に使用
          │
-         └── [harness:impact-analysis 用]
+         └── [phasegate:impact-analysis 用]
              ImpactAnalysisService.analyze(matrix, storyId) → ImpactAnalysisResult
              → harness-apiのinfrastructure層アダプターがCLI出力形式に変換
 ```

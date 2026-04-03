@@ -121,7 +121,7 @@
 - **記事の推奨**: 書くべきものはルーティング指示・禁止事項（ADR参照付き）・ビルド/テスト/デプロイコマンドのみ。システムの現状説明やスタック解説は書かない
 - **PJ現状**: AGENTS.mdは概ねポインタ型だが、バリデータ一覧表は「現状説明」に近い。パッケージ管理の指示やADR参照リンクも不足
 
-> **推奨アクション**: AGENTS.mdからバリデータ一覧を削除し、`pnpm harness:status` コマンドの実行で確認する方式に変更。ADRへの参照リンクを追加する。
+> **推奨アクション**: AGENTS.mdからバリデータ一覧を削除し、`pnpm phasegate:status` コマンドの実行で確認する方式に変更。ADRへの参照リンクを追加する。
 
 #### 3-2. ポインタ腐敗検知の仕組みがない
 - **記事の推奨**: ポインタが指すファイルパスが存在しなくなれば404に相当するエラーが起きる。壊れたポインタは騒がしく失敗するため検知可能
@@ -357,7 +357,7 @@
 **AIDLC_HARNESS現状**:
 - **フェーズは固定的**: Step 0→1→2→3→4→5→6→7→8の固定順序
 - フェーズゲートの設定は `phasegate.config.json` で静的に定義
-- `harness:enable` / `harness:disable` でバリデータの有効/無効は切替可能だが、フェーズの追加・挿入はできない
+- `phasegate:enable` / `phasegate:disable` でバリデータの有効/無効は切替可能だが、フェーズの追加・挿入はできない
 - 設計プロセスの変更にはconfig/SKILL.mdの手動修正が必要
 
 **ギャップ深刻度**: **Nice-to-have**
@@ -401,7 +401,7 @@
    - 対象外: 新規ドメインモデル追加、API契約変更、新機能追加
 3. **Quick Mode用のCLIコマンド**
    - `harness:quick-check` — phase-gateを除いたバリデータのみ実行
-   - 既存の `harness:check-ready` との使い分けを明確化
+   - 既存の `phasegate:check-ready` との使い分けを明確化
 
 ---
 
@@ -439,7 +439,7 @@
 - 分析結果をCONTEXT.mdに記録し、以降のタスクで参照
 
 **AIDLC_HARNESS現状**:
-- **`harness:init`** コマンドは存在するが、設定ファイル生成のみ
+- **`phasegate:init`** コマンドは存在するが、設定ファイル生成のみ
 - 既存コードベースの自動分析機能は未実装
 - Brownfieldプロジェクトへの導入は手動でメタデータ（`@unit`, `@layer`）を付与する必要あり
 - `phasegate.config.json` のプリセット（minimal/standard/strict）が段階的導入を支援するが、コードベース分析は含まない
@@ -489,7 +489,7 @@
    - 未カバーのACを自動検出し、テスト設計の不足を報告
 3. **要件変更時の影響分析**
    - User Story変更時に、影響を受けるテストケースを自動特定
-   - `harness:impact-analysis US-XXX` コマンドの新設
+   - `phasegate:impact-analysis US-XXX` コマンドの新設
 
 ---
 

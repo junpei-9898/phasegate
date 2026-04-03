@@ -30,7 +30,7 @@ AIエージェントのコンテキストウィンドウを効率的に管理す
 
 - `.harness/context-priority.json` ファイルの作成・バリデーション
 - 4段階優先度: critical / important / reference / archive
-- `harness:status`コマンドでの優先度設定表示
+- `phasegate:status`コマンドでの優先度設定表示
 - 存在しないファイルパスのバリデーションエラー
 
 ### 3.2 SKILL.mdコンテキストバジェット

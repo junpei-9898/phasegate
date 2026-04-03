@@ -113,13 +113,13 @@ export const createHookTranslationResult = (
 
 /**
  * FallbackCapabilitySpec を生成するファクトリ
- * デフォルト: { supportedCommands: ['harness:lint'], noAgentApiImports: true }
+ * デフォルト: { supportedCommands: ['phasegate:lint'], noAgentApiImports: true }
  */
 export const createFallbackCapabilitySpec = (
   overrides: Partial<{ supportedCommands: string[]; noAgentApiImports: boolean }> = {}
 ) =>
   FallbackCapabilitySpec.create({
-    supportedCommands: ['harness:lint'],
+    supportedCommands: ['phasegate:lint'],
     noAgentApiImports: true,
     ...overrides,
   });
@@ -597,7 +597,7 @@ target('HookTranslationResult', () => {
       // Arrange
       const input = {
         shouldBlock: false,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: ['--fast'],
         expectedExitCode: 0,
         timeoutMs: 500,
@@ -605,7 +605,7 @@ target('HookTranslationResult', () => {
       // Act
       const actual = HookTranslationResult.create(input);
       // Assert
-      expect(actual.cliCommand).toBe('harness:lint');
+      expect(actual.cliCommand).toBe('phasegate:lint');
       expect(actual.timeoutMs).toBe(500);
     });
 
@@ -632,7 +632,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-005
     it('timeoutMs省略時にundefinedになること', () => {
       // Arrange
-      const input = { shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 };
       // Act
       const actual = HookTranslationResult.create(input);
       // Assert
@@ -644,7 +644,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-010 / UT-BV-005
     it('HarnessErrorがthrowされること', () => {
       // Arrange
-      const input = { shouldBlock: true, cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: true, cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 };
       // Act
       const actual = () => HookTranslationResult.create(input);
       // Assert
@@ -654,7 +654,7 @@ target('HookTranslationResult', () => {
     // UT-HTR-011
     it('エラーメッセージに「shouldBlock=trueのときcliCommandは設定不可」等の識別情報が含まれること', () => {
       // Arrange
-      const input = { shouldBlock: true, cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 };
+      const input = { shouldBlock: true, cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 };
       let caughtError: HarnessError | undefined;
       // Act
       try {
@@ -675,7 +675,7 @@ target('HookTranslationResult', () => {
       const input = {
         shouldBlock: false,
         skipReason: 'HOOK_DISABLED' as const,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: [],
         expectedExitCode: 0,
       };
@@ -691,7 +691,7 @@ target('HookTranslationResult', () => {
       const input = {
         shouldBlock: false,
         skipReason: 'HOOK_DISABLED' as const,
-        cliCommand: 'harness:lint',
+        cliCommand: 'phasegate:lint',
         cliArgs: [],
         expectedExitCode: 0,
       };
@@ -712,8 +712,8 @@ target('HookTranslationResult', () => {
     // UT-HTR-030
     it('同一フィールドを持つ2つのHookTranslationResultが等値であること', () => {
       // Arrange
-      const a = createHookTranslationResult({ cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
-      const b = createHookTranslationResult({ cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
+      const a = createHookTranslationResult({ cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
+      const b = createHookTranslationResult({ cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0 });
       // Act
       const actual = a.equals(b);
       // Assert
@@ -750,7 +750,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-001
     it('supportedCommands 1件・noAgentApiImports=trueで生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint'], noAgentApiImports: true };
+      const input = { supportedCommands: ['phasegate:lint'], noAgentApiImports: true };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -760,7 +760,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-002
     it('supportedCommands 2件・noAgentApiImports=falseで生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: false };
+      const input = { supportedCommands: ['phasegate:lint', 'phasegate:complete-check'], noAgentApiImports: false };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -771,7 +771,7 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-003
     it('supportedCommands 1件（最小有効）で生成されること', () => {
       // Arrange
-      const input = { supportedCommands: ['harness:lint'], noAgentApiImports: true };
+      const input = { supportedCommands: ['phasegate:lint'], noAgentApiImports: true };
       // Act
       const actual = FallbackCapabilitySpec.create(input);
       // Assert
@@ -811,8 +811,8 @@ target('FallbackCapabilitySpec', () => {
     // UT-FCS-020
     it('同一フィールドを持つ2つのFallbackCapabilitySpecが等値であること', () => {
       // Arrange
-      const a = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
-      const b = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
+      const a = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
+      const b = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
       // Act
       const actual = a.equals(b);
       // Assert
@@ -872,7 +872,7 @@ const buildTranslatorPorts = (overrides: {
   };
   const cliCommandRegistryPort = {
     has: vi.fn().mockReturnValue(commandExists),
-    get: vi.fn().mockReturnValue(commandExists ? 'harness:lint' : undefined),
+    get: vi.fn().mockReturnValue(commandExists ? 'phasegate:lint' : undefined),
   };
 
   return { configQueryPort, reentryGuardStatePort, cliCommandRegistryPort };
@@ -933,7 +933,7 @@ target('HookToCliTranslator', () => {
 
     describe('PostToolUseEventを変換する', () => {
       // UT-HTC-010
-      it('hook有効のとき cliCommand=harness:lint のHookTranslationResultを返すこと', () => {
+      it('hook有効のとき cliCommand=phasegate:lint のHookTranslationResultを返すこと', () => {
         // Arrange
         const ports = buildTranslatorPorts({ isEnabled: true });
         const sut = new HookToCliTranslator(ports);
@@ -942,7 +942,7 @@ target('HookToCliTranslator', () => {
         const actual = sut.translate(event);
         // Assert
         expect(actual.shouldBlock).toBe(false);
-        expect(actual.cliCommand).toBe('harness:lint');
+        expect(actual.cliCommand).toBe('phasegate:lint');
         expect(actual.expectedExitCode).toBe(0);
       });
 
@@ -962,7 +962,7 @@ target('HookToCliTranslator', () => {
 
     describe('StopEventを変換する', () => {
       // UT-HTC-020
-      it('ReentryGuard非active時に cliCommand=harness:complete-check のHookTranslationResultを返すこと', () => {
+      it('ReentryGuard非active時に cliCommand=phasegate:complete-check のHookTranslationResultを返すこと', () => {
         // Arrange
         const ports = buildTranslatorPorts({ isActive: false });
         const sut = new HookToCliTranslator(ports);
@@ -971,7 +971,7 @@ target('HookToCliTranslator', () => {
         const actual = sut.translate(event);
         // Assert
         expect(actual.shouldBlock).toBe(false);
-        expect(actual.cliCommand).toBe('harness:complete-check');
+        expect(actual.cliCommand).toBe('phasegate:complete-check');
         expect(actual.cliArgs).toEqual([]);
         expect(actual.expectedExitCode).toBe(0);
       });
@@ -1023,7 +1023,7 @@ const buildVerificationPorts = (overrides: {
   detectedImports?: string[];
   registeredCommands?: string[];
 } = {}) => {
-  const { detectedImports = [], registeredCommands = ['harness:lint', 'harness:complete-check'] } = overrides;
+  const { detectedImports = [], registeredCommands = ['phasegate:lint', 'phasegate:complete-check'] } = overrides;
 
   const importAnalyzerPort = {
     detectAgentApiImports: vi.fn().mockReturnValue(detectedImports),
@@ -1041,9 +1041,9 @@ target('FallbackVerificationService', () => {
       // UT-FVS-001
       it('エージェントAPIのimportなし・全コマンド登録済みのとき violations=[] を返すこと', () => {
         // Arrange
-        const ports = buildVerificationPorts({ detectedImports: [], registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ detectedImports: [], registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
-        const spec = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: true });
+        const spec = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: true });
         // Act
         const actual = sut.verify(spec);
         // Assert
@@ -1053,9 +1053,9 @@ target('FallbackVerificationService', () => {
       // UT-FVS-002
       it('noAgentApiImports=falseのとき importチェックをスキップし violations=[] を返すこと', () => {
         // Arrange
-        const ports = buildVerificationPorts({ detectedImports: ['@anthropic-ai/claude-code'], registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ detectedImports: ['@anthropic-ai/claude-code'], registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
-        const spec = createFallbackCapabilitySpec({ supportedCommands: ['harness:lint'], noAgentApiImports: false });
+        const spec = createFallbackCapabilitySpec({ supportedCommands: ['phasegate:lint'], noAgentApiImports: false });
         // Act
         const actual = sut.verify(spec);
         // Assert
@@ -1108,10 +1108,10 @@ target('FallbackVerificationService', () => {
       // UT-FVS-020
       it('harness:unknownが未登録のとき violations に1件のHarnessErrorが含まれること', () => {
         // Arrange
-        const ports = buildVerificationPorts({ registeredCommands: ['harness:lint'] });
+        const ports = buildVerificationPorts({ registeredCommands: ['phasegate:lint'] });
         const sut = new FallbackVerificationService(ports);
         const spec = createFallbackCapabilitySpec({
-          supportedCommands: ['harness:lint', 'harness:unknown'],
+          supportedCommands: ['phasegate:lint', 'harness:unknown'],
           noAgentApiImports: false,
         });
         // Act
@@ -1127,7 +1127,7 @@ target('FallbackVerificationService', () => {
         const ports = buildVerificationPorts({ registeredCommands: [] });
         const sut = new FallbackVerificationService(ports);
         const spec = createFallbackCapabilitySpec({
-          supportedCommands: ['harness:lint', 'harness:complete-check'],
+          supportedCommands: ['phasegate:lint', 'phasegate:complete-check'],
           noAgentApiImports: false,
         });
         // Act
@@ -1204,8 +1204,8 @@ target('FallbackVerificationService', () => {
 | UT-BV-002 | `protected-file-list.test.ts` | ProtectedFileList | `patterns: ['a']`（1件） | 生成成功（最小有効） |
 | UT-BV-003 | `fallback-capability-spec.test.ts` | FallbackCapabilitySpec | `supportedCommands: []`（空配列） | HarnessError（INV-5違反） |
 | UT-BV-004 | `fallback-capability-spec.test.ts` | FallbackCapabilitySpec | `supportedCommands: ['cmd']`（1件） | 生成成功（最小有効） |
-| UT-BV-005 | `hook-translation-result.test.ts` | HookTranslationResult | `shouldBlock: true` かつ `cliCommand: 'harness:lint'` | HarnessError（INV-2違反） |
-| UT-BV-006 | `hook-translation-result.test.ts` | HookTranslationResult | `skipReason: 'HOOK_DISABLED'` かつ `cliCommand: 'harness:lint'` | HarnessError（INV-3違反） |
+| UT-BV-005 | `hook-translation-result.test.ts` | HookTranslationResult | `shouldBlock: true` かつ `cliCommand: 'phasegate:lint'` | HarnessError（INV-2違反） |
+| UT-BV-006 | `hook-translation-result.test.ts` | HookTranslationResult | `skipReason: 'HOOK_DISABLED'` かつ `cliCommand: 'phasegate:lint'` | HarnessError（INV-3違反） |
 | UT-BV-007 | `reentry-guard.test.ts` | ReentryGuard | active状態で `activate()` | HarnessError（INV-1違反） |
 | UT-BV-008 | `hook-to-cli-translator.test.ts` | HookToCliTranslator | `targetFilePaths: []`（空配列）の PreToolUseEvent | `shouldBlock: false`（ブロックしない） |
 | UT-BV-009 | `hook-to-cli-translator.test.ts` | HookToCliTranslator | HOOK_DISABLEDの PostToolUseEvent | `skipReason: 'HOOK_DISABLED'` |

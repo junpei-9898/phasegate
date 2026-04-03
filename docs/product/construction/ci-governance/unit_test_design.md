@@ -113,8 +113,8 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-PE-001 | `createCommand(key='cmd-status', command='harness:status', description='ステータス確認')` | type=`'command'`のPointerEntryが生成される |
-| UT-PE-002 | `createCommand(key='', command='harness:lint', description='...')` | エラーをスロー / 生成失敗（key空文字不可） |
+| UT-PE-001 | `createCommand(key='cmd-status', command='phasegate:status', description='ステータス確認')` | type=`'command'`のPointerEntryが生成される |
+| UT-PE-002 | `createCommand(key='', command='phasegate:lint', description='...')` | エラーをスロー / 生成失敗（key空文字不可） |
 | UT-PE-003 | `createCommand(key='k', command='', description='...')` | エラーをスロー / 生成失敗（command空文字不可） |
 
 #### 生成テスト（FilePointer）
@@ -333,7 +333,7 @@
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-PV-001 | CommandPointerを含むPointerEntry[] | CommandExistencePort: `exists('harness:status')`→true | HarnessError[]が空配列（Dead Pointerなし） |
+| UT-PV-001 | CommandPointerを含むPointerEntry[] | CommandExistencePort: `exists('phasegate:status')`→true | HarnessError[]が空配列（Dead Pointerなし） |
 | UT-PV-002 | 存在しないCommandPointerを含むPointerEntry[] | CommandExistencePort: `exists('harness:unknown')`→false | AGENTS_MD_DEAD_POINTERエラーを含むHarnessError[]が返る |
 | UT-PV-003 | FilePointerを含むPointerEntry[] | FileExistencePort: `exists('docs/README.md')`→true | HarnessError[]が空配列（Dead Pointerなし） |
 | UT-PV-004 | 存在しないFilePointerを含むPointerEntry[] | FileExistencePort: `exists('docs/nonexistent.md')`→false | AGENTS_MD_DEAD_POINTERエラーを含むHarnessError[]が返る |

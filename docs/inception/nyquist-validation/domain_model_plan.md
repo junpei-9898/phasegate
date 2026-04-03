@@ -14,11 +14,11 @@
   - H07-01: requirement-test-matrix.json新設
   - H07-02: phase-gate ACマッピング完了チェック追加
   - H07-03: test-coverage-checkerでの要件カバレッジ算出
-  - H07-04: harness:impact-analysis HXX-XXコマンド
+  - H07-04: phasegate:impact-analysis HXX-XXコマンド
 - **他Unitとの境界**:
   - traceability-model: `@story HXX-XX`メタデータとの整合性検証（StoryId値オブジェクト消費）
   - validator-system: `AcCoverageGatePolicy`を本Unitが定義し、validator-systemが実行主体として呼び出す
-  - harness-api: `harness:impact-analysis`CLIのエントリポイントはharness-apiが所有。本Unitは実行ロジックを提供
+  - harness-api: `phasegate:impact-analysis`CLIのエントリポイントはharness-apiが所有。本Unitは実行ロジックを提供
   - harness-error: バリデーションエラー出力にHarnessError型を使用
   - config-foundation: `coverageThreshold`（standard: 90% / strict: 95%）をHarnessConfigV2から取得
 
@@ -84,7 +84,7 @@
 - **AC網羅率**: マッピング済みAC数/全AC数 + 未カバーAC一覧
 - **コードカバレッジ閾値**: HarnessConfigV2から取得した閾値との対比（coverageThreshold: standard=90%, strict=95%）
 
-2軸を単一のCoverageResultにまとめることで、harness:ci-checkコマンドの出力に統一されたカバレッジ情報を提供する。
+2軸を単一のCoverageResultにまとめることで、phasegate:ci-checkコマンドの出力に統一されたカバレッジ情報を提供する。
 
 ### 3.4 ImpactAnalysisResultとharness-apiの境界
 

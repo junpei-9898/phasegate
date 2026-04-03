@@ -127,7 +127,7 @@ Gate ──── 最大速度 ──── Gate ──── 最大速度 ─�
  │    ├─ US-001         │    └─ US-003         │
  │    └─ US-002         │                      │
  └─ Pre-flight          └─ Post-wave           └─ Final
-    harness:check-ready    L2 validators          drift-detect
+    phasegate:check-ready    L2 validators          drift-detect
 ```
 
 ### 原則 2: 設計は人間が承認し、実行は機械が自律する（Human Gate, Machine Execute）

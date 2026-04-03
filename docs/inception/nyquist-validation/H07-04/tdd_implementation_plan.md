@@ -1,7 +1,7 @@
 # TDD実装計画: H07-04 (nyquist-validation)
 
 ## 1. スコープ
-- 対象ストーリー: H07-04 harness:impact-analysis HXX-XXコマンド
+- 対象ストーリー: H07-04 phasegate:impact-analysis HXX-XXコマンド
 - 影響する層: Domain / Application / Infrastructure / （CLIエントリポイントはharness-api所有）
 
 ## 2. 前提条件検証

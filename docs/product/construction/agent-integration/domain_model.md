@@ -111,7 +111,7 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 
 | サービス | 責務 | 参照するポート |
 |---------|------|--------------|
-| HookToCliTranslator | HookEvent → HookTranslationResult変換。Hook種別ごとの変換ルールを担う:<br>・PreToolUse Step 1: ProtectedFileList照合 → ブロック判定<br>・PreToolUse Step 2: WriteTargetScope推定 → PhaseGateQueryPort.checkGate() → フェーズゲートブロック判定（v2.2.0追加）<br>・PostToolUse: `harness:lint` / `harness:lint --fast` コマンド指定（timeoutMs: 500）<br>・Stop: ReentryGuard.isActive()チェック → `harness:complete-check` コマンド指定 | ReentryGuardStatePort, CliCommandRegistryPort, ConfigQueryPort, PhaseGateQueryPort |
+| HookToCliTranslator | HookEvent → HookTranslationResult変換。Hook種別ごとの変換ルールを担う:<br>・PreToolUse Step 1: ProtectedFileList照合 → ブロック判定<br>・PreToolUse Step 2: WriteTargetScope推定 → PhaseGateQueryPort.checkGate() → フェーズゲートブロック判定（v2.2.0追加）<br>・PostToolUse: `phasegate:lint` / `phasegate:lint --fast` コマンド指定（timeoutMs: 500）<br>・Stop: ReentryGuard.isActive()チェック → `phasegate:complete-check` コマンド指定 | ReentryGuardStatePort, CliCommandRegistryPort, ConfigQueryPort, PhaseGateQueryPort |
 | FallbackVerificationService | FallbackCapabilitySpecに基づくcoreモジュールのエージェント非依存性検証。violation時にHarnessError[]を返す | ImportAnalyzerPort |
 
 ---
@@ -157,9 +157,9 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | PreToolUseEvent | Step 2: WriteTargetScope.fromPath()でスコープ推定 → PhaseGateQueryPort.checkGate()でゲート不通過ならブロック（v2.2.0追加） | `{ shouldBlock: true, cliCommand: undefined }` |
 | PreToolUseEvent | Step 2: スコープ外（fromPath()がnull）またはゲート通過の場合 | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | ConfigQueryPort.isEnabled('post-tool-use')がfalseの場合 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
-| PostToolUseEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| PostToolUseEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
 | StopEvent | ReentryGuard.isActive()がtrueの場合 | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
-| StopEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 }` |
+| StopEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }` |
 
 **PostToolUse timeoutMs**: 500ms固定。infrastructure層のCliExecutorPortがこの値を使ってタイムアウト制御を実施する。ドメイン層は「このコマンドは500ms以内に完了すべき」という宣言のみを持つ。
 
@@ -216,7 +216,7 @@ HookToCliTranslator.translate(hookEvent)
   │
   ├── [PostToolUse]
   │   ConfigQueryPort → Hook有効/無効チェック
-  │   → HookTranslationResult { cliCommand: 'harness:lint', timeoutMs: 500 }
+  │   → HookTranslationResult { cliCommand: 'phasegate:lint', timeoutMs: 500 }
   │      または { skipReason: 'HOOK_DISABLED' }
   │
   └── [Stop]
@@ -225,7 +225,7 @@ HookToCliTranslator.translate(hookEvent)
       → isActive=true: HookTranslationResult { skipReason: 'REENTRY_DETECTED' }
       → isActive=false:
           ReentryGuard.activate() → ReentryGuardStatePort（フラグ書き込み）
-          HookTranslationResult { cliCommand: 'harness:complete-check' }
+          HookTranslationResult { cliCommand: 'phasegate:complete-check' }
          ↓
 [infrastructure層 Hook Adapter]
   CliExecutorPort → HookTranslationResult.cliCommand 実行

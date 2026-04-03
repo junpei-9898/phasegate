@@ -77,12 +77,12 @@ target('AgentsMdPointer', () => {
     context('既存keyのPointerEntryをreplacePointer()した場合', () => {
       it('既存エントリが新エントリに置換される（pointers.length変化なし）', () => {
         const pointer = createAgentsMdPointer({
-          pointers: [createCommandPointerEntry({ key: 'cmd-1', command: 'harness:old' })],
+          pointers: [createCommandPointerEntry({ key: 'cmd-1', command: 'phasegate:old' })],
         });
-        const newEntry = createCommandPointerEntry({ key: 'cmd-1', command: 'harness:new' });
+        const newEntry = createCommandPointerEntry({ key: 'cmd-1', command: 'phasegate:new' });
         const actual = pointer.replacePointer(newEntry);
         expect(actual.pointers).toHaveLength(1);
-        expect((actual.pointers[0] as any).command).toBe('harness:new');
+        expect((actual.pointers[0] as any).command).toBe('phasegate:new');
       });
     });
 

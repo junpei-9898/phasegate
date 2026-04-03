@@ -17,7 +17,7 @@ export class DetectDriftHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:detect-drift',
+      commandName: 'phasegate:detect-drift',
       args,
       flags: { ...flags, json: true },
     });

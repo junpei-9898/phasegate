@@ -48,7 +48,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 
 ### 2.2 CLI コマンド（50+）
 
-すべてのCLIコマンドは `npx harness <command>` で実行可能。主要コマンド群:
+すべてのCLIコマンドは `npx phasegate <command>` で実行可能。主要コマンド群:
 
 | カテゴリ | コマンド数 | 代表コマンド |
 |---------|----------|------------|
@@ -56,7 +56,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 | 機能管理 | 3 | `enable-feature`, `disable-feature`, `list-features` |
 | エラー管理 | 3 | `render-errors`, `validate-fix`, `list-errors` |
 | コア検証 | 4 | `validate`, `lint`, `ci-check`, `check-phase-gate` |
-| Harness API | 7 | `harness:status`, `harness:check-phase`, `harness:ci-check` 等 |
+| Harness API | 7 | `phasegate:status`, `phasegate:check-phase`, `phasegate:ci-check` 等 |
 | ADR | 2 | `list-adrs`, `validate-adr` |
 | CI統制 | 3 | `ci:generate-template`, `ci:migrate-agents-md`, `ci:check-repetition` |
 | スキル品質 | 5 | `skill:execute-tdd-cycle`, `skill:check-coverage` 等 |
@@ -88,7 +88,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 |------|------|
 | 有効化設定 | `layers.L0_fuse.enabled: false` |
 | バリデータ | L0-001 (FUSE hook config), L0-002 (FUSE mount status) |
-| 実行方法 | `npx harness validate --layer L0` |
+| 実行方法 | `npx phasegate validate --layer L0` |
 | **実際の動作** | **無効。** fuse-nativeが必要。macOS/Linux向け。グレースフルフォールバックで無効時もエラーなし |
 | **価値** | L0が有効なら、ファイルシステムレベルで書き込みを監視・ブロックできる。現状は未稼働 |
 
@@ -98,7 +98,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 |------|------|
 | 有効化設定 | `layers.L1_editor.enabled: true` ✅ |
 | バリデータ | L1-017 (ITテスト内部モック検出), L1-018 (スタブコメント残留検出), L2-013 (CLIコマンドE2Eテスト存在) |
-| 実行方法 | `npx harness lint` |
+| 実行方法 | `npx phasegate lint` |
 | **実際の動作** | **動作する。** Biome CLIを呼び出してAST解析を実行。Import Graph構築。ITテストでの`vi.mock()`使用を検出 |
 | **価値** | コード品質の静的検証。ただし**能動的ブロックではなくレポート出力** |
 
@@ -108,7 +108,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 |------|------|
 | 有効化設定 | `layers.L2_precommit.enabled: true` ✅ |
 | バリデータ | L2-001 (フェーズゲート), L2-002 (メタデータ), L2-003 (テスト品質) |
-| 実行方法 | `npx harness validate --layer L2` / git commit時のpre-commitフック |
+| 実行方法 | `npx phasegate validate --layer L2` / git commit時のpre-commitフック |
 | **実際の動作** | **動作する。** コミット時にメタデータ(`@unit`, `@layer`)の存在を検証。フェーズゲートもvalidate経由で検証可能 |
 | **価値** | **コミット時の品質ゲート。** ただしgit commit自体がClaude Code settings.jsonでdeny設定されているため、**AIエージェント利用時はpre-commitフックが発火しない** |
 
@@ -118,7 +118,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 |------|------|
 | 有効化設定 | `layers.L3_ci.enabled: true` ✅ |
 | バリデータ | L3-001 (セキュリティパターン), L3-002 (パフォーマンス/strictOnly), L3-003 (テストカバレッジ), L3-004 (AC網羅性) |
-| 実行方法 | `npx harness validate --layer L3` / `npx harness ci-check` |
+| 実行方法 | `npx phasegate validate --layer L3` / `npx phasegate ci-check` |
 | **実際の動作** | **動作する。** セキュリティパターンスキャン、AC-テストトレーサビリティ検証 |
 | **価値** | CI/CD統合時の品質ゲート。ただし**CIパイプラインが未構築の場合は手動実行のみ** |
 
@@ -128,7 +128,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 |------|------|
 | 有効化設定 | `layers.L4_scheduled.enabled: false` |
 | バリデータ | L4-001 (ドリフト検出), L4-002 (整合性チェック), L4-003 (デッドコード/strictOnly) |
-| 実行方法 | `npx harness validate --layer L4` / `npx harness harness:detect-drift` |
+| 実行方法 | `npx phasegate validate --layer L4` / `npx phasegate phasegate:detect-drift` |
 | **実際の動作** | **無効だが手動実行可能。** 設計文書とコードの乖離を検出、ADR参照の整合性チェック |
 | **価値** | 長期的な設計-コード整合性の維持。定期実行の仕組みは未構築 |
 
@@ -158,8 +158,8 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
 | 側面 | 状態 | 詳細 |
 |------|------|------|
 | phase-dependency-modelのロジック | ✅ 完全実装 | 15フェーズノード、17依存関係、`checkPhaseGate()` API |
-| CLI経由のフェーズゲートチェック | ✅ 動作 | `npx harness check-phase-gate --level 2 --unit validator-system` |
-| L2バリデータ経由のチェック | ✅ 動作 | `npx harness validate --layer L2` |
+| CLI経由のフェーズゲートチェック | ✅ 動作 | `npx phasegate check-phase-gate --level 2 --unit validator-system` |
+| L2バリデータ経由のチェック | ✅ 動作 | `npx phasegate validate --layer L2` |
 | **pre-tool-use hookによるリアルタイムブロック** | ⚠️ **ハードコード実装** | `scripts/harness/{unit}/` パスと `logical_design.md`, `domain_model.md` のみ。phase-dependency-model未連携 |
 | **設計文書への書き込み順序制約** | ❌ **未実装** | domain_model → logical_design → test_design の順序チェックなし |
 | **設定駆動（他PJ対応）** | ❌ **未対応** | パスがハードコード。phasegate.config.jsonのproject.paths未使用 |
@@ -206,7 +206,7 @@ Phasegateの存在意義は **「AIエージェントが設計プロセスをス
    → 設計文書（docs/）への書き込み順序はノーチェック ❌
 
 3. phase-dependency-modelは完全に独立したCLI
-   → npx harness check-phase-gate で手動実行可能
+   → npx phasegate check-phase-gate で手動実行可能
    → pre-tool-use hookからは呼ばれていない ❌
 
 4. スキル（28個）はプロンプト定義

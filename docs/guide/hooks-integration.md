@@ -72,7 +72,7 @@ Use /quick-implementor skill for version changes in package.json.
 - Provides immediate feedback on violations
 
 ### Stop (before session end)
-- Runs `harness:complete-check` (L2-L4 full validation)
+- Runs `phasegate:complete-check` (L2-L4 full validation)
 - Session end is held if checks are not all green
 
 ## Optional Shell Script Hooks

@@ -23,29 +23,29 @@ import type { ArtifactScanResult } from '../../../harness-api/domain/value-objec
 ```typescript
 describe('harness-api statusコマンド', () => {
   // SC-H09-04-001
-  it('harness:status が "Unknown command" にならない', () => {
+  it('phasegate:status が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:status');
+    const actual = run('phasegate:status');
     // Assert
-    expect(actual.stderr).not.toContain('Unknown command: harness:status');
+    expect(actual.stderr).not.toContain('Unknown command: phasegate:status');
   });
 
   // SC-H09-04-002
-  it('harness:status が exit 0 または exit 2 のみを返す（exit 1を返さない）', () => {
+  it('phasegate:status が exit 0 または exit 2 のみを返す（exit 1を返さない）', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:status');
+    const actual = run('phasegate:status');
     // Assert
     expect(actual.exitCode).not.toBe(1);
     expect([0, 2]).toContain(actual.exitCode);
   });
 
   // SC-H09-04-006
-  it('harness:status の出力がJSON形式である', () => {
+  it('phasegate:status の出力がJSON形式である', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:status');
+    const actual = run('phasegate:status');
     // Assert
     if (actual.stdout) {
       expect(() => JSON.parse(actual.stdout)).not.toThrow();
@@ -55,10 +55,10 @@ describe('harness-api statusコマンド', () => {
   });
 
   // SC-H09-04-003
-  it('harness:status のレスポンスにlayers[]フィールドが含まれる', () => {
+  it('phasegate:status のレスポンスにlayers[]フィールドが含まれる', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:status');
+    const actual = run('phasegate:status');
     // Assert
     if (actual.exitCode === 0 && actual.stdout) {
       const parsed = JSON.parse(actual.stdout);

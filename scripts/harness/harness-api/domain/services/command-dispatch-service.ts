@@ -35,14 +35,14 @@ function makeError(message: string): HarnessError {
 }
 
 const KNOWN_COMMANDS = new Set([
-  'harness:check-ready',
-  'harness:check-phase',
-  'harness:ci-check',
-  'harness:detect-drift',
-  'harness:status',
-  'harness:lint',
-  'harness:complete-check',
-  'harness:impact-analysis',
+  'phasegate:check-ready',
+  'phasegate:check-phase',
+  'phasegate:ci-check',
+  'phasegate:detect-drift',
+  'phasegate:status',
+  'phasegate:lint',
+  'phasegate:complete-check',
+  'phasegate:impact-analysis',
 ]);
 
 export class CommandDispatchService {
@@ -104,7 +104,7 @@ export class CommandDispatchService {
     summary: { totalChecks: number; passed: number; failed: number; warnings: number }
   ): Promise<DispatchResult<T>> {
     switch (commandName) {
-      case 'harness:check-ready': {
+      case 'phasegate:check-ready': {
         const stories = await this.ports.phaseGateQueryPort.queryAllStories();
         const result = CheckReadyResult.fromStories(stories);
         if (result.allPassed) {
@@ -117,7 +117,7 @@ export class CommandDispatchService {
         return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
-      case 'harness:check-phase': {
+      case 'phasegate:check-phase': {
         const unitId = args.unit ?? '';
         const phaseInfo = await this.ports.phaseGateQueryPort.queryUnit(unitId);
         if (phaseInfo === null) {
@@ -129,7 +129,7 @@ export class CommandDispatchService {
         return { status: 'pass', errors: [], summary: r.summary, data: phaseInfo as unknown as T, exitCode: 0 };
       }
 
-      case 'harness:ci-check': {
+      case 'phasegate:ci-check': {
         const validatorResults = await this.ports.validatorExecutionPort.runL3Validators();
         const result = CiCheckResult.fromResults(validatorResults);
         if (result.allPassed) {
@@ -144,7 +144,7 @@ export class CommandDispatchService {
         return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
-      case 'harness:detect-drift': {
+      case 'phasegate:detect-drift': {
         const drifts = await this.ports.validatorExecutionPort.runDriftDetection();
         const result = DriftReportSummary.fromDrifts(drifts);
         if (!result.hasDrift()) {
@@ -156,7 +156,7 @@ export class CommandDispatchService {
         return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
-      case 'harness:status': {
+      case 'phasegate:status': {
         const scanResult = await this.ports.artifactScannerPort.scan();
         let presetInfo = { name: 'standard' as const, enabledLayers: ['L1', 'L2', 'L3'] as ('L1' | 'L2' | 'L3' | 'L4')[] };
         const configPort = this.ports.configQueryPort;
@@ -176,7 +176,7 @@ export class CommandDispatchService {
         return { status: 'pass', errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
       }
 
-      case 'harness:lint': {
+      case 'phasegate:lint': {
         const lintResult = await this.ports.biomeLintPort.runLint();
         if (lintResult.passed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 });
@@ -187,7 +187,7 @@ export class CommandDispatchService {
         return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
       }
 
-      case 'harness:complete-check': {
+      case 'phasegate:complete-check': {
         const [validatorResults, lintResult] = await Promise.all([
           this.ports.validatorExecutionPort.runAllValidators(),
           this.ports.biomeLintPort.runLint(),
@@ -211,7 +211,7 @@ export class CommandDispatchService {
         return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
       }
 
-      case 'harness:impact-analysis': {
+      case 'phasegate:impact-analysis': {
         const storyId = args.storyId ?? '';
         const result = await this.ports.impactAnalysisPort.analyze(storyId);
         if (result === null) {

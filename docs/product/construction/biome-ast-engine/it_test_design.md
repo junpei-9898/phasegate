@@ -461,16 +461,16 @@ scripts/harness/__tests__/biome-ast-engine/
 
 | ID | target | describe | context | it |
 |----|--------|----------|---------|-----|
-| IT-BA-111 | execute | harness:lintコマンドを実行する | 違反なし・ESLint残存なしの場合 | 終了コード0が返される |
-| IT-BA-112 | execute | harness:lintコマンドを実行する | ルール違反がある場合 | 終了コード1が返される |
-| IT-BA-113 | execute | harness:lintコマンドを実行する | ESLint残存がある場合 | 終了コード1が返される |
-| IT-BA-114 | execute | harness:lintコマンドを実行する | 設定読取失敗の場合 | 終了コード2が返される |
-| IT-BA-115 | execute | harness:lintコマンドを実行する | BiomeCLI実行失敗の場合 | 終了コード2が返される |
-| IT-BA-116 | execute | harness:lintコマンドを実行する | --jsonフラグが指定された場合 | HarnessApiResponse形式のJSONが出力される |
-| IT-BA-117 | execute | harness:lintコマンドを実行する | --targetフラグが指定された場合 | 対象ファイルが限定される |
-| IT-BA-118 | execute | harness:lintコマンドを実行する | --skip-eslint-removal-checkが指定された場合 | VerifyEslintRemovalUseCaseが呼ばれない |
-| IT-BA-119 | execute | harness:lintコマンドを実行する | 不正フラグが指定された場合 | Usageが出力され終了コード2が返される |
-| IT-BA-120 | execute | harness:lintコマンドを実行する | 不正フラグが指定された場合 | UseCaseが呼び出されない |
+| IT-BA-111 | execute | phasegate:lintコマンドを実行する | 違反なし・ESLint残存なしの場合 | 終了コード0が返される |
+| IT-BA-112 | execute | phasegate:lintコマンドを実行する | ルール違反がある場合 | 終了コード1が返される |
+| IT-BA-113 | execute | phasegate:lintコマンドを実行する | ESLint残存がある場合 | 終了コード1が返される |
+| IT-BA-114 | execute | phasegate:lintコマンドを実行する | 設定読取失敗の場合 | 終了コード2が返される |
+| IT-BA-115 | execute | phasegate:lintコマンドを実行する | BiomeCLI実行失敗の場合 | 終了コード2が返される |
+| IT-BA-116 | execute | phasegate:lintコマンドを実行する | --jsonフラグが指定された場合 | HarnessApiResponse形式のJSONが出力される |
+| IT-BA-117 | execute | phasegate:lintコマンドを実行する | --targetフラグが指定された場合 | 対象ファイルが限定される |
+| IT-BA-118 | execute | phasegate:lintコマンドを実行する | --skip-eslint-removal-checkが指定された場合 | VerifyEslintRemovalUseCaseが呼ばれない |
+| IT-BA-119 | execute | phasegate:lintコマンドを実行する | 不正フラグが指定された場合 | Usageが出力され終了コード2が返される |
+| IT-BA-120 | execute | phasegate:lintコマンドを実行する | 不正フラグが指定された場合 | UseCaseが呼び出されない |
 
 ### 5.2 LintCommandParser (6ケース)
 
@@ -532,18 +532,18 @@ scripts/harness/__tests__/biome-ast-engine/
 **テストファイル**: `integration/ci-pipeline-smoke.test.ts`
 
 **テスト方針**:
-- `harness:lint --json` コマンドをサブプロセスで実行し、出力のHarnessError形式準拠を検証する
+- `phasegate:lint --json` コマンドをサブプロセスで実行し、出力のHarnessError形式準拠を検証する
 - fixture workspaceを使用し、実Biome CLI + 実TypeScript Compiler APIで統合検証する
 - CIパイプライン（aidlc-gate.yml相当）のlint + format実行フローを模擬する
 
 | ID | target | describe | context | it |
 |----|--------|----------|---------|-----|
-| IT-BA-141 | harness:lint | CIパイプラインでBiome lint + formatを実行する | 正常なワークスペースの場合 | 終了コード0で完了する |
-| IT-BA-142 | harness:lint | CIパイプラインでBiome lint + formatを実行する | 違反があるワークスペースの場合 | 終了コード1で完了しHarnessError形式のエラーが出力される |
-| IT-BA-143 | harness:lint --json | CIパイプラインでJSON形式の出力を確認する | 正常実行の場合 | HarnessApiResponse envelopeが出力される |
-| IT-BA-144 | harness:lint | CI上で8ルールすべてが有効化された状態を確認する | L1 enabled=trueで全ルールerrorの場合 | 8ルール全てがcheckedRulesに含まれる |
-| IT-BA-145 | harness:lint | CI失敗時の出力がHarnessError形式に準拠する | ルール違反が検出された場合 | 出力にcode/severity/message/suggestionが含まれる |
-| IT-BA-146 | harness:lint | CI上でBiome format checkを実行する | フォーマット不備があるファイルの場合 | フォーマット違反が報告される |
+| IT-BA-141 | phasegate:lint | CIパイプラインでBiome lint + formatを実行する | 正常なワークスペースの場合 | 終了コード0で完了する |
+| IT-BA-142 | phasegate:lint | CIパイプラインでBiome lint + formatを実行する | 違反があるワークスペースの場合 | 終了コード1で完了しHarnessError形式のエラーが出力される |
+| IT-BA-143 | phasegate:lint --json | CIパイプラインでJSON形式の出力を確認する | 正常実行の場合 | HarnessApiResponse envelopeが出力される |
+| IT-BA-144 | phasegate:lint | CI上で8ルールすべてが有効化された状態を確認する | L1 enabled=trueで全ルールerrorの場合 | 8ルール全てがcheckedRulesに含まれる |
+| IT-BA-145 | phasegate:lint | CI失敗時の出力がHarnessError形式に準拠する | ルール違反が検出された場合 | 出力にcode/severity/message/suggestionが含まれる |
+| IT-BA-146 | phasegate:lint | CI上でBiome format checkを実行する | フォーマット不備があるファイルの場合 | フォーマット違反が報告される |
 
 ---
 

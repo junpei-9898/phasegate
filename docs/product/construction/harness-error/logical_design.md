@@ -877,7 +877,7 @@ harness-error は `integration_contract.md §3` にあるトップレベル CLI 
 
 **役割**
 
-- `harness:lint`, `harness:complete-check`, `harness:ci-check` の出力整形
+- `phasegate:lint`, `phasegate:complete-check`, `phasegate:ci-check` の出力整形
 - human / agent / ci の3形式へ切り替え
 
 **引数**

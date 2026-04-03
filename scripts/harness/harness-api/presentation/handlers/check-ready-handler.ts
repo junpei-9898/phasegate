@@ -17,7 +17,7 @@ export class CheckReadyHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:check-ready',
+      commandName: 'phasegate:check-ready',
       args,
       flags,
     });

@@ -36,7 +36,7 @@
 
 `scripts/harness/__tests__/helpers/test-helpers.ts` に追加：
 
-- `createCliCommandDefinition(commandName?)`: デフォルト `harness:check-ready`
+- `createCliCommandDefinition(commandName?)`: デフォルト `phasegate:check-ready`
 - `createHarnessApiResponse(overrides?)`: デフォルト `{ status: 'pass', errors: [], summary: '...', data: undefined }`
 - `createCheckReadyResult(overrides?)`: デフォルト `{ stories: [{ storyId: 'H09-01', passed: true }], allPassed: true }`
 - `createCiCheckResult(overrides?)`: デフォルト `{ validatorResults: [{ validatorId: 'L2-001', passed: true }], allPassed: true }`
@@ -60,6 +60,6 @@
 ## 5. 前提条件・リスク
 
 - `HarnessStatusSummary` は L1/L2/L3/L4 の4レイヤーを必須とする（INV: layersは4件固定）
-- `CommandDispatchService` の `§9-D5` ルール：`harness:status` コマンドは exitCode=0 固定（fail=1 を返さない）
+- `CommandDispatchService` の `§9-D5` ルール：`phasegate:status` コマンドは exitCode=0 固定（fail=1 を返さない）
 - `ExitCodeSpec` は pass=0 固定（INV）、fail/error は任意の正整数だが重複禁止
 - `CliCommandDefinition` の commandName は `harness:` プレフィックス必須かつコマンド名部分が英小文字始まり

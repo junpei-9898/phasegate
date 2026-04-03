@@ -4,7 +4,7 @@
 
 ## 1. テスト構造（AAAパターン）
 
-### SC-H11-04-001: Stop Hook が正常に harness:complete-check を呼び出すこと
+### SC-H11-04-001: Stop Hook が正常に phasegate:complete-check を呼び出すこと
 
 ```typescript
 describe('HandleStopUseCase', () => {
@@ -17,7 +17,7 @@ describe('HandleStopUseCase', () => {
         deactivate: vi.fn().mockResolvedValue(undefined),
       };
       const configQueryPort = { isEnabled: vi.fn().mockResolvedValue(true) };
-      const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['harness:complete-check']) };
+      const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['phasegate:complete-check']) };
       const cliExecutorPort = {
         execute: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
       };
@@ -53,7 +53,7 @@ describe('ReentryGuardがアクティブな場合', () => {
     };
     const cliExecutorPort = { execute: vi.fn() };
     const configQueryPort = { isEnabled: vi.fn().mockResolvedValue(true) };
-    const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['harness:complete-check']) };
+    const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['phasegate:complete-check']) };
     const target = new HandleStopUseCase({
       reentryGuardStatePort,
       cliExecutorPort,
@@ -96,7 +96,7 @@ describe('ReentryGuard', () => {
 | ReentryGuardStatePort | `isActive()` → true/false; `activate()`, `deactivate()` → void |
 | CliExecutorPort | `execute()` → `{ exitCode: 0/1, stdout: '', stderr: '' }` |
 | ConfigQueryPort | `isEnabled()` → true |
-| CliCommandRegistryPort | `listAll()` → `['harness:complete-check']` |
+| CliCommandRegistryPort | `listAll()` → `['phasegate:complete-check']` |
 
 ## 3. アサーション方針
 

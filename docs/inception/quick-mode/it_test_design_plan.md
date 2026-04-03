@@ -17,7 +17,7 @@
 
 ### 対象Unitの論理設計
 
-quick-mode は `harness:ci-check --quick` フラグに対応するUnit。`ChangedFile[]` の分類・Quick Mode適用可否判定・ValidatorRelaxationProfile生成・統合実行の4処理を3つのUseCaseに分担する。
+quick-mode は `phasegate:ci-check --quick` フラグに対応するUnit。`ChangedFile[]` の分類・Quick Mode適用可否判定・ValidatorRelaxationProfile生成・統合実行の4処理を3つのUseCaseに分担する。
 
 本ITテスト設計は以下の層を対象とする：
 

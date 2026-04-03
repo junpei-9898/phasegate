@@ -16,7 +16,7 @@
 - **AcCoverageGatePolicyの責務分離**: ACマッピング完了判定ロジックは本Unitが定義し、実行はvalidator-systemのphase-gateバリデータ（L2-001）に委譲する。ポリシーの定義と実行の分離による単一責任原則の遵守。
 - **JSONスキーマバリデーション分離**: スキーマファイルは `docs/contracts/requirement-test-matrix.schema.json` に配置し、ajvでの機械的バリデーションをInfrastructure層アダプタが担う。Domain層はスキーマ依存を持たない。
 - **@storyメタデータ整合性**: requirement-test-matrix.json内のstoryIdはtraceability-modelのStoryId一覧と照合し、未登録storyIdを検出する。
-- **CLIコマンド所有の明確化**: `harness:impact-analysis` のCLIエントリポイントはharness-apiが所有し、本Unitは実行ロジック（ImpactAnalysisService等）のみを提供する。
+- **CLIコマンド所有の明確化**: `phasegate:impact-analysis` のCLIエントリポイントはharness-apiが所有し、本Unitは実行ロジック（ImpactAnalysisService等）のみを提供する。
 - **カバレッジ閾値の参照先明確化**: コードカバレッジ閾値はconfig-foundationのPreset定義から取得。ハードコーディング禁止。
 
 ## 3. 採用パターン

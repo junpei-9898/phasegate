@@ -48,10 +48,10 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 
 ### 3.3 PostToolUse Hook Adapter（H11-03）
 
-- **正規経路**: `harness:lint`コマンド（harness-api所有）を呼び出す。内部でBiome（`biome check`/`biome format`）が実行される
-- **低遅延fast-path**: 500msタイムアウト内での完了を保証するため、`harness:lint --fast`モード（フォーマットのみ）をharness-apiに追加要求する。Biome直呼びは行わず、harness-api経由で統一する
+- **正規経路**: `phasegate:lint`コマンド（harness-api所有）を呼び出す。内部でBiome（`biome check`/`biome format`）が実行される
+- **低遅延fast-path**: 500msタイムアウト内での完了を保証するため、`phasegate:lint --fast`モード（フォーマットのみ）をharness-apiに追加要求する。Biome直呼びは行わず、harness-api経由で統一する
 - v0のformat-typescript-hook.shと同等以上の機能をBiomeで実現
-- Hook未使用時はCLI（`harness:lint`）で同等機能が実行可能
+- Hook未使用時はCLI（`phasegate:lint`）で同等機能が実行可能
 - Hook実行テストの存在
 
 ### 3.5 WriteTargetScope の issue パス認識（ISSUE-001）
@@ -63,11 +63,11 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 
 ### 3.4 Stop Hook Adapter（H11-04）
 
-- **正規フロー**: Stop Hook実行時に`harness:complete-check`を呼び出す（`pnpm test` + L1-L4全バリデータの統合実行を含む）。`harness:complete-check`がfailを返した場合、エージェント完了を阻止する
-- CLI/FSフォールバック経路でも`harness:complete-check`が同一の完了条件を提供するため、Hook経路との「完了条件のズレ」を排除する
+- **正規フロー**: Stop Hook実行時に`phasegate:complete-check`を呼び出す（`pnpm test` + L1-L4全バリデータの統合実行を含む）。`phasegate:complete-check`がfailを返した場合、エージェント完了を阻止する
+- CLI/FSフォールバック経路でも`phasegate:complete-check`が同一の完了条件を提供するため、Hook経路との「完了条件のズレ」を排除する
 - `stop_hook_active`フラグで再入を検出し、無限ループ（テスト失敗→再試行→テスト失敗）を防止
 - 再入検出時にStop Hookをスキップし、適切な警告メッセージを表示
-- Hook未使用時はCLI（`harness:complete-check`相当）で同等の完了チェックが実行可能
+- Hook未使用時はCLI（`phasegate:complete-check`相当）で同等の完了チェックが実行可能
 
 ---
 
@@ -77,7 +77,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 - **ProtectedFileList（値オブジェクト）**: PreToolUseでブロック対象とするファイルパスパターンのリスト（biome.json, tsconfig.json, package.json）
 - **HookTranslationResult（値オブジェクト）**: HookEventをharness-api CLIコマンドに変換した結果（コマンド名、引数、期待する終了コード）
 - **ReentryGuard（エンティティ）**: `stop_hook_active`フラグの管理。再入検出・スキップ判定・フラグリセットを担う
-- **HookToCliTranslator（ドメインサービス）**: HookEventを受け取り、対応するharness-api CLIコマンドへの変換を行う。PreToolUse→ファイル保護チェック、PostToolUse→`harness:lint`、Stop→`pnpm test` + `harness:ci-check`（`harness:complete-check`）
+- **HookToCliTranslator（ドメインサービス）**: HookEventを受け取り、対応するharness-api CLIコマンドへの変換を行う。PreToolUse→ファイル保護チェック、PostToolUse→`phasegate:lint`、Stop→`pnpm test` + `phasegate:ci-check`（`phasegate:complete-check`）
 - **FallbackVerificationService（ドメインサービス）**: coreモジュールのエージェント固有API非依存性を検証。import解析によりClaude Code Hook API等の直接参照がないことを確認
 
 ---
@@ -93,14 +93,14 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 
 | 契約 | 役割 | 相手Unit | 内容 |
 |------|------|---------|------|
-| **CLI Command Registry** | 消費 | harness-api | 全CLIコマンド名・入出力仕様・終了コード定義。`harness:lint`、`harness:ci-check`、`harness:complete-check`等 |
+| **CLI Command Registry** | 消費 | harness-api | 全CLIコマンド名・入出力仕様・終了コード定義。`phasegate:lint`、`phasegate:ci-check`、`phasegate:complete-check`等 |
 | **Harness API Response DTO** | 消費 | harness-api | CLI出力のJSON構造（status/errors/summary）。Hook Adapterがレスポンスをパースしてエージェントに返す |
 
 ### 5.3 実装時依存
 
 | 依存先Unit | 依存内容 |
 |-----------|---------|
-| harness-api | CLIコマンド呼び出し（`harness:lint`、`harness:lint --fast`、`harness:complete-check`） |
+| harness-api | CLIコマンド呼び出し（`phasegate:lint`、`phasegate:lint --fast`、`phasegate:complete-check`） |
 
 ---
 
@@ -110,7 +110,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 |----|------|---------------|
 | K1 | 4層防御モデル（L1-L4） | CLI/FSフォールバック保証により、Hook無しでもL1-L4全層が機能することを検証 |
 | K3 | Biome AST解析 | PostToolUse Hook AdapterがBiome直接呼び出しで高速フォーマット+リントを実行 |
-| K6 | 2-Phase Execution | Stop Hook Adapterが`harness:complete-check`経由で2-Phase Execution遵守を検証 |
+| K6 | 2-Phase Execution | Stop Hook Adapterが`phasegate:complete-check`経由で2-Phase Execution遵守を検証 |
 | K13 | phasegate.config.json | Hook設定（有効/無効、保護対象ファイル等）はphasegate.config.jsonから参照 |
 
 ---
@@ -130,7 +130,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 ## 8. 実装上の制約・注意事項
 
 - **薄いAdapter層の原則**: 本Unitはhook/FSイベントをharness-api CLIコマンドに変換する薄いAdapter層に限定する。バリデーションロジック、CLIコマンド仕様、出力フォーマットはharness-apiが所有し、本Unitには含めない
-- **CLIコマンド仕様の非所有**: `harness:lint`、`harness:ci-check`、`harness:complete-check`等のCLIコマンド名・入出力仕様・終了コードはharness-apiのCLI Command Registryが定義する。本Unitはそれを消費するのみ
+- **CLIコマンド仕様の非所有**: `phasegate:lint`、`phasegate:ci-check`、`phasegate:complete-check`等のCLIコマンド名・入出力仕様・終了コードはharness-apiのCLI Command Registryが定義する。本Unitはそれを消費するのみ
 - **v0との差異**: v0のquality-hooks（US-016〜019）を前身とし、US-037（PostToolUse Hook）をbiome-toolchainから本Unitに統合。v1ではCLI/FSフォールバック保証（H11-01）を新設
 - **エージェント非依存性の保証**: coreモジュール（domain/usecase層）がClaude Code Hook API等のエージェント固有APIを直接importしていないことをテストで検証する。Hook Adapterはinfrastructure層に配置し、エージェント固有の依存をこの層に閉じ込める
 - **PostToolUse Hookタイムアウト**: 500ms厳守。Biome直接呼び出しにより高速化を実現するが、タイムアウト超過時はHook実行をスキップしワーニングを出力する

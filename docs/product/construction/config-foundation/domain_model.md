@@ -103,7 +103,7 @@ phasegate.config.jsonファイル全体を1つのHarnessConfig集約で管理す
 | サービス | 責務 | 理由 |
 |---------|------|------|
 | **PresetResolutionService** | Preset名→デフォルト設定展開 + 個別上書きのdeep merge（RFC 7396）+ 展開後の最終バリデーション | 集約生成の前処理。deep merge + 配列置換のロジックは集約内に置くと責務過多 |
-| **FeatureRegistry** | harness:enable/disableの対象機能名一覧提供 | ACL的サービス。Wave 1では`harnesses`セクションキー、Wave 2でValidator ID追加 |
+| **FeatureRegistry** | phasegate:enable/disableの対象機能名一覧提供 | ACL的サービス。Wave 1では`harnesses`セクションキー、Wave 2でValidator ID追加 |
 
 ### ポートインターフェース
 

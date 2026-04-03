@@ -37,9 +37,9 @@ Unit定義にはAC IDの明記がないため、既存のStory IDを識別子と
 | H04-02 | `project.preset` フィールドの値変更のみでPreset切替が完了する | IT-CF-001-004, UT-CF-172 | △ |
 | H04-02 | Presetの個別設定上書きができる | UT-CF-171, UT-CF-175, IT-CF-003 | ○ |
 | H04-03 | GSD由来品質機能がデフォルトで `enabled: false` になる | UT-CF-126-140, UT-CF-197, IT-CF-004, IT-CF-031 | ○ |
-| H04-03 | `harness:enable <feature>` で個別機能を有効化できる | IT-CF-015-018, IT-CF-062 | ○ |
-| H04-03 | `harness:disable <feature>` で個別機能を無効化できる | IT-CF-023-026, IT-CF-068 | ○ |
-| H04-03 | `harness:enable --list` で機能一覧を表示できる | IT-CF-030-032, IT-CF-060-061 | ○ |
+| H04-03 | `phasegate:enable <feature>` で個別機能を有効化できる | IT-CF-015-018, IT-CF-062 | ○ |
+| H04-03 | `phasegate:disable <feature>` で個別機能を無効化できる | IT-CF-023-026, IT-CF-068 | ○ |
+| H04-03 | `phasegate:enable --list` で機能一覧を表示できる | IT-CF-030-032, IT-CF-060-061 | ○ |
 | H04-03 | 存在しない機能名指定時に利用可能一覧付きエラーを返す | UT-CF-154, UT-CF-187-188, IT-CF-019, IT-CF-063, IT-CF-065, IT-CF-069 | ○ |
 
 ## 3. ドメインロジックカバレッジ詳細

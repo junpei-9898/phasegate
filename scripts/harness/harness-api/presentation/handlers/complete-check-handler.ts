@@ -17,7 +17,7 @@ export class CompleteCheckHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:complete-check',
+      commandName: 'phasegate:complete-check',
       args,
       flags,
     });

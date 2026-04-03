@@ -111,7 +111,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint', 'harness:complete-check'],
+          supportedCommands: ['phasegate:lint', 'phasegate:complete-check'],
           noAgentApiImports: true,
           targetFilePaths: ['src/index.ts'],
         });
@@ -138,7 +138,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: false,
         });
 
@@ -165,7 +165,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: true,
           // targetFilePaths 省略
         });
@@ -194,7 +194,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: true,
           targetFilePaths: ['src/agent.ts'],
         });
@@ -216,14 +216,14 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
         const mockImportAnalyzerPort = { analyzeAgentApiImports: vi.fn() };
         const mockCliCommandRegistryPort = { hasCommand: vi.fn(), listCommands: vi.fn() };
         mockCliCommandRegistryPort.hasCommand.mockImplementation(
-          async (cmd: string) => cmd === 'harness:lint',
+          async (cmd: string) => cmd === 'phasegate:lint',
         );
         const useCase = createVerifyFallbackUseCase({
           importAnalyzerPort: mockImportAnalyzerPort,
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint', 'harness:unknown-cmd'],
+          supportedCommands: ['phasegate:lint', 'harness:unknown-cmd'],
           noAgentApiImports: false,
         });
 
@@ -480,7 +480,7 @@ target('HandlePostToolUseUseCase.execute', () => {
   describe('PostToolUse Hook の CLI 実行制御を行う', () => {
     context('Hook 有効かつ CLI が正常終了する場合', () => {
       // IT-UC-HandlePostToolUse-001
-      it('PostToolUse Hookが有効な場合、harness:lint --fastが実行されること', async () => {
+      it('PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -660,7 +660,7 @@ target('HandleStopUseCase.execute', () => {
   describe('Stop Hook の ReentryGuard ライフサイクルと CLI 実行を管理する', () => {
     context('ReentryGuard が非アクティブな場合（通常フロー）', () => {
       // IT-UC-HandleStop-001
-      it('ReentryGuardが非アクティブな場合、harness:complete-checkが実行されること', async () => {
+      it('ReentryGuardが非アクティブな場合、phasegate:complete-checkが実行されること', async () => {
         // Arrange
         const mockReentryGuardStatePort = {
           readActive: vi.fn().mockResolvedValue(false),
@@ -1139,24 +1139,24 @@ target('HarnessApiCliCommandRegistryAdapter', () => {
   describe('静的コマンドリストのコマンド存在確認を行う', () => {
     context('登録済みコマンドを照会する場合', () => {
       // IT-REPO-CliCommandRegistry-001
-      it('hasCommand（登録済みコマンド "harness:lint"）がtrueを返すこと', async () => {
+      it('hasCommand（登録済みコマンド "phasegate:lint"）がtrueを返すこと', async () => {
         // Arrange
         const adapter = new HarnessApiCliCommandRegistryAdapter();
 
         // Act
-        const actual = await adapter.hasCommand('harness:lint');
+        const actual = await adapter.hasCommand('phasegate:lint');
 
         // Assert
         expect(actual).toBe(true);
       });
 
       // IT-REPO-CliCommandRegistry-002
-      it('hasCommand（登録済みコマンド "harness:complete-check"）がtrueを返すこと', async () => {
+      it('hasCommand（登録済みコマンド "phasegate:complete-check"）がtrueを返すこと', async () => {
         // Arrange
         const adapter = new HarnessApiCliCommandRegistryAdapter();
 
         // Act
-        const actual = await adapter.hasCommand('harness:complete-check');
+        const actual = await adapter.hasCommand('phasegate:complete-check');
 
         // Assert
         expect(actual).toBe(true);
@@ -1188,8 +1188,8 @@ target('HarnessApiCliCommandRegistryAdapter', () => {
 
         // Assert
         expect(actual).toHaveLength(10);
-        expect(actual).toContain('harness:lint');
-        expect(actual).toContain('harness:complete-check');
+        expect(actual).toContain('phasegate:lint');
+        expect(actual).toContain('phasegate:complete-check');
       });
     });
   });
@@ -1322,7 +1322,7 @@ target('ChildProcessCliExecutorAdapter', () => {
 
         // Act
         const actual = await adapter.execute({
-          command: 'harness:lint',
+          command: 'phasegate:lint',
           args: ['--fast'],
           timeoutMs: 5000,
         });
@@ -1343,7 +1343,7 @@ target('ChildProcessCliExecutorAdapter', () => {
 
         // Act
         const actual = await adapter.execute({
-          command: 'harness:lint',
+          command: 'phasegate:lint',
           args: ['--fast'],
           timeoutMs: 5000,
         });
@@ -1364,7 +1364,7 @@ target('ChildProcessCliExecutorAdapter', () => {
 
         // Act
         const actual = await adapter.execute({
-          command: 'harness:status',
+          command: 'phasegate:status',
           args: [],
           timeoutMs: 5000,
         });
@@ -1386,7 +1386,7 @@ target('ChildProcessCliExecutorAdapter', () => {
 
         // Act
         const actual = await adapter.execute({
-          command: 'harness:lint',
+          command: 'phasegate:lint',
           args: [],
           timeoutMs: 5000,
         });
@@ -1407,7 +1407,7 @@ target('ChildProcessCliExecutorAdapter', () => {
         // Act & Assert
         await expect(
           adapter.execute({
-            command: 'harness:lint',
+            command: 'phasegate:lint',
             args: [],
             timeoutMs: 100, // 100ms でタイムアウト（スクリプトは 1000ms 待機）
           }),
@@ -1996,7 +1996,7 @@ target('Hook Flow Integration', () => {
 
     context('PostToolUse Hook 正常フロー', () => {
       // IT-UC-HookFlow-003
-      it('PostToolUse Hook正常フロー：Hook有効 → harness:lint --fast実行', async () => {
+      it('PostToolUse Hook正常フロー：Hook有効 → phasegate:lint --fast実行', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),

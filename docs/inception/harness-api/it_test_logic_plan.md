@@ -96,7 +96,7 @@ scripts/harness/__tests__/fixtures/harness-api/
 ## 6. 前提条件・リスク
 
 - **`@stub: wave2-pending` コメント**: Wave 2 未確定インターフェースへのテストには規定コメントを付与する
-- **D5ルール（harness:status）**: status コマンドは fail でも exitCode=0 返却。テストで特別扱いが必要
+- **D5ルール（phasegate:status）**: status コマンドは fail でも exitCode=0 返却。テストで特別扱いが必要
 - **process.exitCode vs process.exit**: Handler が `process.exitCode =` で設定する場合と `process.exit()` を呼ぶ場合を設計で明示
 - **Cross-Layer統合**: 3つの統合テストファイルは UseCase 実体 + Port モック構成
 - **DB不要**: ローカルCLIツール

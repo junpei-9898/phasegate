@@ -20,15 +20,15 @@ export class StatusHandler {
     options: CLIOutputOptions = {}
   ): Promise<void> {
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:status',
+      commandName: 'phasegate:status',
       args,
       flags,
     });
 
-    // Apply D5 rule: harness:status never returns exitCode 1
+    // Apply D5 rule: phasegate:status never returns exitCode 1
     const exitDecision = this.decideExitCodeUseCase.execute({
       status: result.response.status,
-      commandName: 'harness:status',
+      commandName: 'phasegate:status',
     });
 
     const json = HarnessApiJsonFormatter.format(result.response, options);

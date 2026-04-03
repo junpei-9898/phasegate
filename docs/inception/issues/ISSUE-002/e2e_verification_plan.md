@@ -53,8 +53,8 @@ ISSUE-001 で PreToolUse フェーズゲート Hook の動作は確認済み。�
 
 | # | 機能 | 結果 | 備考 |
 |---|------|------|------|
-| D-1 | `harness:status` | ✅ | JSON で層ステータス・プリセット情報を表示 |
-| D-2 | `harness:check-phase` | ✅ | unit 引数で Phase Gate 状態を表示、引数なしでエラー |
+| D-1 | `phasegate:status` | ✅ | JSON で層ステータス・プリセット情報を表示 |
+| D-2 | `phasegate:check-phase` | ✅ | unit 引数で Phase Gate 状態を表示、引数なしでエラー |
 | D-3 | `validate --layer L1` | ✅ | L1-017, L1-018 pass / L2-013 fail（E2Eテスト不足検出） |
 | D-4 | `validate --layer L2` | ✅ | Phase Gate blockers を詳細表示（設計文書不足を正しく検出） |
 | D-5 | `validate --layer L3` | ✅ | L3-001 pass, L3-002 skip, L3-003 pass, L3-004 pass |
@@ -102,7 +102,7 @@ ISSUE-001 で PreToolUse フェーズゲート Hook の動作は確認済み。�
 
 | # | 機能 | 結果 | 備考 |
 |---|------|------|------|
-| I-1 | implementation-readiness-checker (CLI) | ✅ | `harness:check-ready` 54ストーリー全て passed |
+| I-1 | implementation-readiness-checker (CLI) | ✅ | `phasegate:check-ready` 54ストーリー全て passed |
 | I-2 | story-implementor Phase 1 | ✅ | デプロイ検証OK: SKILL.md 254行、model: codex、フロントマター正常。実行は `/story-implementor` 経由のみ |
 | I-3 | codebase-mapper | ✅ | デプロイ検証OK: SKILL.md 151行、model: sonnet、review: opus。実行は `/codebase-mapper` 経由のみ |
 | I-4 | consistency-checker | ✅ | デプロイ検証OK: SKILL.md 155行、model: sonnet、review: opus、参照チェックリスト付き。実行は `/consistency-checker` 経由のみ |

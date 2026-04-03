@@ -134,11 +134,11 @@ harness_product_overview.mdに定義されているがアーカイブUSでカバ
 - metadataバリデータ(L2)の拡張
 
 ### 4.4 Harness API/コマンド（§9.1）
-- harness:check-ready（Phase Gate通過状態返却）
-- harness:check-phase（現在フェーズ返却）
-- harness:ci-check（L3バリデータ実行結果返却）
-- harness:detect-drift（設計-実装乖離レポート返却）
-- harness:status（ハーネス全体健全性サマリ返却）
+- phasegate:check-ready（Phase Gate通過状態返却）
+- phasegate:check-phase（現在フェーズ返却）
+- phasegate:ci-check（L3バリデータ実行結果返却）
+- phasegate:detect-drift（設計-実装乖離レポート返却）
+- phasegate:status（ハーネス全体健全性サマリ返却）
 - **議論点**: これらはバリデータのCLIラッパーか、独立したUSか？
 
 ### 4.5 Preset System（§7.3）

@@ -41,7 +41,7 @@ target('HandleStopUseCase.execute', () => {
   describe('Stop Hook の ReentryGuard ライフサイクルと CLI 実行を管理する', () => {
     context('ReentryGuard が非アクティブな場合（通常フロー）', () => {
       // IT-UC-HandleStop-001
-      it('ReentryGuardが非アクティブな場合、harness:complete-checkが実行されること', async () => {
+      it('ReentryGuardが非アクティブな場合、phasegate:complete-checkが実行されること', async () => {
         // Arrange
         const mockReentryGuardStatePort = {
           readActive: vi.fn().mockResolvedValue(false),

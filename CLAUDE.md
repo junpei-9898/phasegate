@@ -65,12 +65,12 @@ docs/
 ## ハーネスコマンド
 
 ```bash
-npx harness validate --layer L0     # L0 FUSEフック検証
-npx harness lint                    # L1 Biome ASTチェック
-npx harness validate --layer L2     # L2 Pre-commitチェック
-npx harness validate --layer L3     # L3 CIチェック
-npm run harness:status              # ハーネス状態表示
-npm run harness:check-phase         # フェーズゲート確認
+npx phasegate validate --layer L0     # L0 FUSEフック検証
+npx phasegate lint                    # L1 Biome ASTチェック
+npx phasegate validate --layer L2     # L2 Pre-commitチェック
+npx phasegate validate --layer L3     # L3 CIチェック
+npm run phasegate:status              # ハーネス状態表示
+npm run phasegate:check-phase         # フェーズゲート確認
 npm run test                        # テスト実行
 ```
 

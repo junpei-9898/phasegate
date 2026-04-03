@@ -593,7 +593,7 @@ hooks:
       required: true
     
     - name: harness-validate
-      command: "pnpm harness:ci-check"
+      command: "pnpm phasegate:ci-check"
       required: true
 
 # プラットフォームアダプター設定

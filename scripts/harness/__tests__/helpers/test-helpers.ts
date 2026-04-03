@@ -234,7 +234,7 @@ export const createFallbackCapabilitySpec = (
   overrides: Partial<{ supportedCommands: string[]; noAgentApiImports: boolean }> = {}
 ) =>
   FallbackCapabilitySpec.create({
-    supportedCommands: ['harness:lint'],
+    supportedCommands: ['phasegate:lint'],
     noAgentApiImports: true,
     ...overrides,
   });
@@ -303,7 +303,7 @@ export const createCommandPointerEntry = (overrides: Partial<{
 }> = {}): PointerEntry =>
   PointerEntry.createCommand({
     key: 'cmd-status',
-    command: 'harness:status',
+    command: 'phasegate:status',
     description: 'ステータス確認コマンド',
     ...overrides,
   });

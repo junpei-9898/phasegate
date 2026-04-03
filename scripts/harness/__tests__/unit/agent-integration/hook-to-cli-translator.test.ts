@@ -49,7 +49,7 @@ const buildTranslatorPorts = (overrides: {
   const cliCommandRegistryPort = {
     has: vi.fn().mockReturnValue(commandExists),
     hasCommand: vi.fn().mockResolvedValue(commandExists),
-    get: vi.fn().mockReturnValue(commandExists ? 'harness:lint' : undefined),
+    get: vi.fn().mockReturnValue(commandExists ? 'phasegate:lint' : undefined),
   };
   const phaseGateQueryPort = {
     checkGate: vi.fn().mockResolvedValue(
@@ -126,7 +126,7 @@ target('HookToCliTranslator', () => {
 
     describe('PostToolUseEventを変換する', () => {
       // UT-HTC-010
-      it('hook有効のとき cliCommand=harness:lint のHookTranslationResultを返すこと', () => {
+      it('hook有効のとき cliCommand=phasegate:lint のHookTranslationResultを返すこと', () => {
         // Arrange
         const ports = buildTranslatorPorts({ isEnabled: true });
         const sut = new HookToCliTranslator(ports);
@@ -135,7 +135,7 @@ target('HookToCliTranslator', () => {
         const actual = sut.translate(event);
         // Assert
         expect(actual.shouldBlock).toBe(false);
-        expect(actual.cliCommand).toBe('harness:lint');
+        expect(actual.cliCommand).toBe('phasegate:lint');
         expect(actual.expectedExitCode).toBe(0);
       });
 
@@ -155,7 +155,7 @@ target('HookToCliTranslator', () => {
 
     describe('StopEventを変換する', () => {
       // UT-HTC-020
-      it('ReentryGuard非active時に cliCommand=harness:complete-check のHookTranslationResultを返すこと', () => {
+      it('ReentryGuard非active時に cliCommand=phasegate:complete-check のHookTranslationResultを返すこと', () => {
         // Arrange
         const ports = buildTranslatorPorts({ isActive: false });
         const sut = new HookToCliTranslator(ports);
@@ -164,7 +164,7 @@ target('HookToCliTranslator', () => {
         const actual = sut.translate(event);
         // Assert
         expect(actual.shouldBlock).toBe(false);
-        expect(actual.cliCommand).toBe('harness:complete-check');
+        expect(actual.cliCommand).toBe('phasegate:complete-check');
         expect(actual.cliArgs).toEqual([]);
         expect(actual.expectedExitCode).toBe(0);
       });

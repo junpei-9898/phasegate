@@ -46,7 +46,7 @@ H07-01〜H07-04の各ACに対して、対応するテストケースのマッピ
 | H07-01 requirement-test-matrix.json新設 | 5 | UT-RTM-*, UT-MVS-*, IT-UC-ValidateMatrix-*, IT-REPO-* |
 | H07-02 phase-gate ACマッピング完了チェック | 4 | UT-ACGP-*, IT-UC-CheckACGate-* |
 | H07-03 test-coverage-checkerでの要件カバレッジ算出 | 3 | UT-CCS-*, UT-CVR-*, IT-UC-CalcCoverage-*, IT-REPO-Threshold-* |
-| H07-04 harness:impact-analysis HXX-XXコマンド | 4 | UT-IAS-*, UT-IAR-*, IT-UC-AnalyzeImpact-*, IT-API-AnalyzeImpactHandler-* |
+| H07-04 phasegate:impact-analysis HXX-XXコマンド | 4 | UT-IAS-*, UT-IAR-*, IT-UC-AnalyzeImpact-*, IT-API-AnalyzeImpactHandler-* |
 
 ### 2.2 ドメインロジックカバレッジ分析
 

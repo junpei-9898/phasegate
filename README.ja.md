@@ -60,7 +60,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ║  hook-config        .harness-hooks.yml設定検証              ║
 ║  gate-check         完了ゲートチェック                      ║
 ║                                                             ║
-║  実行: npx harness validate --layer L0                      ║
+║  実行: npx phasegate validate --layer L0                      ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  L1  EDITOR TIME: Biome AST Rules                           ║
 ║  ─────────────────────────────────────────────────────────  ║
@@ -70,7 +70,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ║  no-comment-flood       no-code-duplication                 ║
 ║  + it-test-mock-detection  + stub-comment-detection         ║
 ║                                                             ║
-║  実行: npx harness lint                                     ║
+║  実行: npx phasegate lint                                     ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  L2  PRE-COMMIT: Validators                                 ║
 ║  ─────────────────────────────────────────────────────────  ║
@@ -78,7 +78,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ║  metadata      @unit/@layer/@US-XXX/@story の完全性検証     ║
 ║  test-quality  AAA / actual / single-act / no-domain-mock   ║
 ║                                                             ║
-║  実行: npx harness validate --layer L2                      ║
+║  実行: npx phasegate validate --layer L2                      ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  L3  CI/CD: Validators                                      ║
 ║  ─────────────────────────────────────────────────────────  ║
@@ -87,7 +87,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ║  coverage      カバレッジ閾値 (standard: 90% / strict: 95%) ║
 ║  nyquist       要件→テスト双方向トレーサビリティ検証        ║
 ║                                                             ║
-║  実行: npx harness validate --layer L3                      ║
+║  実行: npx phasegate validate --layer L3                      ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  L4  SCHEDULED: Validators                                  ║
 ║  ─────────────────────────────────────────────────────────  ║
@@ -95,7 +95,7 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 ║  consistency-check 文書間レイヤー整合性チェック             ║
 ║  dead-code         未使用エクスポート・到達不能コード検出   ║
 ║                                                             ║
-║  実行: npx harness validate --layer L4                      ║
+║  実行: npx phasegate validate --layer L4                      ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -147,7 +147,7 @@ npm install --save-dev phasegate
 ### 1. プロジェクト初期化
 
 ```bash
-npx harness init --name <プロジェクト名>
+npx phasegate init --name <プロジェクト名>
 ```
 
 実行されること:
@@ -183,7 +183,7 @@ claude  # プロジェクトルートで起動
 ```bash
 # ハーネスを更新後、スキルを最新版に同期
 npm update phasegate
-npx harness update-skills
+npx phasegate update-skills
 ```
 
 ---
@@ -250,7 +250,7 @@ npx harness update-skills
 ## CLIコマンドリファレンス
 
 ```bash
-npx harness <command> [options]
+npx phasegate <command> [options]
 ```
 
 ### セットアップ
@@ -277,14 +277,14 @@ npx harness <command> [options]
 
 | コマンド | 説明 | オプション |
 |---|---|---|
-| `harness:status` | ハーネス全体の健全性サマリ | `--json` |
-| `harness:check-ready` | 全storyのPhase Gate通過状態 | `--json` |
-| `harness:check-phase` | 指定Unitの現在フェーズ | `--unit <unitId>` `--json` |
-| `harness:ci-check` | 全L3バリデータ実行結果 | `--json` |
-| `harness:detect-drift` | 設計-コード乖離レポート | `--json` |
-| `harness:lint` | harness-api経由のlint | `--target <path>` `--json` |
-| `harness:complete-check` | L2-L4全チェック | `--json` |
-| `harness:impact-analysis` | ストーリー影響範囲分析 | `<storyId>` `--json` |
+| `phasegate:status` | ハーネス全体の健全性サマリ | `--json` |
+| `phasegate:check-ready` | 全storyのPhase Gate通過状態 | `--json` |
+| `phasegate:check-phase` | 指定Unitの現在フェーズ | `--unit <unitId>` `--json` |
+| `phasegate:ci-check` | 全L3バリデータ実行結果 | `--json` |
+| `phasegate:detect-drift` | 設計-コード乖離レポート | `--json` |
+| `phasegate:lint` | harness-api経由のlint | `--target <path>` `--json` |
+| `phasegate:complete-check` | L2-L4全チェック | `--json` |
+| `phasegate:impact-analysis` | ストーリー影響範囲分析 | `<storyId>` `--json` |
 
 ### ADR管理
 
@@ -540,7 +540,7 @@ describe('ConfigSchema', () => {
 |---|---|---|
 | **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック。ブロック時はアクショナブルなエラーメッセージ（違反理由・不足成果物・次に使うべきスキル）を返却 |
 | **PostToolUse** | ファイル書き込み後 | Biome ASTルールを自動実行、違反があれば即時フィードバック |
-| **Stop** | セッション終了前 | `harness:complete-check` (L2-L4全チェック) を実行、全グリーンでないとセッション終了を保留 |
+| **Stop** | セッション終了前 | `phasegate:complete-check` (L2-L4全チェック) を実行、全グリーンでないとセッション終了を保留 |
 
 ### PreToolUse エラーメッセージ (v0.9.0)
 
@@ -641,7 +641,7 @@ PreToolUse Hook がブロックした際、AIエージェントが自律的に�
 軽微な変更（バグ修正、ドキュメント修正、テスト追加、設定変更）に対してハーネスの一部を緩和するモード。
 
 ```bash
-npx harness ci-check --quick
+npx phasegate ci-check --quick
 ```
 
 | レイヤー | 通常モード | Quick Mode |
@@ -694,9 +694,9 @@ npx harness ci-check --quick
 
 ```bash
 # 3種のテンプレートを生成
-npx harness ci:generate-template --type github-actions
-npx harness ci:generate-template --type pre-commit
-npx harness ci:generate-template --type weekly-check
+npx phasegate ci:generate-template --type github-actions
+npx phasegate ci:generate-template --type pre-commit
+npx phasegate ci:generate-template --type weekly-check
 ```
 
 | テンプレート | 用途 | 配置先 |
@@ -709,10 +709,10 @@ npx harness ci:generate-template --type weekly-check
 
 ```bash
 # aidlc-gate.yml を .github/workflows/ にコピー
-npx harness ci:generate-template --type github-actions --render > .github/workflows/aidlc-gate.yml
+npx phasegate ci:generate-template --type github-actions --render > .github/workflows/aidlc-gate.yml
 
 # pre-commit フックを設定
-npx harness ci:generate-template --type pre-commit --render > .husky/pre-commit
+npx phasegate ci:generate-template --type pre-commit --render > .husky/pre-commit
 chmod +x .husky/pre-commit
 ```
 
@@ -724,22 +724,22 @@ chmod +x .husky/pre-commit
 
 ```bash
 # K1-K13 非交渉要件の回帰テスト（16件）
-npx harness regression:run-k-requirements
+npx phasegate regression:run-k-requirements
 
 # Go/No-Go Gate 品質側3条件（3件）
-npx harness regression:run-gng-gate
+npx phasegate regression:run-gng-gate
 
 # K14（Phase Dependency Model）/ K15（Plan文書必須）（2件）
-npx harness regression:run-k14-k15
+npx phasegate regression:run-k14-k15
 
 # エージェント非依存性ガード（3件）
-npx harness regression:run-agent-guard
+npx phasegate regression:run-agent-guard
 ```
 
 JSON出力:
 
 ```bash
-npx harness regression:run-k-requirements --format json
+npx phasegate regression:run-k-requirements --format json
 ```
 
 **非交渉要件 (K1-K15) 概要:**
@@ -789,7 +789,7 @@ phasegate/
 │   ├── regression-suite/            # K1-K15回帰テストスイート
 │   ├── fuse-hooks-engine/           # Hooks Engine (.harness-hooks.yml・完了ゲート)
 │   └── phase2-extensions/           # freshness/pointer/e2e-template (v2)
-├── skills/                          # 28スキル (npx harness init で .claude/skills/ に展開)
+├── skills/                          # 28スキル (npx phasegate init で .claude/skills/ に展開)
 ├── templates/
 │   └── phasegate.config.json          # 設定テンプレート
 └── docs/
@@ -830,14 +830,14 @@ your-project/
 └── .claude/
     ├── CLAUDE.md
     ├── settings.json                # Hooks設定
-    └── skills/                      # npx harness init で展開（gitignore推奨）
+    └── skills/                      # npx phasegate init で展開（gitignore推奨）
 ```
 
 ### .gitignore 推奨設定
 
 ```
 node_modules/
-.claude/skills/          # npx harness init で再生成可能
+.claude/skills/          # npx phasegate init で再生成可能
 dist/
 reports/
 .harness/
@@ -869,7 +869,7 @@ git push origin main --tags
 npm update phasegate
 
 # スキルを最新版に同期
-npx harness update-skills
+npx phasegate update-skills
 ```
 
 > メジャーバージョンアップ時のみ `package.json` の `semver:^X.Y.Z` を手動で更新してください。

@@ -14,12 +14,12 @@
 
 | Unit | 配置先 | 外部依存 | CLI/Presentation |
 |------|--------|---------|-----------------|
-| config-foundation | `scripts/harness/config-foundation/` | `ajv` | `harness:enable`, `harness:disable`、互換入口 `scripts/harness/cli/enable.ts` / `disable.ts` |
+| config-foundation | `scripts/harness/config-foundation/` | `ajv` | `phasegate:enable`, `phasegate:disable`、互換入口 `scripts/harness/cli/enable.ts` / `disable.ts` |
 | harness-error | `scripts/harness/harness-error/` | `typescript`（TypeScript Compiler API） | トップレベルCLI所有なし。内部Presentation 4種（render / validate-fix-example / list-error-definitions / assert-severity-contract） |
-| phase-dependency-model | `scripts/harness/phase-dependency-model/` | なし | `harness:check-phase`, `harness:check-ready`, `scripts/harness/validators/phase-gate.ts` 向けPresentation |
+| phase-dependency-model | `scripts/harness/phase-dependency-model/` | なし | `phasegate:check-phase`, `phasegate:check-ready`, `scripts/harness/validators/phase-gate.ts` 向けPresentation |
 | traceability-model | `scripts/harness/traceability-model/` | なし | 単独Presentationなし。`index.ts` の公開面のみ |
 | adr-foundation | `scripts/harness/adr-foundation/` | `gray-matter` | 内部運用CLI 7種（`adr-create-template`, `adr-seed-initial`, `adr-list`, `adr-show`, `adr-search-archgate`, `adr-validate`, `adr-change-status`） |
-| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `@biomejs/biome`, `typescript`（TypeScript Compiler API） | `harness:lint` |
+| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `@biomejs/biome`, `typescript`（TypeScript Compiler API） | `phasegate:lint` |
 
 ## 2. 技術スタック確認
 
@@ -91,9 +91,9 @@
 - Shared Kernel公開面の存在検証
 - `tsc --noEmit` による型チェック
 - `@biomejs/biome` のlint/format実行検証
-- `pnpm harness:lint` / `harness:check-phase` / `harness:check-ready` の動作検証
+- `pnpm phasegate:lint` / `phasegate:check-phase` / `phasegate:check-ready` の動作検証
 - `pnpm test` によるUnit別テスト実行検証
-- `harness:enable` / `harness:disable` / ADR内部運用CLI群の起動検証
+- `phasegate:enable` / `phasegate:disable` / ADR内部運用CLI群の起動検証
 
 ## 4. QA（不明点・確認事項）
 
@@ -128,7 +128,7 @@ harness-error と biome-ast-engine はどちらも TypeScript Compiler API を�
 
 現在の `package.json` には `eslint`, `@typescript-eslint/*` が残存し、`scripts/harness/eslint-rules/` も存在する。一方、biome-ast-engine は `VerifyEslintRemoval` を持ち、legacy残存を検査する前提で設計されている。
 
-**推奨案:** 環境契約では「削除予定」を宣言し、実削除のトリガーは `harness:lint` と移行後テストのパリティ確認完了時点とする。理由は、先に削除すると比較基準を失い、後に削除すれば回帰確認を維持できるため。
+**推奨案:** 環境契約では「削除予定」を宣言し、実削除のトリガーは `phasegate:lint` と移行後テストのパリティ確認完了時点とする。理由は、先に削除すると比較基準を失い、後に削除すれば回帰確認を維持できるため。
 
 [Answer]
 推奨案を採用する。「削除予定」を宣言し、実削除はパリティ確認完了後とする。

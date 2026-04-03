@@ -27,14 +27,14 @@
 | Infrastructure | NyquistValidationImpactAnalysisAdapter | ImpactAnalysisPort実装 |
 | Infrastructure | FileSystemArtifactScannerAdapter | ArtifactScannerPort実装 |
 | Infrastructure | HarnessConfigQueryAdapter | ConfigQueryPort実装 |
-| Presentation | CheckReadyHandler | harness:check-ready |
-| Presentation | CheckPhaseHandler | harness:check-phase |
-| Presentation | CiCheckHandler | harness:ci-check |
-| Presentation | DetectDriftHandler | harness:detect-drift |
-| Presentation | StatusHandler | harness:status |
-| Presentation | LintHandler | harness:lint |
-| Presentation | CompleteCheckHandler | harness:complete-check |
-| Presentation | ImpactAnalysisHandler | harness:impact-analysis |
+| Presentation | CheckReadyHandler | phasegate:check-ready |
+| Presentation | CheckPhaseHandler | phasegate:check-phase |
+| Presentation | CiCheckHandler | phasegate:ci-check |
+| Presentation | DetectDriftHandler | phasegate:detect-drift |
+| Presentation | StatusHandler | phasegate:status |
+| Presentation | LintHandler | phasegate:lint |
+| Presentation | CompleteCheckHandler | phasegate:complete-check |
+| Presentation | ImpactAnalysisHandler | phasegate:impact-analysis |
 | Cross-Layer | CommandDispatch統合フロー | UseCase→Service→Port連携 |
 | Cross-Layer | StatusDerivation統合フロー | UseCase→Service→Port連携 |
 | Cross-Layer | Shared Kernel Contract | HarnessApiResponse<T>構造の契約検証 |
@@ -67,14 +67,14 @@
 
 | ハンドラー（エンドポイント） | コマンド | テストケース概算 |
 |--------------------------|---------|---------------|
-| CheckReadyHandler | harness:check-ready | 4ケース |
-| CheckPhaseHandler | harness:check-phase | 5ケース |
-| CiCheckHandler | harness:ci-check | 4ケース |
-| DetectDriftHandler | harness:detect-drift | 4ケース |
-| StatusHandler | harness:status | 4ケース |
-| LintHandler | harness:lint | 4ケース |
-| CompleteCheckHandler | harness:complete-check | 4ケース |
-| ImpactAnalysisHandler | harness:impact-analysis | 5ケース |
+| CheckReadyHandler | phasegate:check-ready | 4ケース |
+| CheckPhaseHandler | phasegate:check-phase | 5ケース |
+| CiCheckHandler | phasegate:ci-check | 4ケース |
+| DetectDriftHandler | phasegate:detect-drift | 4ケース |
+| StatusHandler | phasegate:status | 4ケース |
+| LintHandler | phasegate:lint | 4ケース |
+| CompleteCheckHandler | phasegate:complete-check | 4ケース |
+| ImpactAnalysisHandler | phasegate:impact-analysis | 5ケース |
 | Cross-Layer統合 | コマンドディスパッチ統合フロー | 5ケース |
 | Cross-Layer統合 | StatusDerivation統合フロー | 4ケース |
 | Cross-Layer統合 | Shared Kernel Contract検証 | 3ケース |
@@ -103,7 +103,7 @@
 ### ExitCode検証方針
 
 - `process.exitCode` の設定を直接検証する
-- `harness:status` コマンドの特殊ルール（fail→0変換）は DecideExitCodeUseCase テストで重点検証
+- `phasegate:status` コマンドの特殊ルール（fail→0変換）は DecideExitCodeUseCase テストで重点検証
 
 ### Cross-Unit Contract検証方針
 
@@ -141,4 +141,4 @@ ValidatorSystemExecutionAdapter・NyquistValidationImpactAnalysisAdapterは wave
 | 前提2 | 論理設計（`logical_design.md`）が確定済み（2026-03-19時点） |
 | 前提3 | テスト規約（AAAパターン・日本語テスト名・target/context/describe/it構造・actual変数）に従う |
 | リスク1 | ValidatorSystemExecutionAdapter・NyquistValidationImpactAnalysisAdapterはWave 2未完のためスタブ実装を使用 |
-| リスク2 | harness:complete-checkはbiome-ast-engineとvalidator-systemの両方を統合実行するため、スタブ依存が多くなる可能性がある |
+| リスク2 | phasegate:complete-checkはbiome-ast-engineとvalidator-systemの両方を統合実行するため、スタブ依存が多くなる可能性がある |

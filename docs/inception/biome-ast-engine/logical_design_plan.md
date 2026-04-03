@@ -30,7 +30,7 @@
 ### スコープ外
 
 - `@unit/@layer` の正規仕様定義そのものは traceability-model 所有
-- `harness:lint` などCLIコマンドの最終入出力責務は harness-api 所有
+- `phasegate:lint` などCLIコマンドの最終入出力責務は harness-api 所有
 - CIワークフロー全体の所有は ci-governance。biome-ast-engine は実行ロジックと出力契約のみ担う
 - L2-L4 バリデータの設計は validator-system 所有
 

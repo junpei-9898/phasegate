@@ -64,8 +64,8 @@
 # Agent Instructions
 
 ## Commands
-- `harness:status` — ステータス確認コマンド
-- `harness:check-ready` — チェックレディコマンド
+- `phasegate:status` — ステータス確認コマンド
+- `phasegate:check-ready` — チェックレディコマンド
 ...（行数確保用のダミー記述）
 ```
 

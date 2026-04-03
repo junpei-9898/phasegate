@@ -50,12 +50,12 @@ export class AgentsMdFileAdapter implements AgentsMdPort {
     const adrLinks: string[] = [];
 
     for (const line of lines) {
-      const cmdMatch = line.match(/^- \[cmd:([^\]]+)\]\(harness:([^)]+)\)\s*(.*)$/);
+      const cmdMatch = line.match(/^- \[cmd:([^\]]+)\]\(phasegate:([^)]+)\)\s*(.*)$/);
       if (cmdMatch) {
         try {
           pointers.push(PointerEntry.createCommand({
             key: cmdMatch[1].trim(),
-            command: `harness:${cmdMatch[2].trim()}`,
+            command: `phasegate:${cmdMatch[2].trim()}`,
             description: cmdMatch[3].trim(),
           }));
         } catch { /* skip invalid */ }

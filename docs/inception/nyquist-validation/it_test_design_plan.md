@@ -58,9 +58,9 @@ nyquist-validation Unit（Wave 2）
 | ハンドラー | CLIコマンド | テストケース概算 |
 |-----------|------------|----------------|
 | ValidateMatrixHandler | 直接呼び出し（--matrix-file） | 6ケース |
-| CheckAcCoverageGateHandler | harness:ci-check（L3-004経由） | 5ケース |
-| CalculateCoverageHandler | harness:ci-check（--check-threshold） | 6ケース |
-| AnalyzeImpactHandler | harness:impact-analysis | 6ケース |
+| CheckAcCoverageGateHandler | phasegate:ci-check（L3-004経由） | 5ケース |
+| CalculateCoverageHandler | phasegate:ci-check（--check-threshold） | 6ケース |
+| AnalyzeImpactHandler | phasegate:impact-analysis | 6ケース |
 
 ---
 

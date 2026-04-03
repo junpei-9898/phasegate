@@ -33,7 +33,7 @@ export class ImpactAnalysisHandler {
     }
 
     const result = await this.dispatchUseCase.execute({
-      commandName: 'harness:impact-analysis',
+      commandName: 'phasegate:impact-analysis',
       args,
       flags,
     });

@@ -45,7 +45,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 
 ### 3.3 AGENTS.mdポインタ型移行（H13-03）
 
-- AGENTS.mdの記述的バリデータ一覧を`harness:status`実行へのポインタに置換
+- AGENTS.mdの記述的バリデータ一覧を`phasegate:status`実行へのポインタに置換
 - AGENTS.mdへのADR参照リンクの追加
 - 移行前と比較して行数50%以上の削減
 - ポインタが参照する先（コマンド、ファイル）の実在性検証
@@ -91,7 +91,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 |------|------|---------|------|
 | **AGENTS.md Schema** | 提供（所有） | regression-suite | AGENTS.mdの最終文書構造定義（ポインタ型） |
 | **LessonArtifact Schema** | 提供（所有） | skill-quality | lesson artifactのJSON構造定義。skill-qualityがこのスキーマに準拠してartifactを出力 |
-| **Harness API Response DTO** | 消費 | harness-api | `harness:status`の出力JSON構造。AGENTS.mdポインタの参照先 |
+| **Harness API Response DTO** | 消費 | harness-api | `phasegate:status`の出力JSON構造。AGENTS.mdポインタの参照先 |
 | **ADR Frontmatter Schema** | 消費 | adr-foundation | AGENTS.mdに追加するADR参照リンクの参照先ADR実在性検証 |
 | **Validator ID Registry** | 消費 | validator-system | CI/CDテンプレートで実行するバリデータID一覧の参照 |
 | **Preset ID Registry** | 消費 | config-foundation | テンプレートごとの有効レイヤー・バリデータ設定の導出 |
@@ -127,7 +127,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCI/CDテ
 
 - **CI/CDテンプレートのPreset連動**: 各テンプレートはphasegate.config.jsonのプリセット設定（minimal/standard/strict）に基づいて実行対象バリデータを動的に決定する。テンプレート内にバリデータID一覧をハードコードしない。Preset解決はconfig-foundationのPreset ID Registryを通じて行う
 - **反復エラーの発生履歴管理**: エラー発生履歴は`.harness/error-history.json`等のローカルファイルで管理する。セッション間で永続化し、エラー解消時にリセットする。ファイルシステムベースの管理により、エージェント非依存性を維持
-- **AGENTS.mdポインタ型の実在性検証**: ポインタが参照するコマンド（`harness:status`等）はharness-apiのCLI Command Registryに登録されていること、参照するファイルはファイルシステム上に存在することを検証する。Dead Pointer（参照先なし）を許容しない
+- **AGENTS.mdポインタ型の実在性検証**: ポインタが参照するコマンド（`phasegate:status`等）はharness-apiのCLI Command Registryに登録されていること、参照するファイルはファイルシステム上に存在することを検証する。Dead Pointer（参照先なし）を許容しない
 - **lesson artifact集約のべき等性**: 同一lessonの重複集約を防止する。LessonAggregatorはlesson artifactのlessonIdで重複を検出し、既存エントリの更新または新規追加を判断する
 - **AGENTS.md行数削減目標**: ポインタ型移行後のAGENTS.mdは移行前比50%以上の行数削減を達成すること。これは移行のKPIとして回帰テストで検証する
 - **テンプレートの拡張性**: CI/CDテンプレートはGitHub Actions前提で作成するが、将来の他CIプラットフォーム対応（GitLab CI等）を考慮し、バリデータ実行部分をプラットフォーム非依存のスクリプト呼び出しに抽象化する

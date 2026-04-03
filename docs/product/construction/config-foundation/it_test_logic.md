@@ -247,7 +247,7 @@ configRepository.save.mockResolvedValue(undefined);
 
 ### 4.5 EnableFeatureCommandHandler
 
-`target('execute')` 配下は `describe('harness:enable CLI の引数を解釈して出力と終了コードを決める')` を親ふるまいとする。UseCaseはすべてスタブで差し替える。
+`target('execute')` 配下は `describe('phasegate:enable CLI の引数を解釈して出力と終了コードを決める')` を親ふるまいとする。UseCaseはすべてスタブで差し替える。
 
 | ケースID | `context()` | Arrange | Act | Assert |
 |---|---|---|---|---|
@@ -323,5 +323,5 @@ pnpm vitest scripts/harness/__tests__/config-foundation/presentation/cli/enable-
 ```
 
 ```bash
-pnpm harness:check-ready
+pnpm phasegate:check-ready
 ```

@@ -13,7 +13,7 @@
 
 | ファイル | 説明 |
 |---------|------|
-| `scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts` | PostToolUse変換ルール: `{ cliCommand: 'harness:lint', cliArgs: ['--fast'], timeoutMs: 500 }` |
+| `scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts` | PostToolUse変換ルール: `{ cliCommand: 'phasegate:lint', cliArgs: ['--fast'], timeoutMs: 500 }` |
 | `scripts/harness/agent-integration/application/usecases/handle-post-tool-use-usecase.ts` | HandlePostToolUseUseCase（Hook無効/タイムアウト/正常フロー） |
 | `scripts/harness/agent-integration/infrastructure/adapters/child-process-cli-executor-adapter.ts` | ChildProcessCliExecutorAdapter（timeoutMs制御、TIMEOUT_EXCEEDED返却） |
 | `scripts/harness/agent-integration/infrastructure/adapters/harness-api-cli-command-registry-adapter.ts` | HarnessApiCliCommandRegistryAdapter |

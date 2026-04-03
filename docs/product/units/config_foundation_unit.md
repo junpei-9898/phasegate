@@ -21,7 +21,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 |----------|---------|--------|
 | H04-01 | phasegate.config.json v2スキーマ定義 | Must |
 | H04-02 | Preset System定義と切替 | Must |
-| H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | Must |
+| H04-03 | GSD由来品質機能のデフォルト無効化 + phasegate:enable/disable機能切替 | Must |
 
 ---
 
@@ -44,12 +44,12 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 - `project.preset`フィールドの値変更のみでプリセット切替が完了
 - プリセットの個別設定上書き（例: standardだがcoverageThresholdを95%に）が可能
 
-### 3.3 デフォルト無効化 + harness:enable/disable（H04-03）
+### 3.3 デフォルト無効化 + phasegate:enable/disable（H04-03）
 
 - GSD由来の品質機能がデフォルトで`enabled: false`
-- `harness:enable <feature>`コマンドで個別機能を有効化
-- `harness:disable <feature>`コマンドで個別機能を無効化
-- `harness:enable --list`で有効化/無効化可能な機能名一覧を表示
+- `phasegate:enable <feature>`コマンドで個別機能を有効化
+- `phasegate:disable <feature>`コマンドで個別機能を無効化
+- `phasegate:enable --list`で有効化/無効化可能な機能名一覧を表示
 - 存在しない機能名が指定された場合、利用可能な機能名一覧を含むエラーメッセージを表示
 
 ---
@@ -62,7 +62,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 - **LayerConfig（値オブジェクト）**: L1-L4各レイヤーの有効/無効・バリデータ構成・閾値
 - **QuickModeConfig（値オブジェクト）**: Quick Mode設定（allowedCategories / maintainedLayers / relaxedGates）
 - **FeatureToggle（値オブジェクト）**: 個別機能の有効/無効状態
-- **FeatureRegistry（ドメインサービス）**: harness:enable/disableの対象機能名レジストリ。Validator ID Registryおよびharnessesセクションのキーをマージして有効化/無効化可能な機能名一覧を提供する
+- **FeatureRegistry（ドメインサービス）**: phasegate:enable/disableの対象機能名レジストリ。Validator ID Registryおよびharnessesセクションのキーをマージして有効化/無効化可能な機能名一覧を提供する
 - **ConfigValidationService（ドメインサービス）**: JSONスキーマに基づく設定ファイルのバリデーション
 - **PresetResolutionService（ドメインサービス）**: プリセット + 個別上書きの解決・マージ
 
@@ -80,7 +80,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 |------|------|---------|------|
 | **HarnessConfigV2型** | 提供 | 全Unit | v2設定スキーマの型定義（Shared Kernel） |
 | **Preset ID Registry** | 提供 | harness-api, quick-mode, validator-system | プリセットID（minimal/standard/strict）と有効レイヤー定義 |
-| **Validator ID Registry** | 消費 | validator-system | harness:enable/disableの対象機能名として参照 |
+| **Validator ID Registry** | 消費 | validator-system | phasegate:enable/disableの対象機能名として参照 |
 
 ---
 
@@ -101,7 +101,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 | 型定義 | `HarnessConfigV2`型（Shared Kernel） | 全Unit |
 | スキーマ | harness-config-v2.schema.json | 全Unit（バリデーション用） |
 | モジュール | config-loader（v2スキーマ読み込み） | 全Unit |
-| CLI | `harness:enable` / `harness:disable` | 外部利用者、harness-api |
+| CLI | `phasegate:enable` / `phasegate:disable` | 外部利用者、harness-api |
 | データ | Preset定義（minimal/standard/strict） | harness-api, quick-mode, validator-system |
 
 ---
@@ -115,4 +115,4 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 - **設定ファイルフォーマット**: インデント2のJSON形式。ファイルパスはプロジェクトローカル原則（`~`や`$HOME`禁止）
 - **harness-errorへの実装時依存**: harness-errorがfix_example検証でバリデータ実行にconfig参照する。型定義の先行確定により並列開発は可能
 - **HarnessConfigV2型とharnessesセクション**: `harnesses`セクション内の`deadCodeGC`はstrictプリセットで有効化される。`agentLessonCollection`/`cascadeUpdate`/`bundleSizeLimit`/`deadCodeGC`の全キーがharnessesセクションに含まれる
-- **FeatureRegistry**: `harness:enable --list`が返す機能名一覧は、Validator ID Registry（validator-systemが所有）の全ID + harnessesセクションのキーを統合したもの。FeatureRegistryがこの統合を担当する
+- **FeatureRegistry**: `phasegate:enable --list`が返す機能名一覧は、Validator ID Registry（validator-systemが所有）の全ID + harnessesセクションのキーを統合したもの。FeatureRegistryがこの統合を担当する

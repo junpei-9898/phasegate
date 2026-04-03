@@ -132,23 +132,23 @@
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
 | UT-HTR-001 | `{ shouldBlock: true, cliArgs: [], expectedExitCode: 1 }`（ブロック結果） | 生成成功 |
-| UT-HTR-002 | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` | 生成成功 |
+| UT-HTR-002 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` | 生成成功 |
 | UT-HTR-003 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED', cliArgs: [], expectedExitCode: 0 }` | 生成成功 |
 | UT-HTR-004 | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED', cliArgs: [], expectedExitCode: 0 }` | 生成成功 |
-| UT-HTR-005 | `{ shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 }`（timeoutMs省略） | 生成成功（timeoutMs = undefined） |
+| UT-HTR-005 | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }`（timeoutMs省略） | 生成成功（timeoutMs = undefined） |
 
 #### 不変条件テスト（INV-2: shouldBlock=trueならcliCommandはundefined）
 
 | ケースID | 不変条件 | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| UT-HTR-010 | INV-2 | `{ shouldBlock: true, cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 }` | HarnessError がthrowされる |
+| UT-HTR-010 | INV-2 | `{ shouldBlock: true, cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 }` | HarnessError がthrowされる |
 | UT-HTR-011 | INV-2 エラーメッセージ | 同上 | 「shouldBlock=trueのときcliCommandは設定不可」等の識別情報が含まれる |
 
 #### 不変条件テスト（INV-3: skipReasonがあるならcliCommandはundefined）
 
 | ケースID | 不変条件 | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| UT-HTR-020 | INV-3 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED', cliCommand: 'harness:lint', cliArgs: [], expectedExitCode: 0 }` | HarnessError がthrowされる |
+| UT-HTR-020 | INV-3 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED', cliCommand: 'phasegate:lint', cliArgs: [], expectedExitCode: 0 }` | HarnessError がthrowされる |
 | UT-HTR-021 | INV-3 エラーメッセージ | 同上 | 「skipReasonがある場合cliCommandは設定不可」等の識別情報が含まれる |
 
 #### 等値性テスト
@@ -166,9 +166,9 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-FCS-001 | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }` | 生成成功 |
-| UT-FCS-002 | `{ supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: false }` | 生成成功 |
-| UT-FCS-003 | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }`（supportedCommands 1件、最小有効） | 生成成功 |
+| UT-FCS-001 | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }` | 生成成功 |
+| UT-FCS-002 | `{ supportedCommands: ['phasegate:lint', 'phasegate:complete-check'], noAgentApiImports: false }` | 生成成功 |
+| UT-FCS-003 | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }`（supportedCommands 1件、最小有効） | 生成成功 |
 
 #### 制約テスト（INV-5: supportedCommandsは1件以上）
 
@@ -205,14 +205,14 @@
 
 | ケースID | 前提条件（ポートモック） | 入力HookEvent | 期待HookTranslationResult |
 |---------|-------------------|-------------|--------------------------|
-| UT-HTC-010 | ConfigQueryPort.isEnabled('post-tool-use') = true | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| UT-HTC-010 | ConfigQueryPort.isEnabled('post-tool-use') = true | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
 | UT-HTC-011 | ConfigQueryPort.isEnabled('post-tool-use') = false | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
 
 #### StopEventの変換テスト
 
 | ケースID | 前提条件（ポートモック） | 入力HookEvent | 期待HookTranslationResult |
 |---------|-------------------|-------------|--------------------------|
-| UT-HTC-020 | ReentryGuard.isActive() = false | `StopEvent { sessionId: 'sess-001' }` | `{ shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 }` |
+| UT-HTC-020 | ReentryGuard.isActive() = false | `StopEvent { sessionId: 'sess-001' }` | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }` |
 | UT-HTC-021 | ReentryGuard.isActive() = true | `StopEvent { sessionId: 'sess-001' }` | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
 
 #### 異常系テスト
@@ -231,14 +231,14 @@
 
 | ケースID | 前提条件（ポートモック） | 入力FallbackCapabilitySpec | 期待結果 |
 |---------|-------------------|--------------------------|---------|
-| UT-FVS-001 | ImportAnalyzerPort: エージェントAPIのimportなし、CliCommandRegistryPort: 全コマンド登録済み | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }` | HarnessError[] = []（violations なし） |
-| UT-FVS-002 | noAgentApiImports = false（importチェックスキップ）、CliCommandRegistryPort: 全コマンド登録済み | `{ supportedCommands: ['harness:lint'], noAgentApiImports: false }` | HarnessError[] = []（violations なし） |
+| UT-FVS-001 | ImportAnalyzerPort: エージェントAPIのimportなし、CliCommandRegistryPort: 全コマンド登録済み | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }` | HarnessError[] = []（violations なし） |
+| UT-FVS-002 | noAgentApiImports = false（importチェックスキップ）、CliCommandRegistryPort: 全コマンド登録済み | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: false }` | HarnessError[] = []（violations なし） |
 
 #### verify()violation検出テスト（importチェック）
 
 | ケースID | 前提条件（ポートモック） | 入力FallbackCapabilitySpec | 期待結果 |
 |---------|-------------------|--------------------------|---------|
-| UT-FVS-010 | ImportAnalyzerPort: `@anthropic-ai/claude-code` のimportを検出 | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }` | HarnessError[]に1件以上のviolation（どのモジュールがどのAPIをimportしているか含む） |
+| UT-FVS-010 | ImportAnalyzerPort: `@anthropic-ai/claude-code` のimportを検出 | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }` | HarnessError[]に1件以上のviolation（どのモジュールがどのAPIをimportしているか含む） |
 | UT-FVS-011 | ImportAnalyzerPort: 複数モジュールでエージェントAPI使用 | `{ noAgentApiImports: true, ... }` | HarnessError[]に複数のviolation（モジュールごとに1件） |
 | UT-FVS-012 | noAgentApiImports = falseの場合 | `{ noAgentApiImports: false, ... }`（importあっても） | importチェックはスキップされHarnessError[] = [] |
 
@@ -246,8 +246,8 @@
 
 | ケースID | 前提条件（ポートモック） | 入力FallbackCapabilitySpec | 期待結果 |
 |---------|-------------------|--------------------------|---------|
-| UT-FVS-020 | CliCommandRegistryPort: `harness:lint` は登録済みだが `harness:unknown` は未登録 | `{ supportedCommands: ['harness:lint', 'harness:unknown'], noAgentApiImports: false }` | HarnessError[]に1件のviolation（`harness:unknown` が未登録） |
-| UT-FVS-021 | CliCommandRegistryPort: 全コマンド未登録 | `{ supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: false }` | HarnessError[]に2件のviolation |
+| UT-FVS-020 | CliCommandRegistryPort: `phasegate:lint` は登録済みだが `harness:unknown` は未登録 | `{ supportedCommands: ['phasegate:lint', 'harness:unknown'], noAgentApiImports: false }` | HarnessError[]に1件のviolation（`harness:unknown` が未登録） |
+| UT-FVS-021 | CliCommandRegistryPort: 全コマンド未登録 | `{ supportedCommands: ['phasegate:lint', 'phasegate:complete-check'], noAgentApiImports: false }` | HarnessError[]に2件のviolation |
 
 #### verify()複合violation検出テスト
 
@@ -396,8 +396,8 @@
 | UT-BV-002 | ProtectedFileList | patterns: ['a']（1件） | 生成成功（最小有効） |
 | UT-BV-003 | FallbackCapabilitySpec | supportedCommands: []（空配列） | HarnessError（INV-5違反） |
 | UT-BV-004 | FallbackCapabilitySpec | supportedCommands: ['cmd']（1件） | 生成成功（最小有効） |
-| UT-BV-005 | HookTranslationResult | shouldBlock: true かつ cliCommand: 'harness:lint' | HarnessError（INV-2違反） |
-| UT-BV-006 | HookTranslationResult | skipReason: 'HOOK_DISABLED' かつ cliCommand: 'harness:lint' | HarnessError（INV-3違反） |
+| UT-BV-005 | HookTranslationResult | shouldBlock: true かつ cliCommand: 'phasegate:lint' | HarnessError（INV-2違反） |
+| UT-BV-006 | HookTranslationResult | skipReason: 'HOOK_DISABLED' かつ cliCommand: 'phasegate:lint' | HarnessError（INV-3違反） |
 | UT-BV-007 | ReentryGuard | active状態でactivate() | HarnessError（INV-1違反） |
 | UT-BV-008 | HookToCliTranslator | targetFilePaths: []（空配列）のPreToolUseEvent | shouldBlock: false（ブロックしない） |
 | UT-BV-009 | HookToCliTranslator | HOOK_DISABLEDのPostToolUseEvent | skipReason: 'HOOK_DISABLED' |

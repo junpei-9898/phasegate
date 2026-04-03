@@ -18,7 +18,7 @@ target('PointerValidator', () => {
         const filePort = createFileExistencePortMock(true);
         const adrPort = createAdrExistencePortMock(true);
         const validator = new PointerValidator(cmdPort, filePort, adrPort);
-        const entries = [createCommandPointerEntry({ command: 'harness:status' })];
+        const entries = [createCommandPointerEntry({ command: 'phasegate:status' })];
         const actual = await validator.validate(entries);
         expect(actual).toHaveLength(0);
       });
@@ -31,7 +31,7 @@ target('PointerValidator', () => {
         const filePort = createFileExistencePortMock(true);
         const adrPort = createAdrExistencePortMock(true);
         const validator = new PointerValidator(cmdPort, filePort, adrPort);
-        const entries = [createCommandPointerEntry({ command: 'harness:unknown' })];
+        const entries = [createCommandPointerEntry({ command: 'phasegate:unknown' })];
         const actual = await validator.validate(entries);
         expect(actual.length).toBeGreaterThan(0);
         expect(actual[0].code).toContain('DEAD_POINTER');

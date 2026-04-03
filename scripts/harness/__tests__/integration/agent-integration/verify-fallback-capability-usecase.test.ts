@@ -21,7 +21,7 @@ function buildVerifyFallbackInput(overrides: Partial<{
   targetFilePaths: string[];
 }> = {}) {
   return {
-    supportedCommands: ['harness:lint'],
+    supportedCommands: ['phasegate:lint'],
     noAgentApiImports: true,
     ...overrides,
   };
@@ -44,7 +44,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint', 'harness:complete-check'],
+          supportedCommands: ['phasegate:lint', 'phasegate:complete-check'],
           noAgentApiImports: true,
           targetFilePaths: ['src/index.ts'],
         });
@@ -71,7 +71,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: false,
         });
 
@@ -98,7 +98,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: true,
           // targetFilePaths 省略
         });
@@ -127,7 +127,7 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint'],
+          supportedCommands: ['phasegate:lint'],
           noAgentApiImports: true,
           targetFilePaths: ['src/agent.ts'],
         });
@@ -149,14 +149,14 @@ target('VerifyFallbackCapabilityUseCase.execute', () => {
         const mockImportAnalyzerPort = { analyzeAgentApiImports: vi.fn() };
         const mockCliCommandRegistryPort = { hasCommand: vi.fn(), listCommands: vi.fn() };
         mockCliCommandRegistryPort.hasCommand.mockImplementation(
-          async (cmd: string) => cmd === 'harness:lint',
+          async (cmd: string) => cmd === 'phasegate:lint',
         );
         const useCase = createVerifyFallbackUseCase({
           importAnalyzerPort: mockImportAnalyzerPort,
           cliCommandRegistryPort: mockCliCommandRegistryPort,
         });
         const input = buildVerifyFallbackInput({
-          supportedCommands: ['harness:lint', 'harness:unknown-cmd'],
+          supportedCommands: ['phasegate:lint', 'phasegate:unknown-cmd'],
           noAgentApiImports: false,
         });
 

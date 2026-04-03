@@ -22,7 +22,7 @@
 | Domain | `RequirementTestMatrix` 集約の不変条件管理、`StoryMapping`/`AcMapping`/`TestReference` の値検証、AC網羅率算出ロジック、テストケース逆引きロジック、AC網羅ゲート判定ポリシー、matrixバリデーションサービス | 集約、エンティティ、値オブジェクト、ドメインサービス、ドメインポート | なし（Shared Kernel型のみ消費） |
 | Application | ユースケース調停、Domain モデルから公開契約 DTO への投影、JSONスキーマバリデーション指示、外部コンシューマーへの ImpactAnalysisResult / CoverageResult の生成 | UseCase、DTO、Mapper | Domain |
 | Infrastructure | Domainポート実装、requirement-test-matrix.json ファイルI/O、StoryRegistryPort（traceability-model アダプタ）、CoverageThresholdPort（config-foundation アダプタ）、JSONスキーマバリデーション実行 | Adapter、SchemaValidator | Application, Domain |
-| Presentation | CLIハンドラー、出力フォーマット選択、終了コード決定。`harness-api` / `harness:ci-check` / `harness:impact-analysis` コマンドから呼ばれる薄い境界 | CLI handler、formatter | Application, Domain |
+| Presentation | CLIハンドラー、出力フォーマット選択、終了コード決定。`harness-api` / `phasegate:ci-check` / `phasegate:impact-analysis` コマンドから呼ばれる薄い境界 | CLI handler、formatter | Application, Domain |
 
 ### 1.2 依存方向
 
@@ -119,8 +119,8 @@ scripts/harness/
         └── handlers/
             ├── validate-matrix-handler.ts                  # matrix.json バリデーション
             ├── check-ac-coverage-gate-handler.ts           # ACカバレッジゲート判定
-            ├── calculate-coverage-handler.ts               # 網羅率算出（harness:ci-check用）
-            └── analyze-impact-handler.ts                   # テスト逆引き（harness:impact-analysis用）
+            ├── calculate-coverage-handler.ts               # 網羅率算出（phasegate:ci-check用）
+            └── analyze-impact-handler.ts                   # テスト逆引き（phasegate:impact-analysis用）
 ```
 
 **JSONスキーマ配置（外部参照用）**
@@ -136,7 +136,7 @@ docs/contracts/
 - `harness-error` の `HarnessError` はバリデーションエラーの出力フォーマットとして Application 層で使用する
 - `config-foundation` の `HarnessConfigV2` から `coverageThreshold` 設定を取得する。`CoverageThresholdPort` が抽象化境界として機能する
 - `validator-system` の L3-004（nyquist バリデータ）は `AcCoverageGatePolicy` インターフェースを呼び出す。このインターフェースは `shared-kernel/nyquist-validation.ts` から公開する
-- `harness-api` の `harness:impact-analysis <HXX-XX>` コマンドは `ImpactAnalysisResult` 契約を消費する
+- `harness-api` の `phasegate:impact-analysis <HXX-XX>` コマンドは `ImpactAnalysisResult` 契約を消費する
 
 ---
 
@@ -618,7 +618,7 @@ Domain モデルは内部 VO を維持し、他 Unit へ直接露出しない。
 
 ### 4.4 CalculateCoverageUseCase（H07-03）
 
-**責務**: `CoverageCalculationService` によるAC網羅率算出。`harness:ci-check` コマンドが利用する。
+**責務**: `CoverageCalculationService` によるAC網羅率算出。`phasegate:ci-check` コマンドが利用する。
 
 **コンストラクタ依存**
 
@@ -664,7 +664,7 @@ Domain モデルは内部 VO を維持し、他 Unit へ直接露出しない。
 
 ### 4.5 AnalyzeImpactUseCase（H07-04）
 
-**責務**: `ImpactAnalysisService` による直接テストケース逆引き。`harness:impact-analysis <HXX-XX>` コマンドが利用する。
+**責務**: `ImpactAnalysisService` による直接テストケース逆引き。`phasegate:impact-analysis <HXX-XX>` コマンドが利用する。
 
 **コンストラクタ依存**
 
@@ -821,7 +821,7 @@ interface TestReferenceDto {
 
 ### 6.1 前提
 
-nyquist-validation は `integration_contract.md §3.1` にあるトップレベル CLI コマンドの直接所有者ではない。`harness:ci-check` と `harness:impact-analysis` は `harness-api` が所有し、本 Unit の Presentation 層はその内部から呼ばれる CLI handler / formatter を提供する。
+nyquist-validation は `integration_contract.md §3.1` にあるトップレベル CLI コマンドの直接所有者ではない。`phasegate:ci-check` と `phasegate:impact-analysis` は `harness-api` が所有し、本 Unit の Presentation 層はその内部から呼ばれる CLI handler / formatter を提供する。
 
 ### 6.2 ValidateMatrixHandler
 
@@ -882,7 +882,7 @@ nyquist-validation は `integration_contract.md §3.1` にあるトップレベ�
 
 **ファイル**: `scripts/harness/nyquist-validation/presentation/handlers/calculate-coverage-handler.ts`
 
-**役割**: H07-03 対応。`harness:ci-check` コマンド内から AC 網羅率を算出して表示する。
+**役割**: H07-03 対応。`phasegate:ci-check` コマンド内から AC 網羅率を算出して表示する。
 
 **引数**
 
@@ -910,7 +910,7 @@ nyquist-validation は `integration_contract.md §3.1` にあるトップレベ�
 
 **ファイル**: `scripts/harness/nyquist-validation/presentation/handlers/analyze-impact-handler.ts`
 
-**役割**: H07-04 対応。`harness:impact-analysis <HXX-XX>` コマンドの実行ロジックを担う。
+**役割**: H07-04 対応。`phasegate:impact-analysis <HXX-XX>` コマンドの実行ロジックを担う。
 
 **引数**
 
@@ -1014,7 +1014,7 @@ sequenceDiagram
     UC-->>VS: CheckAcCoverageGateOutput
 ```
 
-### 7.3 H07-03: AC網羅率算出（harness:ci-check 用）
+### 7.3 H07-03: AC網羅率算出（phasegate:ci-check 用）
 
 ```mermaid
 sequenceDiagram
@@ -1038,7 +1038,7 @@ sequenceDiagram
     UC-->>API: CalculateCoverageOutput
 ```
 
-### 7.4 H07-04: テストケース逆引き（harness:impact-analysis 用）
+### 7.4 H07-04: テストケース逆引き（phasegate:impact-analysis 用）
 
 ```mermaid
 sequenceDiagram
@@ -1141,14 +1141,14 @@ sequenceDiagram
 - `CheckAcCoverageGateHandler`
 - `shared-kernel/nyquist-validation.ts`（`AcCoverageGatePolicy` インターフェース公開）
 
-### 9.3 H07-03: AC網羅率算出（harness:ci-check 用）
+### 9.3 H07-03: AC網羅率算出（phasegate:ci-check 用）
 
 - `CoverageResult`（VO）、`CoverageCalculationService`（ドメインサービス）
 - `CoverageThresholdPort` → `ConfigFoundationCoverageThresholdAdapter`
 - `CalculateCoverageUseCase`
 - `CalculateCoverageHandler`
 
-### 9.4 H07-04: 直接テストケース逆引き（harness:impact-analysis 用）
+### 9.4 H07-04: 直接テストケース逆引き（phasegate:impact-analysis 用）
 
 - `ImpactAnalysisResult`（VO）、`ImpactAnalysisService`（ドメインサービス）
 - `AnalyzeImpactUseCase`
@@ -1171,7 +1171,7 @@ export interface AcCoverageGatePolicy {
   check(matrix: RequirementTestMatrix): { passed: boolean; errors: HarnessError[] };
 }
 
-// harness-api (harness:impact-analysis) が消費するテストケース逆引き結果
+// harness-api (phasegate:impact-analysis) が消費するテストケース逆引き結果
 export interface ImpactAnalysisResult {
   readonly storyId: StoryId;
   readonly directTests: readonly TestReference[];

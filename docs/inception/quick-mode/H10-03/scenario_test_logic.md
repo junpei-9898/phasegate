@@ -36,28 +36,28 @@ import { ExecuteQuickCiCheckUseCase } from '../../../quick-mode/application/usec
 ```typescript
 describe('quick-mode コマンド群', () => {
   // SC-H10-03-001
-  it('harness:ci-check --quick が "Unknown command" にならない', () => {
+  it('phasegate:ci-check --quick が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:ci-check', '--quick');
+    const actual = run('phasegate:ci-check', '--quick');
     // Assert
     expect(actual.stderr).not.toContain('Unknown command');
   });
 
   // SC-H10-03-002
-  it('harness:ci-check --quick --dry-run でexit 0が返される', () => {
+  it('phasegate:ci-check --quick --dry-run でexit 0が返される', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:ci-check', '--quick', '--dry-run');
+    const actual = run('phasegate:ci-check', '--quick', '--dry-run');
     // Assert
     expect([0, 2]).toContain(actual.exitCode);
   });
 
   // SC-H10-03-004
-  it('harness:ci-check --quick --format json でJSON出力が得られる', () => {
+  it('phasegate:ci-check --quick --format json でJSON出力が得られる', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:ci-check', '--quick', '--format', 'json');
+    const actual = run('phasegate:ci-check', '--quick', '--format', 'json');
     // Assert
     if (actual.stdout) {
       const parsed = JSON.parse(actual.stdout);

@@ -7,7 +7,7 @@ target('PointerEntry', () => {
     // UT-PE-001
     context('有効なkey・command・descriptionを渡した場合', () => {
       it('type="command"のPointerEntryが生成される', () => {
-        const actual = PointerEntry.createCommand({ key: 'cmd-status', command: 'harness:status', description: 'ステータス確認' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-status', command: 'phasegate:status', description: 'ステータス確認' });
         expect(actual.type).toBe('command');
         expect(actual.key).toBe('cmd-status');
       });
@@ -16,7 +16,7 @@ target('PointerEntry', () => {
     // UT-PE-002
     context('key=""（空文字）を渡した場合', () => {
       it('key空文字不可エラーがスローされる', () => {
-        expect(() => PointerEntry.createCommand({ key: '', command: 'harness:lint', description: '...' })).toThrow();
+        expect(() => PointerEntry.createCommand({ key: '', command: 'phasegate:lint', description: '...' })).toThrow();
       });
     });
 
@@ -66,7 +66,7 @@ target('PointerEntry', () => {
     // UT-PE-008
     context('CommandPointerに対してisCommand()を呼ぶ場合', () => {
       it('trueを返す', () => {
-        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' });
         expect(actual.isCommand()).toBe(true);
       });
     });
@@ -74,7 +74,7 @@ target('PointerEntry', () => {
     // UT-PE-009
     context('CommandPointerに対してisFile()を呼ぶ場合', () => {
       it('falseを返す', () => {
-        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' });
         expect(actual.isFile()).toBe(false);
       });
     });

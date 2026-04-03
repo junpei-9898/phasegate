@@ -35,28 +35,28 @@ import type { PhaseGateQueryPort } from '../../../harness-api/domain/ports/phase
 ```typescript
 describe('harness-api check-ready / check-phase コマンド群', () => {
   // SC-H09-01-001
-  it('harness:check-ready が "Unknown command" にならない', () => {
+  it('phasegate:check-ready が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:check-ready');
+    const actual = run('phasegate:check-ready');
     // Assert
-    expect(actual.stderr).not.toContain('Unknown command: harness:check-ready');
+    expect(actual.stderr).not.toContain('Unknown command: phasegate:check-ready');
   });
 
   // SC-H09-01-004
-  it('harness:check-phase が "Unknown command" にならない', () => {
+  it('phasegate:check-phase が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:check-phase', 'config-foundation');
+    const actual = run('phasegate:check-phase', 'config-foundation');
     // Assert
-    expect(actual.stderr).not.toContain('Unknown command: harness:check-phase');
+    expect(actual.stderr).not.toContain('Unknown command: phasegate:check-phase');
   });
 
   // SC-H09-01-006
-  it('harness:check-phase に存在しないUnit名を指定するとexit 1が返される', () => {
+  it('phasegate:check-phase に存在しないUnit名を指定するとexit 1が返される', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:check-phase', 'nonexistent-unit');
+    const actual = run('phasegate:check-phase', 'nonexistent-unit');
     // Assert
     expect(actual.exitCode).toBe(1);
   });
@@ -80,7 +80,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
         const useCase = new DispatchCommandUseCase(ports);
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:check-ready', args: [], flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:check-ready', args: [], flags: {} });
         // Assert
         expect(actual.response.status).toBe('pass');
         expect(actual.exitCode).toBe(0);

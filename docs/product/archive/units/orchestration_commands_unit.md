@@ -62,7 +62,7 @@ Phase 2: 実装計画のフロー定義。
 Phase 3: v1単一executor版の実行フロー定義。
 
 - 実行フロー: pre-flight → story-implementor → post-wave
-- Pre-flightゲート: harness:check-ready（全storyのPhase Gate通過確認）
+- Pre-flightゲート: phasegate:check-ready（全storyのPhase Gate通過確認）
 - story-implementorのFresh Context Protocol準拠（US-045連携）
 - Post-waveバリデーション: L2 harness validators実行
 - v1は単一executor逐次実行。Phase 2でwave-orchestratorによるWave並列に拡張

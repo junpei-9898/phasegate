@@ -1,7 +1,7 @@
 # TDD実装計画: H09-03 (harness-api)
 
 ## 1. スコープ
-- 対象ストーリー: H09-03 harness:detect-drift
+- 対象ストーリー: H09-03 phasegate:detect-drift
 - 影響する層: Domain / Application / Infrastructure / Presentation
 
 ## 2. 前提条件検証

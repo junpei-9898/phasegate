@@ -68,7 +68,7 @@ export class HandleStopUseCase {
     await this.reentryGuardStatePort.writeActive();
 
     try {
-      const cliResult = await this.cliExecutorPort.execute('harness:complete-check', []);
+      const cliResult = await this.cliExecutorPort.execute('phasegate:complete-check', []);
       return {
         executed: true,
         cliResult,

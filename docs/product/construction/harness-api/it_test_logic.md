@@ -115,14 +115,14 @@ InitializeCommandRegistryUseCaseテストで使用する8コマンドのデフ�
 ```typescript
 function buildDefaultCliCommandDefinitions(): CliCommandDefinitionInput[] {
   return [
-    { commandName: 'harness:check-ready',    handler: vi.fn(), description: 'check ready' },
-    { commandName: 'harness:check-phase',    handler: vi.fn(), description: 'check phase' },
-    { commandName: 'harness:ci-check',       handler: vi.fn(), description: 'ci check' },
-    { commandName: 'harness:detect-drift',   handler: vi.fn(), description: 'detect drift' },
-    { commandName: 'harness:status',         handler: vi.fn(), description: 'status' },
-    { commandName: 'harness:lint',           handler: vi.fn(), description: 'lint' },
-    { commandName: 'harness:complete-check', handler: vi.fn(), description: 'complete check' },
-    { commandName: 'harness:impact-analysis',handler: vi.fn(), description: 'impact analysis' },
+    { commandName: 'phasegate:check-ready',    handler: vi.fn(), description: 'check ready' },
+    { commandName: 'phasegate:check-phase',    handler: vi.fn(), description: 'check phase' },
+    { commandName: 'phasegate:ci-check',       handler: vi.fn(), description: 'ci check' },
+    { commandName: 'phasegate:detect-drift',   handler: vi.fn(), description: 'detect drift' },
+    { commandName: 'phasegate:status',         handler: vi.fn(), description: 'status' },
+    { commandName: 'phasegate:lint',           handler: vi.fn(), description: 'lint' },
+    { commandName: 'phasegate:complete-check', handler: vi.fn(), description: 'complete check' },
+    { commandName: 'phasegate:impact-analysis',handler: vi.fn(), description: 'impact analysis' },
   ];
 }
 ```
@@ -338,8 +338,8 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         // Assert
         const sorted = [...actual.commandNames].sort();
         expect(actual.commandNames).toEqual(sorted);
-        expect(actual.commandNames[0]).toBe('harness:check-phase');
-        expect(actual.commandNames[1]).toBe('harness:check-ready');
+        expect(actual.commandNames[0]).toBe('phasegate:check-phase');
+        expect(actual.commandNames[1]).toBe('phasegate:check-ready');
       });
     });
   });
@@ -353,7 +353,7 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         const useCase = new InitializeCommandRegistryUseCase({ registry });
         const commands = [
           ...buildDefaultCliCommandDefinitions(),
-          { commandName: 'harness:check-ready', handler: vi.fn(), description: '重複' },
+          { commandName: 'phasegate:check-ready', handler: vi.fn(), description: '重複' },
         ];
 
         // Act
@@ -362,7 +362,7 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         // Assert
         expect(actual.registeredCount).toBe(8);
         expect(actual.failedRegistrations).toHaveLength(1);
-        expect(actual.failedRegistrations[0].commandName).toBe('harness:check-ready');
+        expect(actual.failedRegistrations[0].commandName).toBe('phasegate:check-ready');
         expect(actual.failedRegistrations[0].reason).toMatch(/DuplicateCommandName/i);
       });
     });
@@ -447,7 +447,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:check-ready',
+          commandName: 'phasegate:check-ready',
           args: {},
           flags: {},
         });
@@ -474,7 +474,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:check-phase',
+          commandName: 'phasegate:check-phase',
           args: { unit: 'harness-error' },
           flags: {},
         });
@@ -501,7 +501,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:ci-check',
+          commandName: 'phasegate:ci-check',
           args: {},
           flags: {},
         });
@@ -523,7 +523,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:detect-drift',
+          commandName: 'phasegate:detect-drift',
           args: {},
           flags: {},
         });
@@ -549,7 +549,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:lint',
+          commandName: 'phasegate:lint',
           args: {},
           flags: {},
         });
@@ -574,7 +574,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:impact-analysis',
+          commandName: 'phasegate:impact-analysis',
           args: { storyId: 'H09-01' },
           flags: {},
         });
@@ -618,7 +618,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:check-phase',
+          commandName: 'phasegate:check-phase',
           args: { unit: 'non-existent-unit' },
           flags: {},
         });
@@ -641,7 +641,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:ci-check',
+          commandName: 'phasegate:ci-check',
           args: {},
           flags: {},
         });
@@ -670,7 +670,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:detect-drift',
+          commandName: 'phasegate:detect-drift',
           args: {},
           flags: {},
         });
@@ -699,7 +699,7 @@ target('DispatchCommandUseCase.execute', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:complete-check',
+          commandName: 'phasegate:complete-check',
           args: {},
           flags: {},
         });
@@ -735,10 +735,10 @@ target('DecideExitCodeUseCase.execute', () => {
 
   // ─── IT-UC-DecideExit-001 ───
   describe("status='pass'のコマンドはexitCode=0を返すこと", () => {
-    context("commandName='harness:check-ready'・status='pass'の場合", () => {
+    context("commandName='phasegate:check-ready'・status='pass'の場合", () => {
       it('exitCode=0が返される', () => {
         // Arrange
-        const input = { status: 'pass' as const, commandName: 'harness:check-ready' };
+        const input = { status: 'pass' as const, commandName: 'phasegate:check-ready' };
 
         // Act
         const actual = useCase.execute(input);
@@ -751,10 +751,10 @@ target('DecideExitCodeUseCase.execute', () => {
 
   // ─── IT-UC-DecideExit-002 ───
   describe("status='fail'の通常コマンドはexitCode=1を返すこと", () => {
-    context("commandName='harness:ci-check'・status='fail'の場合", () => {
+    context("commandName='phasegate:ci-check'・status='fail'の場合", () => {
       it('exitCode=1が返される', () => {
         // Arrange
-        const input = { status: 'fail' as const, commandName: 'harness:ci-check' };
+        const input = { status: 'fail' as const, commandName: 'phasegate:ci-check' };
 
         // Act
         const actual = useCase.execute(input);
@@ -767,10 +767,10 @@ target('DecideExitCodeUseCase.execute', () => {
 
   // ─── IT-UC-DecideExit-003 ───
   describe("status='error'のコマンドはexitCode=2を返すこと", () => {
-    context("commandName='harness:lint'・status='error'の場合", () => {
+    context("commandName='phasegate:lint'・status='error'の場合", () => {
       it('exitCode=2が返される', () => {
         // Arrange
-        const input = { status: 'error' as const, commandName: 'harness:lint' };
+        const input = { status: 'error' as const, commandName: 'phasegate:lint' };
 
         // Act
         const actual = useCase.execute(input);
@@ -782,14 +782,14 @@ target('DecideExitCodeUseCase.execute', () => {
   });
 
   // ─── IT-UC-DecideExit-004 ───
-  // D5ルール: harness:status は fail でも exitCode=0 を返す
-  describe("D5ルール: harness:statusでstatus='fail'でもexitCode=0を返すこと", () => {
-    context("commandName='harness:status'・status='fail'の場合（D5ルール適用）", () => {
+  // D5ルール: phasegate:status は fail でも exitCode=0 を返す
+  describe("D5ルール: phasegate:statusでstatus='fail'でもexitCode=0を返すこと", () => {
+    context("commandName='phasegate:status'・status='fail'の場合（D5ルール適用）", () => {
       it('exitCode=0が返され、reasonにD5ルール適用の旨が含まれる', () => {
         // Arrange
         // D5ルール: statusコマンドはハーネスの健全性表示専用であり、
         // failはCIを止める理由にならない。exitCode=0で情報提供のみ行う。
-        const input = { status: 'fail' as const, commandName: 'harness:status' };
+        const input = { status: 'fail' as const, commandName: 'phasegate:status' };
 
         // Act
         const actual = useCase.execute(input);
@@ -802,11 +802,11 @@ target('DecideExitCodeUseCase.execute', () => {
   });
 
   // ─── IT-UC-DecideExit-005 ───
-  describe("D5ルール: harness:statusでstatus='pass'はexitCode=0を返すこと", () => {
-    context("commandName='harness:status'・status='pass'の場合", () => {
+  describe("D5ルール: phasegate:statusでstatus='pass'はexitCode=0を返すこと", () => {
+    context("commandName='phasegate:status'・status='pass'の場合", () => {
       it('exitCode=0が返される', () => {
         // Arrange
-        const input = { status: 'pass' as const, commandName: 'harness:status' };
+        const input = { status: 'pass' as const, commandName: 'phasegate:status' };
 
         // Act
         const actual = useCase.execute(input);
@@ -818,13 +818,13 @@ target('DecideExitCodeUseCase.execute', () => {
   });
 
   // ─── IT-UC-DecideExit-006 ───
-  describe("D5ルール例外: harness:statusでstatus='error'はexitCode=2を返すこと", () => {
-    context("commandName='harness:status'・status='error'の場合", () => {
+  describe("D5ルール例外: phasegate:statusでstatus='error'はexitCode=2を返すこと", () => {
+    context("commandName='phasegate:status'・status='error'の場合", () => {
       it('D5ルールは適用されず、exitCode=2が返される', () => {
         // Arrange
         // D5ルールはfailにのみ適用。errorはインフラ/設定異常であり、
         // statusコマンドであっても exitCode=2 を返す。
-        const input = { status: 'error' as const, commandName: 'harness:status' };
+        const input = { status: 'error' as const, commandName: 'phasegate:status' };
 
         // Act
         const actual = useCase.execute(input);
@@ -2379,7 +2379,7 @@ target('DetectDriftHandler', () => {
 
 **テストファイル**: `scripts/harness/__tests__/integration/harness-api/status-handler.test.ts`
 
-> **D5ルール**: `harness:status` コマンドは `status='fail'` であっても `process.exitCode=0` を設定する。
+> **D5ルール**: `phasegate:status` コマンドは `status='fail'` であっても `process.exitCode=0` を設定する。
 > このルールは DecideExitCodeUseCase が適用するが、Handler テストでは UseCase モックの `exitCode=0` として表現し、
 > Handler 自体が D5 ルールの結果（exitCode=0）を正しく使用することを検証する。
 
@@ -2495,7 +2495,7 @@ target('StatusHandler', () => {
         // Assert
         const actual = JSON.parse((stdoutSpy.mock.calls[0][0] as string));
         expect(actual.status).toBe('fail');
-        // D5ルール: harness:status は fail であっても process.exitCode=0 になる
+        // D5ルール: phasegate:status は fail であっても process.exitCode=0 になる
         expect(process.exitCode).toBe(0);
       });
     });
@@ -3038,14 +3038,14 @@ target('CommandDispatch 統合フロー', () => {
         );
         // 8 コマンドを事前登録
         await initUseCase.execute({ commands: [
-          { commandName: 'harness:check-ready', description: 'Check ready' },
-          { commandName: 'harness:check-phase', description: 'Check phase' },
-          { commandName: 'harness:ci-check', description: 'CI check' },
-          { commandName: 'harness:detect-drift', description: 'Detect drift' },
-          { commandName: 'harness:status', description: 'Status' },
-          { commandName: 'harness:lint', description: 'Lint' },
-          { commandName: 'harness:complete-check', description: 'Complete check' },
-          { commandName: 'harness:impact-analysis', description: 'Impact analysis' },
+          { commandName: 'phasegate:check-ready', description: 'Check ready' },
+          { commandName: 'phasegate:check-phase', description: 'Check phase' },
+          { commandName: 'phasegate:ci-check', description: 'CI check' },
+          { commandName: 'phasegate:detect-drift', description: 'Detect drift' },
+          { commandName: 'phasegate:status', description: 'Status' },
+          { commandName: 'phasegate:lint', description: 'Lint' },
+          { commandName: 'phasegate:complete-check', description: 'Complete check' },
+          { commandName: 'phasegate:impact-analysis', description: 'Impact analysis' },
         ]});
         const handler = new CheckPhaseHandler(dispatchUseCase);
 
@@ -3249,7 +3249,7 @@ target('StatusDerivation 統合フロー', () => {
 
         // Act
         const actual = await useCase.execute({
-          commandName: 'harness:status',
+          commandName: 'phasegate:status',
           args: {},
           flags: {},
         });

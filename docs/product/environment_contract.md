@@ -31,7 +31,7 @@ v0アーカイブ契約からWave 1 v1環境へ移行するための差分を、
 | M-015 | 実行時データディレクトリ新設 | `.harness/` | ci-governanceが管理するエラー繰り返し検出用 `error-history.json` の格納先として `.harness/` ディレクトリを新設する |
 | M-016 | Claude Code Hook登録 | `.claude/settings.json` | agent-integration の3フックを `tsx` 経由でhooks設定に登録する。実体は `scripts/harness/agent-integration/presentation/` 配下の `pre-tool-use-hook.ts`, `post-tool-use-hook.ts`, `stop-hook.ts` |
 | M-017 | 回帰テストスイートディレクトリ新設 | `scripts/harness/__tests__/` | `regression/` サブディレクトリを新設し、regression-suiteの4テストスイートファイル（k-requirements, gng-gate, agent-independence, v0-migration）を格納する |
-| M-018 | package.jsonスクリプト追加 | `package.json` | `harness:complete-check`, `harness:impact-analysis`, `harness:ci-template` の3スクリプトを新規追加する。既存スクリプト（harness:check-phase / harness:check-ready / harness:lint / harness:ci-check / harness:detect-drift）はWave 2実装完了まで互換入口を維持し、完了後にharness-api向けに切り替える |
+| M-018 | package.jsonスクリプト追加 | `package.json` | `phasegate:complete-check`, `phasegate:impact-analysis`, `phasegate:ci-template` の3スクリプトを新規追加する。既存スクリプト（phasegate:check-phase / phasegate:check-ready / phasegate:lint / phasegate:ci-check / phasegate:detect-drift）はWave 2実装完了まで互換入口を維持し、完了後にharness-api向けに切り替える |
 | M-019 | ts-morph依存追加 | `package.json` | agent-integrationのImportAnalyzerPortアダプタで使用する `ts-morph` を devDependencies に追加する（TypeScript Compiler APIラッパー） |
 
 ---
@@ -42,19 +42,19 @@ v0アーカイブ契約からWave 1 v1環境へ移行するための差分を、
 
 | Unit | 配置先パス | エントリポイント | CLIコマンド | 外部依存 | 設定ファイル |
 |------|------------|------------------|-------------|----------|--------------|
-| config-foundation | `scripts/harness/config-foundation/` | `scripts/harness/shared-kernel/harness-config.ts`, `scripts/harness/cli/enable.ts`, `scripts/harness/cli/disable.ts` | `harness:enable`, `harness:disable` | `ajv` | `phasegate.config.json`, `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json`, `scripts/harness/config-foundation/infrastructure/presets/*.json` |
+| config-foundation | `scripts/harness/config-foundation/` | `scripts/harness/shared-kernel/harness-config.ts`, `scripts/harness/cli/enable.ts`, `scripts/harness/cli/disable.ts` | `phasegate:enable`, `phasegate:disable` | `ajv` | `phasegate.config.json`, `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json`, `scripts/harness/config-foundation/infrastructure/presets/*.json` |
 | harness-error | `scripts/harness/harness-error/` | `scripts/harness/shared-kernel/harness-error.ts` | 単独トップレベルCLIなし。内部Presentationとして `render-harness-errors`, `validate-fix-example`, `list-error-definitions`, `assert-severity-contract` を持つ | `typescript`（Compiler API、devDependency） | `scripts/harness/harness-error/infrastructure/registry/*.ts` |
-| phase-dependency-model | `scripts/harness/phase-dependency-model/` | `scripts/harness/cli/check-phase.ts`, `scripts/harness/cli/check-ready.ts`, `scripts/harness/validators/phase-gate.ts` | `harness:check-phase`, `harness:check-ready` | なし | `phasegate.config.json` |
+| phase-dependency-model | `scripts/harness/phase-dependency-model/` | `scripts/harness/cli/check-phase.ts`, `scripts/harness/cli/check-ready.ts`, `scripts/harness/validators/phase-gate.ts` | `phasegate:check-phase`, `phasegate:check-ready` | なし | `phasegate.config.json` |
 | traceability-model | `scripts/harness/traceability-model/` | `scripts/harness/traceability-model/index.ts`, `scripts/harness/shared-kernel/story-id.ts` | 単独CLIなし | なし | なし |
 | adr-foundation | `scripts/harness/adr-foundation/` | `scripts/harness/adr-foundation/index.ts` | 内部運用CLI: `adr:create-template`, `adr:seed-initial`, `adr:list`, `adr:show`, `adr:search-archgate`, `adr:validate`, `adr:change-status` | `gray-matter` | `docs/ADR/*.md`, `docs/ADR/template.md` |
-| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `scripts/harness/biome-ast-engine/index.ts`, `scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts` | `harness:lint` | `@biomejs/biome`, `typescript`（Compiler API、devDependency） | `biome.json`, `phasegate.config.json`, `package.json`, `pnpm-lock.yaml` |
+| biome-ast-engine | `scripts/harness/biome-ast-engine/` | `scripts/harness/biome-ast-engine/index.ts`, `scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts` | `phasegate:lint` | `@biomejs/biome`, `typescript`（Compiler API、devDependency） | `biome.json`, `phasegate.config.json`, `package.json`, `pnpm-lock.yaml` |
 | validator-system | `scripts/harness/validator-system/` | `scripts/harness/shared-kernel/validator-system.ts` | harness-api経由（単独CLI所有なし）。内部Presentation: `run-l2-validators`, `run-l3-validators`, `run-l4-validators` | なし（biome-ast-engine, nyquist-validation, phase-dependency-model をポート経由参照） | `phasegate.config.json` |
-| nyquist-validation | `scripts/harness/nyquist-validation/` | `scripts/harness/nyquist-validation/index.ts` | harness-api経由（単独CLIなし）。`harness:impact-analysis` はharness-api経由 | なし | `docs/contracts/requirement-test-matrix.schema.json`, `requirement-test-matrix.json`（プロジェクトルート） |
+| nyquist-validation | `scripts/harness/nyquist-validation/` | `scripts/harness/nyquist-validation/index.ts` | harness-api経由（単独CLIなし）。`phasegate:impact-analysis` はharness-api経由 | なし | `docs/contracts/requirement-test-matrix.schema.json`, `requirement-test-matrix.json`（プロジェクトルート） |
 | quick-mode | `scripts/harness/quick-mode/` | `scripts/harness/shared-kernel/quick-mode.ts` | harness-api経由（単独CLIなし）。内部: `quick-mode-check` | なし | `phasegate.config.json` |
-| harness-api | `scripts/harness/harness-api/` | `scripts/harness/shared-kernel/harness-api.ts` | `harness:check-ready`, `harness:check-phase`, `harness:ci-check`, `harness:detect-drift`, `harness:status`, `harness:lint`, `harness:complete-check`, `harness:impact-analysis` | なし（他Unit をポート経由参照） | `phasegate.config.json` |
+| harness-api | `scripts/harness/harness-api/` | `scripts/harness/shared-kernel/harness-api.ts` | `phasegate:check-ready`, `phasegate:check-phase`, `phasegate:ci-check`, `phasegate:detect-drift`, `phasegate:status`, `phasegate:lint`, `phasegate:complete-check`, `phasegate:impact-analysis` | なし（他Unit をポート経由参照） | `phasegate.config.json` |
 | agent-integration | `scripts/harness/agent-integration/` | `scripts/harness/agent-integration/presentation/{pre-tool-use-hook,post-tool-use-hook,stop-hook}.ts` | Claude Code Hook（CLI直接呼び出しなし）。`.claude/settings.json`のhooks設定でtsx経由登録 | なし（biome-ast-engine AST解析はImportAnalyzerPortポート経由） | `phasegate.config.json`, `.claude/settings.json` |
-| skill-quality | `scripts/harness/skill-quality/` | `scripts/harness/skill-quality/index.ts` | harness-api経由。内部: `harness:collect-lessons`（v0互換から移行） | なし | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json` |
-| ci-governance | `scripts/harness/ci-governance/` | `scripts/harness/ci-governance/index.ts` | `harness:ci-template` | `js-yaml` | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json`, `.harness/error-history.json` |
+| skill-quality | `scripts/harness/skill-quality/` | `scripts/harness/skill-quality/index.ts` | harness-api経由。内部: `phasegate:collect-lessons`（v0互換から移行） | なし | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json` |
+| ci-governance | `scripts/harness/ci-governance/` | `scripts/harness/ci-governance/index.ts` | `phasegate:ci-template` | `js-yaml` | `phasegate.config.json`, `docs/contracts/lesson-artifact.schema.json`, `.harness/error-history.json` |
 | regression-suite | `scripts/harness/regression-suite/` | `scripts/harness/__tests__/regression/` | 単独CLIなし。Vitestテストスイート（k-requirements, gng-gate, agent-independence, v0-migration）として実行 | なし | `phasegate.config.json`, `scripts/harness/regression-suite/infrastructure/seeds/v0_v1_test_mapping.md` |
 
 Shared Kernel公開面は以下の**6ファイル**に拡張する（Wave 1の3ファイルに追記）：
@@ -212,13 +212,13 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
   "private": true,
   "type": "module",
   "scripts": {
-    "harness:status": "pnpm exec tsx scripts/harness/cli/status.ts",
-    "harness:init": "pnpm exec tsx scripts/harness/cli/init.ts",
-    "harness:enable": "pnpm exec tsx scripts/harness/cli/enable.ts",
-    "harness:disable": "pnpm exec tsx scripts/harness/cli/disable.ts",
-    "harness:check-phase": "pnpm exec tsx scripts/harness/cli/check-phase.ts",
-    "harness:check-ready": "pnpm exec tsx scripts/harness/cli/check-ready.ts",
-    "harness:lint": "pnpm exec tsx scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts",
+    "phasegate:status": "pnpm exec tsx scripts/harness/cli/status.ts",
+    "phasegate:init": "pnpm exec tsx scripts/harness/cli/init.ts",
+    "phasegate:enable": "pnpm exec tsx scripts/harness/cli/enable.ts",
+    "phasegate:disable": "pnpm exec tsx scripts/harness/cli/disable.ts",
+    "phasegate:check-phase": "pnpm exec tsx scripts/harness/cli/check-phase.ts",
+    "phasegate:check-ready": "pnpm exec tsx scripts/harness/cli/check-ready.ts",
+    "phasegate:lint": "pnpm exec tsx scripts/harness/biome-ast-engine/presentation/cli/harness-lint-command-handler.ts",
     "adr:create-template": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-create-template.ts",
     "adr:seed-initial": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-seed-initial.ts",
     "adr:list": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-list.ts",
@@ -226,13 +226,13 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
     "adr:search-archgate": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-search-archgate.ts",
     "adr:validate": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-validate.ts",
     "adr:change-status": "pnpm exec tsx scripts/harness/adr-foundation/presentation/cli/adr-change-status.ts",
-    "harness:ci-check": "pnpm exec tsx scripts/harness/cli/ci-check.ts",
-    "harness:detect-drift": "pnpm exec tsx scripts/harness/cli/detect-drift.ts",
-    "harness:collect-lessons": "pnpm exec tsx scripts/harness/cli/collect-lessons.ts",
-    "harness:detect-dead-code": "pnpm exec tsx scripts/harness/cli/detect-dead-code.ts",
-    "harness:complete-check": "pnpm exec tsx scripts/harness/harness-api/presentation/handlers/complete-check-handler.ts",
-    "harness:impact-analysis": "pnpm exec tsx scripts/harness/harness-api/presentation/handlers/impact-analysis-handler.ts",
-    "harness:ci-template": "pnpm exec tsx scripts/harness/ci-governance/presentation/cli/ci-template-handler.ts",
+    "phasegate:ci-check": "pnpm exec tsx scripts/harness/cli/ci-check.ts",
+    "phasegate:detect-drift": "pnpm exec tsx scripts/harness/cli/detect-drift.ts",
+    "phasegate:collect-lessons": "pnpm exec tsx scripts/harness/cli/collect-lessons.ts",
+    "phasegate:detect-dead-code": "pnpm exec tsx scripts/harness/cli/detect-dead-code.ts",
+    "phasegate:complete-check": "pnpm exec tsx scripts/harness/harness-api/presentation/handlers/complete-check-handler.ts",
+    "phasegate:impact-analysis": "pnpm exec tsx scripts/harness/harness-api/presentation/handlers/impact-analysis-handler.ts",
+    "phasegate:ci-template": "pnpm exec tsx scripts/harness/ci-governance/presentation/cli/ci-template-handler.ts",
     "test": "pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts",
     "test:regression": "pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts --project regression"
   },
@@ -265,8 +265,8 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
 - `typescript` は Q3に従い `devDependencies` のまま維持する。
 - ESLint関連依存は Q4に従い削除予定として一時残置する。削除の追跡は M-002 で管理する。
 - package script の実行形式は `pnpm exec tsx ...` に統一する。
-- `harness:ci-check`, `harness:detect-drift`, `harness:collect-lessons`, `harness:detect-dead-code` は v0 互換入口であり、Wave 1 v1の設計対象外だが実行互換性のために残す。
-- `harness:check-phase`, `harness:check-ready`, `harness:lint`, `harness:ci-check`, `harness:detect-drift` はWave 2実装完了まで互換入口を維持し、完了後にharness-api向けに切り替える。
+- `phasegate:ci-check`, `phasegate:detect-drift`, `phasegate:collect-lessons`, `phasegate:detect-dead-code` は v0 互換入口であり、Wave 1 v1の設計対象外だが実行互換性のために残す。
+- `phasegate:check-phase`, `phasegate:check-ready`, `phasegate:lint`, `phasegate:ci-check`, `phasegate:detect-drift` はWave 2実装完了まで互換入口を維持し、完了後にharness-api向けに切り替える。
 
 ### §2.4 `tsconfig.json`（確定版）
 
@@ -442,19 +442,19 @@ v1の `package.json` 契約は以下とする。`dependencies` はランタイ�
 
 ### §6.7 CLIコマンド
 
-- [ ] `pnpm harness:enable --list` が機能一覧を返す
-- [ ] `pnpm harness:disable --list` が機能一覧を返す
-- [ ] `pnpm harness:check-phase <unit>` が終了コード規約どおりに動作する
-- [ ] `pnpm harness:check-ready --json` が `HarnessApiResponse` 互換の出力を返す
-- [ ] `pnpm harness:lint --json` が `HarnessApiResponse` 互換の出力を返す
+- [ ] `pnpm phasegate:enable --list` が機能一覧を返す
+- [ ] `pnpm phasegate:disable --list` が機能一覧を返す
+- [ ] `pnpm phasegate:check-phase <unit>` が終了コード規約どおりに動作する
+- [ ] `pnpm phasegate:check-ready --json` が `HarnessApiResponse` 互換の出力を返す
+- [ ] `pnpm phasegate:lint --json` が `HarnessApiResponse` 互換の出力を返す
 - [ ] `pnpm adr:list` が `docs/ADR/` の一覧を返す
 - [ ] `pnpm adr:validate --all` が違反時に終了コード1を返せる
 - [ ] harness-error は単独トップレベルCLIを持たない契約どおり、上位CLI/CIから内部handlerとしてのみ利用される
 - [ ] traceability-model は単独CLIを持たない契約どおり、`index.ts` 公開面のみを提供する
-- [ ] `pnpm harness:status --json` が `HarnessApiResponse` 互換の出力を返す
-- [ ] `pnpm harness:complete-check --json` が `HarnessApiResponse` 互換の出力を返す
-- [ ] `pnpm harness:impact-analysis --story <storyId>` が `ImpactAnalysisResult` 互換の出力を返す
-- [ ] `pnpm harness:ci-template --list` がCIテンプレート一覧を返す
+- [ ] `pnpm phasegate:status --json` が `HarnessApiResponse` 互換の出力を返す
+- [ ] `pnpm phasegate:complete-check --json` が `HarnessApiResponse` 互換の出力を返す
+- [ ] `pnpm phasegate:impact-analysis --story <storyId>` が `ImpactAnalysisResult` 互換の出力を返す
+- [ ] `pnpm phasegate:ci-template --list` がCIテンプレート一覧を返す
 - [ ] `.claude/settings.json` に agent-integration の3フック（PreToolUse/PostToolUse/Stop）が登録されている
 
 ---
@@ -543,14 +543,14 @@ CI運用原則:
 
 ```bash
 pnpm install
-pnpm harness:enable <feature>
-pnpm harness:disable <feature>
-pnpm harness:check-phase <unit>
-pnpm harness:check-ready --json
-pnpm harness:lint --json
-pnpm harness:complete-check --json
-pnpm harness:impact-analysis --story <storyId>
-pnpm harness:ci-template --list
+pnpm phasegate:enable <feature>
+pnpm phasegate:disable <feature>
+pnpm phasegate:check-phase <unit>
+pnpm phasegate:check-ready --json
+pnpm phasegate:lint --json
+pnpm phasegate:complete-check --json
+pnpm phasegate:impact-analysis --story <storyId>
+pnpm phasegate:ci-template --list
 pnpm adr:list
 pnpm adr:validate --all
 pnpm exec tsc --noEmit

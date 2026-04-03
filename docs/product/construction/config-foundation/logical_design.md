@@ -793,7 +793,7 @@ export interface FeatureRegistryPort {
 
 | メソッド | 入力 | 出力 | 用途 |
 |---------|------|------|------|
-| `listAvailable` | なし | `readonly string[]` | `harness:enable/disable` が扱える機能名の一覧を供給する |
+| `listAvailable` | なし | `readonly string[]` | `phasegate:enable/disable` が扱える機能名の一覧を供給する |
 
 ポート設計ポリシー:
 
@@ -1315,7 +1315,7 @@ Updated: /path/to/phasegate.config.json
 | H04-02 | minimal / standard / strict のPreset差分が想定どおりであること |
 | H04-02 | array上書きが置換になること |
 | H04-03 | GSD由来品質機能の初期値が `false/0` であること |
-| H04-03 | `harness:enable --list` / `harness:disable --list` が同じ一覧を返すこと |
+| H04-03 | `phasegate:enable --list` / `phasegate:disable --list` が同じ一覧を返すこと |
 | H04-03 | 未知機能指定時に exit 1 と候補一覧を返すこと |
 
 ---
@@ -1338,7 +1338,7 @@ Updated: /path/to/phasegate.config.json
 | Preset解決 | `PresetResolutionService` |
 | 個別上書き | `sourceDocument` 差分 + deep merge |
 
-### H04-03: GSD由来品質機能のデフォルト無効化 + harness:enable/disable
+### H04-03: GSD由来品質機能のデフォルト無効化 + phasegate:enable/disable
 
 | 要求 | 対応設計 |
 |------|---------|

@@ -101,7 +101,7 @@
 | INV-5 | validatorResults>=1件 | UT-CCR-003, UT-BND-004 |
 | INV-6 | allPassed === 全件passed論理積 | UT-CCR-004/005/006 |
 | INV-7 | totalCount === drifts.length | UT-DRS-003/004, UT-BND-006 |
-| D5ルール | harness:statusはFail=1を返さない | UT-CDS-009/010, IT-UC-DecideExit-004/005, IT-API-Status-003 |
+| D5ルール | phasegate:statusはFail=1を返さない | UT-CDS-009/010, IT-UC-DecideExit-004/005, IT-API-Status-003 |
 
 ---
 

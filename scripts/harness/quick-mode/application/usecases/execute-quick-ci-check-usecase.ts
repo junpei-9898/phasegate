@@ -2,7 +2,7 @@
  * @layer application
  * @unit quick-mode
  *
- * H10-03: harness:ci-check --quick の実行フロー全体を調停するUseCase
+ * H10-03: phasegate:ci-check --quick の実行フロー全体を調停するUseCase
  */
 
 import type { JudgeQuickModeEligibilityUseCase } from './judge-quick-mode-eligibility-usecase.js';

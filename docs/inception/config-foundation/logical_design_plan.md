@@ -15,7 +15,7 @@
 |----------|---------|-------------------|
 | H04-01 | phasegate.config.json v2スキーマ定義 | `HarnessConfigV2` の論理構造、JSONスキーマ検証、Shared Kernel公開境界 |
 | H04-02 | Preset System定義と切替 | `minimal` / `standard` / `strict` の定義、Preset解決、個別上書き |
-| H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | デフォルト無効原則、機能一覧取得、CLIトグル操作 |
+| H04-03 | GSD由来品質機能のデフォルト無効化 + phasegate:enable/disable機能切替 | デフォルト無効原則、機能一覧取得、CLIトグル操作 |
 
 ### 1.2 設計対象の層
 
@@ -149,7 +149,7 @@ Application層は「集約の取得・操作・永続化の調整役」に限定
 | `ValidateConfigUseCase` | H04-01 | 設定ファイルまたはサンプル設定の妥当性確認。CLIやテストフィクスチャ検証で再利用 |
 | `EnableFeatureUseCase` | H04-03 | 対象機能の存在確認、`HarnessConfig.enableFeature()` 実行、保存 |
 | `DisableFeatureUseCase` | H04-03 | 対象機能の存在確認、`HarnessConfig.disableFeature()` 実行、保存 |
-| `ListAvailableFeaturesUseCase` | H04-03 | `harness:enable --list` / `harness:disable --list` 用の機能一覧返却 |
+| `ListAvailableFeaturesUseCase` | H04-03 | `phasegate:enable --list` / `phasegate:disable --list` 用の機能一覧返却 |
 
 補足方針:
 
@@ -178,9 +178,9 @@ CLIは既存のコマンド名を維持しつつ、Presentation層に責務を�
 
 | コマンド | コマンドハンドラ | 責務 |
 |---------|----------------|------|
-| `harness:enable <feature>` | `EnableFeatureCommandHandler` | 引数解釈、`--list` 判定、UseCase呼び出し、成功/失敗メッセージ、終了コード0/1/2の割当 |
-| `harness:disable <feature>` | `DisableFeatureCommandHandler` | 引数解釈、`--list` 判定、UseCase呼び出し、成功/失敗メッセージ、終了コード0/1/2の割当 |
-| `harness:enable --list` / `harness:disable --list` | `ListAvailableFeaturesCommandHandler` | 有効化可能な機能一覧の表示、未知機能エラー時の候補再表示 |
+| `phasegate:enable <feature>` | `EnableFeatureCommandHandler` | 引数解釈、`--list` 判定、UseCase呼び出し、成功/失敗メッセージ、終了コード0/1/2の割当 |
+| `phasegate:disable <feature>` | `DisableFeatureCommandHandler` | 引数解釈、`--list` 判定、UseCase呼び出し、成功/失敗メッセージ、終了コード0/1/2の割当 |
+| `phasegate:enable --list` / `phasegate:disable --list` | `ListAvailableFeaturesCommandHandler` | 有効化可能な機能一覧の表示、未知機能エラー時の候補再表示 |
 
 Presentation方針:
 
@@ -196,7 +196,7 @@ Presentation方針:
 |--------|-----------|------|
 | `ConfigRepositoryPort` | `load(configPath?: string): Promise<unknown>`, `save(configPath: string, document: unknown): Promise<void>` | `phasegate.config.json` の読込・保存 |
 | `ConfigSchemaValidatorPort` | `validate(document: unknown): readonly HarnessError[]` | v2 JSONスキーマ適合性検証 |
-| `FeatureRegistryPort` | `listAvailable(): readonly string[]` | `harness:enable/disable` で扱える機能名一覧の供給 |
+| `FeatureRegistryPort` | `listAvailable(): readonly string[]` | `phasegate:enable/disable` で扱える機能名一覧の供給 |
 
 ポート定義ポリシー:
 
@@ -238,5 +238,5 @@ Presentation方針:
 
 1. Domain層の型と不変条件を確定
 2. `LoadResolvedConfigUseCase` とスキーマValidatorを先に通す
-3. `harness:enable/disable` のApplication + Presentationを接続
+3. `phasegate:enable/disable` のApplication + Presentationを接続
 4. Feature RegistryのWave 2差し替え点を残して固定化する

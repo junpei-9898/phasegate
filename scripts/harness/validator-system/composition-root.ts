@@ -185,9 +185,9 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const aggregateValidationResultsUseCase = new AggregateValidationResultsUseCase();
   const KNOWN_CLI_COMMANDS = [
     'validate', 'lint', 'ci-check', 'detect-drift',
-    'harness:check-ready', 'harness:check-phase', 'harness:ci-check',
-    'harness:detect-drift', 'harness:lint', 'harness:complete-check',
-    'harness:impact-analysis', 'harness:status',
+    'phasegate:check-ready', 'phasegate:check-phase', 'phasegate:ci-check',
+    'phasegate:detect-drift', 'phasegate:lint', 'phasegate:complete-check',
+    'phasegate:impact-analysis', 'phasegate:status',
   ];
   const cwd = process.cwd();
   const itTestFileAnalyzerPort = new ItTestFileAnalyzerAdapter({

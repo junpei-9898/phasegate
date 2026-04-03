@@ -1,5 +1,5 @@
 #!/bin/sh
-# GSDLC Harness CLI entry point
+# Phasegate CLI entry point
 # tsx を使って scripts/harness/main.ts を実行するラッパー
 
 # このスクリプトの実体ファイルの場所を解決する（シンボリックリンク対応）

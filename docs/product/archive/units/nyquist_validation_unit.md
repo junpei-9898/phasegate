@@ -20,7 +20,7 @@
 | US-005 | requirement-test-matrix.jsonの新設 | Must |
 | US-006 | phase-gateへのACマッピング完了チェック追加 | Must |
 | US-007 | test-coverage-checkerでの要件カバレッジ算出 | Must |
-| US-008 | harness:impact-analysisコマンドの新設 | Should |
+| US-008 | phasegate:impact-analysisコマンドの新設 | Should |
 | US-009 | VALIDATION.mdの自動生成 | Should |
 
 ---
@@ -47,7 +47,7 @@
 
 ### 3.4 impact-analysis（Should）
 
-- `harness:impact-analysis US-XXX`コマンド
+- `phasegate:impact-analysis US-XXX`コマンド
 - User Storyに紐づくテストケース一覧出力
 - テスト種別（unit/it/scenario）の表示
 
@@ -78,5 +78,5 @@
 | 種別 | 名称 | 利用Unit |
 |------|------|---------|
 | データ | requirement-test-matrix.json | skill-enhancement（test-coverage-checker Nyquist統合、Plan-Checker Loop） |
-| CLI | `harness:impact-analysis` | 外部利用者 |
+| CLI | `phasegate:impact-analysis` | 外部利用者 |
 | バリデータ | phase-gate ACマッピングチェック | 全Unit（L2 Pre-commit） |

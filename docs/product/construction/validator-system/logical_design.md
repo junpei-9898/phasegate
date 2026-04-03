@@ -1023,7 +1023,7 @@ export interface AggregatedValidationReport {
 
 **対応ストーリー**: H08-06（フルバリデーション実行 / complete-check）
 
-**責務**: L2・L3・L4の全バリデータを統合実行するオーケストレーターUseCase。harness-apiの `harness:complete-check` コマンドから直接呼ばれる。各レイヤーのUseCaseを順次実行し、`AggregateValidationResultsUseCase` で統合する。
+**責務**: L2・L3・L4の全バリデータを統合実行するオーケストレーターUseCase。harness-apiの `phasegate:complete-check` コマンドから直接呼ばれる。各レイヤーのUseCaseを順次実行し、`AggregateValidationResultsUseCase` で統合する。
 
 **コンストラクタ依存**
 
@@ -1302,7 +1302,7 @@ export interface AggregatedValidationReport {
 
 ### 5.1 前提
 
-validator-systemは `integration_contract.md §3.1` にあるトップレベルCLIコマンドの所有者ではない。トップレベルコマンド（`harness:ci-check`, `harness:complete-check`, `harness:detect-drift`等）はharness-apiが所有し、本Unitの Presentation層はその内部から呼ばれるCLIハンドラー・フォーマッターを提供する。
+validator-systemは `integration_contract.md §3.1` にあるトップレベルCLIコマンドの所有者ではない。トップレベルコマンド（`phasegate:ci-check`, `phasegate:complete-check`, `phasegate:detect-drift`等）はharness-apiが所有し、本Unitの Presentation層はその内部から呼ばれるCLIハンドラー・フォーマッターを提供する。
 
 ### 5.2 RunValidatorsHandler
 
@@ -1310,7 +1310,7 @@ validator-systemは `integration_contract.md §3.1` にあるトップレベルC
 
 **役割**
 
-- `harness:ci-check` および `harness:complete-check` の実行ロジック担当
+- `phasegate:ci-check` および `phasegate:complete-check` の実行ロジック担当
 - RunL2ValidatorsUseCase / RunL3ValidatorsUseCase / RunL4ValidatorsUseCase の順次実行
 - AggregateValidationResultsUseCase による統合集約
 - 出力フォーマット選択と終了コード決定
@@ -1432,7 +1432,7 @@ RunValidatorsHandlerと同一。
 
 ```mermaid
 sequenceDiagram
-    participant CLI as harness:complete-check
+    participant CLI as phasegate:complete-check
     participant Handler as RunValidatorsHandler
     participant FullUC as RunFullValidationUseCase
     participant L2UC as RunL2ValidatorsUseCase
@@ -1621,7 +1621,7 @@ sequenceDiagram
 **根拠**:
 - harness-apiの `HarnessApiResponse.summary` で `skippedValidators` を正確に計上するために必要
 - AggregateValidationResultsUseCaseがスキップと通過を区別してサマリーを生成できる
-- `integration_contract.md §3.1` の `harness:status` コマンドが「どのバリデータが無効化されているか」を報告するために必要
+- `integration_contract.md §3.1` の `phasegate:status` コマンドが「どのバリデータが無効化されているか」を報告するために必要
 
 **影響**: ValidationResultContract（公開契約）に `skipped?: boolean` フィールドを追加。harness-apiはこのフィールドを参照してサマリーを構成する。
 

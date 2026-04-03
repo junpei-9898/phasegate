@@ -8,11 +8,11 @@ export class DecideExitCodeUseCase {
   execute(input: ExitCodeDecisionInput): ExitCodeDecisionOutput {
     const { status, commandName } = input;
 
-    // D5ルール: harness:status は fail でも exitCode=0 を返す
-    if (commandName === 'harness:status' && status === 'fail') {
+    // D5ルール: phasegate:status は fail でも exitCode=0 を返す
+    if (commandName === 'phasegate:status' && status === 'fail') {
       return {
         exitCode: 0 as ExitCode,
-        reason: 'D5ルール適用: harness:statusコマンドはfailでもexitCode=0を返す（情報提供コマンドのため）',
+        reason: 'D5ルール適用: phasegate:statusコマンドはfailでもexitCode=0を返す（情報提供コマンドのため）',
       };
     }
 

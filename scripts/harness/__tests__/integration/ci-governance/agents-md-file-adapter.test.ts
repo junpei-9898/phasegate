@@ -24,7 +24,7 @@ target('AgentsMdFileAdapter', () => {
     context('有効なPointerEntry形式のAGENTS.mdが存在する場合', () => {
       it('PointerEntry[]とadrLinks[]が正しくパースされたAgentsMdPointerが返る', async () => {
         const agentsMdPath = path.join(tmpDir, 'AGENTS.md');
-        const content = '# Agent Instructions\n\n<!-- pointer: cmd-status | harness:status | ステータス確認 -->\n';
+        const content = '# Agent Instructions\n\n<!-- pointer: cmd-status | phasegate:status | ステータス確認 -->\n';
         await fs.writeFile(agentsMdPath, content, 'utf-8');
         const adapter = new AgentsMdFileAdapter(tmpDir);
         const actual = await adapter.read();
@@ -42,7 +42,7 @@ target('AgentsMdFileAdapter', () => {
         await fs.writeFile(agentsMdPath, '# Agent Instructions\n', 'utf-8');
         const adapter = new AgentsMdFileAdapter(tmpDir);
         const pointers = AgentsMdPointer.create([
-          PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: 'ステータス確認' }),
+          PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: 'ステータス確認' }),
           PointerEntry.createFile({ key: 'file-1', filePath: 'docs/README.md', description: 'README' }),
         ]);
         await adapter.write(pointers);
@@ -59,7 +59,7 @@ target('AgentsMdFileAdapter', () => {
         await fs.writeFile(agentsMdPath, tenLines, 'utf-8');
         const adapter = new AgentsMdFileAdapter(tmpDir);
         const pointers = AgentsMdPointer.create([
-          PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' }),
+          PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' }),
         ]);
         const actual = await adapter.write(pointers);
         expect(actual.before).toBe(10);

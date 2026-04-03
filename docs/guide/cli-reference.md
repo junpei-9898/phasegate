@@ -3,7 +3,7 @@
 Entry point:
 
 ```
-npx harness <command> [options]
+npx phasegate <command> [options]
 ```
 
 ---
@@ -38,14 +38,14 @@ Commands exposed as npm scripts (`npm run <command>`).
 
 | Command | Options | Description |
 |---|---|---|
-| `harness:status` | `--json` | Health summary |
-| `harness:check-ready` | `--json` | Phase Gate pass status for all stories |
-| `harness:check-phase` | `--unit <unitId>` `--json` | Current phase for a unit |
-| `harness:ci-check` | `--json` | All L3 validators |
-| `harness:detect-drift` | `--json` | Design-code drift report |
-| `harness:lint` | `--target <path>` `--json` | Lint via harness-api |
-| `harness:complete-check` | `--json` | L2-L4 full check |
-| `harness:impact-analysis` | `<storyId>` `--json` | Story impact analysis |
+| `phasegate:status` | `--json` | Health summary |
+| `phasegate:check-ready` | `--json` | Phase Gate pass status for all stories |
+| `phasegate:check-phase` | `--unit <unitId>` `--json` | Current phase for a unit |
+| `phasegate:ci-check` | `--json` | All L3 validators |
+| `phasegate:detect-drift` | `--json` | Design-code drift report |
+| `phasegate:lint` | `--target <path>` `--json` | Lint via harness-api |
+| `phasegate:complete-check` | `--json` | L2-L4 full check |
+| `phasegate:impact-analysis` | `<storyId>` `--json` | Story impact analysis |
 
 ---
 

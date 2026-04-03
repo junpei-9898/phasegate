@@ -9,7 +9,7 @@
 
 ## 1. 概要
 
-Phasegateの全CLIコマンドの名前・入出力仕様・終了コードを一元的に所有するUnit。`harness:check-ready` / `harness:check-phase` / `harness:ci-check` / `harness:detect-drift` / `harness:status`に加え、`harness:lint` / `harness:complete-check`のCLIエントリポイントも本Unitが所有する。
+Phasegateの全CLIコマンドの名前・入出力仕様・終了コードを一元的に所有するUnit。`phasegate:check-ready` / `phasegate:check-phase` / `phasegate:ci-check` / `phasegate:detect-drift` / `phasegate:status`に加え、`phasegate:lint` / `phasegate:complete-check`のCLIエントリポイントも本Unitが所有する。
 
 v0には対応するUnitが存在しない新規Unitである。v0ではCLIコマンドが各Unitに散在し、コマンド名の重複や入出力仕様の不統一が発生していた。v1ではCLI Command Registryによりコマンド定義を集約し、agent-integrationが参照する**薄いCLI契約レイヤー**を提供する。実行ロジック自体はvalidator-system等の各Unitが所有し、harness-apiはCLIのエントリポイント・入出力変換・終了コード管理に責務を限定する。
 
@@ -19,37 +19,37 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 
 | Story ID | タイトル | 優先度 |
 |----------|---------|--------|
-| H09-01 | harness:check-ready / harness:check-phase | Must |
-| H09-02 | harness:ci-check | Must |
-| H09-03 | harness:detect-drift | Must |
-| H09-04 | harness:status（成果物駆動状態導出） | Must |
+| H09-01 | phasegate:check-ready / phasegate:check-phase | Must |
+| H09-02 | phasegate:ci-check | Must |
+| H09-03 | phasegate:detect-drift | Must |
+| H09-04 | phasegate:status（成果物駆動状態導出） | Must |
 
 ---
 
 ## 3. 機能要件
 
-### 3.1 harness:check-ready / harness:check-phase（H09-01）
+### 3.1 phasegate:check-ready / phasegate:check-phase（H09-01）
 
-- `harness:check-ready`コマンドが全storyのPhase Gate通過状態をJSON形式で返却
-- `harness:check-phase <unit>`コマンドが指定Unitの現在フェーズ（Level/スキル名）を返却
+- `phasegate:check-ready`コマンドが全storyのPhase Gate通過状態をJSON形式で返却
+- `phasegate:check-phase <unit>`コマンドが指定Unitの現在フェーズ（Level/スキル名）を返却
 - Phase Gate未通過のstoryが存在する場合、未通過story一覧を含むレスポンスを返す
 - 存在しないUnit名が指定された場合、適切なエラーメッセージを表示
 
-### 3.2 harness:ci-check（H09-02）
+### 3.2 phasegate:ci-check（H09-02）
 
 - 全L3バリデータ（security/performance/coverage/nyquist）を順次実行
 - 全バリデータ通過時にPass判定、1つでも失敗時にFail判定を返す
 - 実行結果にバリデータ別のPass/Fail詳細を含める
 - 失敗時のレスポンスにHarnessError一覧を含める
 
-### 3.3 harness:detect-drift（H09-03）
+### 3.3 phasegate:detect-drift（H09-03）
 
 - 設計→コード方向とコード→設計方向の双方向乖離を検出
 - 乖離レポートにUnit名・乖離方向・対象要素の詳細を含める
 - 乖離が0件の場合、「乖離なし」のサマリーを返却
 - `--json`フラグでJSON形式のレポート出力が可能。出力スキーマに`drifts[]`（方向/unit/要素/推奨アクション）フィールドを含める
 
-### 3.4 harness:status（H09-04）
+### 3.4 phasegate:status（H09-04）
 
 - ファイルシステム上の成果物（設計文書、テストファイル、メタデータ）の存在からハーネス検査状態を導出（成果物駆動の状態導出）
 - レスポンスにL1-L4各レイヤーの健全性（有効/無効/最終実行結果）を含める
@@ -57,10 +57,10 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 - レスポンスにプリセット名と有効な設定のサマリーを含める
 - JSON形式での出力が可能
 
-### 3.5 harness:lint / harness:complete-check（CLI Command Registry所有）
+### 3.5 phasegate:lint / phasegate:complete-check（CLI Command Registry所有）
 
-- `harness:lint`: L1 BiomeバリデータのCLIエントリポイント（実行ロジックはbiome-ast-engine）
-- `harness:complete-check`: L1-L4全バリデータの統合実行CLIエントリポイント（実行ロジックはvalidator-system + biome-ast-engine）
+- `phasegate:lint`: L1 BiomeバリデータのCLIエントリポイント（実行ロジックはbiome-ast-engine）
+- `phasegate:complete-check`: L1-L4全バリデータの統合実行CLIエントリポイント（実行ロジックはvalidator-system + biome-ast-engine）
 - 上記コマンドの入出力仕様・終了コードを本Unitが定義・管理
 
 ---
@@ -68,7 +68,7 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 ## 4. ドメインモデル概要
 
 - **CliCommand（集約ルート）**: CLIコマンドの定義・入出力仕様・終了コードを統括
-  - `commandName`: コマンド名（例: `harness:check-ready`）
+  - `commandName`: コマンド名（例: `phasegate:check-ready`）
   - `inputSpec`: 入力仕様（引数・フラグ定義）
   - `outputSpec`: 出力仕様（JSON構造・フィールド定義）
   - `exitCodes`: 終了コード定義（0: 正常, 1: 失敗, 2: エラー）
@@ -107,10 +107,10 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 
 | K# | 要件 | 本Unitでの対応 |
 |----|------|---------------|
-| K1 | 4層防御モデル（L1-L4） | harness:statusでL1-L4各レイヤーの健全性を一覧表示。harness:complete-checkでL1-L4全層の統合チェックを提供 |
-| K11 | Drift Detection | harness:detect-driftコマンドで設計⇔コード乖離の任意タイミング検出をCLIインターフェースとして提供 |
-| K13 | phasegate.config.json | harness:statusでプリセット名・有効設定のサマリーを表示し、設定状態の可視化を実現 |
-| K14 | Phase Dependency | harness:check-ready/check-phaseでPhase Gate通過状態の機械的判定を提供 |
+| K1 | 4層防御モデル（L1-L4） | phasegate:statusでL1-L4各レイヤーの健全性を一覧表示。phasegate:complete-checkでL1-L4全層の統合チェックを提供 |
+| K11 | Drift Detection | phasegate:detect-driftコマンドで設計⇔コード乖離の任意タイミング検出をCLIインターフェースとして提供 |
+| K13 | phasegate.config.json | phasegate:statusでプリセット名・有効設定のサマリーを表示し、設定状態の可視化を実現 |
+| K14 | Phase Dependency | phasegate:check-ready/check-phaseでPhase Gate通過状態の機械的判定を提供 |
 
 ---
 
@@ -120,14 +120,14 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 |------|------|---------|
 | 型定義 | HarnessApiResponse DTO（CLI出力JSON構造） | agent-integration, ci-governance |
 | 型定義 | CLI Command Registry（全コマンド定義） | agent-integration |
-| CLI | `harness:check-ready` | 外部利用者、agent-integration |
-| CLI | `harness:check-phase <unit>` | 外部利用者、agent-integration |
-| CLI | `harness:ci-check` | 外部利用者、ci-governance |
-| CLI | `harness:detect-drift` | 外部利用者、agent-integration |
-| CLI | `harness:status` | 外部利用者、agent-integration、ci-governance |
-| CLI | `harness:lint` | 外部利用者、agent-integration |
-| CLI | `harness:complete-check` | 外部利用者、agent-integration |
-| CLI | `harness:impact-analysis <HXX-XX>` | 外部利用者（実行ロジック: nyquist-validation） |
+| CLI | `phasegate:check-ready` | 外部利用者、agent-integration |
+| CLI | `phasegate:check-phase <unit>` | 外部利用者、agent-integration |
+| CLI | `phasegate:ci-check` | 外部利用者、ci-governance |
+| CLI | `phasegate:detect-drift` | 外部利用者、agent-integration |
+| CLI | `phasegate:status` | 外部利用者、agent-integration、ci-governance |
+| CLI | `phasegate:lint` | 外部利用者、agent-integration |
+| CLI | `phasegate:complete-check` | 外部利用者、agent-integration |
+| CLI | `phasegate:impact-analysis <HXX-XX>` | 外部利用者（実行ロジック: nyquist-validation） |
 
 ---
 
@@ -137,6 +137,6 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 - **薄いエントリポイント層**: 本Unitは実行ロジックを持たず、CLIの入出力変換・ディスパッチ・終了コード管理に責務を限定する。実行ロジックはvalidator-system（ci-check, detect-drift, complete-check）、biome-ast-engine（lint）、config-foundation（status）等の各Unitが所有
 - **agent-integrationとの境界**: agent-integrationはHook/FSイベントをharness-api CLIに変換する薄いAdapter層。harness-apiのCLI Command RegistryとHarnessApiResponse DTOを消費する関係
 - **順序依存**: validator-systemおよびconfig-foundationの主要インターフェースが確定した後に本Unitの実装に着手する（unit_design_plan.md §4.2参照）
-- **JSON出力の一貫性**: 全コマンドのJSON出力は共通envelope `{ status, errors[], summary }`を持ちつつ、コマンド固有のpayload型を`data`フィールドに格納する設計とする。例: `harness:check-phase`は`data: PhaseInfo`、`harness:detect-drift`は`data: DriftReportSummary`、`harness:ci-check`は`data: CiCheckResult`。HarnessApiResponseは共通envelopeのみ定義し、payload型は各コマンド定義に紐づく
+- **JSON出力の一貫性**: 全コマンドのJSON出力は共通envelope `{ status, errors[], summary }`を持ちつつ、コマンド固有のpayload型を`data`フィールドに格納する設計とする。例: `phasegate:check-phase`は`data: PhaseInfo`、`phasegate:detect-drift`は`data: DriftReportSummary`、`phasegate:ci-check`は`data: CiCheckResult`。HarnessApiResponseは共通envelopeのみ定義し、payload型は各コマンド定義に紐づく
 - **終了コード規約**: 0（正常/Pass）、1（Fail/対象未検出）、2（実行エラー）の3値を全コマンドで統一。agent-integrationがHook内で終了コードに基づくフロー制御を行うため、終了コードの意味論を厳密に定義
-- **成果物駆動の状態導出（H09-04）**: harness:statusはDBやステートファイルではなく、ファイルシステム上の成果物の存在から状態を導出する。これにより状態の不整合やステートファイルの破損リスクを排除
+- **成果物駆動の状態導出（H09-04）**: phasegate:statusはDBやステートファイルではなく、ファイルシステム上の成果物の存在から状態を導出する。これにより状態の不整合やステートファイルの破損リスクを排除

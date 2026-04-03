@@ -28,7 +28,7 @@ A: 下位 Unit から上位 Unit へ（依存方向に沿う）。具体的に�
 A: 全機能実装完了後も実動作バグが残存した根本原因分析から、3 つの構造的欠陥が特定された。①ITテストのモック化（境界未検証）②スタブ残存の見落とし③CLIレイヤーの検証欠如。これらはスキルルールだけでは人的漏れが防げないため、ハーネスの静的解析バリデータとして自動検出機構を追加する。L1-017/L1-018 は grep ベースで実装可能であり、validator-system と同 Wave での実装が効率的。L2-013 は設計文書参照が必要なため Should 優先度とする。
 
 **Q: H12-07（スキル DoD・Tier1 強化）を Wave 3A に含める根拠は？**
-A: H12-07 は L1-017/L1-018 の存在を前提とする（`npx harness lint` で新バリデータが PASS することを DoD に組み込む）。validator-system 完了（Wave 2A）後でなければ DoD の記述が意味を持たないため、スキル品質強化 Wave（Wave 3A）に配置する。
+A: H12-07 は L1-017/L1-018 の存在を前提とする（`npx phasegate lint` で新バリデータが PASS することを DoD に組み込む）。validator-system 完了（Wave 2A）後でなければ DoD の記述が意味を持たないため、スキル品質強化 Wave（Wave 3A）に配置する。
 
 ---
 
@@ -107,7 +107,7 @@ Future B（Future A と並行可）: L4 拡張
 **Wave 2A validator-system 完了条件:**
 - H08-01〜08 全テストグリーン（H08-09 は Should のため任意）
 - 上記 7 件のスタブコメントが消えていること
-- `npx harness validate --layer L1` で L1-017/L1-018 が有効になっていること
+- `npx phasegate validate --layer L1` で L1-017/L1-018 が有効になっていること
 
 ---
 
@@ -120,7 +120,7 @@ Future B（Future A と並行可）: L4 拡張
 | H07-01 | requirement-test-matrix.json 新設 | Must | `@story` メタデータから要件↔テストマッピング JSON を生成 |
 | H07-02 | phase-gate AC マッピング完了チェック追加 | Must | AC カバレッジ判定ロジック本実装 |
 | H07-03 | test-coverage-checker での要件カバレッジ算出 | Must | coverage 閾値と nyquist 結果の統合 |
-| H07-04 | harness:impact-analysis HXX-XX コマンド | Should | 指定ストーリーに紐づくテストケース一覧を返却 |
+| H07-04 | phasegate:impact-analysis HXX-XX コマンド | Should | 指定ストーリーに紐づくテストケース一覧を返却 |
 
 **同 Wave 内スタブ差し替え（H07 完了後）:**
 
@@ -146,27 +146,27 @@ Future B（Future A と並行可）: L4 拡張
 
 | ストーリー ID | タイトル | 優先度 | 実装内容 |
 |---|---|---|---|
-| H09-01 | harness:check-ready / harness:check-phase | Must | 全 story の Phase Gate 通過状態返却 / 指定 Unit の現在フェーズ返却 |
-| H09-02 | harness:ci-check | Must | 全 L3 バリデータ順次実行・Pass/Fail 詳細＋HarnessError 一覧返却 |
-| H09-03 | harness:detect-drift | Must | 設計↔コード双方向乖離レポート（`--json` フラグ対応） |
-| H09-04 | harness:status（成果物駆動状態導出） | Must | FS 上の成果物存在から L1-L4 健全性・Phase Gate 状態・プリセット情報を導出 |
+| H09-01 | phasegate:check-ready / phasegate:check-phase | Must | 全 story の Phase Gate 通過状態返却 / 指定 Unit の現在フェーズ返却 |
+| H09-02 | phasegate:ci-check | Must | 全 L3 バリデータ順次実行・Pass/Fail 詳細＋HarnessError 一覧返却 |
+| H09-03 | phasegate:detect-drift | Must | 設計↔コード双方向乖離レポート（`--json` フラグ対応） |
+| H09-04 | phasegate:status（成果物駆動状態導出） | Must | FS 上の成果物存在から L1-L4 健全性・Phase Gate 状態・プリセット情報を導出 |
 
 **同 Wave 内スタブ差し替え（H09 実装の一部として）:**
 
 | アダプタファイル（harness-api 内） | 差し替え内容 | 関連ストーリー |
 |---|---|---|
-| `biome-ast-engine-lint-adapter.ts` | biome-ast-engine の正式 I/F に差し替え | H09-02 (`harness:lint`) |
-| `validator-system-execution-adapter.ts` | validator-system の正式 I/F に差し替え（L1-L4 全バリデータ） | H09-02 (`harness:ci-check`, `harness:complete-check`) |
-| `phase-dependency-model-query-adapter.ts` | phase-dependency-model の正式 I/F に差し替え | H09-01 (`harness:check-phase`) |
-| `nyquist-validation-impact-analysis-adapter.ts` | nyquist-validation の正式 I/F に差し替え | H07-04（`harness:impact-analysis` の CLI エントリポイント配線） |
-| `harness-config-query-adapter.ts` | `getPhaseGateSummary()` の wave2-pending を phase-dependency-model の正式 I/F に差し替え | H09-04 (`harness:status` の Phase Gate サマリー導出) |
+| `biome-ast-engine-lint-adapter.ts` | biome-ast-engine の正式 I/F に差し替え | H09-02 (`phasegate:lint`) |
+| `validator-system-execution-adapter.ts` | validator-system の正式 I/F に差し替え（L1-L4 全バリデータ） | H09-02 (`phasegate:ci-check`, `phasegate:complete-check`) |
+| `phase-dependency-model-query-adapter.ts` | phase-dependency-model の正式 I/F に差し替え | H09-01 (`phasegate:check-phase`) |
+| `nyquist-validation-impact-analysis-adapter.ts` | nyquist-validation の正式 I/F に差し替え | H07-04（`phasegate:impact-analysis` の CLI エントリポイント配線） |
+| `harness-config-query-adapter.ts` | `getPhaseGateSummary()` の wave2-pending を phase-dependency-model の正式 I/F に差し替え | H09-04 (`phasegate:status` の Phase Gate サマリー導出) |
 
 **Wave 2B 完了条件:**
-- H09-01: `npx harness harness:check-ready` / `harness:check-phase <unit>` が正常動作
-- H09-02: `npx harness harness:ci-check` がフルモード（L3 全バリデータ）で動作
-- H09-03: `npx harness harness:detect-drift` が JSON 出力対応で動作
-- H09-04: `npx harness harness:status` が成果物駆動で L1-L4 健全性・Phase Gate サマリーを返却
-- H07-04連動: `npx harness harness:impact-analysis <HXX-XX>` が正常動作
+- H09-01: `npx phasegate phasegate:check-ready` / `phasegate:check-phase <unit>` が正常動作
+- H09-02: `npx phasegate phasegate:ci-check` がフルモード（L3 全バリデータ）で動作
+- H09-03: `npx phasegate phasegate:detect-drift` が JSON 出力対応で動作
+- H09-04: `npx phasegate phasegate:status` が成果物駆動で L1-L4 健全性・Phase Gate サマリーを返却
+- H07-04連動: `npx phasegate phasegate:impact-analysis <HXX-XX>` が正常動作
 - harness-api 内スタブコメント 5 件が消えていること
 
 ---
@@ -198,7 +198,7 @@ Future B（Future A と並行可）: L4 拡張
 |---|---|---|---|
 | H11-01 | コア品質能力の CLI/FS フォールバック定義 | Must | エージェント非依存フォールバックの設計・ドキュメント化 |
 | H11-02 | Claude Code PreToolUse Hook Adapter（リンター設定保護） | Must | `.biome.json` / `tsconfig.json` 変更阻止フック |
-| H11-03 | Claude Code PostToolUse Hook Adapter（Biome 高速リント） | Must | ファイル保存後の Biome リント自動実行フック（`harness:lint --fast` を呼ぶ） |
+| H11-03 | Claude Code PostToolUse Hook Adapter（Biome 高速リント） | Must | ファイル保存後の Biome リント自動実行フック（`phasegate:lint --fast` を呼ぶ） |
 | H11-04 | Claude Code Stop Hook Adapter（テストゲート + 無限ループ防止） | Must | セッション終了前の全テストグリーン強制・同一エラー繰り返し検出 |
 
 **Wave 2C agent-integration 完了条件:**
@@ -221,7 +221,7 @@ Future B（Future A と並行可）: L4 拡張
 | H12-04 | Agent-Lesson System（lesson artifact 出力） | Must | `skill:collect-lessons` コマンド → `lessons.md` 生成 |
 | H12-05 | Cascade Updater 拡張（Level 3 完了後の累積更新 + @story-id 自動付与） | Must | `skill:apply-cascade-update` コマンド拡張 |
 | H12-06 | スキル SKILL.md 構造維持検証 | Must | `skill:validate-structure` の全スキル定期検証 CI 統合 |
-| H12-07 | スキル DoD・Tier1 強化（L1-017/L1-018 連動） | Must | `story-implementor` DoD に「`npx harness lint` で L1-017/L1-018 PASS」を追加。`codex-delegator` Tier1 にスタブコメント grep を BLOCK 追加 |
+| H12-07 | スキル DoD・Tier1 強化（L1-017/L1-018 連動） | Must | `story-implementor` DoD に「`npx phasegate lint` で L1-017/L1-018 PASS」を追加。`codex-delegator` Tier1 にスタブコメント grep を BLOCK 追加 |
 
 **同 Wave 内スタブ差し替え（H12 完了後）:**
 
@@ -263,7 +263,7 @@ Future B（Future A と並行可）: L4 拡張
 
 **Wave 3B ci-governance 完了条件:**
 - H13-01〜03 全テストグリーン
-- `npx harness ci:generate-template` が 3 種テンプレートを生成できること
+- `npx phasegate ci:generate-template` が 3 種テンプレートを生成できること
 - `validator-id-registry-adapter.ts` のスタブコメントが消えていること
 
 ---
@@ -280,7 +280,7 @@ Future B（Future A と並行可）: L4 拡張
 
 **Wave 3B H14 完了条件:**
 - H14-01〜03 全テストグリーン
-- `npx harness regression:run-k-requirements` / `regression:run-k14-k15` / `regression:run-agent-guard` / `regression:run-gng-gate` が有意な結果を返すこと（stub「0/0 passed」ではないこと）
+- `npx phasegate regression:run-k-requirements` / `regression:run-k14-k15` / `regression:run-agent-guard` / `regression:run-gng-gate` が有意な結果を返すこと（stub「0/0 passed」ではないこと）
 
 ---
 
@@ -303,7 +303,7 @@ Future B（Future A と並行可）: L4 拡張
 
 **Wave 3C 完了条件 = v1 MVH 完成条件:**
 - H15-01〜02 全テストグリーン
-- `npx harness regression:configure-ci-gate` が CI ゲートを設定できること
+- `npx phasegate regression:configure-ci-gate` が CI ゲートを設定できること
 - `vitest-test-runner-adapter.ts` のスタブコメントが消えていること
 - K1-K15 非交渉要件が全て回帰テストでカバーされていること
 
@@ -336,9 +336,9 @@ Future B（Future A と並行可）: L4 拡張
 
 **Future A 完了条件:**
 - HF1-01〜05 全テストグリーン
-- `.harness-hooks.yml` 作成後に `npx harness hooks:config validate` が PASS すること
+- `.harness-hooks.yml` 作成後に `npx phasegate hooks:config validate` が PASS すること
 - FUSE マウント経由のファイル書き込みが PreWrite フックでインターセプトされること
-- `npx harness hooks:gate-check --story <id>` が有意な結果を返すこと
+- `npx phasegate hooks:gate-check --story <id>` が有意な結果を返すこと
 
 ---
 
@@ -350,9 +350,9 @@ Future B（Future A と並行可）: L4 拡張
 
 | ストーリー ID | タイトル | 優先度 | 実装内容 |
 |---|---|---|---|
-| HF2-01 | doc-freshness-checker（L4 拡張） | Should | 設計文書の最終更新日経過日数チェック。`phasegate.config.json` で閾値設定可。`npx harness p2:check-freshness` |
-| HF2-02 | pointer-validator（L4 拡張） | Should | docs 内ファイルパス参照・AGENTS.md コマンドポインタの実在性検証。`npx harness p2:validate-pointers` |
-| HF2-03 | E2E テスト戦略テンプレート（Playwright 統合） | Should | `npx harness p2:generate-e2e-template` コマンド・シードデータ管理・ページオブジェクトパターン |
+| HF2-01 | doc-freshness-checker（L4 拡張） | Should | 設計文書の最終更新日経過日数チェック。`phasegate.config.json` で閾値設定可。`npx phasegate p2:check-freshness` |
+| HF2-02 | pointer-validator（L4 拡張） | Should | docs 内ファイルパス参照・AGENTS.md コマンドポインタの実在性検証。`npx phasegate p2:validate-pointers` |
+| HF2-03 | E2E テスト戦略テンプレート（Playwright 統合） | Should | `npx phasegate p2:generate-e2e-template` コマンド・シードデータ管理・ページオブジェクトパターン |
 
 **Future B 完了条件:**
 - HF2-01〜03 全テストグリーン
@@ -454,8 +454,8 @@ Wave 3A（並行）              Wave 3B（並行）
 
 | リリース | Wave | 完了条件（受け入れ基準） |
 |---|---|---|
-| **v1.2.0** | Wave 2A | H07-01〜04 + H08-01〜08 全テストグリーン（H08-09 は Should）。スタブ #1〜#9 差し替え完了。validator-system + nyquist-validation の全ユニットテスト・統合テストがパスし、`requirement-test-matrix.json` が生成されること。L1-017/L1-018 が `npx harness validate --layer L1` で有効化されていること |
-| **v1.3.0** | Wave 2B | H09-01〜04 全テストグリーン。スタブ #10〜#14 差し替え完了。`harness:check-ready` / `harness:check-phase <unit>` / `harness:ci-check`（フルモード）/ `harness:detect-drift` / `harness:status`（Phase Gate サマリー含む）/ `harness:impact-analysis <HXX-XX>` が全て正常動作 |
+| **v1.2.0** | Wave 2A | H07-01〜04 + H08-01〜08 全テストグリーン（H08-09 は Should）。スタブ #1〜#9 差し替え完了。validator-system + nyquist-validation の全ユニットテスト・統合テストがパスし、`requirement-test-matrix.json` が生成されること。L1-017/L1-018 が `npx phasegate validate --layer L1` で有効化されていること |
+| **v1.3.0** | Wave 2B | H09-01〜04 全テストグリーン。スタブ #10〜#14 差し替え完了。`phasegate:check-ready` / `phasegate:check-phase <unit>` / `phasegate:ci-check`（フルモード）/ `phasegate:detect-drift` / `phasegate:status`（Phase Gate サマリー含む）/ `phasegate:impact-analysis <HXX-XX>` が全て正常動作 |
 | **v1.4.0** | Wave 2C | H10-01〜04 + H11-01〜04 全テストグリーン。Quick Mode 適用可否判定が動作。Claude Code PreToolUse / PostToolUse / Stop Hook が動作 |
 | **v1.5.0** | Wave 3A + 3B | H12-01〜07 + H13-01〜03 + H14-01〜03 全テストグリーン。スタブ #15〜#19 差し替え完了。`skill:check-coverage` / `skill:collect-lessons` / CI テンプレート 3 種生成 / `regression:run-k-requirements`・`regression:run-k14-k15`・`regression:run-agent-guard`・`regression:run-gng-gate` が全て有意な結果（stub 「0/0 passed」以外）を返すこと。`story-implementor` DoD / `codex-delegator` Tier1 が L1-017/L1-018 と連動していること |
 | **v1.6.0** | Wave 3C | H15-01〜02 全テストグリーン。スタブ #20（`vitest-test-runner-adapter.ts`）差し替え完了。K1-K15 回帰テスト全パス。**v1 MVH 完成** |

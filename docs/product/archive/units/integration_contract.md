@@ -101,9 +101,9 @@ Wave 4（高度機能）                      │
 
 | コマンド | 提供Unit | 説明 |
 |---------|---------|------|
-| `harness:enable` / `harness:disable` | config-foundation | GSD由来機能の個別有効/無効化 |
-| `harness:migrate-config` | config-foundation | v1→v2設定マイグレーション |
-| `harness:impact-analysis US-XXX` | nyquist-validation | 変更影響テストケース特定 |
+| `phasegate:enable` / `phasegate:disable` | config-foundation | GSD由来機能の個別有効/無効化 |
+| `phasegate:migrate-config` | config-foundation | v1→v2設定マイグレーション |
+| `phasegate:impact-analysis US-XXX` | nyquist-validation | 変更影響テストケース特定 |
 | `harness:quick-check` | quick-mode | Quick Mode用最小バリデーション |
 | `harness:resume` | session-lifecycle | セッション状態復元 |
 | `harness:pause` | session-lifecycle | セッション状態保存 |
@@ -124,9 +124,9 @@ Wave 4（高度機能）                      │
 ### 3.3 既存CLIコマンド（変更なし）
 
 ```
-harness:status, harness:init, harness:check-phase, harness:check-ready,
-harness:ci-check, harness:detect-drift, harness:collect-lessons,
-harness:detect-dead-code
+phasegate:status, phasegate:init, phasegate:check-phase, phasegate:check-ready,
+phasegate:ci-check, phasegate:detect-drift, phasegate:collect-lessons,
+phasegate:detect-dead-code
 ```
 
 ---

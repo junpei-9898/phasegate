@@ -150,7 +150,7 @@ H-F2 Phase 2拡張        ← v1完了後
 |----|---------|------|--------|
 | H04-01 | phasegate.config.json v2スキーマ定義（layers/quickMode/phaseDependencies/planningMode/paths/reporting/harnesses） | US-029改修 | Must |
 | H04-02 | Preset System定義と切替（minimal: L1+L2 / standard: L1-L3+90% / strict: L1-L4+95%+bundleSize） | 新規 | Must |
-| H04-03 | GSD由来品質機能のデフォルト無効化 + harness:enable/disable機能切替 | US-029一部 | Must |
+| H04-03 | GSD由来品質機能のデフォルト無効化 + phasegate:enable/disable機能切替 | US-029一部 | Must |
 
 #### H-05: ADR基盤（3 US）
 | US | タイトル | 旧US | 優先度 |
@@ -172,7 +172,7 @@ H-F2 Phase 2拡張        ← v1完了後
 | H07-01 | requirement-test-matrix.json新設（JSONスキーマ + US/AC/テストケースマッピング） | US-005 | Must |
 | H07-02 | phase-gate ACマッピング完了チェック追加 | US-006 | Must |
 | H07-03 | test-coverage-checkerでの要件カバレッジ（AC網羅率）算出 | US-007 | Must |
-| H07-04 | harness:impact-analysis US-XXXコマンド（影響テストケース特定） | US-008 | Should |
+| H07-04 | phasegate:impact-analysis US-XXXコマンド（影響テストケース特定） | US-008 | Should |
 
 #### H-08: L2-L4バリデータ体系（5 US）
 | US | タイトル | 旧US | 優先度 |
@@ -186,10 +186,10 @@ H-F2 Phase 2拡張        ← v1完了後
 #### H-09: Harness API（4 US）
 | US | タイトル | 旧US | 優先度 |
 |----|---------|------|--------|
-| H09-01 | harness:check-ready / harness:check-phase（Phase Gate通過状態+現在フェーズ返却） | 新規 | Must |
-| H09-02 | harness:ci-check（全L3バリデータ統合実行結果返却） | US-019一部 | Must |
-| H09-03 | harness:detect-drift（設計-実装乖離レポート返却） | 新規 | Must |
-| H09-04 | harness:status（成果物駆動状態導出 + ハーネス全体健全性サマリ返却） | 新規（codex提案） | Must |
+| H09-01 | phasegate:check-ready / phasegate:check-phase（Phase Gate通過状態+現在フェーズ返却） | 新規 | Must |
+| H09-02 | phasegate:ci-check（全L3バリデータ統合実行結果返却） | US-019一部 | Must |
+| H09-03 | phasegate:detect-drift（設計-実装乖離レポート返却） | 新規 | Must |
+| H09-04 | phasegate:status（成果物駆動状態導出 + ハーネス全体健全性サマリ返却） | 新規（codex提案） | Must |
 
 #### H-10: Quick Mode（4 US）
 | US | タイトル | 旧US | 優先度 |
@@ -205,7 +205,7 @@ H-F2 Phase 2拡張        ← v1完了後
 | H11-01 | コア品質能力のCLI/FSフォールバック定義（Hook無しでもL1-L4全機能動作の保証） | 新規 | Must |
 | H11-02 | Claude Code PreToolUse Hook Adapter（リンター設定保護: biome.json/tsconfig.json/package.json） | US-016 | Must |
 | H11-03 | Claude Code PostToolUse Hook Adapter（Biomeベース高速フォーマット+リント） | US-037 | Must |
-| H11-04 | Claude Code Stop Hook Adapter（テストゲート + harness:ci-check + 無限ループ防止stop_hook_activeフラグ） | US-017+018+019統合 | Must |
+| H11-04 | Claude Code Stop Hook Adapter（テストゲート + phasegate:ci-check + 無限ループ防止stop_hook_activeフラグ） | US-017+018+019統合 | Must |
 
 #### H-12: スキル品質強化（6 US）
 | US | タイトル | 旧US | 優先度 |

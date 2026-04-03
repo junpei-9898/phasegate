@@ -31,7 +31,7 @@ The Hooks Engine validates agent hook configuration and enforces completion gate
 **Command:**
 
 ```bash
-npx harness validate --layer L0
+npx phasegate validate --layer L0
 ```
 
 ---
@@ -68,7 +68,7 @@ L1 rules run in real-time as code is written. They are implemented as Biome AST 
 **Command:**
 
 ```bash
-npx harness lint
+npx phasegate lint
 ```
 
 ---
@@ -86,7 +86,7 @@ L2 validators run before every commit. They enforce process discipline and test 
 **Command:**
 
 ```bash
-npx harness validate --layer L2
+npx phasegate validate --layer L2
 ```
 
 ---
@@ -105,7 +105,7 @@ L3 validators run in the CI/CD pipeline before a merge is permitted. They cover 
 **Command:**
 
 ```bash
-npx harness validate --layer L3
+npx phasegate validate --layer L3
 ```
 
 ---
@@ -123,7 +123,7 @@ L4 validators run on a weekly schedule. They detect slow-moving drift that accum
 **Command:**
 
 ```bash
-npx harness validate --layer L4
+npx phasegate validate --layer L4
 ```
 
 ---

@@ -73,7 +73,7 @@ export const createCommandPointerEntry = (overrides: Partial<{
 }> = {}): PointerEntry =>
   PointerEntry.createCommand({
     key: 'cmd-status',
-    command: 'harness:status',
+    command: 'phasegate:status',
     description: 'ステータス確認コマンド',
     ...overrides,
   });
@@ -535,7 +535,7 @@ target('PointerEntry', () => {
     context('有効なkey・command・descriptionを渡した場合', () => {
       it('type="command"のPointerEntryが生成される', () => {
         // Arrange & Act
-        const actual = PointerEntry.createCommand({ key: 'cmd-status', command: 'harness:status', description: 'ステータス確認' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-status', command: 'phasegate:status', description: 'ステータス確認' });
         // Assert
         expect(actual.type).toBe('command');
         expect(actual.key).toBe('cmd-status');
@@ -546,7 +546,7 @@ target('PointerEntry', () => {
     context('key=""（空文字）を渡した場合', () => {
       it('key空文字不可エラーがスローされる', () => {
         // Arrange & Act & Assert
-        expect(() => PointerEntry.createCommand({ key: '', command: 'harness:lint', description: '...' })).toThrow();
+        expect(() => PointerEntry.createCommand({ key: '', command: 'phasegate:lint', description: '...' })).toThrow();
       });
     });
 
@@ -603,7 +603,7 @@ target('PointerEntry', () => {
     context('CommandPointerに対してisCommand()を呼ぶ場合', () => {
       it('trueを返す', () => {
         // Arrange
-        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' });
         // Assert
         expect(actual.isCommand()).toBe(true);
       });
@@ -613,7 +613,7 @@ target('PointerEntry', () => {
     context('CommandPointerに対してisFile()を呼ぶ場合', () => {
       it('falseを返す', () => {
         // Arrange
-        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'harness:status', description: '...' });
+        const actual = PointerEntry.createCommand({ key: 'cmd-1', command: 'phasegate:status', description: '...' });
         // Assert
         expect(actual.isFile()).toBe(false);
       });
@@ -1466,7 +1466,7 @@ target('PointerValidator', () => {
         const filePort = createFileExistencePortMock(true);
         const adrPort = createAdrExistencePortMock(true);
         const validator = new PointerValidator(cmdPort, filePort, adrPort);
-        const entries = [createCommandPointerEntry({ command: 'harness:status' })];
+        const entries = [createCommandPointerEntry({ command: 'phasegate:status' })];
         // Act
         const actual = await validator.validate(entries);
         // Assert

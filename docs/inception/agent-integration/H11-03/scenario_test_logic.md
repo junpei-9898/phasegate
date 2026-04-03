@@ -4,7 +4,7 @@
 
 ## 1. テスト構造（AAAパターン）
 
-### SC-H11-03-001: PostToolUse Hook が正常に harness:lint --fast を呼び出すこと
+### SC-H11-03-001: PostToolUse Hook が正常に phasegate:lint --fast を呼び出すこと
 
 ```typescript
 describe('HandlePostToolUseUseCase', () => {
@@ -15,7 +15,7 @@ describe('HandlePostToolUseUseCase', () => {
         isEnabled: vi.fn().mockResolvedValue(true),
       };
       const cliCommandRegistryPort = {
-        listAll: vi.fn().mockResolvedValue(['harness:lint']),
+        listAll: vi.fn().mockResolvedValue(['phasegate:lint']),
       };
       const cliExecutorPort = {
         execute: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
@@ -48,7 +48,7 @@ describe('Hook無効設定の場合', () => {
       isEnabled: vi.fn().mockResolvedValue(false),
     };
     const cliExecutorPort = { execute: vi.fn() };
-    const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['harness:lint']) };
+    const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['phasegate:lint']) };
     const target = new HandlePostToolUseUseCase({
       configQueryPort,
       cliExecutorPort,
@@ -85,7 +85,7 @@ describe('HookToCliTranslator（PostToolUse）', () => {
 
     // Assert
     expect(actual.timeoutMs).toBe(500);
-    expect(actual.cliCommand).toBe('harness:lint');
+    expect(actual.cliCommand).toBe('phasegate:lint');
     expect(actual.cliArgs).toContain('--fast');
   });
 });
@@ -97,7 +97,7 @@ describe('HookToCliTranslator（PostToolUse）', () => {
 |--------|-----------|
 | ConfigQueryPort | `isEnabled('post-tool-use')` → true/false |
 | CliExecutorPort | `execute()` → `{ exitCode: 0/1, stdout: '', stderr: '' }` またはタイムアウトエラー |
-| CliCommandRegistryPort | `listAll()` → `['harness:lint']` |
+| CliCommandRegistryPort | `listAll()` → `['phasegate:lint']` |
 
 ## 3. アサーション方針
 

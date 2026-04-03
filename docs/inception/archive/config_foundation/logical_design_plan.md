@@ -17,14 +17,14 @@
 | US-027 | orchestrationセクションの追加 | Must |
 | US-028 | sessionセクションの追加 | Must |
 | US-029 | GSD由来機能のデフォルト無効化 | Must |
-| US-030 | harness:migrate-configによるv1→v2自動マイグレーション | Should |
+| US-030 | phasegate:migrate-configによるv1→v2自動マイグレーション | Should |
 
 ### 設計対象の層
 | 層 | 対象 | 理由 |
 |----|------|------|
 | Domain | 対象 | 集約ルート・値オブジェクト・ドメインサービスの詳細設計 |
 | UseCase | 対象 | アプリケーションサービス（設定読込・マイグレーション・トグル操作）の設計 |
-| Controller（CLI） | 対象 | CLIコマンドハンドラ（harness:enable/disable, harness:migrate-config）の設計 |
+| Controller（CLI） | 対象 | CLIコマンドハンドラ（phasegate:enable/disable, phasegate:migrate-config）の設計 |
 | Infrastructure（アダプター） | 対象 | ポート実装（ファイルI/O、JSONスキーマバリデーション、環境変数読取）の設計 |
 | DB | **対象外** | ファイルシステムベースのローカルツール。RDBは使用しない |
 | BFF / Frontend | **対象外** | CLIツールのためUI層は不要 |
@@ -144,9 +144,9 @@ CLIコマンドハンドラとして以下を設計する。
 
 | コマンド | ハンドラ | 利用UseCase |
 |---------|---------|------------|
-| `harness:enable <feature>` | EnableFeatureHandler | EnableFeatureUseCase, ListToggleableFeaturesUseCase |
-| `harness:disable <feature>` | DisableFeatureHandler | DisableFeatureUseCase, ListToggleableFeaturesUseCase |
-| `harness:migrate-config` | MigrateConfigHandler | MigrateConfigUseCase |
+| `phasegate:enable <feature>` | EnableFeatureHandler | EnableFeatureUseCase, ListToggleableFeaturesUseCase |
+| `phasegate:disable <feature>` | DisableFeatureHandler | DisableFeatureUseCase, ListToggleableFeaturesUseCase |
+| `phasegate:migrate-config` | MigrateConfigHandler | MigrateConfigUseCase |
 
 #### CLIハンドラの責務
 - コマンドライン引数のパース
@@ -207,7 +207,7 @@ EnvironmentOverride（環境変数名→設定パスのマッピング）の定�
 
 ### [Question] Q4: 既存CLIインフラとの統合方式
 
-既存のharness CLIコマンド（harness:status, harness:init等）がどのようなCLIフレームワーク/パターンで実装されているか未確認。新規コマンド（harness:enable/disable, harness:migrate-config）は既存パターンに合わせる必要がある。
+既存のharness CLIコマンド（phasegate:status, phasegate:init等）がどのようなCLIフレームワーク/パターンで実装されているか未確認。新規コマンド（phasegate:enable/disable, phasegate:migrate-config）は既存パターンに合わせる必要がある。
 
 **推奨案:** 既存のCLIコマンド実装を確認し、同一のコマンド登録パターン・引数パース方式に従う。Phase 2（実行）開始前に既存コード調査を実施する。
 

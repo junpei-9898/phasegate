@@ -22,7 +22,7 @@
 | CiCheckResult | 値オブジェクト | L3バリデータ統合実行結果（validatorResults[] + allPassed） |
 | DriftReportSummary | 値オブジェクト | 乖離レポートCLI出力形式（drifts[] + totalCount） |
 | HarnessStatusSummary | 値オブジェクト | ハーネス全体健全性サマリー（layers[]/phaseGateSummary/presetInfo/config） |
-| ArtifactScanResult | 値オブジェクト | 成果物スキャン中間結果（harness:status導出用） |
+| ArtifactScanResult | 値オブジェクト | 成果物スキャン中間結果（phasegate:status導出用） |
 | LayerHealth | 値オブジェクト | L1-L4各レイヤーの健全性（layerId/enabled/lastResult?） |
 | CommandInputSpec | 値オブジェクト | コマンド入力仕様（args/flags定義） |
 | ExitCodeSpec | 値オブジェクト | 終了コード定義（pass:0/fail:1/error:2） |
@@ -174,21 +174,21 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 
 | CommandName | inputSpec | outputType | ExitCode（pass/fail/error） |
 |------------|-----------|-----------|--------------------------|
-| `harness:check-ready` | args:[], flags:[] | `'check-ready'` | 0/1/2 |
-| `harness:check-phase` | args:[unit:string], flags:[] | `'check-phase'` | 0/1/2 |
-| `harness:ci-check` | args:[], flags:[] | `'ci-check'` | 0/1/2 |
-| `harness:detect-drift` | args:[], flags:[--json:boolean] | `'detect-drift'` | 0/1/2 |
-| `harness:status` | args:[], flags:[] | `'status'` | 0/2 |
-| `harness:lint` | args:[], flags:[] | `'lint'` | 0/1/2 |
-| `harness:complete-check` | args:[], flags:[] | `'complete-check'` | 0/1/2 |
-| `harness:impact-analysis` | args:[storyId:HXX-XX形式], flags:[] | `'impact-analysis'` | 0/1/2 |
+| `phasegate:check-ready` | args:[], flags:[] | `'check-ready'` | 0/1/2 |
+| `phasegate:check-phase` | args:[unit:string], flags:[] | `'check-phase'` | 0/1/2 |
+| `phasegate:ci-check` | args:[], flags:[] | `'ci-check'` | 0/1/2 |
+| `phasegate:detect-drift` | args:[], flags:[--json:boolean] | `'detect-drift'` | 0/1/2 |
+| `phasegate:status` | args:[], flags:[] | `'status'` | 0/2 |
+| `phasegate:lint` | args:[], flags:[] | `'lint'` | 0/1/2 |
+| `phasegate:complete-check` | args:[], flags:[] | `'complete-check'` | 0/1/2 |
+| `phasegate:impact-analysis` | args:[storyId:HXX-XX形式], flags:[] | `'impact-analysis'` | 0/1/2 |
 
 > **実行ロジック所有**: harness-apiはCLIエントリポイントのみ所有。実行委譲先:
-> - `harness:lint` → BiomeLintPort（biome-ast-engine）
-> - `harness:ci-check` / `harness:detect-drift` / `harness:complete-check` → ValidatorExecutionPort（validator-system）
-> - `harness:check-ready` / `harness:check-phase` → PhaseGateQueryPort（phase-dependency-model）
-> - `harness:status` → ArtifactScannerPort + ConfigQueryPort
-> - `harness:impact-analysis` → ImpactAnalysisPort（nyquist-validation）
+> - `phasegate:lint` → BiomeLintPort（biome-ast-engine）
+> - `phasegate:ci-check` / `phasegate:detect-drift` / `phasegate:complete-check` → ValidatorExecutionPort（validator-system）
+> - `phasegate:check-ready` / `phasegate:check-phase` → PhaseGateQueryPort（phase-dependency-model）
+> - `phasegate:status` → ArtifactScannerPort + ConfigQueryPort
+> - `phasegate:impact-analysis` → ImpactAnalysisPort（nyquist-validation）
 
 ---
 
@@ -288,6 +288,6 @@ integration_contract.md §2.2に定義された `HarnessApiResponse<T = unknown>
 
 CommandDispatchServiceはHexagonal Architectureに従い、実行ロジックへの直接依存をドメイン層から排除するため6本のポートを定義する。これにより（1）テスト時に全ポートをモック化してCommandDispatchServiceを単体テストできる、（2）実行ロジック側（validator-system等）の実装変更がドメイン層に影響しない、（3）将来のコマンド追加時に新規ポートを追加するだけで対応できる拡張性を確保する。
 
-### D5: harness:statusのExitCode設計
+### D5: phasegate:statusのExitCode設計
 
-`harness:status` コマンドはExitCode 0（正常）または 2（実行エラー）のみを返す（Fail=1を返さない）。理由: statusコマンドはハーネスの「状態表示」であり、Fail状態自体が正常な表示結果であるため。L4の健全性が「unknown」であっても、それは状態として正常に取得・表示できている。他のコマンド（check-ready/ci-check等）はゲートとしてPass/Failを判定するのに対し、statusは情報提供用コマンドという責務の違いを終了コードに反映する。
+`phasegate:status` コマンドはExitCode 0（正常）または 2（実行エラー）のみを返す（Fail=1を返さない）。理由: statusコマンドはハーネスの「状態表示」であり、Fail状態自体が正常な表示結果であるため。L4の健全性が「unknown」であっても、それは状態として正常に取得・表示できている。他のコマンド（check-ready/ci-check等）はゲートとしてPass/Failを判定するのに対し、statusは情報提供用コマンドという責務の違いを終了コードに反映する。

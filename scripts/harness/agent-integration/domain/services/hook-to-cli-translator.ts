@@ -120,7 +120,7 @@ export class HookToCliTranslator {
     }
 
     // Check command registry
-    const commandName = 'harness:lint';
+    const commandName = 'phasegate:lint';
     const hasCommand = (() => {
       const reg = this.cliCommandRegistryPort;
       if (reg.has) {
@@ -154,7 +154,7 @@ export class HookToCliTranslator {
       return HookTranslationResult.skip('REENTRY_DETECTED');
     }
 
-    return HookTranslationResult.execute('harness:complete-check', [], 0);
+    return HookTranslationResult.execute('phasegate:complete-check', [], 0);
   }
 }
 
@@ -281,7 +281,7 @@ export class AsyncHookToCliTranslator {
       return HookTranslationResult.skip('HOOK_DISABLED');
     }
 
-    const commandName = 'harness:lint';
+    const commandName = 'phasegate:lint';
     const hasCommand = await this.cliCommandRegistryPort.hasCommand(commandName);
     if (!hasCommand) {
       throw new CommandNotRegisteredError(commandName);
@@ -295,6 +295,6 @@ export class AsyncHookToCliTranslator {
     if (isActive) {
       return HookTranslationResult.skip('REENTRY_DETECTED');
     }
-    return HookTranslationResult.execute('harness:complete-check', [], 0);
+    return HookTranslationResult.execute('phasegate:complete-check', [], 0);
   }
 }

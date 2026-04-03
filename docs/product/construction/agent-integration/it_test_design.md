@@ -31,16 +31,16 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-VerifyFallback-001 | フォールバック仕様が全て有効な場合、検証が成功すること | `{ supportedCommands: ['harness:lint', 'harness:complete-check'], noAgentApiImports: true, targetFilePaths: ['src/index.ts'] }` | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=trueを返す | `{ isValid: true, violations: [], spec: FallbackCapabilitySpec }` |
-| IT-UC-VerifyFallback-002 | noAgentApiImports=falseの場合、ImportAnalyzer解析をスキップして成功すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: false }` | CliCommandRegistryPort: hasCommand=trueを返す。ImportAnalyzerPortは呼ばれない | `{ isValid: true, violations: [] }` |
-| IT-UC-VerifyFallback-003 | targetFilePathsが未指定の場合、デフォルトのコアモジュールパスで検証が成功すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true }` （targetFilePaths省略） | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=true | `{ isValid: true, violations: [] }` |
+| IT-UC-VerifyFallback-001 | フォールバック仕様が全て有効な場合、検証が成功すること | `{ supportedCommands: ['phasegate:lint', 'phasegate:complete-check'], noAgentApiImports: true, targetFilePaths: ['src/index.ts'] }` | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=trueを返す | `{ isValid: true, violations: [], spec: FallbackCapabilitySpec }` |
+| IT-UC-VerifyFallback-002 | noAgentApiImports=falseの場合、ImportAnalyzer解析をスキップして成功すること | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: false }` | CliCommandRegistryPort: hasCommand=trueを返す。ImportAnalyzerPortは呼ばれない | `{ isValid: true, violations: [] }` |
+| IT-UC-VerifyFallback-003 | targetFilePathsが未指定の場合、デフォルトのコアモジュールパスで検証が成功すること | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true }` （targetFilePaths省略） | ImportAnalyzerPort: agentApiImports=[]を返す。CliCommandRegistryPort: hasCommand=true | `{ isValid: true, violations: [] }` |
 
 #### 異常系
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
 |---------|---------|------|----------|----------|
-| IT-UC-VerifyFallback-004 | エージェント固有APIのimportが検出された場合、violations付きで失敗すること | `{ supportedCommands: ['harness:lint'], noAgentApiImports: true, targetFilePaths: ['src/agent.ts'] }` | ImportAnalyzerPort: `[{ filePath: 'src/agent.ts', agentApiImports: ['@anthropic-ai/claude-code'] }]`を返す | `{ isValid: false, violations: [HarnessError(code含む)] }` |
-| IT-UC-VerifyFallback-005 | 未登録コマンドが指定された場合、violations付きで失敗すること | `{ supportedCommands: ['harness:lint', 'harness:unknown-cmd'], noAgentApiImports: false }` | CliCommandRegistryPort: harness:lintはtrue、harness:unknown-cmdはfalse | `{ isValid: false, violations: [HarnessError] }` |
+| IT-UC-VerifyFallback-004 | エージェント固有APIのimportが検出された場合、violations付きで失敗すること | `{ supportedCommands: ['phasegate:lint'], noAgentApiImports: true, targetFilePaths: ['src/agent.ts'] }` | ImportAnalyzerPort: `[{ filePath: 'src/agent.ts', agentApiImports: ['@anthropic-ai/claude-code'] }]`を返す | `{ isValid: false, violations: [HarnessError(code含む)] }` |
+| IT-UC-VerifyFallback-005 | 未登録コマンドが指定された場合、violations付きで失敗すること | `{ supportedCommands: ['phasegate:lint', 'harness:unknown-cmd'], noAgentApiImports: false }` | CliCommandRegistryPort: phasegate:lintはtrue、harness:unknown-cmdはfalse | `{ isValid: false, violations: [HarnessError] }` |
 | IT-UC-VerifyFallback-006 | supportedCommandsが空の場合、FallbackCapabilityViolationErrorがスローされること | `{ supportedCommands: [], noAgentApiImports: false }` | — | `FallbackCapabilityViolationError` のthrow |
 
 ### 2.2 HandlePreToolUseUseCase（H11-02対応）
@@ -73,7 +73,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-HandlePostToolUse-001 | PostToolUse Hookが有効な場合、harness:lint --fastが実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
+| IT-UC-HandlePostToolUse-001 | PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
 | IT-UC-HandlePostToolUse-002 | Lintが失敗した場合（exitCode=1）、executed=trueでcliResult.exitCode=1が返ること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/bad.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=1を返す | `{ executed: true, cliResult: { exitCode: 1 } }` |
 | IT-UC-HandlePostToolUse-003 | Hook無効設定の場合、HOOK_DISABLEDでスキップされること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled('post-tool-use')=false | `{ executed: false, skipReason: 'HOOK_DISABLED' }` |
 
@@ -93,7 +93,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-HandleStop-001 | ReentryGuardが非アクティブな場合、harness:complete-checkが実行されること | `{ sessionId: 'session-001' }` | ReentryGuardStatePort: readActive=falseを返す。writeActive/clearActiveは成功。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
+| IT-UC-HandleStop-001 | ReentryGuardが非アクティブな場合、phasegate:complete-checkが実行されること | `{ sessionId: 'session-001' }` | ReentryGuardStatePort: readActive=falseを返す。writeActive/clearActiveは成功。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
 | IT-UC-HandleStop-002 | complete-check成功後にdeactivateが呼ばれること（フラグがクリアされること） | `{ sessionId: 'session-002' }` | ReentryGuardStatePort: readActive=false。writeActive/clearActive成功。CliExecutorPort: exitCode=0を返す | clearActiveが呼ばれた（deactivate実行の確認） |
 | IT-UC-HandleStop-003 | ReentryGuardがアクティブな場合（再入）、REENTRY_DETECTEDでスキップされること | `{ sessionId: 'session-003' }` | ReentryGuardStatePort: readActive=trueを返す | `{ executed: false, skipReason: 'REENTRY_DETECTED' }` |
 | IT-UC-HandleStop-004 | complete-checkがFail（exitCode=1）でも、deactivateが必ず呼ばれること（try/finally保証） | `{ sessionId: 'session-004' }` | ReentryGuardStatePort: readActive=false。CliExecutorPort: exitCode=1を返す | `{ executed: true, cliResult: { exitCode: 1 } }`かつclearActiveが呼ばれた |
@@ -165,8 +165,8 @@
 
 | ケースID | 操作 | 入力 | 期待結果 |
 |---------|------|------|---------|
-| IT-REPO-CliCommandRegistry-001 | hasCommand（登録済みコマンド） | `'harness:lint'` | `true` が返る |
-| IT-REPO-CliCommandRegistry-002 | hasCommand（登録済みコマンド） | `'harness:complete-check'` | `true` が返る |
+| IT-REPO-CliCommandRegistry-001 | hasCommand（登録済みコマンド） | `'phasegate:lint'` | `true` が返る |
+| IT-REPO-CliCommandRegistry-002 | hasCommand（登録済みコマンド） | `'phasegate:complete-check'` | `true` が返る |
 | IT-REPO-CliCommandRegistry-003 | hasCommand（未登録コマンド） | `'harness:unknown-command'` | `false` が返る |
 | IT-REPO-CliCommandRegistry-004 | listCommands（全コマンド一覧） | — | `integration_contract.md §3.1` に定義された10コマンドが返る |
 
@@ -197,9 +197,9 @@
 
 | ケースID | 操作 | 入力 | 期待結果 |
 |---------|------|------|---------|
-| IT-REPO-CliExecutor-001 | execute（exitCode=0で正常終了） | command='harness:lint', args=['--fast'], timeoutMs=500 | `{ exitCode: 0, timedOut: false }` |
-| IT-REPO-CliExecutor-002 | execute（exitCode=1でLint失敗） | command='harness:lint', args=['--fast'] | `{ exitCode: 1, timedOut: false }` |
-| IT-REPO-CliExecutor-003 | execute（stdout/stderrが取得できること） | command='harness:status', args=[] | `{ stdout: '...', stderr: '...', timedOut: false }` |
+| IT-REPO-CliExecutor-001 | execute（exitCode=0で正常終了） | command='phasegate:lint', args=['--fast'], timeoutMs=500 | `{ exitCode: 0, timedOut: false }` |
+| IT-REPO-CliExecutor-002 | execute（exitCode=1でLint失敗） | command='phasegate:lint', args=['--fast'] | `{ exitCode: 1, timedOut: false }` |
+| IT-REPO-CliExecutor-003 | execute（stdout/stderrが取得できること） | command='phasegate:status', args=[] | `{ stdout: '...', stderr: '...', timedOut: false }` |
 
 #### タイムアウトテスト
 
@@ -302,7 +302,7 @@ Presentation層のテストは子プロセス（spawnまたはexecFile）経由�
 |---------|---------|---------|-----------|---------|
 | IT-UC-HookFlow-001 | Stop Hook通常フロー：ReentryGuard inactive → activate → complete-check実行 → deactivate | フラグ未設定 | HandleStopUseCase.execute（ReentryGuardStatePort=実体、CliExecutorPort=モック） | executed=true、フラグが最終的にクリアされている |
 | IT-UC-HookFlow-002 | Stop Hook再入フロー：ReentryGuard active → REENTRY_DETECTED | フラグ設定済み（writeActiveで事前セット） | HandleStopUseCase.execute | `{ executed: false, skipReason: 'REENTRY_DETECTED' }`、フラグ状態は変化しない |
-| IT-UC-HookFlow-003 | PostToolUse Hook正常フロー：Hook有効 → harness:lint --fast実行 | ConfigQueryPort=モック（enabled=true） | HandlePostToolUseUseCase.execute（CliExecutorPort=モック） | executed=trueかつcliCommandが正しく渡される |
+| IT-UC-HookFlow-003 | PostToolUse Hook正常フロー：Hook有効 → phasegate:lint --fast実行 | ConfigQueryPort=モック（enabled=true） | HandlePostToolUseUseCase.execute（CliExecutorPort=モック） | executed=trueかつcliCommandが正しく渡される |
 | IT-UC-HookFlow-004 | PreToolUse Hook保護フロー：biome.json変更 → ブロック | ConfigQueryPort=モック（追加パターンなし） | HandlePreToolUseUseCase.execute | `{ shouldBlock: true, blockedFilePath: 'biome.json' }` |
 | IT-UC-HookFlow-005 | CLI実行エラー時のReentryGuardデアクティベート保証 | フラグ未設定 | HandleStopUseCase.execute（CliExecutorPort: Errorをthrow） | エラー伝播しつつ、フラグが最終的にクリアされている（finally保証） |
 

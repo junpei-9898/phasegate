@@ -22,19 +22,19 @@ import type { ValidatorExecutionPort } from '../../../harness-api/domain/ports/v
 ```typescript
 describe('harness-api ci-checkコマンド', () => {
   // SC-H09-02-001
-  it('harness:ci-check が "Unknown command" にならない', () => {
+  it('phasegate:ci-check が "Unknown command" にならない', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:ci-check');
+    const actual = run('phasegate:ci-check');
     // Assert
-    expect(actual.stderr).not.toContain('Unknown command: harness:ci-check');
+    expect(actual.stderr).not.toContain('Unknown command: phasegate:ci-check');
   });
 
   // SC-H09-02-002 / SC-H09-02-003
-  it('harness:ci-check がexit 0またはexit 1を返す', () => {
+  it('phasegate:ci-check がexit 0またはexit 1を返す', () => {
     // Arrange: なし
     // Act
-    const actual = run('harness:ci-check');
+    const actual = run('phasegate:ci-check');
     // Assert
     expect([0, 1]).toContain(actual.exitCode);
   });
@@ -59,7 +59,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
         const useCase = new DispatchCommandUseCase(ports);
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:ci-check', args: [], flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:ci-check', args: [], flags: {} });
         // Assert
         expect(actual.response.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
@@ -79,7 +79,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
         const useCase = new DispatchCommandUseCase(ports);
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:ci-check', args: [], flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:ci-check', args: [], flags: {} });
         // Assert
         expect(actual.response.status).toBe('fail');
         expect(actual.exitCode).toBe(1);

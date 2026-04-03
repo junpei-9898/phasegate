@@ -111,7 +111,7 @@ Gate ──── 最大速度 ──── Gate ──── 最大速度 ─�
  │    ├─ US-001         │    └─ US-003         │
  │    └─ US-002         │                      │
  └─ Pre-flight          └─ Post-wave           └─ Final
-    harness:check-ready    L2 validators          drift-detect
+    phasegate:check-ready    L2 validators          drift-detect
 ```
 
 品質ゲートの定義・実行は品質ハーネスの責務。オーケストレーターはゲートの呼び出しタイミングと結果に基づく制御フローを担う。
@@ -217,7 +217,7 @@ state.json（`docs/inception/_shared/state.json`）はこの状態機械の出�
 │                                                              │
 │  Step 3: 並列制御                                            │
 │    ┌─── Wave 1 ───────────────────────────────────────┐      │
-│    │ PRE-FLIGHT: harness:check-ready (全story)        │      │
+│    │ PRE-FLIGHT: phasegate:check-ready (全story)        │      │
 │    │                                                   │      │
 │    │ ┌─────────────────┐  ┌─────────────────┐         │      │
 │    │ │ Executor A      │  │ Executor B      │         │      │
@@ -328,10 +328,10 @@ state.json（`docs/inception/_shared/state.json`）はこの状態機械の出�
 
 | タイミング | オーケストレーターのアクション | ハーネスの役割 |
 |-----------|---------------------------|-------------|
-| **Pre-flight** | `harness:check-ready`を呼び出し | Phase Gateチェック、設計文書存在確認 |
+| **Pre-flight** | `phasegate:check-ready`を呼び出し | Phase Gateチェック、設計文書存在確認 |
 | **Post-wave** | L2バリデータ群を呼び出し | Pre-commitレベルの品質検証 |
 | **Git commit** | Atomic commitを実行 | git pre-commit hookでL2検証自動実行 |
-| **Post-unit** | `harness:detect-drift`を呼び出し | 設計-実装乖離検出 |
+| **Post-unit** | `phasegate:detect-drift`を呼び出し | 設計-実装乖離検出 |
 | **Verification** | `/gsdlc:verify`で検証フェーズをディスパッチ | consistency-checker, drift-detector実行 |
 | **Adaptive Replanning** | 設計変更が必要な場合、2-Phase承認を要求 | 承認マーカーの管理、Phase Gate強制 |
 
@@ -547,7 +547,7 @@ GSD-2の`metrics.ts`パターンに倣い、全ディスパッチ単位でトー
      /gsdlc:execute      ▼
 ┌─────────────────────────────────────────────────────────┐
 │  PHASE 3: WAVE EXECUTION                                 │
-│  PRE-FLIGHT: harness:check-ready (ハーネスに委譲)         │
+│  PRE-FLIGHT: phasegate:check-ready (ハーネスに委譲)         │
 │  Wave N: Fresh Context → 並列実行 → Atomic commit         │
 │  POST-WAVE: L2 validators (ハーネスに委譲)                │
 └────────────────────────┬────────────────────────────────┘

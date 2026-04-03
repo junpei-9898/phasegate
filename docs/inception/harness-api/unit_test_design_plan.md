@@ -109,7 +109,7 @@ QAなし。ドメインモデル§5の不変条件が明確に定義されてい
 - **前提**: `harness-error` の `HarnessError` 型が利用可能であること
 - **前提**: TypeScript strict mode での型検査に基づくテスト設計
 - **リスク**: `CommandDispatchService` の8コマンドディスパッチテストは各ポートをモックする必要があるため、ドメイン層テストとして境界を明確にすること（ポートインタフェースのモック実装はテスト設計には含めない）
-- **注意**: `harness:status` コマンドのExitCodeは 0/2 のみ（fail=1を返さない設計 §9-D5）
+- **注意**: `phasegate:status` コマンドのExitCodeは 0/2 のみ（fail=1を返さない設計 §9-D5）
 
 ---
 

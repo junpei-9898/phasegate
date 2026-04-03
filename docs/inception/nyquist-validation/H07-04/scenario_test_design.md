@@ -1,4 +1,4 @@
-# シナリオテスト設計: H07-04 — harness:impact-analysis HXX-XXコマンド
+# シナリオテスト設計: H07-04 — phasegate:impact-analysis HXX-XXコマンド
 
 > **Unit ID**: nyquist-validation
 > **ストーリーID**: H07-04
@@ -8,7 +8,7 @@
 
 `ImpactAnalysisService` および `AnalyzeImpactUseCase` による指定ストーリーのテストケース逆引き機能。CLIエントリポイントはharness-apiが所有し、本Unitは実行ロジックを提供する。
 
-- `harness:impact-analysis HXX-XX` コマンドの実行（正常時: 終了コード0、ストーリー未検出時: 終了コード1）
+- `phasegate:impact-analysis HXX-XX` コマンドの実行（正常時: 終了コード0、ストーリー未検出時: 終了コード1）
 - 指定ストーリーIDに紐づくテストケース一覧をrequirement-test-matrix.jsonから特定・出力
 - 存在しないストーリーID（HXX-XX形式）が指定された場合、適切なエラーメッセージを表示
 - 出力にテスト種別（unit/it/scenario）とファイルパスを含める

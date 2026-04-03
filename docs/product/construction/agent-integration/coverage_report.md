@@ -60,9 +60,9 @@
 
 | AC | 内容 | 対応テストケース | カバー状態 |
 |----|------|----------------|-----------|
-| AC-8 | 正規経路として `harness:lint --fast` を呼び出す | UT-HTC-010（`cliCommand: 'harness:lint', cliArgs: ['--fast']`）、IT-UC-HandlePostToolUse-001（harness:lint --fast実行）、IT-UC-HookFlow-003 | カバー済み |
+| AC-8 | 正規経路として `phasegate:lint --fast` を呼び出す | UT-HTC-010（`cliCommand: 'phasegate:lint', cliArgs: ['--fast']`）、IT-UC-HandlePostToolUse-001（phasegate:lint --fast実行）、IT-UC-HookFlow-003 | カバー済み |
 | AC-9 | 500msタイムアウト内での完了を保証 | UT-HTC-010（`timeoutMs: 500`のHookTranslationResult）、IT-UC-HandlePostToolUse-004（TIMEOUT_EXCEEDED）、IT-REPO-CliExecutor-004〜005 | カバー済み |
-| AC-10 | Hook未使用時はCLI（`harness:lint`）で同等機能が実行可能 | IT-UC-HandlePostToolUse-003（HOOK_DISABLED）、IT-API-PostToolUse-005（スキップシナリオ） | カバー済み |
+| AC-10 | Hook未使用時はCLI（`phasegate:lint`）で同等機能が実行可能 | IT-UC-HandlePostToolUse-003（HOOK_DISABLED）、IT-API-PostToolUse-005（スキップシナリオ） | カバー済み |
 | AC-11 | Hook実行テストの存在 | IT-API-PostToolUse-003〜004（Presentation層でHookスクリプト実行テスト）、IT-UC-HookFlow-003 | カバー済み |
 
 **H11-03 カバレッジ**: 4/4完全カバー
@@ -73,11 +73,11 @@
 
 | AC | 内容 | 対応テストケース | カバー状態 |
 |----|------|----------------|-----------|
-| AC-12 | `harness:complete-check` を呼び出す（`pnpm test` + L1-L4全バリデータ） | UT-HTC-020（`cliCommand: 'harness:complete-check'`）、IT-UC-HandleStop-001（harness:complete-check実行）、IT-UC-HookFlow-001 | カバー済み |
-| AC-13 | `harness:complete-check` がfailを返した場合、エージェント完了を阻止 | IT-UC-HandleStop-004（exitCode=1時のcliResult返却）、IT-API-StopHook-004（complete-check失敗シナリオ→exit code 1） | カバー済み |
+| AC-12 | `phasegate:complete-check` を呼び出す（`pnpm test` + L1-L4全バリデータ） | UT-HTC-020（`cliCommand: 'phasegate:complete-check'`）、IT-UC-HandleStop-001（phasegate:complete-check実行）、IT-UC-HookFlow-001 | カバー済み |
+| AC-13 | `phasegate:complete-check` がfailを返した場合、エージェント完了を阻止 | IT-UC-HandleStop-004（exitCode=1時のcliResult返却）、IT-API-StopHook-004（complete-check失敗シナリオ→exit code 1） | カバー済み |
 | AC-14 | `stop_hook_active` フラグで再入を検出し、無限ループを防止 | UT-RG-010〜031（ReentryGuard状態遷移全般）、UT-HTC-021（REENTRY_DETECTED）、IT-UC-HandleStop-003、IT-UC-HookFlow-002 | カバー済み |
 | AC-15 | 再入検出時にStop Hookをスキップし、適切な警告メッセージを表示 | IT-API-StopHook-005（stderrに再入検出メッセージ）、IT-UC-HandleStop-003（skipReason='REENTRY_DETECTED'） | カバー済み |
-| AC-16 | Hook未使用時はCLI（`harness:complete-check`相当）で同等の完了チェックが実行可能 | IT-UC-VerifyFallback-001（`harness:complete-check`コマンドがCLI Command Registryに存在）、IT-REPO-CliCommandRegistry-002 | カバー済み |
+| AC-16 | Hook未使用時はCLI（`phasegate:complete-check`相当）で同等の完了チェックが実行可能 | IT-UC-VerifyFallback-001（`phasegate:complete-check`コマンドがCLI Command Registryに存在）、IT-REPO-CliCommandRegistry-002 | カバー済み |
 
 **H11-04 カバレッジ**: 5/5完全カバー
 
@@ -129,9 +129,9 @@
 | PreToolUse: ProtectedFileList一致→ブロック | `{ shouldBlock: true }` | UT-HTC-001、UT-HTC-003（複数パスの1件一致） | カバー済み |
 | PreToolUse: 非一致→通過 | `{ shouldBlock: false }` | UT-HTC-002 | カバー済み |
 | PreToolUse: 空パス→通過 | `{ shouldBlock: false }` | UT-HTC-004、UT-BV-008 | カバー済み |
-| PostToolUse: 有効→lint実行 | `{ cliCommand: 'harness:lint', timeoutMs: 500 }` | UT-HTC-010 | カバー済み |
+| PostToolUse: 有効→lint実行 | `{ cliCommand: 'phasegate:lint', timeoutMs: 500 }` | UT-HTC-010 | カバー済み |
 | PostToolUse: 無効→HOOK_DISABLED | `{ skipReason: 'HOOK_DISABLED' }` | UT-HTC-011、UT-BV-009 | カバー済み |
-| Stop: inactive→complete-check実行 | `{ cliCommand: 'harness:complete-check' }` | UT-HTC-020 | カバー済み |
+| Stop: inactive→complete-check実行 | `{ cliCommand: 'phasegate:complete-check' }` | UT-HTC-020 | カバー済み |
 | Stop: active→REENTRY_DETECTED | `{ skipReason: 'REENTRY_DETECTED' }` | UT-HTC-021、UT-BV-010 | カバー済み |
 | コマンド未登録（CliCommandRegistryPort） | HarnessError throw | UT-HTC-030 | カバー済み |
 

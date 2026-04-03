@@ -16,7 +16,7 @@
   - H11-03: Claude Code PostToolUse Hook Adapter（Biomeベース高速フォーマット+リント）
   - H11-04: Claude Code Stop Hook Adapter（テストゲート + ci-check + 無限ループ防止）
 - **他Unitとの境界**:
-  - harness-api: CLI Command Registry・Harness API Response DTOを消費（`harness:lint` / `harness:lint --fast` / `harness:complete-check` 呼び出し）
+  - harness-api: CLI Command Registry・Harness API Response DTOを消費（`phasegate:lint` / `phasegate:lint --fast` / `phasegate:complete-check` 呼び出し）
   - harness-error: Hook Adapterのエラー出力にHarnessError型を使用
   - config-foundation: HarnessConfigV2からHook有効/無効設定・保護対象ファイル設定を参照
 
@@ -70,9 +70,9 @@ agent-integrationは「薄いAdapter層」（unit定義§1, §8）であり、�
 [HookToCliTranslator（ドメインサービス）]
   HookEvent → HookTranslationResult（CLIコマンド名 + 引数）
   ├── PreToolUse → ProtectedFileList照合 → ブロック判定
-  ├── PostToolUse → "harness:lint" / "harness:lint --fast"
+  ├── PostToolUse → "phasegate:lint" / "phasegate:lint --fast"
   └── Stop → ReentryGuard.isActive() チェック
-              → "harness:complete-check"
+              → "phasegate:complete-check"
 
 [ReentryGuard（エンティティ）]
   activate() / isActive() / deactivate()

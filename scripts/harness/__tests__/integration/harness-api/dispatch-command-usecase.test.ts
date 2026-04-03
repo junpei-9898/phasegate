@@ -66,7 +66,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:check-ready', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -89,7 +89,7 @@ target('DispatchCommandUseCase.execute', () => {
         });
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:check-phase', args: { unit: 'harness-error' }, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:check-phase', args: { unit: 'harness-error' }, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -112,7 +112,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:ci-check', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -130,7 +130,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([]);
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:detect-drift', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -148,7 +148,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:lint', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:lint', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -169,7 +169,7 @@ target('DispatchCommandUseCase.execute', () => {
         });
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:impact-analysis', args: { storyId: 'H09-01' }, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('pass');
@@ -181,12 +181,12 @@ target('DispatchCommandUseCase.execute', () => {
 
   // ─── IT-UC-DispatchCmd-007 ───
   describe('未登録コマンド名の場合、exitCode=2のerror responseを返すこと', () => {
-    context("commandName='harness:unknown-cmd'（未登録）を渡した場合", () => {
+    context("commandName='phasegate:unknown-cmd'（未登録）を渡した場合", () => {
       it('response.status=error・exitCode=2・errors.length>=1が返される', async () => {
         // Arrange (no setup needed)
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:unknown-cmd', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:unknown-cmd', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('error');
@@ -204,7 +204,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.phaseGateQueryPort.queryUnit.mockResolvedValue(null);
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:check-phase', args: { unit: 'non-existent-unit' }, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:check-phase', args: { unit: 'non-existent-unit' }, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('fail');
@@ -221,7 +221,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.validatorExecutionPort.runL3Validators.mockRejectedValue(new Error('network error'));
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:ci-check', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('error');
@@ -240,7 +240,7 @@ target('DispatchCommandUseCase.execute', () => {
         ]);
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:detect-drift', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
 
         // Assert
         expect(actual.response.status).toBe('fail');
@@ -261,7 +261,7 @@ target('DispatchCommandUseCase.execute', () => {
         ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
 
         // Act
-        const actual = await useCase.execute({ commandName: 'harness:complete-check', args: {}, flags: {} });
+        const actual = await useCase.execute({ commandName: 'phasegate:complete-check', args: {}, flags: {} });
 
         // Assert
         expect(ports.validatorExecutionPort.runAllValidators).toHaveBeenCalledTimes(1);

@@ -5,14 +5,14 @@ import { CommandRegistry } from '../../../harness-api/domain/services/command-re
 
 function buildDefaultCliCommandDefinitions() {
   return [
-    { commandName: 'harness:check-ready', description: 'check ready' },
-    { commandName: 'harness:check-phase', description: 'check phase' },
-    { commandName: 'harness:ci-check', description: 'ci check' },
-    { commandName: 'harness:detect-drift', description: 'detect drift' },
-    { commandName: 'harness:status', description: 'status' },
-    { commandName: 'harness:lint', description: 'lint' },
-    { commandName: 'harness:complete-check', description: 'complete check' },
-    { commandName: 'harness:impact-analysis', description: 'impact analysis' },
+    { commandName: 'phasegate:check-ready', description: 'check ready' },
+    { commandName: 'phasegate:check-phase', description: 'check phase' },
+    { commandName: 'phasegate:ci-check', description: 'ci check' },
+    { commandName: 'phasegate:detect-drift', description: 'detect drift' },
+    { commandName: 'phasegate:status', description: 'status' },
+    { commandName: 'phasegate:lint', description: 'lint' },
+    { commandName: 'phasegate:complete-check', description: 'complete check' },
+    { commandName: 'phasegate:impact-analysis', description: 'impact analysis' },
   ];
 }
 
@@ -52,8 +52,8 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         // Assert
         const sorted = [...actual.commandNames].sort();
         expect(actual.commandNames).toEqual(sorted);
-        expect(actual.commandNames[0]).toBe('harness:check-phase');
-        expect(actual.commandNames[1]).toBe('harness:check-ready');
+        expect(actual.commandNames[0]).toBe('phasegate:check-phase');
+        expect(actual.commandNames[1]).toBe('phasegate:check-ready');
       });
     });
   });
@@ -67,7 +67,7 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         const useCase = new InitializeCommandRegistryUseCase({ registry });
         const commands = [
           ...buildDefaultCliCommandDefinitions(),
-          { commandName: 'harness:check-ready', description: '重複' },
+          { commandName: 'phasegate:check-ready', description: '重複' },
         ];
 
         // Act
@@ -76,14 +76,14 @@ target('InitializeCommandRegistryUseCase.execute', () => {
         // Assert
         expect(actual.registeredCount).toBe(8);
         expect(actual.failedRegistrations).toHaveLength(1);
-        expect(actual.failedRegistrations[0].commandName).toBe('harness:check-ready');
+        expect(actual.failedRegistrations[0].commandName).toBe('phasegate:check-ready');
         expect(actual.failedRegistrations[0].reason).toMatch(/DuplicateCommandName/i);
       });
     });
   });
 
   // ─── IT-UC-InitRegistry-004 ───
-  describe('harness:プレフィックスのないコマンド名はエラーになること', () => {
+  describe('phasegate:プレフィックスのないコマンド名はエラーになること', () => {
     context("commandName='invalid-cmd'を渡した場合", () => {
       it('InvalidCommandNameErrorがスローされる', async () => {
         // Arrange

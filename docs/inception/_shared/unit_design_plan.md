@@ -60,7 +60,7 @@
 | **RequirementTestMatrix Schema** | nyquist-validation | skill-quality (test-coverage-checker), harness-api | requirement-test-matrix.jsonのJSONスキーマ |
 | **AGENTS.md Schema** | ci-governance | skill-quality (Agent-Lesson) | AGENTS.mdの構造定義。skill-qualityはlesson artifactを出力し、ci-governanceがAGENTS.mdに集約反映 |
 | **ADR Frontmatter Schema** | adr-foundation | harness-error (adr_ref), ci-governance (ADRリンク) | ADRフロントマターのYAML構造 |
-| **CLI Command Registry** | harness-api | agent-integration | 全CLIコマンド名・入出力仕様・終了コード定義（`harness:lint`、`harness:complete-check`含む） |
+| **CLI Command Registry** | harness-api | agent-integration | 全CLIコマンド名・入出力仕様・終了コード定義（`phasegate:lint`、`phasegate:complete-check`含む） |
 
 ---
 
@@ -73,7 +73,7 @@
 | 1 | **biome-ast-engine** | H-01 | 3 | H01-01, H01-02, H01-03 | L1 Biomeプラグイン（コア4ルール + AIアンチパターン4ルール）、CI統合、ESLint完全除去 |
 | 2 | **phase-dependency-model** | H-02 | 3 | H02-01, H02-02, H02-03 | 3層フェーズ構造定義、Planning Mode、phase-gateバリデータ拡張、Phase Dependencyカスタマイズ |
 | 3 | **traceability-model** | H-03 | 3 | H03-01, H03-02, H03-03 | @unit/@layer/@US-XXX/@storyメタデータ体系、L2 metadataバリデータ、逆引きチェーン検証 |
-| 4 | **config-foundation** | H-04 | 3 | H04-01, H04-02, H04-03 | phasegate.config.json v2スキーマ、Preset System（minimal/standard/strict）、harness:enable/disable |
+| 4 | **config-foundation** | H-04 | 3 | H04-01, H04-02, H04-03 | phasegate.config.json v2スキーマ、Preset System（minimal/standard/strict）、phasegate:enable/disable |
 | 5 | **adr-foundation** | H-05 | 3 | H05-01, H05-02, H05-03 | ADRテンプレート、初期ADR 11件作成、ステータス管理、フロントマターバリデーション |
 | 6 | **harness-error** | H-06 | 3 | H06-01, H06-02, H06-03 | HarnessError統一フォーマット、fix_example品質保証、severity権限契約 |
 
@@ -167,7 +167,7 @@ Wave 3（拡張・運用・保証）
 │                ←── validator-system（L1+L2 Atomic commit前チェック） │
 │                ※ AGENTS.mdに直接書かず、lesson artifactを出力       │
 │                                                                      │
-│  ci-governance ←── harness-api（harness:statusポインタ）            │
+│  ci-governance ←── harness-api（phasegate:statusポインタ）            │
 │                ←── harness-error（反復エラー検出）                  │
 │                ←── adr-foundation（ADR参照リンク）                  │
 │                ←── skill-quality（lesson artifact消費→AGENTS.md集約）│
@@ -258,7 +258,7 @@ H-08は6ストーリーを含み、L2 test-quality、L3 security/performance/cov
 
 H-09（Harness API）はCLIコマンド定義、H-11（Agent Integration）はCLI/FS fallback + Claude Code Hook Adapterを担当。
 
-**推奨案（codex合意済み）:** 分離を維持。harness-apiは**全CLIコマンドの名前・入出力仕様・終了コードを所有**（`harness:lint`、`harness:complete-check`含む）。agent-integrationはHook/FSイベントをharness-api CLIに変換する**薄いAdapter層に限定**。
+**推奨案（codex合意済み）:** 分離を維持。harness-apiは**全CLIコマンドの名前・入出力仕様・終了コードを所有**（`phasegate:lint`、`phasegate:complete-check`含む）。agent-integrationはHook/FSイベントをharness-api CLIに変換する**薄いAdapter層に限定**。
 
 [Answer]
 推奨案を採用
@@ -304,7 +304,7 @@ H-09（Harness API）はCLIコマンド定義、H-11（Agent Integration）はCL
 
 | # | 指摘 | 深刻度 | 対応 |
 |---|------|--------|------|
-| 1 | CLIフォールバックの責務が未定義 | Critical | `harness:lint`、`harness:complete-check`をharness-api所有に追加。agent-integrationは薄いAdapter層に限定（§3 Unit一覧、§2.4 CLI Command Registry） |
+| 1 | CLIフォールバックの責務が未定義 | Critical | `phasegate:lint`、`phasegate:complete-check`をharness-api所有に追加。agent-integrationは薄いAdapter層に限定（§3 Unit一覧、§2.4 CLI Command Registry） |
 | 2 | regression-suiteの不要なWaveブロック | Major | 内部Phase A/B分割を明記。Phase AはWave 2後半から先行開始可能（§3 Unit一覧、§4.1 依存関係図） |
 | 3 | Shared Kernelが横断契約をカバーしていない | Major | Cross-Unit Contract節を新設。7件の公開契約を定義（§2.4） |
 | 4 | v0整合性の前提ずれ | Major | v0を「13 Unit」に修正。US-009/US-027/US-028/US-030/US-037の扱いを明記（§5） |

@@ -16,8 +16,8 @@
 - **CommandRegistry一元管理**: 全CLIコマンド名の定義権限はharness-apiが所有。INV-1（名前一意性）をCommandRegistryドメインサービスが担保
 - **StatusDerivationService独立化**: H09-04のArtifactScanResult → LayerHealth[] → HarnessStatusSummary変換はCommandDispatchServiceから分離した独立ドメインサービスとして実装（domain_model.md D2）
 - **HarnessApiResponse\<T\>をgenericに**: `{ status, errors[], summary, data?: T }` の共通envelopeでコマンド別payloadを型安全に表現（domain_model.md D3）
-- **ExitCode規約統一**: 0（pass）/ 1（fail/未検出）/ 2（error）の3値を全8コマンドで統一。harness:statusのみ0/2のみ（Fail状態が正常な表示結果のため）
-- **成果物駆動の状態導出**: harness:statusはDBやステートファイルではなく、ファイルシステム上の成果物の存在から状態を導出（domain_model.md D5 / K13）
+- **ExitCode規約統一**: 0（pass）/ 1（fail/未検出）/ 2（error）の3値を全8コマンドで統一。phasegate:statusのみ0/2のみ（Fail状態が正常な表示結果のため）
+- **成果物駆動の状態導出**: phasegate:statusはDBやステートファイルではなく、ファイルシステム上の成果物の存在から状態を導出（domain_model.md D5 / K13）
 
 ## 3. 採用パターン
 - Hexagonal Architecture（Port & Adapter）

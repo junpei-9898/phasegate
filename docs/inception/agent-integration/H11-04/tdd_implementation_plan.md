@@ -14,7 +14,7 @@
 | ファイル | 説明 |
 |---------|------|
 | `scripts/harness/agent-integration/domain/entities/reentry-guard.ts` | ReentryGuard エンティティ（activate/isActive/deactivate、INV-1: 二重activate禁止） |
-| `scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts` | Stop変換ルール: isActive=true → REENTRY_DETECTED、false → harness:complete-check |
+| `scripts/harness/agent-integration/domain/services/hook-to-cli-translator.ts` | Stop変換ルール: isActive=true → REENTRY_DETECTED、false → phasegate:complete-check |
 | `scripts/harness/agent-integration/application/usecases/handle-stop-usecase.ts` | HandleStopUseCase（ReentryGuardライフサイクル管理、CLI呼び出し） |
 | `scripts/harness/agent-integration/infrastructure/adapters/env-file-reentry-guard-state-adapter.ts` | EnvFileReentryGuardStateAdapter（strategy: 'env'）|
 | `scripts/harness/agent-integration/presentation/stop-hook.ts` | Stop Hook エントリポイント（stdin JSON読み取り → UseCase呼び出し → exitCode制御） |

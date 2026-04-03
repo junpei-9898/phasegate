@@ -22,7 +22,7 @@ v0ではVALIDATION.md自動生成（US-009）を含んでいたが、v1ではreq
 | H07-01 | requirement-test-matrix.json新設 | Must |
 | H07-02 | phase-gate ACマッピング完了チェック追加 | Must |
 | H07-03 | test-coverage-checkerでの要件カバレッジ算出 | Must |
-| H07-04 | harness:impact-analysis HXX-XXコマンド | Should |
+| H07-04 | phasegate:impact-analysis HXX-XXコマンド | Should |
 
 ---
 
@@ -50,7 +50,7 @@ v0ではVALIDATION.md自動生成（US-009）を含んでいたが、v1ではreq
 
 ### 3.4 impact-analysisコマンド（H07-04）
 
-- `harness:impact-analysis HXX-XX`コマンドの実行（正常時: 終了コード0、ストーリー未検出時: 終了コード1）。CLIエントリポイントはharness-apiが所有し、本Unitは実行ロジックを提供する
+- `phasegate:impact-analysis HXX-XX`コマンドの実行（正常時: 終了コード0、ストーリー未検出時: 終了コード1）。CLIエントリポイントはharness-apiが所有し、本Unitは実行ロジックを提供する
 - 指定ストーリーIDに紐づくテストケース一覧をrequirement-test-matrix.jsonから特定・出力
 - 存在しないストーリーID（HXX-XX形式）が指定された場合、適切なエラーメッセージを表示
 - 出力にテスト種別（unit/it/scenario）とファイルパスを含める
@@ -104,8 +104,8 @@ v0ではVALIDATION.md自動生成（US-009）を含んでいたが、v1ではreq
 | スキーマ | RequirementTestMatrix JSONスキーマ | skill-quality, harness-api |
 | データ | requirement-test-matrix.json | skill-quality (test-coverage-checker, Plan-Checker Loop) |
 | ポリシー | AcCoverageGatePolicy（ACマッピング完了判定ロジック） | validator-system（L2 phase-gateバリデータが実行） |
-| モジュール | CoverageCalculationService（AC網羅率算出） | harness-api (harness:ci-check) |
-| CLI | `harness:impact-analysis` | 外部利用者、harness-api |
+| モジュール | CoverageCalculationService（AC網羅率算出） | harness-api (phasegate:ci-check) |
+| CLI | `phasegate:impact-analysis` | 外部利用者、harness-api |
 
 ---
 
@@ -115,5 +115,5 @@ v0ではVALIDATION.md自動生成（US-009）を含んでいたが、v1ではreq
 - **@storyメタデータとの整合性**: H07-01のAC-5で定義される@storyメタデータ（H03-03）との整合性を、traceability-modelとの連携で保証する。@storyに記載されたUS IDがrequirement-test-matrix.jsonに存在することを検証
 - **phase-gateバリデータの拡張**: phase-dependency-modelが定義するphase-gate機構を拡張する形でACマッピングチェックを追加。既存のphase-gate APIを壊さない後方互換拡張とする
 - **カバレッジ閾値の参照**: コードカバレッジ閾値はconfig-foundationのPreset定義（standard: 90% / strict: 95%）から取得。ハードコーディング禁止
-- **impact-analysisコマンドの所有**: CLIコマンド名`harness:impact-analysis`の入出力仕様・終了コードはharness-apiのCLI Command Registryに登録。本Unitは実行ロジックを提供し、harness-apiがCLIエントリポイントを所有
+- **impact-analysisコマンドの所有**: CLIコマンド名`phasegate:impact-analysis`の入出力仕様・終了コードはharness-apiのCLI Command Registryに登録。本Unitは実行ロジックを提供し、harness-apiがCLIエントリポイントを所有
 - **JSONスキーマバリデーション**: requirement-test-matrix.jsonのスキーマファイルを定義し、ajv等で機械的にバリデーション。スキーマファイルは本Unit内で管理

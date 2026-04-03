@@ -80,7 +80,7 @@
 | **REQ-NQ-001** | `product/construction/{unit}/requirement-test-matrix.json`を新設し、User StoryのAC -> テストケース（unit/it/scenario）のマッピングを定義できること | Must | JSONスキーマバリデーション |
 | **REQ-NQ-002** | phase-gateに「全AC -> テストケースマッピング完了」チェックを追加すること | Must | phase-gate.ts拡張の自動テスト |
 | **REQ-NQ-003** | test-coverage-checkerを拡張し、コードカバレッジに加え要件カバレッジ（AC網羅率）を算出すること | Must | カバレッジレポート出力検証 |
-| **REQ-NQ-004** | `harness:impact-analysis US-XXX`コマンドを新設し、User Story変更時に影響テストケースを自動特定すること | Should | CLIコマンド実行テスト |
+| **REQ-NQ-004** | `phasegate:impact-analysis US-XXX`コマンドを新設し、User Story変更時に影響テストケースを自動特定すること | Should | CLIコマンド実行テスト |
 | **REQ-NQ-005** | Wave実行前にVALIDATION.mdを自動生成し、要件-テストマッピングの完全性を記録すること | Should | ファイル生成検証 |
 
 ### 2.3 Quick Mode要件
@@ -109,7 +109,7 @@
 | **REQ-QH-001** | PreToolUse Hookに設定ファイル保護ルールを追加し、`.eslintrc*`、`eslint.config.*`、`tsconfig.json`、`biome.json`、`package.json`の変更をブロックすること | Must | Hook実行テスト |
 | **REQ-QH-002** | Stop Hookにテスト実行ゲートを追加し、`pnpm test`全グリーンを完了条件とすること | Must | Stop Hook統合テスト |
 | **REQ-QH-003** | Stop Hookテストゲートに無限ループ防止機構（`stop_hook_active`フラグ）を実装すること | Must | 再入防止テスト |
-| **REQ-QH-004** | Stop Hookに`harness:ci-check`実行を追加し、ハーネスバリデーション全通過を完了条件とすること | Should | Stop Hook統合テスト |
+| **REQ-QH-004** | Stop Hookに`phasegate:ci-check`実行を追加し、ハーネスバリデーション全通過を完了条件とすること | Should | Stop Hook統合テスト |
 
 ### 2.6 ADR・ドキュメント管理要件
 
@@ -135,7 +135,7 @@
 | **REQ-CF-001** | phasegate.config.jsonをv2にバージョンアップし、`orchestration`セクションを追加すること | Must | 設定スキーマバリデーション |
 | **REQ-CF-002** | phasegate.config.json v2に`session`セクションを追加し、stateFile/roadmapFileのパスを設定可能にすること | Must | 設定スキーマバリデーション |
 | **REQ-CF-003** | GSD由来機能はphasegate.config.jsonでデフォルト無効（`enabled: false`）とし、Progressive adoptionを支援すること | Must | デフォルト値検証 |
-| **REQ-CF-004** | v1設定からv2設定への自動マイグレーションツール（`harness:migrate-config`）を提供すること | Should | マイグレーション実行テスト |
+| **REQ-CF-004** | v1設定からv2設定への自動マイグレーションツール（`phasegate:migrate-config`）を提供すること | Should | マイグレーション実行テスト |
 
 ### 2.9 非交渉要件（K1-K13維持）
 
@@ -225,7 +225,7 @@
 | **R-03** | **複雑度の爆発**: 26スキル + 10件のMVH機能追加で、ハーネス自体が理解不能になる | 中 | 高 | **6 (High)** | (1) MVH機能を独立モジュールとして実装（既存コードとの結合度を最小化） (2) 各モジュールに独立したテストスイートを持たせる (3) 00_harness_engineering_overview.mdをv1対応で更新 |
 | **R-04** | **設定ファイルの肥大化**: phasegate.config.json v2が複雑化し、設定ミスが多発する | 中 | 中 | **4 (Medium)** | (1) orchestration/sessionセクションにJSONスキーマバリデーションを適用 (2) デフォルト値を慎重に設計（GSD由来はデフォルトOFF） (3) `harness:validate-config`コマンドで設定の正当性チェック |
 | **R-05** | **Quick Modeの悪用**: Quick Modeを本来フル設計フローが必要な変更に使用し、品質が劣化する | 高 | 低 | **3 (Medium)** | (1) Quick Mode対象外の明確な定義（REQ-QM-004） (2) Quick Mode使用時にもarchitecture/dependency/securityバリデータは必ず実行 (3) Quick Mode使用頻度の監視（L4 Scheduled） |
-| **R-06** | **学習曲線の増大**: v1の新概念（コンテキストバジェット、Nyquist、Quick Mode等）が多すぎて採用障壁になる | 中 | 高 | **6 (High)** | (1) Quick Modeを入口としたProgressive Disclosure (2) 各機能の独立したガイドドキュメント (3) `harness:status`コマンドで現在有効な機能を一覧表示 |
+| **R-06** | **学習曲線の増大**: v1の新概念（コンテキストバジェット、Nyquist、Quick Mode等）が多すぎて採用障壁になる | 中 | 高 | **6 (High)** | (1) Quick Modeを入口としたProgressive Disclosure (2) 各機能の独立したガイドドキュメント (3) `phasegate:status`コマンドで現在有効な機能を一覧表示 |
 | **R-07** | **テスト負債の増加**: v1新機能のテストが不十分で、将来のリファクタリングを阻害する | 中 | 高 | **6 (High)** | (1) 新機能ごとに最低10テストを必須とするルール (2) テストカバレッジ90%閾値の維持（CIゲート） (3) requirement-test-matrixをv1自身にも適用（dogfooding） |
 | **R-08** | **ドキュメント配置の混乱**: GSD由来のアーティファクト（state.json、roadmap.md等）の配置場所が曖昧になる | 中 | 低 | **2 (Low)** | (1) folder_management_rules.mdをv1対応で更新 (2) GSD由来ファイルの配置ルールを明記したADR作成 (3) ファイル配置バリデータ（L1 enforce-folder-structure）の拡張 |
 | **R-09** | **命名の混乱**: AIDLC用語とGSD用語が混在し、コード・ドキュメントの一貫性が失われる | 低 | 高 | **3 (Medium)** | (1) 用語集（glossary）の作成 (2) `/gsd:*`コマンドをv1で一切露出させない（GNG-7） (3) 全てAIDLC命名体系に統一 |

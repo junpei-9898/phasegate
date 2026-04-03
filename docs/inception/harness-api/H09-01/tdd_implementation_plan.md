@@ -1,7 +1,7 @@
 # TDD実装計画: H09-01 (harness-api)
 
 ## 1. スコープ
-- 対象ストーリー: H09-01 harness:check-ready / harness:check-phase
+- 対象ストーリー: H09-01 phasegate:check-ready / phasegate:check-phase
 - 影響する層: Domain / Application / Infrastructure / Presentation
 
 ## 2. 前提条件検証

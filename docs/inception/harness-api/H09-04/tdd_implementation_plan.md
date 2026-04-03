@@ -1,7 +1,7 @@
 # TDD実装計画: H09-04 (harness-api)
 
 ## 1. スコープ
-- 対象ストーリー: H09-04 harness:status（成果物駆動状態導出）
+- 対象ストーリー: H09-04 phasegate:status（成果物駆動状態導出）
 - 影響する層: Domain / Application / Infrastructure / Presentation
 
 ## 2. 前提条件検証

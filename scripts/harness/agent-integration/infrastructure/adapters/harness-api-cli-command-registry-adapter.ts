@@ -10,16 +10,16 @@ import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-regi
 
 /** integration_contract.md §3.1 に定義された登録済みコマンド一覧 */
 const REGISTERED_COMMANDS: readonly string[] = [
-  'harness:check-ready',
-  'harness:check-phase',
-  'harness:ci-check',
-  'harness:detect-drift',
-  'harness:status',
-  'harness:lint',
-  'harness:complete-check',
-  'harness:impact-analysis',
-  'harness:enable',
-  'harness:disable',
+  'phasegate:check-ready',
+  'phasegate:check-phase',
+  'phasegate:ci-check',
+  'phasegate:detect-drift',
+  'phasegate:status',
+  'phasegate:lint',
+  'phasegate:complete-check',
+  'phasegate:impact-analysis',
+  'phasegate:enable',
+  'phasegate:disable',
 ];
 
 const COMMAND_SET = new Set<string>(REGISTERED_COMMANDS);

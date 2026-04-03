@@ -505,12 +505,12 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
 - 処理フロー（PostToolUse）:
   1. `configQueryPort.isHookEnabled('post-tool-use')` で有効/無効を確認する
   2. 無効の場合は `HookTranslationResult.skip('HOOK_DISABLED')` を返す
-  3. `cliCommandRegistryPort.hasCommand('harness:lint')` でコマンド存在を確認する
-  4. `HookTranslationResult.execute('harness:lint', ['--fast'], 0, 500)` を返す
+  3. `cliCommandRegistryPort.hasCommand('phasegate:lint')` でコマンド存在を確認する
+  4. `HookTranslationResult.execute('phasegate:lint', ['--fast'], 0, 500)` を返す
 - 処理フロー（Stop）:
   1. `reentryGuard.isActive()` を呼び出す
   2. `isActive=true` の場合は `HookTranslationResult.skip('REENTRY_DETECTED')` を返す
-  3. `isActive=false` の場合は `HookTranslationResult.execute('harness:complete-check', [], 0)` を返す
+  3. `isActive=false` の場合は `HookTranslationResult.execute('phasegate:complete-check', [], 0)` を返す
 - 例外:
   - `UnsupportedHookTypeError`: 未対応の hookType
   - Port実装のI/Oエラー
@@ -525,9 +525,9 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
 | PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=false` | `{ shouldBlock: true }` |
 | PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=true` | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | `isEnabled('post-tool-use')=false` | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
-| PostToolUseEvent | 通常 | `{ shouldBlock: false, cliCommand: 'harness:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| PostToolUseEvent | 通常 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
 | StopEvent | `reentryGuard.isActive()=true` | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
-| StopEvent | `reentryGuard.isActive()=false` | `{ shouldBlock: false, cliCommand: 'harness:complete-check', cliArgs: [], expectedExitCode: 0 }` |
+| StopEvent | `reentryGuard.isActive()=false` | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }` |
 
 #### 2.4.2 FallbackVerificationService
 
@@ -763,7 +763,7 @@ export interface PhaseGateQueryPort {
 
 ### 4.4 HandlePostToolUseUseCase（H11-03対応）
 
-**責務**: H11-03「PostToolUse Hook処理」のオーケストレーション。`harness:lint --fast` を500ms以内で実行し、Lint結果を返す。
+**責務**: H11-03「PostToolUse Hook処理」のオーケストレーション。`phasegate:lint --fast` を500ms以内で実行し、Lint結果を返す。
 
 **コンストラクタ依存**
 
@@ -806,7 +806,7 @@ export interface PhaseGateQueryPort {
 
 ### 4.5 HandleStopUseCase（H11-04対応）
 
-**責務**: H11-04「Stop Hook処理」のオーケストレーション。ReentryGuard による無限ループ防止と `harness:complete-check` の実行を管理する。ReentryGuard のライフサイクル（activate/deactivate）の唯一の制御点である。
+**責務**: H11-04「Stop Hook処理」のオーケストレーション。ReentryGuard による無限ループ防止と `phasegate:complete-check` の実行を管理する。ReentryGuard のライフサイクル（activate/deactivate）の唯一の制御点である。
 
 **コンストラクタ依存**
 
@@ -835,11 +835,11 @@ export interface PhaseGateQueryPort {
 1. `HookEvent.createStop(sessionId)` でHookEventを生成する
 2. `hookToCliTranslator.translate(hookEvent)` を呼び出す
    - `isActive=true` の場合: `result.skipReason='REENTRY_DETECTED'` となる
-   - `isActive=false` の場合: `result.cliCommand='harness:complete-check'` となる
+   - `isActive=false` の場合: `result.cliCommand='phasegate:complete-check'` となる
 3. `result.shouldSkip()=true` の場合は `{ executed: false, skipReason: result.skipReason }` を返す
 4. `result.shouldSkip()=false` の場合（`isActive=false`）:
    a. `reentryGuard.activate()` を呼び出す（フラグを active に設定）
-   b. `cliExecutorPort.execute('harness:complete-check', [], undefined)` を呼び出す
+   b. `cliExecutorPort.execute('phasegate:complete-check', [], undefined)` を呼び出す
    c. CLI実行完了後（成否問わず）に `reentryGuard.deactivate()` を呼び出す
    d. CLI実行結果を `HandleStopOutput` に投影する
 5. CLI実行中に例外が発生した場合も `finally` ブロックで必ず `deactivate()` を呼ぶ
@@ -925,16 +925,16 @@ export interface PhaseGateQueryPort {
 - Wave 2 では静的なコマンド名リストをハードコードし、harness-apiの正式Registry完成後に差し替える
 - ハードコードする登録済みコマンド（`integration_contract.md §3.1` 準拠）:
   ```
-  harness:check-ready
-  harness:check-phase
-  harness:ci-check
-  harness:detect-drift
-  harness:status
-  harness:lint
-  harness:complete-check
-  harness:impact-analysis
-  harness:enable
-  harness:disable
+  phasegate:check-ready
+  phasegate:check-phase
+  phasegate:ci-check
+  phasegate:detect-drift
+  phasegate:status
+  phasegate:lint
+  phasegate:complete-check
+  phasegate:impact-analysis
+  phasegate:enable
+  phasegate:disable
   ```
 
 **メソッド実装**
@@ -1163,7 +1163,7 @@ Claude Code が渡すPostToolUse Hookペイロード:
 | コード | 意味 |
 |--------|------|
 | 0 | 正常終了（スキップ含む）、またはLint Pass |
-| 1 | Lint Fail（`harness:lint --fast` が失敗） |
+| 1 | Lint Fail（`phasegate:lint --fast` が失敗） |
 | 2 | 実行エラー |
 
 ### 6.4 Stop Hook Adapter
@@ -1209,14 +1209,14 @@ Claude Code が渡すStop Hookペイロード:
    - exit code 0 で終了する（Claude Code への通知のみ）
 5. `output.executed=true` の場合:
    - `cliResult.exitCode` をそのまま返す
-   - `harness:complete-check` の結果を stderr に要約出力する
+   - `phasegate:complete-check` の結果を stderr に要約出力する
 
 **終了コード**
 
 | コード | 意味 |
 |--------|------|
 | 0 | 正常終了（スキップ含む）、またはComplete Check Pass |
-| 1 | Complete Check Fail（`harness:complete-check` が失敗） |
+| 1 | Complete Check Fail（`phasegate:complete-check` が失敗） |
 | 2 | 実行エラー |
 
 ### 6.5 AGENTS.md Hook登録設計
@@ -1292,8 +1292,8 @@ sequenceDiagram
         POT->>CC: exit code 0（スキップ）
     else Hook有効
         CQ-->>TR: true
-        TR-->>UC: HookTranslationResult { cliCommand: 'harness:lint', cliArgs: ['--fast'], timeoutMs: 500 }
-        UC->>CLI: execute('harness:lint', ['--fast'], 500)
+        TR-->>UC: HookTranslationResult { cliCommand: 'phasegate:lint', cliArgs: ['--fast'], timeoutMs: 500 }
+        UC->>CLI: execute('phasegate:lint', ['--fast'], 500)
         note over CLI: 500ms タイムアウト制御
         CLI-->>UC: CliExecutionResult { exitCode, response }
         UC-->>POT: { executed: true, cliResult }
@@ -1326,11 +1326,11 @@ sequenceDiagram
         SH->>CC: exit code 0（スキップ）
     else ReentryGuard inactive（通常実行）
         RG-->>TR: false
-        TR-->>UC: HookTranslationResult { cliCommand: 'harness:complete-check' }
+        TR-->>UC: HookTranslationResult { cliCommand: 'phasegate:complete-check' }
         UC->>RG: activate()
         RG->>RSP: writeActive()
-        UC->>CLI: execute('harness:complete-check', [], undefined)
-        note over CLI: harness:complete-check 実行（L1-L4全バリデータ）
+        UC->>CLI: execute('phasegate:complete-check', [], undefined)
+        note over CLI: phasegate:complete-check 実行（L1-L4全バリデータ）
         CLI-->>UC: CliExecutionResult { exitCode, response }
         UC->>RG: deactivate()
         RG->>RSP: clearActive()
@@ -1493,7 +1493,7 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 - `HandlePreToolUseUseCase`
 - `pre-tool-use-hook.ts`（Presentation）
 
-### 10.3 H11-03 PostToolUse Hook処理（harness:lint --fast 500ms以内）
+### 10.3 H11-03 PostToolUse Hook処理（phasegate:lint --fast 500ms以内）
 
 - `HookEvent`（createPostToolUse）
 - `HookTranslationResult`（timeoutMs=500）
@@ -1502,7 +1502,7 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 - `HandlePostToolUseUseCase`
 - `post-tool-use-hook.ts`（Presentation）
 
-### 10.4 H11-04 Stop Hook処理（ReentryGuard + harness:complete-check）
+### 10.4 H11-04 Stop Hook処理（ReentryGuard + phasegate:complete-check）
 
 - `ReentryGuard`（activate/isActive/deactivate）
 - `ReentryGuardStatePort`, `EnvFileReentryGuardStateAdapter`

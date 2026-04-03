@@ -12,12 +12,12 @@ import { TimeoutError } from '../ports/cli-executor-port.js';
 
 /**
  * CommandName を実行可能なコマンドに変換する
- * 例: 'harness:lint' → ['npx', 'tsx', 'scripts/harness/cli/lint.ts']
+ * 例: 'phasegate:lint' → ['npx', 'tsx', 'scripts/harness/cli/lint.ts']
  * テスト時は直接スクリプトパスで execute を呼ぶことも可能
  */
 function resolveCommand(commandName: string): { cmd: string; args: string[] } {
   // コマンド名をファイルパスに変換
-  const slug = commandName.replace('harness:', '');
+  const slug = commandName.replace('phasegate:', '');
   return {
     cmd: 'npx',
     args: ['tsx', `scripts/harness/cli/${slug}.ts`],

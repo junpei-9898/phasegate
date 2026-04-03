@@ -12,10 +12,10 @@ describe('VerifyFallbackCapabilityUseCase', () => {
     it('HarnessError[]が空配列で返ること', async () => {
       // Arrange
       const importAnalyzerPort = { analyzeImports: vi.fn().mockResolvedValue([]) };
-      const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['harness:lint', 'harness:complete-check']) };
+      const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['phasegate:lint', 'phasegate:complete-check']) };
       const target = new VerifyFallbackCapabilityUseCase({ importAnalyzerPort, cliCommandRegistryPort });
       const spec = FallbackCapabilitySpec.create({
-        supportedCommands: ['harness:lint', 'harness:complete-check'],
+        supportedCommands: ['phasegate:lint', 'phasegate:complete-check'],
         noAgentApiImports: true,
       });
 
@@ -61,10 +61,10 @@ it('エージェントAPI参照検出時にHarnessErrorが返ること', async (
       importedFrom: '@anthropic-ai/claude-code',
     }]),
   };
-  const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['harness:lint']) };
+  const cliCommandRegistryPort = { listAll: vi.fn().mockResolvedValue(['phasegate:lint']) };
   const target = new VerifyFallbackCapabilityUseCase({ importAnalyzerPort, cliCommandRegistryPort });
   const spec = FallbackCapabilitySpec.create({
-    supportedCommands: ['harness:lint'],
+    supportedCommands: ['phasegate:lint'],
     noAgentApiImports: true,
   });
 

@@ -33,7 +33,7 @@
 
 ### 3.2 AGENTS.mdポインタ型移行
 
-- バリデータ一覧を`harness:status`実行へのポインタに置換
+- バリデータ一覧を`phasegate:status`実行へのポインタに置換
 - ADR参照リンク追加
 - AGENTS.mdサイズ削減
 - ポインタ参照先の実在性検証
