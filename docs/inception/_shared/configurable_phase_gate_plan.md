@@ -634,8 +634,8 @@ storyReflection チェック:
 
 #### B-3. アプリケーション層
 
-- [ ] B-3-1: `ResolveGateUseCase` を新設 — Write 対象パスを `blocks` glob でマッチング → 該当ゲートの `requires` チェック
-- [ ] B-3-2: `HandlePreToolUseUseCase` に `custom` プリセット時の `gates[]` ベースチェックを統合
+- [x] B-3-1: `ResolveGateUseCase` を新設 — Write 対象パスを `blocks` glob でマッチング → 該当ゲートの `requires` チェック
+- [x] B-3-2: `HandlePreToolUseUseCase` に `custom` プリセット時の `gates[]` ベースチェックを統合
 
 #### B-4. インフラストラクチャ層
 

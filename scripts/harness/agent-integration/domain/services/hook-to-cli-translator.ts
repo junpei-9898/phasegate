@@ -169,7 +169,7 @@ export class AsyncHookToCliTranslator {
     hasCommand(commandName: string): Promise<boolean>;
   };
   private readonly phaseGateQueryPort: {
-    checkGate(scope: WriteTargetScope): Promise<{
+    checkGate(scope: WriteTargetScope, targetFilePath?: string): Promise<{
       hasPassed(): boolean;
       getBlockers(): readonly string[];
       getWarnings(): readonly string[];
@@ -181,7 +181,7 @@ export class AsyncHookToCliTranslator {
     reentryGuard: ReentryGuard;
     cliCommandRegistryPort: { hasCommand(commandName: string): Promise<boolean> };
     phaseGateQueryPort?: {
-      checkGate(scope: WriteTargetScope): Promise<{
+      checkGate(scope: WriteTargetScope, targetFilePath?: string): Promise<{
         hasPassed(): boolean;
         getBlockers(): readonly string[];
         getWarnings(): readonly string[];
@@ -256,7 +256,10 @@ export class AsyncHookToCliTranslator {
       });
     }
 
-    const phaseGateResult = await this.phaseGateQueryPort.checkGate(detectedScope);
+    const phaseGateResult = await this.phaseGateQueryPort.checkGate(
+      detectedScope,
+      event.targetFilePaths[0],
+    );
     if (!phaseGateResult.hasPassed()) {
       return HookTranslationResult.block({
         reason: 'PHASE_GATE',

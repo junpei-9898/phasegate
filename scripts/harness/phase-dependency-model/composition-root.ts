@@ -7,14 +7,18 @@
  */
 import { FileSystemArtifactExistenceChecker } from './infrastructure/filesystem/file-system-artifact-existence-checker.js';
 import { MarkdownPlanDocumentReader } from './infrastructure/filesystem/markdown-plan-document-reader.js';
+import { InMemoryGlobMatcher } from './infrastructure/adapters/in-memory-glob-matcher.js';
 import {
   HarnessConfigPhaseConfigProvider,
   type PhaseConfigSection,
 } from './infrastructure/config/harness-config-phase-config-provider.js';
 import { PhaseOverrideAuditLogger } from './infrastructure/logging/phase-override-audit-logger.js';
 import { EvidenceBundleAssembler } from './application/services/evidence-bundle-assembler.js';
+import { PhaseGateResultMapper } from './application/services/phase-gate-result-mapper.js';
 import { CheckPhaseGateUseCase } from './application/usecases/check-phase-gate-usecase.js';
+import { ResolveGateUseCase } from './application/usecases/resolve-gate-usecase.js';
 import { CheckPhaseGateCommandHandler } from './presentation/cli/check-phase-gate-command-handler.js';
+import { GateDefinition } from './domain/values/gate-definition.js';
 
 const DEFAULT_REPORT_OUTPUT_DIR = '.harness/reports';
 
@@ -35,6 +39,16 @@ export function createPhaseDependencyModelModule(
 ) {
   const phaseConfig = (config.phaseConfig as PhaseConfigSection | undefined) ?? defaultPhaseConfig;
   const reportOutputDir = config.reportOutputDir ?? DEFAULT_REPORT_OUTPUT_DIR;
+  const rawCustomGates =
+    ((config.phaseConfig as {
+      readonly gates?: readonly unknown[];
+      readonly customization?: { readonly gates?: readonly unknown[]; readonly preset?: string };
+    } | undefined)?.gates) ??
+    ((config.phaseConfig as {
+      readonly customization?: { readonly gates?: readonly unknown[]; readonly preset?: string };
+    } | undefined)?.customization?.gates) ??
+    [];
+  const isCustomPreset = phaseConfig.customization?.preset === 'custom';
 
   // Infrastructure
   const artifactExistenceChecker = new FileSystemArtifactExistenceChecker({
@@ -50,6 +64,7 @@ export function createPhaseDependencyModelModule(
   const auditLogger = new PhaseOverrideAuditLogger({
     outputDir: reportOutputDir,
   });
+  const globMatcher = new InMemoryGlobMatcher();
 
   // Application services
   const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -57,6 +72,7 @@ export function createPhaseDependencyModelModule(
     planDocumentReader,
     phaseConfigProvider,
   });
+  const phaseGateResultMapper = new PhaseGateResultMapper();
 
   // Usecases
   const checkPhaseGateUseCase = new CheckPhaseGateUseCase({
@@ -64,10 +80,40 @@ export function createPhaseDependencyModelModule(
     evidenceBundleAssembler,
     auditLogger,
   });
+  const resolveGateUseCase = new ResolveGateUseCase({
+    globMatcher,
+    artifactExistenceChecker,
+  });
+  const checkPhaseGateFacade = {
+    execute: async (input: {
+      readonly targetLevel: 1 | 2 | 3;
+      readonly unitId?: string;
+      readonly storyId?: string;
+      readonly targetFilePath?: string;
+    }) => {
+      if (isCustomPreset && input.targetFilePath) {
+        const gates = rawCustomGates.map((gate) => GateDefinition.fromRaw(gate));
+        const resolved = await resolveGateUseCase.execute({
+          targetFilePath: input.targetFilePath,
+          gates,
+          scope: { unitId: input.unitId, storyId: input.storyId },
+        });
+        return phaseGateResultMapper.mapFromResolve(resolved, {
+          targetLevel: input.targetLevel,
+        });
+      }
+
+      return checkPhaseGateUseCase.execute({
+        targetLevel: input.targetLevel,
+        unitId: input.unitId,
+        storyId: input.storyId,
+      });
+    },
+  };
 
   // Presentation handlers
   const checkPhaseGateCommandHandler = new CheckPhaseGateCommandHandler({
-    checkPhaseGateUseCase,
+    checkPhaseGateUseCase: checkPhaseGateFacade,
   });
 
   return {

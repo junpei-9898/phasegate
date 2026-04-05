@@ -3,13 +3,13 @@
  * @unit phase-dependency-model
  */
 
-import type { CheckPhaseGateUseCase, CheckPhaseGateInput } from '../../application/usecases/check-phase-gate-usecase.js';
 import type { PhaseGateResultDto } from '../../application/dto/phase-gate-result-dto.js';
 
 export interface CheckPhaseGateCommandInput {
   readonly targetLevel: number;
   readonly unitId?: string;
   readonly storyId?: string;
+  readonly targetFilePath?: string;
   readonly json?: boolean;
 }
 
@@ -20,11 +20,18 @@ export interface CheckPhaseGateCommandOutput {
 }
 
 export interface CheckPhaseGateCommandHandlerDeps {
-  readonly checkPhaseGateUseCase: Pick<CheckPhaseGateUseCase, 'execute'>;
+  readonly checkPhaseGateUseCase: {
+    execute(input: {
+      readonly targetLevel: 1 | 2 | 3;
+      readonly unitId?: string;
+      readonly storyId?: string;
+      readonly targetFilePath?: string;
+    }): Promise<PhaseGateResultDto>;
+  };
 }
 
 export class CheckPhaseGateCommandHandler {
-  private readonly useCase: Pick<CheckPhaseGateUseCase, 'execute'>;
+  private readonly useCase: CheckPhaseGateCommandHandlerDeps['checkPhaseGateUseCase'];
 
   constructor(deps: CheckPhaseGateCommandHandlerDeps) {
     this.useCase = deps.checkPhaseGateUseCase;
@@ -42,10 +49,11 @@ export class CheckPhaseGateCommandHandler {
     }
 
     try {
-      const useCaseInput: CheckPhaseGateInput = {
+      const useCaseInput = {
         targetLevel: input.targetLevel as 1 | 2 | 3,
         unitId: input.unitId,
         storyId: input.storyId,
+        targetFilePath: input.targetFilePath,
       };
 
       const result = await this.useCase.execute(useCaseInput);

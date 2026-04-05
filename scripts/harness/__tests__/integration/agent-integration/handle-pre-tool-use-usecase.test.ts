@@ -391,6 +391,7 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.shouldBlock).toBe(false);
         expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
           expect.objectContaining({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }),
+          'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
         );
       });
     });
@@ -416,6 +417,7 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.shouldBlock).toBe(false);
         expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
           expect.objectContaining({ level: 1 }),
+          'docs/inception/issues/ISSUE-001/issue_description.md',
         );
       });
     });
@@ -469,6 +471,38 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.error).toBeDefined();
         expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
           expect.objectContaining({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }),
+          'docs/inception/agent-integration/issues/ISSUE-001/tdd_implementation_plan.md',
+        );
+      });
+    });
+
+    context('custom プリセット経路で targetFilePath を下位へ受け渡す場合', () => {
+      it('Write 対象ファイルの先頭パスが checkGate の第2引数に渡されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['custom gate blocked'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({ level: 3, unitId: 'agent-integration' }),
+          'scripts/harness/agent-integration/domain/value-objects/example.ts',
         );
       });
     });

@@ -6,7 +6,7 @@ import type { WriteTargetScope } from '../../domain/value-objects/write-target-s
 import { PhaseGateQueryResult } from '../../domain/value-objects/phase-gate-query-result.js';
 
 export class PhaseGateQueryAdapter implements PhaseGateQueryPort {
-  async checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult> {
+  async checkGate(scope: WriteTargetScope, targetFilePath?: string): Promise<PhaseGateQueryResult> {
     try {
       const { createPhaseDependencyModelModule } = await import('../../../phase-dependency-model/composition-root.js');
       const mod = createPhaseDependencyModelModule({ rootDir: process.cwd() });
@@ -14,6 +14,7 @@ export class PhaseGateQueryAdapter implements PhaseGateQueryPort {
         targetLevel: scope.level,
         unitId: scope.unitId,
         storyId: scope.storyId,
+        targetFilePath,
       });
 
       if (result.exitCode === 0) {
