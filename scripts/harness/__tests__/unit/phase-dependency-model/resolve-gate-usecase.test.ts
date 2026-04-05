@@ -7,7 +7,7 @@ import { ResolveGateUseCase } from '../../../phase-dependency-model/application/
 import { GateDefinition } from '../../../phase-dependency-model/domain/values/gate-definition.js';
 import { GateName } from '../../../phase-dependency-model/domain/values/gate-name.js';
 import { PhaseLevel } from '../../../phase-dependency-model/domain/values/phase-level.js';
-import { InMemoryGlobMatcher } from '../../../phase-dependency-model/infrastructure/adapters/in-memory-glob-matcher.js';
+import { PicomatchGlobMatcher } from '../../../phase-dependency-model/infrastructure/adapters/picomatch-glob-matcher.js';
 
 const createGate = (args: {
   name: string;
@@ -35,7 +35,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [
@@ -73,7 +73,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [
@@ -110,7 +110,7 @@ target('ResolveGateUseCase', () => {
           checkAll: vi.fn(),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker: artifactExistenceChecker as never,
         });
         const gates = [
@@ -152,7 +152,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [
@@ -205,7 +205,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [
@@ -254,7 +254,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [
@@ -291,7 +291,7 @@ target('ResolveGateUseCase', () => {
           ),
         };
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker,
         });
         const gates = [

@@ -7,7 +7,10 @@
  */
 import { FileSystemArtifactExistenceChecker } from './infrastructure/filesystem/file-system-artifact-existence-checker.js';
 import { MarkdownPlanDocumentReader } from './infrastructure/filesystem/markdown-plan-document-reader.js';
-import { InMemoryGlobMatcher } from './infrastructure/adapters/in-memory-glob-matcher.js';
+import { PicomatchGlobMatcher } from './infrastructure/adapters/picomatch-glob-matcher.js';
+import { StoryAnnotationVerifierAdapter } from './infrastructure/adapters/story-annotation-verifier-adapter.js';
+import { CustomGatesConfigParser } from './infrastructure/config/custom-gates-config-parser.js';
+import { MarkdownDesignDocumentGateway } from '../traceability-model/infrastructure/gateways/markdown-design-document-gateway.js';
 import {
   HarnessConfigPhaseConfigProvider,
   type PhaseConfigSection,
@@ -18,7 +21,6 @@ import { PhaseGateResultMapper } from './application/services/phase-gate-result-
 import { CheckPhaseGateUseCase } from './application/usecases/check-phase-gate-usecase.js';
 import { ResolveGateUseCase } from './application/usecases/resolve-gate-usecase.js';
 import { CheckPhaseGateCommandHandler } from './presentation/cli/check-phase-gate-command-handler.js';
-import { GateDefinition } from './domain/values/gate-definition.js';
 
 const DEFAULT_REPORT_OUTPUT_DIR = '.harness/reports';
 
@@ -61,10 +63,17 @@ export function createPhaseDependencyModelModule(
     config: phaseConfig,
     defaultOutputDir: reportOutputDir,
   });
+  const designDocumentGateway = new MarkdownDesignDocumentGateway({
+    rootDir: config.rootDir,
+  });
   const auditLogger = new PhaseOverrideAuditLogger({
     outputDir: reportOutputDir,
   });
-  const globMatcher = new InMemoryGlobMatcher();
+  const globMatcher = new PicomatchGlobMatcher();
+  const storyAnnotationVerifier = new StoryAnnotationVerifierAdapter({
+    designDocumentGateway,
+  });
+  const customGatesConfigParser = new CustomGatesConfigParser();
 
   // Application services
   const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -83,6 +92,7 @@ export function createPhaseDependencyModelModule(
   const resolveGateUseCase = new ResolveGateUseCase({
     globMatcher,
     artifactExistenceChecker,
+    storyAnnotationVerifier,
   });
   const checkPhaseGateFacade = {
     execute: async (input: {
@@ -92,7 +102,7 @@ export function createPhaseDependencyModelModule(
       readonly targetFilePath?: string;
     }) => {
       if (isCustomPreset && input.targetFilePath) {
-        const gates = rawCustomGates.map((gate) => GateDefinition.fromRaw(gate));
+        const { gates } = customGatesConfigParser.parse(rawCustomGates);
         const resolved = await resolveGateUseCase.execute({
           targetFilePath: input.targetFilePath,
           gates,

@@ -10,7 +10,7 @@ import { ResolveGateUseCase } from '../../../phase-dependency-model/application/
 import { GateDefinition } from '../../../phase-dependency-model/domain/values/gate-definition.js';
 import { GateName } from '../../../phase-dependency-model/domain/values/gate-name.js';
 import { PhaseLevel } from '../../../phase-dependency-model/domain/values/phase-level.js';
-import { InMemoryGlobMatcher } from '../../../phase-dependency-model/infrastructure/adapters/in-memory-glob-matcher.js';
+import { PicomatchGlobMatcher } from '../../../phase-dependency-model/infrastructure/adapters/picomatch-glob-matcher.js';
 import { FileSystemArtifactExistenceChecker } from '../../../phase-dependency-model/infrastructure/filesystem/file-system-artifact-existence-checker.js';
 
 const tempDirs: string[] = [];
@@ -53,7 +53,7 @@ target('ResolveGateUseCase integration', () => {
         const rootDir = await createTempRoot();
         await ensureFile(rootDir, 'docs/product/construction/example/domain_model.md');
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker: new FileSystemArtifactExistenceChecker({ rootDir }),
         });
         const gates = [
@@ -82,7 +82,7 @@ target('ResolveGateUseCase integration', () => {
         // Arrange
         const rootDir = await createTempRoot();
         const sut = new ResolveGateUseCase({
-          globMatcher: new InMemoryGlobMatcher(),
+          globMatcher: new PicomatchGlobMatcher(),
           artifactExistenceChecker: new FileSystemArtifactExistenceChecker({ rootDir }),
         });
         const gates = [

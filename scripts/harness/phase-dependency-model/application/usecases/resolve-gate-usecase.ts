@@ -5,6 +5,7 @@ import type { ResolveGateResultDto, ResolveGateFindingDto } from '../dto/resolve
 import { GateGraph } from '../../domain/services/gate-graph.js';
 import type { ArtifactExistenceCheckerPort } from '../../domain/ports/artifact-existence-checker-port.js';
 import type { GlobMatcherPort } from '../../domain/ports/glob-matcher-port.js';
+import type { StoryAnnotationVerifierPort } from '../../domain/ports/story-annotation-verifier-port.js';
 import { Artifact } from '../../domain/values/artifact.js';
 import type { GateDefinition, GateRequirement } from '../../domain/values/gate-definition.js';
 
@@ -20,6 +21,7 @@ export interface ResolveGateInput {
 export interface ResolveGateUseCaseDeps {
   readonly globMatcher: GlobMatcherPort;
   readonly artifactExistenceChecker: ArtifactExistenceCheckerPort;
+  readonly storyAnnotationVerifier?: StoryAnnotationVerifierPort;
 }
 
 interface RequirementEvaluation {
@@ -31,10 +33,12 @@ interface RequirementEvaluation {
 export class ResolveGateUseCase {
   private readonly globMatcher: GlobMatcherPort;
   private readonly artifactExistenceChecker: ArtifactExistenceCheckerPort;
+  private readonly storyAnnotationVerifier?: StoryAnnotationVerifierPort;
 
   constructor(deps: ResolveGateUseCaseDeps) {
     this.globMatcher = deps.globMatcher;
     this.artifactExistenceChecker = deps.artifactExistenceChecker;
+    this.storyAnnotationVerifier = deps.storyAnnotationVerifier;
   }
 
   async execute(input: ResolveGateInput): Promise<ResolveGateResultDto> {
@@ -100,6 +104,38 @@ export class ResolveGateUseCase {
       if (evaluation.requirement.required) {
         blockers.push(finding);
       } else {
+        warnings.push(finding);
+      }
+    }
+
+    if (this.storyAnnotationVerifier) {
+      for (const gate of matchedGates) {
+        if (!gate.storyAnnotation) {
+          continue;
+        }
+
+        const verification = await this.storyAnnotationVerifier.verify(
+          input.targetFilePath,
+          gate.storyAnnotation.tag,
+        );
+
+        if (verification.hasAnnotation) {
+          continue;
+        }
+
+        const finding = Object.freeze({
+          gateName: gate.name.value,
+          path: input.targetFilePath,
+          reason: gate.storyAnnotation.required
+            ? `${gate.storyAnnotation.tag} 注釈が必要です`
+            : `${gate.storyAnnotation.tag} 注釈を推奨します`,
+        });
+
+        if (gate.storyAnnotation.required) {
+          blockers.push(finding);
+          continue;
+        }
+
         warnings.push(finding);
       }
     }

@@ -181,6 +181,83 @@
             }
           }
         },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "level", "requires", "blocks", "dependsOn"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "level": {
+                "type": "integer",
+                "enum": [1, 2, 3]
+              },
+              "requires": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path", "required"],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "required": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "blocks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "dependsOn": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                }
+              },
+              "storyAnnotation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["required", "tag"],
+                "properties": {
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "tag": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "required": ["storyAnnotation"]
+                },
+                "then": {
+                  "properties": {
+                    "level": {
+                      "const": 3
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
         "storyReflection": {
           "type": "object",
           "additionalProperties": false,
