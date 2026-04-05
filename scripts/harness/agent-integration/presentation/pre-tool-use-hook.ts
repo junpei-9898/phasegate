@@ -8,8 +8,10 @@
  */
 
 import { HandlePreToolUseUseCase } from '../application/usecases/handle-pre-tool-use-usecase.js';
+import { BashWriteTargetExtractor } from '../domain/services/bash-write-target-extractor.js';
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
 import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
+import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -20,6 +22,7 @@ interface PreToolUseHookInput {
     path?: string;
     file_path?: string;
     paths?: string[];
+    command?: string;
     [key: string]: unknown;
   };
 }
@@ -91,13 +94,37 @@ async function main(): Promise<void> {
     targetFilePaths.push(...input.tool_input.paths.map(toRelative));
   }
 
+  // Bash 経由書き込みのフェーズゲート対応 (A-2.5)
+  // Bash command 文字列からリダイレクト・tee・sed -i・cp・mv・touch 等の
+  // 書き込み先ファイルパスを抽出し、フェーズゲートチェック対象に含める。
+  // Bash 書き込みを検出した場合、effectiveToolName を 'Write' に偽装して
+  // translator の WRITE_TOOLS チェックを通過させる（Bash のままではフェーズゲートが
+  // スキップされるため）。
+  let effectiveToolName = toolName;
+  if (toolName === 'Bash' && typeof input.tool_input?.command === 'string') {
+    const extractor = new BashWriteTargetExtractor();
+    const bashTargets = extractor.extract(input.tool_input.command);
+    if (bashTargets.length > 0) {
+      targetFilePaths.push(...bashTargets.map(toRelative));
+      effectiveToolName = 'Write';
+    }
+  }
+
   try {
     const configPath = await findConfigPath();
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const phaseGateQueryPort = new PhaseGateQueryAdapter();
-    const useCase = new HandlePreToolUseUseCase({ configQueryPort, phaseGateQueryPort });
+    const storyReflectionQueryPort = new FileSystemStoryReflectionQueryAdapter({
+      rootDir: path.dirname(configPath),
+      configPath,
+    });
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort,
+      phaseGateQueryPort,
+      storyReflectionQueryPort,
+    });
 
-    const output = await useCase.execute({ toolName, targetFilePaths });
+    const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths });
 
     if (output.shouldBlock) {
       const msg = output.error?.message

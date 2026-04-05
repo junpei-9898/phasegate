@@ -100,6 +100,81 @@ target('parseImplementationTags', () => {
       });
     });
 
+    context('カンマ区切り @unit の展開', () => {
+      it('カンマ区切り @unit が複数タグに展開される', () => {
+        // Arrange
+        const content = [
+          '/**',
+          ' * @unit order, payment',
+          ' * @layer domain',
+          ' */',
+        ].join('\n');
+
+        // Act
+        const actual = parseImplementationTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(3);
+        expect(actual[0]).toEqual({ type: '@unit', value: 'order', lineNumber: 2 });
+        expect(actual[1]).toEqual({ type: '@unit', value: 'payment', lineNumber: 2 });
+        expect(actual[2]).toEqual({ type: '@layer', value: 'domain', lineNumber: 3 });
+      });
+
+      it('単一 @unit はそのまま 1 タグ', () => {
+        // Arrange
+        const content = '// @unit single-unit';
+
+        // Act
+        const actual = parseImplementationTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(1);
+        expect(actual[0]).toEqual({ type: '@unit', value: 'single-unit', lineNumber: 1 });
+      });
+
+      it('複数行 @unit は複数タグとして維持される', () => {
+        // Arrange
+        const content = [
+          '// @unit alpha',
+          '// @unit beta',
+        ].join('\n');
+
+        // Act
+        const actual = parseImplementationTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(2);
+        expect(actual[0]).toEqual({ type: '@unit', value: 'alpha', lineNumber: 1 });
+        expect(actual[1]).toEqual({ type: '@unit', value: 'beta', lineNumber: 2 });
+      });
+
+      it('カンマ区切りの空白がトリムされる', () => {
+        // Arrange
+        const content = '// @unit  foo ,  bar , baz  ';
+
+        // Act
+        const actual = parseImplementationTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(3);
+        expect(actual[0]).toEqual({ type: '@unit', value: 'foo', lineNumber: 1 });
+        expect(actual[1]).toEqual({ type: '@unit', value: 'bar', lineNumber: 1 });
+        expect(actual[2]).toEqual({ type: '@unit', value: 'baz', lineNumber: 1 });
+      });
+
+      it('@layer はカンマ展開されない', () => {
+        // Arrange
+        const content = '// @layer domain, application';
+
+        // Act
+        const actual = parseImplementationTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(1);
+        expect(actual[0]).toEqual({ type: '@layer', value: 'domain, application', lineNumber: 1 });
+      });
+    });
+
     context('行番号の保持', () => {
       it('正しい行番号が記録されること', () => {
         // Arrange
@@ -203,6 +278,29 @@ target('parseAllTags', () => {
         expect(actual[1].type).toBe('@layer');
         expect(actual[2].type).toBe('@story-id');
         expect(actual[3].type).toBe('@story');
+      });
+    });
+
+    context('カンマ区切り @unit の展開', () => {
+      it('parseAllTags でもカンマ区切り @unit が展開される', () => {
+        // Arrange
+        const content = [
+          '/**',
+          ' * @unit order, payment',
+          ' * @layer domain',
+          ' * @story H01-01',
+          ' */',
+        ].join('\n');
+
+        // Act
+        const actual = parseAllTags(content);
+
+        // Assert
+        expect(actual).toHaveLength(4);
+        expect(actual[0]).toEqual({ type: '@unit', value: 'order', lineNumber: 2 });
+        expect(actual[1]).toEqual({ type: '@unit', value: 'payment', lineNumber: 2 });
+        expect(actual[2]).toEqual({ type: '@layer', value: 'domain', lineNumber: 3 });
+        expect(actual[3]).toEqual({ type: '@story', value: 'H01-01', lineNumber: 4 });
       });
     });
   });

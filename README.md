@@ -157,11 +157,24 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 
 ### Presets
 
+`project.preset` -- overall layer strictness:
+
 | Preset | Layers | Coverage | Use Case |
 |---|---|---|---|
 | `minimal` | L1 + L2 | -- | Prototyping, early exploration |
 | `standard` | L1 - L3 | 90% | Production development (default) |
 | `strict` | L1 - L4 | 95% | Mission-critical systems |
+
+`phaseDependencies.preset` -- phase-gate shape and storyReflection defaults (independent of `project.preset`):
+
+| Preset | Phase 3 gates | storyReflection default | Use Case |
+|---|---|---|---|
+| `full` | All AIDLC gates | Enabled -- `logical_design` + `domain_model` required, `uiux` optional | AIDLC full ceremony (alias for legacy `default`) |
+| `standard` | Core gates | Enabled -- `logical_design` required, `domain_model` optional | Production development with moderate rigor |
+| `minimal` | None | Disabled -- no inception -> product enforcement | Prototyping / exploration |
+| `custom` | User-defined | User-defined via `storyReflection.mappings` | Full control (requires `override: true`) |
+
+`storyReflection` blocks writes to `src/{unit}/*` when an inception US/issue design exists but has not been cascaded into `docs/product/construction/{unit}/`. See [ADR-013](docs/ADR/ADR-013-story-reflection-gate.md) and the [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate).
 
 ### Key Configuration Sections
 
@@ -179,7 +192,10 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
     "allowedCategories": ["bugfix", "docs", "test", "config"],
     "maintainedLayers": ["L1", "L2"]
   },
-  "phaseDependencies": { "preset": "default" }
+  "phaseDependencies": {
+    "preset": "standard",
+    "storyReflection": { "enabled": true }
+  }
 }
 ```
 

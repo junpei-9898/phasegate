@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { HandlePreToolUseUseCase } from '../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js';
 import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result.js';
+import { StoryReflectionQueryResult } from '../../../agent-integration/domain/value-objects/story-reflection-query-result.js';
 
 function createDefaultMockConfigQueryPort() {
   return {
@@ -22,6 +23,12 @@ function createDefaultMockConfigQueryPort() {
 function createDefaultMockPhaseGateQueryPort() {
   return {
     checkGate: vi.fn().mockResolvedValue(PhaseGateQueryResult.create(true, [], [])),
+  };
+}
+
+function createDefaultMockStoryReflectionQueryPort() {
+  return {
+    checkReflection: vi.fn().mockResolvedValue(StoryReflectionQueryResult.pass()),
   };
 }
 
@@ -463,6 +470,206 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(mockPhaseGateQueryPort.checkGate).toHaveBeenCalledWith(
           expect.objectContaining({ level: 3, unitId: 'agent-integration', storyId: 'ISSUE-001' }),
         );
+      });
+    });
+  });
+
+  describe('storyReflection 連携', () => {
+    context('storyReflectionQueryPort が未指定の場合', () => {
+      it('既存動作と同じくブロックせず通過すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+      });
+    });
+
+    context('level=3 かつ unitId 解決可能な Write で storyReflection が通過する場合', () => {
+      it('storyReflection を実行してそのまま通過すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+        expect(mockStoryReflectionQueryPort.checkReflection).toHaveBeenCalledWith('agent-integration');
+      });
+    });
+
+    context('level=3 かつ unitId 解決可能な Write で storyReflection が不通過の場合', () => {
+      it('storyReflection 形式のエラーメッセージでブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = {
+          checkReflection: vi.fn().mockResolvedValue(
+            StoryReflectionQueryResult.block(
+              [
+                'docs/product/construction/agent-integration/logical_design.md に @story-id US-002 が反映されていません。',
+              ],
+              [],
+            ),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('STORY_REFLECTION');
+        expect(actual.storyReflectionBlockers).toEqual([
+          'docs/product/construction/agent-integration/logical_design.md に @story-id US-002 が反映されていません。',
+        ]);
+        expect(actual.error?.message).toContain('US-002');
+        expect(actual.error?.message).toContain('cascade-updater');
+      });
+    });
+
+    context('level=3 かつ unitId 解決可能な Write で storyReflection が skipped の場合', () => {
+      it('Quick Mode 想定で通過すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = {
+          checkReflection: vi.fn().mockResolvedValue(StoryReflectionQueryResult.skipped()),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Edit',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+        expect(mockStoryReflectionQueryPort.checkReflection).toHaveBeenCalledOnce();
+      });
+    });
+
+    context('level=1 や level=2 のパス、または scope 解決不可の場合', () => {
+      it('storyReflection は発火しないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+
+        // Act
+        await useCase.execute(buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/product/product_overview.md'],
+        }));
+        await useCase.execute(buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/product/construction/agent-integration/logical_design.md'],
+        }));
+        await useCase.execute(buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['README.md'],
+        }));
+
+        // Assert
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
+      });
+    });
+
+    context('既存の Phase Gate ブロックが先に発生する場合', () => {
+      it('storyReflection は実行されず既存ブロックが優先されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical design is missing'], []),
+          ),
+        };
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
+      });
+    });
+
+    context('__tests__ 配下のパスが対象の場合', () => {
+      it('storyReflection も発火しないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/__tests__/integration/agent-integration/sample.test.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
       });
     });
   });

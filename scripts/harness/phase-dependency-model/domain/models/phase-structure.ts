@@ -3,8 +3,12 @@
  * @unit phase-dependency-model
  */
 
-import { DEFAULT_PHASE_DEPENDENCIES } from '../definitions/default-phase-dependencies.js';
-import { DEFAULT_PHASE_NODES } from '../definitions/default-phase-nodes.js';
+import { FULL_PHASE_DEPENDENCIES } from '../definitions/full-phase-dependencies.js';
+import { FULL_PHASE_NODES } from '../definitions/full-phase-nodes.js';
+import { MINIMAL_PHASE_DEPENDENCIES } from '../definitions/minimal-phase-dependencies.js';
+import { MINIMAL_PHASE_NODES } from '../definitions/minimal-phase-nodes.js';
+import { STANDARD_PHASE_DEPENDENCIES } from '../definitions/standard-phase-dependencies.js';
+import { STANDARD_PHASE_NODES } from '../definitions/standard-phase-nodes.js';
 import { CustomRule, InvalidCustomRuleError } from '../values/custom-rule.js';
 import { PhaseCustomizationPolicy } from '../values/phase-customization-policy.js';
 import { PhaseDependency } from '../values/phase-dependency.js';
@@ -115,6 +119,22 @@ const createAuditPayload = (
   });
 };
 
+const resolvePresetDefinitions = (preset: string): {
+  nodes: readonly PhaseNode[];
+  dependencies: readonly PhaseDependency[];
+} => {
+  switch (preset) {
+    case 'standard':
+      return { nodes: STANDARD_PHASE_NODES, dependencies: STANDARD_PHASE_DEPENDENCIES };
+    case 'minimal':
+      return { nodes: MINIMAL_PHASE_NODES, dependencies: MINIMAL_PHASE_DEPENDENCIES };
+    case 'full':
+    case 'custom':
+    default:
+      return { nodes: FULL_PHASE_NODES, dependencies: FULL_PHASE_DEPENDENCIES };
+  }
+};
+
 export class PhaseStructure {
   readonly levels: ReadonlyMap<1 | 2 | 3, readonly PhaseNode[]>;
   readonly nodeIndex: ReadonlyMap<string, PhaseNode>;
@@ -140,10 +160,11 @@ export class PhaseStructure {
   }
 
   static createDefault(policy: PhaseCustomizationPolicy): PhaseStructure {
-    const levels = buildLevels(DEFAULT_PHASE_NODES);
-    const nodeIndex = buildNodeIndex(DEFAULT_PHASE_NODES);
+    const { nodes, dependencies } = resolvePresetDefinitions(policy.preset);
+    const levels = buildLevels(nodes);
+    const nodeIndex = buildNodeIndex(nodes);
     const nonRelaxableDependencies = Object.freeze(
-      DEFAULT_PHASE_DEPENDENCIES.filter(
+      dependencies.filter(
         (dependency) =>
           dependency.isLevelTransition() ||
           dependency.to.nodeKey() === '3:implementation-readiness-checker' ||
@@ -153,8 +174,8 @@ export class PhaseStructure {
     const base = new PhaseStructure({
       levels,
       nodeIndex,
-      defaultDependencies: DEFAULT_PHASE_DEPENDENCIES,
-      effectiveDependencies: DEFAULT_PHASE_DEPENDENCIES,
+      defaultDependencies: dependencies,
+      effectiveDependencies: dependencies,
       customizationPolicy: policy,
       nonRelaxableDependencies,
     });

@@ -3,6 +3,18 @@
 > **作成日**: 2026-03-19
 > **Wave**: 2
 
+## QA（設計判断の根拠）
+
+### Q1: Value Object 境界値テストの網羅性
+- **Q**: 全 VO の全不変条件 × 全境界値を網羅するか、代表ケースに絞るか？
+- **A**: **不変条件 × 境界値を全網羅**。VO は immutable なので一度固めれば再発しにくく、投資対効果が高い。
+- **根拠**: ドメインの中核である VO の品質保証を最優先。
+
+### Q2: Entity ライフサイクルのテスト方針
+- **Q**: ReentryGuard の状態遷移テストはどの粒度で書くか？
+- **A**: **状態遷移グラフの全辺を網羅**（inactive→active, active→inactive, 無効遷移の拒否）。
+- **根拠**: Entity の状態機械は仕様の中核であり、全遷移の検証が必要。
+
 ## 1. スコープ
 
 - **対象**: `docs/product/construction/agent-integration/unit_test_design.md`

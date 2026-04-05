@@ -68,6 +68,7 @@ target('GetPhaseInfoUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(createPolicy()),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
           artifactExistenceChecker,
@@ -126,6 +127,7 @@ target('GetPhaseInfoUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(createPolicy()),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
           artifactExistenceChecker,

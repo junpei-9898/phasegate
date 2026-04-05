@@ -7,15 +7,16 @@
  */
 import { CustomPhaseRule } from './custom-phase-rule.js';
 import type { CustomPhaseRuleProps } from './custom-phase-rule.js';
+import type { PhaseDependenciesPresetId } from '../harness-config.js';
 
 export interface PhaseDependenciesConfigProps {
-  readonly preset: 'default' | 'custom';
+  readonly preset: PhaseDependenciesPresetId;
   readonly override: boolean;
   readonly customRules: readonly CustomPhaseRuleProps[];
 }
 
 export class PhaseDependenciesConfig {
-  readonly preset: 'default' | 'custom';
+  readonly preset: PhaseDependenciesPresetId;
   readonly override: boolean;
   readonly customRules: readonly CustomPhaseRule[];
 

@@ -13,6 +13,7 @@ const createPhaseConfigProvider = (): PhaseConfigProviderPort => ({
   ),
   getPlanningMode: vi.fn(),
   getReportingOutputDir: vi.fn(),
+  getStoryReflectionConfig: vi.fn(),
 });
 
 target('BuildPhaseDependencyGraphUseCase', () => {

@@ -80,10 +80,10 @@ export class MetadataValidator {
     }>;
   }): Promise<MetadataValidationResult> {
     const errors: TraceabilityHarnessError[] = [];
-    const unitTag = input.tags.find((tag) => tag.type === '@unit');
+    const unitTags = input.tags.filter((tag) => tag.type === '@unit');
     const layerTag = input.tags.find((tag) => tag.type === '@layer');
 
-    if (!unitTag) {
+    if (unitTags.length === 0) {
       errors.push(
         createError({
           message: '@unit が必要です',
@@ -111,14 +111,16 @@ export class MetadataValidator {
       );
     }
 
-    if (unitTag && !(await hasUnit(this.unitDefinitionPort, unitTag.value))) {
-      errors.push(
-        createError({
-          message: `@unit "${unitTag.value}" は unit 定義に存在しません`,
-          suggestion: '登録済みの unit 名を指定してください',
-          fixExample: '@unit traceability-model',
-        }),
-      );
+    for (const unitTag of unitTags) {
+      if (!(await hasUnit(this.unitDefinitionPort, unitTag.value))) {
+        errors.push(
+          createError({
+            message: `@unit "${unitTag.value}" は unit 定義に存在しません`,
+            suggestion: '登録済みの unit 名を指定してください',
+            fixExample: '@unit traceability-model',
+          }),
+        );
+      }
     }
 
     if (errors.length > 0) {

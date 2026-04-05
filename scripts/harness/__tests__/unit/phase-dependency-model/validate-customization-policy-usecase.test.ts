@@ -16,6 +16,7 @@ const createPhaseConfigProvider = (policy: PhaseCustomizationPolicy): PhaseConfi
   getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
   getPlanningMode: vi.fn(),
   getReportingOutputDir: vi.fn(),
+  getStoryReflectionConfig: vi.fn(),
 });
 
 target('ValidateCustomizationPolicyUseCase', () => {

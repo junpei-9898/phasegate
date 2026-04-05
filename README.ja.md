@@ -220,9 +220,13 @@ npx phasegate update-skills
     "relaxedGates": ["phase-gate", "2-phase-execution"]
   },
   "phaseDependencies": {
-    "preset": "default",          // "default" | "custom"
-    "override": false,            // true でフェーズ依存の緩和を許可
-    "customRules": []
+    "preset": "standard",         // "full" | "standard" | "minimal" | "custom"（"default" は "full" にフォールバック）
+    "override": false,            // custom 時のみ true（customRules を有効化）
+    "customRules": [],
+    "storyReflection": {          // 省略時はプリセットのデフォルト mappings がゼロコンフィグで適用
+      "enabled": true,
+      "mappings": []              // 明示指定でプリセットデフォルトを上書き
+    }
   },
   "planningMode": {
     "default": "interactive",     // "interactive" | "embedded-qa"
@@ -674,7 +678,9 @@ npx phasegate ci-check --quick
 
 ## プリセット
 
-`phasegate.config.json` の `preset` フィールドで段階的に品質レベルを選択できます。
+`phasegate.config.json` のプリセットは **2 系統** あります。
+
+### `project.preset` — レイヤー厳密度（L1-L4 有効化とカバレッジ閾値）
 
 | プリセット | 用途 | 有効レイヤー | カバレッジ閾値 |
 |---|---|---|---|
@@ -687,6 +693,19 @@ npx phasegate ci-check --quick
 - `agentLessonCollection: true`
 - `bundleSizeLimit: 500 KB`
 - `deadCodeGC: true`
+
+### `phaseDependencies.preset` — フェーズゲート構成と storyReflection デフォルト
+
+`project.preset` とは独立。`"default"` は後方互換のため `"full"` にフォールバックされます。
+
+| プリセット | Phase 3 ゲート | storyReflection デフォルト | 用途 |
+|---|---|---|---|
+| **full** | 全 AIDLC ゲート | 有効 — `logical_design` + `domain_model` required、`uiux` optional | AIDLC フルセレモニー（旧 `default`） |
+| **standard** | コアゲート | 有効 — `logical_design` required、`domain_model` optional | 通常開発・中庸な厳密度 |
+| **minimal** | なし | 無効 — inception → product 反映強制なし | プロトタイプ・試行錯誤段階 |
+| **custom** | ユーザー定義 | `storyReflection.mappings` で定義 | 完全カスタマイズ（`override: true` 必須） |
+
+`storyReflection` は inception の US/issue 設計が `docs/product/construction/{unit}/` に反映されていない場合に `src/{unit}/*` への Write/Edit をブロックします。config で省略した場合はプリセットのデフォルト mappings がゼロコンフィグで自動適用されます。`cascade-updater` スキルがこのゲートを通過する標準手段です。詳細は [ADR-013](docs/ADR/ADR-013-story-reflection-gate.md) と [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate) を参照してください。
 
 ---
 

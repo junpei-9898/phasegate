@@ -8,10 +8,17 @@
  */
 
 import { dirname, join, resolve } from 'node:path';
+import { readFile as fsReadFile } from 'node:fs/promises';
 import { createConfigFoundationModule } from './config-foundation/composition-root.js';
 import { createHarnessErrorModule } from './harness-error/composition-root.js';
 import { createTraceabilityModelModule } from './traceability-model/composition-root.js';
 import { createPhaseDependencyModelModule } from './phase-dependency-model/composition-root.js';
+import { HarnessConfigPhaseConfigProvider, type PhaseConfigSection as PhaseDepConfigSection } from './phase-dependency-model/infrastructure/config/harness-config-phase-config-provider.js';
+import { StoryReflectionChecker } from './phase-dependency-model/domain/services/story-reflection-checker.js';
+import { CheckStoryReflectionUseCase } from './phase-dependency-model/application/usecases/check-story-reflection-usecase.js';
+import { FileSystemStoryReflectionAdapter } from './phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js';
+import { StoryReflectionStatusPresenter } from './phase-dependency-model/presentation/cli/story-reflection-status-presenter.js';
+import { StoryReflectionResult } from './phase-dependency-model/domain/values/story-reflection-result.js';
 import { createAdrFoundationModule } from './adr-foundation/composition-root.js';
 import { createBiomeAstEngineModule } from './biome-ast-engine/composition-root.js';
 import { createValidatorSystemModule } from './validator-system/composition-root.js';
@@ -43,7 +50,7 @@ Usage: phasegate <command> [options]
 
 Setup:
   init                         Initialize project: deploy skills + create phasegate.config.json
-                               (--name <project-name>)
+                               (--name <project-name>, --preset <full|standard|minimal|custom>)
   update-skills                Re-deploy skills from current harness version
 
 Commands:
@@ -200,11 +207,29 @@ function parseCoverageThreshold(raw: string | undefined): number {
   return n;
 }
 
-type PhasePreset = 'default' | 'custom';
+type PhasePreset = 'default' | 'full' | 'standard' | 'minimal' | 'custom';
 
 function toPhasePreset(value: string): PhasePreset {
-  if (value === 'default' || value === 'custom') return value;
+  if (
+    value === 'default'
+    || value === 'full'
+    || value === 'standard'
+    || value === 'minimal'
+    || value === 'custom'
+  ) {
+    return value;
+  }
   return 'default';
+}
+
+type InitPhasePreset = 'full' | 'standard' | 'minimal' | 'custom';
+
+function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
+  if (value === undefined) return undefined;
+  if (value === 'full' || value === 'standard' || value === 'minimal' || value === 'custom') {
+    return value;
+  }
+  return undefined;
 }
 
 type RuleSeverity = 'error' | 'warning' | 'off';
@@ -253,6 +278,75 @@ function toL1Config(resolvedConfig: HarnessConfigV2) {
   };
 }
 
+/**
+ * phasegate.config.json を直接読み、storyReflection 設定解決用の provider を返す。
+ * config-foundation の HarnessConfigV2 は storyReflection 未サポートのため raw JSON 経由。
+ */
+async function loadStoryReflectionProvider(
+  rootDir: string,
+): Promise<HarnessConfigPhaseConfigProvider | null> {
+  const configPath = join(rootDir, 'phasegate.config.json');
+  let raw: {
+    phaseDependencies?: {
+      preset?: 'default' | 'full' | 'standard' | 'minimal' | 'custom';
+      override?: boolean;
+      storyReflection?: {
+        enabled?: boolean;
+        mappings?: ReadonlyArray<{ inception: string; product: string; required: boolean }>;
+      };
+    };
+    reporting?: { outputDir?: string };
+  };
+  try {
+    const content = await fsReadFile(configPath, 'utf8');
+    raw = JSON.parse(content);
+  } catch {
+    return null;
+  }
+  const section: PhaseDepConfigSection = {
+    customization: {
+      preset: raw.phaseDependencies?.preset,
+      overrideEnabled: raw.phaseDependencies?.override ?? false,
+    },
+    storyReflection: raw.phaseDependencies?.storyReflection,
+    reportingOutputDir: raw.reporting?.outputDir,
+  };
+  return new HarnessConfigPhaseConfigProvider({
+    config: section,
+    defaultOutputDir: raw.reporting?.outputDir ?? '.harness/reports',
+  });
+}
+
+async function printStoryReflectionValidationSummary(
+  rootDir: string,
+  unit: string | undefined,
+): Promise<void> {
+  const provider = await loadStoryReflectionProvider(rootDir);
+  if (provider === null) return;
+  const config = await provider.getStoryReflectionConfig();
+  const policy = await provider.getCustomizationPolicy();
+  const presenter = new StoryReflectionStatusPresenter();
+  let result = StoryReflectionResult.pass();
+  if (config.enabled && unit) {
+    const fsAdapter = new FileSystemStoryReflectionAdapter({ rootDir });
+    const checker = new StoryReflectionChecker(fsAdapter);
+    const useCase = new CheckStoryReflectionUseCase({ checker });
+    result = await useCase.execute({ unitId: unit, config });
+  }
+  console.log(
+    presenter.formatValidationSummary({ config, preset: policy.preset, result }),
+  );
+}
+
+async function printStoryReflectionStatusLine(rootDir: string): Promise<void> {
+  const provider = await loadStoryReflectionProvider(rootDir);
+  if (provider === null) return;
+  const config = await provider.getStoryReflectionConfig();
+  const policy = await provider.getCustomizationPolicy();
+  const presenter = new StoryReflectionStatusPresenter();
+  console.log(presenter.formatStatusLine({ config, preset: policy.preset }));
+}
+
 async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
   try {
     const configModule = createConfigFoundationModule();
@@ -291,6 +385,18 @@ async function main(): Promise<void> {
       // ── harness setup ──
       case 'init': {
         const projectName = parseFlag(args, '--name') ?? 'my-project';
+        const rawPhasePreset = parseFlag(args, '--preset');
+        if (
+          rawPhasePreset !== undefined
+          && rawPhasePreset !== 'full'
+          && rawPhasePreset !== 'standard'
+          && rawPhasePreset !== 'minimal'
+          && rawPhasePreset !== 'custom'
+        ) {
+          console.error(`Invalid --preset value: "${rawPhasePreset}". Use "full", "standard", "minimal", or "custom".`);
+          process.exit(2);
+        }
+        const phasePreset = parseInitPhasePreset(rawPhasePreset);
         const skillSetRaw = parseFlag(args, '--skills') ?? 'all';
         if (skillSetRaw !== 'core' && skillSetRaw !== 'all') {
           console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
@@ -298,7 +404,7 @@ async function main(): Promise<void> {
         }
         const skillSet: SkillSet = skillSetRaw;
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
-        const configResult = await initHarnessConfig(rootDir, projectName);
+        const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
         const hooksResult = await deployHookScripts(harnessRoot, rootDir);
         console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`);
         if (configResult.created) {
@@ -539,6 +645,9 @@ async function main(): Promise<void> {
           targetPaths,
         });
         console.log(result.output);
+        if (layer === 'L2' || layer === 'all') {
+          await printStoryReflectionValidationSummary(rootDir, unit);
+        }
         process.exit(result.exitCode);
         break;
       }
@@ -601,6 +710,7 @@ async function main(): Promise<void> {
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.status.handle({}, flags);
+        await printStoryReflectionStatusLine(rootDir);
         break;
       }
 

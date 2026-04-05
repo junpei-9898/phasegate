@@ -112,7 +112,7 @@ const createCustomRule = (
 
 const createPhaseCustomizationPolicy = (
   overrides: Partial<{
-    preset: 'default' | 'custom';
+    preset: 'default' | 'full' | 'standard' | 'minimal' | 'custom';
     rules: readonly CustomRule[];
     overrideEnabled: boolean;
   }> = {},
@@ -126,7 +126,7 @@ const createPhaseCustomizationPolicy = (
 
 const createDefaultPhaseStructure = (
   overrides: Partial<{
-    preset: 'default' | 'custom';
+    preset: 'default' | 'full' | 'standard' | 'minimal' | 'custom';
     rules: readonly CustomRule[];
     overrideEnabled: boolean;
   }> = {},
@@ -1861,6 +1861,143 @@ target('ドメインエラー網羅性', () => {
 
       // Assert
       expect(actual).toThrowError(expectedError);
+    });
+  });
+
+  describe('createDefault - プリセット対応', () => {
+    it("'full' プリセットは全 15 ノード・17 依存を生成する", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'full' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      const allNodes = [
+        ...sut.getPhaseNodes(PhaseLevel.create(1)),
+        ...sut.getPhaseNodes(PhaseLevel.create(2)),
+        ...sut.getPhaseNodes(PhaseLevel.create(3)),
+      ];
+      expect(allNodes).toHaveLength(15);
+      expect(sut.effectiveDependencies).toHaveLength(17);
+    });
+
+    it("'standard' プリセットは Level 1 に 2 ノード、Level 2 に 2 ノードを持つ", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'standard' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      expect(sut.getPhaseNodes(PhaseLevel.create(1))).toHaveLength(2);
+      expect(sut.getPhaseNodes(PhaseLevel.create(2))).toHaveLength(2);
+    });
+
+    it("'standard' プリセットは Level 3 に 5 ノードを持つ", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'standard' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      expect(sut.getPhaseNodes(PhaseLevel.create(3))).toHaveLength(5);
+    });
+
+    it("'minimal' プリセットは Level 1 に 1 ノード、Level 2 に 1 ノードを持つ", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'minimal' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      expect(sut.getPhaseNodes(PhaseLevel.create(1))).toHaveLength(1);
+      expect(sut.getPhaseNodes(PhaseLevel.create(2))).toHaveLength(1);
+    });
+
+    it("'minimal' プリセットは Level 3 が空である", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'minimal' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      expect(sut.getPhaseNodes(PhaseLevel.create(3))).toHaveLength(0);
+    });
+
+    it("'custom' プリセットは 'full' ベースで生成される", () => {
+      // Arrange
+      const policy = createPhaseCustomizationPolicy({ preset: 'custom' });
+
+      // Act
+      const sut = PhaseStructure.createDefault(policy);
+
+      // Assert
+      const allNodes = [
+        ...sut.getPhaseNodes(PhaseLevel.create(1)),
+        ...sut.getPhaseNodes(PhaseLevel.create(2)),
+        ...sut.getPhaseNodes(PhaseLevel.create(3)),
+      ];
+      expect(allNodes).toHaveLength(15);
+      expect(sut.effectiveDependencies).toHaveLength(17);
+    });
+
+    it("'standard' の checkPhaseGate が正しく動作する", () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure({ preset: 'standard' });
+      const targetLevel = PhaseLevel.create(3);
+
+      const artifactStatuses = new Map<string, boolean>();
+      const planEvidences = new Map<string, PlanEvidence>();
+
+      for (const node of [
+        ...sut.getPhaseNodes(PhaseLevel.create(1)),
+        ...sut.getPhaseNodes(PhaseLevel.create(2)),
+      ]) {
+        for (const artifact of node.requiredArtifacts()) {
+          artifactStatuses.set(artifact.path, true);
+        }
+        if (node.planArtifacts().length > 0) {
+          planEvidences.set(
+            node.nodeKey(),
+            createPlanEvidence({ exists: true, qaComplete: true, planningModeMatch: true }),
+          );
+        }
+      }
+
+      // Act
+      const actual = sut.checkPhaseGate(targetLevel, {
+        artifactStatuses,
+        planEvidences,
+        planningMode: PlanningMode.create('interactive'),
+      });
+
+      // Assert
+      expect(actual.passed).toBe(true);
+      expect(actual.blockers).toHaveLength(0);
+    });
+
+    it("'minimal' の checkPhaseGate で Level 1 空通過は自動にならない", () => {
+      // Arrange
+      const sut = createDefaultPhaseStructure({ preset: 'minimal' });
+      const targetLevel = PhaseLevel.create(2);
+
+      const artifactStatuses = new Map<string, boolean>();
+      const planEvidences = new Map<string, PlanEvidence>();
+
+      // Act
+      const actual = sut.checkPhaseGate(targetLevel, {
+        artifactStatuses,
+        planEvidences,
+        planningMode: PlanningMode.create('interactive'),
+      });
+
+      // Assert
+      expect(actual.passed).toBe(false);
+      expect(actual.blockers.length).toBeGreaterThan(0);
     });
   });
 });

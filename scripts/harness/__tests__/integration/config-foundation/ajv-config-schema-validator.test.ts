@@ -1,7 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { AjvConfigSchemaValidator } from '../../../config-foundation/infrastructure/validators/ajv-config-schema-validator.js';
-import { createValidSourceDocument } from './config-foundation-test-fixtures.js';
+import {
+  createValidSourceDocument,
+  createValidSourceDocumentWithPhasePreset,
+} from './config-foundation-test-fixtures.js';
+
+function createStoryReflectionDocument(artifacts: string[]): Record<string, unknown> {
+  const document = createValidSourceDocument({
+    phaseDependencies: {
+      preset: 'full',
+      override: false,
+      customRules: [],
+    },
+  }) as unknown as Record<string, unknown>;
+
+  const phaseDependencies = document.phaseDependencies as Record<string, unknown>;
+  phaseDependencies.storyReflection = {
+    enabled: true,
+    mappings: [
+      {
+        unitId: 'config-foundation',
+        artifacts,
+      },
+    ],
+  };
+
+  return document;
+}
 
 target('AjvConfigSchemaValidator', () => {
   describe('validate', () => {
@@ -58,6 +84,102 @@ target('AjvConfigSchemaValidator', () => {
 
         // Assert
         expect(actual.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
+    context('phaseDependencies.preset に新しいプリセットを使う場合', () => {
+      it('full を有効値として受け付けること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocumentWithPhasePreset('full');
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('standard を有効値として受け付けること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocumentWithPhasePreset('standard');
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('minimal を有効値として受け付けること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocumentWithPhasePreset('minimal');
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('invalid を無効値として拒否すること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument({
+          phaseDependencies: {
+            preset: 'invalid' as never,
+            override: false,
+            customRules: [],
+          },
+        });
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThanOrEqual(1);
+        expect(actual.some((error) => 'path' in error && error.path === '/phaseDependencies/preset')).toBe(true);
+      });
+    });
+
+    context('phaseDependencies.storyReflection を検証する場合', () => {
+      it('省略した既存形式を有効として扱うこと', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument();
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('enabled と mappings を持つ形式を有効として扱うこと', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createStoryReflectionDocument(['logical_design.md', 'domain_model.md']);
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('artifact に空文字が含まれる場合はエラーになること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createStoryReflectionDocument(['logical_design.md', '']);
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThanOrEqual(1);
+        expect(actual.some((error) => 'path' in error && error.path === '/phaseDependencies/storyReflection/mappings/0/artifacts/1')).toBe(true);
       });
     });
   });

@@ -5,19 +5,21 @@
 
 import { CustomRule } from './custom-rule.js';
 
+export type PresetName = 'full' | 'standard' | 'minimal' | 'custom';
+
 export interface PhaseCustomizationPolicyCreateArgs {
-  readonly preset?: 'default' | 'custom';
+  readonly preset?: PresetName | 'default';
   readonly rules: readonly CustomRule[];
   readonly overrideEnabled: boolean;
 }
 
 export class PhaseCustomizationPolicy {
-  readonly preset: 'default' | 'custom';
+  readonly preset: PresetName;
   readonly rules: readonly CustomRule[];
   readonly overrideEnabled: boolean;
 
   private constructor(args: {
-    readonly preset: 'default' | 'custom';
+    readonly preset: PresetName;
     readonly rules: readonly CustomRule[];
     readonly overrideEnabled: boolean;
   }) {
@@ -27,9 +29,19 @@ export class PhaseCustomizationPolicy {
     Object.freeze(this);
   }
 
+  private static resolvePreset(preset: PresetName | 'default' | undefined, hasRules: boolean): PresetName {
+    if (preset === undefined) {
+      return hasRules ? 'custom' : 'full';
+    }
+    if (preset === 'default') {
+      return 'full';
+    }
+    return preset;
+  }
+
   static create(args: PhaseCustomizationPolicyCreateArgs): PhaseCustomizationPolicy {
     return new PhaseCustomizationPolicy({
-      preset: args.preset ?? (args.rules.length === 0 ? 'default' : 'custom'),
+      preset: PhaseCustomizationPolicy.resolvePreset(args.preset, args.rules.length > 0),
       rules: args.rules,
       overrideEnabled: args.overrideEnabled,
     });

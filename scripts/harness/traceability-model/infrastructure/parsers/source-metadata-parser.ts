@@ -17,6 +17,20 @@ export interface ParsedMetadataTag {
   readonly lineNumber: number;
 }
 
+function expandUnitTags(rawValue: string, lineNumber: number): ParsedMetadataTag[] {
+  if (!rawValue.includes(',')) {
+    return [{ type: '@unit', value: rawValue.trim(), lineNumber }];
+  }
+  return rawValue
+    .split(',')
+    .map((v) => ({
+      type: '@unit' as const,
+      value: v.trim(),
+      lineNumber,
+    }))
+    .filter((t) => t.value.length > 0);
+}
+
 /**
  * 実装ファイル向けに @unit / @layer / @story-id を抽出する
  */
@@ -30,7 +44,7 @@ export function parseImplementationTags(content: string): readonly ParsedMetadat
 
     const unitMatch = UNIT_TAG_PATTERN.exec(line);
     if (unitMatch) {
-      tags.push({ type: '@unit', value: unitMatch[1].trim(), lineNumber });
+      tags.push(...expandUnitTags(unitMatch[1], lineNumber));
     }
 
     const layerMatch = LAYER_TAG_PATTERN.exec(line);
@@ -80,7 +94,7 @@ export function parseAllTags(content: string): readonly ParsedMetadataTag[] {
 
     const unitMatch = UNIT_TAG_PATTERN.exec(line);
     if (unitMatch) {
-      tags.push({ type: '@unit', value: unitMatch[1].trim(), lineNumber });
+      tags.push(...expandUnitTags(unitMatch[1], lineNumber));
     }
 
     const layerMatch = LAYER_TAG_PATTERN.exec(line);

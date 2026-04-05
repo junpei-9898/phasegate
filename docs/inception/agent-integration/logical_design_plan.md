@@ -2,6 +2,23 @@
 **Phase**: 2（Unit横断設計）
 **作成日**: 2026-03-20
 
+## QA（設計判断の根拠）
+
+### Q1: Adapter 層の責務範囲
+- **Q**: agent-integration がバリデーション・CLI コマンド仕様まで持つか、薄い Adapter に限定するか？
+- **A**: **薄い Adapter 層に限定**。バリデーションロジック・CLI コマンド仕様は harness-api が所有。
+- **根拠**: Unit 境界の明確化。agent-integration は hook イベント → CLI コマンド変換のみ担当。
+
+### Q2: ReentryGuard の状態管理方式
+- **Q**: Stop Hook の無限ループ防止（stop_hook_active フラグ）をどこで管理するか？
+- **A**: **agent-integration Unit 内の Entity**。inactive → active → inactive の状態遷移を Entity として表現。
+- **根拠**: 状態ライフサイクルを持つためドメインモデル化が自然。
+
+### Q3: HookEvent → CLI 変換の独立性
+- **Q**: 変換ロジックをどこに配置するか？
+- **A**: **HookToCliTranslator ドメインサービス**。HookEvent（VO）を HookTranslationResult（VO）に変換するドメインサービスとして独立。
+- **根拠**: 変換は複数 HookEvent 種別を横断するため Entity でなくサービスが適切。
+
 ## 1. スコープ
 - 対象Unit: agent-integration
 - 影響するストーリー: H11-01, H11-02, H11-03, H11-04

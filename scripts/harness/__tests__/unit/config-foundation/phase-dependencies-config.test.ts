@@ -62,6 +62,25 @@ target('PhaseDependenciesConfig', () => {
         expect(actual.customRules[0].requires).toEqual(['review']);
       });
     });
+
+    context('standard presetと空customRulesを渡す場合', () => {
+      it('生成できる', () => {
+        // Arrange
+        const input = {
+          preset: 'standard' as const,
+          override: false,
+          customRules: [],
+        };
+
+        // Act
+        const actual = new PhaseDependenciesConfig(input);
+
+        // Assert
+        expect(actual.preset).toBe('standard');
+        expect(actual.override).toBe(false);
+        expect(actual.customRules).toEqual([]);
+      });
+    });
   });
 
   describe('等値性を判定する', () => {

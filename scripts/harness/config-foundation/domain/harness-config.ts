@@ -23,6 +23,7 @@ import type { L4Config } from './value-objects/l4-config.js';
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
 export type PresetId = 'minimal' | 'standard' | 'strict';
 export type PlanningModeValue = 'interactive' | 'embedded-qa';
+export type PhaseDependenciesPresetId = 'default' | 'full' | 'standard' | 'minimal' | 'custom';
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>
     ? Array<DeepPartial<TItem>>
@@ -76,7 +77,7 @@ export interface HarnessConfigResolvedDocument {
     relaxedGates: string[];
   };
   phaseDependencies: {
-    preset: 'default' | 'custom';
+    preset: PhaseDependenciesPresetId;
     override: boolean;
     customRules: Array<{
       phase: string;

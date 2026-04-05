@@ -287,6 +287,111 @@ target('MetadataValidator.validateImplementation', () => {
       });
     });
 
+    // UT-TM-120
+    context('複数 @unit の全件が有効な場合', () => {
+      it('valid=trueを返すこと', async () => {
+        // Arrange
+        const validUnits = ['traceability-model', 'phase-gate'];
+        const { sut } = createMetadataValidatorSut({
+          unitExists: async (name) => validUnits.includes(name),
+        });
+        const tags = Object.freeze([
+          createMetadataTag({ type: '@unit', value: 'traceability-model', lineNumber: 1 }),
+          createMetadataTag({ type: '@unit', value: 'phase-gate', lineNumber: 2 }),
+          createMetadataTag({ type: '@layer', value: 'domain', lineNumber: 3 }),
+        ]);
+
+        // Act
+        const actual = await sut.validateImplementation(
+          Object.freeze({
+            filePath: createPath('scripts/harness/domain/story-id.ts'),
+            tags,
+          }),
+        );
+
+        // Assert
+        expect(actual.valid).toBe(true);
+        expect(actual.errors).toEqual([]);
+      });
+    });
+
+    // UT-TM-121
+    context('2つの @unit のうち1つが不正な場合', () => {
+      it('不正な @unit のエラーを1件含む結果を返すこと', async () => {
+        // Arrange
+        const validUnits = ['traceability-model'];
+        const { sut } = createMetadataValidatorSut({
+          unitExists: async (name) => validUnits.includes(name),
+        });
+        const tags = Object.freeze([
+          createMetadataTag({ type: '@unit', value: 'traceability-model', lineNumber: 1 }),
+          createMetadataTag({ type: '@unit', value: 'nonexistent-unit', lineNumber: 2 }),
+          createMetadataTag({ type: '@layer', value: 'domain', lineNumber: 3 }),
+        ]);
+
+        // Act
+        const actual = await sut.validateImplementation(
+          Object.freeze({
+            filePath: createPath('scripts/harness/domain/story-id.ts'),
+            tags,
+          }),
+        );
+
+        // Assert
+        expect(actual.valid).toBe(false);
+        expect(actual.errors).toHaveLength(1);
+        expect(actual.errors[0].message).toContain('nonexistent-unit');
+      });
+    });
+
+    // UT-TM-122
+    context('単一 @unit の後方互換', () => {
+      it('単一の有効な @unit でvalid=trueを返すこと', async () => {
+        // Arrange
+        const { sut } = createMetadataValidatorSut();
+        const tags = Object.freeze([
+          createMetadataTag({ type: '@unit', value: 'traceability-model', lineNumber: 1 }),
+          createMetadataTag({ type: '@layer', value: 'domain', lineNumber: 2 }),
+        ]);
+
+        // Act
+        const actual = await sut.validateImplementation(
+          Object.freeze({
+            filePath: createPath('scripts/harness/domain/story-id.ts'),
+            tags,
+          }),
+        );
+
+        // Assert
+        expect(actual.valid).toBe(true);
+        expect(actual.errors).toEqual([]);
+      });
+    });
+
+    // UT-TM-123
+    context('@unit が0個の場合', () => {
+      it('@unit 必須エラーを返すこと', async () => {
+        // Arrange
+        const { sut } = createMetadataValidatorSut();
+        const tags = Object.freeze([
+          createMetadataTag({ type: '@layer', value: 'domain', lineNumber: 1 }),
+        ]);
+
+        // Act
+        const actual = await sut.validateImplementation(
+          Object.freeze({
+            filePath: createPath('scripts/harness/domain/story-id.ts'),
+            tags,
+          }),
+        );
+
+        // Assert
+        expect(actual.valid).toBe(false);
+        expect(actual.errors[0].message).toContain('@unit');
+        expect(actual.errors[0].message).toContain('必要');
+      });
+    });
+
     // UT-TM-116
     context('@unitの値がunit定義に存在しない場合', () => {
       it('errors[0].code==="L2-002" を満たすMetadataValidationResultが返ること', async () => {

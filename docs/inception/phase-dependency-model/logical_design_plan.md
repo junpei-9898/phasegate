@@ -6,6 +6,14 @@
 
 ---
 
+## QA
+
+Q: A-4 インフラ層追加（HarnessConfigPhaseConfigProvider 拡張・FileSystemStoryReflectionAdapter 新設）は論理設計上どの層に属するか？
+A: infrastructure 層。Port 側（domain）は `StoryReflectionFileSystemPort` と `PhaseConfigProviderPort.getStoryReflectionConfig()` のみで、具象実装は infrastructure に配置する。
+
+Q: preset マッピング（`default` → `full`）の責務はどこか？
+A: `HarnessConfigPhaseConfigProvider.getCustomizationPolicy()` 内で `PhaseCustomizationPolicy.create()` に委譲。A-2 で `PhaseCustomizationPolicy` 内にフォールバック処理が実装済み。
+
 ## 1. スコープ
 
 ### 対象ストーリー

@@ -1,5 +1,13 @@
 # ドメインモデル設計計画: phase-dependency-model
 
+## QA
+
+Q: 本計画の集約境界は確定済みか？
+A: はい。§2 に示す PhaseStructure 集約 + 値オブジェクト群で確定。A-2 で StoryReflectionConfig / StoryReflectionMapping / StoryReflectionChecker を追加済み（2026-04-04）。
+
+Q: A-4 インフラ層追加に伴いドメイン層の変更はあるか？
+A: 最小限。`PhaseConfigProviderPort` に `getStoryReflectionConfig()` を追加するのみ。既存 VO・集約の意味論は無変更。
+
 ## 1. スコープ
 
 - **対象Unit**: phase-dependency-model（H-02 Phase Dependency Model）

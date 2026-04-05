@@ -57,6 +57,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = {
           record: vi.fn(),
@@ -111,6 +112,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -146,6 +148,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -182,6 +185,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -231,6 +235,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -269,6 +274,7 @@ target('CheckPhaseGateUseCase', () => {
           getCustomizationPolicy: vi.fn().mockResolvedValue(policy),
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const auditLogger: PhaseAuditLoggerPort = {
           record: vi.fn(),

@@ -27,9 +27,13 @@ This file is the **Single Source of Truth** for all quality configuration in a P
     "relaxedGates": ["phase-gate", "2-phase-execution"]
   },
   "phaseDependencies": {
-    "preset": "default",       // "default" | "custom"
+    "preset": "standard",      // "full" | "standard" | "minimal" | "custom" ("default" -> "full")
     "override": false,
-    "customRules": []
+    "customRules": [],
+    "storyReflection": {       // Optional. Defaults per preset when omitted.
+      "enabled": true,
+      "mappings": []           // Omit to use the preset's built-in mappings.
+    }
   },
   "planningMode": {
     "default": "interactive",  // "interactive" | "embedded-qa"
@@ -108,11 +112,111 @@ The five layers are:
 
 #### `phaseDependencies`
 
-| Sub-field     | Type       | Default     | Description                                                        |
-|---------------|------------|-------------|--------------------------------------------------------------------|
-| `preset`      | `string`   | `"default"` | `"default"` uses the built-in AIDLC phase dependency graph. `"custom"` enables `customRules`. |
-| `override`    | `boolean`  | `false`     | When `true`, custom rules fully replace the default graph instead of extending it. |
-| `customRules` | `array`    | `[]`        | Array of custom phase dependency rules. Only used when `preset` is `"custom"`. |
+| Sub-field          | Type       | Default      | Description                                                        |
+|--------------------|------------|--------------|--------------------------------------------------------------------|
+| `preset`           | `string`   | `"standard"` | One of `"full"`, `"standard"`, `"minimal"`, `"custom"`. `"default"` is accepted for backward compatibility and falls back to `"full"`. |
+| `override`         | `boolean`  | `false`      | When `true`, custom rules fully replace the default graph instead of extending it. Required when `preset` is `"custom"`. |
+| `customRules`      | `array`    | `[]`         | Array of custom phase dependency rules. Only used when `preset` is `"custom"`. |
+| `storyReflection`  | `object`   | preset-based | See [storyReflection](#storyreflection-inception--product-gate) below. Omit entirely for zero-config defaults per preset. |
+
+##### Phase Dependency Presets
+
+| Preset     | Phase 3 Gates | storyReflection default                                                 | Use Case                                           |
+|------------|---------------|-------------------------------------------------------------------------|----------------------------------------------------|
+| `full`     | All gates     | **Enabled** -- `logical_design.md` + `domain_model.md` required, `uiux_design.md` optional | AIDLC full ceremony; mission-critical systems      |
+| `standard` | Core gates    | **Enabled** -- `logical_design.md` required, `domain_model.md` optional | Production development with moderate rigor        |
+| `minimal`  | None          | **Disabled**                                                            | Prototyping / exploration (trade-off: no reflection enforcement) |
+| `custom`   | User-defined  | User-defined (zero or explicit `mappings`)                              | Full control via `customRules` and `storyReflection.mappings` |
+
+> `"default"` is accepted as an alias for `"full"` so existing `phasegate.config.json` files keep working after the upgrade.
+
+#### `storyReflection` (inception -> product gate)
+
+`storyReflection` enforces that every US / issue under `docs/inception/{unit}/{storyId}/` has been **cascaded into the accumulating product design documents** (`docs/product/construction/{unit}/`) before source code under `src/{unit}/` or `scripts/harness/{unit}/` can be written or edited.
+
+The check fires at the pre-tool-use hook and blocks `Write`/`Edit` (and their Bash equivalents such as `cat > file`, `tee`, heredoc, `sed -i`, `cp`, `mv`, `touch`) whenever an inception design exists but its `@story-id` is not reflected in the corresponding product file.
+
+**Zero-config**: omitting the `storyReflection` block, or specifying it without `mappings`, applies the preset's built-in mappings automatically.
+
+| Sub-field   | Type       | Default                 | Description                                                                  |
+|-------------|------------|-------------------------|------------------------------------------------------------------------------|
+| `enabled`   | `boolean`  | preset-dependent        | Master switch. `full` / `standard` default to `true`; `minimal` defaults to `false`. |
+| `mappings`  | `array`    | preset-dependent        | Array of inception -> product file mappings. Omit to use the preset default. |
+
+Each mapping entry:
+
+| Field       | Type      | Description                                                                 |
+|-------------|-----------|-----------------------------------------------------------------------------|
+| `inception` | `string`  | Template path, e.g. `"docs/inception/{unit}/{storyId}/logical_design.md"`. |
+| `product`   | `string`  | Template path, e.g. `"docs/product/construction/{unit}/logical_design.md"`.|
+| `required`  | `boolean` | When `true`, missing reflection blocks the write. When `false`, it is tolerated (optional mapping). |
+
+##### Preset defaults (hard-coded)
+
+**`full`** -- AIDLC recommended (product-accumulated design documents only; test designs are out of scope because they live per-US inside `inception/`):
+
+```jsonc
+[
+  { "inception": "docs/inception/{unit}/{storyId}/logical_design.md",
+    "product":   "docs/product/construction/{unit}/logical_design.md",
+    "required": true },
+  { "inception": "docs/inception/{unit}/{storyId}/domain_model.md",
+    "product":   "docs/product/construction/{unit}/domain_model.md",
+    "required": true },
+  { "inception": "docs/inception/{unit}/{storyId}/uiux_design.md",
+    "product":   "docs/product/construction/{unit}/uiux_design.md",
+    "required": false }
+]
+```
+
+**`standard`**:
+
+```jsonc
+[
+  { "inception": "docs/inception/{unit}/{storyId}/logical_design.md",
+    "product":   "docs/product/construction/{unit}/logical_design.md",
+    "required": true },
+  { "inception": "docs/inception/{unit}/{storyId}/domain_model.md",
+    "product":   "docs/product/construction/{unit}/domain_model.md",
+    "required": false }
+]
+```
+
+**`minimal`**: `enabled: false`. No storyReflection checking.
+
+##### Custom mappings example
+
+Override the preset defaults only when your project needs a different policy:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "standard",
+    "storyReflection": {
+      "enabled": true,
+      "mappings": [
+        { "inception": "docs/inception/{unit}/{storyId}/logical_design.md",
+          "product":   "docs/product/construction/{unit}/logical_design.md",
+          "required": true }
+      ]
+    }
+  }
+}
+```
+
+##### How the check fires
+
+1. `Write` / `Edit` (or a Bash write such as `cat > src/order/foo.ts`) targets a source file under a Unit.
+2. `WriteTargetScope` resolves the `@unit` annotation (comma-separated and multi-line `@unit` are both supported; **all** listed units are checked).
+3. For each unit, every `storyId` directory under `docs/inception/{unit}/` is enumerated.
+4. For each required mapping, the pre-tool-use hook checks that the target product document contains `@story-id {storyId}`.
+5. Any missing reflection produces a `STORY_REFLECTION` block reason with a fix hint that points to the `cascade-updater` skill and [ADR-013](../ADR/ADR-013-story-reflection-gate.md).
+
+##### Passing the gate
+
+`cascade-updater` is the **standard means of passing the storyReflection gate**: run it to propagate the new US / issue design into the accumulating product documents. Manual editing of the product file with an appended `@story-id` tag is also accepted.
+
+Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well (see [Quick Mode](#quick-mode)). L1 and L2 `metadata` / `test-quality` checks remain fully enforced.
 
 #### `planningMode`
 

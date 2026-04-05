@@ -6,6 +6,14 @@
 
 ---
 
+## QA
+
+Q: A-4 インフラ層追加のユニットテストは本計画のスコープに含むか？
+A: 含む。`HarnessConfigPhaseConfigProvider` の preset マッピング + storyReflection パース、および `FileSystemStoryReflectionAdapter` の tmp ディレクトリ I/O テストをユニットテスト枠で実装する。詳細ロジックは `unit_test_logic_plan.md` に記載。
+
+Q: 既存ユニットテストへの影響は？
+A: 無影響。`PhaseConfigProviderPort` に `getStoryReflectionConfig()` を追加するだけで、既存 VO・集約テストはそのまま。
+
 ## 1. スコープ
 
 - 対象Unit: phase-dependency-model

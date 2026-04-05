@@ -2,6 +2,20 @@
 
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
+
+## QA（設計判断の根拠）
+
+### Q1: IT テストの対象範囲
+- **Q**: Hook 全体のエンドツーエンドを IT で検証するか、UseCase 単位で留めるか？
+- **A**: **UseCase 単位 + Adapter 単位**。Hook エントリポイント全体は E2E として scenario テストで扱う。
+- **根拠**: IT の責務は複数コンポーネント統合だが完全な E2E ではない。
+
+### Q2: モック方針
+- **Q**: phase-dependency-model の phaseGateQueryPort を IT でモックするか、実装を使うか？
+- **A**: **実装を使う**（別 Unit の application サービスを呼ぶ）。Unit 境界を跨ぐ IT では本物の連携を検証。
+- **根拠**: 統合の正しさこそ IT の主目的。
+
+
 > **参照文書**:
 > - `docs/product/construction/agent-integration/logical_design.md`
 > - `docs/product/units/integration_contract.md`

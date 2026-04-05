@@ -252,6 +252,7 @@ export async function deployHookScripts(
 export async function initHarnessConfig(
   projectRoot: string,
   projectName: string,
+  phasePreset?: 'full' | 'standard' | 'minimal' | 'custom',
 ): Promise<{ created: boolean; path: string }> {
   const configPath = join(projectRoot, HARNESS_CONFIG_FILE);
   try {
@@ -269,7 +270,7 @@ export async function initHarnessConfig(
     layers: {},
     quickMode: {},
     phaseDependencies: {
-      preset: 'default',
+      preset: phasePreset ?? 'default',
       override: false,
       customRules: [],
     },

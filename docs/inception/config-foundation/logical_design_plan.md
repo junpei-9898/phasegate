@@ -240,3 +240,31 @@ Presentation方針:
 2. `LoadResolvedConfigUseCase` とスキーマValidatorを先に通す
 3. `phasegate:enable/disable` のApplication + Presentationを接続
 4. Feature RegistryのWave 2差し替え点を残して固定化する
+
+---
+
+## 7. QA（不明点・確認事項）
+
+### [Question] Q1: `preset: "default"` の扱い
+
+configurable_phase_gate_plan §4.1 で導入される `preset: "default"` は、config-foundation の `Preset` 値オブジェクトとしても受け入れるべきか。それとも「スキーマレベルの省略時フォールバック」として扱い、`Preset` 値オブジェクトには `full` / `standard` / `minimal` / `custom` のみを置くべきか。
+
+**決定**: `"default"` はスキーマ入力の糖衣構文（syntactic sugar）として扱い、`HarnessConfigPhaseConfigProvider` 内で `"full"` へ解決する。`Preset` 値オブジェクトおよびドメイン層は `full` / `standard` / `minimal` / `custom` の 4 値のみを知る。これにより Domain 層に「default という曖昧な別名」が漏れず、`PresetResolutionService` の分岐も単純に保てる。
+
+[Answer] configurable_phase_gate_plan §4.1 / §A-6 の方針と整合。Infrastructure 層（`HarnessConfigPhaseConfigProvider.getStoryReflectionConfig()`）で `default → full` フォールバックを実装する。
+
+### [Question] Q2: `--preset` CLI オプション追加時のスコープ
+
+`main.ts` に `--preset <name>` オプションを追加する際、config-foundation の CLI ハンドラ群（`EnableFeatureCommandHandler` 等）との役割分担はどうすべきか。
+
+**決定**: `--preset` は **init 系コマンド（`phasegate init`）専用のオプション**として実装する。既存の `enable` / `disable` / `validate` コマンドには波及させない。init 以外のコマンド実行時に `--preset` を渡した場合は引数パースエラーとする。init 実装は `skill-deployer.ts` の `initHarnessConfig` を経由して `phasegate.config.json` の初期値を書き込む（configurable_phase_gate_plan §A-6-2）。
+
+[Answer] configurable_phase_gate_plan §A-6 で定義された init 側の責務に閉じ込める。presentation/cli の enable/disable ハンドラには影響を与えない。
+
+### [Question] Q3: JSON スキーマ拡張の後方互換性
+
+`harness-config-v2.schema.json` に `phaseDependencies.storyReflection` セクションと `phaseDependencies.preset: "default"` を追加する際、既存の `phasegate.config.json`（これらのキーを持たない）がバリデーションエラーで動かなくなることはないか。
+
+**決定**: 両フィールドとも **optional** で追加し、未指定時は `HarnessConfigPhaseConfigProvider` 層でデフォルト値にフォールバックする。スキーマ上の `required` 配列には追加しない。これにより既存プロジェクトの設定ファイルは無改修で引き続き有効。
+
+[Answer] configurable_phase_gate_plan §4.1 の後方互換性要件と整合。Ajv スキーマレベルでは optional、Provider レベルでデフォルト補完、という二段構成で担保する。

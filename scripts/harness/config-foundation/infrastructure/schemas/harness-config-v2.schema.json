@@ -152,11 +152,11 @@
     "phaseDependencies": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["preset", "override", "customRules"],
+      "required": ["preset"],
       "properties": {
         "preset": {
           "type": "string",
-          "enum": ["default", "custom"]
+          "enum": ["default", "full", "standard", "minimal", "custom"]
         },
         "override": {
           "type": "boolean"
@@ -176,6 +176,36 @@
                 "type": "array",
                 "items": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "storyReflection": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "mappings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["unitId", "artifacts"],
+                "properties": {
+                  "unitId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "artifacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
                 }
               }
             }

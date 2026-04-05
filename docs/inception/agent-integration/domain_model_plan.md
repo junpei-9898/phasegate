@@ -7,6 +7,25 @@
 
 ---
 
+## QA（設計判断の根拠）
+
+### Q1: Hook event を Entity とするか Value Object とするか
+- **Q**: PreToolUse/PostToolUse/Stop の Hook event は状態を持たないが、Entity 扱いすべきか？
+- **A**: **Value Object**。Hook event は immutable で、識別子も state 遷移もない。
+- **根拠**: DDD 原則により、不変で値等価性で判定できるものは VO。
+
+### Q2: Protected file list の所有権
+- **Q**: どのファイルが保護対象かの判定ロジックはどこに置くか？
+- **A**: **agent-integration Unit の domain**。config から読み込んだ protected パターンを VO として保持し、マッチング判定を domain service で行う。
+- **根拠**: Hook の振る舞い決定は agent-integration の中核責務。
+
+### Q3: Phase Gate との連携方法
+- **Q**: agent-integration から phase-dependency-model をどう呼ぶか？
+- **A**: **Port 経由**。PhaseGateQueryPort を domain に定義し、infrastructure で phase-dependency-model の application サービスを呼ぶ adapter を実装。
+- **根拠**: Clean Architecture の依存方向原則。
+
+---
+
 ## 1. スコープ
 
 - **対象Unit**: agent-integration

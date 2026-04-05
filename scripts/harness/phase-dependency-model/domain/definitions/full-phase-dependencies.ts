@@ -3,12 +3,12 @@
  * @unit phase-dependency-model
  */
 
-import { DEFAULT_PHASE_NODES } from './default-phase-nodes.js';
+import { FULL_PHASE_NODES } from './full-phase-nodes.js';
 import { PhaseDependency } from '../values/phase-dependency.js';
 import { PhaseNode } from '../values/phase-node.js';
 
 const nodeIndex = new Map<string, PhaseNode>(
-  DEFAULT_PHASE_NODES.map((node) => [node.nodeKey(), node]),
+  FULL_PHASE_NODES.map((node) => [node.nodeKey(), node]),
 );
 
 const getNode = (nodeKey: string): PhaseNode => {
@@ -27,7 +27,7 @@ const createDependency = (
   type: 'requires' | 'recommends' = 'requires',
 ): PhaseDependency => PhaseDependency.create({ from: getNode(from), to: getNode(to), type });
 
-export const DEFAULT_PHASE_DEPENDENCIES: readonly PhaseDependency[] = Object.freeze([
+export const FULL_PHASE_DEPENDENCIES: readonly PhaseDependency[] = Object.freeze([
   createDependency('1:product-architect', '1:story-writer'),
   createDependency('1:story-writer', '1:story-mapper'),
   createDependency('1:story-mapper', '1:unit-designer'),

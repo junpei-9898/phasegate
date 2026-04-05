@@ -6,6 +6,14 @@
 
 ---
 
+## QA
+
+Q: A-4 で新設される `FileSystemStoryReflectionAdapter` と `HarnessConfigPhaseConfigProvider` 拡張は IT テストで扱うか？
+A: 一部扱う。`FileSystemStoryReflectionAdapter` は tmp ディレクトリを使った I/O 検証をユニットテスト枠で実装する（単一コンポーネントで完結するため）。`HarnessConfigPhaseConfigProvider` は preset マッピング + storyReflection パースの挙動をユニットテストで検証する。IT テストでは既存 `CheckPhaseGateUseCase` 経路の回帰確認のみ。
+
+Q: 既存 IT テストに影響があるか？
+A: 影響なし。`PhaseConfigProviderPort` に `getStoryReflectionConfig()` を追加するが、既存 UseCase は参照しない。A-3 で UseCase 統合後に IT テスト追加を検討する。
+
 ## 1. スコープ
 
 - 対象Unit: phase-dependency-model

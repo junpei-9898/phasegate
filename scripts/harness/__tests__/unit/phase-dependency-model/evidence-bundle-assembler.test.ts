@@ -44,6 +44,7 @@ target('EvidenceBundleAssembler', () => {
           getPlanningMode: vi.fn().mockResolvedValue(planningMode),
           getCustomizationPolicy: vi.fn(),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const sut = new EvidenceBundleAssembler({
           artifactExistenceChecker,
@@ -87,6 +88,7 @@ target('EvidenceBundleAssembler', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getCustomizationPolicy: vi.fn(),
           getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
         };
         const sut = new EvidenceBundleAssembler({
           artifactExistenceChecker,

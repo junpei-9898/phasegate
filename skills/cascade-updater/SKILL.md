@@ -9,6 +9,19 @@ review: opus
 
 下位フェーズでの発見・変更・人間からの指示を、正しいレイヤーの設計文書にフィードバックし、影響範囲を整合的に更新するスキル。
 
+## storyReflection ゲート通過の標準手段
+
+`phaseDependencies.storyReflection`（ADR-013）は、`docs/inception/{unit}/{storyId}/` 配下の US/issue 設計が `docs/product/construction/{unit}/` の累積設計文書に反映されていない場合、`src/{unit}/*` および `scripts/harness/{unit}/*` への Write/Edit（Bash 迂回経由の書き込みも含む）を pre-tool-use hook でブロックする。
+
+**cascade-updater はこの storyReflection ゲートを通過する標準手段である。**
+
+- `full` / `standard` プリセットでは、inception の新規 US/issue を作成した後、実装着手前に cascade-updater を実行して product 文書に `@story-id {storyId}` を追記する
+- cascade-updater を実行せずに実装へ進もうとすると `[L2-STORY-REFLECTION]` ブロックが発生する（エラー中で本スキルの実行が案内される）
+- `minimal` プリセットでは storyReflection が無効化されるためゲート連動しないが、cascade-updater による設計整合性の維持は推奨される
+- Quick Mode (`relaxedGates: ["phase-gate"]`) 時は storyReflection も緩和されるため、cascade-updater 実行の必須性は緩まる（ただし品質維持のため実行は推奨）
+
+詳細は ADR-013 および `docs/guide/configuration.md` の storyReflection セクションを参照。
+
 ## 前提条件チェック
 
 ### 必須インプット

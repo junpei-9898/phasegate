@@ -22,7 +22,7 @@ const createNode = (
     artifacts: artifacts.map((artifact) => Artifact.create(artifact)),
   });
 
-export const DEFAULT_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
+export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(1, 'product-architect', [
     {
       name: 'product-overview-plan',
@@ -47,35 +47,6 @@ export const DEFAULT_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
       required: true,
     },
   ]),
-  createNode(1, 'story-mapper', [
-    {
-      name: 'story-mapping-plan',
-      path: 'docs/inception/_shared/story_mapping_plan.md',
-      required: true,
-    },
-    {
-      name: 'user-story-mapping',
-      path: 'docs/product/user_story_mapping.md',
-      required: true,
-    },
-  ]),
-  createNode(1, 'unit-designer', [
-    {
-      name: 'unit-design-plan',
-      path: 'docs/inception/_shared/unit_design_plan.md',
-      required: true,
-    },
-    {
-      name: 'unit-definition',
-      path: 'docs/product/units/{unit}_unit.md',
-      required: true,
-    },
-    {
-      name: 'integration-contract',
-      path: 'docs/product/units/integration_contract.md',
-      required: true,
-    },
-  ]),
   createNode(2, 'domain-designer', [
     {
       name: 'domain-model-plan',
@@ -97,54 +68,6 @@ export const DEFAULT_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     {
       name: 'logical-design',
       path: 'docs/product/construction/{unit}/logical_design.md',
-      required: true,
-    },
-  ]),
-  createNode(2, 'it-test-designer', [
-    {
-      name: 'it-test-design-plan',
-      path: 'docs/inception/{unit}/it_test_design_plan.md',
-      required: true,
-    },
-    {
-      name: 'it-test-design',
-      path: 'docs/product/construction/{unit}/it_test_design.md',
-      required: true,
-    },
-  ]),
-  createNode(2, 'unit-test-designer', [
-    {
-      name: 'unit-test-design-plan',
-      path: 'docs/inception/{unit}/unit_test_design_plan.md',
-      required: true,
-    },
-    {
-      name: 'unit-test-design',
-      path: 'docs/product/construction/{unit}/unit_test_design.md',
-      required: true,
-    },
-  ]),
-  createNode(2, 'it-test-logic-designer', [
-    {
-      name: 'it-test-logic-plan',
-      path: 'docs/inception/{unit}/it_test_logic_plan.md',
-      required: true,
-    },
-    {
-      name: 'it-test-logic',
-      path: 'docs/product/construction/{unit}/it_test_logic.md',
-      required: true,
-    },
-  ]),
-  createNode(2, 'unit-test-logic-designer', [
-    {
-      name: 'unit-test-logic-plan',
-      path: 'docs/inception/{unit}/unit_test_logic_plan.md',
-      required: true,
-    },
-    {
-      name: 'unit-test-logic',
-      path: 'docs/product/construction/{unit}/unit_test_logic.md',
       required: true,
     },
   ]),

@@ -4,7 +4,10 @@ import {
   CustomRule,
   InvalidCustomRuleError,
 } from '../../../phase-dependency-model/domain/values/custom-rule.js';
-import { PhaseCustomizationPolicy } from '../../../phase-dependency-model/domain/values/phase-customization-policy.js';
+import {
+  PhaseCustomizationPolicy,
+  type PresetName,
+} from '../../../phase-dependency-model/domain/values/phase-customization-policy.js';
 
 const createCustomRule = (
   overrides: Partial<{
@@ -132,6 +135,85 @@ target('PhaseCustomizationPolicy.create', () => {
   });
 });
 
+target('PhaseCustomizationPolicy プリセット拡張', () => {
+  describe('PresetName型のプリセットを生成する', () => {
+    // A-2-1: preset type extension
+    it("'default' プリセットは 'full' にフォールバックされる", () => {
+      // Arrange
+      const input = {
+        preset: 'default' as const,
+        rules: [] as readonly CustomRule[],
+        overrideEnabled: false,
+      };
+
+      // Act
+      const actual = PhaseCustomizationPolicy.create(input);
+
+      // Assert
+      expect(actual.preset).toBe('full');
+    });
+
+    it("'full' プリセットが生成できる", () => {
+      // Arrange
+      const input = {
+        preset: 'full' as PresetName,
+        rules: [] as readonly CustomRule[],
+        overrideEnabled: false,
+      };
+
+      // Act
+      const actual = PhaseCustomizationPolicy.create(input);
+
+      // Assert
+      expect(actual.preset).toBe('full');
+    });
+
+    it("'standard' プリセットが生成できる", () => {
+      // Arrange
+      const input = {
+        preset: 'standard' as PresetName,
+        rules: [] as readonly CustomRule[],
+        overrideEnabled: false,
+      };
+
+      // Act
+      const actual = PhaseCustomizationPolicy.create(input);
+
+      // Assert
+      expect(actual.preset).toBe('standard');
+    });
+
+    it("'minimal' プリセットが生成できる", () => {
+      // Arrange
+      const input = {
+        preset: 'minimal' as PresetName,
+        rules: [] as readonly CustomRule[],
+        overrideEnabled: false,
+      };
+
+      // Act
+      const actual = PhaseCustomizationPolicy.create(input);
+
+      // Assert
+      expect(actual.preset).toBe('minimal');
+    });
+
+    it("preset 省略 + ルールなしは 'full' になる", () => {
+      // Arrange
+      const input = {
+        rules: [] as readonly CustomRule[],
+        overrideEnabled: false,
+      };
+
+      // Act
+      const actual = PhaseCustomizationPolicy.create(input);
+
+      // Assert
+      expect(actual.preset).toBe('full');
+    });
+  });
+});
+
 target('PhaseCustomizationPolicy.equals', () => {
   describe('値等価性を判定する', () => {
     // UT-PD-083
@@ -151,6 +233,28 @@ target('PhaseCustomizationPolicy.equals', () => {
 
         // Assert
         expect(actual).toBe(true);
+      });
+    });
+
+    context('異なるプリセットのPhaseCustomizationPolicyを比較する場合', () => {
+      it('equals で異なるプリセットは false', () => {
+        // Arrange
+        const left = PhaseCustomizationPolicy.create({
+          preset: 'full',
+          rules: [],
+          overrideEnabled: false,
+        });
+        const right = PhaseCustomizationPolicy.create({
+          preset: 'minimal',
+          rules: [],
+          overrideEnabled: false,
+        });
+
+        // Act
+        const actual = left.equals(right);
+
+        // Assert
+        expect(actual).toBe(false);
       });
     });
   });

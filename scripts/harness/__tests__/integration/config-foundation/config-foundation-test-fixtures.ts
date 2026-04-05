@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type {
+  PhaseDependenciesPresetId,
   HarnessConfigResolvedDocument,
   HarnessConfigSourceDocument,
 } from '../../../config-foundation/domain/harness-config.js';
@@ -183,6 +184,18 @@ export function createValidSourceDocument(
   };
 
   return deepMerge(baseDocument, overrides);
+}
+
+export function createValidSourceDocumentWithPhasePreset(
+  phasePreset: PhaseDependenciesPresetId,
+): HarnessConfigSourceDocument {
+  return createValidSourceDocument({
+    phaseDependencies: {
+      preset: phasePreset,
+      override: false,
+      customRules: [],
+    },
+  });
 }
 
 export function createHarnessError(
