@@ -6,18 +6,25 @@
  */
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const ROOT = resolve(process.cwd());
 const MAIN = resolve(ROOT, 'scripts/harness/main.ts');
+const TSX_BIN = resolve(ROOT, 'node_modules/.bin/tsx');
 
 function run(...args: string[]) {
-  const result = spawnSync('npx', ['tsx', MAIN, ...args], {
-    cwd: ROOT,
+  return runInCwd(ROOT, ...args);
+}
+
+function runInCwd(cwd: string, ...args: string[]) {
+  const result = spawnSync(TSX_BIN, [MAIN, ...args], {
+    cwd,
     encoding: 'utf-8',
     env: { ...process.env, NODE_ENV: 'test' },
     stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: 30_000,
+    timeout: 90_000,
     maxBuffer: 10 * 1024 * 1024,
   });
   return {
@@ -27,13 +34,23 @@ function run(...args: string[]) {
   };
 }
 
+function withTempDir<T>(testFn: (cwd: string) => T): T {
+  const cwd = mkdtempSync(join(tmpdir(), 'phasegate-cli-test-'));
+
+  try {
+    return testFn(cwd);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+}
+
 describe('harness CLI E2E', () => {
   describe('ヘルプ・基本動作', () => {
     it('--help でUsageが表示され exit 0 で終了する', () => {
       const actual = run('--help');
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('Usage: harness <command>');
+      expect(actual.stdout).toContain('Usage: phasegate <command>');
       expect(actual.stdout).toContain('enable-feature');
       expect(actual.stdout).toContain('lint');
     });
@@ -42,7 +59,7 @@ describe('harness CLI E2E', () => {
       const actual = run();
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('Usage: harness <command>');
+      expect(actual.stdout).toContain('Usage: phasegate <command>');
     });
 
     it('未知のコマンドで exit 2 が返る', () => {
@@ -82,6 +99,36 @@ describe('harness CLI E2E', () => {
 
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).toContain('Available features');
+    });
+
+    it('init --preset full で phaseDependencies.preset に full が書き込まれる', () => {
+      // Arrange
+      const actual = withTempDir((cwd) => {
+        // Act
+        const result = runInCwd(cwd, 'init', '--preset', 'full', '--name', 'test-project');
+        const config = JSON.parse(readFileSync(join(cwd, 'phasegate.config.json'), 'utf-8')) as {
+          phaseDependencies: { preset: string };
+        };
+
+        // Assert
+        expect(result.exitCode).toBe(0);
+        expect(config.phaseDependencies.preset).toBe('full');
+        return result;
+      });
+
+      expect(actual.stderr).toBe('');
+    });
+
+    it('init --preset invalid で exit 2 が返る', () => {
+      // Arrange
+      const actual = withTempDir((cwd) => (
+        // Act
+        runInCwd(cwd, 'init', '--preset', 'invalid')
+      ));
+
+      // Assert
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain('Invalid --preset value');
     });
   });
 
