@@ -1121,3 +1121,110 @@ interface RecordPhaseOverrideAuditInput {
 **変更内容**: `planningMode: 'standard'` → `planningMode: 'interactive'` に修正（`phasegate.config.json` の `planningMode.default: 'interactive'` と一致させた）
 
 **影響ファイル**: `scripts/harness/phase-dependency-model/composition-root.ts`
+
+---
+
+## 10. Phase B 拡張: Configurable Gates（configurable_phase_gate_plan）
+
+> **追加日**: 2026-04-05
+> **対応計画書**: `docs/inception/_shared/configurable_phase_gate_plan.md` §5 / B-2〜B-4
+> **前提**: `domain_model.md` §11
+
+### 10.1 ディレクトリ追加
+
+```text
+scripts/harness/phase-dependency-model/
+├── domain/
+│   ├── values/
+│   │   ├── gate-definition.ts            # GateDefinition VO（INV-10 検証）
+│   │   ├── gate-name.ts                  # GateName VO（^[a-z][a-z0-9-]*$ 検証）
+│   │   └── gate-story-annotation.ts      # GateStoryAnnotation VO
+│   ├── services/
+│   │   └── gate-graph.ts                 # GateGraph ドメインサービス（INV-11〜14 検証）
+│   └── ports/
+│       └── glob-matcher-port.ts          # GlobMatcherPort インターフェース
+├── application/
+│   └── usecases/
+│       └── resolve-gate-usecase.ts       # ResolveGateUseCase（B-3-1）
+└── infrastructure/
+    ├── adapters/
+    │   └── picomatch-glob-matcher.ts     # GlobMatcherPort の picomatch 実装
+    └── config/
+        └── custom-gates-config-parser.ts # gates[] パース + JSON Schema 検証
+```
+
+### 10.2 Domain層拡張
+
+**GateDefinition**（`domain/values/gate-definition.ts`）:
+- コンストラクタで INV-10 を検証: `storyAnnotation` を持つ場合 `level === 3` を強制、違反時 `InvalidGateDefinitionError` をスロー
+- `requires`/`blocks`/`dependsOn` は `readonly` 配列として凍結
+- ファクトリ: `GateDefinition.fromRaw(raw: unknown): GateDefinition`（infrastructure の生 JSON を受け入れる）
+
+**GateGraph**（`domain/services/gate-graph.ts`）:
+- `GateGraph.build(gates: GateDefinition[]): GateGraph` — 構築時に INV-11〜14 を検証し、失敗時 `GateGraphValidationError` をスロー（詳細に全違反を集約）
+- `detectCycles(): GateName[][]` — Tarjan の強連結成分アルゴリズムで循環検出
+- `validateLevelOrder()` — `dependsOn` 参照先の `level <= self.level` を保証
+- `resolveAncestors(name): GateName[]` — トポロジカル順で先祖ゲートを返す（`ResolveGateUseCase` から使用）
+
+**PhaseStructure 拡張**:
+- 新ファクトリ `PhaseStructure.fromGates(gates: GateDefinition[], policy: PhaseCustomizationPolicy): PhaseStructure`
+- 既存の `fromPresetRules()` 経路は維持し、`policy.preset === 'custom'` のときのみ新経路を使う
+- 既存 INV-1〜9 は新経路でも同じく適用（`GateDefinition → PhaseNode` 変換後の検証は従来通り）
+
+### 10.3 Application層拡張
+
+**ResolveGateUseCase**（`application/usecases/resolve-gate-usecase.ts`）:
+
+入力:
+- `targetPath: string` — Write 対象ファイルパス
+- `gates: GateDefinition[]` — custom プリセットの全ゲート
+- `scope?: Scope` — storyId/unitId
+
+出力:
+- `ResolveGateResult { matchedGates: GateDefinition[], missingRequirements: Requirement[], auditPayload }`
+
+フロー:
+1. `GlobMatcherPort.match(gate.blocks[i], targetPath)` で該当ゲートを抽出
+2. 該当ゲートに対し `GateGraph.resolveAncestors()` で先行ゲートを取得
+3. 先行ゲート + 該当ゲートの `requires[]` を `ArtifactExistenceCheckerPort.exists()` でチェック
+4. 未充足項目を `missingRequirements[]` に集約して返す
+
+**HandlePreToolUseUseCase 統合**:
+- `config.phaseDependencies.preset === 'custom'` の分岐で `ResolveGateUseCase` を呼び出す
+- 既存プリセット時は従来の `CheckPhaseGateUseCase` 経路を維持（後方互換）
+- ブロック判定結果は既存の `HarnessError` メッセージフォーマットに統合（ユーザー体験の一貫性）
+
+### 10.4 Infrastructure層拡張
+
+**PicomatchGlobMatcher**（`infrastructure/adapters/picomatch-glob-matcher.ts`）:
+- `GlobMatcherPort` の実装。`picomatch(pattern, { dot: true })(path)` で判定
+- `picomatch` はモジュールロード時に 1 回だけコンパイル、LRU キャッシュで再利用
+- `dependencies`（devDependencies ではなく）に `"picomatch": "^4.0.0"` を追加
+
+**CustomGatesConfigParser**（`infrastructure/config/custom-gates-config-parser.ts`）:
+- `HarnessConfigV2.phaseDependencies.gates[]` を AJV（draft-07）で検証
+- JSON Schema は `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json` の `gates` 定義を参照（config-foundation と協調）
+- 検証通過後 `GateDefinition.fromRaw()` で VO 化、`GateGraph.build()` で DAG 検証
+- 検証失敗時は `InvalidCustomGatesConfigError` を throw し、起動時エラーとしてユーザーに提示
+
+**L2-002 統合**（B-4-3）:
+- `ValidateDesignStoryAnnotationsUseCase` は `GateDefinition.storyAnnotation` を新規入力として受け取る
+- 従来のハードコード `level-3-story-annotation.rule.ts` ロジックは、`custom` プリセット時は `gate.storyAnnotation.tag` でオーバーライド可能
+- `required: false` の annotation は警告のみ（既存の緩和ルール準拠）
+
+### 10.5 テスト方針（B-5）
+
+| テスト | 層 | 観点 |
+|--------|-----|------|
+| `gate-definition.test.ts` | Domain | INV-10（storyAnnotation + level !== 3 で throw）、kebab-case 検証、空 blocks 許容 |
+| `gate-graph.test.ts` | Domain | 循環検出（自己ループ / 2ノード循環 / 長鎖循環）、レベル逆行検出、未知 dependsOn 検出、重複 name 検出、正常系 DAG |
+| `resolve-gate-usecase.test.ts` | Application | 単一 glob マッチ、複数 glob マッチ、dependsOn 解決、requires 欠損時の missingRequirements、scope プレースホルダ解決 |
+| `picomatch-glob-matcher.test.ts` | Infrastructure | `**/*.ts` / `scripts/harness/**/*.ts` / 否定パターンなど代表的パターン |
+| `custom-gates-config-parser.test.ts` | Infrastructure | JSON Schema 違反、DAG 違反、正常系 |
+| `custom-preset.e2e.test.ts` | E2E | config 定義 → ファイル書き込み要求 → ブロック/許可の end-to-end |
+
+### 10.6 バックワード互換性
+
+- 既存の `full` / `standard` / `minimal` プリセット利用者は `gates[]` を定義しないため、新経路は発火しない
+- `PhaseStructure.fromPresetRules()` は既存テストと同じ挙動を維持
+- `custom` プリセット利用者のみ `gates[]` を定義する必要がある（スキーマで `custom` 時 `gates[]` を required にするかは B-4-1 で決定）

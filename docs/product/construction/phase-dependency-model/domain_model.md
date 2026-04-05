@@ -298,3 +298,109 @@ classDiagram
 |---|------|---------|
 | OQ-1 | PhaseNode一覧のハードコード vs 設定ファイル定義 | Infrastructure層設計 |
 | OQ-2 | Quick ModeのrelaxedGatesとPhaseCustomizationPolicyの関係 | config-foundationとの連携設計 |
+
+---
+
+## 11. Phase B 拡張: Configurable Gates（configurable_phase_gate_plan §5）
+
+> **追加日**: 2026-04-05（configurable_phase_gate_plan Phase B）
+> **対応計画書**: `docs/inception/_shared/configurable_phase_gate_plan.md` §5 / B-2〜B-4
+
+### 11.1 追加概念
+
+| 概念 | 分類 | 説明 |
+|------|------|------|
+| **GateDefinition** | 値オブジェクト | `custom` プリセット用のゲート定義。`name` / `level` / `requires[]` / `blocks[]` / `dependsOn[]` / `storyAnnotation?` を保持 |
+| **GateGraph** | ドメインサービス | `GateDefinition[]` から DAG を構築し、循環依存・レベル順序違反・未知の `dependsOn` 参照を検出 |
+| **GateName** | 値オブジェクト | `^[a-z][a-z0-9-]*$`（kebab-case）の識別子 |
+| **GateStoryAnnotation** | 値オブジェクト | `{ required: boolean, tag: string }`。Level 3 のゲートにのみ付与可能（不変条件 INV-10） |
+
+### 11.2 GateDefinition の構造
+
+```typescript
+interface GateDefinition {
+  readonly name: GateName;              // kebab-case 識別子
+  readonly level: PhaseLevel;           // 1 | 2 | 3
+  readonly requires: ReadonlyArray<{
+    readonly path: string;              // 成果物パス（unit/story プレースホルダ可）
+    readonly required: boolean;         // true=必須、false=警告のみ
+  }>;
+  readonly blocks: ReadonlyArray<string>;       // Write 対象を決定する glob パターン（省略時はプリセット既定）
+  readonly dependsOn: ReadonlyArray<GateName>;  // 依存する先行ゲート
+  readonly storyAnnotation?: GateStoryAnnotation; // Level 3 のみ
+}
+```
+
+### 11.3 追加する不変条件
+
+| # | 不変条件 | 検証タイミング | 検証場所 |
+|---|---------|-------------|---------|
+| INV-10 | `storyAnnotation` を持つ `GateDefinition` は `level === 3` でなければならない | GateDefinition 構築時 | ドメイン層（VO コンストラクタ） |
+| INV-11 | `GateGraph` は循環依存を含んではならない | custom プリセット config ロード時 | GateGraph ドメインサービス |
+| INV-12 | `dependsOn` で参照されるゲートはすべて同一 `GateGraph` 内に存在しなければならない | custom プリセット config ロード時 | GateGraph ドメインサービス |
+| INV-13 | `GateDefinition.level` は `dependsOn` で参照される先行ゲートの `level` 以上でなければならない（レベル逆行禁止） | custom プリセット config ロード時 | GateGraph ドメインサービス |
+| INV-14 | `GateName` は同一 `GateGraph` 内で一意でなければならない | GateGraph 構築時 | GateGraph ドメインサービス |
+
+### 11.4 PhaseStructure の拡張
+
+`PhaseStructure` 集約は、`PhaseCustomizationPolicy.preset === 'custom'` の場合、従来のハードコード `PhaseNode[]` ではなく `GateDefinition[]` から動的にフェーズノード群を構築する:
+
+```
+PhaseStructure.fromGates(gates: GateDefinition[]): PhaseStructure
+  ├── GateGraph.build(gates) で DAG 検証（INV-11〜14）
+  ├── 各 GateDefinition を PhaseNode に変換
+  │   ├── skillName: gate.name
+  │   ├── artifacts: gate.requires.map(r => Artifact(r.path, r.required))
+  │   └── level: gate.level
+  └── PhaseDependency を gate.dependsOn から構築
+```
+
+既存の `full` / `standard` / `minimal` プリセットの挙動は INV-1〜9 の従来フローを維持する（`fromPresetRules(policy)` 経路）。`custom` のみ `fromGates(gates)` 経路を通る。
+
+### 11.5 新規ポート
+
+| ポート | 方向 | 理由 |
+|--------|------|------|
+| **GlobMatcherPort** | 外部→ドメイン | `gate.blocks[]` と Write 対象パスのマッチング。picomatch 実装を infrastructure で提供 |
+
+ドメイン層は glob ライブラリに直接依存せず、`GlobMatcherPort.match(pattern, path): boolean` インターフェースのみを参照する。
+
+### 11.6 Class Diagram 追補
+
+```mermaid
+classDiagram
+    class GateDefinition {
+        <<Value Object>>
+        +name: GateName
+        +level: PhaseLevel
+        +requires: GateRequirement[]
+        +blocks: string[]
+        +dependsOn: GateName[]
+        +storyAnnotation?: GateStoryAnnotation
+        +validate(): void
+    }
+
+    class GateGraph {
+        <<Domain Service>>
+        +build(gates: GateDefinition[]): GateGraph
+        +detectCycles(): GateName[][]
+        +validateLevelOrder(): void
+        +resolveAncestors(name: GateName): GateName[]
+    }
+
+    class GateStoryAnnotation {
+        <<Value Object>>
+        +required: boolean
+        +tag: string
+    }
+
+    class GlobMatcherPort {
+        <<Port>>
+        +match(pattern: string, path: string): boolean
+    }
+
+    PhaseStructure ..> GateGraph : uses (custom preset)
+    GateGraph o-- GateDefinition
+    GateDefinition *-- GateStoryAnnotation
+    PhaseStructure ..> GlobMatcherPort : uses (custom preset)
+```

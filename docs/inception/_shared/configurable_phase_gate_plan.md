@@ -623,14 +623,14 @@ storyReflection チェック:
 
 #### B-1. 未決事項の解決
 
-- [ ] B-1-1: glob ライブラリ選定（minimatch / picomatch）
-- [ ] B-1-2: `gates[]` の JSON Schema 定義を確定
+- [x] B-1-1: glob ライブラリ選定（minimatch / picomatch）→ **picomatch 採用**（既に transitive で v4.0.4 存在、高速、zero deps。`dependencies` に明示追加）
+- [x] B-1-2: `gates[]` の JSON Schema 定義を確定 → ドラフト確定（§5.2 準拠。`level ∈ {1,2,3}`、`storyAnnotation` は Level 3 のみドメイン層で検証、DAG 循環検出は `GateGraph` で実施、`additionalProperties: false`）
 
 #### B-2. ドメイン層
 
-- [ ] B-2-1: `GateDefinition` 値オブジェクトを新設（§5.2 フィールド定義に基づく）
-- [ ] B-2-2: `GateGraph` ドメインサービスを新設 — DAG 検証 + 循環依存検出
-- [ ] B-2-3: `PhaseStructure` を `gates[]` から動的構築できるよう拡張
+- [x] B-2-1: `GateDefinition` 値オブジェクトを新設（§5.2 フィールド定義に基づく）
+- [x] B-2-2: `GateGraph` ドメインサービスを新設 — DAG 検証 + 循環依存検出
+- [x] B-2-3: `PhaseStructure` を `gates[]` から動的構築できるよう拡張
 
 #### B-3. アプリケーション層
 
@@ -653,6 +653,64 @@ storyReflection チェック:
 
 - [ ] B-6-1: `docs/guide/configuration.md` に `gates[]` リファレンス追加
 - [ ] B-6-2: カスタムゲート設定の例を 2-3 パターン提供（DDD チーム、フロントエンドチーム、データパイプラインチーム）
+
+---
+
+### Phase C: 既存技術的負債の解消（Phase B と独立レーン、優先度中）
+
+> **2026-04-05 追加** — B-2 実装時の検証で発見した既存ベースライン問題。いずれも B-2 起因ではなく、v0.19.0 時点から存在する長期負債。Phase B の実装スコープ外だが、品質向上のため独立レーンで対処する必要がある。
+
+#### C-1. Vitest ワーカー RPC タイムアウト解消
+
+- [ ] C-1-1: `npm run test` 実行時の `Timeout calling "onTaskUpdate"` エラーを解消
+  - **症状**: 全 392 files / 2963 tests が PASS するにもかかわらず、Vitest 3.2.4 のワーカー RPC タイムアウトにより exit 1 になる
+  - **根本原因**: `scripts/harness/__tests__/vitest.config.ts` の `fileParallelism: false` + 大量ファイル（392）で発生する Vitest 3.2.4 の既知バグ
+  - **対処候補**:
+    - (a) `poolOptions.forks.singleFork: true` を設定して RPC 負荷を軽減
+    - (b) Vitest を 3.3+ にアップグレード（リグレッションリスク要検証）
+    - (c) `teardownTimeout` / RPC timeout を明示的に拡大
+  - **影響範囲**: CI/CD の exit code 判定、`phasegate validate` の L3 チェック
+  - **優先度**: 中（テストは通っているが exit code で誤検知リスク）
+
+#### C-2. phasegate lint ベースライン違反の解消
+
+- [ ] C-2-1: `__tests__/fixtures/` 配下の L1-004（宣言レイヤーとディレクトリ構造の不一致）を整理
+  - **症状**: `npx phasegate lint` で 1218 violations、大半が fixtures
+  - **根本原因**: テスト用フィクスチャに `@layer` アノテーションが付与されているが、fixtures ディレクトリは検証対象外という想定が lint 側と乖離
+  - **対処候補**:
+    - (a) fixtures ディレクトリを lint の除外リストに追加
+    - (b) fixtures 内ファイルの `@layer` アノテーションを削除 or `@layer fixture` のような特殊値を導入
+    - (c) fixtures を `scripts/harness/__tests__/` 外に移動
+  - **優先度**: 中（`phasegate lint` の本来のシグナルが大量のベースラインノイズに埋もれる）
+
+- [ ] C-2-2: L1-004 以外の違反の集計と対処
+  - 1218 件の内訳を分類し、fixtures 以外の本来対処すべき違反を特定
+
+#### C-3. TypeScript `tsc --noEmit` エラーの解消
+
+- [ ] C-3-1: テストファイルの `.ts` 拡張子 import エラー（TS5097）を解消
+  - **症状**: `npx tsc --noEmit` で 212 errors、大半が `import ... from './foo.ts'` 形式のテストファイル
+  - **根本原因**: `tsconfig.json` に `allowImportingTsExtensions: true` が設定されていない一方、テストコードは `.ts` 拡張子付き import を使用
+  - **対処候補**:
+    - (a) `tsconfig.json` に `allowImportingTsExtensions: true` + `noEmit: true` を設定
+    - (b) テストコードから `.ts` 拡張子を除去（grep 置換）
+  - **優先度**: 中（型検証が実質機能していない）
+
+- [ ] C-3-2: mock 型エラー（`Property 'mock' does not exist`）の解消
+  - **症状**: `check-phase-gate-usecase.test.ts` などで Vitest の `vi.fn()` に対する `.mock` アクセスが型エラー
+  - **対処候補**: `vi.fn<TSignature>()` の型注釈を追加 or `as unknown as Mock` でキャスト
+
+#### C-4. Phase C 実施順序
+
+```
+C-1（Vitest タイムアウト解消） ← 最優先。CI 判定の正確性
+  ↓
+C-2（lint ベースライン解消）   ← lint シグナルの信頼性回復
+  ↓
+C-3（tsc エラー解消）          ← 型検証の実効化
+```
+
+各項目は独立して対処可能。Phase B の作業と並行して着手してもよいが、Phase B 実装中に C-1 を先行解消しておくと B-3/B-4 の CI 検証が正確になる。
 
 ---
 

@@ -9,7 +9,10 @@ import { MINIMAL_PHASE_DEPENDENCIES } from '../definitions/minimal-phase-depende
 import { MINIMAL_PHASE_NODES } from '../definitions/minimal-phase-nodes.js';
 import { STANDARD_PHASE_DEPENDENCIES } from '../definitions/standard-phase-dependencies.js';
 import { STANDARD_PHASE_NODES } from '../definitions/standard-phase-nodes.js';
+import { GateGraph } from '../services/gate-graph.js';
+import { Artifact } from '../values/artifact.js';
 import { CustomRule, InvalidCustomRuleError } from '../values/custom-rule.js';
+import { GateDefinition } from '../values/gate-definition.js';
 import { PhaseCustomizationPolicy } from '../values/phase-customization-policy.js';
 import { PhaseDependency } from '../values/phase-dependency.js';
 import { PhaseGateResult } from '../values/phase-gate-result.js';
@@ -135,6 +138,18 @@ const resolvePresetDefinitions = (preset: string): {
   }
 };
 
+const buildNonRelaxableDependencies = (
+  dependencies: readonly PhaseDependency[],
+): readonly PhaseDependency[] =>
+  Object.freeze(
+    dependencies.filter(
+      (dependency) =>
+        dependency.isLevelTransition() ||
+        dependency.to.nodeKey() === '3:implementation-readiness-checker' ||
+        dependency.to.nodeKey() === '3:story-implementor',
+    ),
+  );
+
 export class PhaseStructure {
   readonly levels: ReadonlyMap<1 | 2 | 3, readonly PhaseNode[]>;
   readonly nodeIndex: ReadonlyMap<string, PhaseNode>;
@@ -161,30 +176,42 @@ export class PhaseStructure {
 
   static createDefault(policy: PhaseCustomizationPolicy): PhaseStructure {
     const { nodes, dependencies } = resolvePresetDefinitions(policy.preset);
-    const levels = buildLevels(nodes);
-    const nodeIndex = buildNodeIndex(nodes);
-    const nonRelaxableDependencies = Object.freeze(
-      dependencies.filter(
-        (dependency) =>
-          dependency.isLevelTransition() ||
-          dependency.to.nodeKey() === '3:implementation-readiness-checker' ||
-          dependency.to.nodeKey() === '3:story-implementor',
+
+    return PhaseStructure.createFromNodesAndDependencies(nodes, dependencies, policy);
+  }
+
+  static fromGates(gates: GateDefinition[], policy: PhaseCustomizationPolicy): PhaseStructure {
+    GateGraph.build(gates);
+
+    const nodes = gates.map((gate) =>
+      PhaseNode.create({
+        skillName: gate.name.value,
+        level: gate.level,
+        artifacts: gate.requires.map((requirement, index) =>
+          Artifact.create({
+            name: `${gate.name.value}-${index + 1}`,
+            path: requirement.path,
+            required: requirement.required,
+          }),
+        ),
+      }),
+    );
+    const nodeByGateName = new Map<string, PhaseNode>(
+      gates.map((gate, index) => [gate.name.value, nodes[index]]),
+    );
+    const dependencies = Object.freeze(
+      gates.flatMap((gate) =>
+        gate.dependsOn.map((dependencyName) =>
+          PhaseDependency.create({
+            from: nodeByGateName.get(dependencyName.value) as PhaseNode,
+            to: nodeByGateName.get(gate.name.value) as PhaseNode,
+            type: 'requires',
+          }),
+        ),
       ),
     );
-    const base = new PhaseStructure({
-      levels,
-      nodeIndex,
-      defaultDependencies: dependencies,
-      effectiveDependencies: dependencies,
-      customizationPolicy: policy,
-      nonRelaxableDependencies,
-    });
 
-    if (!policy.hasRules()) {
-      return base;
-    }
-
-    return base.applyCustomization(policy);
+    return PhaseStructure.createFromNodesAndDependencies(nodes, dependencies, policy);
   }
 
   checkPhaseGate(
@@ -506,5 +533,29 @@ export class PhaseStructure {
     for (const nodeKey of adjacency.keys()) {
       visit(nodeKey);
     }
+  }
+
+  private static createFromNodesAndDependencies(
+    nodes: readonly PhaseNode[],
+    dependencies: readonly PhaseDependency[],
+    policy: PhaseCustomizationPolicy,
+  ): PhaseStructure {
+    const levels = buildLevels(nodes);
+    const nodeIndex = buildNodeIndex(nodes);
+    const nonRelaxableDependencies = buildNonRelaxableDependencies(dependencies);
+    const base = new PhaseStructure({
+      levels,
+      nodeIndex,
+      defaultDependencies: dependencies,
+      effectiveDependencies: dependencies,
+      customizationPolicy: policy,
+      nonRelaxableDependencies,
+    });
+
+    if (!policy.hasRules()) {
+      return base;
+    }
+
+    return base.applyCustomization(policy);
   }
 }
