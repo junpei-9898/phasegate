@@ -30,6 +30,7 @@ This file is the **Single Source of Truth** for all quality configuration in a P
     "preset": "standard",      // "full" | "standard" | "minimal" | "custom" ("default" -> "full")
     "override": false,
     "customRules": [],
+    "gates": [],               // Optional. Custom phase gates (preset: "custom"). See gates[] reference below.
     "storyReflection": {       // Optional. Defaults per preset when omitted.
       "enabled": true,
       "mappings": []           // Omit to use the preset's built-in mappings.
@@ -117,6 +118,7 @@ The five layers are:
 | `preset`           | `string`   | `"standard"` | One of `"full"`, `"standard"`, `"minimal"`, `"custom"`. `"default"` is accepted for backward compatibility and falls back to `"full"`. |
 | `override`         | `boolean`  | `false`      | When `true`, custom rules fully replace the default graph instead of extending it. Required when `preset` is `"custom"`. |
 | `customRules`      | `array`    | `[]`         | Array of custom phase dependency rules. Only used when `preset` is `"custom"`. |
+| `gates`            | `array`    | `[]`         | Array of custom phase gate definitions. See [gates\[\]](#gates-custom-phase-gates) below. Optional; defaults to empty. |
 | `storyReflection`  | `object`   | preset-based | See [storyReflection](#storyreflection-inception--product-gate) below. Omit entirely for zero-config defaults per preset. |
 
 ##### Phase Dependency Presets
@@ -129,6 +131,137 @@ The five layers are:
 | `custom`   | User-defined  | User-defined (zero or explicit `mappings`)                              | Full control via `customRules` and `storyReflection.mappings` |
 
 > `"default"` is accepted as an alias for `"full"` so existing `phasegate.config.json` files keep working after the upgrade.
+
+#### `gates[]` (custom phase gates)
+
+`gates[]` lets a project declare **additional phase gates** that fire when a write targets specific file globs. Each gate is checked at the pre-tool-use hook (and via `check-phase-gate` CLI) and blocks the write if its preconditions are not met.
+
+`gates[]` is typically combined with `preset: "custom"` and `override: true` when the project wants full control over the phase dependency graph. It is also valid to layer a small number of gates on top of `preset: "custom"` without replacing the full graph.
+
+**Validation is fail-fast**: a malformed `gates[]` entry (e.g. `level: 99`, unknown dependency) causes `loadResolvedConfig()` to exit with code `2` and prints `Invalid phasegate.config.json: ...` to stderr. The same error surfaces as a `blocker` in the hook path.
+
+##### Gate definition schema
+
+Each entry in `gates[]` is an object with:
+
+| Field             | Type       | Required | Description                                                                                                       |
+|-------------------|------------|----------|-------------------------------------------------------------------------------------------------------------------|
+| `name`            | `string`   | yes      | Unique gate identifier. Must match `^[a-z][a-z0-9-]*$`.                                                           |
+| `level`           | `integer`  | yes      | Phase level this gate belongs to. One of `1`, `2`, `3`.                                                           |
+| `requires`        | `object[]` | yes      | Required artifacts. Each entry is `{ "path": "<glob or path>", "required": <boolean> }`.                          |
+| `blocks`          | `string[]` | yes      | Glob patterns of files the gate guards. A write targeting any matching file triggers this gate.                  |
+| `dependsOn`       | `string[]` | yes      | Names of other gates that must pass first. Forms a DAG; cycles are rejected at load time.                         |
+| `storyAnnotation` | `object`   | no       | `{ "required": <boolean>, "tag": "<tag-name>" }`. When `required: true`, matched files must contain the tag (e.g. `@story-id H01-01`). Only valid when `level: 3`. |
+
+**Rules:**
+
+- `name` must be unique across the whole `gates[]` array.
+- `level` is restricted to `1`, `2`, or `3`. `level: 99` or similar is a schema violation.
+- `dependsOn` must reference existing gate names and must not form a cycle.
+- `storyAnnotation` may only appear on `level: 3` gates (schema-enforced).
+- `blocks` uses picomatch glob syntax (e.g. `"src/**/*.ts"`, `"scripts/harness/order/**"`).
+
+##### Example 1 — single level-3 story gate
+
+Enforce that any write under `scripts/harness/order/**` carries an `@story-id` annotation:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "custom",
+    "override": true,
+    "customRules": [],
+    "gates": [
+      {
+        "name": "order-story-impl",
+        "level": 3,
+        "requires": [
+          { "path": "docs/product/user_stories.md", "required": true }
+        ],
+        "blocks": ["scripts/harness/order/**/*.ts"],
+        "dependsOn": [],
+        "storyAnnotation": { "required": true, "tag": "@story-id" }
+      }
+    ]
+  }
+}
+```
+
+##### Example 2 — diamond DAG with multiple chains
+
+Two level-1 gates feed into a level-2 aggregate, which gates a level-3 implementation:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "custom",
+    "override": true,
+    "customRules": [],
+    "gates": [
+      {
+        "name": "logical-design",
+        "level": 1,
+        "requires": [
+          { "path": "docs/product/construction/{unit}/logical_design.md", "required": true }
+        ],
+        "blocks": [],
+        "dependsOn": []
+      },
+      {
+        "name": "domain-model",
+        "level": 1,
+        "requires": [
+          { "path": "docs/product/construction/{unit}/domain_model.md", "required": true }
+        ],
+        "blocks": [],
+        "dependsOn": []
+      },
+      {
+        "name": "tdd-plan",
+        "level": 2,
+        "requires": [
+          { "path": "docs/inception/{unit}/{storyId}/tdd_implementation_plan.md", "required": true }
+        ],
+        "blocks": [],
+        "dependsOn": ["logical-design", "domain-model"]
+      },
+      {
+        "name": "story-impl",
+        "level": 3,
+        "requires": [],
+        "blocks": ["scripts/harness/**/*.ts"],
+        "dependsOn": ["tdd-plan"],
+        "storyAnnotation": { "required": true, "tag": "@story-id" }
+      }
+    ]
+  }
+}
+```
+
+##### Example 3 — minimal level-1 gate (no storyAnnotation)
+
+Block commits that touch a protected path unless a design artifact exists — no story-id enforcement:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "custom",
+    "override": true,
+    "customRules": [],
+    "gates": [
+      {
+        "name": "schema-guard",
+        "level": 1,
+        "requires": [
+          { "path": "docs/schema/migration-notes.md", "required": true }
+        ],
+        "blocks": ["db/migrations/**/*.sql"],
+        "dependsOn": []
+      }
+    ]
+  }
+}
+```
 
 #### `storyReflection` (inception -> product gate)
 
