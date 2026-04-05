@@ -653,16 +653,16 @@ storyReflection チェック:
 - [x] B-4.5-4: `main.ts check-phase-gate` に `--target-file` 引数追加
 - [x] B-4.5-5: `phase-gate-query-adapter` で `phaseConfig` 配線 + `ConfigValidationError` 判別で invalid config fail-fast（blocker 返却）
 
-#### B-5. テスト
+#### B-5. テスト（v0.24.0）
 
-- [ ] B-5-1: `GateGraph` DAG 検証のユニットテスト（循環検出、レベル順序違反）
-- [ ] B-5-2: `ResolveGateUseCase` のテスト — glob マッチ + requires チェック + dependsOn 解決
-- [ ] B-5-3: `custom` プリセット E2E テスト — config 定義からブロック動作まで
+- [x] B-5-1: `GateGraph` DAG 検証のユニットテスト（循環検出、レベル順序違反、ダイヤモンド DAG 健全系）
+- [x] B-5-2: `ResolveGateUseCase` のテスト — glob マッチ + requires チェック + dependsOn 解決（B-2〜B-4 で概ねカバー済）
+- [x] B-5-3: `custom` プリセット E2E テスト — `custom-preset-cli.e2e.test.ts` 3 ケース（gates 満たす / @story-id 欠損 / schema 違反 level:99 fail-fast）。B-5 着手時に 7 番目の配線ギャップ（`main.ts:loadResolvedConfig` が `ConfigValidationError` を黙殺）を発見し、CLI 側 fail-fast 修正を併せて実施（hook 側 B-4.5 と対称）
 
-#### B-6. ドキュメント
+#### B-6. ドキュメント（v0.25.0）
 
-- [ ] B-6-1: `docs/guide/configuration.md` に `gates[]` リファレンス追加
-- [ ] B-6-2: カスタムゲート設定の例を 2-3 パターン提供（DDD チーム、フロントエンドチーム、データパイプラインチーム）
+- [x] B-6-1: `docs/guide/configuration.md` に `gates[]` リファレンス追加（フィールド定義表 + 制約 + 3 パターン例）
+- [x] B-6-2: カスタムゲート設定の例を 3 パターン提供（単一 level-3 ストーリーゲート / ダイヤモンド DAG 4 ゲート / 最小 level-1 スキーマガード）
 
 ---
 
