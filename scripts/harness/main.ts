@@ -32,6 +32,7 @@ import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
 import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
 import type { SkillSet } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
+import { ConfigValidationError } from './config-foundation/domain/errors/config-validation-error.js';
 
 /**
  * main.ts (scripts/harness/main.ts) から2階層上がパッケージルート。
@@ -319,7 +320,12 @@ async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
     const configModule = createConfigFoundationModule();
     const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
     return result.config;
-  } catch {
+  } catch (error) {
+    if (error instanceof ConfigValidationError) {
+      process.stderr.write(`Invalid phasegate.config.json: ${error.message}\n`);
+      process.exit(2);
+    }
+
     return undefined;
   }
 }

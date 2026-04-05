@@ -161,4 +161,20 @@ describe('GateGraph', () => {
       'logical-designer',
     ]);
   });
+
+  it('dependsOn が DAG を満たす複数チェーン合流構成で violations 空を返すこと', () => {
+    // Arrange
+    const gates = [
+      createGateDefinition({ name: 'gate-a', level: 1 }),
+      createGateDefinition({ name: 'gate-c', level: 1 }),
+      createGateDefinition({ name: 'gate-b', level: 2, dependsOn: ['gate-a', 'gate-c'] }),
+      createGateDefinition({ name: 'gate-d', level: 3, dependsOn: ['gate-b'] }),
+    ];
+
+    // Act
+    const actual = GateGraph.build(gates);
+
+    // Assert
+    expect(actual).toBeInstanceOf(GateGraph);
+  });
 });
