@@ -639,9 +639,19 @@ storyReflection チェック:
 
 #### B-4. インフラストラクチャ層
 
-- [ ] B-4-1: `gates[]` の config パース + バリデーション
-- [ ] B-4-2: glob マッチングアダプター実装（選定ライブラリのラッパー）
-- [ ] B-4-3: `storyAnnotation` フィールドと既存 L2-002 (`ValidateDesignStoryAnnotationsUseCase`) の統合
+- [x] B-4-1: `gates[]` の config パース + バリデーション
+- [x] B-4-2: glob マッチングアダプター実装（選定ライブラリのラッパー）
+- [x] B-4-3: `storyAnnotation` フィールドと既存 L2-002 (`ValidateDesignStoryAnnotationsUseCase`) の統合
+
+#### B-4.5. 配線修正（v0.23.0、2026-04-06 追加）
+
+> B-5 着手時の前提調査で、B-4 が残した「設定ファイル → CLI/hook → phase-dependency-model」経路の配線ギャップ（5 点）を発見。CLI/hook 実運用経路では `custom` preset の `gates[]` が無言で脱落していた。`composition-root-custom-preset.integration.test.ts` が通っていたのは直接モジュールを組み立てていたため。詳細は `configurable_phase_gate_b4_5_wiring_fix_plan.md`。
+
+- [x] B-4.5-1: `PhaseDependenciesConfig` VO に `gates?: readonly unknown[]` 追加（optional + default `[]` で後方互換）
+- [x] B-4.5-2: `load-resolved-config-use-case.ts` で `phaseDependencies.gates` raw forward
+- [x] B-4.5-3: `PhaseConfigSectionMapper` を `config-foundation/application/mappers/` に新設（main.ts / hook adapter 共有）
+- [x] B-4.5-4: `main.ts check-phase-gate` に `--target-file` 引数追加
+- [x] B-4.5-5: `phase-gate-query-adapter` で `phaseConfig` 配線 + `ConfigValidationError` 判別で invalid config fail-fast（blocker 返却）
 
 #### B-5. テスト
 

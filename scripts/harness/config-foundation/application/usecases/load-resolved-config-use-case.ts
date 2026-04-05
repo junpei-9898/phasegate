@@ -42,7 +42,26 @@ function formatHarnessErrors(errors: readonly HarnessError[]): string {
 }
 
 function toSourceDocument(document: unknown): HarnessConfigSourceDocument {
-  return document as HarnessConfigSourceDocument;
+  const sourceDocument = document as HarnessConfigSourceDocument & {
+    readonly phaseDependencies?: HarnessConfigSourceDocument['phaseDependencies'] & {
+      readonly gates?: readonly unknown[];
+    };
+  };
+
+  if (
+    sourceDocument.phaseDependencies === undefined
+    || sourceDocument.phaseDependencies.gates === undefined
+  ) {
+    return sourceDocument;
+  }
+
+  return {
+    ...sourceDocument,
+    phaseDependencies: {
+      ...sourceDocument.phaseDependencies,
+      gates: sourceDocument.phaseDependencies.gates ?? [],
+    },
+  } as HarnessConfigSourceDocument;
 }
 
 export function validateDocumentOrThrow(

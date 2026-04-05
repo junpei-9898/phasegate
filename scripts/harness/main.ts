@@ -10,6 +10,7 @@
 import { dirname, join, resolve } from 'node:path';
 import { readFile as fsReadFile } from 'node:fs/promises';
 import { createConfigFoundationModule } from './config-foundation/composition-root.js';
+import { toPhaseConfigSection } from './config-foundation/application/mappers/phase-config-section-mapper.js';
 import { createHarnessErrorModule } from './harness-error/composition-root.js';
 import { createTraceabilityModelModule } from './traceability-model/composition-root.js';
 import { createPhaseDependencyModelModule } from './phase-dependency-model/composition-root.js';
@@ -207,21 +208,6 @@ function parseCoverageThreshold(raw: string | undefined): number {
   return n;
 }
 
-type PhasePreset = 'default' | 'full' | 'standard' | 'minimal' | 'custom';
-
-function toPhasePreset(value: string): PhasePreset {
-  if (
-    value === 'default'
-    || value === 'full'
-    || value === 'standard'
-    || value === 'minimal'
-    || value === 'custom'
-  ) {
-    return value;
-  }
-  return 'default';
-}
-
 type InitPhasePreset = 'full' | 'standard' | 'minimal' | 'custom';
 
 function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
@@ -247,25 +233,6 @@ function toRuleSeverityMap(
     result[key] = toRuleSeverity(value);
   }
   return result;
-}
-
-/**
- * HarnessConfigV2 (resolved) から phase-dependency-model が期待する PhaseConfigSection を抽出する。
- */
-function toPhaseConfigSection(resolvedConfig: HarnessConfigV2) {
-  return {
-    planningMode: resolvedConfig.planningMode,
-    customization: {
-      preset: toPhasePreset(resolvedConfig.phaseDependencies.preset),
-      overrideEnabled: resolvedConfig.phaseDependencies.override,
-      rules: resolvedConfig.phaseDependencies.customRules.map((r) => ({
-        targetPhase: r.phase,
-        condition: 'requires',
-        action: r.requires,
-      })),
-    },
-    reportingOutputDir: resolvedConfig.reporting.outputDir,
-  };
 }
 
 /**
@@ -565,11 +532,13 @@ async function main(): Promise<void> {
         const level = Number(parseFlag(args, '--level') ?? '1');
         const unitId = parseFlag(args, '--unit');
         const storyId = parseFlag(args, '--story');
+        const targetFilePath = parseFlag(args, '--target-file');
         const result =
           await mod.checkPhaseGateCommandHandler.execute({
             targetLevel: level,
             unitId,
             storyId,
+            targetFilePath,
             json,
           });
         console.log(result.text);

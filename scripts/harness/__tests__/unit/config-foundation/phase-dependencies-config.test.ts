@@ -22,6 +22,7 @@ target('PhaseDependenciesConfig', () => {
         expect(actual.preset).toBe('default');
         expect(actual.override).toBe(false);
         expect(actual.customRules).toEqual([]);
+        expect(actual.gates).toEqual([]);
       });
     });
 
@@ -51,6 +52,7 @@ target('PhaseDependenciesConfig', () => {
           preset: 'custom' as const,
           override: true,
           customRules: [{ phase: 'design', requires: ['review'] }],
+          gates: [{ name: 'story-implementor', level: 3 }],
         };
 
         // Act
@@ -60,6 +62,7 @@ target('PhaseDependenciesConfig', () => {
         expect(actual.hasCustomRules()).toBe(true);
         expect(actual.customRules[0].phase).toBe('design');
         expect(actual.customRules[0].requires).toEqual(['review']);
+        expect(actual.gates).toEqual([{ name: 'story-implementor', level: 3 }]);
       });
     });
 
@@ -79,6 +82,23 @@ target('PhaseDependenciesConfig', () => {
         expect(actual.preset).toBe('standard');
         expect(actual.override).toBe(false);
         expect(actual.customRules).toEqual([]);
+      });
+    });
+
+    context('gatesを省略する場合', () => {
+      it('空配列として保持する', () => {
+        // Arrange
+        const input = {
+          preset: 'custom' as const,
+          override: false,
+          customRules: [],
+        };
+
+        // Act
+        const actual = new PhaseDependenciesConfig(input);
+
+        // Assert
+        expect(actual.gates).toEqual([]);
       });
     });
   });
@@ -126,6 +146,30 @@ target('PhaseDependenciesConfig', () => {
         expect(actual).toBe(false);
       });
     });
+
+    context('gatesが異なる場合', () => {
+      it('等しくない', () => {
+        // Arrange
+        const left = new PhaseDependenciesConfig({
+          preset: 'custom',
+          override: false,
+          customRules: [],
+          gates: [{ name: 'story-implementor', level: 3 }],
+        });
+        const right = new PhaseDependenciesConfig({
+          preset: 'custom',
+          override: false,
+          customRules: [],
+          gates: [{ name: 'story-implementor', level: 2 }],
+        });
+
+        // Act
+        const actual = left.equals(right);
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
   });
 
   describe('customRulesの有無を判定する', () => {
@@ -159,6 +203,44 @@ target('PhaseDependenciesConfig', () => {
 
         // Act
         const actual = phaseDependenciesConfig.hasCustomRules();
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
+  });
+
+  describe('gatesの有無を判定する', () => {
+    context('gatesが1件以上ある場合', () => {
+      it('trueを返す', () => {
+        // Arrange
+        const phaseDependenciesConfig = new PhaseDependenciesConfig({
+          preset: 'custom',
+          override: false,
+          customRules: [],
+          gates: [{ name: 'story-implementor', level: 3 }],
+        });
+
+        // Act
+        const actual = phaseDependenciesConfig.hasCustomGates();
+
+        // Assert
+        expect(actual).toBe(true);
+      });
+    });
+
+    context('gatesが空の場合', () => {
+      it('falseを返す', () => {
+        // Arrange
+        const phaseDependenciesConfig = new PhaseDependenciesConfig({
+          preset: 'custom',
+          override: false,
+          customRules: [],
+          gates: [],
+        });
+
+        // Act
+        const actual = phaseDependenciesConfig.hasCustomGates();
 
         // Assert
         expect(actual).toBe(false);
