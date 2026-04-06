@@ -15,6 +15,7 @@ const ENABLED_CONFIG = path.join(FIXTURES_DIR, 'harness-config-enabled.json');
 const DISABLED_CONFIG = path.join(FIXTURES_DIR, 'harness-config-disabled.json');
 const WITH_PROJECT_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json');
 const CUSTOM_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-custom-paths.json');
+const WITH_EXCLUSIONS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-exclusions.json');
 
 target('HarnessConfigConfigQueryAdapter', () => {
   describe('設定読み取り', () => {
@@ -159,6 +160,34 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
         // Assert
         expect(actual.equals(expected)).toBe(true);
+      });
+    });
+
+    context('protectedFiles.excludeセクションが存在する場合', () => {
+      // IT-REPO-ConfigQueryAdapter-010
+      it('getProtectedFileExclusions()が除外パターン配列を返すこと', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(WITH_EXCLUSIONS_CONFIG);
+
+        // Act
+        const actual = await adapter.getProtectedFileExclusions();
+
+        // Assert
+        expect(actual).toEqual(['tsconfig.json', 'package.json']);
+      });
+    });
+
+    context('protectedFilesセクションが存在しない場合', () => {
+      // IT-REPO-ConfigQueryAdapter-011
+      it('getProtectedFileExclusions()が空配列を返すこと', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
+
+        // Act
+        const actual = await adapter.getProtectedFileExclusions();
+
+        // Assert
+        expect(actual).toEqual([]);
       });
     });
   });

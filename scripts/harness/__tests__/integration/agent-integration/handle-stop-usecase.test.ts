@@ -17,6 +17,7 @@ function createHandleStopUseCase(ports: {
   const configQueryPort = {
     isHookEnabled: vi.fn().mockResolvedValue(true),
     getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
+    getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
   };
   const cliCommandRegistryPort = {
     hasCommand: vi.fn().mockResolvedValue(true),

@@ -31,9 +31,14 @@ interface HarnessesSection {
   deadCodeGC?: boolean;
 }
 
+interface ProtectedFilesSection {
+  exclude?: string[];
+}
+
 interface HarnessConfigDocument {
   harnesses?: HarnessesSection;
   project?: ProjectSection;
+  protectedFiles?: ProtectedFilesSection;
 }
 
 export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
@@ -75,6 +80,11 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   async getProtectedFilePatterns(): Promise<string[]> {
     // Wave 2 では追加カスタムパターンなし
     return [];
+  }
+
+  async getProtectedFileExclusions(): Promise<string[]> {
+    const config = this.loadConfig();
+    return config.protectedFiles?.exclude ?? [];
   }
 
   getProjectPaths(): ProjectPaths {

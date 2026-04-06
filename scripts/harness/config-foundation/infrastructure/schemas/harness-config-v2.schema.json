@@ -16,7 +16,10 @@
     "project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "preset"],
+      "required": [
+        "name",
+        "preset"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -24,7 +27,11 @@
         },
         "preset": {
           "type": "string",
-          "enum": ["minimal", "standard", "strict"]
+          "enum": [
+            "minimal",
+            "standard",
+            "strict"
+          ]
         }
       }
     },
@@ -152,11 +159,19 @@
     "phaseDependencies": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["preset"],
+      "required": [
+        "preset"
+      ],
       "properties": {
         "preset": {
           "type": "string",
-          "enum": ["default", "full", "standard", "minimal", "custom"]
+          "enum": [
+            "default",
+            "full",
+            "standard",
+            "minimal",
+            "custom"
+          ]
         },
         "override": {
           "type": "boolean"
@@ -166,7 +181,10 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["phase", "requires"],
+            "required": [
+              "phase",
+              "requires"
+            ],
             "properties": {
               "phase": {
                 "type": "string",
@@ -186,7 +204,13 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "level", "requires", "blocks", "dependsOn"],
+            "required": [
+              "name",
+              "level",
+              "requires",
+              "blocks",
+              "dependsOn"
+            ],
             "properties": {
               "name": {
                 "type": "string",
@@ -194,14 +218,21 @@
               },
               "level": {
                 "type": "integer",
-                "enum": [1, 2, 3]
+                "enum": [
+                  1,
+                  2,
+                  3
+                ]
               },
               "requires": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["path", "required"],
+                  "required": [
+                    "path",
+                    "required"
+                  ],
                   "properties": {
                     "path": {
                       "type": "string",
@@ -230,7 +261,10 @@
               "storyAnnotation": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["required", "tag"],
+                "required": [
+                  "required",
+                  "tag"
+                ],
                 "properties": {
                   "required": {
                     "type": "boolean"
@@ -245,7 +279,9 @@
             "allOf": [
               {
                 "if": {
-                  "required": ["storyAnnotation"]
+                  "required": [
+                    "storyAnnotation"
+                  ]
                 },
                 "then": {
                   "properties": {
@@ -270,7 +306,10 @@
               "items": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["unitId", "artifacts"],
+                "required": [
+                  "unitId",
+                  "artifacts"
+                ],
                 "properties": {
                   "unitId": {
                     "type": "string",
@@ -293,17 +332,26 @@
     "planningMode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["default", "perPhase"],
+      "required": [
+        "default",
+        "perPhase"
+      ],
       "properties": {
         "default": {
           "type": "string",
-          "enum": ["interactive", "embedded-qa"]
+          "enum": [
+            "interactive",
+            "embedded-qa"
+          ]
         },
         "perPhase": {
           "type": "object",
           "additionalProperties": {
             "type": "string",
-            "enum": ["interactive", "embedded-qa"]
+            "enum": [
+              "interactive",
+              "embedded-qa"
+            ]
           }
         }
       }
@@ -330,7 +378,10 @@
     "paths": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["designDocs", "inceptionDocs"],
+      "required": [
+        "designDocs",
+        "inceptionDocs"
+      ],
       "properties": {
         "designDocs": {
           "type": "string",
@@ -345,7 +396,10 @@
     "reporting": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["format", "outputDir"],
+      "required": [
+        "format",
+        "outputDir"
+      ],
       "properties": {
         "format": {
           "type": "string",
@@ -354,6 +408,20 @@
         "outputDir": {
           "type": "string",
           "minLength": 1
+        }
+      }
+    },
+    "protectedFiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
         }
       }
     }

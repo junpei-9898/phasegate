@@ -148,6 +148,78 @@ target('ProtectedFileList', () => {
     });
   });
 
+  target('createWithExclusions()', () => {
+    // UT-PFL-050
+    it('除外パターンに一致するDEFAULT_PATTERNSがフィルタリングされること', () => {
+      // Arrange
+      const exclusions = ['tsconfig.json'];
+      // Act
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+      // Assert
+      expect(actual.matches('tsconfig.json')).toBe(false);
+    });
+
+    // UT-PFL-051
+    it('除外対象外のDEFAULT_PATTERNSは残ること', () => {
+      // Arrange
+      const exclusions = ['tsconfig.json'];
+      // Act
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+      // Assert
+      expect(actual.matches('biome.json')).toBe(true);
+      expect(actual.matches('package.json')).toBe(true);
+    });
+
+    // UT-PFL-052
+    it('全DEFAULT_PATTERNS除外時にフォールバックで全パターンが復元されること', () => {
+      // Arrange
+      const exclusions = ['biome.json', '.biome.json', 'tsconfig.json', 'package.json', 'package-lock.json'];
+      // Act
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+      // Assert
+      expect(actual.matches('tsconfig.json')).toBe(true);
+      expect(actual.matches('package.json')).toBe(true);
+    });
+
+    // UT-PFL-053
+    it('空の除外リストではDEFAULT_PATTERNSがそのまま有効であること', () => {
+      // Arrange
+      const exclusions: string[] = [];
+      // Act
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+      // Assert
+      expect(actual.matches('tsconfig.json')).toBe(true);
+      expect(actual.matches('package.json')).toBe(true);
+    });
+  });
+
+  target('createWithAdditionalAndExclusions()', () => {
+    // UT-PFL-060
+    it('追加パターンが含まれ除外パターンが除かれること', () => {
+      // Arrange
+      const additional = ['custom.config.js'];
+      const exclusions = ['tsconfig.json'];
+      // Act
+      const actual = ProtectedFileList.createWithAdditionalAndExclusions(additional, exclusions);
+      // Assert
+      expect(actual.matches('custom.config.js')).toBe(true);
+      expect(actual.matches('tsconfig.json')).toBe(false);
+      expect(actual.matches('biome.json')).toBe(true);
+    });
+
+    // UT-PFL-061
+    it('追加も除外も空の場合はDEFAULT_PATTERNSがそのまま有効であること', () => {
+      // Arrange
+      const additional: string[] = [];
+      const exclusions: string[] = [];
+      // Act
+      const actual = ProtectedFileList.createWithAdditionalAndExclusions(additional, exclusions);
+      // Assert
+      expect(actual.matches('tsconfig.json')).toBe(true);
+      expect(actual.matches('package.json')).toBe(true);
+    });
+  });
+
   describe('等値性を検証する', () => {
     // UT-PFL-040
     it('同一patternsを持つ2つのProtectedFileListが等値であること', () => {

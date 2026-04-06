@@ -4,7 +4,7 @@
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-28（ISSUE-001 issueパス認識追加）
 > **Wave**: 2（品質検証レイヤー）
-> **対応ストーリー**: H11-01〜H11-04
+> **対応ストーリー**: H11-01〜H11-04, B-7
 > **対応Issue**: ISSUE-001
 > **v2.2.0変更**: フェーズゲート統合拡張（WriteTargetScope, ProjectPaths, PhaseGateQueryResult, PhaseGateQueryPort追加）
 > **ISSUE-001変更**: WriteTargetScope に issue パス認識を追加。`docs/inception/{unit}/issues/{ISSUE-XXX}/` → Level 3 スコープ

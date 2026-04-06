@@ -58,5 +58,11 @@
   "reporting": {
     "format": "json",
     "outputDir": "reports"
+  },
+  "protectedFiles": {
+    "exclude": [
+      "tsconfig.json",
+      "package.json"
+    ]
   }
 }

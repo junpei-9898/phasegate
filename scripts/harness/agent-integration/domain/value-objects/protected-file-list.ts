@@ -69,6 +69,26 @@ export class ProtectedFileList {
     return new ProtectedFileList(allPatterns);
   }
 
+  static createWithExclusions(exclusions: string[]): ProtectedFileList {
+    const filtered = DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
+    if (filtered.length === 0) {
+      return new ProtectedFileList([...DEFAULT_PATTERNS]);
+    }
+    return new ProtectedFileList(filtered);
+  }
+
+  static createWithAdditionalAndExclusions(
+    additionalPatterns: string[],
+    exclusions: string[],
+  ): ProtectedFileList {
+    const base = DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
+    const allPatterns = [...base, ...additionalPatterns];
+    if (allPatterns.length === 0) {
+      return new ProtectedFileList([...DEFAULT_PATTERNS]);
+    }
+    return new ProtectedFileList(allPatterns);
+  }
+
   matches(filePath: string): boolean {
     if (filePath === '') return false;
     return this.patterns.some((pattern) => {

@@ -1,0 +1,18 @@
+{
+  "project": { "name": "test-project", "preset": "standard" },
+  "harnesses": {
+    "cascadeUpdate": true,
+    "agentLessonCollection": true,
+    "bundleSizeLimit": 500,
+    "deadCodeGC": false
+  },
+  "protectedFiles": {
+    "exclude": ["tsconfig.json", "package.json"]
+  },
+  "layers": {},
+  "quickMode": {},
+  "phaseDependencies": { "preset": "default", "override": false, "customRules": [] },
+  "planningMode": { "default": "interactive", "perPhase": {} },
+  "paths": { "designDocs": "docs", "inceptionDocs": "docs/inception" },
+  "reporting": { "format": "json", "outputDir": "reports" }
+}

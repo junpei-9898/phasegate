@@ -2,8 +2,10 @@
 
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
-> **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
+> **対応ストーリー**: H11-01, H11-02, H11-03, H11-04, B-7
 > **モード**: Unit横断設計（Phase 2）
+>
+> <!-- @story-id B-7 -->
 > **前提ドキュメント**:
 > - `docs/product/construction/agent-integration/domain_model.md`
 > - `docs/product/units/integration_contract.md`

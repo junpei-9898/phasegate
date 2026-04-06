@@ -24,6 +24,7 @@ const buildTranslatorPorts = (overrides: {
   isActive?: boolean;
   commandExists?: boolean;
   protectedPatterns?: string[];
+  protectedExclusions?: string[];
   phaseGateResult?: { passed: boolean; blockers: string[]; warnings: string[] };
   projectPaths?: ReturnType<typeof createProjectPaths>;
 } = {}) => {
@@ -32,6 +33,7 @@ const buildTranslatorPorts = (overrides: {
     isActive = false,
     commandExists = true,
     protectedPatterns = ['biome.json', 'tsconfig.json'],
+    protectedExclusions = [],
     phaseGateResult = { passed: true, blockers: [], warnings: [] },
     projectPaths = createProjectPaths(),
   } = overrides;
@@ -39,8 +41,13 @@ const buildTranslatorPorts = (overrides: {
   const configQueryPort = {
     isEnabled: vi.fn().mockReturnValue(isEnabled),
     isHookEnabled: vi.fn().mockResolvedValue(isEnabled),
-    getProtectedFileList: vi.fn().mockReturnValue(createProtectedFileList(protectedPatterns)),
+    getProtectedFileList: vi.fn().mockReturnValue(
+      protectedPatterns.length > 0
+        ? createProtectedFileList(protectedPatterns)
+        : createProtectedFileList(['__placeholder__']),
+    ),
     getProtectedFilePatterns: vi.fn().mockResolvedValue(protectedPatterns),
+    getProtectedFileExclusions: vi.fn().mockResolvedValue(protectedExclusions),
     getProjectPaths: vi.fn().mockReturnValue(projectPaths),
   };
   const reentryGuardStatePort = {
@@ -509,6 +516,56 @@ target('HookToCliTranslator', () => {
           // Assert
           expect(actual.shouldBlock).toBe(false);
           expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('AsyncHookToCliTranslator Step 1: 保護ファイル除外設定を適用する', () => {
+      context('除外設定にtsconfig.jsonが含まれている場合', () => {
+        // UT-HTC-070
+        it('tsconfig.jsonへの書き込みがブロックされないこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            protectedPatterns: [],
+            protectedExclusions: ['tsconfig.json'],
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({ targetFilePaths: ['tsconfig.json'] });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+        });
+      });
+
+      context('除外設定にtsconfig.jsonが含まれていない場合', () => {
+        // UT-HTC-071
+        it('tsconfig.jsonへの書き込みが引き続きブロックされること', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            protectedPatterns: [],
+            protectedExclusions: [],
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({ targetFilePaths: ['tsconfig.json'] });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
         });
       });
     });

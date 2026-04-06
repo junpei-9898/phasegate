@@ -664,23 +664,45 @@ storyReflection チェック:
 - [x] B-6-1: `docs/guide/configuration.md` に `gates[]` リファレンス追加（フィールド定義表 + 制約 + 3 パターン例）
 - [x] B-6-2: カスタムゲート設定の例を 3 パターン提供（単一 level-3 ストーリーゲート / ダイヤモンド DAG 4 ゲート / 最小 level-1 スキーマガード）
 
+#### B-7. ProtectedFileList 除外設定機能（2026-04-06 追加）
+
+> C-3（tsc --noEmit エラー解消）着手時に発覚。`tsconfig.json` / `package.json` が `ProtectedFileList` の `DEFAULT_PATTERNS` にハードコードされており、quick-implementor スキル内でも pre-tool-use hook がブロックする。設定変更（`config` カテゴリ）を AI 側で完結させるため、`phasegate.config.json` から保護対象の除外を制御できる仕組みを追加する。
+
+**現状の保護チェーン**:
+```
+.claude/settings.json (matcher: "Write|Edit")
+  → pre-tool-use-hook.ts
+    → AsyncHookToCliTranslator.translatePreToolUse()
+      → ProtectedFileList.createWithAdditional(additionalPatterns)
+        → DEFAULT_PATTERNS (ハードコード5件) + additionalPatterns (常に空配列)
+```
+
+**設計方針**: `phasegate.config.json` に `protectedFiles.exclude` キーを追加し、DEFAULT_PATTERNS からの除外を可能にする。
+
+- [ ] B-7-1: `harness-config-v2.schema.json` に `protectedFiles` セクション追加（`exclude: string[]`）
+- [ ] B-7-2: `ProtectedFileList` に除外リスト対応の factory メソッド追加（`createWithExclusions(additional, exclusions)`）
+- [ ] B-7-3: `HarnessConfigConfigQueryAdapter` で `protectedFiles.exclude` を読み取り
+- [ ] B-7-4: `AsyncHookToCliTranslator.translatePreToolUse()` で除外リストを `ProtectedFileList` に渡す
+- [ ] B-7-5: `phasegate.config.json` に `protectedFiles.exclude: ["tsconfig.json", "package.json"]` を設定
+- [ ] B-7-6: テスト追加（ProtectedFileList 除外動作 / adapter 読み取り / E2E で保護解除確認）
+
 ---
 
 ### Phase C: 既存技術的負債の解消（Phase B と独立レーン、優先度中）
 
 > **2026-04-05 追加** — B-2 実装時の検証で発見した既存ベースライン問題。いずれも B-2 起因ではなく、v0.19.0 時点から存在する長期負債。Phase B の実装スコープ外だが、品質向上のため独立レーンで対処する必要がある。
 
-#### C-1. Vitest ワーカー RPC タイムアウト解消
+#### C-1. Vitest ワーカー RPC タイムアウト解消（v0.27.0）
 
-- [ ] C-1-1: `npm run test` 実行時の `Timeout calling "onTaskUpdate"` エラーを解消
-  - **症状**: 全 392 files / 2963 tests が PASS するにもかかわらず、Vitest 3.2.4 のワーカー RPC タイムアウトにより exit 1 になる
-  - **根本原因**: `scripts/harness/__tests__/vitest.config.ts` の `fileParallelism: false` + 大量ファイル（392）で発生する Vitest 3.2.4 の既知バグ
-  - **対処候補**:
-    - (a) `poolOptions.forks.singleFork: true` を設定して RPC 負荷を軽減
-    - (b) Vitest を 3.3+ にアップグレード（リグレッションリスク要検証）
-    - (c) `teardownTimeout` / RPC timeout を明示的に拡大
-  - **影響範囲**: CI/CD の exit code 判定、`phasegate validate` の L3 チェック
-  - **優先度**: 中（テストは通っているが exit code で誤検知リスク）
+- [x] C-1-1: `npm run test` 実行時の `Timeout calling "onTaskUpdate"` エラーを解消
+  - **症状**: 全 402 files / 3002 tests が PASS するにもかかわらず、Vitest 3.2.4 のワーカー RPC タイムアウトにより exit 1 になる
+  - **根本原因**: `pool: 'forks'` + `fileParallelism: false` + 402 ファイル逐次実行で birpc の onTaskUpdate RPC がハードコード 60s 以内に完了しない
+  - **検証した対処候補**:
+    - (a) `poolOptions.forks.singleFork: true` → NG（402 中 1 ファイルしか実行されない）
+    - (b) Vitest 3.3+ アップグレード → 適用不可（3.2.4 が最新安定版）
+    - (c) `teardownTimeout` / reporter 軽量化 / 環境変数 → いずれも無効（birpc timeout はハードコード）
+    - **(d) threads/forks ハイブリッド分割 → 採用**: threads pool（399 ファイル）+ forks pool（`process.chdir()` 依存 3 ファイル）
+  - **結果**: 全 3002 テスト PASS + exit 0、実行時間 252s → 117s（2.2x 高速化）
 
 #### C-2. phasegate lint ベースライン違反の解消
 
@@ -698,29 +720,36 @@ storyReflection チェック:
 
 #### C-3. TypeScript `tsc --noEmit` エラーの解消
 
-- [ ] C-3-1: テストファイルの `.ts` 拡張子 import エラー（TS5097）を解消
-  - **症状**: `npx tsc --noEmit` で 212 errors、大半が `import ... from './foo.ts'` 形式のテストファイル
-  - **根本原因**: `tsconfig.json` に `allowImportingTsExtensions: true` が設定されていない一方、テストコードは `.ts` 拡張子付き import を使用
-  - **対処候補**:
-    - (a) `tsconfig.json` に `allowImportingTsExtensions: true` + `noEmit: true` を設定
-    - (b) テストコードから `.ts` 拡張子を除去（grep 置換）
-  - **優先度**: 中（型検証が実質機能していない）
+> **前提**: B-7（ProtectedFileList 除外設定）完了後に着手。`tsconfig.json` の AI 編集には B-7 による保護解除が必要。
 
-- [ ] C-3-2: mock 型エラー（`Property 'mock' does not exist`）の解消
-  - **症状**: `check-phase-gate-usecase.test.ts` などで Vitest の `vi.fn()` に対する `.mock` アクセスが型エラー
-  - **対処候補**: `vi.fn<TSignature>()` の型注釈を追加 or `as unknown as Mock` でキャスト
+- [ ] C-3-1: `tsconfig.json` に `allowImportingTsExtensions: true` + `noEmit: true` 設定、fixtures を exclude に追加（TS5097 × 151件 + fixtures × 4件 解消）
+  - **症状**: `npx tsc --noEmit` で 212 errors
+  - **根本原因**: `tsconfig.json` に `allowImportingTsExtensions: true` が未設定、`outDir` と `noEmit` の矛盾
+  - **前提**: B-7 完了により `tsconfig.json` が AI 編集可能であること
+
+- [ ] C-3-2: テスト mock 型不整合修正（約31件）
+  - `.mock` プロパティ型エラー、mock オブジェクトの不足プロパティ、`readonly` 代入、暗黙 `any` 等
+  - `__tests__/` 配下のため phase gate 対象外、直接修正可能
+
+- [ ] C-3-3: プロダクションコード型エラー修正（約16件）
+  - Ajv ESM import（`new Ajv()` 不可、namespace as type）× 4件
+  - レガシー `../core/*.js` モジュール参照 × 9件
+  - `unitName` → `unitNames` typo、`string | undefined` → `string` 等 × 3件
+  - quick-implementor で修正
 
 #### C-4. Phase C 実施順序
 
 ```
-C-1（Vitest タイムアウト解消） ← 最優先。CI 判定の正確性
+C-1（Vitest タイムアウト解消） ← 完了（v0.27.0）
+  ↓
+B-7（ProtectedFileList 除外設定）← C-3 の前提。tsconfig.json / package.json の AI 編集を可能にする
+  ↓
+C-3（tsc エラー解消）          ← 型検証の実効化（B-7 完了が前提）
   ↓
 C-2（lint ベースライン解消）   ← lint シグナルの信頼性回復
-  ↓
-C-3（tsc エラー解消）          ← 型検証の実効化
 ```
 
-各項目は独立して対処可能。Phase B の作業と並行して着手してもよいが、Phase B 実装中に C-1 を先行解消しておくと B-3/B-4 の CI 検証が正確になる。
+C-1 完了済。B-7 は C-3 のブロッカーのため先行実施。C-2 と C-3 は独立だが、C-3 を先に実施する（型エラーの方が実害が大きい）。
 
 ---
 
