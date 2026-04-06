@@ -726,9 +726,9 @@ AIDLCを使わないプロジェクトでは、`phasegate.config.json` の `gate
 
 ```bash
 # 3種のテンプレートを生成
-npx phasegate ci:generate-template --type github-actions
+npx phasegate ci:generate-template --type aidlc-gate
 npx phasegate ci:generate-template --type pre-commit
-npx phasegate ci:generate-template --type weekly-check
+npx phasegate ci:generate-template --type consistency-check
 ```
 
 | テンプレート | 用途 | 配置先 |
@@ -741,7 +741,7 @@ npx phasegate ci:generate-template --type weekly-check
 
 ```bash
 # aidlc-gate.yml を .github/workflows/ にコピー
-npx phasegate ci:generate-template --type github-actions --render > .github/workflows/aidlc-gate.yml
+npx phasegate ci:generate-template --type aidlc-gate --render > .github/workflows/aidlc-gate.yml
 
 # pre-commit フックを設定
 npx phasegate ci:generate-template --type pre-commit --render > .husky/pre-commit
