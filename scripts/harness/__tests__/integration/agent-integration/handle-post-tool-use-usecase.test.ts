@@ -8,7 +8,7 @@ import { HandlePostToolUseUseCase } from '../../../agent-integration/application
 import { TimeoutError } from '../../../agent-integration/infrastructure/ports/cli-executor-port.js';
 
 function createHandlePostToolUseUseCase(ports: {
-  configQueryPort: { isHookEnabled: ReturnType<typeof vi.fn>; getProtectedFilePatterns: ReturnType<typeof vi.fn>; getProtectedFileExclusions: ReturnType<typeof vi.fn>; getProjectPaths: ReturnType<typeof vi.fn> };
+  configQueryPort: { isHookEnabled: ReturnType<typeof vi.fn>; getProtectedFilePatterns: ReturnType<typeof vi.fn>; getProtectedFileExclusions: ReturnType<typeof vi.fn>; getRelaxedGates: ReturnType<typeof vi.fn>; getProjectPaths: ReturnType<typeof vi.fn> };
   cliExecutorPort: { execute: ReturnType<typeof vi.fn> };
 }) {
   const cliCommandRegistryPort = {
@@ -43,6 +43,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(true),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = {
@@ -72,6 +73,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(true),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = {
@@ -100,6 +102,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(false),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = { execute: vi.fn() };
@@ -126,6 +129,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(true),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = {
@@ -154,6 +158,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(true),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = {
@@ -178,6 +183,7 @@ target('HandlePostToolUseUseCase.execute', () => {
           isHookEnabled: vi.fn().mockResolvedValue(true),
           getProtectedFilePatterns: vi.fn(),
           getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
           getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
         };
         const mockCliExecutorPort = {

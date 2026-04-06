@@ -35,10 +35,15 @@ interface ProtectedFilesSection {
   exclude?: string[];
 }
 
+interface QuickModeSection {
+  relaxedGates?: string[];
+}
+
 interface HarnessConfigDocument {
   harnesses?: HarnessesSection;
   project?: ProjectSection;
   protectedFiles?: ProtectedFilesSection;
+  quickMode?: QuickModeSection;
 }
 
 export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
@@ -85,6 +90,11 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   async getProtectedFileExclusions(): Promise<string[]> {
     const config = this.loadConfig();
     return config.protectedFiles?.exclude ?? [];
+  }
+
+  async getRelaxedGates(): Promise<readonly string[]> {
+    const config = this.loadConfig();
+    return config.quickMode?.relaxedGates ?? [];
   }
 
   getProjectPaths(): ProjectPaths {

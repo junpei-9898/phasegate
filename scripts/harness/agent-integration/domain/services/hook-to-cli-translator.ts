@@ -260,6 +260,16 @@ export class AsyncHookToCliTranslator {
       });
     }
 
+    // Step 3: Check if phase gate is relaxed via quickMode.relaxedGates
+    const relaxedGates = await this.configQueryPort.getRelaxedGates();
+    if (relaxedGates.includes('phase-gate')) {
+      return HookTranslationResult.create({
+        shouldBlock: false,
+        cliArgs: [],
+        expectedExitCode: 0,
+      });
+    }
+
     const phaseGateResult = await this.phaseGateQueryPort.checkGate(
       detectedScope,
       event.targetFilePaths[0],

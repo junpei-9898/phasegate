@@ -16,6 +16,7 @@ const DISABLED_CONFIG = path.join(FIXTURES_DIR, 'harness-config-disabled.json');
 const WITH_PROJECT_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-project-paths.json');
 const CUSTOM_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-custom-paths.json');
 const WITH_EXCLUSIONS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-exclusions.json');
+const WITH_RELAXED_GATES_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-relaxed-gates.json');
 
 target('HarnessConfigConfigQueryAdapter', () => {
   describe('設定読み取り', () => {
@@ -185,6 +186,34 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
         // Act
         const actual = await adapter.getProtectedFileExclusions();
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('quickMode.relaxedGatesセクションが存在する場合', () => {
+      // IT-REPO-ConfigQueryAdapter-012
+      it('getRelaxedGates()がrelaxedGates配列を返すこと', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(WITH_RELAXED_GATES_CONFIG);
+
+        // Act
+        const actual = await adapter.getRelaxedGates();
+
+        // Assert
+        expect(actual).toEqual(['phase-gate', '2-phase-execution']);
+      });
+    });
+
+    context('quickModeセクションにrelaxedGatesがない場合', () => {
+      // IT-REPO-ConfigQueryAdapter-013
+      it('getRelaxedGates()が空配列を返すこと', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
+
+        // Act
+        const actual = await adapter.getRelaxedGates();
 
         // Assert
         expect(actual).toEqual([]);

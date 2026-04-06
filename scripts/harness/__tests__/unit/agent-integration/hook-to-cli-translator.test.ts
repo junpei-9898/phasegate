@@ -25,6 +25,7 @@ const buildTranslatorPorts = (overrides: {
   commandExists?: boolean;
   protectedPatterns?: string[];
   protectedExclusions?: string[];
+  relaxedGates?: string[];
   phaseGateResult?: { passed: boolean; blockers: string[]; warnings: string[] };
   projectPaths?: ReturnType<typeof createProjectPaths>;
 } = {}) => {
@@ -34,6 +35,7 @@ const buildTranslatorPorts = (overrides: {
     commandExists = true,
     protectedPatterns = ['biome.json', 'tsconfig.json'],
     protectedExclusions = [],
+    relaxedGates = [],
     phaseGateResult = { passed: true, blockers: [], warnings: [] },
     projectPaths = createProjectPaths(),
   } = overrides;
@@ -48,6 +50,7 @@ const buildTranslatorPorts = (overrides: {
     ),
     getProtectedFilePatterns: vi.fn().mockResolvedValue(protectedPatterns),
     getProtectedFileExclusions: vi.fn().mockResolvedValue(protectedExclusions),
+    getRelaxedGates: vi.fn().mockResolvedValue(relaxedGates),
     getProjectPaths: vi.fn().mockReturnValue(projectPaths),
   };
   const reentryGuardStatePort = {
@@ -516,6 +519,64 @@ target('HookToCliTranslator', () => {
           // Assert
           expect(actual.shouldBlock).toBe(false);
           expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    describe('AsyncHookToCliTranslator Step 3: quickMode.relaxedGates によるフェーズゲートスキップ', () => {
+      context('relaxedGatesに"phase-gate"が含まれている場合', () => {
+        // UT-HTC-075
+        it('フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            relaxedGates: ['phase-gate'],
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Write',
+            targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(false);
+          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+        });
+      });
+
+      context('relaxedGatesが空の場合', () => {
+        // UT-HTC-076
+        it('従来通りフェーズゲートチェックが実行されること', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            relaxedGates: [],
+            phaseGateResult: { passed: false, blockers: ['logical_design.md未作成'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            toolName: 'Write',
+            targetFilePaths: ['scripts/harness/agent-integration/domain/value-objects/example.ts'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual.shouldBlock).toBe(true);
+          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
         });
       });
     });

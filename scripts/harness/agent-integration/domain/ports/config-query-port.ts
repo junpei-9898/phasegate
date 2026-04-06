@@ -9,5 +9,6 @@ export interface ConfigQueryPort {
   isHookEnabled(hookType: HookType): Promise<boolean>;
   getProtectedFilePatterns(): Promise<string[]>;
   getProtectedFileExclusions(): Promise<string[]>;
+  getRelaxedGates(): Promise<readonly string[]>;
   getProjectPaths(): ProjectPaths;
 }

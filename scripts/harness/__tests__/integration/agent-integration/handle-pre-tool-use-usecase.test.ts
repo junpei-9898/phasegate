@@ -13,6 +13,7 @@ function createDefaultMockConfigQueryPort() {
     isHookEnabled: vi.fn(),
     getProtectedFilePatterns: vi.fn().mockResolvedValue([]),
     getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+    getRelaxedGates: vi.fn().mockResolvedValue([]),
     getProjectPaths: vi.fn().mockReturnValue({
       getSource: () => ['scripts/harness'],
       getDocsInception: () => 'docs/inception',
