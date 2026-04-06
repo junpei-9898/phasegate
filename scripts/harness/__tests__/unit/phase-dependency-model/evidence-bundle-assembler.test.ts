@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { EvidenceBundleAssembler } from '../../../phase-dependency-model/application/services/evidence-bundle-assembler.js';
 import type { ArtifactExistenceCheckerPort } from '../../../phase-dependency-model/domain/ports/artifact-existence-checker-port.js';
+import type { Artifact } from '../../../phase-dependency-model/domain/values/artifact.js';
 import type { PhaseConfigProviderPort } from '../../../phase-dependency-model/domain/ports/phase-config-provider-port.js';
 import type { PlanDocumentReaderPort } from '../../../phase-dependency-model/domain/ports/plan-document-reader-port.js';
 import { PhaseStructure } from '../../../phase-dependency-model/domain/models/phase-structure.js';
@@ -33,8 +34,8 @@ target('EvidenceBundleAssembler', () => {
         const nodes = structure.getPhaseNodes(PhaseLevel.create(1));
         const planningMode = PlanningMode.create('interactive');
         const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
-          checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
-            return new Map(artifacts.map((artifact) => [artifact.resolve(scope), true]));
+          checkAll: vi.fn().mockImplementation(async (artifacts: readonly Artifact[], scope: { unitId?: string; storyId?: string }) => {
+            return new Map(artifacts.map((artifact: Artifact) => [artifact.resolve(scope), true]));
           }),
         };
         const planDocumentReader: PlanDocumentReaderPort = {

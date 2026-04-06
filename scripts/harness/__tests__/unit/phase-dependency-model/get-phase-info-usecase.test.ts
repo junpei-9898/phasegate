@@ -4,6 +4,7 @@ import { GetPhaseInfoUseCase } from '../../../phase-dependency-model/application
 import { EvidenceBundleAssembler } from '../../../phase-dependency-model/application/services/evidence-bundle-assembler.js';
 import { PhaseInfoResolver } from '../../../phase-dependency-model/application/services/phase-info-resolver.js';
 import type { ArtifactExistenceCheckerPort } from '../../../phase-dependency-model/domain/ports/artifact-existence-checker-port.js';
+import type { Artifact } from '../../../phase-dependency-model/domain/values/artifact.js';
 import type { PhaseConfigProviderPort } from '../../../phase-dependency-model/domain/ports/phase-config-provider-port.js';
 import type { PlanDocumentReaderPort } from '../../../phase-dependency-model/domain/ports/plan-document-reader-port.js';
 import { PhaseCustomizationPolicy } from '../../../phase-dependency-model/domain/values/phase-customization-policy.js';
@@ -45,9 +46,9 @@ target('GetPhaseInfoUseCase', () => {
           .getPhaseNodes(PhaseLevel.create(1))
           .map((node) => node.nodeKey());
         const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
-          checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
+          checkAll: vi.fn().mockImplementation(async (artifacts: readonly Artifact[], scope: { unitId?: string; storyId?: string }) => {
             return new Map(
-              artifacts.map((artifact) => [
+              artifacts.map((artifact: Artifact) => [
                 artifact.resolve(scope),
                 level1NodeKeys.some((nodeKey) => artifact.path.includes('_shared') || nodeKey === '1:unit-designer'),
               ]),
@@ -104,9 +105,9 @@ target('GetPhaseInfoUseCase', () => {
           ...structure.getPhaseNodes(PhaseLevel.create(2)).map((node) => node.nodeKey()),
         ];
         const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
-          checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
+          checkAll: vi.fn().mockImplementation(async (artifacts: readonly Artifact[], scope: { unitId?: string; storyId?: string }) => {
             return new Map(
-              artifacts.map((artifact) => [
+              artifacts.map((artifact: Artifact) => [
                 artifact.resolve(scope),
                 !artifact.path.includes('{storyId}'),
               ]),

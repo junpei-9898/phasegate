@@ -19,6 +19,7 @@ function createMockFileSystemPort(content = '# content') {
   return {
     read: vi.fn().mockResolvedValue(content),
     write: vi.fn().mockResolvedValue(undefined),
+    glob: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -74,6 +75,7 @@ target('ApplyCascadeUpdateUseCase', () => {
             writeCallCount++;
             if (writeCallCount === 2) throw new Error('write failed');
           }),
+          glob: vi.fn().mockResolvedValue([]),
         };
         const mockConfig = createMockConfigQueryPort(['scripts/a.ts', 'scripts/b.ts']);
         const mockRegistry = createMockValidatorIdRegistryPort(['L1-001']);

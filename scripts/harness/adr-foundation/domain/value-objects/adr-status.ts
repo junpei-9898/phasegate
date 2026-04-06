@@ -5,11 +5,11 @@
 const ALLOWED_STATUSES = ['Proposed', 'Accepted', 'Deprecated', 'Superseded'] as const;
 type AdrStatusValue = (typeof ALLOWED_STATUSES)[number];
 
-const TRANSITIONS: Readonly<Record<AdrStatusValue, readonly AdrStatusValue[]>> = Object.freeze({
-  Proposed: Object.freeze(['Accepted', 'Deprecated']),
-  Accepted: Object.freeze(['Deprecated', 'Superseded']),
-  Deprecated: Object.freeze(['Proposed']),
-  Superseded: Object.freeze([]),
+const TRANSITIONS = Object.freeze({
+  Proposed: Object.freeze(['Accepted', 'Deprecated'] as const),
+  Accepted: Object.freeze(['Deprecated', 'Superseded'] as const),
+  Deprecated: Object.freeze(['Proposed'] as const),
+  Superseded: Object.freeze([] as const),
 });
 
 export class InvalidAdrStatusError extends Error {
@@ -52,7 +52,7 @@ export class AdrStatus {
   }
 
   canTransitionTo(target: AdrStatus): boolean {
-    return TRANSITIONS[this.value].includes(target.value);
+    return (TRANSITIONS[this.value] as readonly string[]).includes(target.value);
   }
 
   equals(other: AdrStatus): boolean {

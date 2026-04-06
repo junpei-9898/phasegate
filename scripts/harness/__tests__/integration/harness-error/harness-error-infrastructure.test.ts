@@ -3,7 +3,16 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
-import type { HarnessError as LegacyHarnessError } from '../../../core/error-reporter.js';
+interface LegacyHarnessError {
+  code: string;
+  severity: string;
+  category: string;
+  location: { file: string; line?: number };
+  message: { short: string; detailed: string; agentInstruction: string };
+  context: { rule: string; expected: string; actual: string };
+  resolution: { fixSuggestion: string; docLinks: string[]; relatedFiles: string[] };
+  metadata: { timestamp: string; validator: string; layer: string };
+}
 import { LegacyErrorReporterAdapter } from '../../../harness-error/infrastructure/adapters/legacy-error-reporter-adapter.js';
 import { FileSystemAdrExistenceCheckerAdapter } from '../../../harness-error/infrastructure/adapters/file-system-adr-existence-checker-adapter.js';
 import { TypeScriptSnippetSyntaxAdapter } from '../../../harness-error/infrastructure/adapters/type-script-snippet-syntax-adapter.js';

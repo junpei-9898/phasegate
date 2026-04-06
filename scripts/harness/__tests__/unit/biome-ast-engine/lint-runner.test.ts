@@ -694,7 +694,7 @@ target('LintRunner.run', () => {
         const rules = Object.freeze([
           {
             ...createRuleDefinition(),
-            name: { toString: () => 'unknown-rule', equals: () => false } as RuleName,
+            name: { toString: () => 'unknown-rule', equals: () => false } as unknown as RuleName,
           } as RuleDefinition,
         ]);
         const graph = createImportGraph({

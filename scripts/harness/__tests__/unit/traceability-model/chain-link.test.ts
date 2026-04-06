@@ -90,7 +90,7 @@ target('ChainLink.create', () => {
             Object.freeze({
               from: createPath('scripts/harness/domain/story-id.ts'),
               to: createPath('docs/product/construction/traceability-model'),
-              linkType: 'implementation-to-document',
+              linkType: 'implementation-to-document' as 'implementation-to-unit',
               resolved: true,
             }),
           );

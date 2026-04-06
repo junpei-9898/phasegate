@@ -621,7 +621,7 @@ target('PhaseStructure.checkPhaseGate', () => {
       it('InvalidPhaseLevelErrorをスローする', () => {
         // Arrange
         const sut = createDefaultPhaseStructure();
-        const invalidLevel = { value: 4 } as PhaseLevel;
+        const invalidLevel = { value: 4 } as unknown as PhaseLevel;
         const evidence = createGateEvidence(sut, createPhaseLevel(2));
 
         // Act
@@ -1010,7 +1010,7 @@ target('PhaseStructure.getPhaseNodes', () => {
       it('InvalidPhaseLevelErrorをスローする', () => {
         // Arrange
         const sut = createDefaultPhaseStructure();
-        const invalidLevel = { value: 99 } as PhaseLevel;
+        const invalidLevel = { value: 99 } as unknown as PhaseLevel;
 
         // Act
         const actual = () => sut.getPhaseNodes(invalidLevel);

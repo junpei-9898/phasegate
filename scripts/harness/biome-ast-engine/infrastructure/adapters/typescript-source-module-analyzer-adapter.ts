@@ -64,7 +64,7 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
       snapshots.push(
         SourceModuleSnapshot.create({
           filePath,
-          declaredUnit: unitResult.unitName,
+          declaredUnit: unitResult.unitNames[0],
           declaredLayer: layerResult.layerName,
           imports,
           anyTypeCount: anyCount,

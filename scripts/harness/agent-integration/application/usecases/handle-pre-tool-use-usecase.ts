@@ -84,7 +84,7 @@ export class HandlePreToolUseUseCase {
       return { shouldBlock: false };
     }
 
-    const reflectionResult = await this.storyReflectionQueryPort.checkReflection(scope.unitId);
+    const reflectionResult = await this.storyReflectionQueryPort.checkReflection(scope.unitId!);
 
     if (reflectionResult.skipped || reflectionResult.passed) {
       return { shouldBlock: false };

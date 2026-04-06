@@ -65,7 +65,7 @@ const createTraceabilityChainBuilderSut = () => {
     constructionRoot: null as ReturnType<typeof createPath> | null,
     designDocuments: Object.freeze([]) as readonly ReturnType<typeof createPath>[],
     annotationsQueue: [] as Array<readonly ReturnType<typeof createStoryIdAnnotation>[]>,
-    storyExists: async () => true,
+    storyExists: async (_value: string) => true,
     planPath: null as ReturnType<typeof createPath> | null,
   };
 

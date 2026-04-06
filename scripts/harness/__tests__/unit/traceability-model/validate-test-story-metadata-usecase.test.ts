@@ -39,6 +39,7 @@ const createStoryTag = (
 
 const createSut = () => {
   const metadataReaderPort = {
+    readImplementationTags: vi.fn(),
     readTestTags: vi.fn(),
   };
   const validator = {

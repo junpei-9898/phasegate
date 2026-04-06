@@ -5,7 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Ajv, { type ErrorObject, type ValidateFunction } from 'ajv';
+import AjvModule, { type ErrorObject, type ValidateFunction } from 'ajv';
+const Ajv = AjvModule.default ?? AjvModule;
 import { HarnessError } from '../../../harness-error/domain/value-objects/harness-error.js';
 import { ErrorCode } from '../../../harness-error/domain/value-objects/error-code.js';
 import { Severity } from '../../../harness-error/domain/value-objects/severity.js';

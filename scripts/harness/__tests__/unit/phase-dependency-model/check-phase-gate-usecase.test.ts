@@ -3,6 +3,7 @@ import { target, context } from '../../helpers/test-helpers.ts';
 import { CheckPhaseGateUseCase } from '../../../phase-dependency-model/application/usecases/check-phase-gate-usecase.js';
 import { EvidenceBundleAssembler } from '../../../phase-dependency-model/application/services/evidence-bundle-assembler.js';
 import type { ArtifactExistenceCheckerPort } from '../../../phase-dependency-model/domain/ports/artifact-existence-checker-port.js';
+import type { Artifact } from '../../../phase-dependency-model/domain/values/artifact.js';
 import type { PhaseAuditLoggerPort } from '../../../phase-dependency-model/domain/ports/phase-audit-logger-port.js';
 import type { PhaseConfigProviderPort } from '../../../phase-dependency-model/domain/ports/phase-config-provider-port.js';
 import type { PlanDocumentReaderPort } from '../../../phase-dependency-model/domain/ports/plan-document-reader-port.js';
@@ -35,8 +36,8 @@ const createPlanEvidence = () =>
 
 const createEvidencePorts = () => {
   const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
-    checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
-      return new Map(artifacts.map((artifact) => [artifact.resolve(scope), true]));
+    checkAll: vi.fn().mockImplementation(async (artifacts: readonly Artifact[], scope: { unitId?: string; storyId?: string }) => {
+      return new Map(artifacts.map((artifact: Artifact) => [artifact.resolve(scope), true]));
     }),
   };
   const planDocumentReader: PlanDocumentReaderPort = {
@@ -88,14 +89,14 @@ target('CheckPhaseGateUseCase', () => {
           auditRecorded: false,
         });
         expect(auditLogger.record).not.toHaveBeenCalled();
-        expect(phaseConfigProvider.getCustomizationPolicy.mock.invocationCallOrder[0]).toBeLessThan(
-          phaseConfigProvider.getPlanningMode.mock.invocationCallOrder[0],
+        expect((phaseConfigProvider.getCustomizationPolicy as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]).toBeLessThan(
+          (phaseConfigProvider.getPlanningMode as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0],
         );
-        expect(phaseConfigProvider.getPlanningMode.mock.invocationCallOrder[0]).toBeLessThan(
-          artifactExistenceChecker.checkAll.mock.invocationCallOrder[0],
+        expect((phaseConfigProvider.getPlanningMode as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]).toBeLessThan(
+          (artifactExistenceChecker.checkAll as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0],
         );
-        expect(artifactExistenceChecker.checkAll.mock.invocationCallOrder[0]).toBeLessThan(
-          planDocumentReader.readEvidence.mock.invocationCallOrder[0],
+        expect((artifactExistenceChecker.checkAll as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]).toBeLessThan(
+          (planDocumentReader.readEvidence as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0],
         );
       });
     });
@@ -218,7 +219,7 @@ target('CheckPhaseGateUseCase', () => {
         // Arrange
         const policy = createPolicy();
         const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
-          checkAll: vi.fn().mockImplementation(async (artifacts, scope) => {
+          checkAll: vi.fn().mockImplementation(async (artifacts: readonly Artifact[], scope: { unitId?: string; storyId?: string }) => {
             const results = new Map<string, boolean>();
             for (const artifact of artifacts) {
               const resolved = artifact.resolve(scope);

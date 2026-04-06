@@ -2,7 +2,13 @@
  * @layer infrastructure
  * @unit harness-error
  */
-import type { HarnessError } from '../../../core/error-reporter.js';
+interface HarnessError {
+  code: string;
+  severity: string;
+  message: { short: string; detailed: string; agentInstruction: string };
+  resolution: { fixSuggestion: string; docLinks: string[]; relatedFiles: string[] };
+  metadata: { timestamp: string; validator: string; layer: string };
+}
 import type { ValidatorIssueDraft } from '../../application/dto/validator-issue-draft.js';
 
 function compressSuggestion(error: HarnessError): string {

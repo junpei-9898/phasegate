@@ -12,7 +12,7 @@ const createPath = (value: string) => ProjectRelativePath.create(value);
 const createChainOutput = (overrides: Partial<{
   origin: string;
   complete: boolean;
-  links: readonly Array<{
+  links: Array<{
     from: string;
     to: string;
     linkType:
@@ -22,7 +22,7 @@ const createChainOutput = (overrides: Partial<{
       | 'story-to-plan';
     resolved: boolean;
   }>;
-  brokenLinks: readonly Array<{
+  brokenLinks: Array<{
     from: string;
     to: string;
     linkType:
@@ -33,18 +33,18 @@ const createChainOutput = (overrides: Partial<{
     resolved: boolean;
   }>;
 }> = {}) =>
-  Object.freeze({
+  ({
     origin: 'scripts/harness/traceability-model/domain/value-objects/story-id.ts',
     complete: true,
-    links: Object.freeze([
-      Object.freeze({
+    links: [
+      {
         from: 'scripts/harness/traceability-model/domain/value-objects/story-id.ts',
         to: 'docs/product/construction/traceability-model',
         linkType: 'implementation-to-unit' as const,
         resolved: true,
-      }),
-    ]),
-    brokenLinks: Object.freeze([]),
+      },
+    ],
+    brokenLinks: [] as Array<{ from: string; to: string; linkType: 'implementation-to-unit' | 'unit-to-design' | 'design-to-story' | 'story-to-plan'; resolved: boolean }>,
     ...overrides,
   });
 
@@ -111,14 +111,14 @@ target('VerifyTraceabilityCoverageUseCase.execute', () => {
             createChainOutput({
               origin: 'scripts/harness/traceability-model/domain/services/metadata-validator.ts',
               complete: false,
-              brokenLinks: Object.freeze([
-                Object.freeze({
+              brokenLinks: [
+                {
                   from: 'docs/product/construction/traceability-model',
                   to: 'docs/product/construction/traceability-model/domain_model.md',
                   linkType: 'unit-to-design' as const,
                   resolved: false,
-                }),
-              ]),
+                },
+              ],
             }),
           );
 
@@ -209,33 +209,33 @@ target('VerifyTraceabilityCoverageUseCase.execute', () => {
           .mockResolvedValueOnce(
             createChainOutput({
               complete: false,
-              brokenLinks: Object.freeze([
-                Object.freeze({
+              brokenLinks: [
+                {
                   from: 'docs/product/construction/traceability-model',
                   to: 'docs/product/construction/traceability-model/domain_model.md',
                   linkType: 'unit-to-design' as const,
                   resolved: false,
-                }),
-              ]),
+                },
+              ],
             }),
           )
           .mockResolvedValueOnce(
             createChainOutput({
               complete: false,
-              brokenLinks: Object.freeze([
-                Object.freeze({
+              brokenLinks: [
+                {
                   from: 'docs/product/construction/traceability-model/domain_model.md',
                   to: 'docs/product/user_stories.md',
                   linkType: 'design-to-story' as const,
                   resolved: false,
-                }),
-                Object.freeze({
+                },
+                {
                   from: 'docs/product/user_stories.md',
                   to: 'inception/traceability-model/H03-01/__missing__.md',
                   linkType: 'story-to-plan' as const,
                   resolved: false,
-                }),
-              ]),
+                },
+              ],
             }),
           );
 
