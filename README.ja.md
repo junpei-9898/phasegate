@@ -48,6 +48,9 @@ AIエージェント（Claude Code, Codex, Cursor, その他）が生成する�
 | **Nyquist Validation** | 要件→テストの双方向トレーサビリティを`requirement-test-matrix.json`で保証 |
 | **Cascade Updater** | 下位フェーズの発見を上位設計文書に自動フィードバック |
 | **Regression Suite** | K1-K15非交渉要件・GnGゲート・エージェント非依存性を回帰テストで継続検証 |
+| **カスタムフェーズゲート** | `phasegate.config.json` の `gates[]` で独自のフェーズゲートを定義可能。デフォルトはAIDLCフェーズ依存 |
+| **保護ファイル制御** | `protectedFiles.exclude` でAI書き込みから保護するファイルを設定 |
+| **Bash書き込み検出** | シェル経由のファイル書き込み（`sed -i`, `tee`, `cp`, `mv`, リダイレクト等）を検出してブロック |
 
 ---
 
@@ -135,7 +138,7 @@ npm install --save-dev phasegate
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.14.0"
+    "phasegate": "^0.31.0"
   }
 }
 ```
@@ -194,25 +197,13 @@ npx phasegate update-skills
 
 ```jsonc
 {
-  "version": "1.0",
-  "preset": "standard",          // "minimal" | "standard" | "strict"
-  "project": {
-    "name": "my-project",
-    "architecture": "clean-architecture",
-    "paths": {
-      "source": ["src"],
-      "docs": {
-        "units": "docs/product/units",
-        "inception": "docs/inception",
-        "construction": "docs/product/construction"
-      }
-    }
-  },
+  "project": { "name": "my-project", "preset": "standard" },
   "layers": {
-    "L1_editor":    { "enabled": true },
-    "L2_precommit": { "enabled": true },
-    "L3_ci":        { "enabled": true },
-    "L4_scheduled": { "enabled": false }  // strict preset では true
+    "L0": { "enabled": false },
+    "L1": { "enabled": true },
+    "L2": { "enabled": true },
+    "L3": { "enabled": true },
+    "L4": { "enabled": false }
   },
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
@@ -220,31 +211,16 @@ npx phasegate update-skills
     "relaxedGates": ["phase-gate", "2-phase-execution"]
   },
   "phaseDependencies": {
-    "preset": "standard",         // "full" | "standard" | "minimal" | "custom"（"default" は "full" にフォールバック）
-    "override": false,            // custom 時のみ true（customRules を有効化）
-    "customRules": [],
-    "storyReflection": {          // 省略時はプリセットのデフォルト mappings がゼロコンフィグで適用
-      "enabled": true,
-      "mappings": []              // 明示指定でプリセットデフォルトを上書き
-    }
+    "preset": "standard",
+    "override": false,
+    "storyReflection": { "enabled": true }
   },
-  "planningMode": {
-    "default": "interactive",     // "interactive" | "embedded-qa"
-    "perPhase": {}
-  },
-  "harnesses": {
-    "agentLessonCollection": false,
-    "cascadeUpdate": false,
-    "bundleSizeLimit": 0,
-    "deadCodeGC": false
+  "protectedFiles": {
+    "exclude": ["tsconfig.json", "package.json"]
   },
   "paths": {
     "designDocs": "docs/product/construction",
     "inceptionDocs": "docs/inception"
-  },
-  "reporting": {
-    "format": "json",
-    "outputDir": "reports"
   }
 }
 ```
@@ -511,7 +487,7 @@ describe('ConfigSchema', () => {
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|Bash",
         "hooks": [{
           "type": "command",
           "command": "npx tsx scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts"
@@ -542,7 +518,7 @@ describe('ConfigSchema', () => {
 
 | Hook | タイミング | 動作 |
 |---|---|---|
-| **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック。ブロック時はアクショナブルなエラーメッセージ（違反理由・不足成果物・次に使うべきスキル）を返却 |
+| **PreToolUse** | ファイル書き込み前 | Phase Gate強制・保護ファイルへの変更をブロック・**Bash経由の書き込み検出（`sed -i`, `tee`, `cp`, `mv`, リダイレクト）**。ブロック時はアクショナブルなエラーメッセージ（違反理由・不足成果物・次に使うべきスキル）を返却 |
 | **PostToolUse** | ファイル書き込み後 | Biome ASTルールを自動実行、違反があれば即時フィードバック |
 | **Stop** | セッション終了前 | `phasegate:complete-check` (L2-L4全チェック) を実行、全グリーンでないとセッション終了を保留 |
 
@@ -706,6 +682,43 @@ npx phasegate ci-check --quick
 | **custom** | ユーザー定義 | `storyReflection.mappings` で定義 | 完全カスタマイズ（`override: true` 必須） |
 
 `storyReflection` は inception の US/issue 設計が `docs/product/construction/{unit}/` に反映されていない場合に `src/{unit}/*` への Write/Edit をブロックします。config で省略した場合はプリセットのデフォルト mappings がゼロコンフィグで自動適用されます。`cascade-updater` スキルがこのゲートを通過する標準手段です。詳細は [ADR-013](docs/ADR/ADR-013-story-reflection-gate.md) と [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate) を参照してください。
+
+---
+
+## カスタムフェーズゲート
+
+デフォルトでは **AIDLCフェーズ依存モデル** が適用され、設計文書なしでの実装ファイル書き込みがブロックされます。`standard` または `full` プリセットでゼロコンフィグで動作します。
+
+AIDLCを使わないプロジェクトでは、`phasegate.config.json` の `gates[]` 配列で **独自のゲート** を定義できます:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "custom",
+    "override": true,
+    "gates": [
+      {
+        "name": "schema-first",
+        "level": 3,
+        "blocks": ["src/api/**/*.ts"],
+        "requires": ["docs/api/openapi.yaml"],
+        "description": "API実装にはOpenAPIスキーマが必要"
+      }
+    ]
+  }
+}
+```
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `name` | string | ゲートの一意識別子 |
+| `level` | 1 \| 2 \| 3 | フェーズレベル（上位レベルは下位レベルのゲート通過が前提） |
+| `blocks` | string[] | このゲートが保護するファイルのglobパターン |
+| `requires` | string[] | ブロック対象パスへの書き込み前に存在が必要なファイル |
+| `dependsOn` | string[] | 事前に通過が必要な他のゲート名 |
+| `description` | string | ゲートの説明 |
+
+ゲートは **DAG**（有向非巡回グラフ）を形成します。循環依存は設定読み込み時に拒否されます。
 
 ---
 
@@ -904,4 +917,4 @@ npx phasegate update-skills
 
 ---
 
-*Last updated: 2026-04-02 — v0.11.0*
+*Last updated: 2026-04-06 — v0.31.0*

@@ -27,6 +27,9 @@ Works with **Claude Code, Codex, Cursor, Copilot**, or any other AI agent.
 | **Quick Mode** | Lightweight gate for bugfixes, docs, tests, and config changes |
 | **Claude Code Hooks** | Native PreToolUse / PostToolUse / Stop hook integration |
 | **HarnessError Format** | Every error includes ADR references and fix examples for AI self-correction |
+| **Configurable Phase Gates** | Define custom gates with `gates[]` in config. Default uses AIDLC phase dependencies |
+| **Protected File Control** | Configure which files are protected from AI writes via `protectedFiles.exclude` |
+| **Bash Write Detection** | Detects and blocks shell-based file writes (`sed -i`, `tee`, `cp`, `mv`, redirects) |
 | **Presets** | minimal, standard, and strict -- choose your quality level |
 
 ---
@@ -172,7 +175,7 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 | `full` | All AIDLC gates | Enabled -- `logical_design` + `domain_model` required, `uiux` optional | AIDLC full ceremony (alias for legacy `default`) |
 | `standard` | Core gates | Enabled -- `logical_design` required, `domain_model` optional | Production development with moderate rigor |
 | `minimal` | None | Disabled -- no inception -> product enforcement | Prototyping / exploration |
-| `custom` | User-defined | User-defined via `storyReflection.mappings` | Full control (requires `override: true`) |
+| `custom` | User-defined via `gates[]` array | User-defined via `storyReflection.mappings` | Full control (requires `override: true`) |
 
 `storyReflection` blocks writes to `src/{unit}/*` when an inception US/issue design exists but has not been cascaded into `docs/product/construction/{unit}/`. See [ADR-013](docs/ADR/ADR-013-story-reflection-gate.md) and the [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate).
 
@@ -180,24 +183,65 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 
 ```jsonc
 {
-  "preset": "standard",
-  "project": { "name": "my-project", "architecture": "clean-architecture" },
+  "project": { "name": "my-project", "preset": "standard" },
   "layers": {
-    "L1_editor":    { "enabled": true },
-    "L2_precommit": { "enabled": true },
-    "L3_ci":        { "enabled": true },
-    "L4_scheduled": { "enabled": false }
+    "L0": { "enabled": false },
+    "L1": { "enabled": true },
+    "L2": { "enabled": true },
+    "L3": { "enabled": true },
+    "L4": { "enabled": false }
   },
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
-    "maintainedLayers": ["L1", "L2"]
+    "maintainedLayers": ["L1", "L2"],
+    "relaxedGates": ["phase-gate", "2-phase-execution"]
   },
   "phaseDependencies": {
     "preset": "standard",
     "storyReflection": { "enabled": true }
+  },
+  "protectedFiles": {
+    "exclude": ["tsconfig.json", "package.json"]
   }
 }
 ```
+
+---
+
+## Configurable Phase Gates
+
+By default, Phasegate enforces the **AIDLC phase dependency model** -- implementation files cannot be written without prerequisite design documents. This works out of the box with the `standard` or `full` preset.
+
+For projects that don't follow AIDLC, you can define **custom gates** using the `gates[]` array in `phasegate.config.json`:
+
+```jsonc
+{
+  "phaseDependencies": {
+    "preset": "custom",
+    "override": true,
+    "gates": [
+      {
+        "name": "schema-first",
+        "level": 3,
+        "blocks": ["src/api/**/*.ts"],
+        "requires": ["docs/api/openapi.yaml"],
+        "description": "API implementation requires OpenAPI schema"
+      }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Unique gate identifier |
+| `level` | 1 \| 2 \| 3 | Phase level (higher levels require lower-level gates to pass first) |
+| `blocks` | string[] | Glob patterns for files this gate protects |
+| `requires` | string[] | Files that must exist before writing to blocked paths |
+| `dependsOn` | string[] | Other gate names that must pass first |
+| `description` | string | Human-readable gate description |
+
+Gates form a **DAG** (Directed Acyclic Graph). Circular dependencies are rejected at config load time.
 
 ---
 
@@ -207,7 +251,7 @@ Phasegate integrates natively with Claude Code via hooks in `.claude/settings.js
 
 | Hook | Trigger | Behavior |
 |---|---|---|
-| `PreToolUse` | `Write` or `Edit` | Blocks writes to source files without design docs; runs Biome lint |
+| `PreToolUse` | `Write`, `Edit`, or `Bash` (write operations detected) | Blocks writes to source files without design docs; protects configured files; detects Bash write operations (`sed -i`, `tee`, `cp`, etc.) |
 | `PostToolUse` | `Write` or `Edit` | Auto-formats and validates metadata |
 | `Stop` | Session end | Runs full test suite to ensure all tests pass |
 
