@@ -780,7 +780,7 @@ A-8（ドキュメント）
 ## 8. 未決事項
 
 - [x] `{unit}` の解決 → **パスベース + `@unit` アノテーション併用。`@unit` は複数ユニット対応（カンマ区切り + 複数行）。§4.8 参照**
-- [ ] `blocks` の glob ライブラリ選定（minimatch / picomatch）
+- [x] `blocks` の glob ライブラリ選定（minimatch / picomatch）→ **picomatch 採用**（B-4-2 で実装済み。既に transitive で v4.0.4 存在、高速、zero deps）
 - [x] `standard` の Phase 3 で `scenario_test_design.md` の扱い → **storyReflection 対象外。テスト設計は US 単位で inception に管理され product に累積更新されないため。§4.2 参照**
 - [x] `init` コマンドでプリセット選択 UI を提供するか → **v1.0 で `--preset` オプション追加。`npx phasegate init --name my-project --preset minimal`**
 - [x] storyReflection のデフォルト mappings → **プリセットごとにハードコード。config 省略時はゼロコンフィグで動作**
