@@ -1,3 +1,4 @@
+// @layer domain
 // harness-api.ts — Shared Kernel public entry for harness-api types
 
 export type { HarnessApiResponseContract } from '../harness-api/application/dto/harness-api-response-contract.js';

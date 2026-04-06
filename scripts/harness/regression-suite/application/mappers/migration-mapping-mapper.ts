@@ -1,3 +1,4 @@
+// @layer application
 import type { V0TestMigration } from '../../domain/aggregates/v0-test-migration.js';
 import type { MigrationMappingOutput } from '../dto/migrate-v0-tests-output.js';
 

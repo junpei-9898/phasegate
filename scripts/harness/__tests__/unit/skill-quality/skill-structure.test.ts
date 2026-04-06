@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { SkillStructure } from '../../../skill-quality/domain/value-objects/skill-structure.js';

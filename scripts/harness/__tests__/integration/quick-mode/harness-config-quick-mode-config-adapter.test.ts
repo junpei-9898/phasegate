@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { target, context } from '../../helpers/test-helpers.js';

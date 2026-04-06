@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { PhaseInfoResolver } from '../../../phase-dependency-model/application/services/phase-info-resolver.js';

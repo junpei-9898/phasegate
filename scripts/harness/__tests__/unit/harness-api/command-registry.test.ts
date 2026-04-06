@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CommandRegistry } from '../../../harness-api/domain/services/command-registry.js';

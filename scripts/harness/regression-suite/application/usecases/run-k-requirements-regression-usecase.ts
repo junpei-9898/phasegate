@@ -1,3 +1,4 @@
+// @layer application
 import { SuiteId } from '../../domain/value-objects/suite-id.js';
 import { TestExecutionSummary } from '../../domain/value-objects/test-execution-summary.js';
 import type { SuiteRegistryPort } from '../../domain/ports/suite-registry-port.js';

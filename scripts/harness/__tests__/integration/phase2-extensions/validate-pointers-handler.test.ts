@@ -1,3 +1,4 @@
+// @layer test
 import { beforeEach, expect, it, vi } from 'vitest';
 import { context, target } from '../../helpers/test-helpers.js';
 import { ValidatePointersHandler } from '../../../phase2-extensions/presentation/handlers/validate-pointers-handler.js';

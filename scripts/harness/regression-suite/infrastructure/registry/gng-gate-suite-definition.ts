@@ -1,3 +1,4 @@
+// @layer infrastructure
 import { SuiteId } from '../../domain/value-objects/suite-id.js';
 import { RegressionSuiteDefinition } from '../../domain/value-objects/regression-suite-definition.js';
 import { GngConditionTest } from '../../domain/value-objects/gng-condition-test.js';

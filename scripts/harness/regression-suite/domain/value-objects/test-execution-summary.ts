@@ -1,3 +1,4 @@
+// @layer domain
 import type { CoverageRate } from './coverage-rate.js';
 import type { TestFailureDetail } from './test-failure-detail.js';
 

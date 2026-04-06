@@ -1,3 +1,4 @@
+// @layer application
 export interface TestFailureDetailOutput {
   testCaseId: string;
   errorMessage: string;

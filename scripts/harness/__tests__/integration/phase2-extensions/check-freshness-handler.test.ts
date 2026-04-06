@@ -1,3 +1,4 @@
+// @layer test
 import { beforeEach, expect, it, vi } from 'vitest';
 import { context, target } from '../../helpers/test-helpers.js';
 import { CheckFreshnessHandler } from '../../../phase2-extensions/presentation/handlers/check-freshness-handler.js';

@@ -1,3 +1,4 @@
+// @layer domain
 // check-ready-result.ts — CheckReadyResult Value Object
 
 export interface PhaseGateStoryResult {

@@ -1,3 +1,4 @@
+// @layer application
 // harness-api-response-contract.ts — Cross-Unit Contract DTO
 
 import type { ResponseStatus, HarnessError, ResponseSummary } from '../../domain/value-objects/harness-api-response.js';

@@ -1,3 +1,4 @@
+// @layer application
 import type { SuiteIdValue } from '../../domain/value-objects/suite-id.js';
 import type { ExecutionMode } from '../../domain/value-objects/ci-gate-config.js';
 

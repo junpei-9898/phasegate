@@ -92,7 +92,7 @@ export class RuleDefinitionRegistry {
         'no-comment-flood',
         'L1-008',
         Object.freeze([REQUIRED_INPUT.sourceModuleSnapshots]),
-        Object.freeze({ maxCommentRatio: 0.35, maxRepeatedBlocks: 1 }),
+        Object.freeze({ maxCommentRatio: 0.35, maxRepeatedBlocks: 1, minLogicalLines: 15 }),
         'コメント過多を検出する',
         '不要なコメントを整理し自己説明的なコードへ改善する'
       ),

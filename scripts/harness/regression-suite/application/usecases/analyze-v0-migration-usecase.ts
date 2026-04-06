@@ -1,3 +1,4 @@
+// @layer application
 import { MigrationAnalyzer } from '../../domain/services/migration-analyzer.js';
 import type { V0SpecReaderPort } from '../../domain/ports/v0-spec-reader-port.js';
 import type { MigrationMappingRepositoryPort } from '../../domain/ports/migration-mapping-repository-port.js';

@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { JudgeQuickModeEligibilityUseCase } from '../../../../quick-mode/application/usecases/judge-quick-mode-eligibility-usecase.js';

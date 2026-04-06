@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { RecordErrorOccurrenceUseCase } from '../../../ci-governance/application/usecases/record-error-occurrence-usecase.js';

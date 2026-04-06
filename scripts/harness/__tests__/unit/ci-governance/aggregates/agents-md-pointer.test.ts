@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createAgentsMdPointer, createCommandPointerEntry, createFilePointerEntry } from '../../../helpers/test-helpers.js';
 import { describe, it, expect } from 'vitest';
 import { AgentsMdPointer } from '../../../../ci-governance/domain/aggregates/agents-md-pointer.js';

@@ -1,3 +1,4 @@
+// @layer test
 /**
  * T-042: L0 バリデータ E2E検証
  * validate --layer L0 がバリデータを実行すること

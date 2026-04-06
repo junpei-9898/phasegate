@@ -1,3 +1,4 @@
+// @layer presentation
 // status-handler.ts — StatusHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

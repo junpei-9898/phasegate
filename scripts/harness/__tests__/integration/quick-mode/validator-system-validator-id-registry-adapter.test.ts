@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
 import { ValidatorSystemValidatorIdRegistryAdapter } from '../../../quick-mode/infrastructure/adapters/validator-system-validator-id-registry-adapter.js';

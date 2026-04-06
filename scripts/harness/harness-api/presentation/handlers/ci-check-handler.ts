@@ -1,3 +1,4 @@
+// @layer presentation
 // ci-check-handler.ts — CiCheckHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

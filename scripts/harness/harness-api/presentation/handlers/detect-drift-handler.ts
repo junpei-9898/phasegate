@@ -1,3 +1,4 @@
+// @layer presentation
 // detect-drift-handler.ts — DetectDriftHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

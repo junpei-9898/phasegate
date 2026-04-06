@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ValidateCustomizationPolicyUseCase } from '../../../phase-dependency-model/application/usecases/validate-customization-policy-usecase.js';

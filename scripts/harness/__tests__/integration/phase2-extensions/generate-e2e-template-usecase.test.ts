@@ -1,3 +1,4 @@
+// @layer test
 import { beforeEach, expect, it } from 'vitest';
 import { context, target } from '../../helpers/test-helpers.js';
 import { GenerateE2ETemplateUseCase } from '../../../phase2-extensions/application/usecases/generate-e2e-template-usecase.js';

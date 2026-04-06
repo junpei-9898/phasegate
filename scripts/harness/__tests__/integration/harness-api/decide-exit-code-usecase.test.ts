@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { DecideExitCodeUseCase } from '../../../harness-api/application/usecases/decide-exit-code-usecase.js';

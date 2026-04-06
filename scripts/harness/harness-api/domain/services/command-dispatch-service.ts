@@ -1,3 +1,4 @@
+// @layer domain
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import { CommandRegistry } from './command-registry.js';

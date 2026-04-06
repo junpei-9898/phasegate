@@ -1,3 +1,4 @@
+// @layer application
 // initialize-registry-input.ts — InitializeRegistryInput DTO
 
 export interface CliCommandDefinitionInput {

@@ -1,3 +1,4 @@
+// @layer application
 // harness-api-response-mapper.ts — HarnessApiResponseMapper
 
 import type { HarnessApiResponse } from '../../domain/value-objects/harness-api-response.js';

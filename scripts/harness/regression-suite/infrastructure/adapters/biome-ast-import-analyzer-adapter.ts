@@ -1,3 +1,4 @@
+// @layer infrastructure
 import * as fs from 'node:fs/promises';
 import type { ImportAnalyzerPort } from '../../domain/ports/import-analyzer-port.js';
 

@@ -1,3 +1,4 @@
+// @layer domain
 // validator-execution-port.ts
 
 import type { ValidatorCheckItem } from '../value-objects/ci-check-result.js';

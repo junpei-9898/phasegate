@@ -1,3 +1,4 @@
+// @layer presentation
 // harness-api-json-formatter.ts — HarnessApiJsonFormatter
 
 import type { HarnessApiResponseContract } from '../../application/dto/harness-api-response-contract.js';

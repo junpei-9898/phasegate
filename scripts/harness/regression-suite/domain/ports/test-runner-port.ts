@@ -1,3 +1,4 @@
+// @layer domain
 import type { TestCase } from '../value-objects/regression-suite-definition.js';
 import type { CoverageRate } from '../value-objects/coverage-rate.js';
 import type { TestFailureDetail } from '../value-objects/test-failure-detail.js';

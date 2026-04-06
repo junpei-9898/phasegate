@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ExitCodeSpec } from '../../../harness-api/domain/value-objects/exit-code-spec.js';

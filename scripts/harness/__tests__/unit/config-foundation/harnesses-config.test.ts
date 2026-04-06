@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { HarnessesConfig } from '../../../config-foundation/domain/value-objects/harnesses-config.js';

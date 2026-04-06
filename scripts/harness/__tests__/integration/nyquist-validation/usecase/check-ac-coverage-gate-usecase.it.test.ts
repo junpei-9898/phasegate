@@ -1,3 +1,4 @@
+// @layer test
 import { expect, it, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { CheckAcCoverageGateUseCase } from '../../../../nyquist-validation/application/usecases/check-ac-coverage-gate-usecase.js';

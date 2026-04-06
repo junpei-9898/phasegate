@@ -1,3 +1,4 @@
+// @layer domain
 export interface GngConditionTestProps {
   gngNumber: string;
   targetUnit: string;

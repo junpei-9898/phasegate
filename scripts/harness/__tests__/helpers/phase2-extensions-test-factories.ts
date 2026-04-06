@@ -1,3 +1,4 @@
+// @layer test
 import { DocFreshnessRule } from '../../phase2-extensions/domain/aggregates/doc-freshness-rule.js';
 import { PointerRule } from '../../phase2-extensions/domain/aggregates/pointer-rule.js';
 import { DocumentAge } from '../../phase2-extensions/domain/value-objects/document-age.js';

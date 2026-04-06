@@ -1,3 +1,4 @@
+// @layer presentation
 // check-phase-handler.ts — CheckPhaseHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

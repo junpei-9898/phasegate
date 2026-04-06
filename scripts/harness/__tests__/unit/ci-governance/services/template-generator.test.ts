@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createValidatorIdRegistryPortMock, createPresetConfigPortMock } from '../../../helpers/test-helpers.js';
 import { describe, it, vi, expect } from 'vitest';
 import { TemplateGenerator } from '../../../../ci-governance/domain/services/template-generator.js';

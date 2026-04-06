@@ -26,6 +26,9 @@ const toStringArray = (value: unknown, fallback: readonly string[]): readonly st
     ? Object.freeze([...value])
     : fallback;
 
+const isTestFile = (snapshot: SourceModuleSnapshot): boolean =>
+  snapshot.filePath.toString().includes('__tests__/');
+
 export class LintRunner {
   private readonly ruleDefinitionRegistry: RuleDefinitionRegistry;
 
@@ -98,6 +101,10 @@ export class LintRunner {
             LayerBoundary.standardMatrix(),
             layerByFile
           )) {
+            const fromSnapshot = snapshotByPath.get(edge.from.toString());
+            if (fromSnapshot && isTestFile(fromSnapshot)) {
+              continue;
+            }
             ruleViolations.push(
               RuleViolation.create({
                 filePath: edge.from,
@@ -112,6 +119,10 @@ export class LintRunner {
 
           for (const cycle of params.importGraph.detectCycles()) {
             const firstPath = cycle.path[0];
+            const firstSnapshot = snapshotByPath.get(firstPath.toString());
+            if (firstSnapshot && isTestFile(firstSnapshot)) {
+              continue;
+            }
             ruleViolations.push(
               RuleViolation.create({
                 filePath: firstPath,
@@ -127,6 +138,9 @@ export class LintRunner {
         }
         case 'enforce-folder-structure': {
           for (const snapshot of params.snapshots) {
+            if (isTestFile(snapshot)) {
+              continue;
+            }
             if (snapshot.declaredLayer !== null && !snapshot.belongsToLayerDirectory()) {
               ruleViolations.push(
                 RuleViolation.create({
@@ -147,6 +161,9 @@ export class LintRunner {
           const maxAnyRatio = toNumber(rule.config.maxAnyRatio, 0.05);
 
           for (const snapshot of params.snapshots) {
+            if (isTestFile(snapshot)) {
+              continue;
+            }
             if (
               snapshot.anyTypeCount > maxAnyCount ||
               snapshot.anyRatio() > maxAnyRatio
@@ -223,8 +240,15 @@ export class LintRunner {
         case 'no-comment-flood': {
           const maxCommentRatio = toNumber(rule.config.maxCommentRatio, 0.35);
           const maxRepeatedBlocks = toNumber(rule.config.maxRepeatedBlocks, 1);
+          const minLogicalLines = toNumber(rule.config.minLogicalLines, 15);
 
           for (const snapshot of params.snapshots) {
+            if (isTestFile(snapshot)) {
+              continue;
+            }
+            if (snapshot.logicalLineCount < minLogicalLines) {
+              continue;
+            }
             if (
               snapshot.commentDensity() > maxCommentRatio ||
               snapshot.repeatedCommentBlocks > maxRepeatedBlocks

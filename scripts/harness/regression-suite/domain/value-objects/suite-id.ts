@@ -1,3 +1,4 @@
+// @layer domain
 export type SuiteIdValue = 'k-requirements' | 'gng-gate' | 'v0-migration' | 'agent-independence';
 
 const VALID_SUITE_IDS: ReadonlySet<string> = new Set([

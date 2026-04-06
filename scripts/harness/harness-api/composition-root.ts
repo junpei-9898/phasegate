@@ -1,3 +1,4 @@
+// @layer infrastructure
 // composition-root.ts — harness-api Composition Root
 
 import { CommandRegistry } from './domain/services/command-registry.js';

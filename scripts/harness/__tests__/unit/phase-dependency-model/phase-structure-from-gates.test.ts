@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { GateGraphValidationError } from '../../../phase-dependency-model/domain/services/gate-graph.js';
 import { PhaseStructure } from '../../../phase-dependency-model/domain/models/phase-structure.js';

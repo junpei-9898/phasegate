@@ -1,3 +1,4 @@
+// @layer application
 // dispatch-command-usecase.ts — DispatchCommandUseCase
 
 import { CommandRegistry } from '../../domain/services/command-registry.js';

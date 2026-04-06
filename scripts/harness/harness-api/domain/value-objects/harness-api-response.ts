@@ -1,3 +1,4 @@
+// @layer domain
 // harness-api-response.ts — HarnessApiResponse<T> Value Object
 
 export type ResponseStatus = 'pass' | 'fail' | 'error';

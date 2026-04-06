@@ -1,3 +1,4 @@
+// @layer application
 import type { TestExecutionSummary } from '../../domain/value-objects/test-execution-summary.js';
 import type { RunRegressionSuiteOutput } from '../dto/run-regression-suite-output.js';
 

@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';

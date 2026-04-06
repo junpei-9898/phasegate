@@ -1,3 +1,4 @@
+// @layer domain
 import type { V0TestMigration } from '../aggregates/v0-test-migration.js';
 import type { V0TestId } from '../value-objects/v0-test-id.js';
 import type { MigrationMapping } from '../value-objects/migration-mapping.js';

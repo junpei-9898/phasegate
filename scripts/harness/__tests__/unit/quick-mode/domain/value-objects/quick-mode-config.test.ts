@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { QuickModeConfig } from '../../../../../quick-mode/domain/value-objects/quick-mode-config.js';

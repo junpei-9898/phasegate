@@ -1,3 +1,4 @@
+// @layer domain
 // exit-code-spec.ts — ExitCodeSpec Value Object
 
 export class ExitCodeSpec {

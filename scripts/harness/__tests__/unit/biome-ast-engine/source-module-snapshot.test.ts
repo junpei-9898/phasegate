@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
@@ -148,7 +149,7 @@ target('SourceModuleSnapshot.create', () => {
     });
 
     context('declaredLayerが不正な値の場合', () => {
-      it('declaredLayerがnullとして生成される（レイヤー境界チェック対象外）', () => {
+      it('declaredLayerがnullとして生成されるが、生アノテーションは認識される', () => {
         // Arrange
         const props = {
           ...createSourceModuleSnapshot(),
@@ -160,7 +161,8 @@ target('SourceModuleSnapshot.create', () => {
 
         // Assert
         expect(actual.declaredLayer).toBeNull();
-        expect(actual.hasLayerComment()).toBe(false);
+        expect(actual.hasLayerComment()).toBe(true);
+        expect(actual.hasRawLayerAnnotation).toBe(true);
       });
     });
 

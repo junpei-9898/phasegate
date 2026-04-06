@@ -1,3 +1,4 @@
+// @layer domain
 export interface ImportViolationProps {
   modulePath: string;
   forbiddenPackage: string;

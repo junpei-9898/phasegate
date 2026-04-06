@@ -1,3 +1,4 @@
+// @layer test
 /**
  * T-041: Phase2 Extensions 実docs対象 E2E検証
  * p2:check-freshness / p2:validate-pointers が有意な結果を返すこと

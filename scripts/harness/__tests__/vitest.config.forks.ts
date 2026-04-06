@@ -1,3 +1,4 @@
+// @layer test
 /**
  * process.chdir() 依存テスト専用 — forks pool で実行
  * threads pool では process.chdir() が使えないため分離

@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { RunPlanCheckerLoopUseCase } from '../../../skill-quality/application/usecases/run-plan-checker-loop-usecase.js';

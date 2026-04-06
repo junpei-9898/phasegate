@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { InitializeCommandRegistryUseCase } from '../../../harness-api/application/usecases/initialize-command-registry-usecase.js';

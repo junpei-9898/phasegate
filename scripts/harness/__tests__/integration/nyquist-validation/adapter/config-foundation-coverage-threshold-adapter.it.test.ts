@@ -1,3 +1,4 @@
+// @layer test
 import { expect, it, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { ConfigFoundationCoverageThresholdAdapter } from '../../../../nyquist-validation/infrastructure/adapters/config-foundation-coverage-threshold-adapter.js';

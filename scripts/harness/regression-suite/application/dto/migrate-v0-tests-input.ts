@@ -1,3 +1,4 @@
+// @layer application
 export interface MigrateV0TestsInput {
   confirmExecute?: boolean;
   outOfScopePattern?: string[];

@@ -1,3 +1,4 @@
+// @layer domain
 // command-input-spec.ts — CommandInputSpec Value Object
 
 export interface ArgDef {

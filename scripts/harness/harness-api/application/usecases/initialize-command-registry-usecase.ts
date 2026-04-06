@@ -1,3 +1,4 @@
+// @layer application
 // initialize-command-registry-usecase.ts — InitializeCommandRegistryUseCase
 
 import { CliCommandDefinition } from '../../domain/value-objects/cli-command-definition.js';

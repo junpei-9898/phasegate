@@ -1,3 +1,4 @@
+// @layer domain
 // drift-report-summary.ts — DriftReportSummary Value Object
 
 export interface DriftItem {

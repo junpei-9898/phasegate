@@ -1,3 +1,4 @@
+// @layer infrastructure
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
 
 export class HarnessConfigQueryAdapter implements ConfigQueryPort {

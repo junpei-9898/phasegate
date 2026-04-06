@@ -1,3 +1,4 @@
+// @layer domain
 // command-registry.ts — CommandRegistry Domain Service
 
 import { CliCommandDefinition, type CommandName } from '../value-objects/cli-command-definition.js';

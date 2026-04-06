@@ -1,3 +1,4 @@
+// @layer domain
 import type { AgentIndependenceTest } from '../value-objects/agent-independence-test.js';
 import { ImportViolation } from '../value-objects/import-violation.js';
 import type { ImportAnalyzerPort } from '../ports/import-analyzer-port.js';

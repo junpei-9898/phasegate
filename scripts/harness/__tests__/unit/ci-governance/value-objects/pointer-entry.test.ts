@@ -1,3 +1,4 @@
+// @layer test
 import { target, context } from '../../../helpers/test-helpers.js';
 import { describe, it, expect } from 'vitest';
 import { PointerEntry } from '../../../../ci-governance/domain/value-objects/pointer-entry.js';

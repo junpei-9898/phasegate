@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createTemplateConfig } from '../../../helpers/test-helpers.js';
 import { describe, it, expect } from 'vitest';
 import { TemplateConfig } from '../../../../ci-governance/domain/value-objects/template-config.js';

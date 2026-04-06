@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { RegressionRunner } from '../../../../regression-suite/domain/services/regression-runner.js';

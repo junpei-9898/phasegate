@@ -1,4 +1,5 @@
 /**
+ * @layer infrastructure
  * @unit skill-quality
  * Composition Root - wires all dependencies together
  */

@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { KRequirementTest } from '../../../../regression-suite/domain/value-objects/k-requirement-test.js';

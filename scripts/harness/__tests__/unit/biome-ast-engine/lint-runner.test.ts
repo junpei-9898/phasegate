@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
@@ -520,14 +521,14 @@ target('LintRunner.run', () => {
         const rules = Object.freeze([
           createRuleDefinition({
             name: createRuleName('no-comment-flood'),
-            config: Object.freeze({ maxCommentRatio: 0.5, maxRepeatedBlocks: 1 }),
+            config: Object.freeze({ maxCommentRatio: 0.5, maxRepeatedBlocks: 1, minLogicalLines: 15 }),
             errorCode: 'L1-008',
           }),
         ]);
         const snapshots = Object.freeze([
           createSourceModuleSnapshot({
-            commentLineCount: 8,
-            logicalLineCount: 10,
+            commentLineCount: 16,
+            logicalLineCount: 20,
             repeatedCommentBlocks: 0,
           }),
         ]);
@@ -548,14 +549,14 @@ target('LintRunner.run', () => {
         const rules = Object.freeze([
           createRuleDefinition({
             name: createRuleName('no-comment-flood'),
-            config: Object.freeze({ maxCommentRatio: 0.5, maxRepeatedBlocks: 1 }),
+            config: Object.freeze({ maxCommentRatio: 0.5, maxRepeatedBlocks: 1, minLogicalLines: 15 }),
             errorCode: 'L1-008',
           }),
         ]);
         const snapshots = Object.freeze([
           createSourceModuleSnapshot({
             commentLineCount: 2,
-            logicalLineCount: 10,
+            logicalLineCount: 20,
             repeatedCommentBlocks: 0,
           }),
         ]);

@@ -1,3 +1,4 @@
+// @layer infrastructure
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { V0TestId } from '../../domain/value-objects/v0-test-id.js';

@@ -1,3 +1,4 @@
+// @layer infrastructure
 // index.ts — harness-api public barrel export
 
 // Composition Root

@@ -1,3 +1,4 @@
+// @layer domain
 // artifact-scan-result.ts — ArtifactScanResult Value Object
 
 import type { LayerHealth, LayerId } from './layer-health.js';

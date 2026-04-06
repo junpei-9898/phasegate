@@ -1,3 +1,4 @@
+// @layer domain
 import type { SuiteId } from '../value-objects/suite-id.js';
 import { TestExecutionSummary } from '../value-objects/test-execution-summary.js';
 import { TestFailureDetail } from '../value-objects/test-failure-detail.js';

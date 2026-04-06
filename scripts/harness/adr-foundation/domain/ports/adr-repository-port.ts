@@ -1,3 +1,4 @@
+// @layer domain
 import type { ADR } from '../aggregates/adr.js';
 import type { AdrId } from '../value-objects/adr-id.js';
 import type { AdrStatus } from '../value-objects/adr-status.js';

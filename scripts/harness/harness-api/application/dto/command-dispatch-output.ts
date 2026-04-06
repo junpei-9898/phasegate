@@ -1,3 +1,4 @@
+// @layer application
 // command-dispatch-output.ts — CommandDispatchOutput DTO
 
 import type { ExitCode } from '../../domain/value-objects/harness-api-response.js';

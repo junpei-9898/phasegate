@@ -1,3 +1,4 @@
+// @layer domain
 import type { SuiteId } from './suite-id.js';
 import type { KRequirementTest } from './k-requirement-test.js';
 import type { GngConditionTest } from './gng-condition-test.js';

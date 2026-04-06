@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { WriteLessonArtifactUseCase } from '../../../skill-quality/application/usecases/write-lesson-artifact-usecase.js';

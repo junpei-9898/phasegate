@@ -1,3 +1,4 @@
+// @layer presentation
 // check-ready-handler.ts — CheckReadyHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

@@ -1,3 +1,4 @@
+// @layer domain
 // phase-info.ts — PhaseInfo Value Object
 
 export interface PhaseInfoProps {

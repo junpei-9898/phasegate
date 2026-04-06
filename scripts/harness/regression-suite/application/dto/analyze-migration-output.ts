@@ -1,3 +1,4 @@
+// @layer application
 export interface AnalyzeMigrationOutput {
   totalCount: number;
   migratedCount: number;

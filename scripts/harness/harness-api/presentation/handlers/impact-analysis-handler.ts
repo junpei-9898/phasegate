@@ -1,3 +1,4 @@
+// @layer presentation
 // impact-analysis-handler.ts — ImpactAnalysisHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

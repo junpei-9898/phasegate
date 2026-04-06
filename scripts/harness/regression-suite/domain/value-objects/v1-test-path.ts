@@ -1,3 +1,4 @@
+// @layer domain
 export class V1TestPath {
   readonly value: string;
 

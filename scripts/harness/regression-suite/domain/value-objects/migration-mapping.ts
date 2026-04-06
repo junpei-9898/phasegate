@@ -1,3 +1,4 @@
+// @layer domain
 import type { V0TestId } from './v0-test-id.js';
 import type { V1TestPath } from './v1-test-path.js';
 import type { BiomeModificationSpec } from './biome-modification-spec.js';

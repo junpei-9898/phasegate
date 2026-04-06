@@ -11,7 +11,7 @@ import { FilePath as FilePathVO } from '../../domain/value-objects/file-path.js'
 import type { WorkspaceFilePort } from '../../domain/ports/workspace-file-port.js';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
-const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'coverage', '__fixtures__']);
+const EXCLUDED_DIRS = new Set(['node_modules', 'dist', 'coverage', '__fixtures__', 'fixtures']);
 
 export interface NodeWorkspaceFileAdapterDeps {
   readonly rootDir: string;

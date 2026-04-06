@@ -1,3 +1,4 @@
+// @layer domain
 export class V0TestId {
   readonly value: string;
 

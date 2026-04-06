@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { BuildRelaxationProfileUseCase } from '../../../../../quick-mode/application/usecases/build-relaxation-profile-usecase.js';

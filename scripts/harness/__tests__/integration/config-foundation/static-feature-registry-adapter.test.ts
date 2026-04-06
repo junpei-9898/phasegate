@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { StaticFeatureRegistryAdapter } from '../../../config-foundation/infrastructure/registries/static-feature-registry-adapter.js';

@@ -1,3 +1,4 @@
+// @layer test
 import { expect, it } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { AjvJsonSchemaValidatorAdapter } from '../../../../nyquist-validation/infrastructure/adapters/ajv-json-schema-validator-adapter.js';

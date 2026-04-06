@@ -1,3 +1,4 @@
+// @layer domain
 import { V0TestMigration } from '../aggregates/v0-test-migration.js';
 import { V1TestPath } from '../value-objects/v1-test-path.js';
 import { BiomeModificationSpec } from '../value-objects/biome-modification-spec.js';

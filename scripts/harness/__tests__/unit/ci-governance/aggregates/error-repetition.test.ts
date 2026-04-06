@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createErrorRepetition } from '../../../helpers/test-helpers.js';
 import { describe, it, expect } from 'vitest';
 import { ErrorRepetition } from '../../../../ci-governance/domain/aggregates/error-repetition.js';

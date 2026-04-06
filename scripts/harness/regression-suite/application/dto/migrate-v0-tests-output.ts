@@ -1,3 +1,4 @@
+// @layer application
 export interface MigrationMappingOutput {
   v0TestId: string;
   v1TestPath: string;

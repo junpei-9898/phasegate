@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CheckPhaseGateCommandHandler } from '../../../phase-dependency-model/presentation/cli/check-phase-gate-command-handler.js';

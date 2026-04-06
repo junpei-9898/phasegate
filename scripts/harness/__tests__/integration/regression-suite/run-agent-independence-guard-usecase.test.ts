@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, vi, expect, beforeEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { RunAgentIndependenceGuardUseCase } from '../../../regression-suite/application/usecases/run-agent-independence-guard-usecase.js';

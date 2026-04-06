@@ -59,8 +59,9 @@ export class SourceModuleSnapshot {
   readonly duplicationFingerprints: readonly string[];
   readonly exportedSymbols: readonly string[];
   readonly isEntrypointCandidate: boolean;
+  readonly hasRawLayerAnnotation: boolean;
 
-  private constructor(props: Omit<SourceModuleSnapshotProps, 'declaredLayer'> & { declaredLayer: LayerName | null }) {
+  private constructor(props: Omit<SourceModuleSnapshotProps, 'declaredLayer'> & { declaredLayer: LayerName | null; hasRawLayerAnnotation: boolean }) {
     this.filePath = props.filePath;
     this.declaredUnit = props.declaredUnit;
     this.declaredLayer = props.declaredLayer;
@@ -73,6 +74,7 @@ export class SourceModuleSnapshot {
     this.duplicationFingerprints = props.duplicationFingerprints;
     this.exportedSymbols = props.exportedSymbols;
     this.isEntrypointCandidate = props.isEntrypointCandidate;
+    this.hasRawLayerAnnotation = props.hasRawLayerAnnotation;
   }
 
   static create(props: SourceModuleSnapshotProps): SourceModuleSnapshot {
@@ -83,6 +85,7 @@ export class SourceModuleSnapshot {
         filePath: props.filePath,
         declaredUnit: props.declaredUnit,
         declaredLayer,
+        hasRawLayerAnnotation: props.declaredLayer !== null,
         imports: Object.freeze([...props.imports]),
         anyTypeCount: ensureNonNegative(props.anyTypeCount, 'anyTypeCount'),
         typedNodeCount: ensureNonNegative(props.typedNodeCount, 'typedNodeCount'),
@@ -104,7 +107,7 @@ export class SourceModuleSnapshot {
   }
 
   hasLayerComment(): boolean {
-    return this.declaredLayer !== null;
+    return this.hasRawLayerAnnotation;
   }
 
   anyRatio(): number {

@@ -1,3 +1,4 @@
+// @layer domain
 // status-derivation-service.ts — StatusDerivationService Domain Service
 
 import { LayerHealth, type LayerId } from '../value-objects/layer-health.js';

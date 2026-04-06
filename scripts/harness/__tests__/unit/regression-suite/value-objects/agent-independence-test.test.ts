@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { AgentIndependenceTest } from '../../../../regression-suite/domain/value-objects/agent-independence-test.js';

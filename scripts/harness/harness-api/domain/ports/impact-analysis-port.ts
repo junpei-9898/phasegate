@@ -1,3 +1,4 @@
+// @layer domain
 // impact-analysis-port.ts
 
 export interface ImpactAnalysisResult {

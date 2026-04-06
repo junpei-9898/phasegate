@@ -1,3 +1,4 @@
+// @layer application
 // registry-summary-output.ts — RegistrySummaryOutput DTO
 
 import type { CommandName } from '../../domain/value-objects/cli-command-definition.js';

@@ -1,3 +1,4 @@
+// @layer infrastructure
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { V0TestMigration } from '../../domain/aggregates/v0-test-migration.js';

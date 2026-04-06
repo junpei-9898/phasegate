@@ -1,3 +1,4 @@
+// @layer test
 import { beforeEach, expect, it } from 'vitest';
 import { context, target } from '../../../helpers/test-helpers.js';
 import { createDocFreshnessRule, createDocumentAge } from '../../../helpers/phase2-extensions-test-factories.js';

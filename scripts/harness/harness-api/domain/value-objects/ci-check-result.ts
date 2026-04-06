@@ -1,3 +1,4 @@
+// @layer domain
 // ci-check-result.ts — CiCheckResult Value Object
 
 import type { HarnessError } from './harness-api-response.js';

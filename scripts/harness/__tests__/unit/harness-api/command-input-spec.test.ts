@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
 import { CommandInputSpec } from '../../../harness-api/domain/value-objects/command-input-spec.js';

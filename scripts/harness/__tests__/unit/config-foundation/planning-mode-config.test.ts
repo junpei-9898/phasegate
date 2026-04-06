@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { PlanningModeConfig } from '../../../config-foundation/domain/value-objects/planning-mode-config.js';

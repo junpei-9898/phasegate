@@ -1,3 +1,4 @@
+// @layer presentation
 // lint-handler.ts — LintHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

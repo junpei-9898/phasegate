@@ -1,3 +1,4 @@
+// @layer domain
 import type { AdrFrontmatter } from '../value-objects/adr-frontmatter.js';
 
 export interface AdrFrontmatterParserPort {

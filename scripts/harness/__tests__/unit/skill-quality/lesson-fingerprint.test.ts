@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { LessonFingerprint } from '../../../skill-quality/domain/value-objects/lesson-fingerprint.js';

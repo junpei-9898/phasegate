@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createErrorRepetition, createErrorRepetitionRepositoryPortMock } from '../../../helpers/test-helpers.js';
 import { describe, it, vi, expect } from 'vitest';
 import { RepetitionDetector } from '../../../../ci-governance/domain/services/repetition-detector.js';

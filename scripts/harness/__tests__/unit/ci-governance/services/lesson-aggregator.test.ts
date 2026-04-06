@@ -1,3 +1,4 @@
+// @layer test
 import { target, context, createLessonArtifact } from '../../../helpers/test-helpers.js';
 import { describe, it, expect } from 'vitest';
 import { LessonAggregator } from '../../../../ci-governance/domain/services/lesson-aggregator.js';

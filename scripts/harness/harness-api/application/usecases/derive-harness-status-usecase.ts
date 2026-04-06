@@ -1,3 +1,4 @@
+// @layer application
 // derive-harness-status-usecase.ts — DeriveHarnessStatusUseCase
 
 import type { ArtifactScannerPort } from '../../domain/ports/artifact-scanner-port.js';

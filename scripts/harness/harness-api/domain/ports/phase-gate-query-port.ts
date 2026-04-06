@@ -1,3 +1,4 @@
+// @layer domain
 // phase-gate-query-port.ts
 
 import type { PhaseGateStoryResult } from '../value-objects/check-ready-result.js';

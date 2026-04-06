@@ -1,3 +1,4 @@
+// @layer domain
 // layer-health.ts — LayerHealth Value Object
 
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';

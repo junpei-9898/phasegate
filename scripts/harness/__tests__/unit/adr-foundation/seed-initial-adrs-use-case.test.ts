@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { SeedInitialAdrsUseCase } from '../../../adr-foundation/application/usecases/seed-initial-adrs-use-case.js';

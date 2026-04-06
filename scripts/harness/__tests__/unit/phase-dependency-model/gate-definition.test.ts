@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { PhaseLevel } from '../../../phase-dependency-model/domain/values/phase-level.js';
 import { GateDefinition, InvalidGateDefinitionError } from '../../../phase-dependency-model/domain/values/gate-definition.js';

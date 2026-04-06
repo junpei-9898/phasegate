@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ValidateMetadataCommandHandler } from '../../../traceability-model/presentation/cli/validate-metadata-command-handler.js';

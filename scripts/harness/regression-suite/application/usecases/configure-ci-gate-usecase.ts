@@ -1,3 +1,4 @@
+// @layer application
 import { SuiteId } from '../../domain/value-objects/suite-id.js';
 import { CiGateConfig } from '../../domain/value-objects/ci-gate-config.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';

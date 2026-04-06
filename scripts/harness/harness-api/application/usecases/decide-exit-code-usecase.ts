@@ -1,3 +1,4 @@
+// @layer application
 // decide-exit-code-usecase.ts — DecideExitCodeUseCase
 
 import type { ExitCodeDecisionInput } from '../dto/exit-code-decision-input.js';

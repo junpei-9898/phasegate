@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ValidatePointersUseCase } from '../../../ci-governance/application/usecases/validate-pointers-usecase.js';

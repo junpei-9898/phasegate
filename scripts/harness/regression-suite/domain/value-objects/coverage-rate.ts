@@ -1,3 +1,4 @@
+// @layer domain
 export class CoverageRate {
   readonly value: number;
 

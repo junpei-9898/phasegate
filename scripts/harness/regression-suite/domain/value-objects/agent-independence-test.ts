@@ -1,3 +1,4 @@
+// @layer domain
 export interface AgentIndependenceTestProps {
   targetModule: string;
   forbiddenPatterns: string[];

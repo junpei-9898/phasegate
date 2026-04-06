@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CascadeUpdateService } from '../../../skill-quality/domain/services/cascade-update-service.js';

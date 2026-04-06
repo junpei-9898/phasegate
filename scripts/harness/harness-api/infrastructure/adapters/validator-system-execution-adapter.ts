@@ -1,3 +1,4 @@
+// @layer infrastructure
 // validator-system-execution-adapter.ts — ValidatorSystemExecutionAdapter
 // Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
 

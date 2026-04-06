@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it, vi } from 'vitest';
 import { target, context, createChangedFile, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { JudgeQuickModeEligibilityUseCase } from '../../../../../quick-mode/application/usecases/judge-quick-mode-eligibility-usecase.js';

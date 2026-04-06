@@ -1,3 +1,4 @@
+// @layer domain
 // harness-status-summary.ts — HarnessStatusSummary Value Object
 
 import type { LayerHealth, LayerId } from './layer-health.js';

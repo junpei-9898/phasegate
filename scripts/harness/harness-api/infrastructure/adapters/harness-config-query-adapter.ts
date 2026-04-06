@@ -1,3 +1,4 @@
+// @layer infrastructure
 // harness-config-query-adapter.ts — HarnessConfigQueryAdapter
 
 import * as fs from 'node:fs/promises';

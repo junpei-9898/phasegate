@@ -1,3 +1,4 @@
+// @layer test
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { GenerateCiTemplateUseCase } from '../../../ci-governance/application/usecases/generate-ci-template-usecase.js';

@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { parseCommentDensity } from '../../../biome-ast-engine/infrastructure/parsers/comment-density-parser.js';

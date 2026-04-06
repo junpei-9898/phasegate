@@ -1,3 +1,4 @@
+// @layer test
 import { expect, it } from 'vitest';
 import { context, target } from '../../../helpers/test-helpers.js';
 import { PointerRule } from '../../../../phase2-extensions/domain/aggregates/pointer-rule.js';

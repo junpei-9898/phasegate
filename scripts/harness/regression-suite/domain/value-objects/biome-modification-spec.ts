@@ -1,3 +1,4 @@
+// @layer domain
 export interface BiomeModificationSpecProps {
   targetApi: string;
   replacementApi: string;

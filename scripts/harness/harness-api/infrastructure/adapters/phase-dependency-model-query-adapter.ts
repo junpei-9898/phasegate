@@ -1,3 +1,4 @@
+// @layer infrastructure
 // phase-dependency-model-query-adapter.ts — PhaseDependencyModelQueryAdapter
 // Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
 

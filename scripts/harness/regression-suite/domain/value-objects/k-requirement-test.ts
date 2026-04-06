@@ -1,3 +1,4 @@
+// @layer domain
 export interface KRequirementTestProps {
   kNumber: string;
   targetUnit: string;

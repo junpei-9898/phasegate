@@ -1,3 +1,4 @@
+// @layer application
 // command-dispatch-input.ts — CommandDispatchInput DTO
 
 export interface CommandDispatchInput {

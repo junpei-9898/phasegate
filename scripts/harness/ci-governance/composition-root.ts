@@ -1,4 +1,5 @@
 /**
+ * @layer infrastructure
  * @unit ci-governance
  *
  * Composition Root - 依存性の組み立て

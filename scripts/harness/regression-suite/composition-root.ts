@@ -1,4 +1,5 @@
 /**
+ * @layer infrastructure
  * @unit regression-suite
  *
  * Composition Root - wires all dependencies together

@@ -1,3 +1,4 @@
+// @layer domain
 export interface TestFailureDetailProps {
   testCaseId: string;
   errorMessage: string;

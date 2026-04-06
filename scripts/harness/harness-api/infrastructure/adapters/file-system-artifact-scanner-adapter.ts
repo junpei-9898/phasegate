@@ -1,3 +1,4 @@
+// @layer infrastructure
 // file-system-artifact-scanner-adapter.ts — FileSystemArtifactScannerAdapter
 
 import * as fs from 'node:fs/promises';

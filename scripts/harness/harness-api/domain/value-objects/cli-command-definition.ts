@@ -1,3 +1,4 @@
+// @layer domain
 // cli-command-definition.ts — CliCommandDefinition Value Object
 
 import { CommandInputSpec } from './command-input-spec.js';

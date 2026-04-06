@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { RuleName } from '../../../biome-ast-engine/domain/value-objects/rule-name.js';

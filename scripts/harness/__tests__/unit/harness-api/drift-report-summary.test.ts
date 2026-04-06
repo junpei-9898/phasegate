@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { DriftReportSummary } from '../../../harness-api/domain/value-objects/drift-report-summary.js';

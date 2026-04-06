@@ -1,3 +1,4 @@
+// @layer domain
 import type { SuiteId } from './suite-id.js';
 
 export type ExecutionMode = 'parallel' | 'sequential';

@@ -1,3 +1,4 @@
+// @layer presentation
 // complete-check-handler.ts — CompleteCheckHandler
 
 import type { DispatchCommandUseCase } from '../../application/usecases/dispatch-command-usecase.js';

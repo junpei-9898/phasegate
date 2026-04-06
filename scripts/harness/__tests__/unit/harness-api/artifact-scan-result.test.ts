@@ -1,3 +1,4 @@
+// @layer test
 import { describe, expect, it } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
 import { ArtifactScanResult } from '../../../harness-api/domain/value-objects/artifact-scan-result.js';
