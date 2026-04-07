@@ -301,7 +301,7 @@ Additional resources:
 
 ## Contributing
 
-Contributions are welcome. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before submitting a pull request.
+Contributions are welcome. See [DEVELOPMENT.md](DEVELOPMENT.md) for internal architecture, regression tests, and release procedures.
 
 ---
 
@@ -311,4 +311,4 @@ Contributions are welcome. Please read [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) 
 
 ---
 
-[Japanese version / 日本語版](README.ja.md)
+[Japanese version / 日本語版](README.ja.md) | [Developer Guide](DEVELOPMENT.md) | [開発者ガイド](DEVELOPMENT.ja.md)
