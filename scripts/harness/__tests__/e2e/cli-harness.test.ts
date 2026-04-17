@@ -6,7 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -363,6 +363,21 @@ describe('harness CLI E2E', () => {
       const actual = run('phasegate:status', '--json');
 
       expect(() => JSON.parse(actual.stdout)).not.toThrow();
+    }, 30_000);
+
+    it('壊れた phasegate.config.json で "not valid JSON" 警告が stderr に出る（--json でも続行する）', () => {
+      const actual = withTempDir((cwd) => {
+        writeFileSync(join(cwd, 'phasegate.config.json'), '{ broken json');
+        return runInCwd(cwd, 'phasegate:status', '--json');
+      });
+
+      expect(actual.stderr).toContain('phasegate.config.json is not valid JSON');
+    }, 30_000);
+
+    it('phasegate.config.json が存在しないときは warning が出ない（ENOENT は silent）', () => {
+      const actual = withTempDir((cwd) => runInCwd(cwd, 'phasegate:status', '--json'));
+
+      expect(actual.stderr).not.toContain('phasegate.config.json');
     }, 30_000);
 
     it('phasegate:lint が "Unknown command" にならない', () => {

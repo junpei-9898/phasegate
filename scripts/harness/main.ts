@@ -33,6 +33,7 @@ import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion,
 import type { SkillSet } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
 import { ConfigValidationError } from './config-foundation/domain/errors/config-validation-error.js';
+import { ConfigNotFoundError, ConfigPersistenceError } from './config-foundation/infrastructure/repositories/file-system-config-repository.js';
 
 /**
  * main.ts (scripts/harness/main.ts) から2階層上がパッケージルート。
@@ -268,10 +269,22 @@ async function loadStoryReflectionProvider(
     };
     reporting?: { outputDir?: string };
   };
+  let content: string;
   try {
-    const content = await fsReadFile(configPath, 'utf8');
+    content = await fsReadFile(configPath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Warning: failed to read phasegate.config.json: ${message}\n`);
+    return null;
+  }
+  try {
     raw = JSON.parse(content);
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Warning: phasegate.config.json is not valid JSON: ${message}\n`);
     return null;
   }
   const section: PhaseDepConfigSection = {
@@ -328,7 +341,15 @@ async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
       process.stderr.write(`Invalid phasegate.config.json: ${error.message}\n`);
       process.exit(2);
     }
-
+    if (error instanceof ConfigNotFoundError) {
+      return undefined;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    if (error instanceof ConfigPersistenceError) {
+      process.stderr.write(`Warning: phasegate.config.json is not valid JSON: ${message}\n`);
+    } else {
+      process.stderr.write(`Warning: failed to load phasegate.config.json: ${message}\n`);
+    }
     return undefined;
   }
 }

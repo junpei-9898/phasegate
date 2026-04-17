@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-04-18
+
+### Fixed
+
+- `main.ts` の `loadStoryReflectionProvider` (scripts/harness/main.ts:271) と `loadResolvedConfig` (scripts/harness/main.ts:326) の `catch` が広すぎ、`phasegate.config.json` の `SyntaxError`（JSON パース失敗）や I/O エラーを silent に握り潰していた問題を修正。`ENOENT`（ファイル未作成）は従来どおり silent return、それ以外は stderr に `Warning: phasegate.config.json is not valid JSON: ...` 等を出してから null/undefined を返す。CLI の後続処理は続行する（`ConfigValidationError` の exit(2) 挙動は維持）。
+- `scripts/harness/__tests__/e2e/cli-harness.test.ts` に回帰テストを2件追加（壊れた JSON 警告・ENOENT silent）
+
+### Migration Notes
+
+利用者側の対応は不要。`phasegate.config.json` が壊れていた場合、これまで静かに storyReflection 関連表示・preset 解決だけが消えていたのが、stderr に警告が出るようになる。JSON 消費側（CI スクリプト等）は stdout のみパースしている限り影響なし。
+
 ## [0.38.0] - 2026-04-18
 
 ### Fixed
