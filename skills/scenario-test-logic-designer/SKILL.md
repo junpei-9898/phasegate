@@ -37,7 +37,7 @@ TDD実装フェーズ
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
 - **既存シナリオテスト** — `e2e/tests/**/*.spec.ts`（パターン参考）
 - **UIUX設計** — `docs/inception/{unit}/{story_id}/uiux_design.md`
-- **テスト規約** — `docs/principles/testing_rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`
 
 ---
 

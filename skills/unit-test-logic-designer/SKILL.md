@@ -36,7 +36,7 @@ TDD実装フェーズ
 ### 推奨インプット（あれば参照）
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
 - **既存ユニットテスト** — `backend/test/unit/**/*.test.ts`（パターン参考）
-- **テスト規約** — `docs/principles/testing_rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`
 
 ---
 

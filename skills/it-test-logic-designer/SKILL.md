@@ -38,7 +38,7 @@ TDD実装フェーズ
 ### 推奨インプット（あれば参照）
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
 - **既存ITテスト** — `backend/test/integration/**/*.test.ts`（パターン参考）
-- **テスト規約** — `docs/principles/testing_rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`
 - **ストーリー固有論理設計** — `docs/inception/{unit}/{story_id}/logical_design.md`
 
 ---

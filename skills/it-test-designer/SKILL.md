@@ -18,7 +18,7 @@ review: opus
 ### 任意インプット（あれば参照）
 - **ドメインモデル** — `docs/product/construction/{unit}/domain_model.md`
 - **環境設計** — `docs/product/environment_contract.md`
-- **テスト規約** — `docs/principles/testing_rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`
 - **既存ITテスト** — 既存パターンの参考
 
 ---
@@ -183,7 +183,7 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う
 - 論理設計のすべてのユースケース・エンドポイントをカバーする
 - TDDプロセスの「正しくRED」になる状態を目指す設計を行う
-- テスト規約（`docs/principles/testing_rules.md`）がある場合は遵守する
+- テスト規約（`docs/principles/testing-rules.md`）がある場合は遵守する
 - AAAパターン（Arrange-Act-Assert）を前提としたケース設計を行う
 
 ---

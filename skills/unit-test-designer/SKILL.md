@@ -16,7 +16,7 @@ review: opus
 
 ### 任意インプット（あれば参照）
 - **論理設計** — `docs/product/construction/{unit}/logical_design.md`
-- **テスト規約** — `docs/principles/testing_rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`
 - **既存ユニットテスト** — 既存パターンの参考
 
 ---
@@ -182,7 +182,7 @@ story-implementor ← TDD実装
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う
 - ドメインモデルの不変条件を漏れなくカバーする
 - TDDプロセスの「正しくRED」になる状態を目指す設計を行う
-- テスト規約（`docs/principles/testing_rules.md`）がある場合は遵守する
+- テスト規約（`docs/principles/testing-rules.md`）がある場合は遵守する
 - Vitest/Jest等のテストフレームワークを前提とする
 
 ---

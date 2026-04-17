@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-04-17
+
+### Removed
+
+- `templates/phasegate.config.json` を削除（ISSUE-004 Phase D / P2-6）。`initHarnessConfig()` は `skill-deployer.ts` 内でインライン構築しており、テンプレートファイルは `npm publish` に含まれるのみで誰にも読まれない dead code だった。
+
+### Fixed
+
+- 6 スキル本文の `docs/principles/testing_rules.md`（アンダースコア）参照を正しい `docs/principles/testing-rules.md`（ハイフン）に修正（ISSUE-004 Phase D / 観察事項）。対象: unit-test-designer, it-test-designer, scenario-test-designer, unit-test-logic-designer, it-test-logic-designer, scenario-test-logic-designer
+
+### Migration Notes
+
+利用者側の対応は不要。`templates/phasegate.config.json` は v0.33.0〜v0.36.0 時点でも実際の `init` 生成物とは内容が異なり、参照されていなかった。スキル本文のリンク切れ修正は純粋なドキュメント修正で、動作への影響なし。
+
 ## [0.36.0] - 2026-04-17
 
 ### Added
@@ -141,7 +155,8 @@ Pre-reset era (formerly v1.0.0 - v1.1.1). Initial release and early bug fixes:
 - ajv v8互換対応
 - 3件のバグ修正
 
-[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.36.0...HEAD
+[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.37.0...HEAD
+[0.37.0]: https://github.com/junpei-9898/phasegate/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/junpei-9898/phasegate/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/junpei-9898/phasegate/compare/v0.10.0...v0.35.0
 [0.10.0]: https://github.com/junpei-9898/phasegate/compare/v0.9.0...v0.10.0
