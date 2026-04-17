@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-04-17
+
+### Added
+
+- `phasegate hook <pre-tool-use|post-tool-use|stop>` サブコマンド — Claude Code hook を CLI 経由で起動（ISSUE-004 Phase B）
+- `phasegate pre-commit` サブコマンド — L2 pre-commit バリデータを CLI 経由で起動
+- `phasegate delegate-sonnet [...args]` サブコマンド — Sonnet 4.6 委任スクリプトを CLI 経由で起動
+
+### Changed
+
+- `templates/.claude/settings.json` の hook command を `npx tsx node_modules/phasegate/scripts/...` から `npx phasegate hook X` 形式に変更（パッケージ内部レイアウトに依存しない安定 API へ）
+- `templates/.husky/pre-commit` を `npx phasegate pre-commit` 呼び出しに変更
+- 12 スキル本文の `scripts/delegate-sonnet.sh` 直接参照を `npx phasegate delegate-sonnet` に統一（story-writer, story-mapper, environment-designer, unit-designer, mock-designer, unit-test-designer, unit-test-logic-designer, scenario-test-designer, scenario-test-logic-designer, it-test-designer, it-test-logic-designer, implementation-planner）
+
+### Migration Notes
+
+既存の `.claude/settings.json`（`init` 既存スキップ仕様により旧形式が残る）を v0.35.0 形式に更新する場合、3 箇所の hook command を以下に書き換えてください:
+
+```diff
+- "npx tsx node_modules/phasegate/scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts"
++ "npx phasegate hook pre-tool-use"
+- "npx tsx node_modules/phasegate/scripts/harness/agent-integration/presentation/post-tool-use-hook.ts"
++ "npx phasegate hook post-tool-use"
+- "npx tsx node_modules/phasegate/scripts/harness/agent-integration/presentation/stop-hook.ts"
++ "npx phasegate hook stop"
+```
+
+旧形式は引き続き動作しますが、パッケージ内部パスに依存するため将来非推奨化する可能性があります。
+
 ## [0.10.0] - 2026-04-02
 
 ### Removed

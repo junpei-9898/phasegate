@@ -427,6 +427,14 @@ npx phasegate <command> [options]
 | `list-errors` | エラー定義一覧（`--layer L0-L4`） |
 | `ci:generate-template` | CI/CD テンプレート生成（`--type <type>`） |
 
+### Hook / 委任ラッパー
+
+| コマンド | 説明 |
+|---|---|
+| `hook <pre-tool-use\|post-tool-use\|stop>` | Claude Code hook を起動（stdin から JSON を読む） |
+| `pre-commit` | L2 pre-commit バリデータをステージファイルに対して実行 |
+| `delegate-sonnet [...args]` | Sonnet 4.6 委任スクリプトの透過ラッパー（`scripts/delegate-sonnet.sh` に引数を forward） |
+
 > 開発者向けコマンド（回帰テスト、Hooks Engine、Phase 2 拡張、スキル品質）は [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md) を参照してください。
 
 ---

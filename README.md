@@ -275,6 +275,9 @@ npx phasegate <command> [options]
 | `phasegate:status` | Display overall harness health summary |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
+| `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
+| `pre-commit` | Run L2 pre-commit validators on staged files |
+| `delegate-sonnet [...args]` | Delegate task to Sonnet 4.6 (transparent wrapper) |
 
 See the [Japanese README](README.ja.md) for the complete CLI reference.
 

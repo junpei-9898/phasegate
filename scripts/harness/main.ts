@@ -105,6 +105,9 @@ Commands:
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
+  hook <pre-tool-use|post-tool-use|stop>  Run Claude Code hook (reads JSON from stdin)
+  pre-commit                              Run L2 pre-commit validators on staged files
+  delegate-sonnet [...args]               Delegate task to Sonnet 4.6 (forwards args to scripts/delegate-sonnet.sh)
 
 Skills:
   skills list                  List all available skills
@@ -911,6 +914,49 @@ async function main(): Promise<void> {
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
         console.log(result.stdout);
         process.exit(result.exitCode);
+        break;
+      }
+
+      // ── agent integration / hooks ──
+      case 'hook': {
+        const subCommand = args[1];
+        if (!subCommand) {
+          console.error('Usage: phasegate hook <pre-tool-use|post-tool-use|stop>');
+          process.exit(2);
+        }
+        const hookFileName: Record<string, string> = {
+          'pre-tool-use': 'pre-tool-use-hook.js',
+          'post-tool-use': 'post-tool-use-hook.js',
+          'stop': 'stop-hook.js',
+        };
+        const fileName = hookFileName[subCommand];
+        if (!fileName) {
+          console.error(`Unknown hook subcommand: ${subCommand}`);
+          console.error('Usage: phasegate hook <pre-tool-use|post-tool-use|stop>');
+          process.exit(2);
+        }
+        const hookPath = join(harnessRoot, 'scripts/harness/agent-integration/presentation', fileName);
+        await import(hookPath);
+        break;
+      }
+
+      case 'pre-commit': {
+        const preCommitPath = join(harnessRoot, 'scripts/harness/integrations/pre-commit.js');
+        await import(preCommitPath);
+        break;
+      }
+
+      case 'delegate-sonnet': {
+        const { spawn } = await import('node:child_process');
+        const scriptPath = join(harnessRoot, 'scripts/delegate-sonnet.sh');
+        const forwardArgs = args.slice(1);
+        const child = spawn('bash', [scriptPath, ...forwardArgs], { stdio: 'inherit' });
+        await new Promise<void>((_, reject) => {
+          child.on('exit', (code) => {
+            process.exit(code ?? 1);
+          });
+          child.on('error', reject);
+        });
         break;
       }
 
