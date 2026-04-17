@@ -359,6 +359,12 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: phasegate:status');
     }, 30_000);
 
+    it('phasegate:status --json の stdout が JSON.parse 可能（storyReflection 行が混入しない）', () => {
+      const actual = run('phasegate:status', '--json');
+
+      expect(() => JSON.parse(actual.stdout)).not.toThrow();
+    }, 30_000);
+
     it('phasegate:lint が "Unknown command" にならない', () => {
       const actual = run('phasegate:lint');
 

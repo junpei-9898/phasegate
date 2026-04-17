@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-04-18
+
+### Fixed
+
+- `phasegate:status --json` 出力が JSON.parse 不可だったバグを修正。`storyReflection: ...` という非 JSON 行が JSON 出力の後ろに無条件で追記されていた（`scripts/harness/main.ts:709` で `printStoryReflectionStatusLine` を `--json` フラグに関わらず呼び出していたため）。修正後は `--json` 時のみ抑止する。利用者からの FB により発覚。
+
+### Migration Notes
+
+利用者側の対応は不要。`phasegate:status` を JSON 消費する側（CI スクリプト等）で `JSON.parse(stdout)` が成功するようになる。人間向け（フラグなし）出力には引き続き `storyReflection` 行が表示される。
+
 ## [0.37.0] - 2026-04-17
 
 ### Removed
@@ -155,7 +165,8 @@ Pre-reset era (formerly v1.0.0 - v1.1.1). Initial release and early bug fixes:
 - ajv v8互換対応
 - 3件のバグ修正
 
-[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/junpei-9898/phasegate/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/junpei-9898/phasegate/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/junpei-9898/phasegate/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/junpei-9898/phasegate/compare/v0.10.0...v0.35.0

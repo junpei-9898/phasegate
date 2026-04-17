@@ -706,7 +706,7 @@ async function main(): Promise<void> {
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.status.handle({}, flags);
-        await printStoryReflectionStatusLine(rootDir);
+        if (!json) await printStoryReflectionStatusLine(rootDir);
         break;
       }
 
