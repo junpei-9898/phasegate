@@ -48,17 +48,11 @@ npm install --save-dev phasegate
 npx phasegate init --name my-project
 ```
 
-This deploys 28 skills to `.claude/skills/` and generates `phasegate.config.json`.
+This deploys 28 skills, design principles docs (`docs/principles/*.md`, `docs/folder_management_rules.md`), and generates `phasegate.config.json`.
 
-### 3. Copy design principles
+Optional: add `--with-husky` to also install a `.husky/pre-commit` hook that runs L2 validators.
 
-```bash
-cp node_modules/phasegate/docs/folder_management_rules.md docs/
-mkdir -p docs/principles
-cp node_modules/phasegate/docs/principles/*.md docs/principles/
-```
-
-### 4. Start the AIDLC
+### 3. Start the AIDLC
 
 Launch your AI agent and run the `/product-architect` skill to begin.
 

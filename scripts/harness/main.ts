@@ -29,7 +29,7 @@ import { buildCiGovernance } from './ci-governance/composition-root.js';
 import { createSkillQualityHandlers } from './skill-quality/composition-root.js';
 import { buildRegressionSuite } from './regression-suite/composition-root.js';
 import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
-import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
+import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, deployDesignDocs, deployHuskyHook, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
 import type { SkillSet } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
 import { ConfigValidationError } from './config-foundation/domain/errors/config-validation-error.js';
@@ -51,8 +51,8 @@ function printUsage(): void {
 Usage: phasegate <command> [options]
 
 Setup:
-  init                         Initialize project: deploy skills + create phasegate.config.json
-                               (--name <project-name>, --preset <full|standard|minimal|custom>)
+  init                         Initialize project: deploy skills + design docs + phasegate.config.json
+                               (--name <project-name>, --preset <full|standard|minimal|custom>, --with-husky)
   update-skills                Re-deploy skills from current harness version
 
 Commands:
@@ -382,6 +382,11 @@ async function main(): Promise<void> {
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
         const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
         const hooksResult = await deployHookScripts(harnessRoot, rootDir);
+        const designDocsResult = await deployDesignDocs(harnessRoot, rootDir);
+        const withHusky = hasFlag(args, '--with-husky');
+        const huskyResult = withHusky
+          ? await deployHuskyHook(harnessRoot, rootDir)
+          : null;
         console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`);
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
@@ -395,6 +400,19 @@ async function main(): Promise<void> {
           console.log(`✓ .claude/settings.json created`);
         } else if (hooksResult.scriptsDeployed > 0) {
           console.log(`  .claude/settings.json already exists, skipped`);
+        }
+        if (designDocsResult.copiedFiles.length > 0) {
+          console.log(`✓ Design docs deployed (${designDocsResult.copiedFiles.length} files)`);
+        }
+        for (const skipped of designDocsResult.skippedFiles) {
+          console.log(`  ${skipped} already exists, skipped`);
+        }
+        if (huskyResult !== null) {
+          if (huskyResult.created) {
+            console.log(`✓ .husky/pre-commit deployed`);
+          } else {
+            console.log(`  .husky/pre-commit already exists, skipped`);
+          }
         }
         console.log(`✓ Harness v${result.version} initialized`);
         console.log('');

@@ -54,19 +54,13 @@ npm install --save-dev phasegate
 npx phasegate init --name <プロジェクト名> --preset standard
 ```
 
-`.claude/skills/` に28スキルを展開し、`phasegate.config.json` を生成します。
+`.claude/skills/` に28スキルを展開し、設計原則ドキュメント（`docs/principles/*.md`・`docs/folder_management_rules.md`）を配置し、`phasegate.config.json` を生成します。
 
 `--preset` で初期構成を選択できます: `minimal`（プロトタイプ）/ `standard`（推奨）/ `strict`（本番）
 
-### 3. 設計原則ドキュメントをコピー
+オプションで `--with-husky` を付けると L2 バリデータを実行する `.husky/pre-commit` フックも同時にインストールされます。
 
-```bash
-cp node_modules/phasegate/docs/folder_management_rules.md docs/
-mkdir -p docs/principles
-cp node_modules/phasegate/docs/principles/*.md docs/principles/
-```
-
-### 4. AIDLC を開始
+### 3. AIDLC を開始
 
 ```bash
 claude  # プロジェクトルートで起動

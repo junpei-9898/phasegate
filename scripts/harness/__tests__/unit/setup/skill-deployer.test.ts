@@ -1,10 +1,14 @@
 // @layer test
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
-import { initHarnessConfig } from '../../../setup/skill-deployer.js';
+import {
+  deployDesignDocs,
+  deployHuskyHook,
+  initHarnessConfig,
+} from '../../../setup/skill-deployer.js';
 
 async function withTempProject<T>(testFn: (projectRoot: string) => Promise<T>): Promise<T> {
   const projectRoot = await mkdtemp(join(tmpdir(), 'skill-deployer-test-'));
@@ -86,6 +90,194 @@ target('initHarnessConfig', () => {
 
         // Assert
         expect(actual.phaseDependencies.preset).toBe('custom');
+      });
+    });
+  });
+});
+
+target('deployDesignDocs', () => {
+  describe('設計原則ドキュメントをデプロイする', () => {
+    context('空のプロジェクトに対して呼ぶと', () => {
+      it('4 ファイル全てがコピーされること', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await deployDesignDocs(harnessRoot, projectRoot);
+
+          await Promise.all([
+            access(join(projectRoot, 'docs/folder_management_rules.md')),
+            access(join(projectRoot, 'docs/principles/architecture-philosophy.md')),
+            access(join(projectRoot, 'docs/principles/model-routing.md')),
+            access(join(projectRoot, 'docs/principles/testing-rules.md')),
+          ]);
+
+          return 'copied';
+        });
+
+        // Assert
+        expect(actual).toBe('copied');
+      });
+
+      it('copiedFiles に 4 ファイル全てが含まれ skippedFiles が空であること', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => (
+          deployDesignDocs(harnessRoot, projectRoot)
+        ));
+
+        // Assert
+        expect(actual).toEqual({
+          copiedFiles: [
+            'docs/folder_management_rules.md',
+            'docs/principles/architecture-philosophy.md',
+            'docs/principles/model-routing.md',
+            'docs/principles/testing-rules.md',
+          ],
+          skippedFiles: [],
+        });
+      });
+    });
+
+    context('既に docs/folder_management_rules.md が存在する場合', () => {
+      it('そのファイルはスキップされ skippedFiles に含まれること', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, 'docs'), { recursive: true });
+          await writeFile(
+            join(projectRoot, 'docs/folder_management_rules.md'),
+            'existing folder rules\n',
+            'utf-8',
+          );
+
+          return deployDesignDocs(harnessRoot, projectRoot);
+        });
+
+        // Assert
+        expect(actual.skippedFiles).toContain('docs/folder_management_rules.md');
+      });
+    });
+
+    context('既に docs/principles/testing-rules.md が存在する場合', () => {
+      it('そのファイルはスキップされ他のprinciplesファイルはコピーされること', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, 'docs/principles'), { recursive: true });
+          await writeFile(
+            join(projectRoot, 'docs/principles/testing-rules.md'),
+            'existing testing rules\n',
+            'utf-8',
+          );
+
+          const result = await deployDesignDocs(harnessRoot, projectRoot);
+          await access(join(projectRoot, 'docs/principles/architecture-philosophy.md'));
+          await access(join(projectRoot, 'docs/principles/model-routing.md'));
+
+          return result;
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          copiedFiles: [
+            'docs/folder_management_rules.md',
+            'docs/principles/architecture-philosophy.md',
+            'docs/principles/model-routing.md',
+          ],
+          skippedFiles: ['docs/principles/testing-rules.md'],
+        });
+      });
+    });
+  });
+});
+
+target('deployHuskyHook', () => {
+  describe('husky pre-commit フックをデプロイする', () => {
+    context('空のプロジェクトに対して呼ぶと', () => {
+      it('.husky/pre-commit が作成されて created: true を返すこと', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          const result = await deployHuskyHook(harnessRoot, projectRoot);
+          await access(join(projectRoot, '.husky/pre-commit'));
+          return result;
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          created: true,
+          path: actual.path,
+        });
+      });
+
+      it('.husky/pre-commit に実行権限 (0o755) が付与されること', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          const result = await deployHuskyHook(harnessRoot, projectRoot);
+          const fileStats = await stat(join(projectRoot, '.husky/pre-commit'));
+          return { result, mode: fileStats.mode & 0o777 };
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          result: {
+            created: true,
+            path: actual.result.path,
+          },
+          mode: 0o755,
+        });
+      });
+    });
+
+    context('既に .husky/pre-commit が存在する場合', () => {
+      it('スキップされ created: false を返すこと', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, '.husky'), { recursive: true });
+          await writeFile(join(projectRoot, '.husky/pre-commit'), 'existing hook\n', 'utf-8');
+
+          return deployHuskyHook(harnessRoot, projectRoot);
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          created: false,
+          path: actual.path,
+        });
+      });
+
+      it('内容が上書きされないこと', async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, '.husky'), { recursive: true });
+          await writeFile(join(projectRoot, '.husky/pre-commit'), 'existing hook\n', 'utf-8');
+
+          await deployHuskyHook(harnessRoot, projectRoot);
+
+          return readFile(join(projectRoot, '.husky/pre-commit'), 'utf-8');
+        });
+
+        // Assert
+        expect(actual).toBe('existing hook\n');
       });
     });
   });

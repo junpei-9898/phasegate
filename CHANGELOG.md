@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-04-17
+
+### Added
+
+- `phasegate init` が設計原則ドキュメント（`docs/principles/*.md`、`docs/folder_management_rules.md`）を導入PJの `docs/` 配下に自動配置するように（ISSUE-004 Phase C / P1-4）
+- `phasegate init --with-husky` オプション — `.husky/pre-commit` フック（`npx phasegate pre-commit` 呼び出し）を任意配置（ISSUE-004 Phase C / P1-5）
+- `setup/skill-deployer.ts` に `deployDesignDocs()` `deployHuskyHook()` 関数を追加
+- `__tests__/integration/setup/init-design-docs.integration.test.ts` — `init` の docs/husky 配置を検証する IT テスト（8 ケース）
+
+### Changed
+
+- README.md / README.ja.md の Quick Start から手動 `cp` 手順（旧 §3）を削除し、§2 の `init` 説明に「設計原則ドキュメントも配置される」旨を追記
+- `phasegate --help` の Setup セクション `init` 行に `--with-husky` を追記、説明を「deploy skills + design docs + phasegate.config.json」に更新
+
+### Migration Notes
+
+既に `init` を実行済みのプロジェクトでも、もう一度 `npx phasegate init` を実行すれば不足している設計原則ドキュメントだけが追加配置されます（既存ファイルは上書きされません）。`.husky/pre-commit` を追加したい場合は `npx phasegate init --with-husky` を実行してください。
+
 ## [0.35.0] - 2026-04-17
 
 ### Added
@@ -123,7 +141,9 @@ Pre-reset era (formerly v1.0.0 - v1.1.1). Initial release and early bug fixes:
 - ajv v8互換対応
 - 3件のバグ修正
 
-[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/junpei-9898/phasegate/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/junpei-9898/phasegate/compare/v0.35.0...v0.36.0
+[0.35.0]: https://github.com/junpei-9898/phasegate/compare/v0.10.0...v0.35.0
 [0.10.0]: https://github.com/junpei-9898/phasegate/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/junpei-9898/phasegate/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/junpei-9898/phasegate/compare/v0.7.0...v0.8.0

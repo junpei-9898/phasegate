@@ -292,3 +292,102 @@ export async function initHarnessConfig(
   await fs.writeFile(configPath, JSON.stringify(template, null, 2) + '\n', 'utf-8');
   return { created: true, path: configPath };
 }
+
+export interface DeployDesignDocsResult {
+  copiedFiles: string[];
+  skippedFiles: string[];
+}
+
+/**
+ * 設計原則ドキュメントを対象プロジェクトの docs/ にデプロイする。
+ * - docs/folder_management_rules.md → <projectRoot>/docs/folder_management_rules.md
+ * - docs/principles/*.md → <projectRoot>/docs/principles/*.md
+ * 既存ファイルは上書きせずスキップする。
+ */
+export async function deployDesignDocs(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployDesignDocsResult> {
+  const copiedFiles: string[] = [];
+  const skippedFiles: string[] = [];
+  const docsTargetDir = join(projectRoot, 'docs');
+  const principlesTargetDir = join(docsTargetDir, 'principles');
+
+  await fs.mkdir(docsTargetDir, { recursive: true });
+  await fs.mkdir(principlesTargetDir, { recursive: true });
+
+  const folderRulesRelativePath = join('docs', 'folder_management_rules.md');
+  const folderRulesSource = join(harnessRoot, folderRulesRelativePath);
+  const folderRulesTarget = join(projectRoot, folderRulesRelativePath);
+
+  try {
+    await fs.access(folderRulesTarget);
+    skippedFiles.push(folderRulesRelativePath);
+  } catch {
+    try {
+      await fs.access(folderRulesSource);
+      await fs.copyFile(folderRulesSource, folderRulesTarget);
+      copiedFiles.push(folderRulesRelativePath);
+    } catch {
+      // 配置元が存在しない場合はスキップ
+    }
+  }
+
+  const principlesSourceDir = join(harnessRoot, 'docs', 'principles');
+
+  try {
+    const principleEntries = await fs.readdir(principlesSourceDir, { withFileTypes: true });
+    const principleFiles = principleEntries
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => entry.name)
+      .sort();
+
+    for (const principleFile of principleFiles) {
+      const relativePath = join('docs', 'principles', principleFile);
+      const sourcePath = join(principlesSourceDir, principleFile);
+      const targetPath = join(projectRoot, relativePath);
+
+      try {
+        await fs.access(targetPath);
+        skippedFiles.push(relativePath);
+      } catch {
+        await fs.copyFile(sourcePath, targetPath);
+        copiedFiles.push(relativePath);
+      }
+    }
+  } catch {
+    // principles ディレクトリが存在しない場合はスキップ
+  }
+
+  return { copiedFiles, skippedFiles };
+}
+
+export interface DeployHuskyHookResult {
+  created: boolean;
+  path: string;
+}
+
+/**
+ * husky pre-commit フックを対象プロジェクトの .husky/ にデプロイする。
+ * 既存があればスキップする。実行権限 0o755 を付与する。
+ */
+export async function deployHuskyHook(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployHuskyHookResult> {
+  const targetPath = join(projectRoot, '.husky', 'pre-commit');
+
+  try {
+    await fs.access(targetPath);
+    return { created: false, path: targetPath };
+  } catch {
+    // 配置先が存在しない場合は新規作成
+  }
+
+  const sourcePath = join(harnessRoot, 'templates', '.husky', 'pre-commit');
+  await fs.mkdir(join(projectRoot, '.husky'), { recursive: true });
+  await fs.copyFile(sourcePath, targetPath);
+  await fs.chmod(targetPath, 0o755);
+
+  return { created: true, path: targetPath };
+}
