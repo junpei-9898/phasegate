@@ -287,6 +287,7 @@ Detailed guides are available under `docs/guide/`:
 - [Skills Overview](docs/guide/skills-overview.md) -- 28 skills with AIDLC execution order
 - [5-Layer Defense Model](docs/guide/layer-model.md) -- L0-L4 layer details and HarnessError format
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
+- [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) -- When to use `/story-implementor` vs `/quick-implementor`, with decision flow and case studies
 
 Additional resources:
 
