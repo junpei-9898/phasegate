@@ -153,4 +153,25 @@ target('ValidatorSystemExecutionAdapter', () => {
       });
     });
   });
+
+  // ─── IT-Adapter-Validator-007 (ISSUE-005 P1-5) ───
+  describe('runDriftDetectionがL4-001と同じ検出結果を返すこと', () => {
+    context('phasegate:detect-drift 経路 と L4-001 DriftDetectionService を直接呼ぶ経路を比較', () => {
+      it('両者の件数が一致する', async () => {
+        // Arrange
+        const adapter = new ValidatorSystemExecutionAdapter();
+        const { createValidatorSystemModule } = await import(
+          '../../../validator-system/composition-root.js'
+        );
+        const mod = createValidatorSystemModule();
+
+        // Act
+        const detectDriftResult = await adapter.runDriftDetection();
+        const l4Reports = await mod.driftDetectionService.detect();
+
+        // Assert — 同じ検出器を通しているので件数が一致
+        expect(detectDriftResult.length).toBe(l4Reports.length);
+      }, 60000);
+    });
+  });
 });

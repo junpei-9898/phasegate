@@ -45,8 +45,17 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
       },
 
       async runDriftDetection(): Promise<DriftItem[]> {
-        // validator-system does not implement drift detection
-        return [];
+        // ISSUE-005 P1-5: L4-001 の DriftDetectionService を直接呼び出し、
+        // phasegate:detect-drift と validate --layer L4 の結果を一致させる
+        const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
+        const mod = createValidatorSystemModule();
+        const reports = await mod.driftDetectionService.detect();
+        return reports.map((r) => ({
+          direction: r.direction,
+          unit: r.unitName,
+          element: r.element,
+          recommendation: r.recommendation,
+        }));
       },
     };
   }

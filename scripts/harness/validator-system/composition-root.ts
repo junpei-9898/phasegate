@@ -100,6 +100,7 @@ export interface ValidatorSystemModule {
   runQuickModeUseCase: RunQuickModeUseCase;
   aggregateValidationResultsUseCase: AggregateValidationResultsUseCase;
   runFullValidationUseCase: RunFullValidationUseCase;
+  driftDetectionService: DriftDetectionService;
   handlers: {
     runValidators: RunValidatorsHandler;
     runQuickMode: RunQuickModeHandler;
@@ -229,6 +230,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     runQuickModeUseCase,
     aggregateValidationResultsUseCase,
     runFullValidationUseCase,
+    driftDetectionService,
     handlers,
   };
 }
