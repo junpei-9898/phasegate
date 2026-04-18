@@ -108,6 +108,64 @@ model: codex
 
 ---
 
+## ⚠️ 生成ファイルへのメタデータ付与（必須）
+
+**新規ソースファイルを作成する際、ファイル先頭に必ず `@unit` / `@layer` メタデータを記述する。これは L1 Biome ルール (`L1-001: require-unit-comment`, `L1-002: require-layer-comment`) の要件であり、欠落した状態での生成は許容されない。**
+
+### TypeScript / JavaScript ファイル
+
+```typescript
+// @unit <対象Unit名 — logical_design.md の Unit ID を使用>
+// @layer <domain | application | infrastructure | presentation>
+
+// 以下、実装コード
+```
+
+### `@unit` の決定方法
+
+- `docs/product/construction/{unit}/logical_design.md` の Unit ID をそのまま引用する
+- ストーリー固有実装の場合は、該当ストーリーが属する Unit の ID を使用
+- **複数 Unit にまたがる場合は story-implementor のスコープ違反** — `implementation-readiness-checker` に差し戻し、Unit 分割を検討する
+
+### `@layer` の決定方法
+
+生成ファイルの配置パスから機械的に決定する:
+
+| 配置パス | `@layer` の値 |
+|---------|-------------|
+| `**/domain/**` | `domain` |
+| `**/application/**` | `application` |
+| `**/infrastructure/**` | `infrastructure` |
+| `**/presentation/**` | `presentation` |
+
+Clean Architecture の 4 層構成に従わないプロジェクトは、プロジェクト側で層名を定義した上で phasegate のルール設定に同期させること。
+
+### テストファイルの場合
+
+テストファイル（`**/__tests__/**`, `*.test.ts`, `*.spec.ts`）には `@unit` / `@layer` に加えて **`@story` タグを付与する**:
+
+```typescript
+// @unit <被テストコードと同じ Unit ID>
+// @layer <被テストコードと同じ layer>
+// @story <HXX-XX 形式のストーリーID>
+```
+
+- `@story` は `docs/inception/{unit}/{story_id}/` の `story_id` を使用
+- 複数ストーリーをカバーするテストは `// @story H09-01, H09-02` のように列挙
+- US↔テストの逆引きが機械的に可能になることが目的（test-coverage-checker / nyquist が集計に使用）
+
+### 検証
+
+実装完了後、以下で L1 違反が無いことを確認する:
+
+```bash
+npx phasegate lint
+```
+
+`L1-001` / `L1-002` で違反が検出された場合、本スキル終了前に必ず解決すること。スキルを抜けた後で付け直すのはアンチパターン（直後の L1 有効化時に全違反がまとめて噴出する）。
+
+---
+
 ## ⚠️ 2フェーズ実行ルール
 
 **このスキルは必ず2フェーズに分けて実行する。Phase 1で実装計画を作成し、人間の承認を得てからPhase 2でTDD実装を行う。Phase 1とPhase 2を同時に実行してはならない。**
