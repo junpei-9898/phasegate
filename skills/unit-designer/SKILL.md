@@ -60,58 +60,6 @@ review: opus
 
 ---
 
-## ⚠️ 成果物への YAML frontmatter 付与（必須）
-
-**Phase 2 で生成する成果物（`docs/product/units/{unit_name}.md` および `integration_contract.md`）の先頭に必ず YAML frontmatter を記述する。これは設計文書↔コードの機械可読トレーサビリティ要件であり、欠落した設計文書は pointer-validator / doc-freshness-checker のメタデータ検証でブロックされる。Phase 1 の計画ファイル（`unit_design_plan.md`）には frontmatter は不要。Phase 2 を Sonnet に委任する際もこの制約を必ず引き継ぐこと。**
-
-### Per-Unit ファイル（`docs/product/units/{unit_name}.md`）
-
-```yaml
----
-unit_id: <Unit ID — ファイル名 {unit_name} と一致させる>
-user_story_ids: [<HXX-XX形式のストーリーID>, ...]
-last_reviewed: <YYYY-MM-DD>
----
-```
-
-| フィールド | 決定方法 |
-|---------|---------|
-| `unit_id` | ファイル名 `{unit_name}.md` の `{unit_name}` をそのまま使用 |
-| `user_story_ids` | この Unit に割り当てた全ストーリー ID を列挙 |
-| `last_reviewed` | 初回作成 or 最終レビュー日（`YYYY-MM-DD` 形式） |
-
-> **注**: `layer_scope` は Unit 定義段階では未確定のため含めない。logical-designer / domain-designer 成果物で個別に指定する。
-
-### Integration Contract ファイル（`docs/product/units/integration_contract.md`）
-
-```yaml
----
-related_units: [<unit_id>, ...]
-last_reviewed: <YYYY-MM-DD>
----
-```
-
-| フィールド | 決定方法 |
-|---------|---------|
-| `related_units` | 本 integration contract で扱う全 Unit ID を列挙（Phase 2 で確定した Unit 一覧と一致させる） |
-| `last_reviewed` | 初回作成 or 最終レビュー日 |
-
-### 配置例（Per-Unit）
-
-```markdown
----
-unit_id: harness-api
-user_story_ids: [H09-01, H09-02, H09-03]
-last_reviewed: 2026-04-19
----
-
-# harness-api Unit
-
-（本文…）
-```
-
----
-
 ## ⚠️ 3フェーズ実行ルール
 
 **このスキルは3フェーズで実行する。**

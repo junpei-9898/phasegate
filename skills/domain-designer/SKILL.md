@@ -62,47 +62,6 @@ DDD戦術パターンを用いてドメインモデルを設計するスキル�
 
 ---
 
-## ⚠️ 成果物への YAML frontmatter 付与（必須）
-
-**Phase 2 で生成する設計文書本体（`domain_model.md`）の先頭に必ず YAML frontmatter を記述する。これは設計文書↔コードの機械可読トレーサビリティ要件であり、欠落した設計文書は pointer-validator / doc-freshness-checker のメタデータ検証でブロックされる。Phase 1 の計画ファイル（`domain_model_plan.md`）には frontmatter は不要。**
-
-### 必須フィールド
-
-```yaml
----
-unit_id: <対象Unit ID — docs/product/units/{unit}.md の Unit 名と一致させる>
-user_story_ids: [<HXX-XX形式のストーリーID>, ...]
-layer_scope: [domain]
-last_reviewed: <YYYY-MM-DD>
----
-```
-
-### フィールドの決定方法
-
-| フィールド | 決定方法 |
-|---------|---------|
-| `unit_id` | 上位 Unit 定義（`docs/product/units/{unit}.md`）の Unit ID をそのまま引用。複数 Unit にまたがるドメインモデルは Shared Kernel として別 Unit ID を割り当てる |
-| `user_story_ids` | Unit に属する全ストーリー ID を列挙 |
-| `layer_scope` | ドメインモデルなので常に `[domain]` 固定 |
-| `last_reviewed` | 初回作成 or 最終レビュー日（`YYYY-MM-DD` 形式） |
-
-### 配置例（Phase 2 成果物の先頭）
-
-```markdown
----
-unit_id: harness-api
-user_story_ids: [H09-01, H09-02, H09-03]
-layer_scope: [domain]
-last_reviewed: 2026-04-19
----
-
-# ドメインモデル: harness-api Unit
-
-（本文…）
-```
-
----
-
 ## ⚠️ 2フェーズ実行ルール
 
 **このスキルは必ず2フェーズに分けて実行する。Phase 1で計画を作成し、人間の承認を得てからPhase 2で成果物を作成する。Phase 1とPhase 2を同時に実行してはならない。**

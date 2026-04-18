@@ -62,37 +62,37 @@ phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit�
 
 ---
 
-### P1-2. 設計文書 frontmatter に機械可読メタが無い
+### P1-2. 設計文書 frontmatter 規定（**既存実装で概ねカバー済 — 2026-04-19 調査で前提更新**）
 
-**影響**: 設計文書↔コードの対応が機械的に辿れない。pointer-validator はファイルパス参照のみ、doc-freshness-checker は最終更新日のみを見ており、「この logical_design はどの Unit のどのソースコード群と対応するか」を自動で突き合わせる経路が無い。結果として drift-detection が「設計との乖離」を検出できない — 乖離を測る基準点が存在しないため。
+**2026-04-19 追加調査の結論**: 当初「設計文書↔コードの機械可読トレーサビリティが存在しない」と書いたが、これは既存実装の把握不足だった。以下の機構が既に実装されている:
 
-**現状**:
-- `docs/product/construction/harness-api/logical_design.md:1-12` — `> **Unit ID**: harness-api` `> **対応ストーリー**: H09-01, H09-02, ...` が markdown blockquote で記述
-- `docs/product/construction/harness-api/domain_model.md:1-8` — 同様の人間可読形式
-- frontmatter（YAML）は使われていない
+| 機構 | 実装箇所 | 役割 |
+|---|---|---|
+| コード側 `@unit` / `@layer` タグ検証 | `scripts/harness/traceability-model/domain/services/metadata-validator.ts:75` (`validateImplementation`) | `@unit` が Unit 定義に存在するか、`@layer` が正規語彙かを検証 |
+| テスト側 `@story` タグ検証 | 同:196 (`validateTest`) | `@story` が `HXX-XX` 形式で StoryCatalog に存在するかを検証 |
+| 設計文書の `@story-id` **インライン注釈** | 同:133 (`validateDesignDocument`) + `markdown-story-annotation-parser.ts` | 設計要素と StoryId の 1対N 対応を検証（独立行・直後要素必須・StoryCatalog 存在チェック） |
+| `traceability.initial_creation` YAML frontmatter bool | `scripts/harness/traceability-model/infrastructure/parsers/frontmatter-flag-parser.ts` | 初期設計文書には `@story-id` 注釈を強制するか否かの条件分岐フラグ |
+| Unit↔ドキュメント対応 | 配置パス convention `docs/product/construction/{unit}/*.md` | ディレクトリ名で機械的に導出可能 |
 
-**根本原因**: ドキュメント設計時点で「人間が読む」ことを優先し、「機械がパースする」視点が後回しになった。logical-designer / domain-designer スキルのテンプレ指示も blockquote 形式に留まっている。
+**つまり「設計↔コードの unit/story 単位のトレーサビリティ」は既に機械化済み**であり、当初提案した汎用 YAML frontmatter（`unit_id` / `user_story_ids` / `layer_scope` / `last_reviewed`）は以下の理由で冗長:
 
-**修正案**:
+- `unit_id` → 配置パス `docs/product/construction/{unit}/` から既に推論可能
+- `user_story_ids` → `@story-id` インライン注釈で既にストーリー紐付けが取れる
+- `layer_scope` → 消費する validator / usecase が存在しない（追加しても dead data）
+- `last_reviewed` → `doc-freshness-checker` は `DocumentAge`（git log mtime）を正として使っており、frontmatter 日付は参照しない
 
-1. 設計文書テンプレに YAML frontmatter を必須化:
-   ```yaml
-   ---
-   unit_id: harness-api
-   user_story_ids: [H09-01, H09-02, H09-03]
-   layer_scope: [application, infrastructure]
-   last_reviewed: 2026-04-18
-   ---
-   ```
-2. pointer-validator を拡張し、`unit_id` がコード側の `@unit` と一致しないケースを検出
-3. doc-freshness-checker を拡張し、frontmatter 欠落自体を warn 扱いにする
-4. logical-designer / domain-designer 等、設計系スキルの「成果物」セクションに frontmatter 必須化を明記
+**撤回した試行**: v0.48.0 (`77546e1`) で logical-designer / domain-designer / unit-designer の SKILL.md に上記 4 フィールドの frontmatter 必須化セクションを追加したが、本調査結果に基づき v0.49.0 で **ロールバック済**。
+
+**残存する論点（別 issue で扱うべき）**:
+
+- 現状 `validateDesignDocument` は `traceability.initial_creation: true` の設計文書にしか `@story-id` 注釈を強制しない。**通常の設計更新でも強制するか**は運用ポリシーの再検討事項
+- 設計文書の配置パス `{unit}` 部分と文書内で言及される `@unit` タグの**相互参照検証**は未実装（ただしミスマッチ発生頻度は低い想定）
+- `docs/product/units/integration_contract.md` のような **Unit 横断文書** は上記 convention の対象外で、どの Unit 群を扱うかを機械的に取得する経路がない
 
 **関連**:
-- `.claude/skills/logical-designer/SKILL.md`, `domain-designer/SKILL.md`, `unit-designer/SKILL.md`
-- `scripts/harness/pointer-validator/` — 拡張先
-- `scripts/harness/doc-freshness-checker/` — 拡張先
-- `templates/` — **現在空ディレクトリ**（`ls` 結果 0 件）。ここにテンプレを配布する設計が必要
+- `scripts/harness/traceability-model/domain/services/metadata-validator.ts` — 主実装
+- `scripts/harness/traceability-model/infrastructure/parsers/frontmatter-flag-parser.ts` — 既存 frontmatter parser（限定用途）
+- `templates/` — **現在空ディレクトリ**（P2-4 で別途対応）
 
 ---
 
@@ -142,24 +142,25 @@ phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit�
 
 ## 受け入れ基準
 
-- [ ] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される
-- [ ] logical-designer / domain-designer / unit-designer のスキル定義に、設計文書 frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される
+- [x] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される（Phase A / v0.47.0 で完了）
+- [~] ~~logical-designer / domain-designer / unit-designer のスキル定義に、設計文書 frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される~~ — **撤回**（2026-04-19 調査で `@story-id` インライン注釈 + 配置パス convention + 既存 MetadataValidator により概ねカバー済みと判明）
 - [ ] unit-test-designer / it-test-designer / scenario-test-designer のテスト実装スキルに、`// @story HXX-XX` 付与指示が追加される
 - [ ] `templates/` 配下に実体テンプレ（最低限: `source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される
-- [ ] pointer-validator / doc-freshness-checker が frontmatter メタデータを検証対象に含める
+- [~] ~~pointer-validator / doc-freshness-checker が frontmatter メタデータを検証対象に含める~~ — **撤回**（P1-2 撤回に連動）
 - [ ] L1 ルールに `require-story-tag-in-tests` が追加される（`__tests__/` 配下限定）
-- [ ] メンテナの別 PJ で新規実装を行い、スキル出力に `@unit` / `@layer` / frontmatter / `@story` が自動で含まれることを確認する
+- [ ] メンテナの別 PJ で新規実装を行い、スキル出力に `@unit` / `@layer` / `@story` が自動で含まれることを確認する
 
 ## 推奨実装順
 
-1. **Phase A（最優先 / 30分級）**: P1-1 のみ — story-implementor / quick-implementor のスキル定義に @unit/@layer 付与指示を追記
-   - これだけで新規生成コードから @unit/@layer が出るようになり、codebase-mapper が初めて動く
+1. **Phase A（完了 / v0.47.0）**: P1-1 — story-implementor / quick-implementor のスキル定義に @unit/@layer 付与指示を追記
+   - 新規生成コードから @unit/@layer が出るようになり、codebase-mapper が初めて動く
    - L1-001 / L1-002 は既存ルールなので接続コスト 0
-2. **Phase B**: P1-2 — 設計文書 frontmatter 規定 + logical-designer/domain-designer/unit-designer のスキル更新 + pointer-validator / doc-freshness-checker 拡張
-   - 設計↔コード の双向トレーサビリティが機械化される
-3. **Phase C**: P1-3 — テストコード @story タグ + L1 新規ルール + test-coverage-checker 拡張
+2. ~~**Phase B**: P1-2 — 設計文書 frontmatter 規定 + ...~~ — **撤回 / v0.49.0 でロールバック済**
+   - 理由: 既存の `@story-id` インライン注釈機構と配置パス convention で概ねカバー済みと判明。v0.48.0 (`77546e1`) で追加した skill 更新は冗長だったため v0.49.0 で撤回
+3. **Phase C（次の最優先）**: P1-3 — テストコード @story タグ + L1 新規ルール + test-coverage-checker 拡張
    - US 単位カバレッジの集計が可能になる
-4. **Phase D**（Phase B と並走可）: P2-4 — `templates/` 実体化、ISSUE-007 P1-3 scaffold CLI と基盤共通化
+   - ※ `@story` タグ検証自体は `MetadataValidator.validateTest` で既に実装されているため、実装タスクは「テスト生成系スキルに emit 指示を追加」+「L1 Biome ルール追加」+「coverage aggregation 追加」の 3 点
+4. **Phase D**（Phase C と並走可）: P2-4 — `templates/` 実体化、ISSUE-007 P1-3 scaffold CLI と基盤共通化
 
 ## 関連
 
