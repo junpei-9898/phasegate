@@ -1,0 +1,171 @@
+# ISSUE-008: 生成系スキルがメタデータタグを emit せず、L4 バリデータの前提が崩れている
+
+## ステータス
+
+- **起票日**: 2026-04-18
+- **発見契機**: メンテナへの外部FB「phasegate を導入しても生成コードに `@unit` / `@layer` が付かず、設計文書にも `@us-xxx` 系メタが付いていないのでは？」への実地検証。phasegate 自身のコードには正しく付与されているが、**それは phasegate 自身を AIDLC で育てる際にメンテナが手作業で付けてきたためであり、生成系スキル自身が付与を強制する仕組みは存在しない**ことが判明。
+- **影響Unit**: agent_integration（スキル定義群）, harness_error（メタデータ欠落時の誘導）, biome_ast_engine（L1-001/L1-002 既存ルールとの接続）, ci_governance（新規テンプレ提供）
+- **深刻度**: P1（L4 バリデータ群 — codebase-mapper / drift-detection / dead-code / doc-freshness-checker — の前提が満たされず、投じた AIDLC コストが下流検証まで到達しない）
+- **優先度**: P1 — ISSUE-007（retrofit 導入）と並走で扱うべき。ISSUE-007 が「既存コードベースへの持ち込み障壁」、本 issue は「新規導入で AIDLC を回しても L4 まで繋がらない」を扱う双子。
+
+## 問題の概要
+
+phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit名>` `// @layer <layer名>` を記載」と規定し、L1 Biome AST ルール (`L1-001: require-unit-comment`, `L1-002: require-layer-comment`) で強制する設計になっている。しかし:
+
+1. **実装系スキル（story-implementor / quick-implementor）には、コード生成時に `@unit` / `@layer` を書き込む指示が一切ない**。スキルは Clean Architecture 準拠・TDD 順序・AAA テスト等を厳格に指示するが、メタデータ付与は「L1 で落とされることで事後的に気づく」設計になっている。新規導入 PJ では L1 有効化前にコードが量産され、後から全ファイルに付け直す苦行が発生する
+2. **設計文書側にも機械可読メタデータが無い**。logical_design.md / domain_model.md には `> **Unit ID**: harness-api` `> **対応ストーリー**: H09-01` が人間可読 blockquote で書かれるのみで、frontmatter や `@unit-id` / `@story-id` のような構造化タグが無い。結果として pointer-validator / doc-freshness-checker は「リンク切れ」と「鮮度」しか検証できず、**設計文書↔コードの unit 単位の対応は機械的に辿れない**
+3. **テストコードへの `@story HXX-XX` 付与も実体化していない**。`docs/inception/_shared/cross_cutting_decisions.md` にはテストファイル時に `// @story HXX-XX` を付与する規約が書かれているが、unit-test-designer / unit-test-logic-designer / it-test-designer のスキル定義には付与指示が含まれていない
+
+結果として、AIDLC フルフロー（29 スキル中 9 フェーズ）を回した投資が L4（drift-detection / dead-code / consistency-checker / doc-freshness-checker）まで到達しない。**上流ドキュメントを書いているのに、コードと突き合わせる最後の細い接続線が切れている**状態。
+
+## 確認された問題（severity 順）
+
+### P1-1. 実装系スキルが `@unit` / `@layer` 付与を指示していない
+
+**影響**: 新規 PJ で story-implementor / quick-implementor を使って生成したソースファイルには @unit/@layer が付かない。L1 Biome ルールを有効化した瞬間に全ファイルが違反となり、導入初期の挫折ポイントになる。
+
+**現状**（直接検証済み）:
+- `.claude/skills/story-implementor/SKILL.md` — `@unit` / `@layer` / `@story` のいずれも本文に登場しない（`grep` 結果 0 件）
+- `.claude/skills/quick-implementor/SKILL.md` — 「L1チェック: `@unit` / `@layer` コメントの**維持**を確認」としか書かれておらず、**新規生成時の付与指示がない**（既存コードには付いている前提）
+- CLAUDE.md L34-35 の規約は存在するが、スキル実装指示に反映されていない
+- phasegate 自身の `scripts/harness/` 配下には正しく付与されている（例: `scripts/harness/main.ts:2` に `@layer presentation`）。**これはメンテナの手作業の結果であり、スキルが emit したものではない**
+
+**根本原因**: L1 Biome ルール (L1-001 / L1-002) を「事後的な防御網」として位置付け、スキル側に「生成時に必ず書け」という前方誘導が入っていない。phasegate 自身の運用ではメンテナが手で補完していたため問題が顕在化していなかった。
+
+**修正案**:
+
+#### 案 A: スキル定義にメタデータ付与を明記（推奨・最小コスト）
+
+1. story-implementor / quick-implementor の「コード生成」ステップに以下を追加:
+   ```markdown
+   **必須メタデータ**: 新規ソースファイル作成時、先頭に必ず以下を記述する
+   ```typescript
+   // @unit <対象Unit名 — logical_design.md の Unit ID から引用>
+   // @layer <domain|application|infrastructure|presentation>
+   ```
+   `@layer` は生成ファイルの配置パス（`domain/` / `application/` / 等）から機械的に決定できる。
+   ```
+2. domain-designer / unit-designer 等、コード生成に至らずとも Unit 帰属を決定するスキルの出力に Unit ID を明示する箇所を追加
+
+#### 案 B: CLI で scaffold する方向に倒す（ISSUE-007 P1-3 との合流）
+
+1. `npx phasegate scaffold-source --unit <id> --layer <name> --path <file>` を実装
+2. テンプレに `@unit` / `@layer` を埋め込んだ状態でファイルを生成
+3. スキル側は「Step X: scaffold コマンドを実行してからコード本文を書き始める」と誘導
+
+**案 A が本命、案 B は ISSUE-007 P1-3 と共通基盤化できれば価値が二重に出る**。
+
+**関連**:
+- `.claude/skills/story-implementor/SKILL.md`
+- `.claude/skills/quick-implementor/SKILL.md`
+- `scripts/harness/biome-ast-engine/` — 既存 L1-001 / L1-002 ルール（修正不要、接続先）
+
+---
+
+### P1-2. 設計文書 frontmatter に機械可読メタが無い
+
+**影響**: 設計文書↔コードの対応が機械的に辿れない。pointer-validator はファイルパス参照のみ、doc-freshness-checker は最終更新日のみを見ており、「この logical_design はどの Unit のどのソースコード群と対応するか」を自動で突き合わせる経路が無い。結果として drift-detection が「設計との乖離」を検出できない — 乖離を測る基準点が存在しないため。
+
+**現状**:
+- `docs/product/construction/harness-api/logical_design.md:1-12` — `> **Unit ID**: harness-api` `> **対応ストーリー**: H09-01, H09-02, ...` が markdown blockquote で記述
+- `docs/product/construction/harness-api/domain_model.md:1-8` — 同様の人間可読形式
+- frontmatter（YAML）は使われていない
+
+**根本原因**: ドキュメント設計時点で「人間が読む」ことを優先し、「機械がパースする」視点が後回しになった。logical-designer / domain-designer スキルのテンプレ指示も blockquote 形式に留まっている。
+
+**修正案**:
+
+1. 設計文書テンプレに YAML frontmatter を必須化:
+   ```yaml
+   ---
+   unit_id: harness-api
+   user_story_ids: [H09-01, H09-02, H09-03]
+   layer_scope: [application, infrastructure]
+   last_reviewed: 2026-04-18
+   ---
+   ```
+2. pointer-validator を拡張し、`unit_id` がコード側の `@unit` と一致しないケースを検出
+3. doc-freshness-checker を拡張し、frontmatter 欠落自体を warn 扱いにする
+4. logical-designer / domain-designer 等、設計系スキルの「成果物」セクションに frontmatter 必須化を明記
+
+**関連**:
+- `.claude/skills/logical-designer/SKILL.md`, `domain-designer/SKILL.md`, `unit-designer/SKILL.md`
+- `scripts/harness/pointer-validator/` — 拡張先
+- `scripts/harness/doc-freshness-checker/` — 拡張先
+- `templates/` — **現在空ディレクトリ**（`ls` 結果 0 件）。ここにテンプレを配布する設計が必要
+
+---
+
+### P1-3. テストコードへの `@story` タグが emit されていない
+
+**影響**: US↔テストの逆引きが不能。「US-H09-01 をカバーするテストはどれか」「このテストが落ちた場合、どの US のどの AC が壊れたのか」を機械的に辿れない。nyquist / test-coverage-checker が story 単位のカバレッジを集計したくても、紐付け情報が無い。
+
+**現状**:
+- `docs/inception/_shared/cross_cutting_decisions.md:22-23` — テストファイルへの `// @story HXX-XX` 付与ルールが **規約としては定義済み**
+- unit-test-designer / unit-test-logic-designer / it-test-designer / scenario-test-designer 各スキルには付与指示なし
+- 設計文書（unit_test_design_plan.md 等）には `対応ストーリー: H01-01, H01-02` が人間可読で書かれるが、テスト実装コードへの紐付け自動化フローがない
+
+**根本原因**: 規約の存在が「スキル仕様」に伝わっていない。cross_cutting_decisions.md はメンテナの記憶を通じてのみ運用されている。
+
+**修正案**:
+
+1. 各テスト設計/実装スキルの「テストコード生成」ステップに `// @story <ID>` 付与を必須化
+2. L1 ルールに `require-story-tag-in-tests` を追加（テストファイル限定、`__tests__/` 配下でのみ発火）
+3. test-coverage-checker に「`@story` タグ別カバレッジ」集計を追加
+
+**関連**:
+- `.claude/skills/unit-test-designer/SKILL.md`, `unit-test-logic-designer/SKILL.md`, `it-test-designer/SKILL.md`, `scenario-test-designer/SKILL.md`
+- `scripts/harness/biome-ast-engine/` — L1 新規ルール追加先
+- `scripts/harness/test-coverage-checker/` — 集計機能拡張先
+
+---
+
+### P2-4. `templates/` ディレクトリが空（実体テンプレ無し）
+
+**影響**: `package.json` の `files` フィールドに `templates/**` が宣言されているが、実体が 0 件。P1-1 / P1-2 で提案するテンプレ配布が物理的に成立しない。
+
+**現状**（直接検証済み）:
+- `ls /Users/jumpei/dev/PhaseGate/templates/` 結果 0 件
+- しかし `package.json:36` で `"templates/**"` を npm publish 対象に含めている
+
+**根本原因**: 「templates は将来配布する」意図だけが残り、実装が追随していない。
+
+**修正案**: P1-1 / P1-2 / P1-3 の修正案で生成する最小 viable テンプレをここに配置し、`phasegate init` 時にコピーする仕組みを整える（ISSUE-007 P1-3 `scaffold-design` CLI と共通基盤化）。
+
+---
+
+## 非対象（スコープ外）
+
+- **既存コードベースへのメタデータ一括付与スクリプト**: AI による自動推定は phasegate の「AI 非依存」原則に反する。ユーザーが手で付けるか、ISSUE-007 P1-1 baseline 機構で grandfather 扱いとする。
+- **メタデータスキーマの完全仕様化**（例: unit_id の命名規則、story_id の階層構造）: 現状の運用実績から最小限の規定に留め、過剰規格化しない。
+- **他の AI プラットフォーム向けスキル定義の並行整備**: Claude Code 向けスキルのみ対象。
+
+## 受け入れ基準
+
+- [ ] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される
+- [ ] logical-designer / domain-designer / unit-designer のスキル定義に、設計文書 frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される
+- [ ] unit-test-designer / it-test-designer / scenario-test-designer のテスト実装スキルに、`// @story HXX-XX` 付与指示が追加される
+- [ ] `templates/` 配下に実体テンプレ（最低限: `source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される
+- [ ] pointer-validator / doc-freshness-checker が frontmatter メタデータを検証対象に含める
+- [ ] L1 ルールに `require-story-tag-in-tests` が追加される（`__tests__/` 配下限定）
+- [ ] メンテナの別 PJ で新規実装を行い、スキル出力に `@unit` / `@layer` / frontmatter / `@story` が自動で含まれることを確認する
+
+## 推奨実装順
+
+1. **Phase A（最優先 / 30分級）**: P1-1 のみ — story-implementor / quick-implementor のスキル定義に @unit/@layer 付与指示を追記
+   - これだけで新規生成コードから @unit/@layer が出るようになり、codebase-mapper が初めて動く
+   - L1-001 / L1-002 は既存ルールなので接続コスト 0
+2. **Phase B**: P1-2 — 設計文書 frontmatter 規定 + logical-designer/domain-designer/unit-designer のスキル更新 + pointer-validator / doc-freshness-checker 拡張
+   - 設計↔コード の双向トレーサビリティが機械化される
+3. **Phase C**: P1-3 — テストコード @story タグ + L1 新規ルール + test-coverage-checker 拡張
+   - US 単位カバレッジの集計が可能になる
+4. **Phase D**（Phase B と並走可）: P2-4 — `templates/` 実体化、ISSUE-007 P1-3 scaffold CLI と基盤共通化
+
+## 関連
+
+- メンテナへの外部 FB（2026-04-18）「生成コードに @unit/@layer が付いていないのでは」
+- ISSUE-007（retrofit 導入、P1）と独立かつ並走関係。本 issue は「新規導入で AIDLC を回しても L4 まで繋がらない」を扱い、ISSUE-007 は「既存コードベースへの持ち込み障壁」を扱う
+- ISSUE-006（Quick/Full 判定、優先度引き下げ済）と独立
+- `CLAUDE.md:34-35` — @unit / @layer 規約（本 issue で「規約は存在するが emit 経路が欠落」の根拠）
+- `docs/inception/_shared/cross_cutting_decisions.md:22-23` — @story 規約（同上）
+- L1-001 / L1-002 既存 Biome ルール（本 issue の修正案の接続先）
