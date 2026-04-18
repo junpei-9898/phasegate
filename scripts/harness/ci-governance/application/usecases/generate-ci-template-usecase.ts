@@ -9,7 +9,7 @@ import type { TemplateGenerator } from '../../domain/services/template-generator
 import type { GenerateCiTemplateInput } from '../dto/generate-ci-template-input.js';
 import type { GenerateCiTemplateOutput } from '../dto/generate-ci-template-output.js';
 import { CiTemplate } from '../../domain/aggregates/ci-template.js';
-import { isTemplateType } from '../../domain/types/template-type.js';
+import { isTemplateType, TEMPLATE_TYPES } from '../../domain/types/template-type.js';
 
 export class GenerateCiTemplateUseCase {
   constructor(private readonly templateGenerator: TemplateGenerator) {}
@@ -18,6 +18,10 @@ export class GenerateCiTemplateUseCase {
     const { presetId, templateType } = input;
 
     if (!isTemplateType(templateType)) {
+      const validValues = TEMPLATE_TYPES.map((t) => `'${t}'`).join(', ');
+      const hint = /github|gitlab|circle|jenkins|travis|actions/i.test(String(templateType))
+        ? ` (Hint: --type specifies the template purpose, not the CI platform. Use one of: ${validValues})`
+        : ` (valid: ${validValues})`;
       return {
         templateType: templateType as any,
         presetRef: presetId,
@@ -26,7 +30,7 @@ export class GenerateCiTemplateUseCase {
         failOnWarning: false,
         validationErrors: [{
           code: 'CI_TEMPLATE_INVALID_TYPE',
-          message: `INV-1: Invalid templateType: ${templateType}`,
+          message: `INV-1: Invalid templateType: ${templateType}${hint}`,
         }],
       };
     }

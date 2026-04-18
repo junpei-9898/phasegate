@@ -69,6 +69,46 @@ target('GenerateCiTemplateUseCase', () => {
       });
     });
 
+    // IT-UC-GenerateCiTemplate-004b (ISSUE-005 P0-2)
+    describe('CIプラットフォーム名を誤って渡した場合、誤解解消メッセージを含むエラーが返ること', () => {
+      context('templateType="github-actions"を渡した場合', () => {
+        it('エラーメッセージに有効値と「CI platform, not」のHintが含まれる', async () => {
+          // Arrange
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const useCase = new GenerateCiTemplateUseCase(generator);
+          // Act
+          const actual = await useCase.execute({ presetId: 'standard', templateType: 'github-actions' as any });
+          // Assert
+          expect(actual.validationErrors).toHaveLength(1);
+          const msg = actual.validationErrors[0].message;
+          expect(msg).toContain('aidlc-gate');
+          expect(msg).toContain('consistency-check');
+          expect(msg).toContain('pre-commit');
+          expect(msg.toLowerCase()).toContain('platform');
+        });
+      });
+    });
+
+    // IT-UC-GenerateCiTemplate-004c (ISSUE-005 P0-2)
+    describe('一般的な不正値の場合、有効値リストがエラーメッセージに含まれること', () => {
+      context('templateType="foo"を渡した場合', () => {
+        it('エラーメッセージに valid: の一覧が含まれる', async () => {
+          // Arrange
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const useCase = new GenerateCiTemplateUseCase(generator);
+          // Act
+          const actual = await useCase.execute({ presetId: 'standard', templateType: 'foo' as any });
+          // Assert
+          expect(actual.validationErrors[0].message).toContain('valid:');
+          expect(actual.validationErrors[0].message).toContain('aidlc-gate');
+        });
+      });
+    });
+
     // IT-UC-GenerateCiTemplate-005
     describe('PresetConfigPortがI/O失敗した場合にResult.failが返ること', () => {
       context('PresetConfigPort.getPreset()がエラーをスローする場合', () => {

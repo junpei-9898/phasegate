@@ -85,7 +85,7 @@ Commands:
   phasegate:complete-check       Complete L2-L4 check (--json)
   phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
 
-  ci:generate-template         Generate CI template (--preset <id>, --type <type>, --render, --json)
+  ci:generate-template         Generate CI template (--preset <id>, --type <aidlc-gate|consistency-check|pre-commit>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
 
@@ -760,6 +760,25 @@ async function main(): Promise<void> {
 
       // ── ci-governance ──
       case 'ci:generate-template': {
+        if (hasFlag(args, '--help')) {
+          console.log(`Usage: phasegate ci:generate-template [options]
+
+Generates a CI template configuration.
+
+Options:
+  --preset <id>    Preset name (e.g. standard, strict). Required.
+  --type <type>    Template purpose (NOT CI platform name). One of:
+                     aidlc-gate        — AIDLC phase gate checks
+                     consistency-check — Doc/code consistency checks
+                     pre-commit        — Pre-commit hook template
+  --render         Render the template to stdout
+  --json           Output in JSON format
+
+Examples:
+  phasegate ci:generate-template --preset standard --type aidlc-gate
+  phasegate ci:generate-template --preset strict --type pre-commit --render`);
+          process.exit(0);
+        }
         const mod = buildCiGovernance(rootDir);
         const presetId = parseFlag(args, '--preset') ?? 'default';
         const templateType = parseFlag(args, '--type') ?? 'aidlc-gate';
