@@ -44,6 +44,23 @@ export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort
     const results = await this.analyzeExports(targetUnits);
     return results.flatMap((result) => result.exports.map((entry) => entry.name));
   }
+
+  /**
+   * ISSUE-005 P3-9: element 名から unit 名を引けるマップを返す。
+   * 同名 export が複数 unit に存在する場合は最初に見つかった unit を採用する。
+   */
+  async getElementUnitMap(targetUnits?: readonly string[]): Promise<Record<string, string>> {
+    const results = await this.analyzeExports(targetUnits);
+    const map: Record<string, string> = {};
+    for (const result of results) {
+      for (const entry of result.exports) {
+        if (!(entry.name in map)) {
+          map[entry.name] = result.unitName;
+        }
+      }
+    }
+    return map;
+  }
 }
 
 type ExportType = SourceAnalysisResult['exports'][number]['type'];

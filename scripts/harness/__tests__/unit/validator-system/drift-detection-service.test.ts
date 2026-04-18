@@ -93,4 +93,65 @@ target('DriftDetectionService', () => {
       });
     });
   });
+
+  describe('detect() — unitName 解決 (ISSUE-005 P3-9)', () => {
+    it('ポートが getElementUnitMap を実装している場合、DriftReport.unitName は unknown ではなくマップ値を使う (UT-DDS-007)', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn().mockResolvedValue(['Foo', 'Bar']),
+        getElementUnitMap: vi.fn().mockResolvedValue({ Foo: 'unit-a', Bar: 'unit-b' }),
+      };
+      const sourcePort = {
+        getElements: vi.fn().mockResolvedValue([]),
+        getElementUnitMap: vi.fn().mockResolvedValue({}),
+      };
+      const sut = new DriftDetectionService({
+        designDocumentPort: designPort,
+        sourceCodeAnalyzerPort: sourcePort,
+      });
+      // Act
+      const actual = await sut.detect();
+      // Assert
+      const fooReport = actual.find((r) => r.element === 'Foo');
+      const barReport = actual.find((r) => r.element === 'Bar');
+      expect(fooReport?.unitName).toBe('unit-a');
+      expect(barReport?.unitName).toBe('unit-b');
+    });
+
+    it('code→design の drift も sourceCode 側の unit map で解決される (UT-DDS-008)', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn().mockResolvedValue([]),
+        getElementUnitMap: vi.fn().mockResolvedValue({}),
+      };
+      const sourcePort = {
+        getElements: vi.fn().mockResolvedValue(['Baz']),
+        getElementUnitMap: vi.fn().mockResolvedValue({ Baz: 'unit-c' }),
+      };
+      const sut = new DriftDetectionService({
+        designDocumentPort: designPort,
+        sourceCodeAnalyzerPort: sourcePort,
+      });
+      // Act
+      const actual = await sut.detect();
+      // Assert
+      const bazReport = actual.find((r) => r.element === 'Baz');
+      expect(bazReport?.unitName).toBe('unit-c');
+    });
+
+    it('getElementUnitMap 未実装ポートでは従来挙動 (targetUnits[0] or unknown) を保つ (UT-DDS-009)', async () => {
+      // Arrange
+      const designPort = createMockDesignDocumentPort(['Foo']);
+      const sourcePort = createMockSourceCodeAnalyzerPort([]);
+      const sut = new DriftDetectionService({
+        designDocumentPort: designPort,
+        sourceCodeAnalyzerPort: sourcePort,
+      });
+      // Act
+      const actual = await sut.detect();
+      // Assert
+      const fooReport = actual.find((r) => r.element === 'Foo');
+      expect(fooReport?.unitName).toBe('unknown');
+    });
+  });
 });

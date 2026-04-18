@@ -9,10 +9,20 @@ import { DriftReport } from '../../value-objects/drift-report.js';
 
 export interface DriftDetectionDesignDocumentPort {
   getElements(targetUnits?: readonly string[]): Promise<string[]>;
+  /**
+   * ISSUE-005 P3-9: element → unit 名のマップ。
+   * 実装されていれば DriftReport.unitName の解決に使われる (fallback: 'unknown')。
+   */
+  getElementUnitMap?(targetUnits?: readonly string[]): Promise<Record<string, string>>;
 }
 
 export interface DriftDetectionSourceCodeAnalyzerPort {
   getElements(targetUnits?: readonly string[]): Promise<string[]>;
+  /**
+   * ISSUE-005 P3-9: element → unit 名のマップ。
+   * 実装されていれば DriftReport.unitName の解決に使われる (fallback: 'unknown')。
+   */
+  getElementUnitMap?(targetUnits?: readonly string[]): Promise<Record<string, string>>;
 }
 
 export interface DriftDetectionServiceDeps {
@@ -33,6 +43,23 @@ export class DriftDetectionService {
     const designElements = await this.designDocumentPort.getElements(targetUnits);
     const codeElements = await this.sourceCodeAnalyzerPort.getElements(targetUnits);
 
+    // ISSUE-005 P3-9: element → unit のマップを取得し、DriftReport.unitName の解決に使う
+    const designUnitMap = this.designDocumentPort.getElementUnitMap
+      ? await this.designDocumentPort.getElementUnitMap(targetUnits)
+      : {};
+    const codeUnitMap = this.sourceCodeAnalyzerPort.getElementUnitMap
+      ? await this.sourceCodeAnalyzerPort.getElementUnitMap(targetUnits)
+      : {};
+
+    const resolveUnit = (element: string): string => {
+      return (
+        designUnitMap[element] ??
+        codeUnitMap[element] ??
+        targetUnits?.[0] ??
+        'unknown'
+      );
+    };
+
     const designSet = new Set(designElements);
     const codeSet = new Set(codeElements);
 
@@ -44,7 +71,7 @@ export class DriftDetectionService {
         reports.push(
           DriftReport.create({
             direction: 'design→code',
-            unitName: (targetUnits?.[0]) ?? 'unknown',
+            unitName: resolveUnit(element),
             element,
             description: `設計に存在するがコードに存在しない: ${element}`,
             recommendation: `${element} をコードに実装してください`,
@@ -59,7 +86,7 @@ export class DriftDetectionService {
         reports.push(
           DriftReport.create({
             direction: 'code→design',
-            unitName: (targetUnits?.[0]) ?? 'unknown',
+            unitName: resolveUnit(element),
             element,
             description: `コードに存在するが設計に存在しない: ${element}`,
             recommendation: `${element} を設計文書に追記するか、コードから削除してください`,

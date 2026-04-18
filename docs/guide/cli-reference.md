@@ -66,6 +66,21 @@ Commands exposed as npm scripts (`npm run <command>`).
 | `render-errors` | `--format human\|agent\|ci` | Render errors |
 | `validate-fix` | `--code <code>` | Validate fix code example |
 
+### `list-errors` と `render-errors` の使い分け
+
+ISSUE-005 P3-10 で明確化された境界:
+
+- **`list-errors`** — **定義駆動**。`HarnessError` Value Object の**静的な定義**を出力する。
+  コードを実行しないため、常に安定した結果を返す。`--format json` と組み合わせて**異なる
+  バージョン間の定義差分を比較**する用途に向く。
+- **`render-errors`** — **ランタイム駆動**。実行時に蓄積されたエラーの**蓄積履歴**を整形する。
+  まだエラーが記録されていない環境では空を返すため、テストデータや実行痕跡を前提とする。
+  CI ログ向けの詳細フォーマット (`--format ci`) やエージェント送信向けの構造化 (`--format agent`)
+  に向く。
+
+**差分比較を行いたい場合は `list-errors --format json`** を使い、`render-errors` は runtime 観測用と
+位置付けること。
+
 ---
 
 ## Skill Quality
