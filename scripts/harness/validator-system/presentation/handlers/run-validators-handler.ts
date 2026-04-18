@@ -110,12 +110,21 @@ export class RunValidatorsHandler {
         return { output, exitCode: l1Report.overallPassed ? 0 : 1 };
       }
 
+      // ISSUE-005 P1-4: args.layer を targetLayers にマップ
+      let targetLayers: readonly ('L2' | 'L3' | 'L4')[] | undefined;
+      if (args.layer === 'L2') targetLayers = ['L2'];
+      else if (args.layer === 'L3') targetLayers = ['L3'];
+      else if (args.layer === 'L4') targetLayers = ['L4'];
+      else if (args.layer === 'all') targetLayers = ['L2', 'L3', 'L4'];
+      // undefined → フィルタなし（従来挙動）
+
       const report = await this.useCase.execute({
         targetPaths: args.targetPaths ?? [],
         unitName: args.unit ?? '',
         currentPhase: args.phase ?? '',
         includeL4: !args.noL4,
         failOnWarning: args.failOnWarning,
+        targetLayers,
       });
 
       const format = args.format ?? 'human';

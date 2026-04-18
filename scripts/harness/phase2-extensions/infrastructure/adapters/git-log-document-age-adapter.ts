@@ -17,13 +17,19 @@ export class GitLogDocumentAgeAdapter implements DocumentAgePort {
   constructor(
     private readonly projectRoot: string,
     private readonly nowProvider: () => Date = () => new Date(),
-    private readonly gitLogExecutor: (command: string, options: { cwd: string }) => Buffer = execSync,
+    private readonly gitLogExecutor: (
+      command: string,
+      options: { cwd: string; stdio?: readonly ['pipe', 'pipe', 'pipe'] },
+    ) => Buffer = execSync,
   ) {}
 
   async getAge(documentPath: string): Promise<DocumentAge> {
     try {
       const output = this.gitLogExecutor(`git log --format=%ai -1 -- "${documentPath}"`, {
         cwd: this.projectRoot,
+        // ISSUE-005 P1-3: fresh repo では "fatal: your current branch ... does not have
+        // any commits yet" が 34回 stderr に漏れる。pipe に束ねて静音化する。
+        stdio: ['pipe', 'pipe', 'pipe'] as const,
       })
         .toString()
         .trim();

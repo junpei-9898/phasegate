@@ -138,5 +138,24 @@ target('GitDiffChangedFilesAdapter', () => {
       // Act & Assert
       expect(() => adapter.getChangedFiles()).toThrow();
     });
+
+    // IT-REPO-Git-011 (ISSUE-005 P1-3)
+    it('fresh repo (HEAD未作成) では HEAD 無しの diff コマンドで staged 差分を取得する', () => {
+      // Arrange: rev-parse HEAD が fail、その後の git diff --cached (HEAD無し) は成功
+      execSyncMock.mockImplementation((cmd: string) => {
+        if (cmd.includes('rev-parse')) {
+          throw new Error("fatal: ambiguous argument 'HEAD': unknown revision");
+        }
+        if (cmd === 'git diff --name-status --cached') {
+          return 'A\tsrc/initial.ts\n' as any;
+        }
+        throw new Error(`Unexpected command: ${cmd}`);
+      });
+      const adapter = new GitDiffChangedFilesAdapter();
+      // Act
+      const actual = adapter.getChangedFiles();
+      // Assert
+      expect(actual).toEqual([{ filePath: 'src/initial.ts', changeKind: 'CREATE' }]);
+    });
   });
 });

@@ -32,22 +32,50 @@ export class RunFullValidationUseCase {
   }
 
   async execute(input: RunFullValidationInput): Promise<AggregatedValidationReport> {
+    // ISSUE-005 P1-4: targetLayers で絞り込み。未指定時は従来の includeL4 挙動を維持。
     const includeL4 = input.includeL4 !== false;
+    const defaultLayers: readonly ('L2' | 'L3' | 'L4')[] = includeL4
+      ? ['L2', 'L3', 'L4']
+      : ['L2', 'L3'];
+    const effectiveLayers = input.targetLayers ?? defaultLayers;
+    const runL2 = effectiveLayers.includes('L2');
+    const runL3 = effectiveLayers.includes('L3');
+    const runL4 = effectiveLayers.includes('L4');
 
-    const l2Results = await this.l2UseCase.execute({
-      targetPaths: input.targetPaths,
-      unitName: input.unitName,
-      currentPhase: input.currentPhase,
-    });
+    type Result = {
+      validatorId: string;
+      passed: boolean;
+      errors: readonly {
+        code: string;
+        severity: string;
+        message: string;
+        suggestion: string;
+        [key: string]: unknown;
+      }[];
+      durationMs: number;
+      skipped?: boolean;
+    };
 
-    const l3Results = await this.l3UseCase.execute({
-      targetPaths: input.targetPaths,
-      coverageReportPath: input.coverageReportPath,
-      requirementMatrixPath: input.requirementMatrixPath,
-    });
+    let l2Results: readonly Result[] = [];
+    if (runL2) {
+      l2Results = await this.l2UseCase.execute({
+        targetPaths: input.targetPaths,
+        unitName: input.unitName,
+        currentPhase: input.currentPhase,
+      });
+    }
 
-    let l4Results: readonly { validatorId: string; passed: boolean; errors: readonly { code: string; severity: string; message: string; suggestion: string; [key: string]: unknown }[]; durationMs: number; skipped?: boolean }[] = [];
-    if (includeL4) {
+    let l3Results: readonly Result[] = [];
+    if (runL3) {
+      l3Results = await this.l3UseCase.execute({
+        targetPaths: input.targetPaths,
+        coverageReportPath: input.coverageReportPath,
+        requirementMatrixPath: input.requirementMatrixPath,
+      });
+    }
+
+    let l4Results: readonly Result[] = [];
+    if (runL4) {
       l4Results = await this.l4UseCase.execute({
         targetUnits: input.targetUnits,
       });

@@ -42,9 +42,17 @@ export class GitDiffChangedFilesAdapter {
   getChangedFiles(): readonly ChangedFile[] {
     let output: string;
 
+    // ISSUE-005 P1-3: fresh repo (HEAD 未作成) では `git diff ... HEAD` が fatal
+    // になるため、HEAD の存在を事前確認して命令を切り替える
+    const hasHead = this.hasHead();
+    const command = hasHead
+      ? 'git diff --name-status --cached HEAD'
+      : 'git diff --name-status --cached';
+
     try {
-      output = childProcess.execSync('git diff --name-status --cached HEAD', {
+      output = childProcess.execSync(command, {
         encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
       }) as string;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -88,5 +96,16 @@ export class GitDiffChangedFilesAdapter {
     }
 
     return Object.freeze(files);
+  }
+
+  private hasHead(): boolean {
+    try {
+      childProcess.execSync('git rev-parse --verify HEAD', {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

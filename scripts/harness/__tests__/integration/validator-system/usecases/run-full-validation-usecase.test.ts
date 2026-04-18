@@ -132,6 +132,100 @@ target('RunFullValidationUseCase', () => {
     });
   });
 
+  describe('targetLayers フィルタ (ISSUE-005 P1-4)', () => {
+    context('targetLayers=["L2"] の場合', () => {
+      it('L2 のみ実行され L3/L4 は呼ばれない (IT-UC-RunFull-006)', async () => {
+        // Arrange
+        const { usecase, mockRunL2UseCase, mockRunL3UseCase, mockRunL4UseCase } =
+          createFullValidationUseCase();
+        const input = {
+          targetPaths: ['src/'] as readonly string[],
+          unitName: 'unit-a',
+          currentPhase: 'impl',
+          targetLayers: ['L2'] as readonly ('L2' | 'L3' | 'L4')[],
+        };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(mockRunL2UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(mockRunL3UseCase.execute).not.toHaveBeenCalled();
+        expect(mockRunL4UseCase.execute).not.toHaveBeenCalled();
+        expect(actual.totalValidators).toBe(3); // default L2 fixture has 3
+      });
+    });
+
+    context('targetLayers=["L3"] の場合', () => {
+      it('L3 のみ実行され L2/L4 は呼ばれない (IT-UC-RunFull-007)', async () => {
+        // Arrange
+        const { usecase, mockRunL2UseCase, mockRunL3UseCase, mockRunL4UseCase } =
+          createFullValidationUseCase();
+        const input = {
+          targetPaths: ['src/'] as readonly string[],
+          unitName: 'unit-a',
+          currentPhase: 'impl',
+          targetLayers: ['L3'] as readonly ('L2' | 'L3' | 'L4')[],
+        };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(mockRunL2UseCase.execute).not.toHaveBeenCalled();
+        expect(mockRunL3UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(mockRunL4UseCase.execute).not.toHaveBeenCalled();
+        expect(actual.totalValidators).toBe(4); // default L3 fixture has 4
+      });
+    });
+
+    context('targetLayers=["L4"] の場合', () => {
+      it('L4 のみ実行され L2/L3 は呼ばれない (IT-UC-RunFull-008)', async () => {
+        // Arrange
+        const { usecase, mockRunL2UseCase, mockRunL3UseCase, mockRunL4UseCase } =
+          createFullValidationUseCase();
+        const input = {
+          targetPaths: ['src/'] as readonly string[],
+          unitName: 'unit-a',
+          currentPhase: 'impl',
+          targetLayers: ['L4'] as readonly ('L2' | 'L3' | 'L4')[],
+        };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(mockRunL2UseCase.execute).not.toHaveBeenCalled();
+        expect(mockRunL3UseCase.execute).not.toHaveBeenCalled();
+        expect(mockRunL4UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(actual.totalValidators).toBe(3); // default L4 fixture has 3
+      });
+    });
+
+    context('targetLayers=["L2","L3","L4"] の場合', () => {
+      it('全レイヤーが実行される (IT-UC-RunFull-009)', async () => {
+        // Arrange
+        const { usecase, mockRunL2UseCase, mockRunL3UseCase, mockRunL4UseCase } =
+          createFullValidationUseCase();
+        const input = {
+          targetPaths: ['src/'] as readonly string[],
+          unitName: 'unit-a',
+          currentPhase: 'impl',
+          targetLayers: ['L2', 'L3', 'L4'] as readonly ('L2' | 'L3' | 'L4')[],
+        };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(mockRunL2UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(mockRunL3UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(mockRunL4UseCase.execute).toHaveBeenCalledTimes(1);
+        expect(actual.totalValidators).toBe(10);
+      });
+    });
+  });
+
   describe('異常系', () => {
     context('RunL2UseCaseが例外をthrowした場合', () => {
       it('ValidatorExecutionErrorが上位に伝播する (IT-UC-RunFull-004)', async () => {
