@@ -698,8 +698,29 @@ async function main(): Promise<void> {
       }
 
       case 'phasegate:check-phase': {
+        // ISSUE-005 P2-6: --help / --json を positional として食わないようにする
+        if (hasFlag(args, '--help')) {
+          process.stdout.write([
+            'Usage: phasegate phasegate:check-phase [options]',
+            '',
+            'Check phase gate for a specific unit.',
+            '',
+            'Options:',
+            '  --unit <unitId>   Target unit ID (e.g., harness-api). If omitted,',
+            '                    the first positional argument is used.',
+            '  --json            Output result as JSON.',
+            '  --help            Show this help.',
+            '',
+            'Examples:',
+            '  phasegate phasegate:check-phase --unit harness-api',
+            '  phasegate phasegate:check-phase harness-api --json',
+            '',
+          ].join('\n'));
+          return;
+        }
         const mod = createHarnessApiModule();
-        const unit = parseFlag(args, '--unit') ?? args[1] ?? '';
+        const positional = args[1] && !args[1].startsWith('--') ? args[1] : undefined;
+        const unit = parseFlag(args, '--unit') ?? positional ?? '';
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.checkPhase.handle({ unit }, flags);

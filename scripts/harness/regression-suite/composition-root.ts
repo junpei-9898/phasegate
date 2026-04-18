@@ -40,7 +40,10 @@ export function buildRegressionSuite(baseDir: string): RegressionSuiteCompositio
   const suiteRegistryPort = new StaticSuiteRegistryAdapter();
   const testRunnerPort = new VitestTestRunnerAdapter();
   const configQueryPort = new HarnessConfigQueryAdapter();
-  const ciGateResultWriterPort = new JsonCiGateResultWriterAdapter(baseDir);
+  // ISSUE-005 P2-7: リポジトリ直下ではなく reports/regression/ 配下に出力する
+  const ciGateResultWriterPort = new JsonCiGateResultWriterAdapter(
+    path.join(baseDir, 'reports', 'regression'),
+  );
   const importAnalyzerPort = new BiomeAstImportAnalyzerAdapter();
   const v0SpecReaderPort = new FileSystemV0SpecReaderAdapter(baseDir);
   const migrationMappingRepositoryPort = new MarkdownMigrationMappingRepositoryAdapter(
