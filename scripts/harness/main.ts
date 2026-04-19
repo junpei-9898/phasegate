@@ -1021,7 +1021,10 @@ Examples:
 
       case 'pre-commit': {
         const preCommitPath = join(harnessRoot, 'scripts/harness/integrations/pre-commit.js');
-        await import(preCommitPath);
+        const preCommitMod = (await import(preCommitPath)) as {
+          runPreCommitCli: () => Promise<void>;
+        };
+        await preCommitMod.runPreCommitCli();
         break;
       }
 
