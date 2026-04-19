@@ -203,6 +203,22 @@ TDD実装フェーズ
 - **WARNのみFAIL** → Opusが直接修正してから完了とする
 - **全PASS** → 完了
 
+## 🔗 テストファイルのトレーサビリティメタデータ（必須）
+
+Phase 2 で設計するシナリオ / E2E テストファイル（`*.spec.ts` / `*.e2e.test.ts`）の疑似コード冒頭には、ファイル先頭コメントブロックに `// @story HXX-XX` を emit するよう明記する。`MetadataValidator.validateTest` が検証対象とし、ISSUE-008 Phase C-2 以降は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
+
+```typescript
+// @unit <対象 Unit ID（フロントエンドの場合は presentation / BFF Unit）>
+// @layer <presentation | e2e>
+// @story H09-01
+```
+
+形式ルール:
+- `@unit` / `@layer` と同じヘッダーコメントブロックに配置
+- `HXX-XX` は `docs/product/user_stories.md` に存在する ID（StoryCatalog）
+- シナリオが複数 US を横断する場合は `// @story H09-01, H09-02` のようにカンマ区切りで列挙
+- 目的: US↔シナリオテストの逆引きを機械化（test-coverage-checker / nyquist の集計入力）
+
 ## 注意事項
 
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う

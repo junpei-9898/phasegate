@@ -93,7 +93,7 @@ target('pre-commit CLI 統合検証 (ISSUE-005 P0-1)', () => {
         const actual = await runCli(['pre-commit'], workDir);
         // Assert — 旧メッセージの回帰防止
         expect(actual.stdout).not.toContain('No staged files to check');
-        expect(actual.stdout).toContain('設計文書');
+        expect(actual.stdout).toContain('メタデータ注釈');
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

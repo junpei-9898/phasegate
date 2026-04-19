@@ -29,6 +29,16 @@ const RESET = '\x1b[0m';
 
 const TS_EXTENSION = '.ts';
 const MD_EXTENSION = '.md';
+const TEST_FILE_SUFFIXES = Object.freeze([
+  '.test.ts',
+  '.test.tsx',
+  '.spec.ts',
+  '.spec.tsx',
+]);
+
+function isTestFile(path: string): boolean {
+  return TEST_FILE_SUFFIXES.some((suffix) => path.endsWith(suffix));
+}
 
 interface RunL2Input {
   readonly targetPaths: readonly string[];
@@ -109,6 +119,8 @@ export async function runPreCommit(
 ): Promise<PreCommitResult> {
   const tsFiles = stagedFiles.filter((f) => f.endsWith(TS_EXTENSION));
   const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION));
+  const testFiles = tsFiles.filter((f) => isTestFile(f));
+  const metadataFiles = [...mdFiles, ...testFiles];
 
   if (tsFiles.length === 0 && mdFiles.length === 0) {
     return {
@@ -140,14 +152,16 @@ export async function runPreCommit(
     }
   }
 
-  if (mdFiles.length > 0) {
-    const mdResult = await deps.validateMetadataCommandHandler.execute({
-      filePaths: mdFiles,
+  if (metadataFiles.length > 0) {
+    const metadataResult = await deps.validateMetadataCommandHandler.execute({
+      filePaths: metadataFiles,
     });
     sections.push('');
-    sections.push(`${BOLD}== 設計文書 (${mdFiles.length} file(s)) ==${RESET}`);
-    sections.push(mdResult.text);
-    exitCode = maxExitCode(exitCode, mdResult.exitCode);
+    sections.push(
+      `${BOLD}== 設計 / テスト メタデータ注釈 (${metadataFiles.length} file(s)) ==${RESET}`,
+    );
+    sections.push(metadataResult.text);
+    exitCode = maxExitCode(exitCode, metadataResult.exitCode);
   }
 
   sections.push('');

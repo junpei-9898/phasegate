@@ -144,7 +144,71 @@ target('runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）', () => {
       expect(deps.l2Spy).toHaveBeenCalledTimes(1);
       expect(deps.metadataSpy).toHaveBeenCalledTimes(1);
       expect(actual.stdout).toContain('TypeScript');
-      expect(actual.stdout).toContain('設計文書');
+      expect(actual.stdout).toContain('メタデータ注釈');
+    });
+  });
+
+  context('テストファイル (.test.ts) の @story 検証 ISSUE-008 Phase C-3', () => {
+    // UT-PC-09
+    it('staged に .test.ts が含まれる場合、L2 validator と metadata handler の両方に渡される', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      const actual = await runPreCommit(
+        ['scripts/harness/__tests__/unit/foo.test.ts'],
+        deps,
+      );
+      // Assert — L2 validator は .ts 全般を対象とする（@unit/@layer + test-quality）
+      expect(actual.exitCode).toBe(0);
+      expect(deps.l2Spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetPaths: ['scripts/harness/__tests__/unit/foo.test.ts'],
+        }),
+      );
+      // metadata handler は @story 検証用に test ファイルも受け取る
+      expect(deps.metadataSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filePaths: ['scripts/harness/__tests__/unit/foo.test.ts'],
+        }),
+      );
+    });
+
+    // UT-PC-10
+    it('.md と .test.ts が混在する場合、metadata handler は両方を受け取り、実装順で渡される', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(
+        [
+          'scripts/harness/foo.ts',
+          'docs/product/construction/foo/logical_design.md',
+          'scripts/harness/__tests__/unit/bar.spec.ts',
+        ],
+        deps,
+      );
+      // Assert
+      expect(deps.metadataSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filePaths: [
+            'docs/product/construction/foo/logical_design.md',
+            'scripts/harness/__tests__/unit/bar.spec.ts',
+          ],
+        }),
+      );
+    });
+
+    // UT-PC-11
+    it('テストヘルパー (test-helpers.ts) は test サフィックスを持たないため metadata handler に渡されない', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(
+        ['scripts/harness/__tests__/helpers/test-helpers.ts'],
+        deps,
+      );
+      // Assert
+      expect(deps.l2Spy).toHaveBeenCalledOnce(); // L2 validator は .ts 全般で呼ばれる
+      expect(deps.metadataSpy).not.toHaveBeenCalled(); // metadata handler は呼ばれない
     });
   });
 

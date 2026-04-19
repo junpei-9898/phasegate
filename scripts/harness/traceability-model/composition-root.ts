@@ -15,6 +15,7 @@ import { TraceabilityChainBuilder } from './domain/services/traceability-chain-b
 import { StoryIdAliasResolver } from './domain/services/story-id-alias-resolver.js';
 import { ValidateImplementationMetadataUseCase } from './application/usecases/validate-implementation-metadata-usecase.js';
 import { ValidateDesignStoryAnnotationsUseCase } from './application/usecases/validate-design-story-annotations-usecase.js';
+import { ValidateTestStoryMetadataUseCase } from './application/usecases/validate-test-story-metadata-usecase.js';
 import { ValidateMetadataCommandHandler } from './presentation/cli/validate-metadata-command-handler.js';
 import { ProjectRelativePath } from './domain/value-objects/project-relative-path.js';
 
@@ -51,11 +52,17 @@ export function createTraceabilityModelModule(rootDir: string) {
       designDocumentPort: designDocument,
       validator: metadataValidator,
     });
+  const validateTestStoryMetadataUseCase =
+    new ValidateTestStoryMetadataUseCase({
+      metadataReaderPort: metadataReader,
+      validator: metadataValidator,
+    });
 
   // Presentation handlers
   const validateMetadataCommandHandler = new ValidateMetadataCommandHandler({
     validateImplementationMetadataUseCase,
     validateDesignStoryAnnotationsUseCase,
+    validateTestStoryMetadataUseCase,
     createProjectRelativePath: (value: string) =>
       ProjectRelativePath.create(value),
   });

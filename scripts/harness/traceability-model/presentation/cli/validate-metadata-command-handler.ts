@@ -5,6 +5,7 @@
 
 import type { ValidateImplementationMetadataUseCase } from '../../application/usecases/validate-implementation-metadata-usecase.js';
 import type { ValidateDesignStoryAnnotationsUseCase } from '../../application/usecases/validate-design-story-annotations-usecase.js';
+import type { ValidateTestStoryMetadataUseCase } from '../../application/usecases/validate-test-story-metadata-usecase.js';
 import type { MetadataValidationOutput } from '../../application/dto/metadata-validation-output.js';
 import type { ProjectRelativePath } from '../../domain/value-objects/project-relative-path.js';
 
@@ -22,23 +23,33 @@ export interface ValidateMetadataCommandOutput {
 type PathFactory = (value: string) => ProjectRelativePath;
 type ImplUseCase = Pick<ValidateImplementationMetadataUseCase, 'execute'>;
 type DesignUseCase = Pick<ValidateDesignStoryAnnotationsUseCase, 'execute'>;
+type TestUseCase = Pick<ValidateTestStoryMetadataUseCase, 'execute'>;
 
 const DESIGN_DOCUMENT_EXTENSION = '.md';
+const TEST_FILE_SUFFIXES = Object.freeze([
+  '.test.ts',
+  '.test.tsx',
+  '.spec.ts',
+  '.spec.tsx',
+]);
 
 export interface ValidateMetadataCommandHandlerDeps {
   readonly validateImplementationMetadataUseCase: ImplUseCase;
   readonly validateDesignStoryAnnotationsUseCase: DesignUseCase;
+  readonly validateTestStoryMetadataUseCase?: TestUseCase;
   readonly createProjectRelativePath: PathFactory;
 }
 
 export class ValidateMetadataCommandHandler {
   private readonly implUseCase: ImplUseCase;
   private readonly designUseCase: DesignUseCase;
+  private readonly testUseCase?: TestUseCase;
   private readonly createPath: PathFactory;
 
   constructor(deps: ValidateMetadataCommandHandlerDeps) {
     this.implUseCase = deps.validateImplementationMetadataUseCase;
     this.designUseCase = deps.validateDesignStoryAnnotationsUseCase;
+    this.testUseCase = deps.validateTestStoryMetadataUseCase;
     this.createPath = deps.createProjectRelativePath;
   }
 
@@ -55,11 +66,14 @@ export class ValidateMetadataCommandHandler {
 
     try {
       const paths = input.filePaths.map((p) => this.createPath(p));
-      const { designPaths, implPaths } = this.classify(paths);
+      const { designPaths, testPaths, implPaths } = this.classify(paths);
 
-      const [designResults, implResults] = await Promise.all([
+      const [designResults, testResults, implResults] = await Promise.all([
         designPaths.length > 0
           ? this.designUseCase.execute(designPaths)
+          : Promise.resolve([] as readonly MetadataValidationOutput[]),
+        testPaths.length > 0 && this.testUseCase
+          ? this.testUseCase.execute(testPaths)
           : Promise.resolve([] as readonly MetadataValidationOutput[]),
         implPaths.length > 0
           ? this.implUseCase.execute(implPaths)
@@ -68,6 +82,7 @@ export class ValidateMetadataCommandHandler {
 
       const results = this.mergePreservingOrder(paths, [
         ...designResults,
+        ...testResults,
         ...implResults,
       ]);
 
@@ -92,18 +107,27 @@ export class ValidateMetadataCommandHandler {
 
   private classify(paths: readonly ProjectRelativePath[]): {
     readonly designPaths: readonly ProjectRelativePath[];
+    readonly testPaths: readonly ProjectRelativePath[];
     readonly implPaths: readonly ProjectRelativePath[];
   } {
     const designPaths: ProjectRelativePath[] = [];
+    const testPaths: ProjectRelativePath[] = [];
     const implPaths: ProjectRelativePath[] = [];
     for (const path of paths) {
       if (path.extname() === DESIGN_DOCUMENT_EXTENSION) {
         designPaths.push(path);
+      } else if (this.isTestFile(path) && this.testUseCase) {
+        testPaths.push(path);
       } else {
         implPaths.push(path);
       }
     }
-    return { designPaths, implPaths };
+    return { designPaths, testPaths, implPaths };
+  }
+
+  private isTestFile(path: ProjectRelativePath): boolean {
+    const value = path.toString();
+    return TEST_FILE_SUFFIXES.some((suffix) => value.endsWith(suffix));
   }
 
   private mergePreservingOrder(
