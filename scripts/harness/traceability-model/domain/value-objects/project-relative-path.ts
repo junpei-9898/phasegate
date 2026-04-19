@@ -7,9 +7,12 @@
 const ALLOWED_PROJECT_ROOTS = new Set(['docs', 'scripts']);
 
 export class ProjectRelativePathError extends Error {
+  readonly value: string;
+
   constructor(value: string) {
     super(`ProjectRelativePathが不正です: ${value}`);
     this.name = 'ProjectRelativePathError';
+    this.value = value;
   }
 }
 

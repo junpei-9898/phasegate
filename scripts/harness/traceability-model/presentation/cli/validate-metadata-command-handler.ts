@@ -7,7 +7,10 @@ import type { ValidateImplementationMetadataUseCase } from '../../application/us
 import type { ValidateDesignStoryAnnotationsUseCase } from '../../application/usecases/validate-design-story-annotations-usecase.js';
 import type { ValidateTestStoryMetadataUseCase } from '../../application/usecases/validate-test-story-metadata-usecase.js';
 import type { MetadataValidationOutput } from '../../application/dto/metadata-validation-output.js';
-import type { ProjectRelativePath } from '../../domain/value-objects/project-relative-path.js';
+import {
+  ProjectRelativePathError,
+  type ProjectRelativePath,
+} from '../../domain/value-objects/project-relative-path.js';
 
 export interface ValidateMetadataCommandInput {
   readonly filePaths: readonly string[];
@@ -25,7 +28,11 @@ type ImplUseCase = Pick<ValidateImplementationMetadataUseCase, 'execute'>;
 type DesignUseCase = Pick<ValidateDesignStoryAnnotationsUseCase, 'execute'>;
 type TestUseCase = Pick<ValidateTestStoryMetadataUseCase, 'execute'>;
 
-const DESIGN_DOCUMENT_EXTENSION = '.md';
+const DESIGN_DOCUMENT_EXTENSIONS: ReadonlySet<string> = new Set([
+  '.md',
+  '.mdx',
+  '.markdown',
+]);
 const TEST_FILE_SUFFIXES = Object.freeze([
   '.test.ts',
   '.test.tsx',
@@ -96,7 +103,16 @@ export class ValidateMetadataCommandHandler {
         results,
         text,
       });
-    } catch {
+    } catch (err) {
+      if (err instanceof ProjectRelativePathError) {
+        return Object.freeze({
+          exitCode: 2,
+          results: Object.freeze([]),
+          text:
+            `Error: invalid file path: "${err.value}"\n` +
+            `  Hint: paths must be project-relative and start with 'docs/' or 'scripts/'.`,
+        });
+      }
       return Object.freeze({
         exitCode: 2,
         results: Object.freeze([]),
@@ -114,7 +130,7 @@ export class ValidateMetadataCommandHandler {
     const testPaths: ProjectRelativePath[] = [];
     const implPaths: ProjectRelativePath[] = [];
     for (const path of paths) {
-      if (path.extname() === DESIGN_DOCUMENT_EXTENSION) {
+      if (DESIGN_DOCUMENT_EXTENSIONS.has(path.extname())) {
         designPaths.push(path);
       } else if (this.isTestFile(path) && this.testUseCase) {
         testPaths.push(path);

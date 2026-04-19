@@ -595,5 +595,111 @@ target('ValidateMetadataCommandHandler', () => {
         expect(testUseCase.execute).not.toHaveBeenCalled();
       });
     });
+
+    context('フルパス (絶対パス) が渡された場合 (UT-VMC-20)', () => {
+      it('終了コード2を返し、ProjectRelativePath 制約をヒント付きで報告すること', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = { execute: vi.fn() };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['/Users/me/proj/docs/foo.md'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.text).toContain('invalid file path');
+        expect(actual.text).toContain('/Users/me/proj/docs/foo.md');
+        expect(actual.text).toContain("'docs/'");
+        expect(actual.text).toContain("'scripts/'");
+        expect(implUseCase.execute).not.toHaveBeenCalled();
+        expect(designUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context('未許可 prefix (README.md) が渡された場合 (UT-VMC-21)', () => {
+      it('終了コード2を返し、ヒントに prefix 要件を含めること', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = { execute: vi.fn() };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['README.md'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.text).toContain('invalid file path');
+        expect(actual.text).toContain('README.md');
+        expect(actual.text).toContain("'docs/'");
+        expect(actual.text).not.toContain('failed unexpectedly');
+      });
+    });
+
+    context('.mdx ファイルが与えられた場合 (UT-VMC-22)', () => {
+      it('designStoryAnnotationsUseCase に dispatch されること', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/product/foo.mdx'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/foo.mdx'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(designUseCase.execute).toHaveBeenCalledOnce();
+        expect(implUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context('.markdown ファイルが与えられた場合 (UT-VMC-23)', () => {
+      it('designStoryAnnotationsUseCase に dispatch されること', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/product/foo.markdown'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/foo.markdown'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(designUseCase.execute).toHaveBeenCalledOnce();
+        expect(implUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
   });
 });
