@@ -3,7 +3,6 @@
 @story-id H05-01
 @story-id H05-02
 @story-id H05-03
-
 > **Unit ID**: adr-foundation
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H05-01, H05-02, H05-03

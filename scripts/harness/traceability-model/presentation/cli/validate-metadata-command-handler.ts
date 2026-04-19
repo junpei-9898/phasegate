@@ -4,6 +4,7 @@
  */
 
 import type { ValidateImplementationMetadataUseCase } from '../../application/usecases/validate-implementation-metadata-usecase.js';
+import type { ValidateDesignStoryAnnotationsUseCase } from '../../application/usecases/validate-design-story-annotations-usecase.js';
 import type { MetadataValidationOutput } from '../../application/dto/metadata-validation-output.js';
 import type { ProjectRelativePath } from '../../domain/value-objects/project-relative-path.js';
 
@@ -19,21 +20,25 @@ export interface ValidateMetadataCommandOutput {
 }
 
 type PathFactory = (value: string) => ProjectRelativePath;
+type ImplUseCase = Pick<ValidateImplementationMetadataUseCase, 'execute'>;
+type DesignUseCase = Pick<ValidateDesignStoryAnnotationsUseCase, 'execute'>;
+
+const DESIGN_DOCUMENT_EXTENSION = '.md';
 
 export interface ValidateMetadataCommandHandlerDeps {
-  readonly validateImplementationMetadataUseCase: Pick<
-    ValidateImplementationMetadataUseCase,
-    'execute'
-  >;
+  readonly validateImplementationMetadataUseCase: ImplUseCase;
+  readonly validateDesignStoryAnnotationsUseCase: DesignUseCase;
   readonly createProjectRelativePath: PathFactory;
 }
 
 export class ValidateMetadataCommandHandler {
-  private readonly useCase: Pick<ValidateImplementationMetadataUseCase, 'execute'>;
+  private readonly implUseCase: ImplUseCase;
+  private readonly designUseCase: DesignUseCase;
   private readonly createPath: PathFactory;
 
   constructor(deps: ValidateMetadataCommandHandlerDeps) {
-    this.useCase = deps.validateImplementationMetadataUseCase;
+    this.implUseCase = deps.validateImplementationMetadataUseCase;
+    this.designUseCase = deps.validateDesignStoryAnnotationsUseCase;
     this.createPath = deps.createProjectRelativePath;
   }
 
@@ -50,7 +55,22 @@ export class ValidateMetadataCommandHandler {
 
     try {
       const paths = input.filePaths.map((p) => this.createPath(p));
-      const results = await this.useCase.execute(paths);
+      const { designPaths, implPaths } = this.classify(paths);
+
+      const [designResults, implResults] = await Promise.all([
+        designPaths.length > 0
+          ? this.designUseCase.execute(designPaths)
+          : Promise.resolve([] as readonly MetadataValidationOutput[]),
+        implPaths.length > 0
+          ? this.implUseCase.execute(implPaths)
+          : Promise.resolve([] as readonly MetadataValidationOutput[]),
+      ]);
+
+      const results = this.mergePreservingOrder(paths, [
+        ...designResults,
+        ...implResults,
+      ]);
+
       const hasFailures = results.some((r) => !r.valid);
       const text = input.json
         ? JSON.stringify({ results }, null, 2)
@@ -68,6 +88,40 @@ export class ValidateMetadataCommandHandler {
         text: 'Error: metadata validation failed unexpectedly',
       });
     }
+  }
+
+  private classify(paths: readonly ProjectRelativePath[]): {
+    readonly designPaths: readonly ProjectRelativePath[];
+    readonly implPaths: readonly ProjectRelativePath[];
+  } {
+    const designPaths: ProjectRelativePath[] = [];
+    const implPaths: ProjectRelativePath[] = [];
+    for (const path of paths) {
+      if (path.extname() === DESIGN_DOCUMENT_EXTENSION) {
+        designPaths.push(path);
+      } else {
+        implPaths.push(path);
+      }
+    }
+    return { designPaths, implPaths };
+  }
+
+  private mergePreservingOrder(
+    orderedPaths: readonly ProjectRelativePath[],
+    results: readonly MetadataValidationOutput[],
+  ): readonly MetadataValidationOutput[] {
+    const byPath = new Map<string, MetadataValidationOutput>();
+    for (const result of results) {
+      byPath.set(result.filePath, result);
+    }
+    const ordered: MetadataValidationOutput[] = [];
+    for (const path of orderedPaths) {
+      const result = byPath.get(path.toString());
+      if (result) {
+        ordered.push(result);
+      }
+    }
+    return Object.freeze(ordered);
   }
 
   private formatText(results: readonly MetadataValidationOutput[]): string {

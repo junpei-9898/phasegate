@@ -1,5 +1,8 @@
 # ITテストロジック設計: traceability-model
 
+@story-id H03-01
+@story-id H03-02
+@story-id H03-03
 > **作成日**: 2026-03-14
 > **対応ストーリー**: H03-01, H03-02, H03-03
 > **前提ドキュメント**: `logical_design.md`、`it_test_design.md`、`coverage_report.md`、`testing-rules.md`
@@ -386,7 +389,7 @@ target('<対象クラス or 関数>', () => {
 - `Assert`: `actual[0].contextLine === '## 2.2 値オブジェクト群'` を確認する。
 
 #### IT-TM-042 行末に他文字がある場合にstandaloneLine=falseとなること
-- `context`: `@story-id H03-01 追加内容` のように追記がある場合
+- `context`: `@story-id HXX-XX 追加内容` のように追記がある場合
 - `Arrange`: 該当行を含む Markdown を作る。
 - `Act`: `const actual = parser.parse(content)`
 - `Assert`: `actual[0].standaloneLine === false` を確認する。
@@ -399,7 +402,7 @@ target('<対象クラス or 関数>', () => {
 
 #### IT-TM-044 @story-id行の前後空白が除去されて判定されること
 - `context`: 行頭・行末に空白を含む場合
-- `Arrange`: `'  @story-id H03-01  '` を含む Markdown を作る。
+- `Arrange`: `'  @story-id HXX-XX  '` を含む Markdown を作る。
 - `Act`: `const actual = parser.parse(content)`
 - `Assert`: `actual[0].storyId.toString() === 'H03-01'`、`standaloneLine === true` を確認する。
 

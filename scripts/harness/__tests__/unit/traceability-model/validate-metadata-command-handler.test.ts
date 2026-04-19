@@ -30,14 +30,32 @@ function createInvalidOutput(filePath: string): MetadataValidationOutput {
   };
 }
 
+function createInvalidDesignOutput(filePath: string): MetadataValidationOutput {
+  return {
+    filePath,
+    valid: false,
+    errors: [
+      {
+        code: 'L2-002',
+        severity: 'error',
+        message: '@story-id は必須です',
+        suggestion: '設計文書の対象ストーリーを注釈してください',
+      },
+    ],
+    warnings: [],
+  };
+}
+
 target('ValidateMetadataCommandHandler', () => {
   describe('execute', () => {
     context('ファイルパスが空の場合', () => {
       it('終了コード2を返すこと', async () => {
         // Arrange
-        const useCase = { execute: vi.fn() };
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = { execute: vi.fn() };
         const handler = new ValidateMetadataCommandHandler({
-          validateImplementationMetadataUseCase: useCase,
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
           createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
         });
 
@@ -47,20 +65,23 @@ target('ValidateMetadataCommandHandler', () => {
         // Assert
         expect(actual.exitCode).toBe(2);
         expect(actual.text).toContain('no file paths');
-        expect(useCase.execute).not.toHaveBeenCalled();
+        expect(implUseCase.execute).not.toHaveBeenCalled();
+        expect(designUseCase.execute).not.toHaveBeenCalled();
       });
     });
 
     context('すべてのファイルが検証に合格する場合', () => {
       it('終了コード0を返すこと', async () => {
         // Arrange
-        const useCase = {
+        const implUseCase = {
           execute: vi.fn().mockResolvedValue([
             createValidOutput('scripts/harness/foo.ts'),
           ]),
         };
+        const designUseCase = { execute: vi.fn() };
         const handler = new ValidateMetadataCommandHandler({
-          validateImplementationMetadataUseCase: useCase,
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
           createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
         });
 
@@ -79,13 +100,15 @@ target('ValidateMetadataCommandHandler', () => {
     context('検証に失敗するファイルがある場合', () => {
       it('終了コード1を返すこと', async () => {
         // Arrange
-        const useCase = {
+        const implUseCase = {
           execute: vi.fn().mockResolvedValue([
             createInvalidOutput('scripts/harness/bar.ts'),
           ]),
         };
+        const designUseCase = { execute: vi.fn() };
         const handler = new ValidateMetadataCommandHandler({
-          validateImplementationMetadataUseCase: useCase,
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
           createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
         });
 
@@ -104,13 +127,15 @@ target('ValidateMetadataCommandHandler', () => {
     context('JSON出力が指定された場合', () => {
       it('JSON形式でテキストを返すこと', async () => {
         // Arrange
-        const useCase = {
+        const implUseCase = {
           execute: vi.fn().mockResolvedValue([
             createValidOutput('scripts/harness/foo.ts'),
           ]),
         };
+        const designUseCase = { execute: vi.fn() };
         const handler = new ValidateMetadataCommandHandler({
-          validateImplementationMetadataUseCase: useCase,
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
           createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
         });
 
@@ -130,11 +155,13 @@ target('ValidateMetadataCommandHandler', () => {
     context('ユースケースが例外をスローする場合', () => {
       it('終了コード2を返すこと', async () => {
         // Arrange
-        const useCase = {
+        const implUseCase = {
           execute: vi.fn().mockRejectedValue(new Error('unexpected')),
         };
+        const designUseCase = { execute: vi.fn() };
         const handler = new ValidateMetadataCommandHandler({
-          validateImplementationMetadataUseCase: useCase,
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
           createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
         });
 
@@ -146,6 +173,205 @@ target('ValidateMetadataCommandHandler', () => {
         // Assert
         expect(actual.exitCode).toBe(2);
         expect(actual.text).toContain('failed unexpectedly');
+      });
+    });
+
+    context('.mdファイルが与えられた場合', () => {
+      it('designStoryAnnotationsUseCaseのみが呼ばれること', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/product/construction/foo/logical_design.md'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/construction/foo/logical_design.md'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(designUseCase.execute).toHaveBeenCalledOnce();
+        expect(implUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context('.tsファイルが与えられた場合', () => {
+      it('implementationUseCaseのみが呼ばれること', async () => {
+        // Arrange
+        const implUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('scripts/harness/foo.ts'),
+          ]),
+        };
+        const designUseCase = { execute: vi.fn() };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['scripts/harness/foo.ts'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(implUseCase.execute).toHaveBeenCalledOnce();
+        expect(designUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context('.mdと.tsが混在した場合', () => {
+      it('両方のUseCaseが呼ばれ結果がマージされること', async () => {
+        // Arrange
+        const implUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('scripts/harness/b.ts'),
+          ]),
+        };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/product/a.md'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/a.md', 'scripts/harness/b.ts'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.results).toHaveLength(2);
+        const paths = actual.results.map((r) => r.filePath);
+        expect(paths).toContain('docs/product/a.md');
+        expect(paths).toContain('scripts/harness/b.ts');
+      });
+    });
+
+    context('designUseCaseがFAILを返す場合', () => {
+      it('終了コード1と@story-idエラーメッセージを返すこと', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createInvalidDesignOutput('docs/product/construction/foo/domain_model.md'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/construction/foo/domain_model.md'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(1);
+        expect(actual.text).toContain('FAIL');
+        expect(actual.text).toContain('@story-id は必須です');
+      });
+    });
+
+    context('designUseCaseが例外をスローする場合', () => {
+      it('終了コード2を返すこと', async () => {
+        // Arrange
+        const implUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockRejectedValue(new Error('design read failed')),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: ['docs/product/design.md'],
+        });
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.text).toContain('failed unexpectedly');
+      });
+    });
+
+    context('未知拡張子が与えられた場合', () => {
+      it('implementationUseCaseにフォールバックされること', async () => {
+        // Arrange
+        const implUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/notes/foo.txt'),
+          ]),
+        };
+        const designUseCase = { execute: vi.fn() };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        await handler.execute({ filePaths: ['docs/notes/foo.txt'] });
+
+        // Assert
+        expect(implUseCase.execute).toHaveBeenCalledOnce();
+        expect(designUseCase.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context('.mdと.tsが入れ替わり順で与えられた場合', () => {
+      it('結果が入力順を保持すること', async () => {
+        // Arrange
+        const implUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('scripts/harness/b.ts'),
+          ]),
+        };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([
+            createValidOutput('docs/product/a.md'),
+            createValidOutput('docs/product/c.md'),
+          ]),
+        };
+        const handler = new ValidateMetadataCommandHandler({
+          validateImplementationMetadataUseCase: implUseCase,
+          validateDesignStoryAnnotationsUseCase: designUseCase,
+          createProjectRelativePath: (v: string) => ProjectRelativePath.create(v),
+        });
+
+        // Act
+        const actual = await handler.execute({
+          filePaths: [
+            'docs/product/a.md',
+            'scripts/harness/b.ts',
+            'docs/product/c.md',
+          ],
+        });
+
+        // Assert
+        expect(actual.results).toHaveLength(3);
+        expect(actual.results[0].filePath).toBe('docs/product/a.md');
+        expect(actual.results[1].filePath).toBe('scripts/harness/b.ts');
+        expect(actual.results[2].filePath).toBe('docs/product/c.md');
       });
     });
   });

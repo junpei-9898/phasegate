@@ -1,5 +1,11 @@
 # ドメインモデル: skill-quality
 
+@story-id H12-01
+@story-id H12-02
+@story-id H12-03
+@story-id H12-04
+@story-id H12-05
+@story-id H12-06
 > **Unit ID**: skill-quality
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
@@ -364,7 +370,7 @@ CascadeUpdateService.resolve(storyId)
 CascadeUpdateService.apply(targets)
   └── targets.forEach(target →
         FileSystemPort.read(target.filePath)
-        → content with @story-id H12-05 付与
+        → content with @story-id HXX-XX 付与
         → FileSystemPort.write(target.filePath, updatedContent))
          ↓
 CascadeUpdateResult { updatedCount, appliedStoryIds, errors }

@@ -142,6 +142,40 @@ DDD戦術パターンを用いてドメインモデルを設計するスキル�
 
 ---
 
+## 🔗 成果物のトレーサビリティメタデータ（必須）
+
+Phase 2 で生成する設計文書には、以下 2 種類のメタデータを emit する。`MetadataValidator.validateDesignDocument` が検証対象とし、ISSUE-008 Phase B-2/B-3 完了後は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
+
+### 1. YAML frontmatter（新規作成時）
+
+文書先頭に以下を付与する。既存文書の改訂時は省略してよい。
+
+```yaml
+---
+traceability:
+  initial_creation: true
+---
+```
+
+`initial_creation: true` は「新規作成であり、後述の `@story-id` 注釈が必須」であることを示す。
+
+### 2. `@story-id` インライン注釈
+
+ユーザーストーリーに紐づく集約・エンティティ・VO・ドメインイベントの直前に `@story-id HXX-XX` を独立行で記述する。
+
+```markdown
+@story-id H03-02
+### 集約: Order（注文）
+```
+
+形式ルール:
+- **独立行** — 他のテキストと混在させない
+- **直後に設計要素** — 空行を挟まない
+- **StoryCatalog 存在** — `HXX-XX` は `docs/product/user_stories.md` に存在する ID
+- **複数ストーリー時** — 注釈行を連続で並べ、最後の直後に設計要素を置く
+
+---
+
 ## 注意事項
 
 - **ファイル配置は `docs/folder_management_rules.md` に従うこと**

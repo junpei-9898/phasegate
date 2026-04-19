@@ -1,5 +1,8 @@
 # ITテスト設計: traceability-model
 
+@story-id H03-01
+@story-id H03-02
+@story-id H03-03
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03
 > **前提ドキュメント**: `logical_design.md`、`it_test_design_plan.md`、`integration_contract.md`、`testing-rules.md`
@@ -224,9 +227,9 @@ scripts/harness/__tests__/fixtures/traceability-model/
 |----------|-------------|---------|---------|
 | IT-TM-040 | @story-id H03-01形式の独立行が抽出されること | 正常抽出 | Arrange: `@story-id H03-01`を独立行に含むMarkdown。Act: parse(content)。Assert: actual[0].storyId.toString()==="H03-01"、actual[0].standaloneLine===true |
 | IT-TM-041 | 次行のcontextLineが保持されること | contextLine取得 | Arrange: `@story-id H03-01`の次行に`## 2.2 値オブジェクト群`。Act: parse(content)。Assert: actual[0].contextLine==="## 2.2 値オブジェクト群" |
-| IT-TM-042 | 行末に他文字がある場合にstandaloneLine=falseとなること | 非独立行 | Arrange: `@story-id H03-01 追加内容`。Act: parse(content)。Assert: actual[0].standaloneLine===false |
+| IT-TM-042 | 行末に他文字がある場合にstandaloneLine=falseとなること | 非独立行 | Arrange: `@story-id HXX-XX 追加内容`。Act: parse(content)。Assert: actual[0].standaloneLine===false |
 | IT-TM-043 | 複数の@story-id注釈が全て抽出されること | 複数注釈 | Arrange: 3つの@story-id行を含むMarkdown。Act: parse(content)。Assert: actual.length===3 |
-| IT-TM-044 | @story-id行の前後空白が除去されて判定されること | 前後空白 | Arrange: `  @story-id H03-01  `。Act: parse(content)。Assert: actual[0].standaloneLine===true |
+| IT-TM-044 | @story-id行の前後空白が除去されて判定されること | 前後空白 | Arrange: `  @story-id HXX-XX  `。Act: parse(content)。Assert: actual[0].standaloneLine===true |
 | IT-TM-045 | 行番号が正しく保持されること | 行番号精度 | Arrange: 5行目に@story-id。Act: parse(content)。Assert: actual[0].lineNumber===5 |
 | IT-TM-046 | @story-id注釈がない場合に空配列が返ること | 注釈なし | Arrange: @story-idを含まないMarkdown。Act: parse(content)。Assert: actual.length===0 |
 

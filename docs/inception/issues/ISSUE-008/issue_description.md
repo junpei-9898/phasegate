@@ -13,10 +13,48 @@
 phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit名>` `// @layer <layer名>` を記載」と規定し、L1 Biome AST ルール (`L1-001: require-unit-comment`, `L1-002: require-layer-comment`) で強制する設計になっている。しかし:
 
 1. **実装系スキル（story-implementor / quick-implementor）には、コード生成時に `@unit` / `@layer` を書き込む指示が一切ない**。スキルは Clean Architecture 準拠・TDD 順序・AAA テスト等を厳格に指示するが、メタデータ付与は「L1 で落とされることで事後的に気づく」設計になっている。新規導入 PJ では L1 有効化前にコードが量産され、後から全ファイルに付け直す苦行が発生する
-2. **設計文書側にも機械可読メタデータが無い**。logical_design.md / domain_model.md には `> **Unit ID**: harness-api` `> **対応ストーリー**: H09-01` が人間可読 blockquote で書かれるのみで、frontmatter や `@unit-id` / `@story-id` のような構造化タグが無い。結果として pointer-validator / doc-freshness-checker は「リンク切れ」と「鮮度」しか検証できず、**設計文書↔コードの unit 単位の対応は機械的に辿れない**
-3. **テストコードへの `@story HXX-XX` 付与も実体化していない**。`docs/inception/_shared/cross_cutting_decisions.md` にはテストファイル時に `// @story HXX-XX` を付与する規約が書かれているが、unit-test-designer / unit-test-logic-designer / it-test-designer のスキル定義には付与指示が含まれていない
+2. **設計文書側にも `@story-id` / `initial_creation` が emit されていない**。検証インフラ（`validateDesignDocument` + `markdown-story-annotation-parser` + `frontmatter-flag-parser`）は **実装済み**だが、logical-designer / domain-designer / unit-designer のスキル定義にはこれらの emit 指示が無い。かつ検証 CLI（`validate-metadata`）も pre-commit から呼ばれていない。結果、**検証器は存在するが emit されないので常に空振り、仮に emit しても呼ばれないので検出されない**二重の wiring ギャップ状態
+3. **テストコードへの `@story HXX-XX` 付与も実体化していない**。`docs/inception/_shared/cross_cutting_decisions.md` にはテストファイル時に `// @story HXX-XX` を付与する規約が書かれているが、unit-test-designer / unit-test-logic-designer / it-test-designer のスキル定義には付与指示が含まれていない。検証ロジック `MetadataValidator.validateTest` は実装済みだが CLI dispatch に接続されておらず、`TraceabilityMetadataPolicyAdapter` も `@story` をエラー化しない（regex で読むのみ）
 
 結果として、AIDLC フルフロー（29 スキル中 9 フェーズ）を回した投資が L4（drift-detection / dead-code / consistency-checker / doc-freshness-checker）まで到達しない。**上流ドキュメントを書いているのに、コードと突き合わせる最後の細い接続線が切れている**状態。
+
+---
+
+## 2026-04-19 追加調査: 真の根本原因は「wiring ギャップ」と「検証器の二重実装」
+
+当初「メタデータ検証機能そのものが未実装」と推定したが、v0.48.0 で冗長な frontmatter 機構を追加 → v0.49.0 でロールバックした過程で、**検証ロジックは既に多層的に実装済みだが 3 つの接続線が切れている**ことが判明した。以下が 2026-04-19 時点で実地検証した結果。
+
+### 発見 1: メタデータ検証は 2 系統で並存している
+
+| 系統 | 実装箇所 | 検証内容 | 呼ばれ方 |
+|---|---|---|---|
+| **A. リッチなドメインサービス** | `scripts/harness/traceability-model/domain/services/metadata-validator.ts` | `validateImplementation` (L75): `@unit` が Unit 定義と一致するか、`@layer` が正規語彙か / `validateTest` (L196): `@story` が StoryCatalog に存在するか / `validateDesignDocument` (L133): `@story-id` インライン注釈の配置と StoryCatalog 存在 | CLI `phasegate validate-metadata` 経由のみ（`main.ts:557-567`）。**ただしこの CLI は pre-commit にも CI にも接続されていない** |
+| **B. 軽量な regex アダプター** | `scripts/harness/validator-system/infrastructure/adapters/traceability-metadata-policy-adapter.ts:18-19` | `@unit` / `@layer` の存在のみ regex でチェック（`@story-id` / `@story` は regex で読みはするがエラー化していない） | `phasegate pre-commit` → `runL2ValidatorsUseCase` 経由で実行される（`scripts/harness/integrations/pre-commit.ts` + `templates/.husky/pre-commit`） |
+
+結果、**pre-commit で実際に動いている検証は B のみ**で、`@unit` / `@layer` 欠落は検出されるが、`@story` / `@story-id` は検出されない。リッチな A 系統は「実装済みだが誰にも呼ばれない dead code 状態」になっている部分がある。
+
+### 発見 2: 3 軸 wiring ギャップ
+
+機能が存在しても「呼ばれない」「emit されない」「強制されない」のいずれかで失効している:
+
+| 軸 | ギャップ内容 | 具体的な証拠 |
+|---|---|---|
+| **(a) Skill → emit 欠落** | スキル出力にタグ付与指示が無く、生成物にタグが付かない | `story-implementor` / `quick-implementor` に `@unit` / `@layer` 指示が無かった（Phase A / v0.47.0 で修正済）。`unit-test-logic-designer` 等に `@story` 指示が無い。`logical-designer` 等に `@story-id` インライン注釈の指示が無い |
+| **(b) Validator → CLI 露出欠落** | UseCase は実装済みだが CLI に配線されていない | `ValidateMetadataCommandHandler`（`validate-metadata-command-handler.ts:23-28`）は `validateImplementationMetadataUseCase` のみ DI で受け取る。`validateTest` / `validateDesignDocument` の UseCase はファイルとしては存在するが CLI dispatch（`main.ts:557-567`）に接続されていない |
+| **(c) CLI → 自動実行欠落** | CLI は存在するが pre-commit / CI で呼ばれない | `phasegate pre-commit` が呼ぶのは `runL2ValidatorsUseCase` のみで、`validate-metadata` CLI は呼ばない。L1 Biome ルール（L1-001 / L1-002）は `phasegate lint` 経由で L2 に巻き込まれて実行されるため @unit/@layer は救済されるが、@story / @story-id は救済されない |
+
+### 発見 3: `@story-id` / initial_creation フラグは **部分実装済み**
+
+| 機構 | 状態 |
+|---|---|
+| `@story-id` インライン注釈の parser / validator | `validateDesignDocument` + `markdown-story-annotation-parser` で実装済み |
+| `traceability.initial_creation: true` frontmatter bool | `frontmatter-flag-parser.ts` で解釈済み（新規設計文書には `@story-id` 注釈を強制するかの分岐フラグ） |
+| 設計文書の配置パス convention `docs/product/construction/{unit}/` | Unit↔ドキュメント対応を機械的に導出可能（既に運用中） |
+| **スキルから上記を emit する指示** | **欠落**。どのスキルも `@story-id` も `initial_creation: true` も emit していない |
+
+よって「新規の YAML frontmatter 機構を追加する」方向ではなく、**既存機構を emit する指示をスキルに入れる + 既存 CLI を pre-commit から呼ぶ**方向が正しい修正。
+
+---
 
 ## 確認された問題（severity 順）
 
@@ -142,25 +180,77 @@ phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit�
 
 ## 受け入れ基準
 
-- [x] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される（Phase A / v0.47.0 で完了）
-- [~] ~~logical-designer / domain-designer / unit-designer のスキル定義に、設計文書 frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される~~ — **撤回**（2026-04-19 調査で `@story-id` インライン注釈 + 配置パス convention + 既存 MetadataValidator により概ねカバー済みと判明）
-- [ ] unit-test-designer / it-test-designer / scenario-test-designer のテスト実装スキルに、`// @story HXX-XX` 付与指示が追加される
-- [ ] `templates/` 配下に実体テンプレ（最低限: `source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される
-- [~] ~~pointer-validator / doc-freshness-checker が frontmatter メタデータを検証対象に含める~~ — **撤回**（P1-2 撤回に連動）
-- [ ] L1 ルールに `require-story-tag-in-tests` が追加される（`__tests__/` 配下限定）
-- [ ] メンテナの別 PJ で新規実装を行い、スキル出力に `@unit` / `@layer` / `@story` が自動で含まれることを確認する
+**Phase A（完了 / v0.47.0）**:
+- [x] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される
 
-## 推奨実装順
+**Phase B（設計文書 @story-id end-to-end）**:
+- [ ] B-1: logical-designer / domain-designer / unit-designer の Phase 2 成果物指示に `@story-id` インライン注釈 + `traceability.initial_creation: true` frontmatter emit が明記される
+- [ ] B-2: `ValidateMetadataCommandHandler` に `validateDesignStoryAnnotationsUseCase` が DI され、`main.ts:557` の `validate-metadata` CLI で `.md` ファイルが `validateDesignDocument` に分岐される
+- [ ] B-3: `runL2ValidatorsUseCase` または `TraceabilityMetadataPolicyAdapter` 経由で、staged な `.md` 設計文書に対して `@story-id` 注釈検証が pre-commit で実行される
 
-1. **Phase A（完了 / v0.47.0）**: P1-1 — story-implementor / quick-implementor のスキル定義に @unit/@layer 付与指示を追記
-   - 新規生成コードから @unit/@layer が出るようになり、codebase-mapper が初めて動く
-   - L1-001 / L1-002 は既存ルールなので接続コスト 0
-2. ~~**Phase B**: P1-2 — 設計文書 frontmatter 規定 + ...~~ — **撤回 / v0.49.0 でロールバック済**
-   - 理由: 既存の `@story-id` インライン注釈機構と配置パス convention で概ねカバー済みと判明。v0.48.0 (`77546e1`) で追加した skill 更新は冗長だったため v0.49.0 で撤回
-3. **Phase C（次の最優先）**: P1-3 — テストコード @story タグ + L1 新規ルール + test-coverage-checker 拡張
-   - US 単位カバレッジの集計が可能になる
-   - ※ `@story` タグ検証自体は `MetadataValidator.validateTest` で既に実装されているため、実装タスクは「テスト生成系スキルに emit 指示を追加」+「L1 Biome ルール追加」+「coverage aggregation 追加」の 3 点
-4. **Phase D**（Phase C と並走可）: P2-4 — `templates/` 実体化、ISSUE-007 P1-3 scaffold CLI と基盤共通化
+**Phase C（テスト @story end-to-end）**:
+- [ ] C-1: unit-test-logic-designer / it-test-logic-designer / scenario-test-logic-designer のテスト生成指示に `// @story HXX-XX` 付与が明記される
+- [ ] C-2: テスト側 `@story` 検証が CLI 経由で呼び出し可能になる（`ValidateMetadataCommandHandler` 拡張 **または** L1 Biome `require-story-tag-in-tests` 追加）
+- [ ] C-3: `__tests__/**/*.ts` に対して `@story` 検証が pre-commit で実行される
+
+**Phase D（テンプレ実体化）**:
+- [ ] `templates/` 配下に実体テンプレ（`source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される
+
+**撤回分**:
+- [~] ~~logical-designer / domain-designer / unit-designer のスキル定義に、汎用 YAML frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される~~ — **撤回**（2026-04-19 調査で `@story-id` インライン注釈 + 配置パス convention + 既存 `MetadataValidator.validateDesignDocument` により概ねカバー済みと判明。v0.48.0 → v0.49.0 でロールバック済）
+- [~] ~~pointer-validator / doc-freshness-checker が汎用 frontmatter メタデータを検証対象に含める~~ — **撤回**（上記に連動）
+
+**総合検証**:
+- [ ] メンテナの別 PJ で新規実装を行い、生成物に `@unit` / `@layer` / `@story` / `@story-id` が自動で含まれ、かつ pre-commit で欠落が検出されることを確認する
+
+## 推奨実装順（2026-04-19 再計画）
+
+「3 軸 wiring モデル」に基づき、Phase B / C は **emit 指示 × CLI 露出 × 自動実行** の 3 タスク構造に再設計する。
+
+### Phase A（完了 / v0.47.0）: ソース @unit / @layer
+
+- P1-1 — story-implementor / quick-implementor に @unit/@layer 付与指示を追記
+- 結果: 新規生成コードから @unit/@layer が出るようになり、`TraceabilityMetadataPolicyAdapter` （pre-commit L2 系統 B）と L1-001/L1-002（lint 経由）の両方で検出されるようになった
+
+### ~~Phase B（v0.48.0 で追加 → v0.49.0 で撤回）~~: 設計文書 frontmatter
+
+- ~~P1-2 — 汎用 YAML frontmatter 機構を追加~~ — **撤回**
+- 理由: 既存の `@story-id` インライン注釈 + `traceability.initial_creation` フラグ + 配置パス convention で概ねカバー済みと判明
+
+### Phase B（再設計・次の最優先）: 設計文書 @story-id の end-to-end 完成
+
+既存機構（`validateDesignDocument` + `markdown-story-annotation-parser`）を **emit × 露出 × 実行** の 3 軸で接続する。
+
+| タスク | スコープ | 内容 | 接続先 |
+|---|---|---|---|
+| **B-1** | quick / docs | `logical-designer` / `domain-designer` / `unit-designer` の Phase 2 成果物指示に `@story-id` インライン注釈 + `traceability.initial_creation: true` frontmatter を emit させる | 発見 1 軸 (a) |
+| **B-2** | story / source | `ValidateMetadataCommandHandler` に `validateDesignStoryAnnotationsUseCase` を DI 追加。`main.ts:557-567` の `validate-metadata` コマンドでファイル拡張子（`.md` / `.ts`）で分岐し、design doc には `validateDesignDocument` を呼ぶ経路を追加 | 発見 1 軸 (b) |
+| **B-3** | quick / config | `scripts/harness/integrations/pre-commit.ts` または `runL2ValidatorsUseCase` に `.md` ファイル（`docs/product/construction/` 配下）を対象とする `validateDesignDocument` 呼び出しを追加。あるいは `TraceabilityMetadataPolicyAdapter` に md ファイル分岐を追加 | 発見 1 軸 (c) |
+
+### Phase C: テスト @story の end-to-end 完成
+
+| タスク | スコープ | 内容 | 接続先 |
+|---|---|---|---|
+| **C-1** | quick / docs | `unit-test-logic-designer` / `it-test-logic-designer` / `scenario-test-logic-designer` のテスト生成指示に `// @story HXX-XX` emit を追加 | 発見 1 軸 (a) |
+| **C-2** | story / source | `ValidateMetadataCommandHandler` に `validateTestStoryMetadataUseCase` を DI 追加、CLI 分岐で `__tests__/**/*.ts` を対象に呼び出す。**または** L1 Biome に `require-story-tag-in-tests` を追加（テストファイル限定） | 発見 1 軸 (b) |
+| **C-3** | quick / config | Phase B-3 と同一 pre-commit 経路で test ファイル検証を追加 | 発見 1 軸 (c) |
+
+### Phase D（Phase B/C と並走可）: templates/ 実体化
+
+- P2-4 — `templates/` 配下に実体テンプレ（`source.template.ts`, `logical_design.template.md`, `test.template.ts`）を配置
+- ISSUE-007 P1-3 `scaffold-design` CLI と共通基盤化
+
+### 修正後に成立するトレーサビリティ経路
+
+```
+設計文書 @story-id ─┐
+                    ├─→ validateDesignDocument (既存) ─→ pre-commit (B-3 で接続)
+テスト @story ──────┤
+                    ├─→ validateTest (既存) ─→ pre-commit (C-3 で接続)
+ソース @unit/@layer ┘
+                    └─→ validateImplementation (既存) + TraceabilityMetadataPolicyAdapter (既存)
+                         └─→ pre-commit (既存経由で接続済 / Phase A で emit 達成済)
+```
 
 ## 関連
 

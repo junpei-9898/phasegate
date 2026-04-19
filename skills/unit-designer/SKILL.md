@@ -154,6 +154,47 @@ Unit分割の方針・グルーピングの根拠・不明点を整理し、人�
 
 ---
 
+## 🔗 成果物のトレーサビリティメタデータ（必須）
+
+Phase 2 で生成する Unit 定義文書には、以下 2 種類のメタデータを emit する。`MetadataValidator.validateDesignDocument` が検証対象とし、ISSUE-008 Phase B-2/B-3 完了後は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
+
+### 1. YAML frontmatter（新規作成時）
+
+`docs/product/units/{unit_name}.md` の先頭に以下を付与する。既存 Unit 定義の改訂時は省略してよい。`integration_contract.md` は Unit 横断のため任意。
+
+```yaml
+---
+traceability:
+  initial_creation: true
+---
+```
+
+`initial_creation: true` は「新規作成であり、後述の `@story-id` 注釈が必須」であることを示す。
+
+### 2. `@story-id` インライン注釈
+
+ユーザーストーリーに紐づく機能要件・エンドポイント定義の直前に `@story-id HXX-XX` を独立行で記述する。
+
+```markdown
+@story-id H03-02
+### 機能要件: 注文確定
+```
+
+形式ルール:
+- **独立行** — 他のテキストと混在させない
+- **直後に設計要素** — 空行を挟まない
+- **StoryCatalog 存在** — `HXX-XX` は `docs/product/user_stories.md` に存在する ID
+- **複数ストーリー時** — 注釈行を連続で並べ、最後の直後に設計要素を置く
+
+### 3. Phase 3 レビューでの BLOCK 確認
+
+Phase 3 レビューで以下を BLOCK 基準として確認する:
+- 新規作成文書に `initial_creation: true` frontmatter が付与されているか
+- 担当ストーリーに対応する機能要件の直前に `@story-id` が配置されているか
+- 上記形式ルールに準拠しているか
+
+---
+
 ## Phase 3: レビュー（Opus review）
 
 ### 実行主体
