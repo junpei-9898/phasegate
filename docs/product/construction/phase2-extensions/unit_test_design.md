@@ -251,6 +251,43 @@
 
 ---
 
+@story-id HF2-04
+### 4.3 InitialCreationExpirationCheckService（HF2-04）
+
+#### 判定ロジックテスト
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-P2-066 | rule(days=90, commit=5, mode=or, enabled=true), age(ageInDays=30, commitCount=2) | level='ok' |
+| UT-P2-067 | rule(days=90, commit=5, mode=or), age(ageInDays=90, commitCount=2) | level='warn' (日数閾値到達) |
+| UT-P2-068 | rule(days=90, commit=5, mode=or), age(ageInDays=30, commitCount=5) | level='warn' (コミット閾値到達) |
+| UT-P2-069 | rule(days=90, commit=5, mode=or), age(ageInDays=100, commitCount=10) | level='warn' (両方超過) |
+| UT-P2-070 | rule(days=90, commit=5, mode=and), age(ageInDays=100, commitCount=2) | level='ok' (AND 不成立) |
+| UT-P2-071 | rule(days=90, commit=5, mode=and), age(ageInDays=100, commitCount=10) | level='warn' (AND 成立) |
+| UT-P2-072 | rule(enabled=false), age 任意 | level='ok' (rule disabled) |
+| UT-P2-073 | rule と age の境界値 (ageInDays===daysThreshold) | level='warn' (>= 判定) |
+
+#### InitialCreationExpirationRule 生成テスト
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-P2-074 | 正常値 (days=90, commit=5, or) | インスタンス生成成功 |
+| UT-P2-075 | daysThreshold=0 | 例外スロー (正の整数必須) |
+| UT-P2-076 | commitCountThreshold=-1 | 例外スロー |
+| UT-P2-077 | evaluationMode='invalid' | 例外スロー |
+| UT-P2-078 | ruleId='' | 例外スロー |
+
+#### InitialCreationAge 生成テスト
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-P2-079 | `{ ageInDays: 30, commitCount: 3, source: 'git-log' }` | インスタンス生成成功 |
+| UT-P2-080 | `ageInDays: -1` | 例外 (0以上必須) |
+| UT-P2-081 | `commitCount: 0` | 例外 (1以上必須) |
+| UT-P2-082 | `source: 'invalid'` | 例外 |
+
+---
+
 ## 5. テストケース総数サマリー
 
 | 対象クラス | 生成テスト | 不変条件テスト | 等値性テスト | その他 | 合計 |
@@ -264,6 +301,9 @@
 | PointerRule | 3 | — | — | 2（failOnBroken） | 5 |
 | FreshnessCheckService | 6 | — | — | 3（メッセージ/enabled） | 9 |
 | PointerResolutionService | 5 | — | — | 1（エラーハンドリング） | 6 |
-| **合計** | **39** | **—** | **4** | **22** | **65** |
+| InitialCreationExpirationCheckService | — | — | — | 8（or/and/enabled/境界値） | 8 |
+| InitialCreationExpirationRule | 1 | 4（閾値/mode/ruleId） | — | — | 5 |
+| InitialCreationAge | 1 | 3（ageInDays/commitCount/source） | — | — | 4 |
+| **合計** | **41** | **7** | **4** | **30** | **82** |
 
 > 不変条件テストは各生成テストの異常系に含んでいるため別カウントなし。

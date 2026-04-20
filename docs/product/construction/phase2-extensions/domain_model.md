@@ -41,7 +41,7 @@
 
 ## 2. Aggregate Boundary
 
-### 結論: 集約ルート2つ（DocFreshnessRule / PointerRule）
+### 結論: 集約ルート3つ（DocFreshnessRule / PointerRule / InitialCreationExpirationRule）
 
 横断契約§6の集約降格方針を参照しつつ、以下の分析により2集約を維持する構成とした。
 
@@ -61,6 +61,15 @@
 
 **永続化なし**: PointerRuleもHarnessConfigV2から都度ロードされる構成とする。
 
+@story-id HF2-04
+### InitialCreationExpirationRuleを集約ルートとして新設する根拠
+
+- **独立した責務**: `initial_creation: true` 付き文書の失効判定は DocFreshnessRule（最終更新日基準）と意味論が異なる。起点（初回コミット日）・追加指標（コミット回数）・対象絞り込み（frontmatter フラグ付きのみ）すべてが異なるため、同一集約への統合は凝集度を下げる
+- **複合整合性**: `daysThreshold`（日数閾値）と `commitCountThreshold`（コミット回数閾値）と `evaluationMode`（'or' / 'and'）の組み合わせで失効判定を一意化する責務がある
+- **ドメインロジックの存在**: `InitialCreationExpirationCheckService` が集約を参照して判定する。ルールの enabled 状態・閾値の組み合わせ・評価モードはドメインロジックで、VOでは表現できない
+
+**永続化なし**: DocFreshnessRule / PointerRule と同様に HarnessConfigV2 から `InitialCreationExpirationConfigPort` 経由で都度ロードする。
+
 ---
 
 ## 3. Model Classification
@@ -71,6 +80,7 @@
 |-----------|--------|--------|--------------|
 | DocFreshnessRule | ruleId（`string`） | なし（HarnessConfigV2から都度ロード） | FreshnessConfigPortが生成 → FreshnessCheckServiceが鮮度判定に使用 |
 | PointerRule | ruleId（`string`） | なし（HarnessConfigV2から都度ロード） | PointerConfigPortが生成 → PointerResolutionServiceが検証に使用 |
+| InitialCreationExpirationRule | ruleId（`string`） | なし（HarnessConfigV2から都度ロード） | InitialCreationExpirationConfigPortが生成 → InitialCreationExpirationCheckServiceが失効判定に使用 |
 
 ### 値オブジェクト
 
@@ -81,6 +91,7 @@
 | Pointer | ✓ | ✓ | `type: PointerType`, `rawText: string`（元テキスト）, `target: string`（参照先）。正規表現抽出結果を保持する |
 | PointerValidationResult | ✓ | ✓ | `pointer: Pointer`, `isResolvable: boolean`, `errorMessage: string \| null`, `resolvedPath: string \| null` |
 | E2EStrategyTemplate | ✓ | ✓ | `templateContent: string`（Markdown本文）, `targetPhase: string`, `generatedAt: string`（ISO 8601） |
+| InitialCreationAge | ✓ | ✓ | `ageInDays: number`（0以上、初回コミット日からの経過日数）, `commitCount: number`（1以上、累積コミット回数）, `source: 'git-log' \| 'file-mtime'` |
 
 ### 補助型
 
@@ -98,6 +109,7 @@
 |---------|------|--------------|
 | FreshnessCheckService | DocFreshnessRuleとDocumentAgeを比較してFreshnessCheckResultを算出。`check(rule: DocFreshnessRule, documentAge: DocumentAge): FreshnessCheckResult` | なし（純粋計算） |
 | PointerResolutionService | Pointer[]に対してポート経由で実在性を検証し、PointerValidationResult[]を返す。`resolve(pointers: Pointer[]): Promise<PointerValidationResult[]>` | PointerResolverPort |
+| InitialCreationExpirationCheckService | InitialCreationExpirationRuleとInitialCreationAgeから失効判定を行う。`check(rule: InitialCreationExpirationRule, age: InitialCreationAge, documentPath: string): InitialCreationExpirationResult` | なし（純粋計算） |
 
 ---
 
@@ -112,6 +124,9 @@
 | PointerExtractorPort | ドキュメントファイルから正規表現でPointer[]を抽出。`extract(documentPath: string): Promise<Pointer[]>` | アプリケーション層（ValidateDocPointersUseCase） |
 | PointerResolverPort | PointerType='file-path'のtargetパスがプロジェクト内に実在するか確認（`node:fs`使用）。`resolve(pointer: Pointer): Promise<boolean>` | PointerResolutionService |
 | FreshnessConfigPort | HarnessConfigV2からDocFreshnessRule[]を読み込む。`loadRules(): Promise<DocFreshnessRule[]>` | アプリケーション層（CheckDocFreshnessUseCase） |
+| InitialCreationExpirationConfigPort | HarnessConfigV2からInitialCreationExpirationRule[]を読み込む。`loadInitialCreationExpirationRules(): Promise<InitialCreationExpirationRule[]>` | アプリケーション層（CheckInitialCreationExpirationUseCase） |
+| FrontmatterReaderPort | md ファイルの frontmatter を読み込み `initial_creation` フラグを返す。`read(documentPath: string): Promise<{ initialCreation: boolean }>` | CheckInitialCreationExpirationUseCase |
+| InitialCreationAgePort | 初回追加コミット日とコミット回数を取得。`getInitialCreationAge(documentPath: string): Promise<InitialCreationAge>` | CheckInitialCreationExpirationUseCase |
 
 ### 出力ポート（ドメイン→外部）
 

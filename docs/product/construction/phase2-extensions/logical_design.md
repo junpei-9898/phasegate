@@ -2,7 +2,7 @@
 
 > **Unit ID**: phase2-extensions
 > **作成日**: 2026-03-20
-> **対応ストーリー**: HF2-01, HF2-02, HF2-03
+> **対応ストーリー**: HF2-01, HF2-02, HF2-03, HF2-04
 > **モード**: Unit横断設計（Phase 2 拡張バリデータ）
 > **前提ドキュメント**:
 > - `docs/product/construction/phase2-extensions/domain_model.md`
@@ -331,6 +331,27 @@ interface GenerateE2ETemplateOutput {
 
 ---
 
+@story-id HF2-04
+### 3.4 HF2-04: initial_creation expiration 検出（initial-creation-expiration-checker L4バリデータ）
+
+**背景**: `traceability.initial_creation: true` は新規作成文書の @story-id 注釈を不要とするフラグであるが、2 回目以降の改訂時に削除されないと validator が永続的に素通りする。ISSUE-011 P3-4 で検出された drift パターンに対する L4 検証機構を新設する。
+
+**責務の分離**: HF2-01 (doc-freshness-checker) は「最終更新日」を基準に古い文書を検出する。本 validator は「初回コミット日」と「コミット回数」を基準に、新規作成フラグ付きのまま陳腐化した文書を検出する。両者は独立した集約と UseCase を持つ。
+
+**主要コンポーネント**:
+- 集約: `InitialCreationExpirationRule`
+- VO: `InitialCreationAge`（ageInDays + commitCount + source）
+- ドメインサービス: `InitialCreationExpirationCheckService`
+- 新規ポート: `InitialCreationExpirationConfigPort`, `FrontmatterReaderPort`, `InitialCreationAgePort`
+- UseCase: `CheckInitialCreationExpirationUseCase`
+- CLI ハンドラー: `CheckInitialCreationExpirationHandler`（`phasegate p2:check-initial-creation` として露出想定）
+
+詳細なドメイン・フロー・テスト観点は `docs/inception/phase2-extensions/HF2-04/logical_design.md` を参照。
+
+**HarnessError コード**: `L4-231` (閾値超過 WARN), `L4-232` (frontmatter parse 失敗 WARN), 既存 `L4-299` (config load 失敗 error) を再利用。
+
+---
+
 ## 4. Ports 詳細仕様
 
 ### 4.1 DocumentAgePort
@@ -465,3 +486,18 @@ PointerRule設定もHarnessConfigV2から読み込む点でFreshnessConfigPort�
 ### D3: GenerateE2ETemplateはファイルI/Oをハンドラーに委譲
 
 E2EStrategyTemplate（VO）はMarkdown文字列を保持するのみとし、ファイル書き出しはPresentationの`GenerateE2ETemplateHandler`が担う。これにより、テンプレート生成ロジックとI/Oを分離し、UseCaseのテスタビリティを確保する。
+
+@story-id HF2-04
+### D4: initial-creation-expiration-checker を HF2-01 から分離して新設
+
+HF2-01 (doc-freshness-checker) に frontmatter セマンティクスチェックを統合する案も検討したが、以下の理由で独立 validator として新設する:
+
+1. **起点が異なる**: HF2-01 は「最終更新日」、HF2-04 は「初回コミット日 + コミット回数」
+2. **対象判定が異なる**: HF2-01 は全 md 無差別、HF2-04 は `initial_creation: true` のみ
+3. **severity 方針が異なる**: HF2-01 は warn/error 二段階、HF2-04 は warn 固定（誤検知リスクを考慮した段階導入）
+
+ドメインサービス `InitialCreationExpirationCheckService` と集約 `InitialCreationExpirationRule` を新設し、HF2-01 の `FreshnessCheckService` とは独立させる。共通部分は `DocumentScannerPort` のみ再利用する。
+
+### D5: 既存 frontmatter-flag-parser の再利用
+
+`scripts/harness/traceability-model/infrastructure/parsers/frontmatter-flag-parser.ts` は軽量かつ安定した YAML frontmatter パーサーである。HF2-04 の `MarkdownFrontmatterReaderAdapter` からこれを直接 import して再利用する。`FrontmatterReaderPort` で 1 段階 wrap することで、将来 parser が traceability-model 内で拡張された場合の影響範囲を adapter 層に閉じ込める。

@@ -106,6 +106,7 @@ Commands:
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
+  p2:check-initial-creation      Detect long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
   hook <pre-tool-use|post-tool-use|stop>  Run Claude Code hook (reads JSON from stdin)
   pre-commit                              Run L2 pre-commit validators on staged files
   delegate-sonnet [...args]               Delegate task to Sonnet 4.6 (forwards args to scripts/delegate-sonnet.sh)
@@ -991,6 +992,15 @@ Examples:
         const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
+        console.log(result.stdout);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'p2:check-initial-creation': {
+        const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
+        const p2args = args.slice(1);
+        const result = await mod.checkInitialCreationExpirationHandler.handle(p2args);
         console.log(result.stdout);
         process.exit(result.exitCode);
         break;

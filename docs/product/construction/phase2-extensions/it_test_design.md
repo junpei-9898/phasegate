@@ -284,6 +284,56 @@ tmp/
 
 ---
 
+@story-id HF2-04
+## 6.4 HF2-04: initial-creation-expiration-checker
+
+### CheckInitialCreationExpirationUseCase
+
+| ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
+|---------|---------|------|----------|---------|
+| IT-P2-042 | 全文書が閾値未満で warn なし | rule(days=90,commit=5,or), scanner→[a.md, b.md], frontmatter→両方 initial_creation=true, age→両方 30日/2commit | — | results.length=2, 全て level='ok', warn=0 |
+| IT-P2-043 | 1 文書が日数閾値超過 | 同上 scanner, age→a.md=100日/2commit, b.md=30日/2commit | — | warn=1, a.md が level='warn' |
+| IT-P2-044 | initial_creation: false の文書は対象外 | scanner→[a.md, b.md], frontmatter→a.md=true/b.md=false, age→両方 100日/10commit | — | results.length=1 (a.md のみ) |
+| IT-P2-045 | frontmatter 無し文書はスキップ | scanner→[a.md], frontmatter→initialCreation=false | — | results.length=0 |
+| IT-P2-046 | frontmatter parse エラー時は L4-232 warn を個別追加し他は継続 | scanner→[a.md, b.md], a.md frontmatter→throw, b.md=true/閾値超過 | — | warnings.length=2（L4-232 + L4-231）、usecase 全体は exitCode=0 相当（warn のみ） |
+| IT-P2-047 | config 未指定時はデフォルト rule (90/5/or) で動作 | configAdapter→空、frontmatter=true, age=100日/2commit | — | warn=1 |
+| IT-P2-048 | rule.enabled=false ならスキップ | rule enabled=false, age 任意 | — | results.length=0 |
+
+### GitLogInitialCreationAgeAdapter
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-P2-049 | git log で初回コミット取得成功 | 2回コミット済み tmp git repo の a.md | ageInDays=経過日数, commitCount=2, source='git-log' |
+| IT-P2-050 | git 未管理ディレクトリは file-mtime fallback | 非 git ディレクトリの a.md | source='file-mtime', commitCount=1 |
+| IT-P2-051 | 対象ファイル未存在 → HarnessError | 存在しないパス | 例外 or source=fallback |
+
+### MarkdownFrontmatterReaderAdapter
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-P2-052 | `traceability.initial_creation: true` 読み取り | `---\\ntraceability:\\n  initial_creation: true\\n---\\n...` | `{ initialCreation: true }` |
+| IT-P2-053 | frontmatter 無しは false を返す | 本文のみ | `{ initialCreation: false }` |
+| IT-P2-054 | YAML 不正は例外 | `---\\ntraceability:\\n  initial_creation: maybe\\n---` | throw |
+
+### HarnessConfigInitialCreationExpirationAdapter
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-P2-055 | config にルール複数あれば全て読み込む | HarnessConfigV2.phase2Extensions.initialCreationExpirationRules=[r1,r2] | InitialCreationExpirationRule[2] |
+| IT-P2-056 | 未指定時は default rule を返す | config=undefined or 該当キーなし | InitialCreationExpirationRule[1] with days=90/commit=5/or |
+| IT-P2-057 | enabled=false も尊重される | config rule enabled=false | 読み込まれるが rule.isEnabled()=false |
+
+### CheckInitialCreationExpirationHandler
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-P2-058 | warn=0 なら exitCode=0 | usecase→warn=0/error=0 | exitCode=0 |
+| IT-P2-059 | warn>=1 でも exitCode=0 (warn 固定、error 昇格なし) | usecase→warn=3/error=0 | exitCode=0（段階導入、error 時のみ 1） |
+| IT-P2-060 | usecase が L4-299 error を返す | usecase→errors.length>0 | exitCode=1 |
+| IT-P2-061 | --format=json で JSON 出力 | args=['--format','json'] | stdout is valid JSON with results array |
+
+---
+
 ## 7. テストケース総数サマリー
 
 | テストファイル | 対象 | ケース数 |
@@ -298,4 +348,9 @@ tmp/
 | `check-freshness-handler.test.ts` | CheckFreshnessHandler | 4 |
 | `validate-pointers-handler.test.ts` | ValidatePointersHandler | 3 |
 | `generate-e2e-template-handler.test.ts` | GenerateE2ETemplateHandler | 3 |
-| **合計** | | **41** |
+| `check-initial-creation-expiration-usecase.test.ts` | CheckInitialCreationExpirationUseCase (HF2-04) | 7 |
+| `git-log-initial-creation-age-adapter.test.ts` | GitLogInitialCreationAgeAdapter (HF2-04) | 3 |
+| `markdown-frontmatter-reader-adapter.test.ts` | MarkdownFrontmatterReaderAdapter (HF2-04) | 3 |
+| `harness-config-initial-creation-expiration-adapter.test.ts` | HarnessConfigInitialCreationExpirationAdapter (HF2-04) | 3 |
+| `check-initial-creation-expiration-handler.test.ts` | CheckInitialCreationExpirationHandler (HF2-04) | 4 |
+| **合計** | | **61** |

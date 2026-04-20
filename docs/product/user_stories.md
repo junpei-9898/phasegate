@@ -1328,6 +1328,29 @@ K8（Cascade Updater）
 
 ---
 
+### HF2-04: initial-creation-expiration-checker（L4拡張 / frontmatter semantic drift 検出）
+
+**Epic**: H-F2 Phase 2拡張
+
+**As a** 品質管理者,
+**I want to** 設計文書 frontmatter の `traceability.initial_creation: true` が長期放置されていないか検証したい,
+**so that** 新規作成フラグのまま陳腐化した文書を検出し、累積更新時の注釈 skip 経路が永続化するリスクを防げる。
+
+#### 背景
+
+`traceability.initial_creation: true` は設計文書の新規作成時に @story-id 注釈を不要とするフラグである。2 回目以降の改訂では削除される前提だが、削除漏れが発生すると validator が半永久的に素通りし、長期トレーサビリティが崩壊する（ISSUE-011 P3-4）。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `initial_creation: true` を持つ設計文書の **初回コミット日からの経過日数** を検出する L4 validator が実装されている
+- [ ] AC-2: 閾値（日数 / コミット回数）が `phasegate.config.json` (`phase2Extensions.initialCreationExpirationRules`) で設定可能である
+- [ ] AC-3: 閾値超過時に `warning` severity で HarnessError を出力する（error 昇格は出さない / 段階導入方針）
+- [ ] AC-4: `initial_creation: false` または frontmatter 自体が存在しない文書は対象外とする
+- [ ] AC-5: config 未指定時はデフォルト閾値（90 日 OR 5 コミット）で動作する
+- [ ] AC-6: HF2-01 (doc-freshness-checker) とは独立した validator として実装し、責務を分離する
+
+---
+
 ## Orchestration移管ストーリー一覧（参照）
 
 以下のストーリーはOrchestrationパッケージに移管済み。Quality Harnessのスコープ外。
