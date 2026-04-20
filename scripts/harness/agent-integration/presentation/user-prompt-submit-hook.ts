@@ -20,7 +20,13 @@
  *   }
  */
 
-import { buildUserPromptSubmitContext, collectPhasegateStatus } from './phasegate-status-context.js';
+import * as path from 'node:path';
+import {
+  buildUserPromptSubmitContext,
+  collectPhasegateStatus,
+  collectRecentViolations,
+  findConfigPath,
+} from './phasegate-status-context.js';
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -37,8 +43,14 @@ async function main(): Promise<void> {
     // stdin が無くても続行
   }
 
-  const status = await collectPhasegateStatus(process.cwd());
-  const additionalContext = buildUserPromptSubmitContext(status);
+  const cwd = process.cwd();
+  const status = await collectPhasegateStatus(cwd);
+  // 違反検知の起点は config が見つかったディレクトリ (= project root)。
+  // config が無ければ cwd をそのまま使う。
+  const configPath = await findConfigPath(cwd);
+  const projectRoot = configPath !== null ? path.dirname(configPath) : cwd;
+  const violations = await collectRecentViolations(projectRoot, status);
+  const additionalContext = buildUserPromptSubmitContext(status, violations);
 
   const output = {
     hookSpecificOutput: {

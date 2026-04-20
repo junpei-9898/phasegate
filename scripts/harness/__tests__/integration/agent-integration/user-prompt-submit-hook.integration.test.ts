@@ -122,4 +122,109 @@ target('UserPromptSubmit hook (ISSUE-013 Wave 3 / C-5)', () => {
       expect(() => JSON.parse(actual.stdout)).not.toThrow();
     }, 30000);
   });
+
+  describe('違反検知 (ISSUE-013 Wave 3 / C-6 軽量版)', () => {
+    it('working tree の保護ファイル変更を violation として列挙する', async () => {
+      // Arrange: git リポジトリを作って biome.json を変更した状態を再現
+      const projectRoot = await mkdtemp(path.join(tmpdir(), 'user-prompt-violation-'));
+      // 最小限の git リポジトリ + protected file
+      const { spawn: s } = await import('node:child_process');
+      const run = (cmd: string, args: string[]) => new Promise<void>((resolve, reject) => {
+        const c = s(cmd, args, { cwd: projectRoot });
+        c.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exit ${code}`)));
+        c.on('error', reject);
+      });
+      await run('git', ['init', '-q']);
+      await run('git', ['config', 'user.email', 'test@example.com']);
+      await run('git', ['config', 'user.name', 'Test']);
+      await writeFile(path.join(projectRoot, 'biome.json'), '{}', 'utf8');
+      await writeFile(path.join(projectRoot, 'README.md'), '# test', 'utf8');
+      await run('git', ['add', '.']);
+      await run('git', ['commit', '-q', '-m', 'init']);
+      // 保護ファイルを working tree で改変
+      await writeFile(path.join(projectRoot, 'biome.json'), '{"changed":true}', 'utf8');
+
+      const stdin = JSON.stringify({ hook_event_name: 'UserPromptSubmit' });
+
+      try {
+        // Act
+        const actual = await runCli(['hook', 'user-prompt-submit'], projectRoot, stdin);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        const parsed = JSON.parse(actual.stdout);
+        const context = parsed.hookSpecificOutput.additionalContext as string;
+        expect(context).toContain('violations detected');
+        expect(context).toContain('PROTECTED FILE');
+        expect(context).toContain('biome.json');
+      } finally {
+        await rm(projectRoot, { recursive: true, force: true });
+      }
+    }, 30000);
+
+    it('blocked unit 配下のファイル変更を phase-gate violation として列挙する', async () => {
+      // Arrange: blocked unit (logical_design.md 欠落) 配下の source に変更がある状態
+      const projectRoot = await mkdtemp(path.join(tmpdir(), 'user-prompt-phase-gate-'));
+      const { spawn: s } = await import('node:child_process');
+      const run = (cmd: string, args: string[]) => new Promise<void>((resolve, reject) => {
+        const c = s(cmd, args, { cwd: projectRoot });
+        c.on('exit', (code) => code === 0 ? resolve() : reject(new Error(`${cmd} ${args.join(' ')} exit ${code}`)));
+        c.on('error', reject);
+      });
+      await run('git', ['init', '-q']);
+      await run('git', ['config', 'user.email', 'test@example.com']);
+      await run('git', ['config', 'user.name', 'Test']);
+
+      // blocked unit: docs だけあるが logical_design.md / domain_model.md 無し
+      const unitConstructionDir = path.join(projectRoot, 'docs', 'product', 'construction', 'my-blocked-unit');
+      await mkdir(unitConstructionDir, { recursive: true });
+      await writeFile(path.join(unitConstructionDir, 'placeholder.txt'), '', 'utf8');
+
+      // 実装コード配置 (blocked unit の name が path に出る)
+      const srcDir = path.join(projectRoot, 'src', 'my-blocked-unit');
+      await mkdir(srcDir, { recursive: true });
+      await writeFile(path.join(srcDir, 'impl.ts'), '// v1', 'utf8');
+
+      await run('git', ['add', '.']);
+      await run('git', ['commit', '-q', '-m', 'init']);
+
+      // 違反: blocked unit の source を編集
+      await writeFile(path.join(srcDir, 'impl.ts'), '// v2 (violated)', 'utf8');
+
+      const stdin = JSON.stringify({ hook_event_name: 'UserPromptSubmit' });
+
+      try {
+        // Act
+        const actual = await runCli(['hook', 'user-prompt-submit'], projectRoot, stdin);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        const parsed = JSON.parse(actual.stdout);
+        const context = parsed.hookSpecificOutput.additionalContext as string;
+        expect(context).toContain('PHASE-GATE');
+        expect(context).toContain('my-blocked-unit');
+        expect(context).toContain('impl.ts');
+      } finally {
+        await rm(projectRoot, { recursive: true, force: true });
+      }
+    }, 30000);
+
+    it('変更が無ければ violation セクションを出力しない', async () => {
+      // Arrange: HARNESS_ROOT は git 下だが、このテスト時点で biome.json 等は未変更
+      const stdin = JSON.stringify({ hook_event_name: 'UserPromptSubmit' });
+
+      // Act
+      const actual = await runCli(['hook', 'user-prompt-submit'], HARNESS_ROOT, stdin);
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout);
+      const context = parsed.hookSpecificOutput.additionalContext as string;
+      // 現在の working tree に biome.json / package-lock.json 等の変更が無い限り
+      // "violations detected" は出ないはず
+      if (!context.includes('biome.json') || !context.includes('PROTECTED FILE')) {
+        expect(context).not.toContain('violations detected');
+      }
+    }, 30000);
+  });
 });

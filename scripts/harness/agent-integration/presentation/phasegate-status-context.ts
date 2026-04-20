@@ -10,6 +10,10 @@
 
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execAsync = promisify(exec);
 
 export interface PhasegateConfig {
   protectedFiles?: {
@@ -29,6 +33,14 @@ export interface PhasegateStatus {
   configFound: boolean;
   protectedPatterns: readonly string[];
   blockedUnits: readonly string[];
+}
+
+export type ViolationType = 'protected_file' | 'phase_gate';
+
+export interface RecentViolation {
+  readonly type: ViolationType;
+  readonly filePath: string;
+  readonly detail: string;
 }
 
 const DEFAULT_PROTECTED_PATTERNS = [
@@ -118,6 +130,92 @@ export async function collectPhasegateStatus(cwd: string): Promise<PhasegateStat
   return { configFound, protectedPatterns, blockedUnits };
 }
 
+/**
+ * `git diff --name-only HEAD` で working tree + staged の変更ファイル一覧を取得する。
+ * git 未初期化 / gitコマンド無しの場合は空配列を返す。
+ */
+async function getChangedFiles(projectRoot: string): Promise<string[]> {
+  try {
+    const { stdout } = await execAsync('git diff --name-only HEAD', {
+      cwd: projectRoot,
+      timeout: 5000,
+    });
+    return stdout.split('\n').map((line) => line.trim()).filter((line) => line.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function matchesProtectedPattern(filePath: string, pattern: string): boolean {
+  if (filePath === '') return false;
+  if (pattern === filePath) return true;
+  const regexStr = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '__DOUBLE_STAR__')
+    .replace(/\*/g, '[^/]*')
+    .replace(/__DOUBLE_STAR__/g, '.*')
+    .replace(/\?/g, '[^/]');
+  const regex = new RegExp(`^${regexStr}$`);
+  return regex.test(filePath) || regex.test(path.basename(filePath));
+}
+
+/**
+ * 現在の working tree (git diff HEAD) をスキャンし、保護ファイル違反 /
+ * 既知の phase-gate ブロック Unit への書き込みを列挙する。
+ *
+ * ISSUE-013 Wave 3 / C-6 (軽量版): Codex のネイティブ apply_patch など hook を
+ * バイパスする経路で起きた違反を、次ターン UserPromptSubmit で遅延検知する。
+ */
+export async function collectRecentViolations(
+  projectRoot: string,
+  status: PhasegateStatus,
+): Promise<RecentViolation[]> {
+  const changedFiles = await getChangedFiles(projectRoot);
+  if (changedFiles.length === 0) return [];
+
+  const violations: RecentViolation[] = [];
+  const seen = new Set<string>();
+
+  const blockedUnitNames = status.blockedUnits.map((entry) => entry.split(' ')[0]);
+
+  for (const file of changedFiles) {
+    // 保護ファイルチェック
+    for (const pattern of status.protectedPatterns) {
+      if (matchesProtectedPattern(file, pattern)) {
+        const key = `protected:${file}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          violations.push({
+            type: 'protected_file',
+            filePath: file,
+            detail: `matched pattern \`${pattern}\``,
+          });
+        }
+        break;
+      }
+    }
+
+    // 簡易 phase-gate チェック: 変更ファイルのパスに blocked unit 名が含まれるか
+    for (const unitName of blockedUnitNames) {
+      if (unitName.length === 0) continue;
+      if (file.includes(`/${unitName}/`) || file.startsWith(`${unitName}/`)) {
+        const key = `phase_gate:${file}:${unitName}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          violations.push({
+            type: 'phase_gate',
+            filePath: file,
+            detail: `within blocked unit \`${unitName}\``,
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  return violations;
+}
+
 export function buildSessionStartContext(status: PhasegateStatus): string {
   const lines: string[] = [
     '# Phasegate status (auto-injected by SessionStart hook)',
@@ -159,7 +257,10 @@ export function buildSessionStartContext(status: PhasegateStatus): string {
   return lines.join('\n');
 }
 
-export function buildUserPromptSubmitContext(status: PhasegateStatus): string {
+export function buildUserPromptSubmitContext(
+  status: PhasegateStatus,
+  violations: readonly RecentViolation[] = [],
+): string {
   // UserPromptSubmit は毎ターン発火するため、簡潔に最新状態のみを通知する。
   // SessionStart で既に運用ルールは注入済みの前提。
   const lines: string[] = [
@@ -180,6 +281,18 @@ export function buildUserPromptSubmitContext(status: PhasegateStatus): string {
       lines.push(`  - ${u}`);
     }
     lines.push('  Use `/story-implementor` to create the missing design docs.');
+  }
+
+  if (violations.length > 0) {
+    lines.push('');
+    lines.push(`## ⚠️ Phasegate violations detected in current working tree (${violations.length})`);
+    lines.push('');
+    lines.push('These changes violate Phasegate rules and WILL be blocked at pre-commit time. Native `apply_patch` edits bypass pre-edit hooks, so this turn-boundary check is the only early warning. Consider reverting with `git checkout <file>` or `git restore <file>` if unintended.');
+    lines.push('');
+    for (const v of violations) {
+      const label = v.type === 'protected_file' ? 'PROTECTED FILE' : 'PHASE-GATE';
+      lines.push(`- [${label}] \`${v.filePath}\` — ${v.detail}`);
+    }
   }
 
   return lines.join('\n');
