@@ -29,7 +29,7 @@ import { buildCiGovernance } from './ci-governance/composition-root.js';
 import { createSkillQualityHandlers } from './skill-quality/composition-root.js';
 import { buildRegressionSuite } from './regression-suite/composition-root.js';
 import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
-import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, deployDesignDocs, deployHuskyHook, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
+import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, deployDesignDocs, deployHuskyHook, deployCodexHooks, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
 import type { SkillSet } from './setup/skill-deployer.js';
 import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
 import { ConfigValidationError } from './config-foundation/domain/errors/config-validation-error.js';
@@ -53,7 +53,7 @@ Usage: phasegate <command> [options]
 
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
-                               (--name <project-name>, --preset <full|standard|minimal|custom>, --with-husky)
+                               (--name <project-name>, --preset <full|standard|minimal|custom>, --agent <claude|codex|both>, --with-husky)
   update-skills                Re-deploy skills from current harness version
 
 Commands:
@@ -401,9 +401,22 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         const skillSet: SkillSet = skillSetRaw;
+        const agentRaw = parseFlag(args, '--agent') ?? 'claude';
+        if (agentRaw !== 'claude' && agentRaw !== 'codex' && agentRaw !== 'both') {
+          console.error(`Invalid --agent value: "${agentRaw}". Use "claude", "codex", or "both".`);
+          process.exit(2);
+        }
+        const agent = agentRaw;
+        const deployClaude = agent === 'claude' || agent === 'both';
+        const deployCodex = agent === 'codex' || agent === 'both';
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
         const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
-        const hooksResult = await deployHookScripts(harnessRoot, rootDir);
+        const hooksResult = deployClaude
+          ? await deployHookScripts(harnessRoot, rootDir)
+          : { scriptsDeployed: 0, settingsCreated: false };
+        const codexResult = deployCodex
+          ? await deployCodexHooks(harnessRoot, rootDir)
+          : null;
         const designDocsResult = await deployDesignDocs(harnessRoot, rootDir);
         const withHusky = hasFlag(args, '--with-husky');
         const huskyResult = withHusky
@@ -423,6 +436,13 @@ async function main(): Promise<void> {
         } else if (hooksResult.scriptsDeployed > 0) {
           console.log(`  .claude/settings.json already exists, skipped`);
         }
+        if (codexResult !== null) {
+          if (codexResult.created) {
+            console.log(`✓ .codex/hooks.json deployed`);
+          } else {
+            console.log(`  .codex/hooks.json already exists, skipped`);
+          }
+        }
         if (designDocsResult.copiedFiles.length > 0) {
           console.log(`✓ Design docs deployed (${designDocsResult.copiedFiles.length} files)`);
         }
@@ -436,7 +456,7 @@ async function main(): Promise<void> {
             console.log(`  .husky/pre-commit already exists, skipped`);
           }
         }
-        console.log(`✓ Harness v${result.version} initialized`);
+        console.log(`✓ Harness v${result.version} initialized (agent: ${agent})`);
         console.log('');
         console.log('Next steps:');
         if (skillSet === 'core') {
@@ -445,7 +465,14 @@ async function main(): Promise<void> {
           console.log('  1. Run the product-architect skill to start AIDLC');
         }
         console.log('  2. Customize phasegate.config.json if needed');
-        console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
+        if (deployClaude) {
+          console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
+        }
+        if (deployCodex) {
+          console.log(`  ${deployClaude ? '4' : '3'}. Enable Codex hooks: codex features enable codex_hooks`);
+          console.log(`  ${deployClaude ? '5' : '4'}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`);
+          console.log(`     See docs/guide/codex-integration.md for the native apply_patch limitation.`);
+        }
         process.exit(0);
         break;
       }

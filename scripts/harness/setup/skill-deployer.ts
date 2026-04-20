@@ -391,3 +391,33 @@ export async function deployHuskyHook(
 
   return { created: true, path: targetPath };
 }
+
+export interface DeployCodexHooksResult {
+  created: boolean;
+  path: string;
+}
+
+/**
+ * Codex CLI 向け hooks.json を対象プロジェクトの .codex/ にデプロイする。
+ * 既存があればスキップする (ユーザー定義 hooks を上書きしない)。
+ * ISSUE-013 Wave 2: --agent codex フラグ経由で init から呼び出される。
+ */
+export async function deployCodexHooks(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployCodexHooksResult> {
+  const targetPath = join(projectRoot, '.codex', 'hooks.json');
+
+  try {
+    await fs.access(targetPath);
+    return { created: false, path: targetPath };
+  } catch {
+    // 配置先が存在しない場合は新規作成
+  }
+
+  const sourcePath = join(harnessRoot, 'templates', '.codex', 'hooks.json');
+  await fs.mkdir(join(projectRoot, '.codex'), { recursive: true });
+  await fs.copyFile(sourcePath, targetPath);
+
+  return { created: true, path: targetPath };
+}

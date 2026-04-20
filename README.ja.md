@@ -16,6 +16,7 @@ AIエージェント（Claude Code, Codex, Cursor, Copilot 等）が生成する
 - [AIDLC スキル](#aidlc-スキル)
 - [メタデータ規約](#メタデータ規約)
 - [Claude Code Hooks](#claude-code-hooks)
+- [Codex CLI Integration](#codex-cli-integration)
 - [カスタムフェーズゲート](#カスタムフェーズゲート)
 - [CI/CD テンプレート](#cicd-テンプレート)
 - [導入後のプロジェクト構造](#導入後のプロジェクト構造)
@@ -32,6 +33,7 @@ Phasegate は **「設計なしの実装を物理的に拒否する」** ツー�
 | **5層バリデーション** | L1(AST) → L2(Pre-commit) → L3(CI) → L4(週次) の段階的品質チェック |
 | **28 AIDLC スキル** | 要求定義 → 設計 → テスト設計 → TDD実装の全フェーズをスキルとして提供 |
 | **Claude Code Hooks** | Write/Edit 時に自動でゲートチェック・Biome lint を実行 |
+| **Codex CLI Hooks** | Bash 書き込み時にフェーズゲート / 保護ファイル / Biome lint を実行（ネイティブ `apply_patch` は pre-commit でカバー） |
 | **Quick Mode** | バグ修正・ドキュメント修正など軽微な変更ではゲートを緩和して高速実行 |
 
 ---
@@ -573,6 +575,36 @@ export class ConfigSchema { ... }
 ブロック時は違反理由・不足している設計文書・次に実行すべきスキルを含むエラーメッセージが返されます。
 
 > **オプション**: `.claude/scripts/` 配下にシェルスクリプトフック（deny-check, format, analyze-errors 等）を追加配置できます。詳細は [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md#オプション-シェルスクリプトフック) を参照してください。
+
+---
+
+## Codex CLI Integration
+
+Phasegate は [OpenAI Codex CLI](https://developers.openai.com/codex/cli) でも同じ防御機構を提供します。CLI (`npx phasegate hook <event>`) 自体は agent-agnostic なため、Claude Code と Codex で同じコマンドが使えます。
+
+### セットアップ（2 ステップ）
+
+```bash
+# 1. Codex 向けに初期化（.codex/hooks.json を自動配置）
+npx phasegate init --name my-project --agent codex --with-husky
+
+# 2. Codex hooks フィーチャーフラグを有効化
+codex features enable codex_hooks
+```
+
+Claude + Codex 両対応プロジェクトは `--agent both` を指定してください。
+
+### カバレッジと既知の制約
+
+Codex のネイティブ `apply_patch` ツールは内部の `ApplyPatchHandler` 経由で実行され hook を発火しません（[openai/codex#16732](https://github.com/openai/codex/issues/16732)）。このため pre-edit hard block は Bash 経由の書き込みに限定され、ネイティブ `apply_patch` の違反は **pre-commit (L2)** で commit 時にブロックされます。
+
+| 編集経路 | 事前 hard block | commit 時 block |
+|---|---|---|
+| Bash 書き込み（`sed -i`, `tee`, heredoc, `cat >`） | ✅ `PreToolUse(Bash)` | ✅ pre-commit |
+| Bash 経由 `apply_patch <<'PATCH'` | ✅ `PreToolUse(Bash)`（`BashWriteTargetExtractor` で heredoc 解析） | ✅ pre-commit |
+| Codex ネイティブ `apply_patch` ツール | ❌ Codex 側の制約で hook 非発火 | ✅ pre-commit |
+
+**推奨運用**: こまめに commit することで、ネイティブ `apply_patch` 経由の違反を早期に surface できます。詳細は [docs/guide/codex-integration.md](docs/guide/codex-integration.md) を参照してください。
 
 ---
 

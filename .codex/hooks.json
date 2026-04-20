@@ -1,0 +1,40 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx phasegate hook pre-tool-use",
+            "statusMessage": "phasegate: pre-tool-use check"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx phasegate hook post-tool-use",
+            "statusMessage": "phasegate: post-tool-use lint"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx phasegate hook stop",
+            "statusMessage": "phasegate: completion check",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

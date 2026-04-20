@@ -4,7 +4,23 @@ Phasegate supports [OpenAI Codex CLI](https://developers.openai.com/codex/cli) t
 
 ## Setup
 
-### 1. Enable hooks in Codex config
+### Quick setup (recommended)
+
+```bash
+# 1. Initialize with Codex agent support
+npx phasegate init --name my-project --agent codex --with-husky
+
+# 2. Enable Codex hooks feature flag
+codex features enable codex_hooks
+```
+
+For dual-agent projects (Claude + Codex), use `--agent both`.
+
+### Manual setup
+
+Alternatively, set up Codex integration manually:
+
+#### 1. Enable hooks in Codex config
 
 Add to `~/.codex/config.toml` (or project `.codex/config.toml`):
 
@@ -13,7 +29,7 @@ Add to `~/.codex/config.toml` (or project `.codex/config.toml`):
 codex_hooks = true
 ```
 
-### 2. Install Phasegate hooks
+#### 2. Install Phasegate hooks
 
 Copy the template into your project:
 
@@ -67,12 +83,12 @@ Or merge the following into your existing `.codex/hooks.json`:
 }
 ```
 
-### 3. Enable the pre-commit hook (critical for Codex)
+#### 3. Enable the pre-commit hook (critical for Codex)
 
-Because Codex's native `apply_patch` tool does not trigger hooks (see [Codex's limitation](#known-limitations)), the pre-commit layer is the primary defense for apply_patch-based edits:
+Because Codex's native `apply_patch` tool does not trigger hooks (see [Codex's limitation](#known-limitations)), the pre-commit layer is the primary defense for apply_patch-based edits. Install via husky:
 
 ```bash
-npx phasegate install-pre-commit
+npx phasegate init --with-husky  # or rerun init with this flag
 ```
 
 ## Defense Layers in Codex

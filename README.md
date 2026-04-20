@@ -26,6 +26,7 @@ Works with **Claude Code, Codex, Cursor, Copilot**, or any other AI agent.
 | **Phase Dependency Model** | Blocks implementation when required design documents are missing |
 | **Quick Mode** | Lightweight gate for bugfixes, docs, tests, and config changes |
 | **Claude Code Hooks** | Native PreToolUse / PostToolUse / Stop hook integration |
+| **Codex CLI Hooks** | `PreToolUse(Bash)` / `PostToolUse(Bash)` / `Stop` hook integration (native `apply_patch` falls back to pre-commit) |
 | **HarnessError Format** | Every error includes ADR references and fix examples for AI self-correction |
 | **Configurable Phase Gates** | Define custom gates with `gates[]` in config. Default uses AIDLC phase dependencies |
 | **Protected File Control** | Configure which files are protected from AI writes via `protectedFiles.exclude` |
@@ -253,6 +254,36 @@ All hook errors use the `HarnessError` format with ADR references and fix exampl
 
 ---
 
+## Codex CLI Integration
+
+Phasegate also integrates with [OpenAI Codex CLI](https://developers.openai.com/codex/cli) via hooks in `.codex/hooks.json`. The CLI itself is agent-agnostic, so the same `npx phasegate hook <event>` commands power both Claude Code and Codex.
+
+### Quick setup
+
+```bash
+# 1. Initialize with Codex agent support (auto-deploys .codex/hooks.json)
+npx phasegate init --name my-project --agent codex --with-husky
+
+# 2. Enable Codex hooks feature flag
+codex features enable codex_hooks
+```
+
+For dual-agent projects (Claude + Codex), use `--agent both`.
+
+### Coverage and known limitation
+
+Because Codex's native `apply_patch` tool is routed through an internal `ApplyPatchHandler` and does not emit hook events ([openai/codex#16732](https://github.com/openai/codex/issues/16732)), pre-edit hard-block coverage is limited to Bash-based writes. Native `apply_patch` violations are caught at commit time by the pre-commit layer.
+
+| Path | Pre-edit hard block | Commit-time block |
+|---|---|---|
+| Shell writes (`sed -i`, `tee`, heredoc, `cat >`) | ✅ `PreToolUse(Bash)` | ✅ pre-commit |
+| Bash-invoked `apply_patch <<'PATCH'` | ✅ `PreToolUse(Bash)` (via `BashWriteTargetExtractor`) | ✅ pre-commit |
+| Native `apply_patch` tool call | ❌ not intercepted by Codex today | ✅ pre-commit |
+
+**Recommended mitigation**: commit frequently (e.g., after each logical change) so native `apply_patch` violations surface quickly. See the full guide for details.
+
+---
+
 ## CLI Reference
 
 ```bash
@@ -287,6 +318,7 @@ Detailed guides are available under `docs/guide/`:
 - [Skills Overview](docs/guide/skills-overview.md) -- 28 skills with AIDLC execution order
 - [5-Layer Defense Model](docs/guide/layer-model.md) -- L0-L4 layer details and HarnessError format
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
+- [Codex Integration](docs/guide/codex-integration.md) -- Codex CLI setup, coverage matrix, and native `apply_patch` limitation
 - [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) -- When to use `/story-implementor` vs `/quick-implementor`, with decision flow and case studies
 
 Additional resources:
