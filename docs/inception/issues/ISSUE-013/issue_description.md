@@ -127,14 +127,32 @@ Claude 環境では L0 hook を主防御とするが、Codex 環境では hook �
 
 - [Codex 公式 hooks ドキュメント](https://developers.openai.com/codex/hooks)
 - [openai/codex Issue #16732: ApplyPatchHandler doesn't emit PreToolUse/PostToolUse hook event](https://github.com/openai/codex/issues/16732)
+- [openai/codex PR #18391](https://github.com/openai/codex/pull/18391) — 上流 fix の PR (2026-04-21 時点: open, 1 approval, no blockers)
 - `templates/.claude/settings.json` — Claude 向け hook テンプレート（比較対象）
 - `scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts` — 既存 agent-agnostic アダプタ
 - `scripts/harness/agent-integration/domain/services/bash-write-target-extractor.ts` — Wave 1 で apply_patch 対応追加済み
 - ISSUE-012 — pre-commit の言語拡張子設定化。Codex 対応とは独立だが「多言語・多エージェント対応」の文脈で関連
 
-## 実装順
+## 実装履歴
 
-1. **Wave 2-A**（テンプレート作成）: 5 分
-2. **Wave 2-B**（integration test）: 30 分
-3. **Wave 2-C**（docs）: 20 分
-4. **commit / tag**: 5 分
+| Wave | 版 | 内容 |
+|---|---|---|
+| Wave 1 | v0.57.0 | `BashWriteTargetExtractor` に `apply_patch` heredoc 対応 |
+| Wave 2 | v0.58.0 | `templates/.codex/hooks.json` + `docs/guide/codex-integration.md` + integration test |
+| Wave 3 A-1/A-2 | v0.59.0 | 実機ドッグフーディング + README 告知 + `init --agent codex/both` |
+| Wave 3 C-4 | v0.60.0 | SessionStart hook で静的ルール注入 (L-1 soft enforcement) |
+| Wave 3 C-5 | v0.61.0 | UserPromptSubmit hook で動的状態注入 |
+| Wave 3 C-6 軽量版 | v0.62.0 | UserPromptSubmit に violation detection を追加 (daemon 不採用) |
+| Wave 3 D-7 | - | 上流 PR は [openai/codex#18391](https://github.com/openai/codex/pull/18391) が既存・approval 済みのため送付不要。merge 待ち |
+
+## 上流 fix 後の追従
+
+[openai/codex#18391](https://github.com/openai/codex/pull/18391) が merge されると、Codex ネイティブ `apply_patch` が `PreToolUse`/`PostToolUse` hook を発火するようになる。発火時には `tool_name: "apply_patch"` がセットされる想定。
+
+Phasegate 側の対応:
+
+1. **テンプレート拡張** — `templates/.codex/hooks.json` の `PreToolUse` matcher を `"Bash|apply_patch"` に変更
+2. **既存アダプタ動作確認** — `pre-tool-use-hook.ts` は `tool_input.command` を見ているが、apply_patch 経路では `tool_input` の構造が異なる可能性があるため、実 payload を採取してパーサ調整
+3. **docs 更新** — 既知制約セクションから「ネイティブ apply_patch が hook 非経由」を削除
+
+これらは PR merge 後の実 payload を見てから着手する（現時点では推測ベースで実装しない）。
