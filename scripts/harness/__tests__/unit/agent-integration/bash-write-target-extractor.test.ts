@@ -330,4 +330,235 @@ describe('BashWriteTargetExtractor', () => {
       expect(result).toEqual(['a.ts', 'b.ts']);
     });
   });
+
+  describe('apply_patch 抽出', () => {
+    it('`*** Update File: foo.ts` のパスを抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+
+    it('`*** Add File: new.ts` のパスを抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Add File: new.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['new.ts']);
+    });
+
+    it('`*** Delete File: old.ts` のパスを抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Delete File: old.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['old.ts']);
+    });
+
+    it('1つの apply_patch 内で Update / Add / Delete 混在ケースを全て抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: a.ts
+*** Add File: b.ts
+*** Delete File: c.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['a.ts', 'b.ts', 'c.ts']);
+    });
+
+    it('heredoc が `<<EOF` (unquoted) でも抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<EOF
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+EOF`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+
+    it('heredoc が `<<"EOF"` (double-quoted) でも抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<"EOF"
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+EOF`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+
+    it('パスにスペースを含むファイルも抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: path with spaces.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['path with spaces.ts']);
+    });
+
+    it('`*** Update File: foo.ts   ` の末尾空白をトリムする', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+
+    it('`*** End Patch` が欠けていても command 末尾までをブロックとして扱う', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: foo.ts
+`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+  });
+
+  describe('apply_patch 複合コマンド', () => {
+    it('`cd /tmp && apply_patch ...` から抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `cd /tmp && apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+
+    it('`apply_patch ... && echo done` から抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH' && echo done
+*** Begin Patch
+*** Update File: foo.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['foo.ts']);
+    });
+  });
+
+  describe('apply_patch と既存抽出の統合', () => {
+    it('`apply_patch` と `echo > file` の両方から抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `echo x > log.txt && apply_patch <<'PATCH'
+*** Begin Patch
+*** Add File: new.ts
+*** End Patch
+PATCH`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual(['log.txt', 'new.ts']);
+    });
+  });
+
+  describe('apply_patch 抽出しないパターン', () => {
+    it('`*** Begin Patch` マーカー無しで `*** Update File:` を含むのみの場合は抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `echo '*** Update File: foo.ts'`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it('`*** Begin Patch` / `*** End Patch` ブロックの外にある `*** Update File:` は抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `apply_patch <<'PATCH'
+*** Begin Patch
+*** Update File: real.ts
+*** End Patch
+PATCH
+echo '*** Update File: fake.ts'`;
+
+      // Act
+      const result = extractor.extract(command);
+
+      // Assert
+      expect(result).toContain('real.ts');
+      expect(result).not.toContain('fake.ts');
+    });
+  });
 });

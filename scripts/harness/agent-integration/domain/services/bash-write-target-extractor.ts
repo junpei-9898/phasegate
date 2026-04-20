@@ -16,6 +16,8 @@
  *   - `touch`
  *   - 複合コマンド (`&&`, `;`, `||`) とパイプ (`|`) 分割
  *   - ダブル/シングルクォート対応
+ *   - `apply_patch` ヒアドキュメント (`*** Begin Patch` / `*** End Patch` ブロック内の
+ *     `*** Update|Add|Delete File: <path>` 行) — Codex CLI 対応 (ISSUE-013 Wave 1)
  */
 
 /** 引数トークン (値とクォート種別) */
@@ -219,6 +221,56 @@ function extractFromSingleCommand(tokens: Token[]): string[] {
   return results;
 }
 
+/** apply_patch ブロック境界マーカー (Begin/End) */
+const APPLY_PATCH_BEGIN_SOURCE = String.raw`\*\*\*\s+Begin\s+Patch`;
+const APPLY_PATCH_END_SOURCE = String.raw`\*\*\*\s+End\s+Patch`;
+/** ブロック内のファイル行: `*** (Update|Add|Delete) File: <path>` */
+const APPLY_PATCH_FILE_LINE_SOURCE = String.raw`^\s*\*\*\*\s+(?:Update|Add|Delete)\s+File:\s*(.+?)\s*$`;
+
+/**
+ * apply_patch ヒアドキュメント構文から対象ファイルパスを抽出する。
+ *
+ * Codex CLI 等が採用する unified-diff 風パッチフォーマット:
+ *   *** Begin Patch
+ *   *** Update File: <path>
+ *   *** Add File: <path>
+ *   *** Delete File: <path>
+ *   *** End Patch
+ *
+ * `*** End Patch` が欠けている場合は command 末尾までをブロックとして扱う
+ * (保護側に倒す — phase-gate の取りこぼしよりも誤検出のほうが許容される)。
+ */
+function extractApplyPatchTargets(command: string): string[] {
+  const beginGlobal = new RegExp(APPLY_PATCH_BEGIN_SOURCE, 'g');
+  const beginStarts: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = beginGlobal.exec(command)) !== null) {
+    beginStarts.push(m.index + m[0].length);
+  }
+  if (beginStarts.length === 0) return [];
+
+  const endGlobal = new RegExp(APPLY_PATCH_END_SOURCE, 'g');
+  const endStarts: number[] = [];
+  while ((m = endGlobal.exec(command)) !== null) {
+    endStarts.push(m.index);
+  }
+
+  const results: string[] = [];
+  for (let i = 0; i < beginStarts.length; i += 1) {
+    const start = beginStarts[i];
+    const nextBegin = i + 1 < beginStarts.length ? beginStarts[i + 1] : command.length;
+    const endInRange = endStarts.find((e) => e > start && e <= nextBegin);
+    const end = endInRange ?? nextBegin;
+    const body = command.slice(start, end);
+
+    const fileRegex = new RegExp(APPLY_PATCH_FILE_LINE_SOURCE, 'gm');
+    while ((m = fileRegex.exec(body)) !== null) {
+      results.push(m[1]);
+    }
+  }
+  return results;
+}
+
 export class BashWriteTargetExtractor {
   /**
    * Bash コマンド文字列から書き込み先ファイルパスを抽出する。
@@ -241,6 +293,14 @@ export class BashWriteTargetExtractor {
       for (const path of found) {
         collected.push(path);
       }
+    }
+
+    // apply_patch ヒアドキュメント対応 (ISSUE-013 Wave 1)
+    // 既存の token ベース抽出では heredoc body 内のマーカー行を拾えないため、
+    // raw command 文字列から独立にスキャンする。
+    const applyPatchTargets = extractApplyPatchTargets(command);
+    for (const p of applyPatchTargets) {
+      collected.push(p);
     }
 
     // 重複除去 (挿入順保持)
