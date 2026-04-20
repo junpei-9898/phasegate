@@ -107,7 +107,7 @@ Commands:
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
   p2:check-initial-creation      Detect long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
-  hook <pre-tool-use|post-tool-use|stop|session-start>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start)
+  hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start/user-prompt-submit)
   pre-commit                              Run L2 pre-commit validators on staged files
   delegate-sonnet [...args]               Delegate task to Sonnet 4.6 (forwards args to scripts/delegate-sonnet.sh)
 
@@ -1036,8 +1036,9 @@ Examples:
       // ── agent integration / hooks ──
       case 'hook': {
         const subCommand = args[1];
+        const usage = 'Usage: phasegate hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>';
         if (!subCommand) {
-          console.error('Usage: phasegate hook <pre-tool-use|post-tool-use|stop|session-start>');
+          console.error(usage);
           process.exit(2);
         }
         const hookFileName: Record<string, string> = {
@@ -1045,11 +1046,12 @@ Examples:
           'post-tool-use': 'post-tool-use-hook.js',
           'stop': 'stop-hook.js',
           'session-start': 'session-start-hook.js',
+          'user-prompt-submit': 'user-prompt-submit-hook.js',
         };
         const fileName = hookFileName[subCommand];
         if (!fileName) {
           console.error(`Unknown hook subcommand: ${subCommand}`);
-          console.error('Usage: phasegate hook <pre-tool-use|post-tool-use|stop|session-start>');
+          console.error(usage);
           process.exit(2);
         }
         const hookPath = join(harnessRoot, 'scripts/harness/agent-integration/presentation', fileName);

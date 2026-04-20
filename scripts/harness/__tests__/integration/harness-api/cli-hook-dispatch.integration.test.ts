@@ -99,7 +99,7 @@ target('CLI hook dispatch (ISSUE-004 Phase B)', () => {
       const actual = await runCli(args);
       // Assert
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('hook <pre-tool-use|post-tool-use|stop|session-start>');
+      expect(actual.stdout).toContain('hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>');
       expect(actual.stdout).toContain('pre-commit');
       expect(actual.stdout).toContain('delegate-sonnet');
     }, 30000);
