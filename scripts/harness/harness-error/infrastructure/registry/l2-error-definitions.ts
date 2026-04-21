@@ -44,7 +44,7 @@ export const L2_ERROR_DEFINITIONS = Object.freeze([
       "const requiredPlanPath = 'docs/inception/harness-error/it_test_logic_plan.md';",
     defaultSuggestedSkill: '/story-implementor',
     defaultScaffoldCommand: 'npx phasegate scaffold-design --unit <unit-id> --phase logical',
-    defaultTemplatePath: 'docs/templates/logical_design.template.md',
+    defaultTemplatePath: 'templates/logical_design.template.md',
   }),
   createDefinition({
     code: 'L2-002',

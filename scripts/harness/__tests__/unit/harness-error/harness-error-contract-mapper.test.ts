@@ -112,7 +112,7 @@ target('HarnessErrorContractMapper.toReadonlyContract', () => {
         const harnessError = createHarnessErrorEntity({
           suggestedSkill: '/story-implementor',
           scaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
-          templatePath: 'docs/templates/logical_design.template.md',
+          templatePath: 'templates/logical_design.template.md',
         });
 
         // Act
@@ -121,7 +121,7 @@ target('HarnessErrorContractMapper.toReadonlyContract', () => {
         // Assert
         expect(actual.suggested_skill).toBe('/story-implementor');
         expect(actual.scaffold_command).toBe('npx phasegate scaffold-design --unit x --phase logical');
-        expect(actual.template_path).toBe('docs/templates/logical_design.template.md');
+        expect(actual.template_path).toBe('templates/logical_design.template.md');
       });
     });
 

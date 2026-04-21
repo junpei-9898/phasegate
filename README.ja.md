@@ -588,7 +588,7 @@ export class ConfigSchema { ... }
 
 | Hook | タイミング | 動作 |
 |---|---|---|
-| **PreToolUse** | Write/Edit/Bash 実行前 | フェーズゲート違反・保護ファイルへの書き込み・Bash 経由の書き込み(`sed -i`, `tee` 等)をブロック |
+| **PreToolUse** | Write/Edit/Bash 実行前 | フェーズゲート違反・保護ファイルへの書き込み・Bash 経由の書き込み(`sed -i`, `tee` 等)をブロック。`quickMode.fullModeRequiredWhen` トリガー時は Quick Mode → Full Mode へエスカレート（v0.64.0）。`.phasegate/baseline.json` 登録済みかつ未編集のファイルは grandfather として `phase-gate` をスキップ（v0.66.0） |
 | **PostToolUse** | Write/Edit 実行後 | Biome AST ルールを自動実行、違反を即時フィードバック |
 | **Stop** | セッション終了前 | L2-L4 全チェックを実行、全グリーンでないと終了を保留 |
 
@@ -807,4 +807,4 @@ phasegate 自体の開発（内部アーキテクチャ、回帰テスト、リ�
 
 ---
 
-*Last updated: 2026-04-07 -- v0.33.0*
+*Last updated: 2026-04-22 -- v0.66.0*

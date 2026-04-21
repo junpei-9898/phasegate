@@ -942,7 +942,28 @@ target('buildErrorDefinitionRegistry', () => {
         );
 
         // Assert
-        expect(l2Definition001?.defaultTemplatePath).toBe('docs/templates/logical_design.template.md');
+        expect(l2Definition001?.defaultTemplatePath).toBe('templates/logical_design.template.md');
+      });
+
+      // IT-HE-093 (ISSUE-007 Wave 4)
+      it('L2-001 の defaultTemplatePath が指すテンプレが実在すること', async () => {
+        // Arrange
+        const fsPromises = await import('node:fs/promises');
+        const l2Definition001 = L2_ERROR_DEFINITIONS.find(
+          (d) => d.code.toString() === 'L2-001',
+        );
+        const templatePath = l2Definition001?.defaultTemplatePath ?? '';
+        // vitest は repoRoot cwd で起動する
+        const absolutePath = path.resolve(process.cwd(), templatePath);
+
+        // Act
+        const exists = await fsPromises
+          .access(absolutePath)
+          .then(() => true)
+          .catch(() => false);
+
+        // Assert
+        expect(exists).toBe(true);
       });
     });
   });

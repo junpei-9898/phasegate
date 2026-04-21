@@ -1085,7 +1085,7 @@ target('HandlePreToolUseUseCase.execute', () => {
             guidance({
               suggestedSkill: '/logical-designer',
               scaffoldCommand: 'npx phasegate scaffold-design --unit my-unit --phase logical',
-              templatePath: 'docs/templates/logical_design.template.md',
+              templatePath: 'templates/logical_design.template.md',
             }),
           ),
         });
@@ -1102,7 +1102,7 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.blockReason).toBe('PHASE_GATE');
         expect(actual.error?.message).toContain('/logical-designer');
         expect(actual.error?.message).toContain('npx phasegate scaffold-design --unit my-unit --phase logical');
-        expect(actual.error?.message).toContain('docs/templates/logical_design.template.md');
+        expect(actual.error?.message).toContain('templates/logical_design.template.md');
       });
 
       // IT-AI-GUIDE-002
@@ -1183,7 +1183,7 @@ target('HandlePreToolUseUseCase.execute', () => {
             guidance({
               suggestedSkill: '/story-implementor',
               scaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
-              templatePath: 'docs/templates/logical_design.template.md',
+              templatePath: 'templates/logical_design.template.md',
             }),
           ),
         });
@@ -1200,7 +1200,7 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
         expect(actual.error?.message).toContain('/story-implementor');
         expect(actual.error?.message).toContain('npx phasegate scaffold-design --unit x --phase logical');
-        expect(actual.error?.message).toContain('docs/templates/logical_design.template.md');
+        expect(actual.error?.message).toContain('templates/logical_design.template.md');
       });
     });
 

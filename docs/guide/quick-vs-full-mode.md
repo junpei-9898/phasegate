@@ -50,6 +50,37 @@ Both modes keep **L1 in full strength** and **L2 metadata / test-quality** — `
 
 ---
 
+## Automatic Escalation: `fullModeRequiredWhen`
+
+Even when you launch `/quick-implementor`, the harness re-checks whether the in-flight change set actually qualifies as Quick. Three triggers force escalation back to Full Mode at the **pre-tool-use hook** (synchronous block, not just a post-hoc warning):
+
+| Trigger | `quickMode.fullModeRequiredWhen.*` flag | Default | Block reason on hook |
+|---|---|---|---|
+| Change set spans multiple categories (e.g. `bugfix` + `api`) | `mixedCategories` | `true` | `FULL_MODE_REQUIRED` |
+| New file added under any `domain/` directory | `newDomainFile` | `true` | `FULL_MODE_REQUIRED` |
+| Modification to a Port (`*port.ts`) or Adapter (`*adapter.ts`) | `apiContractChange` | `true` | `FULL_MODE_REQUIRED` |
+
+Introduced in v0.63.0 (ISSUE-006 Story A — config-driven flags + `check-change-category` CLI) and wired into the hook in v0.64.0 (Story B). Each flag can be flipped to `false` only when a project intentionally accepts the risk of merging that category of change without the design ceremony — e.g. early-stage prototypes where new domain files churn freely.
+
+### Dry-running the classifier
+
+Use `check-change-category` to evaluate an arbitrary file list without actually starting an implementation:
+
+```bash
+# Inspect what category each file lands in
+npx phasegate check-change-category --paths src/foo.ts,src/bar.ts
+
+# CI gate: hard-fail the build if Quick Mode would have to escalate
+npx phasegate check-change-category \
+  --paths "$(git diff --name-only origin/main...HEAD | paste -sd, -)" \
+  --fail-on-full-required \
+  --format json
+```
+
+`--fail-on-full-required` is opt-in; without it the command is purely informational (always exit 0).
+
+---
+
 ## Worked Examples
 
 ### Full Mode candidates
@@ -125,7 +156,7 @@ Not mechanically — Quick Mode does not inspect paths. A one-line bugfix inside
 Stop, commit nothing, and re-launch `/story-implementor`. Don't try to "finish in Quick" — you'll skip the design gate that would otherwise catch the scope creep.
 
 **Q. Can I disable Quick Mode entirely?**
-Yes — remove all entries from `quickMode.allowedCategories` in `phasegate.config.json`. All changes will route through Full Mode. This is reasonable for high-compliance projects.
+Yes — remove all entries from `quickMode.allowedCategories` in `phasegate.config.json`. All changes will route through Full Mode. This is reasonable for high-compliance projects. Alternatively, leave the categories as-is and set every `quickMode.fullModeRequiredWhen.*` flag to `true` (the default) so any non-trivial scope automatically escalates.
 
 **Q. Can I add custom categories?**
 No. `allowedCategories` is a fixed enum (`bugfix`, `docs`, `test`, `config`). If your workflow needs a fifth category, that is evidence the change is probably Full Mode material.

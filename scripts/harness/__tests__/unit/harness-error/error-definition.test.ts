@@ -345,14 +345,14 @@ target('ErrorDefinition', () => {
       it('defaultTemplatePath を保持すること', () => {
         // Arrange
         const sut = createErrorDefinition({
-          defaultTemplatePath: 'docs/templates/logical_design.template.md',
+          defaultTemplatePath: 'templates/logical_design.template.md',
         });
 
         // Act
         const actual = sut.defaultTemplatePath;
 
         // Assert
-        expect(actual).toBe('docs/templates/logical_design.template.md');
+        expect(actual).toBe('templates/logical_design.template.md');
       });
 
       // UT-HE-123

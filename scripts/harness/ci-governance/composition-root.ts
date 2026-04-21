@@ -40,11 +40,17 @@ import { GlobFileScannerAdapter } from './infrastructure/adapters/glob-file-scan
 import { FileSystemSha1HasherAdapter } from './infrastructure/adapters/file-system-sha1-hasher-adapter.js';
 import { BaselineJsonRepositoryAdapter } from './infrastructure/adapters/baseline-json-repository-adapter.js';
 
+import { ScaffoldDesignUseCase } from './application/usecases/scaffold-design-usecase.js';
+import { FileSystemTemplateRepositoryAdapter } from './infrastructure/adapters/file-system-template-repository-adapter.js';
+import { FileSystemDesignDocWriterAdapter } from './infrastructure/adapters/file-system-design-doc-writer-adapter.js';
+import { ScaffoldDesignHandler } from './presentation/handlers/scaffold-design-handler.js';
+
 export interface CiGovernanceCompositionRoot {
   generateCiTemplateHandler: GenerateCiTemplateHandler;
   migrateAgentsMdHandler: MigrateAgentsMdHandler;
   checkRepetitionHandler: CheckRepetitionHandler;
   createBaselineHandler: CreateBaselineHandler;
+  scaffoldDesignHandler: ScaffoldDesignHandler;
   // Use cases exposed for direct access
   recordErrorOccurrenceUseCase: RecordErrorOccurrenceUseCase;
   checkEscalationUseCase: CheckEscalationUseCase;
@@ -52,9 +58,13 @@ export interface CiGovernanceCompositionRoot {
   aggregateLessonsUseCase: AggregateLessonsUseCase;
   validatePointersUseCase: ValidatePointersUseCase;
   createBaselineUseCase: CreateBaselineUseCase;
+  scaffoldDesignUseCase: ScaffoldDesignUseCase;
 }
 
-export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot {
+export function buildCiGovernance(
+  baseDir: string,
+  harnessRoot: string = baseDir,
+): CiGovernanceCompositionRoot {
   // Infrastructure adapters
   const validatorIdRegistryAdapter = new ValidatorIdRegistryAdapter();
   const presetConfigAdapter = new PresetConfigAdapter();
@@ -98,6 +108,14 @@ export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot 
     baselineRepository,
   );
 
+  // Scaffold design adapters & use case (ISSUE-007 Wave 4)
+  const templateRepository = new FileSystemTemplateRepositoryAdapter(harnessRoot);
+  const designDocWriter = new FileSystemDesignDocWriterAdapter(baseDir);
+  const scaffoldDesignUseCase = new ScaffoldDesignUseCase(
+    templateRepository,
+    designDocWriter,
+  );
+
   // Handlers
   const generateCiTemplateHandler = new GenerateCiTemplateHandler(
     generateCiTemplateUseCase,
@@ -106,17 +124,20 @@ export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot 
   const migrateAgentsMdHandler = new MigrateAgentsMdHandler(migrateAgentsMdUseCase);
   const checkRepetitionHandler = new CheckRepetitionHandler(checkEscalationUseCase);
   const createBaselineHandler = new CreateBaselineHandler(createBaselineUseCase);
+  const scaffoldDesignHandler = new ScaffoldDesignHandler(scaffoldDesignUseCase);
 
   return {
     generateCiTemplateHandler,
     migrateAgentsMdHandler,
     checkRepetitionHandler,
     createBaselineHandler,
+    scaffoldDesignHandler,
     recordErrorOccurrenceUseCase,
     checkEscalationUseCase,
     resetRepetitionUseCase,
     aggregateLessonsUseCase,
     validatePointersUseCase,
     createBaselineUseCase,
+    scaffoldDesignUseCase,
   };
 }

@@ -191,14 +191,14 @@ target('HarnessError', () => {
       it('templatePath を保持し toContract で snake_case キーで出力されること', () => {
         // Arrange
         const sut = buildHarnessError({
-          templatePath: 'docs/templates/logical_design.template.md',
+          templatePath: 'templates/logical_design.template.md',
         });
 
         // Act
         const actual = sut.toContract();
 
         // Assert
-        expect(actual.template_path).toBe('docs/templates/logical_design.template.md');
+        expect(actual.template_path).toBe('templates/logical_design.template.md');
       });
 
       // UT-HE-103

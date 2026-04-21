@@ -89,6 +89,7 @@ Commands:
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
+  scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --force, --json)
 
   skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed)
   skill:check-coverage         Check coverage (--story <storyId>, --json)
@@ -909,6 +910,23 @@ Examples:
         const result = await mod.createBaselineHandler.handle({
           include,
           dryRun,
+          force,
+          format,
+        });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'scaffold-design': {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const unit = parseFlag(args, '--unit') ?? '';
+        const phase = parseFlag(args, '--phase') ?? '';
+        const force = hasFlag(args, '--force');
+        const format = json ? 'json' : 'human';
+        const result = await mod.scaffoldDesignHandler.handle({
+          unit,
+          phase,
           force,
           format,
         });

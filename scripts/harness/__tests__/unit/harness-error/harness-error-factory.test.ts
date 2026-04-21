@@ -490,7 +490,7 @@ target('HarnessErrorFactory', () => {
           code: createErrorCode('L2-001'),
           defaultSuggestedSkill: '/story-implementor',
           defaultScaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
-          defaultTemplatePath: 'docs/templates/logical_design.template.md',
+          defaultTemplatePath: 'templates/logical_design.template.md',
         });
         const { sut } = createFactory({ definitions: [definition] });
         const params = createFactoryParams({ code: 'L2-001', adrRef: null, fixExample: null });
@@ -501,7 +501,7 @@ target('HarnessErrorFactory', () => {
         // Assert
         expect(actual.suggestedSkill).toBe('/story-implementor');
         expect(actual.scaffoldCommand).toBe('npx phasegate scaffold-design --unit x --phase logical');
-        expect(actual.templatePath).toBe('docs/templates/logical_design.template.md');
+        expect(actual.templatePath).toBe('templates/logical_design.template.md');
       });
 
       // UT-HE-080

@@ -198,6 +198,13 @@ interface HarnessError {
 | `ci:generate-template` | CI テンプレート生成 | `--preset <id>` `--type aidlc-gate\|consistency-check\|pre-commit` `--render` `--json` |
 | `ci:migrate-agents-md` | AGENTS.md マイグレーション | — |
 | `ci:check-repetition` | 反復エラー検出 | `--code <errorCode>` `--reset` `--json` |
+| `baseline` | リトロフィット用 baseline スナップショット (`.phasegate/baseline.json`) を生成（ISSUE-007 Wave 1, Phase A-2 grandfather）。登録済みファイルは構造的に編集されるまで `phase-gate` 対象から除外される | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` |
+
+#### Quick Mode
+
+| コマンド | 説明 | オプション |
+|---|---|---|
+| `check-change-category` | 変更ファイルパスを Quick Mode カテゴリ（`api` / `domain` / `feature` / `bugfix` / `test` / `config` / `docs`）に分類し、`quickMode.fullModeRequiredWhen` で Full Mode 強制が必要かを判定（ISSUE-006 Story A） | `--paths <csv>` `--format human\|json` `--fail-on-full-required` |
 
 #### スキル管理
 
@@ -235,13 +242,34 @@ Claude Code
    - リダイレクト（`>`, `>>`）、`tee`, `sed -i`, `cp`, `mv` のターゲットを抽出
    - Bash を Write ツールとして「偽装」し Phase Gate チェックを適用
 
-3. **HandlePreToolUseUseCase** が以下をチェック:
+3. **HandlePreToolUseUseCase** が以下を順に評価:
    - 保護ファイルリスト（package.json, phasegate.config.json 等）
+   - **Baseline grandfather**: `baseline.enabled` が真かつ `.phasegate/baseline.json` に登録済み sha1 と一致するファイルは `phase-gate` 対象から除外（v0.66.0 / ISSUE-007 Wave 2 / Phase A-2）
    - Phase Gate 違反（WriteTargetScope による判定）
+   - **Full Mode 必須検出**: `quickMode.fullModeRequiredWhen` を変更セットに対して評価。トリガーが立つと Quick Mode → Full Mode にエスカレートしてブロック（v0.64.0 / ISSUE-006 Story B）
    - storyReflection 状態（inception→product の反映状態）
 
-4. **ブロック判定**: `shouldBlock: true` + 理由（PHASE_GATE / PROTECTED_FILE / STORY_REFLECTION_FAILURE）
+4. **ブロック判定**: `shouldBlock: true` + 理由（PHASE_GATE / PROTECTED_FILE / STORY_REFLECTION_FAILURE / FULL_MODE_REQUIRED）
    - exit code 2 でアクションをブロック
+
+### リトロフィット baseline (`.phasegate/baseline.json`)
+
+既存プロジェクトに phasegate を後付け導入すると、レガシーファイルが最初の編集で `phase-gate` に引っかかってしまう問題がある。`baseline` コマンドは現状のファイル sha1 をスナップショット化し、構造的に編集されるまで grandfather として除外する。
+
+```jsonc
+{
+  "version": "1.0",
+  "createdAt": "2026-04-21T20:56:26.843Z",
+  "algorithm": "sha1",
+  "files": [
+    { "path": "scripts/harness/foo/domain/bar.ts", "sha1": "a35d1d68..." }
+  ]
+}
+```
+
+- sha1 不一致（スナップショット以降にファイルが変更されている）になった瞬間、該当ファイルは再び `phase-gate` の対象に戻る
+- スナップショットに未登録の新規ファイルは最初から `phase-gate` 対象
+- `phasegate.config.json` の `baseline.enabled` で仕組み全体を on/off、`baseline.path` でスナップショット位置を変更できる
 
 ### Post-Tool-Use フロー
 
@@ -298,15 +326,19 @@ Quick Mode はファイル変更の安全性を自動判定し、バリデーシ
 | `config` | `.config.json` または `.config.ts` | 低 |
 | `docs` | `docs/` ディレクトリ | 最低 |
 
-### 3 つの却下ルール
+### 3 つの却下ルール（`fullModeRequiredWhen` で設定駆動）
 
 以下のいずれかに該当すると Quick Mode は却下され、フル検証に移行:
 
-| ルール | 条件 | 理由 |
-|---|---|---|
-| `MIXED_CHANGES` | `allowedCategories` 外のファイルが含まれる | スコープ外の変更は設計レビューが必要 |
-| `NEW_DOMAIN` | `domain/` に新規ファイルが作成される | ドメイン変更は設計レビューが必要 |
-| `API_CONTRACT` | `*port.ts` / `*adapter.ts` が変更される | インターフェース契約は慎重な検証が必要 |
+| ルール | 条件 | 理由 | Config flag (`quickMode.fullModeRequiredWhen.*`) |
+|---|---|---|---|
+| `MIXED_CHANGES` | `allowedCategories` 外のファイルが含まれる | スコープ外の変更は設計レビューが必要 | `mixedCategories` |
+| `NEW_DOMAIN` | `domain/` に新規ファイルが作成される | ドメイン変更は設計レビューが必要 | `newDomainFile` |
+| `API_CONTRACT` | `*port.ts` / `*adapter.ts` が変更される | インターフェース契約は慎重な検証が必要 | `apiContractChange` |
+
+ISSUE-006 Story A（v0.63.0）でこれらの判定が `phasegate.config.json` の `quickMode.fullModeRequiredWhen` から駆動されるようになった。フラグを `false` にすると、その特定のエスカレーションだけを無効化できる。Story B（v0.64.0）でさらに同じ判定が pre-tool-use hook に統合され、後追いのバリデーション時ではなく書き込み時点で同期的にエスカレートが発火するようになった。
+
+任意のファイル群に対して dry-run したい場合は `npx phasegate check-change-category --paths <csv> [--format json] [--fail-on-full-required]` を使う。CI で「Quick Mode で出されたが本来 Full Mode 必須」の PR を hard fail させたい場合に有用。
 
 ### バリデータ緩和
 

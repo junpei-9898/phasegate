@@ -3,17 +3,17 @@ traceability:
   initial_creation: true
 ---
 
-# 論理設計: <Unit名>
+# 論理設計: {{unit}}
 
 > **対応ストーリー**: <HXX-XX, HYY-YY>
 > **作成日**: <YYYY-MM-DD>
-> **Unit**: <UNIT_NAME>
+> **Unit**: {{unit}}
 
 ---
 
 ## 概要
 
-<このUnitが解決するビジネス課題を 2〜3 行で記述>
+TODO: Unit `{{unit}}` が解決するビジネス課題を 2〜3 行で記述
 
 ---
 
@@ -22,7 +22,7 @@ traceability:
 @story-id <HXX-XX>
 ### <集約 / エンティティ / 値オブジェクト名>
 
-<不変条件・責務・関連の説明>
+TODO: 不変条件・責務・関連の説明
 
 ---
 
@@ -36,13 +36,13 @@ traceability:
 **So that** <得られる価値>
 
 #### 事前条件
-- <前提>
+- TODO: 前提
 
 #### 基本フロー
-1. <ステップ>
+1. TODO: ステップ
 
 #### 例外フロー
-- <エラーケース>
+- TODO: エラーケース
 
 ---
 
@@ -74,6 +74,3 @@ presentation/    : CLI Handler / Controller
   - 直後に設計要素（空行を挟まない）
   - `HXX-XX` は `docs/product/user_stories.md` に存在する ID
   - 複数ストーリー時は連続並列で並べ、最後の直後に設計要素
-
-これらは `MetadataValidator.validateDesignDocument` で検証され、
-ISSUE-008 Phase B-2 / B-3 以降は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
