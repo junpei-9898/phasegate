@@ -26,6 +26,9 @@ const buildHarnessError = (overrides: Partial<HarnessErrorProps> = {}) =>
     suggestion: '修正案',
     adrRef: null,
     fixExample: null,
+    suggestedSkill: null,
+    scaffoldCommand: null,
+    templatePath: null,
     ...overrides,
   });
 
@@ -150,6 +153,149 @@ target('HarnessError', () => {
         });
       });
 
+    });
+  });
+
+  // ISSUE-007 Wave 3 / H12-03: actionable fields
+  target('actionable fields (suggestedSkill / scaffoldCommand / templatePath)', () => {
+    describe('3 optional フィールドを保持する', () => {
+      // UT-HE-100
+      it('suggestedSkill を保持し toContract で snake_case キーで出力されること', () => {
+        // Arrange
+        const sut = buildHarnessError({ suggestedSkill: '/logical-designer' });
+
+        // Act
+        const actual = sut.toContract();
+
+        // Assert
+        expect(actual.suggested_skill).toBe('/logical-designer');
+      });
+
+      // UT-HE-101
+      it('scaffoldCommand を保持し toContract で snake_case キーで出力されること', () => {
+        // Arrange
+        const sut = buildHarnessError({
+          scaffoldCommand: 'npx phasegate scaffold-design --unit harness-error --phase logical',
+        });
+
+        // Act
+        const actual = sut.toContract();
+
+        // Assert
+        expect(actual.scaffold_command).toBe(
+          'npx phasegate scaffold-design --unit harness-error --phase logical',
+        );
+      });
+
+      // UT-HE-102
+      it('templatePath を保持し toContract で snake_case キーで出力されること', () => {
+        // Arrange
+        const sut = buildHarnessError({
+          templatePath: 'docs/templates/logical_design.template.md',
+        });
+
+        // Act
+        const actual = sut.toContract();
+
+        // Assert
+        expect(actual.template_path).toBe('docs/templates/logical_design.template.md');
+      });
+
+      // UT-HE-103
+      it('3 フィールドが全て null のとき toContract の出力にキーが含まれないこと', () => {
+        // Arrange
+        const sut = buildHarnessError();
+
+        // Act
+        const actual = sut.toContract();
+
+        // Assert
+        expect(actual).not.toHaveProperty('suggested_skill');
+        expect(actual).not.toHaveProperty('scaffold_command');
+        expect(actual).not.toHaveProperty('template_path');
+      });
+    });
+
+    describe('equals が 3 フィールドを比較対象に含む', () => {
+      // UT-HE-104
+      it('suggestedSkill が異なる場合 false を返すこと', () => {
+        // Arrange
+        const sut = buildHarnessError({ suggestedSkill: '/logical-designer' });
+        const other = buildHarnessError({ suggestedSkill: '/story-implementor' });
+
+        // Act
+        const actual = sut.equals(other);
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+
+      // UT-HE-105
+      it('scaffoldCommand が異なる場合 false を返すこと', () => {
+        // Arrange
+        const sut = buildHarnessError({ scaffoldCommand: 'npx phasegate scaffold-design --unit a' });
+        const other = buildHarnessError({ scaffoldCommand: 'npx phasegate scaffold-design --unit b' });
+
+        // Act
+        const actual = sut.equals(other);
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+
+      // UT-HE-106
+      it('templatePath が異なる場合 false を返すこと', () => {
+        // Arrange
+        const sut = buildHarnessError({ templatePath: 'docs/templates/a.md' });
+        const other = buildHarnessError({ templatePath: 'docs/templates/b.md' });
+
+        // Act
+        const actual = sut.equals(other);
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+
+      // UT-HE-107
+      it('3 フィールド全てが一致すれば他のフィールドも一致する場合に true を返すこと', () => {
+        // Arrange
+        const sut = buildHarnessError({
+          suggestedSkill: '/logical-designer',
+          scaffoldCommand: 'npx phasegate scaffold-design --unit x',
+          templatePath: 'docs/templates/x.md',
+        });
+        const other = buildHarnessError({
+          suggestedSkill: '/logical-designer',
+          scaffoldCommand: 'npx phasegate scaffold-design --unit x',
+          templatePath: 'docs/templates/x.md',
+        });
+
+        // Act
+        const actual = sut.equals(other);
+
+        // Assert
+        expect(actual).toBe(true);
+      });
+    });
+
+    describe('has* メソッド', () => {
+      // UT-HE-108
+      it('hasSuggestedSkill: 値があれば true / null なら false', () => {
+        expect(buildHarnessError({ suggestedSkill: '/x' }).hasSuggestedSkill()).toBe(true);
+        expect(buildHarnessError({ suggestedSkill: null }).hasSuggestedSkill()).toBe(false);
+      });
+
+      // UT-HE-109
+      it('hasScaffoldCommand: 値があれば true / null なら false', () => {
+        expect(buildHarnessError({ scaffoldCommand: 'npx x' }).hasScaffoldCommand()).toBe(true);
+        expect(buildHarnessError({ scaffoldCommand: null }).hasScaffoldCommand()).toBe(false);
+      });
+
+      // UT-HE-110
+      it('hasTemplatePath: 値があれば true / null なら false', () => {
+        expect(buildHarnessError({ templatePath: 'docs/x.md' }).hasTemplatePath()).toBe(true);
+        expect(buildHarnessError({ templatePath: null }).hasTemplatePath()).toBe(false);
+      });
     });
   });
 });

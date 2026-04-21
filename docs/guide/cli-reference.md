@@ -32,6 +32,66 @@ npx phasegate <command> [options]
 
 ---
 
+## Quick Mode
+
+| Command | Options | Description |
+|---|---|---|
+| `check-change-category` | `--paths <csv>` `--format human\|json` `--fail-on-full-required` | Classify changed file paths into Quick Mode categories (`api` / `domain` / `feature` / `bugfix` / `test` / `config` / `docs`) and report whether `quickMode.fullModeRequiredWhen` forces escalation to Full Mode. |
+
+### `check-change-category` の使い方
+
+ISSUE-006 Story A で導入。Quick Mode で取り扱おうとしている変更が
+`quickMode.fullModeRequiredWhen` のいずれかをトリガーするか事前に確認したいときに使う。
+
+```bash
+# JSON 出力 (CI で消費しやすい)
+npx phasegate check-change-category --paths src/foo.ts,src/bar.ts --format json
+
+# Full Mode が必要なら exit 1 (PR チェック等に使える)
+npx phasegate check-change-category \
+  --paths "$(git diff --name-only origin/main...HEAD | paste -sd, -)" \
+  --fail-on-full-required
+```
+
+`--fail-on-full-required` を指定しない場合、Full Mode が必要と判定されても exit 0 を返す
+（情報提供のみ）。CI で gate にしたいときは必ず付与すること。
+
+---
+
+## Baseline (Retrofit Grandfather)
+
+| Command | Options | Description |
+|---|---|---|
+| `baseline` | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` | Create / refresh `.phasegate/baseline.json` snapshot. Files in the snapshot are exempted from `phase-gate` until they are structurally modified (sha1 mismatch). |
+
+### `baseline` の使い方
+
+ISSUE-007 Wave 1 で導入。既存リポジトリに phasegate を後付けする際、現状のコード資産を
+"Phase A-2 grandfather" として一度だけ凍結する。
+
+```bash
+# 現在のリポジトリ全体をスナップショット
+npx phasegate baseline
+
+# 何が含まれるかだけ確認 (ファイルは書かない)
+npx phasegate baseline --dry-run --json
+
+# 既存スナップショットを上書きして再生成
+npx phasegate baseline --force
+
+# 特定ディレクトリだけ含める
+npx phasegate baseline --paths "scripts/harness/**/*.ts,src/**/*.ts"
+```
+
+スナップショットに含まれるファイルは sha1 ハッシュで照合される。ファイルを構造的に
+編集した瞬間に grandfather が外れ、通常の `phase-gate` 対象に戻る。新規ファイルは
+最初から `phase-gate` の対象。
+
+`baseline.enabled = false` (デフォルトは `true`) を `phasegate.config.json` に書くと
+仕組み全体を無効化できる。スナップショットの保存先は `baseline.path` で変更可能。
+
+---
+
 ## Harness API
 
 Commands exposed as npm scripts (`npm run <command>`).

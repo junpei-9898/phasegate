@@ -20,6 +20,15 @@ export class HarnessErrorContractMapper {
       ...(harnessError.fixExample !== null
         ? { fix_example: harnessError.fixExample.toString() }
         : {}),
+      ...(harnessError.suggestedSkill !== null
+        ? { suggested_skill: harnessError.suggestedSkill }
+        : {}),
+      ...(harnessError.scaffoldCommand !== null
+        ? { scaffold_command: harnessError.scaffoldCommand }
+        : {}),
+      ...(harnessError.templatePath !== null
+        ? { template_path: harnessError.templatePath }
+        : {}),
     };
 
     return Object.freeze(contract);

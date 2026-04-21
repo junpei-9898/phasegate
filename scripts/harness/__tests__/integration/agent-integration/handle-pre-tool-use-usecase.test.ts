@@ -7,6 +7,7 @@ import { target, context } from '../../helpers/test-helpers.js';
 import { HandlePreToolUseUseCase } from '../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js';
 import { PhaseGateQueryResult } from '../../../agent-integration/domain/value-objects/phase-gate-query-result.js';
 import { StoryReflectionQueryResult } from '../../../agent-integration/domain/value-objects/story-reflection-query-result.js';
+import type { ErrorGuidanceQueryPort, ErrorGuidance } from '../../../agent-integration/domain/ports/error-guidance-query-port.js';
 
 function createDefaultMockConfigQueryPort() {
   return {
@@ -1051,6 +1052,188 @@ target('HandlePreToolUseUseCase.execute', () => {
 
         // Assert
         expect(actual.shouldBlock).toBe(false);
+      });
+    });
+  });
+
+  // ISSUE-007 Wave 3 / H12-03: ErrorGuidance actionable fields
+  describe('ErrorGuidance actionable fields (ISSUE-007 Wave 3)', () => {
+    const guidance = (partial: Partial<ErrorGuidance> = {}): ErrorGuidance => ({
+      suggestedSkill: partial.suggestedSkill ?? null,
+      scaffoldCommand: partial.scaffoldCommand ?? null,
+      templatePath: partial.templatePath ?? null,
+    });
+
+    const guidancePort = (value: ErrorGuidance | null): ErrorGuidanceQueryPort => ({
+      getGuidance: vi.fn().mockResolvedValue(value),
+    });
+
+    context('PHASE_GATE violation + ErrorGuidanceQueryPort 注入', () => {
+      // IT-AI-GUIDE-001
+      it('scaffoldCommand と templatePath がエラーメッセージに含まれること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical_design.md missing'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          errorGuidanceQueryPort: guidancePort(
+            guidance({
+              suggestedSkill: '/logical-designer',
+              scaffoldCommand: 'npx phasegate scaffold-design --unit my-unit --phase logical',
+              templatePath: 'docs/templates/logical_design.template.md',
+            }),
+          ),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/my-unit/domain/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(actual.error?.message).toContain('/logical-designer');
+        expect(actual.error?.message).toContain('npx phasegate scaffold-design --unit my-unit --phase logical');
+        expect(actual.error?.message).toContain('docs/templates/logical_design.template.md');
+      });
+
+      // IT-AI-GUIDE-002
+      it('ErrorGuidanceQueryPort が null を返した場合は従来のハードコード message が使われること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical_design.md missing'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          errorGuidanceQueryPort: guidancePort(null),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/my-unit/domain/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.error?.message).toContain('/story-implementor');
+        expect(actual.error?.message).not.toContain('scaffold-design');
+      });
+
+      // IT-AI-GUIDE-003
+      it('ErrorGuidanceQueryPort 未注入の場合は従来挙動（backward compatible）', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical_design.md missing'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/my-unit/domain/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.error?.message).toContain('/story-implementor');
+        expect(actual.error?.message).not.toContain('scaffold-design');
+      });
+    });
+
+    context('FULL_MODE_REQUIRED violation + ErrorGuidanceQueryPort 注入', () => {
+      // IT-AI-GUIDE-004
+      it('scaffold CLI と template パスが FULL_MODE_REQUIRED message に含まれること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'MIXED_CHANGES' as const,
+            rejectionReason: 'allowedCategories 外',
+            dominantCategory: 'domain',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeQueryPort,
+          errorGuidanceQueryPort: guidancePort(
+            guidance({
+              suggestedSkill: '/story-implementor',
+              scaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
+              templatePath: 'docs/templates/logical_design.template.md',
+            }),
+          ),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/new-unit/domain/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+        expect(actual.error?.message).toContain('/story-implementor');
+        expect(actual.error?.message).toContain('npx phasegate scaffold-design --unit x --phase logical');
+        expect(actual.error?.message).toContain('docs/templates/logical_design.template.md');
+      });
+    });
+
+    context('ErrorGuidanceQueryPort が例外を throw した場合', () => {
+      // IT-AI-GUIDE-005
+      it('graceful degradation — 従来挙動（ハードコード message）で block されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['blocker'], []),
+          ),
+        };
+        const explodingPort: ErrorGuidanceQueryPort = {
+          getGuidance: vi.fn().mockRejectedValue(new Error('registry lookup failed')),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          errorGuidanceQueryPort: explodingPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/my-unit/domain/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(actual.error?.message).toContain('/story-implementor');
       });
     });
   });

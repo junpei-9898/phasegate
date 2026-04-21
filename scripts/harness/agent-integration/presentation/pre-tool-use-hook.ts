@@ -14,6 +14,7 @@ import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-que
 import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
 import { QuickModeFullModeRequirementAdapter } from '../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
 import { CiGovernanceBaselineGrandfatherAdapter } from '../infrastructure/adapters/ci-governance-baseline-grandfather-adapter.js';
+import { HarnessErrorGuidanceAdapter } from '../infrastructure/adapters/harness-error-guidance-adapter.js';
 import { createQuickModeCompositionRoot } from '../../quick-mode/composition-root.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
@@ -128,12 +129,16 @@ async function main(): Promise<void> {
       baseDir: path.dirname(configPath),
       configQueryPort,
     });
+    const errorGuidanceQueryPort = new HarnessErrorGuidanceAdapter({
+      rootDir: path.dirname(configPath),
+    });
     const useCase = new HandlePreToolUseUseCase({
       configQueryPort,
       phaseGateQueryPort,
       storyReflectionQueryPort,
       fullModeRequirementQueryPort,
       baselineGrandfatherQueryPort,
+      errorGuidanceQueryPort,
     });
 
     const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths });

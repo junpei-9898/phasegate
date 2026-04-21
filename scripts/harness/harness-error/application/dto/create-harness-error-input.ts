@@ -12,4 +12,7 @@ export interface CreateHarnessErrorInput {
   readonly adrRef?: string;
   readonly fixExample?: string;
   readonly validatorId: string;
+  readonly suggestedSkill?: string;
+  readonly scaffoldCommand?: string;
+  readonly templatePath?: string;
 }

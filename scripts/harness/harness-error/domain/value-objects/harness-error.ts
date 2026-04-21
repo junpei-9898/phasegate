@@ -17,6 +17,9 @@ export interface HarnessErrorContract {
   readonly suggestion: string;
   readonly adr_ref?: string;
   readonly fix_example?: string;
+  readonly suggested_skill?: string;
+  readonly scaffold_command?: string;
+  readonly template_path?: string;
 }
 
 export interface HarnessErrorProps {
@@ -26,6 +29,9 @@ export interface HarnessErrorProps {
   readonly suggestion: string;
   readonly adrRef: AdrRef | null;
   readonly fixExample: FixExample | null;
+  readonly suggestedSkill?: string | null;
+  readonly scaffoldCommand?: string | null;
+  readonly templatePath?: string | null;
 }
 
 export class HarnessError {
@@ -35,6 +41,9 @@ export class HarnessError {
   readonly suggestion: string;
   readonly adrRef: AdrRef | null;
   readonly fixExample: FixExample | null;
+  readonly suggestedSkill: string | null;
+  readonly scaffoldCommand: string | null;
+  readonly templatePath: string | null;
 
   constructor(props: HarnessErrorProps) {
     this.code = props.code;
@@ -43,6 +52,9 @@ export class HarnessError {
     this.suggestion = props.suggestion;
     this.adrRef = props.adrRef;
     this.fixExample = props.fixExample;
+    this.suggestedSkill = props.suggestedSkill ?? null;
+    this.scaffoldCommand = props.scaffoldCommand ?? null;
+    this.templatePath = props.templatePath ?? null;
   }
 
   equals(other: HarnessError): boolean {
@@ -66,7 +78,10 @@ export class HarnessError {
       this.message === other.message &&
       this.suggestion === other.suggestion &&
       adrRefEqual &&
-      fixExampleEqual
+      fixExampleEqual &&
+      this.suggestedSkill === other.suggestedSkill &&
+      this.scaffoldCommand === other.scaffoldCommand &&
+      this.templatePath === other.templatePath
     );
   }
 
@@ -76,6 +91,18 @@ export class HarnessError {
 
   hasFixExample(): boolean {
     return this.fixExample !== null;
+  }
+
+  hasSuggestedSkill(): boolean {
+    return this.suggestedSkill !== null;
+  }
+
+  hasScaffoldCommand(): boolean {
+    return this.scaffoldCommand !== null;
+  }
+
+  hasTemplatePath(): boolean {
+    return this.templatePath !== null;
   }
 
   toContract(): Readonly<HarnessErrorContract> {
@@ -88,6 +115,9 @@ export class HarnessError {
       ...(this.fixExample !== null
         ? { fix_example: this.fixExample.toString() }
         : {}),
+      ...(this.suggestedSkill !== null ? { suggested_skill: this.suggestedSkill } : {}),
+      ...(this.scaffoldCommand !== null ? { scaffold_command: this.scaffoldCommand } : {}),
+      ...(this.templatePath !== null ? { template_path: this.templatePath } : {}),
     };
     return Object.freeze(contract);
   }

@@ -165,6 +165,13 @@ These commands are for phasegate's own development and quality assurance.
 | `ci:generate-template` | Generate CI template | `--preset <id>` `--type aidlc-gate\|consistency-check\|pre-commit` `--render` `--json` |
 | `ci:migrate-agents-md` | Migrate AGENTS.md | — |
 | `ci:check-repetition` | Repetition error detection | `--code <errorCode>` `--reset` `--json` |
+| `baseline` | Create retrofit baseline snapshot at `.phasegate/baseline.json` (ISSUE-007 Wave 1, Phase A-2 grandfather). Captures sha1 of currently-tracked files so they are exempted from `phase-gate` until they are structurally modified. | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` |
+
+#### Quick Mode
+
+| Command | Description | Options |
+|---|---|---|
+| `check-change-category` | Classify changed file paths into Quick Mode categories (`api` / `domain` / `feature` / `bugfix` / `test` / `config` / `docs`) and report whether Full Mode is required by `quickMode.fullModeRequiredWhen` (ISSUE-006 Story A). | `--paths <csv>` `--format human\|json` `--fail-on-full-required` |
 
 #### Skill Management
 
@@ -196,8 +203,32 @@ Claude Code
 
 1. Receives JSON via stdin before tool invocation: `tool_name`, `tool_input`
 2. **For Bash**: `BashWriteTargetExtractor` detects write targets (redirects, tee, sed -i, cp, mv) and "spoofs" as Write for phase-gate checking
-3. **HandlePreToolUseUseCase** checks: protected files, phase gate violations, storyReflection status
-4. **Block decision**: exit code 2 with reason (PHASE_GATE / PROTECTED_FILE / STORY_REFLECTION_FAILURE)
+3. **HandlePreToolUseUseCase** checks, in order:
+   - Protected file violations
+   - **Baseline grandfather** — if `baseline.enabled` and the target path appears in `.phasegate/baseline.json` with an unchanged sha1, the phase-gate check is skipped (ISSUE-007 Wave 2 / Phase A-2)
+   - Phase gate violations
+   - **Full Mode required detection** — `quickMode.fullModeRequiredWhen` is evaluated for the in-flight change set; when triggered, escalates Quick Mode → Full and blocks (ISSUE-006 Story B / v0.64.0)
+   - storyReflection status
+4. **Block decision**: exit code 2 with reason (PHASE_GATE / PROTECTED_FILE / STORY_REFLECTION_FAILURE / FULL_MODE_REQUIRED)
+
+### Retrofit Baseline (`.phasegate/baseline.json`)
+
+When phasegate is introduced into an existing repository, every legacy file would otherwise trip `phase-gate` on first edit. The `baseline` command snapshots the current state so those files are grandfathered in until they are structurally modified.
+
+```jsonc
+{
+  "version": "1.0",
+  "createdAt": "2026-04-21T20:56:26.843Z",
+  "algorithm": "sha1",
+  "files": [
+    { "path": "scripts/harness/foo/domain/bar.ts", "sha1": "a35d1d68..." }
+  ]
+}
+```
+
+- Hash mismatch (the file changed since the snapshot) re-arms `phase-gate` for that file.
+- New files (not in the snapshot) are subject to `phase-gate` from the start.
+- Toggle the entire mechanism via `baseline.enabled` in `phasegate.config.json`; relocate the snapshot via `baseline.path`.
 
 ### Shell Script Hooks
 
@@ -240,11 +271,15 @@ Configuration for `format-typescript-hook.sh` and `analyze-errors-hook.sh`:
 
 ### 3 Rejection Rules (blocks Quick Mode → full validation)
 
-| Rule | Condition |
-|---|---|
-| `MIXED_CHANGES` | Files outside `allowedCategories` |
-| `NEW_DOMAIN` | New files in `domain/` directory |
-| `API_CONTRACT` | Changes to `*port.ts` / `*adapter.ts` |
+| Rule | Condition | Config flag (`quickMode.fullModeRequiredWhen.*`) |
+|---|---|---|
+| `MIXED_CHANGES` | Files outside `allowedCategories` | `mixedCategories` |
+| `NEW_DOMAIN` | New files in `domain/` directory | `newDomainFile` |
+| `API_CONTRACT` | Changes to `*port.ts` / `*adapter.ts` | `apiContractChange` |
+
+ISSUE-006 Story A made these triggers config-driven; flipping a flag to `false` in `phasegate.config.json` disables that specific escalation. Story B then wired the same checks into the pre-tool-use hook so the escalation fires synchronously at write time, not just after-the-fact during validation.
+
+Use `npx phasegate check-change-category --paths <csv> [--format json] [--fail-on-full-required]` to dry-run the classifier against an arbitrary file list (useful in CI gates that want to short-circuit a Quick Mode PR).
 
 ### Validator Relaxation (when approved)
 

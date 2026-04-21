@@ -20,6 +20,9 @@ const createHarnessErrorEntity = (overrides: {
   suggestion?: string;
   adrRef?: string | null;
   fixExample?: string | null;
+  suggestedSkill?: string | null;
+  scaffoldCommand?: string | null;
+  templatePath?: string | null;
 } = {}) =>
   new HarnessError({
     code: ErrorCode.create(overrides.code ?? 'L1-001'),
@@ -34,6 +37,9 @@ const createHarnessErrorEntity = (overrides: {
       overrides.fixExample === null
         ? null
         : FixExample.create(overrides.fixExample ?? 'const fixed = true;'),
+    suggestedSkill: overrides.suggestedSkill ?? null,
+    scaffoldCommand: overrides.scaffoldCommand ?? null,
+    templatePath: overrides.templatePath ?? null,
   });
 
 target('HarnessErrorContractMapper.toReadonlyContract', () => {
@@ -97,5 +103,43 @@ target('HarnessErrorContractMapper.toReadonlyContract', () => {
       });
     });
 
+    // ISSUE-007 Wave 3 / H12-03: actionable fields mapping
+    context('suggestedSkill / scaffoldCommand / templatePath が設定されている場合', () => {
+      // IT-HE-050
+      it('snake_case キーで投影されること', () => {
+        // Arrange
+        const sut = new HarnessErrorContractMapper();
+        const harnessError = createHarnessErrorEntity({
+          suggestedSkill: '/story-implementor',
+          scaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
+          templatePath: 'docs/templates/logical_design.template.md',
+        });
+
+        // Act
+        const actual = sut.toReadonlyContract(harnessError);
+
+        // Assert
+        expect(actual.suggested_skill).toBe('/story-implementor');
+        expect(actual.scaffold_command).toBe('npx phasegate scaffold-design --unit x --phase logical');
+        expect(actual.template_path).toBe('docs/templates/logical_design.template.md');
+      });
+    });
+
+    context('suggestedSkill / scaffoldCommand / templatePath が全て null の場合', () => {
+      // IT-HE-051
+      it('対応する snake_case キーが省略されること', () => {
+        // Arrange
+        const sut = new HarnessErrorContractMapper();
+        const harnessError = createHarnessErrorEntity();
+
+        // Act
+        const actual = sut.toReadonlyContract(harnessError);
+
+        // Assert
+        expect(actual.suggested_skill).toBeUndefined();
+        expect(actual.scaffold_command).toBeUndefined();
+        expect(actual.template_path).toBeUndefined();
+      });
+    });
   });
 });

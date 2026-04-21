@@ -480,5 +480,73 @@ target('HarnessErrorFactory', () => {
         await expect(actual()).rejects.toThrowError(InvalidErrorCodeError);
       });
     });
+
+    // ISSUE-007 Wave 3 / H12-03: actionable fields propagation
+    describe('actionable default fields を ErrorDefinition から継承する', () => {
+      // UT-HE-079
+      it('ErrorDefinition の defaultSuggestedSkill / defaultScaffoldCommand / defaultTemplatePath が HarnessError に伝播すること', async () => {
+        // Arrange
+        const definition = createErrorDefinition({
+          code: createErrorCode('L2-001'),
+          defaultSuggestedSkill: '/story-implementor',
+          defaultScaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
+          defaultTemplatePath: 'docs/templates/logical_design.template.md',
+        });
+        const { sut } = createFactory({ definitions: [definition] });
+        const params = createFactoryParams({ code: 'L2-001', adrRef: null, fixExample: null });
+
+        // Act
+        const actual = await sut.create(params);
+
+        // Assert
+        expect(actual.suggestedSkill).toBe('/story-implementor');
+        expect(actual.scaffoldCommand).toBe('npx phasegate scaffold-design --unit x --phase logical');
+        expect(actual.templatePath).toBe('docs/templates/logical_design.template.md');
+      });
+
+      // UT-HE-080
+      it('CreateHarnessErrorParams の明示引数が ErrorDefinition の default を上書きすること', async () => {
+        // Arrange
+        const definition = createErrorDefinition({
+          code: createErrorCode('L2-001'),
+          defaultSuggestedSkill: '/story-implementor',
+          defaultScaffoldCommand: 'default-command',
+          defaultTemplatePath: 'default-path',
+        });
+        const { sut } = createFactory({ definitions: [definition] });
+        const params = createFactoryParams({
+          code: 'L2-001',
+          adrRef: null,
+          fixExample: null,
+          suggestedSkill: '/logical-designer',
+          scaffoldCommand: 'explicit-command',
+          templatePath: 'explicit-path',
+        });
+
+        // Act
+        const actual = await sut.create(params);
+
+        // Assert
+        expect(actual.suggestedSkill).toBe('/logical-designer');
+        expect(actual.scaffoldCommand).toBe('explicit-command');
+        expect(actual.templatePath).toBe('explicit-path');
+      });
+
+      // UT-HE-081
+      it('ErrorDefinition に default が無く input にも無い場合 HarnessError の 3 フィールドは null', async () => {
+        // Arrange
+        const definition = createErrorDefinition({ code: createErrorCode('L2-001') });
+        const { sut } = createFactory({ definitions: [definition] });
+        const params = createFactoryParams({ code: 'L2-001', adrRef: null, fixExample: null });
+
+        // Act
+        const actual = await sut.create(params);
+
+        // Assert
+        expect(actual.suggestedSkill).toBeNull();
+        expect(actual.scaffoldCommand).toBeNull();
+        expect(actual.templatePath).toBeNull();
+      });
+    });
   });
 });

@@ -29,6 +29,9 @@ export interface CreateHarnessErrorParams {
   readonly requestedSeverity?: 'error' | 'warning';
   readonly adrRef?: string | null;
   readonly fixExample?: string | null;
+  readonly suggestedSkill?: string | null;
+  readonly scaffoldCommand?: string | null;
+  readonly templatePath?: string | null;
 }
 
 export interface HarnessErrorFactoryDeps {
@@ -119,7 +122,12 @@ export class HarnessErrorFactory {
       }
     }
 
-    // 10. HarnessError 生成と凍結
+    // 10. actionable フィールドの解決（ErrorDefinition の default と input 引数の合成）
+    const resolvedSuggestedSkill = definition.resolveSuggestedSkill(input.suggestedSkill);
+    const resolvedScaffoldCommand = definition.resolveScaffoldCommand(input.scaffoldCommand);
+    const resolvedTemplatePath = definition.resolveTemplatePath(input.templatePath);
+
+    // 11. HarnessError 生成と凍結
     const harnessError = new HarnessError({
       code: errorCode,
       severity: effectiveSeverity,
@@ -127,6 +135,9 @@ export class HarnessErrorFactory {
       suggestion: input.suggestion,
       adrRef: resolvedAdrRef,
       fixExample: resolvedFixExample,
+      suggestedSkill: resolvedSuggestedSkill,
+      scaffoldCommand: resolvedScaffoldCommand,
+      templatePath: resolvedTemplatePath,
     });
 
     return Object.freeze(harnessError);

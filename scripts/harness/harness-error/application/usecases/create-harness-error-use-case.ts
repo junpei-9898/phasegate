@@ -34,6 +34,9 @@ export class CreateHarnessErrorUseCase {
       requestedSeverity: input.severity,
       adrRef: input.adrRef,
       fixExample: input.fixExample,
+      suggestedSkill: input.suggestedSkill,
+      scaffoldCommand: input.scaffoldCommand,
+      templatePath: input.templatePath,
     });
 
     return this.contractMapper.toReadonlyContract(harnessError);

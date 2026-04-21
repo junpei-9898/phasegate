@@ -24,7 +24,12 @@ This file is the **Single Source of Truth** for all quality configuration in a P
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
     "maintainedLayers": ["L1", "L2"],
-    "relaxedGates": ["phase-gate", "2-phase-execution"]
+    "relaxedGates": ["phase-gate", "2-phase-execution"],
+    "fullModeRequiredWhen": {
+      "mixedCategories": true,
+      "newDomainFile": true,
+      "apiContractChange": true
+    }
   },
   "phaseDependencies": {
     "preset": "standard",      // "full" | "standard" | "minimal" | "custom" ("default" -> "full")
@@ -53,6 +58,10 @@ This file is the **Single Source of Truth** for all quality configuration in a P
   "reporting": {
     "format": "json",
     "outputDir": "reports"
+  },
+  "baseline": {
+    "enabled": true,
+    "path": ".phasegate/baseline.json"
   }
 }
 ```
@@ -105,11 +114,26 @@ The five layers are:
 
 #### `quickMode`
 
-| Sub-field           | Type       | Default                                 | Description                                                                 |
-|---------------------|------------|-----------------------------------------|-----------------------------------------------------------------------------|
-| `allowedCategories` | `string[]` | `["bugfix", "docs", "test", "config"]`  | Change categories permitted under Quick Mode. Any category outside this list requires the full `story-implementor` workflow. |
-| `maintainedLayers`  | `string[]` | `["L1", "L2"]`                          | Layers that remain fully enforced even in Quick Mode.                       |
-| `relaxedGates`      | `string[]` | `["phase-gate", "2-phase-execution"]`   | Gates that are relaxed (not skipped) when Quick Mode is active.             |
+| Sub-field              | Type       | Default                                 | Description                                                                 |
+|------------------------|------------|-----------------------------------------|-----------------------------------------------------------------------------|
+| `allowedCategories`    | `string[]` | `["bugfix", "docs", "test", "config"]`  | Change categories permitted under Quick Mode. Any category outside this list requires the full `story-implementor` workflow. |
+| `maintainedLayers`     | `string[]` | `["L1", "L2"]`                          | Layers that remain fully enforced even in Quick Mode.                       |
+| `relaxedGates`         | `string[]` | `["phase-gate", "2-phase-execution"]`   | Gates that are relaxed (not skipped) when Quick Mode is active.             |
+| `fullModeRequiredWhen` | `object`   | all flags `true`                        | Conditions that force a Quick Mode change to escalate to the full `/story-implementor` flow. See below. |
+
+##### `fullModeRequiredWhen`
+
+Introduced in ISSUE-006 Story A (v0.63.0) and wired into the pre-tool-use hook by Story B (v0.64.0). Each flag is a hard escalation rule -- when triggered, the change cannot proceed under Quick Mode regardless of the file's category.
+
+| Flag                | Default | Trigger                                                                                       |
+|---------------------|---------|-----------------------------------------------------------------------------------------------|
+| `mixedCategories`   | `true`  | The change set spans more than one Quick Mode category (e.g. a `bugfix` file + an `api` file).|
+| `newDomainFile`     | `true`  | The change creates a new file under any `domain/` directory.                                  |
+| `apiContractChange` | `true`  | The change modifies a Port (`*port.ts`) or Adapter (`*adapter.ts`) file.                      |
+
+**Use `npx phasegate check-change-category --paths <csv>`** to dry-run the classifier against an arbitrary file list (see [CLI Reference](cli-reference.md#check-change-category-の使い方)). Combining `--fail-on-full-required` with a CI job makes "Quick Mode PR that should have been Full" a hard build failure.
+
+Set a flag to `false` only when the project intentionally accepts the risk of merging that category of change without the design ceremony -- e.g. an early-stage prototype where new domain files are expected to churn.
 
 #### `phaseDependencies`
 
@@ -380,6 +404,17 @@ Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well
 |-------------|----------|-------------|-------------------------------------------------------|
 | `format`    | `string` | `"json"`    | Output format for validation reports.                 |
 | `outputDir` | `string` | `"reports"` | Directory where reports are written.                  |
+
+#### `baseline` (retrofit grandfather)
+
+Introduced in ISSUE-007 Wave 1 (v0.65.0) and wired into the pre-tool-use hook by Wave 2 (v0.66.0). When phasegate is added to an existing repository, the `baseline` block lets you snapshot the current state of the codebase so legacy files do not trip `phase-gate` on first edit. Files in the snapshot are exempted **until they are structurally modified** (sha1 mismatch); new files are subject to `phase-gate` from the start.
+
+| Sub-field | Type      | Default                       | Description                                                                                  |
+|-----------|-----------|-------------------------------|----------------------------------------------------------------------------------------------|
+| `enabled` | `boolean` | `true`                        | Master switch. Set to `false` to disable retrofit grandfather and treat every file as new.   |
+| `path`    | `string`  | `".phasegate/baseline.json"`  | Snapshot location. Override only if `.phasegate/` conflicts with an existing path in the repo.|
+
+Generate or refresh the snapshot with `npx phasegate baseline` (`--dry-run` to inspect, `--force` to overwrite, `--paths <glob,glob,...>` to scope, `--json` for CI-friendly output). See the [Baseline section in CLI Reference](cli-reference.md#baseline-retrofit-grandfather) for details.
 
 ---
 

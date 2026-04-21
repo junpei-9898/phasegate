@@ -18,6 +18,10 @@ import type {
   BaselineGrandfatherCheckResult,
   BaselineGrandfatherQueryPort,
 } from '../../domain/ports/baseline-grandfather-query-port.js';
+import type {
+  ErrorGuidance,
+  ErrorGuidanceQueryPort,
+} from '../../domain/ports/error-guidance-query-port.js';
 import { WriteTargetScope } from '../../domain/value-objects/write-target-scope.js';
 import type { HandlePreToolUseInput, HandlePreToolUseOutput } from '../dto/handle-pre-tool-use-dto.js';
 
@@ -28,6 +32,7 @@ export interface HandlePreToolUseUseCasePorts {
   fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
   baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
   grandfatherLogger?: (reason: string, targetFilePaths: readonly string[]) => void;
+  errorGuidanceQueryPort?: ErrorGuidanceQueryPort;
 }
 
 export class HandlePreToolUseInputValidationError extends Error {
@@ -48,6 +53,7 @@ export class HandlePreToolUseUseCase {
   private readonly storyReflectionQueryPort?: StoryReflectionQueryPort;
   private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
   private readonly baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
+  private readonly errorGuidanceQueryPort?: ErrorGuidanceQueryPort;
   private readonly grandfatherLogger: (
     reason: string,
     targetFilePaths: readonly string[],
@@ -58,6 +64,7 @@ export class HandlePreToolUseUseCase {
     this.storyReflectionQueryPort = ports.storyReflectionQueryPort;
     this.fullModeRequirementQueryPort = ports.fullModeRequirementQueryPort;
     this.baselineGrandfatherQueryPort = ports.baselineGrandfatherQueryPort;
+    this.errorGuidanceQueryPort = ports.errorGuidanceQueryPort;
     this.grandfatherLogger =
       ports.grandfatherLogger ??
       ((reason, paths) =>
@@ -95,7 +102,8 @@ export class HandlePreToolUseUseCase {
           this.grandfatherLogger('phase-gate', input.targetFilePaths);
           // fallthrough: continue to full-mode / story-reflection checks (which may also grandfather)
         } else {
-          return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(blockedFilePath, metadata);
+          const guidance = await this.resolveGuidance('L2-001');
+          return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(blockedFilePath, metadata, guidance);
         }
       } else {
         return {
@@ -116,9 +124,11 @@ export class HandlePreToolUseUseCase {
       } else {
         const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
         if (fullModeResult.requiresFullMode) {
+          const guidance = await this.resolveGuidance('L2-001');
           return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
             input.targetFilePaths[0],
             fullModeResult,
+            guidance,
           );
         }
       }
@@ -168,6 +178,17 @@ export class HandlePreToolUseUseCase {
     }
   }
 
+  private async resolveGuidance(errorCode: string): Promise<ErrorGuidance | null> {
+    if (this.errorGuidanceQueryPort === undefined) {
+      return null;
+    }
+    try {
+      return await this.errorGuidanceQueryPort.getGuidance(errorCode);
+    } catch {
+      return null;
+    }
+  }
+
   private static buildFullModeRequiredBlockOutput(
     blockedFilePath: string | undefined,
     result: {
@@ -176,6 +197,7 @@ export class HandlePreToolUseUseCase {
       rejectionReason?: string;
       dominantCategory?: string;
     },
+    guidance: ErrorGuidance | null,
   ): HandlePreToolUseOutput {
     const fp = blockedFilePath ?? '不明なファイル';
     const lines: string[] = [
@@ -190,7 +212,9 @@ export class HandlePreToolUseUseCase {
     if (result.rejectionReason) {
       lines.push(`理由: ${result.rejectionReason}`);
     }
-    lines.push('次のアクション: /story-implementor スキルを使用して設計フェーズから開始してください。');
+    const suggestedSkill = guidance?.suggestedSkill ?? '/story-implementor';
+    lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
+    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance);
 
     return {
       shouldBlock: true,
@@ -199,8 +223,18 @@ export class HandlePreToolUseUseCase {
       error: { message: lines.join('\n') },
       fullModeRejectionRule: result.rejectionRule,
       fullModeDominantCategory: result.dominantCategory,
-      nextAction: '/story-implementor',
+      nextAction: suggestedSkill,
     };
+  }
+
+  private static appendGuidanceLines(lines: string[], guidance: ErrorGuidance | null): void {
+    if (guidance === null) return;
+    if (guidance.scaffoldCommand !== null) {
+      lines.push(`  scaffold: ${guidance.scaffoldCommand}`);
+    }
+    if (guidance.templatePath !== null) {
+      lines.push(`  テンプレ: ${guidance.templatePath}`);
+    }
   }
 
   private resolveStoryReflectionScope(input: HandlePreToolUseInput): WriteTargetScope | null {
@@ -229,6 +263,7 @@ export class HandlePreToolUseUseCase {
   private static buildPhaseGateBlockOutput(
     blockedFilePath: string | undefined,
     metadata: BlockMetadata,
+    guidance: ErrorGuidance | null,
   ): HandlePreToolUseOutput {
     const levelLabel = metadata.scopeLevel
       ? HandlePreToolUseUseCase.LEVEL_LABELS[metadata.scopeLevel] ?? `Level ${metadata.scopeLevel}`
@@ -246,10 +281,12 @@ export class HandlePreToolUseUseCase {
       }
     }
 
-    lines.push('次のアクション: /story-implementor スキルを使用して設計フェーズから開始してください。');
+    const suggestedSkill = guidance?.suggestedSkill ?? '/story-implementor';
+    lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
     if (metadata.unitId) {
-      lines.push(`  実行例: /story-implementor --unit ${metadata.unitId}`);
+      lines.push(`  実行例: ${suggestedSkill} --unit ${metadata.unitId}`);
     }
+    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance);
 
     return {
       shouldBlock: true,
@@ -258,8 +295,8 @@ export class HandlePreToolUseUseCase {
       error: { message: lines.join('\n') },
       phaseGateBlockers: [...blockers],
       nextAction: metadata.unitId
-        ? `/story-implementor --unit ${metadata.unitId}`
-        : '/story-implementor',
+        ? `${suggestedSkill} --unit ${metadata.unitId}`
+        : suggestedSkill,
     };
   }
 

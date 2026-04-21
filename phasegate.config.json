@@ -69,5 +69,9 @@
       "tsconfig.json",
       "package.json"
     ]
+  },
+  "baseline": {
+    "enabled": true,
+    "path": ".phasegate/baseline.json"
   }
 }

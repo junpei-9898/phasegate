@@ -311,4 +311,110 @@ target('ErrorDefinition', () => {
       });
     });
   });
+
+  // ISSUE-007 Wave 3 / H12-03: actionable defaults
+  target('actionable defaults (defaultSuggestedSkill / defaultScaffoldCommand / defaultTemplatePath)', () => {
+    describe('3 optional フィールドの保持と解決', () => {
+      // UT-HE-120
+      it('defaultSuggestedSkill を保持すること', () => {
+        // Arrange
+        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+
+        // Act
+        const actual = sut.defaultSuggestedSkill;
+
+        // Assert
+        expect(actual).toBe('/story-implementor');
+      });
+
+      // UT-HE-121
+      it('defaultScaffoldCommand を保持すること', () => {
+        // Arrange
+        const sut = createErrorDefinition({
+          defaultScaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
+        });
+
+        // Act
+        const actual = sut.defaultScaffoldCommand;
+
+        // Assert
+        expect(actual).toBe('npx phasegate scaffold-design --unit x --phase logical');
+      });
+
+      // UT-HE-122
+      it('defaultTemplatePath を保持すること', () => {
+        // Arrange
+        const sut = createErrorDefinition({
+          defaultTemplatePath: 'docs/templates/logical_design.template.md',
+        });
+
+        // Act
+        const actual = sut.defaultTemplatePath;
+
+        // Assert
+        expect(actual).toBe('docs/templates/logical_design.template.md');
+      });
+
+      // UT-HE-123
+      it('未指定のとき 3 フィールドは null であること', () => {
+        // Arrange
+        const sut = createErrorDefinition();
+
+        // Assert
+        expect(sut.defaultSuggestedSkill).toBeNull();
+        expect(sut.defaultScaffoldCommand).toBeNull();
+        expect(sut.defaultTemplatePath).toBeNull();
+      });
+    });
+
+    describe('resolve* メソッド', () => {
+      // UT-HE-124
+      it('resolveSuggestedSkill: 明示引数が優先される', () => {
+        // Arrange
+        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+
+        // Act
+        const actual = sut.resolveSuggestedSkill('/logical-designer');
+
+        // Assert
+        expect(actual).toBe('/logical-designer');
+      });
+
+      // UT-HE-125
+      it('resolveSuggestedSkill: 明示引数が null の場合 default が返る', () => {
+        // Arrange
+        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+
+        // Act
+        const actual = sut.resolveSuggestedSkill(null);
+
+        // Assert
+        expect(actual).toBe('/story-implementor');
+      });
+
+      // UT-HE-126
+      it('resolveScaffoldCommand: 明示引数が優先される', () => {
+        // Arrange
+        const sut = createErrorDefinition({ defaultScaffoldCommand: 'npx phasegate scaffold-design --unit a' });
+
+        // Act
+        const actual = sut.resolveScaffoldCommand('npx phasegate scaffold-design --unit b');
+
+        // Assert
+        expect(actual).toBe('npx phasegate scaffold-design --unit b');
+      });
+
+      // UT-HE-127
+      it('resolveTemplatePath: 明示引数が null で default も null なら null を返す', () => {
+        // Arrange
+        const sut = createErrorDefinition();
+
+        // Act
+        const actual = sut.resolveTemplatePath(null);
+
+        // Assert
+        expect(actual).toBeNull();
+      });
+    });
+  });
 });

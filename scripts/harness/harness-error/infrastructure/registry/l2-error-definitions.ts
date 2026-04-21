@@ -14,6 +14,9 @@ function createDefinition(input: {
   category: 'phase_gate' | 'architecture' | 'dependency' | 'quality' | 'security' | 'performance' | 'consistency' | 'metadata';
   ownerValidatorId: string;
   defaultFixExample: string;
+  defaultSuggestedSkill?: string;
+  defaultScaffoldCommand?: string;
+  defaultTemplatePath?: string;
 }): ErrorDefinition {
   return ErrorDefinition.create({
     code: ErrorCode.create(input.code),
@@ -25,6 +28,9 @@ function createDefinition(input: {
     fixExampleRequired: true,
     defaultFixExample: FixExample.create(input.defaultFixExample),
     ownerValidatorId: input.ownerValidatorId,
+    defaultSuggestedSkill: input.defaultSuggestedSkill ?? null,
+    defaultScaffoldCommand: input.defaultScaffoldCommand ?? null,
+    defaultTemplatePath: input.defaultTemplatePath ?? null,
   });
 }
 
@@ -36,6 +42,9 @@ export const L2_ERROR_DEFINITIONS = Object.freeze([
     ownerValidatorId: 'phase-gate',
     defaultFixExample:
       "const requiredPlanPath = 'docs/inception/harness-error/it_test_logic_plan.md';",
+    defaultSuggestedSkill: '/story-implementor',
+    defaultScaffoldCommand: 'npx phasegate scaffold-design --unit <unit-id> --phase logical',
+    defaultTemplatePath: 'docs/templates/logical_design.template.md',
   }),
   createDefinition({
     code: 'L2-002',

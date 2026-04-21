@@ -189,7 +189,12 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
     "maintainedLayers": ["L1", "L2"],
-    "relaxedGates": ["phase-gate", "2-phase-execution"]
+    "relaxedGates": ["phase-gate", "2-phase-execution"],
+    "fullModeRequiredWhen": {
+      "mixedCategories": true,
+      "newDomainFile": true,
+      "apiContractChange": true
+    }
   },
   "phaseDependencies": {
     "preset": "standard",
@@ -197,9 +202,17 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
   },
   "protectedFiles": {
     "exclude": ["tsconfig.json", "package.json"]
+  },
+  "baseline": {
+    "enabled": true,
+    "path": ".phasegate/baseline.json"
   }
 }
 ```
+
+`quickMode.fullModeRequiredWhen` declares which conditions force a Quick Mode change to escalate to the full `/story-implementor` flow. All three triggers default to `true` so retrofits stay safe; flip individual flags to `false` only when a project intentionally accepts the risk.
+
+`baseline` opts in to the **Phase A-2 retrofit grandfather**: pre-existing files captured in `.phasegate/baseline.json` are exempted from `phase-gate` until they are structurally modified. Generate the snapshot with `npx phasegate baseline` before introducing the harness to an existing repository.
 
 ---
 
@@ -246,7 +259,7 @@ Phasegate integrates natively with Claude Code via hooks in `.claude/settings.js
 
 | Hook | Trigger | Behavior |
 |---|---|---|
-| `PreToolUse` | `Write`, `Edit`, or `Bash` (write operations detected) | Blocks writes to source files without design docs; protects configured files; detects Bash write operations (`sed -i`, `tee`, `cp`, etc.) |
+| `PreToolUse` | `Write`, `Edit`, or `Bash` (write operations detected) | Blocks writes to source files without design docs; enforces `quickMode.fullModeRequiredWhen` (escalates Quick Mode → Full when triggered); skips files captured in the `.phasegate/baseline.json` snapshot until they are modified; protects configured files; detects Bash write operations (`sed -i`, `tee`, `cp`, etc.) |
 | `PostToolUse` | `Write` or `Edit` | Auto-formats and validates metadata |
 | `Stop` | Session end | Runs full test suite to ensure all tests pass |
 
@@ -299,6 +312,8 @@ npx phasegate <command> [options]
 | `update-skills` | Update skills to latest version |
 | `phasegate:status` | Display overall harness health summary |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
+| `check-change-category --paths <csv>` | Classify changed files into Quick Mode categories and report whether Full Mode is required (`--format json`, `--fail-on-full-required`) |
+| `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`) |
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
 | `pre-commit` | Run L2 pre-commit validators on staged files |

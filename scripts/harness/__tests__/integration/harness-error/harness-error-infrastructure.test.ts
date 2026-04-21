@@ -907,4 +907,43 @@ target('buildErrorDefinitionRegistry', () => {
       });
     });
   });
+
+  // ISSUE-007 Wave 3 / H12-03: L2-001 registry actionable defaults
+  target('L2_ERROR_DEFINITIONS[L2-001] actionable defaults', () => {
+    describe('phase-gate エラーに actionable な default 値が populate されている', () => {
+      // IT-HE-090
+      it('L2-001 に defaultSuggestedSkill が設定されていること', () => {
+        // Arrange
+        const l2Definition001 = L2_ERROR_DEFINITIONS.find(
+          (d) => d.code.toString() === 'L2-001',
+        );
+
+        // Assert
+        expect(l2Definition001).toBeDefined();
+        expect(l2Definition001?.defaultSuggestedSkill).toBe('/story-implementor');
+      });
+
+      // IT-HE-091
+      it('L2-001 に defaultScaffoldCommand が設定されていること', () => {
+        // Arrange
+        const l2Definition001 = L2_ERROR_DEFINITIONS.find(
+          (d) => d.code.toString() === 'L2-001',
+        );
+
+        // Assert
+        expect(l2Definition001?.defaultScaffoldCommand).toContain('phasegate scaffold-design');
+      });
+
+      // IT-HE-092
+      it('L2-001 に defaultTemplatePath が設定されていること', () => {
+        // Arrange
+        const l2Definition001 = L2_ERROR_DEFINITIONS.find(
+          (d) => d.code.toString() === 'L2-001',
+        );
+
+        // Assert
+        expect(l2Definition001?.defaultTemplatePath).toBe('docs/templates/logical_design.template.md');
+      });
+    });
+  });
 });

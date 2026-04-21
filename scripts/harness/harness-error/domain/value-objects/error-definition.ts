@@ -31,6 +31,9 @@ export interface ErrorDefinitionProps {
   readonly fixExampleRequired: boolean;
   readonly defaultFixExample: FixExample | null;
   readonly ownerValidatorId: string;
+  readonly defaultSuggestedSkill?: string | null;
+  readonly defaultScaffoldCommand?: string | null;
+  readonly defaultTemplatePath?: string | null;
 }
 
 export class ErrorDefinition {
@@ -43,6 +46,9 @@ export class ErrorDefinition {
   readonly fixExampleRequired: boolean;
   readonly defaultFixExample: FixExample | null;
   readonly ownerValidatorId: string;
+  readonly defaultSuggestedSkill: string | null;
+  readonly defaultScaffoldCommand: string | null;
+  readonly defaultTemplatePath: string | null;
 
   private constructor(props: ErrorDefinitionProps) {
     this.code = props.code;
@@ -54,6 +60,9 @@ export class ErrorDefinition {
     this.fixExampleRequired = props.fixExampleRequired;
     this.defaultFixExample = props.defaultFixExample;
     this.ownerValidatorId = props.ownerValidatorId;
+    this.defaultSuggestedSkill = props.defaultSuggestedSkill ?? null;
+    this.defaultScaffoldCommand = props.defaultScaffoldCommand ?? null;
+    this.defaultTemplatePath = props.defaultTemplatePath ?? null;
     Object.freeze(this);
   }
 
@@ -96,6 +105,27 @@ export class ErrorDefinition {
       return explicitFixExample;
     }
     return this.defaultFixExample;
+  }
+
+  resolveSuggestedSkill(explicit?: string | null): string | null {
+    if (explicit) {
+      return explicit;
+    }
+    return this.defaultSuggestedSkill;
+  }
+
+  resolveScaffoldCommand(explicit?: string | null): string | null {
+    if (explicit) {
+      return explicit;
+    }
+    return this.defaultScaffoldCommand;
+  }
+
+  resolveTemplatePath(explicit?: string | null): string | null {
+    if (explicit) {
+      return explicit;
+    }
+    return this.defaultTemplatePath;
   }
 
   equals(other: ErrorDefinition): boolean {

@@ -196,7 +196,12 @@ npx phasegate ci:generate-template --type consistency-check --render > .github/w
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
     "maintainedLayers": ["L1", "L2"],
-    "relaxedGates": ["phase-gate", "2-phase-execution"]
+    "relaxedGates": ["phase-gate", "2-phase-execution"],
+    "fullModeRequiredWhen": {
+      "mixedCategories": true,
+      "newDomainFile": true,
+      "apiContractChange": true
+    }
   },
   "phaseDependencies": {
     "preset": "standard",
@@ -204,9 +209,17 @@ npx phasegate ci:generate-template --type consistency-check --render > .github/w
   },
   "protectedFiles": {
     "exclude": ["package.json"]
+  },
+  "baseline": {
+    "enabled": true,
+    "path": ".phasegate/baseline.json"
   }
 }
 ```
+
+`quickMode.fullModeRequiredWhen` は **「Quick Mode で進めようとした変更を Full Mode に強制エスカレートする条件」** を宣言します（v0.63.0 / ISSUE-006 Story A で導入、v0.64.0 / Story B で pre-tool-use hook に統合）。3 トリガー（`mixedCategories` / `newDomainFile` / `apiContractChange`）はいずれも安全側のデフォルト `true`。プロジェクトが意図的にリスクを受け入れる場合のみ個別に `false` にできます。
+
+`baseline` は **Phase A-2 リトロフィット grandfather** をオン/オフします（v0.65.0 / ISSUE-007 Wave 1 で導入、v0.66.0 / Wave 2 で pre-tool-use hook に統合）。`.phasegate/baseline.json` に登録済みのファイルは、構造的に編集されるまで `phase-gate` 対象から除外されます。既存リポジトリへの導入時に `npx phasegate baseline` でスナップショットを生成してください。
 
 ### project.preset -- レイヤー厳密度
 
@@ -343,10 +356,15 @@ Quick Mode は以下の方法で発動します:
 
 `bugfix`, `docs`, `test`, `config` カテゴリの変更では、Phase Gate と 2-Phase Execution を緩和し L1/L2 のみ維持します。
 
-**Quick Mode が拒否される条件**（フルチェックが強制されます）:
-- `domain/` 配下に新規ファイルを追加した場合
-- `*port.ts` や `*adapter.ts`（API 契約）を変更した場合
-- 新機能追加・新ドメインモデル追加に該当する変更
+**Quick Mode が拒否される条件**（`fullModeRequiredWhen` で設定駆動 / フルチェックが強制されます）:
+
+| 条件 | `fullModeRequiredWhen.*` フラグ |
+|---|---|
+| 複数カテゴリが混在する変更（例: `bugfix` + `api`） | `mixedCategories` |
+| `domain/` 配下に新規ファイルを追加 | `newDomainFile` |
+| `*port.ts` / `*adapter.ts`（API 契約）を変更 | `apiContractChange` |
+
+事前に判定したい場合は `npx phasegate check-change-category --paths <csv>` を使います。CI で gate にしたい場合は `--fail-on-full-required` を付与してください。
 
 ### protectedFiles -- AI 書き込み保護
 
@@ -398,6 +416,8 @@ npx phasegate <command> [options]
 | `ci-check` | CI フルチェック (L2-L4) | `--quick` `--dry-run` `--fail-on-reject` |
 | `check-phase-gate` | フェーズゲートチェック | `--level 1\|2\|3` |
 | `validate-metadata <files>` | メタデータ検証 | |
+| `check-change-category` | 変更ファイルを Quick Mode カテゴリに分類し、`quickMode.fullModeRequiredWhen` 評価結果（Full Mode 強制が必要か）を返す（v0.63.0 / ISSUE-006 Story A） | `--paths <csv>` `--format human\|json` `--fail-on-full-required` |
+| `baseline` | `.phasegate/baseline.json` スナップショットを生成（Phase A-2 grandfather）。登録済みファイルは構造的に編集されるまで `phase-gate` 対象から除外される（v0.65.0 / ISSUE-007 Wave 1） | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` |
 
 ### phasegate コマンド
 
