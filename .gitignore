@@ -16,3 +16,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Python build artifacts
+__pycache__/
+*.pyc

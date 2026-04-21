@@ -278,9 +278,9 @@ scripts/init_skill.py <skill-name> --path <output-directory> [--resources script
 Examples:
 
 ```bash
-scripts/init_skill.py my-skill --path skills/public
-scripts/init_skill.py my-skill --path skills/public --resources scripts,references
-scripts/init_skill.py my-skill --path skills/public --resources scripts --examples
+scripts/init_skill.py my-skill --path skills
+scripts/init_skill.py my-skill --path skills --resources scripts,references
+scripts/init_skill.py my-skill --path skills --resources scripts --examples
 ```
 
 The script:
