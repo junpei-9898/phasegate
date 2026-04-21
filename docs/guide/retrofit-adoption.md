@@ -19,7 +19,7 @@ phasegate は本来「新規プロジェクトをゼロから AIDLC で組む」
 
 - Node.js >= 18.0.0
 - 既存プロジェクトのソースコードが git で管理されている
-- phasegate >= v0.69.0（scaffold-design CLI 含む）
+- phasegate >= v0.71.0（`baseline.enabled` default=true / dry-run 出力キー整合済み）
 
 ```bash
 npm install --save-dev phasegate
@@ -46,21 +46,22 @@ npx phasegate init --name <project-name>
 
 - `.claude/skills/` に 28 スキルを配置
 - `phasegate.config.json` を生成
-- `phasegate.config.json` の `baseline` セクションは既定で `enabled: true`
+- `phasegate.config.json` に `baseline` セクションが未記載でも、v0.71.0 以降は
+  **`baseline.enabled` の default が `true`** のため grandfather は既定で有効
 
-`phasegate.config.json` の該当部分（デフォルト）:
+grandfather をオフにしたい場合のみ `phasegate.config.json` に明示:
 
 ```json
 {
   "baseline": {
-    "enabled": true,
+    "enabled": false,
     "path": ".phasegate/baseline.json"
   }
 }
 ```
 
-`baseline.enabled` を `false` にすると grandfather が無効化され、既存ファイルも全て
-gate 対象になる（後付け導入では推奨しない）。
+`path` も省略時は `.phasegate/baseline.json` が使われる。retrofit 用途では
+この既定値のまま触らないのが最短。
 
 ---
 
@@ -70,14 +71,18 @@ gate 対象になる（後付け導入では推奨しない）。
 npx phasegate baseline
 ```
 
-実行すると、現時点の全 TS/JS ソースファイルの相対パスと sha1 ハッシュを
-`.phasegate/baseline.json` に保存する。
+実行すると、デフォルト glob (`scripts/**/*.ts` / `src/**/*.{ts,tsx,js,jsx}` /
+`docs/product/construction/**/*.md` / `docs/inception/**/*.md`) にマッチする
+ファイルの相対パスと sha1 ハッシュを `.phasegate/baseline.json` に保存する
+（`**/__tests__/**` / `*.test.ts` / `*.spec.ts` / `node_modules/**` / `dist/**`
+は既定で除外）。
 
 ```jsonc
 {
-  "version": 1,
-  "createdAt": "2026-04-22T10:00:00Z",
-  "entries": [
+  "version": "1.0",
+  "createdAt": "2026-04-22T10:00:00.000Z",
+  "algorithm": "sha1",
+  "files": [
     { "path": "src/foo.ts", "sha1": "abc123..." },
     { "path": "src/bar.ts", "sha1": "def456..." }
   ]
@@ -90,7 +95,32 @@ npx phasegate baseline
 npx phasegate baseline --dry-run --json
 ```
 
-### 特定ディレクトリだけ登録
+出力 (抜粋):
+
+```json
+{
+  "savedPath": "/path/to/.phasegate/baseline.json",
+  "entryCount": 12,
+  "dryRun": true,
+  "overwriteBlocked": false,
+  "files": [
+    { "path": "src/foo.ts", "sha1": "abc123..." }
+  ]
+}
+```
+
+v0.71.0 で CLI 出力の key は保存ファイルと同じ `files` に統一された（以前の
+`entries` は deprecated）。
+
+### 再生成（`.phasegate/baseline.json` を上書き）
+
+`baseline` は既存スナップショットがあると既定で上書きを拒否する（exit 2）:
+
+```bash
+npx phasegate baseline --force   # 明示的に上書き
+```
+
+### 特定 glob だけ登録
 
 ```bash
 npx phasegate baseline --paths "src/**/*.ts,scripts/**/*.ts"
@@ -212,8 +242,13 @@ Unit の設計文書が揃い、phasegate フル管理に昇格させたい場�
 
 ### Q. `baseline` 作成後も gate が発火する
 
-**確認**: `phasegate.config.json` の `baseline.enabled` が `true` か。
-`baseline.path` と実ファイルの配置が一致しているか。
+**確認**:
+- v0.71.0 未満を使っていないか（v0.70.0 以前は `baseline.enabled` の default が
+  `false` で、`phasegate.config.json` に明示指定が必要だった）
+- `phasegate.config.json` で `baseline.enabled: false` を**明示**していないか
+- `baseline.path` と実ファイルの配置が一致しているか
+- 発火したファイルが baseline に登録されているか（`.phasegate/baseline.json` で
+  確認）。default glob から外れたパスは未登録の可能性が高い
 
 ### Q. scaffold した直後に L1 lint が失敗する
 

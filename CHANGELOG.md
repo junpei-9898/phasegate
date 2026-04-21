@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.72.0] - 2026-04-22
+
+### Changed
+
+- ISSUE-007 Wave 7 — v0.71.0 で修正した挙動（`baseline.enabled` default=`true` / `baseline --dry-run --json` の `files` キー）に合わせて以下ドキュメントを更新:
+  - `docs/guide/retrofit-adoption.md` — baseline.json スキーマ例を実機形式に修正、default glob の範囲（TS/JS だけでなく md も含む）を明記、「init 後に config を手で書く」記述を削除
+  - `docs/guide/cli-reference.md` — `Scaffold Design` セクション追加（Wave 4 で導入した CLI が未記載だった）、baseline セクションに v0.71.0 の変更点を追補
+  - `README.md` — Command Reference に `scaffold-design` 追加、baseline 段落に v0.71.0 変更点と retrofit-adoption.md リンクを追加、Documentation セクションに retrofit-adoption.md を追加
+  - `README.ja.md` — 同上（baseline / `scaffold-design` 行を CLI テーブルに追加、retrofit-adoption.md リンクを含む段落に更新）
+
 ## [0.71.0] - 2026-04-22
 
 ### Changed (breaking-ish)

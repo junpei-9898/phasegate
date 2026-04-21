@@ -212,7 +212,7 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 
 `quickMode.fullModeRequiredWhen` declares which conditions force a Quick Mode change to escalate to the full `/story-implementor` flow. All three triggers default to `true` so retrofits stay safe; flip individual flags to `false` only when a project intentionally accepts the risk.
 
-`baseline` opts in to the **Phase A-2 retrofit grandfather**: pre-existing files captured in `.phasegate/baseline.json` are exempted from `phase-gate` until they are structurally modified. Generate the snapshot with `npx phasegate baseline` before introducing the harness to an existing repository.
+`baseline` opts in to the **Phase A-2 retrofit grandfather**: pre-existing files captured in `.phasegate/baseline.json` are exempted from `phase-gate` until they are structurally modified. Generate the snapshot with `npx phasegate baseline` before introducing the harness to an existing repository. Since v0.71.0 the `baseline.enabled` flag defaults to `true`, so simply running `npx phasegate baseline` after `init` is enough — no manual config edit needed. For a step-by-step retrofit walkthrough see [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md).
 
 ---
 
@@ -313,7 +313,8 @@ npx phasegate <command> [options]
 | `phasegate:status` | Display overall harness health summary |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `check-change-category --paths <csv>` | Classify changed files into Quick Mode categories and report whether Full Mode is required (`--format json`, `--fail-on-full-required`) |
-| `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`) |
+| `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`). `baseline.enabled` defaults to `true` since v0.71.0. |
+| `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | Generate minimum viable design doc from `templates/*.template.md` into `docs/product/construction/{unit}/*.md` (`--force`, `--json`). Materializes the `scaffold: ...` line emitted by phase-gate errors. |
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
 | `pre-commit` | Run L2 pre-commit validators on staged files |
@@ -335,6 +336,7 @@ Detailed guides are available under `docs/guide/`:
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
 - [Codex Integration](docs/guide/codex-integration.md) -- Codex CLI setup, coverage matrix, and native `apply_patch` limitation
 - [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) -- When to use `/story-implementor` vs `/quick-implementor`, with decision flow and case studies
+- [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md) -- Onboard an existing project without getting blocked: `init` → `baseline` → `scaffold-design` in 4 steps
 
 Additional resources:
 

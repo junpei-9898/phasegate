@@ -87,8 +87,50 @@ npx phasegate baseline --paths "scripts/harness/**/*.ts,src/**/*.ts"
 編集した瞬間に grandfather が外れ、通常の `phase-gate` 対象に戻る。新規ファイルは
 最初から `phase-gate` の対象。
 
-`baseline.enabled = false` (デフォルトは `true`) を `phasegate.config.json` に書くと
-仕組み全体を無効化できる。スナップショットの保存先は `baseline.path` で変更可能。
+`baseline.enabled` は v0.71.0 以降 default が `true`（ISSUE-007 Wave 6）。
+オフにしたい場合のみ `phasegate.config.json` に `baseline.enabled: false` を明示。
+スナップショットの保存先は `baseline.path` で変更可能。
+
+`baseline --dry-run --json` の出力キーは v0.71.0 で保存ファイルと整合する `files`
+に統一（旧 `entries` は廃止）。
+
+---
+
+## Scaffold Design (Retrofit Template Generator)
+
+| Command | Options | Description |
+|---|---|---|
+| `scaffold-design` | `--unit <id>` `--phase <logical\|domain\|uiux\|unit-test\|it-test>` `--force` `--json` | `templates/*.template.md` を読み取り `{{unit}}` を `--unit` 値で置換して `docs/product/construction/{unit}/*.md` を生成する。既存ファイルは `--force` なしでは保護（exit 2）。|
+
+### `scaffold-design` の使い方
+
+ISSUE-007 Wave 4 で導入（v0.69.0）。phase-gate が発火した際にエラーメッセージへ
+挿入される `scaffold: npx phasegate scaffold-design ...` 行の実体。AIDLC フル
+スキルを起動せずに設計文書の雛形だけ先に置きたい時に使う。
+
+```bash
+# 論理設計テンプレを harness-api 用に生成
+npx phasegate scaffold-design --unit harness-api --phase logical
+
+# 既存ファイルを意図的に上書き
+npx phasegate scaffold-design --unit harness-api --phase logical --force
+
+# CI / スクリプト向け JSON 出力
+npx phasegate scaffold-design --unit harness-api --phase logical --json
+```
+
+生成先と対応テンプレ:
+
+| `--phase` | 生成先 | テンプレ |
+|---|---|---|
+| `logical` | `docs/product/construction/{unit}/logical_design.md` | `templates/logical_design.template.md` |
+| `domain` | `docs/product/construction/{unit}/domain_model.md` | `templates/domain_model.template.md` |
+| `uiux` | `docs/product/construction/{unit}/uiux_design.md` | `templates/uiux_design.template.md` |
+| `unit-test` | `docs/product/construction/{unit}/unit_test_design.md` | `templates/unit_test_design.template.md` |
+| `it-test` | `docs/product/construction/{unit}/it_test_design.md` | `templates/it_test_design.template.md` |
+
+exit code は `0` = 生成成功 / 上書き成功、`2` = 既存ファイルあり（`--force` 無）
+または引数不正。
 
 ---
 

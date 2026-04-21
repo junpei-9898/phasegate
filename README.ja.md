@@ -219,7 +219,7 @@ npx phasegate ci:generate-template --type consistency-check --render > .github/w
 
 `quickMode.fullModeRequiredWhen` は **「Quick Mode で進めようとした変更を Full Mode に強制エスカレートする条件」** を宣言します（v0.63.0 / ISSUE-006 Story A で導入、v0.64.0 / Story B で pre-tool-use hook に統合）。3 トリガー（`mixedCategories` / `newDomainFile` / `apiContractChange`）はいずれも安全側のデフォルト `true`。プロジェクトが意図的にリスクを受け入れる場合のみ個別に `false` にできます。
 
-`baseline` は **Phase A-2 リトロフィット grandfather** をオン/オフします（v0.65.0 / ISSUE-007 Wave 1 で導入、v0.66.0 / Wave 2 で pre-tool-use hook に統合）。`.phasegate/baseline.json` に登録済みのファイルは、構造的に編集されるまで `phase-gate` 対象から除外されます。既存リポジトリへの導入時に `npx phasegate baseline` でスナップショットを生成してください。
+`baseline` は **Phase A-2 リトロフィット grandfather** をオン/オフします（v0.65.0 / ISSUE-007 Wave 1 で導入、v0.66.0 / Wave 2 で pre-tool-use hook に統合、v0.71.0 / Wave 6 で `baseline.enabled` の default を `true` に変更）。`.phasegate/baseline.json` に登録済みのファイルは、構造的に編集されるまで `phase-gate` 対象から除外されます。既存リポジトリへの導入時は `npx phasegate init` 後に `npx phasegate baseline` を実行するだけで grandfather が効きます（config への手動追記は不要）。手順の詳細は [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md) を参照。
 
 ### project.preset -- レイヤー厳密度
 
@@ -417,7 +417,8 @@ npx phasegate <command> [options]
 | `check-phase-gate` | フェーズゲートチェック | `--level 1\|2\|3` |
 | `validate-metadata <files>` | メタデータ検証 | |
 | `check-change-category` | 変更ファイルを Quick Mode カテゴリに分類し、`quickMode.fullModeRequiredWhen` 評価結果（Full Mode 強制が必要か）を返す（v0.63.0 / ISSUE-006 Story A） | `--paths <csv>` `--format human\|json` `--fail-on-full-required` |
-| `baseline` | `.phasegate/baseline.json` スナップショットを生成（Phase A-2 grandfather）。登録済みファイルは構造的に編集されるまで `phase-gate` 対象から除外される（v0.65.0 / ISSUE-007 Wave 1） | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` |
+| `baseline` | `.phasegate/baseline.json` スナップショットを生成（Phase A-2 grandfather）。登録済みファイルは構造的に編集されるまで `phase-gate` 対象から除外される（v0.65.0 / ISSUE-007 Wave 1、v0.71.0 で `baseline.enabled` default=`true`・dry-run 出力キー `files` に統一） | `--dry-run` `--force` `--paths <glob,glob,...>` `--json` |
+| `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | `templates/*.template.md` を読み取り `{{unit}}` を `--unit` 値に置換して `docs/product/construction/{unit}/*.md` に出力。phase-gate エラーに挿入される `scaffold: ...` 行の実体（v0.69.0 / ISSUE-007 Wave 4） | `--force` `--json` |
 
 ### phasegate コマンド
 
