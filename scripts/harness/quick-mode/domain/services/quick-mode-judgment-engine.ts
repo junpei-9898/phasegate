@@ -100,47 +100,53 @@ export class QuickModeJudgmentEngine {
     const classification = this.classify(changedFiles, config);
 
     // 1. MIXED_CHANGES評価: allowedCategories 外のカテゴリが含まれる場合
-    const notAllowedFiles: ChangedFile[] = [];
-    classification.categorizedFiles.forEach((files, categoryKey) => {
-      if (!config.isAllowed(categoryKey)) {
-        notAllowedFiles.push(...files);
-      }
-    });
+    if (config.isFullModeRequiredFor('mixedCategories')) {
+      const notAllowedFiles: ChangedFile[] = [];
+      classification.categorizedFiles.forEach((files, categoryKey) => {
+        if (!config.isAllowed(categoryKey)) {
+          notAllowedFiles.push(...files);
+        }
+      });
 
-    if (notAllowedFiles.length > 0) {
-      return QuickModeEligibility.rejected(
-        'MIXED_CHANGES',
-        notAllowedFiles,
-        `allowedCategories外のファイルが含まれています: ${notAllowedFiles.map((f) => f.filePath).join(', ')}`
-      );
+      if (notAllowedFiles.length > 0) {
+        return QuickModeEligibility.rejected(
+          'MIXED_CHANGES',
+          notAllowedFiles,
+          `allowedCategories外のファイルが含まれています: ${notAllowedFiles.map((f) => f.filePath).join(', ')}`
+        );
+      }
     }
 
     // 2. NEW_DOMAIN評価: domain/ 配下かつ changeKind=CREATE
-    const newDomainFiles = changedFiles.filter(
-      (f) =>
-        (f.filePath.includes('/domain/') || f.filePath.startsWith('domain/')) &&
-        f.changeKind === 'CREATE'
-    );
-
-    if (newDomainFiles.length > 0) {
-      return QuickModeEligibility.rejected(
-        'NEW_DOMAIN',
-        newDomainFiles,
-        `domain/配下に新規ファイルが追加されています: ${newDomainFiles.map((f) => f.filePath).join(', ')}`
+    if (config.isFullModeRequiredFor('newDomainFile')) {
+      const newDomainFiles = changedFiles.filter(
+        (f) =>
+          (f.filePath.includes('/domain/') || f.filePath.startsWith('domain/')) &&
+          f.changeKind === 'CREATE'
       );
+
+      if (newDomainFiles.length > 0) {
+        return QuickModeEligibility.rejected(
+          'NEW_DOMAIN',
+          newDomainFiles,
+          `domain/配下に新規ファイルが追加されています: ${newDomainFiles.map((f) => f.filePath).join(', ')}`
+        );
+      }
     }
 
     // 3. API_CONTRACT評価: *port.ts / *adapter.ts の変更
-    const apiContractFiles = changedFiles.filter(
-      (f) => f.filePath.endsWith('port.ts') || f.filePath.endsWith('adapter.ts')
-    );
-
-    if (apiContractFiles.length > 0) {
-      return QuickModeEligibility.rejected(
-        'API_CONTRACT',
-        apiContractFiles,
-        `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles.map((f) => f.filePath).join(', ')}`
+    if (config.isFullModeRequiredFor('apiContractChange')) {
+      const apiContractFiles = changedFiles.filter(
+        (f) => f.filePath.endsWith('port.ts') || f.filePath.endsWith('adapter.ts')
       );
+
+      if (apiContractFiles.length > 0) {
+        return QuickModeEligibility.rejected(
+          'API_CONTRACT',
+          apiContractFiles,
+          `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles.map((f) => f.filePath).join(', ')}`
+        );
+      }
     }
 
     return QuickModeEligibility.eligible('すべてのファイルが許可カテゴリ内です');

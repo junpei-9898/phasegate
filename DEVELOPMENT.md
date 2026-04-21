@@ -23,30 +23,54 @@ pnpm test
 
 ## Internal Architecture
 
-Phasegate is built with Clean Architecture + DDD. Each feature is an independent **Unit** under `scripts/harness/`.
+Phasegate is built with **Clean Architecture + DDD**. Each feature is an independent **Unit** under `scripts/harness/`.
 
-Dependency direction: `domain -> application -> infrastructure / presentation` (reverse is prohibited)
+### Dependency Direction
+
+```
+domain → application → infrastructure / presentation (reverse is prohibited)
+```
 
 ### Units
 
-| Unit | Responsibility |
+15 production Units exist, all with complete layer implementations.
+
+| Unit | Responsibility | Registered in main.ts |
+|---|---|---|
+| `config-foundation` | phasegate.config.json parsing, schema validation, presets | Yes |
+| `harness-error` | HarnessError definitions, ADR references, fix examples | Yes |
+| `traceability-model` | @unit/@layer/@story metadata management | Yes |
+| `phase-dependency-model` | Phase dependencies, Phase Gate, storyReflection | Yes |
+| `adr-foundation` | ADR management | Yes |
+| `biome-ast-engine` | Biome AST analysis engine (import graph, L1 rules) | Yes |
+| `validator-system` | L0-L4 validator system | Yes |
+| `nyquist-validation` | Requirements-test traceability (AC↔test bidirectional) | **No** (library) |
+| `harness-api` | phasegate:* CLI command layer | Yes |
+| `quick-mode` | Quick Mode determination and relaxation | Yes |
+| `agent-integration` | Claude Code Hooks adapter (pre/post/stop) | **No** (via hooks) |
+| `skill-quality` | TDD cycle, coverage, Cascade Update | Yes |
+| `ci-governance` | CI/CD templates, repetition error monitoring | Yes |
+| `regression-suite` | K1-K15 regression test suite | Yes |
+| `phase2-extensions` | freshness / pointer / e2e-template (v2) | Yes |
+
+> **agent-integration** is a library Unit called from Claude Code Hooks presentation layer (index.ts barrel export).
+> **nyquist-validation** has full implementation with composition-root.ts but is not CLI-wired. Referenced internally by validator-system.
+
+### Deprecated Units
+
+| Unit | Removed in | Reason |
+|---|---|---|
+| `fuse-hooks-engine` | v0.10.0 | Simplified to hooks-only configuration (yaml dependency removed) |
+
+### shared-kernel
+
+Cross-unit value objects in `scripts/harness/shared-kernel/`:
+
+| File | Purpose |
 |---|---|
-| `config-foundation` | phasegate.config.json parsing, schema validation, presets |
-| `harness-error` | HarnessError definitions, ADR references, fix examples |
-| `traceability-model` | @unit/@layer/@story metadata management |
-| `phase-dependency-model` | Phase dependencies, Phase Gate, storyReflection |
-| `adr-foundation` | ADR management |
-| `biome-ast-engine` | Biome AST analysis engine (import graph, L1 rules) |
-| `validator-system` | L0-L4 validator system |
-| `nyquist-validation` | Requirements-test traceability |
-| `harness-api` | phasegate:* CLI command layer |
-| `quick-mode` | Quick Mode determination and relaxation |
-| `agent-integration` | Claude Code Hooks adapter |
-| `skill-quality` | TDD cycle, coverage, Cascade Update |
-| `ci-governance` | CI/CD templates, repetition error monitoring |
-| `regression-suite` | K1-K15 regression test suite |
-| `fuse-hooks-engine` | Hooks Engine |
-| `phase2-extensions` | freshness / pointer / e2e-template (v2) |
+| `harness-api.ts` | harness-api shared types |
+| `quick-mode.ts` | Quick Mode shared types |
+| `validator-system.ts` | Validator shared types |
 
 ### HarnessError Format
 
@@ -65,97 +89,58 @@ interface HarnessError {
 
 ---
 
-## Optional: Shell Script Hooks
+## ADR List
 
-Optional hooks can be placed under `.claude/scripts/`. These are not part of phasegate's core — they are development environment customizations.
+All ADRs are in `docs/ADR/`. All have **Accepted** status.
 
-```jsonc
-// Add to .claude/settings.json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/deny-check.sh"
-        }]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/format-settings-hook.sh"
-          },
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/format-typescript-hook.sh"
-          },
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/scripts/analyze-errors-hook.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-| Script | Behavior |
-|---|---|
-| `deny-check.sh` | Blocks dangerous git/bash commands (`git reset --hard`, `rm -rf`, etc.) |
-| `format-settings-hook.sh` | Auto-formats JSON when `settings.json` is edited |
-| `format-typescript-hook.sh` | Auto-formats TypeScript files on edit (Biome / ESLint+Prettier switchable) |
-| `analyze-errors-hook.sh` | Detects tsc / lint errors on TypeScript file edit |
-
-### hook-config.json
-
-`format-typescript-hook.sh` and `analyze-errors-hook.sh` are configured via `.claude/scripts/hook-config.json`.
-
-```json
-{
-  "targetDirs": ["scripts/harness"],
-  "formatter": "biome",
-  "formatterArgs": ["check", "--write"]
-}
-```
-
-| Field | Description | Default |
+| # | Title | Summary |
 |---|---|---|
-| `targetDirs` | Directories where hooks apply (relative to project root) | `[]` (empty = skip) |
-| `formatter` | `"biome"` or `"eslint-prettier"` | `"biome"` |
-| `formatterArgs` | Arguments passed to the formatter | `["check", "--write"]` |
+| ADR-001 | Four-Layer Defense Model (L1-L4) | Editor-time AST validation via Biome for 8 structural rules |
+| ADR-002 | Pre-commit Validators (L2) | Phase gate, metadata, and test quality enforcement |
+| ADR-003 | CI Validators (L3) | Security, performance, coverage, and Nyquist validation |
+| ADR-004 | Scheduled Validators (L4) | Weekly drift detection, consistency checking, dead code detection |
+| ADR-005 | Hexagonal Architecture | Ports & Adapters pattern across all units |
+| ADR-006 | Agent Independence | Validators depend only on filesystem artifacts (agent-agnostic) |
+| ADR-007 | Config Single Source of Truth | phasegate.config.json owns all quality settings |
+| ADR-008 | Quick Mode | Conditional harness relaxation for bugfixes/docs/tests |
+| ADR-009 | DDD Tactical Patterns | Value Objects, Entities, Aggregates, Domain Services, Ports |
+| ADR-010 | HarnessError fix_example | All errors include fix_example + adr_ref for AI self-correction |
+| ADR-011 | archgate Pattern | Architecture rules as executable Biome AST rules |
+| ADR-012 | 2-Phase Execution | Human approval for Phase 1 (planning); Phase 2 auto-runs |
+| ADR-013 | Story Reflection Gate | Inception-to-product document reflection validation |
 
 ---
 
-## Developer CLI Commands
+## CLI Commands
 
-These commands are for phasegate's own development and quality assurance. For user-facing commands, see [README.md](README.md#cli-reference).
+### User-Facing Commands
 
-### Regression Tests
+See [README.md](README.md#cli-reference) for user-facing command details.
+
+### Developer Commands
+
+These commands are for phasegate's own development and quality assurance.
+
+#### Regression Tests
 
 | Command | Description |
 |---|---|
-| `regression:run-k-requirements` | K1-K15 non-negotiable requirements regression |
-| `regression:run-gng-gate` | Go/No-Go Gate 3 conditions |
-| `regression:run-agent-guard` | Agent independence guard |
-| `regression:run-k14-k15` | K14/K15 (Phase Dependency / Plan docs) |
-| `regression:configure-ci-gate` | Configure CI gate |
-| `regression:analyze-migration` | Analyze v0 test migration |
-| `regression:migrate-v0-tests` | Execute v0 test migration |
+| `regression:run-k-requirements` | K1-K15 non-negotiable requirements regression (16 tests) |
+| `regression:run-gng-gate` | Go/No-Go Gate 3 conditions (GNG-4, GNG-5, GNG-8) |
+| `regression:run-agent-guard` | Agent independence guard (3 tests) |
+| `regression:run-k14-k15` | K14/K15 (Phase Dependency / Plan docs) regression |
+| `regression:configure-ci-gate` | Configure CI gate (`--suites <ids>` `--threshold <n>`) |
+| `regression:analyze-migration` | Analyze v0 test migration (`--dry-run`) |
+| `regression:migrate-v0-tests` | Execute v0 test migration (`--confirm`) |
 
-### Hooks Engine
+#### Hooks Engine
 
 | Command | Description |
 |---|---|
 | `hooks:config validate` | Validate .harness-hooks.yml |
 | `hooks:gate-check --story <id>` | Completion gate check |
 
-### Phase 2 Extensions
+#### Phase 2 Extensions
 
 | Command | Description | Options |
 |---|---|---|
@@ -163,7 +148,7 @@ These commands are for phasegate's own development and quality assurance. For us
 | `p2:validate-pointers` | Document file pointer validation | `--include-urls` `--format text\|json` |
 | `p2:generate-e2e-template` | E2E test template generation | `--phase <phase>` `--output <path>` |
 
-### Skill Quality
+#### Skill Quality
 
 | Command | Description | Options |
 |---|---|---|
@@ -173,17 +158,108 @@ These commands are for phasegate's own development and quality assurance. For us
 | `skill:apply-cascade-update` | Apply cascade update | `--story <storyId>` `--dry-run` |
 | `skill:validate-structure` | Validate skill structure | `--file <path>` `--json` |
 
-### CI/CD (Developer)
+#### CI/CD
 
 | Command | Description | Options |
 |---|---|---|
+| `ci:generate-template` | Generate CI template | `--preset <id>` `--type aidlc-gate\|consistency-check\|pre-commit` `--render` `--json` |
+| `ci:migrate-agents-md` | Migrate AGENTS.md | — |
 | `ci:check-repetition` | Repetition error detection | `--code <errorCode>` `--reset` `--json` |
+
+#### Skill Management
+
+| Command | Description |
+|---|---|
+| `skills list` | List available skills |
+| `skills info <name>` | Show skill details |
+
+---
+
+## Hook System Details
+
+### Architecture
+
+Uses Claude Code hooks to run validation before and after tool calls.
+
+```
+Claude Code
+  ├─ PreToolUse (Bash)       → deny-check.sh → pre-tool-use-hook.ts
+  ├─ PreToolUse (Write|Edit) → pre-tool-use-hook.ts
+  ├─ PostToolUse (Write|Edit) → format-settings-hook.sh
+  │                            → format-typescript-hook.sh
+  │                            → analyze-errors-hook.sh
+  │                            → post-tool-use-hook.ts
+  └─ Stop                    → stop-hook.ts
+```
+
+### Pre-Tool-Use Flow
+
+1. Receives JSON via stdin before tool invocation: `tool_name`, `tool_input`
+2. **For Bash**: `BashWriteTargetExtractor` detects write targets (redirects, tee, sed -i, cp, mv) and "spoofs" as Write for phase-gate checking
+3. **HandlePreToolUseUseCase** checks: protected files, phase gate violations, storyReflection status
+4. **Block decision**: exit code 2 with reason (PHASE_GATE / PROTECTED_FILE / STORY_REFLECTION_FAILURE)
+
+### Shell Script Hooks
+
+Optional hooks in `.claude/scripts/`:
+
+| Script | Trigger | Behavior |
+|---|---|---|
+| `deny-check.sh` | PreToolUse (Bash) | Blocks dangerous commands (git reset --hard, rm -rf, etc.) |
+| `format-settings-hook.sh` | PostToolUse (Write\|Edit) | Auto-formats JSON when settings.json is edited |
+| `format-typescript-hook.sh` | PostToolUse (Write\|Edit) | Auto-formats TypeScript files on edit |
+| `analyze-errors-hook.sh` | PostToolUse (Write\|Edit) | Detects tsc/lint errors and type assertions |
+
+### hook-config.json
+
+Configuration for `format-typescript-hook.sh` and `analyze-errors-hook.sh`:
+
+```json
+{
+  "targetDirs": ["scripts/harness"],
+  "formatter": "biome",
+  "formatterArgs": ["check", "--write"]
+}
+```
+
+---
+
+## Quick Mode Internals
+
+### File Categorization (by risk, highest first)
+
+| Category | Condition | Risk |
+|---|---|---|
+| `api` | `*port.ts` or `*adapter.ts` | Highest |
+| `domain` | Files in `domain/` directory | High |
+| `feature` | New files outside domain (CREATE) | Medium |
+| `bugfix` | MODIFY / DELETE operations | Low |
+| `test` | `__tests__/` or `.test.ts` / `.spec.ts` | Low |
+| `config` | `.config.json` or `.config.ts` | Low |
+| `docs` | `docs/` directory | Lowest |
+
+### 3 Rejection Rules (blocks Quick Mode → full validation)
+
+| Rule | Condition |
+|---|---|
+| `MIXED_CHANGES` | Files outside `allowedCategories` |
+| `NEW_DOMAIN` | New files in `domain/` directory |
+| `API_CONTRACT` | Changes to `*port.ts` / `*adapter.ts` |
+
+### Validator Relaxation (when approved)
+
+| Layer | Quick Mode Behavior |
+|---|---|
+| L1 | Always maintained |
+| L2 | Partially maintained per `maintainedLayers` |
+| L3 | Security validator only |
+| L4 | Fully skipped |
 
 ---
 
 ## Regression Tests (K1-K15)
 
-Self-tests verifying that phasegate's non-negotiable requirements are continuously met.
+Self-tests verifying phasegate's non-negotiable requirements.
 
 ```bash
 npx phasegate regression:run-k-requirements    # 16 tests
@@ -192,30 +268,185 @@ npx phasegate regression:run-k14-k15            # 2 tests
 npx phasegate regression:run-agent-guard        # 3 tests
 ```
 
+### K1-K15 Requirements
+
+| # | Requirement | Target Unit |
+|---|---|---|
+| K1 | 5-layer defense model (L0-L4) | validator-system |
+| K2 | Phase Gate (design→implementation order) | phase-dependency-model |
+| K3 | Biome AST analysis (import graph + cycle detection) | biome-ast-engine |
+| K3.5 | @unit/@layer/@US-XXX metadata | traceability-model |
+| K4 | Test quality rules (AAA / actual / no-domain-mock) | validator-system |
+| K5 | DDD design skills | validator-system |
+| K6 | 2-Phase Execution (AI safety mechanism) | harness-api |
+| K7 | Document Split (inception/product separation) | harness-api |
+| K8 | Cascade Updater | harness-api |
+| K9 | Agent-Lesson System | ci-governance |
+| K10 | Security/Performance detection | harness-api |
+| K11 | Drift Detection (bidirectional) | validator-system |
+| K12 | Consistency Checker | validator-system |
+| K13 | phasegate.config.json (quality settings SSOT) | config-foundation |
+| K14 | Phase Dependency Model (3-tier phase structure) | phase-dependency-model |
+| K15 | Plan document generation required | harness-api |
+
+---
+
+## Test Infrastructure
+
+### Test Execution
+
+```bash
+pnpm test
+```
+
+Internally runs two vitest configs sequentially:
+1. `vitest.config.forks.ts` — for `process.chdir()` dependent tests (forks pool)
+2. `vitest.config.ts` — main tests (threads pool, singleThread: true, timeout: 15000ms)
+
+### Test Statistics (v0.33.0)
+
+- Test files: 399
+- Test cases: 2,997
+- All PASSING
+
+---
+
+## Feature Flags Implementation Status
+
+Toggle via `npx phasegate enable-feature <name>` / `disable-feature <name>`.
+
+| Flag | Default | Runtime | Description |
+|---|---|---|---|
+| `agentLessonCollection` | `false` | **Config only** | Lesson collection (manual check required) |
+| `cascadeUpdate` | `false` | **Connected** | storyReflection gate + product docs accumulation |
+| `bundleSizeLimit` | `0` (disabled) | **Not implemented** | Bundle size limit (designed for CI, not wired) |
+| `deadCodeGC` | `false` | **Not implemented** | Dead code GC scan (manual CLI only) |
+
+---
+
+## CI/CD
+
+### GitHub Actions Workflow
+
+`.github/workflows/ci.yml`:
+
+| Job | Environment | Content |
+|---|---|---|
+| `test` | ubuntu-latest, Node 18/20/22 matrix | `pnpm test` |
+| `pack` | ubuntu-latest, Node 22 | `pnpm pack` + package size < 5MB |
+
+Triggers: `push` to main, `pull_request` to main
+
+### CI Template Generation
+
+```bash
+npx phasegate ci:generate-template --type <type> [--preset <id>] [--render] [--json]
+```
+
+| `--type` | Trigger | Purpose |
+|---|---|---|
+| `aidlc-gate` | pull_request | PR quality gate |
+| `consistency-check` | schedule | Periodic consistency check |
+| `pre-commit` | pre-commit | Pre-commit validation |
+
+### Repetition Error Monitoring
+
+`ErrorRepetition` aggregate tracks occurrence counts per error code:
+- Escalation at threshold (default: 3 occurrences)
+- Persisted to `error-history.json`
+- `ci:check-repetition --code <code>` to check, `--reset` to clear
+
+---
+
+## In-Development & Planned Features
+
+### Configurable Phase Gate (Phase A: In Progress / Phase B: Planned)
+
+**Planning doc**: `docs/inception/_shared/configurable_phase_gate_plan.md`
+
+Phase A (v1.0 target):
+- [x] Preset expansion (full / standard / minimal / custom)
+- [x] storyReflection gate validation
+- [x] `@unit` multi-unit support design
+- [ ] Phase B implementation (custom gate DSL)
+
+Phase B (v1.1 target):
+- JSON-based `gates[]` array for user-defined phase dependencies
+- DAG validation (cycle detection)
+
+### Skill Separation (Planned)
+
+**Planning doc**: `docs/inception/_shared/skill_separation_plan.md`
+
+Proposal to split 28 skills into 3 tiers: Core (8), AIDLC Workflow (18), Utility (2).
+Init command: `npx phasegate init --skills core|aidlc|all`
+
+### Harness→Phasegate Rename (Planned, Breaking Change)
+
+**Planning doc**: `docs/inception/_shared/harness_to_phasegate_rename_plan.md`
+
+5-phase coordinated rename: 17 directories, 76 files, 1,500+ code refs, 3,000+ doc refs.
+
+### OSS Public Release Strategy (Planned)
+
+**Planning docs**: `docs/inception/_shared/oss_public_release_strategy.md`, `oss_release_tasklist.md`
+
+---
+
+## Known Issues
+
+### ISSUE-003: 145 Remaining Lint Violations
+
+**Filed**: 2026-04-06 | **Priority**: Low | **Impact**: No functional impact
+
+| Rule | Count | Description |
+|---|---|---|
+| L1-003 (no-layer-violation) | 55 | Layer boundary crossing |
+| L1-007 (no-ghost-file) | 43 | Unused files |
+| L1-006 (no-code-duplication) | 31 | Code duplication |
+| L1-004 (enforce-folder-structure) | 12 | @layer declaration mismatch |
+| L1-005 (no-any-abuse) | 4 | Excessive `any` usage |
+
+Verify: `npx phasegate lint --json`
+
+### L0 / L4 Effectiveness
+
+- **L0 (FUSE)**: Disabled — platform dependency (macOS/Linux native)
+- **L4 (Scheduled)**: Manual only — auto-scheduling not implemented
+
+### Nyquist Auto-Generation Pipeline
+
+`requirement-test-matrix.json` auto-generation not implemented. Manual setup required.
+
 ---
 
 ## Directory Structure
 
 ```
 phasegate/
+├── bin/phasegate                    # CLI entry point (shell script)
 ├── scripts/harness/
-│   ├── main.ts                      # CLI entry point
-│   ├── harness-error/               # HarnessError definitions
-│   ├── config-foundation/           # Config parsing and schema
-│   ├── traceability-model/          # Metadata management
-│   ├── phase-dependency-model/      # Phase dependencies
-│   ├── adr-foundation/              # ADR management
-│   ├── biome-ast-engine/            # AST analysis engine
-│   ├── validator-system/            # L0-L4 validators
-│   ├── harness-api/                 # CLI command layer
-│   ├── quick-mode/                  # Quick Mode
-│   ├── agent-integration/           # Claude Code Hooks
-│   ├── ci-governance/               # CI/CD templates
-│   ├── regression-suite/            # K1-K15 regression tests
-│   └── phase2-extensions/           # v2 extensions
+│   ├── main.ts                      # CLI router (41+ commands)
+│   ├── shared-kernel/               # Cross-unit value objects
+│   ├── setup/                       # Skill deployer
+│   ├── integrations/                # Pre-commit integration
+│   ├── templates/                   # GitHub/Husky CI templates
+│   ├── 15 unit directories/         # Each with domain/application/infrastructure/presentation
+│   └── __tests__/                   # Centralized test suite
+├── .claude/
+│   ├── settings.json                # Claude Code hooks configuration
+│   └── scripts/                     # Shell script hooks
 ├── skills/                          # 28 skills
 ├── templates/                       # Config templates
-└── docs/                            # Documentation
+└── docs/
+    ├── ADR/                         # 13 Architecture Decision Records
+    ├── principles/                  # Development principles (immutable)
+    ├── inception/                   # Design docs & planning
+    │   ├── _shared/                 # Cross-cutting plans
+    │   ├── _operation/              # Operations & deployment
+    │   ├── issues/                  # Cross-cutting issues (ISSUE-001~003)
+    │   └── {UnitName}/             # Per-unit planning
+    └── product/                     # Finalized design docs
 ```
 
 ---
@@ -225,26 +456,60 @@ phasegate/
 Semantic Versioning (MAJOR.MINOR.PATCH).
 
 ```bash
-# 1. Update version in package.json
+# 1. Update version in package.json (and add an entry to CHANGELOG.md)
 # 2. Commit and tag
-git add package.json
+git add package.json CHANGELOG.md
 git commit -m "fix: vX.Y.Z — description"
 git tag vX.Y.Z
 git push origin main --tags
 
-# 3. Publish
-npm publish
+# 3. Verify npm auth (if not logged in: npm login --auth-type=web)
+npm whoami
+
+# 4. Dry-run to inspect the tarball
+npm publish --dry-run
+
+# 5. Publish
+npm publish --auth-type=web
+```
+
+#### Troubleshooting npm publish authentication
+
+`npm publish` behavior depends on your account's 2FA mode:
+
+| 2FA mode | publish behavior | workaround |
+|---|---|---|
+| Disabled | Proceeds directly | `npm publish` |
+| TOTP (authenticator app) | `EOTP` error → OTP required | `npm publish --otp=<6-digit>` |
+| Email OTP (Enhanced Login Verification) | `EOTP` error → code sent by email | Check inbox, then `--otp=<6-digit>` |
+| Security key / Passkey (FIDO/WebAuthn) | `EOTP` error (the `--otp` flag is TOTP-only, so it cannot be used) | **`npm publish --auth-type=web`** — opens a browser, authenticate with the key, publish completes |
+
+**Rule of thumb for security-key accounts:** always use `--auth-type=web`. The `--otp` flag is TOTP-only and will be rejected.
+
+**CI/automation:** generate a **Granular Access Token** from https://www.npmjs.com/settings/<username>/tokens (scope: target package, permissions: Read and write, Bypass 2FA: enabled), then inject it via `.npmrc` as `//registry.npmjs.org/:_authToken=<TOKEN>` or the `NPM_TOKEN` env var.
+
+#### Cross-check before publishing
+
+Local `package.json` can drift from the npm registry (e.g. v0.32.0 was the published latest while local was v0.38.0). Before `npm publish`, cross-check all three:
+
+```bash
+npm view phasegate version     # registry latest
+git tag --list | tail -5       # local tags
+cat package.json | grep version # local version
 ```
 
 ---
 
 ## Roadmap
 
-| Version | Content |
-|---|---|
-| **v1.6.0 (v1 MVH)** | L1-L4, 28 skills, Claude Code Hooks, Nyquist Validation, K1-K15 regression |
-| **v2.0.0** | Hooks Engine, Phase 2 extensions (doc-freshness, pointer-validator, Playwright E2E) |
+| Version | Content | Status |
+|---|---|---|
+| **v0.33.0** (current) | README overhaul, DEVELOPMENT docs | Released |
+| **v1.0.0** | Configurable Phase Gate Phase A, preset system | In Progress |
+| **v1.1.0** | Phase B (custom gate DSL), Skill Separation | Planned |
+| **v1.2.0+** | Harness→Phasegate rename (breaking change) | Planned |
+| **v2.0.0** | L0 FUSE integration, L4 auto-scheduling, OSS release | Long-term |
 
 ---
 
-*See also: [README.md](README.md) (user guide) / [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md) (Japanese)*
+*See also: [README.md](README.md) (user guide) / [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md) (Japanese) / [README.ja.md](README.ja.md) (Japanese user guide)*

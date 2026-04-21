@@ -2,11 +2,33 @@
 
 ## ステータス
 
+- **状態**: ✅ **CLOSED** — Phase A〜D 全着地（2026-04-18）
 - **起票日**: 2026-04-18
+- **完了日**: 2026-04-18
+- **リリース**: v0.40.0（Phase A） / v0.41.0（Phase B-1） / v0.42.0（Phase B-2） / v0.43.0（Phase C） / v0.44.0（Phase D）
 - **発見契機**: phasegate v0.39.0 を他PJ（git履歴なしの fresh repo）に導入し、CLI全サブコマンド・15カテゴリの機能を網羅的に検証してもらった結果の FB
 - **影響Unit**: harness-api（pre-commit, check-phase, detect-drift）, ci-governance（generate-template）, validator-system（layer filter, L4-001）, regression-suite（agent-guard）
 - **深刻度**: P0（1件） / P1（3件） / P2（3件）の混在
 - **優先度**: P0-1 の `pre-commit` クラッシュが `--with-husky` ユーザーを全員ブロックするため最優先
+
+### 解決サマリ
+
+| 項目 | 内容 | 着地バージョン | コミット |
+|------|------|---------------|---------|
+| P0-1 | `pre-commit` モジュール不在クラッシュ | v0.40.0 | `0a4358d` |
+| P0-2 | `ci:generate-template --type` UX改善 | v0.40.0 | `0a4358d` |
+| P1-3 | fresh repo での git 履歴 fallback | v0.41.0 | `4177aa3` |
+| P1-4 | `validate --layer` フィルタ実装 | v0.41.0 | `4177aa3` |
+| P1-5 | `detect-drift` と L4-001 の統合 | v0.42.0 | `f6c2102` |
+| P2-6 | `check-phase` 引数パース修正 | v0.43.0 | `3bd9e9c` |
+| P2-7 | regression 成果物の出力先変更 | v0.43.0 | `3bd9e9c` |
+| P3-8 | L4-001 メタ見出しスキップ | v0.44.0 | `d00c1c9` |
+| P3-9 | L4-001 Unit 推定ロジック改善 | v0.44.0 | `d00c1c9` |
+| P3-10 | `render-errors` / `list-errors` 境界ドキュメント | v0.44.0 | `d00c1c9` |
+
+検証コード上の spot check:
+- `scripts/harness/core/` は廃止済み（P0-1 broken import の残存なし）
+- `scripts/harness/validator-system/application/use-cases/run-full-validation-usecase.ts:35` で `targetLayers` 絞り込みが実装済み（P1-4）
 
 ## 問題の概要
 

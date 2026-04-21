@@ -97,3 +97,16 @@ npm run test                        # テスト実行
 # 3. git tag v0.6.0
 # 4. git push origin main --tags
 ```
+
+### npm publish ルール（必須）
+
+**この npm アカウントは security key (FIDO/WebAuthn) 認証**。publish は必ず以下:
+
+```bash
+npm publish --auth-type=web   # ブラウザで security key 認証 → publish
+```
+
+**禁止**: `npm publish --otp=<code>` / user に OTP を尋ねる / authenticator アプリ参照を提案する。
+`--otp` フラグは TOTP 専用で security key 認証では拒否されるため、EOTP エラーが出たら直ちに `--auth-type=web` に切り替える（OTP を聞き返さない）。
+
+詳細な troubleshooting は `DEVELOPMENT.md` の「Troubleshooting npm publish authentication」を参照。

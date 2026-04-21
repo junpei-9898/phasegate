@@ -145,6 +145,104 @@ target('QuickModeConfig', () => {
         // Assert
         expect(actual).toBe(false);
       });
+
+      // UT-QMC-020（H10-05）
+      it('fullModeRequiredWhenが異なる2つのインスタンスの場合にfalseが返ること', () => {
+        // Arrange
+        const sut = createQuickModeConfig({
+          fullModeRequiredWhen: { mixedCategories: true, newDomainFile: true, apiContractChange: true },
+        });
+        const other = createQuickModeConfig({
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
+        });
+        // Act
+        const actual = sut.equals(other);
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
+  });
+
+  target('fullModeRequiredWhen (H10-05)', () => {
+    describe('未指定時はデフォルト値（全 true）が設定される', () => {
+      // UT-QMC-015
+      it('fullModeRequiredWhenを省略した場合にmixedCategories/newDomainFile/apiContractChangeが全てtrueとなること', () => {
+        // Arrange
+        const input = {
+          allowedCategories: ['bugfix'],
+          maintainedLayers: ['L1'],
+          relaxedGates: [],
+        };
+        // Act
+        const actual = QuickModeConfig.create(input);
+        // Assert
+        expect(actual.fullModeRequiredWhen.mixedCategories).toBe(true);
+        expect(actual.fullModeRequiredWhen.newDomainFile).toBe(true);
+        expect(actual.fullModeRequiredWhen.apiContractChange).toBe(true);
+      });
+    });
+
+    describe('明示指定された値が保持される', () => {
+      // UT-QMC-016
+      it('fullModeRequiredWhen={mixedCategories:false, newDomainFile:true, apiContractChange:false}が保持されること', () => {
+        // Arrange
+        const input = {
+          allowedCategories: ['bugfix'],
+          maintainedLayers: ['L1'],
+          relaxedGates: [],
+          fullModeRequiredWhen: {
+            mixedCategories: false,
+            newDomainFile: true,
+            apiContractChange: false,
+          },
+        };
+        // Act
+        const actual = QuickModeConfig.create(input);
+        // Assert
+        expect(actual.fullModeRequiredWhen.mixedCategories).toBe(false);
+        expect(actual.fullModeRequiredWhen.newDomainFile).toBe(true);
+        expect(actual.fullModeRequiredWhen.apiContractChange).toBe(false);
+      });
+    });
+
+    target('isFullModeRequiredFor', () => {
+      describe('指定ルールのfullModeRequired判定', () => {
+        // UT-QMC-017
+        it("fullModeRequiredWhen.mixedCategories=trueかつrule='mixedCategories'の場合にtrueが返ること", () => {
+          // Arrange
+          const sut = createQuickModeConfig({
+            fullModeRequiredWhen: { mixedCategories: true, newDomainFile: false, apiContractChange: false },
+          });
+          // Act
+          const actual = sut.isFullModeRequiredFor('mixedCategories');
+          // Assert
+          expect(actual).toBe(true);
+        });
+
+        // UT-QMC-018
+        it("fullModeRequiredWhen.newDomainFile=falseかつrule='newDomainFile'の場合にfalseが返ること", () => {
+          // Arrange
+          const sut = createQuickModeConfig({
+            fullModeRequiredWhen: { mixedCategories: true, newDomainFile: false, apiContractChange: true },
+          });
+          // Act
+          const actual = sut.isFullModeRequiredFor('newDomainFile');
+          // Assert
+          expect(actual).toBe(false);
+        });
+
+        // UT-QMC-019
+        it("fullModeRequiredWhen.apiContractChange=trueかつrule='apiContractChange'の場合にtrueが返ること", () => {
+          // Arrange
+          const sut = createQuickModeConfig({
+            fullModeRequiredWhen: { mixedCategories: false, newDomainFile: false, apiContractChange: true },
+          });
+          // Act
+          const actual = sut.isFullModeRequiredFor('apiContractChange');
+          // Assert
+          expect(actual).toBe(true);
+        });
+      });
     });
   });
 });

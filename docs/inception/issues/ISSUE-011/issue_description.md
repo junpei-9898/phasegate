@@ -2,11 +2,21 @@
 
 ## ステータス
 
+- **状態**: ✅ **CLOSED**（Wave 1/2/3 すべて着地 / v0.56.0 完了）
 - **起票日**: 2026-04-19
+- **更新日**: 2026-04-21（Wave 1〜3 完了確認）
 - **発見契機**: ISSUE-008 Phase B-2 (v0.50.0) 完了後の事故パターン棚卸しで、6 項目の「検出漏れ・UX 劣化・挙動の不確実性」が特定された。運用で回避可能だがユーザー体験を損なう
 - **影響Unit**: traceability-model（主）, harness-error（エラーメッセージ）, phase2-extensions（drift 検出）
 - **深刻度**: P3（運用で回避可能 / ブロッカーではない）
 - **優先度**: P2〜P3 — ISSUE-008 Phase B/C を優先し、本 issue は Phase D 以降に着手
+
+## 実装履歴
+
+| Wave | 版 | 内容 |
+|---|---|---|
+| Wave 1 | v0.54.0 | P2-2 CLI エラー伝播 + P2-3 `.mdx`/`.markdown` 対応 |
+| Wave 2 | v0.55.0 | P2-1（parser の code-span / code-fence skip）— P3-5/P3-6 も自動解消 |
+| Wave 3 | v0.56.0 | P3-4 `initial-creation-expiration-checker` 新設 |
 
 ## 問題の概要
 
@@ -111,12 +121,12 @@ ISSUE-008 Phase B-2 で `validate-metadata` CLI が `.md` ファイル検証に�
 
 ## 受け入れ基準
 
-- [ ] P2-1: parser が code-span (`` ` `` で囲まれた `@story-id`) を inline 違反として検出しない
-- [ ] P2-1: parser が code-fence (``` ``` ``` ``` で囲まれたブロック) 内の `@story-id` をスキップする
-- [ ] P2-2: フルパス / 未許可 prefix に対して `ProjectRelativePathError` の内容を CLI に伝播する
-- [ ] P2-3: `.mdx` / `.markdown` 拡張子を design UseCase に振り分ける
-- [ ] P3-4: `initial_creation: true` のまま 90 日以上経過した設計文書を WARN 出力する validator を追加
-- [ ] P3-5 / P3-6: P2-1 改善で自動的に解消（単独の受け入れ基準は不要）
+- [x] P2-1: parser が code-span (`` ` `` で囲まれた `@story-id`) を inline 違反として検出しない（v0.55.0）
+- [x] P2-1: parser が code-fence (``` ``` ``` ``` で囲まれたブロック) 内の `@story-id` をスキップする（v0.55.0）
+- [x] P2-2: フルパス / 未許可 prefix に対して `ProjectRelativePathError` の内容を CLI に伝播する（v0.54.0）
+- [x] P2-3: `.mdx` / `.markdown` 拡張子を design UseCase に振り分ける（v0.54.0）
+- [x] P3-4: `initial_creation: true` のまま 90 日以上経過した設計文書を WARN 出力する validator を追加（v0.56.0 `initial-creation-expiration-checker`）
+- [x] P3-5 / P3-6: P2-1 改善で自動的に解消（v0.55.0 で連動解消）
 
 ## 推奨実装順
 

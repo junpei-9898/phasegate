@@ -716,6 +716,41 @@ async function main(): Promise<void> {
         break;
       }
 
+      // ── quick-mode / check-change-category (H10-05) ──
+      case 'check-change-category': {
+        if (hasFlag(args, '--help')) {
+          process.stdout.write([
+            'Usage: phasegate check-change-category --paths <csv> [options]',
+            '',
+            'Classify changed file paths into quick-mode categories and report',
+            'whether Full Mode is required.',
+            '',
+            'Options:',
+            '  --paths <csv>              Comma-separated file paths to classify.',
+            '  --format <human|json>      Output format. Default: human.',
+            '  --fail-on-full-required    Exit with code 1 when Full Mode is required.',
+            '  --help                     Show this help.',
+            '',
+            'Examples:',
+            '  phasegate check-change-category --paths src/foo.ts,src/bar.ts',
+            '  phasegate check-change-category --paths src/foo.ts --format json',
+            '',
+          ].join('\n'));
+          return;
+        }
+        const mod = createQuickModeCompositionRoot();
+        const paths = parseFlag(args, '--paths');
+        const format = parseFlag(args, '--format') as 'human' | 'json' | undefined;
+        const failOnFullRequired = hasFlag(args, '--fail-on-full-required');
+        const result = await mod.checkChangeCategoryHandler.handle({
+          paths,
+          format,
+          failOnFullRequired,
+        });
+        process.exit(result.exitCode);
+        break;
+      }
+
       // ── harness-api ──
       case 'phasegate:check-ready': {
         const mod = createHarnessApiModule();

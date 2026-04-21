@@ -337,5 +337,73 @@ target('QuickModeJudgmentEngine', () => {
       expect(actual.isEligible()).toBe(false);
       expect(actual.rejectionRule).toBe('MIXED_CHANGES');
     });
+
+    // UT-JE-021（H10-05）
+    describe('fullModeRequiredWhen による rule のオプトアウト', () => {
+      it('fullModeRequiredWhen.mixedCategories=false の場合にallowedCategories外のファイルでも MIXED_CHANGES で拒否されないこと', () => {
+        // Arrange
+        const domainFile = ChangedFile.create({
+          filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
+          changeKind: 'MODIFY',
+        });
+        const config = createQuickModeConfig({
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge([domainFile], config);
+        // Assert
+        expect(actual.rejectionRule).not.toBe('MIXED_CHANGES');
+      });
+
+      // UT-JE-022
+      it('fullModeRequiredWhen.newDomainFile=false の場合に domain/ 配下のCREATEでも NEW_DOMAIN で拒否されないこと', () => {
+        // Arrange
+        const newDomainFile = ChangedFile.create({
+          filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
+          changeKind: 'CREATE',
+        });
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain', 'feature', 'api'],
+          fullModeRequiredWhen: { mixedCategories: true, newDomainFile: false, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge([newDomainFile], config);
+        // Assert
+        expect(actual.rejectionRule).not.toBe('NEW_DOMAIN');
+      });
+
+      // UT-JE-023
+      it('fullModeRequiredWhen.apiContractChange=false の場合に *port.ts の変更でも API_CONTRACT で拒否されないこと', () => {
+        // Arrange
+        const portFile = ChangedFile.create({
+          filePath: 'scripts/harness/quick-mode/domain/ports/some-port.ts',
+          changeKind: 'MODIFY',
+        });
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain', 'feature', 'api'],
+          fullModeRequiredWhen: { mixedCategories: true, newDomainFile: true, apiContractChange: false },
+        });
+        // Act
+        const actual = engine.judge([portFile], config);
+        // Assert
+        expect(actual.rejectionRule).not.toBe('API_CONTRACT');
+      });
+
+      // UT-JE-024
+      it('fullModeRequiredWhen.mixedCategories=false でも newDomainFile=true の場合に domain/ 配下の CREATE は NEW_DOMAIN で拒否されること', () => {
+        // Arrange
+        const newDomainFile = ChangedFile.create({
+          filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
+          changeKind: 'CREATE',
+        });
+        const config = createQuickModeConfig({
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge([newDomainFile], config);
+        // Assert
+        expect(actual.rejectionRule).toBe('NEW_DOMAIN');
+      });
+    });
   });
 });

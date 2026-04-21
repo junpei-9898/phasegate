@@ -2,11 +2,22 @@
 
 ## ステータス
 
+- **状態**: ✅ **CLOSED**（Phase A〜D すべて着地 / v0.37.0 まで）
 - **起票日**: 2026-04-17
+- **更新日**: 2026-04-21（Phase A〜D 完了確認）
 - **発見契機**: phasegate v0.32 を他PJに `npm install --save-dev` → `npx phasegate init` した際、`.claude/settings.json` に登録されたフックコマンドが指すスクリプトが実体として存在しなかった
 - **影響Unit**: agent-integration（hooks）, setup（skill-deployer）, skills（全Sonnet委任系スキル）
 - **深刻度**: P0 — Phase Gate / Bash書き込み検出など主要な品質防御機能が他PJで動作しない
 - **優先度**: 高 — 他PJ導入が事実上できない状態
+
+## 実装履歴
+
+| Phase | 版 | 内容 |
+|---|---|---|
+| Phase A | v0.34.0 | P0 緊急修正（hooks/scripts/docs 配置不整合） |
+| Phase B | v0.35.0 | CLI サブコマンド化（`phasegate hook ...`） |
+| Phase C | v0.36.0 | `init` で design docs / husky 自動配置 |
+| Phase D | v0.37.0 | dead code 削除 + skill リンク切れ修正 |
 
 ## 問題の概要
 

@@ -14,13 +14,17 @@ import { QuickModeDecisionContractMapper } from './application/mappers/quick-mod
 import { JudgeQuickModeEligibilityUseCase } from './application/usecases/judge-quick-mode-eligibility-usecase.js';
 import { BuildRelaxationProfileUseCase } from './application/usecases/build-relaxation-profile-usecase.js';
 import { ExecuteQuickCiCheckUseCase } from './application/usecases/execute-quick-ci-check-usecase.js';
+import { ClassifyChangeCategoryUseCase } from './application/usecases/classify-change-category-usecase.js';
 import { CiCheckQuickModeHandler } from './presentation/handlers/ci-check-quick-mode-handler.js';
+import { CheckChangeCategoryHandler } from './presentation/handlers/check-change-category-handler.js';
 
 export interface QuickModeCompositionRoot {
   handler: CiCheckQuickModeHandler;
+  checkChangeCategoryHandler: CheckChangeCategoryHandler;
   executeUseCase: ExecuteQuickCiCheckUseCase;
   judgeUseCase: JudgeQuickModeEligibilityUseCase;
   buildUseCase: BuildRelaxationProfileUseCase;
+  classifyUseCase: ClassifyChangeCategoryUseCase;
 }
 
 export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
@@ -62,13 +66,21 @@ export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
     buildUseCase,
   });
 
+  const classifyUseCase = new ClassifyChangeCategoryUseCase({
+    quickModeConfigPort,
+    judgmentEngine,
+  });
+
   // Presentation
   const handler = new CiCheckQuickModeHandler({ useCase: executeUseCase });
+  const checkChangeCategoryHandler = new CheckChangeCategoryHandler({ useCase: classifyUseCase });
 
   return {
     handler,
+    checkChangeCategoryHandler,
     executeUseCase,
     judgeUseCase,
     buildUseCase,
+    classifyUseCase,
   };
 }

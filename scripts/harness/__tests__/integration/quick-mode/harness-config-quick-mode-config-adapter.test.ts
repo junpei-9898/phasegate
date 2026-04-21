@@ -137,4 +137,79 @@ target('HarnessConfigQuickModeConfigAdapter', () => {
       await expect(adapter.getQuickModeConfig()).rejects.toThrow();
     });
   });
+
+  describe('fullModeRequiredWhen の読み取り（H10-05）', () => {
+    context('fullModeRequiredWhen フィールドが未定義の場合', () => {
+      // IT-REPO-Config-010
+      it('デフォルト値（全 true）が設定される', async () => {
+        // Arrange
+        readFileMock.mockResolvedValue(HARNESS_CONFIG_WITH_QUICKMODE as never);
+        const adapter = new HarnessConfigQuickModeConfigAdapter();
+        // Act
+        const actual = await adapter.getQuickModeConfig();
+        // Assert
+        expect(actual.fullModeRequiredWhen.mixedCategories).toBe(true);
+        expect(actual.fullModeRequiredWhen.newDomainFile).toBe(true);
+        expect(actual.fullModeRequiredWhen.apiContractChange).toBe(true);
+      });
+    });
+
+    context('fullModeRequiredWhen に明示値が設定されている場合', () => {
+      // IT-REPO-Config-011
+      it('明示値が保持される', async () => {
+        // Arrange
+        const config = JSON.stringify({
+          project: { name: 'test', preset: 'standard' },
+          layers: {},
+          phaseDependencies: {},
+          quickMode: {
+            allowedCategories: ['bugfix'],
+            maintainedLayers: ['L1'],
+            relaxedGates: ['L4'],
+            fullModeRequiredWhen: {
+              mixedCategories: false,
+              newDomainFile: true,
+              apiContractChange: false,
+            },
+          },
+        });
+        readFileMock.mockResolvedValue(config as never);
+        const adapter = new HarnessConfigQuickModeConfigAdapter();
+        // Act
+        const actual = await adapter.getQuickModeConfig();
+        // Assert
+        expect(actual.fullModeRequiredWhen.mixedCategories).toBe(false);
+        expect(actual.fullModeRequiredWhen.newDomainFile).toBe(true);
+        expect(actual.fullModeRequiredWhen.apiContractChange).toBe(false);
+      });
+    });
+
+    context('fullModeRequiredWhen が部分定義の場合', () => {
+      // IT-REPO-Config-012
+      it('未指定フィールドのみデフォルト値（true）で補完される', async () => {
+        // Arrange
+        const config = JSON.stringify({
+          project: { name: 'test', preset: 'standard' },
+          layers: {},
+          phaseDependencies: {},
+          quickMode: {
+            allowedCategories: ['bugfix'],
+            maintainedLayers: ['L1'],
+            relaxedGates: ['L4'],
+            fullModeRequiredWhen: {
+              mixedCategories: false,
+            },
+          },
+        });
+        readFileMock.mockResolvedValue(config as never);
+        const adapter = new HarnessConfigQuickModeConfigAdapter();
+        // Act
+        const actual = await adapter.getQuickModeConfig();
+        // Assert
+        expect(actual.fullModeRequiredWhen.mixedCategories).toBe(false);
+        expect(actual.fullModeRequiredWhen.newDomainFile).toBe(true);
+        expect(actual.fullModeRequiredWhen.apiContractChange).toBe(true);
+      });
+    });
+  });
 });

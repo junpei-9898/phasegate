@@ -2,11 +2,24 @@
 
 ## ステータス
 
+- **状態**: ✅ **CLOSED**（Phase A / B-2 / B-3 / C-1/C-2/C-3 / D 着地 — B-1 は 2026-04-19 調査で撤回、v0.53.0 完了）
 - **起票日**: 2026-04-18
+- **更新日**: 2026-04-21（Phase A〜D 完了確認、B-1 は撤回で扱う）
 - **発見契機**: メンテナへの外部FB「phasegate を導入しても生成コードに `@unit` / `@layer` が付かず、設計文書にも `@us-xxx` 系メタが付いていないのでは？」への実地検証。phasegate 自身のコードには正しく付与されているが、**それは phasegate 自身を AIDLC で育てる際にメンテナが手作業で付けてきたためであり、生成系スキル自身が付与を強制する仕組みは存在しない**ことが判明。
 - **影響Unit**: agent_integration（スキル定義群）, harness_error（メタデータ欠落時の誘導）, biome_ast_engine（L1-001/L1-002 既存ルールとの接続）, ci_governance（新規テンプレ提供）
 - **深刻度**: P1（L4 バリデータ群 — codebase-mapper / drift-detection / dead-code / doc-freshness-checker — の前提が満たされず、投じた AIDLC コストが下流検証まで到達しない）
 - **優先度**: P1 — ISSUE-007（retrofit 導入）と並走で扱うべき。ISSUE-007 が「既存コードベースへの持ち込み障壁」、本 issue は「新規導入で AIDLC を回しても L4 まで繋がらない」を扱う双子。
+
+## 実装履歴
+
+| Phase | 版 | 内容 |
+|---|---|---|
+| Phase A | v0.47.0 | P1-1 生成コードへの @unit/@layer 付与指示 |
+| Phase B-1 | v0.48.0→v0.49.0 | 設計文書 frontmatter 必須化 → 撤回（既存機構で概ねカバー済と判明） |
+| Phase B-2 | v0.50.0 | `validate-metadata` CLI に `.md` 分岐追加 |
+| Phase B-3 | v0.52.0 | pre-commit に `.md` 設計文書検証を接続 |
+| Phase C-1/C-2/C-3 | v0.53.0 | テスト @story end-to-end + templates 実体化 |
+| Phase D | v0.53.0 | templates/ 実体化（Phase C と同時） |
 
 ## 問題の概要
 
@@ -184,24 +197,24 @@ phasegate は CLAUDE.md で「全ソースファイル先頭に `// @unit <unit�
 - [x] story-implementor / quick-implementor のスキル定義に、新規ソース生成時の `@unit` / `@layer` 付与指示が明記される
 
 **Phase B（設計文書 @story-id end-to-end）**:
-- [ ] B-1: logical-designer / domain-designer / unit-designer の Phase 2 成果物指示に `@story-id` インライン注釈 + `traceability.initial_creation: true` frontmatter emit が明記される
-- [ ] B-2: `ValidateMetadataCommandHandler` に `validateDesignStoryAnnotationsUseCase` が DI され、`main.ts:557` の `validate-metadata` CLI で `.md` ファイルが `validateDesignDocument` に分岐される
-- [ ] B-3: `runL2ValidatorsUseCase` または `TraceabilityMetadataPolicyAdapter` 経由で、staged な `.md` 設計文書に対して `@story-id` 注釈検証が pre-commit で実行される
+- [~] ~~B-1: logical-designer / domain-designer / unit-designer の Phase 2 成果物指示に `@story-id` インライン注釈 + `traceability.initial_creation: true` frontmatter emit が明記される~~ — **撤回**（v0.49.0、既存機構で概ねカバー済）
+- [x] B-2: `ValidateMetadataCommandHandler` に `validateDesignStoryAnnotationsUseCase` が DI され、`main.ts:557` の `validate-metadata` CLI で `.md` ファイルが `validateDesignDocument` に分岐される（v0.50.0）
+- [x] B-3: `runL2ValidatorsUseCase` または `TraceabilityMetadataPolicyAdapter` 経由で、staged な `.md` 設計文書に対して `@story-id` 注釈検証が pre-commit で実行される（v0.52.0）
 
 **Phase C（テスト @story end-to-end）**:
-- [ ] C-1: unit-test-logic-designer / it-test-logic-designer / scenario-test-logic-designer のテスト生成指示に `// @story HXX-XX` 付与が明記される
-- [ ] C-2: テスト側 `@story` 検証が CLI 経由で呼び出し可能になる（`ValidateMetadataCommandHandler` 拡張 **または** L1 Biome `require-story-tag-in-tests` 追加）
-- [ ] C-3: `__tests__/**/*.ts` に対して `@story` 検証が pre-commit で実行される
+- [x] C-1: unit-test-logic-designer / it-test-logic-designer / scenario-test-logic-designer のテスト生成指示に `// @story HXX-XX` 付与が明記される（v0.53.0）
+- [x] C-2: テスト側 `@story` 検証が CLI 経由で呼び出し可能になる（`ValidateMetadataCommandHandler` 拡張 **または** L1 Biome `require-story-tag-in-tests` 追加）（v0.53.0）
+- [x] C-3: `__tests__/**/*.ts` に対して `@story` 検証が pre-commit で実行される（v0.53.0）
 
 **Phase D（テンプレ実体化）**:
-- [ ] `templates/` 配下に実体テンプレ（`source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される
+- [x] `templates/` 配下に実体テンプレ（`source.template.ts`, `logical_design.template.md`, `test.template.ts`）が配置される（v0.53.0）
 
 **撤回分**:
 - [~] ~~logical-designer / domain-designer / unit-designer のスキル定義に、汎用 YAML frontmatter（`unit_id`, `user_story_ids`, `layer_scope`）の必須化が明記される~~ — **撤回**（2026-04-19 調査で `@story-id` インライン注釈 + 配置パス convention + 既存 `MetadataValidator.validateDesignDocument` により概ねカバー済みと判明。v0.48.0 → v0.49.0 でロールバック済）
 - [~] ~~pointer-validator / doc-freshness-checker が汎用 frontmatter メタデータを検証対象に含める~~ — **撤回**（上記に連動）
 
 **総合検証**:
-- [ ] メンテナの別 PJ で新規実装を行い、生成物に `@unit` / `@layer` / `@story` / `@story-id` が自動で含まれ、かつ pre-commit で欠落が検出されることを確認する
+- [x] メンテナの別 PJ で新規実装を行い、生成物に `@unit` / `@layer` / `@story` / `@story-id` が自動で含まれ、かつ pre-commit で欠落が検出されることを確認する（ISSUE-013 ドッグフーディングで確認）
 
 ## 推奨実装順（2026-04-19 再計画）
 

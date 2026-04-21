@@ -112,6 +112,11 @@ export const createQuickModeConfig = (overrides: Partial<{
   allowedCategories: string[];
   maintainedLayers: string[];
   relaxedGates: string[];
+  fullModeRequiredWhen: {
+    mixedCategories: boolean;
+    newDomainFile: boolean;
+    apiContractChange: boolean;
+  };
 }> = {}): QuickModeConfig =>
   QuickModeConfig.create({
     allowedCategories: ['bugfix', 'docs', 'test', 'config'],

@@ -60,6 +60,11 @@ export class HarnessConfigQuickModeConfigAdapter {
       allowedCategories?: string[];
       maintainedLayers?: string[];
       relaxedGates?: string[];
+      fullModeRequiredWhen?: {
+        mixedCategories?: boolean;
+        newDomainFile?: boolean;
+        apiContractChange?: boolean;
+      };
     } | undefined;
 
     if (!quickMode) {
@@ -70,6 +75,7 @@ export class HarnessConfigQuickModeConfigAdapter {
       allowedCategories: quickMode.allowedCategories ?? DEFAULT_QUICK_MODE_CONFIG.allowedCategories,
       maintainedLayers: quickMode.maintainedLayers ?? DEFAULT_QUICK_MODE_CONFIG.maintainedLayers,
       relaxedGates: quickMode.relaxedGates ?? DEFAULT_QUICK_MODE_CONFIG.relaxedGates,
+      fullModeRequiredWhen: quickMode.fullModeRequiredWhen,
     });
   }
 }

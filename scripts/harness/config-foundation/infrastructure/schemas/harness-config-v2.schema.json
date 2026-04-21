@@ -153,6 +153,21 @@
             "type": "string"
           },
           "uniqueItems": true
+        },
+        "fullModeRequiredWhen": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mixedCategories": {
+              "type": "boolean"
+            },
+            "newDomainFile": {
+              "type": "boolean"
+            },
+            "apiContractChange": {
+              "type": "boolean"
+            }
+          }
         }
       }
     },

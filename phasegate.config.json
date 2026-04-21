@@ -34,7 +34,12 @@
     "relaxedGates": [
       "phase-gate",
       "2-phase-execution"
-    ]
+    ],
+    "fullModeRequiredWhen": {
+      "mixedCategories": true,
+      "newDomainFile": true,
+      "apiContractChange": true
+    }
   },
   "phaseDependencies": {
     "preset": "default",

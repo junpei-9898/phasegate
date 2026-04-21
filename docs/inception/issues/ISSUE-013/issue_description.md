@@ -2,8 +2,9 @@
 
 ## ステータス
 
+- **状態**: ✅ **CLOSED**（v0.62.0 で完了 / 2026-04-21 npm publish 済み）
 - **起票日**: 2026-04-20
-- **更新日**: 2026-04-21（前提調査により方針を改訂）
+- **更新日**: 2026-04-21（Wave 1〜3 すべて完了、v0.62.0 リリース）
 - **発見契機**: Claude Code hooks vs Codex hooks の機能比較分析
 - **影響Unit**: agent-integration（templates 追加）, harness-api（docs）
 - **深刻度**: P2（機能拡張）
@@ -100,10 +101,17 @@ Claude 環境では L0 hook を主防御とするが、Codex 環境では hook �
 ## 受け入れ基準
 
 - [x] Wave 1: `BashWriteTargetExtractor` が `apply_patch` ヒアドキュメント構文から Update/Add/Delete File を抽出（v0.57.0）
-- [ ] Wave 2-A: `templates/.codex/hooks.json` を作成し、既存 CLI コマンドに hook を配線
-- [ ] Wave 2-B: Codex 模擬 stdin JSON で既存アダプタが動作することを integration test で確認
-- [ ] Wave 2-C: `docs/guide/codex-integration.md` を作成、制約と運用を明記
-- [ ] 既存 Claude ユーザーへの影響ゼロ（テンプレート追加のみ、既存コード非変更）
+- [x] Wave 2-A: `templates/.codex/hooks.json` を作成し、既存 CLI コマンドに hook を配線（v0.58.0）
+- [x] Wave 2-B: Codex 模擬 stdin JSON で既存アダプタが動作することを integration test で確認（v0.58.0）
+- [x] Wave 2-C: `docs/guide/codex-integration.md` を作成、制約と運用を明記（v0.58.0）
+- [x] Wave 3 A-1: 実機ドッグフーディングで PreToolUse / SessionStart の動作確認（v0.59.0）
+- [x] Wave 3 A-2: README.md に Codex 対応を告知（v0.59.0）
+- [x] Wave 3 B-3: `npx phasegate init --agent <claude|codex|both>` の実装（v0.59.0）
+- [x] Wave 3 C-4: SessionStart hook による静的ルール注入（L-1 soft enforcement、v0.60.0）
+- [x] Wave 3 C-5: UserPromptSubmit hook による動的状態注入（v0.61.0）
+- [x] Wave 3 C-6 軽量版: UserPromptSubmit に `git diff` ベースの violation detection を追加（daemon 不採用、v0.62.0）
+- [x] Wave 3 D-7: 上流 fix ([openai/codex#18391](https://github.com/openai/codex/pull/18391)) が既存 approval 済みのため別途 PR 送付は不要と判断、merge 後の追従計画を本 issue に記録
+- [x] 既存 Claude ユーザーへの影響ゼロ（テンプレート追加のみ、既存コード非変更）
 
 ## 非対象（スコープ外）
 
