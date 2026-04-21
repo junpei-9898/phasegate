@@ -8,7 +8,7 @@
 
 export type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED';
 
-export type BlockReason = 'PROTECTED_FILE' | 'PHASE_GATE';
+export type BlockReason = 'PROTECTED_FILE' | 'PHASE_GATE' | 'FULL_MODE_REQUIRED';
 
 export interface BlockMetadata {
   readonly reason: BlockReason;
@@ -18,6 +18,9 @@ export interface BlockMetadata {
   readonly scopeLevel?: 1 | 2 | 3;
   readonly unitId?: string;
   readonly storyId?: string;
+  readonly fullModeRejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+  readonly fullModeRejectionReason?: string;
+  readonly fullModeDominantCategory?: string;
 }
 
 export class HookTranslationResultInvariantError extends Error {

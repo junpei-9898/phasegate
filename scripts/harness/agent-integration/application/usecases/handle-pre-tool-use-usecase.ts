@@ -13,6 +13,7 @@ import type { BlockMetadata } from '../../domain/value-objects/hook-translation-
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
 import type { PhaseGateQueryPort } from '../../domain/ports/phase-gate-query-port.js';
 import type { StoryReflectionQueryPort } from '../../domain/ports/story-reflection-query-port.js';
+import type { FullModeRequirementQueryPort } from '../../domain/ports/full-mode-requirement-query-port.js';
 import { WriteTargetScope } from '../../domain/value-objects/write-target-scope.js';
 import type { HandlePreToolUseInput, HandlePreToolUseOutput } from '../dto/handle-pre-tool-use-dto.js';
 
@@ -20,6 +21,7 @@ export interface HandlePreToolUseUseCasePorts {
   configQueryPort: ConfigQueryPort;
   phaseGateQueryPort: PhaseGateQueryPort;
   storyReflectionQueryPort?: StoryReflectionQueryPort;
+  fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
 }
 
 export class HandlePreToolUseInputValidationError extends Error {
@@ -38,10 +40,12 @@ export class HandlePreToolUseUseCase {
   private readonly translator: AsyncHookToCliTranslator;
   private readonly configQueryPort: ConfigQueryPort;
   private readonly storyReflectionQueryPort?: StoryReflectionQueryPort;
+  private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
     this.configQueryPort = ports.configQueryPort;
     this.storyReflectionQueryPort = ports.storyReflectionQueryPort;
+    this.fullModeRequirementQueryPort = ports.fullModeRequirementQueryPort;
     this.translator = new AsyncHookToCliTranslator({
       configQueryPort: ports.configQueryPort,
       reentryGuard: { isActive: () => false } as never,
@@ -79,6 +83,18 @@ export class HandlePreToolUseUseCase {
       };
     }
 
+    if (HandlePreToolUseUseCase.WRITE_TOOLS.has(input.toolName)
+        && this.fullModeRequirementQueryPort !== undefined
+        && input.targetFilePaths.length > 0) {
+      const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
+      if (fullModeResult.requiresFullMode) {
+        return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
+          input.targetFilePaths[0],
+          fullModeResult,
+        );
+      }
+    }
+
     const scope = this.resolveStoryReflectionScope(input);
     if (scope === null || this.storyReflectionQueryPort === undefined) {
       return { shouldBlock: false };
@@ -95,6 +111,41 @@ export class HandlePreToolUseUseCase {
       reflectionResult.blockers,
       reflectionResult.warnings,
     );
+  }
+
+  private static buildFullModeRequiredBlockOutput(
+    blockedFilePath: string | undefined,
+    result: {
+      requiresFullMode: boolean;
+      rejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+      rejectionReason?: string;
+      dominantCategory?: string;
+    },
+  ): HandlePreToolUseOutput {
+    const fp = blockedFilePath ?? '不明なファイル';
+    const lines: string[] = [
+      `Full mode 必須変更が検出されました: ${fp}`,
+    ];
+    if (result.dominantCategory) {
+      lines.push(`カテゴリ: ${result.dominantCategory}`);
+    }
+    if (result.rejectionRule) {
+      lines.push(`判定ルール: ${result.rejectionRule}`);
+    }
+    if (result.rejectionReason) {
+      lines.push(`理由: ${result.rejectionReason}`);
+    }
+    lines.push('次のアクション: /story-implementor スキルを使用して設計フェーズから開始してください。');
+
+    return {
+      shouldBlock: true,
+      blockedFilePath,
+      blockReason: 'FULL_MODE_REQUIRED',
+      error: { message: lines.join('\n') },
+      fullModeRejectionRule: result.rejectionRule,
+      fullModeDominantCategory: result.dominantCategory,
+      nextAction: '/story-implementor',
+    };
   }
 
   private resolveStoryReflectionScope(input: HandlePreToolUseInput): WriteTargetScope | null {

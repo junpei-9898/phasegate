@@ -2,17 +2,17 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Story A = v0.63.0 で着地予定 / Story B = agent-integration hook 統合 未着手）
+- **状態**: 🟡 **IN PROGRESS**（Story A = v0.63.0 着地 / Story B = v0.64.0 着地 / 他PJ再レビューのみ残）
 - **起票日**: 2026-04-18
-- **更新日**: 2026-04-21（Story A 実装完了 / 受け入れ基準 P2-1a / P2-2 / P2-3 完了）
+- **更新日**: 2026-04-21（Story A / Story B 実装完了 / 受け入れ基準 P2-1a / P2-1b / P2-2 / P2-3 完了）
 
 ## 実装履歴
 
 | Story / 版 | 内容 |
 |---|---|
 | P2-3 (v0.45.0) | `docs/guide/quick-vs-full-mode.md` 新規作成 |
-| Story A (v0.63.0 予定) | H10-05: `fullModeRequiredWhen` 設定駆動化 + `phasegate check-change-category` CLI |
-| Story B (未着手) | agent-integration の pre-tool-use hook が `quick-implementor` スキル起動時に Quick 判定を呼ぶ |
+| Story A (v0.63.0) | H10-05: `fullModeRequiredWhen` 設定駆動化 + `phasegate check-change-category` CLI |
+| Story B (v0.64.0) | H11-05: pre-tool-use hook に Full mode 必須検出を統合（agent-integration → quick-mode 経由） |
 - **発見契機**: 他PJ（Conductor）ドッグフーディング中の FB 「phasegate のステップに沿って実装していくのは過剰か、適切か」。AIDLC フルフェーズ運用の負荷と、Quick Mode への切り替え基準が暗黙である点が論点として浮上。
 - **影響Unit**: harness-api（quick-implementor / story-implementor 選択ロジック）, ci-governance（phasegate.config.json スキーマ）, ドキュメント（採用ガイド）
 - **深刻度**: P2（機能は動くが、採用者の認知負荷が高く、誤用リスクと overkill 批判の根拠になっている）
@@ -115,10 +115,10 @@
 ## 受け入れ基準
 
 - [x] `phasegate.config.json.quickMode.fullModeRequiredWhen` スキーマが定義され、バリデートされる（v0.63.0 / H10-05）
-- [ ] pre-tool-use hook が `quick-implementor` 起動時に Full 必須条件を検出してブロック / 警告する（Story B / 未着手）
+- [x] pre-tool-use hook が Write/Edit 時に Full 必須条件を検出してブロック（`FULL_MODE_REQUIRED`）する（v0.64.0 / H11-05）
 - [x] `phasegate check-change-category --paths <paths>` が実装され、推定 category を返す（v0.63.0 / H10-05）
 - [x] `docs/guide/quick-vs-full-mode.md` が存在し、README から参照されている（v0.45.0）
-- [ ] 他PJ FB 提供者に再レビューしてもらい「判定基準が明示されて迷わなくなった」という確認を得る（Story B 完了後）
+- [ ] 他PJ FB 提供者に再レビューしてもらい「判定基準が明示されて迷わなくなった」という確認を得る（v0.64.0 着地後）
 
 ## 関連
 

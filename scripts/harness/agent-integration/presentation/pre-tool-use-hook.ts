@@ -12,6 +12,8 @@ import { BashWriteTargetExtractor } from '../domain/services/bash-write-target-e
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
 import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
 import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
+import { QuickModeFullModeRequirementAdapter } from '../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
+import { createQuickModeCompositionRoot } from '../../quick-mode/composition-root.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -118,10 +120,14 @@ async function main(): Promise<void> {
       rootDir: path.dirname(configPath),
       configPath,
     });
+    const fullModeRequirementQueryPort = new QuickModeFullModeRequirementAdapter({
+      classifyUseCaseFactory: () => createQuickModeCompositionRoot().classifyUseCase,
+    });
     const useCase = new HandlePreToolUseUseCase({
       configQueryPort,
       phaseGateQueryPort,
       storyReflectionQueryPort,
+      fullModeRequirementQueryPort,
     });
 
     const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths });

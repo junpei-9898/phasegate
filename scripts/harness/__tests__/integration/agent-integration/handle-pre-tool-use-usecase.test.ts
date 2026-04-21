@@ -709,4 +709,155 @@ target('HandlePreToolUseUseCase.execute', () => {
       });
     });
   });
+
+  describe('FULL_MODE_REQUIRED 検出 (ISSUE-006 Story B)', () => {
+    context('fullModeRequirementQueryPort が requiresFullMode=true を返すとき', () => {
+      it('Write ツールの場合、FULL_MODE_REQUIRED でブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'NEW_DOMAIN' as const,
+            rejectionReason: 'domain ファイル新規作成が検出されました',
+            dominantCategory: 'domain',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/some-unit/domain/new-entity.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+        expect(actual.fullModeRejectionRule).toBe('NEW_DOMAIN');
+        expect(actual.fullModeDominantCategory).toBe('domain');
+        expect(actual.error?.message).toContain('Full mode 必須変更が検出されました');
+        expect(actual.error?.message).toContain('/story-implementor');
+        expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledWith([
+          'scripts/harness/some-unit/domain/new-entity.ts',
+        ]);
+      });
+    });
+
+    context('fullModeRequirementQueryPort が requiresFullMode=false を返すとき', () => {
+      it('ブロックされず後続のストーリー反映チェックに進むこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({ requiresFullMode: false }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledOnce();
+      });
+    });
+
+    context('fullModeRequirementQueryPort 未注入のとき', () => {
+      it('既存挙動を保ち fullMode チェックがスキップされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+      });
+    });
+
+    context('Write ツール以外のとき', () => {
+      it('fullMode チェックが発火せずスキップされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({ requiresFullMode: true }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Read',
+          targetFilePaths: ['scripts/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockFullModeRequirementQueryPort.check).not.toHaveBeenCalled();
+      });
+    });
+
+    context('Phase Gate ブロックが優先されるとき', () => {
+      it('fullMode チェックが発火しないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['docs/product/construction/foo/logical_design.md が存在しません'], []),
+          ),
+        };
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({ requiresFullMode: true }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo/domain/new.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(mockFullModeRequirementQueryPort.check).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
