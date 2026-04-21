@@ -49,7 +49,7 @@ target('CreateBaselineUseCase', () => {
         expect(result.entryCount).toBe(2);
         expect(result.dryRun).toBe(false);
         expect(result.overwriteBlocked).toBe(false);
-        expect(result.entries[0]).toEqual({ path: 'a.ts', sha1: SHA('a') });
+        expect(result.files[0]).toEqual({ path: 'a.ts', sha1: SHA('a') });
         expect(repo.save).toHaveBeenCalledTimes(1);
       });
     });

@@ -1,7 +1,7 @@
 // @unit ci-governance
 // @layer application
 
-export interface CreateBaselineOutputEntry {
+export interface CreateBaselineOutputFile {
   readonly path: string;
   readonly sha1: string;
 }
@@ -11,5 +11,5 @@ export interface CreateBaselineOutput {
   readonly entryCount: number;
   readonly dryRun: boolean;
   readonly overwriteBlocked: boolean;
-  readonly entries: readonly CreateBaselineOutputEntry[];
+  readonly files: readonly CreateBaselineOutputFile[];
 }

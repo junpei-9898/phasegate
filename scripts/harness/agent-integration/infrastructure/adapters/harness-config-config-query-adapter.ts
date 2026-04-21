@@ -124,7 +124,7 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     const config = this.loadConfig();
     const baseline = config.baseline ?? {};
     return {
-      enabled: baseline.enabled ?? false,
+      enabled: baseline.enabled ?? true,
       path: baseline.path ?? '.phasegate/baseline.json',
     };
   }

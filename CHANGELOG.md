@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-04-22
+
+### Changed (breaking-ish)
+
+- ISSUE-007 Wave 6 — `baseline.enabled` の default を `false` → **`true`** に変更。ISSUE-007 の趣旨（retrofit 導入時の摩擦解消）と整合させるため。`.phasegate/baseline.json` が存在しないプロジェクトでは従来通り何も grandfather されない（`ci-governance-baseline-grandfather-adapter.ts` が defensive に early-return する）ため、新規プロジェクトへの影響なし。`baseline` をオフにしたい場合は `phasegate.config.json` に `baseline.enabled: false` を明示。
+- `npx phasegate baseline --dry-run --json` の出力キーを `entries` → `files` に変更（保存ファイル `.phasegate/baseline.json` のキー `files` と整合）。同時に `CreateBaselineOutput.entries` → `CreateBaselineOutput.files` にリネーム。`.phasegate/baseline.json` 自体のオンディスク形式は変更なし。
+
+### Fixed
+
+- dogfooding で判明していた「`npx phasegate init` → `npx phasegate baseline` の 2 手を踏んでも pre-tool-use hook で grandfather が効かない」問題を解消（上記の `enabled` default 変更により）。
+
 ## [0.70.0] - 2026-04-22
 
 ### Added

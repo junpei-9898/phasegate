@@ -24,7 +24,7 @@ target('CreateBaselineHandler', () => {
           entryCount: 12,
           dryRun: false,
           overwriteBlocked: false,
-          entries: [],
+          files: [],
         });
         const handler = new CreateBaselineHandler(useCase);
         const result = await handler.handle({});
@@ -44,7 +44,7 @@ target('CreateBaselineHandler', () => {
           entryCount: 3,
           dryRun: true,
           overwriteBlocked: false,
-          entries: [],
+          files: [],
         });
         const handler = new CreateBaselineHandler(useCase);
         const result = await handler.handle({ dryRun: true });
@@ -62,7 +62,7 @@ target('CreateBaselineHandler', () => {
           entryCount: 0,
           dryRun: false,
           overwriteBlocked: true,
-          entries: [],
+          files: [],
         });
         const handler = new CreateBaselineHandler(useCase);
         const result = await handler.handle({});
@@ -80,13 +80,13 @@ target('CreateBaselineHandler', () => {
         entryCount: 1,
         dryRun: false,
         overwriteBlocked: false,
-        entries: [{ path: 'a.ts', sha1: 'a'.repeat(40) }],
+        files: [{ path: 'a.ts', sha1: 'a'.repeat(40) }],
       });
       const handler = new CreateBaselineHandler(useCase);
       const result = await handler.handle({ format: 'json' });
       const parsed = JSON.parse(result.output);
       expect(parsed.entryCount).toBe(1);
-      expect(parsed.entries[0].path).toBe('a.ts');
+      expect(parsed.files[0].path).toBe('a.ts');
     });
   });
 });

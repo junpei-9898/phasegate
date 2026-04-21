@@ -2,9 +2,9 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 / Wave 2 = v0.66.0 / Wave 3 = v0.67.0 / Wave 4 = v0.69.0 / Wave 5 = v0.70.0 着地 — 残り acceptance #8 の実地検証のみ）
+- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 / Wave 2 = v0.66.0 / Wave 3 = v0.67.0 / Wave 4 = v0.69.0 / Wave 5 = v0.70.0 / Wave 6 = v0.71.0 着地 — 残り acceptance #8 の実地検証とドキュメント追補 (v0.72.0 予定) のみ）
 - **起票日**: 2026-04-18
-- **更新日**: 2026-04-22（Wave 5 retrofit-adoption.md 着地）
+- **更新日**: 2026-04-22（Wave 6 baseline.enabled default fix / dry-run key 整合）
 - **発見契機**: メンテナ自身の別 PJ への phasegate 後付け導入時。「phase-gate エラーが連発して作業が進まない」「エラー文から何をどう修正すれば解除できるかが分からない」という実地での痛み。ISSUE-006 (Quick/Full 判定) よりも優先度が高いと判断。
 
 ## 実装履歴
@@ -16,6 +16,7 @@
 | Wave 3 (v0.67.0) | H12-03: HarnessError / ErrorDefinition / HarnessErrorContract に `suggestedSkill` / `scaffoldCommand` / `templatePath` 3 optional フィールド追加 / L2-001 registry に default 値 populate / agent-integration pre-tool-use hook のエラーメッセージに actionable 行（scaffold CLI + templatePath）を挿入 / `ErrorGuidanceQueryPort` + `HarnessErrorGuidanceAdapter` (cross-Unit port) |
 | Wave 4 (v0.69.0) | H12-04: `npx phasegate scaffold-design --unit <id> --phase <name>` CLI 実装（ci-governance Unit）。`templates/*.template.md` を読み取り `{{unit}}` 置換して `docs/product/construction/{unit}/*.md` を生成。5 phase 全対応（logical/domain/uiux/unit-test/it-test）。`--force` なしでは既存保護。L2-001 `defaultTemplatePath` を `docs/templates/` → `templates/` に修正し Wave 3 の dead reference を解消 |
 | Wave 5 (v0.70.0) | H12-05: `docs/guide/retrofit-adoption.md` 執筆。既存 PJ 後付け導入の end-to-end チュートリアル（init → baseline → scaffold-design の 4 ステップ、actionable phase-gate エラーの読み方、baseline 卒業手順、トラブルシュート QA） |
+| Wave 6 (v0.71.0) | H12-06: Wave 5 の dogfooding で判明したコード側不整合を修正。`baseline.enabled` の default を `false` → `true` に変更（`harness-config-config-query-adapter.ts`）。`npx phasegate baseline --dry-run --json` の出力キーを `entries` → `files` に変更し `.phasegate/baseline.json` 保存形式と整合。ISSUE-007 の設計意図（retrofit の摩擦解消）を実装が正しく反映するようになった |
 - **影響Unit**: phase_dependency_model（gate 判定ロジック）, harness_error（エラー情報設計）, agent_integration（pre-tool-use hook）, ci_governance（新規 CLI）
 - **深刻度**: P1（OSS として retrofit 導入経路が事実上封鎖されており、採用の最大の間口が狭まっている）
 - **優先度**: P1 — 新規 PJ への導入は回るが、既存 PJ への持ち込みは現状ほぼ不可能。これを放置すると phasegate は「最初から AIDLC で組む PJ 専用ツール」という強い制約のまま広がらない

@@ -221,11 +221,11 @@ target('HarnessConfigConfigQueryAdapter', () => {
       });
     });
 
-    context('baseline セクションが未定義 (ISSUE-007 Wave 2)', () => {
-      it('IT-AI-HCC-BL-001: デフォルトで enabled=false, path=.phasegate/baseline.json', async () => {
+    context('baseline セクションが未定義 (ISSUE-007 Wave 2 / Wave 6 で default=true へ変更)', () => {
+      it('IT-AI-HCC-BL-001: デフォルトで enabled=true, path=.phasegate/baseline.json', async () => {
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
         const actual = await adapter.getBaselineConfig();
-        expect(actual.enabled).toBe(false);
+        expect(actual.enabled).toBe(true);
         expect(actual.path).toBe('.phasegate/baseline.json');
       });
     });

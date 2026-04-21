@@ -52,7 +52,7 @@ export class CreateBaselineUseCase {
         entryCount: 0,
         dryRun: false,
         overwriteBlocked: true,
-        entries: [],
+        files: [],
       };
     }
 
@@ -71,7 +71,7 @@ export class CreateBaselineUseCase {
       entries,
     });
 
-    const outputEntries = entries.map((e) => ({ path: e.path, sha1: e.sha1 }));
+    const outputFiles = entries.map((e) => ({ path: e.path, sha1: e.sha1 }));
 
     if (dryRun) {
       return {
@@ -79,7 +79,7 @@ export class CreateBaselineUseCase {
         entryCount: snapshot.entryCount,
         dryRun: true,
         overwriteBlocked: false,
-        entries: outputEntries,
+        files: outputFiles,
       };
     }
 
@@ -89,7 +89,7 @@ export class CreateBaselineUseCase {
       entryCount: snapshot.entryCount,
       dryRun: false,
       overwriteBlocked: false,
-      entries: outputEntries,
+      files: outputFiles,
     };
   }
 }
