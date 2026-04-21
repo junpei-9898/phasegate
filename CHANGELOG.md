@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-04-22
+
+### Added
+
+- ISSUE-007 Wave 5 — `docs/guide/retrofit-adoption.md` を追加。既存プロジェクトへの phasegate 後付け導入チュートリアル（`init` → `baseline` → `scaffold-design` の 4 ステップ、phase-gate エラーの読み方、baseline 卒業手順、よくある詰まり方の QA）。
+
 ## [0.69.0] - 2026-04-22
 
 ### Added
