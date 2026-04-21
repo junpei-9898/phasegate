@@ -88,6 +88,7 @@ Commands:
   ci:generate-template         Generate CI template (--preset <id>, --type <aidlc-gate|consistency-check|pre-commit>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
+  baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
 
   skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed)
   skill:check-coverage         Check coverage (--story <storyId>, --json)
@@ -891,6 +892,26 @@ Examples:
         const reset = hasFlag(args, '--reset');
         const format = json ? 'json' : 'human';
         const result = await mod.checkRepetitionHandler.handle({ errorCode, reset, format });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'baseline': {
+        const mod = buildCiGovernance(rootDir);
+        const dryRun = hasFlag(args, '--dry-run');
+        const force = hasFlag(args, '--force');
+        const pathsFlag = parseFlag(args, '--paths');
+        const include = pathsFlag
+          ? pathsFlag.split(',').map((s) => s.trim()).filter(Boolean)
+          : undefined;
+        const format = json ? 'json' : 'human';
+        const result = await mod.createBaselineHandler.handle({
+          include,
+          dryRun,
+          force,
+          format,
+        });
         console.log(result.output);
         process.exit(result.exitCode);
         break;

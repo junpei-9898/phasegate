@@ -2,8 +2,16 @@
 
 ## ステータス
 
+- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 着地 / Wave 2〜5 未着手）
 - **起票日**: 2026-04-18
+- **更新日**: 2026-04-21（Wave 1 `phasegate baseline` CLI + schema 着地）
 - **発見契機**: メンテナ自身の別 PJ への phasegate 後付け導入時。「phase-gate エラーが連発して作業が進まない」「エラー文から何をどう修正すれば解除できるかが分からない」という実地での痛み。ISSUE-006 (Quick/Full 判定) よりも優先度が高いと判断。
+
+## 実装履歴
+
+| Wave / 版 | 内容 |
+|---|---|
+| Wave 1 (v0.65.0) | H12-01: `npx phasegate baseline` CLI + `.phasegate/baseline.json` 生成 + `phasegate.config.json.baseline` schema 拡張 (ci-governance Unit) |
 - **影響Unit**: phase_dependency_model（gate 判定ロジック）, harness_error（エラー情報設計）, agent_integration（pre-tool-use hook）, ci_governance（新規 CLI）
 - **深刻度**: P1（OSS として retrofit 導入経路が事実上封鎖されており、採用の最大の間口が狭まっている）
 - **優先度**: P1 — 新規 PJ への導入は回るが、既存 PJ への持ち込みは現状ほぼ不可能。これを放置すると phasegate は「最初から AIDLC で組む PJ 専用ツール」という強い制約のまま広がらない
@@ -132,9 +140,9 @@
 
 ## 受け入れ基準
 
-- [ ] `npx phasegate baseline` コマンドが実装され、`.phasegate/baseline.json` に sha1 付きファイルリストを保存できる
+- [x] `npx phasegate baseline` コマンドが実装され、`.phasegate/baseline.json` に sha1 付きファイルリストを保存できる（v0.65.0 / H12-01）
 - [ ] pre-tool-use hook が baseline 内ファイルの編集で phase-gate をスキップする（ログに「grandfather」と明示）
-- [ ] `phasegate.config.json` に `baseline` セクションが追加され、スキーマバリデートされる
+- [x] `phasegate.config.json` に `baseline` セクションが追加され、スキーマバリデートされる（v0.65.0 / H12-01）
 - [ ] phase-gate エラーに `suggestedSkill` / `scaffoldCommand` / `templatePath` フィールドが追加される
 - [ ] 実際のエラー表示に次のアクション（スキル名 + scaffold CLI）が明示される
 - [ ] `npx phasegate scaffold-design --unit <id> --phase <name>` が実装され、minimum viable template を生成する

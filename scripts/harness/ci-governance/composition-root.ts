@@ -33,17 +33,25 @@ import { AdrFoundationExistenceAdapter } from './infrastructure/adapters/adr-fou
 import { GenerateCiTemplateHandler } from './presentation/handlers/generate-ci-template-handler.js';
 import { MigrateAgentsMdHandler } from './presentation/handlers/migrate-agents-md-handler.js';
 import { CheckRepetitionHandler } from './presentation/handlers/check-repetition-handler.js';
+import { CreateBaselineHandler } from './presentation/handlers/create-baseline-handler.js';
+
+import { CreateBaselineUseCase } from './application/usecases/create-baseline-usecase.js';
+import { GlobFileScannerAdapter } from './infrastructure/adapters/glob-file-scanner-adapter.js';
+import { FileSystemSha1HasherAdapter } from './infrastructure/adapters/file-system-sha1-hasher-adapter.js';
+import { BaselineJsonRepositoryAdapter } from './infrastructure/adapters/baseline-json-repository-adapter.js';
 
 export interface CiGovernanceCompositionRoot {
   generateCiTemplateHandler: GenerateCiTemplateHandler;
   migrateAgentsMdHandler: MigrateAgentsMdHandler;
   checkRepetitionHandler: CheckRepetitionHandler;
+  createBaselineHandler: CreateBaselineHandler;
   // Use cases exposed for direct access
   recordErrorOccurrenceUseCase: RecordErrorOccurrenceUseCase;
   checkEscalationUseCase: CheckEscalationUseCase;
   resetRepetitionUseCase: ResetRepetitionUseCase;
   aggregateLessonsUseCase: AggregateLessonsUseCase;
   validatePointersUseCase: ValidatePointersUseCase;
+  createBaselineUseCase: CreateBaselineUseCase;
 }
 
 export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot {
@@ -80,6 +88,16 @@ export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot 
   const aggregateLessonsUseCase = new AggregateLessonsUseCase(lessonArtifactReaderPort, lessonAggregator);
   const validatePointersUseCase = new ValidatePointersUseCase(agentsMdPort, pointerValidator);
 
+  // Baseline adapters & use case (ISSUE-007 Wave 1)
+  const fileScanner = new GlobFileScannerAdapter(baseDir);
+  const fileHasher = new FileSystemSha1HasherAdapter(baseDir);
+  const baselineRepository = new BaselineJsonRepositoryAdapter(baseDir);
+  const createBaselineUseCase = new CreateBaselineUseCase(
+    fileScanner,
+    fileHasher,
+    baselineRepository,
+  );
+
   // Handlers
   const generateCiTemplateHandler = new GenerateCiTemplateHandler(
     generateCiTemplateUseCase,
@@ -87,15 +105,18 @@ export function buildCiGovernance(baseDir: string): CiGovernanceCompositionRoot 
   );
   const migrateAgentsMdHandler = new MigrateAgentsMdHandler(migrateAgentsMdUseCase);
   const checkRepetitionHandler = new CheckRepetitionHandler(checkEscalationUseCase);
+  const createBaselineHandler = new CreateBaselineHandler(createBaselineUseCase);
 
   return {
     generateCiTemplateHandler,
     migrateAgentsMdHandler,
     checkRepetitionHandler,
+    createBaselineHandler,
     recordErrorOccurrenceUseCase,
     checkEscalationUseCase,
     resetRepetitionUseCase,
     aggregateLessonsUseCase,
     validatePointersUseCase,
+    createBaselineUseCase,
   };
 }

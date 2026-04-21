@@ -439,6 +439,19 @@
           "uniqueItems": true
         }
       }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }

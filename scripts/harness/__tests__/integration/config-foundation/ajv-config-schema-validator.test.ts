@@ -145,6 +145,29 @@ target('AjvConfigSchemaValidator', () => {
       });
     });
 
+    context('baseline セクション (ISSUE-007 Wave 1)', () => {
+      it('IT-CF-BL-001a: baseline プロパティを省略しても valid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument();
+        expect(validator.validate(document)).toEqual([]);
+      });
+
+      it('IT-CF-BL-001b: baseline.enabled=true + path で valid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        document.baseline = { enabled: true, path: '.phasegate/baseline.json' };
+        expect(validator.validate(document as never)).toEqual([]);
+      });
+
+      it('IT-CF-BL-001c: baseline.enabled が非 boolean で invalid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        document.baseline = { enabled: 'yes', path: '.phasegate/baseline.json' };
+        const errors = validator.validate(document as never);
+        expect(errors.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
     context('phaseDependencies.storyReflection を検証する場合', () => {
       it('省略した既存形式を有効として扱うこと', () => {
         // Arrange
