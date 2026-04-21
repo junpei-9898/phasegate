@@ -19,6 +19,10 @@ function createDefaultMockConfigQueryPort() {
       getDocsInception: () => 'docs/inception',
       getDocsConstruction: () => 'docs/product/construction',
     }),
+    getBaselineConfig: vi.fn().mockResolvedValue({
+      enabled: false,
+      path: '.phasegate/baseline.json',
+    }),
   };
 }
 
@@ -857,6 +861,196 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.shouldBlock).toBe(true);
         expect(actual.blockReason).toBe('PHASE_GATE');
         expect(mockFullModeRequirementQueryPort.check).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Baseline Grandfather (ISSUE-007 Wave 2)', () => {
+    function grandfatherPort(allGrandfathered: boolean) {
+      return {
+        check: vi.fn().mockResolvedValue({
+          allGrandfathered,
+          baselineEnabled: true,
+          grandfatheredPaths: allGrandfathered ? ['scripts/harness/foo.ts'] : [],
+        }),
+      };
+    }
+
+    context('allGrandfathered=true + Phase Gate ブロッカー有', () => {
+      it('IT-AI-GF-001: grandfather skip で shouldBlock=false', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(
+              false,
+              ['docs/product/construction/foo/logical_design.md が存在しません'],
+              [],
+            ),
+          ),
+        };
+        const logger = vi.fn();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          baselineGrandfatherQueryPort: grandfatherPort(true),
+          grandfatherLogger: logger,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(logger).toHaveBeenCalledWith('phase-gate', ['scripts/harness/foo.ts']);
+      });
+    });
+
+    context('allGrandfathered=true + FULL_MODE_REQUIRED 検出', () => {
+      it('IT-AI-GF-002: fullMode check が呼ばれず shouldBlock=false', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'NEW_DOMAIN' as const,
+          }),
+        };
+        const logger = vi.fn();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+          baselineGrandfatherQueryPort: grandfatherPort(true),
+          grandfatherLogger: logger,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo/domain/entity.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockFullModeRequirementQueryPort.check).not.toHaveBeenCalled();
+        expect(logger).toHaveBeenCalledWith('full-mode', [
+          'scripts/harness/foo/domain/entity.ts',
+        ]);
+      });
+    });
+
+    context('allGrandfathered=true + STORY_REFLECTION 違反', () => {
+      it('IT-AI-GF-003: story-reflection check が呼ばれず shouldBlock=false', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = {
+          checkReflection: vi.fn(),
+        };
+        const logger = vi.fn();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+          baselineGrandfatherQueryPort: grandfatherPort(true),
+          grandfatherLogger: logger,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
+      });
+    });
+
+    context('allGrandfathered=true + PROTECTED_FILE', () => {
+      it('IT-AI-GF-004: PROTECTED_FILE は grandfather 対象外で shouldBlock=true', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          baselineGrandfatherQueryPort: grandfatherPort(true),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['biome.json'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PROTECTED_FILE');
+      });
+    });
+
+    context('allGrandfathered=false + Phase Gate ブロック', () => {
+      it('IT-AI-GF-005: 既存通り Phase Gate でブロック', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(
+              false,
+              ['docs/product/construction/foo/logical_design.md が存在しません'],
+              [],
+            ),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          baselineGrandfatherQueryPort: grandfatherPort(false),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo/domain/new.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+      });
+    });
+
+    context('baselineGrandfatherQueryPort 未注入', () => {
+      it('IT-AI-GF-006: 既存挙動維持（backward compatible）', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/foo.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
       });
     });
   });

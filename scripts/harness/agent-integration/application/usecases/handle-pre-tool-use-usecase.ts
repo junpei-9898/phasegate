@@ -14,6 +14,10 @@ import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
 import type { PhaseGateQueryPort } from '../../domain/ports/phase-gate-query-port.js';
 import type { StoryReflectionQueryPort } from '../../domain/ports/story-reflection-query-port.js';
 import type { FullModeRequirementQueryPort } from '../../domain/ports/full-mode-requirement-query-port.js';
+import type {
+  BaselineGrandfatherCheckResult,
+  BaselineGrandfatherQueryPort,
+} from '../../domain/ports/baseline-grandfather-query-port.js';
 import { WriteTargetScope } from '../../domain/value-objects/write-target-scope.js';
 import type { HandlePreToolUseInput, HandlePreToolUseOutput } from '../dto/handle-pre-tool-use-dto.js';
 
@@ -22,6 +26,8 @@ export interface HandlePreToolUseUseCasePorts {
   phaseGateQueryPort: PhaseGateQueryPort;
   storyReflectionQueryPort?: StoryReflectionQueryPort;
   fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
+  baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
+  grandfatherLogger?: (reason: string, targetFilePaths: readonly string[]) => void;
 }
 
 export class HandlePreToolUseInputValidationError extends Error {
@@ -41,11 +47,23 @@ export class HandlePreToolUseUseCase {
   private readonly configQueryPort: ConfigQueryPort;
   private readonly storyReflectionQueryPort?: StoryReflectionQueryPort;
   private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
+  private readonly baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
+  private readonly grandfatherLogger: (
+    reason: string,
+    targetFilePaths: readonly string[],
+  ) => void;
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
     this.configQueryPort = ports.configQueryPort;
     this.storyReflectionQueryPort = ports.storyReflectionQueryPort;
     this.fullModeRequirementQueryPort = ports.fullModeRequirementQueryPort;
+    this.baselineGrandfatherQueryPort = ports.baselineGrandfatherQueryPort;
+    this.grandfatherLogger =
+      ports.grandfatherLogger ??
+      ((reason, paths) =>
+        process.stderr.write(
+          `[baseline] grandfather skip (${reason}): ${paths.join(', ')}\n`,
+        ));
     this.translator = new AsyncHookToCliTranslator({
       configQueryPort: ports.configQueryPort,
       reentryGuard: { isActive: () => false } as never,
@@ -59,6 +77,8 @@ export class HandlePreToolUseUseCase {
       throw new HandlePreToolUseInputValidationError('toolNameは必須です（空文字不可）');
     }
 
+    const grandfather = await this.checkGrandfather(input.targetFilePaths);
+
     const hookEvent = HookEvent.createPreToolUse(input.toolName, input.targetFilePaths);
     const result = await this.translator.translate(hookEvent);
 
@@ -66,37 +86,51 @@ export class HandlePreToolUseUseCase {
       const metadata = result.blockMetadata;
       const blockedFilePath = metadata?.blockedFilePath ?? input.targetFilePaths[0];
 
-      if (metadata?.reason === 'PHASE_GATE') {
-        return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(blockedFilePath, metadata);
-      }
-
       if (metadata?.reason === 'PROTECTED_FILE') {
         return HandlePreToolUseUseCase.buildProtectedFileBlockOutput(blockedFilePath);
       }
 
-      return {
-        shouldBlock: true,
-        blockedFilePath,
-        error: {
-          message: `ブロックされました: ${blockedFilePath ?? '不明なファイル'}`,
-        },
-      };
+      if (metadata?.reason === 'PHASE_GATE') {
+        if (grandfather.allGrandfathered) {
+          this.grandfatherLogger('phase-gate', input.targetFilePaths);
+          // fallthrough: continue to full-mode / story-reflection checks (which may also grandfather)
+        } else {
+          return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(blockedFilePath, metadata);
+        }
+      } else {
+        return {
+          shouldBlock: true,
+          blockedFilePath,
+          error: {
+            message: `ブロックされました: ${blockedFilePath ?? '不明なファイル'}`,
+          },
+        };
+      }
     }
 
     if (HandlePreToolUseUseCase.WRITE_TOOLS.has(input.toolName)
         && this.fullModeRequirementQueryPort !== undefined
         && input.targetFilePaths.length > 0) {
-      const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
-      if (fullModeResult.requiresFullMode) {
-        return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
-          input.targetFilePaths[0],
-          fullModeResult,
-        );
+      if (grandfather.allGrandfathered) {
+        this.grandfatherLogger('full-mode', input.targetFilePaths);
+      } else {
+        const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
+        if (fullModeResult.requiresFullMode) {
+          return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
+            input.targetFilePaths[0],
+            fullModeResult,
+          );
+        }
       }
     }
 
     const scope = this.resolveStoryReflectionScope(input);
     if (scope === null || this.storyReflectionQueryPort === undefined) {
+      return { shouldBlock: false };
+    }
+
+    if (grandfather.allGrandfathered) {
+      this.grandfatherLogger('story-reflection', input.targetFilePaths);
       return { shouldBlock: false };
     }
 
@@ -111,6 +145,27 @@ export class HandlePreToolUseUseCase {
       reflectionResult.blockers,
       reflectionResult.warnings,
     );
+  }
+
+  private async checkGrandfather(
+    targetFilePaths: readonly string[],
+  ): Promise<BaselineGrandfatherCheckResult> {
+    if (this.baselineGrandfatherQueryPort === undefined) {
+      return {
+        allGrandfathered: false,
+        baselineEnabled: false,
+        grandfatheredPaths: [],
+      };
+    }
+    try {
+      return await this.baselineGrandfatherQueryPort.check(targetFilePaths);
+    } catch {
+      return {
+        allGrandfathered: false,
+        baselineEnabled: false,
+        grandfatheredPaths: [],
+      };
+    }
   }
 
   private static buildFullModeRequiredBlockOutput(

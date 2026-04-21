@@ -7,7 +7,11 @@
  */
 
 import * as fs from 'node:fs';
-import type { ConfigQueryPort, HookType } from '../../domain/ports/config-query-port.js';
+import type {
+  BaselineConfig,
+  ConfigQueryPort,
+  HookType,
+} from '../../domain/ports/config-query-port.js';
 import { ProjectPaths } from '../../domain/value-objects/project-paths.js';
 
 interface ProjectDocsSection {
@@ -39,11 +43,17 @@ interface QuickModeSection {
   relaxedGates?: string[];
 }
 
+interface BaselineSection {
+  enabled?: boolean;
+  path?: string;
+}
+
 interface HarnessConfigDocument {
   harnesses?: HarnessesSection;
   project?: ProjectSection;
   protectedFiles?: ProtectedFilesSection;
   quickMode?: QuickModeSection;
+  baseline?: BaselineSection;
 }
 
 export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
@@ -108,5 +118,14 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
         inception: paths?.docs?.inception ?? 'docs/inception',
       },
     );
+  }
+
+  async getBaselineConfig(): Promise<BaselineConfig> {
+    const config = this.loadConfig();
+    const baseline = config.baseline ?? {};
+    return {
+      enabled: baseline.enabled ?? false,
+      path: baseline.path ?? '.phasegate/baseline.json',
+    };
   }
 }

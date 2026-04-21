@@ -13,6 +13,7 @@ import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harn
 import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
 import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
 import { QuickModeFullModeRequirementAdapter } from '../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
+import { CiGovernanceBaselineGrandfatherAdapter } from '../infrastructure/adapters/ci-governance-baseline-grandfather-adapter.js';
 import { createQuickModeCompositionRoot } from '../../quick-mode/composition-root.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
@@ -123,11 +124,16 @@ async function main(): Promise<void> {
     const fullModeRequirementQueryPort = new QuickModeFullModeRequirementAdapter({
       classifyUseCaseFactory: () => createQuickModeCompositionRoot().classifyUseCase,
     });
+    const baselineGrandfatherQueryPort = new CiGovernanceBaselineGrandfatherAdapter({
+      baseDir: path.dirname(configPath),
+      configQueryPort,
+    });
     const useCase = new HandlePreToolUseUseCase({
       configQueryPort,
       phaseGateQueryPort,
       storyReflectionQueryPort,
       fullModeRequirementQueryPort,
+      baselineGrandfatherQueryPort,
     });
 
     const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths });

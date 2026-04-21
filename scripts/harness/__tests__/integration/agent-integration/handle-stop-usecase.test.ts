@@ -20,6 +20,7 @@ function createHandleStopUseCase(ports: {
     getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
     getRelaxedGates: vi.fn().mockResolvedValue([]),
     getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
+    getBaselineConfig: vi.fn().mockResolvedValue({ enabled: false, path: '.phasegate/baseline.json' }),
   };
   const cliCommandRegistryPort = {
     hasCommand: vi.fn().mockResolvedValue(true),

@@ -17,6 +17,7 @@ const WITH_PROJECT_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-p
 const CUSTOM_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-custom-paths.json');
 const WITH_EXCLUSIONS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-exclusions.json');
 const WITH_RELAXED_GATES_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-relaxed-gates.json');
+const WITH_BASELINE_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-baseline.json');
 
 target('HarnessConfigConfigQueryAdapter', () => {
   describe('設定読み取り', () => {
@@ -217,6 +218,24 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
         // Assert
         expect(actual).toEqual([]);
+      });
+    });
+
+    context('baseline セクションが未定義 (ISSUE-007 Wave 2)', () => {
+      it('IT-AI-HCC-BL-001: デフォルトで enabled=false, path=.phasegate/baseline.json', async () => {
+        const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
+        const actual = await adapter.getBaselineConfig();
+        expect(actual.enabled).toBe(false);
+        expect(actual.path).toBe('.phasegate/baseline.json');
+      });
+    });
+
+    context('baseline セクションに enabled=true + カスタム path', () => {
+      it('IT-AI-HCC-BL-002: 指定値を返す', async () => {
+        const adapter = new HarnessConfigConfigQueryAdapter(WITH_BASELINE_CONFIG);
+        const actual = await adapter.getBaselineConfig();
+        expect(actual.enabled).toBe(true);
+        expect(actual.path).toBe('.custom/baseline.json');
       });
     });
   });
