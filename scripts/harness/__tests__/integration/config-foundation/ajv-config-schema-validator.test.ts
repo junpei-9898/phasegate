@@ -168,6 +168,41 @@ target('AjvConfigSchemaValidator', () => {
       });
     });
 
+    context('project.paths (ISSUE-007 Wave 8)', () => {
+      it('IT-CF-PP-001a: project.paths.source を持つ設定が valid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        (document.project as Record<string, unknown>).paths = { source: ['src', 'lib'] };
+        expect(validator.validate(document as never)).toEqual([]);
+      });
+
+      it('IT-CF-PP-001b: project.paths.source + docs を持つ設定が valid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        (document.project as Record<string, unknown>).paths = {
+          source: ['backend/src'],
+          docs: { construction: 'docs/product/construction', inception: 'docs/inception' },
+        };
+        expect(validator.validate(document as never)).toEqual([]);
+      });
+
+      it('IT-CF-PP-001c: project.paths.source が空配列で invalid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        (document.project as Record<string, unknown>).paths = { source: [] };
+        const errors = validator.validate(document as never);
+        expect(errors.length).toBeGreaterThanOrEqual(1);
+      });
+
+      it('IT-CF-PP-001d: project.paths に未知キーで invalid', () => {
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        (document.project as Record<string, unknown>).paths = { source: ['src'], unknown: 'x' };
+        const errors = validator.validate(document as never);
+        expect(errors.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
     context('phaseDependencies.storyReflection を検証する場合', () => {
       it('省略した既存形式を有効として扱うこと', () => {
         // Arrange

@@ -2,9 +2,9 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 / Wave 2 = v0.66.0 / Wave 3 = v0.67.0 / Wave 4 = v0.69.0 / Wave 5 = v0.70.0 / Wave 6 = v0.71.0 / Wave 7 = v0.72.0 着地 — 残りは acceptance #8 の実地検証 (メンテナ本人の別 PJ) のみ）
+- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 / Wave 2 = v0.66.0 / Wave 3 = v0.67.0 / Wave 4 = v0.69.0 / Wave 5 = v0.70.0 / Wave 6 = v0.71.0 / Wave 7 = v0.72.0 / Wave 8 = v0.73.0 着地 — Wave 8 でドッグフード中に発覚した schema blocker も解消済み。残りは acceptance #8 の実地検証のみ）
 - **起票日**: 2026-04-18
-- **更新日**: 2026-04-22（Wave 7 retrofit-adoption.md / cli-reference.md / README.md / README.ja.md をコード側修正 (v0.71.0) に整合）
+- **更新日**: 2026-04-22（Wave 8 `project.paths.source` schema 対応）
 - **発見契機**: メンテナ自身の別 PJ への phasegate 後付け導入時。「phase-gate エラーが連発して作業が進まない」「エラー文から何をどう修正すれば解除できるかが分からない」という実地での痛み。ISSUE-006 (Quick/Full 判定) よりも優先度が高いと判断。
 
 ## 実装履歴
@@ -18,6 +18,7 @@
 | Wave 5 (v0.70.0) | H12-05: `docs/guide/retrofit-adoption.md` 執筆。既存 PJ 後付け導入の end-to-end チュートリアル（init → baseline → scaffold-design の 4 ステップ、actionable phase-gate エラーの読み方、baseline 卒業手順、トラブルシュート QA） |
 | Wave 6 (v0.71.0) | H12-06: Wave 5 の dogfooding で判明したコード側不整合を修正。`baseline.enabled` の default を `false` → `true` に変更（`harness-config-config-query-adapter.ts`）。`npx phasegate baseline --dry-run --json` の出力キーを `entries` → `files` に変更し `.phasegate/baseline.json` 保存形式と整合。ISSUE-007 の設計意図（retrofit の摩擦解消）を実装が正しく反映するようになった |
 | Wave 7 (v0.72.0) | H12-07: v0.71.0 の挙動に合わせてドキュメント群を更新。`docs/guide/retrofit-adoption.md` の baseline.json スキーマ例を実機形式（`version: "1.0"` / `algorithm` / `files`）に修正 + 「init 後 config 手動編集」の誤記述を削除、`docs/guide/cli-reference.md` に `Scaffold Design` セクション追加、`README.md` / `README.ja.md` に `scaffold-design` コマンドと retrofit-adoption.md リンクを追加 |
+| Wave 8 (v0.73.0) | H12-08: Wave 7 の end-to-end dogfood で発見した schema/code 不整合を解消。`harness-config-v2.schema.json` に `project.paths.source` / `project.paths.docs` を追加し、`src/` 配下を使う一般 Node.js プロジェクトでも phase-gate が機能するようになった（旧 schema は `additionalProperties: false` で `project.paths` 自体を拒否していたため、adapter が読む `config.project?.paths?.source` は production では常に default `['scripts/harness']` にフォールバックしていた）。`retrofit-adoption.md` に Step 1 として source path override の設定例を追加 |
 - **影響Unit**: phase_dependency_model（gate 判定ロジック）, harness_error（エラー情報設計）, agent_integration（pre-tool-use hook）, ci_governance（新規 CLI）
 - **深刻度**: P1（OSS として retrofit 導入経路が事実上封鎖されており、採用の最大の間口が狭まっている）
 - **優先度**: P1 — 新規 PJ への導入は回るが、既存 PJ への持ち込みは現状ほぼ不可能。これを放置すると phasegate は「最初から AIDLC で組む PJ 専用ツール」という強い制約のまま広がらない

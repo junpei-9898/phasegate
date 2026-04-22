@@ -32,6 +32,35 @@
             "standard",
             "strict"
           ]
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "docs": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "construction": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "inception": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
         }
       }
     },

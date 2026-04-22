@@ -63,6 +63,42 @@ grandfather をオフにしたい場合のみ `phasegate.config.json` に明示:
 `path` も省略時は `.phasegate/baseline.json` が使われる。retrofit 用途では
 この既定値のまま触らないのが最短。
 
+### source path の指定（v0.73.0 以降、`src/` 系 retrofit に必須）
+
+pre-tool-use hook の phase-gate は `project.paths.source` に記載されたディレクトリ
+配下のファイルのみを監視対象にする。既定値は `["scripts/harness"]` で、これは
+phasegate 本体のレイアウトに合わせたもの。**一般的な Node.js プロジェクト
+(`src/` 配下) では必ず上書きすること**。
+
+```json
+{
+  "project": {
+    "name": "your-project",
+    "preset": "standard",
+    "paths": {
+      "source": ["src"]
+    }
+  }
+}
+```
+
+monorepo など複数ディレクトリを持つ場合は配列で列挙:
+
+```json
+{
+  "project": {
+    "paths": {
+      "source": ["apps/web/src", "apps/api/src", "packages/shared/src"]
+    }
+  }
+}
+```
+
+この設定を忘れると、phase-gate は `scripts/harness/` 配下しか見ないため、
+retrofit 対象の新規コード作成が block されず、結果として **phasegate が
+無効化された運用** になってしまう（ISSUE-007 Wave 8 で schema 上 overridable
+になるまで、この設定は config validator で拒否されていた）。
+
 ---
 
 ## Step 2: 既存コードを baseline に登録

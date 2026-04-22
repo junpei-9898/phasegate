@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.73.0] - 2026-04-22
+
+### Added
+
+- ISSUE-007 Wave 8 — `phasegate.config.json` の `project.paths` セクションを schema (`harness-config-v2.schema.json`) に追加。`project.paths.source` (array, minItems: 1) で phase-gate の監視ディレクトリを override できるようになった。`project.paths.docs.construction` / `project.paths.docs.inception` も optional で指定可能。
+- IT-CF-PP-001a..d を追加（`project.paths.source` の valid/invalid パターン）。
+
+### Fixed
+
+- ISSUE-007 Wave 8 dogfood で発覚した retrofit blocker を解消 — 従来は adapter (`harness-config-config-query-adapter.ts`) が `config.project?.paths?.source` を読む設計だったにも関わらず schema がそれを additionalProperties として reject していたため、`src/` 配下を使う一般 Node.js プロジェクトでは phase-gate が実質無効化されていた。
+
+### Retrofit ガイド追補
+
+- `docs/guide/retrofit-adoption.md` に「source path の指定」セクションを追加。`src/` 系プロジェクトでは `project.paths.source: ["src"]` の明示が必須である旨を記載。
+
 ## [0.72.0] - 2026-04-22
 
 ### Changed
