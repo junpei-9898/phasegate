@@ -9,6 +9,7 @@
 | ISSUE-003 | Wave 0 棚卸し完了、Wave 1 (v0.75.0) / Wave 2a (v0.76.0) 着地 — 159 → 108 件（47/48 L1-007 + 4/4 L1-005） |
 | ISSUE-014 | **新規起票**: アーキテクチャスタイルの config 対応（Clean 固定 → preset 選択式） |
 | ISSUE-015 | **新規起票**: QuickModeJudgmentEngine に comment-only diff 検出を追加（ISSUE-003 Wave 2a 残余 1 件の自動解消） |
+| ISSUE-016 | **新規起票**: `no-layer-violation` (L1-003) の `ignorePatterns` config が dead code。Wave 4 前提として要解決 |
 | 次の最優先 | ISSUE-003 実装進行 → ISSUE-010 → ISSUE-006 CLOSE の順 |
 
 ---
