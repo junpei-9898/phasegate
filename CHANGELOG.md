@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-04-23
+
+### Fixed
+
+- ISSUE-016 — `no-layer-violation` (L1-003) rule の `ignorePatterns` config が dead code 化していた問題を解消。Wave 2b (`enforce-folder-structure`) / Wave 3 (`no-ghost-file`) と同構造で配線。
+  - `scripts/harness/biome-ast-engine/domain/value-objects/import-graph.ts`: `findLayerViolations` の第 3 引数に `ignorePatterns` (default `[]`) を追加。pattern match した `from` ファイル由来の edge は評価前に除外。
+  - `scripts/harness/biome-ast-engine/domain/services/lint-runner.ts`: `no-layer-violation` case で `rule.config.ignorePatterns` を読んで `findLayerViolations` に渡す。
+  - `rule-definition-registry.ts:110-117` 既存の `ignorePatterns: ['**/shared-kernel/**']` 定義が初めて有効化。
+  - 新規 unit test 2 件: `ignorePatterns` で edge 除外 / 空配列で従来挙動維持。既存 3297 件 green 維持（総 3299 件）。
+  - `phasegate lint` violation 数は 66 件（Wave 3 完了時と同値）— shared-kernel 由来の L1-003 violation が現状存在しないため件数変化なし。ISSUE-003 Wave 4 で `composition-root.ts` / `main.ts` / `presentation/*-hook.ts` を `ignorePatterns` に拡張することで本配線が効果を発揮する。
+
 ## [0.78.0] - 2026-04-23
 
 ### Added

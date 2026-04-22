@@ -169,11 +169,18 @@ export class ImportGraph {
 
   findLayerViolations(
     boundaries: readonly LayerBoundary[],
-    layerByFile: ReadonlyMap<string, LayerName>
+    layerByFile: ReadonlyMap<string, LayerName>,
+    ignorePatterns: readonly string[] = []
   ): readonly ImportEdge[] {
     return Object.freeze(
       this.edges.filter((edge) => {
-        const sourceLayer = layerByFile.get(edge.from.toString());
+        const fromStr = edge.from.toString();
+
+        if (ignorePatterns.some((pattern) => matchesPattern(fromStr, pattern))) {
+          return false;
+        }
+
+        const sourceLayer = layerByFile.get(fromStr);
         const targetLayer = layerByFile.get(edge.to.toString());
 
         if (sourceLayer === undefined || targetLayer === undefined) {

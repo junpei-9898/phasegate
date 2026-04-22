@@ -285,6 +285,74 @@ target('ImportGraph.findLayerViolations', () => {
         expect(actual).toEqual([]);
       });
     });
+
+    context('ignorePatterns対象のfromファイルの場合', () => {
+      it('違反エッジから除外される', () => {
+        // Arrange
+        const graph = createImportGraph({
+          nodes: Object.freeze([
+            createFilePath('shared-kernel/a.ts'),
+            createFilePath('domain/b.ts'),
+            createFilePath('application/c.ts'),
+          ]),
+          edges: Object.freeze([
+            createImportEdge({
+              from: createFilePath('shared-kernel/a.ts'),
+              to: createFilePath('application/c.ts'),
+            }),
+            createImportEdge({
+              from: createFilePath('domain/b.ts'),
+              to: createFilePath('application/c.ts'),
+            }),
+          ]),
+          rootNodes: Object.freeze([createFilePath('shared-kernel/a.ts')]),
+        });
+        const boundaries = LayerBoundary.standardMatrix();
+        const layerByFile = new Map<string, LayerName>([
+          ['shared-kernel/a.ts', createLayerName('domain')],
+          ['domain/b.ts', createLayerName('domain')],
+          ['application/c.ts', createLayerName('application')],
+        ]);
+
+        // Act
+        const actual = graph.findLayerViolations(boundaries, layerByFile, [
+          '**/shared-kernel/**',
+        ]);
+
+        // Assert
+        expect(sortEdgeStrings(actual)).toEqual(['domain/b.ts->application/c.ts:value']);
+      });
+    });
+
+    context('ignorePatternsが空配列の場合', () => {
+      it('従来通り全エッジが評価される', () => {
+        // Arrange
+        const graph = createImportGraph({
+          nodes: Object.freeze([
+            createFilePath('domain/a.ts'),
+            createFilePath('application/b.ts'),
+          ]),
+          edges: Object.freeze([
+            createImportEdge({
+              from: createFilePath('domain/a.ts'),
+              to: createFilePath('application/b.ts'),
+            }),
+          ]),
+          rootNodes: Object.freeze([createFilePath('domain/a.ts')]),
+        });
+        const boundaries = LayerBoundary.standardMatrix();
+        const layerByFile = new Map<string, LayerName>([
+          ['domain/a.ts', createLayerName('domain')],
+          ['application/b.ts', createLayerName('application')],
+        ]);
+
+        // Act
+        const actual = graph.findLayerViolations(boundaries, layerByFile, []);
+
+        // Assert
+        expect(sortEdgeStrings(actual)).toEqual(['domain/a.ts->application/b.ts:value']);
+      });
+    });
   });
 });
 

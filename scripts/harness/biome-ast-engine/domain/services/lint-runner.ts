@@ -97,9 +97,12 @@ export class LintRunner {
           break;
         }
         case 'no-layer-violation': {
+          const ignorePatterns = toStringArray(rule.config.ignorePatterns, Object.freeze([]));
+
           for (const edge of params.importGraph.findLayerViolations(
             LayerBoundary.standardMatrix(),
-            layerByFile
+            layerByFile,
+            ignorePatterns
           )) {
             const fromSnapshot = snapshotByPath.get(edge.from.toString());
             if (fromSnapshot && isTestFile(fromSnapshot)) {
