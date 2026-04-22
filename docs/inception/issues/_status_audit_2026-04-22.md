@@ -6,8 +6,9 @@
 |---|---|
 | ISSUE-009 | 🔴 真に未解決 → 🟡 **DEFERRED**。Orchestration Engine との責務境界見直し（詳細は [ISSUE-009 issue_description.md](./ISSUE-009/issue_description.md)） |
 | ISSUE-007 | Wave 9 (v0.74.0) 着地で acceptance 全 8 条件成立 → **2026-04-23 CLOSED** |
-| ISSUE-003 | Wave 0 棚卸し完了、実装計画策定（[implementation_plan.md](./ISSUE-003/implementation_plan.md)）、Wave 1 着手中 |
+| ISSUE-003 | Wave 0 棚卸し完了、Wave 1 (v0.75.0) / Wave 2a (v0.76.0) 着地 — 159 → 108 件（47/48 L1-007 + 4/4 L1-005） |
 | ISSUE-014 | **新規起票**: アーキテクチャスタイルの config 対応（Clean 固定 → preset 選択式） |
+| ISSUE-015 | **新規起票**: QuickModeJudgmentEngine に comment-only diff 検出を追加（ISSUE-003 Wave 2a 残余 1 件の自動解消） |
 | 次の最優先 | ISSUE-003 実装進行 → ISSUE-010 → ISSUE-006 CLOSE の順 |
 
 ---
