@@ -103,7 +103,14 @@ export class HandlePreToolUseUseCase {
           // fallthrough: continue to full-mode / story-reflection checks (which may also grandfather)
         } else {
           const guidance = await this.resolveGuidance('L2-001');
-          return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(blockedFilePath, metadata, guidance);
+          const unitIdForGuidance =
+            metadata?.unitId ?? this.deriveUnitIdFromPaths(input.targetFilePaths);
+          return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(
+            blockedFilePath,
+            metadata,
+            guidance,
+            unitIdForGuidance,
+          );
         }
       } else {
         return {
@@ -125,10 +132,12 @@ export class HandlePreToolUseUseCase {
         const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
         if (fullModeResult.requiresFullMode) {
           const guidance = await this.resolveGuidance('L2-001');
+          const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
           return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
             input.targetFilePaths[0],
             fullModeResult,
             guidance,
+            unitIdForGuidance,
           );
         }
       }
@@ -198,6 +207,7 @@ export class HandlePreToolUseUseCase {
       dominantCategory?: string;
     },
     guidance: ErrorGuidance | null,
+    unitId: string | undefined,
   ): HandlePreToolUseOutput {
     const fp = blockedFilePath ?? '不明なファイル';
     const lines: string[] = [
@@ -214,7 +224,7 @@ export class HandlePreToolUseUseCase {
     }
     const suggestedSkill = guidance?.suggestedSkill ?? '/story-implementor';
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
-    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance);
+    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance, unitId);
 
     return {
       shouldBlock: true,
@@ -227,14 +237,32 @@ export class HandlePreToolUseUseCase {
     };
   }
 
-  private static appendGuidanceLines(lines: string[], guidance: ErrorGuidance | null): void {
+  private static appendGuidanceLines(
+    lines: string[],
+    guidance: ErrorGuidance | null,
+    unitId?: string,
+  ): void {
     if (guidance === null) return;
     if (guidance.scaffoldCommand !== null) {
-      lines.push(`  scaffold: ${guidance.scaffoldCommand}`);
+      const command = unitId !== undefined && unitId !== ''
+        ? guidance.scaffoldCommand.replaceAll('<unit-id>', unitId)
+        : guidance.scaffoldCommand;
+      lines.push(`  scaffold: ${command}`);
     }
     if (guidance.templatePath !== null) {
       lines.push(`  テンプレ: ${guidance.templatePath}`);
     }
+  }
+
+  private deriveUnitIdFromPaths(targetFilePaths: readonly string[]): string | undefined {
+    const projectPaths = this.configQueryPort.getProjectPaths();
+    for (const targetFilePath of targetFilePaths) {
+      const scope = WriteTargetScope.fromPath(targetFilePath, projectPaths);
+      if (scope?.unitId !== undefined) {
+        return scope.unitId;
+      }
+    }
+    return undefined;
   }
 
   private resolveStoryReflectionScope(input: HandlePreToolUseInput): WriteTargetScope | null {
@@ -264,6 +292,7 @@ export class HandlePreToolUseUseCase {
     blockedFilePath: string | undefined,
     metadata: BlockMetadata,
     guidance: ErrorGuidance | null,
+    unitId: string | undefined,
   ): HandlePreToolUseOutput {
     const levelLabel = metadata.scopeLevel
       ? HandlePreToolUseUseCase.LEVEL_LABELS[metadata.scopeLevel] ?? `Level ${metadata.scopeLevel}`
@@ -286,7 +315,7 @@ export class HandlePreToolUseUseCase {
     if (metadata.unitId) {
       lines.push(`  実行例: ${suggestedSkill} --unit ${metadata.unitId}`);
     }
-    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance);
+    HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance, unitId);
 
     return {
       shouldBlock: true,

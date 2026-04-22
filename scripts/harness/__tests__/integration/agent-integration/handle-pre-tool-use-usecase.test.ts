@@ -1204,6 +1204,84 @@ target('HandlePreToolUseUseCase.execute', () => {
       });
     });
 
+    context('scaffoldCommand の <unit-id> プレースホルダ置換 (ISSUE-007 Wave 9)', () => {
+      // IT-AI-GUIDE-UID-001
+      it('PHASE_GATE: metadata.unitId で <unit-id> を置換すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(
+            PhaseGateQueryResult.create(false, ['logical_design.md missing'], []),
+          ),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          errorGuidanceQueryPort: guidancePort(
+            guidance({
+              suggestedSkill: '/story-implementor',
+              scaffoldCommand: 'npx phasegate scaffold-design --unit <unit-id> --phase logical',
+              templatePath: 'templates/logical_design.template.md',
+            }),
+          ),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/payments/domain/charge.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('PHASE_GATE');
+        expect(actual.error?.message).toContain('scaffold: npx phasegate scaffold-design --unit payments --phase logical');
+        expect(actual.error?.message).not.toContain('<unit-id>');
+      });
+
+      // IT-AI-GUIDE-UID-002
+      it('FULL_MODE_REQUIRED: targetFilePaths から導出した unitId で <unit-id> を置換すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'NEW_DOMAIN' as const,
+            rejectionReason: '新規ドメインモデル検出',
+            dominantCategory: 'domain',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeQueryPort,
+          errorGuidanceQueryPort: guidancePort(
+            guidance({
+              suggestedSkill: '/story-implementor',
+              scaffoldCommand: 'npx phasegate scaffold-design --unit <unit-id> --phase logical',
+              templatePath: 'templates/logical_design.template.md',
+            }),
+          ),
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/billing/domain/invoice.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+        expect(actual.error?.message).toContain('scaffold: npx phasegate scaffold-design --unit billing --phase logical');
+        expect(actual.error?.message).not.toContain('<unit-id>');
+      });
+
+    });
+
     context('ErrorGuidanceQueryPort が例外を throw した場合', () => {
       // IT-AI-GUIDE-005
       it('graceful degradation — 従来挙動（ハードコード message）で block されること', async () => {

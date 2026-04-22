@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.74.0] - 2026-04-22
+
+### Fixed
+
+- ISSUE-007 Wave 9 — phase-gate ブロック時に出力される `scaffold:` 行に含まれる `<unit-id>` プレースホルダを、実 unit ID に置換するようにした。従来は L2-001 registry (`l2-error-definitions.ts`) の `defaultScaffoldCommand` が静的文字列 `npx phasegate scaffold-design --unit <unit-id> --phase logical` のまま出力されていたため、ユーザーが手で unit 名に書き換える必要があった。PHASE_GATE の場合は `metadata.unitId`、FULL_MODE_REQUIRED の場合は `targetFilePaths` から `WriteTargetScope.fromPath` で導出した unit ID を使って置換する。
+- IT-AI-GUIDE-UID-001 / IT-AI-GUIDE-UID-002 を追加（PHASE_GATE と FULL_MODE_REQUIRED の両経路で `<unit-id>` が実 unit に置換されることを検証）。
+
 ## [0.73.0] - 2026-04-22
 
 ### Added
