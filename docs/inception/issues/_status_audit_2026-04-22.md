@@ -6,12 +6,15 @@
 |---|---|
 | ISSUE-009 | 🔴 真に未解決 → 🟡 **DEFERRED**。Orchestration Engine との責務境界見直し（詳細は [ISSUE-009 issue_description.md](./ISSUE-009/issue_description.md)） |
 | ISSUE-007 | Wave 9 (v0.74.0) 着地で acceptance 全 8 条件成立 → **2026-04-23 CLOSED** |
-| ISSUE-003 | Wave 0 棚卸し完了、Wave 1 (v0.75.0) / Wave 2a (v0.76.0) 着地 — 159 → 108 件（47/48 L1-007 + 4/4 L1-005） |
+| ISSUE-003 | Wave 1〜4 完了。159 → **15 件**（v0.75.0〜v0.80.0）。残 15 件の内訳: L1-007 (1) + L1-006 (2) + L1-003 (12) — 全て別 issue に切り出し済み |
 | ISSUE-014 | **新規起票**: アーキテクチャスタイルの config 対応（Clean 固定 → preset 選択式） |
 | ISSUE-015 | **新規起票**: QuickModeJudgmentEngine に comment-only diff 検出を追加（ISSUE-003 Wave 2a 残余 1 件の自動解消） |
-| ISSUE-016 | **新規起票** → **2026-04-23 CLOSED (v0.79.0)**: `no-layer-violation` (L1-003) の `ignorePatterns` 配線完了。Wave 4 着手可能状態 |
+| ISSUE-016 | **新規起票** → **2026-04-23 CLOSED (v0.79.0)**: `no-layer-violation` (L1-003) の `ignorePatterns` 配線完了 |
 | ISSUE-017 | **新規起票**: `extractImports` が `export ... from` re-export と nested dynamic import を捕捉せず ghost-file 検出に false positive 発生 |
-| 次の最優先 | ISSUE-003 実装進行 → ISSUE-010 → ISSUE-006 CLOSE の順 |
+| ISSUE-018 | **新規起票**: `agent-integration/infrastructure/ports/cli-executor-port.ts` が Port として location ミス（→ `application/ports/`）。L1-003 残 3 件の根本原因 |
+| ISSUE-019 | **新規起票**: phasegate の LayerBoundary が `presentation → domain` を禁止している仕様判断の再評価（L1-003 残 8 件 + phasegate 導入先への影響）。ISSUE-014 と合流候補 |
+| ISSUE-020 | **新規起票**: `config-foundation/domain/harness-config.ts` と `phase-dependencies-config.ts` の循環依存（L1-003 残 1 件） |
+| 次の最優先 | ISSUE-010 (103件 @story-id) → ISSUE-006 CLOSE → その他 |
 
 ---
 
