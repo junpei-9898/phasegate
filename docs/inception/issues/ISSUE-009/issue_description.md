@@ -1,12 +1,60 @@
 # ISSUE-009: agent 非依存の書き込み権限ガード機構が未実装で、Codex 等の他 agent 配下でフェーズゲートが機能しない
 
-## ステータス
+> **⚠️ ステータス: DEFERRED（2026-04-23）** — Orchestration Engine（`docs/product/orchestration_product_overview.md`）の session-manager / worktree / `.session.lock` 契約が確定するまで実装を保留。下記「保留判断」セクション参照。
+>
+> **実装計画（策定済み・保留中）**: [implementation_plan.md](./implementation_plan.md)（2026-04-22 策定 / v1.2 / Claude + Codex スコープ / chmod 2 層防御 / Wave 0-4 / ~6d）
+
+## 保留判断（2026-04-23）
+
+### 背景
+
+20 並列 agent 時代を想定した堅牢性要件を議論する中で、責務境界の誤りが判明した。
+
+### 責務境界の再整理
+
+| 観点 | Orchestration Engine（別パッケージ） | Quality Harness（guard-system） |
+|---|---|---|
+| 誰がいつどこで動かすか（worktree / session lifecycle） | ✅ | — |
+| 並列 session のシリアル化（`.session.lock`） | ✅（§7.1 で宣言済） | — |
+| クラッシュフォレンジック復元 | ✅ | — |
+| 何を書けるか（OS 層 chmod） | — | ✅ |
+| freeze/unfreeze（単一 session 内） | — | ✅ |
+| atomic state I/O（単一 session の crash 耐性） | — | ✅ |
+
+`docs/product/orchestration_product_overview.md` §7.1 で「`.session.lock` が 1 worktree につき 1 session をシリアル化する」ことが既に宣言されている。つまり **「同一 worktree 内で guard-system が他 session と競合する」ケースは orchestration が防ぐべき越境事象** であり、guard-system 側で ref-counted freeze / cross-process mutex（flock） / stale ref cleanup を重複実装するのは責務越境になる。
+
+### 保留理由
+
+1. **Orchestration Engine が未実装**（`orchestration_product_overview.md` L6: "Inception — 設計確定待ち"）。依存する契約が確定していない状態で guard-system を先行実装すると、後の契約変更で再設計が発生する可能性が高い
+2. **現状の単一 agent（Claude Code）環境では既存 hook 機構で機能**しており、緊急性は P1 → P2 相当に低下。Codex で運用するメンテナが現れるまでは紳士協定で十分
+3. **20 並列 agent の運用が現実化していない**。想定需要が確定してから orchestration → guard の順序で積む方が設計ブレが少ない
+
+### 再開条件
+
+以下のいずれかが満たされた時点で再評価:
+
+- Orchestration Engine Phase 1（session-manager + `.session.lock` + worktree 契約）が実装完了し、guard-system から依存できる状態になった
+- Codex / 他 agent で PhaseGate を運用したいという具体的なユーザー要求が発生した
+- 単一 worktree 内で複数 agent が並列動作する運用パターンが顕在化した
+
+### 再開時の手順
+
+1. Orchestration Engine の session lock 契約（ファイルパス・取得/解放 API・crash detection 方式）を確認
+2. implementation_plan.md v1.2 から orchestration 委譲部分（L1 ref-counted freeze / P2 flock / P3 sync debounce / P4 stale ref cleanup）を削除して v2.0 に改訂
+3. 見積もりを v1.2 の 6d → 単一 session 前提の ~3d に圧縮して再提示
+4. 本「ステータス: DEFERRED」セクションを「再開日: YYYY-MM-DD」に更新
+
+---
+
+## ステータス（起票時の記録・参考）
 
 - **起票日**: 2026-04-19
+- **実装計画策定日**: 2026-04-22（ISSUE-007 完遂直後、chmod ベース OS 層ガード方針で確定）
+- **保留決定日**: 2026-04-23（Orchestration Engine との責務境界見直し）
 - **発見契機**: メンテナから「codex CLI の hooks でも phasegate のフェーズゲートを効かせたい」要求。調査の結果、Codex hooks は experimental で `PreToolUse`/`PostToolUse` が **Bash 限定**（Write/Edit/MCP 等の非シェルツールは intercept 不可）であることが OpenAI 公式 docs で明記されており、現行 PhaseGate の防御は Claude Code 固有の `PreToolUse on Write/Edit` に依存しているため、Codex 配下では主要防御（設計文書未整備 Unit への書き込みブロック）が成立しないことが判明。
 - **影響Unit**: agent_integration（`HandlePreToolUseUseCase` が Claude 固有 hook に結合）, validator_system（`L0-002: fuse-mount-status` が未実装スロットとして予約されたまま放置）, 新規 Unit: `guard-system`（本 issue で提案）
-- **深刻度**: P1（AI agent 多様化時代にツールが Claude Code に lock-in されており、PhaseGate の「AI 非依存の品質防御」というプロダクト標語と実装が乖離している）
-- **優先度**: P1 — ISSUE-007（retrofit 導入障壁）/ ISSUE-008（メタデータ emit 欠落）と並走すべき構造的欠陥。発見時系列では最新だが、PhaseGate のコア価値提案（AI 非依存）に直結する点で後続タスクより重い
+- **深刻度**: ~~P1~~ → **P2 に降格**（2026-04-23 時点。単一 agent 前提で現状は機能しているため）
+- **優先度**: **保留**（Orchestration Engine Phase 1 完了後に再評価）
 
 ## 問題の概要
 

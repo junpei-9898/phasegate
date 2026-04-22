@@ -2,8 +2,9 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Wave 1 = v0.65.0 / Wave 2 = v0.66.0 / Wave 3 = v0.67.0 / Wave 4 = v0.69.0 / Wave 5 = v0.70.0 / Wave 6 = v0.71.0 / Wave 7 = v0.72.0 / Wave 8 = v0.73.0 / Wave 9 = v0.74.0 着地 — Wave 8 dogfood で見つかった schema blocker と、Wave 9 dogfood で見つかった `<unit-id>` プレースホルダ未置換を解消済み。acceptance 全 8 条件成立）
+- **状態**: ✅ **CLOSED**（2026-04-23 / Wave 1〜9 全着地 / v0.74.0 / acceptance 全 8 条件成立）
 - **起票日**: 2026-04-18
+- **完了日**: 2026-04-23
 - **更新日**: 2026-04-22（Wave 9 scaffoldCommand の `<unit-id>` 実 unit 置換）
 - **発見契機**: メンテナ自身の別 PJ への phasegate 後付け導入時。「phase-gate エラーが連発して作業が進まない」「エラー文から何をどう修正すれば解除できるかが分からない」という実地での痛み。ISSUE-006 (Quick/Full 判定) よりも優先度が高いと判断。
 
