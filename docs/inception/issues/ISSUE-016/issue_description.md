@@ -3,10 +3,18 @@
 ## ステータス
 
 - **起票日**: 2026-04-23
+- **CLOSED**: 2026-04-23 (v0.79.0, commit `44e85df`)
 - **発見契機**: ISSUE-003 Wave 2b（L1-004 enforce-folder-structure 修正）の実装調査中に発覚。`rule-definition-registry.ts:114` で `no-layer-violation` に `ignorePatterns: ['**/shared-kernel/**']` が定義されているにもかかわらず、`lint-runner.ts:99-120` の該当 case は config を一切読まず、`ImportGraph.findLayerViolations()` も `ignorePatterns` 引数を受け付けない設計
 - **影響Unit**: biome-ast-engine（主）
 - **深刻度**: Medium — 設定が dead code であることは重大な integrity 問題だが、実害は「shared-kernel が L1-003 の対象外にならない（期待と異なる）」に留まる
 - **優先度**: P2 — ISSUE-003 Wave 4（L1-003 63件解消）の着手前提として解決が必要
+
+### 解消サマリ (v0.79.0)
+
+- `ImportGraph.findLayerViolations` に第 3 引数 `ignorePatterns` (default `[]`) を追加 — pattern match した `from` 由来 edge は評価前に除外
+- `lint-runner.ts` の `no-layer-violation` case で `rule.config.ignorePatterns` を読み取り `findLayerViolations` に渡す
+- 新規 unit test 2 件追加（ignorePatterns で edge 除外 / 空配列で従来挙動）— 既存 3297 件含め 3299 件 green
+- 件数変化: 66 → 66（shared-kernel 由来 violation が現存しないため不変）。Wave 4 の ignorePatterns 拡張で効果発揮予定
 
 ## 問題の概要
 
