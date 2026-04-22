@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-04-23
+
+### Fixed
+
+- ISSUE-003 Wave 4 — `no-layer-violation` (L1-003) 63 件を 12 件まで削減（51件減）。`phasegate lint` violation 数: 66 → 15。
+  - `rule-definition-registry.ts` の `no-layer-violation` `ignorePatterns` を `['**/shared-kernel/**']` から 4 パターンに拡張:
+    - `**/composition-root.ts` — DI wiring（infrastructure/application/domain を束ねる境界ファイル）
+    - `**/main.ts` — CLI entry point（全 Unit の composition-root を集約）
+    - `**/presentation/*-hook.ts` — Claude Code hook entry（Wave 3 で `no-ghost-file` にも追加済み）
+  - 削減内訳: main.ts (13件) + harness-api/composition-root (8件) + skill-quality/composition-root (6件) + ci-governance/composition-root (5件) + quick-mode/composition-root (5件) + agent-integration presentation hooks (14件) = **51 件**
+  - 残 12 件は ignorePatterns では解消できない設計課題（別 issue 起票予定）:
+    - **application → infrastructure/ports (3件)**: agent-integration の `cli-executor-port.ts` が `infrastructure/ports/` に配置されており Port として location ミス
+    - **presentation → domain (8件)**: ci-governance / nyquist-validation / phase-dependency-model / traceability-model の presenter/handler/formatter が domain VO/service を直接 import。phasegate の LayerBoundary は `presentation → presentation + application` のみ許可で domain 禁止だが、Clean Architecture 実装として一般的なため spec 側の再判断が必要
+    - **domain 内循環依存 (1件)**: `config-foundation/domain/harness-config.ts` と `phase-dependencies-config.ts` の相互参照
+
 ## [0.79.0] - 2026-04-23
 
 ### Fixed

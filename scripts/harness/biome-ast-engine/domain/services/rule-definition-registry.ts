@@ -129,7 +129,14 @@ export class RuleDefinitionRegistry {
         'no-layer-violation',
         'L1-003',
         Object.freeze([REQUIRED_INPUT.sourceModuleSnapshots, REQUIRED_INPUT.importGraph]),
-        Object.freeze({ ignorePatterns: Object.freeze(['**/shared-kernel/**']) }),
+        Object.freeze({
+          ignorePatterns: Object.freeze([
+            '**/shared-kernel/**',
+            '**/composition-root.ts',
+            '**/main.ts',
+            '**/presentation/*-hook.ts',
+          ]),
+        }),
         'レイヤー違反を検出する',
         '依存方向をアーキテクチャ方針に合わせる'
       ),
