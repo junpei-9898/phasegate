@@ -2,8 +2,8 @@
  * @layer infrastructure
  * @unit skill-quality
  */
-import AjvModule from 'ajv';
-const Ajv = (AjvModule as any).default ?? AjvModule;
+import AjvModule, { type ErrorObject } from 'ajv';
+const Ajv = AjvModule.default ?? AjvModule;
 import type { LessonArtifactSchemaPort } from '../../domain/ports/lesson-artifact-schema-port.js';
 import type { ValidationViolation } from '../../domain/types/validation-violation.js';
 
@@ -29,7 +29,7 @@ export class AjvLessonArtifactSchemaAdapter implements LessonArtifactSchemaPort 
   async validate(json: unknown): Promise<readonly ValidationViolation[]> {
     const valid = this.compiledValidator(json);
     if (valid) return [];
-    return (this.compiledValidator.errors ?? []).map((err: any) => ({
+    return (this.compiledValidator.errors ?? []).map((err: ErrorObject) => ({
       ruleId: 'SCHEMA_VIOLATION',
       message: err.message ?? 'Schema validation error',
       location: err.instancePath,

@@ -9,7 +9,7 @@ import type { TemplateGenerator } from '../../domain/services/template-generator
 import type { GenerateCiTemplateInput } from '../dto/generate-ci-template-input.js';
 import type { GenerateCiTemplateOutput } from '../dto/generate-ci-template-output.js';
 import { CiTemplate } from '../../domain/aggregates/ci-template.js';
-import { isTemplateType, TEMPLATE_TYPES } from '../../domain/types/template-type.js';
+import { isTemplateType, TEMPLATE_TYPES, type TemplateType } from '../../domain/types/template-type.js';
 
 export class GenerateCiTemplateUseCase {
   constructor(private readonly templateGenerator: TemplateGenerator) {}
@@ -23,7 +23,7 @@ export class GenerateCiTemplateUseCase {
         ? ` (Hint: --type specifies the template purpose, not the CI platform. Use one of: ${validValues})`
         : ` (valid: ${validValues})`;
       return {
-        templateType: templateType as any,
+        templateType: templateType as TemplateType,
         presetRef: presetId,
         triggerCondition: 'pull_request',
         targetValidatorIds: [],

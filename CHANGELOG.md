@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.75.0] - 2026-04-23
+
+### Fixed
+
+- ISSUE-003 Wave 1 — L1-005 (`no-any-abuse`) の 4 件を解消。`phasegate lint` violation 数: 159 → 155。
+  - `ci-governance/application/usecases/generate-ci-template-usecase.ts`: invalid templateType 分岐の `as any` を `as TemplateType` に変更。
+  - `ci-governance/presentation/handlers/migrate-agents-md-handler.ts`: `errors.map((e: any) => ...)` のアノテーションを削除し、`ValidatePointersOutput.errors` の型推論に委譲。
+  - `nyquist-validation/infrastructure/adapters/ajv-json-schema-validator-adapter.ts`: `config-foundation/.../ajv-config-schema-validator.ts` と同じ Ajv v8 の正規パターン（`AjvModule.default ?? AjvModule` + `type ErrorObject` / `type ValidateFunction`）に合わせ、3 箇所の `any` と `biome-ignore` を全て除去。
+  - `skill-quality/infrastructure/adapters/ajv-lesson-artifact-schema-adapter.ts`: `(AjvModule as any).default ?? AjvModule` の `any` cast を削除し、`.map((err: any) => ...)` を `ErrorObject` 型に置換。
+
 ## [0.74.0] - 2026-04-22
 
 ### Fixed

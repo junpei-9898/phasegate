@@ -4,20 +4,13 @@
  *
  * JSONスキーマバリデーション実装: Ajv
  */
-import Ajv from 'ajv';
+import AjvModule, { type ErrorObject, type ValidateFunction } from 'ajv';
+const Ajv = AjvModule.default ?? AjvModule;
 import type { NyquistHarnessError } from '../../domain/services/ac-coverage-gate-policy.js';
 import type { AjvValidatorPort } from '../../application/usecases/validate-matrix-usecase.js';
 import { loadMatrixSchema } from '../schema/matrix-schema-loader.js';
 
-interface AjvErrorObject {
-  keyword: string;
-  instancePath: string;
-  schemaPath: string;
-  params: Record<string, unknown>;
-  message?: string;
-}
-
-function convertAjvError(err: AjvErrorObject): NyquistHarnessError {
+function convertAjvError(err: ErrorObject): NyquistHarnessError {
   let message: string;
 
   switch (err.keyword) {
@@ -41,27 +34,22 @@ function convertAjvError(err: AjvErrorObject): NyquistHarnessError {
 }
 
 export class AjvJsonSchemaValidatorAdapter implements AjvValidatorPort {
-  // biome-ignore lint/suspicious/noExplicitAny: Ajv v8 namespace/class type conflict
-  private readonly ajv: any;
+  private readonly ajv: InstanceType<typeof Ajv>;
 
   constructor() {
-    // biome-ignore lint/suspicious/noExplicitAny: Ajv v8 default export typing
-    this.ajv = new (Ajv as any)({ allErrors: true });
+    this.ajv = new Ajv({ allErrors: true });
   }
 
   async validate(data: unknown): Promise<{ valid: boolean; errors: NyquistHarnessError[] }> {
     const schema = await loadMatrixSchema();
-    const validateFn = this.ajv.compile(schema as object);
+    const validateFn: ValidateFunction = this.ajv.compile(schema as object);
     const valid = validateFn(data);
 
     if (valid) {
       return { valid: true, errors: [] };
     }
 
-    // biome-ignore lint/suspicious/noExplicitAny: Ajv error objects typed via AjvErrorObject cast
-    const errors: NyquistHarnessError[] = (validateFn.errors ?? []).map((e: any) =>
-      convertAjvError(e as AjvErrorObject)
-    );
+    const errors: NyquistHarnessError[] = (validateFn.errors ?? []).map((e) => convertAjvError(e));
     return { valid: false, errors };
   }
 }

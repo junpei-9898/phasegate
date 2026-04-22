@@ -1,8 +1,13 @@
 # ISSUE-003: phasegate lint 残存 violation 145件の解消
 
+> **実装計画**: [implementation_plan.md](./implementation_plan.md)（2026-04-23 策定 / Wave 0-5 / ~3-4d / quick-implementor スコープ）
+>
+> **注意**: 本 issue_description の L1-006 / L1-007 の rule 定義は `rule-violation-code-mapper.ts:11-15` の実コードと食い違う（L1-006 は `no-code-duplication` ではなく `no-ghost-file`、L1-007 は `no-ghost-file` ではなく `no-comment-flood`）。実装計画書は実コード定義に基づく。本 issue 完了時に修正する。
+
 ## ステータス
 
 - **起票日**: 2026-04-06
+- **実装計画策定日**: 2026-04-23（ISSUE-007 完遂後、v0.74.0 時点で 145 → 159 件に悪化を確認）
 - **発見契機**: C-2（phasegate lint ベースライン対応）実施時
 - **影響Unit**: 横断（biome-ast-engine, harness-api, ci-governance, regression-suite, skill-quality 等）
 - **深刻度**: Low — 機能的影響なし。コード品質の改善事項

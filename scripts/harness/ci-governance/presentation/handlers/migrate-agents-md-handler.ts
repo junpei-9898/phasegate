@@ -36,7 +36,7 @@ export class MigrateAgentsMdHandler {
       }
       const lines = vResult.passed
         ? ['✓ All pointers are valid']
-        : ['❌ Dead pointers detected', ...vResult.errors.map((e: any) => `  [${e.code}] ${e.message}`)];
+        : ['❌ Dead pointers detected', ...vResult.errors.map((e) => `  [${e.code}] ${e.message}`)];
       return { exitCode: vResult.passed ? 0 : 1, output: lines.join('\n'), errors: vResult.errors };
     }
 
