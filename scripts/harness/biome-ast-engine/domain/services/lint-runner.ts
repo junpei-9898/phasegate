@@ -4,7 +4,7 @@
  */
 
 import { RuleDefinitionRegistry } from './rule-definition-registry.js';
-import { ImportGraph } from '../value-objects/import-graph.js';
+import { ImportGraph, matchesPattern } from '../value-objects/import-graph.js';
 import { LayerBoundary } from '../value-objects/layer-boundary.js';
 import { LintReport } from '../value-objects/lint-report.js';
 import { RuleDefinition } from '../value-objects/rule-definition.js';
@@ -137,8 +137,14 @@ export class LintRunner {
           break;
         }
         case 'enforce-folder-structure': {
+          const ignorePatterns = toStringArray(rule.config.ignorePatterns, Object.freeze([]));
+
           for (const snapshot of params.snapshots) {
             if (isTestFile(snapshot)) {
+              continue;
+            }
+            const filePathStr = snapshot.filePath.toString();
+            if (ignorePatterns.some((pattern) => matchesPattern(filePathStr, pattern))) {
               continue;
             }
             if (snapshot.declaredLayer !== null && !snapshot.belongsToLayerDirectory()) {

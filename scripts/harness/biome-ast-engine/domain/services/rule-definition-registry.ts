@@ -68,7 +68,18 @@ export class RuleDefinitionRegistry {
         'enforce-folder-structure',
         'L1-004',
         Object.freeze([REQUIRED_INPUT.sourceModuleSnapshots]),
-        Object.freeze({ rootDir: 'scripts/harness', allowTestFixtures: true }),
+        Object.freeze({
+          rootDir: 'scripts/harness',
+          allowTestFixtures: true,
+          ignorePatterns: Object.freeze([
+            '**/composition-root.ts',
+            '**/index.ts',
+            '**/main.ts',
+            '**/shared-kernel/**',
+            '**/integrations/**',
+            '**/setup/**',
+          ]),
+        }),
         'フォルダ構造がレイヤーと一致していることを検証する',
         '宣言レイヤーと配置ディレクトリを一致させる'
       ),

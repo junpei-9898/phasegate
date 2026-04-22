@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.77.0] - 2026-04-23
+
+### Added
+
+- ISSUE-003 Wave 2b — `enforce-folder-structure` (L1-004) rule に `ignorePatterns` config サポートを追加。`no-ghost-file` / `no-layer-violation` と同じ形式。
+  - `scripts/harness/biome-ast-engine/domain/services/lint-runner.ts`: `enforce-folder-structure` case で `rule.config.ignorePatterns` を読み、`matchesPattern` で照合してスキップする処理を追加。
+  - `scripts/harness/biome-ast-engine/domain/value-objects/import-graph.ts`: file-local だった `matchesPattern` を export 化（lint-runner 側から共有利用）。
+
+### Fixed
+
+- ISSUE-003 Wave 2b — L1-004 (`enforce-folder-structure`) 12 件を解消。`phasegate lint` violation 数: 108 → 96。
+  - デフォルト `ignorePatterns` に以下を追加: `**/composition-root.ts`, `**/index.ts`, `**/main.ts`, `**/shared-kernel/**`, `**/integrations/**`, `**/setup/**`。
+  - 対象 Unit: ci-governance / harness-api / quick-mode / regression-suite / skill-quality (composition-root 5 件), harness-api / quick-mode (index 2 件), shared-kernel (2 件), 単独 entry 3 件 (main.ts / integrations/pre-commit.ts / setup/skill-deployer.ts)。
+  - 理由: これらは Clean Architecture の DI wiring（composition-root）・barrel re-export（index）・Shared Kernel・CLI entry に相当し、特定レイヤーの配下に配置する必要がない/できない構造的 anchor。folder-structure ルールの趣旨（declared layer と配置 dir の整合性）外。
+
 ## [0.76.0] - 2026-04-23
 
 ### Fixed

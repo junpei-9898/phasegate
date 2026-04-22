@@ -62,7 +62,7 @@ const globToRegex = (pattern: string): RegExp => {
   return new RegExp(`^${output}$`);
 };
 
-const matchesPattern = (value: string, pattern: string): boolean => {
+export const matchesPattern = (value: string, pattern: string): boolean => {
   return globToRegex(pattern).test(value) || value.includes(pattern.replace(/\*/g, '').replace(/\//g, ''));
 };
 
