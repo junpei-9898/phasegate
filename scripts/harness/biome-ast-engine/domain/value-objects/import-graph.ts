@@ -189,12 +189,21 @@ export class ImportGraph {
     );
   }
 
-  findGhostFiles(ignorePatterns: readonly string[]): readonly FilePath[] {
+  findGhostFiles(
+    ignorePatterns: readonly string[],
+    entryPointPatterns: readonly string[] = []
+  ): readonly FilePath[] {
     const rootNodeSet = new Set(this.rootNodes.map((node) => node.toString()));
 
     return Object.freeze(
       this.nodes.filter((node) => {
-        if (rootNodeSet.has(node.toString())) {
+        const nodeStr = node.toString();
+
+        if (rootNodeSet.has(nodeStr)) {
+          return false;
+        }
+
+        if (entryPointPatterns.some((pattern) => matchesPattern(nodeStr, pattern))) {
           return false;
         }
 
@@ -202,7 +211,7 @@ export class ImportGraph {
           return false;
         }
 
-        return !ignorePatterns.some((pattern) => matchesPattern(node.toString(), pattern));
+        return !ignorePatterns.some((pattern) => matchesPattern(nodeStr, pattern));
       })
     );
   }

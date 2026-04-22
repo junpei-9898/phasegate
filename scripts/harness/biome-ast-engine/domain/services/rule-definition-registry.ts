@@ -112,7 +112,14 @@ export class RuleDefinitionRegistry {
         'L1-007',
         Object.freeze([REQUIRED_INPUT.importGraph]),
         Object.freeze({
-          entryPointPatterns: Object.freeze(['**/index.ts', '**/cli/**/*.ts']),
+          entryPointPatterns: Object.freeze([
+            '**/index.ts',
+            '**/cli/**/*.ts',
+            '**/*.config*.ts',
+            '**/main.ts',
+            '**/composition-root.ts',
+            '**/presentation/*-hook.ts',
+          ]),
           ignorePatterns: Object.freeze(['**/*.test.ts', '**/*.spec.ts']),
         }),
         '未参照ファイルを検出する',

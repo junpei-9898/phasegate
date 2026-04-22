@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.78.0] - 2026-04-23
+
+### Added
+
+- ISSUE-003 Wave 3 — `no-ghost-file` (L1-006) rule に `entryPointPatterns` config サポートを正式配線。`rule-definition-registry.ts:115` で定義されていたが `lint-runner` / `ImportGraph.findGhostFiles` が読んでおらず dead code 化していた。
+  - `scripts/harness/biome-ast-engine/domain/value-objects/import-graph.ts`: `findGhostFiles` の第 2 引数に `entryPointPatterns` (default `[]`) を追加。pattern match した node は rootNode 相当扱いで ghost から除外。
+  - `scripts/harness/biome-ast-engine/domain/services/lint-runner.ts`: `no-ghost-file` case で `rule.config.entryPointPatterns` を読んで `findGhostFiles` に渡す。
+
+### Fixed
+
+- ISSUE-003 Wave 3 — L1-006 (`no-ghost-file`) 32 件を 2 件まで削減。`phasegate lint` violation 数: 96 → 66。
+  - デフォルト `entryPointPatterns` を拡張: `**/*.config*.ts` (vitest.config 系) / `**/main.ts` / `**/composition-root.ts` / `**/presentation/*-hook.ts` を追加。既存 `**/index.ts` / `**/cli/**/*.ts` と合わせて CLI entry・Claude hook・DI wiring・vitest config を一括で entry 扱い。
+  - Pattern B (shared-kernel barrel 3件): `shared-kernel/harness-api.ts` / `shared-kernel/quick-mode.ts` / `shared-kernel/validator-system.ts` — 参照 0 件の未使用 barrel として削除。
+  - Pattern C (dead DTO/port/adapter/mapper 19件): agent-integration / ci-governance / config-foundation / nyquist-validation / quick-mode / skill-quality / traceability-model の未参照ファイル 18 件を削除。1 件 (`quick-mode/domain/ports/changed-files-port.ts`) は application port 経由の re-export で実際には使用中のため false positive として保留（ISSUE-017 解決で自動消化）。
+  - 波及削除: `regex-import-analyzer-adapter.ts` の削除後に orphan 化した `agent-integration/domain/ports/import-analyzer-port.ts` も削除（`fallback-verification-service.ts` 等は inline 型で依然動作）。
+  - 残余 2 件: `adr-foundation/infrastructure/seeds/initial-adr-definitions.ts` (配線 vs 削除の別判断待ち) / `quick-mode/domain/ports/changed-files-port.ts` (ISSUE-017 待ち)。
+
 ## [0.77.0] - 2026-04-23
 
 ### Added

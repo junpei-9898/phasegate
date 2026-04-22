@@ -228,8 +228,15 @@ export class LintRunner {
         }
         case 'no-ghost-file': {
           const ignorePatterns = toStringArray(rule.config.ignorePatterns, Object.freeze([]));
+          const entryPointPatterns = toStringArray(
+            rule.config.entryPointPatterns,
+            Object.freeze([])
+          );
 
-          for (const filePath of params.importGraph.findGhostFiles(ignorePatterns)) {
+          for (const filePath of params.importGraph.findGhostFiles(
+            ignorePatterns,
+            entryPointPatterns
+          )) {
             ruleViolations.push(
               RuleViolation.create({
                 filePath,

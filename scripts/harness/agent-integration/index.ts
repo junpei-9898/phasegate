@@ -32,7 +32,6 @@ export { HandleStopUseCase } from './application/usecases/handle-stop-usecase.js
 
 // Infrastructure - Adapters
 export { EnvFileReentryGuardStateAdapter } from './infrastructure/adapters/env-file-reentry-guard-state-adapter.js';
-export { RegexImportAnalyzerAdapter, TsMorphImportAnalyzerAdapter } from './infrastructure/adapters/regex-import-analyzer-adapter.js';
 export { HarnessApiCliCommandRegistryAdapter } from './infrastructure/adapters/harness-api-cli-command-registry-adapter.js';
 export { HarnessConfigConfigQueryAdapter } from './infrastructure/adapters/harness-config-config-query-adapter.js';
 export { ChildProcessCliExecutorAdapter } from './infrastructure/adapters/child-process-cli-executor-adapter.js';
