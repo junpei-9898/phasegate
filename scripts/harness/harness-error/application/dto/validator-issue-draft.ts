@@ -1,9 +1,6 @@
-/**
- * @layer application
- * @unit harness-error
- *
- * validator出力の正規化前DTO
- */
+// @unit harness-error
+// @layer application
+
 export interface ValidatorIssueDraft {
   readonly code: string;
   readonly message: string;

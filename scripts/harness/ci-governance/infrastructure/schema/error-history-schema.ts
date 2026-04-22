@@ -1,9 +1,5 @@
-/**
- * @layer infrastructure
- * @unit ci-governance
- *
- * .harness/error-history.json スキーマ定義
- */
+// @unit ci-governance
+// @layer infrastructure
 
 export interface ErrorHistoryEntry {
   readonly code: string;

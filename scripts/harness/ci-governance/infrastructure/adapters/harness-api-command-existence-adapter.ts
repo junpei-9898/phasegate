@@ -1,9 +1,5 @@
-/**
- * @layer infrastructure
- * @unit ci-governance
- *
- * CommandExistencePort実装
- */
+// @unit ci-governance
+// @layer infrastructure
 
 import type { CommandExistencePort } from '../../domain/ports/command-existence-port.js';
 

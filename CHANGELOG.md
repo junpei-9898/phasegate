@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.76.0] - 2026-04-23
+
+### Fixed
+
+- ISSUE-003 Wave 2a — L1-007 (`no-comment-flood`) の 47 件を解消。`phasegate lint` violation 数: 155 → 108。
+  - JSDoc ブロック形式 (`/** @layer ... @unit ... */`) を 2 行の単一行コメント (`// @unit ...` / `// @layer ...`) に変換することで、`commentDensity > 0.35` を下回るよう調整。
+  - 一部ファイル（`setup/skill-deployer.ts`, `biome-ast-engine/composition-root.ts`, `fallback-verification-service.ts`, `env-file-reentry-guard-state-adapter.ts` 等）では per-property JSDoc と重複インラインコメント (`repeatedCommentBlocks`) も併せて削除。
+  - 対象 Unit: `agent-integration` / `biome-ast-engine` / `ci-governance` / `config-foundation` / `harness-error` / `nyquist-validation` / `phase-dependency-model` / `quick-mode` / `setup` / `validator-system`（計 47 ファイル、-444/+124 行）。
+- 残余 1 件（`agent-integration/domain/ports/error-guidance-query-port.ts`）は PreToolUse hook が port 変更を `api` カテゴリと判定しブロックしたため、Wave 2a スコープ外に繰り延べ。別途 baseline 登録 or story-implementor 経由で対応予定。
+
 ## [0.75.0] - 2026-04-23
 
 ### Fixed

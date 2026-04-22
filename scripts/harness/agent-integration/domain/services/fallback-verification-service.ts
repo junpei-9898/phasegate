@@ -1,10 +1,5 @@
-/**
- * @layer domain
- * @unit agent-integration
- *
- * FallbackVerificationService ドメインサービス
- * FallbackCapabilitySpec に基づきフォールバック能力を検証する
- */
+// @unit agent-integration
+// @layer domain
 
 import type { FallbackCapabilitySpec } from '../value-objects/fallback-capability-spec.js';
 
@@ -39,9 +34,6 @@ export interface FallbackVerificationServicePorts {
   };
 }
 
-/**
- * 同期版 FallbackVerificationService（ユニットテスト用）
- */
 export class FallbackVerificationService {
   private readonly importAnalyzerPort: FallbackVerificationServicePorts['importAnalyzerPort'];
   private readonly cliCommandRegistryPort: FallbackVerificationServicePorts['cliCommandRegistryPort'];
@@ -54,7 +46,6 @@ export class FallbackVerificationService {
   verify(spec: FallbackCapabilitySpec): Error[] {
     const violations: Error[] = [];
 
-    // Import チェック
     if (spec.requiresNoAgentApiImports()) {
       const detectedImports = this.importAnalyzerPort.detectAgentApiImports();
       for (const importEntry of detectedImports) {
@@ -66,7 +57,6 @@ export class FallbackVerificationService {
       }
     }
 
-    // コマンド登録確認
     for (const command of spec.supportedCommands) {
       const hasCommand = this.cliCommandRegistryPort.has(command);
       if (!hasCommand) {
@@ -82,9 +72,6 @@ export class FallbackVerificationService {
   }
 }
 
-/**
- * 非同期版 FallbackVerificationService（UseCase用）
- */
 export class AsyncFallbackVerificationService {
   private readonly importAnalyzerPort: {
     analyzeAgentApiImports(targetFilePaths: string[]): Promise<Array<{ filePath: string; agentApiImports: string[] }>>;
@@ -111,7 +98,6 @@ export class AsyncFallbackVerificationService {
   ): Promise<{ violations: Error[]; isValid: boolean }> {
     const violations: Error[] = [];
 
-    // Import チェック
     if (spec.requiresNoAgentApiImports()) {
       const results = await this.importAnalyzerPort.analyzeAgentApiImports(targetFilePaths);
       for (const result of results) {
@@ -125,7 +111,6 @@ export class AsyncFallbackVerificationService {
       }
     }
 
-    // コマンド登録確認
     for (const command of spec.supportedCommands) {
       const hasCommand = await this.cliCommandRegistryPort.hasCommand(command);
       if (!hasCommand) {

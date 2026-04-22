@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit config-foundation
- *
- * config-foundation ドメイン層の基底エラークラス
- */
+// @unit config-foundation
+// @layer domain
+
 export class ConfigFoundationDomainError extends Error {
   readonly errorCode: string;
 

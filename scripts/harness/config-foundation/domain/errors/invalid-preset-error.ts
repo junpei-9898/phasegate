@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit config-foundation
- *
- * project.preset が許可列挙値に一致しない場合のエラー
- */
+// @unit config-foundation
+// @layer domain
+
 import { ConfigFoundationDomainError } from './config-foundation-domain-error.js';
 
 export class InvalidPresetError extends ConfigFoundationDomainError {

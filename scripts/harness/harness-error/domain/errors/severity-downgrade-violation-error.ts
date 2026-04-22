@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * severity の格下げ（error -> warning）が試みられた場合に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class SeverityDowngradeViolationError extends HarnessErrorDomainError {

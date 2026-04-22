@@ -1,9 +1,5 @@
-/**
- * @layer domain
- * @unit validator-system
- *
- * SourceCodeAnalyzerPort — AST解析結果取得（L4-001, L4-003）
- */
+// @unit validator-system
+// @layer domain
 
 export interface SourceAnalysisResult {
   readonly unitName: string;
@@ -14,6 +10,5 @@ export interface SourceAnalysisResult {
 
 export interface SourceCodeAnalyzerPort {
   analyzeExports(targetUnits?: readonly string[]): Promise<readonly SourceAnalysisResult[]>;
-  /** DriftDetectionService用: 要素名一覧取得 */
   getElements?(targetUnits?: readonly string[]): Promise<string[]>;
 }

@@ -1,9 +1,5 @@
-/**
- * @layer domain
- * @unit ci-governance
- *
- * TemplateType補助型
- */
+// @unit ci-governance
+// @layer domain
 
 export type TemplateType = 'aidlc-gate' | 'consistency-check' | 'pre-commit';
 

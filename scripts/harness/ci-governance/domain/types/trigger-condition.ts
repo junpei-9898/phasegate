@@ -1,9 +1,5 @@
-/**
- * @layer domain
- * @unit ci-governance
- *
- * TriggerCondition補助型
- */
+// @unit ci-governance
+// @layer domain
 
 export type TriggerCondition = 'pull_request' | 'schedule' | 'pre-commit';
 

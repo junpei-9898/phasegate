@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit validator-system
- *
- * MetadataPolicyPort — traceability-model メタデータ検証仕様
- */
+// @unit validator-system
+// @layer domain
+
 import type { HarnessErrorLike } from '../value-objects/validation-result.js';
 
 export interface MetadataPolicyPort {

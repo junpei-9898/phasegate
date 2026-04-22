@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * ADR参照が必須なのに未指定の場合に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class MissingAdrRefError extends HarnessErrorDomainError {

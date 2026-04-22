@@ -1,9 +1,6 @@
-/**
- * @layer application
- * @unit validator-system
- *
- * RunFullValidationInput — H08-06 UseCase入力DTO
- */
+// @unit validator-system
+// @layer application
+
 export interface RunFullValidationInput {
   readonly targetPaths: readonly string[];
   readonly unitName: string;
@@ -13,9 +10,6 @@ export interface RunFullValidationInput {
   readonly failOnWarning?: boolean;
   readonly coverageReportPath?: string;
   readonly requirementMatrixPath?: string;
-  /**
-   * ISSUE-005 P1-4: 実行レイヤー絞り込み。未指定は全レイヤー実行。
-   * 指定された場合、`includeL4` より優先される。
-   */
+  /** 指定時は includeL4 より優先。未指定は全レイヤー実行。 */
   readonly targetLayers?: readonly ('L2' | 'L3' | 'L4')[];
 }

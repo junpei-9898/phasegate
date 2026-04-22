@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * ADR参照先が実在しない場合に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class AdrReferenceNotFoundError extends HarnessErrorDomainError {

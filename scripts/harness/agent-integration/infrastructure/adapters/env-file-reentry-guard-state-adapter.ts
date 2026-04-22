@@ -1,10 +1,5 @@
-/**
- * @layer infrastructure
- * @unit agent-integration
- *
- * EnvFileReentryGuardStateAdapter
- * ReentryGuardStatePort の実装。環境変数またはtmpファイルで状態を管理する
- */
+// @unit agent-integration
+// @layer infrastructure
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -30,7 +25,6 @@ export class EnvFileReentryGuardStateAdapter implements ReentryGuardStatePort {
       return process.env[ENV_VAR_NAME] === '1';
     }
 
-    // file strategy
     try {
       await fs.access(getTmpFilePath());
       return true;
@@ -45,7 +39,6 @@ export class EnvFileReentryGuardStateAdapter implements ReentryGuardStatePort {
       return;
     }
 
-    // file strategy
     const tmpPath = getTmpFilePath();
     await fs.writeFile(tmpPath, '', 'utf8');
   }
@@ -56,7 +49,6 @@ export class EnvFileReentryGuardStateAdapter implements ReentryGuardStatePort {
       return;
     }
 
-    // file strategy
     const tmpPath = getTmpFilePath();
     try {
       await fs.rm(tmpPath, { force: true });

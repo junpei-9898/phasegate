@@ -1,9 +1,5 @@
-/**
- * @layer domain
- * @unit validator-system
- *
- * SourceFileTextScannerPort — ソースファイルテキストスキャンポート
- */
+// @unit validator-system
+// @layer domain
 
 export interface TextScanMatch {
   readonly filePath: string;
@@ -12,9 +8,6 @@ export interface TextScanMatch {
 }
 
 export interface SourceFileTextScannerPort {
-  /**
-   * 指定ファイル群のソースファイルをスキャンし、パターンに一致する行を返す。
-   */
   scanForPattern(pattern: RegExp, targetPaths?: readonly string[]): Promise<readonly TextScanMatch[]>;
 }
 

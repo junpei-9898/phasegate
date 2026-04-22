@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit validator-system
- *
- * TestQualityAnalyzerPort — AAAパターン・命名規約解析（L2-003）
- */
+// @unit validator-system
+// @layer domain
+
 import type { HarnessErrorLike } from '../value-objects/validation-result.js';
 
 export interface TestQualityAnalyzerPort {

@@ -1,12 +1,5 @@
-/**
- * @layer infrastructure
- *
- * Harnessスキルのデプロイメントインフラ。
- * パッケージルートの skills/ を対象プロジェクトの .claude/skills/ にコピーする。
- * harness init / harness update-skills コマンドから呼び出される。
- *
- * Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
- */
+// @layer infrastructure
+// Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
 import { join } from 'node:path';
 import { promises as fs } from 'node:fs';
@@ -60,9 +53,6 @@ export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
   ],
 } as const;
 
-/**
- * 指定された SkillSet に含まれるスキル名の一覧を返す。
- */
 export function getSkillsForSet(skillSet: SkillSet): string[] {
   if (skillSet === 'core') {
     return [...SKILL_CATEGORIES.core];
@@ -74,9 +64,6 @@ export function getSkillsForSet(skillSet: SkillSet): string[] {
   ];
 }
 
-/**
- * スキル名からカテゴリを逆引きする。未知のスキルは null を返す。
- */
 export function getCategoryForSkill(skillName: string): SkillCategory | null {
   for (const [category, skills] of Object.entries(SKILL_CATEGORIES)) {
     if ((skills as readonly string[]).includes(skillName)) {
@@ -128,13 +115,6 @@ async function copyDirectory(src: string, dest: string): Promise<number> {
   return count;
 }
 
-/**
- * skills/ ディレクトリを対象プロジェクトの .claude/skills/ にデプロイする。
- * 既存ファイルは上書きされる（update-skills でも同じ関数を使う）。
- *
- * @param harnessRoot - harnessパッケージのルートディレクトリ（skills/がある場所）
- * @param projectRoot - デプロイ先プロジェクトのルートディレクトリ
- */
 export async function deploySkills(
   harnessRoot: string,
   projectRoot: string,
@@ -168,10 +148,6 @@ export async function deploySkills(
   return { deployedSkills: skills, targetDir: skillsTarget, version, deployedAt, skillSet };
 }
 
-/**
- * デプロイ済みバージョン情報を読み取る。
- * .harness-version ファイルが存在しない場合は null を返す。
- */
 export async function getDeployedVersion(projectRoot: string): Promise<VersionInfo | null> {
   const versionFile = join(projectRoot, SKILLS_TARGET_DIR, HARNESS_VERSION_FILE);
   try {
@@ -188,14 +164,6 @@ export interface DeployHooksResult {
   settingsCreated: boolean;
 }
 
-/**
- * templates/.claude/scripts/ を対象プロジェクトの .claude/scripts/ にデプロイする。
- * templates/.claude/settings.json も存在しなければ作成する。
- * 既存のスクリプトは上書き、settings.json は既存があればスキップ。
- *
- * @param harnessRoot - harnessパッケージのルートディレクトリ
- * @param projectRoot - デプロイ先プロジェクトのルートディレクトリ
- */
 export async function deployHookScripts(
   harnessRoot: string,
   projectRoot: string,
@@ -220,7 +188,6 @@ export async function deployHookScripts(
       }
     }
   } catch {
-    // テンプレートが存在しない場合はスキップ
   }
 
   // settings.json を作成（既存があればスキップ）
@@ -238,17 +205,12 @@ export async function deployHookScripts(
       await fs.copyFile(settingsSource, settingsTarget);
       settingsCreated = true;
     } catch {
-      // テンプレートが存在しない場合はスキップ
-    }
+      }
   }
 
   return { scriptsDeployed, settingsCreated };
 }
 
-/**
- * phasegate.config.json のデフォルトテンプレートを生成する。
- * 対象プロジェクトに phasegate.config.json が存在しない場合のみ作成する。
- */
 export async function initHarnessConfig(
   projectRoot: string,
   projectName: string,
@@ -298,12 +260,6 @@ export interface DeployDesignDocsResult {
   skippedFiles: string[];
 }
 
-/**
- * 設計原則ドキュメントを対象プロジェクトの docs/ にデプロイする。
- * - docs/folder_management_rules.md → <projectRoot>/docs/folder_management_rules.md
- * - docs/principles/*.md → <projectRoot>/docs/principles/*.md
- * 既存ファイルは上書きせずスキップする。
- */
 export async function deployDesignDocs(
   harnessRoot: string,
   projectRoot: string,
@@ -367,10 +323,6 @@ export interface DeployHuskyHookResult {
   path: string;
 }
 
-/**
- * husky pre-commit フックを対象プロジェクトの .husky/ にデプロイする。
- * 既存があればスキップする。実行権限 0o755 を付与する。
- */
 export async function deployHuskyHook(
   harnessRoot: string,
   projectRoot: string,
@@ -381,7 +333,6 @@ export async function deployHuskyHook(
     await fs.access(targetPath);
     return { created: false, path: targetPath };
   } catch {
-    // 配置先が存在しない場合は新規作成
   }
 
   const sourcePath = join(harnessRoot, 'templates', '.husky', 'pre-commit');
@@ -397,11 +348,6 @@ export interface DeployCodexHooksResult {
   path: string;
 }
 
-/**
- * Codex CLI 向け hooks.json を対象プロジェクトの .codex/ にデプロイする。
- * 既存があればスキップする (ユーザー定義 hooks を上書きしない)。
- * ISSUE-013 Wave 2: --agent codex フラグ経由で init から呼び出される。
- */
 export async function deployCodexHooks(
   harnessRoot: string,
   projectRoot: string,
@@ -412,7 +358,6 @@ export async function deployCodexHooks(
     await fs.access(targetPath);
     return { created: false, path: targetPath };
   } catch {
-    // 配置先が存在しない場合は新規作成
   }
 
   const sourcePath = join(harnessRoot, 'templates', '.codex', 'hooks.json');

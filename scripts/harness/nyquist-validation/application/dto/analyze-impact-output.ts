@@ -1,9 +1,5 @@
-/**
- * @layer application
- * @unit nyquist-validation
- *
- * H07-04: AnalyzeImpactUseCase 出力DTO
- */
+// @unit nyquist-validation
+// @layer application
 
 export interface TestReferenceDto {
   readonly filePath: string;

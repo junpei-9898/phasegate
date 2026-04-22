@@ -1,9 +1,6 @@
-/**
- * @layer application
- * @unit harness-error
- *
- * ErrorDefinition の一覧投影DTO
- */
+// @unit harness-error
+// @layer application
+
 export interface ErrorDefinitionSummary {
   readonly code: string;
   readonly title: string;

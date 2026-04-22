@@ -1,9 +1,5 @@
-/**
- * @layer infrastructure
- * @unit ci-governance
- *
- * ValidatorIdRegistryPort実装
- */
+// @unit ci-governance
+// @layer infrastructure
 
 import type { ValidatorIdRegistryPort } from '../../domain/ports/validator-id-registry-port.js';
 

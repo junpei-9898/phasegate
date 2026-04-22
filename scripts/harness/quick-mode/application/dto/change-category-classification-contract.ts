@@ -1,10 +1,6 @@
-/**
- * @layer application
- * @unit quick-mode
- * @story H10-05
- *
- * ChangeCategoryClassification の公開 DTO
- */
+// @unit quick-mode
+// @layer application
+// @story H10-05
 
 export interface ChangeCategoryPerFile {
   readonly path: string;

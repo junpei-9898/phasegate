@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * ErrorDefinitionRegistry に未登録のコードが指定された場合に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class UnknownErrorDefinitionError extends HarnessErrorDomainError {

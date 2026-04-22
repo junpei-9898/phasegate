@@ -1,14 +1,10 @@
-/**
- * @layer infrastructure
- * @unit nyquist-validation
- *
- * StoryRegistryPort 実装: traceability-model アダプタ
- * @stub wave2-pending
- */
+// @unit nyquist-validation
+// @layer infrastructure
+// @stub wave2-pending
+
 import type { StoryRegistryPort } from '../../domain/ports/story-registry-port.js';
 
 export interface TraceabilityModelStoryRegistryAdapterDeps {
-  /** traceability-model から有効なstoryIdを取得するコールバック（Wave2暫定） */
   getStoryIds: () => Promise<readonly string[]>;
 }
 

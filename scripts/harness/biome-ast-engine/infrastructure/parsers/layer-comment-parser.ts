@@ -1,7 +1,5 @@
-/**
- * @layer infrastructure
- * @unit biome-ast-engine
- */
+// @unit biome-ast-engine
+// @layer infrastructure
 
 const LAYER_COMMENT_PATTERN = /^\s*(?:\/\/|\/\*\*?\s*|\*)\s*@layer\s+(\S+)/m;
 
@@ -9,10 +7,6 @@ export type LayerCommentResult = {
   readonly layerName: string | null;
 };
 
-/**
- * ソースコードから `// @layer {layer}` コメントを抽出する。
- * JSDoc (`/** @layer ... * /`) 形式にも対応する。
- */
 export const parseLayerComment = (sourceCode: string): LayerCommentResult => {
   const match = sourceCode.match(LAYER_COMMENT_PATTERN);
 

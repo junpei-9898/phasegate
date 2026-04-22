@@ -1,20 +1,5 @@
-/**
- * @layer presentation
- * @unit agent-integration
- *
- * SessionStart Hook Adapter (ISSUE-013 Wave 3 / C-4)
- *
- * Codex CLI のセッション開始時に phase-gate 状態 (運用ルール + 保護ファイル一覧 +
- * ブロック中 Unit) を `hookSpecificOutput.additionalContext` として注入する。
- *
- * 出力スキーマ (Codex 公式):
- *   {
- *     "hookSpecificOutput": {
- *       "hookEventName": "SessionStart",
- *       "additionalContext": "<developer context を string で>"
- *     }
- *   }
- */
+// @unit agent-integration
+// @layer presentation
 
 import { buildSessionStartContext, collectPhasegateStatus } from './phasegate-status-context.js';
 

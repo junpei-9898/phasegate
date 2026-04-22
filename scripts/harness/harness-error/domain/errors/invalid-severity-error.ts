@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * Severity の入力不正時に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class InvalidSeverityError extends HarnessErrorDomainError {

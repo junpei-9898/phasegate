@@ -1,16 +1,5 @@
-/**
- * @layer application
- * @unit phase-dependency-model
- *
- * CheckStoryReflectionUseCase
- * StoryReflectionChecker をオーケストレーションし、inception → product への
- * storyId 反映状況を検証するユースケース。
- *
- * 入力: unitId, StoryReflectionConfig
- * 出力: StoryReflectionResult（pass/fail + violations/warnings）
- *
- * enabled=false の場合は即座に pass を返す。
- */
+// @unit phase-dependency-model
+// @layer application
 
 import type { StoryReflectionChecker } from '../../domain/services/story-reflection-checker.js';
 import type { StoryReflectionConfig } from '../../domain/values/story-reflection-config.js';

@@ -1,10 +1,6 @@
-/**
- * @layer infrastructure
- * @unit validator-system
- *
- * CliCommandRegistryAdapter — CliCommandRegistryPort実装
- * 登録済みCLIコマンド名一覧を提供する。
- */
+// @unit validator-system
+// @layer infrastructure
+
 import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-registry-port.js';
 
 export interface CliCommandRegistryAdapterOptions {

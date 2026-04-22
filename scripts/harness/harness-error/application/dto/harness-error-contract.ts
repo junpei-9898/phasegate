@@ -1,9 +1,6 @@
-/**
- * @layer application
- * @unit harness-error
- *
- * HarnessError の公開契約DTO
- */
+// @unit harness-error
+// @layer application
+
 export interface HarnessErrorContract {
   readonly code: string;
   readonly severity: 'error' | 'warning';

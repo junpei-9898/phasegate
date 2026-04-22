@@ -1,9 +1,6 @@
-/**
- * @layer domain
- * @unit harness-error
- *
- * ErrorDefinitionRegistry に重複コードが登録された場合に送出されるドメインエラー
- */
+// @unit harness-error
+// @layer domain
+
 import { HarnessErrorDomainError } from './harness-error-domain-error.js';
 
 export class DuplicateErrorCodeError extends HarnessErrorDomainError {

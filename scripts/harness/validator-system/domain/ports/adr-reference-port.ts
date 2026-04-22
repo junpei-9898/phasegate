@@ -1,9 +1,5 @@
-/**
- * @layer domain
- * @unit validator-system
- *
- * AdrReferencePort — adr-foundation ADR実在性確認（L4-002）
- */
+// @unit validator-system
+// @layer domain
 
 export interface AdrMetadata {
   readonly adrId: string;
