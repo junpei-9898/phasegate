@@ -109,6 +109,18 @@ function createMinimalResolvedDocument(): HarnessConfigResolvedDocument {
       format: 'json',
       outputDir: 'reports',
     },
+    architecture: {
+      preset: 'clean',
+      layers: ['domain', 'application', 'infrastructure', 'presentation'],
+      allowedDependencies: {
+        domain: ['domain'],
+        application: ['application', 'domain'],
+        infrastructure: ['infrastructure', 'application', 'domain'],
+        presentation: ['presentation', 'application', 'domain'],
+      },
+      metadataTags: { layer: '@layer', unit: '@unit' },
+      layerDetection: { byPath: true, byTag: true },
+    },
   };
 }
 

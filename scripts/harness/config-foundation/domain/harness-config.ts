@@ -20,6 +20,10 @@ import type { L1Config } from './value-objects/l1-config.js';
 import type { L2Config } from './value-objects/l2-config.js';
 import type { L3Config } from './value-objects/l3-config.js';
 import type { L4Config } from './value-objects/l4-config.js';
+import type {
+  ArchitectureConfigDocument,
+  ArchitectureConfigSource,
+} from './value-objects/architecture-config.js';
 
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
 export type PresetId = 'minimal' | 'standard' | 'strict';
@@ -45,6 +49,7 @@ export interface HarnessConfigSourceDocument {
   harnesses: Partial<HarnessConfigResolvedDocument['harnesses']>;
   paths: HarnessConfigResolvedDocument['paths'];
   reporting: HarnessConfigResolvedDocument['reporting'];
+  architecture?: ArchitectureConfigSource;
 }
 
 export interface HarnessConfigResolvedDocument {
@@ -103,6 +108,7 @@ export interface HarnessConfigResolvedDocument {
     format: string;
     outputDir: string;
   };
+  architecture?: ArchitectureConfigDocument;
 }
 
 export type HarnessConfigV2 = HarnessConfigResolvedDocument;

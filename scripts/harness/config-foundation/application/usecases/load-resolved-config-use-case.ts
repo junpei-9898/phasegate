@@ -5,11 +5,13 @@
 import { ConfigValidationError } from '../../domain/errors/config-validation-error.js';
 import {
   HarnessConfig,
+  type HarnessConfigResolvedDocument,
   type HarnessConfigSourceDocument,
   type PresetId,
 } from '../../domain/harness-config.js';
 import type { ConfigRepositoryPort } from '../../domain/ports/config-repository-port.js';
 import type { ConfigSchemaValidatorPort } from '../../domain/ports/config-schema-validator-port.js';
+import { ArchitectureResolutionService } from '../../domain/services/architecture-resolution-service.js';
 import {
   PresetResolutionService,
   type PresetDefinition,
@@ -24,6 +26,7 @@ export interface LoadResolvedConfigUseCaseDependencies {
   readonly schemaValidator: ConfigSchemaValidatorPort;
   readonly presetDefinitions: PresetDefinitions;
   readonly presetResolutionService: PresetResolutionService;
+  readonly architectureResolutionService?: ArchitectureResolutionService;
 }
 
 export interface LoadedHarnessConfig {
@@ -94,6 +97,20 @@ export function resolveSourceDocument(
   );
 }
 
+function resolveArchitecture(
+  sourceDocument: HarnessConfigSourceDocument,
+  resolvedDocument: HarnessConfigResolvedDocument,
+  architectureResolutionService: ArchitectureResolutionService | undefined,
+): HarnessConfigResolvedDocument {
+  const service = architectureResolutionService ?? new ArchitectureResolutionService();
+  const { document } = service.resolve(sourceDocument.architecture);
+
+  return {
+    ...resolvedDocument,
+    architecture: document,
+  };
+}
+
 export async function loadHarnessConfig(
   dependencies: LoadResolvedConfigUseCaseDependencies,
   configPath?: string,
@@ -103,10 +120,16 @@ export async function loadHarnessConfig(
   validateDocumentOrThrow(dependencies.schemaValidator, document);
 
   const sourceDocument = toSourceDocument(document);
-  const resolvedDocument = resolveSourceDocument(
+  const resolvedFromPreset = resolveSourceDocument(
     sourceDocument,
     dependencies.presetDefinitions,
     dependencies.presetResolutionService,
+  );
+
+  const resolvedDocument = resolveArchitecture(
+    sourceDocument,
+    resolvedFromPreset,
+    dependencies.architectureResolutionService,
   );
 
   return {
@@ -123,12 +146,14 @@ export class LoadResolvedConfigUseCase {
   private readonly schemaValidator: ConfigSchemaValidatorPort;
   private readonly presetDefinitions: PresetDefinitions;
   private readonly presetResolutionService: PresetResolutionService;
+  private readonly architectureResolutionService: ArchitectureResolutionService | undefined;
 
   constructor(dependencies: LoadResolvedConfigUseCaseDependencies) {
     this.configRepository = dependencies.configRepository;
     this.schemaValidator = dependencies.schemaValidator;
     this.presetDefinitions = dependencies.presetDefinitions;
     this.presetResolutionService = dependencies.presetResolutionService;
+    this.architectureResolutionService = dependencies.architectureResolutionService;
   }
 
   async execute(configPath?: string): Promise<ResolvedConfigOutput> {
@@ -138,6 +163,7 @@ export class LoadResolvedConfigUseCase {
         schemaValidator: this.schemaValidator,
         presetDefinitions: this.presetDefinitions,
         presetResolutionService: this.presetResolutionService,
+        architectureResolutionService: this.architectureResolutionService,
       },
       configPath,
     );

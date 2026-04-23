@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.96.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 3: schema v3 + config-foundation による architecture preset のロード基盤** — Wave 2 で VO に注入口を用意した後の、config レイヤーでの実体化フェーズ。biome-ast-engine 側の配線は Wave 4 以降で担当する。
+  - 新規 `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v3.schema.json` — v2 schema に `architecture` セクション（`preset` 必須、`custom` 時は `layers` + `allowedDependencies` 必須の `allOf/if/then`）を optional で追加。
+  - 新規 `domain/value-objects/architecture-config.ts` — `ArchitecturePresetId` / `ArchitectureConfigSource` / `ArchitectureConfigDocument` / `freezeArchitectureDocument` / `isArchitecturePresetId`。
+  - 新規 `domain/value-objects/architecture-preset-catalog.ts` — `clean / strict-ddd / onion / hexagonal / layered / flat` の 6 preset 定義（`custom` は source 側で明示）。
+  - 新規 `domain/services/architecture-resolution-service.ts` — preset 展開 + 明示 override マージ + semantic validation（C1 自己参照欠落は auto-fill + warn、C2 キー不整合は error、C3 値不整合は error、C4 layer 欠落は `{self}` auto-fill + warn、C5 循環依存は warn）+ layerDetection precedence（byPath=false+byTag=false は error）。
+  - `AjvConfigSchemaValidator` に構造検出（`architecture` キー有無）を追加し、v2/v3 schema を自動選択。
+  - `HarnessConfigResolvedDocument` に optional `architecture` を追加。`LoadResolvedConfigUseCase` が architecture を常時 resolve し、v2 config は `{ preset: "clean" }` 既定を synthesize。
+- **phasegate レポ自身の `phasegate.config.json` に `architecture: { preset: "clean" }` dogfood 明示追記** — Wave 2 から移送された項目。v3 schema + loader が揃った本 Wave で初めて安全に追記可能。
+
+### Changed
+
+- 既存 `load-resolved-config-use-case.test.ts` の `createMinimalResolvedDocument()` に clean デフォルトの architecture セクションを追加（新契約への追従）。
+
+### Tests
+
+- 新規 `unit/config-foundation/architecture-resolution-service.test.ts` — 17 件。7 preset 展開 / custom explicit 必須 / preset+override merge / C1〜C5 semantic validation / layerDetection precedence / metadataTags override。
+- 新規 `integration/config-foundation/ajv-config-schema-validator-v3.test.ts` — 5 件。v2 document / v3 document / 未知 preset / custom without layers のケース。
+- 全 3345 tests green（3323 → +22）、`npx phasegate lint` violations 0。
+
 ## [0.95.0] - 2026-04-23
 
 ### Changed

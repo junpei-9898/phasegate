@@ -2,10 +2,11 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Wave 2 完了 / 2026-04-23）
+- **状態**: 🟡 **IN PROGRESS**（Wave 3 完了 / 2026-04-23）
   - Wave 1 (v0.92.0〜v0.94.0): ADR-015 起票 + `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` で preset schema 設計を完了
-  - Wave 2 (v0.95.0): `LayerName` / `LayerBoundary` VO を `ArchitectureSpec` 注入形式に改修（`CLEAN_PRESET_SPEC` を default にして既存挙動を維持）。onion preset 相当の custom spec 注入テスト 12 件追加
-  - Wave 3 以降: schema v3 実装 + config-foundation 構造検出 + phasegate.config.json への `architecture: { preset: "clean" }` dogfood 追記 → preset 実装 → ガイド追記（各 Wave の詳細は wave1_schema_proposal.md §4 参照）
+  - Wave 2 (v0.95.0): `LayerName` / `LayerBoundary` VO を `ArchitectureSpec` 注入形式に改修（`CLEAN_PRESET_SPEC` を default にして既存挙動を維持）
+  - Wave 3 (v0.96.0): `harness-config-v3.schema.json` 新設 + `AjvConfigSchemaValidator` 構造検出 + `ArchitectureResolutionService` による preset 展開 / override / semantic validation (C1〜C5) / layerDetection precedence を実装。phasegate レポ自身の `phasegate.config.json` に dogfood 追記完了
+  - Wave 4 以降: `flat` preset 実装 + 残存 tag 扱い + preset/user 優先度 → `onion / hexagonal / layered / strict-ddd / custom` 実装 + dogfood 検証 → ガイド追記（各 Wave の詳細は wave1_schema_proposal.md §4 参照）
 - **優先度**: P2
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003（lint 違反解消）Wave 0 棚卸し中に、`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:6,15-20` で層名と依存方向が固定値としてハードコードされていることが判明。プロジェクト側でアーキテクチャスタイルを選べない
@@ -100,8 +101,8 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 
 - [x] **Wave 1**: ADR-015 起票 + preset schema 設計（`wave1_schema_proposal.md`）
 - [x] **Wave 2**: `LayerNameValue` / `ALLOWED_DEPENDENCIES` が config からの注入ベースに改修される（`ArchitectureSpec` + `CLEAN_PRESET_SPEC`）
-- [ ] `phasegate.config.json` に `architecture` セクションが追加される（schema v3 相当 / Wave 3）
-- [ ] `architecture.preset` が `clean / strict-ddd / onion / hexagonal / layered / flat / custom` の **7 種**をサポート
+- [x] **Wave 3**: `phasegate.config.json` に `architecture` セクションが追加される（schema v3、dogfood 済）
+- [x] **Wave 3**: `architecture.preset` が `clean / strict-ddd / onion / hexagonal / layered / flat / custom` の **7 種**をサポート（`ArchitectureResolutionService` + `ARCHITECTURE_PRESET_CATALOG`）
 - [ ] `@layer` タグ名自体を `metadataTags.layer` で差し替え可能（`@tier` 等）
 - [ ] `flat` プリセットで L1-001〜004 が自動無効化される
 - [ ] 既存の phasegate 自身（PhaseGate レポ）で `preset: "clean"` 設定に自動マイグレーション（構造検出による下位互換）
@@ -124,7 +125,7 @@ Wave 1 で Phase B（schema 設計）を先行実施したため、Wave 番号�
 |---|---|---|---|
 | Wave 1 | Phase B | ADR-015 + schema 設計 + 批判的レビュー補修 | 0.5d |
 | Wave 2 ✅ | Phase A | `LayerName` / `LayerBoundary` を `ArchitectureSpec` 注入形式に改修（完了 / v0.95.0） | 1d（実施: 0.5d） |
-| Wave 3 | —（新設） | schema v3 JSON Schema 実体化 + 構造検出ロード + preset override 解決 + semantic validation (C1〜C5) + layerDetection precedence + **phasegate.config.json dogfood 追記（Wave 2 から移送）** | 1.5d |
+| Wave 3 ✅ | —（新設） | schema v3 JSON Schema 実体化 + 構造検出ロード + preset override 解決 + semantic validation (C1〜C5) + layerDetection precedence + **phasegate.config.json dogfood 追記**（完了 / v0.96.0） | 1.5d（実施: 0.75d） |
 | Wave 4 | Phase C | `flat` preset 実装 + 残存 tag 扱い + preset/user 優先度 | 0.5d |
 | Wave 5 | Phase D + E | `onion / hexagonal / layered / strict-ddd / custom` + dogfood 検証 | 1d |
 | Wave 6 | Phase F | ガイド追記 + 呼称分離ガイド + `migrate` CLI + v0.86.0 境界警告 | 0.5d |
