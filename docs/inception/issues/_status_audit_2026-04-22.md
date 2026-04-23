@@ -17,8 +17,13 @@
 | ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正。ISSUE-018 の前提条件を解消 |
 | ISSUE-022 | **新規起票 → CLOSED (v0.85.0)**: `no-layer-violation.ignorePatterns` に `**/index.ts` を追加し Unit barrel 誤検知を解消。L1-003: 15 → 8（barrel 7 件解消） |
 | ISSUE-019 | **CLOSED (v0.86.0)**: 選択肢 A 採用。`ALLOWED_DEPENDENCIES.presentation` に `'domain'` 追加で Robert C. Martin 版 CA 準拠に変更。ADR-014 起票。L1-003: 8 → 0（presentation→domain 8件解消） |
-| 現在の lint 状態 | **0 件** 🎉。全 L1-001〜L1-007 violations 無し。ISSUE-003 (159件スタート) 完全解消 |
-| 次の最優先 | ISSUE-010 (103件 @story-id) / ISSUE-014 (preset `strict-ddd` で厳格派 opt-in 提供) / ISSUE-001 (Medium, inception 設計順序強制) |
+| ISSUE-010 | Wave 1 (v0.87.0 / traceability-model 3件) → Wave 2 (v0.88.0 / adr-foundation 6 + config-foundation 5) → Wave 3 (v0.89.0 / 11 Unit × 7 = 75 件) → fuse-hooks-engine 削除 (v0.90.0 / 7 件消失) → ISSUE-023 (v0.91.0 / validator pattern 拡張で残 7 件解消) で完全 CLOSE。`validate-metadata` FAIL: 103 → **0 件** 達成 |
+| fuse-hooks-engine 削除 | **v0.90.0 (2026-04-23)**: Future Phase の未実装 Unit（実装コード ゼロ、他 Unit からの参照なし）を完全削除。Unit 定義 + 設計文書 7 + inception プラン 8 + HF1-01〜05 user stories + integration_contract / agent_integration_unit / unit_test_design の参照を整理 |
+| ISSUE-023 | **新規起票 → CLOSED (v0.91.0, 2026-04-23)**: `StoryId` VO・`MetadataValidator`・`story-catalog-parser` の 3 箇所の `H[0-9]{2}-[0-9]{2}` pattern を `H(?:F\d+|[0-9]{2})-[0-9]{2}` に拡張。`HF2-XX` 形式を正式サポート。テスト 3 件追加（3308 → 3311）|
+| 現在の lint 状態 | **0 件** 🎉 維持。全 L1-001〜L1-007 violations 無し |
+| 現在の validate-metadata 状態 | **0 件 FAIL** 🎉（全 105 Unit 構成文書 PASS） |
+| npm publish | v0.84.0 〜 v0.90.0 は未 publish だが、v0.91.0（最新）の publish で代表させる方針（user TTY で `--auth-type=web`） |
+| 次の最優先候補 | (A) ISSUE-014 preset `strict-ddd` opt-in / (B) ISSUE-001 inception 設計順序強制 / (C) ISSUE-015 comment-only diff 検出 / (D) ISSUE-012 pre-commit 拡張フィルタ config |
 
 ---
 
@@ -43,7 +48,7 @@ ISSUE-007 完了 (v0.74.0) 直後の時点。
 | **ISSUE-006** | IN PROGRESS | 🟢 **ほぼ完了** | P1 | `quick-mode` Unit / `fullModeRequiredWhen` 配線済み。**他PJ 再レビューのみ残** |
 | **ISSUE-007** | CLOSED（2026-04-23） | 🟢 **真に完了** | — | Wave 9 (v0.74.0) で acceptance 全 8 条件成立。2026-04-23 に CLOSE 宣言 |
 | **ISSUE-009** | 未着手 | 🟡 **DEFERRED**（2026-04-23） | ~~P1~~ → P2 | Orchestration Engine との責務境界見直しで保留。単一 agent 前提の現状は既存 hook で機能 |
-| **ISSUE-010** | 未着手 | 🔴 **真に未解決（103 件実測）** | P2 | `validate-metadata` を 112 `.md` に個別実行 → **103 件** `@story-id は必須です` エラー |
+| **ISSUE-010** | CLOSED（v0.91.0） | 🟢 **完全解消（103 → 0 件）** | — | Wave 1-3 + fuse-hooks-engine 削除 + ISSUE-023 (validator pattern 拡張) で完結。`validate-metadata` FAIL 0 件達成 |
 | **ISSUE-012** | P3 未着手 | 🔴 **真に未解決** | P3 | `scripts/harness/integrations/pre-commit.ts:120` で `TS_EXTENSION` ハードコード、config 化なし |
 | **ISSUE-013** | CLOSED | 🟢 **真に完了** | — | `bash-write-target-extractor.ts` に `apply_patch` heredoc 対応済み（以前セッションで渡された ARGUMENTS は stale） |
 
@@ -104,4 +109,4 @@ ISSUE-007 完了 (v0.74.0) 直後の時点。
 ---
 
 **監査者**: Claude Code (Opus 4.7 / 1M context) + general-purpose agent による裏取り
-**参照 CLI 実行時点**: phasegate v0.81.0 (local source, commit 0027365)
+**参照 CLI 実行時点**: phasegate v0.91.0 (local source) — 2026-04-23 更新（ISSUE-010 完全 CLOSE 反映）

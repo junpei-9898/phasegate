@@ -46,6 +46,30 @@ target('StoryId.parse', () => {
         expect(actual).toThrowError(StoryIdFormatError);
       });
     });
+
+    context('HF\\d+-XX形式（Phase 2 拡張 Epic）を渡す場合', () => {
+      it('HF2-04 を正常に parse できること', () => {
+        // Arrange
+        const actual = StoryId.parse('HF2-04');
+
+        // Act
+        const value = actual.value;
+
+        // Assert
+        expect(value).toBe('HF2-04');
+      });
+
+      it('HF10-99 のような複数桁 F-prefix も受理すること', () => {
+        // Arrange
+        const actual = StoryId.parse('HF10-99');
+
+        // Act
+        const value = actual.value;
+
+        // Assert
+        expect(value).toBe('HF10-99');
+      });
+    });
   });
 });
 
@@ -61,6 +85,19 @@ target('StoryId.getEpicNumber', () => {
 
         // Assert
         expect(actual).toBe('12');
+      });
+    });
+
+    context('HF\\d+-XX 形式の StoryId を保持している場合', () => {
+      it('F-prefix 付きの epic 文字列を返すこと', () => {
+        // Arrange
+        const sut = StoryId.parse('HF2-04');
+
+        // Act
+        const actual = sut.getEpicNumber();
+
+        // Assert
+        expect(actual).toBe('F2');
       });
     });
   });

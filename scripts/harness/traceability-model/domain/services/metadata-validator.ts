@@ -13,7 +13,7 @@ import {
 import type { StoryIdLike } from '../value-objects/story-reference.js';
 import type { StoryIdAnnotation } from '../value-objects/story-id-annotation.js';
 
-const STORY_ID_PATTERN = /^H[0-9]{2}-[0-9]{2}$/;
+const STORY_ID_PATTERN = /^H(?:F\d+|[0-9]{2})-[0-9]{2}$/;
 const VALID_LAYER_NAMES = new Set([
   'domain',
   'application',

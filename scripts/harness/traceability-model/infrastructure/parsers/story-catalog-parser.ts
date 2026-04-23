@@ -10,7 +10,7 @@ export interface ParsedStoryCatalog {
   readonly aliasMap: ReadonlyMap<string, string>;
 }
 
-const STORY_ID_LINE_PATTERN = /\bH[0-9]{2}-[0-9]{2}\b/g;
+const STORY_ID_LINE_PATTERN = /\bH(?:F\d+|[0-9]{2})-[0-9]{2}\b/g;
 const TABLE_ALIAS_PATTERN =
   /\|\s*(H[0-9]{2}-[0-9]{2})\s*\|.*?\|\s*(US-[0-9]{3})\s*\|/g;
 const INLINE_ALIAS_PATTERN =
@@ -58,7 +58,7 @@ export function parseStoryCatalog(content: string): ParsedStoryCatalog {
 
   // 前後行コンテキスト形式: H03-01 の直後に 旧US: US-001
   for (let i = 0; i < lines.length; i++) {
-    const storyIdMatch = /\b(H[0-9]{2}-[0-9]{2})\b/.exec(lines[i]);
+    const storyIdMatch = /\b(H(?:F\d+|[0-9]{2})-[0-9]{2})\b/.exec(lines[i]);
     if (storyIdMatch) {
       const nextLine = i + 1 < lines.length ? lines[i + 1] : '';
       const legacyMatch = /旧US\s*[:：]\s*(US-[0-9]{3})/.exec(nextLine);

@@ -2,7 +2,7 @@
 
 ## ステータス
 
-- **状態**: 🔴 **OPEN**（真に未解決、2026-04-23 監査で実測 103 件確認。ISSUE-008 Phase B-3 の pre-commit 接続は完了済みで、本 issue が次の最優先タスク）
+- **状態**: 🟢 **CLOSED (v0.91.0, 2026-04-23)** — Wave 1 (v0.87.0) / Wave 2 (v0.88.0) / Wave 3 (v0.89.0) で 103 → 7 件まで圧縮、fuse-hooks-engine 削除 (v0.90.0) で 14 → 7、ISSUE-023 (v0.91.0 validator pattern 拡張) で残 7 件解消。`validate-metadata` FAIL: **0 件** 達成
 - **優先度**: P2
 - **起票日**: 2026-04-19
 - **発見契機**: ISSUE-008 Phase B-2 (`validate-metadata` CLI に `.md` 分岐を追加、v0.50.0) 導入後の全件検証で、`docs/product/construction/` 配下の 103 件の設計文書が `@story-id は必須です` エラーを返すことが判明

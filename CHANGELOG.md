@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.91.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-023: `StoryId` validator pattern が `HF\d+-\d{2}` を拒否する** — `HF2-XX` 形式（Phase 2 拡張 Epic）を正式サポート。
+  - `scripts/harness/traceability-model/domain/value-objects/story-id.ts`: `STORY_ID_PATTERN` を `/^H(?<epicNumber>F\d+|\d{2})-(?<storyNumber>\d{2})$/` に拡張。エラーメッセージも更新。
+  - `scripts/harness/traceability-model/domain/services/metadata-validator.ts:16`: `STORY_ID_PATTERN` を `/^H(?:F\d+|[0-9]{2})-[0-9]{2}$/` に同期。
+  - `scripts/harness/traceability-model/infrastructure/parsers/story-catalog-parser.ts`: `STORY_ID_LINE_PATTERN` と前後行コンテキスト形式の内部パターンを同期。`user_stories.md` から `HF2-XX` を StoryCatalog に収集可能に。
+  - `StoryId.getEpicNumber()` は `HF2-04` に対して `'F2'` を返す（従来の 2 桁数字は不変）。外部 API shape は維持。
+- **ISSUE-010 完全 CLOSE（副次効果）** — `validate-metadata` FAIL: 103 → **0 件**。`docs/product/construction/` 配下の全 105 設計文書が PASS。Wave 1 (v0.87.0) / Wave 2 (v0.88.0) / Wave 3 (v0.89.0) / fuse-hooks-engine 削除 (v0.90.0) / 本リリースで完結。
+
+### Tests
+
+- `scripts/harness/__tests__/unit/traceability-model/story-id.test.ts` に HF prefix ケース 3 件追加（3308 → 3311）:
+  - `HF2-04` を正常に parse できること
+  - `HF10-99` のような複数桁 F-prefix も受理すること
+  - `HF2-04` の `getEpicNumber()` が `'F2'` を返すこと
+
+### Lint / Metadata state
+
+- L1 violations: **0 件維持**（scanned 1289 files, no violations）
+- `validate-metadata` FAIL: 7 → **0 件** 🎉
+- 3311 件テスト全 green
+
 ## [0.90.0] - 2026-04-23
 
 ### Removed
