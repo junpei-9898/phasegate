@@ -16,6 +16,13 @@ export interface ResolveEnabledRulesUseCaseDeps {
   readonly ruleDefinitionRegistry: RuleDefinitionResolver;
 }
 
+const FLAT_AUTO_DISABLED_RULES = Object.freeze([
+  'require-unit-comment',
+  'require-layer-comment',
+  'no-layer-violation',
+  'enforce-folder-structure',
+] as const);
+
 export class ResolveEnabledRulesUseCase {
   private readonly ruleConfigProviderPort: RuleConfigProviderPort;
   private readonly ruleDefinitionRegistry: RuleDefinitionResolver;
@@ -29,10 +36,21 @@ export class ResolveEnabledRulesUseCase {
     input: ResolveEnabledRulesInput = {}
   ): Promise<Readonly<ResolveEnabledRulesOutput>> {
     const config = await this.ruleConfigProviderPort.getL1Config();
-    const mergedRules = {
+    const architecture = await this.ruleConfigProviderPort.getArchitecture();
+    const overrideRules = input.overrideRules ?? {};
+    const mergedRules: Record<string, 'error' | 'warning' | 'off'> = {
       ...config.rules,
-      ...(input.overrideRules ?? {}),
+      ...overrideRules,
     };
+
+    if (architecture.preset === 'flat') {
+      for (const ruleName of FLAT_AUTO_DISABLED_RULES) {
+        if (!(ruleName in mergedRules)) {
+          mergedRules[ruleName] = 'off';
+        }
+      }
+    }
+
     const resolved = this.ruleDefinitionRegistry.resolveEnabled({
       l1Enabled: config.enabled,
       rules: mergedRules,

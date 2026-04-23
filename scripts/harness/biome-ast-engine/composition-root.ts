@@ -2,7 +2,11 @@
 // @layer composition
 
 import { SystemClockAdapter } from './infrastructure/adapters/system-clock-adapter.js';
-import { HarnessConfigProviderAdapter, type L1ConfigInput } from './infrastructure/adapters/harness-config-provider-adapter.js';
+import {
+  HarnessConfigProviderAdapter,
+  type ArchitectureConfigInput,
+  type L1ConfigInput,
+} from './infrastructure/adapters/harness-config-provider-adapter.js';
 import { HarnessErrorFormatterAdapter } from './infrastructure/adapters/harness-error-formatter-adapter.js';
 import { NodeWorkspaceFileAdapter } from './infrastructure/adapters/node-workspace-file-adapter.js';
 import { TypeScriptSourceModuleAnalyzerAdapter } from './infrastructure/adapters/typescript-source-module-analyzer-adapter.js';
@@ -20,6 +24,7 @@ import { HarnessLintCommandHandler } from './presentation/cli/harness-lint-comma
 
 export interface BiomeAstEngineModuleOptions {
   readonly l1Config?: L1ConfigInput;
+  readonly architecture?: ArchitectureConfigInput;
 }
 
 export function createBiomeAstEngineModule(
@@ -27,7 +32,10 @@ export function createBiomeAstEngineModule(
   options?: BiomeAstEngineModuleOptions,
 ) {
   const clockPort = new SystemClockAdapter();
-  const ruleConfigProviderPort = new HarnessConfigProviderAdapter(options?.l1Config);
+  const ruleConfigProviderPort = new HarnessConfigProviderAdapter(
+    options?.l1Config,
+    options?.architecture,
+  );
   const violationFormatterPort = new HarnessErrorFormatterAdapter();
   const workspaceFilePort = new NodeWorkspaceFileAdapter({ rootDir });
   const sourceModuleAnalyzerPort = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });

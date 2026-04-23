@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.97.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 4: `flat` preset auto-disable + user override 優先度 + architecture 配線** — Wave 3 で config-foundation がエクスポートした `architecture` を biome-ast-engine の L1 rule pipeline に接続した初回。
+  - `RuleConfigProviderPort` に `getArchitecture()` を追加し、`preset / layers / allowedDependencies` を供給。
+  - `HarnessConfigProviderAdapter` が architecture を保持・返却。未注入時は clean default に fallback。
+  - `createBiomeAstEngineModule` の `BiomeAstEngineModuleOptions` に `architecture?` を追加。
+  - `ResolveEnabledRulesUseCase` が `preset === 'flat'` 時に `require-unit-comment / require-layer-comment / no-layer-violation / enforce-folder-structure` を自動 `off` 扱い。**user 明示設定（rules or overrideRules）が存在する rule は preset 既定より優先**。
+  - `main.ts` が `resolvedConfig.architecture` を抽出し `createBiomeAstEngineModule` に渡す配線を追加。
+  - flat preset は `@layer` タグが残っていても L1-001/002/003/004 が skipped なので違反を発火しない（option A: 残存 tag は ignore）。
+
+### Tests
+
+- `unit/biome-ast-engine/resolve-enabled-rules-usecase.test.ts` に 4 件追加（flat preset 未指定時の 4 rule skipped / user `error` 明示優先 / user overrideRules `off` 明示 / clean preset は既定で auto-disable されない）。
+
+### Notes
+
+- Wave 5（`onion / hexagonal / layered / strict-ddd / custom` の実体活用 + dogfood）と Wave 6（ガイド追記 + migrate CLI）は別 Wave に送り、Wave 4 は flat 有効化のみに絞る。
+- 現状 `no-layer-violation` rule は `LayerBoundary.standardMatrix()` をハードコード呼び出し中（`LintRunner`）。Wave 5 で architecture.allowedDependencies を注入する改修を予定。
+
 ## [0.96.0] - 2026-04-23
 
 ### Added

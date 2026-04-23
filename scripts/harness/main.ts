@@ -254,6 +254,21 @@ function toL1Config(resolvedConfig: HarnessConfigV2) {
 }
 
 /**
+ * HarnessConfigV2 (resolved) から biome-ast-engine が期待する architecture 情報を抽出する。
+ * architecture が未設定の場合は undefined を返し、biome-ast-engine 側の default (clean) に委ねる。
+ */
+function toArchitectureInput(resolvedConfig: HarnessConfigV2) {
+  if (!resolvedConfig.architecture) {
+    return undefined;
+  }
+  return {
+    preset: resolvedConfig.architecture.preset,
+    layers: resolvedConfig.architecture.layers,
+    allowedDependencies: resolvedConfig.architecture.allowedDependencies,
+  };
+}
+
+/**
  * phasegate.config.json を直接読み、storyReflection 設定解決用の provider を返す。
  * config-foundation の HarnessConfigV2 は storyReflection 未サポートのため raw JSON 経由。
  */
@@ -658,7 +673,10 @@ async function main(): Promise<void> {
         const l1Config = resolvedConfig
           ? toL1Config(resolvedConfig)
           : undefined;
-        const mod = createBiomeAstEngineModule(rootDir, { l1Config });
+        const architecture = resolvedConfig
+          ? toArchitectureInput(resolvedConfig)
+          : undefined;
+        const mod = createBiomeAstEngineModule(rootDir, { l1Config, architecture });
         const result = await mod.harnessLintCommandHandler.execute(
           args.slice(1),
         );
