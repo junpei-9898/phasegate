@@ -16,6 +16,7 @@
 | ISSUE-020 | **新規起票 → CLOSED (v0.82.0)**: `PhaseDependenciesPresetId` を VO 側へ移動し循環依存を解消。L1-003: 9 → 8 |
 | ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正。ISSUE-018 の前提条件を解消 |
 | ISSUE-022 | **新規起票 → CLOSED (v0.85.0)**: `no-layer-violation.ignorePatterns` に `**/index.ts` を追加し Unit barrel 誤検知を解消。L1-003: 15 → 8（barrel 7 件解消） |
+| ISSUE-024 | **新規起票 (2026-04-23)**: `@layer` / `@unit` タグ名の差し替え対応（`metadataTags.layer` / `metadataTags.unit`）。ISSUE-014 Wave 1 設計時の受け入れ基準として立てていたが、architecture preset 機能とは直交（タグ名 rename は別軸）なので分離。P3、未着手 |
 | ISSUE-019 | **CLOSED (v0.86.0)**: 選択肢 A 採用。`ALLOWED_DEPENDENCIES.presentation` に `'domain'` 追加で Robert C. Martin 版 CA 準拠に変更。ADR-014 起票。L1-003: 8 → 0（presentation→domain 8件解消） |
 | ISSUE-010 | Wave 1 (v0.87.0 / traceability-model 3件) → Wave 2 (v0.88.0 / adr-foundation 6 + config-foundation 5) → Wave 3 (v0.89.0 / 11 Unit × 7 = 75 件) → fuse-hooks-engine 削除 (v0.90.0 / 7 件消失) → ISSUE-023 (v0.91.0 / validator pattern 拡張で残 7 件解消) で完全 CLOSE。`validate-metadata` FAIL: 103 → **0 件** 達成 |
 | fuse-hooks-engine 削除 | **v0.90.0 (2026-04-23)**: Future Phase の未実装 Unit（実装コード ゼロ、他 Unit からの参照なし）を完全削除。Unit 定義 + 設計文書 7 + inception プラン 8 + HF1-01〜05 user stories + integration_contract / agent_integration_unit / unit_test_design の参照を整理 |

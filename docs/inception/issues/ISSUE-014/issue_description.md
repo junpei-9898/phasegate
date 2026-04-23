@@ -106,7 +106,6 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 - [x] **Wave 2**: `LayerNameValue` / `ALLOWED_DEPENDENCIES` が config からの注入ベースに改修される（`ArchitectureSpec` + `CLEAN_PRESET_SPEC`）
 - [x] **Wave 3**: `phasegate.config.json` に `architecture` セクションが追加される（schema v3、dogfood 済）
 - [x] **Wave 3**: `architecture.preset` が `clean / strict-ddd / onion / hexagonal / layered / flat / custom` の **7 種**をサポート（`ArchitectureResolutionService` + `ARCHITECTURE_PRESET_CATALOG`）
-- [ ] `@layer` タグ名自体を `metadataTags.layer` で差し替え可能（`@tier` 等）
 - [x] **Wave 4**: `flat` プリセットで L1-001〜004 が自動無効化される（`ResolveEnabledRulesUseCase` で実装、user 明示設定は優先）
 - [x] **Wave 3**: 既存の phasegate 自身（PhaseGate レポ）で `preset: "clean"` 設定に自動マイグレーション（構造検出による下位互換）
 - [x] **Wave 5**: `no-layer-violation` が `architecture.allowedDependencies` 注入下で動作（`LintRunner` + `SourceModuleSnapshot` に spec 伝播、onion 2 件 + hexagonal 2 件の unit test で検証）
@@ -120,6 +119,7 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 - **ランタイム強制**（依存方向違反を実行時に throw する） — あくまで lint 時チェック
 - **既存層の renaming migration tool** — 既存 `@layer domain` を `@tier core` に変える等の自動変換は別 issue
 - **DDD 戦術パターンの強制**（Aggregate / Repository / UseCase 等の命名規約） — 別 issue
+- **`@layer` タグ名自体の差し替え**（`metadataTags.layer` で `@tier` 等に rename） — architecture preset の直交機能。ISSUE-024 に分離（Wave 1 設計時に AC として立てたが、preset 機能とは orthogonal で別 issue 扱いが妥当）
 
 ## 推奨実装順
 
