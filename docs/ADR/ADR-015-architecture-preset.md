@@ -79,7 +79,7 @@ const ALLOWED_DEPENDENCIES = {
 
 詳細なスキーマ案と各 preset の層・依存定義は [`docs/inception/issues/ISSUE-014/wave1_schema_proposal.md`](../inception/issues/ISSUE-014/wave1_schema_proposal.md) を参照。
 
-### 採用する preset（6 種）
+### 採用する preset（7 種）
 
 | `preset` | 層構成 | 想定用途 |
 |---|---|---|
@@ -90,6 +90,30 @@ const ALLOWED_DEPENDENCIES = {
 | `layered` | controller / service / repository | MVC / N-tier PJ |
 | `flat` | (層なし) | 小規模スクリプト、CLI ツール、プロトタイプ |
 | `custom` | ユーザー定義 | 独自アーキ |
+
+### `project.preset` との関係（直交）
+
+既存 schema v2 には `project.preset: "minimal" | "standard" | "strict"` が存在するが、本 ADR で追加する `architecture.preset` とは**完全に直交**する概念である:
+
+| 既存 `project.preset` | 新設 `architecture.preset` |
+|---|---|
+| L0〜L4 レイヤー**各防御段**の有効化プリセット（どの validator を使うか） | 依存方向検査の**アーキスタイル**プリセット（どの層構成を採るか） |
+| 例: `strict` = L0-L4 全有効 | 例: `clean` = 4 層 Clean Architecture |
+
+両者は独立に選択可能で、例えば `project.preset: "minimal"` + `architecture.preset: "hexagonal"` の組み合わせは有効。混同を避けるため、ドキュメント・CLI メッセージでは「防御プリセット / アーキプリセット」と区別して呼称する方針とする（Wave 6 のガイドで徹底）。
+
+### ADR-005（Hexagonal 採用）との関係
+
+ADR-005 では「PhaseGate は Hexagonal Architecture を採用する」と記録したが、実際のコードは `domain / application / infrastructure / presentation` の 4 層構成で、これは Clean Architecture の一般的な命名。**本 ADR は ADR-005 を否定しない**：Hexagonal の「core を外部詳細から隔離する」哲学は 4 層構成でも成立し、PhaseGate の `domain` は Hexagonal の `core` に相当する。preset 名としては命名が近い `clean` を選ぶことで、ADR-005 の哲学を維持しつつ preset カテゴリにフィットさせる。外部 PJ が真に 3 層 Hexagonal（`core / ports / adapters`）で記述したい場合は `hexagonal` preset を選べる。
+
+### preset + 明示 layers 併記時の解決規則
+
+- **`preset: "custom"` 以外 + 明示 `layers` / `allowedDependencies`**: **ユーザー明示値が preset 既定を override** する（partial override も許容）。`preset` は「出発点」として扱われ、明示フィールドで上書きできるが、整合性は引き続き schema v3 の semantic validation で検査される
+- **`preset: "custom"`**: `layers` と `allowedDependencies` は必須入力。schema validation で required として強制
+
+### ADR-014 暗黙デフォルト変更との連続性
+
+v0.86.0（ADR-014 適用）以降、`ALLOWED_DEPENDENCIES.presentation` に `'domain'` が追加され、既定挙動として `presentation → domain` が許容化された。本 ADR はこの挙動を `clean` preset の既定として**そのまま引き継ぐ**。v0.85.0 以前の厳格 DDD 挙動を継続したい導入 PJ は、v0.92.0 以降明示的に `architecture.preset: "strict-ddd"` を指定する必要がある点を Wave 6 ガイドで警告する。
 
 ### `flat` preset の挙動
 
@@ -112,9 +136,10 @@ const ALLOWED_DEPENDENCIES = {
 
 ### 下位互換戦略
 
-- **schema v2 → v3 自動マイグレーション**: `architecture` セクション未指定時は `preset: "clean"` 相当のデフォルトが自動適用される（挙動不変）
+- **schema v2 → v3 識別**: 設定ファイルに明示的な `$schemaVersion` フィールドは**追加しない**（既存 config の無害変更を避ける）。代わりに**構造検出**を採用し、`architecture` キーが存在すれば v3 ロード、存在しなければ v2 互換モード（`preset: "clean"` を暗黙適用）とする。Wave 3 で loader に `detectSchemaVersion()` を実装
+- **自動マイグレーション**: `architecture` セクション未指定時は `preset: "clean"` 相当のデフォルトが自動適用される（挙動不変）。ただし v0.86.0 未満から upgrade する user は ADR-014 の既定変更で暗黙に presentation→domain が許容されるため、明示的な変更通知を CHANGELOG / Wave 6 ガイドで提示
 - **Phase 毎 rollout**: Wave 2〜6 で段階的に `LayerName` / `LayerBoundary` / schema validator を移行。各 Wave 独立にリリース可能
-- **PhaseGate レポ自身**: `preset: "clean"` 明示（ドッグフード）
+- **PhaseGate レポ自身**: `preset: "clean"` を明示設定（ドッグフード）。既存の Hexagonal 哲学（ADR-005）は `domain` 層を `core` とみなすことで整合
 
 ## Consequences
 

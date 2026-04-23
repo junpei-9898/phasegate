@@ -97,14 +97,16 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 
 ## 受け入れ基準
 
+- [x] **Wave 1**: ADR-015 起票 + preset schema 設計（`wave1_schema_proposal.md`）
 - [ ] `phasegate.config.json` に `architecture` セクションが追加される（schema v3 相当）
-- [ ] `architecture.preset` が `clean / onion / hexagonal / layered / flat / custom` をサポート
+- [ ] `architecture.preset` が `clean / strict-ddd / onion / hexagonal / layered / flat / custom` の **7 種**をサポート
 - [ ] `LayerNameValue` / `ALLOWED_DEPENDENCIES` が config からの注入ベースに改修される
 - [ ] `@layer` タグ名自体を `metadataTags.layer` で差し替え可能（`@tier` 等）
 - [ ] `flat` プリセットで L1-001〜004 が自動無効化される
-- [ ] 既存の phasegate 自身（PhaseGate レポ）で `preset: "clean"` 設定に自動マイグレーション（schema version bump で下位互換）
-- [ ] オニオン / ヘキサゴナル / flat の各プリセットで dogfood 実証（`/tmp/phasegate-dogfood-onion/` 等）
+- [ ] 既存の phasegate 自身（PhaseGate レポ）で `preset: "clean"` 設定に自動マイグレーション（構造検出による下位互換）
+- [ ] オニオン / ヘキサゴナル / flat の各プリセットで dogfood 実証（`/tmp/phasegate-dogfood-onion/` 等、Wave 5 で最低 3 preset）
 - [ ] README.md / retrofit-adoption.md に「既存 PJ のアーキに合わせて preset を選ぶ」ガイドを追加
+- [ ] v0.85.0 以前からの upgrade user に ADR-014 デフォルト変更（presentation → domain 許容化）を明示警告
 
 ## 非対象（スコープ外）
 
@@ -115,14 +117,20 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 
 ## 推奨実装順
 
-1. **Phase A（1d）**: `LayerNameValue` を config 注入形式に改修。既存挙動を `preset: "clean"` で再現
-2. **Phase B（0.5d）**: schema v3 の設計 + `architecture` セクション定義 + 下位互換マイグレーション
-3. **Phase C（0.5d）**: `flat` プリセット（層関連 rule 無効化）
-4. **Phase D（1d）**: `onion / hexagonal / layered` プリセット + それぞれの dogfood
-5. **Phase E（0.5d）**: `custom` プリセット + validation
-6. **Phase F（0.5d）**: README / retrofit-adoption.md / CLAUDE.md のガイド追記
+Wave 1 で Phase B（schema 設計）を先行実施したため、Wave 番号と Phase 番号の対応は下記の通り再整理する（元の Phase A〜F は wave1_schema_proposal.md §4 に合わせて更新済）:
 
-**合計 ~4d**
+| Wave | 旧 Phase | スコープ | 推定 |
+|---|---|---|---|
+| Wave 1 | Phase B | ADR-015 + schema 設計 | 0.5d |
+| Wave 2 | Phase A | `LayerName` 注入 + phasegate 自身の `architecture: { preset: "clean" }` 明示 | 1d |
+| Wave 3 | —（新設） | schema v3 JSON Schema 実体化 + 構造検出ロード + semantic validation | 1d |
+| Wave 4 | Phase C | `flat` preset 実装 | 0.5d |
+| Wave 5 | Phase D + E | `onion / hexagonal / layered / strict-ddd / custom` + dogfood 検証 | 1d |
+| Wave 6 | Phase F | ガイド追記 + `migrate` CLI + v0.86.0 境界警告 | 0.5d |
+
+**合計 ~4.5d**（旧推定 +0.5d — Wave 6 で migrate CLI を明示追加）
+
+詳細な Wave 分割と成果物定義は [`wave1_schema_proposal.md`](./wave1_schema_proposal.md) §4 を参照。
 
 ## 関連
 

@@ -7,14 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.93.0] - 2026-04-23
+
+### Changed
+
+- **ISSUE-014 Wave 1 レビュー補修** — v0.92.0 で起票した設計文書を批判的レビューにより 12 項目修正。詳細は v0.92.0 の "Review / Hardening" セクション参照（修正差分は v0.93.0 リリースで統合）。実装コード変更なし、設計文書のみ。
+
 ## [0.92.0] - 2026-04-23
 
 ### Added
 
 - **ISSUE-014 Wave 1: アーキテクチャ preset 化の設計着地** — PhaseGate を Clean Architecture 固定から preset 選択式に拡張するための Wave 1（設計・文書作成）を完了。実装コードは含まない。
-  - `docs/ADR/ADR-015-architecture-preset.md` を Accepted 状態で起票。preset 6 種（`clean` / `strict-ddd` / `onion` / `hexagonal` / `layered` / `flat` / `custom`）を採択し、`flat` 時の L1-001〜004 自動無効化、`metadataTags` での `@layer` / `@unit` タグ差し替え、schema v3 への下位互換マイグレーション戦略を決定。
+  - `docs/ADR/ADR-015-architecture-preset.md` を Accepted 状態で起票。preset **7 種**（`clean` / `strict-ddd` / `onion` / `hexagonal` / `layered` / `flat` / `custom`）を採択し、`flat` 時の L1-001〜004 自動無効化、`metadataTags` での `@layer` / `@unit` タグ差し替え、schema v3 への下位互換マイグレーション戦略を決定。
   - `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` を追加。`architecture` セクションの JSON Schema 断片、各 preset の層・`allowedDependencies` 定義、Wave 2〜6 の実装順序（推定 4.5d）を明文化。
   - `docs/inception/issues/ISSUE-014/issue_description.md` の状態を `IN PROGRESS` に更新し、Wave 2 以降の入り口を記述。
+
+### Review / Hardening（批判的レビューによる穴補修）
+
+Wave 1 成果物を批判的にレビューし、以下の穴を修正:
+
+- **カウント誤り**: `preset 6 種` → **7 種** に修正（`clean` + `strict-ddd` + `onion` + `hexagonal` + `layered` + `flat` + `custom`）
+- **schema 識別機構**: loader が v2 / v3 を判別する手段を構造検出（`architecture` キーの有無）に決定。明示的な `$schemaVersion` フィールドは追加しない方針を ADR-015 / §1.0 に明記
+- **`project.preset` vs `architecture.preset` の直交性**: 既存 `project.preset`（防御プリセット）と新設 `architecture.preset`（アーキプリセット）の概念を ADR-015 で分離説明。CLI メッセージ・ドキュメントで区別呼称する方針を Wave 6 ガイドに委譲
+- **semantic validation 穴**: `custom` preset の JSON Schema では validate できない制約（C1: 層名の自己参照、C2/C3: allowedDependencies キー/値の `layers` 配列整合、C4: 全 layer カバレッジ、C5: 循環依存警告）を §1.3 に列挙、Wave 3 実装に委譲
+- **preset override 規則**: `preset` + 明示 `layers` / `allowedDependencies` 併記時のルール（明示値 override、partial override 許容）を §1.2 に追加
+- **`layerDetection` precedence**: `byPath` / `byTag` の全組み合わせ（4 通り）の挙動を §3.4 の表に明示。`byPath: false, byTag: false` は schema error に
+- **`flat` preset の残存 `@layer` tag 扱い**: 案 A（無視）/ B（warn）/ C（error）を列挙、Wave 4 で案 A 採用を推奨
+- **preset vs user 個別設定の優先度**: `flat` preset が L1-001〜004 を無効化する場面で user の明示 `layers.L1.rules["L1-001"]: "error"` が上書きする規則を §2.8 に追加
+- **ADR-005 矛盾の解消**: PhaseGate 自身が `clean` preset を名乗ることと ADR-005（Hexagonal 採用）の両立を「`domain` が Hexagonal の `core` に相当する」という哲学的整合で ADR-015 に明記
+- **ADR-014 境界警告**: v0.86.0 未満から upgrade する user への「暗黙デフォルト変更」警告を Wave 6 ガイド + migrate CLI に入れる方針を明記
+- **`@story` タグのスコープ定義**: test ファイルで使われる `@story` タグが本 Wave の `metadataTags` で扱われない理由（traceability-model 管轄）を §3.3 に追加
+- **Wave 受け入れ基準の再設計**: 物理的な成果物存在と user レビュー完了を分離。物理 [x] / レビュー [ ] で Wave 1 完了判定の厳密性を確保
 
 ### Scope notes
 
