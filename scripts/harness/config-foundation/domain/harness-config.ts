@@ -8,6 +8,7 @@ import { UnsupportedFeatureError } from './errors/unsupported-feature-error.js';
 import { LayersConfig } from './value-objects/layers-config.js';
 import { PathsConfig } from './value-objects/paths-config.js';
 import { PhaseDependenciesConfig } from './value-objects/phase-dependencies-config.js';
+import type { PhaseDependenciesPresetId } from './value-objects/phase-dependencies-config.js';
 import { PlanningModeConfig } from './value-objects/planning-mode-config.js';
 import { ProjectConfig } from './value-objects/project-config.js';
 import { QuickModeConfig } from './value-objects/quick-mode-config.js';
@@ -23,7 +24,7 @@ import type { L4Config } from './value-objects/l4-config.js';
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
 export type PresetId = 'minimal' | 'standard' | 'strict';
 export type PlanningModeValue = 'interactive' | 'embedded-qa';
-export type PhaseDependenciesPresetId = 'default' | 'full' | 'standard' | 'minimal' | 'custom';
+export type { PhaseDependenciesPresetId };
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>
     ? Array<DeepPartial<TItem>>

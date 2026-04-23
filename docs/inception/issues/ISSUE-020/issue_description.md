@@ -2,6 +2,7 @@
 
 ## ステータス
 
+- **状態**: 🟢 **CLOSED (v0.82.0, 2026-04-23)** — `PhaseDependenciesPresetId` 型を Aggregate 側から VO 側へ移動。Aggregate → VO の一方向依存に整理し循環解消。L1-003 違反 9 → 8
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 4（v0.80.0）で L1-003 違反残 12 件中 1 件が domain 内循環依存として検出
 - **影響Unit**: config-foundation（主）

@@ -7,7 +7,8 @@
  */
 import { CustomPhaseRule } from './custom-phase-rule.js';
 import type { CustomPhaseRuleProps } from './custom-phase-rule.js';
-import type { PhaseDependenciesPresetId } from '../harness-config.js';
+
+export type PhaseDependenciesPresetId = 'default' | 'full' | 'standard' | 'minimal' | 'custom';
 
 export interface PhaseDependenciesConfigProps {
   readonly preset: PhaseDependenciesPresetId;

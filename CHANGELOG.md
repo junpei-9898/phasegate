@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.82.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-020** — `config-foundation/domain/` 内の循環依存を解消。
+  - 問題: `harness-config.ts` が `PhaseDependenciesConfig` (VO class) を import、一方で `phase-dependencies-config.ts` が `PhaseDependenciesPresetId` (type) を `harness-config.ts` から import、相互参照で L1-003 違反（循環依存）が検出されていた。
+  - 修正: `PhaseDependenciesPresetId` の型定義を Aggregate 側（`harness-config.ts`）から VO 側（`phase-dependencies-config.ts`）に移動。Aggregate → VO の一方向依存に整理。
+  - 既存 import 箇所（test fixtures 等）の互換性維持のため、`harness-config.ts` から `export type { PhaseDependenciesPresetId }` で re-export。
+  - `phasegate lint` violation 数: 12 → **11**（L1-003: 9 → 8, 循環依存 1 件解消）。
+  - 既存 3304 件テスト全 green 維持。
+
 ## [0.81.0] - 2026-04-23
 
 ### Fixed
