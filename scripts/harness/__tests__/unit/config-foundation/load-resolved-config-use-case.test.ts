@@ -221,6 +221,7 @@ target('LoadResolvedConfigUseCase', () => {
         expect(actual).toEqual({
           config: expectedConfig,
           sourcePath: '/tmp/phasegate.config.json',
+          schemaVersion: 'v2',
         });
       });
     });

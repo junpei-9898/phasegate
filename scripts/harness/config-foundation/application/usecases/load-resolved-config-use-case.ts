@@ -32,6 +32,7 @@ export interface LoadResolvedConfigUseCaseDependencies {
 export interface LoadedHarnessConfig {
   readonly aggregate: HarnessConfig;
   readonly path: string;
+  readonly schemaVersion: 'v2' | 'v3';
 }
 
 const PRESET_IDS = ['minimal', 'standard', 'strict'] as const satisfies readonly PresetId[];
@@ -132,12 +133,16 @@ export async function loadHarnessConfig(
     dependencies.architectureResolutionService,
   );
 
+  const schemaVersion: 'v2' | 'v3' =
+    sourceDocument.architecture === undefined ? 'v2' : 'v3';
+
   return {
     aggregate: HarnessConfig.reconstitute({
       sourceDocument,
       resolvedDocument,
     }),
     path,
+    schemaVersion,
   };
 }
 
@@ -157,7 +162,7 @@ export class LoadResolvedConfigUseCase {
   }
 
   async execute(configPath?: string): Promise<ResolvedConfigOutput> {
-    const { aggregate, path } = await loadHarnessConfig(
+    const { aggregate, path, schemaVersion } = await loadHarnessConfig(
       {
         configRepository: this.configRepository,
         schemaValidator: this.schemaValidator,
@@ -171,6 +176,7 @@ export class LoadResolvedConfigUseCase {
     return {
       config: aggregate.toResolvedConfig(),
       sourcePath: path,
+      schemaVersion,
     };
   }
 }

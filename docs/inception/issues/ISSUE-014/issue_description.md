@@ -2,14 +2,14 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS**（Wave 5.5 完了 / 2026-04-23）
+- **状態**: 🟢 **CLOSED (v0.100.0, 2026-04-23)**（Wave 1〜6 完走）
   - Wave 1 (v0.92.0〜v0.94.0): ADR-015 起票 + `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` で preset schema 設計を完了
   - Wave 2 (v0.95.0): `LayerName` / `LayerBoundary` VO を `ArchitectureSpec` 注入形式に改修（`CLEAN_PRESET_SPEC` を default にして既存挙動を維持）
   - Wave 3 (v0.96.0): `harness-config-v3.schema.json` 新設 + `AjvConfigSchemaValidator` 構造検出 + `ArchitectureResolutionService` による preset 展開 / override / semantic validation (C1〜C5) / layerDetection precedence を実装。phasegate レポ自身の `phasegate.config.json` に dogfood 追記完了
   - Wave 4 (v0.97.0): `RuleConfigProviderPort.getArchitecture()` 追加 + `createBiomeAstEngineModule` で architecture 注入 + `ResolveEnabledRulesUseCase` が `preset='flat'` 時に L1-001〜004 を auto-disable（user 明示設定が優先）+ 残存 `@layer` tag は ignore
   - Wave 5 (v0.98.0): `ResolveEnabledRulesUseCase` 出力に `architectureSpec` 追加 + `LintRunner.run()` が `LayerBoundary.standardMatrix(architecture)` で preset 準拠の依存矩阵を使用 + `SourceModuleSnapshot.create(props, spec?)` で非 clean `@layer` tag を spec 付きで正規化 + `AnalyzeImportGraphUseCase` / `ExecuteLintUseCase` に spec 配線（onion / hexagonal の unit test 追加）
   - Wave 5.5 (v0.99.0): 3 preset（onion / hexagonal / layered）の dogfood を **vitest integration test** で自動化（`os.tmpdir()` に fixture 展開 → `createBiomeAstEngineModule` 経由で ExecuteLintUseCase 呼び出し → `no-layer-violation` の許容/違反双方を検証 / 6 テスト追加）。`/tmp` への Claude Write は pre-tool-use-hook blocker があるため、ランタイム `fs.writeFileSync` を使うテストベース検証に切替
-  - Wave 6 以降: ガイド追記 + 呼称分離ガイド + `migrate` CLI + v0.86.0 境界警告（各 Wave の詳細は wave1_schema_proposal.md §4 参照）
+  - Wave 6 (v0.100.0): `docs/guide/preset-selection.md` 新設 + README / CLAUDE.md / retrofit-adoption.md に preset 選定 & 呼称分離ガイド追記 + `phasegate migrate --schema v3` CLI 実装 (`MigrateSchemaUseCase` + `MigrateSchemaCommandHandler` + `main.ts` dispatch) + v0.86.0 未満の v2 schema 検出時に stderr 警告表示（`LoadResolvedConfigUseCase` 出力に `schemaVersion` 追加、`main.ts` で 1 度だけ emit）。unit 6 + integration 2 の新規 8 テスト追加
 - **優先度**: P2
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003（lint 違反解消）Wave 0 棚卸し中に、`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:6,15-20` で層名と依存方向が固定値としてハードコードされていることが判明。プロジェクト側でアーキテクチャスタイルを選べない
@@ -111,8 +111,8 @@ ISSUE-003 Wave 0 棚卸しで発覚した 5 件の設計判断候補のうち、
 - [x] **Wave 3**: 既存の phasegate 自身（PhaseGate レポ）で `preset: "clean"` 設定に自動マイグレーション（構造検出による下位互換）
 - [x] **Wave 5**: `no-layer-violation` が `architecture.allowedDependencies` 注入下で動作（`LintRunner` + `SourceModuleSnapshot` に spec 伝播、onion 2 件 + hexagonal 2 件の unit test で検証）
 - [x] オニオン / ヘキサゴナル / layered の各プリセットで dogfood 実証（Wave 5.5 / v0.99.0 で `scripts/harness/__tests__/integration/biome-ast-engine/preset-dogfood.integration.test.ts` 追加、計 6 テストで許容/違反双方を end-to-end 検証）
-- [ ] README.md / retrofit-adoption.md に「既存 PJ のアーキに合わせて preset を選ぶ」ガイドを追加
-- [ ] v0.85.0 以前からの upgrade user に ADR-014 デフォルト変更（presentation → domain 許容化）を明示警告
+- [x] README.md / retrofit-adoption.md に「既存 PJ のアーキに合わせて preset を選ぶ」ガイドを追加（Wave 6 / v0.100.0、`docs/guide/preset-selection.md` 新設 + README.md に Defense/Architecture 2 テーブル + retrofit-adoption.md Step 1 に preset 選定節）
+- [x] v0.85.0 以前からの upgrade user に v2 schema 検出時の警告（Wave 6 / v0.100.0、`LoadResolvedConfigUseCase.schemaVersion` + `main.ts` の stderr emit、`npx phasegate migrate --schema v3` 案内）
 
 ## 非対象（スコープ外）
 
@@ -133,7 +133,7 @@ Wave 1 で Phase B（schema 設計）を先行実施したため、Wave 番号�
 | Wave 4 ✅ | Phase C | `flat` preset 実装 + 残存 tag 扱い + preset/user 優先度（完了 / v0.97.0） | 0.5d（実施: 0.25d） |
 | Wave 5 ✅ | Phase D | `no-layer-violation` への architecture 注入 + `SourceModuleSnapshot` 正規化 + pipeline 全体への spec 配線（完了 / v0.98.0、unit test で onion / hexagonal 検証） | 0.75d（実施: 0.5d） |
 | Wave 5.5 ✅ | Phase E | dogfood integration test（`preset-dogfood.integration.test.ts`）で onion / hexagonal / layered を end-to-end 検証（完了 / v0.99.0、6 テスト追加） | 0.25d（実施: 0.2d） |
-| Wave 6 | Phase F | ガイド追記 + 呼称分離ガイド + `migrate` CLI + v0.86.0 境界警告 | 0.5d |
+| Wave 6 ✅ | Phase F | `docs/guide/preset-selection.md` 新設 + README/CLAUDE.md/retrofit-adoption.md 追記 + `phasegate migrate --schema v3` CLI + v0.86.0 未満警告（完了 / v0.100.0、8 テスト追加） | 0.5d（実施: 0.4d） |
 
 **合計 ~5d**（旧推定 +1d — Wave 3 に semantic validation 5 制約 + precedence + override を盛り込んだため 1d → 1.5d）
 

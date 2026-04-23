@@ -60,6 +60,7 @@ Commands:
   enable-feature <name>        Enable a harness feature
   disable-feature <name>       Disable a harness feature
   list-features                List available features
+  migrate                      Migrate phasegate.config.json (--schema v3, --config <path>)
 
   render-errors                Render harness errors (--format human|agent|ci)
   validate-fix                 Validate fix examples (--code <code>)
@@ -349,10 +350,29 @@ async function printStoryReflectionStatusLine(rootDir: string): Promise<void> {
   console.log(presenter.formatStatusLine({ config, preset: policy.preset }));
 }
 
+let v2SchemaWarningEmitted = false;
+
+function emitV2SchemaWarningOnce(sourcePath: string): void {
+  if (v2SchemaWarningEmitted) return;
+  v2SchemaWarningEmitted = true;
+  process.stderr.write(
+    [
+      `Warning: ${sourcePath} は v2 schema（architecture キー無し）として検出されました。`,
+      '  v0.86.0 以降は architecture.preset による層構造の明示を推奨しています。',
+      '  自動 upgrade: npx phasegate migrate --schema v3',
+      '  詳細: docs/guide/preset-selection.md',
+      '',
+    ].join('\n'),
+  );
+}
+
 async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
   try {
     const configModule = createConfigFoundationModule();
     const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
+    if (result.schemaVersion === 'v2') {
+      emitV2SchemaWarningOnce(result.sourcePath);
+    }
     return result.config;
   } catch (error) {
     if (error instanceof ConfigValidationError) {
@@ -549,6 +569,19 @@ async function main(): Promise<void> {
         const mod = createConfigFoundationModule();
         const result = await mod.handlers.enableFeatureCommandHandler.execute({
           list: true,
+        });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case 'migrate': {
+        const mod = createConfigFoundationModule();
+        const targetVersion = parseFlag(args, '--schema') ?? 'v3';
+        const configPath = parseFlag(args, '--config');
+        const result = await mod.handlers.migrateSchemaCommandHandler.execute({
+          targetVersion,
+          configPath,
         });
         console.log(result.output);
         process.exit(result.exitCode);

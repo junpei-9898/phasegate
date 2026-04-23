@@ -12,6 +12,19 @@ Phasegate — AI非依存の品質防御ツールキット。
 - 依存方向: `domain → application → infrastructure/presentation`（逆方向禁止）
 - エントリポイント: `bin/harness` → `scripts/harness/main.ts`
 
+### preset 用語の呼称分離（混同回避）
+
+phasegate の config には「プリセット」と呼ばれる設定が 2 系統存在する。役割が異なるので呼称を分けること:
+
+| 呼称 | 概念 | 設定キー | 値の例 |
+|------|------|---------|--------|
+| **防御プリセット** | L3 CI で検査強度を選ぶ | `project.preset` | `minimal` / `standard` / `strict` |
+| **アーキプリセット** | L1 の層構造と依存方向を定義 | `architecture.preset` | `clean` / `strict-ddd` / `onion` / `hexagonal` / `layered` / `flat` / `custom` |
+
+両者は独立に設定する。例えば `project.preset: "strict"` + `architecture.preset: "onion"` は正当な組み合わせ（オニオンアーキの PJ で CI 厳格度を上げる設定）。
+
+issue / PR / チャット・ログで「preset」とだけ書くと曖昧なので、**「防御プリセット」「アーキプリセット」を明示**すること。詳細は `docs/guide/preset-selection.md` を参照。
+
 ## ディレクトリ構造
 
 ```
@@ -32,7 +45,7 @@ docs/
 - ファイル名: `kebab-case`
 - クラス名: `PascalCase`
 - メタデータ: 全ソースファイル先頭に `// @unit <unit名>` `// @layer <layer名>` を記載
-- `@layer` の有効値: `domain` / `application` / `infrastructure` / `presentation`
+- `@layer` の有効値: このリポジトリでは `domain` / `application` / `infrastructure` / `presentation`（`architecture.preset: "clean"` 採用のため）。他 preset を採用している PJ では preset の `layers` に従う
 
 ### テスト規約
 - テストフレームワーク: Vitest

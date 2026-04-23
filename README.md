@@ -155,13 +155,31 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 
 ### Presets
 
-`project.preset` -- overall layer strictness:
+Phasegate has two orthogonal preset families — defense and architecture. See the note at the end of this section for naming conventions.
+
+**Defense preset** (`project.preset`) -- overall layer strictness:
 
 | Preset | Layers | Coverage | Use Case |
 |---|---|---|---|
 | `minimal` | L1 + L2 | -- | Prototyping, early exploration |
 | `standard` | L1 - L3 | 90% | Production development (default) |
 | `strict` | L1 - L4 | 95% | Mission-critical systems |
+
+**Architecture preset** (`architecture.preset`) -- layer names and dependency directions used by L1-003 / L1-004:
+
+| Preset | Layers | Use Case |
+|---|---|---|
+| `clean` (default) | `domain / application / infrastructure / presentation` | Clean Architecture / AIDLC full harness |
+| `strict-ddd` | `clean` layers + stricter cycle detection | DDD-focused new projects |
+| `onion` | `domain / application / interface` | Onion Architecture |
+| `hexagonal` | `core / ports / adapters` | Hexagonal / Ports-and-Adapters |
+| `layered` | `presentation / business / data` | Classic 3-tier layered |
+| `flat` | No layers | Small scripts / CLI tools / retrofit start |
+| `custom` | User-defined `layers` + `allowedDependencies` | Any other shape |
+
+For selection guidance and config examples see [Preset Selection Guide](docs/guide/preset-selection.md).
+
+> **Naming convention**: "defense preset" refers to CI strictness (`strict` / `standard` / `minimal`). "architecture preset" refers to layer topology (`clean` / `onion` / `hexagonal` / `layered` / `flat` / `strict-ddd` / `custom`). They are set independently.
 
 `phaseDependencies.preset` -- phase-gate shape and storyReflection defaults (independent of `project.preset`):
 

@@ -15,8 +15,10 @@ import { EnableFeatureUseCase } from './application/usecases/enable-feature-use-
 import { DisableFeatureUseCase } from './application/usecases/disable-feature-use-case.js';
 import { ListAvailableFeaturesUseCase } from './application/usecases/list-available-features-use-case.js';
 import { LoadResolvedConfigUseCase } from './application/usecases/load-resolved-config-use-case.js';
+import { MigrateSchemaUseCase } from './application/usecases/migrate-schema-use-case.js';
 import { EnableFeatureCommandHandler } from './presentation/cli/enable-feature-command-handler.js';
 import { DisableFeatureCommandHandler } from './presentation/cli/disable-feature-command-handler.js';
+import { MigrateSchemaCommandHandler } from './presentation/cli/migrate-schema-command-handler.js';
 
 export function createConfigFoundationModule() {
   // Infrastructure
@@ -50,6 +52,7 @@ export function createConfigFoundationModule() {
     presetDefinitions,
     presetResolutionService,
   });
+  const migrateSchemaUseCase = new MigrateSchemaUseCase({ configRepository });
 
   // Presentation handlers
   const enableFeatureCommandHandler = new EnableFeatureCommandHandler({
@@ -60,17 +63,22 @@ export function createConfigFoundationModule() {
     disableFeatureUseCase,
     listAvailableFeaturesUseCase,
   });
+  const migrateSchemaCommandHandler = new MigrateSchemaCommandHandler({
+    migrateSchemaUseCase,
+  });
 
   return {
     handlers: {
       enableFeatureCommandHandler,
       disableFeatureCommandHandler,
+      migrateSchemaCommandHandler,
     },
     usecases: {
       enableFeatureUseCase,
       disableFeatureUseCase,
       listAvailableFeaturesUseCase,
       loadResolvedConfigUseCase,
+      migrateSchemaUseCase,
     },
   } as const;
 }

@@ -97,7 +97,24 @@ monorepo など複数ディレクトリを持つ場合は配列で列挙:
 この設定を忘れると、phase-gate は `scripts/harness/` 配下しか見ないため、
 retrofit 対象の新規コード作成が block されず、結果として **phasegate が
 無効化された運用** になってしまう（ISSUE-007 Wave 8 で schema 上 overridable
-になるまで、この設定は config validator で拒否されていた）。
+になるまで、この設定は config validator for 拒否されていた）。
+
+### architecture preset の選定（v0.86.0 以降）
+
+retrofit 対象 PJ のアーキテクチャスタイルに合わせて `architecture.preset` を
+選ぶと、L1-003 / L1-004 が preset の層構造に従って判定される。既存コードが
+Clean 4 層でない場合（オニオン / ヘキサゴナル / 古典レイヤード / 層分離なし）、
+preset を合わせないと合法な import が violation として検出される。
+
+初期は層分離無しで運用したい場合は `flat` を選ぶと L1-001〜004 が auto-disable
+される。選定ガイドと設定例は [Preset Selection Guide](./preset-selection.md) 参照。
+
+既存の v2 config（v0.86.0 未満相当、`architecture` キー無し）は下記で自動
+アップグレードできる:
+
+```bash
+npx phasegate migrate --schema v3
+```
 
 ---
 

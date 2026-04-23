@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.100.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 6: preset 選定ガイド + `migrate` CLI + 呼称分離 + v0.86.0 未満警告** — Wave 5.5 までの実装を user 導線と docs に接続し ISSUE-014 を CLOSE する。
+  - **`docs/guide/preset-selection.md` 新設**: 7 preset（clean / strict-ddd / onion / hexagonal / layered / flat / custom）の早見表 + 選択フローチャート + 設定例 + override / custom の書式 + v2 → v3 移行手順。
+  - **README.md**: Presets 節を「Defense preset（`project.preset`）」「Architecture preset（`architecture.preset`）」の 2 テーブルに分け、preset-selection.md への導線を追加 + 呼称分離の補足。
+  - **CLAUDE.md**: 「防御プリセット（CI strict/lenient）」と「アーキプリセット（clean/onion/hex...）」の呼称分離ガイドを追記。issue / PR / チャットで「preset」とだけ書かず必ず種類を明示するルール化。
+  - **retrofit-adoption.md**: Step 1 に architecture preset 選定節を追加、`npx phasegate migrate --schema v3` の導線。
+  - **`phasegate migrate --schema v3` CLI 新設** (`scripts/harness/config-foundation/`): `MigrateSchemaUseCase` + `MigrateSchemaCommandHandler` + `main.ts` の switch-case `migrate` + ヘルプ追記。`phasegate.config.json` を読んで `architecture` キーが無ければ `{ preset: "clean" }` を追記して v3 化（idempotent）。
+  - **v0.86.0 未満警告**: `LoadResolvedConfigUseCase` が source document の `architecture` 有無で `schemaVersion: 'v2' | 'v3'` を判定して output DTO に追加。`main.ts` の `loadResolvedConfig()` が v2 検出時に `npx phasegate migrate --schema v3` の案内を **一度だけ** stderr に出力（同一プロセスで多重 load されても重複警告しない）。
+
+### Tests
+
+- 新規 `scripts/harness/__tests__/unit/config-foundation/migrate-schema-use-case.test.ts` で 6 テスト: v2→v3 変換 / v3 no-op / array document で InvalidConfigShapeError / null document / 未対応 targetVersion / configPath 透過。
+- 新規 `scripts/harness/__tests__/integration/config-foundation/migrate-schema-use-case.test.ts` で 2 テスト: tmp dir round-trip（v2 config → 永続化検証 / v3 config → mtime 不変で no-op 確認）。
+- 既存 `load-resolved-config-use-case.test.ts` と `load-config-facade.test.ts` の toEqual 期待値に `schemaVersion: 'v2'` を追加。
+- 全 3387 tests green（3368 unit/integration + 19 forks、+8 新規）、`npx phasegate lint` violations 0（1301 ファイル scan）。
+
+### Notes
+
+- これにより ISSUE-014（アーキテクチャスタイルの config 対応）は Wave 1〜6 完走 → **CLOSED**。v0.86.0〜v0.99.0 の 14 バージョンで段階的に構築: Wave 1 設計文書 → Wave 2 VO 注入 → Wave 3 schema v3 → Wave 4 flat preset + biome-ast-engine 配線 → Wave 5 pipeline 全体に spec 配線 → Wave 5.5 3 preset dogfood integration test → Wave 6 guide + migrate CLI + 警告。
+- `phasegate migrate --schema v3` は破壊的変更ではなく additive（既存フィールドは保持、`architecture` だけ追加）。本リポジトリ自身は Wave 3 時点で dogfood 済のため migrate 対象外。
+
 ## [0.99.0] - 2026-04-23
 
 ### Added

@@ -71,6 +71,7 @@ target('LoadConfigFacade', () => {
           execute: vi.fn().mockResolvedValue({
             config,
             sourcePath: '/tmp/phasegate.config.json',
+            schemaVersion: 'v2',
           }),
         };
         const facade = new LoadConfigFacade({
