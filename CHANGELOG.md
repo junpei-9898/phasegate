@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.95.0] - 2026-04-23
+
+### Changed
+
+- **ISSUE-014 Wave 2: `LayerName` / `LayerBoundary` VO を `ArchitectureSpec` 注入形式に改修** — Clean Architecture 固定値（`domain / application / infrastructure / presentation` と依存行列）を VO 内部から分離し、`ArchitectureSpec` 型 + `CLEAN_PRESET_SPEC` 定数として `scripts/harness/biome-ast-engine/domain/value-objects/architecture-spec.ts` に抽出。`LayerName.fromString` / `tryFromString` / `LayerBoundary.standardMatrix` が任意の spec を受け付けるようになった（default は `CLEAN_PRESET_SPEC` で既存挙動を維持）。
+- `LayerNameValue` を `string` に緩和（外部参照が無い前提での型緩和）、`canDependOn` はインスタンスが保持する spec の `allowedDependencies` を参照する形式へ変更。
+- 新規テスト 12 件追加（`architecture-spec.test.ts` 4 件 + `layer-name.test.ts` に onion preset 注入ケース 5 件 + `layer-boundary.test.ts` に onion 3×3 matrix ケース 3 件）。全 3323 テスト green、`npx phasegate lint` violations 0。
+
+### Plan re-sync
+
+- Wave 2 計画の小さな穴を是正: 当初「`phasegate.config.json` に `architecture: { preset: "clean" }` を dogfood 明示追記」を Wave 2 に含めていたが、現行 schema v2 が root レベルで `additionalProperties: false` を指定しているため `architecture` キー追加は validation error になる。v3 schema + loader が提供される Wave 3 まで dogfood 更新を**移送**。`wave1_schema_proposal.md` §4 と `issue_description.md` の Wave 表を同期更新。
+
 ## [0.94.0] - 2026-04-23
 
 ### Changed

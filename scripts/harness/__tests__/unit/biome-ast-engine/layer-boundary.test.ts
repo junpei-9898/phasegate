@@ -1,8 +1,23 @@
 // @layer test
+// @unit biome-ast-engine
+// @story ISSUE-014
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { LayerName } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
 import { LayerBoundary } from '../../../biome-ast-engine/domain/value-objects/layer-boundary.js';
+import {
+  freezeArchitectureSpec,
+  type ArchitectureSpec,
+} from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
+
+const ONION_SPEC: ArchitectureSpec = freezeArchitectureSpec({
+  layers: ['domain', 'application', 'interface'],
+  allowedDependencies: {
+    domain: ['domain'],
+    application: ['application', 'domain'],
+    interface: ['interface', 'application', 'domain'],
+  },
+});
 
 const createLayerName = (value: 'domain' | 'application' | 'infrastructure' | 'presentation') =>
   LayerName.fromString(value);
@@ -159,6 +174,57 @@ target('LayerBoundary.standardMatrix', () => {
         (item) =>
           item.sourceLayer.toString() === 'presentation' &&
           item.targetLayer.toString() === 'infrastructure'
+      );
+      expect(boundary?.allowed).toBe(false);
+    });
+  });
+});
+
+target('LayerBoundary.standardMatrix (with ArchitectureSpec)', () => {
+  describe('注入された spec に従って行列を生成する', () => {
+    it('onion spec では 3×3=9 件の境界が返される', () => {
+      // Arrange
+
+      // Act
+      const actual = LayerBoundary.standardMatrix(ONION_SPEC);
+
+      // Assert
+      expect(actual).toHaveLength(9);
+      const members = new Set(
+        actual.flatMap((boundary) => [
+          boundary.sourceLayer.toString(),
+          boundary.targetLayer.toString(),
+        ])
+      );
+      expect(members).toEqual(new Set(['domain', 'application', 'interface']));
+    });
+
+    it('onion spec で interface→domain が allowed=true である', () => {
+      // Arrange
+
+      // Act
+      const actual = LayerBoundary.standardMatrix(ONION_SPEC);
+
+      // Assert
+      const boundary = actual.find(
+        (item) =>
+          item.sourceLayer.toString() === 'interface' &&
+          item.targetLayer.toString() === 'domain'
+      );
+      expect(boundary?.allowed).toBe(true);
+    });
+
+    it('onion spec で domain→interface が allowed=false である', () => {
+      // Arrange
+
+      // Act
+      const actual = LayerBoundary.standardMatrix(ONION_SPEC);
+
+      // Assert
+      const boundary = actual.find(
+        (item) =>
+          item.sourceLayer.toString() === 'domain' &&
+          item.targetLayer.toString() === 'interface'
       );
       expect(boundary?.allowed).toBe(false);
     });

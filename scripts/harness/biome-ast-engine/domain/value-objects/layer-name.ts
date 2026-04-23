@@ -3,21 +3,9 @@
  * @unit biome-ast-engine
  */
 
-export type LayerNameValue = 'domain' | 'application' | 'infrastructure' | 'presentation';
+import { CLEAN_PRESET_SPEC, type ArchitectureSpec } from './architecture-spec.js';
 
-const VALID_LAYER_NAMES = new Set<LayerNameValue>([
-  'domain',
-  'application',
-  'infrastructure',
-  'presentation',
-]);
-
-const ALLOWED_DEPENDENCIES: Readonly<Record<LayerNameValue, readonly LayerNameValue[]>> = {
-  domain: Object.freeze(['domain']),
-  application: Object.freeze(['application', 'domain']),
-  infrastructure: Object.freeze(['infrastructure', 'application', 'domain']),
-  presentation: Object.freeze(['presentation', 'application', 'domain']),
-};
+export type LayerNameValue = string;
 
 export class InvalidLayerNameError extends Error {
   constructor(value: string) {
@@ -28,25 +16,27 @@ export class InvalidLayerNameError extends Error {
 
 export class LayerName {
   readonly value: LayerNameValue;
+  private readonly spec: ArchitectureSpec;
 
-  private constructor(value: LayerNameValue) {
+  private constructor(value: LayerNameValue, spec: ArchitectureSpec) {
     this.value = value;
+    this.spec = spec;
   }
 
-  static fromString(value: string): LayerName {
-    if (!VALID_LAYER_NAMES.has(value as LayerNameValue)) {
+  static fromString(value: string, spec: ArchitectureSpec = CLEAN_PRESET_SPEC): LayerName {
+    if (!spec.layers.includes(value)) {
       throw new InvalidLayerNameError(value);
     }
 
-    return Object.freeze(new LayerName(value as LayerNameValue));
+    return Object.freeze(new LayerName(value, spec));
   }
 
-  static tryFromString(value: string): LayerName | null {
-    if (!VALID_LAYER_NAMES.has(value as LayerNameValue)) {
+  static tryFromString(value: string, spec: ArchitectureSpec = CLEAN_PRESET_SPEC): LayerName | null {
+    if (!spec.layers.includes(value)) {
       return null;
     }
 
-    return Object.freeze(new LayerName(value as LayerNameValue));
+    return Object.freeze(new LayerName(value, spec));
   }
 
   equals(other: LayerName): boolean {
@@ -54,7 +44,9 @@ export class LayerName {
   }
 
   canDependOn(target: LayerName): boolean {
-    return ALLOWED_DEPENDENCIES[this.value].includes(target.value);
+    const allowed = this.spec.allowedDependencies[this.value] ?? [];
+
+    return allowed.includes(target.value);
   }
 
   toPathSegment(): string {

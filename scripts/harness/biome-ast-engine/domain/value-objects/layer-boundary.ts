@@ -3,6 +3,7 @@
  * @unit biome-ast-engine
  */
 
+import { CLEAN_PRESET_SPEC, type ArchitectureSpec } from './architecture-spec.js';
 import { LayerName } from './layer-name.js';
 
 type LayerBoundaryProps = {
@@ -10,8 +11,6 @@ type LayerBoundaryProps = {
   readonly targetLayer: LayerName;
   readonly allowed: boolean;
 };
-
-const LAYER_NAMES = Object.freeze(['domain', 'application', 'infrastructure', 'presentation'] as const);
 
 export class LayerBoundary {
   readonly sourceLayer: LayerName;
@@ -28,16 +27,16 @@ export class LayerBoundary {
     return Object.freeze(new LayerBoundary(props));
   }
 
-  static standardMatrix(): readonly LayerBoundary[] {
+  static standardMatrix(spec: ArchitectureSpec = CLEAN_PRESET_SPEC): readonly LayerBoundary[] {
     return Object.freeze(
-      LAYER_NAMES.flatMap((source) => {
-        const sourceLayer = LayerName.fromString(source);
+      spec.layers.flatMap((source) => {
+        const sourceLayer = LayerName.fromString(source, spec);
 
-        return LAYER_NAMES.map((target) =>
+        return spec.layers.map((target) =>
           LayerBoundary.create({
             sourceLayer,
-            targetLayer: LayerName.fromString(target),
-            allowed: sourceLayer.canDependOn(LayerName.fromString(target)),
+            targetLayer: LayerName.fromString(target, spec),
+            allowed: sourceLayer.canDependOn(LayerName.fromString(target, spec)),
           })
         );
       })

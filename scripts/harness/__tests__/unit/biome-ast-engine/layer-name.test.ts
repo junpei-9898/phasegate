@@ -1,9 +1,24 @@
 // @layer test
+// @unit biome-ast-engine
+// @story ISSUE-014
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
-import { LayerName } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
+import { LayerName, InvalidLayerNameError } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
+import {
+  freezeArchitectureSpec,
+  type ArchitectureSpec,
+} from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
 
 const createLayerName = (value = 'domain'): LayerName => LayerName.fromString(value);
+
+const ONION_SPEC: ArchitectureSpec = freezeArchitectureSpec({
+  layers: ['domain', 'application', 'interface'],
+  allowedDependencies: {
+    domain: ['domain'],
+    application: ['application', 'domain'],
+    interface: ['interface', 'application', 'domain'],
+  },
+});
 
 target('LayerName.fromString', () => {
   describe('正規レイヤー名を生成する', () => {
@@ -89,6 +104,81 @@ target('LayerName.canDependOn', () => {
 
         // Assert
         expect(actual).toBe(true);
+      });
+    });
+  });
+});
+
+target('LayerName.fromString (with ArchitectureSpec)', () => {
+  describe('注入された spec に従ってレイヤー名を検証する', () => {
+    context('onion spec で "interface" を指定した場合', () => {
+      it('対応するLayerNameが生成される', () => {
+        // Arrange
+        const input = 'interface';
+
+        // Act
+        const actual = LayerName.fromString(input, ONION_SPEC);
+
+        // Assert
+        expect(actual.toString()).toBe('interface');
+      });
+    });
+
+    context('clean(default) spec で "interface" を指定した場合', () => {
+      it('InvalidLayerNameError がスローされる', () => {
+        // Arrange
+        const input = 'interface';
+
+        // Act
+        const act = () => LayerName.fromString(input);
+
+        // Assert
+        expect(act).toThrow(InvalidLayerNameError);
+      });
+    });
+
+    context('onion spec で "infrastructure" を指定した場合', () => {
+      it('spec に無いためエラーがスローされる', () => {
+        // Arrange
+        const input = 'infrastructure';
+
+        // Act
+        const act = () => LayerName.fromString(input, ONION_SPEC);
+
+        // Assert
+        expect(act).toThrow(InvalidLayerNameError);
+      });
+    });
+  });
+});
+
+target('LayerName.canDependOn (with ArchitectureSpec)', () => {
+  describe('注入された spec に従って依存方向を判定する', () => {
+    context('onion spec で interface が domain に依存する場合', () => {
+      it('trueを返す', () => {
+        // Arrange
+        const source = LayerName.fromString('interface', ONION_SPEC);
+        const targetLayer = LayerName.fromString('domain', ONION_SPEC);
+
+        // Act
+        const actual = source.canDependOn(targetLayer);
+
+        // Assert
+        expect(actual).toBe(true);
+      });
+    });
+
+    context('onion spec で domain が interface に依存する場合', () => {
+      it('falseを返す', () => {
+        // Arrange
+        const source = LayerName.fromString('domain', ONION_SPEC);
+        const targetLayer = LayerName.fromString('interface', ONION_SPEC);
+
+        // Act
+        const actual = source.canDependOn(targetLayer);
+
+        // Assert
+        expect(actual).toBe(false);
       });
     });
   });
