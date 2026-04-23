@@ -9,13 +9,6 @@ export class AdrNotFoundApplicationError extends Error {
   }
 }
 
-export class DuplicateAdrIdApplicationError extends Error {
-  constructor(adrRef: string) {
-    super(`ADR ID が重複しています: ${adrRef}`);
-    this.name = 'DuplicateAdrIdApplicationError';
-  }
-}
-
 export class SupersededTargetNotFoundApplicationError extends Error {
   constructor(adrRef: string) {
     super(`superseded_by の参照先ADRが存在しません: ${adrRef}`);
@@ -51,9 +44,3 @@ export class InvalidAdrDateError extends Error {
   }
 }
 
-export class SeedAdrDefinitionCountError extends Error {
-  constructor(actualCount: number) {
-    super(`初期ADR定義は11件である必要があります: ${actualCount}`);
-    this.name = 'SeedAdrDefinitionCountError';
-  }
-}

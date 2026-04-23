@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.84.0] - 2026-04-23
+
+### Removed
+
+- **L1-006 解消** — `adr-foundation` の never-wired な seed 機能を削除。
+  - `scripts/harness/adr-foundation/infrastructure/seeds/initial-adr-definitions.ts` (11 件の seed 定義、docs/ADR/ 13 件の実 ADR と内容不一致で stale だった)
+  - `scripts/harness/adr-foundation/application/usecases/seed-initial-adrs-use-case.ts`
+  - `scripts/harness/adr-foundation/application/dto/seed-adr-definition.ts`
+  - `scripts/harness/__tests__/unit/adr-foundation/seed-initial-adrs-use-case.test.ts` (6 tests)
+  - `application-errors.ts` から未使用になった `SeedAdrDefinitionCountError` / `DuplicateAdrIdApplicationError` を削除
+  - `infrastructure/seeds/` ディレクトリ自体を削除
+  - composition-root に未配線・CLI 未公開だったため外部影響なし。実 ADR は `docs/ADR/` に直接 markdown として管理済み。
+
+### Fixed
+
+- **L1-007 解消** — `agent-integration/domain/ports/error-guidance-query-port.ts` の JSDoc コメント密度超過を修正。WHAT を説明する冗長コメントを削除（型名から自明）。
+
+### Lint state
+
+- total: 17 → **15**（L1-006: 1 → 0, L1-007: 1 → 0）
+- 残 L1-003: 15 件（全て ISSUE-019 スコープ: barrel 再エクスポート 7 件 + presentation→domain 8 件）
+- 既存 3312 件 - 6 件削除 = **3306 件** テスト全 green
+
 ## [0.83.0] - 2026-04-23
 
 ### Fixed

@@ -15,7 +15,7 @@
 | ISSUE-019 | **新規起票**: phasegate の LayerBoundary が `presentation → domain` を禁止している仕様判断の再評価（L1-003 残 8 件 + phasegate 導入先への影響）。ISSUE-014 と合流候補 |
 | ISSUE-020 | **新規起票 → CLOSED (v0.82.0)**: `PhaseDependenciesPresetId` を VO 側へ移動し循環依存を解消。L1-003: 9 → 8 |
 | ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正。ISSUE-018 の前提条件を解消 |
-| 現在の lint 状態 | **17 件**（L1-003: 15 / L1-006: 1 / L1-007: 1）。内訳: `quick-mode/index.ts` barrel 再エクスポート 7 件（ISSUE-017 で露出）+ presentation→domain 8 件（ISSUE-019）+ L1-006 seed 1 件（真の未配線）+ L1-007 1 件 |
+| 現在の lint 状態 | **15 件**（全て L1-003）。内訳: `quick-mode/index.ts` barrel 再エクスポート 7 件（ISSUE-017 で露出）+ presentation→domain 8 件（ISSUE-019）。L1-006 / L1-007 は v0.84.0 で 0 件化 |
 | 次の最優先 | ISSUE-010 (103件 @story-id) / ISSUE-019 (LayerBoundary 仕様 + barrel 扱い) |
 
 ---
