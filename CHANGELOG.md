@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.90.0] - 2026-04-23
+
+### Removed
+
+- **fuse-hooks-engine Unit の完全削除** — Unit 定義（`docs/product/units/fuse_hooks_engine_unit.md`）・設計文書（`docs/product/construction/fuse-hooks-engine/` 7 件）・inception プラン（`docs/inception/fuse-hooks-engine/` 配下 8 件）を削除。
+  - `scripts/harness/` 配下に実装コードは一切存在せず、他 Unit からの import / 参照もなかった（Future Phase / v1 スコープ外として設計段階で凍結されていた Unit）。
+  - `docs/product/user_stories.md` から HF1-01 〜 HF1-05 の 5 ストーリーセクションと `H-F1` Epic 行を削除。v1 合計を 54 維持、全体（Future 含む）を 62 → 57 に更新。
+  - `docs/product/units/integration_contract.md` の依存図・Wave 実行計画・Validator ID Registry / CLI Command Registry の `fuse-hooks-engine` 参照を削除。L0 拡張ポイント（6.1 / 6.3）は「OS-level enforcement」の抽象概念として残置。
+  - `docs/product/units/agent_integration_unit.md` Stop Hook Adapter 行の `fuse-hooks-engine（Future: FUSE完了ゲートの参照実装）` 参照を `—` に変更。
+  - `docs/product/construction/agent-integration/unit_test_design.md` UT-WTS-I021 のサンプルパスを `fuse-hooks-engine/HF1-06` → `some-unit/HF1-06` に変更（WORK_ITEM_ID_PATTERN 後方互換テストは維持）。
+
+### Fixed
+
+- **ISSUE-010 Wave 3 完全解消（fuse-hooks-engine 削除の副次効果）** — `validate-metadata` FAIL: 14 → **7**（fuse-hooks-engine 7 ファイル消失）。残 7 は `phase2-extensions` の `HF2-XX` 形式 StoryId で、validator `STORY_ID_PATTERN = /^H[0-9]{2}-[0-9]{2}$/` の拡張が別 issue 対象。
+
+### Lint / Metadata state
+
+- L1 violations: **0 件維持**（scanned 1289 files, no violations）
+- `validate-metadata` FAIL: 14 → **7**（-7）
+- 既存 3308 件テスト全 green（regression なし）
+
 ## [0.89.0] - 2026-04-23
 
 ### Fixed

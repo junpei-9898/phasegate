@@ -120,13 +120,13 @@ domain層は外部に依存しない。application層はdomain層のみに依存
 | 契約 | 所有Unit | 消費Unit | 内容 |
 |------|---------|---------|------|
 | **Harness API Response DTO** | harness-api | agent-integration, ci-governance, regression-suite | CLI出力のJSON構造 `{ status, errors[], summary, data }` |
-| **Validator ID Registry** | validator-system | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite, Future: fuse-hooks-engine, phase2-extensions | 確定ID: L2-001〜L4-003（10バリデータ）。予約レンジ: L0-xxx（fuse-hooks-engine）、L4-004〜（phase2-extensions）。実行インターフェース含む |
+| **Validator ID Registry** | validator-system | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite, Future: phase2-extensions | 確定ID: L2-001〜L4-003（10バリデータ）。予約レンジ: L4-004〜（phase2-extensions）。実行インターフェース含む |
 | **Preset ID Registry** | config-foundation | harness-api, quick-mode, validator-system, ci-governance, regression-suite | プリセットID（minimal/standard/strict）と有効レイヤー定義 |
 | **RequirementTestMatrix Schema** | nyquist-validation | skill-quality (test-coverage-checker), harness-api, regression-suite | requirement-test-matrix.jsonのJSONスキーマ |
 | **AGENTS.md Schema** | ci-governance | regression-suite | AGENTS.mdの最終文書構造定義（ポインタ型） |
 | **LessonArtifact Schema** | ci-governance | skill-quality (Agent-Lesson出力フォーマット) | lesson artifactのJSON構造定義。skill-qualityがこのスキーマに準拠してartifactを出力し、ci-governanceが消費してAGENTS.mdに集約反映 |
 | **ADR Frontmatter Schema** | adr-foundation | harness-error (adr_ref), ci-governance (ADRリンク), validator-system (adr_ref検証) | ADRフロントマターのYAML構造 |
-| **CLI Command Registry** | harness-api | agent-integration, ci-governance (ポインタ実在検証), Future: fuse-hooks-engine, phase2-extensions | 全CLIコマンド名・入出力仕様・終了コード定義（`phasegate:lint`、`phasegate:complete-check`含む）。Future Unitはコマンド拡張ポイントとして消費 |
+| **CLI Command Registry** | harness-api | agent-integration, ci-governance (ポインタ実在検証), Future: phase2-extensions | 全CLIコマンド名・入出力仕様・終了コード定義（`phasegate:lint`、`phasegate:complete-check`含む）。Future Unitはコマンド拡張ポイントとして消費 |
 | **Phase Dependency 3層構造** | phase-dependency-model | validator-system (L2 phase-gate), regression-suite (K2/K14回帰テスト) | Level 1→2→3の前提条件・成果物定義 |
 | **@unit/@layerメタデータ仕様** | traceability-model | biome-ast-engine (L1), validator-system (L2 metadata), skill-quality (Cascade Updater), regression-suite | メタデータアノテーション仕様 |
 | **AcCoverageGatePolicy** | nyquist-validation | validator-system (L2 phase-gateバリデータが実行) | ACマッピング完了判定ロジック |
@@ -294,9 +294,6 @@ Wave 3（拡張・運用・保証）
 
 Future
 ┌──────────────────────────────────────────────────────────────────────┐
-│  fuse-hooks-engine ←── validator-system（L0強制力）                 │
-│                    ←── agent-integration（Hook参照実装）            │
-│                                                                      │
 │  phase2-extensions ←── validator-system（L4拡張）                   │
 │                    ←── harness-api（CLI拡張）                       │
 └──────────────────────────────────────────────────────────────────────┘
@@ -318,7 +315,7 @@ Future
 | **Wave 1**: 基盤構築 | biome-ast-engine, phase-dependency-model, traceability-model, config-foundation, adr-foundation, harness-error | 18 | 全6 Unitが並列開発可能 | なし | **型定義の先行確定**: HarnessError型・HarnessConfigV2型のインターフェースをWave開始前に合意 |
 | **Wave 2**: コア品質機構 | nyquist-validation, validator-system, harness-api, quick-mode, agent-integration | 22 | nyquist-validation, validator-system, quick-modeは並列可能 | harness-api → agent-integration の順序推奨 | validator-system, nyquist-validationの主要インターフェースが確定後にharness-api着手 |
 | **Wave 3**: 拡張・運用・保証 | skill-quality, ci-governance, regression-suite | 14 | skill-quality, ci-governanceは並列可能 | regression-suite Phase Bは全v1 Unit完了後 | skill-quality → ci-governance: lesson artifact契約の事前合意。regression-suite Phase AはWave 2後半から先行開始可能 |
-| **Future** | fuse-hooks-engine, phase2-extensions | 8 | — | — | v1全Unit完了後 |
+| **Future** | phase2-extensions | 3 | — | — | v1全Unit完了後 |
 
 ---
 
@@ -326,7 +323,7 @@ Future
 
 ### 6.1 validator-system: L0バリデータ登録インターフェース
 
-FUSE Hooks Engine導入時にL0バリデータを追加登録するためのインターフェース。Validator ID Registryにプラグイン方式でL0バリデータを登録可能にする。
+将来 L0（OS-level enforcement）バリデータを追加する場合の拡張ポイント。Validator ID Registry にプラグイン方式で L0 バリデータを登録可能にする。
 
 ### 6.2 harness-api: CLIコマンド拡張ポイント
 
@@ -334,7 +331,7 @@ CLI Command Registryへの新規コマンド登録API。Future Unitが新たなC
 
 ### 6.3 config-foundation: L0セクション追加用スキーマ拡張
 
-phasegate.config.json v2スキーマにL0設定セクション（FUSE Hooks Engine用）を追加するための拡張ポイント。`layers.L0`セクションの追加を想定。
+phasegate.config.json v2 スキーマに L0（OS-level enforcement）設定セクションを追加するための拡張ポイント。`layers.L0` セクションの追加を想定。
 
 ### 6.4 phase2-extensions: L4バリデータ追加
 
@@ -346,7 +343,7 @@ doc-freshness-checker、pointer-validatorをL4バリデータとして追加。v
 
 | K# | 要件 | Primary Unit | Supporting Units |
 |----|------|-------------|-----------------|
-| K1 | 4層防御モデル（L1-L4）。将来L0（FUSE）追加時は5層に拡張 | **validator-system** | biome-ast-engine (L1), config-foundation (layers設定), harness-api (status/complete-check) |
+| K1 | 4層防御モデル（L1-L4）。将来 L0（OS-level enforcement）追加時は 5 層に拡張 | **validator-system** | biome-ast-engine (L1), config-foundation (layers設定), harness-api (status/complete-check) |
 | K2 | Phase Gate | **phase-dependency-model** | validator-system (L2 phase-gate実行), harness-api (check-ready/check-phase) |
 | K3 | Biome AST解析 | **biome-ast-engine** | harness-api (phasegate:lint), agent-integration (phasegate:lint経由) |
 | K3.5 | @unit/@layer/@story-idメタデータ | **traceability-model** | biome-ast-engine (L1 require-*-comment), validator-system (L2 metadata), skill-quality (Cascade Updater) |
@@ -369,7 +366,6 @@ doc-freshness-checker、pointer-validatorをL4バリデータとして追加。v
 
 Phasegateはローカル開発ツールキットであり、認証認可機構は持たない。
 
-- **ファイルアクセス制御**: FUSE Hooks Engineによる物理的なファイルI/Oインターセプション（L0、Future）
 - **コマンド制御**: Claude Code deny-check.sh / シェルラッパーによる破壊的コマンドブロック
 - **設定変更制御**: PreToolUse Hookによるリンター設定ファイル保護
 - **プロジェクトローカル**: `~/.claude/`へのグローバルインストール不可（Go/No-Go Gate #6）

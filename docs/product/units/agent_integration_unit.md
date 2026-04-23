@@ -122,7 +122,7 @@ v0のquality-hooks Unit（US-016〜019）を前身とし、v1ではCLI/FSフォ�
 | Hook Adapter | PreToolUse Hook Adapter（リンター設定保護） | Claude Code利用環境 |
 | Hook Adapter | PostToolUse Hook Adapter（Biome高速フォーマット+リント） | Claude Code利用環境 |
 | Hook Adapter | Stop Hook Adapter（テストゲート + ci-check + 無限ループ防止） | Claude Code利用環境 |
-| パターン | ReentryGuard（`stop_hook_active`フラグ機構） | fuse-hooks-engine（Future: FUSE完了ゲートの参照実装） |
+| パターン | ReentryGuard（`stop_hook_active`フラグ機構） | — |
 | テスト資産 | CLI/FSフォールバック検証テストスイート | regression-suite（回帰テスト対象） |
 
 ---

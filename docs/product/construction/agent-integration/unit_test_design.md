@@ -292,7 +292,7 @@
 | ケースID | 入力filePath | ProjectPaths | 期待結果 |
 |---------|------------|-------------|---------|
 | UT-WTS-I020 | `'docs/inception/agent-integration/H11-05/logical_design.md'` | デフォルト | `WriteTargetScope { level: 3, unitId: 'agent-integration', storyId: 'H11-05' }`（変更なし） |
-| UT-WTS-I021 | `'docs/inception/fuse-hooks-engine/HF1-06/scenario_test_design.md'` | デフォルト | `WriteTargetScope { level: 3, unitId: 'fuse-hooks-engine', storyId: 'HF1-06' }`（変更なし） |
+| UT-WTS-I021 | `'docs/inception/some-unit/HF1-06/scenario_test_design.md'` | デフォルト | `WriteTargetScope { level: 3, unitId: 'some-unit', storyId: 'HF1-06' }`（変更なし） |
 
 #### カスタムProjectPathsでのissueパス認識テスト
 

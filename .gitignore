@@ -20,3 +20,6 @@ Thumbs.db
 # Python build artifacts
 __pycache__/
 *.pyc
+
+# npm pack artifacts
+*.tgz

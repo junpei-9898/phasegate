@@ -28,7 +28,6 @@
 | H-13 | Scheduled Governance & CI/CDテンプレート | 3 | 3 |
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
-| H-F1 | FUSE Hooks Engine | 5 | Future |
 | H-F2 | Phase 2拡張 | 3 | Future |
 
 ---
@@ -1189,95 +1188,6 @@ K8（Cascade Updater）
 
 ---
 
-## H-F1: FUSE Hooks Engine（Phase 2 backlog）
-
-### HF1-01: .harness-hooks.yml宣言的フック定義
-
-**Epic**: H-F1 FUSE Hooks Engine
-**旧US**: US-040
-
-**As a** ハーネス開発者,
-**I want to** `.harness-hooks.yml`で宣言的にファイルI/Oフックを定義したい,
-**so that** FUSE Hooks Engineのルールを設定ファイルで管理でき、保守性を高められる。
-
-#### 受け入れ基準
-
-- [ ] AC-1: `.harness-hooks.yml`のスキーマが定義されている
-- [ ] AC-2: PreWrite/PostWrite/PreRead/PreBash/OnCompleteの各フック種別が定義可能である
-- [ ] AC-3: 各フックにファイルパターン（glob）とアクション（block/allow/run）が設定可能である
-- [ ] AC-4: YAMLスキーマバリデーションが通過する
-
----
-
-### HF1-02: FUSEパススルー+PreWrite/PostWrite
-
-**Epic**: H-F1 FUSE Hooks Engine
-**旧US**: US-041
-
-**As a** ハーネス開発者,
-**I want to** FUSEパススルーファイルシステムにPreWrite/PostWriteハンドラを実装したい,
-**so that** レイヤー違反ファイルの書き込みをOS-levelで物理的に阻止できる。
-
-#### 受け入れ基準
-
-- [ ] AC-1: FUSE-T/libfuseを使用したパススルーファイルシステムが実装されている
-- [ ] AC-2: PreWriteハンドラがレイヤー違反ファイルの書き込みをEPERMで拒否する
-- [ ] AC-3: PostWriteハンドラがファイル書き込み直後にバリデータを自動起動する
-- [ ] AC-4: FUSE未使用時のL1-L4フォールバックが動作する
-
----
-
-### HF1-03: PreRead Hook機密ファイルブロック
-
-**Epic**: H-F1 FUSE Hooks Engine
-**旧US**: US-042
-
-**As a** ハーネス開発者,
-**I want to** PreRead Hookで機密ファイル（.env, *.key等）へのアクセスをブロックしたい,
-**so that** AIエージェントが機密情報をコンテキストに含めるリスクを排除できる。
-
-#### 受け入れ基準
-
-- [ ] AC-1: PreRead Hookが`.env`、`*.key`、`*.pem`等の機密ファイルへの読み取りをブロックする
-- [ ] AC-2: ブロック対象ファイルパターンが`.harness-hooks.yml`で設定可能である
-- [ ] AC-3: ブロック時に適切なエラーメッセージが返される
-
----
-
-### HF1-04: シェルラッパーPreBash/PostBash
-
-**Epic**: H-F1 FUSE Hooks Engine
-**旧US**: US-043
-
-**As a** ハーネス開発者,
-**I want to** シェルラッパー（PATH override）でPreBash/PostBash Hookを実現したい,
-**so that** `rm -rf`や`git push --force`等の破壊的コマンドをOS-levelで阻止できる。
-
-#### 受け入れ基準
-
-- [ ] AC-1: シェルラッパーがPATH overrideで主要コマンドをインターセプトする
-- [ ] AC-2: PreBash Hookが破壊的コマンドをブロックする
-- [ ] AC-3: ブロック対象コマンドが`.harness-hooks.yml`で設定可能である
-
----
-
-### HF1-05: 完了ゲートMagic File+CLI
-
-**Epic**: H-F1 FUSE Hooks Engine
-**旧US**: US-044
-
-**As a** ハーネス開発者,
-**I want to** 完了ゲート（Magic File + CLI）でStop Hook相当のテスト通過強制をFUSE経由で実現したい,
-**so that** テスト未通過での完了をOS-levelで物理的に阻止できる。
-
-#### 受け入れ基準
-
-- [ ] AC-1: Magic File（`.harness/DONE`等）への書き込みをトリガーとして完了ゲートが起動する
-- [ ] AC-2: 完了ゲートが`pnpm test`全グリーンを検証する
-- [ ] AC-3: テスト未通過時にMagic Fileへの書き込みがEPERMで拒否される
-
----
-
 ## H-F2: Phase 2拡張（Phase 2 backlog）
 
 ### HF2-01: doc-freshness-checker（L4拡張）
@@ -1390,7 +1300,6 @@ K8（Cascade Updater）
 | 3 | H-14 K回帰 | 3 | 3 | 0 |
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | **Wave 3小計** | | **14** | **12** | **2** |
-| Future | H-F1 FUSE | 5 | — | — |
 | Future | H-F2 Phase 2拡張 | 3 | — | — |
 | **v1合計** | | **54** | **49** | **5** |
-| **全体（Future含む）** | | **62** | — | — |
+| **全体（Future含む）** | | **57** | — | — |
