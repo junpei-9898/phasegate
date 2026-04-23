@@ -292,14 +292,14 @@ tag と path が矛盾した場合（例: `infrastructure/adapters/x.ts` に `@l
 
 | Wave | スコープ | 推定 | 依存 |
 |---|---|---|---|
-| **Wave 1（本文書）** | ADR-015 起票、schema 提案、issue/status 更新 | 0.5d | — |
+| **Wave 1（本文書）** | ADR-015 起票、schema 提案、issue/status 更新、批判的レビュー補修 | 0.5d | — |
 | **Wave 2** | `LayerName` VO を config 注入形式に改修、既存挙動を `clean` preset として維持。phasegate レポ自身の `phasegate.config.json` に `architecture: { preset: "clean" }` を明示追記（dogfood） | 1d | Wave 1 |
-| **Wave 3** | `harness-config-v3.schema.json` を新設、`config-foundation` で構造検出による v2/v3 ロード対応、§1.3 semantic validation (C1〜C5) 実装、§3.4 layerDetection precedence 実装 | 1d | Wave 2 |
+| **Wave 3** | `harness-config-v3.schema.json` を新設、`config-foundation` で構造検出による v2/v3 ロード対応、§1.2 preset + 明示 override 解決ロジック、§1.3 semantic validation (C1〜C5) 実装、§3.4 layerDetection precedence 実装 | **1.5d** | Wave 2 |
 | **Wave 4** | `flat` preset 実装（L1-001〜004 自動無効化 + §2.6 flat 残存 tag 扱い + §2.8 preset/user 優先度） | 0.5d | Wave 3 |
 | **Wave 5** | `onion / hexagonal / layered / strict-ddd / custom` 実装 + `/tmp/phasegate-dogfood-*/` で外部 PJ シナリオ検証（3 preset 最低限） | 1d | Wave 4 |
-| **Wave 6** | README / retrofit-adoption.md / CLAUDE.md への preset 選定ガイド追記、`phasegate migrate --schema v3` CLI、v0.86.0 未満からの upgrade 警告 | 0.5d | Wave 5 |
+| **Wave 6** | README / retrofit-adoption.md / CLAUDE.md への preset 選定ガイド追記、**防御プリセット / アーキプリセットの呼称分離ガイド（#3）**、`phasegate migrate --schema v3` CLI、v0.86.0 未満からの upgrade 警告 | 0.5d | Wave 5 |
 
-**合計 4.5d**（issue_description.md 推定より +0.5d — Wave 6 で migrate CLI 明示）
+**合計 5d**（Wave 3 に preset override 解決ロジック + semantic validation + precedence を盛り込んで 1d → 1.5d に膨らんだため、issue_description.md 当初推定 4d → 5d）
 
 **Wave 分割の原則**: 各 Wave は独立にリリース可能（既存挙動を壊さず、段階的に機能を足す）。Wave 1 完了時点で実装コード変更 0、Wave 2 完了時点でも PhaseGate 自身の挙動は不変（`clean` preset が既定として動くため）。
 

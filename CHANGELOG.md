@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.94.0] - 2026-04-23
+
+### Changed
+
+- **ISSUE-014 Wave 1 計画の再同期** — レビュー補修で追加された制約を Wave 分割計画に取り込み漏れがないか検証。以下 3 件を追加反映:
+  - Wave 3 に「§1.2 preset + 明示 override 解決ロジック」を明示追加（semantic validation とは別軸）
+  - Wave 6 に「防御プリセット / アーキプリセットの呼称分離ガイド」を明示追加（レビュー穴 #3 の plan 反映漏れ）
+  - 推定工数を再計算: Wave 3 は 1d → **1.5d**（preset override + semantic validation C1〜C5 + precedence を盛り込んだため）。合計 4.5d → **5d**
+- `wave1_schema_proposal.md` §4 の Wave 分割表と `issue_description.md` 推奨実装順表を同期更新
+
 ## [0.93.0] - 2026-04-23
 
 ### Changed

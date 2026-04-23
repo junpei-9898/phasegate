@@ -121,14 +121,14 @@ Wave 1 で Phase B（schema 設計）を先行実施したため、Wave 番号�
 
 | Wave | 旧 Phase | スコープ | 推定 |
 |---|---|---|---|
-| Wave 1 | Phase B | ADR-015 + schema 設計 | 0.5d |
+| Wave 1 | Phase B | ADR-015 + schema 設計 + 批判的レビュー補修 | 0.5d |
 | Wave 2 | Phase A | `LayerName` 注入 + phasegate 自身の `architecture: { preset: "clean" }` 明示 | 1d |
-| Wave 3 | —（新設） | schema v3 JSON Schema 実体化 + 構造検出ロード + semantic validation | 1d |
-| Wave 4 | Phase C | `flat` preset 実装 | 0.5d |
+| Wave 3 | —（新設） | schema v3 JSON Schema 実体化 + 構造検出ロード + preset override 解決 + semantic validation (C1〜C5) + layerDetection precedence | 1.5d |
+| Wave 4 | Phase C | `flat` preset 実装 + 残存 tag 扱い + preset/user 優先度 | 0.5d |
 | Wave 5 | Phase D + E | `onion / hexagonal / layered / strict-ddd / custom` + dogfood 検証 | 1d |
-| Wave 6 | Phase F | ガイド追記 + `migrate` CLI + v0.86.0 境界警告 | 0.5d |
+| Wave 6 | Phase F | ガイド追記 + 呼称分離ガイド + `migrate` CLI + v0.86.0 境界警告 | 0.5d |
 
-**合計 ~4.5d**（旧推定 +0.5d — Wave 6 で migrate CLI を明示追加）
+**合計 ~5d**（旧推定 +1d — Wave 3 に semantic validation 5 制約 + precedence + override を盛り込んだため 1d → 1.5d）
 
 詳細な Wave 分割と成果物定義は [`wave1_schema_proposal.md`](./wave1_schema_proposal.md) §4 を参照。
 
