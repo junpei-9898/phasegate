@@ -2,7 +2,9 @@
 
 ## ステータス
 
-- **状態**: 🔴 **OPEN**（未着手。ISSUE-019 / ADR-014 で presentation→domain が標準許容化されたため、本 issue の preset 設計では `strict-ddd` を選択肢として opt-in 提供する方針）
+- **状態**: 🟡 **IN PROGRESS**（Wave 1 完了 / 2026-04-23）
+  - Wave 1 (v0.92.0): ADR-015 起票 + `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` で preset schema 設計を完了
+  - Wave 2 以降: `LayerName` VO の config 注入改修 → schema v3 実装 → preset 実装 → dogfood → ガイド追記（各 Wave の詳細は wave1_schema_proposal.md §4 参照）
 - **優先度**: P2
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003（lint 違反解消）Wave 0 棚卸し中に、`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:6,15-20` で層名と依存方向が固定値としてハードコードされていることが判明。プロジェクト側でアーキテクチャスタイルを選べない

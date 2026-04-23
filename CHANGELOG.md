@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.92.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 1: アーキテクチャ preset 化の設計着地** — PhaseGate を Clean Architecture 固定から preset 選択式に拡張するための Wave 1（設計・文書作成）を完了。実装コードは含まない。
+  - `docs/ADR/ADR-015-architecture-preset.md` を Accepted 状態で起票。preset 6 種（`clean` / `strict-ddd` / `onion` / `hexagonal` / `layered` / `flat` / `custom`）を採択し、`flat` 時の L1-001〜004 自動無効化、`metadataTags` での `@layer` / `@unit` タグ差し替え、schema v3 への下位互換マイグレーション戦略を決定。
+  - `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` を追加。`architecture` セクションの JSON Schema 断片、各 preset の層・`allowedDependencies` 定義、Wave 2〜6 の実装順序（推定 4.5d）を明文化。
+  - `docs/inception/issues/ISSUE-014/issue_description.md` の状態を `IN PROGRESS` に更新し、Wave 2 以降の入り口を記述。
+
+### Scope notes
+
+- Wave 1 は **設計・文書のみ**。`scripts/harness/` 配下のコード改修は含まず、既存テストへの影響なし。`LayerName` / `LayerBoundary` の config 注入改修は Wave 2、schema v3 実装は Wave 3、dogfood 検証は Wave 4〜5、ガイド追記は Wave 6 で順次実施予定。
+
 ## [0.91.0] - 2026-04-23
 
 ### Fixed
