@@ -14,7 +14,8 @@
 | ISSUE-018 | **新規起票**: `agent-integration/infrastructure/ports/cli-executor-port.ts` が Port として location ミス（→ `application/ports/`）。L1-003 残 3 件の根本原因 |
 | ISSUE-019 | **新規起票**: phasegate の LayerBoundary が `presentation → domain` を禁止している仕様判断の再評価（L1-003 残 8 件 + phasegate 導入先への影響）。ISSUE-014 と合流候補 |
 | ISSUE-020 | **新規起票**: `config-foundation/domain/harness-config.ts` と `phase-dependencies-config.ts` の循環依存（L1-003 残 1 件） |
-| 次の最優先 | ISSUE-010 (103件 @story-id) → ISSUE-006 CLOSE → その他 |
+| ISSUE-021 | **新規起票（P1 High）**: Full mode 判定が story-implementor コンテキストを認識せず、Port/Adapter の refactor が正規ルートでも構造的にブロック。**ISSUE-018 の前提条件**（dogfooding で最新版確定） |
+| 次の最優先 | **ISSUE-021（構造的 bug 修正）→ ISSUE-018 再着手** → その他 |
 
 ---
 
