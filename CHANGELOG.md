@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.99.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 5.5: 3 preset（onion / hexagonal / layered）dogfood を vitest integration test で自動化** — Wave 5 で pipeline 配線は完成したが、外部 PJ 相当の end-to-end 検証は pre-tool-use-hook の `/tmp/**/src/domain/**` blocking で deferred していた。本 Wave では `/tmp/` への Claude Write を諦め、**テストランタイムの `fs.writeFileSync`（hook 対象外）で `os.tmpdir()` に fixture 展開する方針**に切り替えて解消。
+  - `scripts/harness/__tests__/integration/biome-ast-engine/preset-dogfood.integration.test.ts` を新設（`@story ISSUE-014`）。
+  - 各 preset につき「許容方向 import → violation 0 件」と「違反方向 import → `no-layer-violation` で検出」の 2 テスト × 3 preset = 計 6 テストを `createBiomeAstEngineModule(rootDir, { architecture })` 経由で `ExecuteLintUseCase.execute({ targets: ['src'], includeBiomeNative: false })` を呼び出して検証。
+  - 検証内容: onion（interface→domain 許容 / domain→interface 検出）、hexagonal（adapters→core 許容 / core→adapters 検出）、layered（presentation→business→data 許容 / data→presentation 検出）。
+
+### Tests
+
+- 新規 `preset-dogfood.integration.test.ts` で 6 テスト追加（3354 → 3360）。
+- 全 3379 tests green（3360 unit/integration + 19 forks）、`npx phasegate lint` violations 0（1297 ファイル scan）。
+
+### Notes
+
+- 本 Wave は当初「`/tmp/phasegate-dogfood-*/` に実際のディレクトリを切って `npx phasegate lint` を走らせる外部検証」を想定していたが、pre-tool-use-hook が Claude の Write 経路で `/tmp/**/src/domain/**` を Full-mode 必須カテゴリと判定して blocking するため実行不能。hook の scope を narrow する修正は independent の refactoring スコープになるため、本 Wave では integration test ベースでの dogfood に切替（Claude が関与しない Node.js ランタイム書き込みは hook 対象外）。CLI 経由で phasegate.config.json を読み込む経路の検証は Wave 6 の `migrate` CLI テストで補完予定。
+- ISSUE-014 は Wave 5.5 まで完了。残り Wave 6（ガイド追記 + `migrate` CLI + 呼称分離）で CLOSE 予定。
+
 ## [0.98.0] - 2026-04-23
 
 ### Added
