@@ -11,11 +11,11 @@
 | ISSUE-015 | **新規起票**: QuickModeJudgmentEngine に comment-only diff 検出を追加（ISSUE-003 Wave 2a 残余 1 件の自動解消） |
 | ISSUE-016 | **新規起票** → **2026-04-23 CLOSED (v0.79.0)**: `no-layer-violation` (L1-003) の `ignorePatterns` 配線完了 |
 | ISSUE-017 | **新規起票**: `extractImports` が `export ... from` re-export と nested dynamic import を捕捉せず ghost-file 検出に false positive 発生 |
-| ISSUE-018 | **新規起票**: `agent-integration/infrastructure/ports/cli-executor-port.ts` が Port として location ミス（→ `application/ports/`）。L1-003 残 3 件の根本原因 |
+| ISSUE-018 | **新規起票 → CLOSED (v0.81.0)**: `cli-executor-port.ts` を `application/ports/` に移動。L1-003: 12 → 9 |
 | ISSUE-019 | **新規起票**: phasegate の LayerBoundary が `presentation → domain` を禁止している仕様判断の再評価（L1-003 残 8 件 + phasegate 導入先への影響）。ISSUE-014 と合流候補 |
 | ISSUE-020 | **新規起票**: `config-foundation/domain/harness-config.ts` と `phase-dependencies-config.ts` の循環依存（L1-003 残 1 件） |
-| ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正 |
-| ISSUE-018 | **CLOSED (v0.81.0)**: ISSUE-021 bypass 経由で Port 移動完了。L1-003: 12 → 9 |
+| ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正。ISSUE-018 の前提条件を解消 |
+| 現在の lint 状態 | **12 件**（L1-003: 9 / L1-006: 2 / L1-007: 1）。全て別 issue で tracking 済み（ISSUE-015 / ISSUE-017 / ISSUE-019 / ISSUE-020） |
 | 次の最優先 | ISSUE-010 (103件 @story-id) / ISSUE-020 (循環依存) / ISSUE-019 (LayerBoundary 仕様) など残案件へ |
 
 ---
@@ -37,7 +37,7 @@ ISSUE-007 完了 (v0.74.0) 直後の時点。
 | Issue | 記載ステータス | 実態 | Priority | 所感 |
 |---|---|---|---|---|
 | **ISSUE-001** | 未記載 | 🔴 **真に未解決** | Medium | inception 内の設計順序強制ロジック無し（`check-story-reflection-usecase.ts` は product 反映のみチェック） |
-| **ISSUE-003** | 低 | 🔴 **悪化（2026-04-23 時点 159 件継続）** | 低 | lint 違反 **159 件**（L1-003 / L1-004 / L1-006 / L1-007 / L1-005 分布） |
+| **ISSUE-003** | 低 | 🟡 **大幅改善（159 → 12 件、v0.75.0〜v0.81.0）** | 低 | 残 12 件は全て別 issue（ISSUE-015 / ISSUE-017 / ISSUE-019 / ISSUE-020）で tracking 中 |
 | **ISSUE-006** | IN PROGRESS | 🟢 **ほぼ完了** | P1 | `quick-mode` Unit / `fullModeRequiredWhen` 配線済み。**他PJ 再レビューのみ残** |
 | **ISSUE-007** | CLOSED（2026-04-23） | 🟢 **真に完了** | — | Wave 9 (v0.74.0) で acceptance 全 8 条件成立。2026-04-23 に CLOSE 宣言 |
 | **ISSUE-009** | 未着手 | 🟡 **DEFERRED**（2026-04-23） | ~~P1~~ → P2 | Orchestration Engine との責務境界見直しで保留。単一 agent 前提の現状は既存 hook で機能 |
@@ -102,4 +102,4 @@ ISSUE-007 完了 (v0.74.0) 直後の時点。
 ---
 
 **監査者**: Claude Code (Opus 4.7 / 1M context) + general-purpose agent による裏取り
-**参照 CLI 実行時点**: phasegate v0.74.0 installed locally
+**参照 CLI 実行時点**: phasegate v0.81.0 (local source, commit 0027365)
