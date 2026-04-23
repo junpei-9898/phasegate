@@ -1,5 +1,8 @@
 # ドメインモデル: traceability-model
 
+@story-id H03-01
+@story-id H03-02
+@story-id H03-03
 > **Unit ID**: traceability-model
 > **作成日**: 2026-03-13
 > **Wave**: 1（基盤構築）

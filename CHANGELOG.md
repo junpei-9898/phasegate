@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.87.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-010 Wave 1 + ISSUE-006 formal CLOSE** — traceability-model Unit の `@story-id` 注釈補填と ISSUE-006 機能的完遂の CLOSE 化。
+  - ISSUE-010 Wave 1: `docs/product/construction/traceability-model/` 残 3 件（`coverage_report.md` / `domain_model.md` / `unit_test_logic.md`）に `@story-id H03-01 / H03-02 / H03-03` を standalone 注釈として補填。`validate-metadata` の FAIL 件数 103 → 100（traceability-model Unit は 0 件到達）。
+  - ISSUE-006 CLOSE: Story A（v0.63.0 / `fullModeRequiredWhen` 設定駆動化）/ Story B（v0.64.0 / pre-tool-use hook 統合）/ P2-3（v0.45.0 / `docs/guide/quick-vs-full-mode.md`）すべて着地済のため formal CLOSE。外部PJ再レビュー（welcome-but-not-blocking）のみ残。
+
+### Lint / Metadata state
+
+- L1 violations: **0 件維持**（v0.86.0 時点で完全解消済、本版で変更なし）
+- `validate-metadata` FAIL: 103 → **100**（traceability-model 3 件解消）
+- 既存 3308 件テスト全 green（regression なし）
+
 ## [0.86.0] - 2026-04-23
 
 ### Changed

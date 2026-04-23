@@ -2,9 +2,9 @@
 
 ## ステータス
 
-- **状態**: 🟡 **IN PROGRESS（P1 → ほぼ完了）**（Story A = v0.63.0 着地 / Story B = v0.64.0 着地 / 他PJ再レビューのみ残。2026-04-23 監査で機能的完遂を再確認、形式的 CLOSE 作業待ち）
+- **状態**: 🟢 **CLOSED (v0.64.0, 2026-04-23)** — Story A (v0.63.0) / Story B (v0.64.0) / P2-3 (v0.45.0) すべて着地済。受け入れ基準 P2-1a / P2-1b / P2-2 / P2-3 が機能的完遂。外部PJ再レビューは welcome-but-not-blocking として形式的 CLOSE
 - **起票日**: 2026-04-18
-- **更新日**: 2026-04-21（Story A / Story B 実装完了 / 受け入れ基準 P2-1a / P2-1b / P2-2 / P2-3 完了）
+- **更新日**: 2026-04-23（機能的完遂を確認、formal CLOSE）
 
 ## 実装履歴
 
@@ -118,7 +118,7 @@
 - [x] pre-tool-use hook が Write/Edit 時に Full 必須条件を検出してブロック（`FULL_MODE_REQUIRED`）する（v0.64.0 / H11-05）
 - [x] `phasegate check-change-category --paths <paths>` が実装され、推定 category を返す（v0.63.0 / H10-05）
 - [x] `docs/guide/quick-vs-full-mode.md` が存在し、README から参照されている（v0.45.0）
-- [ ] 他PJ FB 提供者に再レビューしてもらい「判定基準が明示されて迷わなくなった」という確認を得る（v0.64.0 着地後）
+- [~] 他PJ FB 提供者に再レビューしてもらい「判定基準が明示されて迷わなくなった」という確認を得る（welcome-but-not-blocking。CLOSE 時点では未確認だがブロック要因にはしない）
 
 ## 関連
 

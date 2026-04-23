@@ -1,5 +1,8 @@
 # テストカバレッジレポート: traceability-model
 
+@story-id H03-01
+@story-id H03-02
+@story-id H03-03
 ## 1. サマリー
 
 | 観点 | カバー項目数 | 未カバー項目数 | カバレッジ率 |
