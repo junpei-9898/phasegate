@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.85.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-022** — Unit barrel (`**/index.ts`) が `no-layer-violation` で誤検知される問題を解消。
+  - 問題: ISSUE-017（v0.83.0）の `extractImports` 修正で `export ... from` 再帰走査が有効化された結果、`quick-mode/index.ts` の barrel 再エクスポート 7 件が `L1-003` で新規露出していた。Unit barrel は `main.ts` / `composition-root.ts` / `presentation/*-hook.ts` と同じ composition root / entry point の性質を持つが、`no-layer-violation.ignorePatterns` に含まれていなかった。
+  - 修正: `scripts/harness/biome-ast-engine/domain/services/rule-definition-registry.ts` の `no-layer-violation.ignorePatterns` に `'**/index.ts'` を追加。`scripts/harness/*/index.ts` の 11 件の Unit barrel が一括で除外される（sub-layer barrel は存在せず副作用リスク無）。
+  - 残 L1-003 8 件は全て `presentation → domain` パターン（ISSUE-019 の philosophical 案件スコープ）。
+
+### Lint state
+
+- total: 15 → **8**（L1-003 barrel 誤検知 7 件解消）
+- 残 L1-003: 8 件（全て ISSUE-019 スコープ: presentation → domain）
+- 既存 3306 件テスト全 green（regression なし）
+
 ## [0.84.0] - 2026-04-23
 
 ### Removed

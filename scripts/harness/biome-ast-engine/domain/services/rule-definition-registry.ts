@@ -135,6 +135,7 @@ export class RuleDefinitionRegistry {
             '**/composition-root.ts',
             '**/main.ts',
             '**/presentation/*-hook.ts',
+            '**/index.ts',
           ]),
         }),
         'レイヤー違反を検出する',
