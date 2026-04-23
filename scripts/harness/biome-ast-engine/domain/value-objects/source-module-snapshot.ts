@@ -3,6 +3,7 @@
  * @unit biome-ast-engine
  */
 
+import { CLEAN_PRESET_SPEC, type ArchitectureSpec } from './architecture-spec.js';
 import { FilePath } from './file-path.js';
 import { ImportEdge } from './import-edge.js';
 import { LayerName } from './layer-name.js';
@@ -30,7 +31,10 @@ const ensureNonNegative = (value: number, label: string): number => {
   return value;
 };
 
-const normalizeDeclaredLayer = (value: LayerName | string | null): LayerName | null => {
+const normalizeDeclaredLayer = (
+  value: LayerName | string | null,
+  spec: ArchitectureSpec
+): LayerName | null => {
   if (value === null) {
     return null;
   }
@@ -40,7 +44,7 @@ const normalizeDeclaredLayer = (value: LayerName | string | null): LayerName | n
   }
 
   if (typeof value === 'string') {
-    return LayerName.tryFromString(value);
+    return LayerName.tryFromString(value, spec);
   }
 
   return null;
@@ -77,8 +81,11 @@ export class SourceModuleSnapshot {
     this.hasRawLayerAnnotation = props.hasRawLayerAnnotation;
   }
 
-  static create(props: SourceModuleSnapshotProps): SourceModuleSnapshot {
-    const declaredLayer = normalizeDeclaredLayer(props.declaredLayer);
+  static create(
+    props: SourceModuleSnapshotProps,
+    spec: ArchitectureSpec = CLEAN_PRESET_SPEC
+  ): SourceModuleSnapshot {
+    const declaredLayer = normalizeDeclaredLayer(props.declaredLayer, spec);
 
     return Object.freeze(
       new SourceModuleSnapshot({

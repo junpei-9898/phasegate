@@ -203,5 +203,38 @@ target('ResolveEnabledRulesUseCase.execute', () => {
         expect(enabledNames).toContain('enforce-folder-structure');
       });
     });
+
+    context('architecture preset の layers と allowedDependencies を architectureSpec として出力する', () => {
+      it('onion 風のカスタム architecture を渡した場合、architectureSpec に同一値が透過される', async () => {
+        // Arrange
+        const ONION_ARCHITECTURE: ArchitectureProviderInfo = {
+          preset: 'onion',
+          layers: ['domain', 'application', 'interface'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            interface: ['interface', 'application', 'domain'],
+          },
+        };
+        const { sut } = createSut(
+          {
+            enabled: true,
+            rules: {},
+          },
+          ONION_ARCHITECTURE,
+        );
+
+        // Act
+        const actual = await sut.execute();
+
+        // Assert
+        expect(actual.architectureSpec.layers).toEqual(['domain', 'application', 'interface']);
+        expect(actual.architectureSpec.allowedDependencies.interface).toEqual([
+          'interface',
+          'application',
+          'domain',
+        ]);
+      });
+    });
   });
 });

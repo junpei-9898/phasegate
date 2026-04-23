@@ -45,6 +45,7 @@ export class ExecuteLintUseCase {
     const resolvedRules = await this.resolveEnabledRulesUseCase.execute();
     const analyzed = await this.analyzeImportGraphUseCase.execute({
       targets: input.targets,
+      architecture: resolvedRules.architectureSpec,
     });
 
     if (input.includeBiomeNative !== false) {
@@ -58,6 +59,7 @@ export class ExecuteLintUseCase {
       snapshots: analyzed.snapshots,
       importGraph: analyzed.importGraph,
       durationMs,
+      architecture: resolvedRules.architectureSpec,
     });
     const report = LintReport.create({
       violations: baseReport.violations,

@@ -93,7 +93,10 @@ target('AnalyzeImportGraphUseCase.execute', () => {
 
         // Assert
         expect(workspaceFilePort.listSourceFiles).toHaveBeenCalledWith(targets);
-        expect(sourceModuleAnalyzerPort.analyzeMany).toHaveBeenCalledWith([sourceFile, targetFile]);
+        expect(sourceModuleAnalyzerPort.analyzeMany).toHaveBeenCalledWith(
+          [sourceFile, targetFile],
+          undefined
+        );
         expect(actual.files).toEqual([sourceFile, targetFile]);
         expect(actual.importGraph.edges).toHaveLength(1);
         expect(actual.importGraph.rootNodes.map((filePath) => filePath.toString())).toEqual([

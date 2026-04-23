@@ -6,6 +6,7 @@ import type { BiomeExecutorPort } from '../../../biome-ast-engine/domain/ports/b
 import type { ClockPort } from '../../../biome-ast-engine/domain/ports/clock-port.js';
 import { RuleDefinitionRegistry } from '../../../biome-ast-engine/domain/services/rule-definition-registry.js';
 import { LintRunner } from '../../../biome-ast-engine/domain/services/lint-runner.js';
+import { CLEAN_PRESET_SPEC } from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
 import { LayerName } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
 import { RuleName } from '../../../biome-ast-engine/domain/value-objects/rule-name.js';
@@ -37,6 +38,7 @@ const createSut = () => {
     execute: vi.fn().mockResolvedValue({
       enabledRules: [registry.getByName(RuleName.fromString('require-unit-comment'))],
       skippedRules: [],
+      architectureSpec: CLEAN_PRESET_SPEC,
     }),
   };
   const analyzeImportGraphUseCase = {
@@ -99,6 +101,7 @@ target('ExecuteLintUseCase.execute', () => {
         expect(resolveEnabledRulesUseCase.execute).toHaveBeenCalledTimes(1);
         expect(analyzeImportGraphUseCase.execute).toHaveBeenCalledWith({
           targets: ['biome-ast-engine/application/execute-lint-usecase.ts'],
+          architecture: CLEAN_PRESET_SPEC,
         });
         expect(biomeExecutorPort.executeCheck).toHaveBeenCalledWith([filePath]);
         expect(actual.checkedFiles).toEqual([filePath]);

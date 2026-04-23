@@ -5,6 +5,7 @@
 
 import type { RuleConfigProviderPort } from '../../domain/ports/rule-config-provider-port.js';
 import type { RuleDefinitionRegistry } from '../../domain/services/rule-definition-registry.js';
+import { freezeArchitectureSpec } from '../../domain/value-objects/architecture-spec.js';
 import type { ResolveEnabledRulesInput } from '../dto/resolve-enabled-rules-input.js';
 import type { ResolveEnabledRulesOutput } from '../dto/resolve-enabled-rules-output.js';
 import { toResolveEnabledRulesOutput } from '../mappers/resolve-enabled-rules-output-mapper.js';
@@ -56,6 +57,15 @@ export class ResolveEnabledRulesUseCase {
       rules: mergedRules,
     });
 
-    return toResolveEnabledRulesOutput(resolved.enabledRules, resolved.skippedRules);
+    const architectureSpec = freezeArchitectureSpec({
+      layers: architecture.layers,
+      allowedDependencies: architecture.allowedDependencies,
+    });
+
+    return toResolveEnabledRulesOutput(
+      resolved.enabledRules,
+      resolved.skippedRules,
+      architectureSpec
+    );
   }
 }

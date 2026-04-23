@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.98.0] - 2026-04-23
+
+### Added
+
+- **ISSUE-014 Wave 5: `no-layer-violation` への `architecture.allowedDependencies` 注入 + pipeline 全体への spec 配線** — Wave 4 で flat preset 配線を作った後の、非 clean preset（onion / hexagonal / layered / strict-ddd / custom）を実際に lint 判定へ反映する改修。
+  - `ResolveEnabledRulesUseCase` 出力に `architectureSpec: ArchitectureSpec` を追加（DTO + mapper 拡張）。config-foundation の `preset / layers / allowedDependencies` を `freezeArchitectureSpec` で ArchitectureSpec に変換して下流へ伝播。
+  - `LintRunner.run(params)` の params に optional `architecture` を追加。`no-layer-violation` rule 内の `LayerBoundary.standardMatrix()` ハードコード呼び出しを `LayerBoundary.standardMatrix(architecture)` に置換（未指定時は `CLEAN_PRESET_SPEC` で後方互換）。
+  - `SourceModuleSnapshot.create(props, spec?)` で `@layer` tag の正規化が spec 経由になり、`core` / `interface` / `ports` 等の非 clean 層名が LayerName として認識可能に。
+  - `SourceModuleAnalyzerPort.analyzeMany(files, architecture?)` + `TypeScriptSourceModuleAnalyzerAdapter` + `source-module-snapshot-mapper.toSourceModuleSnapshot(raw, architecture?)` の 3 箇所に spec 伝播。
+  - `AnalyzeImportGraphUseCase` 入力 DTO に `architecture?` を追加、`ExecuteLintUseCase` が `resolvedRules.architectureSpec` を analyze/lintRunner の両方へ配線。
+
+### Tests
+
+- 新規 `lint-runner.test.ts` に onion preset 2 件（`domain → interface` 違反検出 / `interface → domain` 許容）を追加 — architecture 注入経路を end-to-end で検証。
+- 新規 `source-module-snapshot.test.ts` に hexagonal spec 正規化 2 件（`core` 値が LayerName として通る / spec 省略時は clean default で `null` に落ちる）を追加。
+- 新規 `resolve-enabled-rules-usecase.test.ts` に onion architecture の architectureSpec 透過 1 件を追加。
+- 既存 `analyze-import-graph-usecase.test.ts` / `execute-lint-usecase.test.ts` の mock 期待値を新シグネチャに更新。
+- 全 3373 tests green（3354 unit + 19 forks、+5）、`npx phasegate lint` violations 0。
+
+### Notes
+
+- 「外部 dogfood（`/tmp/phasegate-dogfood-onion` 等の 3 preset）」は pre-tool-use-hook が `/tmp/**/src/domain/**` への書き込みを quick-mode 外カテゴリとして blocking するため Wave 5.5 に延期。コード経路は unit test で end-to-end 検証済み。
+- Wave 6（ガイド追記 + `migrate` CLI + v0.86.0 境界警告）は本 Wave の範囲外。
+
 ## [0.97.0] - 2026-04-23
 
 ### Added

@@ -4,6 +4,7 @@
  */
 
 import { RuleDefinitionRegistry } from './rule-definition-registry.js';
+import { CLEAN_PRESET_SPEC, type ArchitectureSpec } from '../value-objects/architecture-spec.js';
 import { ImportGraph, matchesPattern } from '../value-objects/import-graph.js';
 import { LayerBoundary } from '../value-objects/layer-boundary.js';
 import { LintReport } from '../value-objects/lint-report.js';
@@ -16,6 +17,7 @@ type LintRunnerParams = {
   readonly snapshots: readonly SourceModuleSnapshot[];
   readonly importGraph: ImportGraph;
   readonly durationMs: number;
+  readonly architecture?: ArchitectureSpec;
 };
 
 const toNumber = (value: unknown, fallback: number): number =>
@@ -37,6 +39,8 @@ export class LintRunner {
   }
 
   run(params: LintRunnerParams): LintReport {
+    const architecture = params.architecture ?? CLEAN_PRESET_SPEC;
+
     for (const rule of params.rules) {
       this.ruleDefinitionRegistry.getByName(rule.name);
     }
@@ -100,7 +104,7 @@ export class LintRunner {
           const ignorePatterns = toStringArray(rule.config.ignorePatterns, Object.freeze([]));
 
           for (const edge of params.importGraph.findLayerViolations(
-            LayerBoundary.standardMatrix(),
+            LayerBoundary.standardMatrix(architecture),
             layerByFile,
             ignorePatterns
           )) {

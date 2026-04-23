@@ -3,9 +3,13 @@
  * @unit biome-ast-engine
  */
 
+import type { ArchitectureSpec } from '../value-objects/architecture-spec.js';
 import { FilePath } from '../value-objects/file-path.js';
 import { SourceModuleSnapshot } from '../value-objects/source-module-snapshot.js';
 
 export interface SourceModuleAnalyzerPort {
-  analyzeMany(files: readonly FilePath[]): Promise<readonly SourceModuleSnapshot[]>;
+  analyzeMany(
+    files: readonly FilePath[],
+    architecture?: ArchitectureSpec
+  ): Promise<readonly SourceModuleSnapshot[]>;
 }

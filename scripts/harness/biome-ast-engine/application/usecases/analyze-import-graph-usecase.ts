@@ -33,7 +33,10 @@ export class AnalyzeImportGraphUseCase {
     input: AnalyzeImportGraphInput = {}
   ): Promise<Readonly<AnalyzeImportGraphOutput>> {
     const files = await this.workspaceFilePort.listSourceFiles(input.targets);
-    const snapshots = await this.sourceModuleAnalyzerPort.analyzeMany(files);
+    const snapshots = await this.sourceModuleAnalyzerPort.analyzeMany(
+      files,
+      input.architecture
+    );
     const importGraph = this.importGraphBuilder.build(snapshots);
 
     return toAnalyzeImportGraphOutput(files, snapshots, importGraph);

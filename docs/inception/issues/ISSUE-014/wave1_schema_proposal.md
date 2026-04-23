@@ -296,8 +296,9 @@ tag と path が矛盾した場合（例: `infrastructure/adapters/x.ts` に `@l
 | **Wave 2** ✅ | `LayerName` / `LayerBoundary` VO を `ArchitectureSpec` 注入形式に改修、既存挙動を `CLEAN_PRESET_SPEC` として維持（完了 / v0.95.0）| 1d | Wave 1 |
 | **Wave 3** ✅ | `harness-config-v3.schema.json` を新設、`config-foundation` で構造検出による v2/v3 ロード対応、§1.2 preset + 明示 override 解決ロジック、§1.3 semantic validation (C1〜C5) 実装、§3.4 layerDetection precedence 実装、**phasegate レポ自身の `phasegate.config.json` に `architecture: { preset: "clean" }` 明示追記（dogfood）** — 完了 / v0.96.0 | **1.5d**（実施: 0.75d） | Wave 2 |
 | **Wave 4** ✅ | `flat` preset 実装（`RuleConfigProviderPort.getArchitecture()` 追加 + `ResolveEnabledRulesUseCase` で `preset='flat'` 時に L1-001〜004 を auto-disable + user 明示優先 + §2.6 flat 残存 tag 扱い = ignore + §2.8 preset/user 優先度） — 完了 / v0.97.0 | 0.5d（実施: 0.25d） | Wave 3 |
-| **Wave 5** | `no-layer-violation` rule に architecture.allowedDependencies 注入（現状 `LayerBoundary.standardMatrix()` ハードコード）+ `onion / hexagonal / layered / strict-ddd / custom` の外部 PJ dogfood 検証（`/tmp/phasegate-dogfood-*/`, 3 preset 最低限） | 1d | Wave 4 |
-| **Wave 6** | README / retrofit-adoption.md / CLAUDE.md への preset 選定ガイド追記、**防御プリセット / アーキプリセットの呼称分離ガイド（#3）**、`phasegate migrate --schema v3` CLI、v0.86.0 未満からの upgrade 警告 | 0.5d | Wave 5 |
+| **Wave 5** ✅ | `no-layer-violation` rule に `architecture.allowedDependencies` を注入（`LintRunner.run(params.architecture)` 経由で `LayerBoundary.standardMatrix(architecture)` 化）+ `SourceModuleSnapshot.create(props, spec?)` で非 clean `@layer` tag を正規化 + pipeline 全体（`ResolveEnabledRulesUseCase` → `AnalyzeImportGraphUseCase` → `LintRunner`）に spec 配線 — 完了 / v0.98.0、onion / hexagonal の unit test で end-to-end 検証 | 0.75d（実施: 0.5d） | Wave 4 |
+| **Wave 5.5** | 外部 PJ dogfood 検証（`/tmp/phasegate-dogfood-onion / .../hexagonal / .../layered`, 3 preset 最低限） — pre-tool-use-hook による `/tmp/**/src/domain/**` blocking の整理が前提 | 0.25d | Wave 5 |
+| **Wave 6** | README / retrofit-adoption.md / CLAUDE.md への preset 選定ガイド追記、**防御プリセット / アーキプリセットの呼称分離ガイド（#3）**、`phasegate migrate --schema v3` CLI、v0.86.0 未満からの upgrade 警告 | 0.5d | Wave 5.5 |
 
 **合計 5d**（Wave 3 に preset override 解決ロジック + semantic validation + precedence を盛り込んで 1d → 1.5d に膨らんだため、issue_description.md 当初推定 4d → 5d）
 

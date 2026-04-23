@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
 import { ImportEdge } from '../../../biome-ast-engine/domain/value-objects/import-edge.js';
+import {
+  freezeArchitectureSpec,
+  type ArchitectureSpec,
+} from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
 import { ImportGraph } from '../../../biome-ast-engine/domain/value-objects/import-graph.js';
 import { LayerName } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
 import { RuleDefinition } from '../../../biome-ast-engine/domain/value-objects/rule-definition.js';
@@ -261,6 +265,157 @@ target('LintRunner.run', () => {
 
         // Act
         const actual = sut.run({ rules, snapshots, importGraph: graph, durationMs: 10 });
+
+        // Assert
+        expect(findViolationCount(actual, 'no-layer-violation')).toBe(0);
+      });
+    });
+
+    context('onion preset spec を注入した場合', () => {
+      const ONION_SPEC: ArchitectureSpec = freezeArchitectureSpec({
+        layers: ['domain', 'application', 'interface'],
+        allowedDependencies: {
+          domain: ['domain'],
+          application: ['application', 'domain'],
+          interface: ['interface', 'application', 'domain'],
+        },
+      });
+
+      it('domain → interface の依存が違反として検出される', () => {
+        // Arrange
+        const sut = createLintRunner();
+        const rules = Object.freeze([
+          createRuleDefinition({
+            name: createRuleName('no-layer-violation'),
+            requiredInputs: Object.freeze([
+              createRequiredInput('source-module-snapshots'),
+              createRequiredInput('import-graph'),
+            ]),
+            config: Object.freeze({ ignorePatterns: Object.freeze([]) }),
+            errorCode: 'L1-003',
+          }),
+        ]);
+        const domainFile = createFilePath('onion-sample/domain/a.ts');
+        const interfaceFile = createFilePath('onion-sample/interface/b.ts');
+        const snapshots = Object.freeze([
+          SourceModuleSnapshot.create(
+            {
+              filePath: domainFile,
+              declaredUnit: 'onion-sample',
+              declaredLayer: 'domain',
+              imports: Object.freeze([]),
+              anyTypeCount: 0,
+              typedNodeCount: 10,
+              commentLineCount: 1,
+              logicalLineCount: 10,
+              repeatedCommentBlocks: 0,
+              duplicationFingerprints: Object.freeze([]),
+              exportedSymbols: Object.freeze([]),
+              isEntrypointCandidate: false,
+            },
+            ONION_SPEC
+          ),
+          SourceModuleSnapshot.create(
+            {
+              filePath: interfaceFile,
+              declaredUnit: 'onion-sample',
+              declaredLayer: 'interface',
+              imports: Object.freeze([]),
+              anyTypeCount: 0,
+              typedNodeCount: 10,
+              commentLineCount: 1,
+              logicalLineCount: 10,
+              repeatedCommentBlocks: 0,
+              duplicationFingerprints: Object.freeze([]),
+              exportedSymbols: Object.freeze([]),
+              isEntrypointCandidate: false,
+            },
+            ONION_SPEC
+          ),
+        ]);
+        const graph = createImportGraph({
+          nodes: Object.freeze([domainFile, interfaceFile]),
+          edges: Object.freeze([createImportEdge({ from: domainFile, to: interfaceFile })]),
+        });
+
+        // Act
+        const actual = sut.run({
+          rules,
+          snapshots,
+          importGraph: graph,
+          durationMs: 10,
+          architecture: ONION_SPEC,
+        });
+
+        // Assert
+        expect(findViolationCount(actual, 'no-layer-violation')).toBeGreaterThan(0);
+      });
+
+      it('interface → domain の依存は許容される', () => {
+        // Arrange
+        const sut = createLintRunner();
+        const rules = Object.freeze([
+          createRuleDefinition({
+            name: createRuleName('no-layer-violation'),
+            requiredInputs: Object.freeze([
+              createRequiredInput('source-module-snapshots'),
+              createRequiredInput('import-graph'),
+            ]),
+            config: Object.freeze({ ignorePatterns: Object.freeze([]) }),
+            errorCode: 'L1-003',
+          }),
+        ]);
+        const interfaceFile = createFilePath('onion-sample/interface/a.ts');
+        const domainFile = createFilePath('onion-sample/domain/b.ts');
+        const snapshots = Object.freeze([
+          SourceModuleSnapshot.create(
+            {
+              filePath: interfaceFile,
+              declaredUnit: 'onion-sample',
+              declaredLayer: 'interface',
+              imports: Object.freeze([]),
+              anyTypeCount: 0,
+              typedNodeCount: 10,
+              commentLineCount: 1,
+              logicalLineCount: 10,
+              repeatedCommentBlocks: 0,
+              duplicationFingerprints: Object.freeze([]),
+              exportedSymbols: Object.freeze([]),
+              isEntrypointCandidate: false,
+            },
+            ONION_SPEC
+          ),
+          SourceModuleSnapshot.create(
+            {
+              filePath: domainFile,
+              declaredUnit: 'onion-sample',
+              declaredLayer: 'domain',
+              imports: Object.freeze([]),
+              anyTypeCount: 0,
+              typedNodeCount: 10,
+              commentLineCount: 1,
+              logicalLineCount: 10,
+              repeatedCommentBlocks: 0,
+              duplicationFingerprints: Object.freeze([]),
+              exportedSymbols: Object.freeze([]),
+              isEntrypointCandidate: false,
+            },
+            ONION_SPEC
+          ),
+        ]);
+        const graph = createImportGraph({
+          nodes: Object.freeze([interfaceFile, domainFile]),
+          edges: Object.freeze([createImportEdge({ from: interfaceFile, to: domainFile })]),
+        });
+
+        // Act
+        const actual = sut.run({
+          rules,
+          snapshots,
+          importGraph: graph,
+          durationMs: 10,
+          architecture: ONION_SPEC,
+        });
 
         // Assert
         expect(findViolationCount(actual, 'no-layer-violation')).toBe(0);

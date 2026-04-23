@@ -3,6 +3,7 @@
  * @unit biome-ast-engine
  */
 
+import type { ArchitectureSpec } from '../../domain/value-objects/architecture-spec.js';
 import { FilePath } from '../../domain/value-objects/file-path.js';
 import { ImportEdge } from '../../domain/value-objects/import-edge.js';
 import { SourceModuleSnapshot } from '../../domain/value-objects/source-module-snapshot.js';
@@ -31,7 +32,10 @@ export type RawModuleData = {
 /**
  * AST解析結果の生データを SourceModuleSnapshot 値オブジェクトへ変換する。
  */
-export const toSourceModuleSnapshot = (raw: RawModuleData): SourceModuleSnapshot => {
+export const toSourceModuleSnapshot = (
+  raw: RawModuleData,
+  architecture?: ArchitectureSpec
+): SourceModuleSnapshot => {
   const filePath = FilePath.fromWorkspaceRelative(raw.filePath);
 
   const imports = raw.imports.map((edge) =>
@@ -42,25 +46,30 @@ export const toSourceModuleSnapshot = (raw: RawModuleData): SourceModuleSnapshot
     })
   );
 
-  return SourceModuleSnapshot.create({
-    filePath,
-    declaredUnit: raw.declaredUnit,
-    declaredLayer: raw.declaredLayer,
-    imports,
-    anyTypeCount: raw.anyTypeCount,
-    typedNodeCount: raw.typedNodeCount,
-    commentLineCount: raw.commentLineCount,
-    logicalLineCount: raw.logicalLineCount,
-    repeatedCommentBlocks: raw.repeatedCommentBlocks,
-    duplicationFingerprints: raw.duplicationFingerprints,
-    exportedSymbols: raw.exportedSymbols,
-    isEntrypointCandidate: raw.isEntrypointCandidate,
-  });
+  return SourceModuleSnapshot.create(
+    {
+      filePath,
+      declaredUnit: raw.declaredUnit,
+      declaredLayer: raw.declaredLayer,
+      imports,
+      anyTypeCount: raw.anyTypeCount,
+      typedNodeCount: raw.typedNodeCount,
+      commentLineCount: raw.commentLineCount,
+      logicalLineCount: raw.logicalLineCount,
+      repeatedCommentBlocks: raw.repeatedCommentBlocks,
+      duplicationFingerprints: raw.duplicationFingerprints,
+      exportedSymbols: raw.exportedSymbols,
+      isEntrypointCandidate: raw.isEntrypointCandidate,
+    },
+    architecture
+  );
 };
 
 /**
  * 複数の生データを一括変換する。
  */
 export const toSourceModuleSnapshots = (
-  rawList: readonly RawModuleData[]
-): readonly SourceModuleSnapshot[] => rawList.map(toSourceModuleSnapshot);
+  rawList: readonly RawModuleData[],
+  architecture?: ArchitectureSpec
+): readonly SourceModuleSnapshot[] =>
+  rawList.map((raw) => toSourceModuleSnapshot(raw, architecture));

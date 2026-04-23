@@ -1,6 +1,10 @@
 // @layer test
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
+import {
+  freezeArchitectureSpec,
+  type ArchitectureSpec,
+} from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
 import { ImportEdge } from '../../../biome-ast-engine/domain/value-objects/import-edge.js';
 import { LayerName, InvalidLayerNameError } from '../../../biome-ast-engine/domain/value-objects/layer-name.js';
@@ -314,6 +318,72 @@ target('SourceModuleSnapshot.belongsToLayerDirectory', () => {
 
         // Assert
         expect(actual).toBe(true);
+      });
+    });
+  });
+});
+
+target('SourceModuleSnapshot.create with ArchitectureSpec', () => {
+  const HEXAGONAL_SPEC: ArchitectureSpec = freezeArchitectureSpec({
+    layers: ['core', 'ports', 'adapters'],
+    allowedDependencies: {
+      core: ['core'],
+      ports: ['ports', 'core'],
+      adapters: ['adapters', 'ports', 'core'],
+    },
+  });
+
+  describe('non-clean @layer 値を spec 付きで正規化する', () => {
+    context('declaredLayer=\'core\' + HEXAGONAL_SPEC の場合', () => {
+      it('declaredLayer が LayerName インスタンスとして正規化される', () => {
+        // Arrange
+        const props = {
+          filePath: createFilePath('hexagonal-sample/core/entity.ts'),
+          declaredUnit: 'hexagonal-sample',
+          declaredLayer: 'core',
+          imports: Object.freeze([]),
+          anyTypeCount: 0,
+          typedNodeCount: 10,
+          commentLineCount: 1,
+          logicalLineCount: 10,
+          repeatedCommentBlocks: 0,
+          duplicationFingerprints: Object.freeze([]),
+          exportedSymbols: Object.freeze([]),
+          isEntrypointCandidate: false,
+        };
+
+        // Act
+        const actual = SourceModuleSnapshot.create(props, HEXAGONAL_SPEC);
+
+        // Assert
+        expect(actual.declaredLayer?.toString()).toBe('core');
+        expect(actual.hasLayerComment()).toBe(true);
+      });
+    });
+
+    context('declaredLayer=\'core\' + spec 省略（clean default）の場合', () => {
+      it('declaredLayer が null に正規化される（clean に core が無い）', () => {
+        // Arrange
+        const props = {
+          filePath: createFilePath('hexagonal-sample/core/entity.ts'),
+          declaredUnit: 'hexagonal-sample',
+          declaredLayer: 'core',
+          imports: Object.freeze([]),
+          anyTypeCount: 0,
+          typedNodeCount: 10,
+          commentLineCount: 1,
+          logicalLineCount: 10,
+          repeatedCommentBlocks: 0,
+          duplicationFingerprints: Object.freeze([]),
+          exportedSymbols: Object.freeze([]),
+          isEntrypointCandidate: false,
+        };
+
+        // Act
+        const actual = SourceModuleSnapshot.create(props);
+
+        // Assert
+        expect(actual.declaredLayer).toBeNull();
       });
     });
   });

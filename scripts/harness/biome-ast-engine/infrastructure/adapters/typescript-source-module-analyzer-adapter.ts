@@ -7,6 +7,7 @@ import * as ts from 'typescript';
 import * as path from 'node:path';
 import type { FilePath } from '../../domain/value-objects/file-path.js';
 import type { SourceModuleAnalyzerPort } from '../../domain/ports/source-module-analyzer-port.js';
+import type { ArchitectureSpec } from '../../domain/value-objects/architecture-spec.js';
 import { SourceModuleSnapshot } from '../../domain/value-objects/source-module-snapshot.js';
 import { ImportEdge } from '../../domain/value-objects/import-edge.js';
 import { FilePath as FilePathVO } from '../../domain/value-objects/file-path.js';
@@ -30,7 +31,10 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
     this.rootDir = deps.rootDir;
   }
 
-  async analyzeMany(files: readonly FilePath[]): Promise<readonly SourceModuleSnapshot[]> {
+  async analyzeMany(
+    files: readonly FilePath[],
+    architecture?: ArchitectureSpec
+  ): Promise<readonly SourceModuleSnapshot[]> {
     const absolutePaths = files.map((f) => path.resolve(this.rootDir, f.toString()));
 
     const program = ts.createProgram(absolutePaths, {
@@ -62,20 +66,23 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
       const isEntrypoint = this.isEntrypointCandidate(filePath);
 
       snapshots.push(
-        SourceModuleSnapshot.create({
-          filePath,
-          declaredUnit: unitResult.unitNames[0],
-          declaredLayer: layerResult.layerName,
-          imports,
-          anyTypeCount: anyCount,
-          typedNodeCount: typedCount,
-          commentLineCount: densityResult.commentLineCount,
-          logicalLineCount: densityResult.logicalLineCount,
-          repeatedCommentBlocks: densityResult.repeatedCommentBlocks,
-          duplicationFingerprints: [],
-          exportedSymbols: exports,
-          isEntrypointCandidate: isEntrypoint,
-        })
+        SourceModuleSnapshot.create(
+          {
+            filePath,
+            declaredUnit: unitResult.unitNames[0],
+            declaredLayer: layerResult.layerName,
+            imports,
+            anyTypeCount: anyCount,
+            typedNodeCount: typedCount,
+            commentLineCount: densityResult.commentLineCount,
+            logicalLineCount: densityResult.logicalLineCount,
+            repeatedCommentBlocks: densityResult.repeatedCommentBlocks,
+            duplicationFingerprints: [],
+            exportedSymbols: exports,
+            isEntrypointCandidate: isEntrypoint,
+          },
+          architecture
+        )
       );
     }
 
