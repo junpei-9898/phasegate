@@ -7,8 +7,8 @@
  */
 
 import { spawn } from 'node:child_process';
-import type { CliExecutorPort, CliExecutionResult } from '../ports/cli-executor-port.js';
-import { TimeoutError } from '../ports/cli-executor-port.js';
+import type { CliExecutorPort, CliExecutionResult } from '../../application/ports/cli-executor-port.js';
+import { TimeoutError } from '../../application/ports/cli-executor-port.js';
 
 /**
  * CommandName を実行可能なコマンドに変換する

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.81.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-021（構造的バグ修正）** — Full mode 判定が story-implementor コンテキストを認識せず、Port/Adapter の refactor が正規ルートでも構造的にブロックされる問題を解消。
+  - 問題: `quick-mode-judgment-engine.ts` で `*port.ts` / `*adapter.ts` は一律 `api` カテゴリに分類され、`allowedCategories` 外として full mode block。hook は skill context を参照しないため `/story-implementor` 経由でも同じブロックが再発する循環参照に陥っていた。
+  - 修正: `HandlePreToolUseUseCase.execute()` の full mode ブランチに「当該Unitの必須設計文書（`logical_design.md` / `domain_model.md`）が揃っている場合は bypass」条件を追加。
+  - `scripts/harness/agent-integration/domain/ports/phase-gate-query-port.ts`: `checkDesignDocsExist(unitId): Promise<boolean>` を追加（既存 Port の責務拡張、ISP 違反なし）。
+  - `scripts/harness/agent-integration/infrastructure/adapters/phase-gate-query-adapter.ts`: `fs.access` で `logical_design.md` / `domain_model.md` 存在確認する adapter 実装。
+  - `HandlePreToolUseUseCase`: `isFullModeBypassedByDesignDocs` private method で bypass 判定を封じ込め、full mode block 直前に評価。
+  - 新規 IT test 5 件（adapter 3 件 + usecase 2 件）: 設計文書揃→bypass / 不足→従来通り block / 空 unitId→false。既存 3299 件 green 維持（総 **3304 件**）。
+
+- **ISSUE-018** — `cli-executor-port.ts` を `infrastructure/ports/` から `application/ports/` へ移動。ISSUE-021 の bypass 経由で実行可能に。
+  - Port は Clean Architecture の Dependency Inversion Principle に従い `application/ports/` に配置。Adapter は `infrastructure/adapters/` のまま。
+  - `@layer infrastructure` → `@layer application` に更新。
+  - import path 更新 5 箇所（`child-process-cli-executor-adapter.ts` / `handle-stop-usecase.ts` / `handle-post-tool-use-usecase.ts` / `agent-integration/index.ts` / `handle-post-tool-use-usecase.test.ts`）。
+  - 旧 `infrastructure/ports/` ディレクトリ削除。
+  - `phasegate lint` violation 数: 15 → **12**（L1-003: 12 → 9, 3件解消）。
+
 ## [0.80.0] - 2026-04-23
 
 ### Fixed

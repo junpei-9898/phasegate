@@ -112,3 +112,49 @@ target('PhaseGateQueryAdapter.checkGate', () => {
     });
   });
 });
+
+target('PhaseGateQueryAdapter.checkDesignDocsExist', () => {
+  describe('指定Unitの設計文書存在を判定する（ISSUE-021 bypass 条件）', () => {
+    context('logical_design.md と domain_model.md が両方存在する Unit の場合', () => {
+      // IT-REPO-PhaseGateQuery-021-01
+      it('true を返すこと', async () => {
+        // Arrange
+        const adapter = new PhaseGateQueryAdapter();
+
+        // Act
+        const actual = await adapter.checkDesignDocsExist('agent-integration');
+
+        // Assert
+        expect(actual).toBe(true);
+      });
+    });
+
+    context('存在しない Unit の場合', () => {
+      // IT-REPO-PhaseGateQuery-021-02
+      it('false を返すこと', async () => {
+        // Arrange
+        const adapter = new PhaseGateQueryAdapter();
+
+        // Act
+        const actual = await adapter.checkDesignDocsExist('unknown-unit-name-xyz');
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
+
+    context('unitId が空文字列の場合', () => {
+      // IT-REPO-PhaseGateQuery-021-03
+      it('false を返すこと', async () => {
+        // Arrange
+        const adapter = new PhaseGateQueryAdapter();
+
+        // Act
+        const actual = await adapter.checkDesignDocsExist('');
+
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
+  });
+});

@@ -2,6 +2,7 @@
 
 ## ステータス
 
+- **状態**: 🟢 **CLOSED (v0.81.0, 2026-04-23)** — ISSUE-021 bypass 経由で移動完了。L1-003 違反 3 件解消（12 → 9）
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 4（v0.80.0）で `no-layer-violation` (L1-003) の ignorePatterns 拡張後も残った 3 件の違反を分析中に発覚
 - **影響Unit**: agent-integration（主）

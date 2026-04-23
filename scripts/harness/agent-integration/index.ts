@@ -36,6 +36,6 @@ export { HarnessApiCliCommandRegistryAdapter } from './infrastructure/adapters/h
 export { HarnessConfigConfigQueryAdapter } from './infrastructure/adapters/harness-config-config-query-adapter.js';
 export { ChildProcessCliExecutorAdapter } from './infrastructure/adapters/child-process-cli-executor-adapter.js';
 
-// Infrastructure - Ports
-export { TimeoutError } from './infrastructure/ports/cli-executor-port.js';
-export type { CliExecutorPort, CliExecutionResult } from './infrastructure/ports/cli-executor-port.js';
+// Application - Ports
+export { TimeoutError } from './application/ports/cli-executor-port.js';
+export type { CliExecutorPort, CliExecutionResult } from './application/ports/cli-executor-port.js';

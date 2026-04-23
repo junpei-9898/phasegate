@@ -50,6 +50,7 @@ export class HandlePreToolUseUseCase {
 
   private readonly translator: AsyncHookToCliTranslator;
   private readonly configQueryPort: ConfigQueryPort;
+  private readonly phaseGateQueryPort: PhaseGateQueryPort;
   private readonly storyReflectionQueryPort?: StoryReflectionQueryPort;
   private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
   private readonly baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
@@ -61,6 +62,7 @@ export class HandlePreToolUseUseCase {
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
     this.configQueryPort = ports.configQueryPort;
+    this.phaseGateQueryPort = ports.phaseGateQueryPort;
     this.storyReflectionQueryPort = ports.storyReflectionQueryPort;
     this.fullModeRequirementQueryPort = ports.fullModeRequirementQueryPort;
     this.baselineGrandfatherQueryPort = ports.baselineGrandfatherQueryPort;
@@ -77,6 +79,19 @@ export class HandlePreToolUseUseCase {
       cliCommandRegistryPort: { hasCommand: async () => true },
       phaseGateQueryPort: ports.phaseGateQueryPort,
     });
+  }
+
+  private async isFullModeBypassedByDesignDocs(targetFilePaths: readonly string[]): Promise<boolean> {
+    const unitId = this.deriveUnitIdFromPaths(targetFilePaths);
+    if (unitId === undefined || unitId === '') {
+      return false;
+    }
+
+    try {
+      return await this.phaseGateQueryPort.checkDesignDocsExist(unitId);
+    } catch {
+      return false;
+    }
   }
 
   async execute(input: HandlePreToolUseInput): Promise<HandlePreToolUseOutput> {
@@ -131,14 +146,19 @@ export class HandlePreToolUseUseCase {
       } else {
         const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
         if (fullModeResult.requiresFullMode) {
-          const guidance = await this.resolveGuidance('L2-001');
-          const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
-          return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
-            input.targetFilePaths[0],
-            fullModeResult,
-            guidance,
-            unitIdForGuidance,
-          );
+          // ISSUE-021: 当該Unitの必須設計文書が揃っている場合は full mode block を bypass
+          //（hook がスキルコンテキストを参照できない構造的ギャップへの対処）
+          const bypassedByDesignDocs = await this.isFullModeBypassedByDesignDocs(input.targetFilePaths);
+          if (!bypassedByDesignDocs) {
+            const guidance = await this.resolveGuidance('L2-001');
+            const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
+            return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
+              input.targetFilePaths[0],
+              fullModeResult,
+              guidance,
+              unitIdForGuidance,
+            );
+          }
         }
       }
     }

@@ -30,6 +30,7 @@ function createDefaultMockConfigQueryPort() {
 function createDefaultMockPhaseGateQueryPort() {
   return {
     checkGate: vi.fn().mockResolvedValue(PhaseGateQueryResult.create(true, [], [])),
+    checkDesignDocsExist: vi.fn().mockResolvedValue(false),
   };
 }
 
@@ -752,6 +753,77 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledWith([
           'scripts/harness/some-unit/domain/new-entity.ts',
         ]);
+      });
+    });
+
+    context('ISSUE-021: requiresFullMode=true でも設計文書が揃っている Unit は bypass される', () => {
+      it('logical_design.md / domain_model.md が存在する Unit の Port 変更はブロックされないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(PhaseGateQueryResult.create(true, [], [])),
+          checkDesignDocsExist: vi.fn().mockResolvedValue(true),
+        };
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'MIXED_CHANGES' as const,
+            rejectionReason: 'allowedCategories外のファイルが含まれています',
+            dominantCategory: 'api',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/application/ports/cli-executor-port.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(mockPhaseGateQueryPort.checkDesignDocsExist).toHaveBeenCalledWith('agent-integration');
+      });
+    });
+
+    context('ISSUE-021: 設計文書が不足している Unit はブロックされる', () => {
+      it('checkDesignDocsExist が false を返す場合は従来通り FULL_MODE_REQUIRED でブロックされること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = {
+          checkGate: vi.fn().mockResolvedValue(PhaseGateQueryResult.create(true, [], [])),
+          checkDesignDocsExist: vi.fn().mockResolvedValue(false),
+        };
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: true,
+            rejectionRule: 'MIXED_CHANGES' as const,
+            rejectionReason: 'allowedCategories外のファイルが含まれています',
+            dominantCategory: 'api',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/undesigned-unit/application/ports/some-port.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(true);
+        expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+        expect(mockPhaseGateQueryPort.checkDesignDocsExist).toHaveBeenCalledWith('undesigned-unit');
       });
     });
 

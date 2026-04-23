@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { HandlePostToolUseUseCase } from '../../../agent-integration/application/usecases/handle-post-tool-use-usecase.js';
-import { TimeoutError } from '../../../agent-integration/infrastructure/ports/cli-executor-port.js';
+import { TimeoutError } from '../../../agent-integration/application/ports/cli-executor-port.js';
 
 function createHandlePostToolUseUseCase(ports: {
   configQueryPort: { isHookEnabled: ReturnType<typeof vi.fn>; getProtectedFilePatterns: ReturnType<typeof vi.fn>; getProtectedFileExclusions: ReturnType<typeof vi.fn>; getRelaxedGates: ReturnType<typeof vi.fn>; getProjectPaths: ReturnType<typeof vi.fn>; getBaselineConfig: ReturnType<typeof vi.fn> };

@@ -1,8 +1,8 @@
 /**
- * @layer infrastructure
+ * @layer application
  * @unit agent-integration
  *
- * CliExecutorPort — infrastructure層ローカルポート
+ * CliExecutorPort — application層ポート（Adapter は infrastructure/adapters/ で実装）
  */
 
 export interface CliExecutionResult {

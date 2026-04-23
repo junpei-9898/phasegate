@@ -12,7 +12,7 @@ import { ReentryGuard } from '../../domain/entities/reentry-guard.js';
 import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
 import type { ReentryGuardStatePort } from '../../domain/ports/reentry-guard-state-port.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
-import type { CliExecutorPort } from '../../infrastructure/ports/cli-executor-port.js';
+import type { CliExecutorPort } from '../ports/cli-executor-port.js';
 import type { HandleStopInput, HandleStopOutput } from '../dto/handle-stop-dto.js';
 
 export interface HandleStopUseCasePorts {

@@ -11,8 +11,8 @@ import { HookEvent } from '../../domain/value-objects/hook-event.js';
 import { ReentryGuard } from '../../domain/entities/reentry-guard.js';
 import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
-import type { CliExecutorPort, CliExecutionResult } from '../../infrastructure/ports/cli-executor-port.js';
-import { TimeoutError } from '../../infrastructure/ports/cli-executor-port.js';
+import type { CliExecutorPort, CliExecutionResult } from '../ports/cli-executor-port.js';
+import { TimeoutError } from '../ports/cli-executor-port.js';
 import type { HandlePostToolUseInput, HandlePostToolUseOutput } from '../dto/handle-post-tool-use-dto.js';
 
 export interface HandlePostToolUseUseCasePorts {

@@ -2,6 +2,7 @@
 
 ## ステータス
 
+- **状態**: 🟢 **CLOSED (v0.81.0, 2026-04-23)** — 選択肢 A で解決。`PhaseGateQueryPort.checkDesignDocsExist` 追加 → `HandlePreToolUseUseCase` で bypass 判定。self-verify として ISSUE-018 の Port 移動を実施し block されないことを確認
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-018（Port 配置修正）着手時、quick-implementor でブロック → `/story-implementor` に誘導 → story-implementor 経由でも同一ブロックが再発する循環に遭遇
 - **影響Unit**: agent-integration（hook）/ quick-mode（judgment engine）
