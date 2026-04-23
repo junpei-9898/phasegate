@@ -1,5 +1,8 @@
 # ドメインモデル: phase-dependency-model
 
+@story-id H02-01
+@story-id H02-02
+@story-id H02-03
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-03-28（ISSUE-001 inception側フェーズゲート整備）

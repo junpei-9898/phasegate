@@ -1,5 +1,8 @@
 # ユニットテストロジック設計: phase2-extensions
 
+@story-id HF2-01
+@story-id HF2-02
+@story-id HF2-03
 > **Unit ID**: phase2-extensions
 > **作成日**: 2026-03-20
 > **参照**: unit_test_design.md, domain_model.md

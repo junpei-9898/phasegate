@@ -1,5 +1,8 @@
 # ITテスト設計: quick-mode
 
+@story-id H10-01
+@story-id H10-02
+@story-id H10-03
 > **作成日**: 2026-03-19
 > **対象Unit**: quick-mode
 > **対応ストーリー**: H10-01, H10-02, H10-03

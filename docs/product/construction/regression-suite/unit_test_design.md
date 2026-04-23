@@ -1,5 +1,10 @@
 # ユニットテスト設計: regression-suite
 
+@story-id H14-01
+@story-id H14-02
+@story-id H14-03
+@story-id H15-01
+@story-id H15-02
 > **Unit ID**: regression-suite
 > **作成日**: 2026-03-20
 > **対応ストーリー**: H14, H15

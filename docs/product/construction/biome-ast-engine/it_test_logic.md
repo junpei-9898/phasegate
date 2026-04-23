@@ -1,5 +1,8 @@
 # ITテストロジック設計: biome-ast-engine
 
+@story-id H01-01
+@story-id H01-02
+@story-id H01-03
 ## 1. テストファイル構成
 
 ### 1.1 配置方針

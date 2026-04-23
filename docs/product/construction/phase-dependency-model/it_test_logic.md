@@ -1,5 +1,8 @@
 # ITテストロジック設計: phase-dependency-model
 
+@story-id H02-01
+@story-id H02-02
+@story-id H02-03
 ## 1. テストファイル構成
 
 | テストファイル | target | 対応ケースID |

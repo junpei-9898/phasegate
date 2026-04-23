@@ -1,5 +1,8 @@
 # ユニットテストロジック設計: phase-dependency-model
 
+@story-id H02-01
+@story-id H02-02
+@story-id H02-03
 > 対象ケース: `UT-PD-001` 〜 `UT-PD-114`, `UT-PD-134` 〜 `UT-PD-152`（ISSUE-001追加分）
 > 正規ケース定義: `docs/product/construction/phase-dependency-model/unit_test_design.md`
 > 参照: `docs/product/construction/phase-dependency-model/domain_model.md`, `docs/product/construction/phase-dependency-model/coverage_report.md`

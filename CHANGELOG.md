@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.89.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-010 Wave 3（partial）** — 11 Unit × 7 設計文書 = 75 件に `@story-id` standalone 注釈を補填し PASS 化。
+  - `agent-integration` / `biome-ast-engine` / `ci-governance` / `harness-api` / `harness-error` / `nyquist-validation` / `phase-dependency-model` / `quick-mode` / `regression-suite` / `skill-quality` / `validator-system` の各 Unit の 7 ファイル（`coverage_report.md` / `domain_model.md` / `it_test_design.md` / `it_test_logic.md` / `logical_design.md` / `unit_test_design.md` / `unit_test_logic.md`）に H01-H15 系 StoryId を付与。
+  - 残 14 件（`fuse-hooks-engine` 7 + `phase2-extensions` 7）は `HF1-XX` / `HF2-XX` 形式の StoryId を必要とするが、`metadata-validator.STORY_ID_PATTERN = /^H[0-9]{2}-[0-9]{2}$/` が `HF` prefix 非対応のため PASS 化不可能。validator パターン拡張は別 issue 対象（ISSUE-019）として切り出し、本 Wave 3 は partial 完了。
+
+### Lint / Metadata state
+
+- L1 violations: **0 件維持**
+- `validate-metadata` FAIL: 89 → **14**（-75: 11 Unit × 7 ファイル解消）
+- 残 14 件は HF-prefix validator 制約による既知の限界（新規回帰ではない）
+- 既存 3308 件テスト全 green（regression なし）
+
 ## [0.88.0] - 2026-04-23
 
 ### Fixed

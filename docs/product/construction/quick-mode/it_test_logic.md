@@ -1,5 +1,8 @@
 # ITテストロジック設計: quick-mode
 
+@story-id H10-01
+@story-id H10-02
+@story-id H10-03
 > **作成日**: 2026-03-19
 > **対象Unit**: quick-mode
 > **参照計画**: `docs/inception/quick-mode/it_test_logic_plan.md`

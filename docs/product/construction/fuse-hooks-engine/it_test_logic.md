@@ -1,5 +1,10 @@
 # ITテストロジック設計: fuse-hooks-engine
 
+@story-id HF1-01
+@story-id HF1-02
+@story-id HF1-03
+@story-id HF1-04
+@story-id HF1-05
 > **Unit ID**: fuse-hooks-engine
 > **作成日**: 2026-03-20
 > **参照**: it_test_design.md, logical_design.md

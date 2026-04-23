@@ -1,5 +1,8 @@
 # ITテスト設計: biome-ast-engine
 
+@story-id H01-01
+@story-id H01-02
+@story-id H01-03
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H01-01, H01-02, H01-03
 > **正規ソース**: `docs/product/construction/biome-ast-engine/logical_design.md`

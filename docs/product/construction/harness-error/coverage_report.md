@@ -1,5 +1,8 @@
 # テストカバレッジレポート: harness-error
 
+@story-id H06-01
+@story-id H06-02
+@story-id H06-03
 > 判定基準: `✅` = 完全カバー、`⚠️` = 一部カバー、`❌` = 未カバー
 > 集計ルール: サマリーの「カバー項目数」は `✅` のみを計上し、`⚠️` と `❌` は未カバー項目数に含める。
 > AC ID欄は、`docs/product/units/harness_error_unit.md` の機能要件節番号と箇条書き番号を参照IDとして用いる。

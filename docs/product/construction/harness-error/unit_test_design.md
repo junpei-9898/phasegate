@@ -1,5 +1,8 @@
 # ユニットテスト設計: harness-error
 
+@story-id H06-01
+@story-id H06-02
+@story-id H06-03
 > **Unit ID**: harness-error
 > **作成日**: 2026-03-13
 > **Phase**: 2（Construction）

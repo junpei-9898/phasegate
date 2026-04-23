@@ -1,5 +1,8 @@
 # テストカバレッジレポート: phase-dependency-model
 
+@story-id H02-01
+@story-id H02-02
+@story-id H02-03
 ## 1. サマリー
 
 > 集計方針: `⚠️ 一部カバー` は未カバーとして集計。HTTP APIエンドポイントは存在しないため、API観点は集計対象外。

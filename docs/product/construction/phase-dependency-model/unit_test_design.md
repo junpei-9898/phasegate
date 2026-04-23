@@ -1,5 +1,8 @@
 # ユニットテスト設計: phase-dependency-model
 
+@story-id H02-01
+@story-id H02-02
+@story-id H02-03
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H02-01, H02-02, H02-03

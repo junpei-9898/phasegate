@@ -1,5 +1,11 @@
 # ドメインモデル: validator-system
 
+@story-id H08-01
+@story-id H08-02
+@story-id H08-03
+@story-id H08-04
+@story-id H08-05
+@story-id H08-06
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）

@@ -1,5 +1,8 @@
 # ドメインモデル: quick-mode
 
+@story-id H10-01
+@story-id H10-02
+@story-id H10-03
 > **Unit ID**: quick-mode
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）

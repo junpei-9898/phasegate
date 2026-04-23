@@ -1,5 +1,9 @@
 # テストカバレッジレポート: nyquist-validation
 
+@story-id H07-01
+@story-id H07-02
+@story-id H07-03
+@story-id H07-04
 > **Unit ID**: nyquist-validation
 > **作成日**: 2026-03-19
 > **Wave**: 2（品質検証レイヤー）

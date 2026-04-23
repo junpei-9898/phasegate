@@ -1,5 +1,8 @@
 # ドメインモデル: harness-error
 
+@story-id H06-01
+@story-id H06-02
+@story-id H06-03
 > **Unit ID**: harness-error
 > **作成日**: 2026-03-13
 > **Wave**: 1（基盤構築）

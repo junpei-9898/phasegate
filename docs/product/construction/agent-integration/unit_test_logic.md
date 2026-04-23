@@ -1,5 +1,9 @@
 # ユニットテストロジック設計: agent-integration
 
+@story-id H11-01
+@story-id H11-02
+@story-id H11-03
+@story-id H11-04
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-28（ISSUE-001 issueパス認識 + PhaseGateQueryResult 追加）

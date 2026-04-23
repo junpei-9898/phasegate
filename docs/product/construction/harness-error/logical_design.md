@@ -1,5 +1,8 @@
 # 論理設計: harness-error
 
+@story-id H06-01
+@story-id H06-02
+@story-id H06-03
 > **Unit ID**: harness-error
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H06-01, H06-02, H06-03

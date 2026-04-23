@@ -1,5 +1,9 @@
 # ユニットテストロジック設計: harness-api
 
+@story-id H09-01
+@story-id H09-02
+@story-id H09-03
+@story-id H09-04
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **Wave**: 2（コア品質機構）

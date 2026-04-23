@@ -1,5 +1,11 @@
 # ITテストロジック設計: validator-system
 
+@story-id H08-01
+@story-id H08-02
+@story-id H08-03
+@story-id H08-04
+@story-id H08-05
+@story-id H08-06
 ## 1. テストファイル構成
 
 | テストファイル | 対象コンポーネント | ケース数 |

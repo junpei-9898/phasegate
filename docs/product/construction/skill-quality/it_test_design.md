@@ -1,5 +1,11 @@
 # ITテスト設計: skill-quality
 
+@story-id H12-01
+@story-id H12-02
+@story-id H12-03
+@story-id H12-04
+@story-id H12-05
+@story-id H12-06
 > **Unit ID**: skill-quality
 > **作成日**: 2026-03-20
 > **対応ストーリー**: H12-01, H12-02, H12-03, H12-04, H12-05, H12-06

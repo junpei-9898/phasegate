@@ -1,5 +1,10 @@
 # 論理設計: fuse-hooks-engine
 
+@story-id HF1-01
+@story-id HF1-02
+@story-id HF1-03
+@story-id HF1-04
+@story-id HF1-05
 > **Unit ID**: fuse-hooks-engine
 > **作成日**: 2026-03-20
 > **対応ストーリー**: HF1-01, HF1-02, HF1-03, HF1-04, HF1-05

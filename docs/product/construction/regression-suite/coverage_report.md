@@ -1,5 +1,10 @@
 # テストカバレッジレポート: regression-suite
 
+@story-id H14-01
+@story-id H14-02
+@story-id H14-03
+@story-id H15-01
+@story-id H15-02
 > **作成日**: 2026-03-20
 > **Unit ID**: regression-suite
 > **Wave**: 3

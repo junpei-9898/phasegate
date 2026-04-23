@@ -1,5 +1,8 @@
 # ユニットテストロジック設計: biome-ast-engine
 
+@story-id H01-01
+@story-id H01-02
+@story-id H01-03
 > 本書は `unit_test_design.md` に定義された 192 ケースのみを対象に、Vitest 実装時の疑似コードと補助設計を定義する。`coverage_report.md` が指摘する未設計項目は、ケースID未定義のため追加しない。
 
 ## 1. テストファイル構成

@@ -1,5 +1,8 @@
 # ドメインモデル: biome-ast-engine
 
+@story-id H01-01
+@story-id H01-02
+@story-id H01-03
 > **Unit ID**: biome-ast-engine
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-03-17（H01-01, H01-02, H01-03 実装完了後の cascade update）

@@ -1,5 +1,9 @@
 # ITテストロジック設計: agent-integration
 
+@story-id H11-01
+@story-id H11-02
+@story-id H11-03
+@story-id H11-04
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01, H11-02, H11-03, H11-04

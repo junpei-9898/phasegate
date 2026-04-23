@@ -1,5 +1,9 @@
 # ITテストロジック設計: nyquist-validation
 
+@story-id H07-01
+@story-id H07-02
+@story-id H07-03
+@story-id H07-04
 ## 1. テストファイル構成
 
 | テストファイル | 対象コンポーネント | ケース数 |

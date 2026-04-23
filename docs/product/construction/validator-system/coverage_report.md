@@ -1,5 +1,11 @@
 # テストカバレッジレポート: validator-system
 
+@story-id H08-01
+@story-id H08-02
+@story-id H08-03
+@story-id H08-04
+@story-id H08-05
+@story-id H08-06
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **フェーズ**: Phase 2（カバレッジ分析） + Phase 3（自己レビュー済み）

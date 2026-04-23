@@ -1,5 +1,11 @@
 # ユニットテストロジック設計: skill-quality
 
+@story-id H12-01
+@story-id H12-02
+@story-id H12-03
+@story-id H12-04
+@story-id H12-05
+@story-id H12-06
 > **Unit ID**: skill-quality
 > **作成日**: 2026-03-20
 > **参照**: unit_test_design.md, domain_model.md

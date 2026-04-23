@@ -1,5 +1,8 @@
 # テストカバレッジレポート: ci-governance
 
+@story-id H13-01
+@story-id H13-02
+@story-id H13-03
 > **作成日**: 2026-03-20
 > **Unit ID**: ci-governance
 > **Wave**: 3

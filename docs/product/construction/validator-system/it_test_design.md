@@ -1,5 +1,11 @@
 # ITテスト設計: validator-system
 
+@story-id H08-01
+@story-id H08-02
+@story-id H08-03
+@story-id H08-04
+@story-id H08-05
+@story-id H08-06
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H08-01〜H08-06

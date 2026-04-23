@@ -1,5 +1,8 @@
 # 論理設計: ci-governance
 
+@story-id H13-01
+@story-id H13-02
+@story-id H13-03
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H13-01, H13-02, H13-03

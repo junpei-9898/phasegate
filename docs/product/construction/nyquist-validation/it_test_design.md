@@ -1,5 +1,9 @@
 # ITテスト設計: nyquist-validation
 
+@story-id H07-01
+@story-id H07-02
+@story-id H07-03
+@story-id H07-04
 > **Unit ID**: nyquist-validation
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H07-01, H07-02, H07-03, H07-04

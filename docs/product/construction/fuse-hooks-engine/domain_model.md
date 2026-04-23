@@ -1,5 +1,10 @@
 # ドメインモデル: fuse-hooks-engine
 
+@story-id HF1-01
+@story-id HF1-02
+@story-id HF1-03
+@story-id HF1-04
+@story-id HF1-05
 > **Unit ID**: fuse-hooks-engine
 > **作成日**: 2026-03-20
 > **最終更新**: 2026-03-20（Wave 2 初版）

@@ -1,5 +1,8 @@
 # ITテストロジック設計: ci-governance
 
+@story-id H13-01
+@story-id H13-02
+@story-id H13-03
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-20
 > **参照**: it_test_design.md, logical_design.md
