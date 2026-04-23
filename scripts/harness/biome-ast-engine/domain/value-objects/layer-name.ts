@@ -16,7 +16,7 @@ const ALLOWED_DEPENDENCIES: Readonly<Record<LayerNameValue, readonly LayerNameVa
   domain: Object.freeze(['domain']),
   application: Object.freeze(['application', 'domain']),
   infrastructure: Object.freeze(['infrastructure', 'application', 'domain']),
-  presentation: Object.freeze(['presentation', 'application']),
+  presentation: Object.freeze(['presentation', 'application', 'domain']),
 };
 
 export class InvalidLayerNameError extends Error {

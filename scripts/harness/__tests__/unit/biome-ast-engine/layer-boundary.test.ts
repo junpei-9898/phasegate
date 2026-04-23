@@ -132,6 +132,36 @@ target('LayerBoundary.standardMatrix', () => {
       );
       expect(boundary?.allowed).toBe(false);
     });
+
+    it('presentationからdomainへの依存がallowed=trueである（ADR-014 Robert C. Martin 版 CA 準拠）', () => {
+      // Arrange
+
+      // Act
+      const actual = LayerBoundary.standardMatrix();
+
+      // Assert
+      const boundary = actual.find(
+        (item) =>
+          item.sourceLayer.toString() === 'presentation' &&
+          item.targetLayer.toString() === 'domain'
+      );
+      expect(boundary?.allowed).toBe(true);
+    });
+
+    it('presentationからinfrastructureへの依存がallowed=falseである', () => {
+      // Arrange
+
+      // Act
+      const actual = LayerBoundary.standardMatrix();
+
+      // Assert
+      const boundary = actual.find(
+        (item) =>
+          item.sourceLayer.toString() === 'presentation' &&
+          item.targetLayer.toString() === 'infrastructure'
+      );
+      expect(boundary?.allowed).toBe(false);
+    });
   });
 });
 

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.86.0] - 2026-04-23
+
+### Changed
+
+- **ISSUE-019 / ADR-014** — LayerBoundary の解釈を **Robert C. Martin 版 Clean Architecture** に切り替え、`presentation → domain` 直接依存を許容。
+  - 変更: `ALLOWED_DEPENDENCIES.presentation` に `'domain'` を追加（`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:15-20`）。
+  - 背景: 従来の厳格 DDD Layered 解釈では presenter / formatter / CLI handler が domain VO / type / policy を read-only で参照するだけで L1-003 違反となっていたが、これは CA では一般的実装。read-only で DIP の本質を侵さない限り許容する。
+  - 禁止は継続: `presentation → infrastructure`、`domain → 他層`、`application → presentation` 等の逆方向依存。
+  - 緩和策の opt-in 提供は ISSUE-014（アーキ config 化）で対応予定。厳格派は `preset: "strict-ddd"` で現行挙動を維持可能とする。
+  - 新規 ADR: `docs/ADR/ADR-014-presentation-domain-dependency.md`。
+  - 新規 test: `layer-boundary.test.ts` に presentation→domain allowed、presentation→infrastructure disallowed の 2 ケース追加。
+
+### Lint state
+
+- total: 8 → **0**（L1-003 presentation→domain 8 件解消、他 rule 増減無し）
+- 既存 3308 件テスト全 green（新規 2 ケース込み）
+
 ## [0.85.0] - 2026-04-23
 
 ### Fixed

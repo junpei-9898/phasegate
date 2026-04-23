@@ -2,6 +2,7 @@
 
 ## ステータス
 
+- **状態**: 🟢 CLOSED (v0.86.0, 2026-04-23) — 選択肢 A 採用。ADR-014 起票済み
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 4（v0.80.0）で L1-003 違反の残 12 件のうち 8 件が `presentation/*.ts → domain/*.ts` であることを確認。現行 phasegate の LayerBoundary 定義では `presentation` layer は `presentation + application` にしか依存できず、domain は禁止されている
 - **影響Unit**: biome-ast-engine（LayerBoundary 定義主体）

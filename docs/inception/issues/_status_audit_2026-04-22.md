@@ -16,8 +16,9 @@
 | ISSUE-020 | **新規起票 → CLOSED (v0.82.0)**: `PhaseDependenciesPresetId` を VO 側へ移動し循環依存を解消。L1-003: 9 → 8 |
 | ISSUE-021 | **新規起票 → CLOSED (v0.81.0)**: Full mode bypass を設計文書存在チェックで実装。PhaseGateQueryPort 拡張 + HandlePreToolUseUseCase 修正。ISSUE-018 の前提条件を解消 |
 | ISSUE-022 | **新規起票 → CLOSED (v0.85.0)**: `no-layer-violation.ignorePatterns` に `**/index.ts` を追加し Unit barrel 誤検知を解消。L1-003: 15 → 8（barrel 7 件解消） |
-| 現在の lint 状態 | **8 件**（全て L1-003 `presentation → domain`、ISSUE-019 スコープ）。L1-006 / L1-007 は v0.84.0 で 0 件化。barrel 誤検知は v0.85.0 で 0 件化 |
-| 次の最優先 | ISSUE-010 (103件 @story-id) / ISSUE-019 (LayerBoundary 仕様: presentation→domain、ISSUE-014 合流候補) |
+| ISSUE-019 | **CLOSED (v0.86.0)**: 選択肢 A 採用。`ALLOWED_DEPENDENCIES.presentation` に `'domain'` 追加で Robert C. Martin 版 CA 準拠に変更。ADR-014 起票。L1-003: 8 → 0（presentation→domain 8件解消） |
+| 現在の lint 状態 | **0 件** 🎉。全 L1-001〜L1-007 violations 無し。ISSUE-003 (159件スタート) 完全解消 |
+| 次の最優先 | ISSUE-010 (103件 @story-id) / ISSUE-014 (preset `strict-ddd` で厳格派 opt-in 提供) / ISSUE-001 (Medium, inception 設計順序強制) |
 
 ---
 
@@ -38,7 +39,7 @@ ISSUE-007 完了 (v0.74.0) 直後の時点。
 | Issue | 記載ステータス | 実態 | Priority | 所感 |
 |---|---|---|---|---|
 | **ISSUE-001** | 未記載 | 🔴 **真に未解決** | Medium | inception 内の設計順序強制ロジック無し（`check-story-reflection-usecase.ts` は product 反映のみチェック） |
-| **ISSUE-003** | 低 | 🟡 **大幅改善（159 → 8 件、v0.75.0〜v0.85.0）** | 低 | 残 8 件は ISSUE-019 (presentation→domain 哲学判断) で tracking。barrel 誤検知は ISSUE-022 で v0.85.0 解消 |
+| **ISSUE-003** | 低 | 🟢 **完全解消 (159 → 0 件、v0.75.0〜v0.86.0)** | — | v0.86.0 / ADR-014 で最終 8 件も CLOSED。lint violations 0 件達成 |
 | **ISSUE-006** | IN PROGRESS | 🟢 **ほぼ完了** | P1 | `quick-mode` Unit / `fullModeRequiredWhen` 配線済み。**他PJ 再レビューのみ残** |
 | **ISSUE-007** | CLOSED（2026-04-23） | 🟢 **真に完了** | — | Wave 9 (v0.74.0) で acceptance 全 8 条件成立。2026-04-23 に CLOSE 宣言 |
 | **ISSUE-009** | 未着手 | 🟡 **DEFERRED**（2026-04-23） | ~~P1~~ → P2 | Orchestration Engine との責務境界見直しで保留。単一 agent 前提の現状は既存 hook で機能 |
