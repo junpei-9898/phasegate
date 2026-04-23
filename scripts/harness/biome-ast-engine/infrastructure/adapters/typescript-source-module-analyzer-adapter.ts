@@ -84,37 +84,47 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
 
   private extractImports(sourceFile: ts.SourceFile, fromFile: FilePath): ImportEdge[] {
     const edges: ImportEdge[] = [];
+    const fromDir = path.dirname(path.resolve(this.rootDir, fromFile.toString()));
 
-    ts.forEachChild(sourceFile, (node) => {
+    const pushEdge = (specifier: string, importKind: 'value' | 'type' | 'dynamic'): void => {
+      if (!specifier.startsWith('.')) {
+        return;
+      }
+
+      const resolved = path.resolve(fromDir, specifier.replace(/\.js$/, '.ts'));
+      const relative = path.relative(this.rootDir, resolved);
+
+      if (relative.startsWith('..')) {
+        return;
+      }
+
+      try {
+        edges.push(
+          ImportEdge.create({
+            from: fromFile,
+            to: FilePathVO.fromWorkspaceRelative(relative),
+            importKind,
+          })
+        );
+      } catch {
+        // invalid path — skip
+      }
+    };
+
+    const visit = (node: ts.Node): void => {
       if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-        const specifier = node.moduleSpecifier.text;
-
-        if (!specifier.startsWith('.')) {
-          return;
-        }
-
-        const fromDir = path.dirname(path.resolve(this.rootDir, fromFile.toString()));
-        const resolved = path.resolve(fromDir, specifier.replace(/\.js$/, '.ts'));
-        const relative = path.relative(this.rootDir, resolved);
-
-        if (relative.startsWith('..')) {
-          return;
-        }
-
         const importKind =
           node.importClause?.isTypeOnly === true ? 'type' as const : 'value' as const;
+        pushEdge(node.moduleSpecifier.text, importKind);
+      }
 
-        try {
-          edges.push(
-            ImportEdge.create({
-              from: fromFile,
-              to: FilePathVO.fromWorkspaceRelative(relative),
-              importKind,
-            })
-          );
-        } catch {
-          // invalid path — skip
-        }
+      if (
+        ts.isExportDeclaration(node) &&
+        node.moduleSpecifier !== undefined &&
+        ts.isStringLiteral(node.moduleSpecifier)
+      ) {
+        const importKind = node.isTypeOnly === true ? 'type' as const : 'value' as const;
+        pushEdge(node.moduleSpecifier.text, importKind);
       }
 
       if (
@@ -123,33 +133,13 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
         node.arguments.length > 0 &&
         ts.isStringLiteral(node.arguments[0])
       ) {
-        const specifier = node.arguments[0].text;
-
-        if (!specifier.startsWith('.')) {
-          return;
-        }
-
-        const fromDir = path.dirname(path.resolve(this.rootDir, fromFile.toString()));
-        const resolved = path.resolve(fromDir, specifier.replace(/\.js$/, '.ts'));
-        const relative = path.relative(this.rootDir, resolved);
-
-        if (relative.startsWith('..')) {
-          return;
-        }
-
-        try {
-          edges.push(
-            ImportEdge.create({
-              from: fromFile,
-              to: FilePathVO.fromWorkspaceRelative(relative),
-              importKind: 'dynamic',
-            })
-          );
-        } catch {
-          // invalid path — skip
-        }
+        pushEdge(node.arguments[0].text, 'dynamic');
       }
-    });
+
+      ts.forEachChild(node, visit);
+    };
+
+    ts.forEachChild(sourceFile, visit);
 
     return edges;
   }

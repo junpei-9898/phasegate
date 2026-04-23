@@ -2,6 +2,7 @@
 
 ## ステータス
 
+- **状態**: 🟢 **CLOSED (v0.83.0, 2026-04-23)** — `extractImports` に `ts.isExportDeclaration` ブランチを追加、`ts.forEachChild` の浅い走査を再帰走査に置換。`quick-mode/domain/ports/changed-files-port.ts` の L1-006 ghost false positive 解消（L1-006: 2 → 1）。副作用として従来隠れていた barrel 再エクスポートの実アーキ違反 7 件が L1-003 に露出（8 → 15）— これは検出精度向上の結果であり ISSUE-019 文脈で追跡。
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 3（L1-006 no-ghost-file 解消）で、`quick-mode/domain/ports/changed-files-port.ts` が実際には `application/ports/changed-files-port.ts` 経由で `export { ChangedFilesPort } from '../../domain/...'` 再エクスポートされているにもかかわらず ghost 判定された
 - **影響Unit**: biome-ast-engine（主）

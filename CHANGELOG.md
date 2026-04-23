@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.83.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-017** — `extractImports` の `export ... from` 再エクスポート／関数内 dynamic import 未対応による ghost-file 検出の false positive を解消。
+  - 問題: `typescript-source-module-analyzer-adapter.ts:extractImports` は `ts.isImportDeclaration` と **トップレベル**の dynamic import (`ts.isCallExpression` + `ImportKeyword`) のみ対応。`export { X } from '...'` / `export type { X } from '...'` / `export * from '...'` / `export { X as Y } from '...'` および関数内ネスト dynamic import が完全に未対応で、barrel 経由で参照されているファイルが L1-006 ghost と誤判定されていた。
+  - 修正: `ts.isExportDeclaration` ブランチを追加し value / type 再エクスポートを適切な importKind で edge 化。`ts.forEachChild` による浅い走査を再帰走査 (`visit`) に置換し、関数ボディ内の `await import('...')` を捕捉。
+  - 新規 integration test 8 件（`typescript-source-module-analyzer-adapter.test.ts`）: 4 variations of `export ... from` + local re-export 非検出 + async/class-method nested dynamic import + 複合パターン。
+  - `scripts/harness/quick-mode/domain/ports/changed-files-port.ts` の L1-006 ghost false positive 解消（`quick-mode/application/ports/changed-files-port.ts` 経由の re-export が正しく incoming edge 化）。
+  - `phasegate lint` 影響:
+    - L1-006: 2 → **1**（false positive 解消。残 1 件 `adr-foundation/infrastructure/seeds/initial-adr-definitions.ts` は真の未配線 seed）。
+    - L1-003: 8 → **15**（検出精度向上の副作用で 7 件新規露出）。内訳は `quick-mode/index.ts` barrel の infrastructure / presentation 再エクスポート 7 件 — 従来 `export ... from` が検出されず隠れていた実アーキ違反。ISSUE-019 (LayerBoundary `presentation → domain` 再評価) と同じ文脈で追跡。
+    - 総 violation 数: 11 → **17**（-1 L1-006 + 7 L1-003）。
+  - 既存 3304 件 + 新規 8 件 = **3312 件** テスト全 green。
+
 ## [0.82.0] - 2026-04-23
 
 ### Fixed
