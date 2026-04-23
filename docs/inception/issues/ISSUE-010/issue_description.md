@@ -2,6 +2,8 @@
 
 ## ステータス
 
+- **状態**: 🔴 **OPEN**（真に未解決、2026-04-23 監査で実測 103 件確認。ISSUE-008 Phase B-3 の pre-commit 接続は完了済みで、本 issue が次の最優先タスク）
+- **優先度**: P2
 - **起票日**: 2026-04-19
 - **発見契機**: ISSUE-008 Phase B-2 (`validate-metadata` CLI に `.md` 分岐を追加、v0.50.0) 導入後の全件検証で、`docs/product/construction/` 配下の 103 件の設計文書が `@story-id は必須です` エラーを返すことが判明
 - **影響Unit**: ほぼ全 Unit の設計文書（adr-foundation, agent-integration, biome-ast-engine, ci-governance, config-foundation, fuse-hooks-engine, harness-api, harness-error, nyquist-validation, phase-dependency-model, phase2-extensions, quick-mode, regression-suite, skill-quality, traceability-model, validator-system）

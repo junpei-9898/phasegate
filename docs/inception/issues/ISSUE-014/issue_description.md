@@ -2,6 +2,8 @@
 
 ## ステータス
 
+- **状態**: 🔴 **OPEN**（未着手。ISSUE-019 / ADR-014 で presentation→domain が標準許容化されたため、本 issue の preset 設計では `strict-ddd` を選択肢として opt-in 提供する方針）
+- **優先度**: P2
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003（lint 違反解消）Wave 0 棚卸し中に、`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:6,15-20` で層名と依存方向が固定値としてハードコードされていることが判明。プロジェクト側でアーキテクチャスタイルを選べない
 - **影響Unit**: biome-ast-engine（主）, config-foundation（schema 拡張）, validator-system（メタデータ規則）, skill-quality（L1-001/L1-002 の `@layer` タグ値）

@@ -2,6 +2,8 @@
 
 ## ステータス
 
+- **状態**: 🔴 **OPEN**（未着手。v0.84.0 で当該 L1-007 違反自体は別アプローチ（コメント削除）で解消されたが、根本原因の `QuickModeJudgmentEngine` categorizer 粒度改善は未実施）
+- **優先度**: P3
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 2a（L1-007 no-comment-flood 解消）で、`scripts/harness/agent-integration/domain/ports/error-guidance-query-port.ts` のコメントブロック削減を PreToolUse hook がブロック。差分がコメント削除のみにもかかわらず `QuickModeJudgmentEngine` が `*port.ts` ファイルパスのみで `api` カテゴリ判定し FULL_MODE 要求した
 - **影響Unit**: quick-mode（主）, agent-integration（hook 経路）

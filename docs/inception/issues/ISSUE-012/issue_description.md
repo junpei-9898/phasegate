@@ -2,6 +2,8 @@
 
 ## ステータス
 
+- **状態**: 🔴 **OPEN**（未着手、2026-04-23 監査で再確認。`scripts/harness/integrations/pre-commit.ts` の拡張子ハードコード残存）
+- **優先度**: P3
 - **起票日**: 2026-04-19
 - **発見契機**: ISSUE-008 Phase B-3 着手時の調査で、実装メタデータ検証ロジック（軽量/リッチ両方）が既に言語非依存（正規表現ベース）である一方、pre-commit の staged ファイルフィルタだけが `.ts` 固定でハードコードされている事実を確認
 - **影響Unit**: harness-api（pre-commit エントリ）, validator-system（任意: ポート拡張の余地あり）

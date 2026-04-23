@@ -2,8 +2,8 @@
 
 ## ステータス
 
+- **状態**: 🟢 **CLOSED (v0.79.0, 2026-04-23)** — `ImportGraph.findLayerViolations` に `ignorePatterns` を配線、dead code 化解消。v0.85.0 (ISSUE-022) で `**/index.ts` 追加、v0.86.0 (ISSUE-019) で presentation→domain 許容化の基盤として機能
 - **起票日**: 2026-04-23
-- **CLOSED**: 2026-04-23 (v0.79.0, commit `44e85df`)
 - **発見契機**: ISSUE-003 Wave 2b（L1-004 enforce-folder-structure 修正）の実装調査中に発覚。`rule-definition-registry.ts:114` で `no-layer-violation` に `ignorePatterns: ['**/shared-kernel/**']` が定義されているにもかかわらず、`lint-runner.ts:99-120` の該当 case は config を一切読まず、`ImportGraph.findLayerViolations()` も `ignorePatterns` 引数を受け付けない設計
 - **影響Unit**: biome-ast-engine（主）
 - **深刻度**: Medium — 設定が dead code であることは重大な integrity 問題だが、実害は「shared-kernel が L1-003 の対象外にならない（期待と異なる）」に留まる
