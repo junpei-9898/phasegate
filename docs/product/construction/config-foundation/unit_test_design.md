@@ -1,5 +1,8 @@
 # ユニットテスト設計: config-foundation
 
+@story-id H04-01
+@story-id H04-02
+@story-id H04-03
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H04-01, H04-02, H04-03
 > **正規ソース**: `docs/product/construction/config-foundation/domain_model.md`, `docs/product/construction/config-foundation/logical_design.md`

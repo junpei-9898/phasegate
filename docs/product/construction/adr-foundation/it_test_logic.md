@@ -1,5 +1,8 @@
 # ITテストロジック設計: adr-foundation
 
+@story-id H05-01
+@story-id H05-02
+@story-id H05-03
 > **作成日**: 2026-03-14
 > **対象ケース**: `docs/product/construction/adr-foundation/it_test_design.md` の `IT-AF-001` 〜 `IT-AF-126`
 > **準拠ルール**: `docs/principles/testing-rules.md`

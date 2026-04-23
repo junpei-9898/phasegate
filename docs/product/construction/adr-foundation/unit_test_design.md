@@ -1,5 +1,8 @@
 # ユニットテスト設計: adr-foundation
 
+@story-id H05-01
+@story-id H05-02
+@story-id H05-03
 > **Unit ID**: adr-foundation
 > **作成日**: 2026-03-13
 > **フェーズ**: Phase 2（確定版）

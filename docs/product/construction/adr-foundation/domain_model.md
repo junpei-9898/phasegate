@@ -1,5 +1,8 @@
 # ドメインモデル: adr-foundation
 
+@story-id H05-01
+@story-id H05-02
+@story-id H05-03
 > **Unit ID**: adr-foundation
 > **作成日**: 2026-03-13
 > **Wave**: 1（基盤構築）

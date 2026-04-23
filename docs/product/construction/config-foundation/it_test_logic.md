@@ -1,5 +1,8 @@
 # ITテストロジック設計: config-foundation
 
+@story-id H04-01
+@story-id H04-02
+@story-id H04-03
 > 本書は `docs/product/construction/config-foundation/it_test_design.md` に定義された `IT-CF-001` から `IT-CF-079` のみを対象とする。`coverage_report.md` に記載の未カバー推奨項目は、本書では新規ケースIDを追加せずに据え置く。
 
 ## 1. テストファイル構成

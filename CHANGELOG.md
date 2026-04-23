@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.88.0] - 2026-04-23
+
+### Fixed
+
+- **ISSUE-010 Wave 2** — `adr-foundation` / `config-foundation` Unit の設計文書 11 件に `@story-id` 注釈を standalone 形式で補填。
+  - adr-foundation 6 件（`coverage_report.md` / `domain_model.md` / `it_test_design.md` / `it_test_logic.md` / `unit_test_design.md` / `unit_test_logic.md`）に `@story-id H05-01 / H05-02 / H05-03` を追加。
+  - config-foundation 5 件（`coverage_report.md` / `domain_model.md` / `it_test_logic.md` / `unit_test_design.md` / `unit_test_logic.md`）に `@story-id H04-01 / H04-02 / H04-03` を追加。
+  - これにより両 Unit とも全 7 ファイル PASS 達成。
+
+### Lint / Metadata state
+
+- L1 violations: **0 件維持**
+- `validate-metadata` FAIL: 100 → **89**（adr-foundation 6 件 + config-foundation 5 件解消）
+- 既存 3308 件テスト全 green（regression なし）
+
 ## [0.87.0] - 2026-04-23
 
 ### Fixed

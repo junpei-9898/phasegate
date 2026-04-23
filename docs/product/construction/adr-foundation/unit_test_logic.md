@@ -1,5 +1,8 @@
 # ユニットテストロジック設計: adr-foundation
 
+@story-id H05-01
+@story-id H05-02
+@story-id H05-03
 > **Unit ID**: adr-foundation
 > **対象**: `unit_test_design.md` に定義された domain 層 139 ケース
 > **前提**: `coverage_report.md` で未カバーとされた3件は UseCase / IT 対象であり、本書では追加しない

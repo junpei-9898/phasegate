@@ -1,5 +1,8 @@
 # ユニットテストロジック設計: config-foundation
 
+@story-id H04-01
+@story-id H04-02
+@story-id H04-03
 > **作成日**: 2026-03-14
 > **参照元**: `domain_model.md` / `unit_test_design.md` / `coverage_report.md`
 > **前提アーキテクチャ**: ヘキサゴナル + DDD（domain → port → usecase → controller）

@@ -1,5 +1,8 @@
 # テストカバレッジレポート: adr-foundation
 
+@story-id H05-01
+@story-id H05-02
+@story-id H05-03
 > 判定対象:
 > - `docs/product/units/adr_foundation_unit.md`
 > - `docs/product/construction/adr-foundation/domain_model.md`
