@@ -3,10 +3,12 @@
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03
+@story-id H02-04
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
-> **対応ストーリー**: H02-01, H02-02, H02-03
-> **対応Issue**: ISSUE-001
+> **最終更新**: 2026-04-24（H02-04 / ISSUE-026 Phase A-1 テストケース追加）
+> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04
+> **対応Issue**: ISSUE-001, ISSUE-026
 > **正規ソース**: `docs/product/construction/phase-dependency-model/domain_model.md`
 
 ---
@@ -524,6 +526,19 @@ scripts/harness/__tests__/phase-dependency-model/
 | UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合 | docs/inception/phase-dependency-model/H02-01/配下の実パスが返される | `phase-structure.test.ts` |
 | UT-PD-152 | `Artifact.resolve` | scope未提供時のArtifactパス解決を検証する | scopeを省略またはstoryId未指定で呼び出した場合 | プレースホルダが未解決のままのパスが返される | `phase-structure.test.ts` |
 
+### 9.6 H02-04 `@work-item-id` アノテーション併存対応
+
+対象: `FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation`（infrastructure 層）
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-153 | `fileContainsStoryAnnotation` | `@issue-id` 検出を検証する | product 文書に `@issue-id ISSUE-026` がある場合 | true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-154 | `fileContainsStoryAnnotation` | `@work-item-id` 検出を検証する | product 文書に `@work-item-id WI-001` がある場合 | true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-155 | `fileContainsStoryAnnotation` | `@work-item-id` を HTML コメントで検出する | `<!-- @work-item-id WI-001 -->` がある場合 | true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-156 | `fileContainsStoryAnnotation` | `@work-item-id` のカンマ区切り複数 ID を検出する | `@work-item-id WI-001, WI-002, WI-003` がある場合 | 指定した各 ID について true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-157 | `fileContainsStoryAnnotation` | 異なるアノテーション種別が混在しても独立検出できる | `@story-id H02-04` と `@work-item-id WI-001` が同一ファイルにある場合 | いずれの ID でも true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-158 | `fileContainsStoryAnnotation` | 未知 ID は検出されない | `@work-item-id WI-001` のみある状態で存在しない ID を問い合わせた場合 | false を返す | `file-system-story-reflection-adapter.test.ts` |
+
 ---
 
 ## テストケース総数
@@ -535,7 +550,8 @@ scripts/harness/__tests__/phase-dependency-model/
 | 境界値・異常系 | 26件（UT-PD-089〜114） |
 | カバレッジギャップ補強 | 19件（UT-PD-115〜133） |
 | ISSUE-001追加: コンテキスト依存チェック（INV-8, INV-9） | 17件（UT-PD-134〜152、UT-PD-147/149統合により2件減） |
-| **合計** | **150件** |
+| H02-04 `@work-item-id` アノテーション併存対応 | 6件（UT-PD-153〜158） |
+| **合計** | **156件** |
 
 > 注: 境界値・異常系のケース（セクション6）は、セクション3・4のケースと一部重複する参照関係を持つ。実装時にはテストファイル内で適切なdescribe/contextグループに統合すること。
 > 注: ISSUE-001追加分（セクション9）はcheckPhaseGateのscope引数に関するテストであり、セクション3.2の既存checkPhaseGateテストと同一テストファイル内のdescribeブロックに統合可能。

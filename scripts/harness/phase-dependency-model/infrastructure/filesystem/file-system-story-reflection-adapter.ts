@@ -15,10 +15,14 @@ export interface FileSystemStoryReflectionAdapterDeps {
 
 /**
  * ファイルシステム上の docs/inception ディレクトリ列挙と
- * product 文書内 `@story-id` アノテーション検索を実装するアダプタ。
+ * product 文書内 `@story-id` / `@issue-id` / `@work-item-id` アノテーション
+ * 検索を実装するアダプタ。
  *
  * 存在しないパス・読めないファイルは true/false に正規化し例外を投げない
  * ことで、上位 (StoryReflectionChecker) の純粋性を保つ。
+ *
+ * ISSUE-026 / H02-04: `@issue-id` / `@work-item-id` も `@story-id` と同等に
+ * 認識する（WI 一本化への段階移行のため、既存 `@story-id` と併存）。
  */
 export class FileSystemStoryReflectionAdapter
   implements StoryReflectionFileSystemPort
@@ -71,15 +75,17 @@ export class FileSystemStoryReflectionAdapter
       return false;
     }
 
-    // `@story-id` の直後にカンマ/空白区切りで列挙される story ID を抽出。
-    // 例: `@story-id US-001`, `@story-id US-001, US-002`,
-    //     `<!-- @story-id US-001 -->`
-    // 行末または `-->` まで（story ID 自体の `-` は許容するため `-->` を明示終端に使う）。
-    const pattern = /@story-id[ \t]+([^\n\r]+)/g;
+    // `@story-id` / `@issue-id` / `@work-item-id` 直後にカンマ/空白区切りで
+    // 列挙される ID を抽出。
+    // 例: `@story-id US-001`, `@work-item-id WI-001, WI-002`,
+    //     `<!-- @issue-id ISSUE-026 -->`
+    // capture[1] がアノテーション種別（未使用・将来拡張用）、capture[2] が ID 本体。
+    // 行末または `-->` まで（ID 自体の `-` を許容するため `-->` を明示終端に使う）。
+    const annotationPattern = /@(story-id|issue-id|work-item-id)[ \t]+([^\n\r]+)/g;
     let match: RegExpExecArray | null;
-    while ((match = pattern.exec(content)) !== null) {
+    while ((match = annotationPattern.exec(content)) !== null) {
       // `-->` 以降の HTML コメント閉じ記号を取り除く
-      const raw = match[1].replace(/-->.*$/, '');
+      const raw = match[2].replace(/-->.*$/, '');
       const ids = raw
         .split(/[\s,]+/)
         .map((s) => s.trim())

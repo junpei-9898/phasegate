@@ -1,5 +1,8 @@
 # Phasegate v1 — ユーザーストーリー一覧
 
+@story-id H02-04
+更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）を H-02 Epic に追加。
+
 > **ステータス**: Phase 2（実行）— codex 1stレビュー済み・指摘反映済み
 > **作成日**: 2026-03-12
 > **入力**: `docs/inception/_shared/story_writer_plan.md`（Phase 1計画・承認済み）
@@ -170,6 +173,30 @@ K6（2-Phase Execution）, K15（Plan文書の必須生成）
 - [ ] AC-3: デフォルトフローからの依存削除（緩和）には`override: true`の明示が必要である
 - [ ] AC-4: `story-implementor`前のテスト設計フェーズ存在が緩和不可である（TDD最低保証）
 - [ ] AC-5: Level間依存（Level 2→Level 1、Level 3→Level 2）が緩和不可である
+
+---
+
+### H02-04: `@work-item-id` アノテーション併存対応（ISSUE-026 Phase A-1）
+
+**Epic**: H-02 Phase Dependency Model
+**旧US**: 新規（ISSUE-026 Phase A の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** `FileSystemStoryReflectionAdapter` の annotation parser を拡張し、既存の `@story-id` に加えて `@issue-id` / `@work-item-id` を同一の統一規約で認識できるようにしたい,
+**so that** ISSUE-026 で採用した work item 一本化（WI-XXX）への段階移行が、既存 `@story-id` の互換性を壊さず進められる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation` が `@story-id` / `@issue-id` / `@work-item-id` いずれのアノテーションでも、指定 ID を検出できる
+- [ ] AC-2: いずれのアノテーションでもカンマ/空白区切りの複数 ID を検出できる
+- [ ] AC-3: HTML コメント（`<!-- @work-item-id WI-001 -->`）形式でも検出できる
+- [ ] AC-4: 既存 `@story-id` のユニットテストが全て green のまま保たれる
+- [ ] AC-5: 新規 `@work-item-id` / `@issue-id` に対するユニットテストが `unit_test_design.md` に追加されている
+- [ ] AC-6: `StoryReflectionFileSystemPort#fileContainsStoryAnnotation` の signature は据え置き（振る舞いのみ拡張・後方互換）
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— `@story-id` 統一規約の軸に `@issue-id` / `@work-item-id` を加える
 
 ---
 

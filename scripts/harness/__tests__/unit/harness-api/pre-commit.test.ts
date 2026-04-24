@@ -257,6 +257,100 @@ target('runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）', () => {
     });
   });
 
+  context('unitName 導出 (ISSUE-026 派生バグ修正)', () => {
+    // UT-PC-12
+    it('scripts/harness/{unit}/... 配下の staged TS から unitName を導出し、L2 に渡す', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(
+        [
+          'scripts/harness/phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.ts',
+        ],
+        deps,
+      );
+      // Assert
+      expect(deps.l2Spy).toHaveBeenCalledTimes(1);
+      expect(deps.l2Spy).toHaveBeenCalledWith(
+        expect.objectContaining({ unitName: 'phase-dependency-model' }),
+      );
+    });
+
+    // UT-PC-13
+    it('__tests__/{type}/{unit}/... 配下の test ファイルからも unitName を導出する', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(
+        [
+          'scripts/harness/__tests__/unit/phase-dependency-model/foo.test.ts',
+        ],
+        deps,
+      );
+      // Assert
+      expect(deps.l2Spy).toHaveBeenCalledWith(
+        expect.objectContaining({ unitName: 'phase-dependency-model' }),
+      );
+    });
+
+    // UT-PC-14
+    it('staged TS が複数 Unit に跨る場合、Unit ごとに L2 を実行する', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(
+        [
+          'scripts/harness/phase-dependency-model/infrastructure/foo.ts',
+          'scripts/harness/config-foundation/domain/bar.ts',
+        ],
+        deps,
+      );
+      // Assert
+      expect(deps.l2Spy).toHaveBeenCalledTimes(2);
+      const calls = deps.l2Spy.mock.calls.map((args) => args[0] as { unitName: string });
+      const unitNames = calls.map((c) => c.unitName).sort();
+      expect(unitNames).toEqual(['config-foundation', 'phase-dependency-model']);
+    });
+
+    // UT-PC-15
+    it('Unit 名を特定できない TS (scripts/harness/foo.ts 等) は unitName="" で実行される', async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      await runPreCommit(['scripts/harness/foo.ts'], deps);
+      // Assert
+      expect(deps.l2Spy).toHaveBeenCalledWith(
+        expect.objectContaining({ unitName: '' }),
+      );
+    });
+
+    // UT-PC-16
+    it('複数 Unit のいずれかで L2-001 が fail した場合、合成結果も fail になる', async () => {
+      // Arrange
+      const l2Spy = vi.fn();
+      l2Spy.mockImplementationOnce(async () => [passingContract('L2-001'), passingContract('L2-002'), passingContract('L2-003')]);
+      l2Spy.mockImplementationOnce(async () => [failingContract('L2-001', 'prerequisites missing'), passingContract('L2-002'), passingContract('L2-003')]);
+      const metadataSpy = vi.fn(async () => passingMetadataOutput());
+      const deps: PreCommitDeps & { l2Spy: typeof l2Spy; metadataSpy: typeof metadataSpy } = {
+        runL2ValidatorsUseCase: { execute: l2Spy },
+        validateMetadataCommandHandler: { execute: metadataSpy },
+        l2Spy,
+        metadataSpy,
+      };
+      // Act
+      const actual = await runPreCommit(
+        [
+          'scripts/harness/phase-dependency-model/foo.ts',
+          'scripts/harness/config-foundation/bar.ts',
+        ],
+        deps,
+      );
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.stdout).toContain('Commit blocked');
+    });
+  });
+
   context('対象外拡張子', () => {
     // UT-PC-08
     it('.ts / .md 以外（.json / .yml 等）は両 UseCase に渡されない', async () => {

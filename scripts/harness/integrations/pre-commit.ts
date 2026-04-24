@@ -14,6 +14,7 @@
  */
 
 import { execSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { createValidatorSystemModule } from '../validator-system/composition-root.js';
 import { HumanValidationResultFormatter } from '../validator-system/presentation/formatters/human-validation-result-formatter.js';
 import type { AggregatedValidationReport } from '../validator-system/application/dto/aggregated-validation-report.js';
@@ -38,6 +39,79 @@ const TEST_FILE_SUFFIXES = Object.freeze([
 
 function isTestFile(path: string): boolean {
   return TEST_FILE_SUFFIXES.some((suffix) => path.endsWith(suffix));
+}
+
+const HARNESS_ROOT_PREFIX = 'scripts/harness/';
+const TESTS_SEGMENT = '__tests__';
+const UNIT_ANNOTATION_PATTERN = /^\s*(?:\/\/|\*)\s*@unit\s+(\S+)/m;
+
+/**
+ * staged TS file path から所属 Unit 名を導出する。
+ *   scripts/harness/{unit}/...                      → unit
+ *   scripts/harness/__tests__/{unit|integration}/{unit}/...
+ *                                                    → unit
+ * 上記パターンに合致しないパス（例: scripts/harness/integrations/pre-commit.ts）は
+ * undefined を返し、呼び出し側が file 内 `@unit` コメントにフォールバックする。
+ */
+function deriveUnitNameFromPath(filePath: string): string | undefined {
+  if (!filePath.startsWith(HARNESS_ROOT_PREFIX)) return undefined;
+  const parts = filePath.slice(HARNESS_ROOT_PREFIX.length).split('/');
+  if (parts.length < 2) return undefined;
+  if (parts[0] === TESTS_SEGMENT) {
+    return parts.length >= 3 ? parts[2] : undefined;
+  }
+  return parts[0];
+}
+
+/**
+ * ファイル本体から `// @unit <name>` / `* @unit <name>` を抽出する。
+ * 読み込み失敗や annotation 不在時は undefined。
+ */
+async function deriveUnitNameFromFile(filePath: string): Promise<string | undefined> {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const match = UNIT_ANNOTATION_PATTERN.exec(content);
+    return match?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * path-based 推定と file-based 推定を組み合わせて Unit 名を解決する。
+ * `@unit` アノテーションが存在する場合はそれを正として採用し、
+ * 無い場合のみ path-based 推定にフォールバックする（cross-cutting dir 対応）。
+ */
+async function resolveUnitName(filePath: string): Promise<string | undefined> {
+  const fileUnit = await deriveUnitNameFromFile(filePath);
+  if (fileUnit) return fileUnit;
+  return deriveUnitNameFromPath(filePath);
+}
+
+/**
+ * 複数 Unit の L2 validator 実行結果を、ValidatorId 単位で集約する。
+ * 同じ ValidatorId に対して、どの Unit でも 1 件でも fail / skip があれば
+ * fail / skip を優先（厳しい側を採用）。
+ */
+function mergePerUnitResults(
+  runs: readonly (readonly ValidationResultContract[])[],
+): readonly ValidationResultContract[] {
+  const byId = new Map<string, ValidationResultContract>();
+  for (const run of runs) {
+    for (const result of run) {
+      const existing = byId.get(result.validatorId);
+      if (!existing) {
+        byId.set(result.validatorId, result);
+        continue;
+      }
+      const existingFailed = !existing.passed && !existing.skipped;
+      const incomingFailed = !result.passed && !result.skipped;
+      if (incomingFailed && !existingFailed) {
+        byId.set(result.validatorId, result);
+      }
+    }
+  }
+  return [...byId.values()];
 }
 
 interface RunL2Input {
@@ -138,12 +212,32 @@ export async function runPreCommit(
   let exitCode: 0 | 1 | 2 = 0;
 
   if (tsFiles.length > 0) {
-    const results = await deps.runL2ValidatorsUseCase.execute({
-      targetPaths: tsFiles,
-      unitName: '',
-      currentPhase: '',
-    });
-    const report = buildReport(results);
+    // staged TS file を Unit ごとにグルーピングし、Unit 単位で L2 phase gate
+    // （L2-001 の `{unit}_unit.md` 等）を評価する。Unit を特定できないファイルは
+    // 別グループ（unitName=''）として従来挙動で評価する。
+    const filesByUnit = new Map<string, string[]>();
+    for (const f of tsFiles) {
+      const unit = (await resolveUnitName(f)) ?? '';
+      const bucket = filesByUnit.get(unit);
+      if (bucket) {
+        bucket.push(f);
+      } else {
+        filesByUnit.set(unit, [f]);
+      }
+    }
+
+    const runs: (readonly ValidationResultContract[])[] = [];
+    for (const [unitName, unitFiles] of filesByUnit) {
+      const results = await deps.runL2ValidatorsUseCase.execute({
+        targetPaths: unitFiles,
+        unitName,
+        currentPhase: '',
+      });
+      runs.push(results);
+    }
+
+    const merged = mergePerUnitResults(runs);
+    const report = buildReport(merged);
     sections.push('');
     sections.push(`${BOLD}== TypeScript 実装 (${tsFiles.length} file(s)) ==${RESET}`);
     sections.push(new HumanValidationResultFormatter().format(report));

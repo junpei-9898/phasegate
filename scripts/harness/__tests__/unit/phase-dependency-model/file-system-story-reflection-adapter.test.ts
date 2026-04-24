@@ -1,5 +1,6 @@
 // @unit phase-dependency-model
 // @layer infrastructure
+// @story H02-04
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
@@ -177,6 +178,146 @@ target('FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation', () => {
       // Assert
       expect(a).toBe(true);
       expect(b).toBe(false);
+    });
+  });
+
+  // UT-PD-153: @issue-id 検出
+  context('product 文書内に @issue-id アノテーションが存在する場合', () => {
+    it('指定した ISSUE ID に対して true を返し、未知 ID には false を返す', async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, 'docs/product/construction/order'), { recursive: true });
+      await writeFile(
+        path.join(rootDir, 'docs/product/construction/order/logical_design.md'),
+        '# Order\n\n@issue-id ISSUE-026\n本文...',
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const hit = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'ISSUE-026',
+      );
+      const miss = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'ISSUE-999',
+      );
+
+      // Assert
+      expect(hit).toBe(true);
+      expect(miss).toBe(false);
+    });
+  });
+
+  // UT-PD-154: @work-item-id 検出
+  context('product 文書内に @work-item-id アノテーションが存在する場合', () => {
+    it('指定した WI ID に対して true を返し、未知 ID には false を返す', async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, 'docs/product/construction/order'), { recursive: true });
+      await writeFile(
+        path.join(rootDir, 'docs/product/construction/order/logical_design.md'),
+        '@work-item-id WI-001',
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const hit = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-001',
+      );
+      const miss = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-999',
+      );
+
+      // Assert
+      expect(hit).toBe(true);
+      expect(miss).toBe(false);
+    });
+  });
+
+  // UT-PD-155: @work-item-id を HTML コメントで検出
+  context('@work-item-id が HTML コメント内に記述されている場合', () => {
+    it('コメント閉じ記号の影響を受けずに検出できる', async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, 'docs/product/construction/order'), { recursive: true });
+      await writeFile(
+        path.join(rootDir, 'docs/product/construction/order/logical_design.md'),
+        '# Order\n\n<!-- @work-item-id WI-001 -->\n本文',
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-001',
+      );
+
+      // Assert
+      expect(actual).toBe(true);
+    });
+  });
+
+  // UT-PD-156: @work-item-id のカンマ区切り複数 ID
+  context('@work-item-id の後ろに複数 ID がカンマ区切りで並ぶ場合', () => {
+    it('列挙された全 ID を検出できる', async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, 'docs/product/construction/order'), { recursive: true });
+      await writeFile(
+        path.join(rootDir, 'docs/product/construction/order/logical_design.md'),
+        '@work-item-id WI-001, WI-002, WI-003',
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const a = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-001',
+      );
+      const b = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-002',
+      );
+      const c = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-003',
+      );
+      const d = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-004',
+      );
+
+      // Assert
+      expect(a).toBe(true);
+      expect(b).toBe(true);
+      expect(c).toBe(true);
+      expect(d).toBe(false);
+    });
+  });
+
+  // UT-PD-157: 異なる種別のアノテーションが混在しても独立検出できる
+  context('@story-id と @work-item-id が同一ファイルに混在する場合', () => {
+    it('いずれの ID でも独立に検出できる', async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, 'docs/product/construction/order'), { recursive: true });
+      await writeFile(
+        path.join(rootDir, 'docs/product/construction/order/logical_design.md'),
+        '@story-id H02-04\n@work-item-id WI-001\n本文',
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const story = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'H02-04',
+      );
+      const wi = await adapter.fileContainsStoryAnnotation(
+        'docs/product/construction/order/logical_design.md',
+        'WI-001',
+      );
+
+      // Assert
+      expect(story).toBe(true);
+      expect(wi).toBe(true);
     });
   });
 });

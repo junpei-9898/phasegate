@@ -3,12 +3,13 @@
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03
+@story-id H02-04
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
-> **最終更新**: 2026-03-28（ISSUE-001 inception側フェーズゲート整備）
+> **最終更新**: 2026-04-24（H02-04 / ISSUE-026 Phase A-1 反映）
 > **Wave**: 1（基盤構築）
-> **対応ストーリー**: H02-01, H02-02, H02-03
-> **対応Issue**: ISSUE-001
+> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04
+> **対応Issue**: ISSUE-001, ISSUE-026
 > **横断契約参照**: cross_cutting_decisions.md §5（所有権）, §6（集約降格）
 
 ---
