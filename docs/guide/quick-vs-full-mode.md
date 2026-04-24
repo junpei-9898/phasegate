@@ -130,7 +130,7 @@ Running every change through Full AIDLC is genuinely heavy for one-person projec
 | Core | `docs/product/construction/<unit>/*.md` (contract docs) | Full |
 | Periphery | Internal helpers in `application/` that don't change ports | Quick-first, Full if contract impact emerges |
 | Periphery | `scripts/harness/presentation/` formatting / wording | Quick |
-| Periphery | `docs/guide/*`, `README.md`, `.claude/skills/*` tweaks | Quick |
+| Periphery | `docs/guide/*`, `README.md`, `skills/*` tweaks | Quick |
 | Periphery | Version bumps, `phasegate.config.json` value edits | Quick |
 
 Codify the split in your head (or in a project CLAUDE.md note) — "`domain/**` is core, everything else starts Quick" is a healthy default for a single-maintainer project.
@@ -168,5 +168,5 @@ No. `allowedCategories` is a fixed enum (`bugfix`, `docs`, `test`, `config`). If
 - [Skills Overview](skills-overview.md) — full catalogue of 28 skills
 - [Layer Model](layer-model.md) — L0 through L4 defence layers
 - [Configuration](configuration.md) — `quickMode` configuration reference
-- `.claude/skills/quick-implementor/SKILL.md` — the Quick Mode skill definition
-- `.claude/skills/story-implementor/SKILL.md` — the Full Mode skill definition
+- `skills/quick-implementor/SKILL.md` — the Quick Mode skill definition
+- `skills/story-implementor/SKILL.md` — the Full Mode skill definition

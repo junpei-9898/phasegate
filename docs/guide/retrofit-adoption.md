@@ -44,7 +44,7 @@ Step 4: 新規 Unit / 構造変更は scaffold-design で設計文書を起こ�
 npx phasegate init --name <project-name>
 ```
 
-- `.claude/skills/` に 28 スキルを配置
+- `skills/` に 28 スキルを配置し、有効な agent 用に `.claude/skills` / `.codex/skills` を作成
 - `phasegate.config.json` を生成
 - `phasegate.config.json` に `baseline` セクションが未記載でも、v0.71.0 以降は
   **`baseline.enabled` の default が `true`** のため grandfather は既定で有効

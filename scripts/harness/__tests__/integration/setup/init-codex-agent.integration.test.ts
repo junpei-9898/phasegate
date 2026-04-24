@@ -1,6 +1,6 @@
 // @unit harness-api
 // @layer integration
-// @story ISSUE-013
+// @story H11-06
 
 /**
  * ISSUE-013 Wave 2 / B-3: `phasegate init --agent codex` / `--agent both` の
@@ -11,7 +11,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { access, mkdtemp, rm } from 'node:fs/promises';
+import { access, lstat, mkdtemp, readlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,7 +62,14 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
           // Assert
           expect(actual.exitCode).toBe(0);
           expect(actual.stdout).toContain('agent: claude');
+          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
+          await expect(lstat(path.join(projectRoot, '.claude', 'skills'))).resolves.toMatchObject({
+            isSymbolicLink: expect.any(Function),
+          });
+          const actualLink = await readlink(path.join(projectRoot, '.claude', 'skills'));
+          expect(actualLink).toBe('../skills');
           await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).rejects.toThrow();
+          await expect(access(path.join(projectRoot, '.codex', 'skills'))).rejects.toThrow();
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }
@@ -84,7 +91,13 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
           expect(actual.exitCode).toBe(0);
           expect(actual.stdout).toContain('agent: codex');
           expect(actual.stdout).toContain('.codex/hooks.json deployed');
+          expect(actual.stdout).toContain('.codex/skills linked to skills/');
           await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).resolves.toBeUndefined();
+          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
+          const actualStats = await lstat(path.join(projectRoot, '.codex', 'skills'));
+          expect(actualStats.isSymbolicLink()).toBe(true);
+          const actualLink = await readlink(path.join(projectRoot, '.codex', 'skills'));
+          expect(actualLink).toBe('../skills');
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }
@@ -117,8 +130,8 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
 
           // Assert
           expect(actual.exitCode).toBe(0);
-          // .claude/settings.json should not be created (but skills go to .claude/skills/)
           await expect(access(path.join(projectRoot, '.claude', 'settings.json'))).rejects.toThrow();
+          await expect(access(path.join(projectRoot, '.claude', 'skills'))).rejects.toThrow();
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }
@@ -141,6 +154,9 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
           expect(actual.stdout).toContain('agent: both');
           await expect(access(path.join(projectRoot, '.claude', 'settings.json'))).resolves.toBeUndefined();
           await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).resolves.toBeUndefined();
+          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
+          expect((await lstat(path.join(projectRoot, '.claude', 'skills'))).isSymbolicLink()).toBe(true);
+          expect((await lstat(path.join(projectRoot, '.codex', 'skills'))).isSymbolicLink()).toBe(true);
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }

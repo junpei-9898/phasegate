@@ -7,14 +7,19 @@ Phasegate supports [OpenAI Codex CLI](https://developers.openai.com/codex/cli) t
 ### Quick setup (recommended)
 
 ```bash
-# 1. Initialize with Codex agent support
+# 1. Initialize the project for Codex
 npx phasegate init --name my-project --agent codex --with-husky
 
-# 2. Enable Codex hooks feature flag
+# 2. Enable the Codex CLI feature flag manually
 codex features enable codex_hooks
 ```
 
 For dual-agent projects (Claude + Codex), use `--agent both`.
+
+Responsibility split:
+
+- `phasegate init --agent codex` sets up **project-local artifacts** such as `phasegate.config.json`, `skills/`, `.codex/hooks.json`, and `.codex/skills`
+- `codex features enable codex_hooks` updates the **Codex CLI user environment** and is intentionally left as a manual step
 
 ### Manual setup
 

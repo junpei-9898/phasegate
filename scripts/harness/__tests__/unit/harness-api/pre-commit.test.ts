@@ -349,11 +349,11 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
     });
 
     // UT-PC-20
-    it("docs配下以外の .md は metadata handler に渡されない", async () => {
+    it("metadata対象外の .md は metadata handler に渡されない", async () => {
       // Arrange
       const deps = buildDeps();
       // Act
-      const actual = await runPreCommit(["skills/quick-implementor/SKILL.md"], deps);
+      const actual = await runPreCommit(["skills/quick-implementor/SKILL.md", "docs/guide/installation.md"], deps);
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(deps.metadataSpy).not.toHaveBeenCalled();

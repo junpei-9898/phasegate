@@ -1,6 +1,6 @@
 # Skills Overview
 
-Phasegate provides 28 skills covering the full AIDLC (AI-Driven Development Life Cycle). Skills are deployed to `.claude/skills/` by `npx phasegate init` and invoked as slash commands in AI agent sessions.
+Phasegate provides 28 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` deploys the skill bodies to `skills/` and exposes them to enabled agents through `.claude/skills/` / `.codex/skills/` links.
 
 ## AIDLC Process — Skill Execution Order
 

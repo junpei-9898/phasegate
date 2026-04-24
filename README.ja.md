@@ -56,7 +56,7 @@ npm install --save-dev phasegate
 npx phasegate init --name <プロジェクト名> --preset standard
 ```
 
-`.claude/skills/` に28スキルを展開し、設計原則ドキュメント（`docs/principles/*.md`・`docs/folder_management_rules.md`）を配置し、`phasegate.config.json` を生成します。
+`skills/` に28スキルを展開し、`.claude/skills` / `.codex/skills` などの agent 向け導線を作成し、設計原則ドキュメント（`docs/principles/*.md`・`docs/folder_management_rules.md`）を配置し、`phasegate.config.json` を生成します。
 
 `--preset` で初期構成を選択できます: `minimal`（プロトタイプ）/ `standard`（推奨）/ `strict`（本番）
 
@@ -606,14 +606,16 @@ Phasegate は [OpenAI Codex CLI](https://developers.openai.com/codex/cli) でも
 ### セットアップ（2 ステップ）
 
 ```bash
-# 1. Codex 向けに初期化（.codex/hooks.json を自動配置）
+# 1. Codex 向けにプロジェクトを初期化（.codex/hooks.json や .codex/skills など project 内ファイルを作成）
 npx phasegate init --name my-project --agent codex --with-husky
 
-# 2. Codex hooks フィーチャーフラグを有効化
+# 2. Codex CLI 側の feature flag を手動で有効化
 codex features enable codex_hooks
 ```
 
 Claude + Codex 両対応プロジェクトは `--agent both` を指定してください。
+
+`init` が担当するのは project 内のセットアップです。`codex_hooks` の有効化は Codex 本体のユーザー設定なので、明示的に手動実行します。
 
 ### カバレッジと既知の制約
 
@@ -786,16 +788,22 @@ your-project/
 │   │   └── {unit}/{US-XXX}/     # Level 2/3（Unit・ストーリー単位）
 │   └── ADR/
 ├── src/                          # 実装コード（@unit/@layer 必須）
-└── .claude/
-    ├── settings.json             # Hooks 設定
-    └── skills/                   # npx phasegate init で展開
+├── .claude/
+│   ├── settings.json             # Hooks 設定
+│   └── skills/                   # ../skills への symlink
+├── .codex/
+│   ├── hooks.json               # Codex hooks 設定
+│   └── skills/                  # ../skills への symlink（Codex有効時）
+└── skills/                      # npx phasegate init で再生成可能
 ```
 
 ### 推奨 .gitignore
 
 ```
 node_modules/
-.claude/skills/    # npx phasegate init で再生成可能
+skills/            # npx phasegate init で再生成可能
+.claude/skills/    # skills/ への symlink
+.codex/skills/     # skills/ への symlink
 dist/
 reports/
 ```

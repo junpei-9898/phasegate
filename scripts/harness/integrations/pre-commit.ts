@@ -38,6 +38,10 @@ function isTestFile(path: string): boolean {
   return TEST_FILE_SUFFIXES.some((suffix) => path.endsWith(suffix));
 }
 
+function isMetadataMarkdownFile(path: string): boolean {
+  return path.startsWith("docs/inception/") || path.startsWith("docs/product/");
+}
+
 const HARNESS_ROOT_PREFIX = "scripts/harness/";
 const TESTS_SEGMENT = "__tests__";
 const UNIT_ANNOTATION_PATTERN = /^\s*(?:\/\/|\*)\s*@unit\s+(\S+)/m;
@@ -207,7 +211,7 @@ export async function runPreCommit(
   options: PreCommitOptions = {},
 ): Promise<PreCommitResult> {
   const tsFiles = stagedFiles.filter((f) => f.endsWith(TS_EXTENSION));
-  const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION) && f.startsWith("docs/"));
+  const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION) && isMetadataMarkdownFile(f));
   const testFiles = tsFiles.filter((f) => isTestFile(f));
   const metadataFiles = [...mdFiles, ...testFiles];
 

@@ -49,7 +49,7 @@ npm install --save-dev phasegate
 npx phasegate init --name my-project
 ```
 
-This deploys 28 skills, design principles docs (`docs/principles/*.md`, `docs/folder_management_rules.md`), and generates `phasegate.config.json`.
+This deploys 28 skills to `skills/`, creates agent-specific links such as `.claude/skills` or `.codex/skills`, installs design principles docs (`docs/principles/*.md`, `docs/folder_management_rules.md`), and generates `phasegate.config.json`.
 
 Optional: add `--with-husky` to also install a `.husky/pre-commit` hook that runs L2 validators.
 
@@ -292,14 +292,16 @@ Phasegate also integrates with [OpenAI Codex CLI](https://developers.openai.com/
 ### Quick setup
 
 ```bash
-# 1. Initialize with Codex agent support (auto-deploys .codex/hooks.json)
+# 1. Initialize the project for Codex (creates project-local files such as .codex/hooks.json and .codex/skills)
 npx phasegate init --name my-project --agent codex --with-husky
 
-# 2. Enable Codex hooks feature flag
+# 2. Enable the Codex CLI feature flag manually on your machine
 codex features enable codex_hooks
 ```
 
 For dual-agent projects (Claude + Codex), use `--agent both`.
+
+`init` sets up files inside the project. The Codex CLI user-level setting (`codex_hooks`) remains an explicit manual step.
 
 ### Coverage and known limitation
 

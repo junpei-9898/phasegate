@@ -51,6 +51,12 @@
     "phasegate:disable": "npx tsx scripts/harness/main.ts disable-feature",
     "phasegate:check-phase": "npx tsx scripts/harness/main.ts phasegate:check-phase",
     "phasegate:check-ready": "npx tsx scripts/harness/main.ts phasegate:check-ready",
+    "harness:status": "pnpm phasegate:status",
+    "harness:init": "npx tsx scripts/harness/main.ts init",
+    "harness:enable": "pnpm phasegate:enable",
+    "harness:disable": "pnpm phasegate:disable",
+    "harness:check-phase": "pnpm phasegate:check-phase",
+    "harness:check-ready": "pnpm phasegate:check-ready",
     "test": "vitest run --config scripts/harness/__tests__/vitest.config.forks.ts && vitest run --config scripts/harness/__tests__/vitest.config.ts"
   },
   "dependencies": {
