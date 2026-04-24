@@ -3,10 +3,12 @@
 @story-id H03-01
 @story-id H03-02
 @story-id H03-03
+@story-id H03-04
 > **Unit ID**: traceability-model
 > **作成日**: 2026-03-13
+> **最終更新**: 2026-04-24（H03-04 / ISSUE-026 Phase A-2 WI frontmatter parser 反映）
 > **Wave**: 1（基盤構築）
-> **対応ストーリー**: H03-01, H03-02, H03-03
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
 > **横断契約参照**: cross_cutting_decisions.md §1（Story ID）, §2（Layer語彙）, §4（Shared Kernel）
 
 ---

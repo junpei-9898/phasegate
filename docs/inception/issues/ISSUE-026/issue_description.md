@@ -1,7 +1,7 @@
 # ISSUE-026: inception の work item 表現が多系統併存しており、product 反映ゲートが機能不全を起こしている
 
-@story-id ISSUE-026
-概要: work item taxonomy の一本化（WI-XXX）を採用し、Phase A〜D で段階導入する。本 issue が上位駆動文書となる。
+@story-id H02-04
+概要: ISSUE-026 の方針（work item taxonomy 一本化、WI-XXX）を Phase A〜D で段階導入する。本 issue が上位駆動文書、初期子タスクは H02-04（Phase A-1 parser 併存対応）。
 
 ## ステータス
 

@@ -5,8 +5,11 @@ traceability:
 
 # 論理設計: traceability-model
 
+@story-id H03-04
+拡張: ISSUE-026 Phase A-2 で `WorkItemFrontmatter` 型と専用 parser を infrastructure 層に追加（既存 `parseFrontmatterFlags` は据え置き・後方互換）。
+
 > **作成日**: 2026-03-13
-> **対応ストーリー**: H03-01, H03-02, H03-03
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**: `logical_design_plan.md`、`domain_model.md`、`traceability_model_unit.md`、`integration_contract.md`
 

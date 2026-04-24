@@ -1,7 +1,8 @@
 # Phasegate v1 — ユーザーストーリー一覧
 
 @story-id H02-04
-更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）を H-02 Epic に追加。
+@story-id H03-04
+更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（ISSUE-026 Phase A-2 / WorkItem frontmatter parser）を追加。
 
 > **ステータス**: Phase 2（実行）— codex 1stレビュー済み・指摘反映済み
 > **作成日**: 2026-03-12
@@ -262,6 +263,34 @@ K3.5（@unit/@layer/@story-idメタデータ）
 - [ ] AC-3: 逆引きチェーン（実装→@unit→product/construction/{unit}/→@story-id HXX-XX→inception/{unit}/{HXX-XX}/）の各リンクが存在することを検証するテストが存在する
 - [ ] AC-4: L3 nyquistバリデータが`@story`メタデータを入力としてUS-テスト間のトレーサビリティを検証する
 - [ ] AC-5: @story欠落時のHarnessError（L2-002拡張）にfix_exampleが含まれる
+
+---
+
+### H03-04: WorkItem frontmatter parser 追加（ISSUE-026 Phase A-2）
+
+**Epic**: H-03 Traceability Model
+**旧US**: 新規（ISSUE-026 Phase A-2 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** 設計文書先頭の YAML frontmatter から WorkItem メタデータ（`id` / `type` / `affects` / `severity` / `status` / `source` / `legacy_id`）を抽出する専用 parser を traceability-model に追加したい,
+**so that** ISSUE-026 で採用した work item 一本化（WI-XXX）の識別と type 別振る舞いの基盤を、既存 `parseFrontmatterFlags` を破壊せずに整備できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `parseWorkItemFrontmatter(content: string): WorkItemFrontmatter | null` が実装され、frontmatter 不在時は `null` を返す
+- [ ] AC-2: `id` は `WI-\d+` / `H\d{2}-\d{2}` / `HF\d+-\d{2}` / `ISSUE-\d+` のいずれかに合致することを検証する
+- [ ] AC-3: `type` は `story | issue | fix | refactor | chore` の enum に制限される
+- [ ] AC-4: `affects` は省略可能、`string[]`（Unit 名リスト）として受け取る
+- [ ] AC-5: `severity` は `trivial | normal | high` の省略可能 enum
+- [ ] AC-6: `status` は `drafted | reflected | implemented | tested` の省略可能 enum
+- [ ] AC-7: `source` / `legacy_id` は任意の string（値検証なし）
+- [ ] AC-8: 型不正・enum 違反時は `WorkItemFrontmatterValidationError` を throw する
+- [ ] AC-9: 既存 `parseFrontmatterFlags` の挙動は無変更（後方互換）
+- [ ] AC-10: L2 metadata validator との統合は本ストーリー非対象（別 US で実施）
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— 設計文書 frontmatter への WI メタデータ表現を追加
 
 ---
 

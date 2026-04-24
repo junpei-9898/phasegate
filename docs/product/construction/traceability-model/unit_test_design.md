@@ -5,8 +5,12 @@ traceability:
 
 # ユニットテスト設計: traceability-model
 
+@story-id H03-04
+拡張: ISSUE-026 Phase A-2 で `parseWorkItemFrontmatter` に対するユニットテスト UT-TM-W01〜W08 を追加。
+
 > **作成日**: 2026-03-13
-> **対応ストーリー**: H03-01, H03-02, H03-03
+> **最終更新**: 2026-04-24（H03-04 / ISSUE-026 Phase A-2 WI frontmatter テスト追加）
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
 > **前提ドキュメント**: `domain_model.md`、`logical_design.md`、`unit_test_design_plan.md`
 > **テストフレームワーク**: Vitest 3.0.0
 
@@ -407,3 +411,20 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 | UT-TM-117 | validateDesignDocument | 設計文書のstory-idアノテーションを検証する | frontmatter未設定で@story-idが欠落している場合 | errors[0].code==="L2-002" かつ errors[0].fix_example に `@story-id H03-02` 形式の修正例を含むこと |
 | UT-TM-118 | validateDesignDocument | 設計文書のstory-idアノテーションを検証する | @story-idが独立行だが次行が空行で設計要素の直前でない場合 | L2-002エラーを含む結果が返ること |
 | UT-TM-119 | validateTest | テストファイルのstoryメタデータを検証する | @storyタグが欠落している場合 | errors[0].code==="L2-002" かつ errors[0].fix_example に `// @story H03-03` 形式の修正例を含むこと |
+
+### 7.2 H03-04 WorkItem frontmatter parser (ISSUE-026 Phase A-2)
+
+対象: `parseWorkItemFrontmatter(content: string): WorkItemFrontmatter | null`
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-W01 | `parseWorkItemFrontmatter` | frontmatter 不在の場合 | content の先頭が `---` で始まらない | `null` を返す |
+| UT-TM-W02 | `parseWorkItemFrontmatter` | 最小構成（id + type のみ）の場合 | `id: WI-001` + `type: story` がある | `{ id: 'WI-001', type: 'story' }` が返る（未指定キーは undefined） |
+| UT-TM-W03 | `parseWorkItemFrontmatter` | 完全構成の場合 | 全 7 フィールドが set されている | すべてのフィールドが反映された `WorkItemFrontmatter` を返す |
+| UT-TM-W04 | `parseWorkItemFrontmatter` | `id` 形式が無効な場合 | `id: BROKEN` のように pattern に合致しない | `WorkItemFrontmatterValidationError` を throw |
+| UT-TM-W05 | `parseWorkItemFrontmatter` | `type` が enum 外の場合 | `type: unknown` が指定されている | `WorkItemFrontmatterValidationError` を throw |
+| UT-TM-W06 | `parseWorkItemFrontmatter` | `severity` が enum 外の場合 | `severity: critical` が指定されている | `WorkItemFrontmatterValidationError` を throw |
+| UT-TM-W07 | `parseWorkItemFrontmatter` | `status` が enum 外の場合 | `status: done` が指定されている | `WorkItemFrontmatterValidationError` を throw |
+| UT-TM-W08 | `parseWorkItemFrontmatter` | `id` / `type` が frontmatter に無い場合 | 他キーのみある | `WorkItemFrontmatterValidationError` を throw（id/type は必須） |
+| UT-TM-W09 | `parseWorkItemFrontmatter` | legacy `id` パターンを受容する場合 | `id: H02-04` / `id: ISSUE-026` / `id: HF2-01` | いずれも正常に parse される |
+| UT-TM-W10 | `parseWorkItemFrontmatter` | `affects` が string 配列の場合 | `affects: [a, b]` | `['a', 'b']` が返る |
