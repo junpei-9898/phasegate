@@ -3,14 +3,14 @@
  * @unit biome-ast-engine
  */
 
-import { CLEAN_PRESET_SPEC, type ArchitectureSpec } from './architecture-spec.js';
+import { type ArchitectureSpec, CLEAN_PRESET_SPEC } from "./architecture-spec.js";
 
 export type LayerNameValue = string;
 
 export class InvalidLayerNameError extends Error {
   constructor(value: string) {
     super(`Invalid LayerName: ${value}`);
-    this.name = 'InvalidLayerNameError';
+    this.name = "InvalidLayerNameError";
   }
 }
 
@@ -28,7 +28,7 @@ export class LayerName {
       throw new InvalidLayerNameError(value);
     }
 
-    return Object.freeze(new LayerName(value, spec));
+    return Object.freeze(new LayerName(value, spec)) as LayerName;
   }
 
   static tryFromString(value: string, spec: ArchitectureSpec = CLEAN_PRESET_SPEC): LayerName | null {
@@ -36,7 +36,7 @@ export class LayerName {
       return null;
     }
 
-    return Object.freeze(new LayerName(value, spec));
+    return Object.freeze(new LayerName(value, spec)) as LayerName;
   }
 
   equals(other: LayerName): boolean {

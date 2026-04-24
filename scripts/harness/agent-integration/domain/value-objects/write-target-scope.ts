@@ -1,10 +1,10 @@
 // @unit agent-integration
 // @layer domain
 
-import { posix as path } from 'node:path';
-import { WriteTargetScopeInvariantError } from '../errors/write-target-scope-invariant-error.js';
-import { type PhaseGateLevel } from '../types/phase-gate-level.js';
-import { ProjectPaths } from './project-paths.js';
+import { posix as path } from "node:path";
+import { WriteTargetScopeInvariantError } from "../errors/write-target-scope-invariant-error.js";
+import type { PhaseGateLevel } from "../types/phase-gate-level.js";
+import type { ProjectPaths } from "./project-paths.js";
 
 type WriteTargetScopeProps = {
   level: PhaseGateLevel;
@@ -27,19 +27,19 @@ export class WriteTargetScope {
 
   static create(props: WriteTargetScopeProps): WriteTargetScope {
     if (props.level !== 1 && props.level !== 2 && props.level !== 3) {
-      throw new WriteTargetScopeInvariantError('level は 1, 2, 3 のいずれかである必要があります（INV-6違反）');
+      throw new WriteTargetScopeInvariantError("level は 1, 2, 3 のいずれかである必要があります（INV-6違反）");
     }
 
     if (props.level === 1 && (props.unitId !== undefined || props.storyId !== undefined)) {
-      throw new WriteTargetScopeInvariantError('level=1 の場合、unitId と storyId は指定できません（INV-7違反）');
+      throw new WriteTargetScopeInvariantError("level=1 の場合、unitId と storyId は指定できません（INV-7違反）");
     }
 
     if (props.level === 2 && (props.unitId === undefined || props.storyId !== undefined)) {
-      throw new WriteTargetScopeInvariantError('level=2 の場合、unitId は必須で storyId は指定できません（INV-8違反）');
+      throw new WriteTargetScopeInvariantError("level=2 の場合、unitId は必須で storyId は指定できません（INV-8違反）");
     }
 
     if (props.level === 3 && props.unitId === undefined) {
-      throw new WriteTargetScopeInvariantError('level=3 の場合、unitId は必須です（INV-9違反）');
+      throw new WriteTargetScopeInvariantError("level=3 の場合、unitId は必須です（INV-9違反）");
     }
 
     return new WriteTargetScope(props);
@@ -48,11 +48,11 @@ export class WriteTargetScope {
   static fromPath(filePath: string, projectPaths: ProjectPaths): WriteTargetScope | null {
     const normalizedPath = normalize(filePath);
 
-    if (normalizedPath === '') {
+    if (normalizedPath === "") {
       return null;
     }
 
-    if (normalizedPath.includes('/__tests__/') || normalizedPath.startsWith('__tests__/')) {
+    if (normalizedPath.includes("/__tests__/") || normalizedPath.startsWith("__tests__/")) {
       return null;
     }
 
@@ -78,12 +78,26 @@ export class WriteTargetScope {
       const [unitId, secondSegment, thirdSegment] = inceptionMatch;
 
       // 横断的 issue: docs/inception/issues/{ISSUE-XXX}/ → Level 1
-      if (unitId === 'issues') {
+      if (unitId === "issues") {
+        return WriteTargetScope.create({ level: 1 });
+      }
+
+      // 横断的 WI: docs/inception/_cross/{WI-XXX}/ → Level 3
+      if (unitId === "_cross") {
+        if (secondSegment !== undefined && WORK_ITEM_ID_PATTERN.test(secondSegment)) {
+          return WriteTargetScope.create({ level: 3, unitId, storyId: secondSegment });
+        }
+
         return WriteTargetScope.create({ level: 1 });
       }
 
       // Unit固有 issue: docs/inception/{unit}/issues/{ISSUE-XXX}/ → Level 3
-      if (unitId !== undefined && secondSegment === 'issues' && thirdSegment !== undefined && WORK_ITEM_ID_PATTERN.test(thirdSegment)) {
+      if (
+        unitId !== undefined &&
+        secondSegment === "issues" &&
+        thirdSegment !== undefined &&
+        WORK_ITEM_ID_PATTERN.test(thirdSegment)
+      ) {
         return WriteTargetScope.create({ level: 3, unitId, storyId: thirdSegment });
       }
 
@@ -110,12 +124,7 @@ export class WriteTargetScope {
 
     const productRoot = normalize(path.dirname(normalize(projectPaths.getDocsConstruction())));
     const productMatch = matchPrefix(normalizedPath, productRoot);
-    if (
-      productMatch !== null
-      && productMatch.length === 1
-      && productMatch[0] !== undefined
-      && productMatch[0].includes('.')
-    ) {
+    if (productMatch !== null && productMatch.length === 1 && productMatch[0]?.includes(".")) {
       return WriteTargetScope.create({ level: 1 });
     }
 
@@ -123,14 +132,16 @@ export class WriteTargetScope {
   }
 
   equals(other: WriteTargetScope): boolean {
-    return this.level === other.level
-      && this.unitId === other.unitId
-      && this.storyId === other.storyId;
+    return this.level === other.level && this.unitId === other.unitId && this.storyId === other.storyId;
   }
 }
 
 const normalize = (value: string): string =>
-  value.replaceAll('\\', '/').replace(/^\.\/+/, '').replace(/\/+/g, '/').replace(/\/$/, '');
+  value
+    .replaceAll("\\", "/")
+    .replace(/^\.\/+/, "")
+    .replace(/\/+/g, "/")
+    .replace(/\/$/, "");
 
 const matchPrefix = (targetPath: string, basePath: string): string[] | null => {
   const normalizedBase = normalize(basePath);
@@ -144,5 +155,5 @@ const matchPrefix = (targetPath: string, basePath: string): string[] | null => {
   }
 
   const remainder = targetPath.slice(normalizedBase.length + 1);
-  return remainder === '' ? [] : remainder.split('/');
+  return remainder === "" ? [] : remainder.split("/");
 };

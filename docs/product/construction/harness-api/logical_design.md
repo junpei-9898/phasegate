@@ -6,6 +6,7 @@
 @story-id H09-04
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
+> **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）
 > **対応ストーリー**: H09-01, H09-02, H09-03, H09-04
 > **モード**: Unit横断設計（Phase 2）
 > **Wave**: 2（コア品質機構）
@@ -124,6 +125,8 @@ scripts/harness/
             ├── lint-handler.ts
             ├── complete-check-handler.ts
             └── impact-analysis-handler.ts
+├── setup/
+│   └── skill-deployer.ts                    ← init/update-skills 用のFS orchestration
 ```
 
 テスト配置:
@@ -179,6 +182,36 @@ scripts/harness/__tests__/
 ---
 
 ## 2. Domain層設計
+
+### 1.5 Setup orchestration（ISSUE-025）
+
+`phasegate init` / `update-skills` は CLI の setup オーケストレーションとして harness-api の責務に含める。ここでいう setup はドメイン概念ではなく、project filesystem への初期配置規則である。
+
+#### 1.5.1 skill 配置の正
+
+skill の実体は project root の `skills/` に配置し、agent ごとの公開面は symlink で表現する。
+
+```text
+skills/                  # 実体
+.claude/skills -> ../skills   # Claude 有効時
+.codex/skills  -> ../skills   # Codex 有効時
+```
+
+#### 1.5.2 `init --agent` ごとの成果物
+
+| agent | skill 実体 | Claude 導線 | Codex 導線 | その他 |
+|---|---|---|---|---|
+| `claude` | `skills/` | `.claude/skills` | なし | `.claude/settings.json`, `.claude/scripts/*` |
+| `codex` | `skills/` | なし | `.codex/skills` | `.codex/hooks.json` |
+| `both` | `skills/` | `.claude/skills` | `.codex/skills` | 両方 |
+
+#### 1.5.3 update-skills の再検証ルール
+
+- `skills/` の実体は常に再配置する
+- `.claude/settings.json` または `.claude/skills` が存在する場合のみ `.claude/skills` を再検証する
+- `.codex/hooks.json` または `.codex/skills` が存在する場合のみ `.codex/skills` を再検証する
+
+既存の通常ディレクトリや通常ファイルは破壊せず、正しい symlink が既にある場合は skip とする。
 
 ### 2.1 中心設計方針
 

@@ -1,67 +1,64 @@
+// @unit harness-api
 // @layer infrastructure
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
-import { join } from 'node:path';
-import { promises as fs } from 'node:fs';
+import { promises as fs } from "node:fs";
+import { join } from "node:path";
 
-const HARNESS_VERSION_FILE = '.harness-version';
-const SKILLS_SOURCE_DIR = 'skills';
-const SKILLS_TARGET_DIR = join('.claude', 'skills');
-const HARNESS_CONFIG_FILE = 'phasegate.config.json';
-const HOOKS_TEMPLATE_DIR = join('templates', '.claude');
-const HOOKS_TARGET_DIR = '.claude';
+const HARNESS_VERSION_FILE = ".harness-version";
+const SKILLS_SOURCE_DIR = "skills";
+const SKILLS_TARGET_DIR = "skills";
+const SKILLS_LINK_TARGET = "../skills";
+const CLAUDE_SKILLS_LINK_DIR = ".claude";
+const CODEX_SKILLS_LINK_DIR = ".codex";
+const HARNESS_CONFIG_FILE = "phasegate.config.json";
+const HOOKS_TEMPLATE_DIR = join("templates", ".claude");
+const HOOKS_TARGET_DIR = ".claude";
 
 // ── Skill Category Map ──
 
-export type SkillCategory = 'core' | 'aidlc' | 'utility';
-export type SkillSet = 'core' | 'all';
+export type SkillCategory = "core" | "aidlc" | "utility";
+export type SkillSet = "core" | "all";
 
 export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
   core: [
-    'cascade-updater',
-    'codebase-mapper',
-    'consistency-checker',
-    'doc-freshness-checker',
-    'engineering-perspective',
-    'implementation-readiness-checker',
-    'pointer-validator',
-    'test-coverage-checker',
+    "cascade-updater",
+    "codebase-mapper",
+    "consistency-checker",
+    "doc-freshness-checker",
+    "engineering-perspective",
+    "implementation-readiness-checker",
+    "pointer-validator",
+    "test-coverage-checker",
   ],
   aidlc: [
-    'domain-designer',
-    'environment-designer',
-    'implementation-planner',
-    'it-test-designer',
-    'it-test-logic-designer',
-    'logical-designer',
-    'mock-designer',
-    'product-architect',
-    'quick-implementor',
-    'scenario-test-designer',
-    'scenario-test-logic-designer',
-    'story-implementor',
-    'story-mapper',
-    'story-writer',
-    'uiux-designer',
-    'unit-designer',
-    'unit-test-designer',
-    'unit-test-logic-designer',
+    "domain-designer",
+    "environment-designer",
+    "implementation-planner",
+    "it-test-designer",
+    "it-test-logic-designer",
+    "logical-designer",
+    "mock-designer",
+    "product-architect",
+    "quick-implementor",
+    "scenario-test-designer",
+    "scenario-test-logic-designer",
+    "story-implementor",
+    "story-mapper",
+    "story-writer",
+    "uiux-designer",
+    "unit-designer",
+    "unit-test-designer",
+    "unit-test-logic-designer",
   ],
-  utility: [
-    'codex-delegator',
-    'skill-creator',
-  ],
+  utility: ["codex-delegator", "skill-creator"],
 } as const;
 
 export function getSkillsForSet(skillSet: SkillSet): string[] {
-  if (skillSet === 'core') {
+  if (skillSet === "core") {
     return [...SKILL_CATEGORIES.core];
   }
-  return [
-    ...SKILL_CATEGORIES.core,
-    ...SKILL_CATEGORIES.aidlc,
-    ...SKILL_CATEGORIES.utility,
-  ];
+  return [...SKILL_CATEGORIES.core, ...SKILL_CATEGORIES.aidlc, ...SKILL_CATEGORIES.utility];
 }
 
 export function getCategoryForSkill(skillName: string): SkillCategory | null {
@@ -92,8 +89,8 @@ interface PkgJson {
 }
 
 export async function getHarnessVersion(harnessRoot: string): Promise<string> {
-  const packageJsonPath = join(harnessRoot, 'package.json');
-  const content = await fs.readFile(packageJsonPath, 'utf-8');
+  const packageJsonPath = join(harnessRoot, "package.json");
+  const content = await fs.readFile(packageJsonPath, "utf-8");
   const pkg: PkgJson = JSON.parse(content);
   return pkg.version;
 }
@@ -118,7 +115,7 @@ async function copyDirectory(src: string, dest: string): Promise<number> {
 export async function deploySkills(
   harnessRoot: string,
   projectRoot: string,
-  skillSet: SkillSet = 'all',
+  skillSet: SkillSet = "all",
 ): Promise<DeployResult> {
   const skillsSource = join(harnessRoot, SKILLS_SOURCE_DIR);
   const skillsTarget = join(projectRoot, SKILLS_TARGET_DIR);
@@ -139,11 +136,7 @@ export async function deploySkills(
   }
 
   const versionInfo: VersionInfo = { version, deployedAt, skillSet };
-  await fs.writeFile(
-    join(skillsTarget, HARNESS_VERSION_FILE),
-    JSON.stringify(versionInfo, null, 2) + '\n',
-    'utf-8',
-  );
+  await fs.writeFile(join(skillsTarget, HARNESS_VERSION_FILE), JSON.stringify(versionInfo, null, 2) + "\n", "utf-8");
 
   return { deployedSkills: skills, targetDir: skillsTarget, version, deployedAt, skillSet };
 }
@@ -151,7 +144,7 @@ export async function deploySkills(
 export async function getDeployedVersion(projectRoot: string): Promise<VersionInfo | null> {
   const versionFile = join(projectRoot, SKILLS_TARGET_DIR, HARNESS_VERSION_FILE);
   try {
-    const content = await fs.readFile(versionFile, 'utf-8');
+    const content = await fs.readFile(versionFile, "utf-8");
     const info: VersionInfo = JSON.parse(content);
     return info;
   } catch {
@@ -159,21 +152,60 @@ export async function getDeployedVersion(projectRoot: string): Promise<VersionIn
   }
 }
 
+export interface AgentSkillLinkResult {
+  created: boolean;
+  path: string;
+}
+
+export interface DeployAgentSkillLinksResult {
+  claude: AgentSkillLinkResult | null;
+  codex: AgentSkillLinkResult | null;
+}
+
+async function ensureSkillLink(projectRoot: string, agentDir: string): Promise<AgentSkillLinkResult> {
+  const parentDir = join(projectRoot, agentDir);
+  const targetPath = join(parentDir, "skills");
+
+  try {
+    const stats = await fs.lstat(targetPath);
+    if (stats.isSymbolicLink()) {
+      const existingTarget = await fs.readlink(targetPath);
+      if (existingTarget === SKILLS_LINK_TARGET) {
+        return { created: false, path: targetPath };
+      }
+    }
+    return { created: false, path: targetPath };
+  } catch {}
+
+  await fs.mkdir(parentDir, { recursive: true });
+  await fs.symlink(SKILLS_LINK_TARGET, targetPath, process.platform === "win32" ? "junction" : "dir");
+  return { created: true, path: targetPath };
+}
+
+export async function deployAgentSkillLinks(
+  projectRoot: string,
+  agents: {
+    claude: boolean;
+    codex: boolean;
+  },
+): Promise<DeployAgentSkillLinksResult> {
+  const claude = agents.claude ? await ensureSkillLink(projectRoot, CLAUDE_SKILLS_LINK_DIR) : null;
+  const codex = agents.codex ? await ensureSkillLink(projectRoot, CODEX_SKILLS_LINK_DIR) : null;
+  return { claude, codex };
+}
+
 export interface DeployHooksResult {
   scriptsDeployed: number;
   settingsCreated: boolean;
 }
 
-export async function deployHookScripts(
-  harnessRoot: string,
-  projectRoot: string,
-): Promise<DeployHooksResult> {
+export async function deployHookScripts(harnessRoot: string, projectRoot: string): Promise<DeployHooksResult> {
   const templateDir = join(harnessRoot, HOOKS_TEMPLATE_DIR);
   const targetDir = join(projectRoot, HOOKS_TARGET_DIR);
 
   // scripts/ ディレクトリをコピー
-  const scriptsSource = join(templateDir, 'scripts');
-  const scriptsTarget = join(targetDir, 'scripts');
+  const scriptsSource = join(templateDir, "scripts");
+  const scriptsTarget = join(targetDir, "scripts");
   let scriptsDeployed = 0;
 
   try {
@@ -183,16 +215,15 @@ export async function deployHookScripts(
     // シェルスクリプトに実行権限を付与
     const entries = await fs.readdir(scriptsTarget);
     for (const entry of entries) {
-      if (entry.endsWith('.sh')) {
+      if (entry.endsWith(".sh")) {
         await fs.chmod(join(scriptsTarget, entry), 0o755);
       }
     }
-  } catch {
-  }
+  } catch {}
 
   // settings.json を作成（既存があればスキップ）
-  const settingsSource = join(templateDir, 'settings.json');
-  const settingsTarget = join(targetDir, 'settings.json');
+  const settingsSource = join(templateDir, "settings.json");
+  const settingsTarget = join(targetDir, "settings.json");
   let settingsCreated = false;
 
   try {
@@ -204,8 +235,7 @@ export async function deployHookScripts(
       await fs.mkdir(targetDir, { recursive: true });
       await fs.copyFile(settingsSource, settingsTarget);
       settingsCreated = true;
-    } catch {
-      }
+    } catch {}
   }
 
   return { scriptsDeployed, settingsCreated };
@@ -214,7 +244,7 @@ export async function deployHookScripts(
 export async function initHarnessConfig(
   projectRoot: string,
   projectName: string,
-  phasePreset?: 'full' | 'standard' | 'minimal' | 'custom',
+  phasePreset?: "full" | "standard" | "minimal" | "custom",
 ): Promise<{ created: boolean; path: string }> {
   const configPath = join(projectRoot, HARNESS_CONFIG_FILE);
   try {
@@ -227,31 +257,31 @@ export async function initHarnessConfig(
   const template = {
     project: {
       name: projectName,
-      preset: 'standard',
+      preset: "standard",
     },
     layers: {},
     quickMode: {},
     phaseDependencies: {
-      preset: phasePreset ?? 'default',
+      preset: phasePreset ?? "default",
       override: false,
       customRules: [],
     },
     planningMode: {
-      default: 'interactive',
+      default: "interactive",
       perPhase: {},
     },
     harnesses: {},
     paths: {
-      designDocs: 'docs/product/construction',
-      inceptionDocs: 'docs/inception',
+      designDocs: "docs/product/construction",
+      inceptionDocs: "docs/inception",
     },
     reporting: {
-      format: 'json',
-      outputDir: 'reports',
+      format: "json",
+      outputDir: "reports",
     },
   };
 
-  await fs.writeFile(configPath, JSON.stringify(template, null, 2) + '\n', 'utf-8');
+  await fs.writeFile(configPath, JSON.stringify(template, null, 2) + "\n", "utf-8");
   return { created: true, path: configPath };
 }
 
@@ -260,19 +290,16 @@ export interface DeployDesignDocsResult {
   skippedFiles: string[];
 }
 
-export async function deployDesignDocs(
-  harnessRoot: string,
-  projectRoot: string,
-): Promise<DeployDesignDocsResult> {
+export async function deployDesignDocs(harnessRoot: string, projectRoot: string): Promise<DeployDesignDocsResult> {
   const copiedFiles: string[] = [];
   const skippedFiles: string[] = [];
-  const docsTargetDir = join(projectRoot, 'docs');
-  const principlesTargetDir = join(docsTargetDir, 'principles');
+  const docsTargetDir = join(projectRoot, "docs");
+  const principlesTargetDir = join(docsTargetDir, "principles");
 
   await fs.mkdir(docsTargetDir, { recursive: true });
   await fs.mkdir(principlesTargetDir, { recursive: true });
 
-  const folderRulesRelativePath = join('docs', 'folder_management_rules.md');
+  const folderRulesRelativePath = join("docs", "folder_management_rules.md");
   const folderRulesSource = join(harnessRoot, folderRulesRelativePath);
   const folderRulesTarget = join(projectRoot, folderRulesRelativePath);
 
@@ -289,17 +316,17 @@ export async function deployDesignDocs(
     }
   }
 
-  const principlesSourceDir = join(harnessRoot, 'docs', 'principles');
+  const principlesSourceDir = join(harnessRoot, "docs", "principles");
 
   try {
     const principleEntries = await fs.readdir(principlesSourceDir, { withFileTypes: true });
     const principleFiles = principleEntries
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
       .map((entry) => entry.name)
       .sort();
 
     for (const principleFile of principleFiles) {
-      const relativePath = join('docs', 'principles', principleFile);
+      const relativePath = join("docs", "principles", principleFile);
       const sourcePath = join(principlesSourceDir, principleFile);
       const targetPath = join(projectRoot, relativePath);
 
@@ -323,20 +350,35 @@ export interface DeployHuskyHookResult {
   path: string;
 }
 
-export async function deployHuskyHook(
-  harnessRoot: string,
-  projectRoot: string,
-): Promise<DeployHuskyHookResult> {
-  const targetPath = join(projectRoot, '.husky', 'pre-commit');
+export async function deployHuskyHook(harnessRoot: string, projectRoot: string): Promise<DeployHuskyHookResult> {
+  const targetPath = join(projectRoot, ".husky", "pre-commit");
 
   try {
     await fs.access(targetPath);
     return { created: false, path: targetPath };
-  } catch {
-  }
+  } catch {}
 
-  const sourcePath = join(harnessRoot, 'templates', '.husky', 'pre-commit');
-  await fs.mkdir(join(projectRoot, '.husky'), { recursive: true });
+  const sourcePath = join(harnessRoot, "templates", ".husky", "pre-commit");
+  await fs.mkdir(join(projectRoot, ".husky"), { recursive: true });
+  await fs.copyFile(sourcePath, targetPath);
+  await fs.chmod(targetPath, 0o755);
+
+  return { created: true, path: targetPath };
+}
+
+export async function deployHuskyCommitMsgHook(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployHuskyHookResult> {
+  const targetPath = join(projectRoot, ".husky", "commit-msg");
+
+  try {
+    await fs.access(targetPath);
+    return { created: false, path: targetPath };
+  } catch {}
+
+  const sourcePath = join(harnessRoot, "templates", ".husky", "commit-msg");
+  await fs.mkdir(join(projectRoot, ".husky"), { recursive: true });
   await fs.copyFile(sourcePath, targetPath);
   await fs.chmod(targetPath, 0o755);
 
@@ -348,20 +390,16 @@ export interface DeployCodexHooksResult {
   path: string;
 }
 
-export async function deployCodexHooks(
-  harnessRoot: string,
-  projectRoot: string,
-): Promise<DeployCodexHooksResult> {
-  const targetPath = join(projectRoot, '.codex', 'hooks.json');
+export async function deployCodexHooks(harnessRoot: string, projectRoot: string): Promise<DeployCodexHooksResult> {
+  const targetPath = join(projectRoot, ".codex", "hooks.json");
 
   try {
     await fs.access(targetPath);
     return { created: false, path: targetPath };
-  } catch {
-  }
+  } catch {}
 
-  const sourcePath = join(harnessRoot, 'templates', '.codex', 'hooks.json');
-  await fs.mkdir(join(projectRoot, '.codex'), { recursive: true });
+  const sourcePath = join(harnessRoot, "templates", ".codex", "hooks.json");
+  await fs.mkdir(join(projectRoot, ".codex"), { recursive: true });
   await fs.copyFile(sourcePath, targetPath);
 
   return { created: true, path: targetPath };

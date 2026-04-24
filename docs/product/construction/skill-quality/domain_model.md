@@ -6,11 +6,12 @@
 @story-id H12-04
 @story-id H12-05
 @story-id H12-06
+@story-id H12-07
 > **Unit ID**: skill-quality
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
 > **Wave**: 2（品質検証レイヤー）
-> **対応ストーリー**: H12-01〜H12-06
+> **対応ストーリー**: H12-01〜H12-07
 > **横断契約参照**: cross_cutting_decisions.md §2（Layer語彙）, §4（Shared Kernel最小化）, §6（集約降格）
 
 ---
@@ -28,7 +29,7 @@
 | LessonCollector | ドメインサービス | [Agent-Lesson]タグ付きエントリをLessonSourceReaderPortから収集しLesson[]を生成する |
 | LessonDeduplicator | ドメインサービス | LessonFingerprintによる重複Lessonの検出と統合を担う |
 | SkillStructureValidator | ドメインサービス | SkillStructure（必須セクション定義）とSKILL.md実体を比較し、SkillValidationResultを生成する |
-| CommitMessage | 値オブジェクト | `feat({unit}/{HXX-XX}): {description}` 形式の検証済みコミットメッセージ |
+| CommitMessage | 値オブジェクト | `feat({unit}/{HXX-XX}): {description}` 形式の検証済みコミットメッセージ。H12-07以降は任意で `Work-Item: WI-XXX` trailerを保持する |
 | TddCycle | 値オブジェクト | Red→Green→Refactor各ステップの状態（phase/passed） |
 | CommitReadiness | 値オブジェクト | L1+L2事前検証の統合結果（go/no-go + 違反詳細） |
 | CoverageReport | 値オブジェクト | 要件カバレッジ（RequirementCoverageResult）とコードカバレッジ（CodeCoverageResult）の統合結果 |
@@ -119,7 +120,7 @@
 
 | 値オブジェクト | 不変 | 値等価性 | 対応ストーリー | 説明 |
 |-------------|------|---------|-------------|------|
-| CommitMessage | ✓ | ✓ | H12-01 | `feat({unit}/{HXX-XX}): {description}` 形式。`format(): string` メソッドで文字列生成 |
+| CommitMessage | ✓ | ✓ | H12-01 / H12-07 | `feat({unit}/{HXX-XX}): {description}` 形式。`workItemId` 指定時は `Work-Item: WI-XXX` trailerを付与する |
 | TddCycle | ✓ | ✓ | H12-01 | Red→Green→Refactorの各ステップ状態。`phase: TddPhase`, `passed: boolean` |
 | CommitReadiness | ✓ | ✓ | H12-01 | L1+L2事前検証統合結果。`ready: boolean`, `violations: ValidationViolation[]` |
 | CoverageReport | ✓ | ✓ | H12-02 | 要件カバレッジ + コードカバレッジの統合結果。閾値判定メソッド付き |
@@ -190,6 +191,7 @@
 | INV-7 | LessonArtifact | `lessonId`（artifact識別子）は一意 | LessonArtifactWriterPort実装レベルで保証 |
 | INV-8 | CommitMessage | `unit`・`storyId`・`description`はいずれも非空文字列 | コンストラクタでHarnessError |
 | INV-9 | CommitMessage | `format()`の結果は`feat({unit}/{storyId}): {description}`パターンに準拠 | 生成時に検証済みのため実行時違反なし |
+| INV-9a | CommitMessage | `workItemId`を指定する場合は`WI-\d+`に一致する | コンストラクタでHarnessError |
 | INV-10 | SkillStructure | `requiredSections`は変更不可（ドメイン層でハードコード）かつ1件以上 | VO定数のため実行時変更不可 |
 | INV-11 | Lesson | `content`は非空文字列、`fingerprint`はcontent正規化後のSHA-256ハッシュと一致 | コンストラクタでHarnessError |
 | INV-12 | CoverageReport | `requirementCoverage`と`codeCoverage`はいずれも非null | コンストラクタでHarnessError |

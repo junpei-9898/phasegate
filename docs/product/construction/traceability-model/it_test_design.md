@@ -322,6 +322,9 @@ scripts/harness/__tests__/fixtures/traceability-model/
 | IT-TM-080 | 存在しないunit名で空配列が返ること | unit不在 | Arrange: fixture未配置。Act: listByUnit("nonexistent")。Assert: actual.length===0 |
 | IT-TM-081 | .md以外のファイルが除外されること | 拡張子フィルタ | Arrange: .mdと.txtを混在配置。Act: listByUnit("traceability-model")。Assert: .txtが結果に含まれない |
 | IT-TM-082 | サブディレクトリ内の.mdファイルが列挙されないこと | 深度制限 | Arrange: construction/{unit}/sub/配下に.md配置。Act: listByUnit(unit)。Assert: サブディレクトリのファイルが含まれないか、含まれるかを仕様に基づき検証 |
+| IT-TM-108 | readWorkItemFrontmatterが有効なWI frontmatterを返すこと | H03-05 WI frontmatter読み取り | Arrange: `id: WI-001` / `type: story` 付きMarkdown配置。Act: readWorkItemFrontmatter(filePath)。Assert: actual.id==="WI-001" |
+| IT-TM-109 | readWorkItemFrontmatterがfrontmatter不在でnullを返すこと | H03-05 後方互換 | Arrange: frontmatterなしMarkdown配置。Act: readWorkItemFrontmatter(filePath)。Assert: actual===null |
+| IT-TM-110 | readWorkItemFrontmatterがinvalid frontmatterで例外を返すこと | H03-05 malformed検出 | Arrange: `type: broken` 付きMarkdown配置。Act: readWorkItemFrontmatter(filePath)。Assert: WorkItemFrontmatterValidationErrorがthrow |
 
 ### 4.9 FileSystemInceptionPlanGateway
 

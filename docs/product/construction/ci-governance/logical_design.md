@@ -1458,6 +1458,12 @@ domain_model.mdのLessonAggregatorは「LessonArtifact[] → PointerEntry[]へ�
 
 Dead Pointer は `HarnessError`（severity: `'error'`）として移行を中断する強制的なエラーとする。一方、AGENTS.md行数削減KPI未達（移行後行数 > 移行前行数 × 0.5）は `HarnessError`（severity: `'warning'`）として警告にとどめ、移行処理自体は完了させる。KPI未達は設計目標であり、ポインタ型への部分移行でも一定の効果があるためである。KPIを強制的な失敗条件とする場合は `--strict-kpi` フラグを `MigrateAgentsMdHandler` に追加して切り替え可能とする。
 
+### D15: Work-Item trailer検証はpre-commit統合のオプション入力として扱う
+
+H13-04では、WI配下document変更時に `Work-Item: WI-XXX` trailerを要求する。ただしGitのpre-commit hookはコミットメッセージ作成前に実行されるため、通常のpre-commit経路では本文を読めない。したがって `runPreCommit()` にオプションの `commitMessage` を追加し、CIの呼び出し元が `PHASEGATE_COMMIT_MESSAGE` で本文を渡した場合にtrailer検証を実行する。Git hookでは `phasegate commit-msg <message-file>` を追加し、`.husky/commit-msg` からGitのmessage fileを渡す。
+
+WI変更の判定は `docs/inception/**/WI-<number>/**` のstaged pathで行う。WI配下以外の変更ではtrailerを要求せず、`commitMessage` 未指定時は既存のL2/metadata検証のみを実行する。
+
 ---
 
 ## 8. テスト方針

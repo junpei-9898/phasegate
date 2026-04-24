@@ -4,10 +4,13 @@
 @story-id H02-02
 @story-id H02-03
 @story-id H02-04
+@story-id H02-05
+@story-id H02-06
+@story-id H02-07
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
-> **最終更新**: 2026-04-24（H02-04 / ISSUE-026 Phase A-1 テストケース追加）
-> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04
+> **最終更新**: 2026-04-24（H02-07 / ISSUE-026 Phase C-4 legacy annotation compatibility テストケース追加）
+> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04, H02-05, H02-06, H02-07
 > **対応Issue**: ISSUE-001, ISSUE-026
 > **正規ソース**: `docs/product/construction/phase-dependency-model/domain_model.md`
 
@@ -539,6 +542,37 @@ scripts/harness/__tests__/phase-dependency-model/
 | UT-PD-157 | `fileContainsStoryAnnotation` | 異なるアノテーション種別が混在しても独立検出できる | `@story-id H02-04` と `@work-item-id WI-001` が同一ファイルにある場合 | いずれの ID でも true を返す | `file-system-story-reflection-adapter.test.ts` |
 | UT-PD-158 | `fileContainsStoryAnnotation` | 未知 ID は検出されない | `@work-item-id WI-001` のみある状態で存在しない ID を問い合わせた場合 | false を返す | `file-system-story-reflection-adapter.test.ts` |
 
+### 9.7 H02-05 WI-aware story reflection listing
+
+対象: `FileSystemStoryReflectionAdapter#listStoryDirectories`
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-159 | `listStoryDirectories` | WI layout の列挙を検証する | `docs/inception/{unit}/WI-001` がある場合 | `WI-001` を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-160 | 同上 | cross WI の列挙を検証する | `docs/inception/_cross/WI-026` がある場合 | `WI-026` を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-161 | 同上 | 旧issuesディレクトリ除外を検証する | `docs/inception/{unit}/issues/ISSUE-001` がある場合 | `issues` / `ISSUE-001` を返さない | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-162 | 同上 | `_cross` の非WI除外を検証する | `docs/inception/_cross/memo` がある場合 | `memo` を返さない | `file-system-story-reflection-adapter.test.ts` |
+
+### 9.8 H02-06 WI frontmatter affects-aware story reflection
+
+対象: `StoryReflectionChecker`, `FileSystemStoryReflectionAdapter#storyAffectsUnit`
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-163 | `StoryReflectionChecker` | cross WI の実在パス解決を検証する | `_cross/WI-026/logical_design.md` が存在し `storyAffectsUnit=true` の場合 | product未反映なら violation を返す | `story-reflection-checker.test.ts` |
+| UT-PD-164 | `StoryReflectionChecker` | cross WI の対象Unit絞り込みを検証する | `_cross/WI-026/logical_design.md` が存在し `storyAffectsUnit=false` の場合 | 対象外として pass | `story-reflection-checker.test.ts` |
+| UT-PD-165 | `storyAffectsUnit` | affects frontmatter を検出する | `affects: [order, billing]` がある場合 | `order` に true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-166 | `storyAffectsUnit` | affects 対象外を検出する | `affects: [order]` がある場合 | `billing` に false を返す | `file-system-story-reflection-adapter.test.ts` |
+
+### 9.9 H02-07 WI annotation legacy compatibility
+
+対象: `FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation`
+
+| ケースID | target | describe | context | it（期待値） | テストファイル |
+|---------|--------|----------|---------|------------|-------------|
+| UT-PD-167 | `fileContainsStoryAnnotation` | legacy_id 経由の旧issue annotation検出 | `legacy_id: ISSUE-001` と product `@issue-id ISSUE-001` がある場合 | `WI-001` に true を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-168 | 同上 | legacy_id 不在時の誤検出防止 | product `@issue-id ISSUE-001` のみある場合 | `WI-001` に false を返す | `file-system-story-reflection-adapter.test.ts` |
+
 ---
 
 ## テストケース総数
@@ -551,7 +585,10 @@ scripts/harness/__tests__/phase-dependency-model/
 | カバレッジギャップ補強 | 19件（UT-PD-115〜133） |
 | ISSUE-001追加: コンテキスト依存チェック（INV-8, INV-9） | 17件（UT-PD-134〜152、UT-PD-147/149統合により2件減） |
 | H02-04 `@work-item-id` アノテーション併存対応 | 6件（UT-PD-153〜158） |
-| **合計** | **156件** |
+| H02-05 WI-aware story reflection listing | 4件（UT-PD-159〜162） |
+| H02-06 WI frontmatter affects-aware story reflection | 4件（UT-PD-163〜166） |
+| H02-07 WI annotation legacy compatibility | 2件（UT-PD-167〜168） |
+| **合計** | **166件** |
 
 > 注: 境界値・異常系のケース（セクション6）は、セクション3・4のケースと一部重複する参照関係を持つ。実装時にはテストファイル内で適切なdescribe/contextグループに統合すること。
 > 注: ISSUE-001追加分（セクション9）はcheckPhaseGateのscope引数に関するテストであり、セクション3.2の既存checkPhaseGateテストと同一テストファイル内のdescribeブロックに統合可能。

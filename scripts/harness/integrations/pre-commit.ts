@@ -13,36 +13,33 @@
  *   2 = runtime error
  */
 
-import { execSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
-import { createValidatorSystemModule } from '../validator-system/composition-root.js';
-import { HumanValidationResultFormatter } from '../validator-system/presentation/formatters/human-validation-result-formatter.js';
-import type { AggregatedValidationReport } from '../validator-system/application/dto/aggregated-validation-report.js';
-import type { ValidationResultContract } from '../validator-system/application/dto/validation-result-contract.js';
-import { createTraceabilityModelModule } from '../traceability-model/composition-root.js';
-import type { ValidateMetadataCommandOutput } from '../traceability-model/presentation/cli/validate-metadata-command-handler.js';
+import { execSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { createTraceabilityModelModule } from "../traceability-model/composition-root.js";
+import type { ValidateMetadataCommandOutput } from "../traceability-model/presentation/cli/validate-metadata-command-handler.js";
+import type { AggregatedValidationReport } from "../validator-system/application/dto/aggregated-validation-report.js";
+import type { ValidationResultContract } from "../validator-system/application/dto/validation-result-contract.js";
+import { createValidatorSystemModule } from "../validator-system/composition-root.js";
+import { HumanValidationResultFormatter } from "../validator-system/presentation/formatters/human-validation-result-formatter.js";
 
-const GREEN = '\x1b[32m';
-const RED = '\x1b[31m';
-const BOLD = '\x1b[1m';
-const DIM = '\x1b[2m';
-const RESET = '\x1b[0m';
+const GREEN = "\x1b[32m";
+const RED = "\x1b[31m";
+const BOLD = "\x1b[1m";
+const DIM = "\x1b[2m";
+const RESET = "\x1b[0m";
 
-const TS_EXTENSION = '.ts';
-const MD_EXTENSION = '.md';
-const TEST_FILE_SUFFIXES = Object.freeze([
-  '.test.ts',
-  '.test.tsx',
-  '.spec.ts',
-  '.spec.tsx',
-]);
+const TS_EXTENSION = ".ts";
+const MD_EXTENSION = ".md";
+const WORK_ITEM_PATH_PATTERN = /(?:^|\/)WI-\d+(?:\/|$)/;
+const WORK_ITEM_TRAILER_PATTERN = /^Work-Item:\s*WI-\d+\s*$/m;
+const TEST_FILE_SUFFIXES = Object.freeze([".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"]);
 
 function isTestFile(path: string): boolean {
   return TEST_FILE_SUFFIXES.some((suffix) => path.endsWith(suffix));
 }
 
-const HARNESS_ROOT_PREFIX = 'scripts/harness/';
-const TESTS_SEGMENT = '__tests__';
+const HARNESS_ROOT_PREFIX = "scripts/harness/";
+const TESTS_SEGMENT = "__tests__";
 const UNIT_ANNOTATION_PATTERN = /^\s*(?:\/\/|\*)\s*@unit\s+(\S+)/m;
 
 /**
@@ -55,7 +52,7 @@ const UNIT_ANNOTATION_PATTERN = /^\s*(?:\/\/|\*)\s*@unit\s+(\S+)/m;
  */
 function deriveUnitNameFromPath(filePath: string): string | undefined {
   if (!filePath.startsWith(HARNESS_ROOT_PREFIX)) return undefined;
-  const parts = filePath.slice(HARNESS_ROOT_PREFIX.length).split('/');
+  const parts = filePath.slice(HARNESS_ROOT_PREFIX.length).split("/");
   if (parts.length < 2) return undefined;
   if (parts[0] === TESTS_SEGMENT) {
     return parts.length >= 3 ? parts[2] : undefined;
@@ -69,7 +66,7 @@ function deriveUnitNameFromPath(filePath: string): string | undefined {
  */
 async function deriveUnitNameFromFile(filePath: string): Promise<string | undefined> {
   try {
-    const content = await readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, "utf-8");
     const match = UNIT_ANNOTATION_PATTERN.exec(content);
     return match?.[1];
   } catch {
@@ -143,14 +140,23 @@ export interface PreCommitResult {
   readonly stdout: string;
 }
 
+export interface PreCommitOptions {
+  /**
+   * Optional commit message supplied by CI / commit-msg style callers.
+   * Native pre-commit hooks run before Git creates the message, so this is
+   * intentionally opt-in and preserves existing local pre-commit behavior.
+   */
+  readonly commitMessage?: string;
+}
+
 function getStagedFiles(): string[] {
   try {
-    const output = execSync('git diff --cached --name-only --diff-filter=ACM', {
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore'],
+    const output = execSync("git diff --cached --name-only --diff-filter=ACM", {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
     });
     return output
-      .split('\n')
+      .split("\n")
       .map((f) => f.trim())
       .filter((f) => f.length > 0);
   } catch {
@@ -158,15 +164,13 @@ function getStagedFiles(): string[] {
   }
 }
 
-function buildReport(
-  results: readonly ValidationResultContract[],
-): AggregatedValidationReport {
+function buildReport(results: readonly ValidationResultContract[]): AggregatedValidationReport {
   const passed = results.filter((r) => r.passed && !r.skipped).length;
   const failed = results.filter((r) => !r.passed && !r.skipped).length;
   const skipped = results.filter((r) => r.skipped).length;
   const allErrors = results.flatMap((r) => r.errors);
-  const errorCount = allErrors.filter((e) => e.severity === 'error').length;
-  const warnCount = allErrors.filter((e) => e.severity === 'warning').length;
+  const errorCount = allErrors.filter((e) => e.severity === "error").length;
+  const warnCount = allErrors.filter((e) => e.severity === "warning").length;
   return {
     overallPassed: failed === 0,
     totalValidators: results.length,
@@ -184,15 +188,26 @@ function buildReport(
 }
 
 function maxExitCode(a: 0 | 1 | 2, b: 0 | 1 | 2): 0 | 1 | 2 {
-  return (Math.max(a, b) as 0 | 1 | 2);
+  return Math.max(a, b) as 0 | 1 | 2;
+}
+
+function requiresWorkItemTrailer(stagedFiles: readonly string[]): boolean {
+  return stagedFiles.some(
+    (filePath) => filePath.startsWith("docs/inception/") && WORK_ITEM_PATH_PATTERN.test(filePath),
+  );
+}
+
+function hasWorkItemTrailer(commitMessage: string): boolean {
+  return WORK_ITEM_TRAILER_PATTERN.test(commitMessage);
 }
 
 export async function runPreCommit(
   stagedFiles: readonly string[],
   deps: PreCommitDeps,
+  options: PreCommitOptions = {},
 ): Promise<PreCommitResult> {
   const tsFiles = stagedFiles.filter((f) => f.endsWith(TS_EXTENSION));
-  const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION));
+  const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION) && f.startsWith("docs/"));
   const testFiles = tsFiles.filter((f) => isTestFile(f));
   const metadataFiles = [...mdFiles, ...testFiles];
 
@@ -205,8 +220,7 @@ export async function runPreCommit(
 
   const sections: string[] = [];
   sections.push(
-    `${BOLD}[phasegate]${RESET} Pre-commit check ` +
-      `(${tsFiles.length} .ts file(s), ${mdFiles.length} .md file(s))`,
+    `${BOLD}[phasegate]${RESET} Pre-commit check ` + `(${tsFiles.length} .ts file(s), ${mdFiles.length} .md file(s))`,
   );
 
   let exitCode: 0 | 1 | 2 = 0;
@@ -217,7 +231,7 @@ export async function runPreCommit(
     // 別グループ（unitName=''）として従来挙動で評価する。
     const filesByUnit = new Map<string, string[]>();
     for (const f of tsFiles) {
-      const unit = (await resolveUnitName(f)) ?? '';
+      const unit = (await resolveUnitName(f)) ?? "";
       const bucket = filesByUnit.get(unit);
       if (bucket) {
         bucket.push(f);
@@ -231,14 +245,14 @@ export async function runPreCommit(
       const results = await deps.runL2ValidatorsUseCase.execute({
         targetPaths: unitFiles,
         unitName,
-        currentPhase: '',
+        currentPhase: "",
       });
       runs.push(results);
     }
 
     const merged = mergePerUnitResults(runs);
     const report = buildReport(merged);
-    sections.push('');
+    sections.push("");
     sections.push(`${BOLD}== TypeScript 実装 (${tsFiles.length} file(s)) ==${RESET}`);
     sections.push(new HumanValidationResultFormatter().format(report));
     if (!report.overallPassed) {
@@ -250,15 +264,26 @@ export async function runPreCommit(
     const metadataResult = await deps.validateMetadataCommandHandler.execute({
       filePaths: metadataFiles,
     });
-    sections.push('');
-    sections.push(
-      `${BOLD}== 設計 / テスト メタデータ注釈 (${metadataFiles.length} file(s)) ==${RESET}`,
-    );
+    sections.push("");
+    sections.push(`${BOLD}== 設計 / テスト メタデータ注釈 (${metadataFiles.length} file(s)) ==${RESET}`);
     sections.push(metadataResult.text);
     exitCode = maxExitCode(exitCode, metadataResult.exitCode);
   }
 
-  sections.push('');
+  if (options.commitMessage !== undefined && requiresWorkItemTrailer(stagedFiles)) {
+    sections.push("");
+    sections.push(`${BOLD}== Work-Item trailer ==${RESET}`);
+    if (hasWorkItemTrailer(options.commitMessage)) {
+      sections.push(`${GREEN}PASS${RESET} Work-Item trailer is present.`);
+    } else {
+      sections.push(
+        `${RED}FAIL${RESET} Commit message must include \`Work-Item: WI-XXX\` when WI documents are staged.`,
+      );
+      exitCode = maxExitCode(exitCode, 1);
+    }
+  }
+
+  sections.push("");
   if (exitCode === 0) {
     sections.push(`${GREEN}[phasegate]${RESET} All checks passed.`);
   } else {
@@ -267,7 +292,7 @@ export async function runPreCommit(
 
   return {
     exitCode,
-    stdout: sections.join('\n'),
+    stdout: sections.join("\n"),
   };
 }
 
@@ -277,10 +302,46 @@ export async function runPreCommitCli(): Promise<void> {
     const validatorMod = createValidatorSystemModule();
     const traceabilityMod = createTraceabilityModelModule(process.cwd());
 
-    const result = await runPreCommit(stagedFiles, {
-      runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
-      validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
-    });
+    const result = await runPreCommit(
+      stagedFiles,
+      {
+        runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
+        validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
+      },
+      {
+        commitMessage: process.env.PHASEGATE_COMMIT_MESSAGE,
+      },
+    );
+
+    process.stdout.write(`${result.stdout}\n`);
+    process.exit(result.exitCode);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`${RED}[phasegate] Unexpected error:${RESET} ${msg}\n`);
+    process.exit(2);
+  }
+}
+
+export async function runCommitMsgCli(commitMessagePath: string | undefined): Promise<void> {
+  try {
+    if (!commitMessagePath) {
+      process.stderr.write(`${RED}[phasegate] commit-msg requires a commit message file path.${RESET}\n`);
+      process.exit(2);
+    }
+
+    const stagedFiles = getStagedFiles();
+    const commitMessage = await readFile(commitMessagePath, "utf-8");
+    const validatorMod = createValidatorSystemModule();
+    const traceabilityMod = createTraceabilityModelModule(process.cwd());
+
+    const result = await runPreCommit(
+      stagedFiles,
+      {
+        runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
+        validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
+      },
+      { commitMessage },
+    );
 
     process.stdout.write(`${result.stdout}\n`);
     process.exit(result.exitCode);

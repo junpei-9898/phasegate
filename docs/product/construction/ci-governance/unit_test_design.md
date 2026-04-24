@@ -370,6 +370,22 @@
 
 ---
 
+### 4.5 Work-Item trailer validation
+
+**テスト配置**: `scripts/harness/__tests__/unit/harness-api/pre-commit.test.ts`
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-PC-17 | WI配下documentがstaged、commit messageにtrailerなし | exitCode 1、`Work-Item: WI-XXX` を表示 |
+| UT-PC-18 | WI配下documentがstaged、commit messageに `Work-Item: WI-026` あり | exitCode 0 |
+| UT-PC-19 | WI配下以外のdocumentがstaged、commit messageにtrailerなし | exitCode 0、trailerセクションなし |
+| IT-PC-10 | `phasegate commit-msg <file>`、WI配下document staged、trailerなし | exitCode 1、trailer欠落を表示 |
+| IT-PC-11 | `phasegate commit-msg <file>`、WI配下document staged、valid trailerあり | trailer検証セクションがPASS |
+| UT-SD-CM-001 | `deployHuskyCommitMsgHook()` を空プロジェクトに実行 | `.husky/commit-msg` を作成 |
+| UT-SD-CM-002 | 既存 `.husky/commit-msg` がある | 上書きしない |
+
+---
+
 ## 5. テストケース総数サマリー
 
 | 対象クラス | 生成テスト | 不変条件テスト | 等値性テスト | その他 | 合計 |
@@ -385,4 +401,5 @@
 | RepetitionDetector | 5 | — | — | — | 5 |
 | PointerValidator | 8 | — | — | — | 8 |
 | LessonAggregator | 5 | — | — | 2（変換ルール） | 7 |
-| **合計** | **52** | **10** | **7** | **36** | **105** |
+| Work-Item trailer validation | — | — | — | 7（pre-commit/CI/commit-msg統合） | 7 |
+| **合計** | **52** | **10** | **7** | **43** | **112** |

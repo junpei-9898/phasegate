@@ -6,9 +6,10 @@
 @story-id H12-04
 @story-id H12-05
 @story-id H12-06
+@story-id H12-07
 > **Unit ID**: skill-quality
 > **作成日**: 2026-03-20
-> **対応ストーリー**: H12-01, H12-02, H12-03, H12-04, H12-05, H12-06
+> **対応ストーリー**: H12-01, H12-02, H12-03, H12-04, H12-05, H12-06, H12-07
 > **Wave**: 3
 > **参照**: domain_model.md, logical_design.md, docs/principles/testing-rules.md
 
@@ -122,6 +123,7 @@
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
 | UT-CM-005 | unit='skill-quality', storyId='H12-01', description='add lesson collector' | `feat(skill-quality/H12-01): add lesson collector` が返される |
+| UT-CM-005a | workItemId='WI-026' | `Work-Item: WI-026` trailer が付与される |
 | UT-CM-006 | unit='harness-error', storyId='H09-03', description='fix error code' | `feat(harness-error/H09-03): fix error code` が返される |
 
 #### 等値性テスト
@@ -130,12 +132,14 @@
 |---------|---------|---------|
 | UT-CM-007 | 同一 unit/storyId/description を持つ 2 つの CommitMessage | equals() が true を返す |
 | UT-CM-008 | description のみ異なる 2 つの CommitMessage | equals() が false を返す |
+| UT-CM-008a | workItemId のみ異なる 2 つの CommitMessage | equals() が false を返す |
 
 #### 不変条件テスト
 
 | ケースID | 不変条件 | 入力 | 期待結果 |
 |---------|---------|------|---------|
 | UT-CM-009 | INV-8: 全フィールドが非空 | 有効な CommitMessage 生成後にプロパティ変更を試みる | プロパティが変更されない（Object.freeze() 済み） |
+| UT-CM-010 | INV-9a: workItemId がWI形式ではない | workItemId='ISSUE-026' | HarnessError(INVALID_WORK_ITEM_ID) がスローされる |
 
 ---
 
@@ -571,7 +575,7 @@
 |---------|--------|---------|
 | 集約ルート | PlanCheckerLoop | 11 |
 | 集約ルート | LessonArtifact | 10 |
-| 値オブジェクト | CommitMessage | 9 |
+| 値オブジェクト | CommitMessage | 12 |
 | 値オブジェクト | TddCycle | 9 |
 | 値オブジェクト | CommitReadiness | 5 |
 | 値オブジェクト | CoverageReport | 8 |

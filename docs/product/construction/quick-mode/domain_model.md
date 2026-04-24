@@ -3,11 +3,12 @@
 @story-id H10-01
 @story-id H10-02
 @story-id H10-03
+@story-id H10-06
 > **Unit ID**: quick-mode
 > **作成日**: 2026-03-19
-> **最終更新**: 2026-03-19（Wave 2 初版）
+> **最終更新**: 2026-04-24（H10-06 / ISSUE-026 Phase D-1 WI-aware quick-implementor 反映）
 > **Wave**: 2（品質検証レイヤー）
-> **対応ストーリー**: H10-01〜H10-03（H10-04はSKILL.mdのためスコープ外）
+> **対応ストーリー**: H10-01〜H10-03, H10-06（H10-04/H10-06はSKILL.md契約のため実装ロジック外）
 > **横断契約参照**: cross_cutting_decisions.md §2（Layer語彙）, §4（Shared Kernel最小化）, §6（集約降格）
 
 ---
@@ -226,6 +227,8 @@ MIXED_CHANGES / NEW_DOMAIN / API_CONTRACT の3拒否ルールは`allowedCategori
 
 `QuickModeEligibility`（適用可否）と`ValidatorRelaxationProfile`（緩和構成）を2段階処理にする設計を採用。JudgmentEngineが`QuickModeEligibility`を返し、eligible=trueの場合のみRelaxationServiceが`ValidatorRelaxationProfile`を生成する。`QuickModeDecision`は`{ eligibility, relaxationProfile? }`の複合VOとして最終出力。eligibility=failの場合はrelaxationProfileをundefinedにする。
 
-### D5: H10-04（quick-implementor SKILL.md）のスコープ外し
+### D5: H10-04 / H10-06（quick-implementor SKILL.md）のスコープ外し
 
 H10-04はSKILL.mdドキュメントの生成であり、ドメインモデルの設計対象外。SKILL.mdはdocs/skills/配下のドキュメント成果物であり、H10-01〜H10-03の実装ロジックが確定した後にskill-creatorスキルで作成する。
+
+H10-06はISSUE-026 Phase D-1として、同じくquick-implementorのスキル契約をWI-awareに更新する作業である。`type: fix | chore` をQuick Mode適用候補、`type: story | issue | refactor` をFull Mode対象として扱うルール、および `Work-Item: WI-XXX` trailer をスキル側の手順に追加する。QuickModeJudgmentEngine自体はファイルカテゴリ判定を維持し、WI frontmatterの運用判断はスキル入口契約で扱う。

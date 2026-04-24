@@ -7,23 +7,20 @@
  * PreToolUse Hook処理のオーケストレーション
  */
 
-import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
-import { HookEvent } from '../../domain/value-objects/hook-event.js';
-import type { BlockMetadata } from '../../domain/value-objects/hook-translation-result.js';
-import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
-import type { PhaseGateQueryPort } from '../../domain/ports/phase-gate-query-port.js';
-import type { StoryReflectionQueryPort } from '../../domain/ports/story-reflection-query-port.js';
-import type { FullModeRequirementQueryPort } from '../../domain/ports/full-mode-requirement-query-port.js';
 import type {
   BaselineGrandfatherCheckResult,
   BaselineGrandfatherQueryPort,
-} from '../../domain/ports/baseline-grandfather-query-port.js';
-import type {
-  ErrorGuidance,
-  ErrorGuidanceQueryPort,
-} from '../../domain/ports/error-guidance-query-port.js';
-import { WriteTargetScope } from '../../domain/value-objects/write-target-scope.js';
-import type { HandlePreToolUseInput, HandlePreToolUseOutput } from '../dto/handle-pre-tool-use-dto.js';
+} from "../../domain/ports/baseline-grandfather-query-port.js";
+import type { ConfigQueryPort } from "../../domain/ports/config-query-port.js";
+import type { ErrorGuidance, ErrorGuidanceQueryPort } from "../../domain/ports/error-guidance-query-port.js";
+import type { FullModeRequirementQueryPort } from "../../domain/ports/full-mode-requirement-query-port.js";
+import type { PhaseGateQueryPort } from "../../domain/ports/phase-gate-query-port.js";
+import type { StoryReflectionQueryPort } from "../../domain/ports/story-reflection-query-port.js";
+import { AsyncHookToCliTranslator } from "../../domain/services/hook-to-cli-translator.js";
+import { HookEvent } from "../../domain/value-objects/hook-event.js";
+import type { BlockMetadata } from "../../domain/value-objects/hook-translation-result.js";
+import { WriteTargetScope } from "../../domain/value-objects/write-target-scope.js";
+import type { HandlePreToolUseInput, HandlePreToolUseOutput } from "../dto/handle-pre-tool-use-dto.js";
 
 export interface HandlePreToolUseUseCasePorts {
   configQueryPort: ConfigQueryPort;
@@ -38,14 +35,17 @@ export interface HandlePreToolUseUseCasePorts {
 export class HandlePreToolUseInputValidationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'HandlePreToolUseInputValidationError';
+    this.name = "HandlePreToolUseInputValidationError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
 export class HandlePreToolUseUseCase {
   private static readonly WRITE_TOOLS: ReadonlySet<string> = new Set([
-    'Write', 'Edit', 'NotebookEdit', 'str_replace_editor',
+    "Write",
+    "Edit",
+    "NotebookEdit",
+    "str_replace_editor",
   ]);
 
   private readonly translator: AsyncHookToCliTranslator;
@@ -55,10 +55,7 @@ export class HandlePreToolUseUseCase {
   private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
   private readonly baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
   private readonly errorGuidanceQueryPort?: ErrorGuidanceQueryPort;
-  private readonly grandfatherLogger: (
-    reason: string,
-    targetFilePaths: readonly string[],
-  ) => void;
+  private readonly grandfatherLogger: (reason: string, targetFilePaths: readonly string[]) => void;
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
     this.configQueryPort = ports.configQueryPort;
@@ -69,10 +66,7 @@ export class HandlePreToolUseUseCase {
     this.errorGuidanceQueryPort = ports.errorGuidanceQueryPort;
     this.grandfatherLogger =
       ports.grandfatherLogger ??
-      ((reason, paths) =>
-        process.stderr.write(
-          `[baseline] grandfather skip (${reason}): ${paths.join(', ')}\n`,
-        ));
+      ((reason, paths) => process.stderr.write(`[baseline] grandfather skip (${reason}): ${paths.join(", ")}\n`));
     this.translator = new AsyncHookToCliTranslator({
       configQueryPort: ports.configQueryPort,
       reentryGuard: { isActive: () => false } as never,
@@ -83,7 +77,10 @@ export class HandlePreToolUseUseCase {
 
   private async isFullModeBypassedByDesignDocs(targetFilePaths: readonly string[]): Promise<boolean> {
     const unitId = this.deriveUnitIdFromPaths(targetFilePaths);
-    if (unitId === undefined || unitId === '') {
+    if (unitId === undefined || unitId === "") {
+      return false;
+    }
+    if (typeof this.phaseGateQueryPort.checkDesignDocsExist !== "function") {
       return false;
     }
 
@@ -95,8 +92,8 @@ export class HandlePreToolUseUseCase {
   }
 
   async execute(input: HandlePreToolUseInput): Promise<HandlePreToolUseOutput> {
-    if (!input.toolName || input.toolName.trim() === '') {
-      throw new HandlePreToolUseInputValidationError('toolNameは必須です（空文字不可）');
+    if (!input.toolName || input.toolName.trim() === "") {
+      throw new HandlePreToolUseInputValidationError("toolNameは必須です（空文字不可）");
     }
 
     const grandfather = await this.checkGrandfather(input.targetFilePaths);
@@ -108,18 +105,17 @@ export class HandlePreToolUseUseCase {
       const metadata = result.blockMetadata;
       const blockedFilePath = metadata?.blockedFilePath ?? input.targetFilePaths[0];
 
-      if (metadata?.reason === 'PROTECTED_FILE') {
+      if (metadata?.reason === "PROTECTED_FILE") {
         return HandlePreToolUseUseCase.buildProtectedFileBlockOutput(blockedFilePath);
       }
 
-      if (metadata?.reason === 'PHASE_GATE') {
+      if (metadata?.reason === "PHASE_GATE") {
         if (grandfather.allGrandfathered) {
-          this.grandfatherLogger('phase-gate', input.targetFilePaths);
+          this.grandfatherLogger("phase-gate", input.targetFilePaths);
           // fallthrough: continue to full-mode / story-reflection checks (which may also grandfather)
         } else {
-          const guidance = await this.resolveGuidance('L2-001');
-          const unitIdForGuidance =
-            metadata?.unitId ?? this.deriveUnitIdFromPaths(input.targetFilePaths);
+          const guidance = await this.resolveGuidance("L2-001");
+          const unitIdForGuidance = metadata?.unitId ?? this.deriveUnitIdFromPaths(input.targetFilePaths);
           return HandlePreToolUseUseCase.buildPhaseGateBlockOutput(
             blockedFilePath,
             metadata,
@@ -132,17 +128,19 @@ export class HandlePreToolUseUseCase {
           shouldBlock: true,
           blockedFilePath,
           error: {
-            message: `ブロックされました: ${blockedFilePath ?? '不明なファイル'}`,
+            message: `ブロックされました: ${blockedFilePath ?? "不明なファイル"}`,
           },
         };
       }
     }
 
-    if (HandlePreToolUseUseCase.WRITE_TOOLS.has(input.toolName)
-        && this.fullModeRequirementQueryPort !== undefined
-        && input.targetFilePaths.length > 0) {
+    if (
+      HandlePreToolUseUseCase.WRITE_TOOLS.has(input.toolName) &&
+      this.fullModeRequirementQueryPort !== undefined &&
+      input.targetFilePaths.length > 0
+    ) {
       if (grandfather.allGrandfathered) {
-        this.grandfatherLogger('full-mode', input.targetFilePaths);
+        this.grandfatherLogger("full-mode", input.targetFilePaths);
       } else {
         const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
         if (fullModeResult.requiresFullMode) {
@@ -150,7 +148,7 @@ export class HandlePreToolUseUseCase {
           //（hook がスキルコンテキストを参照できない構造的ギャップへの対処）
           const bypassedByDesignDocs = await this.isFullModeBypassedByDesignDocs(input.targetFilePaths);
           if (!bypassedByDesignDocs) {
-            const guidance = await this.resolveGuidance('L2-001');
+            const guidance = await this.resolveGuidance("L2-001");
             const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
             return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
               input.targetFilePaths[0],
@@ -169,11 +167,16 @@ export class HandlePreToolUseUseCase {
     }
 
     if (grandfather.allGrandfathered) {
-      this.grandfatherLogger('story-reflection', input.targetFilePaths);
+      this.grandfatherLogger("story-reflection", input.targetFilePaths);
       return { shouldBlock: false };
     }
 
-    const reflectionResult = await this.storyReflectionQueryPort.checkReflection(scope.unitId!);
+    const unitId = scope.unitId;
+    if (unitId === undefined) {
+      return { shouldBlock: false };
+    }
+
+    const reflectionResult = await this.storyReflectionQueryPort.checkReflection(unitId);
 
     if (reflectionResult.skipped || reflectionResult.passed) {
       return { shouldBlock: false };
@@ -186,9 +189,7 @@ export class HandlePreToolUseUseCase {
     );
   }
 
-  private async checkGrandfather(
-    targetFilePaths: readonly string[],
-  ): Promise<BaselineGrandfatherCheckResult> {
+  private async checkGrandfather(targetFilePaths: readonly string[]): Promise<BaselineGrandfatherCheckResult> {
     if (this.baselineGrandfatherQueryPort === undefined) {
       return {
         allGrandfathered: false,
@@ -222,17 +223,15 @@ export class HandlePreToolUseUseCase {
     blockedFilePath: string | undefined,
     result: {
       requiresFullMode: boolean;
-      rejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+      rejectionRule?: "MIXED_CHANGES" | "NEW_DOMAIN" | "API_CONTRACT";
       rejectionReason?: string;
       dominantCategory?: string;
     },
     guidance: ErrorGuidance | null,
     unitId: string | undefined,
   ): HandlePreToolUseOutput {
-    const fp = blockedFilePath ?? '不明なファイル';
-    const lines: string[] = [
-      `Full mode 必須変更が検出されました: ${fp}`,
-    ];
+    const fp = blockedFilePath ?? "不明なファイル";
+    const lines: string[] = [`Full mode 必須変更が検出されました: ${fp}`];
     if (result.dominantCategory) {
       lines.push(`カテゴリ: ${result.dominantCategory}`);
     }
@@ -242,31 +241,28 @@ export class HandlePreToolUseUseCase {
     if (result.rejectionReason) {
       lines.push(`理由: ${result.rejectionReason}`);
     }
-    const suggestedSkill = guidance?.suggestedSkill ?? '/story-implementor';
+    const suggestedSkill = guidance?.suggestedSkill ?? "/story-implementor";
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
     HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance, unitId);
 
     return {
       shouldBlock: true,
       blockedFilePath,
-      blockReason: 'FULL_MODE_REQUIRED',
-      error: { message: lines.join('\n') },
+      blockReason: "FULL_MODE_REQUIRED",
+      error: { message: lines.join("\n") },
       fullModeRejectionRule: result.rejectionRule,
       fullModeDominantCategory: result.dominantCategory,
       nextAction: suggestedSkill,
     };
   }
 
-  private static appendGuidanceLines(
-    lines: string[],
-    guidance: ErrorGuidance | null,
-    unitId?: string,
-  ): void {
+  private static appendGuidanceLines(lines: string[], guidance: ErrorGuidance | null, unitId?: string): void {
     if (guidance === null) return;
     if (guidance.scaffoldCommand !== null) {
-      const command = unitId !== undefined && unitId !== ''
-        ? guidance.scaffoldCommand.replaceAll('<unit-id>', unitId)
-        : guidance.scaffoldCommand;
+      const command =
+        unitId !== undefined && unitId !== ""
+          ? guidance.scaffoldCommand.replaceAll("<unit-id>", unitId)
+          : guidance.scaffoldCommand;
       lines.push(`  scaffold: ${command}`);
     }
     if (guidance.templatePath !== null) {
@@ -303,9 +299,9 @@ export class HandlePreToolUseUseCase {
   }
 
   private static readonly LEVEL_LABELS: Record<number, string> = {
-    1: 'プロダクト設計',
-    2: '構築設計',
-    3: '実装',
+    1: "プロダクト設計",
+    2: "構築設計",
+    3: "実装",
   };
 
   private static buildPhaseGateBlockOutput(
@@ -315,22 +311,22 @@ export class HandlePreToolUseUseCase {
     unitId: string | undefined,
   ): HandlePreToolUseOutput {
     const levelLabel = metadata.scopeLevel
-      ? HandlePreToolUseUseCase.LEVEL_LABELS[metadata.scopeLevel] ?? `Level ${metadata.scopeLevel}`
-      : '不明';
+      ? (HandlePreToolUseUseCase.LEVEL_LABELS[metadata.scopeLevel] ?? `Level ${metadata.scopeLevel}`)
+      : "不明";
     const blockers = metadata.phaseGateBlockers ?? [];
     const lines: string[] = [
-      `フェーズゲート違反: ${blockedFilePath ?? '不明なファイル'}`,
-      `対象スコープ: Level ${metadata.scopeLevel ?? '?'} (${levelLabel})${metadata.unitId ? `, Unit: ${metadata.unitId}` : ''}`,
+      `フェーズゲート違反: ${blockedFilePath ?? "不明なファイル"}`,
+      `対象スコープ: Level ${metadata.scopeLevel ?? "?"} (${levelLabel})${metadata.unitId ? `, Unit: ${metadata.unitId}` : ""}`,
     ];
 
     if (blockers.length > 0) {
-      lines.push('ブロック理由:');
+      lines.push("ブロック理由:");
       for (const b of blockers) {
         lines.push(`  - ${b}`);
       }
     }
 
-    const suggestedSkill = guidance?.suggestedSkill ?? '/story-implementor';
+    const suggestedSkill = guidance?.suggestedSkill ?? "/story-implementor";
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
     if (metadata.unitId) {
       lines.push(`  実行例: ${suggestedSkill} --unit ${metadata.unitId}`);
@@ -340,12 +336,10 @@ export class HandlePreToolUseUseCase {
     return {
       shouldBlock: true,
       blockedFilePath,
-      blockReason: 'PHASE_GATE',
-      error: { message: lines.join('\n') },
+      blockReason: "PHASE_GATE",
+      error: { message: lines.join("\n") },
       phaseGateBlockers: [...blockers],
-      nextAction: metadata.unitId
-        ? `${suggestedSkill} --unit ${metadata.unitId}`
-        : suggestedSkill,
+      nextAction: metadata.unitId ? `${suggestedSkill} --unit ${metadata.unitId}` : suggestedSkill,
     };
   }
 
@@ -375,13 +369,9 @@ export class HandlePreToolUseUseCase {
     },
   ];
 
-  private static buildProtectedFileBlockOutput(
-    blockedFilePath: string | undefined,
-  ): HandlePreToolUseOutput {
-    const fp = blockedFilePath ?? '不明なファイル';
-    const matched = HandlePreToolUseUseCase.PROTECTED_FILE_GUIDANCE.find(
-      ({ pattern }) => pattern.test(fp),
-    );
+  private static buildProtectedFileBlockOutput(blockedFilePath: string | undefined): HandlePreToolUseOutput {
+    const fp = blockedFilePath ?? "不明なファイル";
+    const matched = HandlePreToolUseUseCase.PROTECTED_FILE_GUIDANCE.find(({ pattern }) => pattern.test(fp));
     const message = matched
       ? matched.message(fp)
       : `保護ファイルへの書き込みがブロックされました: ${fp}\nこのファイルは保護されています。/quick-implementor スキルで変更可能か確認してください。`;
@@ -389,7 +379,7 @@ export class HandlePreToolUseUseCase {
     return {
       shouldBlock: true,
       blockedFilePath,
-      blockReason: 'PROTECTED_FILE',
+      blockReason: "PROTECTED_FILE",
       error: { message },
     };
   }
@@ -402,7 +392,7 @@ export class HandlePreToolUseUseCase {
     return {
       shouldBlock: true,
       blockedFilePath,
-      blockReason: 'STORY_REFLECTION',
+      blockReason: "STORY_REFLECTION",
       error: {
         message: HandlePreToolUseUseCase.buildStoryReflectionErrorMessage(blockers),
       },
@@ -413,39 +403,34 @@ export class HandlePreToolUseUseCase {
 
   private static buildStoryReflectionErrorMessage(blockers: readonly string[]): string {
     const firstBlocker = blockers[0];
-    const details = firstBlocker === undefined
-      ? null
-      : HandlePreToolUseUseCase.extractStoryReflectionDetails(firstBlocker);
+    const details =
+      firstBlocker === undefined ? null : HandlePreToolUseUseCase.extractStoryReflectionDetails(firstBlocker);
     const lines: string[] = [];
 
     if (details !== null) {
       lines.push(`[L2-STORY-REFLECTION] ${details.productPath} に`);
       lines.push(`@story-id ${details.storyId} が反映されていません。`);
-      lines.push('');
+      lines.push("");
     } else {
-      lines.push('[L2-STORY-REFLECTION] product 文書に @story-id が反映されていません。');
-      lines.push('');
+      lines.push("[L2-STORY-REFLECTION] product 文書に @story-id が反映されていません。");
+      lines.push("");
     }
 
     for (const blocker of blockers) {
       lines.push(`- ${blocker}`);
     }
 
-    lines.push('');
-    lines.push('修正方法:');
-    lines.push('  1. cascade-updater を実行して product 文書を更新');
-    lines.push(
-      `  2. または手動で該当 product 文書に @story-id ${details?.storyId ?? '<STORY-ID>'} を追加`,
-    );
-    lines.push('');
-    lines.push('参照: ADR-XXX');
+    lines.push("");
+    lines.push("修正方法:");
+    lines.push("  1. cascade-updater を実行して product 文書を更新");
+    lines.push(`  2. または手動で該当 product 文書に @story-id ${details?.storyId ?? "<STORY-ID>"} を追加`);
+    lines.push("");
+    lines.push("参照: ADR-XXX");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
-  private static extractStoryReflectionDetails(
-    blocker: string,
-  ): { productPath: string; storyId: string } | null {
+  private static extractStoryReflectionDetails(blocker: string): { productPath: string; storyId: string } | null {
     const productPathMatch = blocker.match(/docs\/product\/construction\/[^\s]+\.md/);
     const storyIdMatch = blocker.match(/@story-id\s+([A-Z][\w-]*-\d+)|\b([A-Z][\w-]*-\d+)\b/);
     const storyId = storyIdMatch?.[1] ?? storyIdMatch?.[2];

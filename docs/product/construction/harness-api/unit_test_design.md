@@ -6,6 +6,7 @@
 @story-id H09-04
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
+> **最終更新**: 2026-04-24（ISSUE-025 skill setup の unit 観点を追加）
 > **対応ストーリー**: H09-01〜H09-04
 > **Wave**: 2（コア品質機構）
 > **参照**: domain_model.md, logical_design.md, docs/principles/testing-rules.md
@@ -223,6 +224,25 @@
 ---
 
 ## 3. ドメインサービステストケース
+
+## 2.5 Setup / skill deployment
+
+**対象**: `scripts/harness/setup/skill-deployer.ts`
+
+#### `deploySkills`
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-SET-001 | 空プロジェクト + skillSet=`core` | `skills/.harness-version` が project root に作成される |
+| UT-SET-002 | 空プロジェクト + skillSet=`all` | 許可された skill ディレクトリが `skills/` 配下に配置される |
+
+#### `deployAgentSkillLinks`
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-SET-003 | `{ claude: true, codex: true }` | `.claude/skills` と `.codex/skills` の symlink が作成される |
+| UT-SET-004 | 既に `../skills` を向く symlink が存在 | `created: false` で skip される |
+| UT-SET-005 | 通常ディレクトリ/通常ファイルが既に存在 | 上書きせず skip される |
 
 ### CommandRegistry
 

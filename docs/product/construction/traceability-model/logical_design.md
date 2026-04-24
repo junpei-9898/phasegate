@@ -7,9 +7,17 @@ traceability:
 
 @story-id H03-04
 拡張: ISSUE-026 Phase A-2 で `WorkItemFrontmatter` 型と専用 parser を infrastructure 層に追加（既存 `parseFrontmatterFlags` は据え置き・後方互換）。
+@story-id H03-05
+拡張: ISSUE-026 Phase A-3 で `DesignDocumentPort.readWorkItemFrontmatter` を追加し、`ValidateDesignStoryAnnotationsUseCase` が parse error を `L2-002` として変換する。
+@story-id H03-06
+拡張: ISSUE-026 Phase B-1 で旧 issue レイアウトから WI レイアウトへの dry-run migration plan を生成する。
+@story-id H03-07
+拡張: ISSUE-026 Phase B-2 で `migrate work-items --dry-run` CLI から migration plan を表示する。
+@story-id H03-08
+拡張: ISSUE-026 Phase B-3 で `migrate work-items --apply` により旧 issue ディレクトリを WI レイアウトへ安全移動する。
 
 > **作成日**: 2026-03-13
-> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**: `logical_design_plan.md`、`domain_model.md`、`traceability_model_unit.md`、`integration_contract.md`
 
@@ -26,7 +34,7 @@ traceability:
 | domain | StoryId / TraceabilityChain / MetadataTag 群の不変条件、L2 metadata の判定規則、逆引きチェーン構築ロジック | 値オブジェクト、ドメインサービス、ポートIF、定数 | なし |
 | application | 実装・設計・テスト別の検証ユースケース、Legacy ID解決、チェーン/カバレッジ結果DTO化 | UseCase、DTO | domain |
 | infrastructure | Markdown/TypeScript 解析、unit定義・story catalog 取得、設計文書/計画文書探索、既存validatorへの橋渡し | Parser、Gateway、Cache、Adapter | application, domain |
-| presentation | 正規レイヤー語彙としてのみ扱う。本Unitでは Phase 1/2 の実装対象外で、外部公開は `index.ts` の薄い export 面に限定する | 実装なし | application, domain |
+| presentation | CLI handler による metadata validation と WorkItem migration dry-run の入出力整形 | CommandHandler | application, domain |
 
 ### 1.2 依存方向
 

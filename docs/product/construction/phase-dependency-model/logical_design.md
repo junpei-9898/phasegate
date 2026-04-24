@@ -4,8 +4,11 @@
 @story-id H02-02
 @story-id H02-03
 @story-id H02-04
+@story-id H02-05
+@story-id H02-06
+@story-id H02-07
 > **作成日**: 2026-03-13
-> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04
+> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04, H02-05, H02-06, H02-07
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/inception/phase-dependency-model/logical_design_plan.md`, `docs/product/units/phase_dependency_model_unit.md`, `docs/product/units/integration_contract.md`
 
@@ -47,6 +50,9 @@
 - `domain` は外部I/Oに依存しない
 - `presentation` は `domain` を参照できるが、ドメイン操作は必ず `application` 経由で行う
 - `infrastructure` は `scripts/harness/shared-kernel/harness-config.ts` を通じて `HarnessConfigV2` を取得する
+- H02-05以降、story reflection の filesystem adapter は `docs/inception/{unit}/{id}` に加えて `docs/inception/_cross/WI-*` を列挙する。port 名は互換維持のため `listStoryDirectories` のままだが、返却値は reflection対象ID（legacy story ID または WI ID）として扱う
+- H02-06以降、`_cross/WI-*` の実在パスは `docs/inception/_cross/{storyId}/...` として解決し、frontmatter `affects` に対象Unitが含まれる場合だけreflection対象にする
+- H02-07以降、`_cross/WI-*` の `legacy_id` は product 文書の旧 `@issue-id` annotation と照合され、WI反映の移行互換として扱う
 
 ### 1.3 ディレクトリ構成（全ファイル一覧）
 

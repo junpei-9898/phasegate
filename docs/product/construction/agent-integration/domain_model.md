@@ -4,6 +4,7 @@
 @story-id H11-02
 @story-id H11-03
 @story-id H11-04
+@story-id H11-06
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-28（ISSUE-001 issueパス認識追加）
@@ -11,7 +12,7 @@
 > **対応ストーリー**: H11-01〜H11-04, B-7
 > **対応Issue**: ISSUE-001
 > **v2.2.0変更**: フェーズゲート統合拡張（WriteTargetScope, ProjectPaths, PhaseGateQueryResult, PhaseGateQueryPort追加）
-> **ISSUE-001変更**: WriteTargetScope に issue パス認識を追加。`docs/inception/{unit}/issues/{ISSUE-XXX}/` → Level 3 スコープ
+> **ISSUE-026 Phase C-2変更**: WriteTargetScope に `_cross/WI-*` パス認識を追加。`docs/inception/_cross/{WI-XXX}/` → Level 3 スコープ（`unitId="_cross"`）
 > **横断契約参照**: cross_cutting_decisions.md §2（Layer語彙）, §4（Shared Kernel最小化）, §6（集約降格）
 
 ---
@@ -27,7 +28,7 @@
 | ProtectedFileList | 値オブジェクト | PreToolUseでブロック対象とするファイルパスパターンリスト（matches()メソッド付き） |
 | HookTranslationResult | 値オブジェクト | HookEvent→CLIコマンド変換結果（shouldBlock/cliCommand?/cliArgs/expectedExitCode/skipReason?/timeoutMs?） |
 | FallbackCapabilitySpec | 値オブジェクト | CLI/FSフォールバック仕様の宣言（supportedCommands[]/noAgentApiImports） |
-| WriteTargetScope | 値オブジェクト | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。storyId は US ID または issue ID を格納する（v2.2.0追加、ISSUE-001で issue パス対応） |
+| WriteTargetScope | 値オブジェクト | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。storyId は US ID / issue ID / WI ID を格納する（v2.2.0追加、ISSUE-026で `_cross/WI-*` 対応） |
 | ProjectPaths | 値オブジェクト | `phasegate.config.json` の `project.paths` セクションを型安全に保持。`source: string[]`, `docs.construction: string`, `docs.inception: string`（v2.2.0追加） |
 | PhaseGateQueryResult | 値オブジェクト | フェーズゲート検査結果。`passed: boolean`, `blockers: string[]`, `warnings: string[]` を保持（v2.2.0追加） |
 | HookToCliTranslator | ドメインサービス | HookEvent→HookTranslationResult変換。Hook種別ごとの変換ルールを担う。v2.2.0でPreToolUseにStep 2（フェーズゲートチェック）追加 |
@@ -96,7 +97,7 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | ProtectedFileList | ✓ | ✓ | patterns: string[]（1件以上必須）+ matches(filePath: string): boolean |
 | HookTranslationResult | ✓ | ✓ | shouldBlock: boolean, cliCommand?: CommandName, cliArgs: string[], expectedExitCode: ExitCode, skipReason?: SkipReason, timeoutMs?: number |
 | FallbackCapabilitySpec | ✓ | ✓ | supportedCommands: CommandName[]（1件以上必須）, noAgentApiImports: boolean |
-| WriteTargetScope | ✓ | ✓ | level: PhaseGateLevel, unitId?: string, storyId?: string。fromPath()静的ファクトリでファイルパスからスコープを推定。storyId は US ID（`[A-Z]+\d+-\d+`）または issue ID（`docs/inception/{unit}/issues/{ISSUE-XXX}/` パス経由）を格納（v2.2.0追加、ISSUE-001拡張） |
+| WriteTargetScope | ✓ | ✓ | level: PhaseGateLevel, unitId?: string, storyId?: string。fromPath()静的ファクトリでファイルパスからスコープを推定。storyId は US ID / issue ID / WI ID を格納する。`docs/inception/_cross/WI-*` は横断WIの仮想unitとして `unitId="_cross"` を保持する（ISSUE-026 Phase C-2） |
 | ProjectPaths | ✓ | ✓ | source: string[]（1件以上必須）, docs.construction: string, docs.inception: string（v2.2.0追加） |
 | PhaseGateQueryResult | ✓ | ✓ | passed: boolean, blockers: readonly string[], warnings: readonly string[]。passed=falseの場合blockers 1件以上必須（v2.2.0追加） |
 
@@ -211,6 +212,7 @@ HookToCliTranslator.translate(hookEvent)
   │             - {inception}/{unitId}/{storyId}/...       → level=3, unitId, storyId（US）
   │             - {inception}/{unitId}/issues/{issueId}/...→ level=3, unitId, storyId=issueId（ISSUE-001追加）
   │             - {inception}/issues/{issueId}/...         → level=1（横断issue、ISSUE-001追加）
+  │             - {inception}/_cross/{wiId}/...            → level=3, unitId="_cross", storyId=wiId（ISSUE-026 Phase C-2追加）
   │             - {inception}/_shared/...                  → level=1
   │             - {construction}/{unitId}/...              → level=2, unitId
   │           → scope=null（スコープ外）の場合: HookTranslationResult { shouldBlock: false }

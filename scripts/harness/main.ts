@@ -1,4 +1,5 @@
 /**
+ * @unit harness-api
  * @layer presentation
  *
  * Phasegate CLI エントリポイント。
@@ -7,44 +8,71 @@
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
  */
 
-import { dirname, join, resolve } from 'node:path';
-import { readFile as fsReadFile } from 'node:fs/promises';
-import { createConfigFoundationModule } from './config-foundation/composition-root.js';
-import { toPhaseConfigSection } from './config-foundation/application/mappers/phase-config-section-mapper.js';
-import { createHarnessErrorModule } from './harness-error/composition-root.js';
-import { createTraceabilityModelModule } from './traceability-model/composition-root.js';
-import { createPhaseDependencyModelModule } from './phase-dependency-model/composition-root.js';
-import { HarnessConfigPhaseConfigProvider, type PhaseConfigSection as PhaseDepConfigSection } from './phase-dependency-model/infrastructure/config/harness-config-phase-config-provider.js';
-import { StoryReflectionChecker } from './phase-dependency-model/domain/services/story-reflection-checker.js';
-import { CheckStoryReflectionUseCase } from './phase-dependency-model/application/usecases/check-story-reflection-usecase.js';
-import { FileSystemStoryReflectionAdapter } from './phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js';
-import { StoryReflectionStatusPresenter } from './phase-dependency-model/presentation/cli/story-reflection-status-presenter.js';
-import { StoryReflectionResult } from './phase-dependency-model/domain/values/story-reflection-result.js';
-import { createAdrFoundationModule } from './adr-foundation/composition-root.js';
-import { createBiomeAstEngineModule } from './biome-ast-engine/composition-root.js';
-import { createValidatorSystemModule } from './validator-system/composition-root.js';
-import { createQuickModeCompositionRoot } from './quick-mode/composition-root.js';
-import { createHarnessApiModule } from './harness-api/composition-root.js';
-import { buildCiGovernance } from './ci-governance/composition-root.js';
-import { createSkillQualityHandlers } from './skill-quality/composition-root.js';
-import { buildRegressionSuite } from './regression-suite/composition-root.js';
-import { buildPhase2Extensions } from './phase2-extensions/composition-root.js';
-import { deploySkills, deployHookScripts, getDeployedVersion, getHarnessVersion, initHarnessConfig, deployDesignDocs, deployHuskyHook, deployCodexHooks, SKILL_CATEGORIES, getCategoryForSkill } from './setup/skill-deployer.js';
-import type { SkillSet } from './setup/skill-deployer.js';
-import type { HarnessConfigV2 } from './config-foundation/domain/harness-config.js';
-import { ConfigValidationError } from './config-foundation/domain/errors/config-validation-error.js';
-import { ConfigNotFoundError, ConfigPersistenceError } from './config-foundation/infrastructure/repositories/file-system-config-repository.js';
+import { access, readFile as fsReadFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
+import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
+import { buildCiGovernance } from "./ci-governance/composition-root.js";
+import { toPhaseConfigSection } from "./config-foundation/application/mappers/phase-config-section-mapper.js";
+import { createConfigFoundationModule } from "./config-foundation/composition-root.js";
+import { ConfigValidationError } from "./config-foundation/domain/errors/config-validation-error.js";
+import type { HarnessConfigV2 } from "./config-foundation/domain/harness-config.js";
+import {
+  ConfigNotFoundError,
+  ConfigPersistenceError,
+} from "./config-foundation/infrastructure/repositories/file-system-config-repository.js";
+import { createHarnessApiModule } from "./harness-api/composition-root.js";
+import { createHarnessErrorModule } from "./harness-error/composition-root.js";
+import { CheckStoryReflectionUseCase } from "./phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
+import { createPhaseDependencyModelModule } from "./phase-dependency-model/composition-root.js";
+import { StoryReflectionChecker } from "./phase-dependency-model/domain/services/story-reflection-checker.js";
+import { StoryReflectionResult } from "./phase-dependency-model/domain/values/story-reflection-result.js";
+import {
+  HarnessConfigPhaseConfigProvider,
+  type PhaseConfigSection as PhaseDepConfigSection,
+} from "./phase-dependency-model/infrastructure/config/harness-config-phase-config-provider.js";
+import { FileSystemStoryReflectionAdapter } from "./phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js";
+import { StoryReflectionStatusPresenter } from "./phase-dependency-model/presentation/cli/story-reflection-status-presenter.js";
+import { buildPhase2Extensions } from "./phase2-extensions/composition-root.js";
+import { createQuickModeCompositionRoot } from "./quick-mode/composition-root.js";
+import { buildRegressionSuite } from "./regression-suite/composition-root.js";
+import type { SkillSet } from "./setup/skill-deployer.js";
+import {
+  deployAgentSkillLinks,
+  deployCodexHooks,
+  deployDesignDocs,
+  deployHookScripts,
+  deployHuskyCommitMsgHook,
+  deployHuskyHook,
+  deploySkills,
+  getCategoryForSkill,
+  getDeployedVersion,
+  getHarnessVersion,
+  initHarnessConfig,
+} from "./setup/skill-deployer.js";
+import { createSkillQualityHandlers } from "./skill-quality/composition-root.js";
+import { createTraceabilityModelModule } from "./traceability-model/composition-root.js";
+import { createValidatorSystemModule } from "./validator-system/composition-root.js";
 
 /**
  * main.ts (scripts/harness/main.ts) から2階層上がパッケージルート。
  * process.argv[1] は tsx 実行時にスクリプトの絶対パスになる。
  */
 function getHarnessRoot(): string {
-  return resolve(dirname(process.argv[1]), '../..');
+  return resolve(dirname(process.argv[1]), "../..");
 }
 
 function getProjectRoot(): string {
   return process.cwd();
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function printUsage(): void {
@@ -112,6 +140,7 @@ Commands:
   p2:check-initial-creation      Detect long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
   hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start/user-prompt-submit)
   pre-commit                              Run L2 pre-commit validators on staged files
+  commit-msg <message-file>               Validate commit message trailers against staged files
   delegate-sonnet [...args]               Delegate task to Sonnet 4.6 (forwards args to scripts/delegate-sonnet.sh)
 
 Skills:
@@ -138,16 +167,13 @@ function hasFlag(args: readonly string[], flag: string): boolean {
 }
 
 /** フラグとその値を除いた位置引数のみを返す */
-function parsePositionalArgs(
-  args: readonly string[],
-  flagsWithValues: readonly string[] = [],
-): string[] {
+function parsePositionalArgs(args: readonly string[], flagsWithValues: readonly string[] = []): string[] {
   const result: string[] = [];
   const valueFlags = new Set(flagsWithValues);
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg.startsWith('--')) {
+    if (arg.startsWith("--")) {
       if (valueFlags.has(arg)) {
         i++; // skip flag value
       }
@@ -159,51 +185,49 @@ function parsePositionalArgs(
   return result;
 }
 
-type RenderFormat = 'human' | 'agent' | 'ci';
+type RenderFormat = "human" | "agent" | "ci";
 
 function toRenderFormat(value: string): RenderFormat {
-  if (value === 'human' || value === 'agent' || value === 'ci') return value;
-  return 'human';
+  if (value === "human" || value === "agent" || value === "ci") return value;
+  return "human";
 }
 
-type ListFormat = 'human' | 'json';
+type ListFormat = "human" | "json";
 
 function toListFormat(value: string): ListFormat {
-  if (value === 'human' || value === 'json') return value;
-  return 'human';
+  if (value === "human" || value === "json") return value;
+  return "human";
 }
 
-type LayerIdFilter = 'L0' | 'L1' | 'L2' | 'L3' | 'L4';
+type LayerIdFilter = "L0" | "L1" | "L2" | "L3" | "L4";
 
 function toLayerFilter(value: string | undefined): LayerIdFilter | undefined {
-  if (value === 'L0' || value === 'L1' || value === 'L2' || value === 'L3' || value === 'L4') return value;
+  if (value === "L0" || value === "L1" || value === "L2" || value === "L3" || value === "L4") return value;
   return undefined;
 }
 
-type AdrStatus = 'Proposed' | 'Accepted' | 'Deprecated' | 'Superseded';
+type AdrStatus = "Proposed" | "Accepted" | "Deprecated" | "Superseded";
 
 function isAdrStatus(s: string): s is AdrStatus {
-  return s === 'Proposed' || s === 'Accepted' || s === 'Deprecated' || s === 'Superseded';
+  return s === "Proposed" || s === "Accepted" || s === "Deprecated" || s === "Superseded";
 }
 
 function toAdrStatuses(csv: string | undefined): readonly AdrStatus[] | undefined {
   if (!csv) return undefined;
-  return csv.split(',').filter(isAdrStatus);
+  return csv.split(",").filter(isAdrStatus);
 }
 
-type SuiteIdValue = 'k-requirements' | 'gng-gate' | 'v0-migration' | 'agent-independence';
+type SuiteIdValue = "k-requirements" | "gng-gate" | "v0-migration" | "agent-independence";
 
-const VALID_SUITE_IDS: readonly SuiteIdValue[] = [
-  'k-requirements', 'gng-gate', 'v0-migration', 'agent-independence',
-];
-const DEFAULT_REGRESSION_SUITES = 'k-requirements,gng-gate';
+const VALID_SUITE_IDS: readonly SuiteIdValue[] = ["k-requirements", "gng-gate", "v0-migration", "agent-independence"];
+const DEFAULT_REGRESSION_SUITES = "k-requirements,gng-gate";
 const DEFAULT_COVERAGE_THRESHOLD = 90;
 
 function parseSuiteIds(raw: string): SuiteIdValue[] {
-  const ids = raw.split(',').filter(Boolean);
+  const ids = raw.split(",").filter(Boolean);
   for (const id of ids) {
     if (!VALID_SUITE_IDS.includes(id as SuiteIdValue)) {
-      throw new Error(`Invalid suite ID: '${id}'. Valid values: ${VALID_SUITE_IDS.join(', ')}`);
+      throw new Error(`Invalid suite ID: '${id}'. Valid values: ${VALID_SUITE_IDS.join(", ")}`);
     }
   }
   return ids as SuiteIdValue[];
@@ -217,26 +241,24 @@ function parseCoverageThreshold(raw: string | undefined): number {
   return n;
 }
 
-type InitPhasePreset = 'full' | 'standard' | 'minimal' | 'custom';
+type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
 
 function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
   if (value === undefined) return undefined;
-  if (value === 'full' || value === 'standard' || value === 'minimal' || value === 'custom') {
+  if (value === "full" || value === "standard" || value === "minimal" || value === "custom") {
     return value;
   }
   return undefined;
 }
 
-type RuleSeverity = 'error' | 'warning' | 'off';
+type RuleSeverity = "error" | "warning" | "off";
 
 function toRuleSeverity(value: string): RuleSeverity {
-  if (value === 'error' || value === 'warning' || value === 'off') return value;
-  return 'error';
+  if (value === "error" || value === "warning" || value === "off") return value;
+  return "error";
 }
 
-function toRuleSeverityMap(
-  rules: Record<string, string>,
-): Record<string, RuleSeverity> {
+function toRuleSeverityMap(rules: Record<string, string>): Record<string, RuleSeverity> {
   const result: Record<string, RuleSeverity> = {};
   for (const [key, value] of Object.entries(rules)) {
     result[key] = toRuleSeverity(value);
@@ -273,13 +295,11 @@ function toArchitectureInput(resolvedConfig: HarnessConfigV2) {
  * phasegate.config.json を直接読み、storyReflection 設定解決用の provider を返す。
  * config-foundation の HarnessConfigV2 は storyReflection 未サポートのため raw JSON 経由。
  */
-async function loadStoryReflectionProvider(
-  rootDir: string,
-): Promise<HarnessConfigPhaseConfigProvider | null> {
-  const configPath = join(rootDir, 'phasegate.config.json');
+async function loadStoryReflectionProvider(rootDir: string): Promise<HarnessConfigPhaseConfigProvider | null> {
+  const configPath = join(rootDir, "phasegate.config.json");
   let raw: {
     phaseDependencies?: {
-      preset?: 'default' | 'full' | 'standard' | 'minimal' | 'custom';
+      preset?: "default" | "full" | "standard" | "minimal" | "custom";
       override?: boolean;
       storyReflection?: {
         enabled?: boolean;
@@ -290,9 +310,9 @@ async function loadStoryReflectionProvider(
   };
   let content: string;
   try {
-    content = await fsReadFile(configPath, 'utf8');
+    content = await fsReadFile(configPath, "utf8");
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
       return null;
     }
     const message = error instanceof Error ? error.message : String(error);
@@ -316,14 +336,11 @@ async function loadStoryReflectionProvider(
   };
   return new HarnessConfigPhaseConfigProvider({
     config: section,
-    defaultOutputDir: raw.reporting?.outputDir ?? '.harness/reports',
+    defaultOutputDir: raw.reporting?.outputDir ?? ".harness/reports",
   });
 }
 
-async function printStoryReflectionValidationSummary(
-  rootDir: string,
-  unit: string | undefined,
-): Promise<void> {
+async function printStoryReflectionValidationSummary(rootDir: string, unit: string | undefined): Promise<void> {
   const provider = await loadStoryReflectionProvider(rootDir);
   if (provider === null) return;
   const config = await provider.getStoryReflectionConfig();
@@ -336,9 +353,7 @@ async function printStoryReflectionValidationSummary(
     const useCase = new CheckStoryReflectionUseCase({ checker });
     result = await useCase.execute({ unitId: unit, config });
   }
-  console.log(
-    presenter.formatValidationSummary({ config, preset: policy.preset, result }),
-  );
+  console.log(presenter.formatValidationSummary({ config, preset: policy.preset, result }));
 }
 
 async function printStoryReflectionStatusLine(rootDir: string): Promise<void> {
@@ -358,11 +373,11 @@ function emitV2SchemaWarningOnce(sourcePath: string): void {
   process.stderr.write(
     [
       `Warning: ${sourcePath} は v2 schema（architecture キー無し）として検出されました。`,
-      '  v0.86.0 以降は architecture.preset による層構造の明示を推奨しています。',
-      '  自動 upgrade: npx phasegate migrate --schema v3',
-      '  詳細: docs/guide/preset-selection.md',
-      '',
-    ].join('\n'),
+      "  v0.86.0 以降は architecture.preset による層構造の明示を推奨しています。",
+      "  自動 upgrade: npx phasegate migrate --schema v3",
+      "  詳細: docs/guide/preset-selection.md",
+      "",
+    ].join("\n"),
   );
 }
 
@@ -370,7 +385,7 @@ async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
   try {
     const configModule = createConfigFoundationModule();
     const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
-    if (result.schemaVersion === 'v2') {
+    if (result.schemaVersion === "v2") {
       emitV2SchemaWarningOnce(result.sourcePath);
     }
     return result.config;
@@ -396,7 +411,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
 
-  if (!command || command === '--help' || command === 'help') {
+  if (!command || command === "--help" || command === "help") {
     printUsage();
     process.exit(0);
   }
@@ -404,13 +419,13 @@ async function main(): Promise<void> {
   const rootDir = getProjectRoot();
   const harnessRoot = getHarnessRoot();
 
-  if (command === '--version' || command === 'version') {
+  if (command === "--version" || command === "version") {
     const version = await getHarnessVersion(harnessRoot);
     console.log(`phasegate v${version}`);
     process.exit(0);
   }
 
-  const json = hasFlag(args, '--json');
+  const json = hasFlag(args, "--json");
 
   // Cross-unit wiring: 設定を先に解決し、各Unit に注入する
   const resolvedConfig = await loadResolvedConfig();
@@ -418,48 +433,51 @@ async function main(): Promise<void> {
   try {
     switch (command) {
       // ── harness setup ──
-      case 'init': {
-        const projectName = parseFlag(args, '--name') ?? 'my-project';
-        const rawPhasePreset = parseFlag(args, '--preset');
+      case "init": {
+        const projectName = parseFlag(args, "--name") ?? "my-project";
+        const rawPhasePreset = parseFlag(args, "--preset");
         if (
-          rawPhasePreset !== undefined
-          && rawPhasePreset !== 'full'
-          && rawPhasePreset !== 'standard'
-          && rawPhasePreset !== 'minimal'
-          && rawPhasePreset !== 'custom'
+          rawPhasePreset !== undefined &&
+          rawPhasePreset !== "full" &&
+          rawPhasePreset !== "standard" &&
+          rawPhasePreset !== "minimal" &&
+          rawPhasePreset !== "custom"
         ) {
           console.error(`Invalid --preset value: "${rawPhasePreset}". Use "full", "standard", "minimal", or "custom".`);
           process.exit(2);
         }
         const phasePreset = parseInitPhasePreset(rawPhasePreset);
-        const skillSetRaw = parseFlag(args, '--skills') ?? 'all';
-        if (skillSetRaw !== 'core' && skillSetRaw !== 'all') {
+        const skillSetRaw = parseFlag(args, "--skills") ?? "all";
+        if (skillSetRaw !== "core" && skillSetRaw !== "all") {
           console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
           process.exit(2);
         }
         const skillSet: SkillSet = skillSetRaw;
-        const agentRaw = parseFlag(args, '--agent') ?? 'claude';
-        if (agentRaw !== 'claude' && agentRaw !== 'codex' && agentRaw !== 'both') {
+        const agentRaw = parseFlag(args, "--agent") ?? "claude";
+        if (agentRaw !== "claude" && agentRaw !== "codex" && agentRaw !== "both") {
           console.error(`Invalid --agent value: "${agentRaw}". Use "claude", "codex", or "both".`);
           process.exit(2);
         }
         const agent = agentRaw;
-        const deployClaude = agent === 'claude' || agent === 'both';
-        const deployCodex = agent === 'codex' || agent === 'both';
+        const deployClaude = agent === "claude" || agent === "both";
+        const deployCodex = agent === "codex" || agent === "both";
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
+        const skillLinkResult = await deployAgentSkillLinks(rootDir, {
+          claude: deployClaude,
+          codex: deployCodex,
+        });
         const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
         const hooksResult = deployClaude
           ? await deployHookScripts(harnessRoot, rootDir)
           : { scriptsDeployed: 0, settingsCreated: false };
-        const codexResult = deployCodex
-          ? await deployCodexHooks(harnessRoot, rootDir)
-          : null;
+        const codexResult = deployCodex ? await deployCodexHooks(harnessRoot, rootDir) : null;
         const designDocsResult = await deployDesignDocs(harnessRoot, rootDir);
-        const withHusky = hasFlag(args, '--with-husky');
-        const huskyResult = withHusky
-          ? await deployHuskyHook(harnessRoot, rootDir)
-          : null;
-        console.log(`✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`);
+        const withHusky = hasFlag(args, "--with-husky");
+        const huskyResult = withHusky ? await deployHuskyHook(harnessRoot, rootDir) : null;
+        const huskyCommitMsgResult = withHusky ? await deployHuskyCommitMsgHook(harnessRoot, rootDir) : null;
+        console.log(
+          `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
+        );
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
         } else {
@@ -473,11 +491,25 @@ async function main(): Promise<void> {
         } else if (hooksResult.scriptsDeployed > 0) {
           console.log(`  .claude/settings.json already exists, skipped`);
         }
+        if (skillLinkResult.claude !== null) {
+          if (skillLinkResult.claude.created) {
+            console.log(`✓ .claude/skills linked to skills/`);
+          } else {
+            console.log(`  .claude/skills already exists, skipped`);
+          }
+        }
         if (codexResult !== null) {
           if (codexResult.created) {
             console.log(`✓ .codex/hooks.json deployed`);
           } else {
             console.log(`  .codex/hooks.json already exists, skipped`);
+          }
+        }
+        if (skillLinkResult.codex !== null) {
+          if (skillLinkResult.codex.created) {
+            console.log(`✓ .codex/skills linked to skills/`);
+          } else {
+            console.log(`  .codex/skills already exists, skipped`);
           }
         }
         if (designDocsResult.copiedFiles.length > 0) {
@@ -493,53 +525,71 @@ async function main(): Promise<void> {
             console.log(`  .husky/pre-commit already exists, skipped`);
           }
         }
-        console.log(`✓ Harness v${result.version} initialized (agent: ${agent})`);
-        console.log('');
-        console.log('Next steps:');
-        if (skillSet === 'core') {
-          console.log('  1. Core skills only — quality defense tools are ready');
-        } else {
-          console.log('  1. Run the product-architect skill to start AIDLC');
+        if (huskyCommitMsgResult !== null) {
+          if (huskyCommitMsgResult.created) {
+            console.log(`✓ .husky/commit-msg deployed`);
+          } else {
+            console.log(`  .husky/commit-msg already exists, skipped`);
+          }
         }
-        console.log('  2. Customize phasegate.config.json if needed');
+        console.log(`✓ Harness v${result.version} initialized (agent: ${agent})`);
+        console.log("");
+        console.log("Next steps:");
+        if (skillSet === "core") {
+          console.log("  1. Core skills only — quality defense tools are ready");
+        } else {
+          console.log("  1. Run the product-architect skill to start AIDLC");
+        }
+        console.log("  2. Customize phasegate.config.json if needed");
         if (deployClaude) {
-          console.log('  3. Edit .claude/scripts/hook-config.json to set target directories');
+          console.log("  3. Edit .claude/scripts/hook-config.json to set target directories");
         }
         if (deployCodex) {
-          console.log(`  ${deployClaude ? '4' : '3'}. Enable Codex hooks: codex features enable codex_hooks`);
-          console.log(`  ${deployClaude ? '5' : '4'}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`);
+          console.log(`  ${deployClaude ? "4" : "3"}. Enable Codex hooks: codex features enable codex_hooks`);
+          console.log(
+            `  ${deployClaude ? "5" : "4"}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`,
+          );
           console.log(`     See docs/guide/codex-integration.md for the native apply_patch limitation.`);
         }
         process.exit(0);
         break;
       }
 
-      case 'update-skills': {
+      case "update-skills": {
         const deployed = await getDeployedVersion(rootDir);
         const current = await getHarnessVersion(harnessRoot);
-        const previousSkillSet: SkillSet = deployed?.skillSet ?? 'all';
-        const overrideSkillSet = parseFlag(args, '--skills');
-        const updateSkillSet: SkillSet = overrideSkillSet === 'core' || overrideSkillSet === 'all'
-          ? overrideSkillSet
-          : previousSkillSet;
+        const previousSkillSet: SkillSet = deployed?.skillSet ?? "all";
+        const overrideSkillSet = parseFlag(args, "--skills");
+        const updateSkillSet: SkillSet =
+          overrideSkillSet === "core" || overrideSkillSet === "all" ? overrideSkillSet : previousSkillSet;
         if (deployed) {
           console.log(`Previously deployed: v${deployed.version} (${deployed.deployedAt}, set: ${previousSkillSet})`);
         } else {
-          console.log('No previously deployed skills found');
+          console.log("No previously deployed skills found");
         }
         console.log(`Current harness version: v${current}`);
         const result = await deploySkills(harnessRoot, rootDir, updateSkillSet);
+        const shouldLinkClaude =
+          (await pathExists(join(rootDir, ".claude", "settings.json"))) ||
+          (await pathExists(join(rootDir, ".claude", "skills")));
+        const shouldLinkCodex =
+          (await pathExists(join(rootDir, ".codex", "hooks.json"))) ||
+          (await pathExists(join(rootDir, ".codex", "skills")));
+        await deployAgentSkillLinks(rootDir, {
+          claude: shouldLinkClaude,
+          codex: shouldLinkCodex,
+        });
         console.log(`✓ Skills updated (${result.deployedSkills.length} skills redeployed, set: ${updateSkillSet})`);
         process.exit(0);
         break;
       }
 
       // ── config-foundation ──
-      case 'enable-feature': {
+      case "enable-feature": {
         const mod = createConfigFoundationModule();
         const featureName = args[1];
-        const list = hasFlag(args, '--list');
-        const configPath = parseFlag(args, '--config');
+        const list = hasFlag(args, "--list");
+        const configPath = parseFlag(args, "--config");
         const result = await mod.handlers.enableFeatureCommandHandler.execute({
           featureName,
           list,
@@ -550,11 +600,11 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'disable-feature': {
+      case "disable-feature": {
         const mod = createConfigFoundationModule();
         const featureName = args[1];
-        const list = hasFlag(args, '--list');
-        const configPath = parseFlag(args, '--config');
+        const list = hasFlag(args, "--list");
+        const configPath = parseFlag(args, "--config");
         const result = await mod.handlers.disableFeatureCommandHandler.execute({
           featureName,
           list,
@@ -565,7 +615,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'list-features': {
+      case "list-features": {
         const mod = createConfigFoundationModule();
         const result = await mod.handlers.enableFeatureCommandHandler.execute({
           list: true,
@@ -575,10 +625,21 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'migrate': {
+      case "migrate": {
+        if (args[1] === "work-items") {
+          const mod = createTraceabilityModelModule(rootDir);
+          const result = await mod.migrateWorkItemsCommandHandler.execute({
+            dryRun: hasFlag(args, "--dry-run"),
+            apply: hasFlag(args, "--apply"),
+            json,
+          });
+          console.log(result.text);
+          process.exit(result.exitCode);
+          break;
+        }
         const mod = createConfigFoundationModule();
-        const targetVersion = parseFlag(args, '--schema') ?? 'v3';
-        const configPath = parseFlag(args, '--config');
+        const targetVersion = parseFlag(args, "--schema") ?? "v3";
+        const configPath = parseFlag(args, "--config");
         const result = await mod.handlers.migrateSchemaCommandHandler.execute({
           targetVersion,
           configPath,
@@ -589,10 +650,10 @@ async function main(): Promise<void> {
       }
 
       // ── harness-error ──
-      case 'render-errors': {
+      case "render-errors": {
         const mod = createHarnessErrorModule(rootDir);
-        const format = toRenderFormat(parseFlag(args, '--format') ?? 'human');
-        const failOnError = hasFlag(args, '--fail-on-error');
+        const format = toRenderFormat(parseFlag(args, "--format") ?? "human");
+        const failOnError = hasFlag(args, "--fail-on-error");
         const result = mod.renderHarnessErrorsHandler.execute({
           errors: [],
           format,
@@ -603,11 +664,11 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'validate-fix': {
+      case "validate-fix": {
         const mod = createHarnessErrorModule(rootDir);
-        const code = parseFlag(args, '--code');
-        const failFast = hasFlag(args, '--fail-fast');
-        const format = toListFormat(parseFlag(args, '--format') ?? 'human');
+        const code = parseFlag(args, "--code");
+        const failFast = hasFlag(args, "--fail-fast");
+        const format = toListFormat(parseFlag(args, "--format") ?? "human");
         const result = await mod.validateFixExampleHandler.execute({
           code,
           failFast,
@@ -618,10 +679,10 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'list-errors': {
+      case "list-errors": {
         const mod = createHarnessErrorModule(rootDir);
-        const format = toListFormat(parseFlag(args, '--format') ?? 'human');
-        const layer = toLayerFilter(parseFlag(args, '--layer'));
+        const format = toListFormat(parseFlag(args, "--format") ?? "human");
+        const layer = toLayerFilter(parseFlag(args, "--layer"));
         const result = await mod.listErrorDefinitionsHandler.execute({
           format,
           layer,
@@ -632,7 +693,7 @@ async function main(): Promise<void> {
       }
 
       // ── traceability-model ──
-      case 'validate-metadata': {
+      case "validate-metadata": {
         const mod = createTraceabilityModelModule(rootDir);
         const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
@@ -645,37 +706,34 @@ async function main(): Promise<void> {
       }
 
       // ── phase-dependency-model ──
-      case 'check-phase-gate': {
-        const phaseConfig = resolvedConfig
-          ? toPhaseConfigSection(resolvedConfig)
-          : undefined;
+      case "check-phase-gate": {
+        const phaseConfig = resolvedConfig ? toPhaseConfigSection(resolvedConfig) : undefined;
         const reportOutputDir = resolvedConfig?.reporting.outputDir;
         const mod = createPhaseDependencyModelModule({
           rootDir,
           phaseConfig,
           reportOutputDir,
         });
-        const level = Number(parseFlag(args, '--level') ?? '1');
-        const unitId = parseFlag(args, '--unit');
-        const storyId = parseFlag(args, '--story');
-        const targetFilePath = parseFlag(args, '--target-file');
-        const result =
-          await mod.checkPhaseGateCommandHandler.execute({
-            targetLevel: level,
-            unitId,
-            storyId,
-            targetFilePath,
-            json,
-          });
+        const level = Number(parseFlag(args, "--level") ?? "1");
+        const unitId = parseFlag(args, "--unit");
+        const storyId = parseFlag(args, "--story");
+        const targetFilePath = parseFlag(args, "--target-file");
+        const result = await mod.checkPhaseGateCommandHandler.execute({
+          targetLevel: level,
+          unitId,
+          storyId,
+          targetFilePath,
+          json,
+        });
         console.log(result.text);
         process.exit(result.exitCode);
         break;
       }
 
       // ── adr-foundation ──
-      case 'list-adrs': {
+      case "list-adrs": {
         const mod = createAdrFoundationModule(rootDir);
-        const statuses = toAdrStatuses(parseFlag(args, '--status'));
+        const statuses = toAdrStatuses(parseFlag(args, "--status"));
         const result = await mod.listAdrsCommandHandler.execute({
           statuses,
           json,
@@ -685,12 +743,10 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'validate-adr': {
+      case "validate-adr": {
         const mod = createAdrFoundationModule(rootDir);
-        const all = hasFlag(args, '--all');
-        const adrRef = args.find(
-          (a) => !a.startsWith('--') && a !== command,
-        );
+        const all = hasFlag(args, "--all");
+        const adrRef = args.find((a) => !a.startsWith("--") && a !== command);
         const result = await mod.validateAdrCommandHandler.execute({
           adrRef,
           all,
@@ -702,37 +758,26 @@ async function main(): Promise<void> {
       }
 
       // ── biome-ast-engine ──
-      case 'lint': {
-        const l1Config = resolvedConfig
-          ? toL1Config(resolvedConfig)
-          : undefined;
-        const architecture = resolvedConfig
-          ? toArchitectureInput(resolvedConfig)
-          : undefined;
+      case "lint": {
+        const l1Config = resolvedConfig ? toL1Config(resolvedConfig) : undefined;
+        const architecture = resolvedConfig ? toArchitectureInput(resolvedConfig) : undefined;
         const mod = createBiomeAstEngineModule(rootDir, { l1Config, architecture });
-        const result = await mod.harnessLintCommandHandler.execute(
-          args.slice(1),
-        );
+        const result = await mod.harnessLintCommandHandler.execute(args.slice(1));
         console.log(result.text);
         process.exit(result.exitCode);
         break;
       }
 
       // ── validator-system ──
-      case 'validate': {
+      case "validate": {
         const mod = createValidatorSystemModule();
-        const layer = parseFlag(args, '--layer') as 'L0' | 'L2' | 'L3' | 'L4' | 'all' | undefined;
-        const unit = parseFlag(args, '--unit');
-        const phase = parseFlag(args, '--phase');
-        const format = parseFlag(args, '--format') as 'human' | 'agent' | 'ci' | undefined;
-        const failOnWarning = hasFlag(args, '--fail-on-warning');
-        const noL4 = hasFlag(args, '--no-l4');
-        const targetPaths = parsePositionalArgs(args.slice(1), [
-          '--layer',
-          '--unit',
-          '--phase',
-          '--format',
-        ]);
+        const layer = parseFlag(args, "--layer") as "L0" | "L2" | "L3" | "L4" | "all" | undefined;
+        const unit = parseFlag(args, "--unit");
+        const phase = parseFlag(args, "--phase");
+        const format = parseFlag(args, "--format") as "human" | "agent" | "ci" | undefined;
+        const failOnWarning = hasFlag(args, "--fail-on-warning");
+        const noL4 = hasFlag(args, "--no-l4");
+        const targetPaths = parsePositionalArgs(args.slice(1), ["--layer", "--unit", "--phase", "--format"]);
         const result = await mod.handlers.runValidators.execute({
           layer,
           unit,
@@ -743,7 +788,7 @@ async function main(): Promise<void> {
           targetPaths,
         });
         console.log(result.output);
-        if (layer === 'L2' || layer === 'all') {
+        if (layer === "L2" || layer === "all") {
           await printStoryReflectionValidationSummary(rootDir, unit);
         }
         process.exit(result.exitCode);
@@ -751,14 +796,14 @@ async function main(): Promise<void> {
       }
 
       // ── quick-mode / ci-check ──
-      case 'ci-check': {
-        const quick = hasFlag(args, '--quick');
+      case "ci-check": {
+        const quick = hasFlag(args, "--quick");
         if (quick) {
           const mod = createQuickModeCompositionRoot();
-          const failOnReject = hasFlag(args, '--fail-on-reject');
-          const dryRun = hasFlag(args, '--dry-run');
-          const files = parseFlag(args, '--files');
-          const format = parseFlag(args, '--format') as 'human' | 'json' | 'agent' | undefined;
+          const failOnReject = hasFlag(args, "--fail-on-reject");
+          const dryRun = hasFlag(args, "--dry-run");
+          const files = parseFlag(args, "--files");
+          const format = parseFlag(args, "--format") as "human" | "json" | "agent" | undefined;
           await mod.handler.handle({ quick: true, failOnReject, dryRun, files, format });
         } else {
           const mod = createHarnessApiModule();
@@ -770,31 +815,33 @@ async function main(): Promise<void> {
       }
 
       // ── quick-mode / check-change-category (H10-05) ──
-      case 'check-change-category': {
-        if (hasFlag(args, '--help')) {
-          process.stdout.write([
-            'Usage: phasegate check-change-category --paths <csv> [options]',
-            '',
-            'Classify changed file paths into quick-mode categories and report',
-            'whether Full Mode is required.',
-            '',
-            'Options:',
-            '  --paths <csv>              Comma-separated file paths to classify.',
-            '  --format <human|json>      Output format. Default: human.',
-            '  --fail-on-full-required    Exit with code 1 when Full Mode is required.',
-            '  --help                     Show this help.',
-            '',
-            'Examples:',
-            '  phasegate check-change-category --paths src/foo.ts,src/bar.ts',
-            '  phasegate check-change-category --paths src/foo.ts --format json',
-            '',
-          ].join('\n'));
+      case "check-change-category": {
+        if (hasFlag(args, "--help")) {
+          process.stdout.write(
+            [
+              "Usage: phasegate check-change-category --paths <csv> [options]",
+              "",
+              "Classify changed file paths into quick-mode categories and report",
+              "whether Full Mode is required.",
+              "",
+              "Options:",
+              "  --paths <csv>              Comma-separated file paths to classify.",
+              "  --format <human|json>      Output format. Default: human.",
+              "  --fail-on-full-required    Exit with code 1 when Full Mode is required.",
+              "  --help                     Show this help.",
+              "",
+              "Examples:",
+              "  phasegate check-change-category --paths src/foo.ts,src/bar.ts",
+              "  phasegate check-change-category --paths src/foo.ts --format json",
+              "",
+            ].join("\n"),
+          );
           return;
         }
         const mod = createQuickModeCompositionRoot();
-        const paths = parseFlag(args, '--paths');
-        const format = parseFlag(args, '--format') as 'human' | 'json' | undefined;
-        const failOnFullRequired = hasFlag(args, '--fail-on-full-required');
+        const paths = parseFlag(args, "--paths");
+        const format = parseFlag(args, "--format") as "human" | "json" | undefined;
+        const failOnFullRequired = hasFlag(args, "--fail-on-full-required");
         const result = await mod.checkChangeCategoryHandler.handle({
           paths,
           format,
@@ -805,7 +852,7 @@ async function main(): Promise<void> {
       }
 
       // ── harness-api ──
-      case 'phasegate:check-ready': {
+      case "phasegate:check-ready": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -813,37 +860,39 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'phasegate:check-phase': {
+      case "phasegate:check-phase": {
         // ISSUE-005 P2-6: --help / --json を positional として食わないようにする
-        if (hasFlag(args, '--help')) {
-          process.stdout.write([
-            'Usage: phasegate phasegate:check-phase [options]',
-            '',
-            'Check phase gate for a specific unit.',
-            '',
-            'Options:',
-            '  --unit <unitId>   Target unit ID (e.g., harness-api). If omitted,',
-            '                    the first positional argument is used.',
-            '  --json            Output result as JSON.',
-            '  --help            Show this help.',
-            '',
-            'Examples:',
-            '  phasegate phasegate:check-phase --unit harness-api',
-            '  phasegate phasegate:check-phase harness-api --json',
-            '',
-          ].join('\n'));
+        if (hasFlag(args, "--help")) {
+          process.stdout.write(
+            [
+              "Usage: phasegate phasegate:check-phase [options]",
+              "",
+              "Check phase gate for a specific unit.",
+              "",
+              "Options:",
+              "  --unit <unitId>   Target unit ID (e.g., harness-api). If omitted,",
+              "                    the first positional argument is used.",
+              "  --json            Output result as JSON.",
+              "  --help            Show this help.",
+              "",
+              "Examples:",
+              "  phasegate phasegate:check-phase --unit harness-api",
+              "  phasegate phasegate:check-phase harness-api --json",
+              "",
+            ].join("\n"),
+          );
           return;
         }
         const mod = createHarnessApiModule();
-        const positional = args[1] && !args[1].startsWith('--') ? args[1] : undefined;
-        const unit = parseFlag(args, '--unit') ?? positional ?? '';
+        const positional = args[1] && !args[1].startsWith("--") ? args[1] : undefined;
+        const unit = parseFlag(args, "--unit") ?? positional ?? "";
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.checkPhase.handle({ unit }, flags);
         break;
       }
 
-      case 'phasegate:ci-check': {
+      case "phasegate:ci-check": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -851,7 +900,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'phasegate:detect-drift': {
+      case "phasegate:detect-drift": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -859,7 +908,7 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'phasegate:status': {
+      case "phasegate:status": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -868,17 +917,17 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'phasegate:lint': {
+      case "phasegate:lint": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
-        const target = parseFlag(args, '--target');
+        const target = parseFlag(args, "--target");
         if (target) flags.target = target;
         await mod.handlers.lint.handle({}, flags);
         break;
       }
 
-      case 'phasegate:complete-check': {
+      case "phasegate:complete-check": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -886,9 +935,9 @@ async function main(): Promise<void> {
         break;
       }
 
-      case 'phasegate:impact-analysis': {
+      case "phasegate:impact-analysis": {
         const mod = createHarnessApiModule();
-        const storyId = args[1] && !args[1].startsWith('--') ? args[1] : (parseFlag(args, '--story-id') ?? '');
+        const storyId = args[1] && !args[1].startsWith("--") ? args[1] : (parseFlag(args, "--story-id") ?? "");
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.impactAnalysis.handle({ storyId }, flags);
@@ -896,8 +945,8 @@ async function main(): Promise<void> {
       }
 
       // ── ci-governance ──
-      case 'ci:generate-template': {
-        if (hasFlag(args, '--help')) {
+      case "ci:generate-template": {
+        if (hasFlag(args, "--help")) {
           console.log(`Usage: phasegate ci:generate-template [options]
 
 Generates a CI template configuration.
@@ -917,47 +966,50 @@ Examples:
           process.exit(0);
         }
         const mod = buildCiGovernance(rootDir);
-        const presetId = parseFlag(args, '--preset') ?? 'default';
-        const templateType = parseFlag(args, '--type') ?? 'aidlc-gate';
-        const render = hasFlag(args, '--render');
-        const format = json ? 'json' : 'human';
+        const presetId = parseFlag(args, "--preset") ?? "default";
+        const templateType = parseFlag(args, "--type") ?? "aidlc-gate";
+        const render = hasFlag(args, "--render");
+        const format = json ? "json" : "human";
         const result = await mod.generateCiTemplateHandler.handle({ presetId, templateType, render, format });
         console.log(result.output);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'ci:migrate-agents-md': {
+      case "ci:migrate-agents-md": {
         const mod = buildCiGovernance(rootDir);
-        const dryRun = hasFlag(args, '--dry-run');
-        const validateOnly = hasFlag(args, '--validate-only');
-        const format = json ? 'json' : 'human';
+        const dryRun = hasFlag(args, "--dry-run");
+        const validateOnly = hasFlag(args, "--validate-only");
+        const format = json ? "json" : "human";
         const result = await mod.migrateAgentsMdHandler.handle({ dryRun, validateOnly, format });
         console.log(result.output);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'ci:check-repetition': {
+      case "ci:check-repetition": {
         const mod = buildCiGovernance(rootDir);
-        const errorCode = parseFlag(args, '--code') ?? '';
-        const reset = hasFlag(args, '--reset');
-        const format = json ? 'json' : 'human';
+        const errorCode = parseFlag(args, "--code") ?? "";
+        const reset = hasFlag(args, "--reset");
+        const format = json ? "json" : "human";
         const result = await mod.checkRepetitionHandler.handle({ errorCode, reset, format });
         console.log(result.output);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'baseline': {
+      case "baseline": {
         const mod = buildCiGovernance(rootDir);
-        const dryRun = hasFlag(args, '--dry-run');
-        const force = hasFlag(args, '--force');
-        const pathsFlag = parseFlag(args, '--paths');
+        const dryRun = hasFlag(args, "--dry-run");
+        const force = hasFlag(args, "--force");
+        const pathsFlag = parseFlag(args, "--paths");
         const include = pathsFlag
-          ? pathsFlag.split(',').map((s) => s.trim()).filter(Boolean)
+          ? pathsFlag
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
           : undefined;
-        const format = json ? 'json' : 'human';
+        const format = json ? "json" : "human";
         const result = await mod.createBaselineHandler.handle({
           include,
           dryRun,
@@ -969,12 +1021,12 @@ Examples:
         break;
       }
 
-      case 'scaffold-design': {
+      case "scaffold-design": {
         const mod = buildCiGovernance(rootDir, harnessRoot);
-        const unit = parseFlag(args, '--unit') ?? '';
-        const phase = parseFlag(args, '--phase') ?? '';
-        const force = hasFlag(args, '--force');
-        const format = json ? 'json' : 'human';
+        const unit = parseFlag(args, "--unit") ?? "";
+        const phase = parseFlag(args, "--phase") ?? "";
+        const force = hasFlag(args, "--force");
+        const format = json ? "json" : "human";
         const result = await mod.scaffoldDesignHandler.handle({
           unit,
           phase,
@@ -987,58 +1039,57 @@ Examples:
       }
 
       // ── skill-quality ──
-      case 'skill:execute-tdd-cycle': {
+      case "skill:execute-tdd-cycle": {
         const mod = createSkillQualityHandlers();
-        const unit = parseFlag(args, '--unit') ?? '';
-        const storyId = parseFlag(args, '--story') ?? '';
-        const description = parseFlag(args, '--desc') ?? '';
-        const phaseRaw = parseFlag(args, '--phase') ?? 'RED';
-        const phase = (phaseRaw === 'RED' || phaseRaw === 'GREEN' || phaseRaw === 'REFACTOR')
-          ? phaseRaw
-          : 'RED' as const;
-        const passed = hasFlag(args, '--passed');
+        const unit = parseFlag(args, "--unit") ?? "";
+        const storyId = parseFlag(args, "--story") ?? "";
+        const description = parseFlag(args, "--desc") ?? "";
+        const phaseRaw = parseFlag(args, "--phase") ?? "RED";
+        const phase =
+          phaseRaw === "RED" || phaseRaw === "GREEN" || phaseRaw === "REFACTOR" ? phaseRaw : ("RED" as const);
+        const passed = hasFlag(args, "--passed");
         const result = await mod.executeTddCycleHandler.handle({ unit, storyId, description, phase, passed });
         console.log(result.message);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'skill:check-coverage': {
+      case "skill:check-coverage": {
         const mod = createSkillQualityHandlers();
-        const storyId = parseFlag(args, '--story') ?? '';
-        const format = json ? 'json' : 'human';
+        const storyId = parseFlag(args, "--story") ?? "";
+        const format = json ? "json" : "human";
         const result = await mod.checkCoverageHandler.handle({ storyId, format });
         console.log(result.message);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'skill:collect-lessons': {
+      case "skill:collect-lessons": {
         const mod = createSkillQualityHandlers();
-        const storyId = parseFlag(args, '--story') ?? '';
-        const sourcesRaw = parseFlag(args, '--sources') ?? '';
-        const sources = sourcesRaw ? sourcesRaw.split(',') : [];
-        const writeArtifact = hasFlag(args, '--write-artifact');
+        const storyId = parseFlag(args, "--story") ?? "";
+        const sourcesRaw = parseFlag(args, "--sources") ?? "";
+        const sources = sourcesRaw ? sourcesRaw.split(",") : [];
+        const writeArtifact = hasFlag(args, "--write-artifact");
         const result = await mod.collectLessonsHandler.handle({ storyId, sources, writeArtifact });
         console.log(result.message);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'skill:apply-cascade-update': {
+      case "skill:apply-cascade-update": {
         const mod = createSkillQualityHandlers();
-        const storyId = parseFlag(args, '--story') ?? '';
-        const dryRun = hasFlag(args, '--dry-run');
+        const storyId = parseFlag(args, "--story") ?? "";
+        const dryRun = hasFlag(args, "--dry-run");
         const result = await mod.applyCascadeUpdateHandler.handle({ storyId, dryRun });
         console.log(result.message);
         process.exit(result.exitCode);
         break;
       }
 
-      case 'skill:validate-structure': {
+      case "skill:validate-structure": {
         const mod = createSkillQualityHandlers();
-        const skillFile = parseFlag(args, '--file') ?? '';
-        const format = json ? 'json' : 'human';
+        const skillFile = parseFlag(args, "--file") ?? "";
+        const format = json ? "json" : "human";
         const result = await mod.validateSkillStructureHandler.handle({ skillFile, format });
         console.log(result.message);
         process.exit(result.exitCode);
@@ -1046,60 +1097,70 @@ Examples:
       }
 
       // ── regression-suite ──
-      case 'regression:run-k-requirements': {
+      case "regression:run-k-requirements": {
         const mod = buildRegressionSuite(rootDir);
         const result = await mod.runKRequirementsRegressionUseCase.execute();
-        const output = json ? JSON.stringify(result, null, 2) : `K-Requirements: ${result.passedCount}/${result.totalCount} passed`;
+        const output = json
+          ? JSON.stringify(result, null, 2)
+          : `K-Requirements: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
         process.exit(result.failedCount > 0 ? 1 : 0);
         break;
       }
 
-      case 'regression:run-gng-gate': {
+      case "regression:run-gng-gate": {
         const mod = buildRegressionSuite(rootDir);
         const result = await mod.runGngGateRegressionUseCase.execute();
-        const output = json ? JSON.stringify(result, null, 2) : `GnG Gate: ${result.passedCount}/${result.totalCount} passed`;
+        const output = json
+          ? JSON.stringify(result, null, 2)
+          : `GnG Gate: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
         process.exit(result.failedCount > 0 ? 1 : 0);
         break;
       }
 
-      case 'regression:run-agent-guard': {
+      case "regression:run-agent-guard": {
         const mod = buildRegressionSuite(rootDir);
         const result = await mod.runAgentIndependenceGuardUseCase.execute();
-        const output = json ? JSON.stringify(result, null, 2) : `Agent Independence: ${result.passedCount}/${result.totalCount} passed`;
+        const output = json
+          ? JSON.stringify(result, null, 2)
+          : `Agent Independence: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
         process.exit(result.failedCount > 0 ? 1 : 0);
         break;
       }
 
-      case 'regression:run-k14-k15': {
+      case "regression:run-k14-k15": {
         const mod = buildRegressionSuite(rootDir);
         const result = await mod.runK14K15RegressionUseCase.execute();
-        const output = json ? JSON.stringify(result, null, 2) : `K14/K15: ${result.passedCount}/${result.totalCount} passed`;
+        const output = json
+          ? JSON.stringify(result, null, 2)
+          : `K14/K15: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
         process.exit(result.failedCount > 0 ? 1 : 0);
         break;
       }
 
-      case 'regression:configure-ci-gate': {
+      case "regression:configure-ci-gate": {
         const mod = buildRegressionSuite(rootDir);
-        const requiredSuiteIds = parseSuiteIds(parseFlag(args, '--suites') ?? DEFAULT_REGRESSION_SUITES);
-        const threshold = parseCoverageThreshold(parseFlag(args, '--threshold'));
+        const requiredSuiteIds = parseSuiteIds(parseFlag(args, "--suites") ?? DEFAULT_REGRESSION_SUITES);
+        const threshold = parseCoverageThreshold(parseFlag(args, "--threshold"));
         const result = await mod.configureCiGateUseCase.execute({
           requiredSuiteIds,
           coverageThreshold: threshold,
-          executionMode: 'sequential',
+          executionMode: "sequential",
         });
-        const output = json ? JSON.stringify(result, null, 2) : `CI gate configured: suites=${result.requiredSuiteIds.join(',')}, threshold=${result.coverageThreshold}%`;
+        const output = json
+          ? JSON.stringify(result, null, 2)
+          : `CI gate configured: suites=${result.requiredSuiteIds.join(",")}, threshold=${result.coverageThreshold}%`;
         console.log(output);
         process.exit(0);
         break;
       }
 
-      case 'regression:analyze-migration': {
+      case "regression:analyze-migration": {
         const mod = buildRegressionSuite(rootDir);
-        const dryRun = !hasFlag(args, '--no-dry-run');
+        const dryRun = !hasFlag(args, "--no-dry-run");
         const result = await mod.analyzeV0MigrationUseCase.execute({ dryRun });
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -1109,9 +1170,9 @@ Examples:
         break;
       }
 
-      case 'regression:migrate-v0-tests': {
+      case "regression:migrate-v0-tests": {
         const mod = buildRegressionSuite(rootDir);
-        const confirm = hasFlag(args, '--confirm');
+        const confirm = hasFlag(args, "--confirm");
         const result = await mod.migrateV0TestsUseCase.execute({ confirmExecute: confirm });
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -1122,7 +1183,7 @@ Examples:
       }
 
       // ── phase2-extensions ──
-      case 'p2:check-freshness': {
+      case "p2:check-freshness": {
         const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.checkFreshnessHandler.handle(p2args);
@@ -1131,7 +1192,7 @@ Examples:
         break;
       }
 
-      case 'p2:validate-pointers': {
+      case "p2:validate-pointers": {
         const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.validatePointersHandler.handle(p2args);
@@ -1140,7 +1201,7 @@ Examples:
         break;
       }
 
-      case 'p2:generate-e2e-template': {
+      case "p2:generate-e2e-template": {
         const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
@@ -1149,7 +1210,7 @@ Examples:
         break;
       }
 
-      case 'p2:check-initial-creation': {
+      case "p2:check-initial-creation": {
         const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.checkInitialCreationExpirationHandler.handle(p2args);
@@ -1159,19 +1220,19 @@ Examples:
       }
 
       // ── agent integration / hooks ──
-      case 'hook': {
+      case "hook": {
         const subCommand = args[1];
-        const usage = 'Usage: phasegate hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>';
+        const usage = "Usage: phasegate hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>";
         if (!subCommand) {
           console.error(usage);
           process.exit(2);
         }
         const hookFileName: Record<string, string> = {
-          'pre-tool-use': 'pre-tool-use-hook.js',
-          'post-tool-use': 'post-tool-use-hook.js',
-          'stop': 'stop-hook.js',
-          'session-start': 'session-start-hook.js',
-          'user-prompt-submit': 'user-prompt-submit-hook.js',
+          "pre-tool-use": "pre-tool-use-hook.js",
+          "post-tool-use": "post-tool-use-hook.js",
+          stop: "stop-hook.js",
+          "session-start": "session-start-hook.js",
+          "user-prompt-submit": "user-prompt-submit-hook.js",
         };
         const fileName = hookFileName[subCommand];
         if (!fileName) {
@@ -1179,13 +1240,13 @@ Examples:
           console.error(usage);
           process.exit(2);
         }
-        const hookPath = join(harnessRoot, 'scripts/harness/agent-integration/presentation', fileName);
+        const hookPath = join(harnessRoot, "scripts/harness/agent-integration/presentation", fileName);
         await import(hookPath);
         break;
       }
 
-      case 'pre-commit': {
-        const preCommitPath = join(harnessRoot, 'scripts/harness/integrations/pre-commit.js');
+      case "pre-commit": {
+        const preCommitPath = join(harnessRoot, "scripts/harness/integrations/pre-commit.js");
         const preCommitMod = (await import(preCommitPath)) as {
           runPreCommitCli: () => Promise<void>;
         };
@@ -1193,33 +1254,42 @@ Examples:
         break;
       }
 
-      case 'delegate-sonnet': {
-        const { spawn } = await import('node:child_process');
-        const scriptPath = join(harnessRoot, 'scripts/delegate-sonnet.sh');
+      case "commit-msg": {
+        const preCommitPath = join(harnessRoot, "scripts/harness/integrations/pre-commit.js");
+        const preCommitMod = (await import(preCommitPath)) as {
+          runCommitMsgCli: (commitMessagePath: string | undefined) => Promise<void>;
+        };
+        await preCommitMod.runCommitMsgCli(args[1]);
+        break;
+      }
+
+      case "delegate-sonnet": {
+        const { spawn } = await import("node:child_process");
+        const scriptPath = join(harnessRoot, "scripts/delegate-sonnet.sh");
         const forwardArgs = args.slice(1);
-        const child = spawn('bash', [scriptPath, ...forwardArgs], { stdio: 'inherit' });
+        const child = spawn("bash", [scriptPath, ...forwardArgs], { stdio: "inherit" });
         await new Promise<void>((_, reject) => {
-          child.on('exit', (code) => {
+          child.on("exit", (code) => {
             process.exit(code ?? 1);
           });
-          child.on('error', reject);
+          child.on("error", reject);
         });
         break;
       }
 
       // ── skills ──
-      case 'skills': {
+      case "skills": {
         const subCommand = args[1];
-        const skillsRoot = join(harnessRoot, 'skills');
+        const skillsRoot = join(harnessRoot, "skills");
 
-        if (subCommand === 'list') {
-          const { promises: fs } = await import('node:fs');
+        if (subCommand === "list") {
+          const { promises: fs } = await import("node:fs");
           const entries = await fs.readdir(skillsRoot, { withFileTypes: true });
           const skills: string[] = [];
           for (const entry of entries) {
             if (entry.isDirectory()) {
               try {
-                await fs.access(join(skillsRoot, entry.name, 'SKILL.md'));
+                await fs.access(join(skillsRoot, entry.name, "SKILL.md"));
                 skills.push(entry.name);
               } catch {
                 // skip directories without SKILL.md
@@ -1230,39 +1300,39 @@ Examples:
 
           const grouped: Record<string, string[]> = { core: [], aidlc: [], utility: [], unknown: [] };
           for (const name of skills) {
-            const cat = getCategoryForSkill(name) ?? 'unknown';
+            const cat = getCategoryForSkill(name) ?? "unknown";
             grouped[cat].push(name);
           }
 
           console.log(`Available skills (${skills.length}):\n`);
 
           const labels: Record<string, string> = {
-            core: 'Core — Quality Defense',
-            aidlc: 'AIDLC — Development Workflow',
-            utility: 'Utility',
+            core: "Core — Quality Defense",
+            aidlc: "AIDLC — Development Workflow",
+            utility: "Utility",
           };
-          for (const cat of ['core', 'aidlc', 'utility', 'unknown'] as const) {
+          for (const cat of ["core", "aidlc", "utility", "unknown"] as const) {
             if (grouped[cat].length === 0) continue;
-            const label = labels[cat] ?? 'Other';
+            const label = labels[cat] ?? "Other";
             console.log(`  [${label}] (${grouped[cat].length})`);
             for (const name of grouped[cat]) {
               console.log(`    /${name}`);
             }
-            console.log('');
+            console.log("");
           }
           process.exit(0);
         }
 
-        if (subCommand === 'info') {
+        if (subCommand === "info") {
           const skillName = args[2];
           if (!skillName) {
-            console.error('Usage: phasegate skills info <skill-name>');
+            console.error("Usage: phasegate skills info <skill-name>");
             process.exit(2);
           }
-          const { promises: fs } = await import('node:fs');
-          const skillMdPath = join(skillsRoot, skillName, 'SKILL.md');
+          const { promises: fs } = await import("node:fs");
+          const skillMdPath = join(skillsRoot, skillName, "SKILL.md");
           try {
-            const content = await fs.readFile(skillMdPath, 'utf-8');
+            const content = await fs.readFile(skillMdPath, "utf-8");
             console.log(content);
             process.exit(0);
           } catch {
@@ -1272,7 +1342,7 @@ Examples:
           }
         }
 
-        console.error('Usage: phasegate skills <list|info <name>>');
+        console.error("Usage: phasegate skills <list|info <name>>");
         process.exit(2);
         break;
       }
@@ -1283,8 +1353,7 @@ Examples:
         process.exit(2);
     }
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown error occurred';
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error(`Fatal: ${message}`);
     process.exit(2);
   }

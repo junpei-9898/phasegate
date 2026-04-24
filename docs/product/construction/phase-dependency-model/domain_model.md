@@ -4,11 +4,14 @@
 @story-id H02-02
 @story-id H02-03
 @story-id H02-04
+@story-id H02-05
+@story-id H02-06
+@story-id H02-07
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
-> **最終更新**: 2026-04-24（H02-04 / ISSUE-026 Phase A-1 反映）
+> **最終更新**: 2026-04-24（H02-07 / ISSUE-026 Phase C-4 legacy annotation compatibility 反映）
 > **Wave**: 1（基盤構築）
-> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04
+> **対応ストーリー**: H02-01, H02-02, H02-03, H02-04, H02-05, H02-06, H02-07
 > **対応Issue**: ISSUE-001, ISSUE-026
 > **横断契約参照**: cross_cutting_decisions.md §5（所有権）, §6（集約降格）
 
@@ -103,6 +106,7 @@
 | **ArtifactExistenceCheckerPort** | 外部→ドメイン | 成果物ファイルの存在確認（ファイルシステムアクセス） |
 | **PlanDocumentReaderPort** | 外部→ドメイン | plan文書の存在 + QAセクション読み取り |
 | **PhaseConfigProviderPort** | 外部→ドメイン | HarnessConfigV2.phaseDependenciesの取得 |
+| **StoryReflectionFileSystemPort** | 外部→ドメイン | inception の reflection 対象ID列挙、product アノテーション検出、cross WI の `affects` 判定。H02-07以降は `_cross/WI-*` の `legacy_id` を旧 `@issue-id` 互換として扱う |
 
 ---
 

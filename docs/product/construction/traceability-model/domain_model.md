@@ -4,11 +4,15 @@
 @story-id H03-02
 @story-id H03-03
 @story-id H03-04
+@story-id H03-05
+@story-id H03-06
+@story-id H03-07
+@story-id H03-08
 > **Unit ID**: traceability-model
 > **作成日**: 2026-03-13
-> **最終更新**: 2026-04-24（H03-04 / ISSUE-026 Phase A-2 WI frontmatter parser 反映）
+> **最終更新**: 2026-04-24（H03-08 / ISSUE-026 Phase B-3 WI migration apply 反映）
 > **Wave**: 1（基盤構築）
-> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08
 > **横断契約参照**: cross_cutting_decisions.md §1（Story ID）, §2（Layer語彙）, §4（Shared Kernel）
 
 ---
@@ -31,6 +35,9 @@
 | MetadataValidator | ドメインサービス | ファイル横断のメタデータ整合性検証 |
 | StoryIdAliasResolver | ドメインサービス | v0 US-XXX → v1 HXX-XX 別名解決 |
 | TraceabilityChainBuilder | ドメインサービス | 逆引きチェーン構築 |
+| WorkItemMigrationPlan | 値オブジェクト | 旧issueレイアウトからWIレイアウトへの移行候補一覧 |
+| WorkItemMigrationPlanner | ドメインサービス | `ISSUE-XXX` から `WI-XXX` への移行計画を生成 |
+| WorkItemMigrationApplyResult | 値オブジェクト | WI移行applyの適用済み/スキップ/警告/blocked状態 |
 
 ### 他Unitから受け取るShared Kernel
 

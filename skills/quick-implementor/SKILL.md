@@ -18,6 +18,20 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 | `test` | テスト追加・修正（新機能のテストではない） |
 | `config` | 設定変更、依存バージョン更新 |
 
+### WI-aware trivial path（ISSUE-026 Phase D）
+
+作業対象に `WI-XXX` が明示されている場合、最初に `docs/inception/{unit}/WI-XXX/description.md` または `docs/inception/_cross/WI-XXX/description.md` のfrontmatterを確認する。
+
+| WI type | Quick Modeでの扱い |
+|---------|-------------------|
+| `fix` | 適用候補。既存仕様の局所修正として扱う |
+| `chore` | 適用候補。依存更新・運用・ドキュメント整備として扱う |
+| `story` | 適用不可。`story-implementor` にエスカレーション |
+| `issue` | 適用不可。product反映が必要な可能性が高いため `story-implementor` にエスカレーション |
+| `refactor` | 適用不可。設計影響を伴う可能性が高いため `story-implementor` にエスカレーション |
+
+`type: fix | chore` でも、API契約変更・新ドメインモデル追加・レイヤー構造変更・複数Unitにまたがる実装変更が見えた場合は、通常の除外ルールを優先して `story-implementor` に切り替える。
+
 ### 適用除外（フルハーネス必須 → story-implementor を使用）
 
 - 新機能追加
@@ -82,10 +96,12 @@ pnpm test  # 全テスト グリーンを確認
 
 ### Step 5: コミット
 
-Atomic commit で変更をコミットする。コミットメッセージに `[quick]` プレフィックスを付与。
+Atomic commit で変更をコミットする。コミットメッセージに `[quick]` プレフィックスを付与。作業対象WIがある場合は `Work-Item: WI-XXX` trailer を必ず含める。
 
 ```
 [quick] fix: {変更内容の要約}
+
+Work-Item: WI-XXX
 ```
 
 ---

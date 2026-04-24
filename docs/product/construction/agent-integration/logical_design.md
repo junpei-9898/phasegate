@@ -504,6 +504,7 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
   Step 2（フェーズゲートチェック — v2.2.0追加、AsyncHookToCliTranslatorのみ）:
   5. `configQueryPort.getProjectPaths()` で `ProjectPaths` を取得する
   6. `hookEvent.targetFilePaths` の各パスに対し `WriteTargetScope.fromPath(filePath, projectPaths)` でスコープを推定する
+     - ISSUE-026 Phase C-2以降、`docs.inception/_cross/WI-*` は横断WIの仮想unitとして `level=3`, `unitId="_cross"`, `storyId="WI-XXX"` に解決する
   7. いずれのパスもスコープ外（null）の場合は `HookTranslationResult.create({ shouldBlock: false, ... })` を返す
   8. スコープが検出された場合、`phaseGateQueryPort.checkGate(detectedScope)` を呼び出す
   9. `!phaseGateResult.hasPassed()` の場合は `HookTranslationResult.block()` を返す

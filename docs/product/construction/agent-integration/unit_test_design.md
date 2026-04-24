@@ -343,6 +343,19 @@
 
 ---
 
+## ISSUE-026 Phase C-2追加分: WriteTargetScope（_cross/WIパス認識）
+
+> **対応Story**: H11-06
+> **対象VO**: WriteTargetScope（`fromPath()` の `_cross/WI-*` パス認識拡張）
+
+| ケースID | 入力filePath | ProjectPaths | 期待結果 |
+|---------|------------|-------------|---------|
+| UT-WTS-WI001 | `'docs/inception/_cross/WI-026/description.md'` | デフォルト | `WriteTargetScope { level: 3, unitId: '_cross', storyId: 'WI-026' }` |
+| UT-WTS-WI002 | `'custom/inception/_cross/WI-026/description.md'` | inception=`custom/inception` | `WriteTargetScope { level: 3, unitId: '_cross', storyId: 'WI-026' }` |
+| UT-WTS-WI003 | `'docs/inception/_cross/memo.md'` | デフォルト | `WriteTargetScope { level: 1 }` — 非WIをstoryId付きLevel 3として誤認しない |
+
+---
+
 ## ISSUE-001追加分: PhaseGateQueryResult
 
 > **対応Issue**: ISSUE-001（v2.2.0で追加されたVO）

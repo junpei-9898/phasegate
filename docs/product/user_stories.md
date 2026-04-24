@@ -2,7 +2,8 @@
 
 @story-id H02-04
 @story-id H03-04
-更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（ISSUE-026 Phase A-2 / WorkItem frontmatter parser）を追加。
+@story-id H03-05
+更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（Phase A-2 / WI frontmatter parser）、H03-05（Phase A-3 / L2 validator 統合）を追加。
 
 > **ステータス**: Phase 2（実行）— codex 1stレビュー済み・指摘反映済み
 > **作成日**: 2026-03-12
@@ -201,6 +202,73 @@ K3.5（@unit/@layer/@story-id メタデータ）— `@story-id` 統一規約の�
 
 ---
 
+### H02-05: WI-aware story reflection listing（ISSUE-026 Phase C-1）
+
+**Epic**: H-02 Phase Dependency Model
+**旧US**: 新規（ISSUE-026 Phase C-1 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** story reflection が `docs/inception/{unit}/WI-*` と `docs/inception/_cross/WI-*` を列挙対象に含めるようにしたい,
+**so that** Phase B で移行した WI layout を gate logic refresh の対象にできる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `docs/inception/{unit}/WI-*` が story reflection 候補として列挙される
+- [ ] AC-2: legacy `docs/inception/{unit}/{HXX-XX}` / `US-*` は移行期間中も列挙される
+- [ ] AC-3: `docs/inception/_cross/WI-*` が story reflection 候補として列挙される
+- [ ] AC-4: `docs/inception/{unit}/issues` は列挙されない
+- [ ] AC-5: `docs/inception/_cross` の非WIディレクトリは列挙されない
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI layout を reflection gate の入力に乗せる
+
+---
+
+### H02-06: WI frontmatter affects-aware story reflection（ISSUE-026 Phase C-3）
+
+**Epic**: H-02 Phase Dependency Model
+**旧US**: 新規（ISSUE-026 Phase C-3 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** story reflection が `_cross/WI-*` のfrontmatter `affects` を読んで対象Unitだけを検査できるようにしたい,
+**so that** 横断WIを全Unitへ過剰適用せず、実際に影響するUnitのproduct反映だけをゲートできる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `_cross/WI-*` のinception pathは `docs/inception/_cross/{WI}/...` として解決される
+- [ ] AC-2: `affects` に対象Unitが含まれる場合、reflection検査対象になる
+- [ ] AC-3: `affects` に対象Unitが含まれない場合、reflection検査対象から除外される
+- [ ] AC-4: frontmatterが読めない場合は既存互換として対象に含める
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI frontmatter を reflection gate の対象解決に利用する
+
+---
+
+### H02-07: WI annotation legacy compatibility（ISSUE-026 Phase C-4）
+
+**Epic**: H-02 Phase Dependency Model
+**旧US**: 新規（ISSUE-026 Phase C-4 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** `legacy_id` を持つ `WI-*` が旧 `@issue-id ISSUE-*` のproduct反映を移行互換として認識できるようにしたい,
+**so that** Phase Bで移行された既存issueが、product文書のannotationを一斉更新しなくても段階的にWI運用へ移行できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: product文書の `@work-item-id WI-XXX` は直接検出される
+- [ ] AC-2: `_cross/WI-XXX/description.md` に `legacy_id: ISSUE-XXX` がある場合、product文書の `@issue-id ISSUE-XXX` が `WI-XXX` の反映として扱われる
+- [ ] AC-3: `legacy_id` がない場合、旧IDだけではWI反映として扱われない
+- [ ] AC-4: 既存 `@story-id` / `@issue-id` の直接検出は後方互換で維持される
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— legacy annotation と WI annotation の段階移行互換
+
+---
+
 ## H-03: Traceability Model
 
 ### H03-01: @unit/@layerメタデータ体系 + L2 metadataバリデータ基本実装
@@ -263,6 +331,104 @@ K3.5（@unit/@layer/@story-idメタデータ）
 - [ ] AC-3: 逆引きチェーン（実装→@unit→product/construction/{unit}/→@story-id HXX-XX→inception/{unit}/{HXX-XX}/）の各リンクが存在することを検証するテストが存在する
 - [ ] AC-4: L3 nyquistバリデータが`@story`メタデータを入力としてUS-テスト間のトレーサビリティを検証する
 - [ ] AC-5: @story欠落時のHarnessError（L2-002拡張）にfix_exampleが含まれる
+
+---
+
+### H03-05: WorkItem frontmatter の L2 metadata validator 統合（ISSUE-026 Phase A-3）
+
+**Epic**: H-03 Traceability Model
+**旧US**: 新規（ISSUE-026 Phase A-3 の最小統合）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** `parseWorkItemFrontmatter` を L2 metadata validator の設計文書検証フローに統合し、壊れた WI frontmatter を commit 前に検出したい,
+**so that** Phase B（migration）で WI frontmatter を実装文書へ本格導入する前に、malformed frontmatter が CI・commit を通過するリスクを除去できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `DesignDocumentPort` に `readWorkItemFrontmatter(filePath): Promise<WorkItemFrontmatter | null>` が optional member として追加される
+- [ ] AC-2: `MarkdownDesignDocumentGateway` が `readWorkItemFrontmatter` を実装し、有効 frontmatter は `WorkItemFrontmatter`、不在は `null` を返す
+- [ ] AC-3: invalid frontmatter（enum 違反・id 形式違反等）では `WorkItemFrontmatterValidationError` が gateway からそのまま throw される
+- [ ] AC-4: `ValidateDesignStoryAnnotationsUseCase` が `readWorkItemFrontmatter` を呼び、throw されたエラーを `L2-002` の `MetadataValidationOutput.errors` に変換する
+- [ ] AC-5: frontmatter 不在 (`null`) の文書は validator 上追加違反を発生させない（後方互換）
+- [ ] AC-6: 有効 frontmatter の文書は validator 上追加違反を発生させない
+- [ ] AC-7: 既存 `readFrontmatterFlags` / `readStoryAnnotations` の挙動は無変更（既存テスト無変更で green）
+- [ ] AC-8: 新テスト（UT-TM-WV01〜WV04）が追加される
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI frontmatter の well-formed 検証を L2 に統合
+
+---
+
+### H03-06: WorkItem 物理レイアウト移行 dry-run（ISSUE-026 Phase B-1）
+
+**Epic**: H-03 Traceability Model
+**旧US**: 新規（ISSUE-026 Phase B-1 の安全な移行計画）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** 旧 issue レイアウトから WI レイアウトへの移行計画を dry-run で生成したい,
+**so that** 実ファイル移動の前に移動元・移動先・legacy_id・衝突を確認し、進行中作業やリンクを壊さず Phase B を開始できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `docs/inception/issues/{ISSUE-XXX}` が `docs/inception/_cross/{WI-XXX}` への候補として列挙される
+- [ ] AC-2: `docs/inception/{unit}/issues/{ISSUE-XXX}` が `docs/inception/{unit}/{WI-XXX}` への候補として列挙される
+- [ ] AC-3: `ISSUE-026` から `WI-026` を導出し、`legacy_id: ISSUE-026` の追記計画を返す
+- [ ] AC-4: 移動先が既に存在する場合は candidate に `conflict: true` が設定される
+- [ ] AC-5: dry-run ではファイルシステムを書き換えない
+- [ ] AC-6: cross-unit issue では旧文書の「影響Unit」行から `affects` 候補を抽出し、抽出不能なら warning を返す
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI frontmatter と legacy_id による traceability migration の基盤
+
+---
+
+### H03-07: WorkItem migration CLI dry-run（ISSUE-026 Phase B-2）
+
+**Epic**: H-03 Traceability Model
+**旧US**: 新規（ISSUE-026 Phase B-2 の CLI 接続）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** `phasegate migrate work-items --dry-run` で WI 移行計画を確認したい,
+**so that** 実ファイル移動前に source / target / conflict / warning をレビューし、既存の config schema migration を壊さず Phase B を進められる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `phasegate migrate work-items --dry-run` が WorkItem migration plan を表示する
+- [ ] AC-2: `--json` 指定時は `{ candidates, warnings }` を JSON で出力する
+- [ ] AC-3: human 出力では source path、target path、legacy id、next id、conflict を確認できる
+- [ ] AC-4: conflict が1件以上ある場合は終了コード1を返す
+- [ ] AC-5: `--dry-run` 未指定または `--apply` 指定時は、ファイルシステムを書き換えず終了コード2を返す
+- [ ] AC-6: 既存 `phasegate migrate --schema v3` の config schema migration は従来通り動作する
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI migration の実行前レビュー経路
+
+---
+
+### H03-08: WorkItem migration apply（ISSUE-026 Phase B-3）
+
+**Epic**: H-03 Traceability Model
+**旧US**: 新規（ISSUE-026 Phase B-3 の実移行）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** `phasegate migrate work-items --apply` で旧 issue レイアウトを WI レイアウトへ安全に移行したい,
+**so that** `docs/inception/issues/` と `{unit}/issues/` を廃止し、後続の gate logic refresh を単一の work item 構造に対して実装できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `phasegate migrate work-items --apply` が旧 issue ディレクトリを target WI ディレクトリへ移動する
+- [ ] AC-2: `issue_description.md` は `description.md` に rename され、WI frontmatter が先頭に付与される
+- [ ] AC-3: 既に `description.md` の旧issueは同ファイルにWI frontmatterが付与される
+- [ ] AC-4: `logical_design.md` 等の付随ファイルは target directory に保持される
+- [ ] AC-5: plan に conflict が1件でもある場合は、ファイルシステムを書き換えず終了コード1を返す
+- [ ] AC-6: `--apply --dry-run` の同時指定は拒否し、ファイルシステムを書き換えない
+
+#### 対応非交渉要件
+K3.5（@unit/@layer/@story-id メタデータ）— WI physical layout migration
 
 ---
 
@@ -870,6 +1036,24 @@ K12（Consistency Checker）
 
 ---
 
+### H10-06: WI-aware quick-implementor trivial path（ISSUE-026 Phase D-1）
+
+**Epic**: H-10 Quick Mode
+**旧US**: 新規（ISSUE-026 Phase D-1 の分割）
+**優先度**: Should
+
+**As a** PhaseGate 開発者,
+**I want to** quick-implementor が `type: fix | chore` のWIを軽量パスとして扱い、重いWI種別をFull Modeへエスカレーションできるようにしたい,
+**so that** 小さな修正にも `Work-Item` 証跡を残しつつ、設計影響のある変更は従来通りFull workflowで保護できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `skills/quick-implementor/SKILL.md` が `type: fix | chore` をQuick Mode適用候補として説明している
+- [ ] AC-2: `type: story | issue | refactor` は `story-implementor` へエスカレーションするよう説明している
+- [ ] AC-3: Quick Modeのコミットにも `Work-Item: WI-XXX` trailer を含めるよう説明している
+
+---
+
 ## H-11: エージェント統合オプション
 
 ### H11-01: コア品質能力のCLI/FSフォールバック定義
@@ -946,6 +1130,28 @@ K12（Consistency Checker）
 - [ ] AC-3: `stop_hook_active`フラグで再入を検出し、無限ループ（テスト失敗→再試行→テスト失敗）を防止する
 - [ ] AC-4: 再入検出時にStop Hookがスキップされ、適切な警告メッセージが表示される
 - [ ] AC-5: Hook未使用時はCLI（`phasegate:complete-check`相当）で同等の完了チェックが実行可能である
+
+---
+
+### H11-06: WI cross layout write target scope（ISSUE-026 Phase C-2）
+
+**Epic**: H-11 エージェント統合オプション
+**旧US**: 新規（ISSUE-026 Phase C-2 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** PreToolUse Hook の書き込み対象スコープ判定が `docs/inception/_cross/WI-*` を Level 3 作業単位として認識できるようにしたい,
+**so that** Phase B で移行した横断 WI に対する設計・実装作業もフェーズゲート対象にできる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `docs/inception/_cross/WI-XXX/...` が `WriteTargetScope { level: 3, unitId: "_cross", storyId: "WI-XXX" }` に解決される
+- [ ] AC-2: カスタム `ProjectPaths.docs.inception` でも `_cross/WI-*` が同じ規則で解決される
+- [ ] AC-3: `_cross` 配下の非WIパスは storyId 付き Level 3 として誤認されない
+- [ ] AC-4: 旧 `docs/inception/issues/ISSUE-*` は既存互換として Level 1 のまま維持される
+
+#### 対応非交渉要件
+K2（Phase Gate Architecture）— 新 WI layout を Hook 側のスコープ推定に接続する
 
 ---
 
@@ -1077,6 +1283,25 @@ K8（Cascade Updater）
 
 ---
 
+### H12-07: Work-Item trailer support（ISSUE-026 Phase D-2）
+
+**Epic**: H-12 スキル品質強化
+**旧US**: 新規（ISSUE-026 Phase D-2 の分割）
+**優先度**: Must
+
+**As a** PhaseGate 開発者,
+**I want to** Atomic Commitで生成されるコミットメッセージが `Work-Item: WI-XXX` trailerを保持・整形できるようにしたい,
+**so that** Quick Modeを含む軽量パスでもWI単位の変更証跡をgit履歴から追跡できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `CommitMessage` は任意の `workItemId` を保持できる
+- [ ] AC-2: `workItemId` は `WI-\\d+` 形式のみ受け付ける
+- [ ] AC-3: `format()` は `Work-Item: WI-XXX` trailerを出力する
+- [ ] AC-4: `workItemId` 未指定時の既存コミット形式は維持される
+
+---
+
 ## H-13: Scheduled Governance & CI/CDテンプレート
 
 ### H13-01: CI/CDテンプレート
@@ -1133,6 +1358,26 @@ K8（Cascade Updater）
 - [ ] AC-2: AGENTS.mdにADR参照リンクが追加されている
 - [ ] AC-3: AGENTS.mdの行数が移行前と比較して50%以上削減されている
 - [ ] AC-4: ポインタが参照する先（コマンド、ファイル）が実在することが検証可能である
+
+---
+
+### H13-04: Work-Item trailer pre-commit/CI検証（ISSUE-026 Phase D-3）
+
+**Epic**: H-13 Scheduled Governance & CI/CDテンプレート
+**旧US**: 新規（ISSUE-026 Phase D-3 の分割）
+**優先度**: Must
+
+**As a** ハーネス管理者,
+**I want to** WI配下document変更時に `Work-Item: WI-XXX` trailerをpre-commit/CI経路で検証したい,
+**so that** Quick Modeを含む軽量変更でもWI単位の変更証跡がgit履歴から失われないようにする。
+
+#### 受け入れ基準
+
+- [ ] AC-1: WI配下documentがstagedでcommit messageに `Work-Item: WI-XXX` が無い場合、検証は失敗する
+- [ ] AC-2: WI配下documentがstagedでvalid trailerがある場合、検証は成功する
+- [ ] AC-3: WI配下以外の変更ではtrailerを要求しない
+- [ ] AC-4: 通常pre-commitでは既存のL2/metadata検証挙動を維持する
+- [ ] AC-5: `.husky/commit-msg` hookが `phasegate commit-msg "$1"` 経由でtrailer検証を実行する
 
 ---
 

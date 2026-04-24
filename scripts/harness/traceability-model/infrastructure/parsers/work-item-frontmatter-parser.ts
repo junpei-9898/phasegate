@@ -11,47 +11,44 @@
  */
 
 import {
-  type WorkItemFrontmatter,
-  type WorkItemSeverity,
-  type WorkItemStatus,
-  type WorkItemType,
   WORK_ITEM_ID_PATTERN,
   WORK_ITEM_SEVERITIES,
   WORK_ITEM_STATUSES,
   WORK_ITEM_TYPES,
+  type WorkItemFrontmatter,
   WorkItemFrontmatterValidationError,
-} from '../../domain/value-objects/work-item-frontmatter.js';
+  type WorkItemSeverity,
+  type WorkItemStatus,
+  type WorkItemType,
+} from "../../domain/value-objects/work-item-frontmatter.js";
 
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---/;
 
-const scalarPattern = (key: string): RegExp =>
-  new RegExp(`^\\s*${key}\\s*:\\s*(.+?)\\s*$`, 'm');
+const scalarPattern = (key: string): RegExp => new RegExp(`^\\s*${key}\\s*:\\s*(.+?)\\s*$`, "m");
 
-const flowArrayPattern = (key: string): RegExp =>
-  new RegExp(`^\\s*${key}\\s*:\\s*\\[([^\\]]*)\\]\\s*$`, 'm');
+const flowArrayPattern = (key: string): RegExp => new RegExp(`^\\s*${key}\\s*:\\s*\\[([^\\]]*)\\]\\s*$`, "m");
 
 const blockArrayPattern = (key: string): RegExp =>
-  new RegExp(
-    `^\\s*${key}\\s*:\\s*\\r?\\n((?:[ \\t]+-[ \\t]+.+\\r?\\n?)+)`,
-    'm',
-  );
+  new RegExp(`^\\s*${key}\\s*:\\s*\\r?\\n((?:[ \\t]+-[ \\t]+.+\\r?\\n?)+)`, "m");
 
-export function parseWorkItemFrontmatter(
-  content: string,
-): WorkItemFrontmatter | null {
+export function parseWorkItemFrontmatter(content: string): WorkItemFrontmatter | null {
   const match = FRONTMATTER_PATTERN.exec(content);
   if (!match) return null;
 
   const body = match[1];
 
-  const id = extractScalar(body, 'id');
-  const type = extractScalar(body, 'type');
+  const id = extractScalar(body, "id");
+  const type = extractScalar(body, "type");
+
+  if (!id && !type) {
+    return null;
+  }
 
   if (!id) {
-    throw new WorkItemFrontmatterValidationError('id が不足しています');
+    throw new WorkItemFrontmatterValidationError("id が不足しています");
   }
   if (!type) {
-    throw new WorkItemFrontmatterValidationError('type が不足しています');
+    throw new WorkItemFrontmatterValidationError("type が不足しています");
   }
   if (!WORK_ITEM_ID_PATTERN.test(id)) {
     throw new WorkItemFrontmatterValidationError(`id 形式が不正です: ${id}`);
@@ -60,29 +57,19 @@ export function parseWorkItemFrontmatter(
     throw new WorkItemFrontmatterValidationError(`type 値が enum 外: ${type}`);
   }
 
-  const severityRaw = extractScalar(body, 'severity');
-  if (
-    severityRaw !== undefined &&
-    !WORK_ITEM_SEVERITIES.has(severityRaw as WorkItemSeverity)
-  ) {
-    throw new WorkItemFrontmatterValidationError(
-      `severity 値が enum 外: ${severityRaw}`,
-    );
+  const severityRaw = extractScalar(body, "severity");
+  if (severityRaw !== undefined && !WORK_ITEM_SEVERITIES.has(severityRaw as WorkItemSeverity)) {
+    throw new WorkItemFrontmatterValidationError(`severity 値が enum 外: ${severityRaw}`);
   }
 
-  const statusRaw = extractScalar(body, 'status');
-  if (
-    statusRaw !== undefined &&
-    !WORK_ITEM_STATUSES.has(statusRaw as WorkItemStatus)
-  ) {
-    throw new WorkItemFrontmatterValidationError(
-      `status 値が enum 外: ${statusRaw}`,
-    );
+  const statusRaw = extractScalar(body, "status");
+  if (statusRaw !== undefined && !WORK_ITEM_STATUSES.has(statusRaw as WorkItemStatus)) {
+    throw new WorkItemFrontmatterValidationError(`status 値が enum 外: ${statusRaw}`);
   }
 
-  const affects = extractArray(body, 'affects');
-  const source = extractScalar(body, 'source');
-  const legacyId = extractScalar(body, 'legacy_id');
+  const affects = extractArray(body, "affects");
+  const source = extractScalar(body, "source");
+  const legacyId = extractScalar(body, "legacy_id");
 
   const result: {
     id: string;
@@ -111,18 +98,15 @@ function extractScalar(body: string, key: string): string | undefined {
   const raw = match[1].trim();
   if (raw.length === 0) return undefined;
   // フロー配列記法 (`[a, b]`) は scalar として扱わず、array 抽出側に委ねる
-  if (raw.startsWith('[')) return undefined;
+  if (raw.startsWith("[")) return undefined;
   return stripYamlQuotes(raw);
 }
 
-function extractArray(
-  body: string,
-  key: string,
-): readonly string[] | undefined {
+function extractArray(body: string, key: string): readonly string[] | undefined {
   const flow = flowArrayPattern(key).exec(body);
   if (flow) {
     const items = flow[1]
-      .split(',')
+      .split(",")
       .map((s) => stripYamlQuotes(s.trim()))
       .filter((s) => s.length > 0);
     return items.length > 0 ? items : undefined;
@@ -132,7 +116,7 @@ function extractArray(
   if (block) {
     const items = block[1]
       .split(/\r?\n/)
-      .map((line) => line.replace(/^[ \t]+-[ \t]+/, '').trim())
+      .map((line) => line.replace(/^[ \t]+-[ \t]+/, "").trim())
       .map(stripYamlQuotes)
       .filter((s) => s.length > 0);
     return items.length > 0 ? items : undefined;

@@ -7,10 +7,18 @@ traceability:
 
 @story-id H03-04
 拡張: ISSUE-026 Phase A-2 で `parseWorkItemFrontmatter` に対するユニットテスト UT-TM-W01〜W08 を追加。
+@story-id H03-05
+拡張: ISSUE-026 Phase A-3 で gateway / usecase の WI frontmatter 統合テスト UT-TM-WV01〜WV04 を追加。
+@story-id H03-06
+拡張: ISSUE-026 Phase B-1 で WI layout migration dry-run planner / usecase のユニットテストを追加。
+@story-id H03-07
+拡張: ISSUE-026 Phase B-2 で WI migration CLI dry-run handler のユニットテストを追加。
+@story-id H03-08
+拡張: ISSUE-026 Phase B-3 で WI migration apply usecase / gateway / handler のユニットテストを追加。
 
 > **作成日**: 2026-03-13
-> **最終更新**: 2026-04-24（H03-04 / ISSUE-026 Phase A-2 WI frontmatter テスト追加）
-> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04
+> **最終更新**: 2026-04-24（H03-08 / ISSUE-026 Phase B-3 migration apply テスト追加）
+> **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08
 > **前提ドキュメント**: `domain_model.md`、`logical_design.md`、`unit_test_design_plan.md`
 > **テストフレームワーク**: Vitest 3.0.0
 
@@ -20,7 +28,7 @@ traceability:
 
 ### スコープ
 
-traceability-model は集約・エンティティを持たない。`domain_model.md §2` に基づき、値オブジェクト + ドメインサービスのみをテスト対象とする。Presentation層は本Unitに存在しないため対象外。
+traceability-model は集約・エンティティを持たない。`domain_model.md §2` に基づき、値オブジェクト + ドメインサービスを中心にテスト対象とする。Presentation層は CLI 入出力整形に限定して handler 単体で検証する。
 
 ### テスト対象一覧
 
@@ -411,6 +419,56 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 | UT-TM-117 | validateDesignDocument | 設計文書のstory-idアノテーションを検証する | frontmatter未設定で@story-idが欠落している場合 | errors[0].code==="L2-002" かつ errors[0].fix_example に `@story-id H03-02` 形式の修正例を含むこと |
 | UT-TM-118 | validateDesignDocument | 設計文書のstory-idアノテーションを検証する | @story-idが独立行だが次行が空行で設計要素の直前でない場合 | L2-002エラーを含む結果が返ること |
 | UT-TM-119 | validateTest | テストファイルのstoryメタデータを検証する | @storyタグが欠落している場合 | errors[0].code==="L2-002" かつ errors[0].fix_example に `// @story H03-03` 形式の修正例を含むこと |
+
+### 7.3 H03-05 L2 metadata validator への WI frontmatter 統合 (ISSUE-026 Phase A-3)
+
+対象: `MarkdownDesignDocumentGateway#readWorkItemFrontmatter` / `ValidateDesignStoryAnnotationsUseCase#execute`
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-WV01 | `MarkdownDesignDocumentGateway#readWorkItemFrontmatter` | 有効 frontmatter を読む場合 | `id: WI-001 / type: story` がある design doc | `WorkItemFrontmatter` オブジェクトを返す |
+| UT-TM-WV02 | 同上 | frontmatter 不在の場合 | frontmatter を持たない design doc | `null` を返す |
+| UT-TM-WV03 | 同上 | invalid frontmatter の場合 | `type: broken` の design doc | `WorkItemFrontmatterValidationError` を throw |
+| UT-TM-WV04 | `ValidateDesignStoryAnnotationsUseCase#execute` | gateway が WI frontmatter parse error を throw した場合 | port が invalid frontmatter を返す | `L2-002` コードの error が `MetadataValidationOutput.errors` に追加される |
+
+### 7.4 H03-06 WI layout migration dry-run (ISSUE-026 Phase B-1)
+
+対象: `WorkItemMigrationPlanner` / `PlanWorkItemMigrationUseCase` / `FileSystemWorkItemMigrationSourceGateway`
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-WM01 | `WorkItemMigrationPlanner#plan` | 旧issueレイアウトからWI migration planを生成する | cross-unit issueを渡した場合 | `_cross/WI-XXX` 配下の候補を返す |
+| UT-TM-WM02 | 同上 | 同上 | unit-owned issueを渡した場合 | `{unit}/WI-XXX` 配下の候補を返す |
+| UT-TM-WM03 | 同上 | 同上 | 移動先が既に存在する場合 | `conflict=true` を返す |
+| UT-TM-WM04 | 同上 | 同上 | cross-unit issueで影響Unitを抽出できない場合 | affects不足warningを返す |
+| UT-TM-WM05 | `PlanWorkItemMigrationUseCase#execute` | WI migration dry-run planを生成する | 旧issueディレクトリが存在する場合 | source portから取得したentryをmigration candidateに変換する |
+| UT-TM-WM06 | `FileSystemWorkItemMigrationSourceGateway#listLegacyIssueDirectories` | 旧issueレイアウトを走査する | cross-unit issueとunit-owned issueがある場合 | 両方をlegacy issue entryとして返す |
+| UT-TM-WM07 | 同上 | 同上 | 移動先が既に存在する場合 | `targetExists=true` を返す |
+
+### 7.5 H03-07 WI migration CLI dry-run (ISSUE-026 Phase B-2)
+
+対象: `MigrateWorkItemsCommandHandler`
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-WM08 | `MigrateWorkItemsCommandHandler#execute` | WI migration dry-runを表示する | `--dry-run` が指定された場合 | human text に source / target / legacy id / next id を出力する |
+| UT-TM-WM09 | 同上 | 同上 | `--json` が指定された場合 | JSON に candidates / warnings を出力する |
+| UT-TM-WM10 | 同上 | 同上 | conflict candidate がある場合 | 終了コード1を返す |
+| UT-TM-WM11 | 同上 | 同上 | `--dry-run` が指定されていない場合 | 終了コード2を返し、usecase を実行しない |
+| UT-TM-WM12 | 同上 | 同上 | `--apply` 未配線で指定された場合 | 終了コード2を返し、usecase を実行しない |
+
+### 7.6 H03-08 WI migration apply (ISSUE-026 Phase B-3)
+
+対象: `ApplyWorkItemMigrationUseCase` / `FileSystemWorkItemMigrationApplyGateway` / `MigrateWorkItemsCommandHandler`
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-WM13 | `ApplyWorkItemMigrationUseCase#execute` | WI migration applyを実行する | conflict がない plan の場合 | 全 candidate を apply port へ渡す |
+| UT-TM-WM14 | 同上 | 同上 | conflict がある plan の場合 | apply port を呼ばず blocked result を返す |
+| UT-TM-WM15 | `FileSystemWorkItemMigrationApplyGateway#apply` | 旧issueディレクトリをWIへ移動する | `issue_description.md` を持つ cross issue の場合 | target に移動し `description.md` へ rename して frontmatter を付与する |
+| UT-TM-WM16 | 同上 | 同上 | `description.md` を持つ unit issue の場合 | 同ファイルに frontmatter を付与し付随ファイルを保持する |
+| UT-TM-WM17 | `MigrateWorkItemsCommandHandler#execute` | WI migration applyを実行する | `--apply` が指定された場合 | apply result を表示し終了コード0を返す |
+| UT-TM-WM18 | 同上 | 同上 | `--apply --dry-run` が同時指定された場合 | 終了コード2を返し usecase を実行しない |
 
 ### 7.2 H03-04 WorkItem frontmatter parser (ISSUE-026 Phase A-2)
 

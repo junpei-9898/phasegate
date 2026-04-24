@@ -6,6 +6,7 @@
 @story-id H09-04
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
+> **最終更新**: 2026-04-24（ISSUE-025 init --agent setup の IT 観点を追加）
 > **Wave**: 2（コア品質機構）
 > **対応ストーリー**: H09-01, H09-02, H09-03, H09-04
 > **参照計画**: `docs/inception/harness-api/it_test_design_plan.md`
@@ -218,6 +219,16 @@
 ---
 
 ## 4. Presentation（CLIハンドラー）テストケース
+
+## 3.7 Init / update-skills setup integration（ISSUE-025）
+
+**テスト配置**: `scripts/harness/__tests__/integration/setup/init-codex-agent.integration.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-SET-001 | `--agent claude` で shared skill 実体と Claude 導線が作成される | `phasegate init --agent claude` | `skills/.harness-version` が存在し、`.claude/skills` は `../skills` を向く symlink、`.codex/skills` は未作成 |
+| IT-SET-002 | `--agent codex` で Codex hooks と Codex 導線が作成される | `phasegate init --agent codex` | `.codex/hooks.json` が存在し、`.codex/skills` は `../skills` を向く symlink、`.claude/settings.json` は未作成 |
+| IT-SET-003 | `--agent both` で両 agent の導線が作成される | `phasegate init --agent both` | `.claude/skills` と `.codex/skills` の両方が symlink として存在 |
 
 ### CheckReadyHandler
 

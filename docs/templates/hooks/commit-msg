@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# PhaseGate commit-msg hook template.
+#
+# Usage:
+#   1. Copy this file to .husky/commit-msg
+#   2. chmod +x .husky/commit-msg
+#
+# The hook validates commit-message trailers that require access to the final
+# commit message, such as `Work-Item: WI-XXX` for WI document changes.
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx phasegate commit-msg "$1"
