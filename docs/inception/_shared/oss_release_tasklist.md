@@ -1,8 +1,11 @@
 # Phasegate OSS公開 — タスクリスト
 
+@story-id H13-05
+親 Epic: H-13 Scheduled Governance & CI/CDテンプレート（OSS release governance）
+
 > 戦略書: [oss_public_release_strategy.md](./oss_public_release_strategy.md)
 > 作成日: 2026-04-02
-> 最終更新: 2026-04-02
+> 最終更新: 2026-04-26
 
 ---
 
@@ -37,8 +40,8 @@
 ### Week 1: 法的・メタデータ整備 → v0.10.0
 
 #### 1-1. ライセンスファイル作成
-- [ ] `LICENSE` ファイルを作成（Apache 2.0）
-- [ ] package.json に `"license": "Apache-2.0"` を追加
+- [ ] `LICENSE` ファイルを作成（MIT）
+- [ ] package.json に `"license": "MIT"` を追加
 
 #### 1-2. package.json メタデータ追加
 - [ ] `"repository"` フィールド追加: `{ "type": "git", "url": "https://github.com/junpei-9898/phasegate.git" }`
@@ -65,7 +68,7 @@
 #### 1-5. セキュリティチェック
 - [ ] `npm audit` 実行 — 依存脆弱性がないことを確認
 - [ ] `gitleaks detect` 実行 — 全markdownにシークレットが混入していないことを確認
-- [ ] `license-checker --production` — 全依存ライセンスが Apache 2.0 と互換であることを確認
+- [ ] `license-checker --production` — 全依存ライセンスが MIT と互換であることを確認
 
 #### 1-6. バージョンアップ・コミット・タグ
 - [ ] `package.json` version を `0.10.0` に更新

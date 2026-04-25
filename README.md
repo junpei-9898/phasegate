@@ -1,6 +1,6 @@
 # Phasegate
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >= 18](https://img.shields.io/badge/Node.js-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 
 **Phasegate -- AI-agnostic quality defense toolkit.**
@@ -399,7 +399,7 @@ Contributions are welcome. See [DEVELOPMENT.md](DEVELOPMENT.md) for internal arc
 
 ## License
 
-[Apache License 2.0](LICENSE)
+[MIT License](LICENSE)
 
 ---
 
