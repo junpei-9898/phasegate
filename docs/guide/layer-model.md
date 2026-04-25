@@ -142,13 +142,13 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 
 > **Status**: L4 is **disabled by default** (`layers.L4.enabled: false` in `phasegate.config.json`). Projects opt in by flipping the flag and scheduling the command via CI cron (see `ci:generate-template --type consistency-check`). Implementation-wise the validators listed below are functional; the default-off state is a conservative rollout choice, not a missing feature.
 
-| Validator | Description |
-|-----------|-------------|
-| **drift-detect** | Bidirectional design-code drift detection. Compares design documents against the actual codebase to find divergence in either direction. |
-| **consistency-check** | Cross-document layer consistency. Ensures that references between design documents, ADRs, and code remain coherent. |
-| **dead-code** | Detects unused exports and unreachable code that should be removed. |
-| **doc-freshness** | Flags design documents whose last update is older than a configured threshold while the corresponding code has diverged. |
-| **pointer-validation** | Verifies that relative-path pointers inside design docs resolve to files that actually exist. |
+| Validator | ID | Description |
+|-----------|-----|-------------|
+| **drift-detect** | L4-001 | Bidirectional design-code drift detection. Compares design documents against the actual codebase to find divergence in either direction. |
+| **consistency-check** | L4-002 | Cross-document layer consistency. Ensures that references between design documents, ADRs, and code remain coherent. |
+| **dead-code** | L4-003 | Detects unused exports and unreachable code that should be removed. |
+
+> **Note (2026-04-25)**: `doc-freshness` and `pointer-validation` capabilities exist as standalone CLI commands `p2:check-freshness` and `p2:validate-pointers` (implemented in the `phase2-extensions` unit), **not as L4 validators yet**. Promoting them to L4-004 / L4-005 is tracked as **WI-033**. Until that lands, run them explicitly via `npx phasegate p2:check-freshness` / `p2:validate-pointers`.
 
 **Command:**
 

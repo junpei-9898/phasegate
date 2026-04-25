@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.110.0] - 2026-04-25
+
+### Documentation
+
+- **WI-030: README / layer-model 主張と実装の乖離訂正** — README.ja.md と docs/guide/layer-model.md の audit で発見した不整合を訂正。
+  - **README.ja.md L180**: 「毎週月曜 09:00 UTC + GitHub Issue 自動作成」の記述を実態に合わせて訂正。bundled template (`scripts/harness/templates/.github/workflows/consistency-check.yml`) は月曜 04:00 UTC + issue 自動化、CLI 生成 (`ci:generate-template --type consistency-check`) は毎日 02:00 UTC + issue 化なし、と二系統あることを明示。`phasegate init` が workflow を自動配置しない点も補足。
+  - **README.ja.md L408**: feature flag disclaimer 「ランタイム動作未実装」を削除し、`agentLessonCollection` / `cascadeUpdate` / `bundleSizeLimit` / `deadCodeGC` の各 runtime 動作実装箇所を表に追記。
+  - **docs/guide/layer-model.md L4 セクション**: WI-029 で誤って追加した `doc-freshness` / `pointer-validation` を L4 validators 一覧から削除し、これらは `phase2-extensions` unit の `p2:check-freshness` / `p2:validate-pointers` CLI として実装されている旨を注記（L4-004 / L4-005 への昇格は WI-033 に分離）。
+- **README.md / README.ja.md に Roadmap 節を新設** — partial 実装 / user-side wiring 依存の機能を 4 件の Work Item として明示:
+  - WI-031: CI template 二系統統一 + `phasegate init --with-ci`
+  - WI-032: AGENTS.md / CLAUDE.md auto-refresh パイプライン
+  - WI-033: `doc-freshness` / `pointer-validation` を L4 validator に昇格
+  - WI-034: L0 legacy validator (`L0-001` / `L0-002`) の撤去
+
+Source code 改変なし。次のリリースで上記 Roadmap WI が順次対応される予定。
+
 ## [0.109.0] - 2026-04-25
 
 ### Documentation

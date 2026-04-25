@@ -376,6 +376,21 @@ Additional resources:
 
 ---
 
+## Roadmap (Planned but not yet implemented)
+
+The following are documented behaviors that are partially implemented or rely on user-side wiring. Each is tracked as a Work Item and will land in a future minor release. Inception docs live under `docs/inception/_cross/WI-XXX/description.md`.
+
+| Work Item | Title | Why it matters |
+|---|---|---|
+| **[WI-031](docs/inception/_cross/WI-031/description.md)** | CI template unification + `phasegate init --with-ci` | Today the bundled YAML and the `ci:generate-template` output diverge (different cron schedule, only the bundled one creates GitHub Issues). `phasegate init` does not deploy the workflow, so L4 only runs after the user manually copies the file. WI-031 unifies the two paths and adds an opt-in deploy flag. |
+| **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh pipeline | `ci:migrate-agents-md` exists as a one-shot CLI but there is no scheduled job, and CLAUDE.md is fully hand-maintained. WI-032 adds an `auto-refresh-agent-context` workflow plus a template-driven CLAUDE.md regenerator that preserves user-owned sections. |
+| **[WI-033](docs/inception/_cross/WI-033/description.md)** | Promote `doc-freshness` / `pointer-validation` to L4 validators | Both capabilities exist as `p2:check-freshness` / `p2:validate-pointers` CLI commands but are not registered as L4 validators, so `validate --layer L4` skips them. WI-033 plumbs them through `validator-system` so they run via the standard L4 path and presets. |
+| **[WI-034](docs/inception/_cross/WI-034/description.md)** | Retire legacy L0 validators (`L0-001` / `L0-002`) | The `fuse-hook-config` / `fuse-mount-status` validator IDs are leftovers from an earlier FUSE-based design. They are disabled by default and have no actual implementation behind them. WI-034 removes them and lets the agent-integration runtime hooks be the sole L0 surface. |
+
+`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is also a known gap; see the L3 section above.
+
+---
+
 ## Contributing
 
 Contributions are welcome. See [DEVELOPMENT.md](DEVELOPMENT.md) for internal architecture, regression tests, and release procedures.

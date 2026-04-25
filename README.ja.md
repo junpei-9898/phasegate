@@ -177,7 +177,11 @@ L4 は CI の cron スケジュールで週次実行します。`consistency-che
 npx phasegate ci:generate-template --type consistency-check --render > .github/workflows/consistency-check.yml
 ```
 
-デフォルトは毎週月曜 09:00 UTC に実行。乖離やデッドコードが検出されると GitHub Issue が自動作成されます。手動で実行する場合は `npx phasegate validate --layer L4` を使います。
+**bundled template (`scripts/harness/templates/.github/workflows/consistency-check.yml`) を user 側で `.github/workflows/` にコピー**する場合は、月曜 04:00 UTC に走り、検出時に `github.rest.issues.create` で GitHub Issue を自動作成します。
+
+一方、`ci:generate-template --type consistency-check --render` で **CLI 生成した YAML** は現状 `cron: "0 2 * * *"` (毎日 02:00 UTC) で出力され、issue 自動作成 logic は含まれていません（両経路の統一は **WI-031** で予定）。
+
+手動実行は `npx phasegate validate --layer L4` を使います。なお `phasegate init` は workflow を自動配置しないため、L4 を CI で動かすには user 側で workflow を `.github/workflows/` 配下に commit する必要があります（自動配置は WI-031 `--with-ci` フラグで予定）。
 
 ---
 
@@ -400,14 +404,14 @@ npx phasegate <command> [options]
 
 利用可能な Feature flags:
 
-| Feature | 説明 | デフォルト |
-|---|---|---|
-| `agentLessonCollection` | AI エージェントの学習ログを収集 | off (`strict` で on) |
-| `cascadeUpdate` | 下位フェーズの変更を上位設計に自動反映 | off |
-| `bundleSizeLimit` | バンドルサイズ制限チェック (KB) | off (`strict` で 500KB) |
-| `deadCodeGC` | デッドコード検出・削除 | off (`strict` で on) |
+| Feature | 説明 | デフォルト | ランタイム動作 |
+|---|---|---|---|
+| `agentLessonCollection` | AI エージェントの学習ログを収集 | off (`strict` で on) | ✅ 実装済（agent-integration unit の `harness-config-config-query-adapter.ts:86` で参照、pre-tool-use hook 経路で機能） |
+| `cascadeUpdate` | 下位フェーズの変更を上位設計に反映 | off | ✅ 実装済（`CascadeUpdateService` 経由で `skill:apply-cascade-update` CLI / cascade-updater skill が動作） |
+| `bundleSizeLimit` | バンドルサイズ制限チェック (`number`、単位は KB) | `0` (off) / `strict` で `500` | ✅ 実装済（L3-002 performance validator が threshold として参照） |
+| `deadCodeGC` | デッドコード検出 | off (`strict` で on) | ✅ 実装済（L4 `dead-code-detection-service` が threshold 経由で受領） |
 
-> **注意**: Feature flags は config への保存・読み出しは動作しますが、フラグに応じたランタイム動作は未実装です（将来バージョンで対応予定）。
+> **補足**: 過去のバージョンでは「Feature flags のランタイム動作未実装」と記載していましたが、`v0.110.0` 時点では上表のとおり 4 機能とも実 runtime で動作します。
 
 ### 品質チェック
 
@@ -814,10 +818,25 @@ reports/
 
 ---
 
+## 今後の実装予定 (Roadmap)
+
+README/docs 上で言及があるが、現状 partial 実装か user 側 wiring に依存しているもの。それぞれ Work Item として `docs/inception/_cross/WI-XXX/description.md` 配下に起票済み。
+
+| Work Item | タイトル | 概要 |
+|---|---|---|
+| **[WI-031](docs/inception/_cross/WI-031/description.md)** | CI template の二系統統一 + `phasegate init --with-ci` | bundled template と `ci:generate-template` 出力が cron / GitHub Issue 自動化ロジックで乖離。さらに `phasegate init` は workflow を自動配置しないため L4 が user 配置に依存している。両方を解消する。|
+| **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh パイプライン | `ci:migrate-agents-md` の一回限り CLI は存在するが定期実行機構が無く、CLAUDE.md は完全な手動メンテ。週次 workflow + CLAUDE.md template-driven 再生成（user 編集領域を保護）を追加する。|
+| **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 | 機能は `p2:check-freshness` / `p2:validate-pointers` CLI として実装済みだが、L4 validator として登録されておらず `validate --layer L4` で走らない。validator-system に編入する。|
+| **[WI-034](docs/inception/_cross/WI-034/description.md)** | L0 legacy validator (`L0-001` / `L0-002`) の撤去 | FUSE 構想の名残として残存している `fuse-hook-config` / `fuse-mount-status` の definition を削除。実態の L0 は agent-integration の runtime hook + Husky として既に確立しているため、誤解を招く legacy を整理する。|
+
+L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成パイプラインも依然未完成であり、§5層防御モデル の L3 Nyquist 節を参照のこと。
+
+---
+
 ## 開発者向けドキュメント
 
 phasegate 自体の開発（内部アーキテクチャ、回帰テスト、リリース手順等）については [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md) を参照してください。
 
 ---
 
-*Last updated: 2026-04-22 -- v0.66.0*
+*Last updated: 2026-04-25 -- v0.110.0*
