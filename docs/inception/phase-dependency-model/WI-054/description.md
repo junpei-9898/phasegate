@@ -1,10 +1,9 @@
 ---
-id: H02-07
-unit: phase-dependency-model
+id: WI-054
 type: story
-issue: ISSUE-026
-phase: C-4
-created: 2026-04-24
+severity: normal
+status: drafted
+legacy_id: H02-07
 ---
 
 # H02-07: WI annotation legacy compatibility

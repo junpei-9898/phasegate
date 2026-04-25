@@ -1,10 +1,9 @@
 ---
-id: H10-06
-unit: quick-mode
+id: WI-060
 type: story
-issue: ISSUE-026
-phase: D-1
-created: 2026-04-24
+severity: normal
+status: drafted
+legacy_id: H10-06
 ---
 
 # H10-06: WI-aware quick-implementor trivial path

@@ -1,10 +1,9 @@
 ---
-id: H12-07
-unit: skill-quality
+id: WI-072
 type: story
-issue: ISSUE-026
-phase: D-2
-created: 2026-04-24
+severity: normal
+status: drafted
+legacy_id: H12-07
 ---
 
 # H12-07: Work-Item trailer support

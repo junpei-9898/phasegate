@@ -1,10 +1,9 @@
 ---
-id: H02-06
-unit: phase-dependency-model
+id: WI-053
 type: story
-issue: ISSUE-026
-phase: C-3
-created: 2026-04-24
+severity: normal
+status: drafted
+legacy_id: H02-06
 ---
 
 # H02-06: WI frontmatter affects-aware story reflection

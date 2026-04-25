@@ -1,10 +1,9 @@
 ---
-id: H11-06
-unit: agent-integration
+id: WI-033
 type: story
-issue: ISSUE-026
-phase: C-2
-created: 2026-04-24
+severity: normal
+status: drafted
+legacy_id: H11-06
 ---
 
 # H11-06: WI cross layout write target scope
