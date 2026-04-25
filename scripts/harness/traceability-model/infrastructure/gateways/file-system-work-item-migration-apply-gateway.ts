@@ -58,9 +58,46 @@ export class FileSystemWorkItemMigrationApplyGateway implements WorkItemMigratio
 
   private async ensureFrontmatter(descriptionPath: string, frontmatterPreview: string): Promise<void> {
     const content = await readFile(descriptionPath, "utf8");
-    if (content.startsWith("---\n")) return;
-    await writeFile(descriptionPath, `${frontmatterPreview}\n\n${content}`, "utf8");
+    const existing = parseFrontmatter(content);
+
+    if (existing === null) {
+      await writeFile(descriptionPath, `${frontmatterPreview}\n\n${content}`, "utf8");
+      return;
+    }
+
+    if (matchesPlannerFrontmatter(existing.frontmatter, frontmatterPreview)) {
+      return;
+    }
+
+    const body = content.slice(existing.length).replace(/^\s+/, "");
+    await writeFile(descriptionPath, `${frontmatterPreview}\n\n${body}`, "utf8");
   }
+}
+
+const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+const ID_PATTERN = /^id:\s*(\S+)\s*$/m;
+const LEGACY_ID_PATTERN = /^legacy_id:\s*(\S+)\s*$/m;
+
+function parseFrontmatter(content: string): { readonly frontmatter: string; readonly length: number } | null {
+  const match = FRONTMATTER_PATTERN.exec(content);
+  if (!match) return null;
+  return { frontmatter: match[1], length: match[0].length };
+}
+
+function matchesPlannerFrontmatter(existing: string, preview: string): boolean {
+  const previewMatch = FRONTMATTER_PATTERN.exec(`${preview}\n`);
+  if (!previewMatch) return false;
+  const previewBody = previewMatch[1];
+
+  const previewId = ID_PATTERN.exec(previewBody)?.[1];
+  const existingId = ID_PATTERN.exec(existing)?.[1];
+  if (previewId === undefined || previewId !== existingId) return false;
+
+  const previewLegacy = LEGACY_ID_PATTERN.exec(previewBody)?.[1];
+  if (previewLegacy === undefined) return true;
+
+  const existingLegacy = LEGACY_ID_PATTERN.exec(existing)?.[1];
+  return existingLegacy === previewLegacy;
 }
 
 async function assertPathDoesNotExist(targetPath: string): Promise<void> {
