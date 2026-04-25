@@ -174,20 +174,38 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
       return null;
     }
 
+    for (const candidate of await this.listDescriptionCandidates(storyId)) {
+      const legacyId = await this.tryReadLegacyId(candidate);
+      if (legacyId !== null) return legacyId;
+    }
+
+    return null;
+  }
+
+  private async listDescriptionCandidates(storyId: string): Promise<readonly string[]> {
+    const inceptionDir = path.join(this.rootDir, this.inceptionRoot);
+    const candidates: string[] = [path.join(inceptionDir, "_cross", storyId, "description.md")];
+
+    for (const entry of await this.readDirectories(inceptionDir)) {
+      if (!entry.isDirectory()) continue;
+      const name = entry.name;
+      if (name.startsWith("_") || name.startsWith(".") || name === "issues") continue;
+      candidates.push(path.join(inceptionDir, name, storyId, "description.md"));
+    }
+
+    return candidates;
+  }
+
+  private async tryReadLegacyId(absolutePath: string): Promise<string | null> {
     let content: string;
     try {
-      content = await readFile(
-        path.join(this.rootDir, this.inceptionRoot, "_cross", storyId, "description.md"),
-        "utf8",
-      );
+      content = await readFile(absolutePath, "utf8");
     } catch {
       return null;
     }
 
     const frontmatter = FRONTMATTER_PATTERN.exec(content)?.[1];
-    if (frontmatter === undefined) {
-      return null;
-    }
+    if (frontmatter === undefined) return null;
 
     return LEGACY_ID_PATTERN.exec(frontmatter)?.[1] ?? null;
   }

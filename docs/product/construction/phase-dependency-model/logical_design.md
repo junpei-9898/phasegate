@@ -7,6 +7,9 @@
 @story-id H02-05
 @story-id H02-06
 @story-id H02-07
+@work-item-id WI-027
+拡張: `FileSystemStoryReflectionAdapter#readLegacyId` を `_cross/{WI-XXX}/description.md` のみから `{unit}/{WI-XXX}/description.md` も走査するよう拡張する（H-ID 移行で unit-scoped WI が初めて出現したことに伴う対応）。これにより、product 側の既存 `@story-id H{NN}-{NN}` annotation が unit-scoped WI の reflection として継続認識される。
+
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H02-01, H02-02, H02-03, H02-04, H02-05, H02-06, H02-07
 > **モード**: Unit横断設計（Phase 2）

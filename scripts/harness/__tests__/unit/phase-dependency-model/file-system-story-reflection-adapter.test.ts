@@ -410,4 +410,28 @@ target("FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation", () => {
       expect(actual).toBe(false);
     });
   });
+
+  // UT-PD-169 (WI-027): unit-scoped WI の legacy_id も解決できる
+  context("unit-scoped WI directory に legacy_id が存在する場合", () => {
+    it("旧 H-ID annotation を unit-scoped WI の反映として検出できる", async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, "docs/inception/order/WI-074"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/product/construction/order"), { recursive: true });
+      await writeFile(
+        path.join(rootDir, "docs/inception/order/WI-074/description.md"),
+        "---\nid: WI-074\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(path.join(rootDir, "docs/product/construction/order/logical_design.md"), "@story-id H03-04");
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.fileContainsStoryAnnotation(
+        "docs/product/construction/order/logical_design.md",
+        "WI-074",
+      );
+
+      // Assert
+      expect(actual).toBe(true);
+    });
+  });
 });

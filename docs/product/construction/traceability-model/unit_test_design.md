@@ -445,6 +445,19 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 | UT-TM-WM06 | `FileSystemWorkItemMigrationSourceGateway#listLegacyIssueDirectories` | 旧issueレイアウトを走査する | cross-unit issueとunit-owned issueがある場合 | 両方をlegacy issue entryとして返す |
 | UT-TM-WM07 | 同上 | 同上 | 移動先が既に存在する場合 | `targetExists=true` を返す |
 
+#### H-ID 検出拡張（WI-027 G2-1）
+
+@work-item-id WI-027
+
+| ケース ID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| UT-TM-WM19 | `WorkItemMigrationPlanner#plan` | H-ID 旧storyレイアウトからWI migration planを生成する | `H02-04` 形式の unit-owned entry を渡した場合 | `existingWorkItemIds` の空き番号の若い順に `WI-XXX` を割り当てる |
+| UT-TM-WM20 | 同上 | 同上 | `existingWorkItemIds` に `WI-001..WI-027` が含まれる場合 | H-ID 1 件目に `WI-028` を割り当てる |
+| UT-TM-WM21 | 同上 | 同上 | H-ID entry を渡した場合 | `frontmatterPreview` に `type: story` と `legacy_id: H02-04` が含まれる（`affects` は付かない） |
+| UT-TM-WM22 | 同上 | 同上 | ISSUE-026 と H02-04 が混在し、ISSUE 由来が `WI-026` を埋める場合 | H02-04 への割当は `WI-026` を skip し次の空き番号を採用する |
+| UT-TM-WM23 | `FileSystemWorkItemMigrationSourceGateway#listLegacyIssueDirectories` | 旧storyレイアウトを走査する | `{unit}/H02-04/` directory がある場合 | unit scope の legacy entry として `legacyId="H02-04"` で返す |
+| UT-TM-WM24 | `FileSystemWorkItemMigrationSourceGateway#listExistingWorkItemIds` | 既存 WI directory を列挙する | `_cross/WI-001/` と `{unit}/WI-002/` が存在する場合 | 両方の WI ID を sort して返す |
+
 ### 7.5 H03-07 WI migration CLI dry-run (ISSUE-026 Phase B-2)
 
 対象: `MigrateWorkItemsCommandHandler`

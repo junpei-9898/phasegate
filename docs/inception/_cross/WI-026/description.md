@@ -227,7 +227,7 @@ TESTED        @work-item-id 付きテストが存在し green
 
 > 2026-04-25 ドッグフード結果反映: 既存実装（Phase A〜B + 基本 gate）は仕様通り動作するが、`_cross/{WI-XXX}` dead-lock 修正と H-ID リナンバリングが残作業。残作業は `docs/inception/_shared/wi-026-remediation-plan.md` に分割済み。
 
-- [ ] 全 work item が `docs/inception/{unit}/{WI-XXX}/` または `docs/inception/_cross/{WI-XXX}/` に統一される（**未済**: 旧 H-ID 形式が多数残存。WI-027 として切り出し）
+- [x] 全 work item が `docs/inception/{unit}/{WI-XXX}/` または `docs/inception/_cross/{WI-XXX}/` に統一される（v0.105.0 / WI-027 で 57 件の H-ID directory を WI-028..WI-084 に移行）
 - [x] `docs/inception/issues/` と `docs/inception/{unit}/issues/` が廃止される（v0.104.0 で物理削除＋ legacy 分岐コード除去）
 - [x] WI frontmatter（`id` / `type` / `severity` / `affects`）が L2 metadata validator で検証される
 - [x] `type: story | issue | refactor` の WI について、`affects` 全 Unit の product 反映未完時に Level 3 書き込みがブロックされる

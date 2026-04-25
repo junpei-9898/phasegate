@@ -20,7 +20,10 @@ export class PlanWorkItemMigrationUseCase {
   }
 
   async execute(): Promise<WorkItemMigrationPlan> {
-    const entries = await this.sourcePort.listLegacyIssueDirectories();
-    return this.planner.plan(entries);
+    const [entries, existingWorkItemIds] = await Promise.all([
+      this.sourcePort.listLegacyIssueDirectories(),
+      this.sourcePort.listExistingWorkItemIds(),
+    ]);
+    return this.planner.plan(entries, existingWorkItemIds);
   }
 }

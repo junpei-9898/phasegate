@@ -48,7 +48,7 @@ EXIT: 2
 | G4-1 | ✅ 完了 | WI-026 description.md `status: implemented` → `drafted` 訂正 |
 | G4-2 | ✅ 完了 | Phase 3 仕様文言を G1 方針に合わせて訂正 |
 | G4-3 | ✅ 完了 | AC チェックボックスを実態と一致 |
-| G2-1 / G2-2 | 🔜 別 WI に分離（**WI-027** 起票予定） | H-ID → WI-XXX 一斉リネーム + `StoryId` VO 拡張 + 移行スクリプト H-ID 対応 |
+| G2-1 / G2-2 | ✅ 完了 | WI-027 (v0.105.0): planner / gateway を H-ID 検出に拡張し、57 件を WI-028..WI-084 に移行。`FileSystemStoryReflectionAdapter#readLegacyId` を unit-scoped WI に対応させて post-migration dead-lock を解消 |
 
 ## 修正フェーズ
 

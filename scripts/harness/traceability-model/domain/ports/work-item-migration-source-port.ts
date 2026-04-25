@@ -5,4 +5,5 @@ import type { LegacyIssueDirectory } from "../value-objects/work-item-migration-
 
 export interface WorkItemMigrationSourcePort {
   listLegacyIssueDirectories(): Promise<readonly LegacyIssueDirectory[]>;
+  listExistingWorkItemIds(): Promise<readonly string[]>;
 }
