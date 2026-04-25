@@ -287,8 +287,17 @@ export class HandlePreToolUseUseCase {
     }
 
     const projectPaths = this.configQueryPort.getProjectPaths();
+    const inceptionPath = projectPaths.getDocsInception();
 
     for (const targetFilePath of input.targetFilePaths) {
+      // WI-026 G1: inception 配下の書込は Phase 1 work であり Phase 3 reflection 対象外。
+      // 仕様上 Phase 3 = scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts
+      // のみが reflection check の対象。inception 編集を含めると _cross/{WI-XXX}/ 編集が
+      // 仮想パス docs/product/construction/_cross/ への反映を要求し常時 block される。
+      if (HandlePreToolUseUseCase.isUnderInception(targetFilePath, inceptionPath)) {
+        continue;
+      }
+
       const scope = WriteTargetScope.fromPath(targetFilePath, projectPaths);
       if (scope?.level === 3 && scope.unitId !== undefined) {
         return scope;
@@ -296,6 +305,12 @@ export class HandlePreToolUseUseCase {
     }
 
     return null;
+  }
+
+  private static isUnderInception(targetFilePath: string, inceptionPath: string): boolean {
+    const normalizedTarget = targetFilePath.replaceAll("\\", "/").replace(/^\.\/+/, "").replace(/\/+/g, "/");
+    const normalizedBase = inceptionPath.replaceAll("\\", "/").replace(/^\.\/+/, "").replace(/\/+/g, "/").replace(/\/$/, "");
+    return normalizedTarget === normalizedBase || normalizedTarget.startsWith(`${normalizedBase}/`);
   }
 
   private static readonly LEVEL_LABELS: Record<number, string> = {

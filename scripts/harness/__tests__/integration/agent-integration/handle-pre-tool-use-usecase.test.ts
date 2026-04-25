@@ -714,6 +714,80 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
       });
     });
+
+    context('docs/inception/_cross/{WI-XXX}/ 配下への書き込みの場合 (WI-026 G1)', () => {
+      it('inception 編集は Phase 1 work であり storyReflection は発火しないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/inception/_cross/WI-099/description.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
+      });
+    });
+
+    context('docs/inception/{unit}/{WI-XXX}/ 配下への書き込みの場合 (WI-026 G1)', () => {
+      it('Unit 所有 WI の inception 設計書編集も storyReflection は発火しないこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['docs/inception/agent-integration/H11-06/logical_design.md'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual).toEqual({ shouldBlock: false });
+        expect(mockStoryReflectionQueryPort.checkReflection).not.toHaveBeenCalled();
+      });
+    });
+
+    context('実ソース書込 (scripts/harness) の場合 (WI-026 G1 回帰防止)', () => {
+      it('inception skip 後も実ソース書込では storyReflection が依然発火すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockStoryReflectionQueryPort = createDefaultMockStoryReflectionQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          storyReflectionQueryPort: mockStoryReflectionQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/agent-integration/domain/services/dummy.ts'],
+        });
+
+        // Act
+        await useCase.execute(input);
+
+        // Assert
+        expect(mockStoryReflectionQueryPort.checkReflection).toHaveBeenCalledWith('agent-integration');
+      });
+    });
   });
 
   describe('FULL_MODE_REQUIRED 検出 (ISSUE-006 Story B)', () => {
