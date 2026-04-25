@@ -443,6 +443,8 @@ npx phasegate <command> [options]
 | `validate-adr` | ADR 検証（`--all` または `<adrRef>`） |
 | `list-errors` | エラー定義一覧（`--layer L0-L4`） |
 | `ci:generate-template` | CI/CD テンプレート生成（`--type <type>`） |
+| `migrate work-items` | `docs/inception/` 配下の旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を統一 `WI-XXX` レイアウトへ移行（v0.100.0 で導入、v0.105.0 で H-ID 検出に拡張）。frontmatter に `type` / `legacy_id` / `affects` を注入し、空き番号の若い順に sequential 採番（既存 WI 番号は予約）。`--dry-run` / `--apply` / `--json`。詳細は [CLI Reference -- Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
+| `migrate --schema v3` | `phasegate.config.json` を v3 スキーマへ昇格（`architecture` キーを追加、既存設定は保持）。冪等。 |
 
 ### Hook / 委任ラッパー
 

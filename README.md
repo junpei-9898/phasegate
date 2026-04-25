@@ -339,6 +339,8 @@ npx phasegate <command> [options]
 | `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
 | `pre-commit` | Run L2 pre-commit validators on staged files |
 | `delegate-sonnet [...args]` | Delegate task to Sonnet 4.6 (transparent wrapper) |
+| `migrate work-items --dry-run` / `--apply` | Migrate legacy `ISSUE-XXX` / `H{NN}-{NN}` directories under `docs/inception/` to the unified `WI-XXX` layout (frontmatter `type` / `legacy_id` / `affects` injected). Sequential allocator skips numbers already used by existing WIs. See [CLI Reference -- Work Item Migration](docs/guide/cli-reference.md#work-item-migration). |
+| `migrate --schema v3` | Upgrade `phasegate.config.json` to v3 schema by adding the `architecture` key (idempotent). |
 
 See the [Japanese README](README.ja.md) for the complete CLI reference.
 

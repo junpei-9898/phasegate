@@ -7,6 +7,92 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.108.0] - 2026-04-25
+
+### Documentation
+
+- **WI-028: `migrate work-items` + WI taxonomy のドキュメント整備** — WI-026 / WI-027 で導入された機能の公開ドキュメント整合。
+  - `CHANGELOG.md`: v0.101..v0.107 の 7 リリースを Keep-a-Changelog 形式で追記。
+  - `README.md` / `README.ja.md`: CLI Reference 表に `migrate work-items` を追加。
+  - `docs/guide/cli-reference.md`: **Work Item Migration** セクションを新設し、検出パターン（`ISSUE-XXX` / `WI-XXX` / `H{NN}-{NN}`）、sequential allocator の挙動、frontmatter 注入の冪等性、legacy_id grep 互換性、exit code を解説。
+
+## [0.107.0] - 2026-04-25
+
+### Fixed
+
+- **WI-027 root cause 修正**: `FileSystemWorkItemMigrationApplyGateway#ensureFrontmatter` が `---\n` で始まる既存 frontmatter を常に保持してしまい、旧 story-style frontmatter (`id: H02-06`, `unit: ...`, `issue: ...`, `phase: ...`, `created: ...`) を持つ H-ID directory に対して planner 生成 frontmatter が prepend されないバグを解消。
+  - 既存 frontmatter なし → 従来通り planner 生成版を prepend（変更なし）。
+  - 既存 frontmatter の `id` が target WI と不一致 / `legacy_id` 不在 → planner 生成 frontmatter で旧 frontmatter を **置換**し、本文は保持。
+  - 既存 frontmatter が target WI と一致 + `legacy_id` も一致 → byte-for-byte **冪等保持**（再 apply 安全）。
+- 単体テスト追加: `apply-gateway` に「旧 frontmatter 置換」「冪等性」の 2 シナリオ + end-to-end dogfood で 3 シナリオ（stale 置換 / stub 生成 / 冪等保持）全 PASS。
+
+## [0.106.0] - 2026-04-25
+
+### Fixed
+
+- **WI-027 dogfood follow-up**: v0.105.0 適用時、5 件の H-ID directory が旧 story-style frontmatter (`id: H02-06` 形式) を保持していたため、`legacy_id` が記録されず directory 名と `id:` フィールドの不整合が発生していたデータ修正。対象: `agent-integration/WI-033`, `phase-dependency-model/WI-053`, `phase-dependency-model/WI-054`, `quick-mode/WI-060`, `skill-quality/WI-072`。
+- 各ファイルの frontmatter を planner 生成形式（`id: WI-XXX` / `type: story` / `severity: normal` / `status: drafted` / `legacy_id: H{NN}-{NN}`）に正規化。
+
+## [0.105.0] - 2026-04-25
+
+### Added
+
+- **WI-027: `migrate work-items` を H-ID 旧ストーリーレイアウトに拡張** — WI-026 残作業 G2-1/G2-2 の切り出し。`docs/inception/{unit}/H{NN}-{NN}/` 形式 directory（57 件）を `migrate work-items` の対象に含め、空き番号の若い順に `WI-XXX` へ採番する。
+  - **`WorkItemMigrationSourcePort#listExistingWorkItemIds()` 追加**: 既存 `_cross/WI-XXX/` + `{unit}/WI-XXX/` directory の ID を列挙。planner が採番時に予約番号として使用。
+  - **`WorkItemMigrationPlanner` の sequential allocator**: `existingWorkItemIds` + 同一 plan 内 ISSUE-XXX の embedded number を `usedNumbers` に登録し、H-ID には未使用の最小 WI 番号を割り当てる。ISSUE-XXX → WI-XXX の embedded mapping は変更なし（後方互換）。
+  - **H-ID 由来 candidate の frontmatter**: `type: story`（issue ではなく）+ `legacy_id: H{NN}-{NN}` を生成。`affects` は付かない（unit-scoped のため）。
+  - **`FileSystemWorkItemMigrationSourceGateway` の H-ID directory walker**: `^H\d{2}-\d{2}$` パターンで unit 配下の H-ID directory を列挙、`SKIPPED_INCEPTION_DIRS` (`_shared` / `_operation` / `_cross` / `issues`) は引き続き skip。
+  - **適用結果**: phasegate 自身の dogfood で 57 件の H-ID directory を `WI-028..WI-084` に物理 rename + frontmatter 注入。`description.md` 不在の 44 件には stub `# {legacyId}\n` を自動生成。
+
+### Fixed
+
+- **同梱修正: reflection adapter の unit-scoped legacy_id 解決** — `FileSystemStoryReflectionAdapter#readLegacyId` が `_cross/{WI-XXX}/description.md` のみを参照していたため、H-ID 移行で初出した unit-scoped WI（traceability-model/WI-074 等）に対する `@story-id H{NN}-{NN}` annotation が legacy_id 経由で反映認識されず、source 書込時に dead-lock を起こしていた。`{unit}/{WI-XXX}/description.md` も走査するよう拡張し、product 側既存 `@story-id H{NN}-{NN}` annotation が継続利用可能に。
+- 単体テスト UT-PD-169 追加（unit-scoped WI の legacy_id 経由 reflection 検出）。
+
+### Tests
+
+- planner: 5 ケース追加（H-ID 単独 / existingWorkItemIds skip / type: story frontmatter / ISSUE 混在 skip / 連続 H-ID 採番）。
+- gateway: 4 ケース追加（H-ID directory 列挙 / 既存 issues との混在 / `listExistingWorkItemIds` _cross+unit 併合 / 空 inception）。
+- plan use case: existingWorkItemIds を planner に渡すケース追加。
+- reflection adapter: UT-PD-169 (unit-scoped WI legacy_id 解決)。
+- 全 3440 tests green。
+
+## [0.104.0] - 2026-04-25
+
+### Fixed
+
+- **WI-026 残作業 G2-3〜G2-5 / G3 / G4** — Phase A-3 / G1 の続編として ISSUE-026 残債を清掃。
+  - **G2-3**: 空の `docs/inception/issues/` を物理削除（cross issue 旧 layout）。
+  - **G2-4**: `WriteTargetScope.fromPath` の legacy `issues` 分岐を撤去（`{unit}/issues/{ISSUE-XXX}` パスは全 WI 移行済のため不要）。
+  - **G2-5**: `FileSystemStoryReflectionAdapter#listUnitWorkItemDirectories` の `name !== "issues"` filter を撤去。
+  - **G3**: L2-STORY-REFLECTION のメッセージで storyId が `WI-` 始まりの場合 `@work-item-id` を出力（旧 `@story-id` 表記を統一）。
+  - **G4-1〜G4-3**: `_cross/WI-026/description.md` の `status` を `implemented` → `drafted` に戻し、AC checkbox を実態と一致させ、Phase 3 仕様文言を G1 採用案 B に合わせて訂正。
+
+## [0.103.0] - 2026-04-24
+
+### Fixed
+
+- **WI-026 残作業 G1: `_cross/WI-XXX/` inception 編集 dead-lock 解消** — `HandlePreToolUseUseCase#resolveStoryReflectionScope` で `docs/inception/**` への書込を reflection check 対象外にする（採用案 B）。`_cross/WI-XXX/{description,logical_design}.md` を新規作成しても `affects` 不一致による Level 3 reflection 要求でブロックされなくなる。`scripts/harness/{unit}/...` 書込での reflection check は維持。
+- integration test: `_cross/WI-099/{description,logical_design}.md` の新規作成が pass、agent-integration ソース書込で WI-001 reflection が依然要求されることを確認。
+
+## [0.102.0] - 2026-04-24
+
+### Added
+
+- **ISSUE-026 Phase A-2 (H03-04): WorkItem frontmatter parser** — 設計文書 frontmatter から WI メタデータを抽出する専用 parser を `traceability-model` に追加。既存 `parseFrontmatterFlags` は無変更・後方互換維持。
+  - 新規 API: `WorkItemFrontmatter` interface (`id` / `type` / `affects` / `severity` / `status` / `source` / `legacyId`、すべて readonly)、`WorkItemType` / `WorkItemSeverity` / `WorkItemStatus` string union、`parseWorkItemFrontmatter(content: string): WorkItemFrontmatter | null`、`WorkItemFrontmatterValidationError`、`WORK_ITEM_ID_PATTERN` (`WI-\d+` / `H\d{2}-\d{2}` / `HF\d+-\d{2}` / `ISSUE-\d+`)。
+  - UT-TM-W01〜W10 の 10 ケースで AC-1〜AC-10 を 1:1 カバー、3390 tests green。
+
+## [0.101.0] - 2026-04-24
+
+### Added
+
+- **ISSUE-026 Phase A-1 (H02-04): `@work-item-id` annotation parser 併存対応** — `FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation` の regex を `/@(story-id|issue-id|work-item-id)[ \t]+([^\n\r]+)/g` に拡張し、`@story-id` / `@issue-id` / `@work-item-id` の 3 系統を同一規約で認識（後方互換維持）。HTML コメント形式 (`<!-- @work-item-id WI-001 -->`) およびカンマ/空白区切りの複数 ID 列挙にも対応。
+
+### Fixed
+
+- pre-commit の unitName 導出バグ修正。
+
 ## [0.100.0] - 2026-04-23
 
 ### Added

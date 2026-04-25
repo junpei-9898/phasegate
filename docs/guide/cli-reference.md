@@ -134,6 +134,114 @@ exit code は `0` = 生成成功 / 上書き成功、`2` = 既存ファイルあ
 
 ---
 
+## Work Item Migration
+
+`docs/inception/` 配下の work item directory を **統一 `WI-XXX` レイアウト**へ移行する CLI。
+WI-026 で導入（v0.100.0、`ISSUE-XXX` 系統）、WI-027 で `H{NN}-{NN}` 形式の旧ストーリー
+directory にも拡張（v0.105.0）、WI-027 follow-up で apply の冪等性を確立（v0.107.0）。
+
+| Command | Options | Description |
+|---|---|---|
+| `migrate work-items` | `--dry-run` / `--apply` / `--json` | 旧 directory を `WI-XXX` へ採番移行する。`--dry-run` と `--apply` は排他、どちらかが必須。|
+
+### 検出パターン
+
+`docs/inception/` 配下を走査し、以下のいずれかに合致する directory を candidate として列挙する:
+
+| 検出パターン | 配置 | scope | nextId 採番方式 |
+|---|---|---|---|
+| `^ISSUE-\d+$` | `docs/inception/issues/` または `{unit}/issues/` | `cross` / `unit` | embedded number そのまま (`ISSUE-026 → WI-026`) |
+| `^WI-\d+$` | 既に WI レイアウトの directory | `cross` / `unit` | 変更なし（idempotent skip） |
+| `^H\d{2}-\d{2}$` | `{unit}/` 直下 | `unit` のみ | sequential allocator: 既存 WI 番号 + 同一 plan 内 ISSUE-XXX 番号を予約したうえで、空き番号の若い順に `WI-XXX` を割り当て |
+
+skip 対象: `_shared/` / `_operation/` / `_cross/` / `issues/` 配下（`_cross/WI-XXX/` は WI レイアウトのため再走査不要）。
+
+### Sequential Allocator の挙動（H-ID 採番）
+
+```
+input:  entries (混在: WI-XXX / ISSUE-XXX / H{NN}-{NN})
+        existingWorkItemIds = ["WI-001", ..., "WI-027"]   # _cross/ + {unit}/ から列挙
+
+step 1. usedNumbers = parseToInts(existingWorkItemIds)            # {1..27}
+step 2. 同一 plan 内 ISSUE-XXX / WI-XXX の embedded number を usedNumbers に追加
+step 3. H-ID entries を sourcePath 昇順でループ:
+          cursor = 1
+          while usedNumbers.has(cursor): cursor++
+          assign WI-{cursor.padStart(3, "0")} to entry
+          usedNumbers.add(cursor)
+```
+
+不変条件:
+
+- 既存 WI-XXX directory の番号は新規 H-ID 採番で再利用されない。
+- 同一 plan 呼び出し内で `nextId` は重複しない（usedNumbers が共有される）。
+- `ISSUE-XXX → WI-XXX` の embedded mapping は変更しない（後方互換）。
+
+### Frontmatter 注入
+
+`--apply` 時、各 directory の `description.md` に以下の frontmatter を生成する。
+既存 frontmatter があれば **id 一致 + legacy_id 一致** のときだけ byte-for-byte
+保持し、それ以外は planner 生成版で置換する（v0.107.0 で冪等化）。
+
+```yaml
+---
+id: WI-XXX                    # 採番された ID
+type: story | issue           # H-ID 由来は story、ISSUE-XXX 由来は issue
+severity: trivial | normal | high  # 元 description の "深刻度" から抽出（既定: normal）
+status: drafted
+legacy_id: H02-04              # または ISSUE-026
+affects: [unit-a, unit-b]      # cross scope のみ。元 description の "影響Unit" から抽出
+---
+```
+
+`description.md` 不在の directory には `# {legacyId}\n` の stub を生成して frontmatter を prepend する。
+
+### 使用例
+
+```bash
+# 移行候補を表示（実際の rename は行わない）
+npx phasegate migrate work-items --dry-run
+
+# JSON 出力（CI / スクリプト向け）
+npx phasegate migrate work-items --dry-run --json
+
+# 実マイグレーション実行
+npx phasegate migrate work-items --apply
+
+# apply 結果を JSON で取得
+npx phasegate migrate work-items --apply --json
+```
+
+### exit code
+
+| code | 意味 |
+|---|---|
+| `0` | 成功（dry-run 時 conflict なし、apply 時 blocked なし）|
+| `1` | dry-run で conflict candidate あり（target directory が既に存在）/ apply で blocked |
+| `2` | 引数不正（`--dry-run` / `--apply` どちらも未指定、両方指定、`--apply` 未配線等）|
+
+### Legacy ID Grep 互換性
+
+WI-XXX へ移行後も、frontmatter の `legacy_id:` 経由で旧 ID を逆引きできる:
+
+```bash
+# 旧 H-ID から WI directory を逆引き
+grep -rn "^legacy_id: H02-04" docs/inception/
+
+# 旧 ISSUE-XXX から逆引き
+grep -rn "^legacy_id: ISSUE-026" docs/inception/
+
+# Work-Item commit trailer による履歴遡及
+git log --grep='Work-Item: WI-074'
+```
+
+また、ソースコード内の `// @story-id H02-04` などの legacy annotation は、
+`FileSystemStoryReflectionAdapter#readLegacyId` が `_cross/` と `{unit}/` の
+両方の `WI-XXX/description.md` を走査して `legacy_id` を解決するため、
+unit-scoped WI（H-ID 由来）の reflection check でも継続認識される（v0.105.0）。
+
+---
+
 ## Harness API
 
 Commands exposed as npm scripts (`npm run <command>`).
