@@ -19,20 +19,46 @@ Layers are additive: L1 rules still apply when L3 runs. The earlier a defect is 
 
 ---
 
-## L0: Hooks Engine
+## L0: Agent Runtime Hooks + Git Hooks
 
-The Hooks Engine validates agent hook configuration and enforces completion gates before work can proceed.
+L0 is the **earliest defense layer** — it intercepts file writes and commits *before* they happen, so violations never land in the working tree or the history. There are two sub-systems:
 
-| Rule | Description |
-|------|-------------|
-| **hook-config** | Validates `.harness-hooks.yml` configuration structure and semantics |
-| **gate-check** | Verifies that all required completion gates have been satisfied |
+### L0-A: AI agent runtime hooks (`agent-integration` unit)
 
-**Command:**
+Registered via `.claude/settings.json` (Claude Code) and `.codex/hooks.json` (Codex). Every hook is implemented in `scripts/harness/agent-integration/presentation/*-hook.ts` and ships with the npm package.
+
+| Hook | Matcher / Trigger | Responsibility |
+|------|-------------------|----------------|
+| **pre-tool-use-hook** | `Write` / `Edit` / `Bash` | Blocks writes that violate phase gate, write-protected paths, Bash-based bypass (`tee`, `sed -i`, `cp`, heredoc, etc.), or miss `@work-item-id` reflection. Returns exit 2 with a structured guide message that the agent can act on. |
+| **post-tool-use-hook** | `Write` / `Edit` | Runs auto-lint / auto-format / error analysis on the file that was just modified (`format-settings-hook.sh`, `format-typescript-hook.sh`, `analyze-errors-hook.sh`). |
+| **stop-hook** | Agent `Stop` | Activates `ReentryGuard` to prevent infinite hook loops, then runs `phasegate:complete-check` (L2–L4 aggregate) as a final gate. |
+| **session-start-hook** | `startup` / `resume` | Loads session context for Codex (project status summary, recent changes). |
+| **user-prompt-submit-hook** | `UserPromptSubmit` | Refreshes status so the next prompt sees the current harness state. |
+
+Command-line entry points exist for debugging / CI use:
+
+```bash
+npx phasegate hook pre-tool-use < payload.json
+npx phasegate hook post-tool-use < payload.json
+npx phasegate hook stop < payload.json
+```
+
+### L0-B: Husky git hooks
+
+Deployed by `phasegate init --with-husky` into `.husky/`.
+
+| Hook file | Invokes | Responsibility |
+|-----------|---------|----------------|
+| **.husky/pre-commit** | `npx phasegate pre-commit` | Runs L2 validators (phase-gate / metadata / story-reflection / test-quality) on staged files. Fails the commit on violation. |
+| **.husky/commit-msg** | `npx phasegate commit-msg $1` | Enforces the `Work-Item: WI-XXX` trailer when WI directories or their contents are staged. Ensures every commit is traceable to a work item. |
+
+### About the `validate --layer L0` CLI
 
 ```bash
 npx phasegate validate --layer L0
 ```
+
+`list-errors --layer L0` surfaces `L0-001 fuse-hook-config` / `L0-002 fuse-mount-status` — these are **legacy validator definitions** from an earlier design and are disabled by default (`layers.L0.enabled: false`). The **runtime L0 enforcement happens via the agent-runtime hooks and Husky git hooks above**, not via those validators.
 
 ---
 
@@ -112,13 +138,17 @@ npx phasegate validate --layer L3
 
 ## L4: Scheduled Validators
 
-L4 validators run on a weekly schedule. They detect slow-moving drift that accumulates over time.
+L4 validators are designed to run on a weekly schedule and detect slow-moving drift that accumulates over time.
+
+> **Status**: L4 is **disabled by default** (`layers.L4.enabled: false` in `phasegate.config.json`). Projects opt in by flipping the flag and scheduling the command via CI cron (see `ci:generate-template --type consistency-check`). Implementation-wise the validators listed below are functional; the default-off state is a conservative rollout choice, not a missing feature.
 
 | Validator | Description |
 |-----------|-------------|
 | **drift-detect** | Bidirectional design-code drift detection. Compares design documents against the actual codebase to find divergence in either direction. |
 | **consistency-check** | Cross-document layer consistency. Ensures that references between design documents, ADRs, and code remain coherent. |
 | **dead-code** | Detects unused exports and unreachable code that should be removed. |
+| **doc-freshness** | Flags design documents whose last update is older than a configured threshold while the corresponding code has diverged. |
+| **pointer-validation** | Verifies that relative-path pointers inside design docs resolve to files that actually exist. |
 
 **Command:**
 

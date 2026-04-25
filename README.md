@@ -63,30 +63,38 @@ Launch your AI agent and run the `/product-architect` skill to begin.
 
 ```
 +------------------------------------------------------------------+
-|  L0  HOOKS ENGINE          Agent hook configuration              |
+|  L0  AGENT RUNTIME HOOKS   Claude Code / Codex hooks             |
+|  PreToolUse (Write/Edit/Bash block + guide), PostToolUse         |
+|  (auto lint/format), Stop (ReentryGuard + complete-check),       |
+|  SessionStart, UserPromptSubmit. Plus Husky .husky/pre-commit    |
+|  and .husky/commit-msg (Work-Item trailer enforcement).          |
 +------------------------------------------------------------------+
 |  L1  EDITOR TIME           Biome AST rules                       |
 |  require-unit-comment, no-layer-violation, no-any-abuse,         |
 |  enforce-folder-structure, no-ghost-file, no-code-duplication    |
 +------------------------------------------------------------------+
 |  L2  PRE-COMMIT            Validators                            |
-|  phase-gate, metadata completeness, test-quality (AAA pattern)   |
+|  phase-gate, metadata completeness, story-reflection,            |
+|  test-quality (AAA pattern)                                      |
 +------------------------------------------------------------------+
 |  L3  CI/CD                 Validators                            |
 |  security, performance, coverage threshold, nyquist traceability |
 +------------------------------------------------------------------+
-|  L4  SCHEDULED             Validators                            |
-|  drift-detection, consistency-check, dead-code analysis          |
+|  L4  SCHEDULED             Validators (default off)              |
+|  drift-detection, consistency-check, dead-code analysis,         |
+|  doc-freshness, pointer-validation                               |
 +------------------------------------------------------------------+
 ```
 
 | Layer | Trigger | Key Checks |
 |---|---|---|
-| L0 | Agent hooks | Hook config validation, gate checks |
-| L1 | Editor save / lint | Import graph, layer violations, AI anti-patterns |
-| L2 | Pre-commit | Phase gate, `@unit`/`@layer` metadata, test quality |
+| L0 | AI agent runtime (`.claude/settings.json` / `.codex/hooks.json`) + Husky git hooks | PreToolUse blocks Write/Edit/Bash that violate gates; PostToolUse runs lint/format; Stop enforces ReentryGuard + `complete-check`; `.husky/pre-commit` runs `phasegate pre-commit`; `.husky/commit-msg` enforces `Work-Item: WI-XXX` trailer |
+| L1 | Editor save / `phasegate lint` | `@unit` / `@layer` metadata, layer violations, AI anti-patterns, dead code |
+| L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`), test quality |
 | L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability |
-| L4 | Scheduled (weekly) | Design-code drift, cross-document consistency, dead code |
+| L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code, doc freshness, pointer validation |
+
+> The `L0-001` / `L0-002` validators that appear in `list-errors --layer L0` output are legacy definitions from an earlier design and are disabled by default (`layers.L0.enabled: false`). The runtime L0 enforcement happens via the agent-integration hook scripts and Husky git hooks listed above, not via those validators.
 
 ---
 

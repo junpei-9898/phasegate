@@ -83,11 +83,13 @@ npx phasegate update-skills   # スキルを最新版に同期
 
 | レイヤー | タイミング | チェック内容 | 実行コマンド |
 |---|---|---|---|
-| **L0** | Agent Hook | hook 設定検証・完了ゲートチェック | `npx phasegate validate --layer L0` |
+| **L0** | AI agent runtime (Claude Code / Codex) + Husky git hooks | PreToolUse が Write/Edit/Bash をゲート違反時に block（reflection 未済 / 保護ファイル / Bash 迂回検知）、PostToolUse が自動 lint/format、Stop で ReentryGuard + `complete-check`、`.husky/pre-commit` が staged files に L2 validators を適用、`.husky/commit-msg` が `Work-Item: WI-XXX` trailer を強制 | runtime 自動起動（`.claude/settings.json` / `.codex/hooks.json` / `.husky/` 経由） |
 | **L1** | エディタ保存時 | import グラフ・レイヤー違反・`@unit`/`@layer` メタデータ・AI アンチパターン | `npx phasegate lint` |
-| **L2** | コミット前 | フェーズゲート・メタデータ完全性・テスト品質 | `npx phasegate validate --layer L2` |
+| **L2** | コミット前（pre-commit hook 内でも評価） | フェーズゲート・メタデータ完全性・`@work-item-id` 反映（L2-STORY-REFLECTION）・テスト品質 | `npx phasegate validate --layer L2` |
 | **L3** | CI/CD | セキュリティ・パフォーマンス・カバレッジ・要件トレーサビリティ (※) | `npx phasegate validate --layer L3` |
-| **L4** | 週次（CI cron） | 設計-コード乖離検出・文書間整合性・デッドコード検出 | `npx phasegate validate --layer L4` |
+| **L4** | 週次（CI cron、現状 `layers.L4.enabled: false` がデフォルト — プロジェクト側で opt-in） | 設計-コード乖離検出・文書間整合性・デッドコード検出・文書鮮度・ポインタ検証 | `npx phasegate validate --layer L4` |
+
+> `list-errors --layer L0` に表示される `L0-001` / `L0-002` は初期設計期に定義された legacy validator で、`layers.L0.enabled: false` により無効化されています。**実際の L0 検知は上表のとおり agent-integration の 5 種の runtime hook と Husky の 2 種の git hook で担っています**。
 
 エラーは統一された `HarnessError` フォーマットで報告され、ADR 参照と修正コード例が含まれるため AI エージェントが自己修正できます。
 

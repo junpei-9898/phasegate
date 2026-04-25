@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.109.0] - 2026-04-25
+
+### Documentation
+
+- **WI-029: 5-Layer Defense Model docs の正確化** — L0 が legacy な `hook-config` / `gate-check` / `FUSEフック` 検証ではなく、**`agent-integration` unit の 5 種 runtime hook + Husky 2 種 git hook** で実現されている実態に docs を一致させた。
+  - `README.md` / `README.ja.md`: 5-Layer 表の L0 description を agent-runtime hooks (`PreToolUse` / `PostToolUse` / `Stop` / `SessionStart` / `UserPromptSubmit`) + Husky (`.husky/pre-commit` / `.husky/commit-msg`) に書き直し。L4 が `layers.L4.enabled: false` デフォルトであることも補足。
+  - `docs/guide/layer-model.md`: **L0: Agent Runtime Hooks + Git Hooks** セクションに全面改訂。L0-A（agent runtime 5 hook）と L0-B（Husky 2 hook）の責務表を追加。legacy validator `L0-001` / `L0-002` は disabled である旨を明記。L4 セクションにも「default disabled + opt-in による週次 cron 運用」を追記、`doc-freshness` / `pointer-validation` を validator 一覧に追加。
+  - `CLAUDE.md`: 「L0 FUSEフック検証」記述を「L0 legacy validator（現状 enabled: false）」に訂正し、実運用の L0 経路（agent-integration hook + Husky）を補足。
+
+Source code 改変なし。`list-errors --layer L0` の `L0-001` / `L0-002` definition は legacy として残置（削除は別 WI）。
+
 ## [0.108.0] - 2026-04-25
 
 ### Documentation

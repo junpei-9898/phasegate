@@ -79,7 +79,7 @@ docs/
 ## ハーネスコマンド
 
 ```bash
-npx phasegate validate --layer L0     # L0 FUSEフック検証
+npx phasegate validate --layer L0     # L0 legacy validator 実行（現状 enabled: false、実運用の L0 は agent-integration runtime hook + Husky が担当）
 npx phasegate lint                    # L1 Biome ASTチェック
 npx phasegate validate --layer L2     # L2 Pre-commitチェック
 npx phasegate validate --layer L3     # L3 CIチェック
@@ -87,6 +87,8 @@ npm run phasegate:status              # ハーネス状態表示
 npm run phasegate:check-phase         # フェーズゲート確認
 npm run test                        # テスト実行
 ```
+
+> **L0 の実体**: `.claude/settings.json` / `.codex/hooks.json` 経由で登録される `scripts/harness/agent-integration/presentation/` 配下の 5 種 hook（pre-tool-use / post-tool-use / stop / session-start / user-prompt-submit）と、`.husky/pre-commit` / `.husky/commit-msg`（Work-Item trailer 強制）が runtime L0 を担う。`--layer L0` 経由で呼ばれる `L0-001` / `L0-002` validator は legacy definition で、config で無効化されている。詳細: `docs/guide/layer-model.md` §L0。
 
 ## 必読ドキュメント
 
