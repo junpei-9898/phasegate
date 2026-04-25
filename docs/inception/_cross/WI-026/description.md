@@ -2,7 +2,7 @@
 id: WI-026
 type: issue
 severity: high
-status: implemented
+status: drafted
 legacy_id: ISSUE-026
 affects: [phase-dependency-model, agent-integration, traceability-model, validator-system, config-foundation, docs]
 ---
@@ -14,7 +14,7 @@ affects: [phase-dependency-model, agent-integration, traceability-model, validat
 
 ## ステータス
 
-- **状態**: 🔴 OPEN（2026-04-24 方針確定: work item 一本化採用）
+- **状態**: 🔴 OPEN（2026-04-24 方針確定 / 2026-04-25 ドッグフード結果反映: Phase A〜B は実装済みだが `_cross/WI-XXX` 編集 dead-lock + H-ID 移行未済が残存）
 - **起票日**: 2026-04-24
 - **発見契機**: PhaseGate 自身の Codex ドッグフーディング中に、`docs/inception/issues/ISSUE-025/` を作成して設計を進めたあと、対応する `docs/product/construction/{unit}/` の更新を行わずに実装へ進められた
 - **影響Unit**: phase-dependency-model, agent-integration, traceability-model, validator-system, config-foundation, docs
@@ -142,6 +142,8 @@ ISSUE-026の完了条件では、旧 `docs/inception/issues/` / `{unit}/issues/`
 
 `WriteTargetScope.fromPath` は `docs/inception/{unit}/{WI-XXX}/` と `docs/inception/_cross/{WI-XXX}/` のいずれも **Level 3 + workItemId** として扱う。reflection check の列挙は `{unit}/` 直下のみでなく `_cross/` も走査する（`{unit}/issues/` と `docs/inception/issues/` の特殊分岐は削除）。
 
+ただし **inception 配下のパス自体（`docs/inception/**`）への書込は Phase 1 work であり、Phase 3 reflection check の対象外**とする。Phase 3 reflection は `scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts` への実ソース書込のみを対象とする（v0.103.0 / WI-026 G1 で確定）。これは `_cross/WI-XXX/` 自体の inception 編集が、存在しない仮想パス `docs/product/construction/_cross/` への反映を要求して dead-lock する事象を回避するため。
+
 ### Phase 0 — Product / 横断仕様
 
 **対象**: `docs/product/product_overview.md` / `user_stories.md` / `user_story_mapping.md` / `units/*.md`
@@ -223,19 +225,22 @@ TESTED        @work-item-id 付きテストが存在し green
 
 ## 受け入れ基準
 
-- [x] 全 work item が `docs/inception/{unit}/{WI-XXX}/` または `docs/inception/_cross/{WI-XXX}/` に統一される
-- [x] `docs/inception/issues/` と `docs/inception/{unit}/issues/` が廃止される
+> 2026-04-25 ドッグフード結果反映: 既存実装（Phase A〜B + 基本 gate）は仕様通り動作するが、`_cross/{WI-XXX}` dead-lock 修正と H-ID リナンバリングが残作業。残作業は `docs/inception/_shared/wi-026-remediation-plan.md` に分割済み。
+
+- [ ] 全 work item が `docs/inception/{unit}/{WI-XXX}/` または `docs/inception/_cross/{WI-XXX}/` に統一される（**未済**: 旧 H-ID 形式が多数残存。WI-027 として切り出し）
+- [x] `docs/inception/issues/` と `docs/inception/{unit}/issues/` が廃止される（v0.104.0 で物理削除＋ legacy 分岐コード除去）
 - [x] WI frontmatter（`id` / `type` / `severity` / `affects`）が L2 metadata validator で検証される
 - [x] `type: story | issue | refactor` の WI について、`affects` 全 Unit の product 反映未完時に Level 3 書き込みがブロックされる
 - [x] `type: fix | chore` は description.md + PR trailer だけで証跡が残る軽量パスを提供する
 - [x] `@work-item-id` アノテーション（新）と `@story-id` / `@issue-id`（legacy）の両方で反映検出ができる
 - [x] `FileSystemStoryReflectionAdapter` が全 WI を uniform に列挙する（`_cross/` 含む、`{unit}/issues/` 特殊分岐なし）
-- [x] `WriteTargetScope.fromPath` が `_cross/{WI-XXX}/` と `{unit}/{WI-XXX}/` を Level 3 として扱う
+- [x] `WriteTargetScope.fromPath` が `_cross/{WI-XXX}/` と `{unit}/{WI-XXX}/` を Level 3 として扱う（ただし inception パス自体への書込は Phase 1 work として reflection check 対象外。v0.103.0 / G1 で確定）
 - [x] `git log --grep='Work-Item: WI-XXX'` で WI-ID に紐づく全コミットを遡れる
-- [x] 移行スクリプト `npx phasegate migrate work-items` が実行でき、`legacy_id` で旧 ID の grep 互換が保たれる
+- [x] 移行スクリプト `npx phasegate migrate work-items` が実行でき、`legacy_id` で旧 ID の grep 互換が保たれる（H-ID 検出の追加拡張は WI-027 で対応）
 - [x] Codex / Claude Code の両方で、少なくとも commit 前には未反映状態を fail にできる
 - [x] hook / metadata validator / consistency validator の責務分担が docs と実装で一致する
 - [x] 回帰テストで `story | issue | refactor | fix | chore` の各 type を検証する
+- [x] L2-STORY-REFLECTION のメッセージで `WI-XXX` の場合 `@work-item-id` を出力（v0.104.0 / G3）
 
 ## 非対象
 

@@ -422,12 +422,14 @@ export class HandlePreToolUseUseCase {
       firstBlocker === undefined ? null : HandlePreToolUseUseCase.extractStoryReflectionDetails(firstBlocker);
     const lines: string[] = [];
 
+    const annotationKey = HandlePreToolUseUseCase.annotationKeyFor(details?.storyId);
+
     if (details !== null) {
       lines.push(`[L2-STORY-REFLECTION] ${details.productPath} に`);
-      lines.push(`@story-id ${details.storyId} が反映されていません。`);
+      lines.push(`@${annotationKey} ${details.storyId} が反映されていません。`);
       lines.push("");
     } else {
-      lines.push("[L2-STORY-REFLECTION] product 文書に @story-id が反映されていません。");
+      lines.push(`[L2-STORY-REFLECTION] product 文書に @${annotationKey} が反映されていません。`);
       lines.push("");
     }
 
@@ -438,11 +440,17 @@ export class HandlePreToolUseUseCase {
     lines.push("");
     lines.push("修正方法:");
     lines.push("  1. cascade-updater を実行して product 文書を更新");
-    lines.push(`  2. または手動で該当 product 文書に @story-id ${details?.storyId ?? "<STORY-ID>"} を追加`);
+    lines.push(
+      `  2. または手動で該当 product 文書に @${annotationKey} ${details?.storyId ?? "<WORK-ITEM-ID>"} を追加`,
+    );
     lines.push("");
     lines.push("参照: ADR-XXX");
 
     return lines.join("\n");
+  }
+
+  private static annotationKeyFor(storyId: string | undefined): "work-item-id" | "story-id" {
+    return storyId !== undefined && /^WI-\d+$/.test(storyId) ? "work-item-id" : "story-id";
   }
 
   private static extractStoryReflectionDetails(blocker: string): { productPath: string; storyId: string } | null {

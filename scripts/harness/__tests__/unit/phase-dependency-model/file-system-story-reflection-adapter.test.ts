@@ -64,12 +64,11 @@ target("FileSystemStoryReflectionAdapter#listStoryDirectories", () => {
     });
   });
 
-  context("WI layout のディレクトリが存在する場合", () => {
-    it("unit-owned WI と cross WI を reflection 対象IDとして返す", async () => {
+  context("WI layout のディレクトリが存在する場合 (WI-026 G2-5 後: legacy issues 分岐廃止)", () => {
+    it("unit-owned WI / 既存 H- ID と cross WI を reflection 対象IDとして返す", async () => {
       // Arrange
       await mkdir(path.join(rootDir, "docs/inception/order/WI-001"), { recursive: true });
       await mkdir(path.join(rootDir, "docs/inception/order/H02-05"), { recursive: true });
-      await mkdir(path.join(rootDir, "docs/inception/order/issues/ISSUE-001"), { recursive: true });
       await mkdir(path.join(rootDir, "docs/inception/_cross/WI-026"), { recursive: true });
       await mkdir(path.join(rootDir, "docs/inception/_cross/memo"), { recursive: true });
       const adapter = new FileSystemStoryReflectionAdapter({ rootDir });

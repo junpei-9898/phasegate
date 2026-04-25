@@ -36,6 +36,20 @@ EXIT: 2
 | GAP-5 | L2-STORY-REFLECTION のメッセージが `@story-id WI-XXX` と表示（新仕様では `@work-item-id`） | "`@work-item-id` への命名統一" | 低 |
 | GAP-6 | WI-026 description.md が `status: implemented` だが上記 GAP のため AC 未達 | description.md の記述整合 | 低 |
 
+## 進捗状況 (2026-04-25)
+
+| Phase | 状態 | コミット / 備考 |
+|---|---|---|
+| G1 | ✅ 完了 | `922f5d3` (v0.103.0) |
+| G2-3 | ✅ 完了 | 空 `docs/inception/issues/` 削除 |
+| G2-4 | ✅ 完了 | `WriteTargetScope` の legacy `issues` 分岐削除 |
+| G2-5 | ✅ 完了 | `FileSystemStoryReflectionAdapter` の `issues` filter 削除 |
+| G3 | ✅ 完了 | `WI-` 始まり storyId は `@work-item-id` を出力 |
+| G4-1 | ✅ 完了 | WI-026 description.md `status: implemented` → `drafted` 訂正 |
+| G4-2 | ✅ 完了 | Phase 3 仕様文言を G1 方針に合わせて訂正 |
+| G4-3 | ✅ 完了 | AC チェックボックスを実態と一致 |
+| G2-1 / G2-2 | 🔜 別 WI に分離（**WI-027** 起票予定） | H-ID → WI-XXX 一斉リネーム + `StoryId` VO 拡張 + 移行スクリプト H-ID 対応 |
+
 ## 修正フェーズ
 
 ### G1. `_cross/WI-XXX` inception 編集 dead-lock 解消（最優先）

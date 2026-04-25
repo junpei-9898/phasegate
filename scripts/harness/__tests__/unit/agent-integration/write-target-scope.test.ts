@@ -541,84 +541,7 @@ target("WriteTargetScope", () => {
       });
     });
 
-    // === ISSUE-001追加分: issueパス認識 ===
-
-    // UT-WTS-I001
-    context("Unit固有issueパス（docs/inception/{unit}/issues/{ISSUE-XXX}/）の場合", () => {
-      it("level=3, unitId=unit名, storyId=issue IDとして認識される", () => {
-        // Arrange
-        const filePath = "docs/inception/agent-integration/issues/ISSUE-001/logical_design.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "agent-integration", storyId: "ISSUE-001" }));
-      });
-    });
-
-    // UT-WTS-I002
-    context("Unit固有issueパスでtdd_implementation_plan.mdを書く場合", () => {
-      it("level=3として正しく認識される", () => {
-        // Arrange
-        const filePath = "docs/inception/phase-dependency-model/issues/ISSUE-001/tdd_implementation_plan.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(
-          createWriteTargetScope({ level: 3, unitId: "phase-dependency-model", storyId: "ISSUE-001" }),
-        );
-      });
-    });
-
-    // UT-WTS-I003
-    context("Unit固有issueパスでissue_description.mdを書く場合", () => {
-      it("level=3として正しく認識される", () => {
-        // Arrange
-        const filePath = "docs/inception/agent-integration/issues/ISSUE-002/issue_description.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "agent-integration", storyId: "ISSUE-002" }));
-      });
-    });
-
-    // UT-WTS-I010
-    context("横断的issueパス（docs/inception/issues/{ISSUE-XXX}/）の場合", () => {
-      it("level=1として認識されフェーズゲート対象外となる", () => {
-        // Arrange
-        const filePath = "docs/inception/issues/ISSUE-001/issue_description.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
-      });
-    });
-
-    // UT-WTS-I011
-    context("横断的issueパスでlogical_design.mdを書く場合", () => {
-      it("level=1として認識される", () => {
-        // Arrange
-        const filePath = "docs/inception/issues/ISSUE-003/logical_design.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
-      });
-    });
+    // === WI-026 G2-4: legacy issues 分岐は廃止。WI-XXX / 既存 H-/US- 互換のみ残す ===
 
     // UT-WTS-I020
     context("既存USパスが後方互換で動作する場合", () => {
@@ -652,41 +575,9 @@ target("WriteTargetScope", () => {
       });
     });
 
-    // UT-WTS-I030
-    context("カスタムProjectPathsでUnit固有issueパスを認識する場合", () => {
-      it("カスタムinceptionパスでもlevel=3として認識される", () => {
-        // Arrange
-        const filePath = "custom/inception/my-unit/issues/ISSUE-010/logical_design.md";
-        const projectPaths = createProjectPaths({
-          docs: { construction: "custom/construction", inception: "custom/inception" },
-        });
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "my-unit", storyId: "ISSUE-010" }));
-      });
-    });
-
-    // UT-WTS-I040
-    context("issuesディレクトリ直下（issue IDなし）の場合", () => {
-      it("level=2（unit配下）として扱われる", () => {
-        // Arrange
-        const filePath = "docs/inception/agent-integration/issues/readme.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 2, unitId: "agent-integration" }));
-      });
-    });
-
     // UT-WTS-I041
-    context("issuesディレクトリが小文字のissue IDを含む場合", () => {
-      it("WORK_ITEM_ID_PATTERNにマッチしないためlevel=2として扱われる", () => {
+    context("issuesディレクトリが小文字のissue IDを含む場合 (legacy 分岐削除後の挙動)", () => {
+      it("issues は通常 segment 扱いとなり level=2 として扱われる", () => {
         // Arrange
         const filePath = "docs/inception/agent-integration/issues/issue-001/logical_design.md";
         const projectPaths = createProjectPaths();
@@ -696,21 +587,6 @@ target("WriteTargetScope", () => {
 
         // Assert
         expect(actual).toEqual(createWriteTargetScope({ level: 2, unitId: "agent-integration" }));
-      });
-    });
-
-    // UT-WTS-I042
-    context("Unit名がissuesの場合（横断的issue直下）", () => {
-      it("level=1として扱われる", () => {
-        // Arrange
-        const filePath = "docs/inception/issues/ISSUE-001/logical_design.md";
-        const projectPaths = createProjectPaths();
-
-        // Act
-        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
-
-        // Assert
-        expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
       });
     });
 

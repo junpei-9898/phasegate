@@ -105,7 +105,7 @@ export class FileSystemStoryReflectionQueryAdapter
   ): StoryReflectionQueryResult {
     const warnings = result.warnings.map(
       (w) =>
-        `${w.storyId}: ${w.productPath} に @story-id ${w.storyId} が未反映 (optional, inception: ${w.inceptionPath})`,
+        `${w.storyId}: ${w.productPath} に @${FileSystemStoryReflectionQueryAdapter.annotationKeyFor(w.storyId)} ${w.storyId} が未反映 (optional, inception: ${w.inceptionPath})`,
     );
 
     if (!result.isBlocked()) {
@@ -114,9 +114,13 @@ export class FileSystemStoryReflectionQueryAdapter
 
     const blockers = result.violations.map(
       (v) =>
-        `${v.productPath} に @story-id ${v.storyId} が反映されていません (inception: ${v.inceptionPath})`,
+        `${v.productPath} に @${FileSystemStoryReflectionQueryAdapter.annotationKeyFor(v.storyId)} ${v.storyId} が反映されていません (inception: ${v.inceptionPath})`,
     );
 
     return StoryReflectionQueryResult.block(blockers, warnings);
+  }
+
+  private static annotationKeyFor(storyId: string): "work-item-id" | "story-id" {
+    return /^WI-\d+$/.test(storyId) ? "work-item-id" : "story-id";
   }
 }

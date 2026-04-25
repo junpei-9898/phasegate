@@ -59,7 +59,7 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
     return entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
-      .filter((name) => name !== "issues" && !name.startsWith("_") && !name.startsWith("."))
+      .filter((name) => !name.startsWith("_") && !name.startsWith("."))
       .sort();
   }
 
