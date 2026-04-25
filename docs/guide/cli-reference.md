@@ -140,6 +140,16 @@ exit code は `0` = 生成成功 / 上書き成功、`2` = 既存ファイルあ
 WI-026 で導入（v0.100.0、`ISSUE-XXX` 系統）、WI-027 で `H{NN}-{NN}` 形式の旧ストーリー
 directory にも拡張（v0.105.0）、WI-027 follow-up で apply の冪等性を確立（v0.107.0）。
 
+> **WI taxonomy の正式仕様**は [`docs/folder_management_rules.md`](../folder_management_rules.md) を参照してください。本セクションは CLI の挙動に焦点を絞ります。
+
+### いつ使うか
+
+- **既存リポジトリ**: `docs/inception/issues/` や `{unit}/{US-XXX}/` のような旧形式を残しているプロジェクトを v0.105.0 以降へ更新する初回マイグレーション
+- **新規開発で旧 ID を持ち込む**: 別リポジトリから `ISSUE-XXX` / `H{NN}-{NN}` directory をコピーした後、`legacy_id` を保ったまま `WI-XXX` に統一したいとき
+- **継続運用での再走査**: 既存 WI と新規 directory の混在状態に対し、未採番のものだけ採番する（既存 WI は idempotent skip）
+
+新規 PJ で最初から `WI-XXX` で起票している場合は不要です。
+
 | Command | Options | Description |
 |---|---|---|
 | `migrate work-items` | `--dry-run` / `--apply` / `--json` | 旧 directory を `WI-XXX` へ採番移行する。`--dry-run` と `--apply` は排他、どちらかが必須。|

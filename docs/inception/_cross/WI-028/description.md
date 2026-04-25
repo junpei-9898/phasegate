@@ -2,7 +2,7 @@
 id: WI-028
 type: refactor
 severity: normal
-status: drafted
+status: reflected
 affects: [docs]
 ---
 
@@ -38,11 +38,13 @@ WI-026 (v0.100.0..v0.104.0) で `phasegate migrate work-items` CLI と WI taxono
 
 ## 受け入れ基準
 
-- [ ] `CHANGELOG.md` の `[Unreleased]` が解消され、v0.101..v0.107 の 7 リリースが記録される
-- [ ] `README.md` の CLI Reference 表に `migrate work-items` が追加される
-- [ ] `README.ja.md` の CLI コマンド表に `migrate work-items` が追加される
-- [ ] `docs/guide/cli-reference.md` に Work Item Migration セクションが追加され、dry-run / apply 両モードと frontmatter 形式が解説される
-- [ ] 既存の他 CLI コマンド説明スタイルと体裁が揃う
+- [ ] `CHANGELOG.md` の `[Unreleased]` が解消され、v0.101..v0.107 の 7 リリースが記録される（残作業）
+- [x] `README.md` の CLI Reference 表に `migrate work-items` が追加される（v0.108.0）
+- [x] `README.ja.md` の CLI コマンド表に `migrate work-items` が追加される（v0.108.0、v0.112.0 で説明強化）
+- [x] `docs/guide/cli-reference.md` に Work Item Migration セクションが追加され、dry-run / apply 両モードと frontmatter 形式が解説される（v0.108.0）
+- [x] 既存の他 CLI コマンド説明スタイルと体裁が揃う
+- [x] `docs/folder_management_rules.md` が WI taxonomy（v0.105.0 仕様）に全面改訂される（v0.112.0）
+- [x] README.md / README.ja.md に「Document Lifecycle / ドキュメント・ライフサイクル」節が追加され、`@work-item-id` / `type` / state machine が説明される（v0.112.0）
 
 ## スコープ外
 

@@ -51,6 +51,8 @@ npx phasegate init --name my-project
 
 This deploys 28 skills to `skills/`, creates agent-specific links such as `.claude/skills` or `.codex/skills`, installs design principles docs (`docs/principles/*.md`, `docs/folder_management_rules.md`), and generates `phasegate.config.json`.
 
+**`init` does NOT generate**: `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by AIDLC skills (`/product-architect`, `/domain-designer`, etc.) — that is the whole point of "no design, no code."
+
 Optional: add `--with-husky` to also install a `.husky/pre-commit` hook that runs L2 validators.
 
 ### 3. Start the AIDLC
@@ -154,6 +156,117 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing ph
 | `/pointer-validator` | Validate file path references in design documents |
 | `/engineering-perspective` | Multi-perspective design review (Beck, Fowler, Martin, Evans) |
 | `/skill-creator` | Create or update agent skills |
+
+---
+
+## Document Lifecycle
+
+Phasegate enforces a single-direction data flow: **inception → product → src**. Each step has a designated location and a corresponding PhaseGate behavior.
+
+### Three-tier model
+
+```
+docs/inception/{unit}/{WI-XXX}/    ← transient planning/design (per WI, fluid)
+        ↓ reflection (with @work-item-id, accumulated update)
+docs/product/construction/{unit}/   ← canonical design (per Unit, persistent)
+        ↕ phase gate
+scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts
+```
+
+### Work Item (WI) layout
+
+WIs are placed in one of three buckets based on scope:
+
+| Path | Use |
+|---|---|
+| `docs/inception/_shared/` | Cross-cutting plans/strategy/research not tied to a WI |
+| `docs/inception/_cross/{WI-XXX}/` | Cross-cutting WI affecting multiple Units |
+| `docs/inception/{unit}/{WI-XXX}/` | WI owned by a single Unit |
+
+> **Removed in v0.104.0**: `docs/inception/issues/`, `docs/inception/{unit}/issues/`, `docs/inception/{unit}/{US-XXX}/`. Existing assets are migrated via `npx phasegate migrate work-items --apply`. Legacy IDs are retained via `legacy_id` for grep compatibility.
+
+### WI frontmatter (required)
+
+Each WI's `description.md` must start with:
+
+```yaml
+---
+id: WI-042
+type: story | issue | fix | refactor | chore   # see below
+severity: trivial | normal | high
+status: drafted | reflected | implemented | tested   # auto-updated by PhaseGate
+affects: [unit-a, unit-b]                            # cross-unit only
+legacy_id: ISSUE-XXX | US-XXX | H{NN}-{NN}          # optional
+---
+```
+
+L2 metadata validator verifies the frontmatter shape.
+
+### Required artifacts by `type`
+
+| `type` | inception artifacts | product reflection | Use |
+|---|---|---|---|
+| `story` | description + logical_design + domain_model + test designs | All categories accumulated | New feature |
+| `issue` | description + logical_design + domain_model + relevant test designs | Relevant categories | Bug / spec mismatch |
+| `refactor` | description + logical_design | logical_design update | Refactor |
+| `fix` | description + PR link | `@work-item-id` annotation in relevant category | Typo / dep update |
+| `chore` | description.md (1 line) + PR link | None | Chore |
+
+`fix` / `chore` are lightweight paths — fixes too small for a formal story still get audit trail.
+
+### State machine
+
+```
+DRAFTED  (inception artifacts present per `type`)
+  ↓ Phase 0/2 reflection
+REFLECTED  (product carries @work-item-id WI-XXX)
+  ↓ Phase 3 implementation
+IMPLEMENTED  (src exists / lint+type+test green)
+  ↓ Phase 4 test
+TESTED  (test files annotated with @work-item-id, all green)
+```
+
+`type: chore` ends at DRAFTED. `type: fix` shortcuts via DRAFTED → REFLECTED → IMPLEMENTED. PhaseGate auto-updates `status`.
+
+Full spec: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
+
+---
+
+## Metadata Conventions
+
+Each source file declares its `@unit` / `@layer`. Tests add `@story` or `@work-item-id` for traceability.
+
+```typescript
+// @unit config-foundation
+// @layer domain
+// @work-item-id WI-042       ← optional (boosts traceability)
+// @story US-001              ← test files only (legacy)
+
+export class ConfigSchema { ... }
+```
+
+| Tag | Value | Required |
+|---|---|---|
+| `@unit` | Unit name from `/unit-designer` (e.g., `config-foundation`) | **Yes** (L1-001) |
+| `@layer` | Layer name from `architecture.preset` | **Yes** (L1-002) |
+| `@work-item-id` | WI driving this file change (e.g., `WI-042`) | Optional |
+| `@story` | US/WI being verified by tests (legacy) | Recommended for tests |
+
+In product docs, declare reflection per section using HTML-comment annotations:
+
+```markdown
+## Port Definitions
+
+<!-- @work-item-id WI-042 -->
+### OrderRepository Port
+- findById(id: OrderId): Promise<Order>
+
+<!-- @work-item-id WI-042, WI-051 -->
+### PaymentGateway Port
+- charge(amount: Money): Promise<Receipt>
+```
+
+L2-STORY-REFLECTION uses these annotations to verify inception design has been cascaded into product. Legacy `@story-id US-XXX` / `@story-id H##-##` / `@issue-id ISSUE-XXX` are still resolved via WI `legacy_id` — no bulk replacement needed for existing docs.
 
 ---
 

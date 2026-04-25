@@ -1,251 +1,316 @@
 # docs ディレクトリ管理ガイド
 
-本ドキュメントは`docs/`配下のドキュメント管理方針を定義します。
+本ドキュメントは `docs/` 配下のドキュメント管理方針を定義します。Phasegate が「設計なしの実装を物理的に拒否する」ための **正本となる構造とアノテーション規約**を記述しています。
+
+> WI-026 (v0.100.0..v0.104.0) で work item taxonomy が `WI-XXX` に統一されました。`docs/inception/issues/` および `docs/inception/{unit}/issues/` は **廃止済み**です。本ドキュメントは v0.105.0 以降の最新仕様で記述されています。
 
 ---
 
-## ディレクトリ構造
+## 1. ディレクトリ構造（全体像）
 
 ```
 docs/
-├── ADR/                    # Architecture Decision Records
-├── basic_input/            # 入力サンプル・テンプレート
-├── principles/             # 開発原則・ルール
-├── inception/              # 計画ドキュメント + 作業単位（US・issue）の設計
-└── product/                # 共有設計ドキュメント（確定版）
+├── ADR/                       # Architecture Decision Records
+├── principles/                # 開発原則・テスト規約（immutable）
+├── guide/                     # 公開ユーザーガイド
+├── inception/                 # 計画・work item の一時設計（流動）
+│   ├── _shared/               # 非 WI の横断計画（戦略・タスクリスト等）
+│   ├── _cross/                # cross-cutting WI（複数 Unit に影響）
+│   │   └── {WI-XXX}/
+│   └── {unit}/                # Unit 所有の WI と Unit 横断計画
+│       └── {WI-XXX}/
+└── product/                   # 確定した設計成果物（累積更新・正本）
+    ├── product_overview.md
+    ├── user_stories.md
+    ├── user_story_mapping.md
+    ├── units/{unit}.md
+    └── construction/{unit}/
+        ├── domain_model.md
+        ├── logical_design.md
+        ├── uiux_design.md
+        ├── unit_test_design.md
+        ├── it_test_design.md
+        ├── unit_test_logic.md
+        ├── it_test_logic.md
+        └── coverage_report.md
 ```
+
+### 役割の対応
+
+| ディレクトリ | 役割 | 寿命 |
+|---|---|---|
+| `ADR/` | アーキテクチャ意思決定の永続記録 | 永続（status で管理） |
+| `principles/` | 全プロジェクトで遵守すべき不変ルール | 永続（変更には ADR 必須） |
+| `guide/` | 利用者向け公開ドキュメント | 永続（仕様変更で追従） |
+| `inception/` | 計画・調査・work item の一時設計 | 流動（実装後はアーカイブ） |
+| `product/` | Unit 単位の確定設計（累積更新） | 永続（生きたドキュメント） |
 
 ---
 
-## 各ディレクトリの役割
+## 2. 三階層モデル: inception → product → src
 
-### ADR/
-アーキテクチャ決定記録。技術選定や設計方針の決定理由を記録する。
-
-### basic_input/
-入力データのサンプルやテンプレートを格納する。
-
-### principles/
-開発原則、テストルール、アーキテクチャ哲学など、プロジェクト全体で遵守すべきルールを定義する。
-
-### inception/
-**計画ドキュメント**と**作業単位（US・issue）の設計**を格納する。inception 配下のドキュメントは一時的な作業用であり、設計成果物は `product/` に反映される。
+Phasegate の中核は **「inception で設計を起こし、product に確定させ、src（実装）に展開する」** という単方向のデータフローです。逆流はフェーズゲートでブロックされます。
 
 ```
-inception/
-├── _shared/                # 横断的な計画（複数Unitにまたがるもの）
-├── _operation/             # 運用・デプロイ関連の計画
-├── issues/                 # 横断的なissue（複数Unitにまたがるもの）
-│   └── {ISSUE-XXX}/
-│       ├── issue_description.md  # 問題の記述
-│       ├── logical_design.md     # 論理設計
-│       └── ...
-├── {Unit名}/               # Unit毎の階層
-│   ├── *_plan.md           # Unit全体の計画
-│   ├── {US-XXX}/           # ストーリー単位の計画・設計
-│   │   ├── *_plan.md       # 実装計画
-│   │   ├── uiux_design.md  # UI/UX設計
-│   │   └── ...             # その他ストーリー固有のドキュメント
-│   └── issues/             # Unit固有のissue（バグ・不整合）
-│       └── {ISSUE-XXX}/
-│           ├── issue_description.md  # 問題の記述
-│           ├── logical_design.md     # 論理設計
-│           └── tdd_implementation_plan.md
+docs/inception/{unit}/{WI-XXX}/   ← 一時的な計画・設計（WI ごと）
+        ↓ 設計成果物の反映（@work-item-id 付きで累積更新）
+docs/product/construction/{unit}/  ← 確定設計（Unit ごとの正本）
+        ↕ フェーズゲート
+scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts
 ```
 
-### product/
-**確定した設計ドキュメント**を格納する。作業単位（US-XXX / ISSUE-XXX）のドキュメントは含まない。
+### product docs ハブモデル（設計思想）
 
-> **設計思想（product docs ハブモデル）**:
+- **inception → product**: WI の設計成果が確定したら、対応する `product/construction/{unit}/{category}.md` に **累積更新**する（新規ファイルは作らない）
+- **product → src**: ソースの phase-gate は **product docs の存在**で判定する（inception の存在では判定しない）
+- **ソースと WI を直接紐付けない**: 一つのファイルに紐づく WI が増えると依存が複雑化するため、product docs を媒介させて間接的に紐付ける
+
+---
+
+## 3. inception/ — work item と計画の置き場
+
+### 3.1 物理レイアウト（v0.105.0 以降）
+
+| 配置先 | 用途 | 例 |
+|---|---|---|
+| `inception/_shared/` | 非 WI の横断計画・戦略・調査メモ | `oss_release_tasklist.md`, `wi-026-remediation-plan.md` |
+| `inception/_cross/{WI-XXX}/` | 複数 Unit に影響する cross-cutting WI | `_cross/WI-026/`, `_cross/WI-031/` |
+| `inception/{unit}/{WI-XXX}/` | 単一 Unit が所有する WI | `validator-system/WI-074/` |
+
+> **廃止された配置**（v0.104.0 で物理削除）:
+> - `docs/inception/issues/{ISSUE-XXX}/`
+> - `docs/inception/{unit}/issues/{ISSUE-XXX}/`
+> - `docs/inception/{unit}/{US-XXX}/`（旧 US 形式）
 >
-> `product/` はUnit単位で確定済みの仕様を集約する **ハブ** である。
->
-> ```
-> inception/{unit}/{作業単位}/   一時設計（US・issue ごと）
->         ↓ 設計成果物の反映（累積更新）
-> product/construction/{unit}/   正式設計（常に最新、Unitの真実のソース）
->         ↕ フェーズゲート
-> scripts/harness/{unit}/*.ts    実装ファイル
-> ```
->
-> - **inception → product**: US・issue の設計成果が確定したら product docs を累積更新する
-> - **product → source**: ソースファイルのフェーズゲートは product docs（Unit単位）の存在で判定する
-> - **ソースファイルと US/issue は直接紐付けない**: PJ のライフサイクルが進むほどにバグ修正や US 追加で一つのソースファイルに紐づくドキュメント数が増大し、依存関係が複雑になるため。product docs が常に最新に保たれることで、inception の一時ドキュメントと実装が間接的に紐づく
-> - **US/issue 単位で正として管理しない**: 整合性維持のコストが非常に大きくなるため、作業単位の設計は inception にアーカイブ的に保持し、確定した仕様のみを product に集約する
+> 既存資産は `migrate work-items --apply` で `WI-XXX` レイアウトに移行済み。`legacy_id` で旧 ID の grep 互換性は維持されています。
+
+### 3.2 WI frontmatter（必須）
+
+各 WI の `description.md` 先頭に以下の YAML frontmatter を必須とします（L2 metadata validator が検証）:
+
+```yaml
+---
+id: WI-XXX                                              # 必須: WI の一意 ID
+type: story | issue | fix | refactor | chore           # 必須: 後述
+severity: trivial | normal | high                       # 必須
+status: drafted | reflected | implemented | tested      # PhaseGate が自動更新
+affects: [unit-a, unit-b]                               # cross-unit のみ列挙。省略時は所有 Unit のみ
+legacy_id: ISSUE-XXX | US-XXX | H{NN}-{NN}             # 任意: 移行用エイリアス
+source: github#123 | slack | internal                   # 任意: 外部報告源
+---
+```
+
+### 3.3 type による要求成果物の段階化
+
+WI の重さに応じて、生成必須の成果物が変わります。
+
+| `type` | inception 必須成果物 | product 反映 | 用途 |
+|---|---|---|---|
+| `story` | description + logical_design + domain_model + test 設計（+ uiux） | 全カテゴリ累積更新 | 新機能 |
+| `issue` | description + logical_design + domain_model + 関係 test 設計 | 関係カテゴリ累積更新 | バグ・仕様不整合 |
+| `refactor` | description + logical_design（構造変更の意図） | logical_design 更新 | リファクタ |
+| `fix` | description.md + PR link | 関係カテゴリに `@work-item-id` 追記 | typo・依存更新等 |
+| `chore` | description.md 1 行 + PR link | 不要 | 雑用 |
+
+`fix` / `chore` は軽量パスとして提供されています。formal な US で起票するには重すぎる修正もここで証跡が残せます。
+
+### 3.4 _shared/ の使い方
+
+`inception/_shared/` は **WI に紐付かない計画・調査文書**を置きます。例:
+
+- 戦略文書（`oss_public_release_strategy.md`）
+- 横断 remediation 計画（`wi-026-remediation-plan.md`）
+- TDD 実装計画の集約（`configurable_phase_gate_b4_tdd_plan.md`）
+
+`_shared/` 配下の文書は WI ではないため `description.md` の frontmatter は不要ですが、L2 metadata validator が staged 時に `@story-id` または `@work-item-id` を要求します。新規作成時は `traceability.initial_creation: true` か該当する `@story-id`（catalog 登録済み H##-##）を付与してください。
+
+---
+
+## 4. product/ — 確定設計の正本
+
+### 4.1 構造
 
 ```
 product/
-├── product_overview.md         # プロダクト概要
-├── user_stories.md             # ユーザーストーリー一覧
-├── user_story_mapping.md       # ストーリーマッピング
-├── construction/               # Unit毎の設計（確定版・累積更新）
-│   └── {Unit名}/
-│       ├── domain_model.md     # ドメインモデル
-│       ├── logical_design.md   # 論理設計
-│       ├── uiux_design.md      # UI/UX設計（Unit全体で1ファイル）
-│       ├── unit_test_design.md  # ユニットテストケース設計
-│       ├── it_test_design.md    # ITテストケース設計
-│       ├── unit_test_logic.md   # ユニットテストロジック設計
-│       ├── it_test_logic.md     # ITテストロジック設計
-│       └── coverage_report.md   # テストカバレッジレポート
-└── units/                      # Unit設計ドキュメント
-    ├── {unit_name}_unit.md     # Unit定義
-    └── integration_contract.md # 統合契約
+├── product_overview.md         # プロダクト全体像
+├── user_stories.md             # US / WI catalog（H## ID と WI のマッピングを含む）
+├── user_story_mapping.md       # MVP スコープ・優先順位
+├── units/
+│   ├── {unit}.md               # Unit 定義
+│   └── integration_contract.md # Unit 間統合契約
+└── construction/{unit}/
+    ├── domain_model.md         # ドメインモデル
+    ├── logical_design.md       # Hexagonal 論理設計
+    ├── uiux_design.md          # UI/UX（Unit 全体で 1 ファイル）
+    ├── unit_test_design.md     # ユニットテストケース設計
+    ├── it_test_design.md       # IT テストケース設計
+    ├── unit_test_logic.md      # ユニットテストロジック設計
+    ├── it_test_logic.md        # IT テストロジック設計
+    └── coverage_report.md      # カバレッジレポート
 ```
 
-> **`construction/{Unit名}/` のドキュメントは累積更新される「生きたドキュメント」です。**
-> ストーリー実装のたびに、新しい仕様を既存ファイルに追記・更新します。
+### 4.2 重要なルール
+
+1. **work item ディレクトリを置かない**: `product/construction/{unit}/WI-XXX/` のような階層は作らない（NG）
+2. **累積更新する**: 新しい WI の設計成果が確定したら **既存の `{category}.md` を編集**する（新規ファイル作成は禁止）
+3. **`@work-item-id` で反映を宣言**: product 文書内で「この章は WI-XXX に基づく」と機械的に判定するため、該当章の冒頭に `@work-item-id WI-XXX` を記載する
+
+### 4.3 `@work-item-id` の書き方
+
+```markdown
+<!-- product/construction/order/logical_design.md -->
+
+## ポート定義
+
+<!-- @work-item-id WI-042 -->
+### OrderRepository Port
+- findById(id: OrderId): Promise<Order>
+
+<!-- @work-item-id WI-042, WI-051 -->
+### PaymentGateway Port
+- charge(amount: Money): Promise<Receipt>
+```
+
+カンマ区切りで複数 WI を 1 つのアノテーションにまとめられます。
+
+> **legacy 互換**: 既存 product 文書の `@story-id US-XXX` / `@issue-id ISSUE-XXX` / `@story-id H##-##` は WI の `legacy_id` 経由で読み替えられます。一括置換は **しません**（履歴の対応関係を破壊しないため）。新規記述は `@work-item-id WI-XXX` を使ってください。
 
 ---
 
-## 重要なルール
+## 5. ソースコードのアノテーション規約
 
-### 1. productには作業単位（US・issue）の設計を入れない
+`scripts/harness/` 配下のソースファイル先頭に以下を記載します。
 
+```typescript
+// @unit config-foundation
+// @layer domain
+// @work-item-id WI-042       ← 任意（traceability に貢献）
+// @story US-001              ← テストファイルのみ（legacy 互換）
+
+export class ConfigSchema { ... }
 ```
-# NG: product配下にUS-XXX/ISSUE-XXXディレクトリを作成
-product/construction/withholding_tax/US-217/
-product/construction/withholding_tax/issues/ISSUE-001/
 
-# OK: inception配下に作成
-inception/withholding_tax/US-217/
-inception/withholding_tax/issues/ISSUE-001/
-```
+| タグ | 意味 | 必須性 |
+|---|---|---|
+| `@unit` | このファイルが属する Unit 名 | **必須**（L1-001 が検証） |
+| `@layer` | 層名（preset で定義された値） | **必須**（L1-002 が検証） |
+| `@work-item-id` | このファイル変更を駆動した WI | 任意（traceability で活用） |
+| `@story` | テストが検証する US / WI（legacy 互換） | テストでは推奨 |
 
-### 2. 仕様変更時は既存のproductドキュメントを更新する
-
-US 実装や issue 修正で仕様が確定したら、`product/`配下の既存ドキュメント（domain_model.md等）を累積更新する。新規ファイルを作成するのではなく、既存ファイルに変更を追記する。product docs は常に最新の状態を維持する「生きたドキュメント」である。
-
-### 3. ストーリー・issue単位の計画・設計は必ずinception配下に作成する
-
-```
-# 新しいストーリーUS-999の計画を作成する場合
-inception/{該当Unit}/US-999/
-├── logical_design_plan.md
-├── scenario_test_plan.md
-├── scenario_test_design.md
-├── scenario_test_logic.md
-├── uiux_design_plan.md
-└── tdd_implementation_plan.md
-
-# Unit固有のissue（バグ・不整合）を起票する場合
-inception/{該当Unit}/issues/ISSUE-999/
-├── issue_description.md
-├── logical_design.md
-└── tdd_implementation_plan.md
-
-# 横断的なissue（複数Unitにまたがる）を起票する場合
-inception/issues/ISSUE-999/
-├── issue_description.md
-└── logical_design.md
-```
+`@layer` の有効値は `architecture.preset` で決まります（clean / onion / hexagonal / layered / strict-ddd / flat / custom）。
 
 ---
 
-## ドキュメント作成フロー
+## 6. ドキュメント作成フロー（AIDLC 準拠）
 
-AIDLCプロセスは **US（新機能）** と **issue（バグ・不整合）** の2つの起点を持つ。いずれも inception で計画を立て、product docs を更新し、実装に反映する流れは共通である。
+WI は以下の 5 段階で進行します。各段階で配置先と PhaseGate の挙動が決まっています。
 
-### US と issue の違い
+### Phase 0 — Product / 横断仕様（_cross WI のみ）
 
-| 起点 | フロー | inception 配置先 |
-|------|--------|-----------------|
-| **US（新機能）** | Phase 1 → Phase 2 → Phase 3 の全フローを上位から順に実行 | `inception/{unit}/{US-XXX}/` |
-| **issue（バグ・不整合）** | 原因フェーズを特定し、そのフェーズから下位に向けてドキュメント・実装をアップデート | `inception/{unit}/issues/{ISSUE-XXX}/` |
+**対象**: `docs/product/product_overview.md` / `user_stories.md` / `user_story_mapping.md` / `units/*.md`
 
-#### issue の処理フロー
+`_cross/{WI-XXX}/` かつ `type: story | issue` が戦略・スコープ・Unit 境界に影響する場合、上記いずれかに `@work-item-id WI-XXX` の反映が必要。未反映なら `affects` 全 Unit への Phase 2/3 書き込みをブロック。
 
-1. **issue 起票**: `inception/{unit}/issues/{ISSUE-XXX}/issue_description.md` に問題の記述・原因分析を記載
-2. **原因フェーズの特定**: バグや仕様の認識違いがどのフェーズに起因するかを判定
-   - ドメイン設計に起因 → domain_model から下位に向けてリファクタ
-   - 論理設計に起因 → logical_design から下位に向けてリファクタ
-   - テスト設計に起因 → test_design から下位に向けてリファクタ
-   - 実装のみに起因 → 実装の修正のみ
-3. **inception で計画**: 特定したフェーズから下位のフェーズに向けて、inception 配下に計画・設計文書を作成
-4. **product docs 更新**: 設計成果物を `product/construction/{unit}/` の該当ドキュメントに累積更新
-5. **TDD 実装**: テスト設計→実装の順序で修正を適用
+### Phase 1 — Inception（下書き・探索）
 
-> **issue が既存仕様に存在しない追加機能であった場合**: issue ではなく **US を新規作成** し、unit へのマッピングからドメイン設計→TDD 実装まで、下記の Phase 1〜3 の全フローに沿って実施する。
+**対象**: `docs/inception/{unit}/{WI-XXX}/` / `docs/inception/_cross/{WI-XXX}/`
 
----
+- WI directory 作成と `description.md` 編集は自由
+- 設計カテゴリ文書（`logical_design.md` 等）が新規作成・実質更新された時点で「反映義務フラグ」が立つ（`status: drafted`）
+- inception 配下のパスへの書き込みは Phase 1 work であり、**Phase 3 reflection check の対象外**（v0.103.0 で確定）
 
-### US のドキュメント作成フロー
+### Phase 2 — Product Construction（確定設計の累積）
 
-US は3つのフェーズで構成される。各フェーズでドキュメントの配置先が異なる。
+**対象**: `docs/product/construction/{unit}/{category}.md` / `product/*.md`
 
-### Phase 1: プロダクト全体設計（横断的・初回）
+- inception の各カテゴリ文書と同カテゴリの product 文書が `@work-item-id WI-XXX` を含み、かつ実質 diff を伴う
+- `_cross/` WI は `affects` 全 Unit について満たす必要あり
 
-プロダクトの全体像を定義し、ストーリー・Unitの構造を確立する。
+### Phase 3 — Implementation (TDD)
 
-| Step | スキル | 計画（inception） | 成果物（product） |
-|------|--------|-------------------|-------------------|
-| Step 0 | product-architect | `_shared/product_overview_plan.md` | `product_overview.md` |
-| Step 1.1 | story-writer | `_shared/story_writer_plan.md` | `user_stories.md` |
-| Step 1.5 | story-mapper | `_shared/story_mapping_plan.md` | `user_story_mapping.md` |
-| Step 2 | unit-designer | `_shared/unit_design_plan.md` | `units/{unit_name}.md` + `units/integration_contract.md` |
+**対象**: `scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts`
 
-### Phase 2: Unit横断設計（Unit単位）
+- 当該 Unit の open な WI のうち、Phase 2 反映が未完なら実装書き込みをブロック
+- `_cross/` WI の `affects` に含まれる Unit は、当該 WI の Phase 0 / 2 反映が完了するまで実装ブロック
 
-各Unitの設計を確定させる。成果物は`product/construction/{unit}/`に配置される累積更新ドキュメント。
+### Phase 4 — Test
 
-| Step | スキル | 計画（inception/{unit}/） | 成果物（product/construction/{unit}/） |
-|------|--------|--------------------------|----------------------------------------|
-| Step 3 | domain-designer | `domain_model_plan.md` | `domain_model.md` |
-| Step 4 | logical-designer（横断） | `logical_design_plan.md` | `logical_design.md` |
-| Step 5 | scenario-test-designer | → Phase 3で実行 | - |
-| Step 5 | it-test-designer | `it_test_design_plan.md` | `it_test_design.md` |
-| Step 5 | unit-test-designer | `unit_test_design_plan.md` | `unit_test_design.md` |
-| - | test-coverage-checker | `test_coverage_plan.md` | `coverage_report.md` |
-| Step 6 | unit-test-logic-designer | `unit_test_logic_plan.md` | `unit_test_logic.md` |
-| Step 6 | it-test-logic-designer | `it_test_logic_plan.md` | `it_test_logic.md` |
+**対象**: `scripts/harness/__tests__/(unit|integration)/**/*.test.ts`
 
-### Phase 3: ストーリー実装（US単位）/ issue 修正
-
-個別ストーリーの設計・テスト・実装。計画・成果物は`inception/{unit}/{US-XXX}/`に配置。
-issue の場合は `inception/{unit}/issues/{ISSUE-XXX}/` に配置し、原因フェーズから下位に向けて同様のドキュメントを作成する。
-
-| Step | スキル | 計画（inception/{unit}/{US-XXX}/） | 成果物配置先 |
-|------|--------|-----------------------------------|-------------|
-| Step 4 | logical-designer（固有） | `logical_design_plan.md` | `logical_design.md`（同ディレクトリ） |
-| Step 5 | scenario-test-designer | `scenario_test_plan.md` | `scenario_test_design.md`（同ディレクトリ） |
-| Step 6 | scenario-test-logic-designer | `scenario_test_logic_plan.md` | `scenario_test_logic.md`（同ディレクトリ） |
-| Step 7 | uiux-designer | `uiux_design_plan.md` | `product/construction/{unit}/uiux_design.md`（※累積更新） |
-| Step 8 | story-implementor | `tdd_implementation_plan.md` | コード（TDD実装） |
-| 実装完了後 | - | - | `product/construction/{unit}/` の各ドキュメントを更新 |
-
-> **uiux_design.mdについて**: 計画はストーリー単位（`inception/{unit}/{US-XXX}/`）に作成するが、
-> 成果物は`product/construction/{unit}/uiux_design.md`にUnit全体で1ファイルとして累積更新する。
-> これはUI/UXの全体一貫性を保つためで、他のproduct/construction配下のドキュメントと同じルールに従う。
-
-### 横断的な計画
-
-複数Unitにまたがる計画は `inception/_shared/` に作成する。
-
-### 運用関連
-
-デプロイ、IaC、運用手順は `inception/_operation/` に作成する。
+- product 側の `unit_test_design.md` / `it_test_design.md` に該当 WI の反映があること
+- テストファイルの `@work-item-id` から traceability-model が WI → test カバレッジを算出
 
 ---
 
-## ファイル命名規則
+## 7. State Machine（WI のステータス遷移）
 
-| 種別 | 命名パターン | 例 |
-|-----|------------|---|
-| issue記述 | `issue_description.md` | - |
-| 計画 | `*_plan.md` | `domain_model_plan.md` |
+```
+DRAFTED       inception の必要成果物が type に応じて揃っている
+  ↓ (Phase 0 / Phase 2 reflection)
+REFLECTED     affects 全 Unit の product に @work-item-id 反映済み
+  ↓ (Phase 3 implementation)
+IMPLEMENTED   scripts/harness 配下に対応実装が存在し lint/type/test green
+  ↓ (Phase 4 test)
+TESTED        @work-item-id 付きテストが存在し green
+```
+
+- `type: chore` は DRAFTED で完結（product 反映不要、PR trailer のみ）
+- `type: fix` は DRAFTED → REFLECTED（@work-item-id の product 追記）→ IMPLEMENTED の簡略パス
+- `type: story | issue | refactor` はフル状態遷移
+
+`status` フィールドは PhaseGate が自動更新します（手動で書き換える必要はありません）。
+
+---
+
+## 8. WI ID 採番ルール
+
+`migrate work-items --apply` および新規 WI 起票時の採番:
+
+- 既存 WI 番号は予約（重複しない）
+- 空き番号の **若い順**で sequential allocation
+- legacy ID（`ISSUE-XXX` / `US-XXX` / `H{NN}-{NN}`）が存在する場合、frontmatter の `legacy_id` に保持
+
+詳細は [CLI Reference — Work Item Migration](./guide/cli-reference.md#work-item-migration) を参照。
+
+---
+
+## 9. ファイル命名規則
+
+| 種別 | パターン | 例 |
+|---|---|---|
+| WI 記述 | `description.md` | `_cross/WI-026/description.md` |
+| 計画 | `*_plan.md` | `domain_model_plan.md`（inception のみ） |
 | ドメインモデル | `domain_model.md` | - |
 | 論理設計 | `logical_design.md` | - |
-| UI/UX設計 | `uiux_design.md` | - |
+| UI/UX 設計 | `uiux_design.md` | Unit 全体で 1 ファイル |
 | シナリオテスト設計 | `scenario_test_design.md` | - |
-| ITテスト設計 | `it_test_design.md` | - |
+| IT テスト設計 | `it_test_design.md` | - |
 | ユニットテスト設計 | `unit_test_design.md` | - |
 | テストロジック設計 | `*_test_logic.md` | `unit_test_logic.md` |
 | カバレッジレポート | `coverage_report.md` | - |
-| Unit定義 | `{unit_name}_unit.md` | `withholding_tax_unit.md` |
+| Unit 定義 | `{unit}.md` | `withholding_tax.md` |
 | 統合契約 | `integration_contract.md` | - |
 
 ---
 
+## 10. アンチパターン
+
+| NG | 理由 |
+|---|---|
+| `product/construction/{unit}/WI-XXX/` を作る | product は累積更新の正本。WI ディレクトリは inception のみ |
+| inception/{unit}/issues/ を新規作成する | v0.104.0 で廃止。`{unit}/{WI-XXX}/` を使う |
+| inception/{unit}/{US-XXX}/ を新規作成する | 旧形式。`migrate work-items` で `WI-XXX` に移行 |
+| product 文書に `@story-id US-XXX` を **新規記述**する | 新規は `@work-item-id WI-XXX` を使う（legacy は読み取り互換のみ） |
+| frontmatter の `status` を手動編集する | PhaseGate が自動更新する。手動上書きは状態機械を壊す |
+| `_cross/{WI-XXX}/` の `affects` を省略する | cross-unit WI は必須。省略するとどの Unit の reflection check も発火しない |
+
+---
+
 ## 関連ドキュメント
+
 - [アーキテクチャ哲学](./principles/architecture-philosophy.md)
 - [テストルール](./principles/testing-rules.md)
+- [CLI Reference — Work Item Migration](./guide/cli-reference.md#work-item-migration)
+- [Configuration — storyReflection / WI gate](./guide/configuration.md)
+- [Layer Model](./guide/layer-model.md)
+- WI 仕様の出典: [`docs/inception/_cross/WI-026/description.md`](./inception/_cross/WI-026/description.md)

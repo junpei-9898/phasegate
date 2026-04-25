@@ -81,8 +81,18 @@ claude
 - `skills/` — 28 の AIDLC スキル一式
 - `.claude/skills/` ・ `.codex/skills/` — agent 向けの skill symlink
 - `.claude/settings.json` — PreToolUse / PostToolUse / Stop hook
-- `docs/principles/` ・ `docs/folder_management_rules.md` — 設計原則 docs
+- `.codex/hooks.json` — Codex CLI hooks 設定（`--agent codex|both` 時）
+- `docs/principles/*.md` — アーキテクチャ哲学・テスト規約（immutable）
+- `docs/folder_management_rules.md` — ドキュメント配置ルール（**正本**）
 - `--with-husky` を付けると `.husky/pre-commit` ・ `.husky/commit-msg` も配置
+
+**`init` が生成しないもの**（後で skill が作る）:
+
+- `docs/inception/` 配下の WI directory — `/product-architect` 以降のスキル実行で生成
+- `docs/product/` 配下の確定設計文書 — `/domain-designer` `/logical-designer` 等が生成
+- `docs/ADR/` — `/skill-creator` や手動で必要に応じて作成
+
+「設計してから書け」を強制する仕組みなので、設計文書はユーザーがスキル経由で作るのが既定動作です。
 
 ### Codex CLI を使う場合
 
@@ -176,21 +186,43 @@ AIDLC (AI-Driven Development Life Cycle) は **要求定義 → 設計 → テ�
 
 ## メタデータ規約
 
-ソースファイル先頭に `@unit` / `@layer` を、テストには `@story` を記載します。L1 はこれを使ってレイヤー違反検出と drift-detection を行います。
+ソースファイル先頭に `@unit` / `@layer` を、テストには `@story` または `@work-item-id` を記載します。L1 / L2 はこれを使ってレイヤー違反検出・drift-detection・WI トレーサビリティを行います。
 
 ```typescript
 // @unit config-foundation
 // @layer domain
-// @story US-001          ← テストファイルのみ
+// @work-item-id WI-042   ← 任意（traceability に貢献）
+// @story US-001          ← テストファイルのみ（legacy 互換）
 
 export class ConfigSchema { ... }
 ```
 
-| タグ | 値 |
-|---|---|
-| `@unit` | `/unit-designer` が定義した Unit 名（例: `config-foundation`） |
-| `@layer` | `architecture.preset` で定義した層名（例: `domain` / `application` / `infrastructure` / `presentation`） |
-| `@story` | 検証する US の ID（例: `US-001`） |
+| タグ | 値 | 必須性 |
+|---|---|---|
+| `@unit` | `/unit-designer` が定義した Unit 名（例: `config-foundation`） | **必須**（L1-001 が検証） |
+| `@layer` | `architecture.preset` で定義した層名（例: `domain` / `application` / `infrastructure` / `presentation`） | **必須**（L1-002 が検証） |
+| `@work-item-id` | このファイル変更を駆動した WI（例: `WI-042`） | 任意 |
+| `@story` | 検証する US / WI の ID（例: `US-001`, `H02-04`） | テストでは推奨（legacy 互換） |
+
+### product 文書での反映宣言
+
+product 文書（`docs/product/construction/{unit}/*.md`）の章ごとに、反映元の WI を `@work-item-id` で記載します:
+
+```markdown
+## ポート定義
+
+<!-- @work-item-id WI-042 -->
+### OrderRepository Port
+- findById(id: OrderId): Promise<Order>
+
+<!-- @work-item-id WI-042, WI-051 -->
+### PaymentGateway Port
+- charge(amount: Money): Promise<Receipt>
+```
+
+L2-STORY-REFLECTION バリデータがこのアノテーションを検出し、inception 設計が product に反映されているかを判定します。
+
+> **legacy 互換**: 既存 product 文書の `@story-id US-XXX` / `@story-id H##-##` / `@issue-id ISSUE-XXX` は、WI frontmatter の `legacy_id` 経由で読み替えられます。一括置換は **しません**。新規記述は `@work-item-id WI-XXX` を使ってください。
 
 ---
 
@@ -260,7 +292,7 @@ npx phasegate <command> [options]
 | `phasegate:status` | 全体の健全性サマリ |
 | `phasegate:check-phase --unit <id>` | 指定 Unit の現在フェーズ |
 | `phasegate:detect-drift` | 設計-コード乖離レポート |
-| `migrate work-items --dry-run` / `--apply` | 旧 `ISSUE-XXX` / `H{NN}-{NN}` を `WI-XXX` 統一レイアウトへ移行 |
+| `migrate work-items --dry-run` / `--apply` | 既存リポジトリの旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を WI 統一レイアウト（`_cross/{WI-XXX}/` / `{unit}/{WI-XXX}/`）へ移行。frontmatter（`type` / `severity` / `legacy_id` / `affects`）を自動注入。冪等。`--json` で CI/スクリプト連携可。詳細: [Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
 | `migrate --schema v3` | `phasegate.config.json` を v3 schema へ昇格（`architecture` キー追加） |
 | `ci:generate-template --type <aidlc-gate\|pre-commit\|consistency-check>` | CI/CD テンプレート生成（`--render` でファイル出力） |
 | `list-errors --layer <L0-L4>` | エラー定義一覧 |
@@ -299,21 +331,104 @@ npx phasegate <command> [options]
 
 ---
 
+## ドキュメント・ライフサイクル
+
+Phasegate は **「inception で設計を起こし → product に確定させ → src に実装する」** という単方向のデータフローを物理的に強制します。各段階で生成される文書と PhaseGate の振る舞いが対応しています。
+
+### 三階層モデル
+
+```
+docs/inception/{unit}/{WI-XXX}/   ← 一時的な計画・設計（WI ごと、流動）
+        ↓ 設計成果物の反映（@work-item-id 付きで累積更新）
+docs/product/construction/{unit}/  ← 確定設計（Unit ごとの正本、永続）
+        ↕ フェーズゲート
+scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts
+```
+
+### Work Item (WI) の置き場
+
+WI は規模・影響範囲に応じて 3 通りに振り分けます。
+
+| 配置先 | 用途 |
+|---|---|
+| `docs/inception/_shared/` | 非 WI の横断計画・戦略・調査メモ |
+| `docs/inception/_cross/{WI-XXX}/` | 複数 Unit に影響する cross-cutting WI |
+| `docs/inception/{unit}/{WI-XXX}/` | 単一 Unit が所有する WI |
+
+> **廃止済み**（v0.104.0 で物理削除）: `docs/inception/issues/`, `docs/inception/{unit}/issues/`, `docs/inception/{unit}/{US-XXX}/`。既存資産は `npx phasegate migrate work-items --apply` で `WI-XXX` へ移行済み。`legacy_id` で旧 ID の grep 互換は維持。
+
+### WI frontmatter（必須）
+
+各 WI の `description.md` 先頭に:
+
+```yaml
+---
+id: WI-042
+type: story | issue | fix | refactor | chore   # 後述
+severity: trivial | normal | high
+status: drafted | reflected | implemented | tested   # PhaseGate が自動更新
+affects: [unit-a, unit-b]                            # cross-unit のみ列挙
+legacy_id: ISSUE-XXX | US-XXX | H{NN}-{NN}          # 任意
+---
+```
+
+L2 metadata validator が frontmatter の妥当性を検証します。
+
+### type による要求成果物の段階化
+
+| `type` | inception 必須 | product 反映 | 用途 |
+|---|---|---|---|
+| `story` | description + logical_design + domain_model + test 設計 | 全カテゴリ累積 | 新機能 |
+| `issue` | description + logical_design + domain_model + 関係 test 設計 | 関係カテゴリ累積 | バグ・仕様不整合 |
+| `refactor` | description + logical_design | logical_design 更新 | リファクタ |
+| `fix` | description + PR link | 関係カテゴリに `@work-item-id` 追記 | typo・依存更新等 |
+| `chore` | description.md 1 行 + PR link | 不要 | 雑用 |
+
+`fix` / `chore` は軽量パスとして提供。formal な story で起票するには重すぎる修正もここで証跡が残せます。
+
+### State Machine
+
+```
+DRAFTED (inception 揃う)
+  ↓ Phase 0/2 reflection
+REFLECTED (product に @work-item-id 反映済み)
+  ↓ Phase 3 implementation
+IMPLEMENTED (src 実装あり / lint・type・test green)
+  ↓ Phase 4 test
+TESTED (@work-item-id 付きテストあり / green)
+```
+
+`type: chore` は DRAFTED で完結。`type: fix` は DRAFTED → REFLECTED → IMPLEMENTED の簡略パス。`status` は PhaseGate が自動更新します。
+
+詳細仕様: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
+
+---
+
 ## 導入後のプロジェクト構造
 
 ```
 your-project/
 ├── phasegate.config.json
 ├── docs/
-│   ├── folder_management_rules.md
-│   ├── principles/                # アーキテクチャ哲学・テスト規約
-│   ├── product/construction/{unit}/   # 確定版設計（domain_model.md / logical_design.md）
-│   ├── inception/{unit}/{US-XXX}/     # AIDLC が生成する設計計画
+│   ├── folder_management_rules.md          # WI 仕様の正本（init で配置）
+│   ├── principles/                         # 開発原則（init で配置・immutable）
+│   ├── inception/                          # AIDLC スキルが生成
+│   │   ├── _shared/                        # 横断計画
+│   │   ├── _cross/{WI-XXX}/                # cross-unit WI
+│   │   └── {unit}/{WI-XXX}/                # Unit 所有 WI
+│   ├── product/                            # 確定設計（累積更新）
+│   │   ├── product_overview.md
+│   │   ├── user_stories.md
+│   │   ├── units/{unit}.md
+│   │   └── construction/{unit}/
+│   │       ├── domain_model.md
+│   │       ├── logical_design.md
+│   │       └── ...
 │   └── ADR/
-├── src/                            # 実装コード（@unit/@layer 必須）
+├── src/                                    # 実装コード（@unit/@layer 必須）
 ├── .claude/{settings.json, skills/}
-├── .codex/{hooks.json, skills/}
-└── skills/                         # init で再生成可能
+├── .codex/{hooks.json, skills/}            # --agent codex|both 時
+└── skills/                                 # init で再生成可能
 ```
 
 推奨 `.gitignore`:
