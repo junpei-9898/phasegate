@@ -1,10 +1,12 @@
+![Phasegate header](assets/phasegate-header.png)
+
 # Phasegate
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >= 18](https://img.shields.io/badge/Node.js-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 
-**AI が書いたコードに「設計してから書け」を物理的に強制するツールキット。**
-Claude Code / Codex / Cursor / Copilot — どの AI agent でも同じ防御が効きます。
+**AI agent に「設計してから書け」を hooks / git / CI で強制するツールキット。**
+Claude Code / Codex / Cursor / Copilot — どの AI agent でも設計意図・レイヤー境界・テスト規約を守らせます。
 
 [English README](README.md) ・ [開発者ガイド](DEVELOPMENT.ja.md)
 
@@ -12,7 +14,7 @@ Claude Code / Codex / Cursor / Copilot — どの AI agent でも同じ防御が
 
 ## 30 秒でわかる Phasegate
 
-1. **AI agent が設計文書なしで実装ファイルを書こうとすると、Write/Edit/Bash がブロックされる**（PreToolUse hook）
+1. **AI agent が設計文書なしで実装ファイルを書こうとすると、Write/Edit/Bash または git hook で止まる**
 2. **コミット前に L1〜L3 のバリデーションが自動で走り**、レイヤー違反・テスト品質違反・依存方向違反を弾く
 3. **ブロック時のエラーは AI が読んで自己修正できる形式**（理由・必要な設計文書・次に打つべきスキル名が出る）
 
@@ -24,7 +26,7 @@ Claude Code / Codex / Cursor / Copilot — どの AI agent でも同じ防御が
 
 AI agent は速いが、設計を飛ばして実装に走ります。レイヤー境界を平気で越え、`any` 型で型システムを骨抜きにし、テストはあるけど実装の写経になっている — そんなコードを高速に量産します。レビューで全部捕まえるのは現実的ではありません。
 
-Phasegate はこれを **「人がレビューで防ぐ」のではなく「ツールがファイルシステム/git/CI レベルで防ぐ」** で解決します。設計文書がなければそもそも書けない。レイヤー違反があれば commit が通らない。AI agent 自身が「次にどの設計スキルを呼べばいいか」を読んで自走します。
+Phasegate はこれを **「人がレビューで防ぐ」のではなく「ツールが hooks / git / CI レベルで防ぐ」** で解決します。設計文書がなければ書き込みまたは commit が止まる。レイヤー違反があれば CI が通らない。AI agent 自身が「次にどの設計スキルを呼べばいいか」を読んで自走します。
 
 ### こんなプロジェクトで効きます
 
@@ -51,7 +53,7 @@ AI agent が設計なしに `src/order/order-service.ts` を書こうとする�
   実行例: /story-implementor --unit order
 ```
 
-Claude Code / Codex はこのメッセージを読んで `/story-implementor` を起動し、ドメイン設計→論理設計→TDD 実装の順で進みます。人間が「設計やってからね」と言わなくても自走します。
+Claude Code / Codex はこのメッセージを読んで `/story-implementor` を起動し、ドメイン設計→論理設計→TDD 実装の順で進みます。単に失敗させるのではなく、AI agent が復帰できる形で「次に何を作るべきか」を返します。
 
 ---
 
@@ -101,7 +103,7 @@ npx phasegate init --name my-project --agent codex --with-husky
 codex features enable codex_hooks   # Codex 本体の feature flag を手動で有効化
 ```
 
-両方使う場合は `--agent both`。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。
+両方使う場合は `--agent both`。Codex のネイティブ `apply_patch` は現時点で事前 hook を発火しないため、pre-commit (L2) で commit 時にブロックします。Bash 経由の書き込みは実行前に止まります。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。
 
 ### アップデート
 
@@ -123,6 +125,7 @@ npx phasegate update-skills   # スキルを最新版に再デプロイ
 | **Claude Code / Codex Hooks** | Write/Edit/Bash 時に自動でゲートチェック・lint を実行 |
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
 | **Baseline (retrofit)** | 既存リポジトリ導入時、`baseline` snapshot に登録した既存ファイルは構造的に編集されるまで gate 対象外 |
+| **カスタム gate** | AIDLC 以外のプロジェクトでも schema-first など独自の前提条件を設定できる |
 
 ---
 
@@ -444,9 +447,9 @@ reports/
 
 ---
 
-## ロードマップ
+## 既知の制約とロードマップ
 
-ドキュメントで言及があるが現状 partial 実装または user 配線に依存しているもの。各 Work Item は `docs/inception/_cross/WI-XXX/description.md` に起票済み。
+主要な導入パスはそのまま利用できますが、一部の機能は user 側の配線が必要、または今後の minor release での改善対象です。各 Work Item は `docs/inception/_cross/WI-XXX/description.md` に起票済みです。
 
 | Work Item | 内容 |
 |---|---|
@@ -455,7 +458,7 @@ reports/
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 |
 | **[WI-034](docs/inception/_cross/WI-034/description.md)** | L0 legacy validator (`L0-001` / `L0-002`) の撤去 |
 
-L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成パイプラインも未完成（手動セットアップで利用可）。
+L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。現時点では手動セットアップで利用できます。
 
 ---
 

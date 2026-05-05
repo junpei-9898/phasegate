@@ -1,63 +1,124 @@
+![Phasegate header](assets/phasegate-header.png)
+
 # Phasegate
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js >= 18](https://img.shields.io/badge/Node.js-%3E%3D18-brightgreen.svg)](https://nodejs.org/)
 
-**Phasegate -- AI-agnostic quality defense toolkit.**
+**A toolkit that makes AI agents design before they code.**
 
-Enforces structural integrity between design intent and code, regardless of which AI agent you use.
+Phasegate adds project-local hooks, validators, and agent skills that keep generated code aligned with design intent, layer boundaries, and test discipline across Claude Code, Codex, Cursor, Copilot, and other AI coding agents.
+
+[日本語版](README.ja.md) | [Developer Guide](DEVELOPMENT.md)
+
+---
+
+## Phasegate in 30 Seconds
+
+1. **When an AI agent tries to write implementation code without design docs, Phasegate blocks the write** through agent hooks or git hooks.
+2. **Before commit and CI, validators check layer boundaries, metadata, test quality, security, performance, and traceability.**
+3. **Every failure is returned in an agent-readable format** with the reason, missing artifacts, references, and the next skill or command to run.
+
+Run `npx phasegate init` once and the project gets the guardrails, skills, and configuration needed to make that flow repeatable.
 
 ---
 
 ## Why Phasegate?
 
-AI coding agents are fast but unconstrained. They skip design steps, violate layer boundaries, and produce code that drifts from intent. Phasegate solves this with a portable, agent-independent defense layer that makes it **physically impossible** to implement without design, commit without validation, or merge without traceability.
+AI coding agents are fast, but they do not naturally protect your architecture. They skip design steps, cross layer boundaries, weaken type systems with `any`, and generate tests that mirror implementation instead of proving behavior. Human review cannot reliably catch that at AI speed.
 
-Works with **Claude Code, Codex, Cursor, Copilot**, or any other AI agent.
+Phasegate turns those expectations into enforcement. If the design is missing, the agent is told what to create first. If a change violates the architecture, commit or CI fails. If a design has not been reflected into canonical product docs, implementation is blocked until the trace exists.
+
+### Where it fits
+
+| Good fit | Poor fit |
+|---|---|
+| Medium to large projects where AI agents implement multiple features | Throwaway scripts with no lasting structure |
+| Clean Architecture, DDD, Hexagonal, or layered systems | Codebases where architecture is intentionally ad hoc |
+| Teams that want TDD and test conventions enforced automatically | Projects that do not write automated tests |
+| Products that need design-code drift detection over time | Projects where code is the only source of truth |
 
 ---
 
-## Features
+## What It Looks Like
 
-| Feature | Description |
-|---|---|
-| **5-Layer Defense Model** | L0 through L4 validators from editor time to scheduled audits |
-| **28 AIDLC Skills** | Full coverage from product architecture to story implementation |
-| **Phase Dependency Model** | Blocks implementation when required design documents are missing |
-| **Quick Mode** | Lightweight gate for bugfixes, docs, tests, and config changes |
-| **Claude Code Hooks** | Native PreToolUse / PostToolUse / Stop hook integration |
-| **Codex CLI Hooks** | `PreToolUse(Bash)` / `PostToolUse(Bash)` / `Stop` hook integration (native `apply_patch` falls back to pre-commit) |
-| **HarnessError Format** | Every error includes ADR references and fix examples for AI self-correction |
-| **Configurable Phase Gates** | Define custom gates with `gates[]` in config. Default uses AIDLC phase dependencies |
-| **Protected File Control** | Configure which files are protected from AI writes via `protectedFiles.exclude` |
-| **Bash Write Detection** | Detects and blocks shell-based file writes (`sed -i`, `tee`, `cp`, `mv`, redirects) |
-| **Presets** | minimal, standard, and strict -- choose your quality level |
+When an agent tries to write `src/order/order-service.ts` before the `order` unit has design docs, Phasegate stops it:
+
+```text
+Phase gate violation: src/order/order-service.ts
+Scope: Level 3 (implementation), Unit: order
+Blocked because:
+  - docs/product/construction/order/domain_model.md is missing
+  - docs/product/construction/order/logical_design.md is missing
+Next action: run the /story-implementor skill and start from design.
+Example: /story-implementor --unit order
+```
+
+The point is not just to fail the edit. The error gives the AI agent enough structure to recover: create the missing design, reflect it into product docs, then implement with tests.
 
 ---
 
 ## Quick Start
 
-### 1. Install
+### Requirements
+
+Node.js >= 18, npm >= 9, TypeScript 5.x
+
+### 3 steps
 
 ```bash
+# 1. Install
 npm install --save-dev phasegate
+
+# 2. Initialize the project
+npx phasegate init --name my-project --with-husky
+
+# 3. Start your AI agent and begin with product design
+claude
+> /product-architect
 ```
 
-### 2. Initialize
+`init` creates:
+
+- `phasegate.config.json` as the quality settings source of truth
+- `skills/` with 28 AIDLC skills
+- `.claude/skills` and/or `.codex/skills` links for agent use
+- `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
+- `docs/principles/*.md` and `docs/folder_management_rules.md`
+- `.husky/pre-commit` and `.husky/commit-msg` when `--with-husky` is passed
+
+`init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
+
+### Codex CLI
 
 ```bash
-npx phasegate init --name my-project
+npx phasegate init --name my-project --agent codex --with-husky
+codex features enable codex_hooks
 ```
 
-This deploys 28 skills to `skills/`, creates agent-specific links such as `.claude/skills` or `.codex/skills`, installs design principles docs (`docs/principles/*.md`, `docs/folder_management_rules.md`), and generates `phasegate.config.json`.
+Use `--agent both` for projects that use Claude Code and Codex together. Codex native `apply_patch` currently cannot be intercepted before the edit, so those violations are caught at pre-commit; Bash-based writes are blocked before execution.
 
-**`init` does NOT generate**: `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by AIDLC skills (`/product-architect`, `/domain-designer`, etc.) — that is the whole point of "no design, no code."
+### Update
 
-Optional: add `--with-husky` to also install a `.husky/pre-commit` hook that runs L2 validators.
+```bash
+npm update phasegate
+npx phasegate update-skills
+```
 
-### 3. Start the AIDLC
+---
 
-Launch your AI agent and run the `/product-architect` skill to begin.
+## Core Capabilities
+
+| Capability | What it does |
+|---|---|
+| **Phase gates** | Blocks implementation writes until required design documents exist and have been reflected into product docs |
+| **5-layer validation** | Runs checks from agent runtime and editor time through pre-commit, CI, and scheduled audits |
+| **28 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
+| **Quick Mode** | Keeps bugfixes, docs, test-only changes, and config changes lightweight while preserving traceability |
+| **Claude Code / Codex hooks** | Runs checks around Write/Edit/Bash operations and session boundaries |
+| **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
+| **Retrofit baseline** | Lets existing repositories adopt Phasegate gradually by grandfathering unchanged files |
+| **Configurable gates** | Supports AIDLC defaults or custom gates such as schema-first API development |
 
 ---
 
@@ -102,60 +163,19 @@ Launch your AI agent and run the `/product-architect` skill to begin.
 
 ## 28 Skills
 
-Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**, enforcing phase dependencies so that implementation cannot begin without design.
+Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**: product definition, design, test design, and TDD implementation. Each skill consumes the artifacts from the previous phase.
 
-### Foundation (4)
+**First step**: run `/product-architect` inside Claude Code or Codex.
 
-| Skill | Purpose |
+| Group | Skills |
 |---|---|
-| `/product-architect` | Define product vision, domains, architecture, and constraints |
-| `/story-writer` | Create Who/What/Why user stories with acceptance criteria |
-| `/story-mapper` | Prioritize stories and define MVP scope |
-| `/unit-designer` | Group stories into independently buildable Units |
+| **Foundation (4)** | `/product-architect` `/story-writer` `/story-mapper` `/unit-designer` |
+| **Design (5)** | `/domain-designer` `/logical-designer` `/mock-designer` `/uiux-designer` `/environment-designer` |
+| **Test Engineering (7)** | `/unit-test-designer` `/it-test-designer` `/scenario-test-designer` `/unit-test-logic-designer` `/it-test-logic-designer` `/scenario-test-logic-designer` `/test-coverage-checker` |
+| **Implementation (4)** | `/story-implementor` `/quick-implementor` `/implementation-planner` `/implementation-readiness-checker` |
+| **Verification (8)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-freshness-checker` `/pointer-validator` `/engineering-perspective` `/skill-creator` |
 
-### Design (5)
-
-| Skill | Purpose |
-|---|---|
-| `/domain-designer` | DDD tactical design -- aggregates, entities, value objects, events |
-| `/logical-designer` | Hexagonal architecture design (ports and adapters) |
-| `/mock-designer` | UI mockup design for early validation |
-| `/uiux-designer` | Final UI/UX definition from test cases and logical design |
-| `/environment-designer` | Local dev environment and infrastructure design |
-
-### Test Engineering (7)
-
-| Skill | Purpose |
-|---|---|
-| `/unit-test-designer` | Unit test case design from domain models |
-| `/it-test-designer` | Integration test case design from logical design |
-| `/scenario-test-designer` | E2E scenario test case design |
-| `/unit-test-logic-designer` | Vitest implementation logic with pseudocode |
-| `/it-test-logic-designer` | Integration test Vitest implementation logic |
-| `/scenario-test-logic-designer` | Playwright E2E implementation logic |
-| `/test-coverage-checker` | Coverage verification and Nyquist validation |
-
-### Implementation (4)
-
-| Skill | Purpose |
-|---|---|
-| `/story-implementor` | TDD implementation (Red-Green-Refactor) with atomic commits |
-| `/quick-implementor` | Lightweight implementation for bugfixes, docs, tests, config |
-| `/implementation-planner` | Implementation plan from Unit specs and domain models |
-| `/implementation-readiness-checker` | Pre-implementation readiness verification |
-
-### Verification (8)
-
-| Skill | Purpose |
-|---|---|
-| `/consistency-checker` | Cross-layer consistency check across design documents |
-| `/cascade-updater` | Propagate lower-phase discoveries to upstream design docs |
-| `/codex-delegator` | Delegate tasks to Codex CLI with quality oversight |
-| `/codebase-mapper` | Generate structure map from `@unit`/`@layer` annotations |
-| `/doc-freshness-checker` | Design document staleness detection (L4 extension) |
-| `/pointer-validator` | Validate file path references in design documents |
-| `/engineering-perspective` | Multi-perspective design review (Beck, Fowler, Martin, Evans) |
-| `/skill-creator` | Create or update agent skills |
+Details, prerequisites, and generated artifacts: [Skills Overview](docs/guide/skills-overview.md)
 
 ---
 
@@ -489,9 +509,9 @@ Additional resources:
 
 ---
 
-## Roadmap (Planned but not yet implemented)
+## Known Limits and Roadmap
 
-The following are documented behaviors that are partially implemented or rely on user-side wiring. Each is tracked as a Work Item and will land in a future minor release. Inception docs live under `docs/inception/_cross/WI-XXX/description.md`.
+The main path is ready for project use, but a few documented behaviors still require user-side wiring or are tracked for a future minor release. Each item has a Work Item under `docs/inception/_cross/WI-XXX/description.md`.
 
 | Work Item | Title | Why it matters |
 |---|---|---|
@@ -500,7 +520,7 @@ The following are documented behaviors that are partially implemented or rely on
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | Promote `doc-freshness` / `pointer-validation` to L4 validators | Both capabilities exist as `p2:check-freshness` / `p2:validate-pointers` CLI commands but are not registered as L4 validators, so `validate --layer L4` skips them. WI-033 plumbs them through `validator-system` so they run via the standard L4 path and presets. |
 | **[WI-034](docs/inception/_cross/WI-034/description.md)** | Retire legacy L0 validators (`L0-001` / `L0-002`) | The `fuse-hook-config` / `fuse-mount-status` validator IDs are leftovers from an earlier FUSE-based design. They are disabled by default and have no actual implementation behind them. WI-034 removes them and lets the agent-integration runtime hooks be the sole L0 surface. |
 
-`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is also a known gap; see the L3 section above.
+`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see the L3 guide for the current manual setup.
 
 ---
 
