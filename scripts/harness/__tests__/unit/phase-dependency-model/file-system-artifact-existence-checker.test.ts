@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -113,6 +116,56 @@ target('FileSystemArtifactExistenceChecker.checkAll', () => {
 
         // Assert
         expect(actual.get('docs/units/u1/stories/s1_plan.md')).toBe(true);
+      });
+    });
+
+    // IT-PD-126
+    context('pathRoots 引数でカスタム root を指定する場合', () => {
+      it('カスタム root 配下のファイルを判定対象とする（WI-085）', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(rootDir, 'mydocs/inception/my-unit/H99-01/logical_design.md', '# logical');
+        const artifact = Artifact.create({
+          name: 'story-logical-design',
+          path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md',
+          required: false,
+        });
+        const sut = new FileSystemArtifactExistenceChecker({ rootDir });
+        const pathRoots = {
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        };
+
+        // Act
+        const actual = await sut.checkAll(
+          [artifact],
+          { unitId: 'my-unit', storyId: 'H99-01' },
+          pathRoots,
+        );
+
+        // Assert
+        expect(actual.get('mydocs/inception/my-unit/H99-01/logical_design.md')).toBe(true);
+      });
+    });
+
+    // IT-PD-127
+    context('pathRoots を省略した場合', () => {
+      it('デフォルト docs/inception / docs/product/construction 配下を判定対象とする（WI-085: 後方互換）', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(rootDir, 'docs/inception/_shared/product_overview_plan.md', '# plan');
+        const artifact = Artifact.create({
+          name: 'product-overview-plan',
+          path: '{inceptionDocsRoot}/_shared/product_overview_plan.md',
+          required: true,
+        });
+        const sut = new FileSystemArtifactExistenceChecker({ rootDir });
+
+        // Act
+        const actual = await sut.checkAll([artifact], {});
+
+        // Assert
+        expect(actual.get('docs/inception/_shared/product_overview_plan.md')).toBe(true);
       });
     });
   });

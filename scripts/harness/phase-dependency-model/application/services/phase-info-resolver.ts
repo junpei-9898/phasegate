@@ -7,6 +7,7 @@ import type { PhaseInfoDto } from '../dto/phase-info-dto.js';
 import type { PhaseDependency } from '../../domain/values/phase-dependency.js';
 import type { PhaseNode } from '../../domain/values/phase-node.js';
 import type { PlanEvidence } from '../../domain/values/plan-evidence.js';
+import { DEFAULT_PATH_ROOTS, type PathRoots } from '../../domain/values/artifact.js';
 
 export interface ResolvedPhaseInfo
   extends Omit<PhaseInfoDto, 'unitId' | 'storyId'> {}
@@ -41,6 +42,7 @@ export class PhaseInfoResolver {
     },
     artifactStatuses: ReadonlyMap<string, boolean>,
     planEvidences: ReadonlyMap<string, PlanEvidence>,
+    pathRoots: PathRoots = DEFAULT_PATH_ROOTS,
   ): ResolvedPhaseInfo {
     const incomingDependencies = collectIncomingDependencies(graph.dependencies);
     const completedNodeKeys = new Set<string>();
@@ -108,7 +110,7 @@ export class PhaseInfoResolver {
 
       for (const artifact of node.requiredArtifacts()) {
         if (artifactStatuses.get(artifact.path) !== true) {
-          blockers.push(`成果物が不足しています: ${artifact.path}`);
+          blockers.push(`成果物が不足しています: ${artifact.expandRoots(pathRoots)}`);
         }
       }
 

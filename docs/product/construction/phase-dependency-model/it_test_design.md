@@ -75,6 +75,7 @@ scripts/harness/__tests__/phase-dependency-model/
 - **ファイル名**: kebab-case で統一する
 - **Domain実体はモック禁止**: PhaseStructure、値オブジェクト群は実体を使用する
 - **Portのみモック可**: ArtifactExistenceCheckerPort, PlanDocumentReaderPort, PhaseConfigProviderPort, PhaseAuditLoggerPort は Fake/Stub を使用する
+- **WI-085: pathRoots 流入経路**: `EvidenceBundleAssembler` / `FileSystemArtifactExistenceChecker` / `HarnessConfigPhaseConfigProvider` の各テストで `paths.designDocs` / `paths.inceptionDocs` config 経由の `pathRoots` 取得・流入を検証する
 
 ---
 
@@ -194,10 +195,13 @@ Application サービスは独立テストファイルを持たず、関連UseCa
 | ケースID | カテゴリ | テストケース名 | 検証内容 |
 |---------|---------|-------------|---------|
 | IT-PD-033 | 正常系 | 指定Levelの前提ノード全てに対してartifactStatuses・planEvidencesが収集される | assembleForLevel → 返却Mapのキー数がノード成果物数と一致 |
-| IT-PD-034 | 正常系 | scope指定時にArtifactのプレースホルダが解決された上で存在判定される | unitId/storyId指定 → resolve後のパスで判定 |
+| IT-PD-034 | 正常系 | scope指定時にArtifactのプレースホルダが解決された上で存在判定される | unitId/storyId指定 → resolve後のパスで判定。WI-085: `pathRoots` も `phaseConfigProvider.getPathRoots()` 経由で取得され resolve / checkAll に流入する |
 | IT-PD-035 | 正常系 | PlanningModeがPhaseConfigProviderPortから取得されPlanEvidence判定に使用される | getPlanningMode呼び出し確認 + planningModeMatch反映 |
 | IT-PD-036 | 異常系 | ArtifactExistenceCheckerPort失敗時に例外が伝播される | checkAll例外 → 上位伝播 |
 | IT-PD-037 | 異常系 | PlanDocumentReaderPort失敗時に例外が伝播される | readEvidence例外 → 上位伝播 |
+| IT-PD-123 | 正常系 | カスタム paths 設定時に Artifact.resolve がカスタム root で展開される（WI-085） | `phaseConfigProvider.getPathRoots()` Stub が `{ designDocsRoot: 'mydocs/product', inceptionDocsRoot: 'mydocs/inception' }` を返す → assembleForLevel 後の artifactStatuses キーが `mydocs/...` 系 |
+| IT-PD-124 | 正常系 | デフォルト paths 設定時に従来通り `docs/inception` / `docs/product/construction` で解決される（WI-085: 後方互換） | Stub が default 値を返す → artifactStatuses キーが `docs/inception/...` / `docs/product/construction/...` |
+| IT-PD-125 | 正常系 | `getPathRoots` が `assembleForLevel` 内で 1 回だけ呼ばれる（WI-085） | spy で呼び出し回数 = 1 を assert |
 
 ### 4.2 PhaseInfoResolver
 
@@ -241,9 +245,11 @@ Infrastructure層テストでは実ファイルシステムを使用する。一
 |---------|---------|-------------|---------|
 | IT-PD-046 | 正常系 | 存在するファイルに対してtrueを含むMapを返す | 一時ディレクトリにファイル作成 → checkAll → Map値true |
 | IT-PD-047 | 正常系 | 存在しないファイルに対してfalseを含むMapを返す | ファイル未作成パス → checkAll → Map値false |
-| IT-PD-048 | 正常系 | プレースホルダ解決後のパスで存在判定される | `{unit}` プレースホルダ → scope指定 → 解決済みパスで判定 |
+| IT-PD-048 | 正常系 | プレースホルダ解決後のパスで存在判定される（WI-085: `checkAll(artifacts, scope, pathRoots?)` シグネチャ） | `{unit}` プレースホルダ → scope指定 → 解決済みパスで判定。pathRoots 省略時はデフォルト値（`docs/product/construction` / `docs/inception`）で展開される |
 | IT-PD-049 | 正常系 | required=falseの成果物もMapに含まれる | required=false → Map内に存在確認 |
 | IT-PD-050 | 境界値 | storyId未指定で `{storyId}` プレースホルダを含む成果物はfalseを返す | storyId未指定 → false |
+| IT-PD-126 | 正常系 | pathRoots 引数で指定したカスタム root 配下のファイルを判定対象とする（WI-085） | 一時 `mydocs/inception/{unit}/...` ファイル作成 + pathRoots = `{ designDocsRoot: '...', inceptionDocsRoot: 'mydocs/inception' }` を渡す → checkAll 結果 true |
+| IT-PD-127 | 正常系 | pathRoots 省略時はデフォルト `docs/inception` / `docs/product/construction` 配下を判定対象とする（WI-085: 後方互換） | 一時 `docs/...` ファイル → pathRoots 未指定 → true |
 
 ### 5.2 MarkdownPlanDocumentReader
 
@@ -276,6 +282,9 @@ Infrastructure層テストでは実ファイルシステムを使用する。一
 | IT-PD-062 | 正常系 | phaseDependencies.presetとoverrideからPhaseCustomizationPolicyが正しく変換される | preset=custom, override=true → policy検証 |
 | IT-PD-063 | 正常系 | reporting.outputDirの値が取得できる | config fixture → getReportingOutputDir → パス検証 |
 | IT-PD-064 | 正常系 | quickMode.relaxedGatesはLevel間依存緩和として解釈されない | relaxedGates設定あり → nonRelaxableDependencies不変確認 |
+| IT-PD-128 | 正常系 | `paths.designDocs` / `paths.inceptionDocs` 設定時に `getPathRoots()` がそれを返す（WI-085） | config fixture `paths: { designDocs: 'mydocs/product', inceptionDocs: 'mydocs/inception' }` → `{ designDocsRoot: 'mydocs/product', inceptionDocsRoot: 'mydocs/inception' }` |
+| IT-PD-129 | 正常系 | `paths` 未指定時に `getPathRoots()` がデフォルト値を返す（WI-085: 後方互換） | config fixture に `paths` セクションなし → `{ designDocsRoot: 'docs/product/construction', inceptionDocsRoot: 'docs/inception' }` |
+| IT-PD-130 | 正常系 | `paths.designDocs` のみ指定時、`inceptionDocsRoot` はデフォルトに fallback する（WI-085） | partial fixture → `inceptionDocsRoot: 'docs/inception'` |
 
 ### 5.4 PhaseOverrideAuditLogger
 

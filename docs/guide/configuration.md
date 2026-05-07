@@ -469,3 +469,26 @@ docs/
 ```
 
 If you move your design documents to a non-default location, update `paths` accordingly so that all validators and hooks resolve files correctly.
+
+**How paths flow into the L2 phase-gate validator (since v0.117.0 / WI-085):**
+
+`STANDARD_PHASE_NODES` / `FULL_PHASE_NODES` / `MINIMAL_PHASE_NODES` express artifact locations using two placeholders, expanded at validation time from `paths`:
+
+| Placeholder | Resolved from | Default |
+|---|---|---|
+| `{designDocsRoot}` | `paths.designDocs` | `docs/product/construction` |
+| `{inceptionDocsRoot}` | `paths.inceptionDocs` | `docs/inception` |
+
+Setting `paths.designDocs` to `mydocs/product/construction` makes the L2 phase-gate require `mydocs/product/construction/{unit}/domain_model.md` instead of the default. Default values match the v0.115.0 layout for full backward compatibility.
+
+**Out of scope (paths handled by literal references):**
+
+A handful of Level 1 product-wide artifacts live at `docs/product/` directly (not under `construction/`) and remain literal:
+
+- `docs/product/product_overview.md`
+- `docs/product/user_stories.md`
+- `docs/product/user_story_mapping.md`
+- `docs/product/units/{unit}_unit.md`
+- `docs/product/units/integration_contract.md`
+
+These are not controlled by `paths.designDocs` (which targets the *construction* subtree). If your project moves the entire `docs/product/` tree, override these via `phaseDependencies.preset: "custom"` + `gates[]`.

@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ValidateCustomizationPolicyUseCase } from '../../../phase-dependency-model/application/usecases/validate-customization-policy-usecase.js';
@@ -18,6 +21,10 @@ const createPhaseConfigProvider = (policy: PhaseCustomizationPolicy): PhaseConfi
   getPlanningMode: vi.fn(),
   getReportingOutputDir: vi.fn(),
   getStoryReflectionConfig: vi.fn(),
+  getPathRoots: vi.fn().mockResolvedValue({
+    designDocsRoot: 'docs/product/construction',
+    inceptionDocsRoot: 'docs/inception',
+  }),
 });
 
 target('ValidateCustomizationPolicyUseCase', () => {

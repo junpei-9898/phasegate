@@ -14,7 +14,7 @@
 | UseCase | 10 | 0 | 100% |
 | **総合** | **43** | **0** | **100%** |
 
-前回未カバーだった8項目は、`UT-PD-115〜133` および `IT-PD-088〜102` の追加で解消された。
+前回未カバーだった8項目は、`UT-PD-115〜133` および `IT-PD-088〜102` の追加で解消された。WI-085（ADR-016: phase-gate validator paths config プレースホルダ化）対応として `UT-PD-049/098/099/110/150〜152` の意味更新および `UT-PD-169〜177` / `IT-PD-123〜130` を追加し、Artifact 仕様変更・PhaseConfigProviderPort.getPathRoots・EvidenceBundleAssembler/FileSystemArtifactExistenceChecker の paths 流入経路を網羅。
 
 ### 判定結果
 - ✅ 90%以上: テストロジック設計に進んで問題なし
@@ -65,7 +65,7 @@
 | 値オブジェクト名 | 制約 | 対応テストケース | カバー状態 |
 |------|------|----------------|----------|
 | PhaseLevel | `1/2/3` のみ許可し、Level比較が正しく機能する | UT-PD-036〜046, UT-PD-089〜094 | ✅ カバー |
-| Artifact | `docs/` 配下のみ許可し、`required=true` では未解決プレースホルダを禁止する | UT-PD-047〜053, UT-PD-095〜099, IT-PD-048〜050 | ✅ カバー |
+| Artifact | 任意の相対パスを許可（WI-085: `docs/` 接頭辞撤廃）、許可外プレースホルダ（`{designDocsRoot}` / `{inceptionDocsRoot}` / `{unit}` / `{storyId}` 以外）禁止、`required=true` では未解決プレースホルダを禁止する | UT-PD-047〜053, UT-PD-095〜099, UT-PD-169〜177, IT-PD-048〜050, IT-PD-126〜127 | ✅ カバー |
 | PhaseNode | Level 3のstory scope必須成果物は `{storyId}` を含む | UT-PD-054〜059, UT-PD-127 | ✅ カバー |
 | PhaseDependency | 自己依存禁止、依存種別は `requires/recommends` のみ | UT-PD-060〜064 | ✅ カバー |
 | PhaseDependency | `recommends` はphase-gate失敗要因にしない | UT-PD-128〜129, IT-PD-099〜100 | ✅ カバー |

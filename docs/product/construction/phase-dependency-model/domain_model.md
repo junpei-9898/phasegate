@@ -125,6 +125,7 @@
 | INV-7 | override: trueが適用された場合、監査ペイロードが返される | PhaseCustomizationPolicy適用時 |
 | INV-8 | scope.storyId提供時、Level 3ノードの成果物をresolve(scope)で解決し、解決済みパスの存在をチェック対象とする（コンテキスト依存required） | phase-gate検証時（ISSUE-001追加） |
 | INV-9 | scope.storyId未提供時、Level 3ノードのrequired=false成果物はチェックをスキップする（既存動作維持） | phase-gate検証時（ISSUE-001追加） |
+| INV-10 | 全 Level の成果物 path は `paths.designDocs` / `paths.inceptionDocs` を解決元とする `{designDocsRoot}` / `{inceptionDocsRoot}` プレースホルダで構築され、`Artifact.resolve(scope, pathRoots)` 時に config の値で展開される（pathRoots 省略時は `docs/product/construction` / `docs/inception` のデフォルト値で展開し、後方互換挙動を維持） | phase-gate検証時（WI-085 / ADR-016 追加） |
 
 ### Shared Kernelに対する前提条件
 
@@ -281,6 +282,7 @@ classDiagram
     class PhaseConfigProviderPort {
         <<Port>>
         +getCustomizationPolicy(): PhaseCustomizationPolicy
+        +getPathRoots(): {designDocsRoot, inceptionDocsRoot}
     }
 
     PhaseStructure *-- PhaseLevel

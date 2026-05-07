@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { GetPhaseInfoUseCase } from '../../../phase-dependency-model/application/usecases/get-phase-info-usecase.js';
@@ -71,6 +74,10 @@ target('GetPhaseInfoUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
           artifactExistenceChecker,
@@ -130,6 +137,10 @@ target('GetPhaseInfoUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
           artifactExistenceChecker,

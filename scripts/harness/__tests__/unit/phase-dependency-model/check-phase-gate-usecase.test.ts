@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { CheckPhaseGateUseCase } from '../../../phase-dependency-model/application/usecases/check-phase-gate-usecase.js';
@@ -60,6 +63,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = {
           record: vi.fn(),
@@ -115,6 +122,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -151,6 +162,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -188,6 +203,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -238,6 +257,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = { record: vi.fn() };
         const evidenceBundleAssembler = new EvidenceBundleAssembler({
@@ -277,6 +300,10 @@ target('CheckPhaseGateUseCase', () => {
           getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const auditLogger: PhaseAuditLoggerPort = {
           record: vi.fn(),

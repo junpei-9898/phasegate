@@ -6,6 +6,7 @@
 import type { ArtifactExistenceCheckerPort } from '../../domain/ports/artifact-existence-checker-port.js';
 import type { PhaseConfigProviderPort } from '../../domain/ports/phase-config-provider-port.js';
 import type { PlanDocumentReaderPort } from '../../domain/ports/plan-document-reader-port.js';
+import type { PathRoots } from '../../domain/values/artifact.js';
 import { PhaseLevel } from '../../domain/values/phase-level.js';
 import type { PhaseNode } from '../../domain/values/phase-node.js';
 import type { PlanEvidence } from '../../domain/values/plan-evidence.js';
@@ -21,6 +22,7 @@ export interface EvidenceBundle {
   readonly artifactStatuses: ReadonlyMap<string, boolean>;
   readonly planEvidences: ReadonlyMap<string, PlanEvidence>;
   readonly planningMode: PlanningMode;
+  readonly pathRoots: PathRoots;
 }
 
 export class EvidenceBundleAssembler {
@@ -40,13 +42,21 @@ export class EvidenceBundleAssembler {
     scope: { unitId?: string; storyId?: string },
   ): Promise<EvidenceBundle> {
     const planningMode = await this.phaseConfigProvider.getPlanningMode(scope);
+    const pathRoots = await this.phaseConfigProvider.getPathRoots();
     const artifacts = nodes.flatMap((node) => node.artifacts);
-    const resolvedStatuses = await this.artifactExistenceChecker.checkAll(artifacts, scope);
+    const resolvedStatuses = await this.artifactExistenceChecker.checkAll(
+      artifacts,
+      scope,
+      pathRoots,
+    );
     const artifactStatuses = new Map<string, boolean>();
 
     for (const artifact of artifacts) {
       try {
-        artifactStatuses.set(artifact.path, resolvedStatuses.get(artifact.resolve(scope)) ?? false);
+        artifactStatuses.set(
+          artifact.path,
+          resolvedStatuses.get(artifact.resolve(scope, pathRoots)) ?? false,
+        );
       } catch {
         artifactStatuses.set(artifact.path, false);
       }
@@ -66,6 +76,7 @@ export class EvidenceBundleAssembler {
       artifactStatuses,
       planEvidences,
       planningMode,
+      pathRoots,
     };
   }
 }

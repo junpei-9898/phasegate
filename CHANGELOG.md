@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.117.0] - 2026-05-07
+
+### Fixed
+
+- **WI-085: phase-gate validator (L2-001) が `paths.designDocs` / `paths.inceptionDocs` 設定を尊重しない問題を修正** — 外部レポーター nakataj-mti が GitHub Issue [#1](https://github.com/junpei-9898/phasegate/issues/1) で報告。`paths.designDocs` を `mydocs/...` などのデフォルト外パスに変更しても、L2-001 が要求する成果物パスは `docs/inception/...` / `docs/product/...` のままになる挙動を修正した。`docs/guide/configuration.md` の「`paths` を変えれば全 validator / hook が解決する」記述と実装の齟齬を解消。
+  - **新プレースホルダ**: `Artifact.path` で `{designDocsRoot}` / `{inceptionDocsRoot}` を許可。`Artifact.resolve(scope, pathRoots?)` が `paths.designDocs` / `paths.inceptionDocs` の値（未指定時はデフォルト `docs/product/construction` / `docs/inception`）でこれらを展開するよう拡張（[ADR-016](docs/ADR/ADR-016-paths-config-placeholder.md)）。
+  - **`docs/` 接頭辞バリデーション撤廃**: `Artifact.create()` の `path` が `docs/` 始まりでなければ `InvalidArtifactPathError` を投げる挙動を削除。プレースホルダ展開後の任意 root（`mydocs/...` 等）を許容するため。許可外プレースホルダの拒否は維持。
+  - **新ポートメソッド**: `PhaseConfigProviderPort.getPathRoots(): Promise<{ designDocsRoot, inceptionDocsRoot }>` を追加。`HarnessConfigPhaseConfigProvider` が `paths.designDocs` / `paths.inceptionDocs` 設定を読み（末尾スラッシュは trim）、未指定時はデフォルト値を返す。
+  - **流入経路**: `EvidenceBundleAssembler.assembleForLevel` 内で `getPathRoots()` を 1 回呼び、結果を `Artifact.resolve(scope, pathRoots)` および `ArtifactExistenceCheckerPort.checkAll(artifacts, scope, pathRoots)` に渡す。`PhaseInfoResolver.resolve(..., pathRoots?)` でブロッカー表示時にも root プレースホルダを実値に展開。
+  - **phase-nodes リテラル置換**: `STANDARD_PHASE_NODES` / `FULL_PHASE_NODES` / `MINIMAL_PHASE_NODES` の path リテラル `'docs/inception/...'` / `'docs/product/construction/...'` を `'{inceptionDocsRoot}/...'` / `'{designDocsRoot}/...'` に置換。
+  - **後方互換**: `paths` 未指定または既定値の場合、要求パスは v0.116.0 以前と完全同一。
+  - **スコープ外（Q1 (α) 採用）**: `docs/product/product_overview.md` / `docs/product/user_stories.md` / `docs/product/units/{unit}_unit.md` 等、`docs/product/` 直下の Level 1 product-wide 成果物はリテラル維持。`paths.designDocs`（= `docs/product/construction`）は construction subtree のみを管理する。
+  - **テスト追加**: ユニット 9 ケース（UT-PD-169〜177）と既存 5 ケースの意味反転 / シグネチャ拡張、IT 8 ケース（IT-PD-123〜130）を追加。`unit_test_design.md` / `it_test_design.md` / `coverage_report.md` 同期更新。
+  - **ドキュメント整合**: `docs/guide/configuration.md` §「Paths and the AIDLC Document Structure」に新プレースホルダ仕様と非 construction パスの取り扱いを明記。
+
 ## [0.116.0] - 2026-05-07
 
 ### Security

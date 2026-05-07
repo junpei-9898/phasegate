@@ -12,6 +12,7 @@ import {
 import { CustomRule } from '../../domain/values/custom-rule.js';
 import { StoryReflectionConfig } from '../../domain/values/story-reflection-config.js';
 import { StoryReflectionMapping } from '../../domain/values/story-reflection-mapping.js';
+import { DEFAULT_PATH_ROOTS, type PathRoots } from '../../domain/values/artifact.js';
 import { FULL_STORY_REFLECTION_DEFAULTS } from '../../domain/definitions/full-story-reflection-defaults.js';
 import { STANDARD_STORY_REFLECTION_DEFAULTS } from '../../domain/definitions/standard-story-reflection-defaults.js';
 import { MINIMAL_STORY_REFLECTION_DEFAULTS } from '../../domain/definitions/minimal-story-reflection-defaults.js';
@@ -54,7 +55,13 @@ export interface PhaseConfigSection {
   };
   readonly storyReflection?: StoryReflectionSectionInput;
   readonly reportingOutputDir?: string;
+  readonly paths?: {
+    readonly designDocs?: string;
+    readonly inceptionDocs?: string;
+  };
 }
+
+const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, '');
 
 /**
  * プリセットごとの storyReflection デフォルト定義。
@@ -133,6 +140,17 @@ export class HarnessConfigPhaseConfigProvider
 
   async getReportingOutputDir(): Promise<string> {
     return this.config.reportingOutputDir ?? this.defaultOutputDir;
+  }
+
+  async getPathRoots(): Promise<PathRoots> {
+    const paths = this.config.paths;
+    const designDocsRoot = paths?.designDocs
+      ? trimTrailingSlash(paths.designDocs)
+      : DEFAULT_PATH_ROOTS.designDocsRoot;
+    const inceptionDocsRoot = paths?.inceptionDocs
+      ? trimTrailingSlash(paths.inceptionDocs)
+      : DEFAULT_PATH_ROOTS.inceptionDocsRoot;
+    return { designDocsRoot, inceptionDocsRoot };
   }
 
   async getStoryReflectionConfig(): Promise<StoryReflectionConfig> {

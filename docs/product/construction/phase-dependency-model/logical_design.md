@@ -333,23 +333,25 @@ scripts/harness/
 | 属性 | 型 | 説明 |
 |------|-----|------|
 | name | string | 論理名 |
-| path | string | プロジェクト相対パス。`{unit}` / `{storyId}` プレースホルダを許可 |
+| path | string | プロジェクト相対パス。`{designDocsRoot}` / `{inceptionDocsRoot}` / `{unit}` / `{storyId}` プレースホルダを許可（WI-085） |
 | required | boolean | `true` の場合のみ phase-gate 失敗要因になる |
 
 **生成ルール**:
 
-- `path` は `docs/` で始まるプロジェクト相対パスのみ許可
 - 空文字は `InvalidArtifactPathError`
+- 許可されたプレースホルダ以外を含む場合は `InvalidArtifactPathError`
+- ~~`path` は `docs/` で始まるプロジェクト相対パスのみ許可~~（WI-085 / ADR-016 で撤廃。`{designDocsRoot}` / `{inceptionDocsRoot}` のデフォルト値が `docs/...` 配下のため、デフォルト挙動は不変）
 
 **メソッド**:
 
 - `isPlanArtifact(): boolean`
-- `resolve(scope: { unitId?: string; storyId?: string }): string`
+- `resolve(scope: { unitId?: string; storyId?: string }, pathRoots?: { designDocsRoot: string; inceptionDocsRoot: string }): string`（WI-085: `pathRoots` 引数を追加。省略時はデフォルト値 `docs/product/construction` / `docs/inception` で展開）
 - `equals(other: Artifact): boolean`
 
 **バリデーションルール**:
 
 - `required === true` の成果物は `resolve()` 後に未解決プレースホルダを残してはいけない
+- `{designDocsRoot}` / `{inceptionDocsRoot}` は `pathRoots` 引数または各々のデフォルト値で展開される（WI-085）
 
 #### 2.2.3 PhaseNode
 
@@ -529,7 +531,7 @@ Wave 1ではドメインイベントは導入しない。
 |---------|---------|
 | `InvalidPhaseLevelError` | Levelが `1/2/3` 以外 |
 | `InvalidPlanningModeError` | `interactive/embedded-qa` 以外のモード |
-| `InvalidArtifactPathError` | 成果物パスが空、または `docs/` 配下でない |
+| `InvalidArtifactPathError` | 成果物パスが空、または許可外プレースホルダを含む（WI-085 / ADR-016: `docs/` 接頭辞バリデーションは撤廃） |
 | `InvalidPhaseDependencyError` | 自己依存または不正な依存定義 |
 | `InvalidCustomRuleError` | 未知ノード参照、空の `action`、重複ルール |
 | `NonRelaxableDependencyOverrideError` | Level間依存またはTDD最低保証の削除要求 |
@@ -548,13 +550,14 @@ interface ArtifactExistenceCheckerPort {
   checkAll(
     artifacts: readonly Artifact[],
     scope: { unitId?: string; storyId?: string },
+    pathRoots?: { designDocsRoot: string; inceptionDocsRoot: string }, // WI-085
   ): Promise<ReadonlyMap<string, boolean>>;
 }
 ```
 
 | メソッド | 入力 | 出力 | 目的 |
 |---------|------|------|------|
-| `checkAll` | `artifacts`, `scope` | `artifact.path -> exists` | 成果物ファイルの存在判定 |
+| `checkAll` | `artifacts`, `scope`, `pathRoots?` | `resolvedPath -> exists` | 成果物ファイルの存在判定。返却 Map のキーは `Artifact.resolve(scope, pathRoots)` 後の解決済みパス（WI-085） |
 
 ### 3.2 PlanDocumentReaderPort
 
@@ -579,6 +582,8 @@ interface PhaseConfigProviderPort {
   getPlanningMode(scope: { unitId?: string; storyId?: string }): Promise<PlanningMode>;
   getCustomizationPolicy(): Promise<PhaseCustomizationPolicy>;
   getReportingOutputDir(): Promise<string>;
+  getStoryReflectionConfig(): Promise<StoryReflectionConfig>;
+  getPathRoots(): Promise<{ designDocsRoot: string; inceptionDocsRoot: string }>; // WI-085
 }
 ```
 
@@ -587,6 +592,8 @@ interface PhaseConfigProviderPort {
 | `getPlanningMode` | `scope` | `PlanningMode` | default/perPhase を解決した正規モード取得 |
 | `getCustomizationPolicy` | なし | `PhaseCustomizationPolicy` | `phaseDependencies` の意味論付き取得 |
 | `getReportingOutputDir` | なし | `string` | 監査ログ出力先の取得 |
+| `getStoryReflectionConfig` | なし | `StoryReflectionConfig` | story reflection 設定取得 |
+| `getPathRoots` | なし | `{ designDocsRoot, inceptionDocsRoot }` | `paths.designDocs` / `paths.inceptionDocs` の解決値（未指定時はデフォルト `docs/product/construction` / `docs/inception`）。WI-085 |
 
 ### 3.4 PhaseAuditLoggerPort
 
@@ -625,6 +632,7 @@ interface PhaseAuditLoggerPort {
 **主要メソッド**:
 
 - `assembleForLevel(level: PhaseLevel, nodes: readonly PhaseNode[], scope: { unitId?: string; storyId?: string }): Promise<{ artifactStatuses: ReadonlyMap<string, boolean>; planEvidences: ReadonlyMap<string, PlanEvidence>; planningMode: PlanningMode; }>`
+  - WI-085: 内部で `phaseConfigProvider.getPathRoots()` を呼び、取得した `pathRoots` を `Artifact.resolve(scope, pathRoots)` および `ArtifactExistenceCheckerPort.checkAll(artifacts, scope, pathRoots)` に流す
 
 #### 4.1.2 PhaseInfoResolver
 

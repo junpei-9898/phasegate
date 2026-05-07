@@ -3,9 +3,24 @@
  * @unit phase-dependency-model
  */
 
-const ALLOWED_PLACEHOLDERS = new Set(['unit', 'storyId']);
+const ALLOWED_PLACEHOLDERS = new Set([
+  'unit',
+  'storyId',
+  'designDocsRoot',
+  'inceptionDocsRoot',
+]);
 const PLACEHOLDER_PATTERN = /\{([^}]+)\}/g;
 const UNRESOLVED_PLACEHOLDER_PATTERN = /\{[^}]+\}/;
+
+export interface PathRoots {
+  readonly designDocsRoot: string;
+  readonly inceptionDocsRoot: string;
+}
+
+export const DEFAULT_PATH_ROOTS: PathRoots = Object.freeze({
+  designDocsRoot: 'docs/product/construction',
+  inceptionDocsRoot: 'docs/inception',
+});
 
 export interface ArtifactCreateArgs {
   readonly name: string;
@@ -45,7 +60,7 @@ export class Artifact {
   static create(args: ArtifactCreateArgs): Artifact {
     const normalizedPath = args.path.trim();
 
-    if (normalizedPath.length === 0 || !normalizedPath.startsWith('docs/')) {
+    if (normalizedPath.length === 0) {
       throw new InvalidArtifactPathError(args.path);
     }
 
@@ -66,17 +81,37 @@ export class Artifact {
     return this.path.endsWith('_plan.md');
   }
 
-  resolve(scope: { unitId?: string; storyId?: string }): string {
+  resolve(
+    scope: { unitId?: string; storyId?: string },
+    pathRoots: PathRoots = DEFAULT_PATH_ROOTS,
+  ): string {
     let resolvedPath = this.path;
 
+    resolvedPath = resolvedPath.replaceAll(
+      '{designDocsRoot}',
+      pathRoots.designDocsRoot,
+    );
+    resolvedPath = resolvedPath.replaceAll(
+      '{inceptionDocsRoot}',
+      pathRoots.inceptionDocsRoot,
+    );
     resolvedPath = resolvedPath.replaceAll('{unit}', scope.unitId ?? '{unit}');
-    resolvedPath = resolvedPath.replaceAll('{storyId}', scope.storyId ?? '{storyId}');
+    resolvedPath = resolvedPath.replaceAll(
+      '{storyId}',
+      scope.storyId ?? '{storyId}',
+    );
 
     if (this.required && UNRESOLVED_PLACEHOLDER_PATTERN.test(resolvedPath)) {
       throw new InvalidArtifactPathError(this.path);
     }
 
     return resolvedPath;
+  }
+
+  expandRoots(pathRoots: PathRoots = DEFAULT_PATH_ROOTS): string {
+    return this.path
+      .replaceAll('{designDocsRoot}', pathRoots.designDocsRoot)
+      .replaceAll('{inceptionDocsRoot}', pathRoots.inceptionDocsRoot);
   }
 
   equals(other: Artifact): boolean {

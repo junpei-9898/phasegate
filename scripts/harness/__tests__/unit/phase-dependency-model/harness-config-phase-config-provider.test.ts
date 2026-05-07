@@ -1,5 +1,7 @@
 // @unit phase-dependency-model
 // @layer infrastructure
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -181,6 +183,89 @@ target('HarnessConfigPhaseConfigProvider#getStoryReflectionConfig', () => {
       expect(config.mappings.length).toBe(
         STANDARD_STORY_REFLECTION_DEFAULTS.mappings.length,
       );
+    });
+  });
+});
+
+target('HarnessConfigPhaseConfigProvider#getPathRoots', () => {
+  describe('paths セクションの解決', () => {
+    // IT-PD-128
+    context('paths.designDocs / paths.inceptionDocs を指定した場合', () => {
+      it('指定値をそのまま返す', async () => {
+        // Arrange
+        const provider = buildProvider({
+          paths: {
+            designDocs: 'mydocs/product',
+            inceptionDocs: 'mydocs/inception',
+          },
+        });
+
+        // Act
+        const actual = await provider.getPathRoots();
+
+        // Assert
+        expect(actual).toEqual({
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        });
+      });
+    });
+
+    // IT-PD-129
+    context('paths セクション未指定の場合', () => {
+      it('デフォルト値（docs/product/construction / docs/inception）を返す（後方互換）', async () => {
+        // Arrange
+        const provider = buildProvider({});
+
+        // Act
+        const actual = await provider.getPathRoots();
+
+        // Assert
+        expect(actual).toEqual({
+          designDocsRoot: 'docs/product/construction',
+          inceptionDocsRoot: 'docs/inception',
+        });
+      });
+    });
+
+    // IT-PD-130
+    context('paths.designDocs のみ指定した場合', () => {
+      it('inceptionDocsRoot はデフォルトに fallback する', async () => {
+        // Arrange
+        const provider = buildProvider({
+          paths: { designDocs: 'mydocs/product' },
+        });
+
+        // Act
+        const actual = await provider.getPathRoots();
+
+        // Assert
+        expect(actual).toEqual({
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'docs/inception',
+        });
+      });
+    });
+
+    context('末尾スラッシュ付き設定の場合', () => {
+      it('trim 処理されてスラッシュなし root が返る', async () => {
+        // Arrange
+        const provider = buildProvider({
+          paths: {
+            designDocs: 'mydocs/product/',
+            inceptionDocs: 'mydocs/inception///',
+          },
+        });
+
+        // Act
+        const actual = await provider.getPathRoots();
+
+        // Assert
+        expect(actual).toEqual({
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        });
+      });
     });
   });
 });

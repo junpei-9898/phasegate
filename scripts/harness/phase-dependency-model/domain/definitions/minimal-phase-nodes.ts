@@ -26,7 +26,7 @@ export const MINIMAL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(1, 'product-architect', [
     {
       name: 'product-overview-plan',
-      path: 'docs/inception/_shared/product_overview_plan.md',
+      path: '{inceptionDocsRoot}/_shared/product_overview_plan.md',
       required: true,
     },
     {
@@ -38,12 +38,12 @@ export const MINIMAL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(2, 'logical-designer', [
     {
       name: 'logical-design-plan',
-      path: 'docs/inception/{unit}/logical_design_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/logical_design_plan.md',
       required: true,
     },
     {
       name: 'logical-design',
-      path: 'docs/product/construction/{unit}/logical_design.md',
+      path: '{designDocsRoot}/{unit}/logical_design.md',
       required: true,
     },
   ]),

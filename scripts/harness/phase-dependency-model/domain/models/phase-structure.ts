@@ -10,7 +10,7 @@ import { MINIMAL_PHASE_NODES } from '../definitions/minimal-phase-nodes.js';
 import { STANDARD_PHASE_DEPENDENCIES } from '../definitions/standard-phase-dependencies.js';
 import { STANDARD_PHASE_NODES } from '../definitions/standard-phase-nodes.js';
 import { GateGraph } from '../services/gate-graph.js';
-import { Artifact } from '../values/artifact.js';
+import { Artifact, DEFAULT_PATH_ROOTS, type PathRoots } from '../values/artifact.js';
 import { CustomRule, InvalidCustomRuleError } from '../values/custom-rule.js';
 import { GateDefinition } from '../values/gate-definition.js';
 import { PhaseCustomizationPolicy } from '../values/phase-customization-policy.js';
@@ -76,13 +76,14 @@ const buildNodeIndex = (nodes: readonly PhaseNode[]): ReadonlyMap<string, PhaseN
 const collectMissingArtifactBlockers = (
   nodes: readonly PhaseNode[],
   artifactStatuses: ReadonlyMap<string, boolean>,
+  pathRoots: PathRoots,
 ): readonly string[] => {
   const blockers: string[] = [];
 
   for (const node of nodes) {
     for (const artifact of node.requiredArtifacts()) {
       if (!artifactStatuses.get(artifact.path)) {
-        blockers.push(`成果物が不足しています: ${artifact.path}`);
+        blockers.push(`成果物が不足しています: ${artifact.expandRoots(pathRoots)}`);
       }
     }
   }
@@ -220,6 +221,7 @@ export class PhaseStructure {
       artifactStatuses: ReadonlyMap<string, boolean>;
       planEvidences: ReadonlyMap<string, PlanEvidence>;
       planningMode: PlanningMode;
+      pathRoots?: PathRoots;
     },
     scope?: {
       unitId?: string;
@@ -237,13 +239,14 @@ export class PhaseStructure {
       });
     }
 
+    const pathRoots = evidence.pathRoots ?? DEFAULT_PATH_ROOTS;
     const prerequisiteNodes = [1, 2, 3]
       .map((value) => PhaseLevel.create(value))
       .filter((level) => level.isPrerequisiteOf(targetLevel))
       .flatMap((level) => this.getPhaseNodes(level));
 
     const blockers = [
-      ...collectMissingArtifactBlockers(prerequisiteNodes, evidence.artifactStatuses),
+      ...collectMissingArtifactBlockers(prerequisiteNodes, evidence.artifactStatuses, pathRoots),
     ];
     const completedNodeKeys = new Set<string>();
     const warnings: string[] = [];
@@ -289,7 +292,7 @@ export class PhaseStructure {
         let nodeComplete = true;
         for (const artifact of node.artifacts) {
           // Evidence map may be keyed by unresolved path (artifact.path) or resolved path
-          const resolvedPath = artifact.resolve(scope);
+          const resolvedPath = artifact.resolve(scope, pathRoots);
           const exists = evidence.artifactStatuses.get(artifact.path)
             ?? evidence.artifactStatuses.get(resolvedPath)
             ?? false;

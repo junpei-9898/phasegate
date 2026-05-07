@@ -3,11 +3,12 @@
  * @unit phase-dependency-model
  */
 
-import type { Artifact } from '../values/artifact.js';
+import type { Artifact, PathRoots } from '../values/artifact.js';
 
 export interface ArtifactExistenceCheckerPort {
   checkAll(
     artifacts: readonly Artifact[],
     scope: { unitId?: string; storyId?: string },
+    pathRoots?: PathRoots,
   ): Promise<ReadonlyMap<string, boolean>>;
 }

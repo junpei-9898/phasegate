@@ -6,7 +6,7 @@
 import { access } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { ArtifactExistenceCheckerPort } from '../../domain/ports/artifact-existence-checker-port.js';
-import type { Artifact } from '../../domain/values/artifact.js';
+import type { Artifact, PathRoots } from '../../domain/values/artifact.js';
 
 export interface FileSystemArtifactExistenceCheckerDeps {
   readonly rootDir: string;
@@ -24,13 +24,14 @@ export class FileSystemArtifactExistenceChecker
   async checkAll(
     artifacts: readonly Artifact[],
     scope: { unitId?: string; storyId?: string },
+    pathRoots?: PathRoots,
   ): Promise<ReadonlyMap<string, boolean>> {
     const results = new Map<string, boolean>();
 
     for (const artifact of artifacts) {
       let resolvedPath: string;
       try {
-        resolvedPath = artifact.resolve(scope);
+        resolvedPath = artifact.resolve(scope, pathRoots);
       } catch {
         results.set(artifact.path, false);
         continue;

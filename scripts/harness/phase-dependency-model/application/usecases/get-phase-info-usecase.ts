@@ -48,6 +48,7 @@ export class GetPhaseInfoUseCase {
       graph,
       evidenceBundle.artifactStatuses,
       evidenceBundle.planEvidences,
+      evidenceBundle.pathRoots,
     );
 
     return Object.freeze({

@@ -202,17 +202,20 @@ scripts/harness/__tests__/phase-dependency-model/
 
 ### 4.2 Artifact
 
-> **制約帰属**: pathの`docs/`始まり制約、空文字不可制約、`required === true`の未解決プレースホルダ禁止はいずれもArtifact自身の制約。
+> **制約帰属**: 空文字不可制約、許可外プレースホルダ禁止（WI-085 / ADR-016: 許可は `{designDocsRoot}` / `{inceptionDocsRoot}` / `{unit}` / `{storyId}`）、`required === true`の未解決プレースホルダ禁止はいずれもArtifact自身の制約。`docs/`始まり制約は WI-085 で撤廃した。
 
 | ケースID | target | describe | context | it（期待値） | テストファイル |
 |---------|--------|----------|---------|------------|-------------|
 | UT-PD-047 | `Artifact.create` | Artifactを生成する | pathが"docs/"で始まる有効なパスの場合 | Artifactが正常に生成される | `phase-structure.test.ts` |
 | UT-PD-048 | `Artifact.create` | Artifactを生成する | pathが空文字の場合 | InvalidArtifactPathErrorをスローする | `phase-structure.test.ts` |
-| UT-PD-049 | `Artifact.create` | Artifactを生成する | pathが"docs/"で始まらない場合 | InvalidArtifactPathErrorをスローする | `phase-structure.test.ts` |
+| UT-PD-049 | `Artifact.create` | Artifactを生成する | pathが"docs/"以外で始まる場合（WI-085: 接頭辞バリデーション撤廃） | Artifactが正常に生成される | `phase-structure.test.ts` |
 | UT-PD-050 | `Artifact.create` | Artifactを生成する | required=trueかつpathに未解決プレースホルダが含まれる場合 | InvalidArtifactPathErrorをスローする | `phase-structure.test.ts` |
 | UT-PD-051 | `Artifact.create` | Artifactを生成する | required=falseかつpathに未解決プレースホルダが含まれる場合 | Artifactが正常に生成される（required=falseは許容） | `phase-structure.test.ts` |
 | UT-PD-052 | `Artifact.create` | Artifactを生成する | required=trueかつ有効なパスの場合 | required=trueのArtifactが生成される | `phase-structure.test.ts` |
 | UT-PD-053 | `equals` | 値等価性を判定する | 同一属性のArtifactを比較した場合 | trueを返す | `phase-structure.test.ts` |
+| UT-PD-169 | `Artifact.create` | Artifactを生成する | pathに`{designDocsRoot}`プレースホルダを含む場合（WI-085） | Artifactが正常に生成される | `phase-structure.test.ts` |
+| UT-PD-170 | `Artifact.create` | Artifactを生成する | pathに`{inceptionDocsRoot}`プレースホルダを含む場合（WI-085） | Artifactが正常に生成される | `phase-structure.test.ts` |
+| UT-PD-171 | `Artifact.create` | Artifactを生成する | pathに許可外プレースホルダ（例: `{unknownRoot}`）を含む場合（WI-085） | InvalidArtifactPathErrorをスローする | `phase-structure.test.ts` |
 
 ### 4.3 PhaseNode
 
@@ -322,8 +325,8 @@ scripts/harness/__tests__/phase-dependency-model/
 | UT-PD-095 | `""` | InvalidArtifactPathError | 空文字不可 |
 | UT-PD-096 | `"docs/"` | 正常生成 | 最短の有効パス |
 | UT-PD-097 | `"docs/valid.md"` | 正常生成 | 典型的な有効パス |
-| UT-PD-098 | `"src/invalid.md"` | InvalidArtifactPathError | docs/始まり制約違反 |
-| UT-PD-099 | `"DOCS/upper.md"` | InvalidArtifactPathError | 大文字のdocs/は無効 |
+| UT-PD-098 | `"src/invalid.md"` | 正常生成 | WI-085: `docs/`接頭辞バリデーション撤廃により非`docs/`配下も許容 |
+| UT-PD-099 | `"DOCS/upper.md"` | 正常生成 | WI-085: 同上（任意のリテラル相対パスを許容） |
 
 ### 6.3 CustomRule.action境界値
 
@@ -349,7 +352,7 @@ scripts/harness/__tests__/phase-dependency-model/
 |---------|-------------|---------|----------------|
 | UT-PD-108 | InvalidPhaseLevelError | PhaseLevel生成時に1/2/3以外を指定 | UT-PD-039, UT-PD-040, UT-PD-089〜094 |
 | UT-PD-109 | InvalidPlanningModeError | PlanningMode生成時にinteractive/embedded-qa以外を指定 | UT-PD-067 |
-| UT-PD-110 | InvalidArtifactPathError | Artifact.pathが空文字またはdocs/始まりでない、またはrequired=trueで未解決プレースホルダ | UT-PD-048〜050, UT-PD-095〜099 |
+| UT-PD-110 | InvalidArtifactPathError | Artifact.pathが空文字、または許可外プレースホルダを含む（WI-085: 許可は`{designDocsRoot}` / `{inceptionDocsRoot}` / `{unit}` / `{storyId}`）、またはrequired=trueで未解決プレースホルダ | UT-PD-048, UT-PD-050, UT-PD-095, UT-PD-171 |
 | UT-PD-111 | InvalidPhaseDependencyError | PhaseDependency生成時に自己依存またはtype制約違反 | UT-PD-062, UT-PD-063 |
 | UT-PD-112 | InvalidCustomRuleError | CustomRuleが未知ノード参照またはtargetPhase空文字またはaction空 | UT-PD-004, UT-PD-032, UT-PD-076, UT-PD-077 |
 | UT-PD-113 | NonRelaxableDependencyOverrideError | Level間依存またはTDD最低保証の緩和を試行 | UT-PD-005, UT-PD-026〜028 |
@@ -525,9 +528,15 @@ scripts/harness/__tests__/phase-dependency-model/
 
 | ケースID | target | describe | context | it（期待値） | テストファイル |
 |---------|--------|----------|---------|------------|-------------|
-| UT-PD-150 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'agent-integration', storyId:'H11-05'})を呼び出した場合 | {unitId}が'agent-integration'に、{storyId}が'H11-05'に置換された実パスが返される | `phase-structure.test.ts` |
-| UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合 | docs/inception/phase-dependency-model/H02-01/配下の実パスが返される | `phase-structure.test.ts` |
-| UT-PD-152 | `Artifact.resolve` | scope未提供時のArtifactパス解決を検証する | scopeを省略またはstoryId未指定で呼び出した場合 | プレースホルダが未解決のままのパスが返される | `phase-structure.test.ts` |
+| UT-PD-150 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'agent-integration', storyId:'H11-05'}) を pathRoots 省略で呼び出した場合 | {unit} が 'agent-integration' に、{storyId} が 'H11-05' に置換され、`{designDocsRoot}`/`{inceptionDocsRoot}` はデフォルト値（`docs/product/construction`/`docs/inception`）で展開された実パスが返される（WI-085: 後方互換） | `phase-structure.test.ts` |
+| UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'}) を pathRoots 省略で呼び出した場合 | docs/inception/phase-dependency-model/H02-01/ 配下の実パスが返される（WI-085: 後方互換、デフォルト inceptionDocsRoot で展開） | `phase-structure.test.ts` |
+| UT-PD-152 | `Artifact.resolve` | scope未提供時のArtifactパス解決を検証する | scope を省略または storyId 未指定で呼び出した場合（pathRoots 省略時はデフォルト値で展開） | scope 由来のプレースホルダ（`{unit}` / `{storyId}`）は未解決のまま、`{designDocsRoot}`/`{inceptionDocsRoot}` はデフォルト値で展開されたパスが返される | `phase-structure.test.ts` |
+| UT-PD-172 | `Artifact.resolve` | カスタム pathRoots での `{designDocsRoot}` 展開を検証する（WI-085） | path=`'{designDocsRoot}/{unit}/domain_model.md'`, scope={unitId:'phase-dependency-model'}, pathRoots={designDocsRoot:'mydocs/product', inceptionDocsRoot:'mydocs/inception'} で呼び出した場合 | `'mydocs/product/phase-dependency-model/domain_model.md'` が返される | `phase-structure.test.ts` |
+| UT-PD-173 | `Artifact.resolve` | カスタム pathRoots での `{inceptionDocsRoot}` 展開を検証する（WI-085） | path=`'{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md'`, scope={unitId:'X', storyId:'H02-01'}, pathRoots={designDocsRoot:'mydocs/product', inceptionDocsRoot:'mydocs/inception'} で呼び出した場合 | `'mydocs/inception/X/H02-01/logical_design.md'` が返される | `phase-structure.test.ts` |
+| UT-PD-174 | `Artifact.resolve` | pathRoots 省略時のデフォルト designDocsRoot 展開を検証する（WI-085: 後方互換） | path=`'{designDocsRoot}/{unit}/domain_model.md'`, scope={unitId:'phase-dependency-model'}, pathRoots 省略 | `'docs/product/construction/phase-dependency-model/domain_model.md'` が返される | `phase-structure.test.ts` |
+| UT-PD-175 | `Artifact.resolve` | pathRoots 省略時のデフォルト inceptionDocsRoot 展開を検証する（WI-085: 後方互換） | path=`'{inceptionDocsRoot}/_shared/product_overview_plan.md'`, pathRoots 省略 | `'docs/inception/_shared/product_overview_plan.md'` が返される | `phase-structure.test.ts` |
+| UT-PD-176 | `Artifact.resolve` | root + unit + storyId プレースホルダ混在の展開を検証する（WI-085） | 全種プレースホルダを含むパス + scope + pathRoots を提供した場合 | 全プレースホルダが対応する実値で展開された解決済みパスが返される | `phase-structure.test.ts` |
+| UT-PD-177 | `Artifact.resolve` | required=true で `{unit}` 未提供時の未解決検知を検証する（WI-085） | required=true の Artifact について scope.unitId 未提供で resolve を呼び出した場合 | InvalidArtifactPathError をスローする（既存の未解決プレースホルダ検知挙動） | `phase-structure.test.ts` |
 
 ### 9.6 H02-04 `@work-item-id` アノテーション併存対応
 

@@ -26,7 +26,7 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(1, 'product-architect', [
     {
       name: 'product-overview-plan',
-      path: 'docs/inception/_shared/product_overview_plan.md',
+      path: '{inceptionDocsRoot}/_shared/product_overview_plan.md',
       required: true,
     },
     {
@@ -38,7 +38,7 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(1, 'story-writer', [
     {
       name: 'story-writer-plan',
-      path: 'docs/inception/_shared/story_writer_plan.md',
+      path: '{inceptionDocsRoot}/_shared/story_writer_plan.md',
       required: true,
     },
     {
@@ -50,60 +50,60 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(2, 'domain-designer', [
     {
       name: 'domain-model-plan',
-      path: 'docs/inception/{unit}/domain_model_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/domain_model_plan.md',
       required: true,
     },
     {
       name: 'domain-model',
-      path: 'docs/product/construction/{unit}/domain_model.md',
+      path: '{designDocsRoot}/{unit}/domain_model.md',
       required: true,
     },
   ]),
   createNode(2, 'logical-designer', [
     {
       name: 'logical-design-plan',
-      path: 'docs/inception/{unit}/logical_design_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/logical_design_plan.md',
       required: true,
     },
     {
       name: 'logical-design',
-      path: 'docs/product/construction/{unit}/logical_design.md',
+      path: '{designDocsRoot}/{unit}/logical_design.md',
       required: true,
     },
   ]),
   createNode(3, 'logical-designer', [
     {
       name: 'story-logical-design-plan',
-      path: 'docs/inception/{unit}/{storyId}/logical_design_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design_plan.md',
       required: false,
     },
     {
       name: 'story-logical-design',
-      path: 'docs/inception/{unit}/{storyId}/logical_design.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md',
       required: false,
     },
   ]),
   createNode(3, 'scenario-test-designer', [
     {
       name: 'scenario-test-plan',
-      path: 'docs/inception/{unit}/{storyId}/scenario_test_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/scenario_test_plan.md',
       required: false,
     },
     {
       name: 'scenario-test-design',
-      path: 'docs/inception/{unit}/{storyId}/scenario_test_design.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/scenario_test_design.md',
       required: false,
     },
   ]),
   createNode(3, 'scenario-test-logic-designer', [
     {
       name: 'scenario-test-logic-plan',
-      path: 'docs/inception/{unit}/{storyId}/scenario_test_logic_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/scenario_test_logic_plan.md',
       required: false,
     },
     {
       name: 'scenario-test-logic',
-      path: 'docs/inception/{unit}/{storyId}/scenario_test_logic.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/scenario_test_logic.md',
       required: false,
     },
   ]),
@@ -111,7 +111,7 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
   createNode(3, 'story-implementor', [
     {
       name: 'tdd-implementation-plan',
-      path: 'docs/inception/{unit}/{storyId}/tdd_implementation_plan.md',
+      path: '{inceptionDocsRoot}/{unit}/{storyId}/tdd_implementation_plan.md',
       required: false,
     },
   ]),

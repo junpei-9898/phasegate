@@ -40,5 +40,6 @@ export function toPhaseConfigSection(resolvedConfig: HarnessConfigV2) {
       gates: phaseDependencies.gates ?? [],
     },
     reportingOutputDir: resolvedConfig.reporting.outputDir,
+    paths: resolvedConfig.paths,
   };
 }

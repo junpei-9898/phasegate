@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -1393,7 +1396,7 @@ target('PhaseLevel.equals', () => {
 
 target('Artifact.create', () => {
   describe('Artifactを生成する', () => {
-    // UT-PD-047, UT-PD-051, UT-PD-052, UT-PD-096, UT-PD-097
+    // UT-PD-047, UT-PD-049, UT-PD-051, UT-PD-052, UT-PD-096, UT-PD-097, UT-PD-098, UT-PD-099, UT-PD-169, UT-PD-170
     it.each([
       {
         title: 'pathが"docs/"で始まる有効なパスの場合はArtifactが正常に生成される',
@@ -1415,6 +1418,22 @@ target('Artifact.create', () => {
         title: '"docs/valid.md"を指定した場合は正常生成される',
         input: { name: 'artifact', path: 'docs/valid.md', required: true },
       },
+      {
+        title: 'pathが"docs/"以外で始まる場合も正常生成される（WI-085: 接頭辞バリデーション撤廃）',
+        input: { name: 'artifact', path: 'src/invalid.md', required: true },
+      },
+      {
+        title: '"DOCS/upper.md"を指定した場合も正常生成される（WI-085: 接頭辞バリデーション撤廃）',
+        input: { name: 'artifact', path: 'DOCS/upper.md', required: true },
+      },
+      {
+        title: 'pathに{designDocsRoot}プレースホルダを含む場合は正常生成される（WI-085）',
+        input: { name: 'artifact', path: '{designDocsRoot}/{unit}/domain_model.md', required: true },
+      },
+      {
+        title: 'pathに{inceptionDocsRoot}プレースホルダを含む場合は正常生成される（WI-085）',
+        input: { name: 'artifact', path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md', required: false },
+      },
     ])('$title', ({ input }) => {
       // Arrange
       const props = input;
@@ -1427,31 +1446,19 @@ target('Artifact.create', () => {
       expect(actual.required).toBe(props.required);
     });
 
-    // UT-PD-048, UT-PD-049, UT-PD-050, UT-PD-095, UT-PD-098, UT-PD-099
+    // UT-PD-048, UT-PD-050, UT-PD-095, UT-PD-110, UT-PD-171
     it.each([
       {
         title: 'pathが空文字の場合はInvalidArtifactPathErrorをスローする',
         input: { name: 'artifact', path: '', required: true },
       },
       {
-        title: 'pathが"docs/"で始まらない場合はInvalidArtifactPathErrorをスローする',
-        input: { name: 'artifact', path: 'src/invalid.md', required: true },
-      },
-      {
         title: 'required=trueかつ未知プレースホルダが含まれる場合はInvalidArtifactPathErrorをスローする',
         input: { name: 'artifact', path: 'docs/product/{unknown}/domain_model.md', required: true },
       },
       {
-        title: '空文字を指定した場合はInvalidArtifactPathErrorをスローする',
-        input: { name: 'artifact', path: '', required: true },
-      },
-      {
-        title: '"src/invalid.md"を指定した場合はInvalidArtifactPathErrorをスローする',
-        input: { name: 'artifact', path: 'src/invalid.md', required: true },
-      },
-      {
-        title: '"DOCS/upper.md"を指定した場合はInvalidArtifactPathErrorをスローする',
-        input: { name: 'artifact', path: 'DOCS/upper.md', required: true },
+        title: 'pathに許可外プレースホルダ{unknownRoot}を含む場合はInvalidArtifactPathErrorをスローする（WI-085）',
+        input: { name: 'artifact', path: '{unknownRoot}/foo.md', required: true },
       },
     ])('$title', ({ input }) => {
       // Arrange
@@ -1480,6 +1487,133 @@ target('Artifact.equals', () => {
 
         // Assert
         expect(actual).toBe(true);
+      });
+    });
+  });
+});
+
+target('Artifact.resolve', () => {
+  describe('プレースホルダを実値に展開する', () => {
+    // UT-PD-172
+    context('カスタムpathRootsで{designDocsRoot}を展開する場合', () => {
+      it('pathRoots.designDocsRootの値で置換される（WI-085）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'domain-model',
+          path: '{designDocsRoot}/{unit}/domain_model.md',
+          required: true,
+        });
+        const pathRoots = {
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        };
+
+        // Act
+        const actual = sut.resolve({ unitId: 'phase-dependency-model' }, pathRoots);
+
+        // Assert
+        expect(actual).toBe('mydocs/product/phase-dependency-model/domain_model.md');
+      });
+    });
+
+    // UT-PD-173
+    context('カスタムpathRootsで{inceptionDocsRoot}を展開する場合', () => {
+      it('pathRoots.inceptionDocsRootの値で置換される（WI-085）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'logical-design',
+          path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md',
+          required: false,
+        });
+        const pathRoots = {
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        };
+
+        // Act
+        const actual = sut.resolve({ unitId: 'X', storyId: 'H02-01' }, pathRoots);
+
+        // Assert
+        expect(actual).toBe('mydocs/inception/X/H02-01/logical_design.md');
+      });
+    });
+
+    // UT-PD-174
+    context('pathRoots省略時のデフォルトdesignDocsRoot展開を検証する場合', () => {
+      it('docs/product/construction がデフォルトとして適用される（WI-085: 後方互換）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'domain-model',
+          path: '{designDocsRoot}/{unit}/domain_model.md',
+          required: true,
+        });
+
+        // Act
+        const actual = sut.resolve({ unitId: 'phase-dependency-model' });
+
+        // Assert
+        expect(actual).toBe('docs/product/construction/phase-dependency-model/domain_model.md');
+      });
+    });
+
+    // UT-PD-175
+    context('pathRoots省略時のデフォルトinceptionDocsRoot展開を検証する場合', () => {
+      it('docs/inception がデフォルトとして適用される（WI-085: 後方互換）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'product-overview-plan',
+          path: '{inceptionDocsRoot}/_shared/product_overview_plan.md',
+          required: true,
+        });
+
+        // Act
+        const actual = sut.resolve({});
+
+        // Assert
+        expect(actual).toBe('docs/inception/_shared/product_overview_plan.md');
+      });
+    });
+
+    // UT-PD-176
+    context('rootとscopeのプレースホルダが混在する場合', () => {
+      it('全プレースホルダがそれぞれ対応する実値で展開される（WI-085）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'mixed',
+          path: '{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md',
+          required: false,
+        });
+        const pathRoots = {
+          designDocsRoot: 'custom/design',
+          inceptionDocsRoot: 'custom/inception',
+        };
+
+        // Act
+        const actual = sut.resolve(
+          { unitId: 'agent-integration', storyId: 'H11-05' },
+          pathRoots,
+        );
+
+        // Assert
+        expect(actual).toBe('custom/inception/agent-integration/H11-05/logical_design.md');
+      });
+    });
+
+    // UT-PD-177
+    context('required=trueで{unit}が未提供の場合', () => {
+      it('未解決プレースホルダ検知でInvalidArtifactPathErrorをスローする（WI-085: 既存挙動継承）', () => {
+        // Arrange
+        const sut = Artifact.create({
+          name: 'domain-model',
+          path: '{designDocsRoot}/{unit}/domain_model.md',
+          required: true,
+        });
+
+        // Act
+        const actual = () => sut.resolve({});
+
+        // Assert
+        expect(actual).toThrowError(InvalidArtifactPathError);
       });
     });
   });
@@ -1866,7 +2000,7 @@ target('ドメインエラー網羅性', () => {
   });
 
   describe('createDefault - プリセット対応', () => {
-    it("'full' プリセットは全 15 ノード・17 依存を生成する", () => {
+    it('full プリセットは全 15 ノード・17 依存を生成する', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'full' });
 
@@ -1883,7 +2017,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.effectiveDependencies).toHaveLength(17);
     });
 
-    it("'standard' プリセットは Level 1 に 2 ノード、Level 2 に 2 ノードを持つ", () => {
+    it('standard プリセットは Level 1 に 2 ノード、Level 2 に 2 ノードを持つ', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'standard' });
 
@@ -1895,7 +2029,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.getPhaseNodes(PhaseLevel.create(2))).toHaveLength(2);
     });
 
-    it("'standard' プリセットは Level 3 に 5 ノードを持つ", () => {
+    it('standard プリセットは Level 3 に 5 ノードを持つ', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'standard' });
 
@@ -1906,7 +2040,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.getPhaseNodes(PhaseLevel.create(3))).toHaveLength(5);
     });
 
-    it("'minimal' プリセットは Level 1 に 1 ノード、Level 2 に 1 ノードを持つ", () => {
+    it('minimal プリセットは Level 1 に 1 ノード、Level 2 に 1 ノードを持つ', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'minimal' });
 
@@ -1918,7 +2052,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.getPhaseNodes(PhaseLevel.create(2))).toHaveLength(1);
     });
 
-    it("'minimal' プリセットは Level 3 が空である", () => {
+    it('minimal プリセットは Level 3 が空である', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'minimal' });
 
@@ -1929,7 +2063,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.getPhaseNodes(PhaseLevel.create(3))).toHaveLength(0);
     });
 
-    it("'custom' プリセットは 'full' ベースで生成される", () => {
+    it('custom プリセットは full ベースで生成される', () => {
       // Arrange
       const policy = createPhaseCustomizationPolicy({ preset: 'custom' });
 
@@ -1946,7 +2080,7 @@ target('ドメインエラー網羅性', () => {
       expect(sut.effectiveDependencies).toHaveLength(17);
     });
 
-    it("'standard' の checkPhaseGate が正しく動作する", () => {
+    it('standard の checkPhaseGate が正しく動作する', () => {
       // Arrange
       const sut = createDefaultPhaseStructure({ preset: 'standard' });
       const targetLevel = PhaseLevel.create(3);
@@ -1981,7 +2115,7 @@ target('ドメインエラー網羅性', () => {
       expect(actual.blockers).toHaveLength(0);
     });
 
-    it("'minimal' の checkPhaseGate で Level 1 空通過は自動にならない", () => {
+    it('minimal の checkPhaseGate で Level 1 空通過は自動にならない', () => {
       // Arrange
       const sut = createDefaultPhaseStructure({ preset: 'minimal' });
       const targetLevel = PhaseLevel.create(2);

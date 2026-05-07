@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase-dependency-model
+// @story H02-01
+// @work-item-id WI-085
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { EvidenceBundleAssembler } from '../../../phase-dependency-model/application/services/evidence-bundle-assembler.js';
@@ -47,6 +50,10 @@ target('EvidenceBundleAssembler', () => {
           getCustomizationPolicy: vi.fn(),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const sut = new EvidenceBundleAssembler({
           artifactExistenceChecker,
@@ -63,9 +70,11 @@ target('EvidenceBundleAssembler', () => {
         expect(phaseConfigProvider.getPlanningMode).toHaveBeenCalledWith({
           unitId: 'phase-dependency-model',
         });
-        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith(nodes.flatMap((node) => node.artifacts), {
-          unitId: 'phase-dependency-model',
-        });
+        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith(
+          nodes.flatMap((node) => node.artifacts),
+          { unitId: 'phase-dependency-model' },
+          { designDocsRoot: 'docs/product/construction', inceptionDocsRoot: 'docs/inception' },
+        );
         expect(planDocumentReader.readEvidence).toHaveBeenCalledTimes(nodes.length);
         expect(actual.planningMode.equals(planningMode)).toBe(true);
         expect(actual.artifactStatuses.get(nodes[0].artifacts[0].path)).toBe(true);
@@ -91,6 +100,10 @@ target('EvidenceBundleAssembler', () => {
           getCustomizationPolicy: vi.fn(),
           getReportingOutputDir: vi.fn(),
           getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue({
+            designDocsRoot: 'docs/product/construction',
+            inceptionDocsRoot: 'docs/inception',
+          }),
         };
         const sut = new EvidenceBundleAssembler({
           artifactExistenceChecker,
@@ -105,12 +118,97 @@ target('EvidenceBundleAssembler', () => {
         });
 
         // Assert
-        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith([], {
-          unitId: 'phase-dependency-model',
-          storyId: 'H02-01',
-        });
+        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith(
+          [],
+          { unitId: 'phase-dependency-model', storyId: 'H02-01' },
+          { designDocsRoot: 'docs/product/construction', inceptionDocsRoot: 'docs/inception' },
+        );
         expect(planDocumentReader.readEvidence).not.toHaveBeenCalled();
         expect([...actual.planEvidences.keys()]).toEqual([]);
+      });
+    });
+
+    // IT-PD-123
+    context('カスタム paths 設定時', () => {
+      it('Artifact.resolve がカスタム root で展開される（WI-085）', async () => {
+        // Arrange
+        const structure = PhaseStructure.createDefault(createPolicy());
+        const nodes = structure.getPhaseNodes(PhaseLevel.create(2));
+        const customPathRoots = {
+          designDocsRoot: 'mydocs/product',
+          inceptionDocsRoot: 'mydocs/inception',
+        };
+        const planEvidence = createPlanEvidence();
+        const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
+          checkAll: vi.fn().mockResolvedValue(new Map()),
+        };
+        const planDocumentReader: PlanDocumentReaderPort = {
+          readEvidence: vi.fn().mockResolvedValue(planEvidence),
+        };
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getCustomizationPolicy: vi.fn(),
+          getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
+          getPathRoots: vi.fn().mockResolvedValue(customPathRoots),
+        };
+        const sut = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+
+        // Act
+        const actual = await sut.assembleForLevel(PhaseLevel.create(2), nodes, {
+          unitId: 'phase-dependency-model',
+        });
+
+        // Assert
+        expect(artifactExistenceChecker.checkAll).toHaveBeenCalledWith(
+          expect.any(Array),
+          { unitId: 'phase-dependency-model' },
+          customPathRoots,
+        );
+        expect(actual.pathRoots).toEqual(customPathRoots);
+      });
+    });
+
+    // IT-PD-125
+    context('assembleForLevel 内での getPathRoots 呼び出し回数', () => {
+      it('1 回だけ呼ばれる（WI-085）', async () => {
+        // Arrange
+        const structure = PhaseStructure.createDefault(createPolicy());
+        const nodes = structure.getPhaseNodes(PhaseLevel.create(2));
+        const getPathRootsSpy = vi.fn().mockResolvedValue({
+          designDocsRoot: 'docs/product/construction',
+          inceptionDocsRoot: 'docs/inception',
+        });
+        const artifactExistenceChecker: ArtifactExistenceCheckerPort = {
+          checkAll: vi.fn().mockResolvedValue(new Map()),
+        };
+        const planDocumentReader: PlanDocumentReaderPort = {
+          readEvidence: vi.fn().mockResolvedValue(createPlanEvidence()),
+        };
+        const phaseConfigProvider: PhaseConfigProviderPort = {
+          getPlanningMode: vi.fn().mockResolvedValue(PlanningMode.create('interactive')),
+          getCustomizationPolicy: vi.fn(),
+          getReportingOutputDir: vi.fn(),
+          getStoryReflectionConfig: vi.fn(),
+          getPathRoots: getPathRootsSpy,
+        };
+        const sut = new EvidenceBundleAssembler({
+          artifactExistenceChecker,
+          planDocumentReader,
+          phaseConfigProvider,
+        });
+
+        // Act
+        await sut.assembleForLevel(PhaseLevel.create(2), nodes, {
+          unitId: 'phase-dependency-model',
+        });
+
+        // Assert
+        expect(getPathRootsSpy).toHaveBeenCalledTimes(1);
       });
     });
   });
