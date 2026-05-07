@@ -19,4 +19,9 @@ export interface HandlePreToolUseOutput {
   fullModeRejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
   fullModeDominantCategory?: string;
   nextAction?: string;
+  // Quick Mode が write を許可した際に dominant カテゴリを presentation 層に伝える。
+  // shouldBlock=false のときのみセットされる。WI-087 finding #3。
+  quickModeAllowed?: {
+    dominantCategory?: string;
+  };
 }

@@ -150,6 +150,14 @@ async function main(): Promise<void> {
       process.exit(2);
     }
 
+    // Quick Mode が write を許可した場合に visibility を上げる informational notice。
+    // exit 0 は維持し semantics は変えない。WI-087 finding #3。
+    if (output.quickModeAllowed !== undefined) {
+      const cat = output.quickModeAllowed.dominantCategory;
+      const suffix = cat !== undefined && cat !== '' ? `, category=${cat}` : '';
+      process.stderr.write(`phasegate: write allowed (Quick Mode${suffix})\n`);
+    }
+
     process.exit(0);
   } catch (error) {
     process.stderr.write(`実行エラー: ${String(error)}\n`);

@@ -134,6 +134,7 @@ export class HandlePreToolUseUseCase {
       }
     }
 
+    let quickModeAllowed: HandlePreToolUseOutput["quickModeAllowed"];
     if (
       HandlePreToolUseUseCase.WRITE_TOOLS.has(input.toolName) &&
       this.fullModeRequirementQueryPort !== undefined &&
@@ -157,29 +158,31 @@ export class HandlePreToolUseUseCase {
               unitIdForGuidance,
             );
           }
+        } else {
+          quickModeAllowed = { dominantCategory: fullModeResult.dominantCategory };
         }
       }
     }
 
     const scope = this.resolveStoryReflectionScope(input);
     if (scope === null || this.storyReflectionQueryPort === undefined) {
-      return { shouldBlock: false };
+      return { shouldBlock: false, quickModeAllowed };
     }
 
     if (grandfather.allGrandfathered) {
       this.grandfatherLogger("story-reflection", input.targetFilePaths);
-      return { shouldBlock: false };
+      return { shouldBlock: false, quickModeAllowed };
     }
 
     const unitId = scope.unitId;
     if (unitId === undefined) {
-      return { shouldBlock: false };
+      return { shouldBlock: false, quickModeAllowed };
     }
 
     const reflectionResult = await this.storyReflectionQueryPort.checkReflection(unitId);
 
     if (reflectionResult.skipped || reflectionResult.passed) {
-      return { shouldBlock: false };
+      return { shouldBlock: false, quickModeAllowed };
     }
 
     return HandlePreToolUseUseCase.buildStoryReflectionBlockOutput(

@@ -42,9 +42,27 @@ Add the following to `.claude/settings.json`:
 
 ## Hook Behaviors
 
+### Responsibility Separation (important)
+
+Phasegate's hooks are **strictly partitioned by phase**:
+
+| Hook | What it checks | What it does NOT check |
+|------|----------------|------------------------|
+| **PreToolUse** | Phase Gate, protected files, Quick Mode category gating, story-reflection | L1 lint (`@unit` / `@layer` / `any` abuse) — these are post-write concerns |
+| **PostToolUse** | L1 Biome AST rules, formatter, type-check (via `analyze-errors-hook.sh`) | Phase Gate (already checked before write) |
+| **Stop** | Complete-check (L2-L4 full validation suite) | Per-edit lint (already done by PostToolUse) |
+
+This separation is intentional:
+- **Pre = "should this write happen at all?"** — concerns the caller's intent and design state.
+- **Post = "is what was written valid?"** — concerns the resulting code's quality.
+- **Stop = "is the session ready to end?"** — concerns the cumulative state across the session.
+
+If you expect L1 lint (e.g., missing `@unit` annotation) to **block** a Write before it happens, that is by design **not** the case. The PreToolUse hook intentionally does not run lint, because lint requires the resulting file content (which only exists after the write). Lint violations surface as **PostToolUse** decision JSON (`decision: "block"`) and trigger Claude Code to retry.
+
 ### PreToolUse (before file write)
 - Enforces Phase Gate: blocks writing to source files if required design documents don't exist
 - Blocks writes to protected files (package.json, biome.json, tsconfig.json)
+- Quick Mode: when a write is allowed because the change is classified within `quickMode.allowedCategories`, an informational notice is emitted to stderr (`phasegate: write allowed (Quick Mode, category=<...>)`) — exit code remains 0
 - Returns actionable error messages with:
   - Violation reason
   - Missing artifacts

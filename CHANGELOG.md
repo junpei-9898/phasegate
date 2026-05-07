@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.121.0] - 2026-05-07
+
+### Fixed
+
+- **WI-087 finding #3 + WI-086 docs: PreToolUse の Quick Mode 通過時の visibility 改善 + hook 責務分離をドキュメント化** — 外部レポーター nakataj-mti / junpei-9898 が GitHub Issue [#3](https://github.com/junpei-9898/phasegate/issues/3) finding #3 / [#2](https://github.com/junpei-9898/phasegate/issues/2) で報告した「Quick Mode で write が allow されるとき hook が完全 silent で、初見ユーザーが "hook が走っていない" と誤認する」問題と「pre-tool-use が L1 lint をしないことが暗黙仕様化していてレポーター期待と齟齬している」問題を解消。
+  - **Quick Mode visibility notice** (`scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts`): `HandlePreToolUseOutput.quickModeAllowed` がセットされた場合、stderr に `phasegate: write allowed (Quick Mode, category=<dominantCategory>)` を出力。exit code は 0 維持で **semantics は不変**、可視性のみ向上。
+  - **DTO 拡張** (`scripts/harness/agent-integration/application/dto/handle-pre-tool-use-dto.ts`): `quickModeAllowed?: { dominantCategory?: string }` を追加。`HandlePreToolUseUseCase.execute` 内で `WRITE_TOOLS + fullModeRequirementQueryPort + requiresFullMode=false` の経路で populate。block 経路や WRITE_TOOLS 外 (`Bash` 等) では出力されず、後方互換維持。
+  - **テスト追加** (`scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts`): 4 ケース — `quickModeAllowed` が `dominantCategory` 付きで返る / `dominantCategory` 未設定で返る / `fullModeRequirementQueryPort` 未指定時は出力なし / WRITE_TOOLS 外 (`Bash`) では出力なし。全 49 ケース (前回 45 + 新規 4) グリーン。
+  - **責務分離のドキュメント明文化** (`docs/guide/hooks-integration.md`): "Responsibility Separation" セクションを冒頭に追加し、pre = フェーズゲート / post = lint / Stop = complete-check の役割分担表と「pre-tool-use は意図的に lint を実行しない (lint は書き込み後の content が必要)」旨を明記。WI-086 で指摘された「`pre-tool-use` で違反 Write を exit 2 でブロックしてほしい」期待が現行設計と乖離する理由を ユーザー視点で説明。
+  - **互換性**: 既存テスト全てグリーン（`expect(actual).toEqual({ shouldBlock: false })` 形式の既存 assert は `quickModeAllowed: undefined` を含む結果でも一致）。`HandlePreToolUseOutput` への field 追加は外部 API ではなく application/presentation 内部 DTO のみで、外部消費者なし。
+  - **スコープ外** (Phase C-2 で対応予定): WI-087 finding #4 — Stop hook `--enforce` flag (`agentIntegration.stopHook.enforce` config 追加で Complete Check 失敗時に exit 2 + decision JSON `"deny"` を返す strict mode)。config schema 拡張のため story-implementor で別リリース予定。
+
 ## [0.120.0] - 2026-05-07
 
 ### Fixed

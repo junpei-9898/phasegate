@@ -297,6 +297,19 @@ finding #1（init defaults が単一パッケージ構成固定）+ WI-086 findi
 - 新規 integration test 14 ケース (`scripts/harness/__tests__/integration/setup/init-hook-config-detection.integration.test.ts`) — 全 pass
 - 全 3476 テスト (前回 3462 + 新規 14) グリーン
 
-スコープ外（Phase C で対応予定）:
-- finding #3: Quick Mode 通過時の stderr notice
-- finding #4: Stop hook `--enforce` flag
+### Phase C-1 完了（v0.121.0）— 2026-05-07
+
+finding #3（Quick Mode 通過時の visibility）+ WI-086 docs（hook 責務分離の明文化）を統合修正:
+
+- `scripts/harness/agent-integration/application/dto/handle-pre-tool-use-dto.ts`:
+  - `HandlePreToolUseOutput` に `quickModeAllowed?: { dominantCategory?: string }` フィールド追加
+- `scripts/harness/agent-integration/application/usecases/handle-pre-tool-use-usecase.ts`:
+  - `WRITE_TOOLS + fullModeRequirementQueryPort + requiresFullMode=false` の経路で `quickModeAllowed` を populate
+- `scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts`:
+  - `output.quickModeAllowed` セット時に stderr へ `phasegate: write allowed (Quick Mode, category=<...>)` 出力。exit 0 維持で semantics 不変
+- `docs/guide/hooks-integration.md`:
+  - "Responsibility Separation" セクションを冒頭に追加 — pre / post / Stop の責務分担表と「pre-tool-use は意図的に lint を実行しない (lint は書き込み後の content が必要)」旨を明記。WI-086 reporter 期待との齟齬を ユーザー視点で説明
+- テスト 4 ケース追加 (`handle-pre-tool-use-usecase.test.ts` 内)、全 3480 テスト (前回 3476 + 新規 4) グリーン
+
+スコープ外（Phase C-2 で対応予定）:
+- finding #4: Stop hook `--enforce` flag (config schema 拡張のため story-implementor で別リリース)

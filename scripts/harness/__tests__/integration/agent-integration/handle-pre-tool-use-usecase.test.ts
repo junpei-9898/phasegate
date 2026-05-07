@@ -909,6 +909,119 @@ target('HandlePreToolUseUseCase.execute', () => {
     });
   });
 
+  describe('Quick Mode 通過時の visibility notice (WI-087 finding #3)', () => {
+    context('fullModeRequirementQueryPort が requiresFullMode=false を返すとき', () => {
+      it('shouldBlock=false かつ quickModeAllowed.dominantCategory が出力に含まれること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: false,
+            dominantCategory: 'bugfix',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/some-unit/infrastructure/fix.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(actual.quickModeAllowed).toEqual({ dominantCategory: 'bugfix' });
+      });
+    });
+
+    context('fullModeRequirementQueryPort が dominantCategory なしで requiresFullMode=false を返すとき', () => {
+      it('quickModeAllowed は dominantCategory undefined で出力されること', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({ requiresFullMode: false }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/some-unit/infrastructure/fix.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(actual.quickModeAllowed).toEqual({ dominantCategory: undefined });
+      });
+    });
+
+    context('fullModeRequirementQueryPort が未指定の場合', () => {
+      it('quickModeAllowed は出力されないこと（後方互換）', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Write',
+          targetFilePaths: ['scripts/harness/some-unit/infrastructure/fix.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(actual.quickModeAllowed).toBeUndefined();
+      });
+    });
+
+    context('Bash など WRITE_TOOLS 外の toolName の場合', () => {
+      it('quickModeAllowed は出力されないこと（書き込み判定対象外）', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: false,
+            dominantCategory: 'bugfix',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const input = buildPreToolUseInput({
+          toolName: 'Bash',
+          targetFilePaths: ['scripts/harness/some-unit/infrastructure/fix.ts'],
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(actual.quickModeAllowed).toBeUndefined();
+        expect(mockFullModeRequirementQueryPort.check).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('Baseline Grandfather (ISSUE-007 Wave 2)', () => {
     function grandfatherPort(allGrandfathered: boolean) {
       return {

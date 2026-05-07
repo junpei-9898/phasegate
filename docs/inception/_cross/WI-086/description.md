@@ -241,6 +241,16 @@ WI-087 Phase B との統合対応で finding #1（モノレポ構成で `targetD
 - `phasegate.config.json` テンプレートに `architecture: { preset: "clean" }` を追加し
   schemaVersion = 'v3' で生成 → v2 warning 解消
 
-残スコープ（Phase C で対応予定）:
-- `pre-tool-use` の責務範囲を `docs/guide/agent-integration.md` に明文化
-  （pre = フェーズゲート / post = lint の分離）
+### v0.121.0 — 2026-05-07
+
+WI-087 Phase C-1 との統合対応で「pre-tool-use の責務範囲明文化」を解消:
+
+- `docs/guide/hooks-integration.md` に "Responsibility Separation" セクションを追加し、
+  pre = フェーズゲート / post = lint / Stop = complete-check の責務分担表を明記
+- 「pre-tool-use は意図的に lint を実行しない (lint は書き込み後の content が必要)」旨を
+  ユーザー視点で明文化。レポーター期待「pre で違反 Write を exit 2 でブロックしてほしい」が
+  現行設計と乖離する理由を、責務分離の必然性として説明
+
+これにより、本 issue の主要 4 症状はすべて修正完了 (post-tool-use silent no-op /
+v2 schema warning / モノレポ targetDirs / 責務範囲ドキュメント)。pre-tool-use の
+L1 lint 拡張は別 ADR で検討する方針 (本 issue のスコープ外)。
