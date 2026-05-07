@@ -96,11 +96,11 @@ execSync(`git rev-list --count HEAD -- "${filePath}"`, ...)
 非テストコード `scripts/harness/**/*.ts` を `execSync(\`...${...}\`)` パターンで grep した結果:
 
 - ✅ 本 WI 対象 2 ファイル（`phase2-extensions/.../git-log-document-age-adapter.ts`, `git-log-initial-creation-age-adapter.ts`）
-- ⚠️ **follow-up 候補**: `scripts/harness/skill-quality/infrastructure/adapters/git-commit-executor-adapter.ts:14`
+- ⚠️ **follow-up**: `scripts/harness/skill-quality/infrastructure/adapters/git-commit-executor-adapter.ts:14`
   ```ts
   execSync(`git commit -m ${JSON.stringify(message)}`, { stdio: 'pipe' });
   ```
-  `JSON.stringify` はバッククオート / `$` をエスケープしないため、`message` が外部入力に由来すると `/bin/sh -c` 経由で評価される可能性。`affects: [phase2-extensions]` のスコープ外のため、別 WI として起票推奨。
+  `JSON.stringify` はバッククオート / `$` をエスケープしないため、`message` が外部入力に由来すると `/bin/sh -c` 経由で評価される可能性。`affects: [phase2-extensions]` のスコープ外のため、**WI-036 として起票済み**（`docs/inception/_cross/WI-036/description.md`）。
 
 ### Phase 4: リリース
 

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.115.0] - 2026-05-07
+
+### Documentation
+
+- **WI-036 起票** — WI-035 Phase 3 横展開監査の follow-up として、`scripts/harness/skill-quality/infrastructure/adapters/git-commit-executor-adapter.ts:14` の `execSync(\`git commit -m ${JSON.stringify(message)}\`)` を同種コマンドインジェクション (HIGH) の sink として切り出し、別 WI に分離。`JSON.stringify` がバッククオート / `$` をエスケープしないため、`description` が外部入力に由来すると `/bin/sh -c` 経由で評価され得る点を文書化。修正実装は次回（`execFileSync` 配列引数化 + DI seed 化 + 悪意 description fixture テスト）。
+- WI-035 description.md の Phase 3 監査結果欄を「WI-036 として起票済み」に更新。
+
 ## [0.114.0] - 2026-05-07
 
 ### Security
