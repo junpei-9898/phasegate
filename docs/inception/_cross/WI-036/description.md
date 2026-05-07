@@ -2,7 +2,7 @@
 id: WI-036
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [skill-quality]
 ---
 

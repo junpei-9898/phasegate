@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.116.0] - 2026-05-07
+
+### Security
+
+- **WI-036: skill-quality の git-commit-executor adapter におけるコマンドインジェクション (HIGH) を修正** — WI-035 Phase 3 横展開監査で発見した follow-up。`execSync(\`git commit -m ${JSON.stringify(message)}\`)` を `execFileSync('git', ['commit', '-m', message], ...)` 配列引数形式に置換。`JSON.stringify` がバッククオート / `$` をエスケープせず `/bin/sh -c` 経由で評価される経路を遮断。
+  - `scripts/harness/skill-quality/infrastructure/adapters/git-commit-executor-adapter.ts` を `execFileSync` 化、コンストラクタに `gitExecutor` を DI 可能化（テスタビリティ向上、`CommitExecutorPort.commit()` の外部 signature は不変）。
+  - 悪意ある `description`（バッククオート / `$()` / `;` / `"` / 改行 / `|` 含む）が引数配列にそのまま渡されシェル評価されないことを assert する unit test (`__tests__/unit/skill-quality/git-commit-executor-adapter.test.ts`) を新規追加。
+  - 横展開監査 (再走査): 非テストコード `scripts/harness/**/*.ts` の `execSync(\`...${var}...\`)` パターンが **完全消滅**（WI-035 / WI-036 で網羅完了）。
+- WI-035 / WI-036 の `status` を `drafted` → `implemented` に更新。
+
 ## [0.115.0] - 2026-05-07
 
 ### Documentation
