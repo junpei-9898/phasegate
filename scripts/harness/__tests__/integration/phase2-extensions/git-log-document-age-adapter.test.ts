@@ -1,4 +1,6 @@
 // @layer test
+// @unit phase2-extensions
+// @story HF2-04
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -48,6 +50,28 @@ target('IT-P2-004 GitLogDocumentAgeAdapter', () => {
       const actual = await adapter.getAge('docs/design.md');
       // Assert
       expect(actual.source).toBe('file-mtime');
+    });
+
+    it('WI-035: 悪意あるファイル名は execFileSync の引数配列にそのまま渡され、シェル評価されない', async () => {
+      // Arrange
+      const maliciousPaths = [
+        'docs/foo$(echo PWNED).md',
+        'docs/foo`echo PWNED`.md',
+        'docs/foo;echo PWNED.md',
+        'docs/foo".md',
+        'docs/foo|cat /etc/passwd.md',
+      ];
+      gitLogExecutor.mockReturnValue(Buffer.from('2026-03-10 12:00:00 +0900\n'));
+
+      for (const maliciousPath of maliciousPaths) {
+        // Act
+        await adapter.getAge(maliciousPath);
+
+        // Assert
+        const lastCall = gitLogExecutor.mock.calls.at(-1);
+        expect(lastCall?.[0]).toBe('git');
+        expect(lastCall?.[1]).toEqual(['log', '--format=%ai', '-1', '--', maliciousPath]);
+      }
     });
   });
 });

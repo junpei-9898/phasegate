@@ -2,7 +2,7 @@
  * @layer infrastructure
  * @unit phase2-extensions
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { DocumentAgePort } from '../../domain/ports/document-age-port.js';
@@ -17,20 +17,26 @@ export class GitLogDocumentAgeAdapter implements DocumentAgePort {
   constructor(
     private readonly projectRoot: string,
     private readonly nowProvider: () => Date = () => new Date(),
+    // WI-035: 配列引数で execFileSync を直接呼ぶことでシェル経由のメタ文字評価を遮断する。
     private readonly gitLogExecutor: (
-      command: string,
+      file: string,
+      args: readonly string[],
       options: { cwd: string; stdio?: readonly ['pipe', 'pipe', 'pipe'] },
-    ) => Buffer = execSync,
+    ) => Buffer = execFileSync,
   ) {}
 
   async getAge(documentPath: string): Promise<DocumentAge> {
     try {
-      const output = this.gitLogExecutor(`git log --format=%ai -1 -- "${documentPath}"`, {
-        cwd: this.projectRoot,
-        // ISSUE-005 P1-3: fresh repo では "fatal: your current branch ... does not have
-        // any commits yet" が 34回 stderr に漏れる。pipe に束ねて静音化する。
-        stdio: ['pipe', 'pipe', 'pipe'] as const,
-      })
+      const output = this.gitLogExecutor(
+        'git',
+        ['log', '--format=%ai', '-1', '--', documentPath],
+        {
+          cwd: this.projectRoot,
+          // ISSUE-005 P1-3: fresh repo では "fatal: your current branch ... does not have
+          // any commits yet" が 34回 stderr に漏れる。pipe に束ねて静音化する。
+          stdio: ['pipe', 'pipe', 'pipe'] as const,
+        },
+      )
         .toString()
         .trim();
 

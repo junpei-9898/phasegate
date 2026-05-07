@@ -32,12 +32,12 @@ target('IT-P2-049〜051 GitLogInitialCreationAgeAdapter', () => {
   context('getAge(filePath)', () => {
     it('git log で初回コミット日と回数を取得できる', async () => {
       // Arrange
-      gitExecutor.mockImplementation((command: string) => {
-        if (command.includes('git log')) {
+      gitExecutor.mockImplementation((file: string, args: readonly string[]) => {
+        if (file === 'git' && args[0] === 'log') {
           return Buffer.from('2026-04-10 12:00:00 +0900\n');
         }
 
-        if (command.includes('git rev-list')) {
+        if (file === 'git' && args[0] === 'rev-list') {
           return Buffer.from('2\n');
         }
 
@@ -75,6 +75,44 @@ target('IT-P2-049〜051 GitLogInitialCreationAgeAdapter', () => {
 
       // Act & Assert
       await expect(adapter.getAge('does-not-exist.md')).rejects.toThrow();
+    });
+
+    it('WI-035: 悪意あるファイル名は execFileSync の引数配列にそのまま渡され、シェル評価されない', async () => {
+      // Arrange
+      const maliciousPaths = [
+        'foo$(echo PWNED).md',
+        'foo`echo PWNED`.md',
+        'foo;echo PWNED.md',
+        'foo".md',
+        'foo|cat /etc/passwd.md',
+      ];
+      gitExecutor.mockImplementation((_file: string, args: readonly string[]) => {
+        if (args[0] === 'log') return Buffer.from('2026-04-10 12:00:00 +0900\n');
+        if (args[0] === 'rev-list') return Buffer.from('1\n');
+        return Buffer.from('');
+      });
+
+      for (const maliciousPath of maliciousPaths) {
+        // Act
+        await adapter.getAge(maliciousPath);
+
+        // Assert
+        const calls = gitExecutor.mock.calls;
+        const logCall = calls.find((c) => c[1][0] === 'log' && c[1].includes(maliciousPath));
+        const revListCall = calls.find(
+          (c) => c[1][0] === 'rev-list' && c[1].includes(maliciousPath),
+        );
+        expect(logCall?.[0]).toBe('git');
+        expect(logCall?.[1]).toEqual([
+          'log',
+          '--diff-filter=A',
+          '--format=%ai',
+          '--',
+          maliciousPath,
+        ]);
+        expect(revListCall?.[0]).toBe('git');
+        expect(revListCall?.[1]).toEqual(['rev-list', '--count', 'HEAD', '--', maliciousPath]);
+      }
     });
   });
 });

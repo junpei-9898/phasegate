@@ -2,14 +2,16 @@
  * @layer infrastructure
  * @unit phase2-extensions
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { InitialCreationAgePort } from '../../domain/ports/initial-creation-age-port.js';
 import { InitialCreationAge } from '../../domain/value-objects/initial-creation-age.js';
 
+// WI-035: 配列引数で execFileSync を直接呼ぶことでシェル経由のメタ文字評価を遮断する。
 type GitExecutor = (
-  command: string,
+  file: string,
+  args: readonly string[],
   options: { cwd: string; stdio?: readonly ['pipe', 'pipe', 'pipe'] },
 ) => Buffer;
 
@@ -22,12 +24,12 @@ export class GitLogInitialCreationAgeAdapter implements InitialCreationAgePort {
   constructor(
     private readonly projectRoot: string,
     private readonly nowProvider: () => Date = () => new Date(),
-    private readonly gitExecutor: GitExecutor = execSync,
+    private readonly gitExecutor: GitExecutor = execFileSync,
   ) {}
 
   async getAge(filePath: string): Promise<InitialCreationAge> {
-    const dateOutput = this.runGit(`git log --diff-filter=A --format=%ai -- "${filePath}"`);
-    const countOutput = this.runGit(`git rev-list --count HEAD -- "${filePath}"`);
+    const dateOutput = this.runGit(['log', '--diff-filter=A', '--format=%ai', '--', filePath]);
+    const countOutput = this.runGit(['rev-list', '--count', 'HEAD', '--', filePath]);
 
     if (dateOutput !== null && dateOutput.length > 0) {
       const commitCount = this.parseCount(countOutput);
@@ -42,9 +44,9 @@ export class GitLogInitialCreationAgeAdapter implements InitialCreationAgePort {
     return this.fileMtimeFallback(filePath);
   }
 
-  private runGit(command: string): string | null {
+  private runGit(args: readonly string[]): string | null {
     try {
-      return this.gitExecutor(command, {
+      return this.gitExecutor('git', args, {
         cwd: this.projectRoot,
         // ISSUE-005 P1-3 と同様に、fresh repo の fatal stderr を静音化する。
         stdio: ['pipe', 'pipe', 'pipe'] as const,

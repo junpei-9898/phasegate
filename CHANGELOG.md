@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.114.0] - 2026-05-07
+
+### Security
+
+- **WI-035: phase2-extensions の git-log adapter におけるコマンドインジェクション脆弱性 (HIGH) を修正** — `/security-review` で発見。`execSync` テンプレート文字列に `documentPath` / `filePath` をダブルクオート展開していたため、ファイル名に `$()` / バッククオート / `;` 等のシェルメタ文字を含めると `/bin/sh -c` 経由で任意コードが実行される経路があった（攻撃者は POSIX 許容範囲のファイル名を含む公開リポジトリを 1 つ用意するだけで成立。clone / `gh pr checkout` でローカルに展開された時点で発火し、マージは不要）。
+  - `scripts/harness/phase2-extensions/infrastructure/adapters/git-log-document-age-adapter.ts` の `gitLogExecutor` を `execFileSync` 配列引数形式（`('git', ['log', '--format=%ai', '-1', '--', documentPath], ...)`）に置換。
+  - `scripts/harness/phase2-extensions/infrastructure/adapters/git-log-initial-creation-age-adapter.ts` の `gitExecutor` を同形式に置換（`runGit(args)` の signature も合わせて変更）。
+  - DI ポートの signature を `(command: string) => Buffer` から `(file: string, args: readonly string[], options) => Buffer` に変更。
+  - 悪意あるファイル名（`$()` / バッククオート / `;` / `"` / `|` 含む）でも引数が **配列要素のまま** 渡され、シェルメタ文字として評価されないことを assert する unit test を 2 ファイルに追加。
+  - 横展開監査結果: 同種パターン (`execSync(\`...${var}...\`)`) は他に `scripts/harness/skill-quality/infrastructure/adapters/git-commit-executor-adapter.ts:14` に 1 箇所存在（`JSON.stringify` 経由だが `$` / バッククオートが残存）。本 WI のスコープ (`affects: [phase2-extensions]`) 外のため follow-up WI として WI-035 description に記録。
+
 ## [0.110.0] - 2026-04-25
 
 ### Documentation
