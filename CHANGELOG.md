@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.119.0] - 2026-05-07
+
+### Fixed
+
+- **WI-087 Phase A: `phasegate init` がデプロイする hook スクリプトが macOS 標準 bash 3.2 で silent no-op になる問題を修正** — 外部レポーター nakataj-mti が GitHub Issue [#3](https://github.com/junpei-9898/phasegate/issues/3) で報告。`templates/.claude/scripts/format-typescript-hook.sh` および `analyze-errors-hook.sh` の `mapfile -t TARGET_DIRS < <(jq ...)` が bash 4+ builtin であり、macOS 標準 `/bin/bash` (3.2.57) では `mapfile: command not found` エラーで `TARGET_DIRS` 配列が空になり、後続の `${#TARGET_DIRS[@]} -eq 0` 判定で hook が exit 0 で抜けていた。結果としてユーザーには何も表示されず、format / lint hook が deliberately quiet と誤認される状態だった。
+  - `mapfile -t ARRAY < <(...)` を bash 3.2 互換の `while IFS= read -r line; do ARRAY+=("$line"); done < <(...)` idiom に置換（`format-typescript-hook.sh` 内 2 箇所、`analyze-errors-hook.sh` 内 1 箇所）。
+  - shebang は `#!/bin/bash` を維持（追加インストール不要、既存ユーザーへの影響なし）。
+  - 検証: macOS bash 3.2.57 で `targetDirs` を含む hook-config.json をロード後、対象ディレクトリ下のファイルに対して `format-typescript-hook.sh` が `Formatted: ...` を出力、`analyze-errors-hook.sh` が `{"decision": "approve", ...}` を返すことを確認。
+  - 関連: WI-086（GitHub Issue [#2](https://github.com/junpei-9898/phasegate/issues/2), reporter: junpei-9898）の "post-tool-use がセッション中に呼ばれても通知されない" 症状の主因も同じ `mapfile` であり、本修正で副次的に解消する。
+  - スコープ外（後続フェーズで対応予定）: `phasegate init` の monorepo 自動検出（WI-087 Phase B）、Quick Mode 通過時の stderr notice / Stop hook `--enforce` flag（WI-087 Phase C）、`phasegate init` の formatter 自動検出（WI-087 Phase B）。
+
 ## [0.118.0] - 2026-05-07
 
 ### Fixed

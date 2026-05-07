@@ -17,9 +17,14 @@ FORMATTER="biome"
 FORMATTER_ARGS=()
 
 if [[ -f "$CONFIG_FILE" ]] && command -v jq &> /dev/null; then
-    mapfile -t TARGET_DIRS < <(jq -r '.targetDirs[]' "$CONFIG_FILE" 2>/dev/null)
+    # bash 3.2 (macOS default) has no mapfile; use portable while-read.
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && TARGET_DIRS+=("$line")
+    done < <(jq -r '.targetDirs[]' "$CONFIG_FILE" 2>/dev/null)
     FORMATTER=$(jq -r '.formatter // "biome"' "$CONFIG_FILE" 2>/dev/null)
-    mapfile -t FORMATTER_ARGS < <(jq -r '.formatterArgs[]' "$CONFIG_FILE" 2>/dev/null)
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && FORMATTER_ARGS+=("$line")
+    done < <(jq -r '.formatterArgs[]' "$CONFIG_FILE" 2>/dev/null)
 fi
 
 if [[ ${#TARGET_DIRS[@]} -eq 0 ]]; then
