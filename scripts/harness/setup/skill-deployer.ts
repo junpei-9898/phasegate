@@ -197,15 +197,159 @@ export async function deployAgentSkillLinks(
 export interface DeployHooksResult {
   scriptsDeployed: number;
   settingsCreated: boolean;
+  hookConfigGenerated: boolean;
+  detectedTargetDirs: string[];
+  detectedFormatter: string | null;
+}
+
+// pnpm-workspace.yaml の packages: 配列を line-based でパースする最小実装。
+// 依存追加を避けつつ pnpm の workspace 定義を扱う。
+function parsePnpmWorkspacePackages(yaml: string): string[] {
+  const lines = yaml.split(/\r?\n/);
+  const packages: string[] = [];
+  let inPackages = false;
+  let packagesIndent = -1;
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/#.*$/, "").replace(/\s+$/, "");
+    if (line.length === 0) continue;
+    const indent = line.length - line.trimStart().length;
+    if (!inPackages) {
+      if (/^packages\s*:\s*$/.test(line)) {
+        inPackages = true;
+        packagesIndent = indent;
+      }
+      continue;
+    }
+    if (indent <= packagesIndent) {
+      // packages: ブロックを抜けた
+      inPackages = false;
+      continue;
+    }
+    const itemMatch = line.match(/^\s*-\s*['"]?([^'"#]+?)['"]?\s*$/);
+    if (itemMatch) {
+      packages.push(itemMatch[1].trim());
+    }
+  }
+  return packages;
+}
+
+// 単純な末尾 `*` glob (`pkg/*`) のみを展開する。`**` 等のネストパターンは対象外。
+async function expandWorkspaceGlobs(projectRoot: string, patterns: string[]): Promise<string[]> {
+  const expanded = new Set<string>();
+  for (const pattern of patterns) {
+    if (pattern.includes("**")) {
+      // 安全のため、再帰 glob は無視（無限ループ・性能を避ける）
+      continue;
+    }
+    if (pattern.endsWith("/*")) {
+      const baseDir = pattern.slice(0, -2);
+      try {
+        const entries = await fs.readdir(join(projectRoot, baseDir), { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && !entry.name.startsWith(".")) {
+            expanded.add(`${baseDir}/${entry.name}`);
+          }
+        }
+      } catch {}
+    } else {
+      // glob なし: そのまま採用（ディレクトリ存在チェックは後段で実施）
+      expanded.add(pattern);
+    }
+  }
+  return [...expanded];
+}
+
+export async function detectWorkspaceTargetDirs(projectRoot: string): Promise<string[]> {
+  let patterns: string[] = [];
+
+  // 1. pnpm-workspace.yaml
+  try {
+    const yamlContent = await fs.readFile(join(projectRoot, "pnpm-workspace.yaml"), "utf-8");
+    patterns = parsePnpmWorkspacePackages(yamlContent);
+  } catch {}
+
+  // 2. package.json の workspaces (npm/yarn)
+  if (patterns.length === 0) {
+    try {
+      const pkgRaw = await fs.readFile(join(projectRoot, "package.json"), "utf-8");
+      const pkg = JSON.parse(pkgRaw) as { workspaces?: string[] | { packages?: string[] } };
+      const workspaces = pkg.workspaces;
+      if (Array.isArray(workspaces)) {
+        patterns = workspaces;
+      } else if (workspaces && Array.isArray(workspaces.packages)) {
+        patterns = workspaces.packages;
+      }
+    } catch {}
+  }
+
+  // 3. lerna.json
+  if (patterns.length === 0) {
+    try {
+      const lernaRaw = await fs.readFile(join(projectRoot, "lerna.json"), "utf-8");
+      const lerna = JSON.parse(lernaRaw) as { packages?: string[] };
+      if (Array.isArray(lerna.packages)) {
+        patterns = lerna.packages;
+      }
+    } catch {}
+  }
+
+  if (patterns.length === 0) {
+    return ["src"];
+  }
+
+  const workspaceDirs = await expandWorkspaceGlobs(projectRoot, patterns);
+  const targetDirs: string[] = [];
+  for (const ws of workspaceDirs) {
+    try {
+      const stats = await fs.stat(join(projectRoot, ws, "src"));
+      if (stats.isDirectory()) {
+        targetDirs.push(`${ws}/src`);
+      }
+    } catch {}
+  }
+
+  // workspace 定義は見つかったが src/ を持つものが一切ない場合は ["src"] にフォールバック
+  return targetDirs.length > 0 ? targetDirs.sort() : ["src"];
+}
+
+export interface DetectedFormatter {
+  formatter: string | null;
+  formatterArgs: string[];
+}
+
+export async function detectFormatter(projectRoot: string): Promise<DetectedFormatter> {
+  try {
+    const pkgRaw = await fs.readFile(join(projectRoot, "package.json"), "utf-8");
+    const pkg = JSON.parse(pkgRaw) as {
+      devDependencies?: Record<string, string>;
+      dependencies?: Record<string, string>;
+    };
+    const allDeps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
+    if (allDeps["@biomejs/biome"]) {
+      return { formatter: "biome", formatterArgs: ["check", "--write"] };
+    }
+    if (allDeps["prettier"]) {
+      return { formatter: "eslint-prettier", formatterArgs: [] };
+    }
+  } catch {}
+  return { formatter: null, formatterArgs: [] };
 }
 
 export async function deployHookScripts(harnessRoot: string, projectRoot: string): Promise<DeployHooksResult> {
   const templateDir = join(harnessRoot, HOOKS_TEMPLATE_DIR);
   const targetDir = join(projectRoot, HOOKS_TARGET_DIR);
 
-  // scripts/ ディレクトリをコピー
   const scriptsSource = join(templateDir, "scripts");
   const scriptsTarget = join(targetDir, "scripts");
+  const hookConfigPath = join(scriptsTarget, "hook-config.json");
+
+  // copyDirectory で全 scripts/ を上書きするため、ユーザーカスタマイズを尊重するには
+  // 事前に hook-config.json の既存内容を捕捉して後で復元する。
+  let preexistingHookConfig: string | null = null;
+  try {
+    preexistingHookConfig = await fs.readFile(hookConfigPath, "utf-8");
+  } catch {}
+
   let scriptsDeployed = 0;
 
   try {
@@ -220,6 +364,29 @@ export async function deployHookScripts(harnessRoot: string, projectRoot: string
       }
     }
   } catch {}
+
+  // hook-config.json の決定:
+  //   既存あり → ユーザーカスタマイズ尊重で元の内容を書き戻し
+  //   既存なし → 検出結果を反映して新規生成
+  const detectedTargetDirs = await detectWorkspaceTargetDirs(projectRoot);
+  const { formatter, formatterArgs } = await detectFormatter(projectRoot);
+  let hookConfigGenerated = false;
+
+  if (scriptsDeployed > 0) {
+    if (preexistingHookConfig !== null) {
+      await fs.writeFile(hookConfigPath, preexistingHookConfig, "utf-8");
+    } else {
+      const hookConfig: Record<string, unknown> = {
+        targetDirs: detectedTargetDirs,
+      };
+      if (formatter !== null) {
+        hookConfig.formatter = formatter;
+        hookConfig.formatterArgs = formatterArgs;
+      }
+      await fs.writeFile(hookConfigPath, JSON.stringify(hookConfig, null, 2) + "\n", "utf-8");
+      hookConfigGenerated = true;
+    }
+  }
 
   // settings.json を作成（既存があればスキップ）
   const settingsSource = join(templateDir, "settings.json");
@@ -238,7 +405,13 @@ export async function deployHookScripts(harnessRoot: string, projectRoot: string
     } catch {}
   }
 
-  return { scriptsDeployed, settingsCreated };
+  return {
+    scriptsDeployed,
+    settingsCreated,
+    hookConfigGenerated,
+    detectedTargetDirs,
+    detectedFormatter: formatter,
+  };
 }
 
 export async function initHarnessConfig(
@@ -258,6 +431,9 @@ export async function initHarnessConfig(
     project: {
       name: projectName,
       preset: "standard",
+    },
+    architecture: {
+      preset: "clean",
     },
     layers: {},
     quickMode: {},

@@ -284,6 +284,19 @@ finding #2（`mapfile` bash 4+ 依存）を修正:
 - WI-086（Issue #2）の "post-tool-use silent no-op" 症状の主因も同じ `mapfile`
   だったため、本修正で副次的に解消
 
-スコープ外（次回以降のリリースで対応）:
-- Phase B: finding #1（`phasegate init` の monorepo 検出 / formatter 検出）
-- Phase C: finding #3（Quick Mode notice）/ finding #4（Stop hook `--enforce` flag）
+### Phase B 完了（v0.120.0）— 2026-05-07
+
+finding #1（init defaults が単一パッケージ構成固定）+ WI-086 finding #1 / v2 schema warning を統合修正:
+
+- `scripts/harness/setup/skill-deployer.ts`:
+  - `detectWorkspaceTargetDirs(projectRoot)` 追加 — pnpm-workspace.yaml → package.json workspaces (配列 / オブジェクト形式) → lerna.json の優先順位で検出。pnpm-workspace.yaml は依存ゼロの line-based parser
+  - `detectFormatter(projectRoot)` 追加 — `@biomejs/biome` → biome、不在 + prettier → eslint-prettier、どちらも不在 → null
+  - `deployHookScripts` 拡張 — copyDirectory 前に既存 hook-config.json を捕捉し write-back することで **ユーザーカスタマイズ尊重**。既存なしの場合は検出結果を反映した hook-config.json を生成
+  - `initHarnessConfig` テンプレートに `architecture: { preset: "clean" }` を追加 → 生成された phasegate.config.json が schemaVersion = 'v3' と判定され、v2 schema warning が出なくなる
+- `scripts/harness/main.ts`: init 出力に `✓ hook-config.json generated (targetDirs: ...; formatter: ...)` 行追加
+- 新規 integration test 14 ケース (`scripts/harness/__tests__/integration/setup/init-hook-config-detection.integration.test.ts`) — 全 pass
+- 全 3476 テスト (前回 3462 + 新規 14) グリーン
+
+スコープ外（Phase C で対応予定）:
+- finding #3: Quick Mode 通過時の stderr notice
+- finding #4: Stop hook `--enforce` flag

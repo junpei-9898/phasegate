@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.120.0] - 2026-05-07
+
+### Fixed
+
+- **WI-087 Phase B + WI-086 finding #1 統合対応: `phasegate init` のデフォルト値を実プロジェクト構成に追従させる** — 外部レポーター nakataj-mti / junpei-9898 が GitHub Issue [#3](https://github.com/junpei-9898/phasegate/issues/3) / [#2](https://github.com/junpei-9898/phasegate/issues/2) で報告した「デプロイされる `hook-config.json` のデフォルト値が単一パッケージ構成（`targetDirs:["src"]` / `formatter:"biome"`）固定で、モノレポ構成や biome 不在環境ではユーザーが明示的に書き換えない限り hook が silent no-op になる」問題を修正。
+  - **モノレポ workspace 自動検出** (`scripts/harness/setup/skill-deployer.ts:detectWorkspaceTargetDirs`): `pnpm-workspace.yaml` の `packages:` 配列 → `package.json.workspaces` (配列形式 / `{packages:[...]}` オブジェクト形式の両対応) → `lerna.json.packages` の優先順位で検出。検出した workspace glob (`pkg/*` 等) を実 FS 上で展開し、`<workspace>/src` ディレクトリが存在するもののみを `targetDirs` に採用。pnpm-workspace.yaml は依存追加を避けるため line-based の最小 parser で対応 (`packages:` ブロック検出 + `- 'pattern'` 行抽出のみ)。
+  - **formatter 自動検出** (`detectFormatter`): `package.json.devDependencies` (および `dependencies`) を読み、`@biomejs/biome` 存在 → `biome` + `["check","--write"]`、不在 + `prettier` 存在 → `eslint-prettier`、どちらも不在 → `null` (formatter フィールド省略で `format-typescript-hook.sh` の case 文 default フォールスルー、registry pull を回避)。
+  - **`deployHookScripts` 拡張**: `copyDirectory` 直前に既存 `.claude/scripts/hook-config.json` を捕捉し、(a) 既存あり → 元の内容を書き戻して **ユーザーカスタマイズ尊重**、(b) 既存なし → 検出結果を反映した新規 hook-config.json を生成。`DeployHooksResult` に `hookConfigGenerated` / `detectedTargetDirs` / `detectedFormatter` を追加し、`scripts/harness/main.ts` の init 出力に `✓ hook-config.json generated (targetDirs: ...; formatter: ...)` 行を追加。
+  - **`initHarnessConfig` テンプレートに `architecture: { preset: "clean" }` を追加**: 新規プロジェクトで生成される `phasegate.config.json` が schemaVersion = 'v3' と判定されるようにし、`init` 直後の v2 schema warning を解消（GitHub Issue #2 の "v2 schema warning が phasegate init 直後でも出る" を解消）。既存 v2 config を持つプロジェクトは `migrate-schema` CLI / 手動編集ルートを継続。
+  - **テスト追加**: `scripts/harness/__tests__/integration/setup/init-hook-config-detection.integration.test.ts` (14 ケース) — workspace 検出 (pnpm/npm/yarn 配列/yarn オブジェクト/lerna/未定義/src 不在/全 src 不在)、formatter 検出 (biome/prettier/null)、hook-config.json 生成 (既存尊重 / 新規生成)、schema v3 化 (architecture フィールド存在 / `phasegate:status` の stderr に v2 warning が出ないこと)。
+  - **互換性**: 既存 v2 config を読む load-resolved-config-use-case 側は変更なし。既存 `.claude/scripts/hook-config.json` をカスタマイズ済みのプロジェクトで `phasegate init` を再実行しても上書きされない (write-back ガード)。
+  - **スコープ外** (Phase C で対応予定): Quick Mode 通過時の stderr notice (finding #3) / Stop hook `--enforce` flag (finding #4) / `pre-tool-use` の責務範囲ドキュメント明文化 (WI-086)。
+
 ## [0.119.0] - 2026-05-07
 
 ### Fixed

@@ -469,7 +469,13 @@ async function main(): Promise<void> {
         const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
         const hooksResult = deployClaude
           ? await deployHookScripts(harnessRoot, rootDir)
-          : { scriptsDeployed: 0, settingsCreated: false };
+          : {
+              scriptsDeployed: 0,
+              settingsCreated: false,
+              hookConfigGenerated: false,
+              detectedTargetDirs: [] as string[],
+              detectedFormatter: null,
+            };
         const codexResult = deployCodex ? await deployCodexHooks(harnessRoot, rootDir) : null;
         const designDocsResult = await deployDesignDocs(harnessRoot, rootDir);
         const withHusky = hasFlag(args, "--with-husky");
@@ -485,6 +491,13 @@ async function main(): Promise<void> {
         }
         if (hooksResult.scriptsDeployed > 0) {
           console.log(`✓ Hook scripts deployed to .claude/scripts/ (${hooksResult.scriptsDeployed} files)`);
+        }
+        if (hooksResult.hookConfigGenerated) {
+          const dirsLabel = hooksResult.detectedTargetDirs.join(", ");
+          const formatterLabel = hooksResult.detectedFormatter ?? "none";
+          console.log(
+            `✓ hook-config.json generated (targetDirs: ${dirsLabel}; formatter: ${formatterLabel})`,
+          );
         }
         if (hooksResult.settingsCreated) {
           console.log(`✓ .claude/settings.json created`);

@@ -222,3 +222,25 @@ WI-087 の設計に統合。固有スコープ:
 - レポーターの v0.112.0 環境での再現手順は GitHub Issue #2 本文を参照
 - Claude Code Hooks 仕様: https://code.claude.com/docs/en/hooks
   （PreToolUse は exit code 2 で block）
+
+## 進捗ログ
+
+### v0.119.0 — 2026-05-07
+
+WI-087 Phase A（`mapfile` bash 4+ 依存修正）により、本 issue がレポートしていた
+「post-tool-use がセッション中に呼ばれても通知されない（無音）」症状の主因が解消。
+詳細は WI-087 進捗ログ Phase A を参照。
+
+### v0.120.0 — 2026-05-07
+
+WI-087 Phase B との統合対応で finding #1（モノレポ構成で `targetDirs` がサブパッケージ
+配下を捕捉できない）と「v2 schema warning が `phasegate init` 直後でも出る」を解消:
+
+- `phasegate init` がモノレポ workspace 定義（pnpm-workspace.yaml / package.json
+  workspaces / lerna.json）を検出し `targetDirs` を自動生成
+- `phasegate.config.json` テンプレートに `architecture: { preset: "clean" }` を追加し
+  schemaVersion = 'v3' で生成 → v2 warning 解消
+
+残スコープ（Phase C で対応予定）:
+- `pre-tool-use` の責務範囲を `docs/guide/agent-integration.md` に明文化
+  （pre = フェーズゲート / post = lint の分離）
