@@ -17,4 +17,7 @@ export interface ConfigQueryPort {
   getRelaxedGates(): Promise<readonly string[]>;
   getProjectPaths(): ProjectPaths;
   getBaselineConfig(): Promise<BaselineConfig>;
+  // WI-087 finding #4: Stop hook strict mode 設定。true なら Complete Check 失敗時に
+  // exit 2 + decision JSON を出して Claude Code セッションを block する。
+  getStopHookEnforce(): Promise<boolean>;
 }

@@ -69,9 +69,13 @@ export class HandleStopUseCase {
 
     try {
       const cliResult = await this.cliExecutorPort.execute('phasegate:complete-check', []);
+      // WI-087 finding #4: enforce=true かつ Complete Check 失敗時のみ shouldEnforceFailure=true
+      const enforce = await this.configQueryPort.getStopHookEnforce();
+      const shouldEnforceFailure = enforce && cliResult.exitCode !== 0;
       return {
         executed: true,
         cliResult,
+        shouldEnforceFailure,
       };
     } finally {
       // deactivate は成否問わず必ず実行（finally保証）

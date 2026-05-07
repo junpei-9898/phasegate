@@ -24,6 +24,7 @@ function createDefaultMockConfigQueryPort() {
       enabled: false,
       path: '.phasegate/baseline.json',
     }),
+    getStopHookEnforce: vi.fn().mockResolvedValue(false),
   };
 }
 

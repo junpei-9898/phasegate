@@ -88,6 +88,15 @@ async function main(): Promise<void> {
 
     if (output.executed && output.cliResult) {
       if (output.cliResult.exitCode !== 0) {
+        // WI-087 finding #4: enforce=true なら exit 2 + decision JSON で turn block
+        if (output.shouldEnforceFailure === true) {
+          const reason = `Complete Check failed (exitCode=${output.cliResult.exitCode})`;
+          process.stdout.write(`${JSON.stringify({ decision: 'block', reason })}\n`);
+          process.stderr.write(
+            `Complete Check失敗 (exitCode=${output.cliResult.exitCode}) — strict mode により turn を block します\n`,
+          );
+          process.exit(2);
+        }
         process.stderr.write(`Complete Check失敗 (exitCode=${output.cliResult.exitCode})\n`);
       }
       process.exit(output.cliResult.exitCode);

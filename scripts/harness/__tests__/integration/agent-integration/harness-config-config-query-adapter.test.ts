@@ -18,12 +18,13 @@ const CUSTOM_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-custom-paths
 const WITH_EXCLUSIONS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-exclusions.json');
 const WITH_RELAXED_GATES_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-relaxed-gates.json');
 const WITH_BASELINE_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-baseline.json');
+const WITH_STOP_HOOK_ENFORCE_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-stop-hook-enforce.json');
 
 target('HarnessConfigConfigQueryAdapter', () => {
   describe('設定読み取り', () => {
     context('cascadeUpdate=trueのfixture使用時', () => {
       // IT-REPO-ConfigQueryAdapter-001
-      it('isHookEnabled("post-tool-use")（cascadeUpdate=true）がtrueを返すこと', async () => {
+      it('post-tool-use フックが有効と判定されること（cascadeUpdate=true）', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
 
@@ -37,7 +38,7 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
     context('cascadeUpdate=falseのfixture使用時', () => {
       // IT-REPO-ConfigQueryAdapter-002
-      it('isHookEnabled("post-tool-use")（cascadeUpdate=false）がfalseを返すこと', async () => {
+      it('post-tool-use フックが無効と判定されること（cascadeUpdate=false）', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(DISABLED_CONFIG);
 
@@ -51,7 +52,7 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
     context('agentLessonCollection=trueのfixture使用時', () => {
       // IT-REPO-ConfigQueryAdapter-003
-      it('isHookEnabled("pre-tool-use")（agentLessonCollection=true）がtrueを返すこと', async () => {
+      it('pre-tool-use フックが有効と判定されること（agentLessonCollection=true）', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
 
@@ -79,7 +80,7 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
     context('Stopフックのデフォルト有効設定', () => {
       // IT-REPO-ConfigQueryAdapter-005
-      it('isHookEnabled("stop")（Stopはデフォルト有効）がtrueを返すこと', async () => {
+      it('stop フックが有効と判定されること（Stopはデフォルト有効）', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
 
@@ -236,6 +237,32 @@ target('HarnessConfigConfigQueryAdapter', () => {
         const actual = await adapter.getBaselineConfig();
         expect(actual.enabled).toBe(true);
         expect(actual.path).toBe('.custom/baseline.json');
+      });
+    });
+
+    context('agentIntegration.stopHook.enforce=true (WI-087 Phase C-2)', () => {
+      it('getStopHookEnforce() が true を返す', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(WITH_STOP_HOOK_ENFORCE_CONFIG);
+
+        // Act
+        const actual = await adapter.getStopHookEnforce();
+
+        // Assert
+        expect(actual).toBe(true);
+      });
+    });
+
+    context('agentIntegration セクションが未定義 (WI-087 Phase C-2)', () => {
+      it('getStopHookEnforce() がデフォルト false を返す', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
+
+        // Act
+        const actual = await adapter.getStopHookEnforce();
+
+        // Assert
+        expect(actual).toBe(false);
       });
     });
   });

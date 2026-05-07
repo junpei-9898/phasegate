@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.122.0] - 2026-05-08
+
+### Added
+
+- **WI-087 Phase C-2 — Stop hook strict mode (`agentIntegration.stopHook.enforce`)** — 外部レポーター nakataj-mti が GitHub Issue [#3](https://github.com/junpei-9898/phasegate/issues/3) finding #4 で報告した「`phasegate hook stop` が Complete Check 失敗時に exit 1 を返すが、Claude Code の Stop hook block には exit 2 が必要」問題を解消。新 config flag `agentIntegration.stopHook.enforce: boolean` (default `false`) を v3 schema に追加し、true セット時のみ Complete Check 失敗で **exit 2 + `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}`** を出力する strict mode に切り替わる。default は従来挙動 (exit cliResult.exitCode、stderr メッセージのみ) を完全維持。
+  - **schema 拡張**: `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v3.schema.json` に top-level `agentIntegration.stopHook.enforce: boolean` を追加 (`additionalProperties: false`)。boolean 以外 / 未定義 key は AJV validator が reject。
+  - **新ポートメソッド**: `ConfigQueryPort.getStopHookEnforce(): Promise<boolean>` を追加 (`scripts/harness/agent-integration/domain/ports/config-query-port.ts`)。
+  - **infrastructure 実装**: `HarnessConfigConfigQueryAdapter.getStopHookEnforce()` が `agentIntegration.stopHook.enforce === true` のときのみ true を返す strict 一致判定。
+  - **application 拡張**: `HandleStopOutput` DTO に `shouldEnforceFailure?: boolean` を追加。`HandleStopUseCase.execute` 内で `enforce && cliResult.exitCode !== 0` の合成条件を populate。reentry 検出時は populate されない (現行挙動保持)。
+  - **presentation 分岐拡張**: `stop-hook.ts` で `output.shouldEnforceFailure === true` のとき stdout に decision JSON 出力 + stderr に reason 付きメッセージ + exit 2。それ以外は現行通り cliResult.exitCode で抜ける。
+  - **テスト追加**: 11 ケース (`ajv-config-schema-validator-v3.test.ts` +5、`harness-config-config-query-adapter.test.ts` +2、`handle-stop-usecase.test.ts` +4)。全 3491 テスト (前回 3480 + 新規 11) グリーン。
+  - **dogfood 検証**: phasegate 自身の `phasegate.config.json` に `enforce: true` を一時注入し `stop-hook.ts` を手動実行 → exit 2 + decision JSON 出力を確認。enforce 削除後は exit 1 + decision JSON なしの後方互換挙動を確認。
+  - **既存テストへの影響**: `ConfigQueryPort` インターフェース拡張に伴い、`handle-pre-tool-use-usecase.test.ts` / `handle-post-tool-use-usecase.test.ts` / `handle-stop-usecase.test.ts` / `ci-governance-baseline-grandfather-adapter.test.ts` の mock literal に `getStopHookEnforce: vi.fn().mockResolvedValue(false)` を追加 (default 後方互換を維持しつつ TypeScript 型契約を満たす)。
+  - **ドキュメント整合**: `docs/guide/configuration.md` に `agentIntegration` セクションを追加 (sub-field 表 + 用途説明)、`docs/guide/hooks-integration.md` の Stop hook 説明に enforce オプションを追記。
+  - **互換性**: 既存 v2/v3 config (agentIntegration セクション不在) は default false で v0.121.0 以前と完全同一挙動。schema validator 経路 / ConfigQueryPort 既存メソッド経路への影響なし。
+
 ## [0.121.0] - 2026-05-07
 
 ### Fixed

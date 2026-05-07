@@ -311,5 +311,25 @@ finding #3（Quick Mode 通過時の visibility）+ WI-086 docs（hook 責務分
   - "Responsibility Separation" セクションを冒頭に追加 — pre / post / Stop の責務分担表と「pre-tool-use は意図的に lint を実行しない (lint は書き込み後の content が必要)」旨を明記。WI-086 reporter 期待との齟齬を ユーザー視点で説明
 - テスト 4 ケース追加 (`handle-pre-tool-use-usecase.test.ts` 内)、全 3480 テスト (前回 3476 + 新規 4) グリーン
 
-スコープ外（Phase C-2 で対応予定）:
-- finding #4: Stop hook `--enforce` flag (config schema 拡張のため story-implementor で別リリース)
+### Phase C-2 完了（v0.122.0）— 2026-05-08
+
+finding #4（Stop hook `--enforce` flag）を `agentIntegration.stopHook.enforce` config flag として実装:
+
+- `scripts/harness/config-foundation/infrastructure/schemas/harness-config-v3.schema.json`:
+  - 新 top-level `agentIntegration.stopHook.enforce: boolean` セクションを追加 (`additionalProperties: false`)。boolean 以外や未定義 key は AJV validator が reject
+- `scripts/harness/agent-integration/domain/ports/config-query-port.ts`:
+  - `getStopHookEnforce(): Promise<boolean>` を ConfigQueryPort に追加
+- `scripts/harness/agent-integration/infrastructure/adapters/harness-config-config-query-adapter.ts`:
+  - `agentIntegration.stopHook.enforce === true` のときのみ true を返す strict 一致判定で実装
+- `scripts/harness/agent-integration/application/dto/handle-stop-dto.ts`:
+  - `HandleStopOutput` に `shouldEnforceFailure?: boolean` フィールド追加
+- `scripts/harness/agent-integration/application/usecases/handle-stop-usecase.ts`:
+  - `enforce && cliResult.exitCode !== 0` の合成条件で populate。reentry 検出時は populate しない
+- `scripts/harness/agent-integration/presentation/stop-hook.ts`:
+  - `output.shouldEnforceFailure === true` のとき stdout へ `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` 出力 + stderr に reason 付きメッセージ + exit 2
+  - それ以外は現行挙動 (exit cliResult.exitCode、stderr メッセージのみ) を完全維持
+- 新規テスト 11 ケース (ajv schema +5, adapter +2, usecase +4)。全 3491 テスト (前回 3480 + 新規 11) グリーン
+- dogfood 検証: phasegate 自身の config に enforce: true 注入 → stop-hook.ts 手動実行 → exit 2 + decision JSON を確認。restore 後は exit 1 + JSON なしで後方互換維持
+- ドキュメント整合: `docs/guide/configuration.md` に `agentIntegration` セクション追加、`docs/guide/hooks-integration.md` の Stop hook 説明に enforce オプション追記
+
+これで WI-087 finding #1〜#4 + WI-086 全 findings の対応が完了。本 WI のスコープ内残作業はなし。

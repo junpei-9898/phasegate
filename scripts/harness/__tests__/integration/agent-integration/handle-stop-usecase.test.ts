@@ -13,6 +13,7 @@ function createHandleStopUseCase(ports: {
     clearActive: ReturnType<typeof vi.fn>;
   };
   cliExecutorPort: { execute: ReturnType<typeof vi.fn> };
+  stopHookEnforce?: boolean;
 }) {
   const configQueryPort = {
     isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -21,6 +22,7 @@ function createHandleStopUseCase(ports: {
     getRelaxedGates: vi.fn().mockResolvedValue([]),
     getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
     getBaselineConfig: vi.fn().mockResolvedValue({ enabled: false, path: '.phasegate/baseline.json' }),
+    getStopHookEnforce: vi.fn().mockResolvedValue(ports.stopHookEnforce ?? false),
   };
   const cliCommandRegistryPort = {
     hasCommand: vi.fn().mockResolvedValue(true),
@@ -212,6 +214,118 @@ target('HandleStopUseCase.execute', () => {
         // Act & Assert
         await expect(useCase.execute(input)).rejects.toThrow('write failed');
         expect(mockReentryGuardStatePort.clearActive).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Stop Hook strict mode (WI-087 finding #4)', () => {
+    context('stopHookEnforce=true かつ Complete Check 失敗 (exitCode=1)', () => {
+      it('shouldEnforceFailure=true が出力されること', async () => {
+        // Arrange
+        const mockReentryGuardStatePort = {
+          readActive: vi.fn().mockResolvedValue(false),
+          writeActive: vi.fn().mockResolvedValue(undefined),
+          clearActive: vi.fn().mockResolvedValue(undefined),
+        };
+        const mockCliExecutorPort = {
+          execute: vi.fn().mockResolvedValue({ exitCode: 1, stdout: '', stderr: '', timedOut: false }),
+        };
+        const useCase = createHandleStopUseCase({
+          reentryGuardStatePort: mockReentryGuardStatePort,
+          cliExecutorPort: mockCliExecutorPort,
+          stopHookEnforce: true,
+        });
+        const input = buildHandleStopInput({ sessionId: 'session-enforce-fail' });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.executed).toBe(true);
+        expect(actual.cliResult?.exitCode).toBe(1);
+        expect(actual.shouldEnforceFailure).toBe(true);
+      });
+    });
+
+    context('stopHookEnforce=true かつ Complete Check 成功 (exitCode=0)', () => {
+      it('shouldEnforceFailure=false が出力されること (false-positive 回避)', async () => {
+        // Arrange
+        const mockReentryGuardStatePort = {
+          readActive: vi.fn().mockResolvedValue(false),
+          writeActive: vi.fn().mockResolvedValue(undefined),
+          clearActive: vi.fn().mockResolvedValue(undefined),
+        };
+        const mockCliExecutorPort = {
+          execute: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '', timedOut: false }),
+        };
+        const useCase = createHandleStopUseCase({
+          reentryGuardStatePort: mockReentryGuardStatePort,
+          cliExecutorPort: mockCliExecutorPort,
+          stopHookEnforce: true,
+        });
+        const input = buildHandleStopInput({ sessionId: 'session-enforce-pass' });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.executed).toBe(true);
+        expect(actual.cliResult?.exitCode).toBe(0);
+        expect(actual.shouldEnforceFailure).toBe(false);
+      });
+    });
+
+    context('stopHookEnforce=false かつ Complete Check 失敗 (exitCode=1)', () => {
+      it('shouldEnforceFailure=false が出力されること (default 後方互換)', async () => {
+        // Arrange
+        const mockReentryGuardStatePort = {
+          readActive: vi.fn().mockResolvedValue(false),
+          writeActive: vi.fn().mockResolvedValue(undefined),
+          clearActive: vi.fn().mockResolvedValue(undefined),
+        };
+        const mockCliExecutorPort = {
+          execute: vi.fn().mockResolvedValue({ exitCode: 1, stdout: '', stderr: '', timedOut: false }),
+        };
+        const useCase = createHandleStopUseCase({
+          reentryGuardStatePort: mockReentryGuardStatePort,
+          cliExecutorPort: mockCliExecutorPort,
+          stopHookEnforce: false,
+        });
+        const input = buildHandleStopInput({ sessionId: 'session-noenforce-fail' });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.executed).toBe(true);
+        expect(actual.cliResult?.exitCode).toBe(1);
+        expect(actual.shouldEnforceFailure).toBe(false);
+      });
+    });
+
+    context('reentry 検出時 (REENTRY_DETECTED) は enforce 設定に関わらず', () => {
+      it('shouldEnforceFailure フィールドが populate されないこと', async () => {
+        // Arrange
+        const mockReentryGuardStatePort = {
+          readActive: vi.fn().mockResolvedValue(true),
+          writeActive: vi.fn(),
+          clearActive: vi.fn(),
+        };
+        const mockCliExecutorPort = { execute: vi.fn() };
+        const useCase = createHandleStopUseCase({
+          reentryGuardStatePort: mockReentryGuardStatePort,
+          cliExecutorPort: mockCliExecutorPort,
+          stopHookEnforce: true,
+        });
+        const input = buildHandleStopInput({ sessionId: 'session-reentry' });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.executed).toBe(false);
+        expect(actual.skipReason).toBe('REENTRY_DETECTED');
+        expect(actual.shouldEnforceFailure).toBeUndefined();
       });
     });
   });

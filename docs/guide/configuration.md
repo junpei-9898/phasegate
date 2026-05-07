@@ -416,6 +416,28 @@ Introduced in ISSUE-007 Wave 1 (v0.65.0) and wired into the pre-tool-use hook by
 
 Generate or refresh the snapshot with `npx phasegate baseline` (`--dry-run` to inspect, `--force` to overwrite, `--paths <glob,glob,...>` to scope, `--json` for CI-friendly output). See the [Baseline section in CLI Reference](cli-reference.md#baseline-retrofit-grandfather) for details.
 
+#### `agentIntegration` (Stop hook strict mode)
+
+Controls how phasegate's agent-side hooks integrate with Claude Code. Currently only `stopHook.enforce` is exposed.
+
+```jsonc
+{
+  "agentIntegration": {
+    "stopHook": {
+      "enforce": true
+    }
+  }
+}
+```
+
+| Sub-field          | Type      | Default | Description                                                                                                          |
+|--------------------|-----------|---------|----------------------------------------------------------------------------------------------------------------------|
+| `stopHook.enforce` | `boolean` | `false` | When `true`, a non-zero exit from `phasegate:complete-check` causes the Stop hook to emit `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exit with code 2, blocking Claude Code's turn. When `false` (default), the hook exits with the inner CLI's exit code, which Claude Code surfaces only as a transcript warning. |
+
+Use `enforce: true` when your team treats Complete Check failures as hard gates (e.g., disallow ending a session with failing tests or lint). Leave it as default `false` for an opt-in / advisory experience.
+
+Reentry-detection cases (`REENTRY_DETECTED`) always exit with code 0 regardless of this setting; strict mode applies only to actual Complete Check failures.
+
 ---
 
 ### Quick Mode

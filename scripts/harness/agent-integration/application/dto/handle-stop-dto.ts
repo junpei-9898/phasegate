@@ -14,4 +14,5 @@ export interface HandleStopOutput {
   executed: boolean;
   skipReason?: SkipReason;
   cliResult?: CliExecutionResult;
+  shouldEnforceFailure?: boolean;
 }

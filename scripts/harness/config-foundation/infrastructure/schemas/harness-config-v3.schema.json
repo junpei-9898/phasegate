@@ -482,6 +482,21 @@
         }
       }
     },
+    "agentIntegration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stopHook": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enforce": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
     "architecture": {
       "type": "object",
       "additionalProperties": false,

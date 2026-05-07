@@ -27,6 +27,7 @@ function createConfigPort(enabled: boolean, customPath?: string) {
       enabled,
       path: customPath ?? '.phasegate/baseline.json',
     }),
+    getStopHookEnforce: vi.fn().mockResolvedValue(false),
   };
 }
 
@@ -86,7 +87,7 @@ target('CiGovernanceBaselineGrandfatherAdapter.check', () => {
 
   describe('grandfather 判定', () => {
     context('enabled=true + 全 paths が baseline 内', () => {
-      it('IT-AI-BGF-003: allGrandfathered=true', async () => {
+      it('IT-AI-BGF-003: 全 paths が baseline 内なら allGrandfathered=true', async () => {
         const snapshot = snapshotWith(['scripts/harness/foo.ts', 'scripts/harness/bar.ts']);
         const adapter = new CiGovernanceBaselineGrandfatherAdapter({
           baseDir: '/repo',
@@ -110,7 +111,7 @@ target('CiGovernanceBaselineGrandfatherAdapter.check', () => {
     });
 
     context('enabled=true + 一部 paths が baseline 外', () => {
-      it('IT-AI-BGF-004: allGrandfathered=false (all-or-nothing)', async () => {
+      it('IT-AI-BGF-004: 一部 paths が baseline 外なら allGrandfathered=false（all-or-nothing 判定）', async () => {
         const snapshot = snapshotWith(['scripts/harness/foo.ts']);
         const adapter = new CiGovernanceBaselineGrandfatherAdapter({
           baseDir: '/repo',

@@ -1,6 +1,6 @@
 // @layer test
 // @unit config-foundation
-// @story ISSUE-014
+// @story H04-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { AjvConfigSchemaValidator } from '../../../config-foundation/infrastructure/validators/ajv-config-schema-validator.js';
@@ -98,6 +98,97 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const document = {
           ...baseV2Document(),
           architecture: { preset: 'custom' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('agentIntegration.stopHook.enforce フィールド (WI-087 Phase C-2)', () => {
+    context('agentIntegration.stopHook.enforce: true を含む v3 document', () => {
+      it('v3 schema で validate され errors 0 件', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          agentIntegration: { stopHook: { enforce: true } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('agentIntegration.stopHook.enforce: false を含む v3 document', () => {
+      it('v3 schema で validate され errors 0 件', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          agentIntegration: { stopHook: { enforce: false } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('agentIntegration セクションがそもそも無い v3 document', () => {
+      it('v3 schema で validate され errors 0 件 (任意フィールド)', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('agentIntegration.stopHook.enforce が boolean 以外 (string) の場合', () => {
+      it('v3 schema validate で error が返る', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          agentIntegration: { stopHook: { enforce: 'yes' } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThan(0);
+      });
+    });
+
+    context('agentIntegration セクションに未定義の key が含まれる場合', () => {
+      it('v3 schema validate で error が返る (additionalProperties: false)', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          agentIntegration: { unknownKey: true },
         };
 
         // Act

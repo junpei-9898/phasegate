@@ -48,12 +48,21 @@ interface BaselineSection {
   path?: string;
 }
 
+interface AgentIntegrationStopHookSection {
+  enforce?: boolean;
+}
+
+interface AgentIntegrationSection {
+  stopHook?: AgentIntegrationStopHookSection;
+}
+
 interface HarnessConfigDocument {
   harnesses?: HarnessesSection;
   project?: ProjectSection;
   protectedFiles?: ProtectedFilesSection;
   quickMode?: QuickModeSection;
   baseline?: BaselineSection;
+  agentIntegration?: AgentIntegrationSection;
 }
 
 export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
@@ -127,5 +136,12 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
       enabled: baseline.enabled ?? true,
       path: baseline.path ?? '.phasegate/baseline.json',
     };
+  }
+
+  async getStopHookEnforce(): Promise<boolean> {
+    const config = this.loadConfig();
+    const enforce = config.agentIntegration?.stopHook?.enforce;
+    // type guard: boolean 以外（schema validator ですり抜ける null/undefined を含む）は false にフォールバック
+    return enforce === true;
   }
 }
