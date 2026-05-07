@@ -201,3 +201,15 @@ WI-085 スコープのテスト設計補完を完了:
 - `docs/product/construction/phase-dependency-model/coverage_report.md` 更新（Artifact 仕様変更を反映、追加ケースを記録）
 
 > Sonnet 委任 (`scripts/delegate-sonnet.sh`) は非対話セッションで Write 権限プロンプトをブロックされる事象が発生。Opus が直接 Edit ツールで diff を適用することで代替実施。
+
+### Phase 5 follow-up — 2026-05-07 (v0.118.0)
+
+v0.117.0 リリース後の dogfood 検証（`paths.designDocs: "mydocs/product/construction"` / `paths.inceptionDocs: "mydocs/inception"` で `npx phasegate validate --layer L2` を実行）で、ブロッカーテキストがデフォルトパスのまま追従しない事象を発見。原因は `validator-system` / `harness-api` 配下の adapter 3 箇所で `createPhaseDependencyModelModule({ rootDir })` が `phaseConfig` を渡していなかったため。`agent-integration/.../phase-gate-query-adapter.ts` と同等の config 流入経路を追加し v0.118.0 として再リリース。
+
+修正対象:
+- `scripts/harness/validator-system/infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.ts`
+- `scripts/harness/harness-api/infrastructure/adapters/phase-dependency-model-query-adapter.ts` (queryAllStories / queryUnit 両メソッド)
+
+検証結果:
+- カスタム paths 設定時: `mydocs/inception/_shared/product_overview_plan.md` 等を要求 (期待通り)
+- デフォルト復元後: ベースライン挙動 (`docs/product/units/{unit}_unit.md` リテラル維持) に戻る (後方互換 OK)

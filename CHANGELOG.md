@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.118.0] - 2026-05-07
+
+### Fixed
+
+- **WI-085 follow-up: validator-system / harness-api 経路で `paths` config が phase-dependency-model に流入していなかった問題を修正** — v0.117.0 リリース後のセルフホスト dogfooding で発見。`scripts/harness/validator-system/infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.ts` および `scripts/harness/harness-api/infrastructure/adapters/phase-dependency-model-query-adapter.ts` が `createPhaseDependencyModelModule({ rootDir })` を `phaseConfig` 引数なしで呼んでおり、`paths.designDocs` / `paths.inceptionDocs` が L2-001 (`npx phasegate validate --layer L2`) と harness-api 経由の phase-gate query から到達できない状態だった。`agent-integration` 配下の `phase-gate-query-adapter.ts` と同等の `loadResolvedConfigUseCase` + `toPhaseConfigSection` 注入経路を 3 箇所追加。
+  - dogfood 検証: `paths.designDocs: "mydocs/product/construction"` / `paths.inceptionDocs: "mydocs/inception"` 設定で L2-001 ブロッカーが `mydocs/inception/_shared/product_overview_plan.md` 等を要求することを確認。
+  - デフォルト設定での挙動は v0.117.0 と完全互換（dogfood 復元後にベースラインブロッカー `docs/product/units/{unit}_unit.md` のみ残ることを確認）。
+
 ## [0.117.0] - 2026-05-07
 
 ### Fixed

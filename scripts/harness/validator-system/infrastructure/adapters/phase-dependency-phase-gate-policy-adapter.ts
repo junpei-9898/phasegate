@@ -13,8 +13,17 @@ export class PhaseDependencyPhaseGatePolicyAdapter implements PhaseGatePolicyPor
     violations: readonly HarnessErrorLike[];
   }> {
     try {
+      // WI-085: paths config を phase-dependency-model に流入させる
+      const { createConfigFoundationModule } = await import('../../../config-foundation/composition-root.js');
+      const { toPhaseConfigSection } = await import('../../../config-foundation/application/mappers/phase-config-section-mapper.js');
+      const configModule = createConfigFoundationModule();
+      const resolvedConfig = await configModule.usecases.loadResolvedConfigUseCase.execute();
       const { createPhaseDependencyModelModule } = await import('../../../phase-dependency-model/composition-root.js');
-      const mod = createPhaseDependencyModelModule({ rootDir: process.cwd() });
+      const mod = createPhaseDependencyModelModule({
+        rootDir: process.cwd(),
+        phaseConfig: toPhaseConfigSection(resolvedConfig.config),
+        reportOutputDir: resolvedConfig.config.reporting.outputDir,
+      });
       const result = await mod.checkPhaseGateCommandHandler.execute({
         targetLevel: 2,
         unitId: context.unitName,
