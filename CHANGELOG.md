@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.132.0] - 2026-05-08
+
+### Fixed
+
+- **WI-094 follow-up — `DriftReport` / `ConsistencyReport` / `DeadCodeReport` の `toHarnessError(s)` が `severity: 'error'` を hardcode していたため v0.131.0 の集計セマンティクス修正が L4-001/002/003 で実機に反映されなかった (post-publish dogfood で発見)** — `error catalog` の `defaultSeverity: warning` 宣言と各 report の `toHarnessError(s)` 出力 severity が乖離しており、aggregator が `severity !== 'warning'` で hasNonWarningError と判定して overall FAIL となっていた。
+  - **修正対象**:
+    - `scripts/harness/validator-system/domain/value-objects/drift-report.ts:47` — L4-001 drift error の severity を `'error'` → `'warning'`
+    - `scripts/harness/validator-system/domain/value-objects/consistency-report.ts:49` — L4-002 consistency error の severity を `'error'` → `'warning'`
+    - `scripts/harness/validator-system/domain/value-objects/dead-code-report.ts:46/54` — L4-003 dead-code error の severity を `'error'` → `'warning'` (unused export / unreachable code 双方)
+  - **dogfood 結果 (v0.131.0 の状態)**: `/private/tmp/phasegate-dogfood-wi094` で drift 2 件発生させて `validate --layer L4 --format human` を実行 → `[FAIL] L4-001` / overall FAIL ✗ / exit 1。期待は `[WARN] L4-001` / overall PASS ✓ / exit 0。原因は本 fix で解消。
+  - **後方互換**: `validate.failOnWarning: true` を設定している user の挙動は不変 (warning でも overall FAIL)。`failOnWarning: false` (default for `minimal` / `standard`) の user のみ exit code 0 に変わる。これは ADR-017 で承認済みの BREAKING の意図通りで、v0.131.0 で動かなかった部分が初めて動く形。
+  - **post-publish dogfood**: WI-094 description.md に v0.132.0 dogfood 結果を反映。
+
 ## [0.131.0] - 2026-05-08
 
 ### Changed (BREAKING for `standard` / `minimal` preset users)

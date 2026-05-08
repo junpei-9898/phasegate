@@ -43,10 +43,11 @@ export class ConsistencyReport {
     return this.mismatchPairs.length;
   }
 
+  // ADR-017 / WI-094: error catalog の defaultSeverity: warning と整合
   toHarnessErrors(): readonly HarnessErrorLike[] {
     return this.mismatchPairs.map((pair) => ({
       code: { value: 'L4-002', toString: () => 'L4-002' },
-      severity: { value: 'error', toString: () => 'error' },
+      severity: { value: 'warning', toString: () => 'warning' },
       message: `レイヤー整合性違反: expected "${pair.expected}" but got "${pair.actual}" at ${pair.location}`,
       suggestion: '設計文書間のレイヤー依存方向を統一してください',
     }));

@@ -38,12 +38,13 @@ export class DeadCodeReport {
     return this.unusedExports.length > 0 || this.unreachableCode.length > 0;
   }
 
+  // ADR-017 / WI-094: error catalog の defaultSeverity: warning と整合
   toHarnessErrors(): readonly HarnessErrorLike[] {
     const errors: HarnessErrorLike[] = [];
     for (const exportId of this.unusedExports) {
       errors.push({
         code: { value: 'L4-003', toString: () => 'L4-003' },
-        severity: { value: 'error', toString: () => 'error' },
+        severity: { value: 'warning', toString: () => 'warning' },
         message: `未使用エクスポート: ${exportId}`,
         suggestion: '未使用エクスポートを削除するか、他ファイルからimportしてください',
       });
@@ -51,7 +52,7 @@ export class DeadCodeReport {
     for (const loc of this.unreachableCode) {
       errors.push({
         code: { value: 'L4-003', toString: () => 'L4-003' },
-        severity: { value: 'error', toString: () => 'error' },
+        severity: { value: 'warning', toString: () => 'warning' },
         message: `到達不能コード: ${loc.filePath}:${loc.range.startLine}-${loc.range.endLine}`,
         suggestion: '到達不能なコードブロックを削除してください',
       });

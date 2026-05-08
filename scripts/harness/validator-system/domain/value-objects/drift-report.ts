@@ -42,9 +42,10 @@ export class DriftReport {
   }
 
   toHarnessError(): HarnessErrorLike {
+    // ADR-017 / WI-094: error catalog の defaultSeverity: warning と整合
     return {
       code: { value: 'L4-001', toString: () => 'L4-001' },
-      severity: { value: 'error', toString: () => 'error' },
+      severity: { value: 'warning', toString: () => 'warning' },
       message: `乖離検出 [${this.direction}] Unit: ${this.unitName}, Element: ${this.element}`,
       suggestion: this.recommendation,
     };
