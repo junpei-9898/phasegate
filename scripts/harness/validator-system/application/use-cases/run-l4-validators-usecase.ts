@@ -69,6 +69,10 @@ export class RunL4ValidatorsUseCase {
       throw new ValidatorExecutionError(`Failed to get L4 LayerConfig: ${err instanceof Error ? err.message : String(err)}`, err);
     }
 
+    if (!layerConfig.enabled) {
+      return [];
+    }
+
     const results = this.executionService.execute(definitions, [layerConfig]);
     const overrideMap = new Map<string, ValidationResult>(results.map((result) => [result.validatorId.value, result]));
 

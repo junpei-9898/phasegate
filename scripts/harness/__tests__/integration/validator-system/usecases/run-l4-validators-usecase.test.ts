@@ -88,6 +88,52 @@ target('RunL4ValidatorsUseCase', () => {
         expect(l4003?.skipped).toBe(false);
       });
     });
+
+    context('LayerConfig.enabled=falseの場合', () => {
+      it('空のValidationResultContract[]が返る (IT-UC-RunL4-007)', async () => {
+        // Arrange
+        const usecase = createL4UseCase({ enabled: false });
+        const input = { strictMode: false };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(actual).toHaveLength(0);
+      });
+
+      it('drift / consistency / dead-code service が呼ばれないこと (IT-UC-RunL4-008)', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { enabled: false })),
+        };
+        const driftDetect = vi.fn().mockResolvedValue([]);
+        const consistencyCheck = vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] });
+        const deadCodeDetect = vi.fn().mockResolvedValue({ hasDeadCode: () => false, toHarnessErrors: () => [] });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          driftDetectionService: { detect: driftDetect } as never,
+          consistencyCheckService: { check: consistencyCheck } as never,
+          deadCodeDetectionService: { detect: deadCodeDetect } as never,
+        });
+        const input = { strictMode: false };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(actual).toHaveLength(0);
+        expect(driftDetect).not.toHaveBeenCalled();
+        expect(consistencyCheck).not.toHaveBeenCalled();
+        expect(deadCodeDetect).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('異常系', () => {
