@@ -132,7 +132,7 @@ case "init": {
 - [x] L1 / L2 (metadata, test-quality) 維持 (`No violations found`)
 - [x] CHANGELOG に v0.126.0 として WI-090 を記載
 - [x] minor version bump (0.125.0 → 0.126.0)
-- [ ] dogfood: publish 後、別 PJ で `npx phasegate@0.126.0 init --skill-set core --yes` が exit 2 で error suggestion を出すこと、`--skills core --yes` が成功することを確認 (publish 後)
+- [x] dogfood: publish 後、別 PJ で `npx phasegate@0.126.0 init --skill-set core --yes` が exit 2 で error suggestion を出すこと、`--skills core --yes` が成功することを確認 (2026-05-08 `/tmp/phasegate-dogfood-wi090-typo` で 4 ケース全 pass: typo / =value typo / 完全に未知 / 正常)
 
 ## スコープ外 (別 WI で漸進)
 
@@ -181,3 +181,14 @@ scope 通り `init` subcommand のみに validateKnownFlags を導入:
 - Levenshtein 閾値は **4** (description で示した目安どおり) — `--skill-set` (12 文字) ↔ `--skills` (8 文字) の距離が 4 で、これを suggestion 拾いの境界として運用。
 - `--yes` は parse コードに対応がなくても known flag として受理 (silent ignore は許容、unknown flag error は出さない)。
 - 他 subcommand への展開は本 WI ではせず、必要が出てから漸進的に導入する方針。
+
+### v0.126.0 dogfood 検証結果 — 2026-05-08
+
+publish 後に `/tmp/phasegate-dogfood-wi090-typo` で `npx phasegate@0.126.0` を install して 4 ケース実機検証。全 pass:
+
+1. **`init --skill-set core --yes`** (typo) → `Error: unknown flag '--skill-set'. Did you mean '--skills'?` exit 2 ✅
+2. **`init --skill-set=core --yes`** (=value 形式 typo) → 同上 suggestion exit 2 ✅
+3. **`init --xyz-totally-unknown`** (完全に未知) → `Error: unknown flag '--xyz-totally-unknown'. Known flags: --name, --preset, --skills, --agent, --with-husky, --yes` exit 2 ✅
+4. **`init --skills core --yes`** (正しい flag) → `✓ Skills deployed ... (8 skills, set: core)` で deploy 成功、Next steps の Step 1 は `Core skills only — quality defense tools are ready`、`Need help?` ブロックが表示されない (= WI-089 P1 conditional `if (skillSet !== "core")` も初めて実機検証成功) ✅
+
+副次的に WI-089 で表現した `skillSet === "core"` パスの動作確認もこの dogfood で達成された (WI-089 では typo arg-parsing bug のため core モード検証ができなかった)。
