@@ -1,12 +1,12 @@
 {
   "name": "phasegate",
-  "version": "0.134.0",
+  "version": "0.135.0",
   "packageManager": "pnpm@10.30.1",
   "description": "Phasegate — AI-agnostic quality defense toolkit. Enforces structural integrity between design intent and code.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/junpei-9898/phasegate.git"
+    "url": "git+https://github.com/junpei-9898/phasegate.git"
   },
   "homepage": "https://github.com/junpei-9898/phasegate#readme",
   "bugs": {
@@ -35,6 +35,7 @@
     "skills/**",
     "templates/**",
     "docs/ADR/**",
+    "docs/contracts/**",
     "docs/principles/**",
     "docs/guide/**",
     "docs/folder_management_rules.md",
@@ -42,7 +43,7 @@
     "CHANGELOG.md"
   ],
   "bin": {
-    "phasegate": "./bin/phasegate"
+    "phasegate": "bin/phasegate"
   },
   "scripts": {
     "phasegate": "npx tsx scripts/harness/main.ts",

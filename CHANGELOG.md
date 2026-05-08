@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.135.0] - 2026-05-09
+
+### Added
+
+- **WI-033 — `doc-freshness` / `pointer-validation` を L4 validators に昇格** — 既存の `p2:check-freshness` / `p2:validate-pointers` CLI を維持しつつ、`validate --layer L4` で L4-004 / L4-005 として実行されるようにした。
+  - `validator-system` に `L4-004 doc-freshness` / `L4-005 pointer-validation` を登録し、preset ごとの enable / disable 判定に対応。
+  - default の検査対象は `phasegate.config.json` の `paths.designDocs` から導出し、`paths.inceptionDocs` と archive 配下の計画・履歴文書は pointer validation の対象外にした。
+  - Markdown pointer 抽出を改善し、相対リンク・アンカー・行番号 suffix を正規化しつつ、placeholder / template / glob 表現の false positive を抑制。
+  - `docs/contracts/lesson-artifact.schema.json` を追加し、ci-governance / skill-quality 間の lesson artifact 契約参照を実在化。
+  - 旧ディレクトリ構成を指していた設計文書内の test path 参照を現行構成へ整理し、`p2:validate-pointers` は `broken=0` を確認済み。
+
 ## [0.134.0] - 2026-05-08
 
 ### Changed
