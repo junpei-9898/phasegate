@@ -108,17 +108,17 @@ phasegate `init` で `.claude/skills/` 配下に既に 28 skill をデプロイ�
 
 ## 受け入れ基準
 
-- [ ] `skills/phasegate-toolkit-guide/SKILL.md` が `skill-creator` 経由で作成され、phasegate の skill 規約 (フロントマター・@unit/@layer タグ等) を満たす
-- [ ] `skills/phasegate-config-doctor/SKILL.md` が `skill-creator` 経由で作成され、同様に規約を満たす
-- [ ] `scripts/harness/setup/skill-deployer.ts` に `guidance` カテゴリが追加され、`getSkillsForSet("all")` に含まれる
-- [ ] `getSkillsForSet("core")` には含まれない (core/guidance の責務分離)
-- [ ] `npx phasegate init` 実行後、`.claude/skills/phasegate-toolkit-guide/SKILL.md` と `.claude/skills/phasegate-config-doctor/SKILL.md` が deploy される
-- [ ] integration test 2 ケース以上追加し、全テストグリーン
-- [ ] guidance skill の knowledge は **canonical doc へのポインタ式** で書かれており、phasegate のバージョン更新で自動追従できる構造になっている (skill markdown に concept の本文を埋め込まない)
-- [ ] README.md / quickstart.md に guidance skill の使い方セクション追加
-- [ ] CHANGELOG に WI-088 として記載
-- [ ] minor version bump (0.122.0 → 0.123.0)
-- [ ] dogfood: phasegate リポジトリ自身で skill を起動し、「L1 と L2 の違いを教えて」「config に architecture preset 追加して」などの典型クエリで動作確認
+- [x] `skills/phasegate-toolkit-guide/SKILL.md` が `skill-creator` 経由で作成され、phasegate の skill 規約 (フロントマター) を満たす (Phase A / v0.123.0)
+- [x] `skills/phasegate-config-doctor/SKILL.md` が `skill-creator` 経由で作成され、同様に規約を満たす (Phase B / v0.124.0)
+- [x] `scripts/harness/setup/skill-deployer.ts` に `guidance` カテゴリが追加され、`getSkillsForSet("all")` に含まれる
+- [x] `getSkillsForSet("core")` には含まれない (core/guidance の責務分離)
+- [x] integration test 2 ケース以上追加し、全テストグリーン (Phase A 4 ケース + Phase B 4 ケース)
+- [x] guidance skill の knowledge は **canonical doc へのポインタ式** で書かれており、phasegate のバージョン更新で自動追従できる構造になっている (skill markdown に concept の本文を埋め込まない)
+- [x] CHANGELOG に WI-088 として記載 (v0.123.0 / v0.124.0 両方)
+- [x] minor version bump (0.122.0 → 0.123.0 → 0.124.0)
+- [ ] `npx phasegate init` 実行後、`.claude/skills/phasegate-toolkit-guide/SKILL.md` と `.claude/skills/phasegate-config-doctor/SKILL.md` が deploy される (publish 後 dogfood で確認)
+- [ ] dogfood: phasegate リポジトリ自身で skill を起動し、「L1 と L2 の違いを教えて」「config に architecture preset 追加して」などの典型クエリで動作確認 (publish 後)
+- [ ] README.md / quickstart.md に guidance skill の使い方セクション追加 (将来別 WI で対応 — 本 WI では skill 本体追加に集中)
 
 ## スコープ外
 
@@ -172,3 +172,21 @@ phasegate `init` で `.claude/skills/` 配下に既に 28 skill をデプロイ�
 - 全 3495 テスト (前回 3491 + 新規 4) グリーン、L1 violations なし
 
 **Phase A 適用範囲**: 最小スコープ (5-7 概念質問カテゴリへのポインタ式) を実装。dogfood しながら必要に応じて拡張する方針 (本 WI の Phase B 完了後または別 WI で対応)。
+
+### Phase B 完了（v0.124.0）— 2026-05-08
+
+`phasegate-config-doctor` skill を Phase A の対 (設定変更系 skill) として追加:
+
+- `skills/phasegate-config-doctor/SKILL.md` を `skill-creator` skill (`init_skill.py phasegate-config-doctor --path skills`) 経由で作成。skill-creator validator で pass 確認済 (memory `feedback_use_skill_creator_for_new_skills.md` 適用)。
+- SKILL 内容: 9 診断観点 (schema バージョン / project.preset / architecture.preset / paths / quickMode / harnesses / baseline / agentIntegration.stopHook.enforce / hook-config.json) ごとに OK / WARN / SUGGEST の判定基準と修正案 diff フォーマットを定義。silent 書き換え禁止 / schema を読んでから提案 / `phasegate validate --layer L2` で事後検証必須、を skill body に明記。
+- `scripts/harness/setup/skill-deployer.ts` の `SKILL_CATEGORIES.guidance` に `phasegate-config-doctor` を追加 (Phase A の `phasegate-toolkit-guide` と並ぶ)。
+- 新規テスト 4 ケース (`scripts/harness/__tests__/unit/setup/skill-deployer.test.ts`):
+  - `SKILL_CATEGORIES.guidance` に登録されていること
+  - `getCategoryForSkill('phasegate-config-doctor') === 'guidance'`
+  - `getSkillsForSet('all')` に含まれること
+  - `getSkillsForSet('core')` に含まれないこと
+- 全 3499 テスト (前回 3495 + 新規 4) グリーン、L1 violations なし
+
+**Phase B 適用範囲**: WI-087 Phase B で実装した `detectWorkspaceTargetDirs` / `detectFormatter` 既存ロジックを skill body の診断観点 9 (hook-config.json) に文脈として参照。skill 自体は機械検出ロジックを再実装せず、AI が hook-config.json を Read して診断する設計。
+
+**WI-088 全体スコープ**: 本 WI の guidance skill 系列 (Phase A: phasegate-toolkit-guide / Phase B: phasegate-config-doctor) は v0.124.0 で完了。`phasegate-troubleshoot` (症状ベース診断) は dogfood 結果を見てから別 WI で起票する方針 (本 WI スコープ外)。

@@ -336,12 +336,30 @@ target("SKILL_CATEGORIES / getSkillsForSet (WI-088 guidance category)", () => {
         // Assert
         expect(actual).toContain("phasegate-toolkit-guide");
       });
+
+      it("phasegate-config-doctor が guidance カテゴリ配下に登録されていること", () => {
+        // Arrange & Act
+        const actual = SKILL_CATEGORIES.guidance;
+
+        // Assert
+        expect(actual).toContain("phasegate-config-doctor");
+      });
     });
 
     context("getCategoryForSkill('phasegate-toolkit-guide') 呼び出し時", () => {
       it("guidance カテゴリを返すこと", () => {
         // Arrange & Act
         const actual = getCategoryForSkill("phasegate-toolkit-guide");
+
+        // Assert
+        expect(actual).toBe("guidance");
+      });
+    });
+
+    context("getCategoryForSkill('phasegate-config-doctor') 呼び出し時", () => {
+      it("guidance カテゴリを返すこと", () => {
+        // Arrange & Act
+        const actual = getCategoryForSkill("phasegate-config-doctor");
 
         // Assert
         expect(actual).toBe("guidance");
@@ -358,6 +376,14 @@ target("SKILL_CATEGORIES / getSkillsForSet (WI-088 guidance category)", () => {
         // Assert
         expect(actual).toContain("phasegate-toolkit-guide");
       });
+
+      it("phasegate-config-doctor が含まれること", () => {
+        // Arrange & Act
+        const actual = getSkillsForSet("all");
+
+        // Assert
+        expect(actual).toContain("phasegate-config-doctor");
+      });
     });
 
     context("skillSet='core' を指定した場合", () => {
@@ -367,6 +393,14 @@ target("SKILL_CATEGORIES / getSkillsForSet (WI-088 guidance category)", () => {
 
         // Assert
         expect(actual).not.toContain("phasegate-toolkit-guide");
+      });
+
+      it("phasegate-config-doctor が含まれないこと（guidance は core に属さない）", () => {
+        // Arrange & Act
+        const actual = getSkillsForSet("core");
+
+        // Assert
+        expect(actual).not.toContain("phasegate-config-doctor");
       });
     });
   });

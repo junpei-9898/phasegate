@@ -52,7 +52,7 @@ export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
     "unit-test-logic-designer",
   ],
   utility: ["codex-delegator", "skill-creator"],
-  guidance: ["phasegate-toolkit-guide"],
+  guidance: ["phasegate-toolkit-guide", "phasegate-config-doctor"],
 } as const;
 
 export function getSkillsForSet(skillSet: SkillSet): string[] {

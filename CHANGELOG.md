@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.124.0] - 2026-05-08
+
+### Added
+
+- **WI-088 Phase B — bundled guidance skill `phasegate-config-doctor`** — `phasegate.config.json` の現状を schema + プロジェクト検出結果と突き合わせて改善案を **diff 形式で提案する診断スキル** を追加。Phase A の `phasegate-toolkit-guide` (read-only Q&A) と対をなす設定変更系 skill。AI による silent な書き換えを禁止し、必ずユーザー承認 → Edit → `phasegate validate --layer L2` 検証の手順を踏む。
+  - **新規ファイル**: `skills/phasegate-config-doctor/SKILL.md` を `skill-creator` skill (`init_skill.py`) 経由で作成 (validation pass)。9 診断観点 (schema バージョン / project.preset / architecture.preset / paths / quickMode / harnesses / baseline / agentIntegration.stopHook.enforce / hook-config.json) ごとに OK / WARN / SUGGEST 判定の基準と提案 diff フォーマットを定義。
+  - **設計原則**: silent 書き換え禁止 / schema を読んでから提案 / 機械検出を優先 / AI 推論は判断要素のみ・根拠提示必須 / read-only Q&A は phasegate-toolkit-guide に委譲。
+  - **skill-deployer 拡張**: `SKILL_CATEGORIES.guidance` に `phasegate-config-doctor` を追加。`getSkillsForSet("all")` に含まれるが `getSkillsForSet("core")` には含まれない (Phase A と同じ責務分離)。
+  - **テスト追加**: 4 ケース (guidance カテゴリ登録 / `getCategoryForSkill('phasegate-config-doctor') === 'guidance'` / `getSkillsForSet('all')` に含まれる / `getSkillsForSet('core')` に含まれない)。全 3499 テスト (前回 3495 + 新規 4) グリーン。
+  - **互換性**: 既存 deploy ロジックに変更なし。consumer プロジェクトで `phasegate init` 実行時、`.claude/skills/` 配下に `phasegate-toolkit-guide` (Phase A) と `phasegate-config-doctor` (Phase B) の 2 つが追加 deploy される。
+
 ## [0.123.0] - 2026-05-08
 
 ### Added
