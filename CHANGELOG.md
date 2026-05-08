@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.134.0] - 2026-05-08
+
+### Changed
+
+- **WI-034: L0 legacy validator (`L0-001` / `L0-002`) の撤去** — `validator-system` から FUSE 時代の未実装 validator 定義と `RunL0ValidatorsUseCase` を削除し、config schema / `phasegate.config.json` から `layers.L0` を撤去。`list-errors --layer L0` は空のままになり、`validate --layer L0` は runtime L0 が agent-integration hooks と Husky hooks で提供される旨の案内を表示して exit 0 で終了する。
+  - **Migration guide**: CI で `phasegate validate --layer L0` を実行していた場合、そのジョブは削除してください。L0 相当の防御は `.claude/settings.json` / `.codex/hooks.json` の runtime hook と `.husky/pre-commit` / `.husky/commit-msg` で有効化し、CI 側は `phasegate validate --layer L2` / `--layer L3` / `--layer L4` または `--layer all` に移行します。
+
 ## [0.133.0] - 2026-05-08
 
 ### Added

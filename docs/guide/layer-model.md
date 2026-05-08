@@ -52,13 +52,13 @@ Deployed by `phasegate init --with-husky` into `.husky/`.
 | **.husky/pre-commit** | `npx phasegate pre-commit` | Runs L2 validators (phase-gate / metadata / story-reflection / test-quality) on staged files. Fails the commit on violation. |
 | **.husky/commit-msg** | `npx phasegate commit-msg $1` | Enforces the `Work-Item: WI-XXX` trailer when WI directories or their contents are staged. Ensures every commit is traceable to a work item. |
 
-### About the `validate --layer L0` CLI
+### About `validate --layer L0`
 
 ```bash
 npx phasegate validate --layer L0
 ```
 
-`list-errors --layer L0` surfaces `L0-001 fuse-hook-config` / `L0-002 fuse-mount-status` — these are **legacy validator definitions** from an earlier design and are disabled by default (`layers.L0.enabled: false`). The **runtime L0 enforcement happens via the agent-runtime hooks and Husky git hooks above**, not via those validators.
+`validate --layer L0` is kept as a compatibility alias that prints guidance and exits successfully. Runtime L0 enforcement happens via the agent-runtime hooks and Husky git hooks above. `list-errors --layer L0` returns no validator definitions.
 
 ---
 
@@ -227,14 +227,14 @@ History: prior to v0.131.0, the aggregator's `failOnWarning` flag was effectivel
 
 Presets control which layers are active. Choose based on project maturity and team discipline.
 
-| Preset     | L0  | L1  | L2  | L3  | L4  |
+| Preset     | L0 hooks | L1  | L2  | L3  | L4  |
 |------------|-----|-----|-----|-----|-----|
-| `minimal`  | off | on  | on  | off | off |
-| `standard` | off | on  | on  | on  | off |
-| `strict`   | on  | on  | on  | on  | on  |
+| `minimal`  | installed separately | on  | on  | off | off |
+| `standard` | installed separately | on  | on  | on  | off |
+| `strict`   | installed separately | on  | on  | on  | on  |
 
 - **minimal** — Suitable for early prototyping. Editor-time rules and pre-commit checks only.
 - **standard** — Recommended for active development. Adds CI/CD validators for security, performance, coverage, and traceability.
-- **strict** — Full defense. Enables the Hooks Engine (L0) and scheduled drift detection (L4). Use for production-critical codebases.
+- **strict** — Full defense. Enables scheduled drift detection (L4). Runtime L0 hooks are configured through the agent and Husky hook files, not through validator presets.
 
 Presets are configured in `phasegate.config.json`, the single source of truth for all quality settings.

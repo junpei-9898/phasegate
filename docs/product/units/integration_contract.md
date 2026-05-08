@@ -1,5 +1,8 @@
 # 統合契約（Integration Contract）
 
+@story-id H08-01
+設計要素: L0 legacy validator 撤去後の validator-system / agent-integration 境界。
+
 > **作成日**: 2026-03-12
 > **Unit数**: 14（v1） + 2（Future）
 > **ストーリー数**: 54（v1） + 8（Future）= 62
@@ -321,17 +324,17 @@ Future
 
 ## 6. Future Extension Points
 
-### 6.1 validator-system: L0バリデータ登録インターフェース
+### 6.1 agent-integration: Runtime hook 登録インターフェース
 
-将来 L0（OS-level enforcement）バリデータを追加する場合の拡張ポイント。Validator ID Registry にプラグイン方式で L0 バリデータを登録可能にする。
+L0 相当の runtime enforcement を追加する場合の拡張ポイント。agent runtime hook と Husky hook の登録・配布経路を通じて追加し、Validator ID Registry には登録しない。
 
 ### 6.2 harness-api: CLIコマンド拡張ポイント
 
 CLI Command Registryへの新規コマンド登録API。Future Unitが新たなCLIコマンドを追加する際、harness-apiのCommandRegistryに登録する。コマンド名の一意性は自動検証。
 
-### 6.3 config-foundation: L0セクション追加用スキーマ拡張
+### 6.3 config-foundation: Hook 設定拡張
 
-phasegate.config.json v2 スキーマに L0（OS-level enforcement）設定セクションを追加するための拡張ポイント。`layers.L0` セクションの追加を想定。
+runtime hook の設定項目を追加する場合の拡張ポイント。validator layer 設定は `layers.L1`〜`layers.L4` を対象とし、L0 hook は agent / git hook 側の設定で扱う。
 
 ### 6.4 phase2-extensions: L4バリデータ追加
 

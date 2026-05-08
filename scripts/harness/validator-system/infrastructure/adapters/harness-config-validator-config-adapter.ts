@@ -9,7 +9,6 @@ import { LayerConfig } from '../../domain/value-objects/layer-config.js';
 import type { ValidatorConfigPort } from '../../domain/ports/validator-config-port.js';
 
 export interface HarnessConfigLayers {
-  L0?: { enabled?: boolean; validators?: string[]; strictOnly?: boolean; preset?: string };
   L2?: { enabled?: boolean; validators?: string[]; strictOnly?: boolean; preset?: string };
   L3?: { enabled?: boolean; validators?: string[]; strictOnly?: boolean; preset?: string; coverageThreshold?: number; bundleSizeLimit?: number };
   L4?: { enabled?: boolean; validators?: string[]; strictOnly?: boolean; preset?: string; deadCodeGC?: boolean };
@@ -32,13 +31,12 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
     this.config = config;
   }
 
-  async getLayerConfig(layer: 'L0' | 'L2' | 'L3' | 'L4'): Promise<LayerConfig> {
+  async getLayerConfig(layer: 'L2' | 'L3' | 'L4'): Promise<LayerConfig> {
     const preset = (this.config.project?.preset ?? this.config.preset ?? 'standard') as 'minimal' | 'standard' | 'strict';
     const strictOnly = preset === 'strict';
     const layerData = this.config.layers?.[layer] ?? {};
 
     const defaultValidators: Record<string, string[]> = {
-      L0: ['L0-001', 'L0-002'],
       L2: ['L2-001', 'L2-002', 'L2-003'],
       L3: ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
       L4: ['L4-001', 'L4-002', 'L4-003'],

@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * ValidatorRegistry ドメインサービス
- * 全10バリデータ定義のカタログ管理と選択実行インターフェース
+ * L2-L4バリデータ定義のカタログ管理と選択実行インターフェース
  */
 import { ValidatorId } from '../value-objects/validator-id.js';
 import { ValidatorDefinition } from '../value-objects/validator-definition.js';
@@ -48,7 +48,7 @@ export class ValidatorRegistry {
     return this.definitionList;
   }
 
-  listByLayer(layer: 'L0' | 'L2' | 'L3' | 'L4'): readonly ValidatorDefinition[] {
+  listByLayer(layer: 'L2' | 'L3' | 'L4'): readonly ValidatorDefinition[] {
     return this.definitionList.filter((def) => def.layer === layer);
   }
 

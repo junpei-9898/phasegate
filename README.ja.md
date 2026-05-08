@@ -161,8 +161,6 @@ npx phasegate update-skills   # スキルを最新版に再デプロイ
 
 エラーは `HarnessError` 形式（理由 / ADR 参照 / 修正例）で返されるため、AI agent が自己修正できます。
 
-> `--layer L0` の `L0-001` / `L0-002` は legacy validator で `enabled: false`。実体の L0 は agent-integration の hook と Husky です。
-
 詳細: [5-Layer Defense Model](docs/guide/layer-model.md)
 
 ---
@@ -238,7 +236,7 @@ L2-STORY-REFLECTION バリデータがこのアノテーションを検出し、
   "project":   { "name": "my-project", "preset": "standard" },
   "architecture": { "preset": "clean" },
   "layers": {
-    "L0": { "enabled": false }, "L1": { "enabled": true },
+    "L1": { "enabled": true },
     "L2": { "enabled": true  }, "L3": { "enabled": true  },
     "L4": { "enabled": false }
   },
@@ -456,7 +454,6 @@ reports/
 | **[WI-031](docs/inception/_cross/WI-031/description.md)** | CI template の二系統統一 + `phasegate init --with-ci` |
 | **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh パイプライン |
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 |
-| **[WI-034](docs/inception/_cross/WI-034/description.md)** | L0 legacy validator (`L0-001` / `L0-002`) の撤去 |
 
 L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。現時点では手動セットアップで利用できます。
 

@@ -7,5 +7,5 @@
 import type { LayerConfig } from '../value-objects/layer-config.js';
 
 export interface ValidatorConfigPort {
-  getLayerConfig(layer: 'L0' | 'L2' | 'L3' | 'L4'): Promise<LayerConfig>;
+  getLayerConfig(layer: 'L2' | 'L3' | 'L4'): Promise<LayerConfig>;
 }

@@ -4,9 +4,6 @@
     "preset": "standard"
   },
   "layers": {
-    "L0": {
-      "enabled": false
-    },
     "L1": {
       "enabled": true
     },

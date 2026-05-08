@@ -20,8 +20,6 @@ const VALIDATOR_ID_PATTERN = /^L[0-4]-\d{3}$/;
 
 /** バリデータID -> バリデータ名のマップ */
 const VALIDATOR_NAME_MAP: Record<string, string> = {
-  'L0-001': 'fuse-hook-config',
-  'L0-002': 'fuse-mount-status',
   'L1-017': 'it-test-mock-detection',
   'L1-018': 'stub-comment-detection',
   'L2-001': 'phase-gate',

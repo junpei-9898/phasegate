@@ -110,7 +110,7 @@ Commands:
 
   lint                         Run lint checks (--json, --target <path>)
 
-  validate                     Run validators (--layer L0|L2|L3|L4|all, --unit, --format human|agent|ci)
+  validate                     Run validators (--layer L2|L3|L4|all; L0 prints runtime hook info, --unit, --format human|agent|ci)
   ci-check                     CI check (--quick for quick mode, --fail-on-reject, --dry-run, --files)
 
   phasegate:check-ready         Check ready status (--json)
@@ -263,10 +263,10 @@ Options:
   --help, -h                      Show this help`,
   validate: `Usage: phasegate validate [options]
 
-Run validators against the project. Without --layer, runs all enabled layers (L0/L2/L3/L4).
+Run validators against the project. Without --layer, runs all enabled validator layers (L2/L3/L4).
 
 Options:
-  --layer <L0|L2|L3|L4>           Run only the specified layer
+  --layer <L0|L2|L3|L4>           Run only the specified validator layer; L0 prints runtime hook info
   --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
   lint: `Usage: phasegate lint [options]

@@ -15,7 +15,6 @@ This file is the **Single Source of Truth** for all quality configuration in a P
     "preset": "standard"       // "minimal" | "standard" | "strict"
   },
   "layers": {
-    "L0": { "enabled": false },
     "L1": { "enabled": true },
     "L2": { "enabled": true },
     "L3": { "enabled": true },

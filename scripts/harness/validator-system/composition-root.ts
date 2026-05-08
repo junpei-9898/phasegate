@@ -10,7 +10,6 @@ import { ValidationRule } from './domain/value-objects/validation-rule.js';
 import { ValidatorRegistry } from './domain/services/validator-registry.js';
 import { ValidatorExecutionService } from './domain/services/validator-execution-service.js';
 import { ValidationResultContractMapper } from './application/mappers/validation-result-contract-mapper.js';
-import { RunL0ValidatorsUseCase } from './application/use-cases/run-l0-validators-usecase.js';
 import { RunL2ValidatorsUseCase } from './application/use-cases/run-l2-validators-usecase.js';
 import { RunL3ValidatorsUseCase } from './application/use-cases/run-l3-validators-usecase.js';
 import { RunL4ValidatorsUseCase } from './application/use-cases/run-l4-validators-usecase.js';
@@ -45,7 +44,6 @@ import { join } from 'node:path';
 const DEFAULT_CONFIG = {
   preset: 'standard' as const,
   layers: {
-    L0: { enabled: true, validators: ['L0-001', 'L0-002'] },
     L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },
@@ -61,7 +59,7 @@ function buildDefaultRegistry(): ValidatorRegistry {
     fixExample: null,
   });
 
-  const createDef = (id: string, layer: 'L0' | 'L2' | 'L3' | 'L4', enabledCondition: 'always' | 'strictOnly' = 'always', externalPolicyRef: string | null = null) =>
+  const createDef = (id: string, layer: 'L2' | 'L3' | 'L4', enabledCondition: 'always' | 'strictOnly' = 'always', externalPolicyRef: string | null = null) =>
     ValidatorDefinition.create({
       validatorId: ValidatorId.create(id),
       layer,
@@ -75,7 +73,6 @@ function buildDefaultRegistry(): ValidatorRegistry {
     });
 
   const definitions = [
-    createDef('L0-001', 'L0', 'always'),
     createDef('L2-001', 'L2', 'always', 'PhaseGatePolicyPort'),
     createDef('L2-002', 'L2', 'always', 'MetadataPolicyPort'),
     createDef('L2-003', 'L2', 'always'),
@@ -93,7 +90,6 @@ function buildDefaultRegistry(): ValidatorRegistry {
 
 export interface ValidatorSystemModule {
   registry: ValidatorRegistry;
-  runL0ValidatorsUseCase: RunL0ValidatorsUseCase;
   runL1ValidatorsUseCase: RunL1ValidatorsUseCase;
   runL2ValidatorsUseCase: RunL2ValidatorsUseCase;
   runL3ValidatorsUseCase: RunL3ValidatorsUseCase;
@@ -123,13 +119,6 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const testQualityAnalyzerPort = new BiomeAstTestQualityAnalyzerAdapter();
   const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
   const performanceScannerPort = new AstPerformanceScannerAdapter();
-
-  const runL0ValidatorsUseCase = new RunL0ValidatorsUseCase({
-    validatorRegistry: registry,
-    validatorExecutionService: executionService,
-    validatorConfigPort: configPort,
-    contractMapper,
-  });
 
   const runL2ValidatorsUseCase = new RunL2ValidatorsUseCase({
     validatorRegistry: registry,
@@ -220,7 +209,6 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const handlers = {
     runValidators: new RunValidatorsHandler({
       runFullValidationUseCase,
-      runL0ValidatorsUseCase,
       runL1ValidatorsUseCase,
       defaultFailOnWarning,
     }),
@@ -230,7 +218,6 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
 
   return {
     registry,
-    runL0ValidatorsUseCase,
     runL1ValidatorsUseCase,
     runL2ValidatorsUseCase,
     runL3ValidatorsUseCase,
