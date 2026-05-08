@@ -81,7 +81,8 @@ Usage: phasegate <command> [options]
 
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
-                               (--name <project-name>, --preset <full|standard|minimal|custom>, --agent <claude|codex|both>, --with-husky)
+                               (--name <project-name>, --preset <full|standard|minimal|custom>,
+                                --skills <core|all>, --agent <claude|codex|both>, --with-husky, --yes)
   update-skills                Re-deploy skills from current harness version
 
 Commands:
@@ -164,6 +165,58 @@ function parseFlag(args: readonly string[], flag: string): string | undefined {
 
 function hasFlag(args: readonly string[], flag: string): boolean {
   return args.includes(flag);
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function findClosestFlag(input: string, known: readonly string[]): string | undefined {
+  let best: string | undefined;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (const flag of known) {
+    const dist = levenshtein(input, flag);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = flag;
+    }
+  }
+  return bestDist <= 4 ? best : undefined;
+}
+
+function validateKnownFlags(args: readonly string[], known: readonly string[]): string | null {
+  const knownSet = new Set(known);
+  let i = 0;
+  while (i < args.length) {
+    const arg = args[i];
+    if (!arg.startsWith("--")) {
+      i++;
+      continue;
+    }
+    const flagName = arg.includes("=") ? arg.slice(0, arg.indexOf("=")) : arg;
+    if (knownSet.has(flagName)) {
+      i++;
+      continue;
+    }
+    const suggestion = findClosestFlag(flagName, known);
+    return suggestion
+      ? `Error: unknown flag '${flagName}'. Did you mean '${suggestion}'?`
+      : `Error: unknown flag '${flagName}'. Known flags: ${known.join(", ")}`;
+  }
+  return null;
 }
 
 /** フラグとその値を除いた位置引数のみを返す */
@@ -434,6 +487,12 @@ async function main(): Promise<void> {
     switch (command) {
       // ── harness setup ──
       case "init": {
+        const KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--yes"];
+        const flagError = validateKnownFlags(args, KNOWN_INIT_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
         const projectName = parseFlag(args, "--name") ?? "my-project";
         const rawPhasePreset = parseFlag(args, "--preset");
         if (

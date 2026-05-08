@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.126.0] - 2026-05-08
+
+### Fixed
+
+- **WI-090 — `phasegate init` が unknown flag を silent ignore する問題を解消** — 例えば `phasegate init --skill-set core` (typo: 正しくは `--skills core`) を実行すると、従来は `--skill-set` 値が無視されて default の `all` で deploy されていた。本リリースで unknown flag を **exit 2 + suggestion** として error 化。
+  - **新規ヘルパー**: `scripts/harness/main.ts` に `validateKnownFlags` / `findClosestFlag` / `levenshtein` の 3 関数を inline 追加 (presentation layer の zero-dep CLI parser に組み込み、commander/yargs などの外部依存は追加しない方針を維持)。
+  - **挙動**: `init` 冒頭で `KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--yes"]` と照合し、未知の `--xxx` または `--xxx=value` を検出すると Levenshtein 距離 ≤ 4 の closest flag を `Did you mean '...'?` で提示、該当無しなら known flags の列挙を提示して exit 2。
+  - **互換性**: 既存の正しい flag 利用 (`--skills core` / `--name foo` 等) には一切影響しない。`--yes` は既存 user の script 互換のため known flag として受理 (no-op)。
+  - **help line 修正**: `main.ts` の `printUsage()` で表示される `init` 説明行に `--skills <core|all>` と `--yes` を追記 (従来 `--skills` が help から欠落していた)。
+  - **テスト追加**: 4 integration ケース (`scripts/harness/__tests__/integration/harness-api/init-flag-validation.integration.test.ts`):
+    - `--skill-set core` typo は `Did you mean '--skills'?` を出して exit 2
+    - `--skill-set=core` (=value 形式の typo) も同様に検出
+    - `--xyz-totally-unknown` は known flags の列挙を出して exit 2
+    - 正しい組み合わせ `--name foo --skills all --agent claude --yes` は flag validation で reject されない
+  - 全 3503 テスト (前回 3499 + 新規 4) グリーン、L1 lint 違反なし。
+  - **スコープ外**: 他 subcommand (update-skills / migrate / lint / validate / etc.) への validateKnownFlags 展開は段階適用のため別 WI。`--help` per subcommand 実装も別 WI。
+
 ## [0.125.0] - 2026-05-08
 
 ### Changed
