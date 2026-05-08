@@ -302,9 +302,16 @@ dogfood で発覚した finding #1 の DI 配線漏れを修正:
 - 結合テスト 2 ケース新規追加 (`validate-layer-config.integration.test.ts`)。
 - 全 3516 テスト (前回 3514 + 新規 2) グリーン。
 
-**v0.128.0 dogfood 検証 (post-publish) — 予定**:
+**v0.128.0 dogfood 検証 (post-publish) — 結果 (2026-05-08)**:
 
-1. `layers.L4.enabled: false` + `validate --layer L4` → L4-001/002/003 すべて `[SKIP]` + 総合判定 PASS + exit 0
+`/tmp/phasegate-dogfood-wi091` で `npx phasegate@0.128.0` を install して検証。
+
+1. **finding #1 L4 enabled gate**: ✅ `layers.L4.enabled: false` + `validate --layer L4` 実行 → `バリデータ: 0件 (合格:0 失敗:0 スキップ:0)` / 総合判定: PASS ✓ / exit 0。v0.127.0 で発覚した DI 配線漏れが解消され、user の config が runtime で実際に L4 use case に届くことを確認。
+2. **finding #1 回帰確認**: ✅ `layers.L4.enabled: true` で `phasegate:detect-drift` 実行 → drift 検出が動作 (sample-unit の `CommonIdInfo` / `Consent` を検出)。enabled gate が enabled=true 時には透過することを確認。
+3. **finding #3 --help pre-dispatch**: ✅ `update-skills --help` / `phasegate:detect-drift --help` で usage + exit 0 (副作用ナシ、回帰なし)。
+4. **finding #5 qualifier normalize**: ✅ drift detect output の element 名が `CommonIdInfo` / `Consent` (括弧 qualifier 除去済) で、回帰なし。
+
+**3/5 finding が v0.127.0+v0.128.0 で実機 runtime での動作を確認済**。残る #2 (severity 集計) / #4 (paths threading) / #5 advanced (`pointers:` block 仕様) は別 WI 起票で漸進的に対応する。
 
 **残 follow-up (別 commit で対応)**:
 - `harness-api/infrastructure/adapters/validator-system-execution-adapter.ts:27/38/51` の 3 site (phasegate:detect-drift / phasegate:check-ready / runAllValidators flow)
