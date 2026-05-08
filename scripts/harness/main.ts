@@ -219,6 +219,128 @@ function validateKnownFlags(args: readonly string[], known: readonly string[]): 
   return null;
 }
 
+const SUBCOMMAND_HELP: Record<string, string> = {
+  init: `Usage: phasegate init [options]
+
+Initialize phasegate in the current project: deploy skills + design docs + phasegate.config.json.
+
+Options:
+  --name <project-name>           Project name (default: "my-project")
+  --preset <full|standard|minimal|custom>   Phase dependency preset (default: "standard")
+  --skills <core|all>             Skill set to deploy (default: "all")
+  --agent <claude|codex|both>     Agent integration target (default: "claude")
+  --with-husky                    Install Husky pre-commit hooks
+  --yes                           Skip confirmation prompts
+  --help, -h                      Show this help`,
+  "update-skills": `Usage: phasegate update-skills [options]
+
+Redeploy skills in .claude/skills/ from the installed phasegate version. WARNING: overwrites existing skill files.
+
+Options:
+  --skills <core|all>             Skill set to deploy
+  --agent <claude|codex|both>     Agent integration target
+  --help, -h                      Show this help`,
+  validate: `Usage: phasegate validate [options]
+
+Run validators against the project. Without --layer, runs all enabled layers (L0/L2/L3/L4).
+
+Options:
+  --layer <L0|L2|L3|L4>           Run only the specified layer
+  --json                          Output machine-readable JSON
+  --help, -h                      Show this help`,
+  lint: `Usage: phasegate lint [options]
+
+Run L1 Biome AST checks across the project.
+
+Options:
+  --json                          Output machine-readable JSON
+  --help, -h                      Show this help`,
+  migrate: `Usage: phasegate migrate [options]
+
+Migrate phasegate.config.json from older schema versions. Backs up the original to phasegate.config.json.bak.
+
+Options:
+  --dry-run                       Preview changes without writing
+  --help, -h                      Show this help`,
+  "list-errors": `Usage: phasegate list-errors [options]
+
+List validator error catalog entries.
+
+Options:
+  --layer <L0|L1|L2|L3|L4>        Filter by layer
+  --format <table|json>           Output format (default: "table")
+  --help, -h                      Show this help`,
+  "phasegate:status": `Usage: phasegate phasegate:status
+
+Display harness status (enabled validators, schema version, hook deployment).`,
+  "phasegate:detect-drift": `Usage: phasegate phasegate:detect-drift [options]
+
+Run L4-001 drift detection between design documents and source code. WARNING: scans the project filesystem.
+
+Options:
+  --json                          Output machine-readable JSON (default for this command)
+  --help, -h                      Show this help`,
+  "phasegate:check-ready": `Usage: phasegate phasegate:check-ready
+
+Check whether the harness is ready (config valid, hooks deployed).`,
+  "phasegate:complete-check": `Usage: phasegate phasegate:complete-check
+
+Run completion check (used by Stop hook). Validates phase-gate, metadata, and test-quality.`,
+  "phasegate:check-phase": `Usage: phasegate phasegate:check-phase [options]
+
+Check phase gate for a specific unit.
+
+Options:
+  --unit <unitId>   Target unit ID (e.g., harness-api). If omitted,
+                    the first positional argument is used.
+  --json            Output result as JSON.
+  --help, -h        Show this help.
+
+Examples:
+  phasegate phasegate:check-phase --unit harness-api
+  phasegate phasegate:check-phase harness-api --json`,
+  "check-change-category": `Usage: phasegate check-change-category --paths <csv> [options]
+
+Classify changed file paths into quick-mode categories and report
+whether Full Mode is required.
+
+Options:
+  --paths <csv>              Comma-separated file paths to classify.
+  --format <human|json>      Output format. Default: human.
+  --fail-on-full-required    Exit with code 1 when Full Mode is required.
+  --help, -h                 Show this help.
+
+Examples:
+  phasegate check-change-category --paths src/foo.ts,src/bar.ts
+  phasegate check-change-category --paths src/foo.ts --format json`,
+  "ci:generate-template": `Usage: phasegate ci:generate-template [options]
+
+Generates a CI template configuration.
+
+Options:
+  --preset <id>    Preset name (e.g. standard, strict). Required.
+  --type <type>    Template purpose (NOT CI platform name). One of:
+                     aidlc-gate        — AIDLC phase gate checks
+                     consistency-check — Doc/code consistency checks
+                     pre-commit        — Pre-commit hook template
+  --render         Render the template to stdout
+  --json           Output in JSON format
+
+Examples:
+  phasegate ci:generate-template --preset standard --type aidlc-gate
+  phasegate ci:generate-template --preset strict --type pre-commit --render`,
+};
+
+function printSubcommandHelp(command: string): void {
+  const help = SUBCOMMAND_HELP[command];
+  if (help) {
+    console.log(help);
+  } else {
+    console.log(`Usage: phasegate ${command} [options]`);
+    console.log("(use 'phasegate --help' for the full command reference)");
+  }
+}
+
 /** フラグとその値を除いた位置引数のみを返す */
 function parsePositionalArgs(args: readonly string[], flagsWithValues: readonly string[] = []): string[] {
   const result: string[] = [];
@@ -475,6 +597,12 @@ async function main(): Promise<void> {
   if (command === "--version" || command === "version") {
     const version = await getHarnessVersion(harnessRoot);
     console.log(`phasegate v${version}`);
+    process.exit(0);
+  }
+
+  // Pre-dispatch: 全 subcommand で --help / -h を最優先で解釈し usage 出力 (副作用走行を防ぐ — WI-091 finding #3)
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printSubcommandHelp(command);
     process.exit(0);
   }
 
