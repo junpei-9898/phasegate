@@ -281,10 +281,11 @@ ADR を 1 本起票し、(A)〜(D) の採用方針 + (C) の互換戦略を確�
 
 **全 3514 tests** (前回 3503 + 新規 11) グリーン、L1 lint 違反なし、L2 metadata + test-quality 維持。
 
-**残作業 (別 WI 起票予定)**:
-- **finding #2** (severity 集計セマンティクス): `aggregate-validation-results-usecase.ts:67` で `overallPassed = failedValidators === 0` と severity 非考慮の問題。`defaultSeverity: warning` の validator が fail しても overall FAIL になり exit 1。既存 user CI への影響があるため後方互換戦略 (例: `validate.warningExitCode` config flag) を ADR で決定する必要あり。**story-implementor 案件**。
-- **finding #4** (paths.designDocs 完全 threading): `phase-dependency-model/domain/definitions/{full,standard,minimal}-phase-nodes.ts` 3 ファイルと `traceability-model/{domain/services/traceability-chain-builder.ts, infrastructure/gateways/markdown-story-catalog-gateway.ts}` 2 ファイルの hardcoded `docs/product/...` を `{designDocsRoot}/...` placeholder に置換し、`Artifact.resolve(pathRoots)` で `paths.designDocs` 値を展開する作業。WI-085 で `inceptionDocs` 側 threading のみ通った漏れの補完。**story-implementor 案件**。
-- **finding #5 advanced** (`pointers:` block 仕様): 設計文書側で `element → file path` を明示する高度仕様の策定 — ADR で要件確定後に別 WI。本 v0.127.0 の immediate 修正で false-positive の主原因 (qualifier) は解消されたため緊急度は低下。
+**残作業 (別 WI 起票済)** — 2026-05-08 に 3 件すべて起票:
+
+- **[WI-094](../WI-094/description.md)** (finding #2: severity 集計セマンティクス + ADR): `aggregate-validation-results-usecase.ts:67` で `overallPassed = failedValidators === 0` と severity 非考慮の問題。`defaultSeverity: warning` の validator が fail しても overall FAIL になり exit 1。既存 user CI への影響があるため後方互換戦略 (例: `validate.warningExitCode` config flag) を ADR で決定する必要あり。type: issue、severity: high、**story-implementor 案件**。
+- **[WI-093](../WI-093/description.md)** (finding #4: paths.designDocs 完全 threading): `phase-dependency-model/domain/definitions/{full,standard,minimal}-phase-nodes.ts` 3 ファイルと `traceability-model/{domain/services/traceability-chain-builder.ts, infrastructure/gateways/markdown-story-catalog-gateway.ts}` 2 ファイルの hardcoded `docs/product/...` を `{designDocsRoot}/...` placeholder に置換し、`Artifact.resolve(pathRoots)` で `paths.designDocs` 値を展開する作業。WI-085 で `inceptionDocs` 側 threading のみ通った漏れの補完。type: fix、severity: high、**story-implementor 案件**。
+- **[WI-095](../WI-095/description.md)** (finding #5 advanced: `pointers:` block 仕様): 設計文書側で `element → file path` を明示する高度仕様の策定 — ADR で要件確定後に実装。本 v0.127.0 の immediate 修正で false-positive の主原因 (qualifier) は解消されたため緊急度は低下。type: story、severity: normal。
 
 ### dogfood 検証 (post-publish) — v0.127.0 結果
 
@@ -313,9 +314,10 @@ dogfood で発覚した finding #1 の DI 配線漏れを修正:
 
 **3/5 finding が v0.127.0+v0.128.0 で実機 runtime での動作を確認済**。残る #2 (severity 集計) / #4 (paths threading) / #5 advanced (`pointers:` block 仕様) は別 WI 起票で漸進的に対応する。
 
-**残 follow-up (別 commit で対応)**:
-- `harness-api/infrastructure/adapters/validator-system-execution-adapter.ts:27/38/51` の 3 site (phasegate:detect-drift / phasegate:check-ready / runAllValidators flow)
-- `integrations/pre-commit.ts:306/338` の 2 site (Husky pre-commit)
+**残 follow-up (別 WI 起票で対応)** — 2026-05-08 に起票済:
+
+- **[WI-092](../WI-092/description.md)** — `createValidatorSystemModule()` 残 5 site の DI 配線漏れ sweep (`validator-system-execution-adapter.ts:27/38/51` + `integrations/pre-commit.ts:306/338`)。本 v0.128.0 で `main.ts:979` のみ修正、残 5 site は予防的 sweep 対象。
+
 これらも同種の DI 配線漏れだが、別ハンドラ経路で `resolvedConfig` がスコープ外のため別途修正。phasegate:detect-drift で finding #5 normalize が機能したのは drift detection が design adapter を直接呼ぶ経路で、L4 enabled gate を経由していないため。
 
 **教訓 (memory 反映予定)**: `feedback_dogfood_before_release.md` に composition root の DI 経路 (`createValidatorSystemModule(config?)` を呼ぶ全 6 site) で config threading を毎回 grep 確認する規律を追記する。
