@@ -89,6 +89,20 @@ WI-091/WI-092 の流れ (config を caller 側で resolved して thread) と一
 - [x] dogfood: unit test で `project.preset: "minimal"` + `layers.L4.enabled: true` の L4 enabled を確認
 - [x] 既存 status derivation test green、新規 unit test 追加 (override 反映 case)
 - [x] L1 / L2 (metadata, test-quality) 維持
+- [x] post-publish dogfood: `npx phasegate@0.133.0 phasegate:status --json` で `minimal + L4.enabled:true` と `strict + L4.enabled:false` の両方向override表示を確認
+
+## publish / dogfood 結果
+
+- publish: `phasegate@0.133.0` として npm publish 済み (2026-05-08)
+- npm registry: `npm view phasegate@0.133.0 version dist.tarball` で `version = '0.133.0'` と tarball URL を確認
+- dogfood fixture: `/private/tmp/phasegate-dogfood-0.133.0`
+- `project.preset: "minimal"` + `layers.L4.enabled: true`
+  - command: `npx phasegate@0.133.0 phasegate:status --json`
+  - result: `data.layers[]` の L4 が `{"layerId":"L4","enabled":true,"lastResult":"unknown"}`、`presetInfo.enabledLayers` に `L4` が含まれる
+- `project.preset: "strict"` + `layers.L4.enabled: false`
+  - command: `npx phasegate@0.133.0 phasegate:status --json`
+  - result: `data.layers[]` の L4 が `{"layerId":"L4","enabled":false}`、`presetInfo.enabledLayers` は `["L1","L2","L3"]`
+- conclusion: status表示経路が runtime config の `layers.L?.enabled` override をpublished packageでも反映している。
 
 ## 実害評価 (なぜ severity: trivial か)
 - runtime の `validate --layer L?` は WI-091/WI-092 の config threading により override を正しく honor → 実際の検査挙動は正しい

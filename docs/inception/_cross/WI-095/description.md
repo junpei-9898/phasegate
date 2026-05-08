@@ -103,6 +103,20 @@ drift-detect は heading 名 exact match に加えて pointers の file path 存
 - [x] `docs/guide/layer-model.md` で pointers spec 記載
 - [x] 結合テスト: pointers 指定 / 未指定 / file 存在 / 不存在 / 複数 pointer の各ケース
 - [x] dogfood: unit/integration tests で実 pointer path と code file path の照合を確認
+- [x] post-publish dogfood: `npx phasegate@0.133.0 phasegate:detect-drift --json` で pointer が別名 export を対応付け、drift 0件になることを確認
+
+## publish / dogfood 結果
+
+- publish: `phasegate@0.133.0` として npm publish 済み (2026-05-08)
+- npm registry: `npm view phasegate@0.133.0 version dist.tarball` で `version = '0.133.0'` と tarball URL を確認
+- dogfood fixture: `/private/tmp/phasegate-dogfood-0.133.0`
+  - design: `docs/product/construction/sample-unit/domain_model.md`
+  - heading: `## UserProfile`
+  - pointer: `<!-- pointers: scripts/harness/sample-unit/domain/user-profile.ts -->`
+  - code: `scripts/harness/sample-unit/domain/user-profile.ts` with `export class UserProfileV2 {}`
+- command: `npx phasegate@0.133.0 phasegate:detect-drift --json`
+- result: `{"status":"pass",...,"data":{"drifts":[],"totalCount":0}}`
+- conclusion: design pointer が設計名 `UserProfile` と code export `UserProfileV2` を対応付け、WI-095の主要false-positiveケースをpublished packageで解消できている。
 
 ## スコープ外
 - WI-091 finding #5 immediate (qualifier normalize) — v0.127.0 で完了済

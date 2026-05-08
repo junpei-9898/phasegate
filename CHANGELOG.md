@@ -12,10 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **WI-095 — L4-001 drift-detect の design pointers 対応** — 設計見出し直下の `<!-- pointers: ... -->` / `<pointers>` block で実装ファイルpathを明示できるようにし、設計名とcode export名が異なる移行中ケースのfalse positiveを抑制。ADR-018でsyntaxとORセマンティクスを定義。
+  - **post-publish dogfood**: `/private/tmp/phasegate-dogfood-0.133.0` で `npx phasegate@0.133.0 phasegate:detect-drift --json` を実行。設計見出し `UserProfile` に `<!-- pointers: scripts/harness/sample-unit/domain/user-profile.ts -->` を付け、コード側は `export class UserProfileV2 {}` とした状態で `drifts: [] / totalCount: 0` を確認。
 
 ### Fixed
 
 - **WI-096 — `phasegate:status` が `layers.L?.enabled` user override を表示に反映しない問題を修正** — status表示用のenabledLayersをpreset値と明示overrideから合成し、`strict + L4.enabled:false` / `minimal + L4.enabled:true` の双方に対応。
+  - **post-publish dogfood**: `npx phasegate@0.133.0 phasegate:status --json` で `project.preset: "minimal" + layers.L4.enabled: true` の L4 `enabled: true`、および `project.preset: "strict" + layers.L4.enabled: false` の L4 `enabled: false` を確認。
 
 ## [0.132.0] - 2026-05-08
 
