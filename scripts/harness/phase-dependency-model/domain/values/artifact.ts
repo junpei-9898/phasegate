@@ -2,6 +2,7 @@
  * @layer domain
  * @unit phase-dependency-model
  */
+import path from 'node:path';
 
 const ALLOWED_PLACEHOLDERS = new Set([
   'unit',
@@ -21,6 +22,8 @@ export const DEFAULT_PATH_ROOTS: PathRoots = Object.freeze({
   designDocsRoot: 'docs/product/construction',
   inceptionDocsRoot: 'docs/inception',
 });
+
+const normalizeProjectPath = (value: string): string => path.posix.normalize(value);
 
 export interface ArtifactCreateArgs {
   readonly name: string;
@@ -105,13 +108,15 @@ export class Artifact {
       throw new InvalidArtifactPathError(this.path);
     }
 
-    return resolvedPath;
+    return normalizeProjectPath(resolvedPath);
   }
 
   expandRoots(pathRoots: PathRoots = DEFAULT_PATH_ROOTS): string {
-    return this.path
-      .replaceAll('{designDocsRoot}', pathRoots.designDocsRoot)
-      .replaceAll('{inceptionDocsRoot}', pathRoots.inceptionDocsRoot);
+    return normalizeProjectPath(
+      this.path
+        .replaceAll('{designDocsRoot}', pathRoots.designDocsRoot)
+        .replaceAll('{inceptionDocsRoot}', pathRoots.inceptionDocsRoot),
+    );
   }
 
   equals(other: Artifact): boolean {

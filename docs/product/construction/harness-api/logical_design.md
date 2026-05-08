@@ -950,13 +950,16 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 **利用ライブラリ**
 
 - `validator-system` Composition Root（`createValidatorSystemModule()`）を動的importで呼び出す
+- `config-foundation` の `LoadResolvedConfigUseCase` と `toValidatorSystemConfig()` で解決済み config を validator-system に注入する
 - テスト用オーバーライド: コンストラクタに `IValidatorSystemStub` を渡すと実実装の代わりに使用される
 
+<!-- @work-item-id WI-092 -->
 **実装方針（Wave 2A 実装済み）**
 
-- `runL3Validators()`: `createValidatorSystemModule().runL3ValidatorsUseCase.execute({})` を呼び出し、`ValidationResultContract[]` を `ValidatorCheckItem[]` に変換して返す。L3-001〜L3-004の結果を含む
-- `runAllValidators()`: `runFullValidationUseCase.execute({})` を呼び出し全バリデータ結果を集約する
-- `runDriftDetection()`: validator-system にドリフト検出機能がないため常に `[]` を返す（将来対応）
+- `runL3Validators()`: `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig)).runL3ValidatorsUseCase.execute({})` を呼び出し、`ValidationResultContract[]` を `ValidatorCheckItem[]` に変換して返す。L3-001〜L3-004の結果を含む
+- `runAllValidators()`: 同じ config 注入済み module の `runFullValidationUseCase.execute({})` を呼び出し全バリデータ結果を集約する
+- `runDriftDetection()`: 同じ config 注入済み module の `driftDetectionService.detect()` を呼び出し、`DriftReport[]` を `DriftItem[]` に変換して返す
+- config 不在時は validator-system composition root の default config にフォールバックする。config が存在するが不正な場合は例外として扱う
 - バリデータが投げる例外は `ValidatorCheckItem.passed = false` + `HarnessError` に変換してラップし、再スローしない
 - 動的importを使用してCircular dependency を回避している
 

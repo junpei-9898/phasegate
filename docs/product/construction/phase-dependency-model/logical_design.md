@@ -176,10 +176,10 @@ scripts/harness/
 
 | ノードキー | skillName | artifacts |
 |-----------|-----------|-----------|
-| `1:product-architect` | `product-architect` | `docs/inception/_shared/product_overview_plan.md`, `docs/product/product_overview.md` |
-| `1:story-writer` | `story-writer` | `docs/inception/_shared/story_writer_plan.md`, `docs/product/user_stories.md` |
-| `1:story-mapper` | `story-mapper` | `docs/inception/_shared/story_mapping_plan.md`, `docs/product/user_story_mapping.md` |
-| `1:unit-designer` | `unit-designer` | `docs/inception/_shared/unit_design_plan.md`, `docs/product/units/{unit}_unit.md`, `docs/product/units/integration_contract.md` |
+| `1:product-architect` | `product-architect` | `{inceptionDocsRoot}/_shared/product_overview_plan.md`, `{designDocsRoot}/../product_overview.md` |
+| `1:story-writer` | `story-writer` | `{inceptionDocsRoot}/_shared/story_writer_plan.md`, `{designDocsRoot}/../user_stories.md` |
+| `1:story-mapper` | `story-mapper` | `{inceptionDocsRoot}/_shared/story_mapping_plan.md`, `{designDocsRoot}/../user_story_mapping.md` |
+| `1:unit-designer` | `unit-designer` | `{inceptionDocsRoot}/_shared/unit_design_plan.md`, `{designDocsRoot}/../units/{unit}_unit.md`, `{designDocsRoot}/../units/integration_contract.md` |
 
 **Level 2: Unit横断設計**
 
@@ -352,6 +352,7 @@ scripts/harness/
 
 - `required === true` の成果物は `resolve()` 後に未解決プレースホルダを残してはいけない
 - `{designDocsRoot}` / `{inceptionDocsRoot}` は `pathRoots` 引数または各々のデフォルト値で展開される（WI-085）
+- Level 1 の product 直下文書は `{designDocsRoot}/../*.md` として定義し、`Artifact.resolve()` / `expandRoots()` が POSIX 正規化する。`paths.designDocs: "mydocs/product/construction"` の場合は `mydocs/product/product_overview.md` / `mydocs/product/user_stories.md` を参照する。（WI-093）
 
 #### 2.2.3 PhaseNode
 

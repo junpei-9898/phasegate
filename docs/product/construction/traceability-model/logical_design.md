@@ -935,7 +935,8 @@ interface InceptionPlanPort {
 
 **役割**
 
-- `docs/product/user_stories.md` から正規 StoryId 一覧と `旧US` 対応表を抽出する。
+- product root の `user_stories.md` から正規 StoryId 一覧と `旧US` 対応表を抽出する。
+- 既定では `docs/product/user_stories.md` を読む。`paths.designDocs` が `mydocs/product/construction` のように変更された場合は、その親 product root (`mydocs/product`) の `user_stories.md` を読む。（WI-093）
 
 **実装方針**
 
@@ -952,6 +953,7 @@ interface InceptionPlanPort {
 **実装方針**
 
 - `user_stories.md` を起動時にロードし、mtime 変化時のみ再読み込みする。
+- story catalog path は composition root から constructor injection で受け取る。未指定時は `docs/product/user_stories.md` を使い後方互換を維持する。（WI-093）
 - `getAllStoryIds()` と `getAliasMap()` はキャッシュされた不変値を返す。
 
 ### 5.6 MarkdownUnitDefinitionGateway
@@ -962,8 +964,8 @@ interface InceptionPlanPort {
 
 **実装方針**
 
-- `docs/product/units/*_unit.md` を走査し、`Unit ID:` 行から unit 名を抽出する。
-- `findConstructionRoot(unitName)` は `docs/product/construction/{unitName}` の相対パスを返す。
+- product root の `units/*_unit.md` を走査し、`Unit ID:` 行から unit 名を抽出する。既定 product root は `docs/product`。（WI-093）
+- `findConstructionRoot(unitName)` は constructor injection された configured design docs root 配下の `{unitName}` 相対パスを返す。既定では `docs/product/construction/{unitName}`。（WI-093）
 
 ### 5.7 FileSystemMetadataReader
 

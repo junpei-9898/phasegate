@@ -1,5 +1,6 @@
 // @unit phase-dependency-model
 // @layer integration
+// @story H03-01
 
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -117,5 +118,69 @@ target('main check-phase-gate custom integration', () => {
     expect(actual.exitCode).toBe(0);
     expect(actual.result?.passed).toBe(true);
     expect(actual.result?.blockers).toEqual([]);
+  });
+
+  it('paths.designDocsがcustom construction rootの場合にLevel1 product文書のblockerがcustom product rootを参照すること', async () => {
+    // Arrange
+    const rootDir = await createTempRoot();
+    const config = {
+      project: {
+        name: 'custom-design-docs-project',
+        preset: 'standard',
+      },
+      layers: {},
+      quickMode: {},
+      phaseDependencies: {
+        preset: 'standard',
+        override: false,
+        customRules: [],
+      },
+      planningMode: {
+        default: 'interactive',
+        perPhase: {},
+      },
+      harnesses: {},
+      paths: {
+        designDocs: 'mydocs/product/construction',
+        inceptionDocs: 'mydocs/inception',
+      },
+      reporting: {
+        format: 'json',
+        outputDir: '.harness/reports',
+      },
+    };
+    await ensureFile(rootDir, 'phasegate.config.json', `${JSON.stringify(config, null, 2)}\n`);
+    await ensureFile(rootDir, 'mydocs/inception/_shared/product_overview_plan.md', '# plan\n');
+    await ensureFile(rootDir, 'mydocs/inception/_shared/story_writer_plan.md', '# plan\n');
+    await ensureFile(rootDir, 'mydocs/product/user_stories.md', '# Stories\n- H01-01\n');
+    const configModule = createConfigFoundationModule();
+    const resolvedConfig = await configModule.usecases.loadResolvedConfigUseCase.execute(
+      path.join(rootDir, 'phasegate.config.json'),
+    );
+    const phaseConfig = toPhaseConfigSection(resolvedConfig.config);
+    const sut = createPhaseDependencyModelModule({
+      rootDir,
+      phaseConfig,
+      reportOutputDir: resolvedConfig.config.reporting.outputDir,
+    });
+
+    // Act
+    const actual = await sut.checkPhaseGateCommandHandler.execute({
+      targetLevel: 2,
+      unitId: 'sample',
+    });
+
+    // Assert
+    expect(actual.exitCode).toBe(1);
+    expect(
+      actual.result?.blockers.some((blocker) =>
+        blocker.includes('mydocs/product/product_overview.md'),
+      ),
+    ).toBe(true);
+    expect(
+      actual.result?.blockers.some((blocker) =>
+        blocker.includes('成果物が不足しています: docs/product/product_overview.md'),
+      ),
+    ).toBe(false);
   });
 });

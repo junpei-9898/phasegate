@@ -17,7 +17,7 @@ import type { StoryIdLike } from '../value-objects/story-reference.js';
 import { TraceabilityChain } from '../value-objects/traceability-chain.js';
 
 const PROJECT_RELATIVE_PATH_PATTERN = /^(docs|scripts|inception)\//;
-const STORY_CATALOG_PATH = 'docs/product/user_stories.md';
+const DEFAULT_STORY_CATALOG_PATH = 'docs/product/user_stories.md';
 
 const createPath = (value: string): ProjectRelativePathLike =>
   Object.freeze({
@@ -136,6 +136,7 @@ export class TraceabilityChainBuilder {
   private readonly designDocumentPort: DesignDocumentPort;
   private readonly storyCatalogPort: StoryCatalogPort;
   private readonly inceptionPlanPort: InceptionPlanPort;
+  private readonly storyCatalogPath: ProjectRelativePathLike;
 
   constructor(deps: {
     readonly metadataReaderPort: MetadataReaderPort;
@@ -143,12 +144,16 @@ export class TraceabilityChainBuilder {
     readonly designDocumentPort: DesignDocumentPort;
     readonly storyCatalogPort: StoryCatalogPort;
     readonly inceptionPlanPort: InceptionPlanPort;
+    readonly storyCatalogPath?: string;
   }) {
     this.metadataReaderPort = deps.metadataReaderPort;
     this.unitDefinitionPort = deps.unitDefinitionPort;
     this.designDocumentPort = deps.designDocumentPort;
     this.storyCatalogPort = deps.storyCatalogPort;
     this.inceptionPlanPort = deps.inceptionPlanPort;
+    this.storyCatalogPath = createPath(
+      deps.storyCatalogPath ?? DEFAULT_STORY_CATALOG_PATH,
+    );
   }
 
   async build(origin: string | ProjectRelativePathLike): Promise<TraceabilityChain> {
@@ -235,7 +240,7 @@ export class TraceabilityChainBuilder {
         designToStoryLinks.push(
           createLink({
             from: designDocument,
-            to: createPath(STORY_CATALOG_PATH),
+            to: this.storyCatalogPath,
             linkType: 'design-to-story',
             resolved: false,
           }),
@@ -248,7 +253,7 @@ export class TraceabilityChainBuilder {
         designToStoryLinks.push(
           createLink({
             from: designDocument,
-            to: createPath(STORY_CATALOG_PATH),
+            to: this.storyCatalogPath,
             linkType: 'design-to-story',
             resolved: storyResolved,
           }),
@@ -265,7 +270,7 @@ export class TraceabilityChainBuilder {
         );
         storyToPlanLinks.push(
           createLink({
-            from: createPath(STORY_CATALOG_PATH),
+            from: this.storyCatalogPath,
             to:
               planRoot ??
               createPlaceholderPath(

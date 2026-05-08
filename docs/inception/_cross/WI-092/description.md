@@ -2,7 +2,7 @@
 id: WI-092
 type: fix
 severity: normal
-status: drafted
+status: tested
 affects: [harness-api, validator-system, integrations]
 github_issue: null
 reporter: junpei-9898
@@ -62,12 +62,23 @@ spawn ベースの結合テスト 1〜2 ケース (例: `phasegate:detect-drift`
 - type: fix、severity: normal (現状実害なし、予防的 sweep)
 
 ## 受け入れ基準
-- [ ] `validator-system-execution-adapter.ts:27/38/51` の 3 site で `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig))` 形に修正
-- [ ] `integrations/pre-commit.ts:306/338` の 2 site で同様に修正
-- [ ] `toValidatorSystemConfig` translator が `main.ts` から共通利用可能な位置 (例: `config-foundation/application/...`) に export される、または per-call で再実装される
-- [ ] dogfood: `phasegate:detect-drift` を `L4.enabled: false` 環境で実行 → `validate --layer L4` と整合した挙動を維持することを確認
-- [ ] 全テストグリーン
-- [ ] L1 / L2 (metadata, test-quality) 維持
+- [x] `validator-system-execution-adapter.ts:27/38/51` の 3 site で `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig))` 形に修正
+- [x] `integrations/pre-commit.ts:306/338` の 2 site で同様に修正
+- [x] `toValidatorSystemConfig` translator が `main.ts` から共通利用可能な位置 (例: `config-foundation/application/...`) に export される、または per-call で再実装される
+- [x] post-publish dogfood: `phasegate:detect-drift` を `L4.enabled: false` 環境で実行 → `validate --layer L4` と整合した挙動を維持することを確認
+- [x] 全テストグリーン
+- [x] L1 / L2 (metadata, test-quality) 維持
+
+## 実施結果 (2026-05-08)
+
+- `toValidatorSystemConfig` を `scripts/harness/config-foundation/application/mappers/validator-system-config-mapper.ts` に移動し、`main.ts` / harness-api adapter / pre-commit CLI から共通利用する形にした。
+- `toValidatorSystemConfig` は `project.preset` と `layers.L2/L3/L4.enabled` のみを渡し、`validators` 配列は渡さない。validator catalog は validator-system の default 解決に委ねる。
+- `ValidatorSystemExecutionAdapter` の `runL3Validators()` / `runAllValidators()` / `runDriftDetection()` は、毎回 `LoadResolvedConfigUseCase` で config を解決して `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig))` を呼ぶ。
+- `runPreCommitCli()` / `runCommitMsgCli()` も同じ config 注入を行う。config 不在時のみ default fallback、不正 config は runtime error とする。
+- publish 前 local/self-host 検証: phasegate 自身の `phasegate.config.json` (`layers.L4.enabled: false`) で `pnpm exec tsx scripts/harness/main.ts validate --layer L4 --format human` は exit 0 / `総合判定: PASS` / validator 0 件。`pnpm exec tsx scripts/harness/main.ts phasegate:detect-drift --json` は drift detection を実行し、既存 drift 2065 件により exit 1。detect-drift direct 経路は config threading 後も維持されている。
+- test: `pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts unit/config-foundation/validator-system-config-mapper.test.ts integration/harness-api/validator-system-execution-adapter.test.ts integration/harness-api/validate-layer-config.integration.test.ts` は 3 files / 11 tests pass。`pnpm test` は sandbox では tsx IPC 制約で失敗したため権限昇格で再実行し、452 files / 3518 tests pass。
+- metadata: changed files に対する `validate-metadata` は全 PASS。`validate --layer L1` / `validate --layer L2` は既存の L2-013 / L2-001 blocker が残るため raw layer gate としては fail するが、今回変更ファイルの metadata / test-quality 維持は確認済み。
+- post-publish dogfood: `/private/tmp/phasegate-dogfood-wi092` で `npx phasegate@0.129.0` を使用して検証。`npm view phasegate@0.129.0 version` は `0.129.0`。`validate --layer L4 --format human` は exit 0 / `総合判定: PASS` / validator 0 件。`phasegate:status --json` は L4 `enabled:false`。`phasegate:detect-drift --json` は published package 経路で実行され、fixture の `SampleEntity` drift 1 件により exit 1。`pre-commit` は staged markdown 2 件を検査し、両方 PASS / `All checks passed.`。
 
 ## スコープ外
 - `createValidatorSystemModule()` の引数 type を `object` から厳密化するリファクタリング (別 WI で漸進)

@@ -2,7 +2,7 @@
 id: WI-093
 type: fix
 severity: high
-status: drafted
+status: tested
 affects: [phase-dependency-model, traceability-model, validator-system, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti
@@ -75,15 +75,39 @@ WI-085 では `inceptionDocsRoot` 側の templating を通したが、**`designD
 - **story-implementor 案件** (DI 配線変更 + 複数 Unit にまたがる)
 
 ## 受け入れ基準
-- [ ] 5 ファイル (`{full,standard,minimal}-phase-nodes.ts:34/46` + `traceability-chain-builder.ts:20` + `markdown-story-catalog-gateway.ts:55`) の hardcoded `docs/product/...` が `{designDocsRoot}/...` placeholder または config 経由解決に置換される
-- [ ] `Artifact.resolve(pathRoots)` で `paths.designDocs` が展開される
-- [ ] `traceability-chain-builder.ts` の `STORY_CATALOG_PATH` が constructor injection 化される
-- [ ] dogfood: `paths.designDocs: "mydocs/product/construction"` で `validate --layer L2` を実行 → blocker が `mydocs/...` を参照
-- [ ] 既存 default 動作 (`paths.designDocs: "docs/product/construction"`) 不変
-- [ ] 既存テスト全て pass、新規 IT テスト追加 (paths customize 時の挙動)
-- [ ] WI-085 description.md に「v0.117 では `inceptionDocs` のみ threading、`designDocs` 側は WI-093 で補完」の post-mortem を追記
-- [ ] CHANGELOG に GitHub Issue #4 finding #4 解消として記載
-- [ ] dogfood: reporter 環境想定で symlink workaround を外しても動作することを確認
+- [x] 5 ファイル (`{full,standard,minimal}-phase-nodes.ts:34/46` + `traceability-chain-builder.ts:20` + `markdown-story-catalog-gateway.ts:55`) の hardcoded `docs/product/...` が `{designDocsRoot}/...` placeholder または config 経由解決に置換される
+- [x] `Artifact.resolve(pathRoots)` で `paths.designDocs` が展開される
+- [x] `traceability-chain-builder.ts` の `STORY_CATALOG_PATH` が constructor injection 化される
+- [x] dogfood: `paths.designDocs: "mydocs/product/construction"` で `validate --layer L2` を実行 → blocker が `mydocs/...` を参照
+- [x] 既存 default 動作 (`paths.designDocs: "docs/product/construction"`) 不変
+- [x] 既存テスト全て pass、新規 IT テスト追加 (paths customize 時の挙動)
+- [x] WI-085 description.md に「v0.117 では `inceptionDocs` のみ threading、`designDocs` 側は WI-093 で補完」の post-mortem を追記
+- [x] CHANGELOG に GitHub Issue #4 finding #4 解消として記載
+- [x] dogfood: reporter 環境想定で symlink workaround を外しても動作することを確認
+
+## 実装結果
+
+- phase-dependency-model の Level 1 product 直下文書を `{designDocsRoot}/../...` に置換し、`Artifact.resolve()` / `expandRoots()` で POSIX 正規化するようにした。
+- traceability-model は `createTraceabilityModelModule(rootDir, { pathRoots })` で `paths.designDocs` を受け取り、product root を導出して `MarkdownStoryCatalogGateway` / `MarkdownUnitDefinitionGateway` / `MarkdownDesignDocumentGateway` / `TraceabilityChainBuilder` に注入する。
+- `ProjectRelativePath` は `docs/` / `scripts/` 固定 root 制約を外し、任意のプロジェクト相対 POSIX パスを許容する。
+- 新規テスト:
+  - `scripts/harness/__tests__/integration/phase-dependency-model/main-check-phase-gate-custom.integration.test.ts`
+  - `scripts/harness/__tests__/unit/traceability-model/traceability-custom-paths.test.ts`
+
+## 検証結果
+
+- `pnpm exec tsc --noEmit`: pass
+- targeted tests: `pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts unit/traceability-model/traceability-custom-paths.test.ts unit/traceability-model/traceability-chain-builder.test.ts integration/phase-dependency-model/main-check-phase-gate-custom.integration.test.ts`: 3 files / 11 tests pass
+- full regression: `pnpm test`: 453 files / 3520 tests pass
+- local/self-host reporter fixture (`/private/tmp/phasegate-local-wi093`, symlink なし): `validate --layer L2 --format human` は exit 1 / FAIL、L2-001 blocker に `mydocs/product/product_overview.md` を表示し、`docs/product/product_overview.md` は出ないことを確認。
+- changed file metadata: `validate-metadata` pass
+- `npm pack --dry-run`: pass (`phasegate@0.130.0`, `phasegate-0.130.0.tgz`)
+- `pnpm harness:check-ready`: pass
+- post-publish dogfood (`/private/tmp/phasegate-dogfood-wi093-published`, `npx phasegate@0.130.0`, symlink workaround なし):
+  - `validate --layer L2 --format human` with `paths.designDocs: "mydocs/product/construction"`: exit 1 / FAIL、L2-001 blocker は `mydocs/product/product_overview.md` を参照。
+  - `validate --layer L2 --format human` with default `paths.designDocs: "docs/product/construction"`: exit 1 / FAIL、L2-001 blocker は `docs/product/product_overview.md` を参照。
+  - `validate-metadata mydocs/product/construction/sample/domain_model.md`: exit 0 / PASS。`mydocs/product/user_stories.md` の story catalog を参照する traceability path を確認。
+  - `docs/product` は symlink ではないことを確認。
 
 ## スコープ外
 - WI-091 finding #2 (severity 集計 / WI-094) / #5 advanced (pointers spec / WI-095) — 別 WI

@@ -31,7 +31,7 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'product-overview',
-      path: 'docs/product/product_overview.md',
+      path: '{designDocsRoot}/../product_overview.md',
       required: true,
     },
   ]),
@@ -43,7 +43,7 @@ export const STANDARD_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'user-stories',
-      path: 'docs/product/user_stories.md',
+      path: '{designDocsRoot}/../user_stories.md',
       required: true,
     },
   ]),

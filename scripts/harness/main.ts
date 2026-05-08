@@ -14,6 +14,7 @@ import { createAdrFoundationModule } from "./adr-foundation/composition-root.js"
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
 import { buildCiGovernance } from "./ci-governance/composition-root.js";
 import { toPhaseConfigSection } from "./config-foundation/application/mappers/phase-config-section-mapper.js";
+import { toValidatorSystemConfig } from "./config-foundation/application/mappers/validator-system-config-mapper.js";
 import { createConfigFoundationModule } from "./config-foundation/composition-root.js";
 import { ConfigValidationError } from "./config-foundation/domain/errors/config-validation-error.js";
 import type { HarnessConfigV2 } from "./config-foundation/domain/harness-config.js";
@@ -64,6 +65,12 @@ function getHarnessRoot(): string {
 
 function getProjectRoot(): string {
   return process.cwd();
+}
+
+function toTraceabilityModelOptions(resolvedConfig: HarnessConfigV2 | undefined) {
+  return resolvedConfig
+    ? { pathRoots: { designDocsRoot: resolvedConfig.paths.designDocs } }
+    : undefined;
 }
 
 async function pathExists(path: string): Promise<boolean> {
@@ -455,27 +462,6 @@ function toL1Config(resolvedConfig: HarnessConfigV2) {
  * HarnessConfigV2 (resolved) から biome-ast-engine が期待する architecture 情報を抽出する。
  * architecture が未設定の場合は undefined を返し、biome-ast-engine 側の default (clean) に委ねる。
  */
-/**
- * HarnessConfigV2 (resolved) から validator-system の `createValidatorSystemModule` が
- * 期待する shape (`{ project: { preset }, layers: { L2/L3/L4: { enabled } } }`) に変換する。
- *
- * WI-091 finding #1 follow-up: 直接 resolvedConfig を渡すと preset-style の
- * `validators: ["drift-detector"]` が validator-code (L4-001/002/003) を上書きし
- * 全 SKIP になる症状が出るため、`enabled` field のみ thread し validators の
- * 解決は composition root 側の defaultValidators[layer] フォールバックに委ねる。
- */
-function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefined): object | undefined {
-  if (!resolvedConfig) return undefined;
-  return {
-    project: { preset: resolvedConfig.project.preset },
-    layers: {
-      L2: { enabled: resolvedConfig.layers.L2.enabled },
-      L3: { enabled: resolvedConfig.layers.L3.enabled },
-      L4: { enabled: resolvedConfig.layers.L4.enabled },
-    },
-  };
-}
-
 function toArchitectureInput(resolvedConfig: HarnessConfigV2) {
   if (!resolvedConfig.architecture) {
     return undefined;
@@ -854,7 +840,10 @@ async function main(): Promise<void> {
 
       case "migrate": {
         if (args[1] === "work-items") {
-          const mod = createTraceabilityModelModule(rootDir);
+          const mod = createTraceabilityModelModule(
+            rootDir,
+            toTraceabilityModelOptions(resolvedConfig),
+          );
           const result = await mod.migrateWorkItemsCommandHandler.execute({
             dryRun: hasFlag(args, "--dry-run"),
             apply: hasFlag(args, "--apply"),
@@ -921,7 +910,10 @@ async function main(): Promise<void> {
 
       // ── traceability-model ──
       case "validate-metadata": {
-        const mod = createTraceabilityModelModule(rootDir);
+        const mod = createTraceabilityModelModule(
+          rootDir,
+          toTraceabilityModelOptions(resolvedConfig),
+        );
         const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
           filePaths,

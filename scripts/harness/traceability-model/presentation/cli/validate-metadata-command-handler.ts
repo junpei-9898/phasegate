@@ -110,7 +110,7 @@ export class ValidateMetadataCommandHandler {
           results: Object.freeze([]),
           text:
             `Error: invalid file path: "${err.value}"\n` +
-            `  Hint: paths must be project-relative and start with 'docs/' or 'scripts/'.`,
+            `  Hint: paths must be project-relative POSIX paths without '..' segments.`,
         });
       }
       return Object.freeze({

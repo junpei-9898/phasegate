@@ -1,5 +1,5 @@
 /**
- * @layer composition
+ * @layer application
  * @unit traceability-model
  *
  * traceability-model ユニットの Composition Root。
@@ -25,12 +25,39 @@ import { MarkdownUnitDefinitionGateway } from "./infrastructure/gateways/markdow
 import { MigrateWorkItemsCommandHandler } from "./presentation/cli/migrate-work-items-command-handler.js";
 import { ValidateMetadataCommandHandler } from "./presentation/cli/validate-metadata-command-handler.js";
 
-export function createTraceabilityModelModule(rootDir: string) {
+export interface TraceabilityModelPathRoots {
+  readonly designDocsRoot: string;
+}
+
+export interface TraceabilityModelModuleOptions {
+  readonly pathRoots?: TraceabilityModelPathRoots;
+}
+
+const deriveProductDocsRoot = (designDocsRoot: string): string => {
+  const normalized = designDocsRoot.replace(/\/+$/, "");
+  if (normalized.endsWith("/construction")) {
+    return normalized.slice(0, -"/construction".length);
+  }
+  return normalized;
+};
+
+export function createTraceabilityModelModule(
+  rootDir: string,
+  options: TraceabilityModelModuleOptions = {},
+) {
+  const designDocsRoot = options.pathRoots?.designDocsRoot ?? "docs/product/construction";
+  const productDocsRoot = deriveProductDocsRoot(designDocsRoot);
+  const storyCatalogPath = `${productDocsRoot}/user_stories.md`;
+
   // Infrastructure gateways
-  const storyCatalog = new MarkdownStoryCatalogGateway({ rootDir });
-  const unitDefinition = new MarkdownUnitDefinitionGateway({ rootDir });
+  const storyCatalog = new MarkdownStoryCatalogGateway({ rootDir, storyCatalogPath });
+  const unitDefinition = new MarkdownUnitDefinitionGateway({
+    rootDir,
+    productDocsRoot,
+    designDocsRoot,
+  });
   const metadataReader = new FileSystemMetadataReader({ rootDir });
-  const designDocument = new MarkdownDesignDocumentGateway({ rootDir });
+  const designDocument = new MarkdownDesignDocumentGateway({ rootDir, designDocsRoot });
   const inceptionPlan = new FileSystemInceptionPlanGateway({ rootDir });
   const workItemMigrationSource = new FileSystemWorkItemMigrationSourceGateway({ rootDir });
   const workItemMigrationApply = new FileSystemWorkItemMigrationApplyGateway({ rootDir });
@@ -46,6 +73,7 @@ export function createTraceabilityModelModule(rootDir: string) {
     designDocumentPort: designDocument,
     storyCatalogPort: storyCatalog,
     inceptionPlanPort: inceptionPlan,
+    storyCatalogPath,
   });
   const storyIdAliasResolver = new StoryIdAliasResolver(storyCatalog);
 

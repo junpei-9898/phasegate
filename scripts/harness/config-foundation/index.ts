@@ -1,9 +1,10 @@
 // @unit config-foundation
-// @layer public-api
+// @layer application
 
 export { createConfigFoundationModule } from './composition-root.js';
 
 export { LoadResolvedConfigUseCase } from './application/usecases/load-resolved-config-use-case.js';
+export { toValidatorSystemConfig } from './application/mappers/validator-system-config-mapper.js';
 
 export type { ResolvedConfigOutput } from './application/dto/resolved-config-output.js';
 export type { FeatureToggleResult } from './application/dto/feature-toggle-result.js';

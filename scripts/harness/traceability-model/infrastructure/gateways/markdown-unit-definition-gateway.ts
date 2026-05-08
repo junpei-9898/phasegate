@@ -15,14 +15,20 @@ const UNIT_ID_PATTERN = /Unit\s+ID\*{0,2}\s*[:：]\s*(\S+)/;
 
 export interface MarkdownUnitDefinitionGatewayDeps {
   readonly rootDir: string;
+  readonly productDocsRoot?: string;
+  readonly designDocsRoot?: string;
 }
 
 export class MarkdownUnitDefinitionGateway implements UnitDefinitionPort {
   private readonly rootDir: string;
+  private readonly productDocsRoot: string;
+  private readonly designDocsRoot: string;
   private cachedUnitNames: readonly string[] | null = null;
 
   constructor(deps: MarkdownUnitDefinitionGatewayDeps) {
     this.rootDir = deps.rootDir;
+    this.productDocsRoot = deps.productDocsRoot ?? path.join('docs', 'product');
+    this.designDocsRoot = deps.designDocsRoot ?? path.join('docs', 'product', 'construction');
   }
 
   async getAllUnitNames(): Promise<readonly string[]> {
@@ -47,7 +53,7 @@ export class MarkdownUnitDefinitionGateway implements UnitDefinitionPort {
       return null;
     }
 
-    const constructionPath = `docs/product/construction/${unitName}`;
+    const constructionPath = path.posix.join(this.designDocsRoot, unitName);
     const absolutePath = path.join(this.rootDir, constructionPath);
 
     if (!fs.existsSync(absolutePath)) {
@@ -68,7 +74,7 @@ export class MarkdownUnitDefinitionGateway implements UnitDefinitionPort {
       return;
     }
 
-    const unitsDir = path.join(this.rootDir, 'docs', 'product', 'units');
+    const unitsDir = path.join(this.rootDir, this.productDocsRoot, 'units');
     if (!fs.existsSync(unitsDir)) {
       this.cachedUnitNames = Object.freeze([]);
       return;

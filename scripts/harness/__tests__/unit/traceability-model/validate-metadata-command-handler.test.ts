@@ -1,4 +1,5 @@
 // @layer test
+// @story H03-01
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ValidateMetadataCommandHandler } from '../../../traceability-model/presentation/cli/validate-metadata-command-handler.js';
@@ -569,7 +570,7 @@ target('ValidateMetadataCommandHandler', () => {
     });
 
     context('テストヘルパー (scripts/harness/__tests__/helpers/foo.ts) が渡された場合 (UT-VMC-19)', () => {
-      it('`.test.ts` サフィックスを持たないため implUseCase にルーティングされること', async () => {
+      it('サフィックスが .test.ts でないため implUseCase にルーティングされること', async () => {
         // Arrange
         const implUseCase = {
           execute: vi.fn().mockResolvedValue([
@@ -616,18 +617,19 @@ target('ValidateMetadataCommandHandler', () => {
         expect(actual.exitCode).toBe(2);
         expect(actual.text).toContain('invalid file path');
         expect(actual.text).toContain('/Users/me/proj/docs/foo.md');
-        expect(actual.text).toContain("'docs/'");
-        expect(actual.text).toContain("'scripts/'");
+        expect(actual.text).toContain('project-relative POSIX paths');
         expect(implUseCase.execute).not.toHaveBeenCalled();
         expect(designUseCase.execute).not.toHaveBeenCalled();
       });
     });
 
-    context('未許可 prefix (README.md) が渡された場合 (UT-VMC-21)', () => {
-      it('終了コード2を返し、ヒントに prefix 要件を含めること', async () => {
+    context('任意rootの相対Markdownパスが渡された場合 (UT-VMC-21)', () => {
+      it('custom paths対応のためdesignStoryAnnotationsUseCaseにdispatchされること', async () => {
         // Arrange
         const implUseCase = { execute: vi.fn() };
-        const designUseCase = { execute: vi.fn() };
+        const designUseCase = {
+          execute: vi.fn().mockResolvedValue([createValidOutput('README.md')]),
+        };
         const handler = new ValidateMetadataCommandHandler({
           validateImplementationMetadataUseCase: implUseCase,
           validateDesignStoryAnnotationsUseCase: designUseCase,
@@ -640,10 +642,9 @@ target('ValidateMetadataCommandHandler', () => {
         });
 
         // Assert
-        expect(actual.exitCode).toBe(2);
-        expect(actual.text).toContain('invalid file path');
-        expect(actual.text).toContain('README.md');
-        expect(actual.text).toContain("'docs/'");
+        expect(actual.exitCode).toBe(0);
+        expect(designUseCase.execute).toHaveBeenCalledOnce();
+        expect(implUseCase.execute).not.toHaveBeenCalled();
         expect(actual.text).not.toContain('failed unexpectedly');
       });
     });

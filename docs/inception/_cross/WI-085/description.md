@@ -213,3 +213,9 @@ v0.117.0 リリース後の dogfood 検証（`paths.designDocs: "mydocs/product/
 検証結果:
 - カスタム paths 設定時: `mydocs/inception/_shared/product_overview_plan.md` 等を要求 (期待通り)
 - デフォルト復元後: ベースライン挙動 (`docs/product/units/{unit}_unit.md` リテラル維持) に戻る (後方互換 OK)
+
+### Post-mortem — 2026-05-08 (WI-093)
+
+v0.117.0〜v0.129.0 の WI-085 系修正では、`paths.inceptionDocs` と Level 2 construction 文書 (`{designDocsRoot}/{unit}/...`) の threading は完了していたが、Level 1 の product 直下文書 (`product_overview.md` / `user_stories.md` / `user_story_mapping.md` / `units/*.md`) と traceability-model の story catalog / construction root は `docs/product/...` hardcoded のまま残っていた。
+
+WI-093 で `paths.designDocs` を construction root として扱い、その親を product root として導出する形に統一した。これにより `paths.designDocs: "mydocs/product/construction"` の場合、L2-001 blocker は `mydocs/product/product_overview.md` / `mydocs/product/user_stories.md` を参照し、traceability-model も `mydocs/product/user_stories.md` と `mydocs/product/construction/{unit}` を読む。

@@ -31,7 +31,7 @@ export const MINIMAL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'product-overview',
-      path: 'docs/product/product_overview.md',
+      path: '{designDocsRoot}/../product_overview.md',
       required: true,
     },
   ]),

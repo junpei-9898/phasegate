@@ -13,16 +13,23 @@ import { parseStoryCatalog } from '../parsers/story-catalog-parser.js';
 
 export interface MarkdownStoryCatalogGatewayDeps {
   readonly rootDir: string;
+  readonly storyCatalogPath?: string;
 }
 
 export class MarkdownStoryCatalogGateway implements StoryCatalogPort {
   private readonly rootDir: string;
+  private readonly storyCatalogPath: string;
   private cachedStoryIds: readonly StoryIdLike[] | null = null;
   private cachedAliasMap: ReadonlyMap<string, StoryIdLike> | null = null;
   private cachedMtime: number | null = null;
 
   constructor(deps: MarkdownStoryCatalogGatewayDeps) {
     this.rootDir = deps.rootDir;
+    this.storyCatalogPath = deps.storyCatalogPath ?? path.join(
+      'docs',
+      'product',
+      'user_stories.md',
+    );
   }
 
   async getAllStoryIds(): Promise<readonly StoryIdLike[]> {
@@ -48,12 +55,7 @@ export class MarkdownStoryCatalogGateway implements StoryCatalogPort {
   }
 
   private async ensureLoaded(): Promise<void> {
-    const filePath = path.join(
-      this.rootDir,
-      'docs',
-      'product',
-      'user_stories.md',
-    );
+    const filePath = path.join(this.rootDir, this.storyCatalogPath);
 
     let currentMtime: number;
     try {

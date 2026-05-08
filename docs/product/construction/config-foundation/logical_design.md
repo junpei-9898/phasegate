@@ -812,6 +812,13 @@ export interface FeatureRegistryPort {
 | `FeatureToggleResult` | `{ feature: string; enabled: boolean; configPath: string }` | CLI成功メッセージ用 |
 | `AvailableFeatureItem` | `{ name: string; enabled: boolean }` | `--list` 表示用 |
 
+<!-- @work-item-id WI-092 -->
+### 4.1.1 ValidatorSystemConfigMapper
+
+**ファイル**: `scripts/harness/config-foundation/application/mappers/validator-system-config-mapper.ts`
+
+`toValidatorSystemConfig(resolvedConfig)` は、config-foundation の解決済み `HarnessConfigV2` から validator-system の composition root に渡す最小 config を生成する。渡す項目は `project.preset` と `layers.L2/L3/L4.enabled` のみに限定し、`validators` 配列は渡さない。これは preset-style の validator 名が validator-system 側の `L4-001` 等の内部ID解決を上書きしないようにするためであり、validator catalog は validator-system の default 解決に委ねる。
+
 ### 4.2 LoadResolvedConfigUseCase
 
 **責務**: 設定読込、スキーマ検証、Preset解決、集約再構築、`HarnessConfigV2` DTO返却。

@@ -1,3 +1,4 @@
+// @unit harness-api
 // @layer infrastructure
 // nyquist-validation-impact-analysis-adapter.ts — NyquistValidationImpactAnalysisAdapter
 // Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
@@ -24,8 +25,13 @@ export class NyquistValidationImpactAnalysisAdapter implements ImpactAnalysisPor
     return {
       async analyzeImpact(storyId: string): Promise<ImpactAnalysisResult | null> {
         try {
+          const { createConfigFoundationModule } = await import('../../../config-foundation/composition-root.js');
+          const configModule = createConfigFoundationModule();
+          const resolvedConfig = await configModule.usecases.loadResolvedConfigUseCase.execute();
           const { createTraceabilityModelModule } = await import('../../../traceability-model/composition-root.js');
-          const traceModule = createTraceabilityModelModule(rootDir);
+          const traceModule = createTraceabilityModelModule(rootDir, {
+            pathRoots: { designDocsRoot: resolvedConfig.config.paths.designDocs },
+          });
           const storyIds = await traceModule.storyCatalog.getAllStoryIds();
 
           const { createNyquistValidationModule } = await import('../../../nyquist-validation/composition-root.js');

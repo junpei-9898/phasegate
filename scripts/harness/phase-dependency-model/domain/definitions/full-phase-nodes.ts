@@ -31,7 +31,7 @@ export const FULL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'product-overview',
-      path: 'docs/product/product_overview.md',
+      path: '{designDocsRoot}/../product_overview.md',
       required: true,
     },
   ]),
@@ -43,7 +43,7 @@ export const FULL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'user-stories',
-      path: 'docs/product/user_stories.md',
+      path: '{designDocsRoot}/../user_stories.md',
       required: true,
     },
   ]),
@@ -55,7 +55,7 @@ export const FULL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'user-story-mapping',
-      path: 'docs/product/user_story_mapping.md',
+      path: '{designDocsRoot}/../user_story_mapping.md',
       required: true,
     },
   ]),
@@ -67,12 +67,12 @@ export const FULL_PHASE_NODES: readonly PhaseNode[] = Object.freeze([
     },
     {
       name: 'unit-definition',
-      path: 'docs/product/units/{unit}_unit.md',
+      path: '{designDocsRoot}/../units/{unit}_unit.md',
       required: true,
     },
     {
       name: 'integration-contract',
-      path: 'docs/product/units/integration_contract.md',
+      path: '{designDocsRoot}/../units/integration_contract.md',
       required: true,
     },
   ]),

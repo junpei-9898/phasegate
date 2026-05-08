@@ -2,10 +2,8 @@
  * @layer domain
  * @unit traceability-model
  *
- * docs/ または scripts/ 配下のPOSIX相対パス
+ * プロジェクト相対POSIXパス
  */
-const ALLOWED_PROJECT_ROOTS = new Set(['docs', 'scripts']);
-
 export class ProjectRelativePathError extends Error {
   readonly value: string;
 
@@ -42,7 +40,7 @@ const normalizeSegments = (rawValue: string): readonly string[] => {
       return segment;
     });
 
-  if (segments.length === 0 || !ALLOWED_PROJECT_ROOTS.has(segments[0])) {
+  if (segments.length === 0) {
     throw new ProjectRelativePathError(rawValue);
   }
 

@@ -25,15 +25,17 @@ export class PhaseDependencyModelQueryAdapter implements PhaseGateQueryPort {
     return {
       async queryAllStories(): Promise<PhaseGateStoryResult[]> {
         try {
-          const { createTraceabilityModelModule } = await import('../../../traceability-model/composition-root.js');
-          const traceModule = createTraceabilityModelModule(rootDir);
-          const storyIds = await traceModule.storyCatalog.getAllStoryIds();
-
           // WI-085: paths config を phase-dependency-model に流入させる
           const { createConfigFoundationModule } = await import('../../../config-foundation/composition-root.js');
           const { toPhaseConfigSection } = await import('../../../config-foundation/application/mappers/phase-config-section-mapper.js');
           const configModule = createConfigFoundationModule();
           const resolvedConfig = await configModule.usecases.loadResolvedConfigUseCase.execute();
+          const { createTraceabilityModelModule } = await import('../../../traceability-model/composition-root.js');
+          const traceModule = createTraceabilityModelModule(rootDir, {
+            pathRoots: { designDocsRoot: resolvedConfig.config.paths.designDocs },
+          });
+          const storyIds = await traceModule.storyCatalog.getAllStoryIds();
+
           const { createPhaseDependencyModelModule } = await import('../../../phase-dependency-model/composition-root.js');
           const phaseModule = createPhaseDependencyModelModule({
             rootDir,

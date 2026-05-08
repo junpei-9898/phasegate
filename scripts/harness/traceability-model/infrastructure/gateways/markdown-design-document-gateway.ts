@@ -21,18 +21,22 @@ import { parseWorkItemFrontmatter } from "../parsers/work-item-frontmatter-parse
 
 export interface MarkdownDesignDocumentGatewayDeps {
   readonly rootDir: string;
+  readonly designDocsRoot?: string;
 }
 
 export class MarkdownDesignDocumentGateway implements DesignDocumentPort {
   private readonly rootDir: string;
+  private readonly designDocsRoot: string;
   private readonly contentCache = new Map<string, string>();
 
   constructor(deps: MarkdownDesignDocumentGatewayDeps) {
     this.rootDir = deps.rootDir;
+    this.designDocsRoot = deps.designDocsRoot ?? path.join("docs", "product", "construction");
   }
 
   async listByUnit(unitName: string): Promise<readonly ProjectRelativePathLike[]> {
-    const constructionDir = path.join(this.rootDir, "docs", "product", "construction", unitName);
+    const constructionRoot = path.posix.join(this.designDocsRoot, unitName);
+    const constructionDir = path.join(this.rootDir, constructionRoot);
 
     if (!fs.existsSync(constructionDir)) {
       return [];
@@ -43,7 +47,7 @@ export class MarkdownDesignDocumentGateway implements DesignDocumentPort {
 
     for (const entry of entries) {
       if (entry.endsWith(".md")) {
-        results.push(ProjectRelativePath.create(`docs/product/construction/${unitName}/${entry}`));
+        results.push(ProjectRelativePath.create(path.posix.join(constructionRoot, entry)));
       }
     }
 

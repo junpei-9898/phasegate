@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.130.0] - 2026-05-08
+
+### Fixed
+
+- **WI-093 — `paths.designDocs` を L2-001 / traceability-model の product 直下文書まで完全 threading (GitHub Issue #4 finding #4)** — WI-085 で残っていた `docs/product/product_overview.md` / `docs/product/user_stories.md` hardcoded 経路を解消。
+  - **phase-dependency-model**: Level 1 product 文書を `{designDocsRoot}/../...` で定義し、`Artifact.resolve()` / `expandRoots()` で POSIX 正規化。`paths.designDocs: "mydocs/product/construction"` の場合、L2 blocker は `mydocs/product/product_overview.md` / `mydocs/product/user_stories.md` を参照する。
+  - **traceability-model**: `MarkdownStoryCatalogGateway` / `MarkdownDesignDocumentGateway` / `MarkdownUnitDefinitionGateway` / `TraceabilityChainBuilder` に custom design docs root を注入し、`mydocs/product/user_stories.md` と `mydocs/product/construction/{unit}` を読むよう修正。
+  - **後方互換**: config 未指定時は従来通り `docs/product/user_stories.md` / `docs/product/construction/{unit}` を利用。
+  - **検証 (publish 前 local/self-host)**: `pnpm exec tsc --noEmit` pass。対象テスト 4 files / 29 tests pass。`pnpm test` は 453 files / 3520 tests pass。`/private/tmp/phasegate-local-wi093` の symlink なし reporter fixture で `validate --layer L2 --format human` を実行し、L2-001 blocker が `mydocs/product/product_overview.md` を参照することを確認。
+  - **post-publish dogfood**: `/private/tmp/phasegate-dogfood-wi093-published` で `npx phasegate@0.130.0` を使い検証済み。custom `paths.designDocs: "mydocs/product/construction"` では L2-001 blocker が `mydocs/product/product_overview.md` を参照し、default `paths.designDocs: "docs/product/construction"` では `docs/product/product_overview.md` を参照。`validate-metadata mydocs/product/construction/sample/domain_model.md` は `mydocs/product/user_stories.md` 由来で PASS。`docs/product` symlink workaround なし。
+
+## [0.129.0] - 2026-05-08
+
+### Fixed
+
+- **WI-092 — `createValidatorSystemModule()` 残 5 site の config threading 漏れを sweep** — v0.128.0 で `validate --layer L4` 経路のみ修正した DI 配線漏れの follow-up として、harness-api / pre-commit 経路でも user config (`layers.L2/L3/L4.enabled`) が validator-system composition root に渡るよう修正。
+  - **対象**: `ValidatorSystemExecutionAdapter` の `runL3Validators()` / `runAllValidators()` / `runDriftDetection()`、および `runPreCommitCli()` / `runCommitMsgCli()` の計 5 site。
+  - **共通 translator 化**: `toValidatorSystemConfig()` を `config-foundation/application/mappers/validator-system-config-mapper.ts` に移動し、`main.ts` / harness-api adapter / pre-commit CLI から共通利用。渡す値は `project.preset` と `layers.L2/L3/L4.enabled` のみに限定し、`validators` 配列は渡さない。validator catalog は validator-system の default 解決に委ねる。
+  - **fallback**: `phasegate.config.json` 不在時のみ validator-system の default config にフォールバック。不正 config は従来通り runtime error として扱う。
+  - **検証 (publish 前 local/self-host)**: PhaseGate 自身の `phasegate.config.json` (`layers.L4.enabled: false`) で `validate --layer L4` は exit 0 / PASS / validator 0 件。`phasegate:detect-drift --json` は drift detection direct 経路を維持し、既存 drift 2065 件により exit 1。
+  - **テスト**: `pnpm test` は 452 files / 3518 tests pass。対象テスト 3 files / 11 tests pass。変更ファイルの `validate-metadata` pass。
+  - **post-publish dogfood**: `/private/tmp/phasegate-dogfood-wi092` で `npx phasegate@0.129.0` を使い検証済み。`validate --layer L4 --format human` は exit 0 / PASS / validator 0 件、`phasegate:status --json` は L4 `enabled:false`、`phasegate:detect-drift --json` は fixture の drift 1 件を返して exit 1、`pre-commit` は staged markdown 2 件を検査して PASS。
+
 ## [0.128.0] - 2026-05-08
 
 ### Fixed
