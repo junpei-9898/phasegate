@@ -1,4 +1,5 @@
 // @layer infrastructure
+// @unit harness-api
 // harness-config-query-adapter.ts — HarnessConfigQueryAdapter
 
 import * as fs from 'node:fs/promises';
@@ -12,6 +13,7 @@ interface HarnessConfigJson {
     name: string;
     preset: 'minimal' | 'standard' | 'strict';
   };
+  layers?: Partial<Record<LayerId, { enabled?: boolean }>>;
   paths?: {
     designDocs?: string;
     integrationTests?: string;
@@ -46,7 +48,18 @@ export class HarnessConfigQueryAdapter implements ConfigQueryPort {
   async getPresetInfo(): Promise<PresetInfo> {
     const config = await this.readConfig();
     const preset = config.project.preset;
-    const enabledLayers = PRESET_LAYERS[preset] ?? ['L1', 'L2', 'L3'];
+    const presetLayers = PRESET_LAYERS[preset] ?? ['L1', 'L2', 'L3'];
+    const enabledLayerSet = new Set<LayerId>(presetLayers);
+
+    for (const [layerId, layerConfig] of Object.entries(config.layers ?? {}) as [LayerId, { enabled?: boolean }][]) {
+      if (layerConfig.enabled === true) {
+        enabledLayerSet.add(layerId);
+      } else if (layerConfig.enabled === false) {
+        enabledLayerSet.delete(layerId);
+      }
+    }
+
+    const enabledLayers = (['L1', 'L2', 'L3', 'L4'] as const).filter((layerId) => enabledLayerSet.has(layerId));
     return { name: preset, enabledLayers };
   }
 

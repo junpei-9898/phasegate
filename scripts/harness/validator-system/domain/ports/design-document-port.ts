@@ -8,6 +8,7 @@
 export interface DesignDocumentConcept {
   readonly name: string;
   readonly type: 'class' | 'interface' | 'type' | 'value-object' | 'service';
+  readonly pointers?: readonly string[];
 }
 
 export interface StructuredDesignDoc {
@@ -24,4 +25,6 @@ export interface DesignDocumentPort {
   getLayerAnnotations?(targetDocs?: readonly string[]): Promise<Record<string, string>>;
   /** DriftDetectionService用: 要素名一覧取得 */
   getElements?(targetUnits?: readonly string[]): Promise<string[]>;
+  /** DriftDetectionService用: 設計要素から対応する実装ファイルへの明示ポインタ */
+  getElementPointers?(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>>;
 }

@@ -268,6 +268,8 @@
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
 | IT-REPO-DesignDoc-001 | domain_model.mdが存在する場合、概念一覧が返る | `targetUnits: ["harness-error"]` | docs/product/construction/harness-error/domain_model.md が存在 | `concepts`に"HarnessError"等のクラス名が含まれる |
+| IT-REPO-DesignDoc-011 | HTML comment形式のpointersを含む場合、設計要素ごとのpointer一覧が返る | `domain_model.md` に `<!-- pointers: ... -->` を記述 | `getElementPointers(["test-unit"])` | element名をkeyにしたpath配列が返る |
+| IT-REPO-DesignDoc-012 | `<pointers>` block形式のpointersを含む場合、複数pointerが返る | `domain_model.md` に `<pointers>` blockを記述 | `getElementPointers(["test-unit"])` | block内の複数pathが配列で返る |
 | IT-REPO-DesignDoc-002 | ADR参照（ADR-001等）がadrRefsに収集される | `targetUnits: ["harness-error"]` | domain_model.mdにADR-001参照が含まれる | `adrRefs`に"ADR-001"が含まれる |
 | IT-REPO-DesignDoc-003 | 同一Unit文書の2回目の読み取りがキャッシュから返る | `targetUnits: ["harness-error"]` | ファイルI/Oをspyでカウント | ファイルI/Oが1回のみ実行される |
 | IT-REPO-DesignDoc-004 | 存在しないUnitを指定した場合、空の構造化データが返る | `targetUnits: ["nonexistent-unit"]` | ディレクトリ/ファイルが存在しない | 戻り値が空配列 |

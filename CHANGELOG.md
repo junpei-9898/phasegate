@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.133.0] - 2026-05-08
+
+### Added
+
+- **WI-095 — L4-001 drift-detect の design pointers 対応** — 設計見出し直下の `<!-- pointers: ... -->` / `<pointers>` block で実装ファイルpathを明示できるようにし、設計名とcode export名が異なる移行中ケースのfalse positiveを抑制。ADR-018でsyntaxとORセマンティクスを定義。
+
+### Fixed
+
+- **WI-096 — `phasegate:status` が `layers.L?.enabled` user override を表示に反映しない問題を修正** — status表示用のenabledLayersをpreset値と明示overrideから合成し、`strict + L4.enabled:false` / `minimal + L4.enabled:true` の双方に対応。
+
 ## [0.132.0] - 2026-05-08
 
 ### Fixed

@@ -213,6 +213,8 @@
 |---------|------|------|----------|---------|
 | IT-REPO-ConfigQuery-001 | getPresetInfo実行（standard） | なし | テスト用phasegate.config.json（project.preset='standard'） | PresetInfo{name:'standard', enabledLayers:['L1','L2','L3']} |
 | IT-REPO-ConfigQuery-002 | getPresetInfo実行（strict） | なし | テスト用phasegate.config.json（project.preset='strict'） | PresetInfo{name:'strict', enabledLayers:['L1','L2','L3','L4']} |
+| IT-REPO-ConfigQuery-003 | getPresetInfo実行（strict + L4 disabled override） | なし | テスト用phasegate.config.json（project.preset='strict', layers.L4.enabled=false） | PresetInfo{name:'strict', enabledLayers:['L1','L2','L3']} |
+| IT-REPO-ConfigQuery-004 | getPresetInfo実行（minimal + L4 enabled override） | なし | テスト用phasegate.config.json（project.preset='minimal', layers.L4.enabled=true） | PresetInfo{name:'minimal', enabledLayers:['L1','L4']} |
 | IT-REPO-ConfigQuery-003 | getConfigSummary実行 | なし | テスト用phasegate.config.json（既知のパス） | ConfigSummary.configPathが正しいパス、lastModifiedがISO 8601形式 |
 | IT-REPO-ConfigQuery-004 | phasegate.config.jsonが存在しない場合に例外をスローすること | なし | phasegate.config.jsonなし | Errorがスローされる |
 

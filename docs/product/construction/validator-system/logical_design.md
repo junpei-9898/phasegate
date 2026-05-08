@@ -689,16 +689,18 @@ export interface DesignDocumentPort {
   loadDesignDocuments(targetUnits?: readonly string[]): Promise<readonly {
     unitName: string;
     docPath: string;
-    concepts: readonly { name: string; type: "class" | "interface" | "type" | "value-object" | "service" }[];
+    concepts: readonly { name: string; type: "class" | "interface" | "type" | "value-object" | "service"; pointers?: readonly string[] }[];
     layerDependencies: readonly { from: string; to: string }[];
     adrRefs: readonly string[];
   }[]>;
+  getElementPointers?(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>>;
 }
 ```
 
 | メソッド | 入力 | 出力 | 説明 |
 |---------|------|------|------|
 | `loadDesignDocuments` | `targetUnits?` | `Promise<StructuredDesignDoc[]>` | Markdownの設計文書を解析し、概念一覧・レイヤー依存・ADR参照を構造化して返す |
+| `getElementPointers` | `targetUnits?` | `Promise<Record<string, readonly string[]>>` | WI-095 / ADR-018: 見出し単位の `pointers` block から設計要素→実装ファイルpathの明示対応を返す |
 
 ---
 
@@ -712,12 +714,14 @@ export interface SourceCodeAnalyzerPort {
     exports: readonly { name: string; type: "class" | "interface" | "type" | "function" | "const" }[];
     imports: readonly { source: string; name: string }[];
   }[]>;
+  getElementFilePathMap?(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>>;
 }
 ```
 
 | メソッド | 入力 | 出力 | 説明 |
 |---------|------|------|------|
 | `analyzeExports` | `targetUnits?` | `Promise<SourceAnalysisResult[]>` | ソースコードのAST解析からエクスポート・import一覧を取得する。L4-001乖離検出とL4-003デッドコード検出で使用 |
+| `getElementFilePathMap` | `targetUnits?` | `Promise<Record<string, readonly string[]>>` | WI-095 / ADR-018: export要素名から定義ファイルpathを返し、design pointer照合に使う |
 
 ---
 
@@ -1232,6 +1236,8 @@ export interface AggregatedValidationReport {
 
 **実装ポート**: `DesignDocumentPort`
 
+<!-- @work-item-id WI-095 -->
+
 **ファイル**: `scripts/harness/validator-system/infrastructure/adapters/markdown-design-document-adapter.ts`
 
 **外部I/O**
@@ -1243,6 +1249,7 @@ export interface AggregatedValidationReport {
 
 - `domain_model.md §D3` の方針に従い、Markdownパースはこのアダプタが担当する
 - 見出し（`##`）・コードブロック（` ```typescript `）・テーブルから概念名とレイヤー依存を抽出する
+- WI-095 / ADR-018: 見出し直下から `<!-- pointers: path -->` または `<pointers><li相当の - path</pointers>` を抽出し、設計要素と実装ファイルpathの明示対応として扱う
 - `ADR-{nnn}` 形式の参照を `adrRefs` として収集する
 - 解析結果をキャッシュして同一文書の複数回読み取りを回避する
 
@@ -1532,6 +1539,8 @@ sequenceDiagram
 
 ### 6.3 L4 乖離検出（H08-03内部）のシーケンス
 
+<!-- @work-item-id WI-095 -->
+
 ```mermaid
 sequenceDiagram
     participant L4UC as RunL4ValidatorsUseCase
@@ -1544,9 +1553,13 @@ sequenceDiagram
     ExecSvc->>DriftSvc: detect(targetUnits)
     DriftSvc->>DesignPort: loadDesignDocuments(targetUnits)
     DesignPort-->>DriftSvc: StructuredDesignDoc[] (概念一覧・依存)
+    DriftSvc->>DesignPort: getElementPointers?(targetUnits)
+    DesignPort-->>DriftSvc: element -> pointer path[]
     DriftSvc->>SrcPort: analyzeExports(targetUnits)
     SrcPort-->>DriftSvc: SourceAnalysisResult[] (エクスポート一覧)
-    DriftSvc->>DriftSvc: compare(designConcepts, codeExports)
+    DriftSvc->>SrcPort: getElementFilePathMap?(targetUnits)
+    SrcPort-->>DriftSvc: export -> file path[]
+    DriftSvc->>DriftSvc: compare(designConcepts, codeExports, pointers)
     DriftSvc->>DriftSvc: generate DriftReport[] (design→code & code→design)
     DriftSvc-->>ExecSvc: DriftReport[]
     ExecSvc->>ExecSvc: DriftReport[].toHarnessError() → HarnessError[]
@@ -1600,6 +1613,16 @@ sequenceDiagram
 - テスト容易性：DriftDetectionServiceはPortをモックするだけでI/Oなしにテスト可能
 
 **影響**: MarkdownDesignDocumentAdapterが唯一のMarkdownパース担当となり、設計文書の形式変更時の影響範囲が局所化される。
+
+<!-- @work-item-id WI-095 -->
+
+### LD-7: L4 drift-detect の design pointers
+
+**論点**: 設計要素名と code export 名の完全一致だけに依存すると、移行中のリネームや業務概念名と実装型名の差で false positive が起きる。
+
+**決定**: ADR-018 に従い、設計見出し直下の `pointers` block で実装ファイル path を明示できるようにする。`DriftDetectionService` は名前一致に加えて、`DesignDocumentPort.getElementPointers()` と `SourceCodeAnalyzerPort.getElementFilePathMap()` が提供された場合に path 対応を OR 条件として扱う。
+
+**影響**: optional port のため既存アダプタやモックは後方互換を維持する。pointer が一致した設計要素と code export は、名前が異なっても design→code / code→design の双方で drift とみなさない。
 
 ---
 

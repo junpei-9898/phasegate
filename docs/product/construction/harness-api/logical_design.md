@@ -429,7 +429,7 @@ skills/                  # 実体
 | 型名 | 構造 | 説明 |
 |------|------|------|
 | `PhaseGateSummary` | `{ totalStories: number; passedStories: number; pendingStories: number }` | Phase Gate全体集計 |
-| `PresetInfo` | `{ name: 'minimal' \| 'standard' \| 'strict'; enabledLayers: LayerId[] }` | プリセット詳細 |
+| `PresetInfo` | `{ name: 'minimal' \| 'standard' \| 'strict'; enabledLayers: LayerId[] }` | プリセット詳細。`enabledLayers` は WI-096 以降、preset default と `layers.L?.enabled` override を合成した effective enabled layers |
 | `ConfigSummary` | `{ configPath: string; lastModified: string; version: string }` | 設定ファイル情報 |
 
 **メソッド一覧**
@@ -1084,6 +1084,8 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 ### 5.6 HarnessConfigQueryAdapter
 
+<!-- @work-item-id WI-096 -->
+
 **ファイル**: `scripts/harness/harness-api/infrastructure/adapters/harness-config-query-adapter.ts`
 
 **実装ポート**: `ConfigQueryPort`
@@ -1095,10 +1097,11 @@ Cross-Unit Contract DTO（`HarnessApiResponseContract`）は Application層で�
 
 **実装方針**
 
-- `getPresetInfo()`: `HarnessConfigV2.project.preset` を読み取り、プリセット名と有効レイヤー一覧を返す
+- `getPresetInfo()`: `HarnessConfigV2.project.preset` を読み取り、プリセット名と effective な有効レイヤー一覧を返す
   - `minimal`: L1のみ有効
   - `standard`: L1-L3有効
   - `strict`: L1-L4有効
+  - `layers.L?.enabled` が明示されている場合は preset default に優先して合成する
 - `getConfigSummary()`: `phasegate.config.json` のファイルパス・最終更新タイムスタンプ・スキーマバージョンを返す
 - `getPhaseGateSummary()`: `phase-dependency-model` と連携して Phase Gate 全体集計を返す（Wave 2完了後）
 

@@ -11,4 +11,5 @@ export interface SourceAnalysisResult {
 export interface SourceCodeAnalyzerPort {
   analyzeExports(targetUnits?: readonly string[]): Promise<readonly SourceAnalysisResult[]>;
   getElements?(targetUnits?: readonly string[]): Promise<string[]>;
+  getElementFilePathMap?(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>>;
 }

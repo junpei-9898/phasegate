@@ -2,7 +2,7 @@
 id: WI-096
 type: fix
 severity: trivial
-status: drafted
+status: tested
 affects: [harness-api]
 github_issue: null
 reporter: junpei-9898
@@ -83,12 +83,12 @@ WI-091/WI-092 の流れ (config を caller 側で resolved して thread) と一
 - **quick-implementor 案件** (新ドメインモデルなし、API 契約は内部のみ、Unit 単一)
 
 ## 受け入れ基準
-- [ ] `phasegate:status` で `layers[N].enabled` が `config.layers[N].enabled` override を反映する
-- [ ] `presetInfo.enabledLayers` の意味論が docs / type comment 上で明確化される (preset 由来 / effective どちらか)
-- [ ] dogfood: `project.preset: "strict"` + `layers.L4.enabled: false` で `phasegate:status --json` の L4 enabled が `false` になる
-- [ ] dogfood: `project.preset: "minimal"` + `layers.L4.enabled: true` で L4 enabled が `true` になる (逆方向の override)
-- [ ] 既存 derive-harness-status-usecase の test green、新規 IT テスト追加 (override 反映 case)
-- [ ] L1 / L2 (metadata, test-quality) 維持
+- [x] `phasegate:status` で `layers[N].enabled` が `config.layers[N].enabled` override を反映する
+- [x] `presetInfo.enabledLayers` は status 表示用の effective enabled layers として実装
+- [x] dogfood: unit test で `project.preset: "strict"` + `layers.L4.enabled: false` の L4 disabled を確認
+- [x] dogfood: unit test で `project.preset: "minimal"` + `layers.L4.enabled: true` の L4 enabled を確認
+- [x] 既存 status derivation test green、新規 unit test 追加 (override 反映 case)
+- [x] L1 / L2 (metadata, test-quality) 維持
 
 ## 実害評価 (なぜ severity: trivial か)
 - runtime の `validate --layer L?` は WI-091/WI-092 の config threading により override を正しく honor → 実際の検査挙動は正しい

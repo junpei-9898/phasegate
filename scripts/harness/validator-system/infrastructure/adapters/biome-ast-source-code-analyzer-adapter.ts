@@ -61,6 +61,17 @@ export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort
     }
     return map;
   }
+
+  async getElementFilePathMap(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>> {
+    const results = await this.analyzeExports(targetUnits);
+    const map: Record<string, string[]> = {};
+    for (const result of results) {
+      for (const entry of result.exports) {
+        map[entry.name] = [...(map[entry.name] ?? []), result.filePath];
+      }
+    }
+    return map;
+  }
 }
 
 type ExportType = SourceAnalysisResult['exports'][number]['type'];

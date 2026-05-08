@@ -341,6 +341,8 @@
 | UT-DDS-002 | コードに存在するが設計文書に存在しない要素あり | `detect()` 呼び出し | `direction: "code→design"` のDriftReportが生成される |
 | UT-DDS-003 | 設計とコードが完全に一致 | `detect()` 呼び出し | 空のDriftReport[]が返る（乖離なし） |
 | UT-DDS-004 | 設計→コードとコード→設計の両方向で乖離あり | `detect()` 呼び出し | 両方向のDriftReportが含まれる結果が返る |
+| UT-DDS-010 | 設計要素のpointerがコード要素の定義ファイルに一致 | `detect()` 呼び出し | 名前が異なってもDriftReportは生成されない |
+| UT-DDS-011 | 設計要素のpointerがどのコード定義ファイルにも一致しない | `detect()` 呼び出し | 従来通りdesign→codeとcode→designのDriftReportが生成される |
 
 #### ポートインタラクションテスト
 

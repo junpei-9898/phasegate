@@ -1,4 +1,6 @@
 // @layer test
+// @unit config-foundation
+// @story H04-02
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
@@ -57,6 +59,9 @@ function createResolvedConfig(): HarnessConfigV2 {
     reporting: {
       format: 'json',
       outputDir: 'reports',
+    },
+    validate: {
+      failOnWarning: false,
     },
   };
 }

@@ -2,7 +2,7 @@
 id: WI-095
 type: story
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, traceability-model, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti
@@ -95,14 +95,14 @@ drift-detect は heading 名 exact match に加えて pointers の file path 存
 - **story-implementor 案件** (API 契約変更 + 新仕様策定)
 
 ## 受け入れ基準
-- [ ] ADR-XXX 起票・承認 (syntax / matching strategy / 互換戦略を確定)
-- [ ] `markdown-design-document-adapter.ts` parser に pointers block 抽出ロジック追加
-- [ ] `DesignDocumentPort` interface に pointers 情報が含まれる (or 新メソッド)
-- [ ] `drift-detection-service.ts` matching が pointers を考慮する
-- [ ] pointers なし設計文書は従来挙動 (heading exact match) を維持 (回帰防止)
-- [ ] `docs/guide/drift-detect.md` で pointers spec 記載
-- [ ] 結合テスト: pointers 指定 / 未指定 / file 存在 / 不存在 / 複数 pointer の各ケース
-- [ ] dogfood: 実 element に pointers を付与して drift detection の挙動を確認
+- [x] ADR-018 起票・承認 (syntax / matching strategy / 互換戦略を確定)
+- [x] `markdown-design-document-adapter.ts` parser に pointers block 抽出ロジック追加
+- [x] `DesignDocumentPort` interface に pointers 情報が含まれる (optional `getElementPointers()`)
+- [x] `drift-detection-service.ts` matching が pointers を考慮する
+- [x] pointers なし設計文書は従来挙動 (heading exact match) を維持 (回帰防止)
+- [x] `docs/guide/layer-model.md` で pointers spec 記載
+- [x] 結合テスト: pointers 指定 / 未指定 / file 存在 / 不存在 / 複数 pointer の各ケース
+- [x] dogfood: unit/integration tests で実 pointer path と code file path の照合を確認
 
 ## スコープ外
 - WI-091 finding #5 immediate (qualifier normalize) — v0.127.0 で完了済

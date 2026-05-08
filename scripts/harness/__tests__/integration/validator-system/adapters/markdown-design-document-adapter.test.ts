@@ -247,4 +247,80 @@ target('MarkdownDesignDocumentAdapter', () => {
       });
     });
   });
+
+  describe('pointers block 抽出 (WI-095)', () => {
+    context('HTML comment形式のpointersを含む場合', () => {
+      it('設計要素ごとのpointer一覧が返ること (IT-REPO-DesignDoc-011)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi095-comment-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            [
+              '## UserProfile',
+              '<!-- pointers: scripts/harness/test-unit/domain/user-profile.ts -->',
+              '',
+              '## AccountProfile',
+              '<!-- pointers: scripts/harness/test-unit/domain/account-profile.ts, scripts/harness/test-unit/domain/account-profile-types.ts -->',
+              '',
+            ].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElementPointers(['test-unit']);
+
+          // Assert
+          expect(actual.UserProfile).toEqual(['scripts/harness/test-unit/domain/user-profile.ts']);
+          expect(actual.AccountProfile).toEqual([
+            'scripts/harness/test-unit/domain/account-profile.ts',
+            'scripts/harness/test-unit/domain/account-profile-types.ts',
+          ]);
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+
+    context('<pointers> block形式のpointersを含む場合', () => {
+      it('設計要素ごとの複数pointerが返ること (IT-REPO-DesignDoc-012)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi095-block-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            [
+              '## UserProfile',
+              '<pointers>',
+              '  - scripts/harness/test-unit/domain/user-profile.ts',
+              '  - scripts/harness/test-unit/domain/user-profile-types.ts',
+              '</pointers>',
+              '',
+              '## Unrelated',
+              '',
+            ].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElementPointers(['test-unit']);
+
+          // Assert
+          expect(actual.UserProfile).toEqual([
+            'scripts/harness/test-unit/domain/user-profile.ts',
+            'scripts/harness/test-unit/domain/user-profile-types.ts',
+          ]);
+          expect(actual.Unrelated).toBeUndefined();
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+  });
 });

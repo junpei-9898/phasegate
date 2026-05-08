@@ -1,6 +1,7 @@
 /**
  * @layer test
  * @unit validator-system
+ * @story H08-04
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -152,6 +153,60 @@ target('DriftDetectionService', () => {
       // Assert
       const fooReport = actual.find((r) => r.element === 'Foo');
       expect(fooReport?.unitName).toBe('unknown');
+    });
+  });
+
+  describe('detect() — design pointers (WI-095)', () => {
+    it('設計要素のpointerがコード要素の定義ファイルに一致する場合、名前が異なっても乖離にしないこと (UT-DDS-010)', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn().mockResolvedValue(['UserProfile']),
+        getElementPointers: vi.fn().mockResolvedValue({
+          UserProfile: ['scripts/harness/sample-unit/domain/user-profile.ts'],
+        }),
+      };
+      const sourcePort = {
+        getElements: vi.fn().mockResolvedValue(['UserProfileV2']),
+        getElementFilePathMap: vi.fn().mockResolvedValue({
+          UserProfileV2: ['/repo/scripts/harness/sample-unit/domain/user-profile.ts'],
+        }),
+      };
+      const sut = new DriftDetectionService({
+        designDocumentPort: designPort,
+        sourceCodeAnalyzerPort: sourcePort,
+      });
+
+      // Act
+      const actual = await sut.detect();
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('設計要素のpointerがどのコード定義ファイルにも一致しない場合、従来通り乖離にすること (UT-DDS-011)', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn().mockResolvedValue(['UserProfile']),
+        getElementPointers: vi.fn().mockResolvedValue({
+          UserProfile: ['scripts/harness/sample-unit/domain/user-profile.ts'],
+        }),
+      };
+      const sourcePort = {
+        getElements: vi.fn().mockResolvedValue(['UserProfileV2']),
+        getElementFilePathMap: vi.fn().mockResolvedValue({
+          UserProfileV2: ['/repo/scripts/harness/sample-unit/domain/account-profile.ts'],
+        }),
+      };
+      const sut = new DriftDetectionService({
+        designDocumentPort: designPort,
+        sourceCodeAnalyzerPort: sourcePort,
+      });
+
+      // Act
+      const actual = await sut.detect();
+
+      // Assert
+      expect(actual.map((report) => report.direction)).toEqual(['code→design', 'design→code']);
     });
   });
 });

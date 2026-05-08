@@ -30,9 +30,39 @@ function isMetaHeading(name: string): boolean {
   return DEFAULT_META_HEADING_PATTERNS.some((p) => p.test(name));
 }
 
-function extractConceptNames(markdown: string): string[] {
+function extractPointerLines(lines: readonly string[], startIndex: number, headingRegex: RegExp): string[] {
+  const pointers: string[] = [];
+  for (let i = startIndex + 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (headingRegex.test(line)) break;
+
+    const commentMatch = /<!--\s*pointers?\s*:\s*(.+?)\s*-->/i.exec(line);
+    if (commentMatch) {
+      pointers.push(...commentMatch[1].split(',').map((p) => p.trim()).filter(Boolean));
+      continue;
+    }
+
+    const blockStartMatch = /^<pointers>\s*$/i.exec(line.trim());
+    if (blockStartMatch) {
+      for (let j = i + 1; j < lines.length; j++) {
+        const blockLine = lines[j].trim();
+        if (/^<\/pointers>\s*$/i.test(blockLine)) {
+          i = j;
+          break;
+        }
+        const itemMatch = /^-\s+(.+?)\s*$/.exec(blockLine);
+        if (itemMatch) pointers.push(itemMatch[1].trim());
+      }
+      continue;
+    }
+  }
+
+  return Array.from(new Set(pointers));
+}
+
+function extractConcepts(markdown: string): Array<{ name: string; pointers?: readonly string[] }> {
   const lines = markdown.split(/\r?\n/);
-  const headings: string[] = [];
+  const concepts: Array<{ name: string; pointers?: readonly string[] }> = [];
   const headingRegex = /^(#{2,3})\s+(.+?)\s*$/;
   for (let i = 0; i < lines.length; i++) {
     const m = headingRegex.exec(lines[i]);
@@ -59,10 +89,11 @@ function extractConceptNames(markdown: string): string[] {
       .replace(/[（(][^）)]*[）)]/g, '')
       .trim();
     if (stripped.length > 0) {
-      headings.push(stripped);
+      const pointers = extractPointerLines(lines, i, headingRegex);
+      concepts.push(pointers.length > 0 ? { name: stripped, pointers } : { name: stripped });
     }
   }
-  return headings;
+  return concepts;
 }
 
 export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
@@ -92,7 +123,7 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
         const doc: StructuredDesignDoc = {
           unitName,
           docPath,
-          concepts: extractConceptNames(markdown).map((name) => ({ name, type: 'class' })),
+          concepts: extractConcepts(markdown).map((concept) => ({ ...concept, type: 'class' })),
           layerDependencies: [],
           adrRefs: Array.from(new Set(markdown.match(ADR_PATTERN) ?? [])),
         };
@@ -113,6 +144,19 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
   async getElements(targetUnits?: readonly string[]): Promise<string[]> {
     const docs = await this.loadDesignDocuments(targetUnits);
     return docs.flatMap((doc) => doc.concepts.map((concept) => concept.name));
+  }
+
+  async getElementPointers(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>> {
+    const docs = await this.loadDesignDocuments(targetUnits);
+    const map: Record<string, readonly string[]> = {};
+    for (const doc of docs) {
+      for (const concept of doc.concepts) {
+        if (concept.pointers && concept.pointers.length > 0) {
+          map[concept.name] = concept.pointers;
+        }
+      }
+    }
+    return map;
   }
 
   /**

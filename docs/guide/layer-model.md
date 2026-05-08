@@ -150,6 +150,27 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 
 > **Note (2026-04-25)**: `doc-freshness` and `pointer-validation` capabilities exist as standalone CLI commands `p2:check-freshness` and `p2:validate-pointers` (implemented in the `phase2-extensions` unit), **not as L4 validators yet**. Promoting them to L4-004 / L4-005 is tracked as **WI-033**. Until that lands, run them explicitly via `npx phasegate p2:check-freshness` / `p2:validate-pointers`.
 
+### Drift-detect design pointers
+
+L4-001 normally matches design headings to code exports by name. When a heading intentionally maps to a differently named implementation file, add a pointer directly under the heading:
+
+```markdown
+## UserProfile
+<!-- pointers: scripts/harness/user/domain/user-profile.ts -->
+```
+
+For multiple files:
+
+```markdown
+## UserProfile
+<pointers>
+  - scripts/harness/user/domain/user-profile.ts
+  - scripts/harness/user/domain/user-profile-types.ts
+</pointers>
+```
+
+Pointers are optional and backward compatible. If any listed path matches the file defining a code export, drift-detect treats that design heading and export as corresponding even when their names differ.
+
 **Command:**
 
 ```bash
