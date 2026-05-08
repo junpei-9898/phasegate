@@ -455,6 +455,27 @@ function toL1Config(resolvedConfig: HarnessConfigV2) {
  * HarnessConfigV2 (resolved) から biome-ast-engine が期待する architecture 情報を抽出する。
  * architecture が未設定の場合は undefined を返し、biome-ast-engine 側の default (clean) に委ねる。
  */
+/**
+ * HarnessConfigV2 (resolved) から validator-system の `createValidatorSystemModule` が
+ * 期待する shape (`{ project: { preset }, layers: { L2/L3/L4: { enabled } } }`) に変換する。
+ *
+ * WI-091 finding #1 follow-up: 直接 resolvedConfig を渡すと preset-style の
+ * `validators: ["drift-detector"]` が validator-code (L4-001/002/003) を上書きし
+ * 全 SKIP になる症状が出るため、`enabled` field のみ thread し validators の
+ * 解決は composition root 側の defaultValidators[layer] フォールバックに委ねる。
+ */
+function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefined): object | undefined {
+  if (!resolvedConfig) return undefined;
+  return {
+    project: { preset: resolvedConfig.project.preset },
+    layers: {
+      L2: { enabled: resolvedConfig.layers.L2.enabled },
+      L3: { enabled: resolvedConfig.layers.L3.enabled },
+      L4: { enabled: resolvedConfig.layers.L4.enabled },
+    },
+  };
+}
+
 function toArchitectureInput(resolvedConfig: HarnessConfigV2) {
   if (!resolvedConfig.architecture) {
     return undefined;
@@ -976,7 +997,7 @@ async function main(): Promise<void> {
 
       // ── validator-system ──
       case "validate": {
-        const mod = createValidatorSystemModule();
+        const mod = createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig));
         const layer = parseFlag(args, "--layer") as "L0" | "L2" | "L3" | "L4" | "all" | undefined;
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
