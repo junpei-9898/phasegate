@@ -163,7 +163,7 @@ option 形式 (例 1 件):
 - [x] L1 / L2 (metadata, test-quality) 維持 (`npx phasegate lint` で No violations found)
 - [x] CHANGELOG に v0.125.0 として WI-089 を記載
 - [x] minor version bump (0.124.0 → 0.125.0)
-- [ ] dogfood: publish 後、別 PJ で `npx phasegate init` を実行し Next steps の guidance skill 案内が出ることを確認 (publish 後)
+- [x] dogfood: publish 後、別 PJ で `npx phasegate init` を実行し Next steps の guidance skill 案内が出ることを確認 (2026-05-08 `npx phasegate@0.125.0 init --skill-set all --yes` を `/tmp/phasegate-dogfood-wi089` で実行、`Need help?` ブロック表示確認 + deployed SKILL.md に WI-086/087 言及 0 件 + section 構造 cleanup 反映確認)
 
 ## スコープ外 (再掲)
 
@@ -212,3 +212,12 @@ WI-088 dogfood 検証で挙げた P1 / P2 / P4 / P5 + cohesion audit を反映:
 - **互換性**: SKILL.md 内容変更のみで挙動変更なし、既存テスト影響なし。consumer プロジェクトには `phasegate init` 再実行で新 SKILL.md が deploy される (skill-deployer のロジック自体は無変更)。
 
 **WI-089 全体スコープ**: dogfood feedback の 5 項目中、P1 / P2 / P4 / P5 + cohesion audit を v0.125.0 で完了。**P3 (canonical doc 日本語化)** は別 WI (WI-090 候補) で扱う方針 (本 WI スコープ外)。
+
+### 副次的検出 (本 WI スコープ外)
+
+v0.125.0 dogfood 検証中に `phasegate init` の **`--skill-set` フラグ arg-parsing bug** を発見:
+
+- 症状: `npx phasegate init --skill-set core --yes` および `--skill-set=core --yes` のいずれも、出力に `Skills deployed to ... (30 skills, set: all)` と表示され、core 限定 deploy が機能していない。
+- 影響: `getSkillsForSet("core")` の挙動 (guidance skills 除外) が CLI から検証できない状態。core skill-set を期待する consumer は意図せず all skill-set が deploy される。
+- 範囲: 本 WI の P1 conditional (`if (skillSet !== "core")`) のロジック自体は正常 (else 分岐で Need help? 出力)。pre-existing な CLI parser のバグであり WI-089 で導入したものではない。
+- 対応: 別 WI (WI-090 候補) で起票して修正。本 WI ではここに記録するに留める。
