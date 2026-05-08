@@ -2,11 +2,14 @@
 id: WI-094
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [validator-system, config-foundation, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti
 related: [WI-091]
+resolved_in:
+  - v0.131.0 (集計セマンティクス + config schema + CLI tri-state + human formatter)
+  - v0.132.0 (Drift/Consistency/DeadCode Report の toHarnessError(s) severity 'warning' 修正、post-publish dogfood で発見)
 ---
 
 # WI-094: warning-severity validator の集計セマンティクス策定 (overall FAIL の判定が severity を考慮するように、後方互換 config flag + ADR)
@@ -124,3 +127,49 @@ const exitCode = report.overallPassed ? 0 : 1;
 
 ## 教訓フィードバック (memory 適用)
 - `feedback_dogfood_before_release.md`: 集計セマンティクス変更は publish 前に複数 severity 組み合わせ (error only / warning only / mixed) で `validate` 実行して exit code を確認する。本 WI では特に既存 user CI への影響を回帰テストで担保。
+
+## 解消ステータス (2026-05-08)
+
+### v0.131.0 (1st publish) で対応した範囲
+1. ADR-017 起票・承認 (`docs/ADR/ADR-017-warning-severity-aggregation.md`)
+2. 集計ロジック修正 (`aggregate-validation-results-usecase.ts:35-42` で severity を反映)
+3. config schema 拡張 (`validate.failOnWarning: boolean`、preset 別 default: minimal/standard=false、strict=true)
+4. CLI tri-state 化 (`--fail-on-warning` / `--no-fail-on-warning` / 未指定→config値)
+5. composition-root + handler threading
+6. human formatter で `[WARN]` 表示分離 (agent/ci JSON は既存互換維持)
+7. 回帰テスト 11 件追加 (warning-only / error-only / mixed / failOnWarning=true / 防御的)
+8. docs/guide/{layer-model,configuration}.md 更新 + CHANGELOG migration ガイド
+9. 全テスト green (455 files / 3536 tests pass)
+
+### v0.131.0 dogfood で発見した残課題
+`/private/tmp/phasegate-dogfood-wi094` で drift 2 件発生させて `validate --layer L4` を実行 → 期待は `[WARN]` / overall PASS / exit 0 だったが実測は `[FAIL]` / overall FAIL / exit 1。
+原因: `DriftReport.toHarnessError()` (drift-report.ts:47)、`ConsistencyReport.toHarnessErrors()` (consistency-report.ts:49)、`DeadCodeReport.toHarnessErrors()` (dead-code-report.ts:46/54) が `severity: 'error'` を hardcode しており、error catalog の `defaultSeverity: warning` 宣言と乖離していた。
+
+### v0.132.0 (2nd publish) で対応した範囲
+- `Drift / Consistency / DeadCode Report` の `toHarnessError(s)` で `severity: 'error'` → `'warning'` に修正
+- 全テスト green (455 files / 3536 tests pass、severity を直接 assert する既存テストなし)
+
+### v0.132.0 dogfood 結果 (`/private/tmp/phasegate-dogfood-wi094`、drift 2 件発生条件)
+
+| ケース | config validate.failOnWarning | CLI flag | 期待 | 実測 |
+|--------|------------------------------|----------|------|------|
+| 1. default | unset (preset standard → false) | (none) | `[WARN]` / PASS / exit 0 | ✅ `[WARN]` / PASS / exit 0 |
+| 2. CLI opt-in | unset | `--fail-on-warning` | `[WARN]` / FAIL / exit 1 | ✅ `[WARN]` / FAIL / exit 1 |
+| 3. config opt-in | `true` | (none) | `[WARN]` / FAIL / exit 1 | ✅ `[WARN]` / FAIL / exit 1 |
+| 4. CLI override | `true` | `--no-fail-on-warning` | `[WARN]` / PASS / exit 0 | ✅ `[WARN]` / PASS / exit 0 |
+
+### 受け入れ基準達成状況
+
+- [x] ADR-XXX 起票・承認 → ADR-017 として確定
+- [x] `aggregate-validation-results-usecase.ts:67` の判定に severity が反映される
+- [x] `validate.failOnWarning` が config schema に追加される (v2/v3)
+- [x] config flag のデフォルト値が ADR 通りになる (minimal/standard=false、strict=true)
+- [x] `defaultSeverity: warning` の validator (L4-001/002/003) が fail しても overall PASS / exit 0 が選べる (config 次第) — v0.132.0 で完全機能
+- [x] 既存 user 向け migration ガイドが CHANGELOG に記載される
+- [x] dogfood: drift 検出を発生させて exit code が config flag に従うことを確認 — 4/4 ケース pass
+- [x] `docs/guide/layer-model.md` / `docs/guide/configuration.md` 更新
+- [x] 既存 CI 想定の回帰テスト (warning-only / error-only / mixed の 3 ケースで exit code 確認)
+- [x] 全テストグリーン (3536/3536)
+
+### post-mortem
+v0.131.0 で aggregator 層は修正したが、validator-system の domain VO (`{Drift,Consistency,DeadCode}Report.toHarnessError(s)`) が hardcode した `severity: 'error'` を見落として publish した。catalog 宣言と実装の整合性チェック (validator catalog `defaultSeverity` と実際の `toHarnessError(s)` が出す severity の一致テスト) が無かったのが原因。今後は新規 validator 追加時に `error catalog defaultSeverity = toHarnessError severity` を assert するメタテストを足すことで再発を防げる (別 WI の検討対象)。
