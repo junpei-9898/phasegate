@@ -2,46 +2,24 @@
 
 ## 必読ドキュメント
 
-- **`docs/folder_management_rules.md`** — ドキュメント配置ルール・AIDLCフェーズ順序
-- **`docs/principles/architecture-philosophy.md`** — アーキテクチャ哲学
-- **`docs/principles/testing-rules.md`** — テスト規約
+- `docs/folder_management_rules.md` — ドキュメント配置・AIDLCフェーズ順序の正本
+- `docs/principles/` — 設計・テスト原則の正本
 
-## ハーネス設計
+## ドキュメント作成・配置ルール
 
-- `docs/harness_design/integration_architecture.md` — 統合アーキテクチャ
-- `docs/harness_design/phase_gate_design.md` — フェーズゲート設計
+詳細な配置・成果物・frontmatter・フェーズ順序は `docs/folder_management_rules.md` を正とし、PhaseGate / metadata validator の指示に従う。
 
-## ハーネス検証ツール
+エージェントは、ユーザーが「調査して計画」「実装計画」「対応計画」「TDD計画」「設計して」などを依頼した場合、会話だけで終わらせず、対象 WI の `docs/inception/.../{WI-XXX}/` 配下に適切な計画・設計ファイルを作成または更新する。
 
-| コマンド | 用途 |
-|---------|------|
-| `pnpm harness:status` | ハーネス状態表示 |
-| `pnpm harness:init` | 設定ファイル生成 |
-| `pnpm harness:enable <target>` | ハーネス/レイヤー有効化 |
-| `pnpm harness:disable <target>` | ハーネス/レイヤー無効化 |
-| `pnpm harness:check-phase` | フェーズゲート確認 |
-| `pnpm harness:check-ready` | 実装開始可否判定 |
+- cross-cutting WI は `docs/inception/_cross/{WI-XXX}/`
+- 単一 Unit WI は `docs/inception/{unit}/{WI-XXX}/`
+- WI に紐付かない横断調査は `docs/inception/_shared/`
 
-## バリデーター一覧（L1-L3: 8つ）
+実装・テスト変更の前に、必要な inception 成果物と `docs/product/...` への `@work-item-id WI-XXX` 付き反映が済んでいるか確認する。未反映なら、先にドキュメントを整える。
 
-| バリデーター | 検証内容 |
-|-------------|---------|
-| phase-gate | 設計→実装の順序強制（フェーズゲート） |
-| architecture | フォルダ構造・命名規約の検証 |
-| dependency | レイヤー依存方向・循環依存の検出 |
-| test-quality | AAA・actual命名・単一Act・ドメインモック禁止 |
-| security | シークレット・SQLインジェクション・ループ内await |
-| performance | N+1クエリ検出・バンドルサイズ制限 |
-| consistency | 設計-実装整合性・API契約検証 |
-| metadata | @unit/@layer 必須コメントチェック |
+## ハーネス検証
 
-## L4 Scheduled 検出器（3つ）
-
-| 検出器 | 検出内容 |
-|--------|---------|
-| drift-detector | ドメインモデル設計書と実装コードの乖離検出 |
-| lesson-collector | `[Agent-Lesson]` コメントの収集・カテゴリ分類 |
-| dead-code-detector | 未使用export・未参照ファイルの検出 |
+詳細なコマンド、バリデーター、L4 検出器は README / docs / CLI help を正とする。実装前後は必要に応じて `pnpm harness:check-ready` や該当レイヤーの検証を実行する。
 
 ## エラー発生時の対処
 
