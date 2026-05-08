@@ -9,6 +9,8 @@ reporter: nakataj-mti
 related: [WI-085, WI-090]
 ---
 
+> **進捗状況 (2026-05-08)**: 5 finding のうち #1 / #3 / #5 immediate を v0.127.0 で完了 (本 description の `## 進捗ログ` 参照)。残 #2 (severity 集計) / #4 (paths threading) / #5 advanced (`pointers:` block 仕様) は別 WI 起票予定のため、本 WI の `status` は `drafted` のまま据え置き。3 件分割完了後に本 WI を `implemented` (もしくは split-closed として close) する判断を下す。
+
 # WI-091: phasegate v0.124 — `layers.L4.enabled` 無視 / `--help` がサブコマンドで解釈されない / `paths` 設定が L2-001 に伝播しない / warning-severity でも validate 全体 FAIL になる
 
 > 起票日: 2026-05-08
@@ -264,3 +266,30 @@ ADR を 1 本起票し、(A)〜(D) の採用方針 + (C) の互換戦略を確�
 - `feedback_dogfood_before_release.md`: `paths` config 改修と severity 集計変更は publish 前に dogfood で検証必須。WI-085 の `inceptionDocs` のみ threading が `designDocs` 側で漏れた教訓 — 関連箇所を grep で網羅してから fix する
 - `feedback_verify_existing_before_extending.md`: finding #1 / #3 / #4 すべて grep で根本原因 / 既存実装の有無を確認済（本 description 内に行番号で引用）。実装着手前にも再確認すること
 - `feedback_npm_publish_auth_type_web.md`: publish は `--auth-type=web` 固定
+
+## 進捗ログ
+
+### v0.127.0 完了 — 2026-05-08 (finding #1 / #3 / #5 immediate, 3/5 件)
+
+リスクの低い 3 件を quick-implementor で先行修正:
+
+- **finding #1** (commit `00410a5`): `RunL4ValidatorsUseCase` に L3 と対称な `if (!layerConfig.enabled) return [];` ガードを追加。空配列を返すことで集計層で SKIP 表示。整合性テスト `IT-UC-RunL4-007/008` 追加。
+- **finding #3** (commit `7ff7d85`): `main.ts` に `SUBCOMMAND_HELP` table (13 entry) と `printSubcommandHelp` helper を追加し、`switch` 手前の pre-dispatch で `--help` / `-h` を最優先解釈 → usage + exit 0。13 個の specific usage を登録、未登録は generic fallback。spawn 経由 5 ケースの結合テスト (`subcommand-help.integration.test.ts`) で副作用走行ナシを検証。既存 inline 3 箇所 (line 982 / 1028 / 1112) は dead code として残置。
+- **finding #5 immediate** (commit `0660c36`): `extractConceptNames` (`markdown-design-document-adapter.ts`) に括弧 qualifier (`/[（(][^）)]*[）)]/g`) strip + 空名 filter を追加。半角 / 全角 / 連続パターン対応、`pointers:` block 仕様は別 WI に切り出し。整合性テスト `IT-REPO-DesignDoc-007〜010` 追加。
+
+**dogfood 再現確認**: `/tmp/phasegate-dogfood-wi091` (phasegate@0.126.0) にて 5 件すべて再現確認済。本リリース後 v0.127.0 で 3 件が解消されることを再 dogfood で検証する。
+
+**全 3514 tests** (前回 3503 + 新規 11) グリーン、L1 lint 違反なし、L2 metadata + test-quality 維持。
+
+**残作業 (別 WI 起票予定)**:
+- **finding #2** (severity 集計セマンティクス): `aggregate-validation-results-usecase.ts:67` で `overallPassed = failedValidators === 0` と severity 非考慮の問題。`defaultSeverity: warning` の validator が fail しても overall FAIL になり exit 1。既存 user CI への影響があるため後方互換戦略 (例: `validate.warningExitCode` config flag) を ADR で決定する必要あり。**story-implementor 案件**。
+- **finding #4** (paths.designDocs 完全 threading): `phase-dependency-model/domain/definitions/{full,standard,minimal}-phase-nodes.ts` 3 ファイルと `traceability-model/{domain/services/traceability-chain-builder.ts, infrastructure/gateways/markdown-story-catalog-gateway.ts}` 2 ファイルの hardcoded `docs/product/...` を `{designDocsRoot}/...` placeholder に置換し、`Artifact.resolve(pathRoots)` で `paths.designDocs` 値を展開する作業。WI-085 で `inceptionDocs` 側 threading のみ通った漏れの補完。**story-implementor 案件**。
+- **finding #5 advanced** (`pointers:` block 仕様): 設計文書側で `element → file path` を明示する高度仕様の策定 — ADR で要件確定後に別 WI。本 v0.127.0 の immediate 修正で false-positive の主原因 (qualifier) は解消されたため緊急度は低下。
+
+### dogfood 検証 (post-publish) — 予定
+
+publish 後 `/tmp/phasegate-dogfood-wi091` で `npx phasegate@0.127.0` を install し、以下 3 ケースを再検証:
+
+1. `layers.L4.enabled: false` + `validate --layer L4` → L4-001/002/003 が `[SKIP]` 表示 (前回は L4-001/002 が `[PASS]` で実行されていた)
+2. `update-skills --help` / `phasegate:detect-drift --help` / `validate --help` → 副作用走行せず usage + exit 0
+3. `## CommonIdInfo（エンティティ・新規）` を含む `domain_model.md` で drift-detect 実行 → element 名が `CommonIdInfo` に normalize される

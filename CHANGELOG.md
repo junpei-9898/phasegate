@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.127.0] - 2026-05-08
+
+### Fixed
+
+- **WI-091 — `layers.L4.enabled: false` 無視 / `--help` がサブコマンドで no-op / drift-detect が括弧 qualifier で破綻する 3 件を解消 (GitHub Issue #4)** — 外部レポーター nakataj-mti が pnpm monorepo 環境 (defense `standard` / architecture `clean`) で報告した 5 件の bug+DX gap (`L4.enabled` 無視 / warning でも overall FAIL / `--help` 副作用走行 / `paths` 設定が L2-001 に未配線 / drift element の括弧 qualifier 破綻) のうち、リスクの低い 3 件 (#1, #3, #5 immediate) を本リリースで先行修正。残る #2 (severity 集計セマンティクス) と #4 (paths threading 完成) は後続 WI に切り出す方針 (本 description の `スコープ外` 参照)。
+  - **finding #1 — L4 enabled gate 追加 (`run-l4-validators-usecase.ts`)**: L3 (`run-l3-validators-usecase.ts:74-78`) と対称な `if (!layerConfig.enabled) return [];` ガードを `getLayerConfig` 直後に追加。`layers.L4.enabled: false` 設定で drift / consistency / dead-code service が呼ばれず、空配列を返すことで集計層で SKIP として表示される。dogfood 再現済 (`/tmp/phasegate-dogfood-wi091`, phasegate@0.126.0)。整合性テスト 2 ケース (`IT-UC-RunL4-007/008`) 追加。
+  - **finding #3 — `--help` / `-h` を全 subcommand に pre-dispatch で集約 (`main.ts`)**: 51 個の subcommand のうち 3 個のみが inline `--help` を持っており、残り ~48 個は silent ignore で `update-skills --help` → 8 skills 再 deploy / `phasegate:detect-drift --help` → drift 実 run / `validate --help` → phase gate 実走 という副作用走行を起こしていた。`main()` 内に `SUBCOMMAND_HELP` table (13 entry) と `printSubcommandHelp` helper を追加し、`switch(command)` の手前で `hasFlag(args, "--help") || hasFlag(args, "-h")` を最優先で解釈 → usage 出力 + exit 0。table 未登録の subcommand は `Usage: phasegate <cmd> [options]\n(use 'phasegate --help' for the full command reference)` の generic fallback で exit 0。dogfood 再現済 3 ケースが本 fix で停止することを spawn 経由 5 ケース (副作用ナシ確認込み) で検証。
+  - **finding #5 immediate — drift-detect の design heading から括弧 qualifier を normalize (`markdown-design-document-adapter.ts`)**: `extractConceptNames` が markdown heading から `（〜）` / `(〜)` qualifier (例: `（エンティティ・新規）`, `(legacy)`) を strip しないため code 側 class 名と exact match できず false-positive drift を出していた問題を解消。半角・全角括弧両対応、global flag で連続 / 複数 qualifier (`Foo（A）（B）` → `Foo`) も処理、strip 後 0 文字になる病的 heading は concepts に含めない。source code 側 (`biome-ast-source-code-analyzer-adapter.ts`) は AST node name から識別子のみ取得 (括弧含まず) のため design 側 normalize で十分。整合性テスト 4 ケース (`IT-REPO-DesignDoc-007〜010`) 追加。`pointers:` block 仕様による element → file path 明示は別 WI に切り出し。
+  - **既存 inline `--help` 処理は残置**: `main.ts` の 3 箇所 (line 982 / 1028 / 1112) は pre-dispatch で hit する関係で dead code 化するが本 commit では削除せず (テスト互換性確保のため)。clean-up は別 commit で漸進可。
+  - **テスト**: 全 3514 テスト (前回 3510 + 新規 11: finding #1 で 2 + finding #3 で 5 + finding #5 で 4) グリーン。L1 lint 違反なし。
+  - **スコープ外 (別 WI 起票予定)**: finding #2 (warning-severity でも overall FAIL の集計セマンティクス) は ADR レベルの後方互換戦略判断が必要なため story-implementor 案件として分離。finding #4 (`paths.designDocs` を L2-001 へ完全 threading) は WI-085 で `inceptionDocs` 側のみ通った threading 漏れの補完で phase-nodes 3 ファイル + traceability-model 2 ファイルの placeholder 化を伴う story-implementor 案件として分離。
+
 ## [0.126.0] - 2026-05-08
 
 ### Fixed
