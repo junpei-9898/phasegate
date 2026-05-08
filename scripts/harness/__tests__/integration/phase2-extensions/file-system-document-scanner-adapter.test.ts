@@ -1,4 +1,6 @@
 // @layer test
+// @unit phase2-extensions
+// @story H08-01
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -40,6 +42,23 @@ target('IT-P2-005 FileSystemDocumentScannerAdapter', () => {
       const actual = await adapter.scan('**/*.md');
       // Assert
       expect(actual.every((entry) => !entry.includes('node_modules'))).toBe(true);
+    });
+
+    it('excludePatterns に一致するファイルは結果に含まれない', async () => {
+      // Arrange
+      await fs.mkdir(path.join(tmpDir, 'docs/inception/WI-001'), { recursive: true });
+      await fs.mkdir(path.join(tmpDir, 'docs/guide'), { recursive: true });
+      await fs.writeFile(path.join(tmpDir, 'docs/inception/WI-001/plan.md'), '');
+      await fs.writeFile(path.join(tmpDir, 'docs/guide/configuration.md'), '');
+      adapter = new FileSystemDocumentScannerAdapter(tmpDir, {
+        excludePatterns: [/^docs\/inception\//],
+      });
+
+      // Act
+      const actual = await adapter.scan('docs/**/*.md');
+
+      // Assert
+      expect(actual).toEqual(['docs/guide/configuration.md']);
     });
   });
 });

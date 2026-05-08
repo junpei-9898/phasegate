@@ -267,7 +267,7 @@
 |---------|------|---------|
 | UT-VRG-008 | `layer: "L2"` | L2-001〜L2-003の3件のDefinitionをvalidatorId昇順で返す |
 | UT-VRG-009 | `layer: "L3"` | L3-001〜L3-004の4件のDefinitionを返す |
-| UT-VRG-010 | `layer: "L4"` | L4-001〜L4-003の3件のDefinitionを返す |
+| UT-VRG-010 | `layer: "L4"` | L4-001〜L4-005の5件のDefinitionを返す |
 
 #### `select()` テスト
 

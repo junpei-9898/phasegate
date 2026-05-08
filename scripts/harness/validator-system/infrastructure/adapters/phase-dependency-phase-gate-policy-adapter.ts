@@ -12,6 +12,10 @@ export class PhaseDependencyPhaseGatePolicyAdapter implements PhaseGatePolicyPor
     satisfied: boolean;
     violations: readonly HarnessErrorLike[];
   }> {
+    if (context.unitName.trim().length === 0) {
+      return { satisfied: true, violations: [] };
+    }
+
     try {
       // WI-085: paths config を phase-dependency-model に流入させる
       const { createConfigFoundationModule } = await import('../../../config-foundation/composition-root.js');

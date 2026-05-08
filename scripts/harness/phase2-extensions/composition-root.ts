@@ -25,7 +25,13 @@ import { ValidatePointersHandler } from './presentation/handlers/validate-pointe
 
 export function buildPhase2Extensions(projectRoot: string, config?: HarnessConfigV2) {
   const configAdapter = new HarnessConfigFreshnessAdapter(config);
-  const documentScanner = new FileSystemDocumentScannerAdapter(projectRoot);
+  const inceptionDocsRoot = config?.paths?.inceptionDocs.replace(/\\/g, '/').replace(/\/+$/g, '') ?? 'docs/inception';
+  const documentScanner = new FileSystemDocumentScannerAdapter(projectRoot, {
+    excludePatterns: [
+      new RegExp(`^${inceptionDocsRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`),
+      /^docs\/.*\/archive\//,
+    ],
+  });
   const documentAge = new GitLogDocumentAgeAdapter(projectRoot);
   const pointerExtractor = new RegexPointerExtractorAdapter(projectRoot);
   const pointerResolver = new FileSystemPointerResolverAdapter(projectRoot);

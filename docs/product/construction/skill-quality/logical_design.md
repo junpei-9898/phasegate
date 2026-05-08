@@ -1350,7 +1350,7 @@ requiredSections = [
 **実装方針**
 
 - validator-system の Validator ID Registry インターフェースを呼び出す
-- integration_contract.md §9 の確定 ID（L1-001〜L4-003）を静的マップとしてフォールバックで保持する
+- validator-system の確定 ID（L1-001〜L4-005）を静的マップとしてフォールバックで保持する
 - validator-system の正式 Registry が整備されたらアダプター内部実装のみ差し替える
 
 ---

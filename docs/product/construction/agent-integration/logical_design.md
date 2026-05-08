@@ -158,7 +158,7 @@ scripts/harness/__tests__/
         ├── env-file-reentry-guard-state-adapter.test.ts
         ├── harness-config-config-query-adapter.test.ts
         ├── phase-gate-query-adapter.test.ts           # v2.2.0追加
-        └── hook-flow-integration.test.ts
+        └── codex-payload-compatibility.integration.test.ts
 ```
 
 ---

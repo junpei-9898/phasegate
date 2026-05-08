@@ -25,13 +25,13 @@
 | `scripts/harness/__tests__/integration/agent-integration/handle-stop-usecase.test.ts` | HandleStopUseCase | 7 |
 | `scripts/harness/__tests__/integration/agent-integration/env-file-reentry-guard-state-adapter.test.ts` | EnvFileReentryGuardStateAdapter | 10 |
 | `scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts` | HarnessConfigConfigQueryAdapter | 6 |
-| `scripts/harness/__tests__/integration/agent-integration/harness-api-cli-command-registry-adapter.test.ts` | HarnessApiCliCommandRegistryAdapter | 4 |
-| `scripts/harness/__tests__/integration/agent-integration/ts-morph-import-analyzer-adapter.test.ts` | TsMorphImportAnalyzerAdapter | 5 |
-| `scripts/harness/__tests__/integration/agent-integration/child-process-cli-executor-adapter.test.ts` | ChildProcessCliExecutorAdapter | 5 |
-| `scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts` | pre-tool-use-hook.ts | 7 |
-| `scripts/harness/__tests__/integration/agent-integration/hook/post-tool-use-hook.test.ts` | post-tool-use-hook.ts | 7 |
-| `scripts/harness/__tests__/integration/agent-integration/hook/stop-hook.test.ts` | stop-hook.ts | 7 |
-| `scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts` | Hook Flow Integration | 5 |
+| `scripts/harness/__tests__/integration/agent-integration/` | HarnessApiCliCommandRegistryAdapter | 4 |
+| `scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts` | TsMorphImportAnalyzerAdapter | 5 |
+| `scripts/harness/__tests__/integration/agent-integration/` | ChildProcessCliExecutorAdapter | 5 |
+| `scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts` | pre-tool-use-hook.ts | 7 |
+| `scripts/harness/__tests__/integration/agent-integration/handle-post-tool-use-usecase.test.ts` | post-tool-use-hook.ts | 7 |
+| `scripts/harness/__tests__/integration/agent-integration/handle-stop-usecase.test.ts` | stop-hook.ts | 7 |
+| `scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts` | Hook Flow Integration | 5 |
 
 ---
 
@@ -2096,17 +2096,17 @@ pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-s
 # Infrastructure Adapter テストのみ実行
 pnpm vitest run scripts/harness/__tests__/integration/agent-integration/env-file-reentry-guard-state-adapter.test.ts
 pnpm vitest run scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/harness-api-cli-command-registry-adapter.test.ts
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/ts-morph-import-analyzer-adapter.test.ts
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/child-process-cli-executor-adapter.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/
 
 # Presentation Hook テストのみ実行
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook/post-tool-use-hook.test.ts
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook/stop-hook.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-post-tool-use-usecase.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-stop-usecase.test.ts
 
 # Hook Flow 統合テストのみ実行
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts
 
 # @story タグでフィルタ実行（H11-04 のみ）
 pnpm vitest run --reporter=verbose --grep "H11-04" scripts/harness/__tests__/integration/agent-integration
@@ -2129,8 +2129,8 @@ pnpm vitest run --reporter=verbose --grep "H11-04" scripts/harness/__tests__/int
 | `scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts` | HandlePreToolUseUseCase（issue パス対応） | 8 |
 | `scripts/harness/__tests__/integration/agent-integration/phase-gate-query-adapter.test.ts` | PhaseGateQueryAdapter | 6 |
 | `scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts` | HarnessConfigConfigQueryAdapter（issue パス対応） | 3 |
-| `scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts` | pre-tool-use-hook.ts（issue パス対応） | 3 |
-| `scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts` | Hook Flow Integration（issue パス対応） | 3 |
+| `scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts` | pre-tool-use-hook.ts（issue パス対応） | 3 |
+| `scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts` | Hook Flow Integration（issue パス対応） | 3 |
 
 ### 8.1 テストヘルパー・シードデータ（ISSUE-001追加分）
 
@@ -2959,8 +2959,8 @@ pnpm vitest run scripts/harness/__tests__/integration/agent-integration/phase-ga
 pnpm vitest run scripts/harness/__tests__/integration/agent-integration/harness-config-config-query-adapter.test.ts
 
 # Presentation Hook issue パス対応テスト
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook/pre-tool-use-hook.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts
 
 # 統合フロー issue パス対応テスト
-pnpm vitest run scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts
+pnpm vitest run scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts
 ```

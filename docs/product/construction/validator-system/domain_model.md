@@ -138,6 +138,8 @@ L3-004: nyquist
 L4-001: drift-detect
 L4-002: consistency-check
 L4-003: dead-code
+L4-004: doc-freshness
+L4-005: pointer-validation
 ```
 
 ### ValidatorDefinition不変条件
@@ -188,6 +190,8 @@ L4-003: dead-code
 | L4-001 | drift-detect | 設計文書とコード実装の双方向乖離検出 | — |
 | L4-002 | consistency-check | 設計文書間（domain_model.md等）のレイヤー整合性検証 | AdrReferencePort |
 | L4-003 | dead-code | 未使用エクスポート・到達不能コード検出（strictプリセット限定でGC推奨） | — |
+| L4-004 | doc-freshness | 設計ドキュメントの鮮度閾値検証 | phase2-extensions CheckDocFreshnessUseCase |
+| L4-005 | pointer-validation | 設計ドキュメント内ポインタ参照の解決検証 | phase2-extensions ValidateDocPointersUseCase |
 
 ---
 

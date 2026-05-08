@@ -54,7 +54,7 @@
 | 契約 | 消費Unit | 内容 |
 |------|---------|------|
 | TestExecutionSummary Contract | ci-governance | CIゲート統合用テスト結果（pass/fail/coverage）をCiGateResultWriterPort経由で出力 |
-| MigrationMapping Contract | （ドキュメント経由） | `docs/product/construction/regression-suite/v0_v1_test_mapping.md` にv0→v1対応表を永続化 |
+| MigrationMapping Contract | （ドキュメント経由） | `docs/product/construction/regression-suite/domain_model.md` にv0→v1対応表を永続化 |
 
 ---
 
@@ -72,7 +72,7 @@ V0TestMigration は以下の3要素を満たすため、集約ルートとして
 
 **識別子による管理**: `v0TestId`（v0テストファイルの相対パスをラップしたVO）により143件が一意に識別される。人間レビューを経た移行状態の追跡には識別子ベースの管理が不可欠。
 
-**I/O境界の存在**: `docs/product/construction/regression-suite/v0_v1_test_mapping.md` というファイルが永続化境界として機能し、`MigrationPersistencePort` 経由で集約の状態を読み書きする。ライフサイクルが外部ストレージに対して確立されている。
+**I/O境界の存在**: `docs/product/construction/regression-suite/domain_model.md` というファイルが永続化境界として機能し、`MigrationPersistencePort` 経由で集約の状態を読み書きする。ライフサイクルが外部ストレージに対して確立されている。
 
 **biomeModification の状態依存**: `biomeModificationSpec` は `migrationStatus=modified` の場合にのみ存在し、集約ルートが状態に応じた整合性を保証する責務を担う。
 
@@ -155,7 +155,7 @@ unit定義§4では `RegressionTestSuite` を集約ルートと記載してい�
 
 | ポート名 | 責務 | 利用サービス/集約 |
 |---------|------|-----------------|
-| MigrationMappingRepositoryPort | V0TestMigration集約の永続化・`docs/product/construction/regression-suite/v0_v1_test_mapping.md` への読み書き（CRUD） | V0TestMigration集約、MigrationAnalyzer |
+| MigrationMappingRepositoryPort | V0TestMigration集約の永続化・`docs/product/construction/regression-suite/domain_model.md` への読み書き（CRUD） | V0TestMigration集約、MigrationAnalyzer |
 | CiGateResultWriterPort | CIゲート統合用テスト結果出力（pass/fail件数・coverageRate・suiteId）。CI連携フォーマットへのシリアライズ | RegressionRunner |
 
 ---

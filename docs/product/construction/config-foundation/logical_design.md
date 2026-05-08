@@ -812,12 +812,12 @@ export interface FeatureRegistryPort {
 | `FeatureToggleResult` | `{ feature: string; enabled: boolean; configPath: string }` | CLI成功メッセージ用 |
 | `AvailableFeatureItem` | `{ name: string; enabled: boolean }` | `--list` 表示用 |
 
-<!-- @work-item-id WI-092 -->
+<!-- @work-item-id WI-092, WI-033 -->
 ### 4.1.1 ValidatorSystemConfigMapper
 
 **ファイル**: `scripts/harness/config-foundation/application/mappers/validator-system-config-mapper.ts`
 
-`toValidatorSystemConfig(resolvedConfig)` は、config-foundation の解決済み `HarnessConfigV2` から validator-system の composition root に渡す最小 config を生成する。渡す項目は `project.preset` と `layers.L2/L3/L4.enabled` のみに限定し、`validators` 配列は渡さない。これは preset-style の validator 名が validator-system 側の `L4-001` 等の内部ID解決を上書きしないようにするためであり、validator catalog は validator-system の default 解決に委ねる。
+`toValidatorSystemConfig(resolvedConfig)` は、config-foundation の解決済み `HarnessConfigV2` から validator-system の composition root に渡す最小 config を生成する。渡す項目は `project.preset`、`layers.L2/L3/L4.enabled`、`layers.L4.validators`、`validate.failOnWarning` とする。validator-system 側で L4 の preset-style validator 名を内部IDへ正規化するため、`doc-freshness-checker` や `pointer-validator` などのプリセット名でも L4 の個別 enable/disable が反映される。
 
 ### 4.2 LoadResolvedConfigUseCase
 

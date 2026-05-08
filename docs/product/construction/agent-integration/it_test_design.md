@@ -300,7 +300,7 @@ Presentation層のテストは子プロセス（spawnまたはexecFile）経由�
 ## 5. 統合フローテストケース（Hook Flow Integration）
 
 **テスト方針**: EnvFileReentryGuardStateAdapter（実ファイルシステム）とDomainモデルを実体として使用。CliExecutorPortのみモック。
-テストファイル: `scripts/harness/__tests__/integration/agent-integration/hook-flow-integration.test.ts`
+テストファイル: `scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts`
 
 | ケースID | シナリオ | 事前状態 | テスト操作 | 期待結果 |
 |---------|---------|---------|-----------|---------|
@@ -344,10 +344,10 @@ scripts/harness/__tests__/integration/agent-integration/
 │   └── mock-cli-slow.ts
 ├── env-file-reentry-guard-state-adapter.test.ts
 ├── harness-config-config-query-adapter.test.ts
-├── harness-api-cli-command-registry-adapter.test.ts
-├── ts-morph-import-analyzer-adapter.test.ts
-├── child-process-cli-executor-adapter.test.ts
-└── hook-flow-integration.test.ts
+├── handle-pre-tool-use-usecase.test.ts
+├── handle-post-tool-use-usecase.test.ts
+├── handle-stop-usecase.test.ts
+└── codex-payload-compatibility.integration.test.ts
 ```
 
 ### テストメタデータ（testing-rules.md準拠）

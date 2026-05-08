@@ -8,4 +8,5 @@ export interface RunL4ValidatorsInput {
   readonly validatorIds?: readonly string[];
   readonly targetUnits?: readonly string[];
   readonly strictMode?: boolean;
+  readonly forceLayerEnabled?: boolean;
 }

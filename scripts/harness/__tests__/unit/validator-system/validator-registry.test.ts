@@ -1,6 +1,7 @@
 /**
  * @layer test
  * @unit validator-system
+ * @story H08-01
  */
 import { describe, expect, it } from 'vitest';
 import { target, context, createValidatorId, createValidatorDefinition, createValidatorRegistry } from '../../helpers/test-helpers.js';
@@ -10,10 +11,10 @@ target('ValidatorRegistry', () => {
 
   describe('ValidatorDefinitionリストで初期化する', () => {
 
-    it('10件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
+    it('12件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
       // Arrange
-      const ids = ['L2-001','L2-002','L2-003','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003'];
-      const layers = ['L2','L2','L2','L3','L3','L3','L3','L4','L4','L4'] as const;
+      const ids = ['L2-001','L2-002','L2-003','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
+      const layers = ['L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
       const defs = ids.map((id, i) =>
         createValidatorDefinition({ validatorId: createValidatorId(id), layer: layers[i] })
       );
@@ -68,13 +69,13 @@ target('ValidatorRegistry', () => {
 
   describe('getAllDefinitions()で全定義を返す', () => {
 
-    it('10件登録済みのRegistryからgetAllDefinitions()で10件全て返ること (UT-VRG-006/UT-BND-010)', () => {
+    it('12件登録済みのRegistryからgetAllDefinitions()で12件全て返ること (UT-VRG-006/UT-BND-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.getAllDefinitions();
       // Assert
-      expect(actual).toHaveLength(10);
+      expect(actual).toHaveLength(12);
     });
 
     it('getAllDefinitions()の返却配列は外部から変更不能なreadonly配列であること (UT-VRG-007)', () => {
@@ -118,13 +119,13 @@ target('ValidatorRegistry', () => {
       expect(actual).toHaveLength(4);
     });
 
-    it('layer: L4を渡すとL4-001〜L4-003の3件が返ること (UT-VRG-010)', () => {
+    it('layer: L4を渡すとL4-001〜L4-005の5件が返ること (UT-VRG-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.listByLayer('L4');
       // Assert
-      expect(actual).toHaveLength(3);
+      expect(actual).toHaveLength(5);
     });
   });
 

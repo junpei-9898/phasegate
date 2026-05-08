@@ -394,23 +394,23 @@ pnpm test
 adr-foundation のみ実行:
 
 ```bash
-pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/adr-foundation
+pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/adr-foundation
 ```
 
 UseCase 単体ファイル実行:
 
 ```bash
-pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/adr-foundation/application/get-adr-by-ref-use-case.test.ts
+pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/adr-foundation/get-adr-by-ref-use-case.test.ts
 ```
 
 Infrastructure 単体ファイル実行:
 
 ```bash
-pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/adr-foundation/infrastructure/file-system-adr-repository.test.ts
+pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/integration/adr-foundation/file-system-adr-repository.test.ts
 ```
 
 Presentation 単体ファイル実行:
 
 ```bash
-pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/adr-foundation/presentation/adr-validate.test.ts
+pnpm vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/adr-foundation/validate-adr-frontmatter-use-case.test.ts
 ```

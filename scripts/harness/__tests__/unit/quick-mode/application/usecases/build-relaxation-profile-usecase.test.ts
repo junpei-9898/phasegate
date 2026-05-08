@@ -1,4 +1,6 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
 import { describe, expect, it, vi } from 'vitest';
 import { target, context, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { BuildRelaxationProfileUseCase } from '../../../../../quick-mode/application/usecases/build-relaxation-profile-usecase.js';
@@ -9,7 +11,7 @@ const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
   'L2-001', 'L2-002', 'L2-003',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
 
 const buildSut = (overrides?: {

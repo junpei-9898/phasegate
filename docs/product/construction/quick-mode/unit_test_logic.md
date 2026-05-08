@@ -1662,7 +1662,7 @@ target('ValidatorRelaxationService', () => {
   target('build', () => {
     describe('QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する', () => {
       // UT-VRS-001
-      it('デフォルト設定と全ValidatorId（L1-001〜L4-003）が渡された場合にデフォルト緩和プロファイルが生成されること', () => {
+      it('デフォルト設定と全ValidatorId（L1-001〜L4-005）が渡された場合にデフォルト緩和プロファイルが生成されること', () => {
         // Arrange
         const config = createQuickModeConfig(); // relaxedGates: ['L2-001'], maintainedLayers: ['L1']
         // Act

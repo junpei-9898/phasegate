@@ -26,17 +26,17 @@
 | `scripts/harness/__tests__/integration/harness-api/nyquist-validation-impact-analysis-adapter.test.ts` | NyquistValidationImpactAnalysisAdapter | 5 |
 | `scripts/harness/__tests__/integration/harness-api/file-system-artifact-scanner-adapter.test.ts` | FileSystemArtifactScannerAdapter | 5 |
 | `scripts/harness/__tests__/integration/harness-api/harness-config-query-adapter.test.ts` | HarnessConfigQueryAdapter | 4 |
-| `scripts/harness/__tests__/integration/harness-api/check-ready-handler.test.ts` | CheckReadyHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/check-phase-handler.test.ts` | CheckPhaseHandler | 5 |
-| `scripts/harness/__tests__/integration/harness-api/ci-check-handler.test.ts` | CiCheckHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/detect-drift-handler.test.ts` | DetectDriftHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/status-handler.test.ts` | StatusHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/lint-handler.test.ts` | LintHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/complete-check-handler.test.ts` | CompleteCheckHandler | 4 |
-| `scripts/harness/__tests__/integration/harness-api/impact-analysis-handler.test.ts` | ImpactAnalysisHandler | 5 |
-| `scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts` | CommandDispatch統合フロー | 5 |
-| `scripts/harness/__tests__/integration/harness-api/status-derivation-integration.test.ts` | StatusDerivation統合フロー | 4 |
-| `scripts/harness/__tests__/integration/harness-api/shared-kernel-contract.test.ts` | SharedKernel Contract検証 | 3 |
+| `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts` | CheckReadyHandler | 4 |
+| `scripts/harness/__tests__/integration/harness-api/check-phase-cli.integration.test.ts` | CheckPhaseHandler | 5 |
+| `scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts` | CiCheckHandler | 4 |
+| `scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts` | DetectDriftHandler | 4 |
+| `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts` | StatusHandler | 4 |
+| `scripts/harness/__tests__/integration/harness-api/biome-ast-engine-lint-adapter.test.ts` | LintHandler | 4 |
+| `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts` | CompleteCheckHandler | 4 |
+| `scripts/harness/__tests__/integration/harness-api/nyquist-validation-impact-analysis-adapter.test.ts` | ImpactAnalysisHandler | 5 |
+| `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts` | CommandDispatch統合フロー | 5 |
+| `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts` | StatusDerivation統合フロー | 4 |
+| `scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts` | SharedKernel Contract検証 | 3 |
 
 **合計**: 103件
 
@@ -190,7 +190,7 @@ ports.artifactScannerPort.scan.mockResolvedValue({
     { layer: 'L1', present: true, path: 'docs/product/construction/harness-api/domain_model.md' },
     { layer: 'L2', present: true, path: 'docs/product/construction/harness-api/logical_design.md' },
     { layer: 'L3', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
-    { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts' },
+    { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
   ],
   scannedPaths: ['docs/product/construction/harness-api', 'scripts/harness/__tests__'],
 });
@@ -882,7 +882,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
             { layer: 'L1', present: true, path: 'docs/product/construction/harness-api/domain_model.md' },
             { layer: 'L2', present: true, path: 'docs/product/construction/harness-api/logical_design.md' },
             { layer: 'L3', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
-            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts' },
+            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
           ],
           scannedPaths: ['docs/product/construction/harness-api', 'scripts/harness/__tests__/integration/harness-api'],
         });
@@ -918,7 +918,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
             { layer: 'L1', present: true, path: 'docs/product/construction/harness-api/domain_model.md' },
             { layer: 'L2', present: true, path: 'docs/product/construction/harness-api/logical_design.md' },
             { layer: 'L3', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
-            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts' },
+            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
           ],
           scannedPaths: [],
         });
@@ -1016,7 +1016,7 @@ target('DeriveHarnessStatusUseCase.execute', () => {
             { layer: 'L1', present: true, path: 'docs/product/construction/harness-api/domain_model.md' },
             { layer: 'L2', present: true, path: 'docs/product/construction/harness-api/logical_design.md' },
             { layer: 'L3', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
-            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts' },
+            { layer: 'L4', present: true, path: 'scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts' },
           ],
           scannedPaths: [],
         });
@@ -1838,7 +1838,7 @@ DispatchCommandUseCase はテストファイルの先頭で `vi.fn()` により�
 
 ### 5.1 CheckReadyHandler（IT-API-CheckReady-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/check-ready-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -1965,7 +1965,7 @@ target('CheckReadyHandler', () => {
 
 ### 5.2 CheckPhaseHandler（IT-API-CheckPhase-001〜005）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/check-phase-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/check-phase-cli.integration.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2094,7 +2094,7 @@ target('CheckPhaseHandler', () => {
 
 ### 5.3 CiCheckHandler（IT-API-CiCheck-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/ci-check-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2231,7 +2231,7 @@ target('CiCheckHandler', () => {
 
 ### 5.4 DetectDriftHandler（IT-API-DetectDrift-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/detect-drift-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2381,7 +2381,7 @@ target('DetectDriftHandler', () => {
 
 ### 5.5 StatusHandler（IT-API-Status-001〜004）D5ルール含む
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/status-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts`
 
 > **D5ルール**: `phasegate:status` コマンドは `status='fail'` であっても `process.exitCode=0` を設定する。
 > このルールは DecideExitCodeUseCase が適用するが、Handler テストでは UseCase モックの `exitCode=0` として表現し、
@@ -2535,7 +2535,7 @@ target('StatusHandler', () => {
 
 ### 5.6 LintHandler（IT-API-Lint-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/lint-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/biome-ast-engine-lint-adapter.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2667,7 +2667,7 @@ target('LintHandler', () => {
 
 ### 5.7 CompleteCheckHandler（IT-API-CompleteCheck-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/complete-check-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2800,7 +2800,7 @@ target('CompleteCheckHandler', () => {
 
 ### 5.8 ImpactAnalysisHandler（IT-API-ImpactAnalysis-001〜005）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/impact-analysis-handler.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/nyquist-validation-impact-analysis-adapter.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -2948,7 +2948,7 @@ Handler のモックは使用せず、実際のコンポーネント連携を検
 
 ### 6.1 CommandDispatch統合フロー（IT-API-DispatchInteg-001〜005）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -3143,7 +3143,7 @@ target('CommandDispatch 統合フロー', () => {
 
 ### 6.2 StatusDerivation統合フロー（IT-API-StatusInteg-001〜004）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/status-derivation-integration.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts`
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -3304,7 +3304,7 @@ target('StatusDerivation 統合フロー', () => {
 
 ### 6.3 SharedKernel Contract検証（IT-API-SharedKernel-001〜003）
 
-**テストファイル**: `scripts/harness/__tests__/integration/harness-api/shared-kernel-contract.test.ts`
+**テストファイル**: `scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts`
 
 ```typescript
 import { describe, it, expect } from 'vitest';
@@ -3439,22 +3439,22 @@ npx vitest scripts/harness/__tests__/integration/harness-api/
 
 ```bash
 # Handler テストのみ
-npx vitest run scripts/harness/__tests__/integration/harness-api/check-ready-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/check-phase-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/ci-check-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/detect-drift-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/status-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/lint-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/complete-check-handler.test.ts \
-  scripts/harness/__tests__/integration/harness-api/impact-analysis-handler.test.ts
+npx vitest run scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts \
+  scripts/harness/__tests__/integration/harness-api/check-phase-cli.integration.test.ts \
+  scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts \
+  scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts \
+  scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts \
+  scripts/harness/__tests__/integration/harness-api/biome-ast-engine-lint-adapter.test.ts \
+  scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts \
+  scripts/harness/__tests__/integration/harness-api/nyquist-validation-impact-analysis-adapter.test.ts
 
 # Cross-Layer 統合テストのみ
-npx vitest run scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts \
-  scripts/harness/__tests__/integration/harness-api/status-derivation-integration.test.ts \
-  scripts/harness/__tests__/integration/harness-api/shared-kernel-contract.test.ts
+npx vitest run scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts \
+  scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts \
+  scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts
 
 # D5 ルール検証テストのみ（StatusHandler）
-npx vitest run scripts/harness/__tests__/integration/harness-api/status-handler.test.ts \
+npx vitest run scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts \
   --reporter=verbose
 ```
 
@@ -3462,11 +3462,11 @@ npx vitest run scripts/harness/__tests__/integration/harness-api/status-handler.
 
 ```bash
 # IT-API-Status-003 (D5 ルール) のみ実行
-npx vitest run scripts/harness/__tests__/integration/harness-api/status-handler.test.ts \
+npx vitest run scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts \
   -t "D5ルール"
 
 # SharedKernel Contract 検証のみ
-npx vitest run scripts/harness/__tests__/integration/harness-api/shared-kernel-contract.test.ts \
+npx vitest run scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts \
   --reporter=verbose
 ```
 

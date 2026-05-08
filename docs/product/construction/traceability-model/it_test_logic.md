@@ -11,25 +11,25 @@
 
 | ファイルパス | 対象コンポーネント | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/traceability-model/application/validate-implementation-metadata-usecase.test.ts` | `ValidateImplementationMetadataUseCase` | 5 |
-| `scripts/harness/__tests__/traceability-model/application/validate-design-story-annotations-usecase.test.ts` | `ValidateDesignStoryAnnotationsUseCase` | 6 |
-| `scripts/harness/__tests__/traceability-model/application/validate-test-story-metadata-usecase.test.ts` | `ValidateTestStoryMetadataUseCase` | 5 |
-| `scripts/harness/__tests__/traceability-model/application/build-traceability-chain-usecase.test.ts` | `BuildTraceabilityChainUseCase` | 4 |
-| `scripts/harness/__tests__/traceability-model/application/verify-traceability-coverage-usecase.test.ts` | `VerifyTraceabilityCoverageUseCase` | 5 |
-| `scripts/harness/__tests__/traceability-model/application/resolve-legacy-story-id-usecase.test.ts` | `ResolveLegacyStoryIdUseCase` | 4 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/source-metadata-parser.test.ts` | `SourceMetadataParser` | 10 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/markdown-story-annotation-parser.test.ts` | `MarkdownStoryAnnotationParser` | 7 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/frontmatter-flag-parser.test.ts` | `FrontmatterFlagParser` | 5 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/story-catalog-parser.test.ts` | `StoryCatalogParser` | 6 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/markdown-story-catalog-gateway.test.ts` | `MarkdownStoryCatalogGateway` | 6 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/markdown-unit-definition-gateway.test.ts` | `MarkdownUnitDefinitionGateway` | 6 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/file-system-metadata-reader.test.ts` | `FileSystemMetadataReader` | 6 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/markdown-design-document-gateway.test.ts` | `MarkdownDesignDocumentGateway` | 7 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/file-system-inception-plan-gateway.test.ts` | `FileSystemInceptionPlanGateway` | 5 |
-| `scripts/harness/__tests__/traceability-model/infrastructure/legacy-metadata-validator-adapter.test.ts` | `LegacyMetadataValidatorAdapter` | 5 |
-| `scripts/harness/__tests__/traceability-model/integration/shared-kernel-story-id.integration.test.ts` | shared-kernel `StoryId` export | 3 |
-| `scripts/harness/__tests__/traceability-model/integration/metadata-validator-adapter.integration.test.ts` | legacy adapter 連携 | 4 |
-| `scripts/harness/__tests__/traceability-model/integration/traceability-chain.integration.test.ts` | 逆引きチェーン end-to-end | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/validate-implementation-metadata-usecase.test.ts` | `ValidateImplementationMetadataUseCase` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/application/validate-design-story-annotations-usecase.test.ts` | `ValidateDesignStoryAnnotationsUseCase` | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/application/validate-test-story-metadata-usecase.test.ts` | `ValidateTestStoryMetadataUseCase` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/application/build-traceability-chain-usecase.test.ts` | `BuildTraceabilityChainUseCase` | 4 |
+| `scripts/harness/__tests__/unit/traceability-model/application/verify-traceability-coverage-usecase.test.ts` | `VerifyTraceabilityCoverageUseCase` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/application/resolve-legacy-story-id-usecase.test.ts` | `ResolveLegacyStoryIdUseCase` | 4 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/source-metadata-parser.test.ts` | `SourceMetadataParser` | 10 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/markdown-story-annotation-parser.test.ts` | `MarkdownStoryAnnotationParser` | 7 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/frontmatter-flag-parser.test.ts` | `FrontmatterFlagParser` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/story-catalog-parser.test.ts` | `StoryCatalogParser` | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/markdown-story-catalog-gateway.test.ts` | `MarkdownStoryCatalogGateway` | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/markdown-unit-definition-gateway.test.ts` | `MarkdownUnitDefinitionGateway` | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/file-system-metadata-reader.test.ts` | `FileSystemMetadataReader` | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/markdown-design-document-gateway.test.ts` | `MarkdownDesignDocumentGateway` | 7 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/file-system-inception-plan-gateway.test.ts` | `FileSystemInceptionPlanGateway` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/infrastructure/legacy-metadata-validator-adapter.test.ts` | `LegacyMetadataValidatorAdapter` | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/integration/shared-kernel-story-id.integration.test.ts` | shared-kernel `StoryId` export | 3 |
+| `scripts/harness/__tests__/unit/traceability-model/integration/metadata-validator-adapter.integration.test.ts` | legacy adapter 連携 | 4 |
+| `scripts/harness/__tests__/unit/traceability-model/traceability-chain.test.ts` | 逆引きチェーン end-to-end | 5 |
 | **合計** |  | **104** |
 
 ## 2. テストヘルパー・シードデータ
@@ -853,13 +853,13 @@ pnpm test
 ```
 
 ```bash
-pnpm test -- scripts/harness/__tests__/traceability-model
+pnpm test -- scripts/harness/__tests__/unit/traceability-model
 ```
 
 ```bash
-pnpm test -- scripts/harness/__tests__/traceability-model/application/validate-implementation-metadata-usecase.test.ts
+pnpm test -- scripts/harness/__tests__/unit/traceability-model/validate-implementation-metadata-usecase.test.ts
 ```
 
 ```bash
-pnpm test -- scripts/harness/__tests__/traceability-model/integration/traceability-chain.integration.test.ts
+pnpm test -- scripts/harness/__tests__/unit/traceability-model/traceability-chain.test.ts
 ```

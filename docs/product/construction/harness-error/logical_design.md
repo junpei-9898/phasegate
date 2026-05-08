@@ -137,8 +137,8 @@ scripts/harness/
 
 ### 1.4 既存実装との接続方針
 
-- 既存 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/core/error-reporter.ts) は Phase 1 では削除せず、`legacy-error-reporter-adapter.ts` で canonical 契約へ吸収する
-- 既存 [`scripts/harness/cli/ci-check.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/cli/ci-check.ts) の validator 実行結果は `NormalizeValidatorErrorsUseCase` 経由で `HarnessError[]` に正規化する
+- 既存 [`scripts/harness/core/error-reporter.ts`](scripts/harness/harness-error/infrastructure/adapters/legacy-error-reporter-adapter.ts) は Phase 1 では削除せず、`legacy-error-reporter-adapter.ts` で canonical 契約へ吸収する
+- 既存 [`scripts/harness/cli/ci-check.ts`](scripts/harness/harness-api/presentation/handlers/ci-check-handler.ts) の validator 実行結果は `NormalizeValidatorErrorsUseCase` 経由で `HarnessError[]` に正規化する
 - `severity: "info"` は canonical 契約外のため、legacy adapter で `warning` にマップした上で以後の層へ渡す
 - エラー定義カタログは Wave 1 ではコードベース静的定義とし、`infrastructure/registry/*.ts` から `ErrorDefinitionRegistry` を構築する
 
@@ -842,7 +842,7 @@ Shared Kernel DTO は Application 層でのみ生成する。Domain 層は内部
 
 ### 5.5 LegacyErrorReporterAdapter
 
-**役割**: 現行 [`scripts/harness/core/error-reporter.ts`](/Users/jumpei/dev/ALIDL_HARNESS/phasegate/scripts/harness/core/error-reporter.ts) の豊富な旧 `HarnessError` を `ValidatorIssueDraft` に変換する。
+**役割**: 現行 [`scripts/harness/core/error-reporter.ts`](scripts/harness/harness-error/infrastructure/adapters/legacy-error-reporter-adapter.ts) の豊富な旧 `HarnessError` を `ValidatorIssueDraft` に変換する。
 
 **実装方針**
 

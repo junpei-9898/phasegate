@@ -133,7 +133,7 @@ scripts/harness/
             ├── agent-independence-suite-definition.ts
             └── v0-migration-suite-definition.ts
 
-scripts/harness/__tests__/regression/
+scripts/harness/__tests__/integration/regression-suite/
 ├── k-requirements/
 │   ├── k1-validator-regression.test.ts
 │   ├── k2-phase-gate-regression.test.ts
@@ -770,7 +770,7 @@ scripts/harness/__tests__/regression/
 
 **実装方針**
 
-- `docs/product/construction/regression-suite/v0_v1_test_mapping.md` をMarkdownテーブルとして読み書きする
+- `docs/product/construction/regression-suite/domain_model.md` をMarkdownテーブルとして読み書きする
 - V0TestMigration集約の状態（v0TestId・v1TestPath・migrationStatus・biomeModification）をテーブル行として永続化する
 - `save()` は集約1件分の行を追記または上書きする
 - `findAll()` はテーブル全行をパースして V0TestMigration 集約に復元する
@@ -831,11 +831,11 @@ scripts/harness/__tests__/regression/
 
 ## 5. テストスイート構成
 
-通常のPresentation層の代わりに、4つのVitest外部テストスイートファイルが `scripts/harness/__tests__/regression/` 配下に配置される。各スイートはApplication層のユースケースを呼び出し、TestExecutionSummaryをCIゲートへ出力する。
+通常のPresentation層の代わりに、4つのVitest外部テストスイートファイルが `scripts/harness/__tests__/integration/regression-suite/` 配下に配置される。各スイートはApplication層のユースケースを呼び出し、TestExecutionSummaryをCIゲートへ出力する。
 
 ### 5.1 k-requirements（K1-K15回帰テスト）
 
-**配置**: `scripts/harness/__tests__/regression/k-requirements/`
+**配置**: `scripts/harness/__tests__/integration/regression-suite/k-requirements/`
 
 **役割**: Wave 1-2の全6+5 Unitが対象。各K要件に対応する独立したテストファイルを配置する。
 
@@ -862,7 +862,7 @@ scripts/harness/__tests__/regression/
 
 ### 5.2 gng-gate（Go/No-Go Gate品質側3条件）
 
-**配置**: `scripts/harness/__tests__/regression/gng-gate/`
+**配置**: `scripts/harness/__tests__/integration/regression-suite/gng-gate/`
 
 **役割**: Go/No-Go Gate品質側3条件の継続的な回帰保証。
 
@@ -874,7 +874,7 @@ scripts/harness/__tests__/regression/
 
 ### 5.3 agent-independence（エージェント非依存ガード）
 
-**配置**: `scripts/harness/__tests__/regression/agent-independence/`
+**配置**: `scripts/harness/__tests__/integration/regression-suite/agent-independence/`
 
 **役割**: K14/K15 非交渉要件として、coreモジュール（domain/application層）がエージェント固有API（`@anthropic-ai/claude-code`等）を import していないことを継続的に保証する。
 
@@ -886,7 +886,7 @@ scripts/harness/__tests__/regression/
 
 ### 5.4 v0-migration（v0テスト仕様のv1再実装）
 
-**配置**: `scripts/harness/__tests__/regression/v0-migration/`
+**配置**: `scripts/harness/__tests__/integration/regression-suite/v0-migration/`
 
 **役割**: Phase B（H15）で整備。v0テスト仕様143件のv1再実装テストが全件通過することを検証し、カバレッジ90%閾値を適用する。
 
@@ -1031,7 +1031,7 @@ MigrateV0TestsUseCase.execute({ confirmExecute: true })
       （全V0TestMigration集約を生成・状態遷移）
         │
         ├── 各V0TestMigration に対して MigrationMappingRepositoryPort.save(migration)
-        │   → docs/product/construction/regression-suite/v0_v1_test_mapping.md に永続化
+        │   → docs/product/construction/regression-suite/domain_model.md に永続化
         │
         └── migrated/modified のものを toMigrationMapping() で変換
        ↓
@@ -1088,7 +1088,7 @@ regression-suite は他の Unit と異なる特徴を持つ。通常の Unit は
 
 regression-suite の場合:
 - **通常のUnit実装**: `scripts/harness/regression-suite/` 配下に4層で配置（他Unitと同一構造）
-- **テストスイートファイル**: `scripts/harness/__tests__/regression/` 配下にVitest外部テストファイルとして配置（Presentation層代替）
+- **テストスイートファイル**: `scripts/harness/__tests__/integration/regression-suite/` 配下にVitest外部テストファイルとして配置（Presentation層代替）
 
 テストスイートファイルは regression-suite Unit の「公開インターフェース」であると同時に、CIパイプラインが直接実行するVitest workspaceのテストファイルでもある。この二重構造は「テストスイートの仕様を管理する」というドメイン責務と「テストを実際に実行してCIゲートを制御する」というインフラ責務を明確に分離する設計判断に基づく。
 

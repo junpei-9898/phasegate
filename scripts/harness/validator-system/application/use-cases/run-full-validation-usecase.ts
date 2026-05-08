@@ -78,6 +78,7 @@ export class RunFullValidationUseCase {
     if (runL4) {
       l4Results = await this.l4UseCase.execute({
         targetUnits: input.targetUnits,
+        forceLayerEnabled: input.targetLayers?.length === 1 && input.targetLayers.includes('L4'),
       });
     }
 

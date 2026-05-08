@@ -182,11 +182,11 @@
 
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
-| IT-REPO-Registry-001 | getAllValidatorIdsがintegration_contract.md §9の全ID（L1-001〜L4-003）を返すこと | なし | 静的定義 | 返却配列が `['L1-001','L1-002','L1-003','L1-004','L1-005','L1-006','L1-007','L1-008','L2-001','L2-002','L2-003','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003']` の全18件を含む（順序を問わず） |
+| IT-REPO-Registry-001 | getAllValidatorIdsが全ID（L1-001〜L4-005）を返すこと | なし | 静的定義 | 返却配列が `['L1-001','L1-002','L1-003','L1-004','L1-005','L1-006','L1-007','L1-008','L2-001','L2-002','L2-003','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005']` の全20件を含む（順序を問わず） |
 | IT-REPO-Registry-002 | L1 IDが8件（L1-001〜L1-008）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L1')).length === 8` |
 | IT-REPO-Registry-003 | L2 IDが3件（L2-001〜L2-003）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L2')).length === 3` |
 | IT-REPO-Registry-004 | L3 IDが4件（L3-001〜L3-004）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L3')).length === 4` |
-| IT-REPO-Registry-005 | L4 IDが3件（L4-001〜L4-003）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L4')).length === 3` |
+| IT-REPO-Registry-005 | L4 IDが5件（L4-001〜L4-005）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L4')).length === 5` |
 | IT-REPO-Registry-006 | 返却値がreadonly配列であること | なし | 静的定義 | 返却されたオブジェクトへの要素追加がエラーまたはsilentlyスキップされる |
 
 ---

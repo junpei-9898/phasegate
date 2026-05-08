@@ -9,7 +9,7 @@
 
 | テストファイル | 対象 | 対応ケースID |
 |---|---|---|
-| `scripts/harness/__tests__/config-foundation/application/use-cases/load-resolved-config-use-case.test.ts` | `LoadResolvedConfigUseCase.execute` | IT-CF-001 から IT-CF-008 |
+| `scripts/harness/__tests__/unit/config-foundation/load-resolved-config-use-case.test.ts` | `LoadResolvedConfigUseCase.execute` | IT-CF-001 から IT-CF-008 |
 | `scripts/harness/__tests__/config-foundation/application/use-cases/validate-config-use-case.test.ts` | `ValidateConfigUseCase.execute` | IT-CF-009 から IT-CF-014 |
 | `scripts/harness/__tests__/config-foundation/application/use-cases/enable-feature-use-case.test.ts` | `EnableFeatureUseCase.execute` | IT-CF-015 から IT-CF-022 |
 | `scripts/harness/__tests__/config-foundation/application/use-cases/disable-feature-use-case.test.ts` | `DisableFeatureUseCase.execute` | IT-CF-023 から IT-CF-029 |
@@ -18,7 +18,7 @@
 | `scripts/harness/__tests__/config-foundation/infrastructure/validators/ajv-config-schema-validator.test.ts` | `AjvConfigSchemaValidator.validate` | IT-CF-043 から IT-CF-050 |
 | `scripts/harness/__tests__/config-foundation/infrastructure/registries/static-feature-registry-adapter.test.ts` | `StaticFeatureRegistryAdapter.listAvailable` | IT-CF-051 から IT-CF-053 |
 | `scripts/harness/__tests__/config-foundation/infrastructure/preset-definition-store.test.ts` | `PresetDefinitionStore` の公開取得API | IT-CF-054 から IT-CF-058 |
-| `scripts/harness/__tests__/config-foundation/presentation/cli/enable-feature-command-handler.test.ts` | `EnableFeatureCommandHandler.execute` | IT-CF-059 から IT-CF-066 |
+| `scripts/harness/__tests__/unit/config-foundation/enable-feature-command-handler.test.ts` | `EnableFeatureCommandHandler.execute` | IT-CF-059 から IT-CF-066 |
 | `scripts/harness/__tests__/config-foundation/presentation/cli/disable-feature-command-handler.test.ts` | `DisableFeatureCommandHandler.execute` | IT-CF-067 から IT-CF-072 |
 | `scripts/harness/__tests__/config-foundation/presentation/cli/list-available-features-command-handler.test.ts` | `ListAvailableFeaturesCommandHandler.execute` | IT-CF-073 から IT-CF-076 |
 | `scripts/harness/__tests__/config-foundation/application/facades/load-config.test.ts` | `loadConfig` | IT-CF-077 から IT-CF-079 |
@@ -318,11 +318,11 @@ pnpm vitest scripts/harness/__tests__/config-foundation --run
 ```
 
 ```bash
-pnpm vitest scripts/harness/__tests__/config-foundation/application/use-cases/load-resolved-config-use-case.test.ts --run
+pnpm vitest scripts/harness/__tests__/unit/config-foundation/load-resolved-config-use-case.test.ts --run
 ```
 
 ```bash
-pnpm vitest scripts/harness/__tests__/config-foundation/presentation/cli/enable-feature-command-handler.test.ts --run
+pnpm vitest scripts/harness/__tests__/unit/config-foundation/enable-feature-command-handler.test.ts --run
 ```
 
 ```bash

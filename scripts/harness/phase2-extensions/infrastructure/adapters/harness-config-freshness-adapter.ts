@@ -9,6 +9,10 @@ import type { FreshnessConfigPort } from '../../domain/ports/freshness-config-po
 import { FreshnessThreshold } from '../../domain/value-objects/freshness-threshold.js';
 
 type Phase2RuleConfig = {
+  paths?: {
+    designDocs?: string;
+    inceptionDocs?: string;
+  };
   phase2Extensions?: {
     freshnessRules?: Array<{
       ruleId: string;
@@ -25,16 +29,22 @@ type Phase2RuleConfig = {
   };
 };
 
+function normalizePathPatternRoot(value: string | undefined): string {
+  const normalized = value?.replace(/\\/g, '/').replace(/\/+$/g, '');
+  return normalized && normalized.length > 0 ? normalized : 'docs/product/construction';
+}
+
 export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
   constructor(private readonly config?: HarnessConfigV2 | Phase2RuleConfig) {}
 
   async loadRules(): Promise<DocFreshnessRule[]> {
     const configRules = this.config && 'phase2Extensions' in this.config ? this.config.phase2Extensions?.freshnessRules : undefined;
     if (!configRules || configRules.length === 0) {
+      const designDocsRoot = normalizePathPatternRoot(this.config?.paths?.designDocs);
       return [
         DocFreshnessRule.create({
           ruleId: 'default-doc-freshness',
-          documentPattern: 'docs/**/*.md',
+          documentPattern: `${designDocsRoot}/**/*.md`,
           threshold: FreshnessThreshold.create({ warnThresholdDays: 30, errorThresholdDays: 90 }),
           enabled: true,
         }),
@@ -57,10 +67,11 @@ export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
   async loadPointerRules(): Promise<PointerRule[]> {
     const configRules = this.config && 'phase2Extensions' in this.config ? this.config.phase2Extensions?.pointerRules : undefined;
     if (!configRules || configRules.length === 0) {
+      const designDocsRoot = normalizePathPatternRoot(this.config?.paths?.designDocs);
       return [
         PointerRule.create({
           ruleId: 'default-pointer-rule',
-          documentPattern: 'docs/**/*.md',
+          documentPattern: `${designDocsRoot}/**/*.md`,
           failOnBroken: true,
         }),
       ];

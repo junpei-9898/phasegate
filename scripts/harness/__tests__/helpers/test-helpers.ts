@@ -1,4 +1,6 @@
 // @layer test
+// @unit validator-system
+// @story H08-01
 import { describe } from 'vitest';
 
 /**
@@ -91,6 +93,8 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]): Validator
     createValidatorDefinition({ validatorId: createValidatorId('L4-001'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-002'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-003'), layer: 'L4' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L4-004'), layer: 'L4' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L4-005'), layer: 'L4' }),
   ];
   return new ValidatorRegistry(definitions);
 };

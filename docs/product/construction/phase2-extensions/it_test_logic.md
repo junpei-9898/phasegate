@@ -77,7 +77,7 @@ const freshnessConfigPort = {
   loadRules: vi.fn().mockResolvedValue([createDocFreshnessRule()]),
   loadPointerRules: vi.fn().mockResolvedValue([]),
 };
-const documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/design.md']) };
+const documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/product/construction/phase2-extensions/logical_design.md']) };
 const documentAgePort = { getAge: vi.fn().mockResolvedValue(DocumentAge.create({ ageInDays: 5, source: 'git-log' })) };
 
 const freshnessCheckService = new FreshnessCheckService();
@@ -107,7 +107,7 @@ describe(target(CheckDocFreshnessUseCase), () => {
       loadRules: vi.fn().mockResolvedValue([createDocFreshnessRule()]),
       loadPointerRules: vi.fn().mockResolvedValue([]),
     };
-    documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/design.md']) };
+    documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/product/construction/phase2-extensions/logical_design.md']) };
     documentAgePort = { getAge: vi.fn().mockResolvedValue(DocumentAge.create({ ageInDays: 5, source: 'git-log' })) };
     useCase = new CheckDocFreshnessUseCase(freshnessConfigPort, documentScannerPort, documentAgePort, new FreshnessCheckService());
   });
@@ -235,7 +235,7 @@ describe(target(ValidateDocPointersUseCase), () => {
         PointerRule.create({ ruleId: 'docs-pointers', documentPattern: 'docs/**/*.md', failOnBroken: true }),
       ]),
     };
-    documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/design.md']) };
+    documentScannerPort = { scan: vi.fn().mockResolvedValue(['docs/product/construction/phase2-extensions/logical_design.md']) };
     pointerExtractorPort = { extract: vi.fn().mockResolvedValue([createFilePathPointer()]) };
     pointerResolverPort = { resolve: vi.fn().mockResolvedValue(true) };
     useCase = new ValidateDocPointersUseCase(
@@ -377,7 +377,7 @@ describe(target(GitLogDocumentAgeAdapter), () => {
 
   beforeEach(async () => {
     await fs.mkdir(tmpDir, { recursive: true });
-    testFilePath = path.join(tmpDir, 'docs/design.md');
+    testFilePath = path.join(tmpDir, 'docs/product/construction/phase2-extensions/logical_design.md');
     await fs.mkdir(path.dirname(testFilePath), { recursive: true });
     await fs.writeFile(testFilePath, '# Design');
     execSyncSpy = vi.spyOn(childProcess, 'execSync');
@@ -394,7 +394,7 @@ describe(target(GitLogDocumentAgeAdapter), () => {
       // Arrange
       execSyncSpy.mockReturnValue('2026-03-10 12:00:00 +0900\n');
       // Act
-      const actual = await adapter.getAge('docs/design.md');
+      const actual = await adapter.getAge('docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.source).toBe('git-log');
       expect(actual.ageInDays).toBeGreaterThanOrEqual(9); // 2026-03-20 基準
@@ -404,7 +404,7 @@ describe(target(GitLogDocumentAgeAdapter), () => {
       // Arrange
       execSyncSpy.mockReturnValue('');
       // Act
-      const actual = await adapter.getAge('docs/design.md');
+      const actual = await adapter.getAge('docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.source).toBe('file-mtime');
     });
@@ -413,7 +413,7 @@ describe(target(GitLogDocumentAgeAdapter), () => {
       // Arrange
       execSyncSpy.mockImplementation(() => { throw new Error('not a git repository'); });
       // Act
-      const actual = await adapter.getAge('docs/design.md');
+      const actual = await adapter.getAge('docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.source).toBe('file-mtime');
       expect(actual.ageInDays).toBeGreaterThanOrEqual(0);
@@ -498,11 +498,11 @@ describe(target(RegexPointerExtractorAdapter), () => {
     it('Markdown リンク [text](path) が file-path ポインタとして抽出される', async () => {
       // Arrange
       testFilePath = path.join(tmpDir, 'test.md');
-      await fs.writeFile(testFilePath, '# Title\n\n[設計書](docs/design.md)\n');
+      await fs.writeFile(testFilePath, '# Title\n\n[設計書](docs/product/construction/phase2-extensions/logical_design.md)\n');
       // Act
       const actual = await adapter.extract('test.md');
       // Assert
-      expect(actual.some((p) => p.type === 'file-path' && p.target === 'docs/design.md')).toBe(true);
+      expect(actual.some((p) => p.type === 'file-path' && p.target === 'docs/product/construction/phase2-extensions/logical_design.md')).toBe(true);
     });
 
     it('URL リンク [text](https://...) が url ポインタとして抽出される', async () => {
@@ -518,11 +518,11 @@ describe(target(RegexPointerExtractorAdapter), () => {
     it('docs/ で始まる相対パス参照が file-path ポインタとして抽出される', async () => {
       // Arrange
       testFilePath = path.join(tmpDir, 'test.md');
-      await fs.writeFile(testFilePath, 'docs/design.md を参照してください\n');
+      await fs.writeFile(testFilePath, 'docs/product/construction/phase2-extensions/logical_design.md を参照してください\n');
       // Act
       const actual = await adapter.extract('test.md');
       // Assert
-      expect(actual.some((p) => p.type === 'file-path' && p.target.includes('docs/design.md'))).toBe(true);
+      expect(actual.some((p) => p.type === 'file-path' && p.target.includes('docs/product/construction/phase2-extensions/logical_design.md'))).toBe(true);
     });
 
     it('ポインタ記述のないファイルに対して空配列が返る', async () => {
@@ -560,8 +560,8 @@ describe(target(FileSystemPointerResolverAdapter), () => {
   context('resolve(pointer)', () => {
     it('実在するファイルパスの Pointer に対して true が返る', async () => {
       // Arrange
-      await fs.writeFile(path.join(tmpDir, 'docs/design.md'), '');
-      const pointer = createFilePathPointer({ target: 'docs/design.md' });
+      await fs.writeFile(path.join(tmpDir, 'docs/product/construction/phase2-extensions/logical_design.md'), '');
+      const pointer = createFilePathPointer({ target: 'docs/product/construction/phase2-extensions/logical_design.md' });
       // Act
       const actual = await adapter.resolve(pointer);
       // Assert

@@ -7,7 +7,7 @@
 
 ### 1.1 配置方針
 
-- ルート: `scripts/harness/__tests__/biome-ast-engine/`
+- ルート: `scripts/harness/__tests__/unit/biome-ast-engine/`
 - `application/`, `infrastructure/`, `presentation/`, `fixtures/` を分離する
 - テストファイル名はすべて kebab-case とし、`{component-name}.test.ts` に統一する
 - `target` と `context` は `describe` のエイリアスを使う
@@ -1311,23 +1311,23 @@ npx vitest run --config scripts/harness/__tests__/vitest.config.ts
 ### 6.2 UseCase単位
 
 ```bash
-npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/biome-ast-engine/application/execute-lint-usecase.test.ts
+npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/biome-ast-engine/execute-lint-usecase.test.ts
 ```
 
 ### 6.3 Infrastructure単位
 
 ```bash
-npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/biome-ast-engine/infrastructure/biome-cli-executor-adapter.test.ts
+npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/integration/biome-ast-engine/node-workspace-file-adapter.test.ts
 ```
 
 ### 6.4 Presentation単位
 
 ```bash
-npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/biome-ast-engine/presentation/harness-lint-command-handler.test.ts
+npx vitest run --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/biome-ast-engine/execute-lint-usecase.test.ts
 ```
 
 ### 6.5 開発中のウォッチ実行
 
 ```bash
-npx vitest --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/biome-ast-engine/presentation/lint-cli-presenter.test.ts
+npx vitest --config scripts/harness/__tests__/vitest.config.ts scripts/harness/__tests__/unit/biome-ast-engine/lint-report.test.ts
 ```

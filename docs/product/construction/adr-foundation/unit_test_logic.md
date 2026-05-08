@@ -11,16 +11,16 @@
 
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/adr-foundation/domain/adr.test.ts` | ADR | 37 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-id.test.ts` | AdrId | 12 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-status.test.ts` | AdrStatus | 14 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-frontmatter.test.ts` | AdrFrontmatter | 16 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-body.test.ts` | AdrBody | 10 |
-| `scripts/harness/__tests__/adr-foundation/domain/archgate-entry.test.ts` | ArchgateEntry | 10 |
-| `scripts/harness/__tests__/adr-foundation/domain/archgate-mapping.test.ts` | ArchgateMapping | 12 |
-| `scripts/harness/__tests__/adr-foundation/domain/superseded-by-ref.test.ts` | SupersededByRef | 5 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-file-path.test.ts` | AdrFilePath | 10 |
-| `scripts/harness/__tests__/adr-foundation/domain/adr-validation-service.test.ts` | AdrValidationService | 13 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr.test.ts` | ADR | 37 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-id.test.ts` | AdrId | 12 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-status.test.ts` | AdrStatus | 14 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-frontmatter.test.ts` | AdrFrontmatter | 16 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-body.test.ts` | AdrBody | 10 |
+| `scripts/harness/__tests__/unit/adr-foundation/archgate-entry.test.ts` | ArchgateEntry | 10 |
+| `scripts/harness/__tests__/unit/adr-foundation/archgate-mapping.test.ts` | ArchgateMapping | 12 |
+| `scripts/harness/__tests__/unit/adr-foundation/superseded-by-ref.test.ts` | SupersededByRef | 5 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-file-path.test.ts` | AdrFilePath | 10 |
+| `scripts/harness/__tests__/unit/adr-foundation/adr-validation-service.test.ts` | AdrValidationService | 13 |
 
 ### 共通スイート骨子
 

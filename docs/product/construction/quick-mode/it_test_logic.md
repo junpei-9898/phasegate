@@ -1267,7 +1267,7 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
 
   describe('IDレジストリ検証', () => {
     // IT-REPO-Registry-001
-    it('getAllValidatorIdsがintegration_contract.md §9の全ID（L1-001〜L4-003）を返すこと', () => {
+    it('getAllValidatorIdsが全ID（L1-001〜L4-005）を返すこと', () => {
       // Arrange
       const adapter = new ValidatorSystemValidatorIdRegistryAdapter();
 
@@ -1322,7 +1322,7 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
     });
 
     // IT-REPO-Registry-005
-    it('L4 IDが3件（L4-001〜L4-003）含まれること', () => {
+    it('L4 IDが5件（L4-001〜L4-005）含まれること', () => {
       // Arrange
       const adapter = new ValidatorSystemValidatorIdRegistryAdapter();
 

@@ -1,7 +1,7 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-// @work-item-id WI-092
+// @work-item-id WI-092 / WI-033
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
@@ -70,7 +70,7 @@ function createResolvedConfig(): HarnessConfigV2 {
 target('toValidatorSystemConfig', () => {
   describe('resolved configをvalidator-system用configに変換する場合', () => {
     context('L4が無効でvalidator配列が設定されている場合', () => {
-      it('レイヤーの有効状態だけが渡され、validator配列は渡されないこと', () => {
+      it('L4のvalidator配列と各レイヤーの有効状態が渡されること', () => {
         // Arrange
         const resolvedConfig = createResolvedConfig();
 
@@ -83,7 +83,7 @@ target('toValidatorSystemConfig', () => {
           layers: {
             L2: { enabled: true },
             L3: { enabled: true },
-            L4: { enabled: false },
+            L4: { enabled: false, validators: ['drift-detector'] },
           },
           validate: { failOnWarning: false },
         });
@@ -105,7 +105,7 @@ target('toValidatorSystemConfig', () => {
           layers: {
             L2: { enabled: true },
             L3: { enabled: true },
-            L4: { enabled: false },
+            L4: { enabled: false, validators: ['drift-detector'] },
           },
           validate: { failOnWarning: true },
         });

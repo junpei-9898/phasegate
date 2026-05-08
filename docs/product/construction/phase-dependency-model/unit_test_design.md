@@ -47,7 +47,7 @@
 ## 2. テストファイル構成
 
 ```
-scripts/harness/__tests__/phase-dependency-model/
+scripts/harness/__tests__/unit/phase-dependency-model/
 ├── phase-structure.test.ts              # PhaseStructure集約 + 内包VO検証
 ├── planning-mode.test.ts                # PlanningMode値オブジェクト
 └── phase-customization-policy.test.ts   # PhaseCustomizationPolicy + CustomRule値オブジェクト
@@ -529,7 +529,7 @@ scripts/harness/__tests__/phase-dependency-model/
 | ケースID | target | describe | context | it（期待値） | テストファイル |
 |---------|--------|----------|---------|------------|-------------|
 | UT-PD-150 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'agent-integration', storyId:'H11-05'}) を pathRoots 省略で呼び出した場合 | {unit} が 'agent-integration' に、{storyId} が 'H11-05' に置換され、`{designDocsRoot}`/`{inceptionDocsRoot}` はデフォルト値（`docs/product/construction`/`docs/inception`）で展開された実パスが返される（WI-085: 後方互換） | `phase-structure.test.ts` |
-| UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'}) を pathRoots 省略で呼び出した場合 | docs/inception/phase-dependency-model/H02-01/ 配下の実パスが返される（WI-085: 後方互換、デフォルト inceptionDocsRoot で展開） | `phase-structure.test.ts` |
+| UT-PD-151 | `Artifact.resolve` | scope提供時のArtifactパス解決を検証する | resolve({unitId:'phase-dependency-model', storyId:'H02-01'}) を pathRoots 省略で呼び出した場合 | docs/inception/ 配下の実パスが返される（WI-085: 後方互換、デフォルト inceptionDocsRoot で展開） | `phase-structure.test.ts` |
 | UT-PD-152 | `Artifact.resolve` | scope未提供時のArtifactパス解決を検証する | scope を省略または storyId 未指定で呼び出した場合（pathRoots 省略時はデフォルト値で展開） | scope 由来のプレースホルダ（`{unit}` / `{storyId}`）は未解決のまま、`{designDocsRoot}`/`{inceptionDocsRoot}` はデフォルト値で展開されたパスが返される | `phase-structure.test.ts` |
 | UT-PD-172 | `Artifact.resolve` | カスタム pathRoots での `{designDocsRoot}` 展開を検証する（WI-085） | path=`'{designDocsRoot}/{unit}/domain_model.md'`, scope={unitId:'phase-dependency-model'}, pathRoots={designDocsRoot:'mydocs/product', inceptionDocsRoot:'mydocs/inception'} で呼び出した場合 | `'mydocs/product/phase-dependency-model/domain_model.md'` が返される | `phase-structure.test.ts` |
 | UT-PD-173 | `Artifact.resolve` | カスタム pathRoots での `{inceptionDocsRoot}` 展開を検証する（WI-085） | path=`'{inceptionDocsRoot}/{unit}/{storyId}/logical_design.md'`, scope={unitId:'X', storyId:'H02-01'}, pathRoots={designDocsRoot:'mydocs/product', inceptionDocsRoot:'mydocs/inception'} で呼び出した場合 | `'mydocs/inception/X/H02-01/logical_design.md'` が返される | `phase-structure.test.ts` |

@@ -6,6 +6,7 @@
  * HarnessConfigV2からLayerConfig VOを構築する
  */
 import { LayerConfig } from '../../domain/value-objects/layer-config.js';
+import { ValidatorId } from '../../domain/value-objects/validator-id.js';
 import type { ValidatorConfigPort } from '../../domain/ports/validator-config-port.js';
 
 export interface HarnessConfigLayers {
@@ -39,7 +40,7 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
     const defaultValidators: Record<string, string[]> = {
       L2: ['L2-001', 'L2-002', 'L2-003'],
       L3: ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
-      L4: ['L4-001', 'L4-002', 'L4-003'],
+      L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'],
     };
 
     const thresholds: Record<string, number> = {};
@@ -62,10 +63,18 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
     return LayerConfig.create({
       layer,
       enabled: layerData.enabled !== false,
-      validatorIds: layerData.validators ?? defaultValidators[layer],
+      validatorIds: (layerData.validators ?? defaultValidators[layer]).map((idOrName) => this.normalizeValidatorId(idOrName)),
       thresholds,
       strictOnly: layerData.strictOnly ?? strictOnly,
       preset,
     });
+  }
+
+  private normalizeValidatorId(idOrName: string): string {
+    try {
+      return ValidatorId.create(idOrName).value;
+    } catch {
+      return ValidatorId.fromName(idOrName).value;
+    }
   }
 }

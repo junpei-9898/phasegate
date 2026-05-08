@@ -12,9 +12,23 @@ import { basename, join, relative, sep } from 'node:path';
 
 const HARNESS_ROOT = join(process.cwd(), 'scripts', 'harness');
 
+export interface BiomeAstSourceCodeAnalyzerAdapterOptions {
+  readonly sourceRoot?: string;
+  /** スキャン対象から除外するパスパターン（デフォルト: テストディレクトリを除外） */
+  readonly excludePattern?: RegExp;
+}
+
 export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort {
+  private readonly sourceRoot: string;
+  private readonly excludePattern: RegExp;
+
+  constructor(options: BiomeAstSourceCodeAnalyzerAdapterOptions = {}) {
+    this.sourceRoot = options.sourceRoot ?? HARNESS_ROOT;
+    this.excludePattern = options.excludePattern ?? /__tests__\//;
+  }
+
   async analyzeExports(targetUnits?: readonly string[]): Promise<readonly SourceAnalysisResult[]> {
-    const targetFiles = await collectTargetFiles(targetUnits);
+    const targetFiles = await collectTargetFiles(this.sourceRoot, this.excludePattern, targetUnits);
     if (targetFiles.length === 0) return [];
 
     const program = ts.createProgram(targetFiles, {
@@ -30,7 +44,7 @@ export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort
       const sourceFile = program.getSourceFile(filePath);
       if (!sourceFile) continue;
       results.push({
-        unitName: resolveUnitName(filePath),
+        unitName: resolveUnitName(this.sourceRoot, filePath),
         filePath,
         exports: extractExports(sourceFile),
         imports: extractImports(sourceFile),
@@ -134,26 +148,31 @@ function extractImports(sourceFile: ts.SourceFile): SourceAnalysisResult['import
   return imports;
 }
 
-async function collectTargetFiles(targetUnits?: readonly string[]): Promise<readonly string[]> {
+async function collectTargetFiles(
+  sourceRoot: string,
+  excludePattern: RegExp,
+  targetUnits?: readonly string[],
+): Promise<readonly string[]> {
   const roots = targetUnits && targetUnits.length > 0
-    ? targetUnits.map((unit) => join(HARNESS_ROOT, unit))
-    : [HARNESS_ROOT];
+    ? targetUnits.map((unit) => join(sourceRoot, unit))
+    : [sourceRoot];
 
   const files: string[] = [];
   for (const root of roots) {
-    files.push(...await walkTsFiles(root));
+    files.push(...await walkTsFiles(root, excludePattern));
   }
 
   return files;
 }
 
-async function walkTsFiles(root: string): Promise<string[]> {
+async function walkTsFiles(root: string, excludePattern: RegExp): Promise<string[]> {
   try {
     const entries = await readdir(root, { withFileTypes: true });
     const files = await Promise.all(entries.map(async (entry) => {
       const fullPath = join(root, entry.name);
+      if (excludePattern.test(fullPath)) return [];
       if (entry.isDirectory()) {
-        return walkTsFiles(fullPath);
+        return walkTsFiles(fullPath, excludePattern);
       }
       return fullPath.endsWith('.ts') ? [fullPath] : [];
     }));
@@ -163,8 +182,8 @@ async function walkTsFiles(root: string): Promise<string[]> {
   }
 }
 
-function resolveUnitName(filePath: string): string {
-  const relativePath = relative(HARNESS_ROOT, filePath);
+function resolveUnitName(sourceRoot: string, filePath: string): string {
+  const relativePath = relative(sourceRoot, filePath);
   const [firstSegment] = relativePath.split(sep);
   return firstSegment || basename(filePath);
 }

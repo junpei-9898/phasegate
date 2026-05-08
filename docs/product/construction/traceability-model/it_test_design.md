@@ -48,7 +48,7 @@
 ### 2.1 ディレクトリ配置
 
 ```text
-scripts/harness/__tests__/traceability-model/
+scripts/harness/__tests__/unit/traceability-model/
 ├── application/
 │   ├── validate-implementation-metadata-usecase.test.ts
 │   ├── validate-design-story-annotations-usecase.test.ts
@@ -76,7 +76,7 @@ scripts/harness/__tests__/traceability-model/
 ### 2.2 フィクスチャ配置
 
 ```text
-scripts/harness/__tests__/fixtures/traceability-model/
+scripts/harness/__tests__/fixtures/harness-api/
 ├── docs/
 │   ├── product/
 │   │   ├── user_stories.md                          # 正規ID + 旧US alias付き
@@ -410,7 +410,7 @@ scripts/harness/__tests__/fixtures/traceability-model/
 
 | 種別 | 配置先 | 用途 |
 |------|--------|------|
-| 静的fixture | `scripts/harness/__tests__/fixtures/traceability-model/` | 設計文書、catalog、unit定義の最小構造 |
+| 静的fixture | `scripts/harness/__tests__/fixtures/harness-api/` | 設計文書、catalog、unit定義の最小構造 |
 | 一時ディレクトリ | `fs.mkdtempSync()` + afterEach cleanup | Gateway/AdapterのファイルI/Oテスト |
 | 初回設計文書fixture | frontmatter `initial_creation: true` 付き | DesignDocumentFlags検証 |
 | 累積更新fixture | frontmatter なし | @story-id必須検証 |

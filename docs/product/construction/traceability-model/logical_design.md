@@ -141,7 +141,7 @@ scripts/harness/
 #### テストファイル
 
 ```text
-scripts/harness/__tests__/traceability-model/
+scripts/harness/__tests__/unit/traceability-model/
 ├── domain/
 │   ├── story-id.test.ts
 │   ├── project-relative-path.test.ts
@@ -1060,7 +1060,7 @@ CLI/CI/Hookのプレゼンテーション責務は以下のUnit側アダプタ�
 
 ### 7.4 フィクスチャ方針
 
-- `scripts/harness/__tests__/fixtures/traceability-model/` を新設し、`docs/product/construction/` と `docs/inception/` の最小構造を再現する。
+- `scripts/harness/__tests__/fixtures/harness-api/` を新設し、`docs/product/construction/` と `docs/inception/` の最小構造を再現する。
 - 初回設計文書fixtureと累積更新fixtureを分け、frontmatterあり/なしを両方用意する。
 - legacy alias fixtureでは `旧US` 列を含む `user_stories.md` 断片を保持する。
 

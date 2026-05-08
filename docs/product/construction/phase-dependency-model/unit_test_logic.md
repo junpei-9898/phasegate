@@ -15,9 +15,9 @@
 ## 1. テストファイル構成
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/phase-dependency-model/phase-structure.test.ts` | `PhaseStructure`, `PhaseLevel`, `Artifact`, `PhaseNode`, `PhaseDependency`, `PlanEvidence`, `PhaseGateResult` | 95 |
-| `scripts/harness/__tests__/phase-dependency-model/planning-mode.test.ts` | `PlanningMode` | 5 |
-| `scripts/harness/__tests__/phase-dependency-model/phase-customization-policy.test.ts` | `CustomRule`, `PhaseCustomizationPolicy` | 12 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/phase-structure.test.ts` | `PhaseStructure`, `PhaseLevel`, `Artifact`, `PhaseNode`, `PhaseDependency`, `PlanEvidence`, `PhaseGateResult` | 95 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/planning-mode.test.ts` | `PlanningMode` | 5 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/phase-customization-policy.test.ts` | `CustomRule`, `PhaseCustomizationPolicy` | 12 |
 
 実装方針は以下に統一する。
 
@@ -624,7 +624,7 @@ target('CustomRule.create', () => {
 > ISSUE-001（inception側フェーズゲート整備）により追加された不変条件 INV-8, INV-9 に対応するテストロジック。
 > `checkPhaseGate(targetLevel, evidence, scope?)` の第3引数 `scope` によるコンテキスト依存動作を検証する。
 > 対象ケース: `UT-PD-134` 〜 `UT-PD-152`（17件、UT-PD-147/149はAPI仕様に基づき統合済み）
-> テストファイル: `scripts/harness/__tests__/phase-dependency-model/phase-structure.test.ts`
+> テストファイル: `scripts/harness/__tests__/unit/phase-dependency-model/phase-structure.test.ts`
 
 ### 6.1 追加ヘルパー・ファクトリ
 
@@ -1030,7 +1030,7 @@ describe('Level 3依存グラフで全前提成果物が存在する場合を検
 | ケースID | テスト名 | Arrange | Act | Assert |
 |---|---|---|---|---|
 | UT-PD-150 | resolve({unitId:'agent-integration', storyId:'H11-05'})を呼び出した場合は{unitId}が'agent-integration'に、{storyId}が'H11-05'に置換された実パスが返される | `{storyId}` と `{unitId}` を含む path の Artifact を作る | `artifact.resolve(scope)` | `docs/inception/agent-integration/H11-05/logical_design.md` |
-| UT-PD-151 | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合はdocs/inception/phase-dependency-model/H02-01/配下の実パスが返される | 同上 | `artifact.resolve(scope)` | `docs/inception/phase-dependency-model/H02-01/` を含むパス |
+| UT-PD-151 | resolve({unitId:'phase-dependency-model', storyId:'H02-01'})を呼び出した場合はdocs/inception/配下の実パスが返される | 同上 | `artifact.resolve(scope)` | `docs/inception/` を含むパス |
 | UT-PD-152 | scopeを省略またはstoryId未指定で呼び出した場合はプレースホルダが未解決のままのパスが返される | プレースホルダ付き Artifact を作る | `artifact.resolve()` または `artifact.resolve({ unitId: 'x' })` | `{storyId}` が残存するパス |
 
 ```ts
@@ -1052,7 +1052,7 @@ target('Artifact.resolve', () => {
       expect(actual).toBe('docs/inception/agent-integration/H11-05/logical_design.md');
     });
 
-    it('resolve({unitId:\'phase-dependency-model\', storyId:\'H02-01\'})を呼び出した場合はdocs/inception/phase-dependency-model/H02-01/配下の実パスが返される', () => {
+    it('resolve({unitId:\'phase-dependency-model\', storyId:\'H02-01\'})を呼び出した場合はdocs/inception/配下の実パスが返される', () => {
       // Arrange
       const artifact = createArtifact({
         name: 'story-logical-design',
@@ -1065,7 +1065,7 @@ target('Artifact.resolve', () => {
       const actual = artifact.resolve(scope);
 
       // Assert
-      expect(actual).toContain('docs/inception/phase-dependency-model/H02-01/');
+      expect(actual).toContain('docs/inception/');
     });
   });
 

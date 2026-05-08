@@ -1,6 +1,7 @@
 /**
  * @layer test
  * @unit validator-system
+ * @story H08-01
  */
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -28,13 +29,13 @@ target('ValidatorId', () => {
       expect(actual.value).toBe('L3-003');
     });
 
-    it('L4-003（有効範囲最大値）を渡すとValidatorIdが生成されること (UT-VID-003/UT-BND-002)', () => {
+    it('L4-005（有効範囲最大値）を渡すとValidatorIdが生成されること (UT-VID-003/UT-BND-002)', () => {
       // Arrange
-      const input = 'L4-003';
+      const input = 'L4-005';
       // Act
       const actual = ValidatorId.create(input);
       // Assert
-      expect(actual.value).toBe('L4-003');
+      expect(actual.value).toBe('L4-005');
     });
 
     it('L2-001（有効範囲最小値）を渡すとValidatorIdが生成されること (UT-VID-004/UT-BND-001)', () => {
@@ -121,9 +122,9 @@ target('ValidatorId', () => {
       expect(actual).toThrow(InvalidValidatorIdError);
     });
 
-    it('L4-004（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
+    it('L4-006（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
       // Arrange
-      const input = 'L4-004';
+      const input = 'L4-006';
       // Act
       const actual = () => ValidatorId.create(input);
       // Assert
@@ -179,6 +180,24 @@ target('ValidatorId', () => {
       const actual = sut.getName();
       // Assert
       expect(actual).toBe('drift-detect');
+    });
+
+    it('L4-004のValidatorIdからdoc-freshnessを返すこと', () => {
+      // Arrange
+      const sut = ValidatorId.create('L4-004');
+      // Act
+      const actual = sut.getName();
+      // Assert
+      expect(actual).toBe('doc-freshness');
+    });
+
+    it('L4-005のValidatorIdからpointer-validationを返すこと', () => {
+      // Arrange
+      const sut = ValidatorId.create('L4-005');
+      // Act
+      const actual = sut.getName();
+      // Assert
+      expect(actual).toBe('pointer-validation');
     });
   });
 

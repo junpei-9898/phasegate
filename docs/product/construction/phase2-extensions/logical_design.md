@@ -228,6 +228,8 @@ interface PointerValidationResultDto {
 
 1. `PointerConfigPort.loadRules()` → `PointerRule[]`取得
 2. 各ルールに対して `DocumentScannerPort.scan(rule.documentPattern)` → ファイルパス[]
+   - `pointerRules` / `freshnessRules` 未指定時は `paths.designDocs/**/*.md` をデフォルト対象にする。
+   - デフォルト配線では `paths.inceptionDocs` と `docs/**/archive/` を除外する。これらは計画・履歴文書であり、継続保守対象の設計文書として扱わない。
 3. 各ドキュメントに対して `PointerExtractorPort.extract(path)` → `Pointer[]`
 4. `PointerResolutionService.resolve(pointers)` → `PointerValidationResult[]`
    - `file-path`: `PointerResolverPort.resolve()` で実在確認
@@ -250,6 +252,8 @@ const RELATIVE_PATH_REGEX = /(?:^|\s)((?:docs|scripts)\/[^\s,'")\]]+)/gm;
 const isUrlTarget = (target: string): boolean =>
   target.startsWith('http://') || target.startsWith('https://');
 ```
+
+抽出時は Markdown 相対リンクをドキュメント位置基準のプロジェクト相対パスへ正規化し、`#anchor` / 行番号サフィックス / テンプレート表記 / glob 表記 / 日本語説明文は file-path 検証対象から除外する。
 
 #### Infrastructure Adapter: FileSystemPointerResolverAdapter
 

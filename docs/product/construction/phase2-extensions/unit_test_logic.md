@@ -66,8 +66,8 @@ export const createFilePathPointer = (overrides: Partial<{
 }> = {}): Pointer =>
   Pointer.create({
     type: 'file-path',
-    rawText: '[設計書](docs/design.md)',
-    target: 'docs/design.md',
+    rawText: '[設計書](docs/product/construction/phase2-extensions/logical_design.md)',
+    target: 'docs/product/construction/phase2-extensions/logical_design.md',
     ...overrides,
   });
 
@@ -246,16 +246,16 @@ describe(target(Pointer), () => {
   context('create() [file-path]', () => {
     it('type="file-path" で正常に生成される', () => {
       // Arrange
-      const input = { type: 'file-path' as const, rawText: '[設計](docs/design.md)', target: 'docs/design.md' };
+      const input = { type: 'file-path' as const, rawText: '[設計](docs/product/construction/phase2-extensions/logical_design.md)', target: 'docs/product/construction/phase2-extensions/logical_design.md' };
       // Act
       const actual = Pointer.create(input);
       // Assert
       expect(actual.type).toBe('file-path');
-      expect(actual.target).toBe('docs/design.md');
+      expect(actual.target).toBe('docs/product/construction/phase2-extensions/logical_design.md');
     });
 
     it('rawText が空文字のとき Phase2ExtensionsDomainError をスロー（INV-8）', () => {
-      expect(() => Pointer.create({ type: 'file-path', rawText: '', target: 'docs/design.md' }))
+      expect(() => Pointer.create({ type: 'file-path', rawText: '', target: 'docs/product/construction/phase2-extensions/logical_design.md' }))
         .toThrow(Phase2ExtensionsDomainError);
     });
 
@@ -297,11 +297,11 @@ describe(target(PointerValidationResult), () => {
       // Arrange
       const pointer = createFilePathPointer();
       // Act
-      const actual = PointerValidationResult.resolved(pointer, 'docs/design.md');
+      const actual = PointerValidationResult.resolved(pointer, 'docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.isResolvable).toBe(true);
       expect(actual.errorMessage).toBeNull();
-      expect(actual.resolvedPath).toBe('docs/design.md');
+      expect(actual.resolvedPath).toBe('docs/product/construction/phase2-extensions/logical_design.md');
     });
   });
 
@@ -310,11 +310,11 @@ describe(target(PointerValidationResult), () => {
       // Arrange
       const pointer = createFilePathPointer();
       // Act
-      const actual = PointerValidationResult.broken(pointer, 'File not found: docs/missing.md');
+      const actual = PointerValidationResult.broken(pointer, 'File not found: missing-doc-path');
       // Assert
       expect(actual.isResolvable).toBe(false);
       expect(actual.resolvedPath).toBeNull();
-      expect(actual.errorMessage).toContain('docs/missing.md');
+      expect(actual.errorMessage).toContain('missing-doc-path');
     });
   });
 
@@ -510,7 +510,7 @@ describe(target(FreshnessCheckService), () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 5 });
       // Act
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.level).toBe('ok');
     });
@@ -520,7 +520,7 @@ describe(target(FreshnessCheckService), () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 14 });
       // Act
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.level).toBe('warn');
     });
@@ -528,28 +528,28 @@ describe(target(FreshnessCheckService), () => {
     it('ageInDays=20（warn〜error間）のとき level="warn" を返す', () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 20 });
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       expect(actual.level).toBe('warn');
     });
 
     it('ageInDays=30（errorThreshold境界値）のとき level="error" を返す', () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 30 });
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       expect(actual.level).toBe('error');
     });
 
     it('ageInDays=100（errorThreshold超過）のとき level="error" を返す', () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 100 });
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       expect(actual.level).toBe('error');
     });
 
     it('ageInDays=13（warnThreshold-1: 境界値未満）のとき level="ok" を返す', () => {
       const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 13 });
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       expect(actual.level).toBe('ok');
     });
   });
@@ -569,7 +569,7 @@ describe(target(FreshnessCheckService), () => {
     it('source="file-mtime" のとき ageSource="file-mtime" が含まれる', () => {
       const rule = createDocFreshnessRule();
       const documentAge = createDocumentAge({ source: 'file-mtime' });
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       expect(actual.ageSource).toBe('file-mtime');
     });
   });
@@ -580,7 +580,7 @@ describe(target(FreshnessCheckService), () => {
       const rule = createDocFreshnessRule({ enabled: false, errorThresholdDays: 30 });
       const documentAge = createDocumentAge({ ageInDays: 365 }); // 非常に古い
       // Act
-      const actual = service.check(rule, documentAge, 'docs/design.md');
+      const actual = service.check(rule, documentAge, 'docs/product/construction/phase2-extensions/logical_design.md');
       // Assert
       expect(actual.level).toBe('ok');
     });
@@ -608,7 +608,7 @@ describe(target(PointerResolutionService), () => {
     it('実在するfile-pathポインタに対して isResolvable=true の結果が返る', async () => {
       // Arrange
       resolverPort.resolve.mockResolvedValue(true);
-      const pointers = [createFilePathPointer({ target: 'docs/design.md' })];
+      const pointers = [createFilePathPointer({ target: 'docs/product/construction/phase2-extensions/logical_design.md' })];
       // Act
       const actual = await service.resolve(pointers);
       // Assert
@@ -619,7 +619,7 @@ describe(target(PointerResolutionService), () => {
     it('存在しないfile-pathポインタに対して isResolvable=false の結果が返る', async () => {
       // Arrange
       resolverPort.resolve.mockResolvedValue(false);
-      const pointers = [createFilePathPointer({ target: 'docs/missing.md' })];
+      const pointers = [createFilePathPointer({ target: 'missing-doc-path' })];
       // Act
       const actual = await service.resolve(pointers);
       // Assert
@@ -652,7 +652,7 @@ describe(target(PointerResolutionService), () => {
         .mockResolvedValueOnce(false); // file-path2
       const pointers = [
         createFilePathPointer({ target: 'docs/exists.md' }),
-        createFilePathPointer({ target: 'docs/missing.md' }),
+        createFilePathPointer({ target: 'missing-doc-path' }),
         createUrlPointer(),
       ];
       // Act

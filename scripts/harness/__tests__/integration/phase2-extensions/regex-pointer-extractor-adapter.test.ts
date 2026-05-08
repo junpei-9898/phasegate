@@ -1,4 +1,6 @@
 // @layer test
+// @unit phase2-extensions
+// @story H08-01
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -36,6 +38,62 @@ target('IT-P2-006 RegexPointerExtractorAdapter', () => {
       const actual = await adapter.extract('test.md');
       // Assert
       expect(actual.some((pointer) => pointer.type === 'url' && pointer.target === 'https://github.com/')).toBe(true);
+    });
+
+    it('Markdown の相対リンクとアンカーがプロジェクト相対パスに正規化される', async () => {
+      // Arrange
+      await fs.mkdir(path.join(tmpDir, 'docs/guide'), { recursive: true });
+      await fs.writeFile(path.join(tmpDir, 'docs/guide/configuration.md'), '[CLI](./cli-reference.md#validate)\n');
+
+      // Act
+      const actual = await adapter.extract('docs/guide/configuration.md');
+
+      // Assert
+      expect(actual.some((pointer) => pointer.target === 'docs/guide/cli-reference.md')).toBe(true);
+    });
+
+    it('アンカーのみ・テンプレート・glob は file-path ポインタとして抽出しない', async () => {
+      // Arrange
+      await fs.writeFile(
+        path.join(tmpDir, 'test.md'),
+        [
+          '[section](#known-limitations)',
+          '`scripts/harness/{unit}/*.ts`',
+          'docs/inception/{unit}/...',
+          'scripts/harness/配下の.tsファイル',
+        ].join('\n'),
+      );
+
+      // Act
+      const actual = await adapter.extract('test.md');
+
+      // Assert
+      expect(actual).toHaveLength(0);
+    });
+
+    it('Markdown構文の説明用 placeholder は file-path ポインタとして抽出しない', async () => {
+      // Arrange
+      await fs.writeFile(
+        path.join(tmpDir, 'test.md'),
+        ['Markdown link syntax: [text](path)', 'Sample target: [設計書](sample-design-md)'].join('\n'),
+      );
+
+      // Act
+      const actual = await adapter.extract('test.md');
+
+      // Assert
+      expect(actual).toHaveLength(0);
+    });
+
+    it('絶対パスと行番号サフィックスを正規化して抽出する', async () => {
+      // Arrange
+      await fs.writeFile(path.join(tmpDir, 'test.md'), '[source](/repo/docs/design.md:56)\n');
+
+      // Act
+      const actual = await adapter.extract('test.md');
+
+      // Assert
+      expect(actual.some((pointer) => pointer.target === '/repo/docs/design.md')).toBe(true);
     });
   });
 });

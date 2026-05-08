@@ -123,7 +123,7 @@ scripts/harness/adr-foundation/
 #### テストコード
 
 ```text
-scripts/harness/__tests__/adr-foundation/
+scripts/harness/__tests__/unit/adr-foundation/
 ├── domain/
 │   ├── adr.test.ts
 │   ├── adr-id.test.ts
@@ -1049,7 +1049,7 @@ type SearchArchgateMappingsInput = {
 **想定コマンド**:
 
 ```bash
-pnpm tsx scripts/harness/adr-foundation/presentation/cli/adr-create-template.ts --title "Decision title" --status Proposed
+pnpm tsx scripts/harness/adr-foundation/application/usecases/create-adr-template-use-case.ts --title "Decision title" --status Proposed
 ```
 
 **引数**:

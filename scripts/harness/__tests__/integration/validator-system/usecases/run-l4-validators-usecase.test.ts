@@ -28,7 +28,7 @@ function createL4UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target('RunL4ValidatorsUseCase', () => {
   describe('全L4バリデータの実行', () => {
     context('validatorIdsを省略しstrictMode=falseの場合', () => {
-      it('全L4バリデータ（L4-001〜L4-003）が実行され3件の結果が返る (IT-UC-RunL4-001)', async () => {
+      it('全L4バリデータ（L4-001〜L4-005）が実行され5件の結果が返る (IT-UC-RunL4-001)', async () => {
         // Arrange
         const usecase = createL4UseCase();
         const input = { strictMode: false };
@@ -37,7 +37,7 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(3);
+        expect(actual).toHaveLength(5);
         expect(actual.every((r) => r.passed === true)).toBe(true);
       });
     });
@@ -113,6 +113,8 @@ target('RunL4ValidatorsUseCase', () => {
         const driftDetect = vi.fn().mockResolvedValue([]);
         const consistencyCheck = vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] });
         const deadCodeDetect = vi.fn().mockResolvedValue({ hasDeadCode: () => false, toHarnessErrors: () => [] });
+        const checkDocFreshness = vi.fn().mockResolvedValue({ results: [], summary: { total: 0, ok: 0, warn: 0, error: 0 }, errors: [] });
+        const validateDocPointers = vi.fn().mockResolvedValue({ results: [], summary: { totalDocuments: 0, totalPointers: 0, brokenPointers: 0, skippedUrlPointers: 0 }, passed: true, errors: [] });
         const usecase = new RunL4ValidatorsUseCase({
           validatorRegistry: registry,
           validatorExecutionService: executionService,
@@ -121,6 +123,8 @@ target('RunL4ValidatorsUseCase', () => {
           driftDetectionService: { detect: driftDetect } as never,
           consistencyCheckService: { check: consistencyCheck } as never,
           deadCodeDetectionService: { detect: deadCodeDetect } as never,
+          checkDocFreshnessUseCase: { execute: checkDocFreshness },
+          validateDocPointersUseCase: { execute: validateDocPointers },
         });
         const input = { strictMode: false };
 
@@ -132,6 +136,97 @@ target('RunL4ValidatorsUseCase', () => {
         expect(driftDetect).not.toHaveBeenCalled();
         expect(consistencyCheck).not.toHaveBeenCalled();
         expect(deadCodeDetect).not.toHaveBeenCalled();
+        expect(checkDocFreshness).not.toHaveBeenCalled();
+        expect(validateDocPointers).not.toHaveBeenCalled();
+      });
+
+      it('forceLayerEnabled=trueの場合はL4バリデータが実行されること', async () => {
+        // Arrange
+        const usecase = createL4UseCase({ enabled: false });
+        const input = { strictMode: false, forceLayerEnabled: true };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(actual).toHaveLength(5);
+      });
+    });
+  });
+
+  describe('phase2-extensions由来のL4バリデータ実行', () => {
+    context('doc freshnessで警告が返る場合', () => {
+      it('L4-004がwarning付きの結果として返ること', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-004'] })),
+        };
+        const checkDocFreshness = vi.fn().mockResolvedValue({
+          results: [{ level: 'warn', message: 'docs/a.md is 40 days old' }],
+          summary: { total: 1, ok: 0, warn: 1, error: 0 },
+          errors: [],
+        });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          checkDocFreshnessUseCase: { execute: checkDocFreshness },
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-004'] });
+
+        // Assert
+        expect(checkDocFreshness).toHaveBeenCalledWith({ format: 'json' });
+        expect(actual).toHaveLength(1);
+        expect(actual[0].validatorId).toBe('L4-004');
+        expect(actual[0].passed).toBe(false);
+        expect(actual[0].errors[0].severity).toBe('warning');
+      });
+    });
+
+    context('pointer validationで未解決参照が返る場合', () => {
+      it('L4-005がwarning付きの結果として返ること', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-005'] })),
+        };
+        const validateDocPointers = vi.fn().mockResolvedValue({
+          results: [{
+            documentPath: 'docs/a.md',
+            pointerTarget: 'docs/missing.md',
+            pointerType: 'file-path',
+            isResolvable: false,
+            errorMessage: 'File not found: docs/missing.md',
+          }],
+          summary: { totalDocuments: 1, totalPointers: 1, brokenPointers: 1, skippedUrlPointers: 0 },
+          passed: false,
+          errors: [],
+        });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          validateDocPointersUseCase: { execute: validateDocPointers },
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-005'] });
+
+        // Assert
+        expect(validateDocPointers).toHaveBeenCalledWith({ includeUrlPointers: false, format: 'json' });
+        expect(actual).toHaveLength(1);
+        expect(actual[0].validatorId).toBe('L4-005');
+        expect(actual[0].passed).toBe(false);
+        expect(actual[0].errors[0].severity).toBe('warning');
       });
     });
   });

@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * ValidatorId 値オブジェクト
- * L1-001〜L4-003 のバリデータを識別する不変値オブジェクト
+ * L1-001〜L4-005 のバリデータを識別する不変値オブジェクト
  * Wave 2A で L1-017, L1-018, L2-013 を追加
  */
 
@@ -33,12 +33,19 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   'L4-001': 'drift-detect',
   'L4-002': 'consistency-check',
   'L4-003': 'dead-code',
+  'L4-004': 'doc-freshness',
+  'L4-005': 'pointer-validation',
 };
 
 /** バリデータ名 -> バリデータID の逆引きマップ */
-const NAME_TO_ID_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(VALIDATOR_NAME_MAP).map(([id, name]) => [name, id])
-);
+const NAME_TO_ID_MAP: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(VALIDATOR_NAME_MAP).map(([id, name]) => [name, id])),
+  'drift-detector': 'L4-001',
+  'consistency-checker': 'L4-002',
+  'dead-code-detector': 'L4-003',
+  'doc-freshness-checker': 'L4-004',
+  'pointer-validator': 'L4-005',
+};
 
 /** 有効なValidatorID集合 */
 const VALID_IDS = new Set(Object.keys(VALIDATOR_NAME_MAP));

@@ -76,7 +76,7 @@
 ## 2. テストファイル構成
 
 ```
-scripts/harness/__tests__/biome-ast-engine/
+scripts/harness/__tests__/unit/biome-ast-engine/
 ├── application/
 │   ├── resolve-enabled-rules-usecase.test.ts
 │   ├── analyze-import-graph-usecase.test.ts

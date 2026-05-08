@@ -13,7 +13,8 @@ export type WorkItemStatus =
   | 'drafted'
   | 'reflected'
   | 'implemented'
-  | 'tested';
+  | 'tested'
+  | 'completed';
 
 export interface WorkItemFrontmatter {
   readonly id: string;
@@ -54,4 +55,5 @@ export const WORK_ITEM_STATUSES: ReadonlySet<WorkItemStatus> = new Set([
   'reflected',
   'implemented',
   'tested',
+  'completed',
 ]);

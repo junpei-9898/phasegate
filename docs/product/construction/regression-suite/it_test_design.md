@@ -234,7 +234,7 @@ import { target, context } from '../../helpers/test-helpers';
 
 ### MarkdownMigrationMappingRepositoryAdapter
 
-**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/markdown-migration-mapping-repository-adapter.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts`
 
 #### 正常系
 
@@ -283,7 +283,7 @@ import { target, context } from '../../helpers/test-helpers';
 
 ### StaticSuiteRegistryAdapter
 
-**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/static-suite-registry-adapter.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts`
 
 #### 正常系
 
@@ -300,7 +300,7 @@ import { target, context } from '../../helpers/test-helpers';
 
 ### H14-01: k-requirements実行統合フロー
 
-**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/k-requirements-integration.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts`
 
 #### 統合シナリオ
 
@@ -327,7 +327,7 @@ import { target, context } from '../../helpers/test-helpers';
 
 ### H15-01: v0移行フロー統合
 
-**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/v0-migration-integration.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts`
 
 #### 統合シナリオ
 

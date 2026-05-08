@@ -6,20 +6,20 @@
 ## 1. テストファイル構成
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/traceability-model/domain/story-id.test.ts` | StoryId | 8 |
-| `scripts/harness/__tests__/traceability-model/domain/project-relative-path.test.ts` | ProjectRelativePath | 12 |
-| `scripts/harness/__tests__/traceability-model/domain/metadata-tag.test.ts` | MetadataTag | 10 |
-| `scripts/harness/__tests__/traceability-model/domain/unit-reference.test.ts` | UnitReference | 5 |
-| `scripts/harness/__tests__/traceability-model/domain/layer-reference.test.ts` | LayerReference | 6 |
-| `scripts/harness/__tests__/traceability-model/domain/story-reference.test.ts` | StoryReference | 4 |
-| `scripts/harness/__tests__/traceability-model/domain/story-id-annotation.test.ts` | StoryIdAnnotation | 5 |
-| `scripts/harness/__tests__/traceability-model/domain/design-document-flags.test.ts` | DesignDocumentFlags | 6 |
-| `scripts/harness/__tests__/traceability-model/domain/chain-link.test.ts` | ChainLink | 5 |
-| `scripts/harness/__tests__/traceability-model/domain/traceability-chain.test.ts` | TraceabilityChain | 9 |
-| `scripts/harness/__tests__/traceability-model/domain/metadata-validation-result.test.ts` | MetadataValidationResult | 9 |
-| `scripts/harness/__tests__/traceability-model/domain/metadata-validator.test.ts` | MetadataValidator | 22 |
-| `scripts/harness/__tests__/traceability-model/domain/story-id-alias-resolver.test.ts` | StoryIdAliasResolver | 6 |
-| `scripts/harness/__tests__/traceability-model/domain/traceability-chain-builder.test.ts` | TraceabilityChainBuilder | 8 |
+| `scripts/harness/__tests__/unit/traceability-model/story-id.test.ts` | StoryId | 8 |
+| `scripts/harness/__tests__/unit/traceability-model/project-relative-path.test.ts` | ProjectRelativePath | 12 |
+| `scripts/harness/__tests__/unit/traceability-model/metadata-tag.test.ts` | MetadataTag | 10 |
+| `scripts/harness/__tests__/unit/traceability-model/unit-reference.test.ts` | UnitReference | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/layer-reference.test.ts` | LayerReference | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/story-reference.test.ts` | StoryReference | 4 |
+| `scripts/harness/__tests__/unit/traceability-model/story-id-annotation.test.ts` | StoryIdAnnotation | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/design-document-flags.test.ts` | DesignDocumentFlags | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/chain-link.test.ts` | ChainLink | 5 |
+| `scripts/harness/__tests__/unit/traceability-model/traceability-chain.test.ts` | TraceabilityChain | 9 |
+| `scripts/harness/__tests__/unit/traceability-model/metadata-validation-result.test.ts` | MetadataValidationResult | 9 |
+| `scripts/harness/__tests__/unit/traceability-model/metadata-validator.test.ts` | MetadataValidator | 22 |
+| `scripts/harness/__tests__/unit/traceability-model/story-id-alias-resolver.test.ts` | StoryIdAliasResolver | 6 |
+| `scripts/harness/__tests__/unit/traceability-model/traceability-chain-builder.test.ts` | TraceabilityChainBuilder | 8 |
 
 ## 2. 共通ヘルパー・ファクトリ
 
@@ -1978,7 +1978,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -1997,7 +1997,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -2017,7 +2017,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -2036,7 +2036,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -2059,7 +2059,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -2082,7 +2082,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 
@@ -2100,7 +2100,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags: [],
         });
 
@@ -2122,7 +2122,7 @@ target('MetadataValidator.validateTest', () => {
 
         // Act
         const actual = await sut.validateTest({
-          filePath: createProjectRelativePath('scripts/harness/__tests__/traceability-model/domain/story-id.test.ts'),
+          filePath: createProjectRelativePath('scripts/harness/__tests__/unit/traceability-model/story-id.test.ts'),
           tags,
         });
 

@@ -508,7 +508,7 @@ target('RunL4ValidatorsUseCase', () => {
   describe('全L4バリデータの実行', () => {
     context('validatorIdsを省略しstrictMode=falseの場合', () => {
       // IT-UC-RunL4-001
-      it('全L4バリデータ（L4-001〜L4-003）が実行され3件の結果が返る', async () => {
+      it('全L4バリデータ（L4-001〜L4-005）が実行され5件の結果が返る', async () => {
         // Arrange
         const mockValidatorConfigPort = {
           getLayerConfig: vi.fn().mockReturnValue(createLayerConfig('L4')),

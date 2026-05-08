@@ -64,6 +64,8 @@ const DEFAULT_VALIDATOR_IDS = [
   'drift-detect',
   'consistency-check',
   'dead-code',
+  'doc-freshness',
+  'pointer-validation',
 ] as const;
 
 export const DEFAULT_VALIDATOR_ENTRYPOINTS = new Map<

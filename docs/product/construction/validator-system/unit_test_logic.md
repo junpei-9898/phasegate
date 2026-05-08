@@ -125,7 +125,7 @@ export const createDriftReport = (overrides: Partial<DriftReportProps> = {}) =>
 
 /**
  * ValidatorRegistry ファクトリ
- * デフォルト: 全10件のバリデータ定義で初期化
+ * デフォルト: 全12件のバリデータ定義で初期化
  */
 export const createValidatorRegistry = (defs?: ValidatorDefinition[]) => {
   const definitions = defs ?? [
@@ -139,6 +139,8 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]) => {
     createValidatorDefinition({ validatorId: createValidatorId('L4-001'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-002'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-003'), layer: 'L4' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L4-004'), layer: 'L4' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L4-005'), layer: 'L4' }),
   ];
   return new ValidatorRegistry(definitions);
 };
@@ -147,7 +149,7 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]) => {
 補足:
 - ファクトリ関数はテストファイル内でもインライン定義してよい（重複を避けるためヘルパー追加を推奨）
 - `overrides` を受け取るファクトリは `Partial<...Props>` でスプレッドして上書きする
-- `createValidatorRegistry` で全10件のIDは `VALIDATOR_NAME_MAP` の定義に従う
+- `createValidatorRegistry` で全12件のIDは `VALIDATOR_NAME_MAP` の定義に従う
 
 ---
 
@@ -1567,7 +1569,7 @@ target('ValidatorRegistry', () => {
     });
 
     // UT-VRG-010
-    it('layer: L4を渡すとL4-001〜L4-003の3件が返ること', () => {
+    it('layer: L4を渡すとL4-001〜L4-005の5件が返ること', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
@@ -1879,7 +1881,7 @@ target('ValidatorExecutionService', () => {
     });
 
     // UT-BND-017
-    it('全10件がenabled: falseの設定でexecute()を呼び出すと全件skipped: trueのValidationResultが返ること', () => {
+    it('全12件がenabled: falseの設定でexecute()を呼び出すと全件skipped: trueのValidationResultが返ること', () => {
       // Arrange
       const mockConfigPort = createMockValidatorConfigPort({
         getLayerConfig: vi.fn().mockReturnValue(createLayerConfig({ enabled: false })),

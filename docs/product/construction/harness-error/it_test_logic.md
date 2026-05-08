@@ -6,27 +6,27 @@
 ## 1. テストファイル構成
 | ファイルパス | 対象コンポーネント | ケース数 |
 |---|---|---:|
-| `scripts/harness/harness-error/__tests__/application/usecases/create-harness-error-usecase.test.ts` | CreateHarnessErrorUseCase | 8 |
-| `scripts/harness/harness-error/__tests__/application/usecases/normalize-validator-errors-usecase.test.ts` | NormalizeValidatorErrorsUseCase | 10 |
-| `scripts/harness/harness-error/__tests__/application/usecases/validate-fix-example-usecase.test.ts` | ValidateFixExampleUseCase | 8 |
-| `scripts/harness/harness-error/__tests__/application/usecases/validate-all-fix-examples-usecase.test.ts` | ValidateAllFixExamplesUseCase | 8 |
-| `scripts/harness/harness-error/__tests__/application/usecases/assert-severity-contract-usecase.test.ts` | AssertSeverityContractUseCase | 6 |
-| `scripts/harness/harness-error/__tests__/application/usecases/list-error-definitions-usecase.test.ts` | ListErrorDefinitionsUseCase | 6 |
-| `scripts/harness/harness-error/__tests__/application/mappers/harness-error-contract-mapper.test.ts` | HarnessErrorContractMapper | 4 |
-| `scripts/harness/harness-error/__tests__/infrastructure/adapters/file-system-adr-existence-checker-adapter.test.ts` | FileSystemAdrExistenceCheckerAdapter | 6 |
-| `scripts/harness/harness-error/__tests__/infrastructure/adapters/type-script-snippet-syntax-adapter.test.ts` | TypeScriptSnippetSyntaxAdapter | 6 |
-| `scripts/harness/harness-error/__tests__/infrastructure/adapters/validator-execution-fix-example-validator-adapter.test.ts` | ValidatorExecutionFixExampleValidatorAdapter | 8 |
-| `scripts/harness/harness-error/__tests__/infrastructure/adapters/validator-registry-bridge-adapter.test.ts` | ValidatorRegistryBridgeAdapter | 4 |
-| `scripts/harness/harness-error/__tests__/infrastructure/adapters/legacy-error-reporter-adapter.test.ts` | LegacyErrorReporterAdapter | 8 |
-| `scripts/harness/harness-error/__tests__/infrastructure/registry/build-error-definition-registry.test.ts` | buildErrorDefinitionRegistry | 6 |
-| `scripts/harness/harness-error/__tests__/presentation/handlers/render-harness-errors-handler.test.ts` | RenderHarnessErrorsHandler | 8 |
-| `scripts/harness/harness-error/__tests__/presentation/handlers/validate-fix-example-handler.test.ts` | ValidateFixExampleHandler | 6 |
-| `scripts/harness/harness-error/__tests__/presentation/handlers/list-error-definitions-handler.test.ts` | ListErrorDefinitionsHandler | 5 |
-| `scripts/harness/harness-error/__tests__/presentation/handlers/assert-severity-contract-handler.test.ts` | AssertSeverityContractHandler | 5 |
-| `scripts/harness/harness-error/__tests__/presentation/formatters/human-harness-error-formatter.test.ts` | HumanHarnessErrorFormatter | 4 |
-| `scripts/harness/harness-error/__tests__/presentation/formatters/agent-harness-error-formatter.test.ts` | AgentHarnessErrorFormatter | 4 |
-| `scripts/harness/harness-error/__tests__/presentation/formatters/ci-harness-error-formatter.test.ts` | CiHarnessErrorFormatter | 4 |
-| `scripts/harness/harness-error/__tests__/shared-kernel/harness-error-contract.test.ts` | isHarnessError / HarnessErrorContract / shared-kernel再エクスポート | 12 |
+| `scripts/harness/__tests__/unit/harness-error/create-harness-error-usecase.test.ts` | CreateHarnessErrorUseCase | 8 |
+| `scripts/harness/__tests__/unit/harness-error/normalize-validator-errors-usecase.test.ts` | NormalizeValidatorErrorsUseCase | 10 |
+| `scripts/harness/__tests__/unit/harness-error/validate-fix-example-usecase.test.ts` | ValidateFixExampleUseCase | 8 |
+| `scripts/harness/__tests__/unit/harness-error/validate-all-fix-examples-usecase.test.ts` | ValidateAllFixExamplesUseCase | 8 |
+| `scripts/harness/__tests__/unit/harness-error/assert-severity-contract-usecase.test.ts` | AssertSeverityContractUseCase | 6 |
+| `scripts/harness/__tests__/unit/harness-error/list-error-definitions-usecase.test.ts` | ListErrorDefinitionsUseCase | 6 |
+| `scripts/harness/__tests__/unit/harness-error/application/mappers/harness-error-contract-mapper.test.ts` | HarnessErrorContractMapper | 4 |
+| `scripts/harness/__tests__/integration/harness-error/adapters/file-system-adr-existence-checker-adapter.test.ts` | FileSystemAdrExistenceCheckerAdapter | 6 |
+| `scripts/harness/__tests__/integration/harness-error/adapters/type-script-snippet-syntax-adapter.test.ts` | TypeScriptSnippetSyntaxAdapter | 6 |
+| `scripts/harness/__tests__/integration/harness-error/adapters/validator-execution-fix-example-validator-adapter.test.ts` | ValidatorExecutionFixExampleValidatorAdapter | 8 |
+| `scripts/harness/__tests__/integration/harness-error/adapters/validator-registry-bridge-adapter.test.ts` | ValidatorRegistryBridgeAdapter | 4 |
+| `scripts/harness/__tests__/integration/harness-error/adapters/legacy-error-reporter-adapter.test.ts` | LegacyErrorReporterAdapter | 8 |
+| `scripts/harness/__tests__/integration/harness-error/registry/build-error-definition-registry.test.ts` | buildErrorDefinitionRegistry | 6 |
+| `scripts/harness/__tests__/unit/harness-error/handlers/render-harness-errors-handler.test.ts` | RenderHarnessErrorsHandler | 8 |
+| `scripts/harness/__tests__/unit/harness-error/handlers/validate-fix-example-handler.test.ts` | ValidateFixExampleHandler | 6 |
+| `scripts/harness/__tests__/unit/harness-error/handlers/list-error-definitions-handler.test.ts` | ListErrorDefinitionsHandler | 5 |
+| `scripts/harness/__tests__/unit/harness-error/handlers/assert-severity-contract-handler.test.ts` | AssertSeverityContractHandler | 5 |
+| `scripts/harness/__tests__/unit/harness-error/formatters/human-harness-error-formatter.test.ts` | HumanHarnessErrorFormatter | 4 |
+| `scripts/harness/__tests__/unit/harness-error/formatters/agent-harness-error-formatter.test.ts` | AgentHarnessErrorFormatter | 4 |
+| `scripts/harness/__tests__/unit/harness-error/formatters/ci-harness-error-formatter.test.ts` | CiHarnessErrorFormatter | 4 |
+| `scripts/harness/__tests__/unit/harness-error/harness-error-contract-mapper.test.ts` | isHarnessError / HarnessErrorContract / shared-kernel再エクスポート | 12 |
 
 ## 2. テストヘルパー・シードデータ
 ### 2.1 共通ヘルパー
@@ -2797,17 +2797,17 @@ pnpm test
 ```
 
 ```bash
-pnpm test -- scripts/harness/harness-error/__tests__/application/usecases
+pnpm test -- scripts/harness/__tests__/unit/harness-error
 ```
 
 ```bash
-pnpm test -- scripts/harness/harness-error/__tests__/infrastructure
+pnpm test -- scripts/harness/__tests__/integration/harness-error
 ```
 
 ```bash
-pnpm test -- scripts/harness/harness-error/__tests__/presentation
+pnpm test -- scripts/harness/__tests__/unit/harness-error
 ```
 
 ```bash
-pnpm test -- scripts/harness/harness-error/__tests__/shared-kernel/harness-error-contract.test.ts
+pnpm test -- scripts/harness/__tests__/unit/harness-error/harness-error-contract-mapper.test.ts
 ```

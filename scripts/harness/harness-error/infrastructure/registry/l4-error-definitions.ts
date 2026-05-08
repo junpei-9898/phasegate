@@ -50,4 +50,18 @@ export const L4_ERROR_DEFINITIONS = Object.freeze([
     ownerValidatorId: 'dead-code',
     defaultFixExample: 'const actual = "remove unused export";',
   }),
+  createDefinition({
+    code: 'L4-004',
+    title: '設計ドキュメントの鮮度が閾値を超過した',
+    category: 'consistency',
+    ownerValidatorId: 'doc-freshness',
+    defaultFixExample: 'const actual = "review or refresh stale design document";',
+  }),
+  createDefinition({
+    code: 'L4-005',
+    title: '設計ドキュメント内のポインタ参照が解決できない',
+    category: 'consistency',
+    ownerValidatorId: 'pointer-validation',
+    defaultFixExample: 'const actual = "fix unresolved document pointer";',
+  }),
 ]);

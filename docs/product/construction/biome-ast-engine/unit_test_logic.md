@@ -9,22 +9,22 @@
 
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/rule-name.test.ts` | `RuleName` | 12 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/rule-type.test.ts` | `RuleType` | 8 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/layer-name.test.ts` | `LayerName` | 10 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/file-path.test.ts` | `FilePath` | 14 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/required-input.test.ts` | `RequiredInput` | 6 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/import-edge.test.ts` | `ImportEdge` | 8 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/import-cycle.test.ts` | `ImportCycle` | 6 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/layer-boundary.test.ts` | `LayerBoundary` | 10 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/source-module-snapshot.test.ts` | `SourceModuleSnapshot` | 16 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/rule-definition.test.ts` | `RuleDefinition` | 14 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/rule-violation.test.ts` | `RuleViolation` | 10 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/import-graph.test.ts` | `ImportGraph` | 18 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/value-objects/lint-report.test.ts` | `LintReport` | 10 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/rule-definition-registry.test.ts` | `RuleDefinitionRegistry` | 18 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/import-graph-builder.test.ts` | `ImportGraphBuilder` | 10 |
-| `scripts/harness/__tests__/biome-ast-engine/domain/lint-runner.test.ts` | `LintRunner` | 22 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/rule-name.test.ts` | `RuleName` | 12 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/rule-type.test.ts` | `RuleType` | 8 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/layer-name.test.ts` | `LayerName` | 10 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/file-path.test.ts` | `FilePath` | 14 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/required-input.test.ts` | `RequiredInput` | 6 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/import-edge.test.ts` | `ImportEdge` | 8 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/import-cycle.test.ts` | `ImportCycle` | 6 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/layer-boundary.test.ts` | `LayerBoundary` | 10 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/source-module-snapshot.test.ts` | `SourceModuleSnapshot` | 16 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/rule-definition.test.ts` | `RuleDefinition` | 14 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/rule-violation.test.ts` | `RuleViolation` | 10 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/import-graph.test.ts` | `ImportGraph` | 18 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/value-objects/lint-report.test.ts` | `LintReport` | 10 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/rule-definition-registry.test.ts` | `RuleDefinitionRegistry` | 18 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/import-graph-builder.test.ts` | `ImportGraphBuilder` | 10 |
+| `scripts/harness/__tests__/unit/biome-ast-engine/lint-runner.test.ts` | `LintRunner` | 22 |
 
 ## 2. 共通ヘルパー・ファクトリ
 

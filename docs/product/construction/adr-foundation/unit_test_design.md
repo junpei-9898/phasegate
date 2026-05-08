@@ -43,7 +43,7 @@
 ## 2. テストファイル構成
 
 ```
-scripts/harness/__tests__/adr-foundation/domain/
+scripts/harness/__tests__/unit/adr-foundation/
 ├── adr.test.ts
 ├── adr-id.test.ts
 ├── adr-status.test.ts
@@ -424,7 +424,7 @@ scripts/harness/__tests__/adr-foundation/domain/
 
 | 区分 | パス |
 |------|------|
-| 全テスト | `scripts/harness/__tests__/adr-foundation/domain/*.test.ts` |
+| 全テスト | `scripts/harness/__tests__/unit/adr-foundation/*.test.ts` |
 
 ### 8.4 モック方針
 

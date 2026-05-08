@@ -1110,7 +1110,7 @@ target('BiomeAstImportAnalyzerAdapter', () => {
 
 ### 4.4 MarkdownMigrationMappingRepositoryAdapter
 
-**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/markdown-migration-mapping-repository-adapter.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts`
 
 ```typescript
 import * as os from 'node:os';
@@ -1395,7 +1395,7 @@ target('JsonCiGateResultWriterAdapter', () => {
 
 ### 4.7 StaticSuiteRegistryAdapter
 
-**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/static-suite-registry-adapter.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts`
 
 ```typescript
 import { StaticSuiteRegistryAdapter } from '../../../regression-suite/infrastructure/adapters/static-suite-registry-adapter.js';
@@ -1468,7 +1468,7 @@ target('StaticSuiteRegistryAdapter', () => {
 
 ### 5.1 H14-01: k-requirements実行統合フロー
 
-**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/k-requirements-integration.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts`
 
 ```typescript
 import { RunKRequirementsRegressionUseCase } from '../../../regression-suite/application/usecases/run-k-requirements-regression-usecase.js';
@@ -1616,7 +1616,7 @@ target('agent-independence統合フロー（H14-02）', () => {
 
 ### 5.3 H15-01: v0移行フロー統合
 
-**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/v0-migration-integration.test.ts`
+**テストファイル**: `scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts`
 
 ```typescript
 import { AnalyzeV0MigrationUseCase } from '../../../regression-suite/application/usecases/analyze-v0-migration-usecase.js';
@@ -1811,12 +1811,12 @@ npx vitest run scripts/harness/__tests__/integration/regression-suite/run-agent-
 npx vitest run scripts/harness/__tests__/integration/regression-suite/analyze-v0-migration-usecase.test.ts
 
 # Infrastructure Adapterテストのみ
-npx vitest run scripts/harness/__tests__/integration/regression-suite/markdown-migration-mapping-repository-adapter.test.ts
-npx vitest run scripts/harness/__tests__/integration/regression-suite/static-suite-registry-adapter.test.ts
+npx vitest run scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts
+npx vitest run scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts
 
 # Cross-Layer統合テストのみ
-npx vitest run scripts/harness/__tests__/integration/regression-suite/k-requirements-integration.test.ts
-npx vitest run scripts/harness/__tests__/integration/regression-suite/v0-migration-integration.test.ts
+npx vitest run scripts/harness/__tests__/integration/regression-suite/run-k-requirements-regression-usecase.test.ts
+npx vitest run scripts/harness/__tests__/integration/regression-suite/migrate-v0-tests-usecase.test.ts
 
 # ウォッチモード（開発時）
 npx vitest --watch scripts/harness/__tests__/integration/regression-suite/

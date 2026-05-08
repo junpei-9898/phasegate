@@ -61,7 +61,7 @@ traceability-model は集約・エンティティを持たない。`domain_model
 ## 2. テストファイル構成
 
 ```text
-scripts/harness/__tests__/traceability-model/
+scripts/harness/__tests__/unit/traceability-model/
 └── domain/
     ├── story-id.test.ts
     ├── project-relative-path.test.ts

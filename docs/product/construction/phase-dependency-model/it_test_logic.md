@@ -7,23 +7,23 @@
 
 | テストファイル | target | 対応ケースID |
 |---|---|---|
-| `scripts/harness/__tests__/phase-dependency-model/application/check-phase-gate-usecase.test.ts` | `CheckPhaseGateUseCase.execute` | IT-PD-001〜010 |
-| `scripts/harness/__tests__/phase-dependency-model/application/check-phase-gate-usecase.test.ts` | `EvidenceBundleAssembler.assembleForLevel` | IT-PD-033〜037 |
-| `scripts/harness/__tests__/phase-dependency-model/application/check-phase-gate-usecase.test.ts` | `PhaseGateResultMapper.toDto` | IT-PD-043〜045 |
-| `scripts/harness/__tests__/phase-dependency-model/application/build-phase-dependency-graph-usecase.test.ts` | `BuildPhaseDependencyGraphUseCase.execute` | IT-PD-011〜016 |
-| `scripts/harness/__tests__/phase-dependency-model/application/get-phase-info-usecase.test.ts` | `GetPhaseInfoUseCase.execute` | IT-PD-017〜023 |
-| `scripts/harness/__tests__/phase-dependency-model/application/get-phase-info-usecase.test.ts` | `PhaseInfoResolver.resolve` | IT-PD-038〜042 |
-| `scripts/harness/__tests__/phase-dependency-model/application/validate-customization-policy-usecase.test.ts` | `ValidateCustomizationPolicyUseCase.execute` | IT-PD-024〜028 |
-| `scripts/harness/__tests__/phase-dependency-model/application/record-phase-override-audit-usecase.test.ts` | `RecordPhaseOverrideAuditUseCase.execute` | IT-PD-029〜032 |
-| `scripts/harness/__tests__/phase-dependency-model/infrastructure/file-system-artifact-existence-checker.test.ts` | `FileSystemArtifactExistenceChecker.checkAll` | IT-PD-046〜050 |
-| `scripts/harness/__tests__/phase-dependency-model/infrastructure/markdown-plan-document-reader.test.ts` | `MarkdownPlanDocumentReader.readEvidence` | IT-PD-051〜058 |
-| `scripts/harness/__tests__/phase-dependency-model/infrastructure/harness-config-phase-config-provider.test.ts` | `HarnessConfigPhaseConfigProvider.getPlanningMode` / `getCustomizationPolicy` / `getReportingOutputDir` | IT-PD-059〜064 |
-| `scripts/harness/__tests__/phase-dependency-model/infrastructure/phase-override-audit-logger.test.ts` | `PhaseOverrideAuditLogger.record` | IT-PD-065〜067 |
-| `scripts/harness/__tests__/phase-dependency-model/presentation/check-phase-command-handler.test.ts` | `CheckPhaseCommandHandler.handle` | IT-PD-068〜072 |
-| `scripts/harness/__tests__/phase-dependency-model/presentation/check-phase-command-handler.test.ts` | `PhaseInfoPresenter.present` | IT-PD-082〜084 |
-| `scripts/harness/__tests__/phase-dependency-model/presentation/check-ready-command-handler.test.ts` | `CheckReadyCommandHandler.handle` | IT-PD-073〜077 |
-| `scripts/harness/__tests__/phase-dependency-model/presentation/check-ready-command-handler.test.ts` | `PhaseGateResultPresenter.present` | IT-PD-085〜087 |
-| `scripts/harness/__tests__/phase-dependency-model/presentation/phase-gate-validator-facade.test.ts` | `PhaseGateValidatorFacade.validate` | IT-PD-078〜081 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-usecase.test.ts` | `CheckPhaseGateUseCase.execute` | IT-PD-001〜010 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-usecase.test.ts` | `EvidenceBundleAssembler.assembleForLevel` | IT-PD-033〜037 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-usecase.test.ts` | `PhaseGateResultMapper.toDto` | IT-PD-043〜045 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/build-phase-dependency-graph-usecase.test.ts` | `BuildPhaseDependencyGraphUseCase.execute` | IT-PD-011〜016 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/get-phase-info-usecase.test.ts` | `GetPhaseInfoUseCase.execute` | IT-PD-017〜023 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/get-phase-info-usecase.test.ts` | `PhaseInfoResolver.resolve` | IT-PD-038〜042 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/validate-customization-policy-usecase.test.ts` | `ValidateCustomizationPolicyUseCase.execute` | IT-PD-024〜028 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/record-phase-override-audit-usecase.test.ts` | `RecordPhaseOverrideAuditUseCase.execute` | IT-PD-029〜032 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/file-system-artifact-existence-checker.test.ts` | `FileSystemArtifactExistenceChecker.checkAll` | IT-PD-046〜050 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/markdown-plan-document-reader.test.ts` | `MarkdownPlanDocumentReader.readEvidence` | IT-PD-051〜058 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/harness-config-phase-config-provider.test.ts` | `HarnessConfigPhaseConfigProvider.getPlanningMode` / `getCustomizationPolicy` / `getReportingOutputDir` | IT-PD-059〜064 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/phase-override-audit-logger.test.ts` | `PhaseOverrideAuditLogger.record` | IT-PD-065〜067 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-command-handler.test.ts` | `CheckPhaseCommandHandler.handle` | IT-PD-068〜072 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-command-handler.test.ts` | `PhaseInfoPresenter.present` | IT-PD-082〜084 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-command-handler.test.ts` | `CheckReadyCommandHandler.handle` | IT-PD-073〜077 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-command-handler.test.ts` | `PhaseGateResultPresenter.present` | IT-PD-085〜087 |
+| `scripts/harness/__tests__/unit/phase-dependency-model/phase-gate-validator-facade.test.ts` | `PhaseGateValidatorFacade.validate` | IT-PD-078〜081 |
 
 共通ルールは全ファイルで固定する。
 
@@ -230,7 +230,7 @@ target("EvidenceBundleAssembler.assembleForLevel", () => {
 | ケースID | `context()` と `it()` | Arrange | Act | Assert |
 |---|---|---|---|---|
 | IT-PD-033 | `context("前提ノード全ての証跡を収集する場合")` `it("指定Levelの前提ノード全てに対してartifactStatuses・planEvidencesが収集される")` | Level 3 の前提ノード集合に対して全 artifact / 全 plan を stub 返却する | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `actual.artifactStatuses.size` が前提 artifact 数と一致し、`actual.planEvidences.size` が plan artifact 数と一致する |
-| IT-PD-034 | `context("scope付きでプレースホルダを解決する場合")` `it("scope指定時にArtifactのプレースホルダが解決された上で存在判定される")` | `scope = { unitId, storyId }` を渡し、stub 側で解決済みパスを観測できるようにする | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `artifactExistenceChecker.checkAll` に渡された artifact から `docs/inception/phase-dependency-model/H02-01/...` の解決済みパスが使われる |
+| IT-PD-034 | `context("scope付きでプレースホルダを解決する場合")` `it("scope指定時にArtifactのプレースホルダが解決された上で存在判定される")` | `scope = { unitId, storyId }` を渡し、stub 側で解決済みパスを観測できるようにする | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `artifactExistenceChecker.checkAll` に渡された artifact から `docs/inception/...` の解決済みパスが使われる |
 | IT-PD-035 | `context("planning mode を plan 判定へ渡す場合")` `it("PlanningModeがPhaseConfigProviderPortから取得されPlanEvidence判定に使用される")` | `phaseConfigProvider.getPlanningMode` を nodeKey ごとに返す stub にし、interactive ノードだけ QA 節必須にする | `assembleForLevel({ structure, scope, targetLevel: 3 })` | `phaseConfigProvider.getPlanningMode` の呼び出し回数と nodeKey を検証し、`planEvidences` に mode 反映済み値が入る |
 | IT-PD-036 | `context("成果物存在判定でPortが失敗する場合")` `it("ArtifactExistenceCheckerPort失敗時に例外が伝播される")` | `artifactExistenceChecker.checkAll` を reject させる | `assembleForLevel({ structure, scope, targetLevel: 2 })` | `await expect(...).rejects.toThrow(seedError)` |
 | IT-PD-037 | `context("plan読取でPortが失敗する場合")` `it("PlanDocumentReaderPort失敗時に例外が伝播される")` | `planDocumentReader.readEvidence` を reject させる | `assembleForLevel({ structure, scope, targetLevel: 2 })` | `await expect(...).rejects.toThrow(seedError)` |
@@ -747,28 +747,28 @@ target("PhaseGateResultPresenter.present", () => {
 全件実行:
 
 ```bash
-pnpm test -- scripts/harness/__tests__/phase-dependency-model
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model
 ```
 
 UseCase系のみ実行:
 
 ```bash
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/application
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model
 ```
 
 Adapter系のみ実行:
 
 ```bash
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/infrastructure
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/presentation
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model
 ```
 
 個別ファイル実行:
 
 ```bash
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/application/check-phase-gate-usecase.test.ts
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/infrastructure/markdown-plan-document-reader.test.ts
-pnpm test -- scripts/harness/__tests__/phase-dependency-model/presentation/check-ready-command-handler.test.ts
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-usecase.test.ts
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model/markdown-plan-document-reader.test.ts
+pnpm test -- scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-command-handler.test.ts
 ```
 
 監査ログや一時ディレクトリを使う Adapter テストは、Vitest の `afterEach` で必ずクリーンアップを実行する前提で実装する。

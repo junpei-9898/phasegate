@@ -1,48 +1,15 @@
 /**
  * @layer e2e-test
+ * @unit harness-api
+ * @story H08-01
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
  */
 import { describe, it, expect } from 'vitest';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-
-const ROOT = resolve(process.cwd());
-const MAIN = resolve(ROOT, 'scripts/harness/main.ts');
-const TSX_BIN = resolve(ROOT, 'node_modules/.bin/tsx');
-
-function run(...args: string[]) {
-  return runInCwd(ROOT, ...args);
-}
-
-function runInCwd(cwd: string, ...args: string[]) {
-  const result = spawnSync(TSX_BIN, [MAIN, ...args], {
-    cwd,
-    encoding: 'utf-8',
-    env: { ...process.env, NODE_ENV: 'test' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    timeout: 90_000,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  return {
-    stdout: result.stdout?.trim() ?? '',
-    stderr: result.stderr?.trim() ?? '',
-    exitCode: result.status ?? 2,
-  };
-}
-
-function withTempDir<T>(testFn: (cwd: string) => T): T {
-  const cwd = mkdtempSync(join(tmpdir(), 'phasegate-cli-test-'));
-
-  try {
-    return testFn(cwd);
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
-  }
-}
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { run, runInCwd, withTempDir } from './cli-test-helpers.js';
 
 describe('harness CLI E2E', () => {
   describe('ヘルプ・基本動作', () => {
@@ -196,82 +163,6 @@ describe('harness CLI E2E', () => {
     });
   });
 
-  describe('phase2-extensions コマンド群', () => {
-    // SC-P2-001
-    it('p2:check-freshness が "Unknown command" にならない', () => {
-      const actual = run('p2:check-freshness', '--dry-run');
-
-      expect(actual.stderr).not.toContain('Unknown command: p2:check-freshness');
-    }, 30_000);
-
-    // SC-P2-002
-    it('p2:check-freshness --dry-run が exit 0 で完了する', () => {
-      const actual = run('p2:check-freshness', '--dry-run');
-
-      expect(actual.exitCode).toBe(0);
-    }, 30_000);
-
-    // SC-P2-003
-    it('p2:check-freshness --format json でJSON形式の出力が返る', () => {
-      const actual = run('p2:check-freshness', '--format', 'json', '--dry-run');
-
-      expect([0, 1]).toContain(actual.exitCode);
-      expect(actual.stdout).toMatch(/^\s*[\[{]/);
-    }, 30_000);
-
-    // SC-P2-004
-    it('p2:check-freshness --pattern でパターン指定を受け付ける', () => {
-      const actual = run('p2:check-freshness', '--pattern', 'docs/**/*.md', '--dry-run');
-
-      expect(actual.stderr).not.toContain('Unknown command');
-    }, 30_000);
-
-    // SC-P2-005
-    it('p2:validate-pointers が "Unknown command" にならない', () => {
-      const actual = run('p2:validate-pointers');
-
-      expect(actual.stderr).not.toContain('Unknown command: p2:validate-pointers');
-    });
-
-    // SC-P2-006
-    it('p2:validate-pointers --include-urls を受け付ける', () => {
-      const actual = run('p2:validate-pointers', '--include-urls');
-
-      expect(actual.stderr).not.toContain('Unknown command');
-    });
-
-    // SC-P2-007
-    it('p2:validate-pointers --format json でJSON形式の出力が返る', () => {
-      const actual = run('p2:validate-pointers', '--format', 'json');
-
-      expect([0, 1]).toContain(actual.exitCode);
-      expect(actual.stdout).toMatch(/^\s*[\[{]/);
-    });
-
-    // SC-P2-008
-    it('p2:generate-e2e-template --phase でテンプレートが生成される', () => {
-      const actual = run('p2:generate-e2e-template', '--phase', 'construction');
-
-      expect(actual.stderr).not.toContain('Unknown command: p2:generate-e2e-template');
-      expect(actual.exitCode).toBe(0);
-    });
-
-    // SC-P2-009
-    it('p2:generate-e2e-template --phase なしで exit 2 が返る', () => {
-      const actual = run('p2:generate-e2e-template');
-
-      expect(actual.exitCode).toBe(2);
-    });
-
-    // SC-P2-010
-    it('p2:generate-e2e-template --phase 指定でテンプレート内容が出力される', () => {
-      const actual = run('p2:generate-e2e-template', '--phase', 'test');
-
-      expect(actual.exitCode).toBe(0);
-      expect(actual.stdout.length).toBeGreaterThan(0);
-    });
-  });
-
   describe('validator-system コマンド群', () => {
     it('validate が "Unknown command" にならない', () => {
       const actual = run('validate', '--layer', 'L2');
@@ -406,69 +297,4 @@ describe('harness CLI E2E', () => {
     }, 30_000);
   });
 
-  describe('regression-suite コマンド群', () => {
-    it('regression:run-k-requirements が "K-Requirements" を出力して完了する', () => {
-      const actual = run('regression:run-k-requirements');
-
-      expect([0, 1]).toContain(actual.exitCode);
-      expect(actual.stdout).toContain('K-Requirements');
-    }, 60_000);
-
-    it('regression:run-k-requirements --json でJSON形式の出力が返る', () => {
-      const actual = run('regression:run-k-requirements', '--json');
-
-      expect([0, 1]).toContain(actual.exitCode);
-      const parsed = JSON.parse(actual.stdout);
-      expect(typeof parsed).toBe('object');
-    }, 60_000);
-
-    it('regression:run-gng-gate が exit 0 で完了する（stub実装）', () => {
-      const actual = run('regression:run-gng-gate');
-
-      expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('GnG Gate');
-    });
-
-    it('regression:run-agent-guard が exit 0 で完了する（stub実装）', () => {
-      const actual = run('regression:run-agent-guard');
-
-      expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('Agent Independence');
-    });
-
-    it('regression:run-k14-k15 が "K14/K15" を出力して完了する', () => {
-      const actual = run('regression:run-k14-k15');
-
-      expect([0, 1]).toContain(actual.exitCode);
-      expect(actual.stdout).toContain('K14/K15');
-    }, 30_000);
-
-    it('regression:configure-ci-gate デフォルト値で exit 0 が返る', () => {
-      const actual = run('regression:configure-ci-gate');
-
-      expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('CI gate configured');
-    });
-
-    it('regression:configure-ci-gate --suites 不正値で exit 2 が返る', () => {
-      const actual = run('regression:configure-ci-gate', '--suites', 'invalid-suite');
-
-      expect(actual.exitCode).toBe(2);
-      expect(actual.stderr).toContain('Invalid suite ID');
-    });
-
-    it('regression:configure-ci-gate --json でJSON形式の出力が返る', () => {
-      const actual = run('regression:configure-ci-gate', '--json');
-
-      expect(actual.exitCode).toBe(0);
-      const parsed = JSON.parse(actual.stdout);
-      expect(typeof parsed.coverageThreshold).toBe('number');
-    });
-
-    it('regression:analyze-migration が "Unknown command" にならない', () => {
-      const actual = run('regression:analyze-migration', '--dry-run');
-
-      expect(actual.stderr).not.toContain('Unknown command: regression:analyze-migration');
-    });
-  });
 });

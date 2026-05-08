@@ -313,7 +313,7 @@ Quick Mode時のバリデータ実行構成を表す値オブジェクト。
 | L1 | 全8ルール（L1-001〜L1-008） | なし |
 | L2 | L2-002（metadata）, L2-003（test-quality） | L2-001（phase-gate） |
 | L3 | L3-001（security） | L3-002（performance）, L3-003（coverage）, L3-004（nyquist） |
-| L4 | なし | 全3ルール（L4-001〜L4-003） |
+| L4 | なし | 全5ルール（L4-001〜L4-005） |
 
 **生成ルール**
 
@@ -477,7 +477,7 @@ export interface ValidatorIdRegistryPort {
 
 | メソッド | 入力 | 出力 | 説明 |
 |---------|------|------|------|
-| `getAllValidatorIds` | なし | `Promise<readonly string[]>` | validator-system が公開する全 ValidatorId（L1-001〜L4-003）の一覧を返す |
+| `getAllValidatorIds` | なし | `Promise<readonly string[]>` | validator-system が公開する全 ValidatorId（L1-001〜L4-005）の一覧を返す |
 
 **設計上の注意点**
 
@@ -733,9 +733,9 @@ interface QuickModeDecisionContract {
 
 **実装方針**
 
-- Wave 2 では `integration_contract.md §9` の確定 ID 一覧（L1-001〜L4-003、計11 ID）を静的定義として保持する
+- Wave 2 では validator-system の確定 ID 一覧（L1-001〜L4-005）を静的定義として保持する
 - validator-system の正式 Registry が整備された段階でこの Adapter の内部実装のみを差し替える
-- 静的リストは `L1-001, L1-002, ..., L1-008, L2-001, L2-002, L2-003, L3-001, L3-002, L3-003, L3-004, L4-001, L4-002, L4-003` で構成する
+- 静的リストは `L1-001, L1-002, ..., L1-008, L2-001, L2-002, L2-003, L3-001, L3-002, L3-003, L3-004, L4-001, L4-002, L4-003, L4-004, L4-005` で構成する
 
 **外部I/O詳細**
 
@@ -864,7 +864,7 @@ sequenceDiagram
     UC2->>CFP: getQuickModeConfig()
     CFP-->>UC2: QuickModeConfig
     UC2->>VRP: getAllValidatorIds()
-    VRP-->>UC2: readonly string[] (L1-001〜L4-003)
+    VRP-->>UC2: readonly string[] (L1-001〜L4-005)
     UC2->>RS: build(config, allValidatorIds)
     RS-->>UC2: ValidatorRelaxationProfile
     UC2-->>CLI: Readonly<ValidatorRelaxationProfileContract>
@@ -1007,7 +1007,7 @@ sequenceDiagram
 
 **論点**: `ValidatorIdRegistryPort` の Adapter を validator-system のモジュールに依存させるか、静的定義で実装するか。
 
-**判断**: Wave 2 では `integration_contract.md §9` の確定 ID 一覧（L1-001〜L4-003）を静的定義として `ValidatorSystemValidatorIdRegistryAdapter` に保持する。
+**判断**: Wave 2 では validator-system の確定 ID 一覧（L1-001〜L4-005）を静的定義として `ValidatorSystemValidatorIdRegistryAdapter` に保持する。
 
 **根拠**:
 - validator-system の正式 Registry API が Wave 2 内で順次整備されるため、API 確定前から quick-mode の実装を開始できる

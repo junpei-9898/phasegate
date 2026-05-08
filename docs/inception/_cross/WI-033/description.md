@@ -2,7 +2,7 @@
 id: WI-033
 type: refactor
 severity: normal
-status: drafted
+status: completed
 affects: [validator-system, phase2-extensions]
 ---
 
@@ -44,11 +44,11 @@ affects: [validator-system, phase2-extensions]
 
 ## 受け入れ基準
 
-- [ ] `npx phasegate list-errors --layer L4` に L4-004 / L4-005 が表示される
-- [ ] `npx phasegate validate --layer L4` が freshness / pointer も実行する
-- [ ] preset 設定で個別 enable/disable できる
-- [ ] phase2-extensions の `p2:check-freshness` / `p2:validate-pointers` CLI は backwards-compatible に維持
-- [ ] validator-system の unit/IT test 全 PASS
+- [x] `npx phasegate list-errors --layer L4` に L4-004 / L4-005 が表示される
+- [x] `npx phasegate validate --layer L4` が freshness / pointer も実行する
+- [x] preset 設定で個別 enable/disable できる
+- [x] phase2-extensions の `p2:check-freshness` / `p2:validate-pointers` CLI は backwards-compatible に維持
+- [x] validator-system の unit/IT test 全 PASS
 
 ## スコープ外
 

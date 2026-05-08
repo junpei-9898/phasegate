@@ -56,7 +56,7 @@ const BASE_CONFIG = {
 
 target("phasegate validate --layer config threading (WI-091 finding #1 follow-up)", () => {
   context("layers.L4.enabled: false が設定されている場合", () => {
-    it("validate --layer L4 は L4 全 validator を SKIP として扱い 総合判定 PASS で exit 0 になること", async () => {
+    it("validate --layer L4 の明示実行では L4 validator が実行され 総合判定 PASS で exit 0 になること", async () => {
       const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-l4disabled-"));
       try {
         await writeConfig(workDir, { ...BASE_CONFIG, layers: { L4: { enabled: false } } });
@@ -66,7 +66,7 @@ target("phasegate validate --layer config threading (WI-091 finding #1 follow-up
         expect(actual.exitCode).toBe(0);
         expect(actual.stdout).toContain("総合判定: PASS");
         expect(actual.stdout).not.toContain("[FAIL] L4-001");
-        expect(actual.stdout).not.toContain("[PASS] L4-001");
+        expect(actual.stdout).toContain("[PASS] L4-001");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

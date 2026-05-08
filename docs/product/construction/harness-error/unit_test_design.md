@@ -45,10 +45,10 @@ harness-error Unitは集約を持たない。`HarnessError`を中心とした不
 
 ## 2. テストファイル構成
 
-すべてのテストファイルは `scripts/harness/__tests__/harness-error/` 配下にkebab-caseで配置する。
+すべてのテストファイルは `scripts/harness/__tests__/unit/harness-error/` 配下にkebab-caseで配置する。
 
 ```text
-scripts/harness/__tests__/harness-error/
+scripts/harness/__tests__/unit/harness-error/
 ├── value-objects/
 │   ├── error-code.test.ts
 │   ├── severity.test.ts

@@ -6,6 +6,10 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { DocumentScannerPort } from '../../domain/ports/document-scanner-port.js';
 
+export interface FileSystemDocumentScannerAdapterOptions {
+  readonly excludePatterns?: readonly RegExp[];
+}
+
 function escapeRegex(value: string): string {
   return value.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
 }
@@ -67,11 +71,21 @@ async function walk(root: string, current = ''): Promise<string[]> {
 }
 
 export class FileSystemDocumentScannerAdapter implements DocumentScannerPort {
-  constructor(private readonly projectRoot: string) {}
+  private readonly excludePatterns: readonly RegExp[];
+
+  constructor(
+    private readonly projectRoot: string,
+    options: FileSystemDocumentScannerAdapterOptions = {},
+  ) {
+    this.excludePatterns = options.excludePatterns ?? [];
+  }
 
   async scan(pattern: string): Promise<string[]> {
     const files = await walk(this.projectRoot);
     const regex = toPatternRegex(pattern);
-    return files.filter((file) => regex.test(file)).sort();
+    return files
+      .filter((file) => regex.test(file))
+      .filter((file) => !this.excludePatterns.some((excludePattern) => excludePattern.test(file)))
+      .sort();
   }
 }

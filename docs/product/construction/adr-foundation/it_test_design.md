@@ -59,7 +59,7 @@
 ### ディレクトリ構造
 
 ```text
-scripts/harness/__tests__/adr-foundation/
+scripts/harness/__tests__/unit/adr-foundation/
 ├── helpers/
 │   └── in-memory-adr-repository.ts       # 共通テストヘルパー（Q-IT-1）
 ├── application/
@@ -249,7 +249,7 @@ scripts/harness/__tests__/adr-foundation/
 
 ### 5.2 GrayMatterAdrFrontmatterParser
 
-fixtureファイル（`scripts/harness/__tests__/adr-foundation/fixtures/docs/ADR/`）を使用する。
+fixtureファイル（`scripts/harness/__tests__/unit/adr-foundation/fixtures/docs/ADR/`）を使用する。
 
 | ケースID | target | describe | context | it（期待値） |
 |----------|--------|----------|---------|-------------|
@@ -382,8 +382,8 @@ CLIハンドラは関数引数としてテストする（Q-IT-2）。UseCaseは�
 | テスト構造ヘルパー | `target`, `context` エイリアスが利用可能であること |
 | Node.js | 20以上（`node:fs/promises`, `node:path` 利用） |
 | 外部ライブラリ | gray-matter（devDependencies） |
-| fixtureファイル | `scripts/harness/__tests__/adr-foundation/fixtures/docs/ADR/` に配置 |
-| vitest設定 | 共有設定 `scripts/harness/__tests__/adr-foundation/vitest.config.ts` を使用 |
+| fixtureファイル | `scripts/harness/__tests__/unit/adr-foundation/fixtures/docs/ADR/` に配置 |
+| vitest設定 | 共有設定 `scripts/harness/__tests__/unit/adr-foundation/vitest.config.ts` を使用 |
 
 ### 7.2 fixtureファイル一覧
 

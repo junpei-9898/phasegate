@@ -48,7 +48,7 @@
 ## 2. テストファイル構成
 
 ```text
-scripts/harness/__tests__/phase-dependency-model/
+scripts/harness/__tests__/unit/phase-dependency-model/
 ├── application/
 │   ├── check-phase-gate-usecase.test.ts
 │   ├── build-phase-dependency-graph-usecase.test.ts

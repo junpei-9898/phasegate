@@ -75,7 +75,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-RunL4-001 | validatorIdsを省略した場合、全L4バリデータ（L4-001〜L4-003）が実行される | `{ strictMode: false }` | ValidatorConfigPort: L4 LayerConfig(enabled=true)。ExecutionService: 3件のpass結果 | `ValidationResultContract[]`が3件返る |
+| IT-UC-RunL4-001 | validatorIdsを省略した場合、全L4バリデータ（L4-001〜L4-005）が実行される | `{ strictMode: false }` | ValidatorConfigPort: L4 LayerConfig(enabled=true)。ExecutionService: 5件のpass結果 | `ValidationResultContract[]`が5件返る |
 | IT-UC-RunL4-002 | strictMode=falseの場合、L4-003（dead-code/strictOnly）がスキップされる | `{ strictMode: false }` | LayerConfig: strictOnly=false | L4-003の結果が`skipped=true` |
 | IT-UC-RunL4-003 | targetUnitsを指定した場合、対象Unitのみが検査される | `{ targetUnits: ["harness-error"], strictMode: false }` | DriftDetectionService/ConsistencyCheckService: targetUnitsを受け取ってpass結果を返す | L4-001/L4-002の結果が`passed=true` |
 | IT-UC-RunL4-004 | L4-001（drift-detect）がfailした場合、DriftReportが含まれたエラーが返る | `{ strictMode: false }` | ExecutionService: L4-001がfail（errors: [{code:"L4-001"}]）の結果を返す | L4-001の`passed=false`、`errors`にL4-001エラー |

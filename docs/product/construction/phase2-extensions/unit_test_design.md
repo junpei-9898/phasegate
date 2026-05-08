@@ -81,7 +81,7 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-P2-019 | `type='file-path'`, `rawText='[設計](docs/design.md)'`, `target='docs/design.md'` | 正常に生成される |
+| UT-P2-019 | `type='file-path'`, `rawText='[設計](docs/product/construction/phase2-extensions/logical_design.md)'`, `target='docs/product/construction/phase2-extensions/logical_design.md'` | 正常に生成される |
 | UT-P2-020 | `type='file-path'`, `rawText=''`（空文字） | Phase2ExtensionsDomainErrorをスロー（INV-8違反） |
 | UT-P2-021 | `type='file-path'`, `target=''`（空文字） | Phase2ExtensionsDomainErrorをスロー（INV-9違反） |
 
@@ -109,14 +109,14 @@
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-P2-026 | `isResolvable=true`, `errorMessage=null`, `resolvedPath='docs/design.md'` | 正常に生成される |
-| UT-P2-027 | `isResolvable=false`, `errorMessage='File not found: docs/missing.md'`, `resolvedPath=null` | 正常に生成される |
+| UT-P2-026 | `isResolvable=true`, `errorMessage=null`, `resolvedPath='docs/product/construction/phase2-extensions/logical_design.md'` | 正常に生成される |
+| UT-P2-027 | `isResolvable=false`, `errorMessage='File not found: missing-doc-path'`, `resolvedPath=null` | 正常に生成される |
 
 #### ファクトリメソッドテスト
 
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
-| UT-P2-028 | `PointerValidationResult.resolved(pointer, 'docs/design.md')` | `isResolvable=true`, `errorMessage=null`のインスタンスが生成される |
+| UT-P2-028 | `PointerValidationResult.resolved(pointer, 'docs/product/construction/phase2-extensions/logical_design.md')` | `isResolvable=true`, `errorMessage=null`のインスタンスが生成される |
 | UT-P2-029 | `PointerValidationResult.broken(pointer, 'File not found')` | `isResolvable=false`, `resolvedPath=null`のインスタンスが生成される |
 | UT-P2-030 | `PointerValidationResult.skipped(pointer)` | `isResolvable=true`, `errorMessage=null`（URLスキップ時）のインスタンスが生成される |
 
@@ -237,8 +237,8 @@
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-P2-060 | `[file-path Pointer('docs/design.md')]` | PointerResolverPort: `resolve()`→true | `[PointerValidationResult(isResolvable=true)]` が返る |
-| UT-P2-061 | `[file-path Pointer('docs/missing.md')]` | PointerResolverPort: `resolve()`→false | `[PointerValidationResult(isResolvable=false, errorMessage!==null)]` が返る |
+| UT-P2-060 | `[file-path Pointer('docs/product/construction/phase2-extensions/logical_design.md')]` | PointerResolverPort: `resolve()`→true | `[PointerValidationResult(isResolvable=true)]` が返る |
+| UT-P2-061 | `[file-path Pointer('missing-doc-path')]` | PointerResolverPort: `resolve()`→false | `[PointerValidationResult(isResolvable=false, errorMessage!==null)]` が返る |
 | UT-P2-062 | `[url Pointer('https://example.com')]` | PointerResolverPortは呼び出されない | `[PointerValidationResult(isResolvable=true)]` が返る（URLスキップ） |
 | UT-P2-063 | `[]`（空配列） | PointerResolverPortは呼び出されない | 空の`PointerValidationResult[]`が返る |
 | UT-P2-064 | `[file-path1（実在）, file-path2（不在）, url1（スキップ）]`の3件 | PointerResolverPort: file-path1→true, file-path2→false | 3件のPointerValidationResult[]。broken=1件、skipped=1件 |

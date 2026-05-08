@@ -65,7 +65,7 @@
 ## 2. テストファイル構成
 
 ```
-scripts/harness/harness-error/__tests__/
+scripts/harness/__tests__/unit/harness-error/
 ├── fixtures/
 │   ├── adr/                                    # ADR fixture（frontmatter付き）
 │   │   ├── ADR-001.md                          # 正常ADR

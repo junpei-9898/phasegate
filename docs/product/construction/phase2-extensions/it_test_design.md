@@ -175,9 +175,9 @@ tmp/
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-P2-019 | git logが有効な日時を返す場合にsource='git-log'のDocumentAgeが返ること | `documentPath='docs/design.md'` | `execSync`モック: `'2026-03-10 12:00:00 +0900'` (10日前) | `DocumentAge.source='git-log'`, `ageInDays >= 9` |
+| IT-P2-019 | git logが有効な日時を返す場合にsource='git-log'のDocumentAgeが返ること | `documentPath='docs/product/construction/phase2-extensions/logical_design.md'` | `execSync`モック: `'2026-03-10 12:00:00 +0900'` (10日前) | `DocumentAge.source='git-log'`, `ageInDays >= 9` |
 | IT-P2-020 | git logが空文字を返す場合（未コミットファイル）にsource='file-mtime'にフォールバックすること | `documentPath='docs/new.md'` | `execSync`モック: `''`; tmpdir内にファイルを作成（mtime制御） | `DocumentAge.source='file-mtime'` |
-| IT-P2-021 | execSyncがエラーをスローする場合（Git外環境）にsource='file-mtime'にフォールバックすること | `documentPath='docs/design.md'` | `execSync`モック: エラーをスロー; 実ファイルをtmpdir内に作成 | `DocumentAge.source='file-mtime'`, エラーはスローされない |
+| IT-P2-021 | execSyncがエラーをスローする場合（Git外環境）にsource='file-mtime'にフォールバックすること | `documentPath='docs/product/construction/phase2-extensions/logical_design.md'` | `execSync`モック: エラーをスロー; 実ファイルをtmpdir内に作成 | `DocumentAge.source='file-mtime'`, エラーはスローされない |
 
 ---
 
@@ -192,6 +192,7 @@ tmp/
 | IT-P2-022 | Globパターンに一致するファイルが2件ある場合、2件のパスが返ること | `pattern='docs/**/*.md'` + tmpdir内に2件の.mdファイル | 2件のファイルパス[]が返る |
 | IT-P2-023 | Globパターンに一致するファイルが0件の場合、空配列が返ること | `pattern='docs/nonexistent/**/*.md'` | `[]`が返る |
 | IT-P2-024 | node_modules内のファイルはGlobパターンが一致しても除外されること | `pattern='**/*.md'` + tmpdir内にnode_modules/test.mdを作成 | node_modules内ファイルは結果に含まれない |
+| IT-P2-025 | excludePatternsに一致する計画文書はGlobパターンが一致しても除外されること | `excludePatterns=[/^docs\/inception\//]` + `docs/inception/WI-001/plan.md` | 保守対象の文書のみ返る |
 
 ---
 
@@ -203,9 +204,9 @@ tmp/
 
 | ケースID | シナリオ | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| IT-P2-025 | Markdownリンク形式`[text](path)`が正しく抽出されること | `[設計書](docs/design.md)`を含むファイル | `Pointer(type='file-path', target='docs/design.md')`が返る |
+| IT-P2-025 | Markdownリンク形式`[text](path)`が正しく抽出されること | `[設計書](docs/product/construction/phase2-extensions/logical_design.md)`を含むファイル | `Pointer(type='file-path', target='docs/product/construction/phase2-extensions/logical_design.md')`が返る |
 | IT-P2-026 | URLリンク`[text](https://...)`が`url`タイプで抽出されること | `[GitHub](https://github.com/)`を含むファイル | `Pointer(type='url', target='https://github.com/')`が返る |
-| IT-P2-027 | `docs/`で始まる相対パス参照が抽出されること | ` docs/design.md を参照`を含むファイル | `Pointer(type='file-path', target='docs/design.md')`が返る |
+| IT-P2-027 | `docs/`で始まる相対パス参照が抽出されること | ` docs/product/construction/phase2-extensions/logical_design.md を参照`を含むファイル | `Pointer(type='file-path', target='docs/product/construction/phase2-extensions/logical_design.md')`が返る |
 | IT-P2-028 | ポインタが0件のファイルに対して空配列が返ること | ポインタ記述のないMarkdownファイル | `[]`が返る |
 
 ---
@@ -218,7 +219,7 @@ tmp/
 
 | ケースID | シナリオ | 入力 | 期待結果 |
 |---------|---------|------|---------|
-| IT-P2-029 | 実在するファイルパスのPointerに対してtrueが返ること | `Pointer(type='file-path', target='docs/design.md')` + 実ファイルをtmpdir内に作成 | trueが返る |
+| IT-P2-029 | 実在するファイルパスのPointerに対してtrueが返ること | `Pointer(type='file-path', target='docs/product/construction/phase2-extensions/logical_design.md')` + 実ファイルをtmpdir内に作成 | trueが返る |
 | IT-P2-030 | 存在しないファイルパスのPointerに対してfalseが返ること | `Pointer(type='file-path', target='docs/nonexistent.md')` | falseが返る |
 | IT-P2-031 | URLタイプのPointerに対して常にtrueが返ること（スキップ） | `Pointer(type='url', target='https://example.com')` | trueが返る（ネットワークアクセスなし） |
 

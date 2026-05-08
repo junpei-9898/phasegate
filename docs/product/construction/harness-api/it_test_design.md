@@ -234,7 +234,7 @@
 
 ### CheckReadyHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/check-ready-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 #### 正常系
 
@@ -259,7 +259,7 @@
 
 ### CheckPhaseHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/check-phase-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/check-phase-cli.integration.test.ts`
 
 #### 正常系
 
@@ -285,7 +285,7 @@
 
 ### CiCheckHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/ci-check-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts`
 
 #### 正常系
 
@@ -310,7 +310,7 @@
 
 ### DetectDriftHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/detect-drift-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts`
 
 #### 正常系
 
@@ -335,7 +335,7 @@
 
 ### StatusHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/status-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts`
 
 #### 正常系
 
@@ -360,7 +360,7 @@
 
 ### LintHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/lint-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/biome-ast-engine-lint-adapter.test.ts`
 
 #### 正常系
 
@@ -385,7 +385,7 @@
 
 ### CompleteCheckHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/complete-check-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 #### 正常系
 
@@ -410,7 +410,7 @@
 
 ### ImpactAnalysisHandler
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/impact-analysis-handler.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/nyquist-validation-impact-analysis-adapter.test.ts`
 
 #### 正常系
 
@@ -438,7 +438,7 @@
 
 ### CommandDispatch統合フロー
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/command-dispatch-integration.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/dispatch-command-usecase.test.ts`
 
 > 論理設計§1.3に指定されているテストファイル。UseCase・DomainService・ポートモックを組み合わせたEnd-to-Endフロー検証（CLI実行を除く）。
 
@@ -454,7 +454,7 @@
 
 ### StatusDerivation統合フロー
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/status-derivation-integration.test.ts`
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/derive-harness-status-usecase.test.ts`
 
 > 論理設計§1.3に指定されているテストファイル。DeriveHarnessStatusUseCase + StatusDerivationService（実体）+ ポートモックの統合検証。
 
@@ -469,7 +469,7 @@
 
 ### Shared Kernel Contract検証
 
-**テスト配置**: `scripts/harness/__tests__/integration/harness-api/shared-kernel-contract.test.ts`
+**テスト配置**: `scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts`
 
 > 論理設計§1.3に指定されているテストファイル。HarnessApiResponse<T>のJSON構造がintegration_contract.md §2.2に準拠することを検証する。
 

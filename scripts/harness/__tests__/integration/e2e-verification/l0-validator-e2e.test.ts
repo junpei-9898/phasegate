@@ -16,8 +16,8 @@ target('L0 Runtime Hook E2E検証', () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(3) + L3(4) + L4(3) = 10
-      expect(actual).toHaveLength(10);
+      // Assert — L2(3) + L3(4) + L4(5) = 12
+      expect(actual).toHaveLength(12);
       const layers = new Set(actual.map((d) => d.validatorId.layer));
       expect(layers.has('L0')).toBe(false);
       expect(layers.has('L2')).toBe(true);
@@ -37,7 +37,7 @@ target('L0 Runtime Hook E2E検証', () => {
       // Assert
       expect(actual.l2Defs).toHaveLength(3);
       expect(actual.l3Defs).toHaveLength(4);
-      expect(actual.l4Defs).toHaveLength(3);
+      expect(actual.l4Defs).toHaveLength(5);
     });
 
     it('T-042-03 L0設定がなくてもL2-L4が機能すること', () => {
@@ -47,7 +47,7 @@ target('L0 Runtime Hook E2E検証', () => {
         layers: {
           L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
           L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'] },
-          L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },
+          L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
         },
       });
       // Act

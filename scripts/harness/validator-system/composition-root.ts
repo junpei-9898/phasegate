@@ -35,6 +35,7 @@ import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/impo
 import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
 import { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
+import { buildPhase2Extensions } from '../phase2-extensions/composition-root.js';
 import { RunValidatorsHandler } from './presentation/handlers/run-validators-handler.js';
 import { RunQuickModeHandler } from './presentation/handlers/run-quick-mode-handler.js';
 import { ReportValidationResultsHandler } from './presentation/handlers/report-validation-results-handler.js';
@@ -46,12 +47,12 @@ const DEFAULT_CONFIG = {
   layers: {
     L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
-    L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },
+    L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
   },
   validate: { failOnWarning: false },
 };
 
-/** バリデータ定義カタログ（全10件） */
+/** バリデータ定義カタログ */
 function buildDefaultRegistry(): ValidatorRegistry {
   const defaultRule = ValidationRule.create({
     ruleName: 'default-rule',
@@ -83,6 +84,8 @@ function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L4-001', 'L4', 'always'),
     createDef('L4-002', 'L4', 'always'),
     createDef('L4-003', 'L4', 'strictOnly'),
+    createDef('L4-004', 'L4', 'always'),
+    createDef('L4-005', 'L4', 'always'),
   ];
 
   return new ValidatorRegistry(definitions);
@@ -157,6 +160,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const deadCodeDetectionService = new DeadCodeDetectionService({
     sourceAnalysisPort,
   });
+  const phase2Extensions = buildPhase2Extensions(process.cwd(), configData as never);
 
   const runL4ValidatorsUseCase = new RunL4ValidatorsUseCase({
     validatorRegistry: registry,
@@ -166,6 +170,8 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     driftDetectionService,
     consistencyCheckService,
     deadCodeDetectionService,
+    checkDocFreshnessUseCase: phase2Extensions.checkDocFreshnessUseCase,
+    validateDocPointersUseCase: phase2Extensions.validateDocPointersUseCase,
   });
 
   const runQuickModeUseCase = new RunQuickModeUseCase({

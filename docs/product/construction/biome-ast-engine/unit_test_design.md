@@ -47,7 +47,7 @@ biome-ast-engineはステートレスな解析ドメインであり、集約・�
 ### 2.1 ディレクトリ配置
 
 ```
-scripts/harness/__tests__/biome-ast-engine/domain/
+scripts/harness/__tests__/unit/biome-ast-engine/
 ├── value-objects/
 │   ├── rule-name.test.ts
 │   ├── rule-type.test.ts

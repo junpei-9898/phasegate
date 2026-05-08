@@ -166,11 +166,13 @@ scripts/harness/
 | `L4-001` | drift-detect | Scheduled |
 | `L4-002` | consistency-check | Scheduled |
 | `L4-003` | dead-code | Scheduled |
+| `L4-004` | doc-freshness | Scheduled |
+| `L4-005` | pointer-validation | Scheduled |
 
 **生成ルール**
 
 - 正規表現 `/^L[2-4]-\d{3}$/` に一致すること
-- 有効IDは上記10種のみ。L2-004以降やL4-004以降は現行バージョンでは無効
+- 有効IDは上記12種のみ。未登録IDは現行バージョンでは無効
 - `cross_cutting_decisions.md §3` に従い、意味名（`"phase-gate"` 等）は識別子として使用しない
 
 **メソッド**
@@ -898,7 +900,8 @@ export interface ValidatorRelaxationProfile {
 
 **対応ストーリー**: H08-03（L4バリデータ実行）
 
-**責務**: drift-detect（L4-001）・consistency-check（L4-002）・dead-code（L4-003）の3バリデータをScheduled文脈で実行し、`ValidationResultContract[]` を返す。
+<!-- @work-item-id WI-033 -->
+**責務**: drift-detect（L4-001）・consistency-check（L4-002）・dead-code（L4-003）・doc-freshness（L4-004）・pointer-validation（L4-005）の5バリデータをScheduled文脈で実行し、`ValidationResultContract[]` を返す。
 
 **コンストラクタ依存**
 
@@ -911,9 +914,10 @@ export interface ValidatorRelaxationProfile {
 
 | 項目 | 型 | 必須 | 説明 |
 |------|----|------|------|
-| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L4（L4-001〜L4-003） |
+| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L4（L4-001〜L4-005） |
 | targetUnits | `readonly string[] \| undefined` | No | 対象Unitフィルタ（省略時は全Unit） |
 | strictMode | `boolean` | No | strictプリセット判定フラグ（L4-003のgcRecommended制御） |
+| forceLayerEnabled | `boolean` | No | 明示的な `validate --layer L4` 実行時に、デフォルト無効のL4を一時的に実行する |
 
 **出力**: `Promise<readonly ValidationResultContract[]>`
 
@@ -923,7 +927,7 @@ export interface ValidatorRelaxationProfile {
 2. `validatorConfigPort.getLayerConfig("L4")` で `LayerConfig` を取得する
 3. `L4-003`（dead-code）の `enabledCondition === "strictOnly"` を確認する
 4. `LayerConfig.thresholds` から `schedule` 設定を参照する
-5. `validatorExecutionService.execute()` を呼ぶ。L4-001はDriftDetectionService、L4-002はConsistencyCheckService、L4-003はDeadCodeDetectionServiceに委譲される
+5. `validatorExecutionService.execute()` を呼ぶ。L4-001はDriftDetectionService、L4-002はConsistencyCheckService、L4-003はDeadCodeDetectionService、L4-004/L4-005はphase2-extensionsの既存use caseに委譲される
 6. 結果を変換して返す
 
 **例外**

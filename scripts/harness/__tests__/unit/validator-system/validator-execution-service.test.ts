@@ -1,6 +1,7 @@
 /**
  * @layer test
  * @unit validator-system
+ * @story H08-01
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, createValidatorId, createValidatorDefinition, createLayerConfig } from '../../helpers/test-helpers.js';
@@ -186,7 +187,7 @@ target('ValidatorExecutionService', () => {
       expect(actual).toEqual([]);
     });
 
-    it('全10件がenabled: falseの設定でexecute()を呼び出すと全件skipped: trueのValidationResultが返ること (UT-BND-017)', () => {
+    it('全定義がenabled: falseの設定でexecute()を呼び出すと全件skipped: trueのValidationResultが返ること (UT-BND-017)', () => {
       // Arrange
       const layerConfig = createLayerConfig({ enabled: false });
       const sut = new ValidatorExecutionService({ configPort: createMockValidatorConfigPort() });
