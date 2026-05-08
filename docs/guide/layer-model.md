@@ -183,6 +183,25 @@ Error codes follow the pattern `L{layer}-{number}`:
 
 ---
 
+## Severity Policy (ADR-017 / WI-094, v0.131.0+)
+
+Each error catalog entry declares a `defaultSeverity` of `error` or `warning`. As of v0.131.0, the aggregator (`aggregate-validation-results-usecase.ts`) honors this declaration when computing `overallPassed` and exit code:
+
+- A validator returning **only `severity: warning` errors** is treated as **overall PASS** (exit 0) by default. The result is labeled `[WARN]` in `human` formatter so the warning is still visible.
+- A validator returning at least one **`severity: error`** counts as **overall FAIL** (exit 1). Mixed warning + error fails are also FAIL because of the error.
+- A validator returning `passed=false` with no errors is treated as FAIL (defensive — severity cannot be assessed).
+
+**Validators with `defaultSeverity: warning`** (advisory by design — fail does not stop CI by default):
+- L4-001 drift-detect
+- L4-002 consistency-check
+- L4-003 dead-code
+
+**Opt-in to strict mode** via `phasegate.config.json` `validate.failOnWarning: true` or CLI `--fail-on-warning` (CLI > config). The `strict` preset defaults to `failOnWarning: true` to match the precedent set by the `ci-governance` preset adapter.
+
+History: prior to v0.131.0, the aggregator's `failOnWarning` flag was effectively dead code (`hasFail = !result.passed || ...` masked it), so every warning-only fail produced exit 1 regardless of severity declaration. See ADR-017 for the rationale.
+
+---
+
 ## Presets and Layer Activation
 
 Presets control which layers are active. Choose based on project maturity and team discipline.

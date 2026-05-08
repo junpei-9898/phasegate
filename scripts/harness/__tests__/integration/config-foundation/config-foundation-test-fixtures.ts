@@ -1,4 +1,6 @@
 // @layer test
+// @unit config-foundation
+// @story H04-01
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -120,6 +122,9 @@ export function createResolvedDocument(
       format: 'json',
       outputDir: 'reports',
     },
+    validate: {
+      failOnWarning: false,
+    },
   };
 
   if (preset === 'standard') {
@@ -148,6 +153,9 @@ export function createResolvedDocument(
       cascadeUpdate: false,
       bundleSizeLimit: 500,
       deadCodeGC: true,
+    };
+    minimal.validate = {
+      failOnWarning: true,
     };
   }
 

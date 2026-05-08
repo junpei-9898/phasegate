@@ -27,17 +27,21 @@ export interface RunValidatorsHandlerDeps {
   runFullValidationUseCase: RunFullValidationUseCase;
   runL0ValidatorsUseCase?: RunL0ValidatorsUseCase;
   runL1ValidatorsUseCase?: RunL1ValidatorsUseCase;
+  /** WI-094 / ADR-017: config 由来の failOnWarning デフォルト。args.failOnWarning が undefined の場合に適用 */
+  defaultFailOnWarning?: boolean;
 }
 
 export class RunValidatorsHandler {
   private readonly useCase: RunFullValidationUseCase;
   private readonly l0UseCase: RunL0ValidatorsUseCase | undefined;
   private readonly l1UseCase: RunL1ValidatorsUseCase | undefined;
+  private readonly defaultFailOnWarning: boolean;
 
   constructor(deps: RunValidatorsHandlerDeps) {
     this.useCase = deps.runFullValidationUseCase;
     this.l0UseCase = deps.runL0ValidatorsUseCase;
     this.l1UseCase = deps.runL1ValidatorsUseCase;
+    this.defaultFailOnWarning = deps.defaultFailOnWarning ?? false;
   }
 
   async execute(args: RunValidatorsHandlerArgs): Promise<{ output: string; exitCode: number }> {
@@ -118,12 +122,13 @@ export class RunValidatorsHandler {
       else if (args.layer === 'all') targetLayers = ['L2', 'L3', 'L4'];
       // undefined → フィルタなし（従来挙動）
 
+      const failOnWarning = args.failOnWarning ?? this.defaultFailOnWarning;
       const report = await this.useCase.execute({
         targetPaths: args.targetPaths ?? [],
         unitName: args.unit ?? '',
         currentPhase: args.phase ?? '',
         includeL4: !args.noL4,
-        failOnWarning: args.failOnWarning,
+        failOnWarning,
         targetLayers,
       });
 

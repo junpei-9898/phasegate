@@ -1,4 +1,6 @@
 // @layer test
+// @unit config-foundation
+// @story H04-01
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigSourceDocument } from '../../../config-foundation/domain/harness-config.js';
@@ -95,6 +97,7 @@ function createPresetDefinitions(): Readonly<
         format: 'json',
         outputDir: 'reports',
       },
+      validate: { failOnWarning: false },
     },
     standard: {
       layers: {
@@ -145,6 +148,7 @@ function createPresetDefinitions(): Readonly<
         format: 'json',
         outputDir: 'reports',
       },
+      validate: { failOnWarning: false },
     },
     strict: {
       layers: {
@@ -195,6 +199,7 @@ function createPresetDefinitions(): Readonly<
         format: 'json',
         outputDir: 'reports',
       },
+      validate: { failOnWarning: false },
     },
   };
 }

@@ -455,6 +455,15 @@
         }
       }
     },
+    "validate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "failOnWarning": {
+          "type": "boolean"
+        }
+      }
+    },
     "protectedFiles": {
       "type": "object",
       "additionalProperties": false,

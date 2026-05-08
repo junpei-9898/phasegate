@@ -18,6 +18,7 @@ export interface PresetDefinition {
   harnesses: HarnessConfigResolvedDocument['harnesses'];
   paths: HarnessConfigResolvedDocument['paths'];
   reporting: HarnessConfigResolvedDocument['reporting'];
+  validate: HarnessConfigResolvedDocument['validate'];
 }
 
 export class InvalidPresetDefinitionError extends ConfigFoundationDomainError {
@@ -113,6 +114,7 @@ function assertValidPresetDefinition(
     'harnesses',
     'paths',
     'reporting',
+    'validate',
   ];
 
   for (const key of requiredKeys) {
@@ -176,6 +178,11 @@ export class PresetResolutionService {
         presetDefinition.reporting,
         sourceDocument.reporting,
         'reporting',
+      ),
+      validate: deepMerge(
+        presetDefinition.validate,
+        sourceDocument.validate,
+        'validate',
       ),
     };
   }

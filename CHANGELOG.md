@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.131.0] - 2026-05-08
+
+### Changed (BREAKING for `standard` / `minimal` preset users)
+
+- **WI-094 — warning-severity validator の集計セマンティクスを修正 (ADR-017, GitHub Issue #4 finding #2)** — `error catalog` で `defaultSeverity: warning` と宣言された validator (L4-001 drift / L4-002 consistency / L4-003 dead-code) が fail を返した際、`overallPassed` 判定が severity を見ず常に `failedValidators++` していたバグを修正。warning-only validator fail は `overall PASS / exit 0` を default に変更。
+  - **修正前**: `aggregate-validation-results-usecase.ts:35-42` の `hasFail = !result.passed || (failOnWarning && hasWarnings)` で `failOnWarning` flag が常に dead code 化していた。warning-only fail でも `[FAIL]` 表示・exit 1 となり、reporter (nakataj-mti) は plan-level workaround (false positive 注釈) で凌いでいた。
+  - **修正後**: `hasFail = !result.passed && (isEmptyFail || hasNonWarningError || (failOnWarning && hasWarnings))` で severity を反映。`failOnWarning=true` で旧挙動 (warning も fail) に opt-in 可能。
+  - **新 config フラグ**: `phasegate.config.json` に `validate.failOnWarning: boolean` を追加。default は `false`。preset 別 default: `minimal` / `standard` = `false`、`strict` = `true` (ci-governance preset adapter の precedent と整合)。schema v2 / v3 双方で optional property として追加 — 既存 user の config はそのまま valid。
+  - **新 CLI flag**: `--fail-on-warning` / `--no-fail-on-warning` の tri-state 化。両方未指定の場合は config 値を使用 (CLI > config 優先順位)。
+  - **Formatter 改修**: `human` formatter で `[FAIL]` と `[WARN]` を分離表示。warning-only fail は `[WARN] L4-001` として表示。`agent` / `ci` formatter (JSON) は既存 `severity` field 構造を維持し、後方互換性を確保。
+  - **Migration**: warning-only fail で CI を止めたい既存 user は `phasegate.config.json` に以下を追加:
+    ```json
+    { "validate": { "failOnWarning": true } }
+    ```
+    または CLI で `--fail-on-warning` を指定。`strict` preset 利用者は default で `failOnWarning: true` のため migration 不要。
+  - **回帰テスト**: warning-only / error-only / mixed / failOnWarning=true / 防御的 (passed=false かつ errors=[]) の 5 ケースを `aggregate-validation-results-usecase.test.ts` に追加。`human-validation-result-formatter.test.ts` 新設で `[WARN]` / `[FAIL]` / `[PASS]` / `[SKIP]` の表示を網羅。
+  - **検証 (publish 前)**: `pnpm test` 454 files / 3531 tests pass (baseline +11)。`npx phasegate validate --layer L2` は pre-existing fail のみ (L2-001 artifact 不足、本 WI とは無関係)。
+  - **post-publish dogfood**: WI-094 description.md / `tdd_implementation_plan.md` に dogfood 結果を反映予定。
+
 ## [0.130.0] - 2026-05-08
 
 ### Fixed

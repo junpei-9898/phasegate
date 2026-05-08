@@ -32,8 +32,12 @@ export class AggregateValidationResultsUseCase {
         continue;
       }
 
+      // ADR-017: warning-only validator fail は failOnWarning=false で overall PASS、true で従来挙動 (FAIL)
+      const hasNonWarningError = result.errors.some((e) => e.severity !== 'warning');
       const hasWarnings = result.errors.some((e) => e.severity === 'warning');
-      const hasFail = !result.passed || (failOnWarning && hasWarnings);
+      const isEmptyFail = !result.passed && result.errors.length === 0;
+      const hasFail =
+        !result.passed && (isEmptyFail || hasNonWarningError || (failOnWarning && hasWarnings));
 
       if (hasFail) {
         failedValidators++;

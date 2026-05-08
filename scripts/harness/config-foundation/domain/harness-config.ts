@@ -13,6 +13,7 @@ import { PlanningModeConfig } from './value-objects/planning-mode-config.js';
 import { ProjectConfig } from './value-objects/project-config.js';
 import { QuickModeConfig } from './value-objects/quick-mode-config.js';
 import { ReportingConfig } from './value-objects/reporting-config.js';
+import { ValidateConfig } from './value-objects/validate-config.js';
 import { HarnessesConfig } from './value-objects/harnesses-config.js';
 import type { FeatureNameValue } from './value-objects/feature-name.js';
 import type { FeatureName } from './value-objects/feature-name.js';
@@ -49,6 +50,7 @@ export interface HarnessConfigSourceDocument {
   harnesses: Partial<HarnessConfigResolvedDocument['harnesses']>;
   paths: HarnessConfigResolvedDocument['paths'];
   reporting: HarnessConfigResolvedDocument['reporting'];
+  validate?: HarnessConfigResolvedDocument['validate'];
   architecture?: ArchitectureConfigSource;
 }
 
@@ -107,6 +109,9 @@ export interface HarnessConfigResolvedDocument {
   reporting: {
     format: string;
     outputDir: string;
+  };
+  validate: {
+    failOnWarning: boolean;
   };
   architecture?: ArchitectureConfigDocument;
 }
@@ -226,6 +231,7 @@ export class HarnessConfig {
   readonly planningMode: PlanningModeConfig;
   readonly paths: PathsConfig;
   readonly reporting: ReportingConfig;
+  readonly validate: ValidateConfig;
   harnesses: HarnessesConfig;
 
   private sourceDocument: HarnessConfigSourceDocument;
@@ -241,6 +247,7 @@ export class HarnessConfig {
     harnesses: HarnessesConfig;
     paths: PathsConfig;
     reporting: ReportingConfig;
+    validate: ValidateConfig;
     sourceDocument: HarnessConfigSourceDocument;
     resolvedDocument: HarnessConfigResolvedDocument;
     pendingEvents: readonly DomainEvent[];
@@ -253,6 +260,7 @@ export class HarnessConfig {
     this.harnesses = props.harnesses;
     this.paths = props.paths;
     this.reporting = props.reporting;
+    this.validate = props.validate;
     this.sourceDocument = deepClone(props.sourceDocument);
     this.resolvedDocument = deepClone(props.resolvedDocument);
     this.pendingEvents = [...props.pendingEvents];
@@ -271,6 +279,7 @@ export class HarnessConfig {
     const harnesses = HarnessesConfig.create(props.resolvedDocument.harnesses);
     const paths = PathsConfig.create(props.resolvedDocument.paths);
     const reporting = ReportingConfig.create(props.resolvedDocument.reporting);
+    const validate = ValidateConfig.create(props.resolvedDocument.validate);
 
     if (
       props.sourceDocument.project.preset !== props.resolvedDocument.project.preset
@@ -289,6 +298,7 @@ export class HarnessConfig {
       harnesses,
       paths,
       reporting,
+      validate,
       sourceDocument: props.sourceDocument,
       resolvedDocument: props.resolvedDocument,
       pendingEvents: props.pendingEvents ?? [],

@@ -1,4 +1,6 @@
 // @layer test
+// @unit config-foundation
+// @story H04-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -79,6 +81,9 @@ function createMinimalPresetDefinition(): PresetDefinition {
       format: 'json',
       outputDir: 'reports',
     },
+    validate: {
+      failOnWarning: false,
+    },
   };
 }
 
@@ -158,6 +163,7 @@ function createResolvedDocument(): HarnessConfigResolvedDocument {
     harnesses: presetDefinition.harnesses,
     paths: presetDefinition.paths,
     reporting: presetDefinition.reporting,
+    validate: presetDefinition.validate,
   };
 }
 

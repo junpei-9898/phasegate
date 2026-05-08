@@ -174,6 +174,20 @@ function hasFlag(args: readonly string[], flag: string): boolean {
   return args.includes(flag);
 }
 
+/**
+ * WI-094 / ADR-017: CLI で boolean フラグを tri-state に解釈する。
+ * - `--<flag>` 指定 → true
+ * - `--no-<flag>` 指定 → false
+ * - 両方未指定 → undefined (config 値にフォールバック)
+ * 両方同時指定された場合は後置を優先する。
+ */
+function parseTriStateFlag(args: readonly string[], positiveFlag: string, negativeFlag: string): boolean | undefined {
+  const positiveIdx = args.lastIndexOf(positiveFlag);
+  const negativeIdx = args.lastIndexOf(negativeFlag);
+  if (positiveIdx === -1 && negativeIdx === -1) return undefined;
+  return positiveIdx > negativeIdx;
+}
+
 function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
@@ -994,7 +1008,8 @@ async function main(): Promise<void> {
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
         const format = parseFlag(args, "--format") as "human" | "agent" | "ci" | undefined;
-        const failOnWarning = hasFlag(args, "--fail-on-warning");
+        // WI-094 / ADR-017: --fail-on-warning / --no-fail-on-warning / 未指定→config値
+        const failOnWarning = parseTriStateFlag(args, "--fail-on-warning", "--no-fail-on-warning");
         const noL4 = hasFlag(args, "--no-l4");
         const targetPaths = parsePositionalArgs(args.slice(1), ["--layer", "--unit", "--phase", "--format"]);
         const result = await mod.handlers.runValidators.execute({

@@ -61,6 +61,9 @@ function createResolvedConfig(): HarnessConfigV2 {
       format: 'json',
       outputDir: 'reports',
     },
+    validate: {
+      failOnWarning: false,
+    },
   };
 }
 
@@ -82,6 +85,29 @@ target('toValidatorSystemConfig', () => {
             L3: { enabled: true },
             L4: { enabled: false },
           },
+          validate: { failOnWarning: false },
+        });
+      });
+    });
+
+    context('validate.failOnWarning が true の場合', () => {
+      it('failOnWarning=true が validator-system に伝搬すること', () => {
+        // Arrange — WI-094 / ADR-017
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.validate = { failOnWarning: true };
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig);
+
+        // Assert
+        expect(actual).toEqual({
+          project: { preset: 'standard' },
+          layers: {
+            L2: { enabled: true },
+            L3: { enabled: true },
+            L4: { enabled: false },
+          },
+          validate: { failOnWarning: true },
         });
       });
     });

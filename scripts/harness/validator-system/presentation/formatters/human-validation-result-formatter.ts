@@ -15,7 +15,15 @@ export class HumanValidationResultFormatter {
     lines.push('');
 
     for (const result of report.results) {
-      const status = result.skipped ? 'SKIP' : result.passed ? 'PASS' : 'FAIL';
+      // WI-094 / ADR-017: warning-only fail は [WARN]、error severity を含む fail は [FAIL]
+      const hasNonWarningError = result.errors.some((e) => e.severity !== 'warning');
+      const status = result.skipped
+        ? 'SKIP'
+        : result.passed
+          ? 'PASS'
+          : hasNonWarningError || result.errors.length === 0
+            ? 'FAIL'
+            : 'WARN';
       lines.push(`[${status}] ${result.validatorId} (${result.durationMs}ms)`);
       for (const error of result.errors) {
         lines.push(`  ⚠ ${error.message}`);

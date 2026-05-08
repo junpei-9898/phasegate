@@ -50,6 +50,7 @@ const DEFAULT_CONFIG = {
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },
   },
+  validate: { failOnWarning: false },
 };
 
 /** バリデータ定義カタログ（全10件） */
@@ -111,6 +112,8 @@ export interface ValidatorSystemModule {
 export function createValidatorSystemModule(config?: object): ValidatorSystemModule {
   const configData = (config ?? DEFAULT_CONFIG) as typeof DEFAULT_CONFIG;
   const configPort = new HarnessConfigValidatorConfigAdapter(configData);
+  // WI-094 / ADR-017: validate.failOnWarning を handler に伝搬。config 未指定時は false
+  const defaultFailOnWarning = configData.validate?.failOnWarning ?? false;
   const registry = buildDefaultRegistry();
   const executionService = new ValidatorExecutionService({ configPort });
   const contractMapper = new ValidationResultContractMapper();
@@ -215,7 +218,12 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   });
 
   const handlers = {
-    runValidators: new RunValidatorsHandler({ runFullValidationUseCase, runL0ValidatorsUseCase, runL1ValidatorsUseCase }),
+    runValidators: new RunValidatorsHandler({
+      runFullValidationUseCase,
+      runL0ValidatorsUseCase,
+      runL1ValidatorsUseCase,
+      defaultFailOnWarning,
+    }),
     runQuickMode: new RunQuickModeHandler({ runQuickModeUseCase }),
     reportValidationResults: new ReportValidationResultsHandler(),
   };

@@ -405,6 +405,40 @@ Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well
 | `format`    | `string` | `"json"`    | Output format for validation reports.                 |
 | `outputDir` | `string` | `"reports"` | Directory where reports are written.                  |
 
+#### `validate` (severity policy, ADR-017 / WI-094)
+
+Controls how warning-severity validator failures are aggregated into the overall result. Introduced in v0.131.0 to fix the dead-code `failOnWarning` parameter (`aggregate-validation-results-usecase.ts:35-42`) where warning-only fails were always counted as overall FAIL.
+
+| Sub-field        | Type      | Default by preset                                                | Description                                                                                                                                                          |
+|------------------|-----------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `failOnWarning`  | `boolean` | `false` (`minimal` / `standard`), `true` (`strict`)              | When `true`, warning-only validator fails (e.g. L4-001 drift, L4-002 consistency, L4-003 dead-code) count as overall FAIL / exit 1. When `false`, they count as PASS / exit 0. |
+
+CLI override: `--fail-on-warning` / `--no-fail-on-warning` (CLI > config). Both unspecified → config value used.
+
+Resulting label in `human` formatter:
+
+| validator state                     | `failOnWarning=false` | `failOnWarning=true` |
+|-------------------------------------|-----------------------|----------------------|
+| `passed=true` (errors=[])           | `[PASS]`              | `[PASS]`             |
+| `passed=false` + `severity: error`  | `[FAIL]` (overall FAIL) | `[FAIL]` (overall FAIL) |
+| `passed=false` + warning-only       | `[WARN]` (overall PASS) | `[WARN]` (overall FAIL) |
+| `passed=false` + errors=[] (defensive) | `[FAIL]` (overall FAIL) | `[FAIL]` (overall FAIL) |
+| `skipped=true`                      | `[SKIP]`              | `[SKIP]`             |
+
+`agent` / `ci` formatter (JSON output) preserves the existing `severity` field on each error and is unchanged structurally — downstream parsers do not need to update.
+
+##### Migration from v0.130.0 and earlier
+
+The fix is BREAKING for `minimal` / `standard` preset users who relied on warning-only fails stopping CI:
+
+```json
+{
+  "validate": { "failOnWarning": true }
+}
+```
+
+`strict` preset already defaults to `failOnWarning: true`, matching ci-governance template adapter precedent — no migration needed.
+
 #### `baseline` (retrofit grandfather)
 
 Introduced in ISSUE-007 Wave 1 (v0.65.0) and wired into the pre-tool-use hook by Wave 2 (v0.66.0). When phasegate is added to an existing repository, the `baseline` block lets you snapshot the current state of the codebase so legacy files do not trip `phase-gate` on first edit. Files in the snapshot are exempted **until they are structurally modified** (sha1 mismatch); new files are subject to `phase-gate` from the start.

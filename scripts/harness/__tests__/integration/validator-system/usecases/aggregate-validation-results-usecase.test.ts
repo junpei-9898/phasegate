@@ -97,13 +97,13 @@ target('AggregateValidationResultsUseCase', () => {
 
   describe('failOnWarning オプション', () => {
 
-    it('failOnWarning: trueかつwarningが含まれる場合failedValidatorsに計上されること (IT-UC-Agg-006)', () => {
-      // Arrange
+    it('failOnWarning: true で passed=false + warning-only fail は failedValidators に計上 (IT-UC-Agg-006)', () => {
+      // Arrange — ADR-017 後は passed=false + warning が現実的ケース (L4-001 drift 等)
       const usecase = new AggregateValidationResultsUseCase();
       const results = [
         createValidationResultContract({
           validatorId: 'L3-001',
-          passed: true,
+          passed: false,
           errors: [{ code: 'L3-001', severity: 'warning', message: 'warn', suggestion: 'fix' }],
         }),
       ];
@@ -114,14 +114,14 @@ target('AggregateValidationResultsUseCase', () => {
       expect(actual.overallPassed).toBe(false);
     });
 
-    it('failOnWarning: falseかつwarningが含まれる場合passedValidatorsに計上されること (IT-UC-Agg-007)', () => {
-      // Arrange
+    it('failOnWarning: false で passed=true は passedValidators に計上 (IT-UC-Agg-007)', () => {
+      // Arrange — passed=true は errors=[] (INV-5)。warning なし正常ケース
       const usecase = new AggregateValidationResultsUseCase();
       const results = [
         createValidationResultContract({
           validatorId: 'L3-001',
           passed: true,
-          errors: [{ code: 'L3-001', severity: 'warning', message: 'warn', suggestion: 'fix' }],
+          errors: [],
         }),
       ];
       // Act
@@ -129,6 +129,106 @@ target('AggregateValidationResultsUseCase', () => {
       // Assert
       expect(actual.passedValidators).toBe(1);
       expect(actual.overallPassed).toBe(true);
+    });
+  });
+
+  // WI-094 / ADR-017: warning-only validator fail のセマンティクス
+  describe('warning-severity validator fail のセマンティクス (ADR-017)', () => {
+
+    it('passed=false かつ warning-only errors の場合、failOnWarning=false (default) では passedValidators に計上され overallPassed=true (IT-UC-Agg-009)', () => {
+      // Arrange
+      const usecase = new AggregateValidationResultsUseCase();
+      const results = [
+        createValidationResultContract({
+          validatorId: 'L4-001',
+          passed: false,
+          errors: [{ code: 'L4-001', severity: 'warning', message: 'drift detected', suggestion: 'sync design' }],
+        }),
+      ];
+      // Act
+      const actual = usecase.execute({ results, failOnWarning: false });
+      // Assert
+      expect(actual.passedValidators).toBe(1);
+      expect(actual.failedValidators).toBe(0);
+      expect(actual.overallPassed).toBe(true);
+      expect(actual.summary.totalWarnings).toBe(1);
+      expect(actual.summary.totalErrors).toBe(0);
+    });
+
+    it('passed=false かつ error-severity errors の場合、failOnWarning=false でも failedValidators に計上され overallPassed=false (IT-UC-Agg-010)', () => {
+      // Arrange
+      const usecase = new AggregateValidationResultsUseCase();
+      const results = [
+        createValidationResultContract({
+          validatorId: 'L2-001',
+          passed: false,
+          errors: [{ code: 'L2-001', severity: 'error', message: 'phase-gate violation', suggestion: 'add design doc' }],
+        }),
+      ];
+      // Act
+      const actual = usecase.execute({ results, failOnWarning: false });
+      // Assert
+      expect(actual.failedValidators).toBe(1);
+      expect(actual.overallPassed).toBe(false);
+      expect(actual.summary.totalErrors).toBe(1);
+      expect(actual.summary.totalWarnings).toBe(0);
+    });
+
+    it('passed=false かつ warning + error が混在する場合、failOnWarning=false でも failedValidators に計上され overallPassed=false (IT-UC-Agg-011)', () => {
+      // Arrange
+      const usecase = new AggregateValidationResultsUseCase();
+      const results = [
+        createValidationResultContract({
+          validatorId: 'L3-001',
+          passed: false,
+          errors: [
+            { code: 'L3-001', severity: 'warning', message: 'perf hint', suggestion: 'optimize' },
+            { code: 'L3-002', severity: 'error', message: 'security issue', suggestion: 'patch' },
+          ],
+        }),
+      ];
+      // Act
+      const actual = usecase.execute({ results, failOnWarning: false });
+      // Assert
+      expect(actual.failedValidators).toBe(1);
+      expect(actual.overallPassed).toBe(false);
+      expect(actual.summary.totalErrors).toBe(1);
+      expect(actual.summary.totalWarnings).toBe(1);
+    });
+
+    it('passed=false かつ warning-only errors の場合、failOnWarning=true では failedValidators に計上され overallPassed=false (IT-UC-Agg-012)', () => {
+      // Arrange
+      const usecase = new AggregateValidationResultsUseCase();
+      const results = [
+        createValidationResultContract({
+          validatorId: 'L4-001',
+          passed: false,
+          errors: [{ code: 'L4-001', severity: 'warning', message: 'drift detected', suggestion: 'sync design' }],
+        }),
+      ];
+      // Act
+      const actual = usecase.execute({ results, failOnWarning: true });
+      // Assert
+      expect(actual.failedValidators).toBe(1);
+      expect(actual.overallPassed).toBe(false);
+      expect(actual.summary.totalWarnings).toBe(1);
+    });
+
+    it('passed=false かつ errors=[] (防御的ケース) では failedValidators に計上され overallPassed=false (IT-UC-Agg-013)', () => {
+      // Arrange
+      const usecase = new AggregateValidationResultsUseCase();
+      const results = [
+        createValidationResultContract({
+          validatorId: 'L2-001',
+          passed: false,
+          errors: [],
+        }),
+      ];
+      // Act
+      const actual = usecase.execute({ results, failOnWarning: false });
+      // Assert
+      expect(actual.failedValidators).toBe(1);
+      expect(actual.overallPassed).toBe(false);
     });
   });
 

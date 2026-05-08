@@ -1,4 +1,6 @@
 // @layer test
+// @unit config-foundation
+// @story H04-01
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ConfigValidationError } from '../../../config-foundation/domain/errors/config-validation-error.js';
@@ -109,6 +111,9 @@ function createMinimalResolvedDocument(): HarnessConfigResolvedDocument {
       format: 'json',
       outputDir: 'reports',
     },
+    validate: {
+      failOnWarning: false,
+    },
     architecture: {
       preset: 'clean',
       layers: ['domain', 'application', 'infrastructure', 'presentation'],
@@ -138,6 +143,7 @@ function createPresetDefinitions(): Readonly<
       harnesses: minimal.harnesses,
       paths: minimal.paths,
       reporting: minimal.reporting,
+      validate: minimal.validate,
     },
     standard: {
       ...{
@@ -156,6 +162,7 @@ function createPresetDefinitions(): Readonly<
       harnesses: minimal.harnesses,
       paths: minimal.paths,
       reporting: minimal.reporting,
+      validate: minimal.validate,
     },
     strict: {
       ...{
@@ -184,6 +191,7 @@ function createPresetDefinitions(): Readonly<
       },
       paths: minimal.paths,
       reporting: minimal.reporting,
+      validate: minimal.validate,
     },
   };
 }
