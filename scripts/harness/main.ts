@@ -564,6 +564,12 @@ async function main(): Promise<void> {
           );
           console.log(`     See docs/guide/codex-integration.md for the native apply_patch limitation.`);
         }
+        if (skillSet !== "core") {
+          console.log("");
+          console.log("Need help?");
+          console.log("  • Q&A about phasegate concepts: invoke /phasegate-toolkit-guide");
+          console.log("  • Diagnose & tune phasegate.config.json: invoke /phasegate-config-doctor");
+        }
         process.exit(0);
         break;
       }

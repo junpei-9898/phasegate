@@ -9,22 +9,23 @@ phasegate ツールキット自体の概念・仕様・設定について、ユ�
 
 ## このスキルが解決する問題
 
-ユーザーが phasegate を導入したプロジェクトで、AI に phasegate 関連の質問や設定変更を依頼したとき、AI が `node_modules/phasegate/` を grep で調査して仕様を推測する非効率を防ぐ。
+ユーザーが phasegate を導入したプロジェクトで AI に phasegate 関連の質問をしたとき、AI が `node_modules/phasegate/` を grep で調査して仕様を推測する非効率を防ぐ。
 
-phasegate の概念と仕様は **canonical doc が `node_modules/phasegate/docs/guide/` 配下に同梱されている**。本 skill はそれらへの正確なポインタを提供する。
+phasegate の概念・仕様は **canonical doc が `node_modules/phasegate/docs/guide/` 配下に同梱されている**。本 skill はそれらへの正確なポインタを提供する。
 
-## 重要な設計原則
+## 設計原則
 
-**knowledge を skill 本体に固定しない**。本 SKILL.md は「どの doc を読めば答えられるか」のポインタだけを持つ。実際の概念知識は phasegate 同梱 canonical doc から動的に読み込む。
-
-これにより `npm update phasegate` で knowledge が自動追従する (skill markdown に概念本文を書いてしまうとバージョン乖離が起きる)。
+1. **canonical doc を必ず Read してから答える** — training data 依存で答えない (バージョン乖離リスク)
+2. **knowledge を skill 本体に固定しない** — skill markdown には「どの doc を読めば答えられるか」のポインタだけを書く。`npm update phasegate` で knowledge が自動追従する構造を保つ
+3. **read-only に徹する** — 「config の X を変更したい」など設定変更を伴う質問は範囲外。`phasegate-config-doctor` に委譲する
+4. **doc 全文をユーザーに貼り付けない** — 要約 + 該当セクション名引用で返す
 
 ## 回答プロセス
 
 1. ユーザー質問を以下の **概念カテゴリ** にマッピング
-2. 対応する canonical doc を **Read tool で読む**
-3. Read した内容に基づいて回答
-4. 回答内に **doc 内の該当セクションへのポインタ** を含める (ユーザーが詳細確認できるように)
+2. 対応する canonical doc を **Read tool で読む** — 長い doc は当該セクションを `offset` / `limit` で限定して読む
+3. Read した内容に基づいて簡潔に回答 (2-3 段落 + コード例 1 つ程度)
+4. 回答内に **doc 内の該当セクション名** を引用 (ユーザーが doc を直接開いたとき navigation できるように)
 
 ### canonical doc の場所
 
@@ -32,7 +33,7 @@ phasegate がインストールされたプロジェクトでは、以下のい�
 
 ```
 node_modules/phasegate/docs/guide/   # npm 経由でインストールされた consumer プロジェクト
-docs/guide/                           # phasegate リポジトリ自体 (dogfood)
+docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 ```
 
 **先に `node_modules/phasegate/docs/guide/` を試し**、見つからなければ `docs/guide/` を試す。
@@ -48,7 +49,7 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 
 **参照先**: `docs/guide/layer-model.md`
 
-**読み方**: ファイル全体を読む (各層のセクションが明確に分かれている)。
+各層 (L0 / L1 / L2 / L3 / L4) のセクションが見出しで区切られているので、質問された層のセクションのみ `offset` 指定で部分読みすると効率的。
 
 ### 2. 防御プリセット / アーキプリセット (重要: 2 系統あり)
 
@@ -75,9 +76,9 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 - 「relaxedGates って何のため？」
 - 「allowedCategories はどこで設定する？」
 
-**参照先**: `docs/guide/quick-vs-full-mode.md`
+**参照先**: `docs/guide/quick-vs-full-mode.md` (Mode の概念と切り替え条件)
 
-設定キーは `phasegate.config.json` の `quickMode` セクション (`allowedCategories` / `relaxedGates` / `fullModeRequiredWhen`)。詳細は `docs/guide/configuration.md` の `quickMode` セクションも併読。
+設定キー (`quickMode.allowedCategories` / `quickMode.relaxedGates` / `quickMode.fullModeRequiredWhen`) の詳細は `docs/guide/configuration.md` の `quickMode` セクション。
 
 ### 4. Hook 仕様 (PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit)
 
@@ -89,7 +90,7 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 
 **参照先**: `docs/guide/hooks-integration.md`
 
-`Responsibility Separation` セクションに pre / post / Stop の責務分担表がある (WI-086 で追加)。Stop hook の `agentIntegration.stopHook.enforce` オプションは WI-087 Phase C-2 で追加された。
+`Responsibility Separation` セクションに pre / post / Stop の責務分担表があり、Stop hook を strict mode (turn を hard block) にする `agentIntegration.stopHook.enforce` オプションもそこに記載されている。
 
 ### 5. config 全般 (`phasegate.config.json`)
 
@@ -101,7 +102,7 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 
 **参照先**: `docs/guide/configuration.md`
 
-各 top-level セクションごとに説明あり: `project` / `layers` / `quickMode` / `phaseDependencies` / `harnesses` / `paths` / `reporting` / `architecture` / `agentIntegration` / `protectedFiles` / `baseline`。
+各 top-level セクション (`project` / `layers` / `quickMode` / `phaseDependencies` / `harnesses` / `paths` / `reporting` / `architecture` / `agentIntegration` / `protectedFiles` / `baseline`) ごとに説明あり。
 
 ### 6. CLI コマンド一覧
 
@@ -120,7 +121,7 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 - 「既存プロジェクトに後から導入したい」
 
 **参照先**:
-- 新規導入: `docs/guide/installation.md`, `docs/guide/quickstart.md` (存在する場合)
+- 新規導入: `docs/guide/installation.md`
 - 既存プロジェクト導入: `docs/guide/retrofit-adoption.md`
 
 ### 8. skill 一覧と使い分け
@@ -139,28 +140,18 @@ docs/guide/                           # phasegate リポジトリ自体 (dogfood
 
 **参照先**: `docs/guide/codex-integration.md`
 
-## 回答時のスタイル
+## 境界条件
 
-- 簡潔に答える (2-3 段落 + コード例 1 つ程度)
-- canonical doc の **該当セクション名** を必ず引用 (ユーザーが doc を直接開いたときの navigation 補助)
-- 質問が複数カテゴリにまたがる場合は、最も関連性の高い doc を先に読む
-- doc を読まずに回答しない (本 skill の存在意義は「正確な情報源を引く」こと)
+### 質問が複数カテゴリにまたがる場合
 
-## マッピングが曖昧な場合
+最も関連性の高い doc を先に読み、必要なら追加で別 doc を読んで補う。
 
-ユーザー質問が上記カテゴリのいずれにも明確に当てはまらない場合:
+### マッピングが曖昧な場合
 
 1. `docs/guide/` 配下の doc 一覧 (`ls node_modules/phasegate/docs/guide/`) を取得
 2. ファイル名から推測して最も近い doc を読む
 3. それでも見つからなければ、ユーザーに **どの観点を知りたいか** を質問で絞り込む
 
-## 設定変更を伴う質問
+### 設定変更を伴う質問
 
-「config の X を変更したい」など **設定変更を伴う質問** は、本 skill の範囲外。phasegate-config-doctor skill (存在すれば) に委譲するか、ユーザーに「設定変更には phasegate-config-doctor を起動するのが推奨」と案内する。本 skill は **read-only な Q&A に徹する**。
-
-## アンチパターン
-
-- ❌ canonical doc を読まずに training data 依存で答える (バージョン乖離リスク)
-- ❌ doc 全文をユーザーに貼り付ける (要約して該当セクションへのポインタを返す)
-- ❌ `phasegate.config.json` を直接編集する (本 skill は read-only)
-- ❌ skill 本文に概念解説を書き加える (doc に書くべき。skill はポインタ役)
+「config の X を変更したい」など **設定変更を伴う質問** は本 skill のスコープ外。`phasegate-config-doctor` に委譲する (deploy 済の guidance skill。ユーザーに「設定変更には phasegate-config-doctor が推奨」と案内)。

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.125.0] - 2026-05-08
+
+### Changed
+
+- **WI-089 — WI-088 guidance skills の dogfood feedback 反映 (P1, P2, P4, P5 + cohesion audit)** — v0.124.0 で追加した `phasegate-toolkit-guide` / `phasegate-config-doctor` を別 PJ で dogfood 検証した結果を反映し、UX 改善 + skill 内部の冗長 / 凝集度 / 矛盾を解消。
+  - **P1 (discoverability)**: `phasegate init` 完了メッセージの末尾に `Need help?` ブロックを追加。`skillSet !== "core"` 時に `/phasegate-toolkit-guide` (Q&A) と `/phasegate-config-doctor` (config tuning) の起動方法を案内。
+  - **P2 (fresh init shortcut)**: `phasegate-config-doctor` に **Step 1.5: Fresh init 判定** を新設。default config + 設計文書空 + Unit 構造未着手の 3 条件を全て満たすプロジェクトには「先に `/product-architect` で AIDLC を開始するのが効率的」とショートカット応答し、9 観点の機械的診断ノイズを抑制。
+  - **P4 (UX 標準化)**: `phasegate-config-doctor` Step 4 (適用フロー) を `AskUserQuestion` ベースに書き換え。提案件数に応じて 1 回確認 / WARN→SUGGEST 分割を使い分ける指針を明記。
+  - **P5 (consumer noise 削除)**: 両 skill 本文から `WI-086` / `WI-087` 等の実装履歴 WI 番号を削除し、機能ベースの記述 (例: `(v0.122 以降)` / `monorepo 自動検出`) に置き換え。consumer プロジェクトの AI に意味のない historical noise を排除。
+  - **Cohesion audit** (`phasegate-toolkit-guide`): 「重要な設計原則」と「アンチパターン」「回答プロセス」と「回答時のスタイル」「マッピングが曖昧な場合 / 設定変更を伴う質問 / アンチパターン」の 3 重複を統合。設計原則を肯定形 4 項目に正規化、回答プロセスを 4 step に統合、境界条件を 1 セクションにまとめ、アンチパターン section を削除。
+  - **Cohesion audit** (`phasegate-config-doctor`): 設計原則を 6 項目の肯定形に正規化しアンチパターン section を削除、観点 1 (schema バージョン) と観点 3 (architecture.preset) を「観点 1: architecture セクション (preset / 整合性)」に統合 (architecture key 不在判定 + 推奨 preset 推測 + custom 値検証を一体化)、Step 3 末尾の重複した「適用しますか？」列挙を Step 4 に統合、Step 4 末尾と重複していた「出力例 (簡易)」section を削除。
+  - **矛盾解消** (`phasegate-config-doctor` 観点 3 paths): default path が「実プロジェクトのパスに合っていれば OK」という曖昧条件を「Read tool でリストして存在 + 中身ありなら OK / 存在しないか空なら scaffold 期 (Step 1.5) または別配置の可能性」と判定基準を明示化。
+  - **検証**: 両 SKILL.md を `skill-creator/scripts/quick_validate.py` で再 validation pass。全 3499 テストグリーン (前回と同数、新規テストは追加せず — UX 改善 + 文章整理のため挙動変更なし)。L1 lint 違反なし。
+  - **スコープ外**: P3 (canonical doc 日本語化 / 各 doc に日本語サマリ追加) は分量大のため別 WI (WI-090 候補) で扱う。
+
 ## [0.124.0] - 2026-05-08
 
 ### Added

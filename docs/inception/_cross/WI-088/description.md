@@ -116,8 +116,8 @@ phasegate `init` で `.claude/skills/` 配下に既に 28 skill をデプロイ�
 - [x] guidance skill の knowledge は **canonical doc へのポインタ式** で書かれており、phasegate のバージョン更新で自動追従できる構造になっている (skill markdown に concept の本文を埋め込まない)
 - [x] CHANGELOG に WI-088 として記載 (v0.123.0 / v0.124.0 両方)
 - [x] minor version bump (0.122.0 → 0.123.0 → 0.124.0)
-- [ ] `npx phasegate init` 実行後、`.claude/skills/phasegate-toolkit-guide/SKILL.md` と `.claude/skills/phasegate-config-doctor/SKILL.md` が deploy される (publish 後 dogfood で確認)
-- [ ] dogfood: phasegate リポジトリ自身で skill を起動し、「L1 と L2 の違いを教えて」「config に architecture preset 追加して」などの典型クエリで動作確認 (publish 後)
+- [x] `npx phasegate init` 実行後、`.claude/skills/phasegate-toolkit-guide/SKILL.md` と `.claude/skills/phasegate-config-doctor/SKILL.md` が deploy される (2026-05-08 `npx phasegate@0.124.0 init --skill-set all` を `/tmp/phasegate-dogfood-wi088` で実行、30 skills deploy + 両 SKILL.md frontmatter 健全性確認済)
+- [ ] dogfood: phasegate リポジトリ自身で skill を起動し、「L1 と L2 の違いを教えて」「config に architecture preset 追加して」などの典型クエリで動作確認 (publish 後 — AI session 側での trigger 検証が必要、user 側で実機確認待ち)
 - [ ] README.md / quickstart.md に guidance skill の使い方セクション追加 (将来別 WI で対応 — 本 WI では skill 本体追加に集中)
 
 ## スコープ外
@@ -190,3 +190,14 @@ phasegate `init` で `.claude/skills/` 配下に既に 28 skill をデプロイ�
 **Phase B 適用範囲**: WI-087 Phase B で実装した `detectWorkspaceTargetDirs` / `detectFormatter` 既存ロジックを skill body の診断観点 9 (hook-config.json) に文脈として参照。skill 自体は機械検出ロジックを再実装せず、AI が hook-config.json を Read して診断する設計。
 
 **WI-088 全体スコープ**: 本 WI の guidance skill 系列 (Phase A: phasegate-toolkit-guide / Phase B: phasegate-config-doctor) は v0.124.0 で完了。`phasegate-troubleshoot` (症状ベース診断) は dogfood 結果を見てから別 WI で起票する方針 (本 WI スコープ外)。
+
+### Dogfood 検証 — 2026-05-08
+
+publish 後の deploy 確認:
+
+- 別ディレクトリ `/tmp/phasegate-dogfood-wi088` に `npm install phasegate@0.124.0 --save-dev` → npm tarball 内に `node_modules/phasegate/skills/{phasegate-toolkit-guide,phasegate-config-doctor}/` 同梱を確認
+- `npx phasegate init --skill-set all --yes` 実行 → `✓ Skills deployed to ... (30 skills, set: all)` を確認 (Phase A/B 反映前は 28 skills、+2 で 30 と整合)
+- deploy 後 `skills/phasegate-toolkit-guide/SKILL.md` / `skills/phasegate-config-doctor/SKILL.md` の frontmatter (name / description) が破損なく読み込め、AI agent の trigger source として機能する形状を保持していることを確認
+- `.claude/skills` は `../skills` への symlink でデプロイされ、両 skill が `.claude/skills/phasegate-toolkit-guide/` `.claude/skills/phasegate-config-doctor/` として AI から参照可能
+
+**結論**: Phase A/B の deploy 経路は v0.124.0 で正常動作。残るのは AI session 内での trigger 動作確認のみで、これは user 側で実利用しながら検証する想定。
