@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.128.0] - 2026-05-08
+
+### Fixed
+
+- **WI-091 finding #1 follow-up — `validate --layer L4` で `layers.L4.enabled: false` が runtime で実際に機能するよう composition root に config を thread (GitHub Issue #4)** — v0.127.0 publish 後の dogfood (`/tmp/phasegate-dogfood-wi091`, phasegate@0.127.0) で finding #1 の修正が runtime で機能していないことが判明したため緊急修正。
+  - **症状**: `phasegate.config.json` に `layers.L4.enabled: false` を設定して `phasegate validate --layer L4` を実行しても、L4-001/002 が `[PASS]` (実際には実行された) となり、L4-003 だけが `[SKIP]` (strictOnly のため)。期待挙動は L4-001/002/003 すべて `[SKIP]`。
+  - **根本原因**: `scripts/harness/main.ts:979` の `validate` case で `createValidatorSystemModule()` が config 引数なしで呼ばれており、`composition-root.ts:111-114` の `const configData = (config ?? DEFAULT_CONFIG)` で常に `DEFAULT_CONFIG` (L4.enabled=true) が使われていた。WI-091 finding #1 で `RunL4ValidatorsUseCase` に追加した gate (`if (!layerConfig.enabled) return [];`) はソースに正しく入っていたが、上流 DI で user の config が threading されていないため runtime で常に enabled=true 判定となり gate が hit せず drift / consistency / dead-code service が呼ばれていた。WI-085 retrospective (`feedback_dogfood_before_release.md`) で記録した「composition root の DI 配線漏れ」と同種の bug が再発した形。
+  - **修正**: `main.ts` に `toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefined)` translator を追加し、HarnessConfigV2 から validator-system が期待する shape (`{ project: { preset }, layers: { L2/L3/L4: { enabled } } }`) に変換。`validate` case で `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig))` を呼ぶように修正。`validators` field は thread しない設計判断 — preset-style の `["drift-detector"]` が validator-code-style の `L4-001/002/003` を override し全 SKIP になる症状を回避するため、`validators` の解決は composition root 側の `defaultValidators[layer]` フォールバックに委ねる。
+  - **テスト**: spawn 経由結合テスト 2 ケース (`scripts/harness/__tests__/integration/harness-api/validate-layer-config.integration.test.ts`) 新規追加:
+    - `layers.L4.enabled: false` で `validate --layer L4` 実行時、L4 全 validator が `[SKIP]` 表示 + 総合判定 PASS + exit 0
+    - `layers.L4.enabled: true` で L4 validator が enabled で実行 (回帰防止)
+  - 全 3516 テスト (前回 3514 + 新規 2) グリーン、L1 lint 違反なし。
+  - **スコープ外 (別 follow-up commit で対応)**: 同種の DI 配線漏れが `harness-api/infrastructure/adapters/validator-system-execution-adapter.ts:27/38/51` (phasegate:detect-drift / phasegate:check-ready 等の harness-api flow) と `integrations/pre-commit.ts:306/338` (Husky pre-commit) にも存在するが、別ハンドラ経路で `resolvedConfig` がスコープ外のため別途修正。
+  - **教訓 (memory 反映)**: `feedback_dogfood_before_release.md` に「`paths` config / Artifact / PhaseConfigProviderPort 改修」と並べて「composition root の `createValidatorSystemModule(config?)` 経路」を追記。`createValidatorSystemModule()` を呼ぶ全 site (現状 6 箇所) で config が threading されているか毎回 grep 確認する規律を強化する。
+
 ## [0.127.0] - 2026-05-08
 
 ### Fixed

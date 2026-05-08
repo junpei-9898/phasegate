@@ -286,10 +286,29 @@ ADR を 1 本起票し、(A)〜(D) の採用方針 + (C) の互換戦略を確�
 - **finding #4** (paths.designDocs 完全 threading): `phase-dependency-model/domain/definitions/{full,standard,minimal}-phase-nodes.ts` 3 ファイルと `traceability-model/{domain/services/traceability-chain-builder.ts, infrastructure/gateways/markdown-story-catalog-gateway.ts}` 2 ファイルの hardcoded `docs/product/...` を `{designDocsRoot}/...` placeholder に置換し、`Artifact.resolve(pathRoots)` で `paths.designDocs` 値を展開する作業。WI-085 で `inceptionDocs` 側 threading のみ通った漏れの補完。**story-implementor 案件**。
 - **finding #5 advanced** (`pointers:` block 仕様): 設計文書側で `element → file path` を明示する高度仕様の策定 — ADR で要件確定後に別 WI。本 v0.127.0 の immediate 修正で false-positive の主原因 (qualifier) は解消されたため緊急度は低下。
 
-### dogfood 検証 (post-publish) — 予定
+### dogfood 検証 (post-publish) — v0.127.0 結果
 
-publish 後 `/tmp/phasegate-dogfood-wi091` で `npx phasegate@0.127.0` を install し、以下 3 ケースを再検証:
+publish 後 `/tmp/phasegate-dogfood-wi091` で `npx phasegate@0.127.0` を install して 3 ケース検証した結果:
 
-1. `layers.L4.enabled: false` + `validate --layer L4` → L4-001/002/003 が `[SKIP]` 表示 (前回は L4-001/002 が `[PASS]` で実行されていた)
-2. `update-skills --help` / `phasegate:detect-drift --help` / `validate --help` → 副作用走行せず usage + exit 0
-3. `## CommonIdInfo（エンティティ・新規）` を含む `domain_model.md` で drift-detect 実行 → element 名が `CommonIdInfo` に normalize される
+1. **finding #5 normalize**: ✅ `## CommonIdInfo（エンティティ・新規）` を含む `domain_model.md` で `phasegate phasegate:detect-drift` 実行 → output に `"element":"CommonIdInfo"` (qualifier 除去済) が出力された。fix が runtime で機能していることを確認。
+2. **finding #3 --help pre-dispatch**: ✅ `update-skills --help` / `phasegate:detect-drift --help` / `validate --help` で副作用走行せず usage + exit 0 (本 dogfood では既に commit 段階の結合テストで spawn 経由検証済、追加で実機確認)。
+3. **finding #1 L4 enabled gate**: ❌ `layers.L4.enabled: false` + `validate --layer L4` 実行で L4-001/002 が `[PASS]` (実行された) のままで `[SKIP]` にならない。fix がソースには入っているが runtime で機能していない症状を確認 → DI 配線漏れと特定 (composition root が user config を受け取っていない)。**v0.128.0 で follow-up fix**。
+
+### v0.128.0 完了 — 2026-05-08 (finding #1 follow-up)
+
+dogfood で発覚した finding #1 の DI 配線漏れを修正:
+
+- **commit `adb7553`**: `main.ts` に `toValidatorSystemConfig` translator 追加、`validate` case で `createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig))` を呼ぶように修正。`validators` field は thread しない (preset-style の `["drift-detector"]` が validator-code-style `L4-001/002/003` を override し全 SKIP になる症状を回避、defaultValidators[layer] フォールバックに委ねる)。
+- 結合テスト 2 ケース新規追加 (`validate-layer-config.integration.test.ts`)。
+- 全 3516 テスト (前回 3514 + 新規 2) グリーン。
+
+**v0.128.0 dogfood 検証 (post-publish) — 予定**:
+
+1. `layers.L4.enabled: false` + `validate --layer L4` → L4-001/002/003 すべて `[SKIP]` + 総合判定 PASS + exit 0
+
+**残 follow-up (別 commit で対応)**:
+- `harness-api/infrastructure/adapters/validator-system-execution-adapter.ts:27/38/51` の 3 site (phasegate:detect-drift / phasegate:check-ready / runAllValidators flow)
+- `integrations/pre-commit.ts:306/338` の 2 site (Husky pre-commit)
+これらも同種の DI 配線漏れだが、別ハンドラ経路で `resolvedConfig` がスコープ外のため別途修正。phasegate:detect-drift で finding #5 normalize が機能したのは drift detection が design adapter を直接呼ぶ経路で、L4 enabled gate を経由していないため。
+
+**教訓 (memory 反映予定)**: `feedback_dogfood_before_release.md` に composition root の DI 経路 (`createValidatorSystemModule(config?)` を呼ぶ全 6 site) で config threading を毎回 grep 確認する規律を追記する。
