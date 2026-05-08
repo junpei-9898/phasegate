@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.123.0] - 2026-05-08
+
+### Added
+
+- **WI-088 Phase A — bundled guidance skill `phasegate-toolkit-guide`** — phasegate を導入したプロジェクトで AI エージェントが phasegate ツールキット自体の概念 (L0-L4 / 防御プリセット / アーキプリセット / Quick Mode / Hook 仕様 / config 全般) について質問されたとき、`node_modules/phasegate/docs/guide/` 配下の canonical doc を読み込んで正確に回答するための skill を追加。
+  - **設計原則 (stale 回避)**: SKILL 本体に概念知識を固定せず、概念カテゴリごとに canonical doc へのポインタのみを記述。`npm update phasegate` で knowledge が自動追従する構造。
+  - **新規ファイル**: `skills/phasegate-toolkit-guide/SKILL.md` を `skill-creator` スキル (`init_skill.py`) 経由で作成 (validation pass)。9 概念カテゴリ (L0-L4 layer model / preset 2 系統 / Quick vs Full Mode / hook 仕様 / config 全般 / CLI / installation / skills overview / codex integration) ごとに `docs/guide/*.md` への参照を整理。
+  - **skill-deployer 拡張**: `scripts/harness/setup/skill-deployer.ts` の `SkillCategory` type union に `"guidance"` を追加、`SKILL_CATEGORIES.guidance = ["phasegate-toolkit-guide"]` を登録、`getSkillsForSet("all")` の返り値に guidance カテゴリを含めた。`getSkillsForSet("core")` には含めない (core は continuous governance 用、guidance は ad-hoc Q&A 用なので責務分離)。
+  - **テスト追加**: 4 ケース (`scripts/harness/__tests__/unit/setup/skill-deployer.test.ts` に `SKILL_CATEGORIES.guidance` 登録 / `getCategoryForSkill('phasegate-toolkit-guide') === 'guidance'` / `getSkillsForSet('all')` に含まれる / `getSkillsForSet('core')` に含まれない)。全 3495 テスト (前回 3491 + 新規 4) グリーン。
+  - **互換性**: 既存 deploy ロジックに変更なし、`getSkillsForSet("core")` の返り値も変更なし。consumer プロジェクトで `phasegate init` 実行時、`.claude/skills/` 配下に `phasegate-toolkit-guide` が追加 deploy されるのみ。
+
 ## [0.122.0] - 2026-05-08
 
 ### Added

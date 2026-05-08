@@ -11,7 +11,10 @@ import {
   deployHuskyCommitMsgHook,
   deployHuskyHook,
   deploySkills,
+  getCategoryForSkill,
+  getSkillsForSet,
   initHarnessConfig,
+  SKILL_CATEGORIES,
 } from "../../../setup/skill-deployer.js";
 import { context, target } from "../../helpers/test-helpers.ts";
 
@@ -318,6 +321,52 @@ target("deployDesignDocs", () => {
           ],
           skippedFiles: ["docs/principles/testing-rules.md"],
         });
+      });
+    });
+  });
+});
+
+target("SKILL_CATEGORIES / getSkillsForSet (WI-088 guidance category)", () => {
+  describe("guidance カテゴリの登録", () => {
+    context("SKILL_CATEGORIES に guidance キーを追加した場合", () => {
+      it("phasegate-toolkit-guide が guidance カテゴリ配下に登録されていること", () => {
+        // Arrange & Act
+        const actual = SKILL_CATEGORIES.guidance;
+
+        // Assert
+        expect(actual).toContain("phasegate-toolkit-guide");
+      });
+    });
+
+    context("getCategoryForSkill('phasegate-toolkit-guide') 呼び出し時", () => {
+      it("guidance カテゴリを返すこと", () => {
+        // Arrange & Act
+        const actual = getCategoryForSkill("phasegate-toolkit-guide");
+
+        // Assert
+        expect(actual).toBe("guidance");
+      });
+    });
+  });
+
+  describe("getSkillsForSet の skillSet 別返り値", () => {
+    context("skillSet='all' を指定した場合", () => {
+      it("phasegate-toolkit-guide が含まれること", () => {
+        // Arrange & Act
+        const actual = getSkillsForSet("all");
+
+        // Assert
+        expect(actual).toContain("phasegate-toolkit-guide");
+      });
+    });
+
+    context("skillSet='core' を指定した場合", () => {
+      it("phasegate-toolkit-guide が含まれないこと（guidance は core に属さない）", () => {
+        // Arrange & Act
+        const actual = getSkillsForSet("core");
+
+        // Assert
+        expect(actual).not.toContain("phasegate-toolkit-guide");
       });
     });
   });

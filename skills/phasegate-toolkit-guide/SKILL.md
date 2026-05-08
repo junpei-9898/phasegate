@@ -1,0 +1,166 @@
+---
+name: phasegate-toolkit-guide
+description: phasegate ツールキット自体に関する Q&A スキル。ユーザーが phasegate の概念 (L0-L4 レイヤーモデル / 防御プリセット / アーキプリセット / Quick Mode と Full Mode / Hook 仕様 / config 全般) について質問したとき、対応する canonical doc を読み込んでから回答する。使用タイミング:「phasegate の L1 と L2 の違いは？」「Quick Mode で許可されるカテゴリを増やしたい」「architecture.preset の使い分けは？」「phasegate の hook って何が動いている？」「phasegate.config.json の relaxedGates は何のため？」など phasegate ツールキット内部の仕様・設定を尋ねる質問。
+---
+
+# Phasegate Toolkit Guide
+
+phasegate ツールキット自体の概念・仕様・設定について、ユーザーの質問に正確に答えるための skill。
+
+## このスキルが解決する問題
+
+ユーザーが phasegate を導入したプロジェクトで、AI に phasegate 関連の質問や設定変更を依頼したとき、AI が `node_modules/phasegate/` を grep で調査して仕様を推測する非効率を防ぐ。
+
+phasegate の概念と仕様は **canonical doc が `node_modules/phasegate/docs/guide/` 配下に同梱されている**。本 skill はそれらへの正確なポインタを提供する。
+
+## 重要な設計原則
+
+**knowledge を skill 本体に固定しない**。本 SKILL.md は「どの doc を読めば答えられるか」のポインタだけを持つ。実際の概念知識は phasegate 同梱 canonical doc から動的に読み込む。
+
+これにより `npm update phasegate` で knowledge が自動追従する (skill markdown に概念本文を書いてしまうとバージョン乖離が起きる)。
+
+## 回答プロセス
+
+1. ユーザー質問を以下の **概念カテゴリ** にマッピング
+2. 対応する canonical doc を **Read tool で読む**
+3. Read した内容に基づいて回答
+4. 回答内に **doc 内の該当セクションへのポインタ** を含める (ユーザーが詳細確認できるように)
+
+### canonical doc の場所
+
+phasegate がインストールされたプロジェクトでは、以下のいずれかにある:
+
+```
+node_modules/phasegate/docs/guide/   # npm 経由でインストールされた consumer プロジェクト
+docs/guide/                           # phasegate リポジトリ自体 (dogfood)
+```
+
+**先に `node_modules/phasegate/docs/guide/` を試し**、見つからなければ `docs/guide/` を試す。
+
+## 概念カテゴリと参照先 doc
+
+### 1. L0-L4 レイヤーモデル
+
+ユーザー質問例:
+- 「phasegate の L1 と L2 の違いって何？」
+- 「L0 ってどこで動いてる？」
+- 「L3 と L4 の検査内容を教えて」
+
+**参照先**: `docs/guide/layer-model.md`
+
+**読み方**: ファイル全体を読む (各層のセクションが明確に分かれている)。
+
+### 2. 防御プリセット / アーキプリセット (重要: 2 系統あり)
+
+ユーザー質問例:
+- 「preset って何？」
+- 「standard と strict の違いは？」
+- 「architecture.preset で onion と clean どっち選ぶべき？」
+- 「アーキプリセットを custom にしたいんだけど」
+
+**重要**: phasegate には **「防御プリセット」(`project.preset`) と「アーキプリセット」(`architecture.preset`) の 2 系統** がある。質問が曖昧な場合は **どちらを聞いているか確認** すること:
+
+| 呼称 | 概念 | 設定キー | 値の例 |
+|---|---|---|---|
+| **防御プリセット** | L3 CI で検査強度を選ぶ | `project.preset` | `minimal` / `standard` / `strict` |
+| **アーキプリセット** | L1 の層構造と依存方向を定義 | `architecture.preset` | `clean` / `strict-ddd` / `onion` / `hexagonal` / `layered` / `flat` / `custom` |
+
+**参照先**: `docs/guide/preset-selection.md` (両系統の詳細解説)
+
+### 3. Quick Mode と Full Mode
+
+ユーザー質問例:
+- 「Quick Mode と Full Mode の違いは？」
+- 「Quick Mode で書き込みが許可されるカテゴリを増やしたい」
+- 「relaxedGates って何のため？」
+- 「allowedCategories はどこで設定する？」
+
+**参照先**: `docs/guide/quick-vs-full-mode.md`
+
+設定キーは `phasegate.config.json` の `quickMode` セクション (`allowedCategories` / `relaxedGates` / `fullModeRequiredWhen`)。詳細は `docs/guide/configuration.md` の `quickMode` セクションも併読。
+
+### 4. Hook 仕様 (PreToolUse / PostToolUse / Stop / SessionStart / UserPromptSubmit)
+
+ユーザー質問例:
+- 「phasegate の hook って何が動いてる？」
+- 「PreToolUse で何が走る？」
+- 「Stop hook の enforce オプションって何？」
+- 「post-tool-use で format / lint が走らない、なぜ？」
+
+**参照先**: `docs/guide/hooks-integration.md`
+
+`Responsibility Separation` セクションに pre / post / Stop の責務分担表がある (WI-086 で追加)。Stop hook の `agentIntegration.stopHook.enforce` オプションは WI-087 Phase C-2 で追加された。
+
+### 5. config 全般 (`phasegate.config.json`)
+
+ユーザー質問例:
+- 「phasegate.config.json の各セクションの意味は？」
+- 「baseline.enabled って何？」
+- 「protectedFiles って何？」
+- 「project.paths にはどうやって書く？」
+
+**参照先**: `docs/guide/configuration.md`
+
+各 top-level セクションごとに説明あり: `project` / `layers` / `quickMode` / `phaseDependencies` / `harnesses` / `paths` / `reporting` / `architecture` / `agentIntegration` / `protectedFiles` / `baseline`。
+
+### 6. CLI コマンド一覧
+
+ユーザー質問例:
+- 「phasegate のコマンド一覧を教えて」
+- 「validate と lint と check-phase の違いは？」
+- 「init コマンドは何をする？」
+
+**参照先**: `docs/guide/cli-reference.md`
+
+### 7. インストールと初期設定
+
+ユーザー質問例:
+- 「phasegate のインストール方法は？」
+- 「monorepo で使うときは？」
+- 「既存プロジェクトに後から導入したい」
+
+**参照先**:
+- 新規導入: `docs/guide/installation.md`, `docs/guide/quickstart.md` (存在する場合)
+- 既存プロジェクト導入: `docs/guide/retrofit-adoption.md`
+
+### 8. skill 一覧と使い分け
+
+ユーザー質問例:
+- 「phasegate にはどんな skill がある？」
+- 「story-implementor と quick-implementor の違いは？」
+
+**参照先**: `docs/guide/skills-overview.md`
+
+### 9. Codex 統合
+
+ユーザー質問例:
+- 「codex CLI と組み合わせて使うには？」
+- 「codex-delegator って何？」
+
+**参照先**: `docs/guide/codex-integration.md`
+
+## 回答時のスタイル
+
+- 簡潔に答える (2-3 段落 + コード例 1 つ程度)
+- canonical doc の **該当セクション名** を必ず引用 (ユーザーが doc を直接開いたときの navigation 補助)
+- 質問が複数カテゴリにまたがる場合は、最も関連性の高い doc を先に読む
+- doc を読まずに回答しない (本 skill の存在意義は「正確な情報源を引く」こと)
+
+## マッピングが曖昧な場合
+
+ユーザー質問が上記カテゴリのいずれにも明確に当てはまらない場合:
+
+1. `docs/guide/` 配下の doc 一覧 (`ls node_modules/phasegate/docs/guide/`) を取得
+2. ファイル名から推測して最も近い doc を読む
+3. それでも見つからなければ、ユーザーに **どの観点を知りたいか** を質問で絞り込む
+
+## 設定変更を伴う質問
+
+「config の X を変更したい」など **設定変更を伴う質問** は、本 skill の範囲外。phasegate-config-doctor skill (存在すれば) に委譲するか、ユーザーに「設定変更には phasegate-config-doctor を起動するのが推奨」と案内する。本 skill は **read-only な Q&A に徹する**。
+
+## アンチパターン
+
+- ❌ canonical doc を読まずに training data 依存で答える (バージョン乖離リスク)
+- ❌ doc 全文をユーザーに貼り付ける (要約して該当セクションへのポインタを返す)
+- ❌ `phasegate.config.json` を直接編集する (本 skill は read-only)
+- ❌ skill 本文に概念解説を書き加える (doc に書くべき。skill はポインタ役)

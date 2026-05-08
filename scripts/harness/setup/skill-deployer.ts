@@ -17,7 +17,7 @@ const HOOKS_TARGET_DIR = ".claude";
 
 // ── Skill Category Map ──
 
-export type SkillCategory = "core" | "aidlc" | "utility";
+export type SkillCategory = "core" | "aidlc" | "utility" | "guidance";
 export type SkillSet = "core" | "all";
 
 export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
@@ -52,13 +52,19 @@ export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
     "unit-test-logic-designer",
   ],
   utility: ["codex-delegator", "skill-creator"],
+  guidance: ["phasegate-toolkit-guide"],
 } as const;
 
 export function getSkillsForSet(skillSet: SkillSet): string[] {
   if (skillSet === "core") {
     return [...SKILL_CATEGORIES.core];
   }
-  return [...SKILL_CATEGORIES.core, ...SKILL_CATEGORIES.aidlc, ...SKILL_CATEGORIES.utility];
+  return [
+    ...SKILL_CATEGORIES.core,
+    ...SKILL_CATEGORIES.aidlc,
+    ...SKILL_CATEGORIES.utility,
+    ...SKILL_CATEGORIES.guidance,
+  ];
 }
 
 export function getCategoryForSkill(skillName: string): SkillCategory | null {
