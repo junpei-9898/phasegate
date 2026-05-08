@@ -52,7 +52,15 @@ function extractConceptNames(markdown: string): string[] {
     // 既知のメタ見出しは暗黙的にスキップ
     if (isMetaHeading(name)) continue;
     // 名前から末尾のスキップマーカーを落とす (念のため)
-    headings.push(name.replace(SKIP_MARKER, '').trim());
+    // WI-091 finding #5: `（〜）` / `(〜)` qualifier (例: `（エンティティ・新規）`) を strip
+    // して code 側の class 名と exact match できるようにする
+    const stripped = name
+      .replace(SKIP_MARKER, '')
+      .replace(/[（(][^）)]*[）)]/g, '')
+      .trim();
+    if (stripped.length > 0) {
+      headings.push(stripped);
+    }
   }
   return headings;
 }

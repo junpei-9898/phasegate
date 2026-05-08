@@ -140,4 +140,111 @@ target('MarkdownDesignDocumentAdapter', () => {
       });
     });
   });
+
+  describe('括弧 qualifier の normalize (WI-091 finding #5)', () => {
+    context('全角括弧 `（〜）` の qualifier 付き見出しを含む場合', () => {
+      it('qualifier が除去された名前が concepts に含まれること (IT-REPO-DesignDoc-007)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi091-fullwidth-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            [
+              '## CommonIdInfo（エンティティ・新規）',
+              '',
+              '## Consent（既存・enum 値追加）',
+              '',
+            ].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElements(['test-unit']);
+
+          // Assert
+          expect(actual).toEqual(['CommonIdInfo', 'Consent']);
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+
+    context('半角括弧 `(〜)` の qualifier 付き見出しを含む場合', () => {
+      it('qualifier が除去された名前が concepts に含まれること (IT-REPO-DesignDoc-008)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi091-halfwidth-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            ['## OldClass (legacy)', '', '## NewClass (planned)', ''].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElements(['test-unit']);
+
+          // Assert
+          expect(actual).toEqual(['OldClass', 'NewClass']);
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+
+    context('連続する複数 qualifier `Foo（A）（B）` を含む場合', () => {
+      it('全 qualifier が除去された名前が concepts に含まれること (IT-REPO-DesignDoc-009)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi091-multi-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            ['## Foo（A）（B）', '', '## Bar (x)（y）', ''].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElements(['test-unit']);
+
+          // Assert
+          expect(actual).toEqual(['Foo', 'Bar']);
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+
+    context('qualifier のみで本体名が無い見出しを含む場合', () => {
+      it('strip 後 0 文字になる見出しは concepts に含まれないこと (IT-REPO-DesignDoc-010)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi091-empty-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          await writeFile(
+            path.join(unitDir, 'domain_model.md'),
+            ['## ValidName', '', '## （メタ情報）', '', '## AnotherName', ''].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+
+          // Act
+          const actual = await adapter.getElements(['test-unit']);
+
+          // Assert
+          expect(actual).toEqual(['ValidName', 'AnotherName']);
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
+      });
+    });
+  });
 });
