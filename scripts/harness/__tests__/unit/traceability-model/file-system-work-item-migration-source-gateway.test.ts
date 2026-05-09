@@ -2,6 +2,7 @@
 // @layer test
 // @story H03-06
 // @work-item-id WI-027
+// @work-item-id WI-106
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -158,6 +159,23 @@ target("FileSystemWorkItemMigrationSourceGateway.listLegacyIssueDirectories", ()
 
         // Assert
         expect(actual).toEqual(["WI-001", "WI-002", "WI-026"]);
+      });
+    });
+
+    context("既存WI番号が_crossとunit配下にまたがって存在する場合 (WI-106)", () => {
+      it("採番用の既存IDとして全て返す", async () => {
+        // Arrange
+        const rootDir = await createTempRoot();
+        await mkdir(path.join(rootDir, "docs/inception/_cross/WI-001"), { recursive: true });
+        await mkdir(path.join(rootDir, "docs/inception/agent-integration/WI-002"), { recursive: true });
+        await mkdir(path.join(rootDir, "docs/inception/ci-governance/WI-010"), { recursive: true });
+        const sut = new FileSystemWorkItemMigrationSourceGateway({ rootDir });
+
+        // Act
+        const actual = await sut.listExistingWorkItemIds();
+
+        // Assert
+        expect(actual).toEqual(["WI-001", "WI-002", "WI-010"]);
       });
     });
 

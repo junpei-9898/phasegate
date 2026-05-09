@@ -15,6 +15,8 @@
 - 単一 Unit WI は `docs/inception/{unit}/{WI-XXX}/`
 - WI に紐付かない横断調査は `docs/inception/_shared/`
 
+新規 WI 作成時は `docs/inception/**/WI-XXX/` と `id: WI-XXX` を確認し、inception 全体で重複しない番号を使う。`description.md` の parent directory 名と frontmatter `id` は一致させる。
+
 実装・テスト変更の前に、必要な inception 成果物と `docs/product/...` への `@work-item-id WI-XXX` 付き反映が済んでいるか確認する。未反映なら、先にドキュメントを整える。
 
 ## ハーネス検証

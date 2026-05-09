@@ -2,7 +2,7 @@
 id: WI-106
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [traceability-model, validator-system, ci-governance]
 source: internal
 ---
@@ -50,13 +50,20 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] `docs/folder_management_rules.md` に WI ID global unique ルールが明記されている
-- [ ] `AGENTS.md` に新規 WI 起票時の重複確認ルールが最小限で追記されている
-- [ ] `docs/inception/**/description.md` の frontmatter `id` 重複を検出する自動テストがある
-- [ ] directory 名 `WI-XXX` と frontmatter `id` の不一致を検出する自動テストがある
-- [ ] `_cross` と Unit 配下をまたいだ重複 fixture が fail する
-- [ ] `migrate work-items` の採番が `_cross` を含む既存 WI を避ける
-- [ ] `pnpm harness:check-ready` または該当 validator コマンドで再発防止が確認できる
+- [x] `docs/folder_management_rules.md` に WI ID global unique ルールが明記されている
+- [x] `AGENTS.md` に新規 WI 起票時の重複確認ルールが最小限で追記されている
+- [x] `docs/inception/**/description.md` の frontmatter `id` 重複を検出する自動テストがある
+- [x] directory 名 `WI-XXX` と frontmatter `id` の不一致を検出する自動テストがある
+- [x] `_cross` と Unit 配下をまたいだ重複 fixture が fail する
+- [x] `migrate work-items` の採番が `_cross` を含む既存 WI を避ける
+- [x] `pnpm harness:check-ready` または該当 validator コマンドで再発防止が確認できる
+
+## 完了確認
+
+- `traceability-model` に `WorkItemIdentityValidationService` と `FileSystemWorkItemIdentityGateway` を追加し、`docs/inception/**/WI-XXX/description.md` の frontmatter `id` を global scan する。
+- `validate-metadata docs/inception/_cross/WI-106/description.md --json` で現行 repository が pass することを確認。
+- `_cross` と Unit 配下をまたぐ同一 `id` fixture、および parent directory 名と frontmatter `id` の不一致 fixture を自動テスト化。
+- `migrate work-items` の既存 WI ID 収集が `_cross` と Unit 配下をまたぐ番号を予約することを自動テスト化。
 
 ## スコープ外
 

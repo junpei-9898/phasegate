@@ -3,6 +3,7 @@
 @story-id H03-01
 @story-id H03-02
 @story-id H03-03
+@work-item-id WI-106
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03
 > **前提ドキュメント**: `logical_design.md`、`it_test_design_plan.md`、`integration_contract.md`、`testing-rules.md`
@@ -36,6 +37,7 @@
 | infrastructure | Gateway | FileSystemMetadataReader | file-system-metadata-reader.test.ts |
 | infrastructure | Gateway | MarkdownDesignDocumentGateway | markdown-design-document-gateway.test.ts |
 | infrastructure | Gateway | FileSystemInceptionPlanGateway | file-system-inception-plan-gateway.test.ts |
+| infrastructure | Gateway | FileSystemWorkItemIdentityGateway | file-system-work-item-identity-gateway.test.ts |
 | infrastructure | Adapter | LegacyMetadataValidatorAdapter | legacy-metadata-validator-adapter.test.ts |
 | integration | 統合 | shared-kernel StoryId export | shared-kernel-story-id.integration.test.ts |
 | integration | 統合 | legacy adapter連携 | metadata-validator-adapter.integration.test.ts |

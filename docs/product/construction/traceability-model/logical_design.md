@@ -18,6 +18,8 @@ traceability:
 @work-item-id WI-027
 拡張: WI-026 残作業 G2-1/G2-2 で `migrate work-items` を `H{NN}-{NN}` directory にも対応させる。
 `WorkItemMigrationSourcePort` に既存 WI ID 列挙メソッドを追加し、`WorkItemMigrationPlanner` が空き番号の若い順に H-ID へ sequential WI-XXX を採番する（H-ID 由来は frontmatter `type: story` + `legacy_id: H{NN}-{NN}` を生成）。
+@work-item-id WI-106
+拡張: inception 全体での WI ID 重複を防ぐため、`docs/inception/**/WI-XXX/description.md` の parent directory 名と frontmatter `id` を走査し、重複および不一致を metadata validation の `L2-002` error として返す。
 
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08

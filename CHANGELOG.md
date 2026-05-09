@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **WI-106 — inception WI ID 重複防止** — `docs/inception/**/WI-XXX/description.md` の frontmatter `id` を global scan し、`_cross` と Unit 配下をまたぐ重複、および parent directory 名と `id` の不一致を `validate-metadata` 経路で検出するようにした。
+  - `docs/folder_management_rules.md` / `AGENTS.md` に、新規 WI 作成時の global unique ルールを明記。
+  - `migrate work-items` の採番が `_cross` と Unit 配下の既存 WI 番号を避けることを回帰テストで固定。
+
 ## [0.138.0] - 2026-05-09
 
 ### Fixed

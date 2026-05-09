@@ -77,6 +77,8 @@ scripts/harness/{unit}/(domain|application|infrastructure|presentation)/*.ts
 | `inception/_cross/{WI-XXX}/` | 複数 Unit に影響する cross-cutting WI | `_cross/WI-026/`, `_cross/WI-031/` |
 | `inception/{unit}/{WI-XXX}/` | 単一 Unit が所有する WI | `validator-system/WI-074/` |
 
+`WI-XXX` は `docs/inception/**` 全体で一意でなければなりません。`_cross/WI-031` と `{unit}/WI-031` のように配置先が違っても同じ ID は使えません。`description.md` の frontmatter `id` は parent directory 名と一致させます。
+
 > **廃止された配置**（v0.104.0 で物理削除）:
 > - `docs/inception/issues/{ISSUE-XXX}/`
 > - `docs/inception/{unit}/issues/{ISSUE-XXX}/`
@@ -266,7 +268,8 @@ TESTED        @work-item-id 付きテストが存在し green
 
 `migrate work-items --apply` および新規 WI 起票時の採番:
 
-- 既存 WI 番号は予約（重複しない）
+- 既存 WI 番号は `docs/inception/**/WI-XXX` 全体で予約（`_cross` と Unit 配下をまたいで重複しない）
+- `description.md` の frontmatter `id` は parent directory 名 `WI-XXX` と一致させる
 - 空き番号の **若い順**で sequential allocation
 - legacy ID（`ISSUE-XXX` / `US-XXX` / `H{NN}-{NN}`）が存在する場合、frontmatter の `legacy_id` に保持
 

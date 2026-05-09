@@ -15,6 +15,8 @@ traceability:
 拡張: ISSUE-026 Phase B-2 で WI migration CLI dry-run handler のユニットテストを追加。
 @story-id H03-08
 拡張: ISSUE-026 Phase B-3 で WI migration apply usecase / gateway / handler のユニットテストを追加。
+@work-item-id WI-106
+拡張: WI identity validation service / gateway / metadata validation 統合で、WI ID 重複・directory id 不一致・採番 skip の回帰テストを追加。
 
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-04-24（H03-08 / ISSUE-026 Phase B-3 migration apply テスト追加）

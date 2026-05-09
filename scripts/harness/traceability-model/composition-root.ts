@@ -19,6 +19,7 @@ import { FileSystemInceptionPlanGateway } from "./infrastructure/gateways/file-s
 import { FileSystemMetadataReader } from "./infrastructure/gateways/file-system-metadata-reader.js";
 import { FileSystemWorkItemMigrationApplyGateway } from "./infrastructure/gateways/file-system-work-item-migration-apply-gateway.js";
 import { FileSystemWorkItemMigrationSourceGateway } from "./infrastructure/gateways/file-system-work-item-migration-source-gateway.js";
+import { FileSystemWorkItemIdentityGateway } from "./infrastructure/gateways/file-system-work-item-identity-gateway.js";
 import { MarkdownDesignDocumentGateway } from "./infrastructure/gateways/markdown-design-document-gateway.js";
 import { MarkdownStoryCatalogGateway } from "./infrastructure/gateways/markdown-story-catalog-gateway.js";
 import { MarkdownUnitDefinitionGateway } from "./infrastructure/gateways/markdown-unit-definition-gateway.js";
@@ -61,6 +62,7 @@ export function createTraceabilityModelModule(
   const inceptionPlan = new FileSystemInceptionPlanGateway({ rootDir });
   const workItemMigrationSource = new FileSystemWorkItemMigrationSourceGateway({ rootDir });
   const workItemMigrationApply = new FileSystemWorkItemMigrationApplyGateway({ rootDir });
+  const workItemIdentity = new FileSystemWorkItemIdentityGateway({ rootDir });
 
   // Domain services
   const metadataValidator = new MetadataValidator({
@@ -85,6 +87,7 @@ export function createTraceabilityModelModule(
   const validateDesignStoryAnnotationsUseCase = new ValidateDesignStoryAnnotationsUseCase({
     designDocumentPort: designDocument,
     validator: metadataValidator,
+    workItemIdentityPort: workItemIdentity,
   });
   const validateTestStoryMetadataUseCase = new ValidateTestStoryMetadataUseCase({
     metadataReaderPort: metadataReader,

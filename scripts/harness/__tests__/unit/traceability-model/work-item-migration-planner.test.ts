@@ -2,6 +2,7 @@
 // @layer test
 // @story H03-06
 // @work-item-id WI-027
+// @work-item-id WI-106
 import { describe, expect, it } from "vitest";
 import { WorkItemMigrationPlanner } from "../../../traceability-model/domain/services/work-item-migration-planner.ts";
 import type { LegacyIssueDirectory } from "../../../traceability-model/domain/value-objects/work-item-migration-candidate.ts";
@@ -121,6 +122,19 @@ target("WorkItemMigrationPlanner.plan", () => {
 
         // Assert
         expect(actual.candidates[0].nextId).toBe("WI-028");
+      });
+    });
+
+    context("_crossとunit配下から収集したexistingWorkItemIdsがある場合 (WI-106)", () => {
+      it("双方の既存WI番号を避けて採番する", () => {
+        // Arrange
+        const sut = new WorkItemMigrationPlanner();
+
+        // Act
+        const actual = sut.plan([createHIdEntry()], ["WI-001", "WI-002"]);
+
+        // Assert
+        expect(actual.candidates[0].nextId).toBe("WI-003");
       });
     });
 

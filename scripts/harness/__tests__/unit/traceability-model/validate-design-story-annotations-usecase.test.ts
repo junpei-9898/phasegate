@@ -1,6 +1,7 @@
 // @unit traceability-model
 // @layer test
 // @story H03-05
+// @work-item-id WI-106
 import { describe, expect, it, vi } from "vitest";
 import {
   DesignDocumentReadApplicationError,
@@ -49,7 +50,13 @@ const createStoryIdAnnotation = (
     ...overrides,
   });
 
-const createSut = () => {
+const createSut = (options: {
+  readonly workItemIdentityEntries?: readonly {
+    readonly filePath: string;
+    readonly directoryId: string;
+    readonly frontmatterId: string;
+  }[];
+} = {}) => {
   const designDocumentPort = {
     readFrontmatterFlags: vi.fn(),
     readStoryAnnotations: vi.fn(),
@@ -58,13 +65,20 @@ const createSut = () => {
   const validator = {
     validateDesignDocument: vi.fn(),
   };
+  const workItemIdentityPort = options.workItemIdentityEntries
+    ? {
+      listWorkItemIdentities: vi.fn().mockResolvedValue(options.workItemIdentityEntries),
+    }
+    : undefined;
 
   return {
     designDocumentPort,
     validator,
+    workItemIdentityPort,
     sut: new ValidateDesignStoryAnnotationsUseCase({
       designDocumentPort,
       validator,
+      ...(workItemIdentityPort ? { workItemIdentityPort } : {}),
     }),
   };
 };
@@ -233,6 +247,78 @@ target("ValidateDesignStoryAnnotationsUseCase.execute", () => {
         expect(actual[0].errors[0].message).toContain("WorkItem frontmatter");
         expect(actual[0].errors[0].fix_example).toContain("id: WI-001");
         expect(designDocumentPort.readWorkItemFrontmatter).toHaveBeenCalledWith(filePath);
+      });
+    });
+
+    // WI-106
+    context("WI description.md の identity scan で重複がある場合", () => {
+      it("L2-002エラーとして返ること", async () => {
+        // Arrange
+        const { sut, designDocumentPort, validator, workItemIdentityPort } = createSut({
+          workItemIdentityEntries: [
+            {
+              filePath: "docs/inception/_cross/WI-200/description.md",
+              directoryId: "WI-200",
+              frontmatterId: "WI-200",
+            },
+            {
+              filePath: "docs/inception/agent-integration/WI-200/description.md",
+              directoryId: "WI-200",
+              frontmatterId: "WI-200",
+            },
+          ],
+        });
+        const filePath = createPath("docs/inception/_cross/WI-200/description.md");
+        designDocumentPort.readFrontmatterFlags.mockResolvedValue(DesignDocumentFlags.create({ initialCreation: false }));
+        designDocumentPort.readStoryAnnotations.mockResolvedValue(Object.freeze([]));
+        designDocumentPort.readWorkItemFrontmatter.mockResolvedValue({
+          id: "WI-200",
+          type: "issue",
+          severity: "normal",
+          status: "drafted",
+        });
+        validator.validateDesignDocument.mockResolvedValue(MetadataValidationResult.success());
+
+        // Act
+        const actual = await sut.execute([filePath]);
+
+        // Assert
+        expect(actual[0].valid).toBe(false);
+        expect(actual[0].errors[0].message).toContain("WI id WI-200 is duplicated");
+        expect(workItemIdentityPort?.listWorkItemIdentities).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    // WI-106
+    context("WI description.md の directory id と frontmatter id が一致しない場合", () => {
+      it("L2-002エラーとして返ること", async () => {
+        // Arrange
+        const { sut, designDocumentPort, validator } = createSut({
+          workItemIdentityEntries: [
+            {
+              filePath: "docs/inception/_cross/WI-201/description.md",
+              directoryId: "WI-201",
+              frontmatterId: "WI-202",
+            },
+          ],
+        });
+        const filePath = createPath("docs/inception/_cross/WI-201/description.md");
+        designDocumentPort.readFrontmatterFlags.mockResolvedValue(DesignDocumentFlags.create({ initialCreation: false }));
+        designDocumentPort.readStoryAnnotations.mockResolvedValue(Object.freeze([]));
+        designDocumentPort.readWorkItemFrontmatter.mockResolvedValue({
+          id: "WI-202",
+          type: "issue",
+          severity: "normal",
+          status: "drafted",
+        });
+        validator.validateDesignDocument.mockResolvedValue(MetadataValidationResult.success());
+
+        // Act
+        const actual = await sut.execute([filePath]);
+
+        // Assert
+        expect(actual[0].valid).toBe(false);
+        expect(actual[0].errors[0].message).toContain("does not match frontmatter id WI-202");
       });
     });
   });

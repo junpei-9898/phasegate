@@ -12,6 +12,11 @@ import {
 import type { ProjectRelativePath } from "../../domain/value-objects/project-relative-path.js";
 import type { WorkItemFrontmatter } from "../../domain/value-objects/work-item-frontmatter.js";
 import { WorkItemFrontmatterValidationError } from "../../domain/value-objects/work-item-frontmatter.js";
+import type { WorkItemIdentityPort } from "../../domain/ports/work-item-identity-port.js";
+import {
+  WorkItemIdentityValidationService,
+  type WorkItemIdentityViolation,
+} from "../../domain/services/work-item-identity-validation-service.js";
 import type { MetadataValidationOutput } from "../dto/metadata-validation-output.js";
 
 type DesignStoryAnnotationsValidator = Pick<MetadataValidator, "validateDesignDocument">;
@@ -36,6 +41,20 @@ const toWorkItemFrontmatterError = (error: WorkItemFrontmatterValidationError): 
     fix_example: `---
 id: WI-001
 type: story
+severity: normal
+status: drafted
+---`,
+  });
+
+const toWorkItemIdentityError = (violation: WorkItemIdentityViolation): TraceabilityHarnessError =>
+  Object.freeze({
+    code: "L2-002",
+    severity: "error",
+    message: violation.message,
+    suggestion: "docs/inception/**/WI-XXX/description.md の parent directory 名と frontmatter id を一致させ、WI id を inception 全体で一意にしてください",
+    fix_example: `---
+id: ${violation.workItemId}
+type: issue
 severity: normal
 status: drafted
 ---`,
@@ -92,15 +111,22 @@ export class DesignDocumentReadApplicationError extends Error {
 export interface ValidateDesignStoryAnnotationsUseCaseDeps {
   readonly designDocumentPort: DesignDocumentPort;
   readonly validator: DesignStoryAnnotationsValidator;
+  readonly workItemIdentityPort?: WorkItemIdentityPort;
+  readonly workItemIdentityValidationService?: WorkItemIdentityValidationService;
 }
 
 export class ValidateDesignStoryAnnotationsUseCase {
   private readonly designDocumentPort: DesignDocumentPort;
   private readonly validator: DesignStoryAnnotationsValidator;
+  private readonly workItemIdentityPort?: WorkItemIdentityPort;
+  private readonly workItemIdentityValidationService: WorkItemIdentityValidationService;
 
   constructor(deps: ValidateDesignStoryAnnotationsUseCaseDeps) {
     this.designDocumentPort = deps.designDocumentPort;
     this.validator = deps.validator;
+    this.workItemIdentityPort = deps.workItemIdentityPort;
+    this.workItemIdentityValidationService =
+      deps.workItemIdentityValidationService ?? new WorkItemIdentityValidationService();
   }
 
   async execute(filePaths: readonly ProjectRelativePath[]): Promise<readonly Readonly<MetadataValidationOutput>[]> {
@@ -128,6 +154,11 @@ export class ValidateDesignStoryAnnotationsUseCase {
             }
           }
         }
+        if (this.workItemIdentityPort && isWorkItemDescriptionPath(filePath)) {
+          const entries = await this.workItemIdentityPort.listWorkItemIdentities();
+          const violations = this.workItemIdentityValidationService.validate(entries);
+          workItemFrontmatterErrors.push(...violations.map(toWorkItemIdentityError));
+        }
 
         const flags = await this.designDocumentPort.readFrontmatterFlags(filePath);
         const annotations = await this.designDocumentPort.readStoryAnnotations(filePath);
@@ -145,4 +176,8 @@ export class ValidateDesignStoryAnnotationsUseCase {
 
     return Object.freeze(results);
   }
+}
+
+function isWorkItemDescriptionPath(filePath: ProjectRelativePath): boolean {
+  return /(?:^|\/)WI-\d+\/description\.md$/.test(filePath.toString());
 }
