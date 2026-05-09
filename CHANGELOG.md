@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.138.0] - 2026-05-09
+
+### Fixed
+
+- **WI-032 post-publish dogfood** — `phasegate init --with-ci` が生成する `phasegate.config.json` の `ci.enabled` を config schema v2/v3 で許可した。
+  - v0.137.0 published package の dogfood で、init 後の `ci:generate-template` / `ci:auto-refresh-agent-context` が `additionalProperties: /ci is not allowed` で失敗することを確認。
+  - `ci.enabled` は WI-031 以降の公開設定として生成済みのため、schema 側を追従させる。
+
 ## [0.137.0] - 2026-05-09
 
 ### Added

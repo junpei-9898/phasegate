@@ -199,4 +199,42 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
   });
+
+  describe('ci.enabled フィールド (WI-032 post-publish dogfood)', () => {
+    context('ci.enabled: true を含む v3 document', () => {
+      it('v3 schema で validate され errors 0 件', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          ci: { enabled: true },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('ci.enabled が boolean 以外の場合', () => {
+      it('v3 schema validate で error が返る', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          ci: { enabled: 'yes' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThan(0);
+      });
+    });
+  });
 });

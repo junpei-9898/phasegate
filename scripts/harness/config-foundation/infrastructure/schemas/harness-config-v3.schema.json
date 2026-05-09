@@ -439,6 +439,15 @@
         }
       }
     },
+    "ci": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
     "validate": {
       "type": "object",
       "additionalProperties": false,

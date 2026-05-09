@@ -50,6 +50,7 @@ export interface HarnessConfigSourceDocument {
   harnesses: Partial<HarnessConfigResolvedDocument['harnesses']>;
   paths: HarnessConfigResolvedDocument['paths'];
   reporting: HarnessConfigResolvedDocument['reporting'];
+  ci?: HarnessConfigResolvedDocument['ci'];
   validate?: HarnessConfigResolvedDocument['validate'];
   architecture?: ArchitectureConfigSource;
 }
@@ -109,6 +110,9 @@ export interface HarnessConfigResolvedDocument {
   reporting: {
     format: string;
     outputDir: string;
+  };
+  ci?: {
+    enabled: boolean;
   };
   validate: {
     failOnWarning: boolean;
