@@ -16,6 +16,10 @@ export interface ArchitectureProviderInfo {
   readonly preset: ArchitecturePresetIdValue;
   readonly layers: readonly string[];
   readonly allowedDependencies: Readonly<Record<string, readonly string[]>>;
+  readonly metadataTags?: {
+    readonly unit?: string;
+    readonly layer?: string;
+  };
 }
 
 export interface RuleConfigProviderPort {

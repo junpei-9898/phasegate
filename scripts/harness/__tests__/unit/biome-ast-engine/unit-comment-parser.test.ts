@@ -1,4 +1,6 @@
 // @layer test
+// @unit biome-ast-engine
+// @story H01-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { parseUnitComment } from '../../../biome-ast-engine/infrastructure/parsers/unit-comment-parser.js';
@@ -74,6 +76,32 @@ target('parseUnitComment', () => {
       it('unitNamesが空配列になる', () => {
         // Arrange
         const input = 'export const x = 1;\nconst y = 2;';
+
+        // Act
+        const actual = parseUnitComment(input);
+
+        // Assert
+        expect(actual.unitNames).toEqual([]);
+      });
+    });
+
+    context('カスタムタグ @module を指定した場合', () => {
+      it('@moduleのみをunit metadataとして抽出する', () => {
+        // Arrange
+        const input = '// @unit legacy\n// @module order\nexport const x = 1;';
+
+        // Act
+        const actual = parseUnitComment(input, '@module');
+
+        // Assert
+        expect(actual.unitNames).toEqual(['order']);
+      });
+    });
+
+    context('カスタムタグを指定しない場合', () => {
+      it('@moduleは既定のunit metadataとして抽出されない', () => {
+        // Arrange
+        const input = '// @module order\nexport const x = 1;';
 
         // Act
         const actual = parseUnitComment(input);

@@ -490,6 +490,7 @@ function toArchitectureInput(resolvedConfig: HarnessConfigV2) {
     preset: resolvedConfig.architecture.preset,
     layers: resolvedConfig.architecture.layers,
     allowedDependencies: resolvedConfig.architecture.allowedDependencies,
+    metadataTags: resolvedConfig.architecture.metadataTags,
   };
 }
 

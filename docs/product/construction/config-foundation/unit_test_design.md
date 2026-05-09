@@ -3,6 +3,7 @@
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03
+@work-item-id WI-024
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H04-01, H04-02, H04-03
 > **正規ソース**: `docs/product/construction/config-foundation/domain_model.md`, `docs/product/construction/config-foundation/logical_design.md`
@@ -550,6 +551,7 @@ scripts/harness/__tests__/config-foundation/
 | UT-CF-174 | deep merge中に構造不整合が発生した場合にエラーになる | objectとprimitiveが混在する不整合 | `ConfigMergeError`（L1-008） |
 | UT-CF-175 | standard上でcoverageThresholdを95に個別上書きできる | standard preset + coverageThreshold=95の上書き | coverageThreshold=95 |
 | UT-CF-176 | sourceDocumentに差分がない場合、Preset定義がそのまま解決済みドキュメントになる | 最小限のsourceDocument（project.name/presetのみ） | preset定義の値がそのまま使われる |
+| UT-CF-176-WI024 | architecture.metadataTagsを上書きした場合に解決済みドキュメントへ反映される | sourceDocument.architecture.metadataTags={ unit:"@module", layer:"@tier" } | resolvedDocument.architecture.metadataTagsが同値になる |
 
 #### applyFeatureOverride
 

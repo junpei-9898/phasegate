@@ -1,4 +1,6 @@
 // @layer test
+// @unit biome-ast-engine
+// @story H01-01
 import { describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
@@ -234,6 +236,40 @@ target('ResolveEnabledRulesUseCase.execute', () => {
           'application',
           'domain',
         ]);
+      });
+
+      it('metadataTagsが指定された場合、architectureSpecに透過される', async () => {
+        // Arrange
+        const CUSTOM_TAG_ARCHITECTURE: ArchitectureProviderInfo = {
+          preset: 'clean',
+          layers: ['domain', 'application', 'infrastructure', 'presentation'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            infrastructure: ['infrastructure', 'application', 'domain'],
+            presentation: ['presentation', 'application', 'domain'],
+          },
+          metadataTags: {
+            unit: '@module',
+            layer: '@tier',
+          },
+        };
+        const { sut } = createSut(
+          {
+            enabled: true,
+            rules: {},
+          },
+          CUSTOM_TAG_ARCHITECTURE,
+        );
+
+        // Act
+        const actual = await sut.execute();
+
+        // Assert
+        expect(actual.architectureSpec.metadataTags).toEqual({
+          unit: '@module',
+          layer: '@tier',
+        });
       });
     });
   });

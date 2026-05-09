@@ -1,4 +1,6 @@
 // @layer test
+// @unit biome-ast-engine
+// @story H01-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { parseLayerComment } from '../../../biome-ast-engine/infrastructure/parsers/layer-comment-parser.js';
@@ -48,6 +50,32 @@ target('parseLayerComment', () => {
       it('layerNameがnullになる', () => {
         // Arrange
         const input = 'export const x = 1;';
+
+        // Act
+        const actual = parseLayerComment(input);
+
+        // Assert
+        expect(actual.layerName).toBeNull();
+      });
+    });
+
+    context('カスタムタグ @tier を指定した場合', () => {
+      it('@tierのみをlayer metadataとして抽出する', () => {
+        // Arrange
+        const input = '// @layer domain\n// @tier application\nexport const x = 1;';
+
+        // Act
+        const actual = parseLayerComment(input, '@tier');
+
+        // Assert
+        expect(actual.layerName).toBe('application');
+      });
+    });
+
+    context('カスタムタグを指定しない場合', () => {
+      it('@tierは既定のlayer metadataとして抽出されない', () => {
+        // Arrange
+        const input = '// @tier domain\nexport const x = 1;';
 
         // Act
         const actual = parseLayerComment(input);

@@ -1,15 +1,23 @@
 // @unit biome-ast-engine
 // @layer infrastructure
 
-// カンマ区切り複数ユニット対応 + 複数行の @unit を収集、重複除去。
-const UNIT_COMMENT_PATTERN = /^\s*(?:\/\/|\/\*\*?\s*|\*)\s*@unit\s+(.+)/gm;
+// カンマ区切り複数ユニット対応 + 複数行の metadata unit tag を収集、重複除去。
+const DEFAULT_UNIT_TAG = '@unit';
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const createUnitCommentPattern = (tagName: string): RegExp =>
+  new RegExp(`^\\s*(?:\\/\\/|\\/\\*\\*?\\s*|\\*)\\s*${escapeRegExp(tagName)}\\s+(.+)`, 'gm');
 
 export type UnitCommentResult = {
   readonly unitNames: readonly string[];
 };
 
-export const parseUnitComment = (sourceCode: string): UnitCommentResult => {
-  const matches = sourceCode.matchAll(UNIT_COMMENT_PATTERN);
+export const parseUnitComment = (
+  sourceCode: string,
+  tagName: string = DEFAULT_UNIT_TAG
+): UnitCommentResult => {
+  const matches = sourceCode.matchAll(createUnitCommentPattern(tagName));
   const names: string[] = [];
 
   for (const match of matches) {

@@ -56,8 +56,8 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
       }
 
       const sourceText = sourceFile.getFullText();
-      const unitResult = parseUnitComment(sourceText);
-      const layerResult = parseLayerComment(sourceText);
+      const unitResult = parseUnitComment(sourceText, architecture?.metadataTags.unit);
+      const layerResult = parseLayerComment(sourceText, architecture?.metadataTags.layer);
       const densityResult = parseCommentDensity(sourceText);
       const imports = this.extractImports(sourceFile, filePath);
       const anyCount = this.countAnyTypes(sourceFile);
@@ -69,7 +69,7 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
         SourceModuleSnapshot.create(
           {
             filePath,
-            declaredUnit: unitResult.unitNames[0],
+            declaredUnit: unitResult.unitNames[0] ?? null,
             declaredLayer: layerResult.layerName,
             imports,
             anyTypeCount: anyCount,

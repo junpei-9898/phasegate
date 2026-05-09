@@ -1,6 +1,6 @@
 // @layer test
 // @unit biome-ast-engine
-// @story ISSUE-014
+// @story H01-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -38,6 +38,18 @@ target('CLEAN_PRESET_SPEC', () => {
       });
     });
 
+    context('metadataTags を確認する場合', () => {
+      it('既定タグとして @unit / @layer が定義される', () => {
+        // Arrange
+
+        // Act
+        const actual = CLEAN_PRESET_SPEC.metadataTags;
+
+        // Assert
+        expect(actual).toEqual({ unit: '@unit', layer: '@layer' });
+      });
+    });
+
     context('layers 配列を書き換えようとした場合', () => {
       it('frozen のため書き換えが拒否される', () => {
         // Arrange
@@ -67,6 +79,10 @@ target('freezeArchitectureSpec', () => {
             application: ['application', 'domain'],
             interface: ['interface', 'application', 'domain'],
           },
+          metadataTags: {
+            unit: '@module',
+            layer: '@tier',
+          },
         };
 
         // Act
@@ -77,6 +93,8 @@ target('freezeArchitectureSpec', () => {
         expect(Object.isFrozen(actual.layers)).toBe(true);
         expect(Object.isFrozen(actual.allowedDependencies)).toBe(true);
         expect(Object.isFrozen(actual.allowedDependencies.interface)).toBe(true);
+        expect(Object.isFrozen(actual.metadataTags)).toBe(true);
+        expect(actual.metadataTags).toEqual({ unit: '@module', layer: '@tier' });
       });
     });
   });

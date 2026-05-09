@@ -3,6 +3,7 @@
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
+@work-item-id WI-024
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H01-01, H01-02, H01-03
 > **モード**: Unit横断設計（Phase 2）
@@ -367,8 +368,8 @@ scripts/harness/
 | 属性 | 型 | 説明 |
 |------|----|------|
 | filePath | FilePath | 解析対象ファイル |
-| declaredUnit | string \| null | `// @unit` で宣言されたUnit名 |
-| declaredLayer | LayerName \| null | `// @layer` で宣言されたレイヤー |
+| declaredUnit | string \| null | configured unit metadata tag（既定 `// @unit`）で宣言されたUnit名 |
+| declaredLayer | LayerName \| null | configured layer metadata tag（既定 `// @layer`）で宣言されたレイヤー |
 | imports | readonly ImportEdge[] | 解析で得たimport一覧 |
 | anyTypeCount | number | `any` 使用数 |
 | typedNodeCount | number | 型注釈を持つノード数 |
@@ -958,10 +959,14 @@ interface ClockPort {
 | `mappers/biome-diagnostic-mapper.ts` | Biome JSON診断を `RuleViolation` に変換 |
 | `mappers/rule-violation-code-mapper.ts` | 8ルール名とL1コードの対応表を保持 |
 | `mappers/source-module-snapshot-mapper.ts` | AST抽出結果から `SourceModuleSnapshot` を生成 |
-| `parsers/unit-comment-parser.ts` | `// @unit {unit}` の抽出 |
-| `parsers/layer-comment-parser.ts` | `// @layer {layer}` の抽出 |
+| `parsers/unit-comment-parser.ts` | `architecture.metadataTags.unit`（既定 `@unit`）に一致するUnit metadataの抽出 |
+| `parsers/layer-comment-parser.ts` | `architecture.metadataTags.layer`（既定 `@layer`）に一致するLayer metadataの抽出 |
 | `parsers/comment-density-parser.ts` | コメント密度、重複コメントブロック数の算出 |
 | `process/node-process-runner.ts` | 子プロセス実行の共通化 |
+
+#### WI-024: metadata tag名の設定反映
+
+`ArchitectureSpec` は `metadataTags.unit` / `metadataTags.layer` を保持し、未指定時は `@unit` / `@layer` を使う。`ResolveEnabledRulesUseCase` は config-foundation から受け取った `architecture.metadataTags` を spec に透過し、`TypeScriptSourceModuleAnalyzerAdapter` は parser 呼び出し時にその tag名だけを検出対象にする。`LintRunner` の L1-001 / L1-002 欠落メッセージも同じ spec の tag名を使い、設定上有効な metadata key を user に提示する。
 
 ---
 

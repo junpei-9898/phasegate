@@ -3,6 +3,7 @@
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
+@work-item-id WI-024
 > **作成日**: 2026-03-13
 > **フェーズ**: Phase 2（構築）
 > **対応ストーリー**: H01-01, H01-02, H01-03
@@ -443,6 +444,18 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 | UT-BA-209 | run | v0 no-layer-violationパリティを検証する | v0 ESLint fixtureで正規依存方向のみのファイルの場合 | v0と同一の非違反結果が得られる |
 | UT-BA-210 | run | v0 enforce-folder-structureパリティを検証する | v0 ESLint fixtureで不正配置のファイルの場合 | v0と同一の違反が検出される |
 | UT-BA-211 | run | v0 enforce-folder-structureパリティを検証する | v0 ESLint fixtureで正規配置のファイルの場合 | v0と同一の非違反結果が得られる |
+
+#### WI-024 metadataTags回帰テスト
+
+| ケースID | target | describe | context | it |
+|---------|--------|----------|---------|-----|
+| UT-BA-212 | parseUnitComment | ソースコードから@unitコメントを抽出する | カスタムタグ @module を指定した場合 | @moduleのみをunit metadataとして抽出する |
+| UT-BA-213 | parseUnitComment | ソースコードから@unitコメントを抽出する | カスタムタグを指定しない場合 | @moduleは既定のunit metadataとして抽出されない |
+| UT-BA-214 | parseLayerComment | ソースコードから@layerコメントを抽出する | カスタムタグ @tier を指定した場合 | @tierのみをlayer metadataとして抽出する |
+| UT-BA-215 | parseLayerComment | ソースコードから@layerコメントを抽出する | カスタムタグを指定しない場合 | @tierは既定のlayer metadataとして抽出されない |
+| UT-BA-216 | run | require-unit-commentの違反判定を実行する | metadataTags.unitがカスタム設定されている場合 | 違反メッセージに設定タグ名が使われる |
+| UT-BA-217 | run | require-layer-commentの違反判定を実行する | metadataTags.layerがカスタム設定されている場合 | 違反メッセージに設定タグ名が使われる |
+| UT-BA-218 | execute | architecture preset の metadataTags を architectureSpec として出力する | metadataTagsが指定された場合 | architectureSpecに透過される |
 
 ---
 

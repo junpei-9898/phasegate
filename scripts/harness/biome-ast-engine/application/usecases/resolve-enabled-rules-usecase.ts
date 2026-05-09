@@ -60,6 +60,7 @@ export class ResolveEnabledRulesUseCase {
     const architectureSpec = freezeArchitectureSpec({
       layers: architecture.layers,
       allowedDependencies: architecture.allowedDependencies,
+      metadataTags: architecture.metadataTags,
     });
 
     return toResolveEnabledRulesOutput(

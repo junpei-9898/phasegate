@@ -3,6 +3,7 @@
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03
+@work-item-id WI-024
 > **Unit ID**: config-foundation
 > **作成日**: 2026-03-13
 > **Wave**: 1（基盤構築）
@@ -20,6 +21,7 @@
 | HarnessConfig | 集約ルート | phasegate.config.json全体の整合性境界 |
 | Preset | 値オブジェクト | minimal/standard/strict |
 | LayerConfig | 値オブジェクト | L1-L4の個別設定 |
+| ArchitectureConfig | 値オブジェクト | architecture preset/layers/allowedDependencies/metadataTags設定 |
 | QuickModeConfig | 値オブジェクト | Quick Mode設定 |
 | PhaseDependenciesConfig | 値オブジェクト | フェーズ依存設定（構造のみ。意味論はphase-dependency-model） |
 | PlanningModeConfig | 値オブジェクト | Planning Mode設定（構造のみ。正規定義はphase-dependency-model） |
@@ -88,6 +90,7 @@ phasegate.config.jsonファイル全体を1つのHarnessConfig集約で管理す
 | **ProjectConfig** | ✅ | ✅ | `{ name, preset }` プロジェクト設定 |
 | **Preset** | ✅ | ✅ | `"minimal" \| "standard" \| "strict"`。preset名からデフォルト設定を展開 |
 | **LayersConfig** | ✅ | ✅ | `{ L1, L2, L3, L4 }` 4層設定の集約 |
+| **ArchitectureConfig** | ✅ | ✅ | `{ preset, layers, allowedDependencies, metadataTags }`。metadataTagsは既定 `@unit` / `@layer` から任意の単一タグ名へ差し替え可能 |
 | **L1Config** | ✅ | ✅ | `{ enabled, rules: Record<string, "error"\|"warning"\|"off"> }` |
 | **L2Config** | ✅ | ✅ | `{ enabled, validators: string[] }` |
 | **L3Config** | ✅ | ✅ | `{ enabled, validators: string[], coverageThreshold: number }` |

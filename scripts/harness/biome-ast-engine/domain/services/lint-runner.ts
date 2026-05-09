@@ -75,7 +75,7 @@ export class LintRunner {
                   line: 1,
                   column: 1,
                   ruleName: rule.name,
-                  message: '@unitコメントが必要です',
+                  message: `${architecture.metadataTags.unit}コメントが必要です`,
                   severity: rule.severity,
                 })
               );
@@ -92,7 +92,7 @@ export class LintRunner {
                   line: 1,
                   column: 1,
                   ruleName: rule.name,
-                  message: '@layerコメントが必要です',
+                  message: `${architecture.metadataTags.layer}コメントが必要です`,
                   severity: rule.severity,
                 })
               );

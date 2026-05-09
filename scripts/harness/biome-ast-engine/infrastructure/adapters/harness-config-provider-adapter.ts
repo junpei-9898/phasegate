@@ -29,6 +29,10 @@ const DEFAULT_ARCHITECTURE: ArchitectureConfigInput = Object.freeze({
     infrastructure: Object.freeze(['infrastructure', 'application', 'domain']),
     presentation: Object.freeze(['presentation', 'application', 'domain']),
   }),
+  metadataTags: Object.freeze({
+    unit: '@unit',
+    layer: '@layer',
+  }),
 });
 
 /**

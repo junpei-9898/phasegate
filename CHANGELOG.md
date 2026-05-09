@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.140.0] - 2026-05-09
+
+### Added
+
+- **WI-024 — configurable L1 metadata tag names** — `architecture.metadataTags.unit` / `architecture.metadataTags.layer` を biome-ast-engine の L1 parser / analyzer / runner に反映し、`@module` / `@tier` などのプロジェクト語彙を単一の有効タグ名として使えるようにした。
+  - 既定値は従来通り `@unit` / `@layer`。
+  - カスタムタグ設定時は旧タグを alias として扱わず、欠落メッセージも設定タグ名を表示する。
+
 ## [0.139.0] - 2026-05-09
 
 ### Added

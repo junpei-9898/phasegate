@@ -1,6 +1,6 @@
 // @unit biome-ast-engine
 // @layer infrastructure
-// @story ISSUE-017
+// @story H01-01
 
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -9,6 +9,7 @@ import { describe, expect, it, afterEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { TypeScriptSourceModuleAnalyzerAdapter } from '../../../biome-ast-engine/infrastructure/adapters/typescript-source-module-analyzer-adapter.js';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
+import { freezeArchitectureSpec } from '../../../biome-ast-engine/domain/value-objects/architecture-spec.js';
 
 let tmpDirs: string[] = [];
 
@@ -29,6 +30,76 @@ afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
   tmpDirs = [];
+});
+
+target('TypeScriptSourceModuleAnalyzerAdapter.analyzeMany (metadataTags)', () => {
+  describe('設定されたmetadata tag名でunit/layerを抽出する', () => {
+    context('@module / @tier を指定した場合', () => {
+      it('@unit / @layer ではなく設定タグだけが抽出される', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(
+          rootDir,
+          'src/domain/example.ts',
+          '// @unit legacy\n// @layer infrastructure\n// @module custom-unit\n// @tier domain\nexport const x = 1;\n'
+        );
+        const adapter = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });
+        const architecture = freezeArchitectureSpec({
+          layers: ['domain', 'application', 'infrastructure', 'presentation'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            infrastructure: ['infrastructure', 'application', 'domain'],
+            presentation: ['presentation', 'application', 'domain'],
+          },
+          metadataTags: { unit: '@module', layer: '@tier' },
+        });
+
+        // Act
+        const actual = await adapter.analyzeMany(
+          [FilePath.fromWorkspaceRelative('src/domain/example.ts')],
+          architecture
+        );
+
+        // Assert
+        expect(actual[0].declaredUnit).toBe('custom-unit');
+        expect(actual[0].declaredLayer?.toString()).toBe('domain');
+      });
+    });
+
+    context('@module / @tier 設定で旧タグのみがある場合', () => {
+      it('unit/layer metadataは欠落として扱われる', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(
+          rootDir,
+          'src/domain/example.ts',
+          '// @unit legacy\n// @layer domain\nexport const x = 1;\n'
+        );
+        const adapter = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });
+        const architecture = freezeArchitectureSpec({
+          layers: ['domain', 'application', 'infrastructure', 'presentation'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            infrastructure: ['infrastructure', 'application', 'domain'],
+            presentation: ['presentation', 'application', 'domain'],
+          },
+          metadataTags: { unit: '@module', layer: '@tier' },
+        });
+
+        // Act
+        const actual = await adapter.analyzeMany(
+          [FilePath.fromWorkspaceRelative('src/domain/example.ts')],
+          architecture
+        );
+
+        // Assert
+        expect(actual[0].declaredUnit).toBeNull();
+        expect(actual[0].hasLayerComment()).toBe(false);
+      });
+    });
+  });
 });
 
 target('TypeScriptSourceModuleAnalyzerAdapter.analyzeMany (extractImports)', () => {

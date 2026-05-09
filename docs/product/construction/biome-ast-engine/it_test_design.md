@@ -3,6 +3,7 @@
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
+@work-item-id WI-024
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H01-01, H01-02, H01-03
 > **正規ソース**: `docs/product/construction/biome-ast-engine/logical_design.md`
@@ -430,6 +431,18 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 | IT-BA-102 | parse | ソースコードから@layerを抽出する | @layerコメントがない場合 | nullが返される |
 | IT-BA-103 | parse | ソースコードから@layerを抽出する | 不正なフォーマット `// @layer` の場合 | nullが返される |
 | IT-BA-104 | parse | ソースコードから@layerを抽出する | v0語彙（port/usecase/controller）が指定された場合 | nullが返される |
+
+### 4.11.1 WI-024 metadataTags解析連携
+
+**テストファイル**: `integration/biome-ast-engine/typescript-source-module-analyzer-adapter.test.ts`
+
+**テスト方針**:
+- `ArchitectureSpec.metadataTags` が指定された場合、TypeScript AST解析が既定タグではなく設定タグを parser に渡すことを検証する
+
+| ID | target | describe | context | it |
+|----|--------|----------|---------|-----|
+| IT-BA-WI024-001 | analyzeMany | 設定されたmetadata tag名でunit/layerを抽出する | @module / @tier を指定した場合 | @unit / @layer ではなく設定タグだけが抽出される |
+| IT-BA-WI024-002 | analyzeMany | 設定されたmetadata tag名でunit/layerを抽出する | @module / @tier 設定で旧タグのみがある場合 | unit/layer metadataは欠落として扱われる |
 
 ### 4.12 CommentDensityParser (6ケース)
 

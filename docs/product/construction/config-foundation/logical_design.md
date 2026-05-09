@@ -3,6 +3,7 @@
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03
+@work-item-id WI-024
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H04-01, H04-02, H04-03
 > **モード**: Unit横断設計（Phase 2）
@@ -192,6 +193,7 @@ export type { HarnessConfigV2Props } from '../config-foundation/domain/harness-c
 | `project` | `ProjectConfig` | Yes | 解決済み `project` セクション。`preset` を含む |
 | `layers` | `LayersConfig` | Yes | 解決済み `layers` セクション |
 | `quickMode` | `QuickModeConfig` | Yes | 解決済み `quickMode` セクション |
+| `architecture` | `ArchitectureConfig` | Yes | 解決済み `architecture` セクション。preset/layers/allowedDependencies/metadataTagsを含む |
 | `phaseDependencies` | `PhaseDependenciesConfig` | Yes | 解決済み `phaseDependencies` 構造 |
 | `planningMode` | `PlanningModeConfig` | Yes | 解決済み `planningMode` 構造 |
 | `harnesses` | `HarnessesConfig` | Yes | 解決済み `harnesses` セクション |
@@ -208,6 +210,7 @@ export type { HarnessConfigV2Props } from '../config-foundation/domain/harness-c
 | `project` | `{ name: string; preset: "minimal" \| "standard" \| "strict" }` | 永続化される project |
 | `layers` | `Partial<ResolvedLayersDocument>` | トップレベルは必須。ネスト側でPreset上書き差分を保持 |
 | `quickMode` | `Partial<ResolvedQuickModeDocument>` | トップレベルは必須。ネスト側でPreset上書き差分を保持 |
+| `architecture` | `Partial<ArchitectureConfigDocument>` | architecture preset と metadata tag名の上書き差分を保持 |
 | `phaseDependencies` | `ResolvedPhaseDependenciesDocument` | 構造値。Preset非依存 |
 | `planningMode` | `ResolvedPlanningModeDocument` | 構造値。Preset非依存 |
 | `harnesses` | `Partial<ResolvedHarnessesDocument>` | トップレベルは必須。ネスト側でPreset上書き差分とCLIトグル結果を保持 |

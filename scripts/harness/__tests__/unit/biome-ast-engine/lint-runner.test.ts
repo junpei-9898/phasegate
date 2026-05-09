@@ -1,4 +1,6 @@
 // @layer test
+// @unit biome-ast-engine
+// @story H01-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { FilePath } from '../../../biome-ast-engine/domain/value-objects/file-path.js';
@@ -129,6 +131,40 @@ target('LintRunner.run', () => {
       });
     });
 
+    context('metadataTags.unitがカスタム設定されている場合', () => {
+      it('違反メッセージに設定タグ名が使われる', () => {
+        // Arrange
+        const sut = createLintRunner();
+        const rules = Object.freeze([createRuleDefinition()]);
+        const snapshots = Object.freeze([createSourceModuleSnapshot({ declaredUnit: null })]);
+        const graph = createImportGraph({
+          nodes: Object.freeze([snapshots[0].filePath]),
+        });
+        const architecture = freezeArchitectureSpec({
+          layers: ['domain', 'application', 'infrastructure', 'presentation'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            infrastructure: ['infrastructure', 'application', 'domain'],
+            presentation: ['presentation', 'application', 'domain'],
+          },
+          metadataTags: { unit: '@module', layer: '@tier' },
+        });
+
+        // Act
+        const actual = sut.run({
+          rules,
+          snapshots,
+          importGraph: graph,
+          durationMs: 10,
+          architecture,
+        });
+
+        // Assert
+        expect(actual.violations[0].message).toBe('@moduleコメントが必要です');
+      });
+    });
+
     context('declaredUnitが設定されている場合', () => {
       it('違反が報告されない', () => {
         // Arrange
@@ -169,6 +205,43 @@ target('LintRunner.run', () => {
 
         // Assert
         expect(findViolationCount(actual, 'require-layer-comment')).toBeGreaterThan(0);
+      });
+    });
+
+    context('metadataTags.layerがカスタム設定されている場合', () => {
+      it('違反メッセージに設定タグ名が使われる', () => {
+        // Arrange
+        const sut = createLintRunner();
+        const rules = Object.freeze([
+          createRuleDefinition({
+            name: createRuleName('require-layer-comment'),
+            errorCode: 'L1-002',
+          }),
+        ]);
+        const snapshots = Object.freeze([createSourceModuleSnapshot({ declaredLayer: null })]);
+        const graph = createImportGraph({ nodes: Object.freeze([snapshots[0].filePath]) });
+        const architecture = freezeArchitectureSpec({
+          layers: ['domain', 'application', 'infrastructure', 'presentation'],
+          allowedDependencies: {
+            domain: ['domain'],
+            application: ['application', 'domain'],
+            infrastructure: ['infrastructure', 'application', 'domain'],
+            presentation: ['presentation', 'application', 'domain'],
+          },
+          metadataTags: { unit: '@module', layer: '@tier' },
+        });
+
+        // Act
+        const actual = sut.run({
+          rules,
+          snapshots,
+          importGraph: graph,
+          durationMs: 10,
+          architecture,
+        });
+
+        // Assert
+        expect(actual.violations[0].message).toBe('@tierコメントが必要です');
       });
     });
 
