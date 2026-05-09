@@ -116,6 +116,29 @@ target('RenderCiTemplateUseCase', () => {
         });
       });
     });
+
+    // IT-UC-RenderCiTemplate-WI032-001
+    describe('agent-context-refreshテンプレートがbundled workflowと一致すること', () => {
+      context('実ファイルのYamlTemplateRendererAdapterでrenderする場合', () => {
+        it('contentがdocs/templates/ci/agent-context-refresh.ymlと一致する', async () => {
+          // Arrange
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const rendererPort = new YamlTemplateRendererAdapter(process.cwd());
+          const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
+          const expected = await readFile(join(process.cwd(), 'docs/templates/ci/agent-context-refresh.yml'), 'utf-8');
+
+          // Act
+          const actual = await useCase.execute({ presetId: 'standard', templateType: 'agent-context-refresh' });
+
+          // Assert
+          expect(actual.content).toBe(expected);
+          expect(actual.outputPath).toBe('.github/workflows/agent-context-refresh.yml');
+          expect(actual.errors).toHaveLength(0);
+        });
+      });
+    });
   });
 
   describe('異常系', () => {

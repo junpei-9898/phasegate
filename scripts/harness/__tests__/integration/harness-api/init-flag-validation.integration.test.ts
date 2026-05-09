@@ -94,6 +94,7 @@ target("phasegate init flag validation (WI-090)", () => {
         expect(config.ci.enabled).toBe(true);
         await access(path.join(workDir, ".github/workflows/aidlc-gate.yml"));
         await access(path.join(workDir, ".github/workflows/consistency-check.yml"));
+        await access(path.join(workDir, ".github/workflows/agent-context-refresh.yml"));
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

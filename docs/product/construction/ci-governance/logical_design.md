@@ -1531,3 +1531,32 @@ WI変更の判定は `docs/inception/**/WI-<number>/**` のstaged pathで行う�
 ### 9.3 設計判断
 
 cron や GitHub Issue 自動作成 logic は bundled template 側を正とし、`TemplateGenerator` の preset / validator list は summary 出力と validation のために残す。template content 自体を preset ごとに差し替える機能は WI-031 の対象外とする。
+
+---
+
+## 10. WI-032: agent context refresh pipeline
+
+<!-- @work-item-id WI-032 -->
+
+### 10.1 CLI 境界
+
+`ci:auto-refresh-agent-context` は AGENTS.md pointer 更新と CLAUDE.md 標準セクション更新を 1 回の操作として扱う。
+
+- `--dry-run`: 書き込みを行わず、更新対象と preview を返す。
+- `--apply`: AGENTS.md / CLAUDE.md を更新する。
+- `--json`: CI から機械判定できる structured output を返す。
+
+`refresh-claude-md` は CLAUDE.md だけを更新する軽量コマンドとして提供し、CI workflow と手元実行の双方から利用できる。
+
+### 10.2 CLAUDE.md 標準セクション
+
+CLAUDE.md は bundled template を正本とし、PhaseGate が所有する標準セクションと user-owned section を marker で分離する。
+
+- 標準セクション: 必読ドキュメント、ハーネスコマンド、skills、preset、agent context refresh 手順
+- user-owned section: `<!-- phasegate:user-section:start -->` から `<!-- phasegate:user-section:end -->` まで
+
+更新時は既存 CLAUDE.md の user-owned section を保持し、それ以外を template から再生成する。
+
+### 10.3 CI template
+
+`agent-context-refresh.yml` は週次 schedule と手動実行で `ci:auto-refresh-agent-context --apply` を実行し、変更があれば PR を作成する。template は `docs/templates/ci/agent-context-refresh.yml` を正本とし、`ci:generate-template --render --type agent-context-refresh` から取得できる。

@@ -86,7 +86,7 @@ claude
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
 - `.husky/pre-commit` and `.husky/commit-msg` when `--with-husky` is passed
-- `.github/workflows/aidlc-gate.yml` and `.github/workflows/consistency-check.yml` when `--with-ci` is passed
+- `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml` when `--with-ci` is passed
 
 `init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
 
@@ -468,7 +468,10 @@ npx phasegate <command> [options]
 | `lint` | Run L1 Biome AST checks |
 | `validate --layer <L2-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance) |
 | `ci-check` | Full CI check (L2-L4) |
-| `ci:generate-template --type <aidlc-gate\|consistency-check\|pre-commit> --render` | Render the bundled CI/hook template to stdout |
+| `ci:generate-template --type <aidlc-gate\|consistency-check\|pre-commit\|agent-context-refresh> --render` | Render the bundled CI/hook template to stdout |
+| `ci:auto-refresh-agent-context --dry-run` / `--apply` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
+| `refresh-claude-md --dry-run` / `--apply` | Refresh only CLAUDE.md while preserving the user-owned section |
+| `p2:check-agent-context` | Check AGENTS.md / CLAUDE.md freshness |
 | `update-skills` | Update skills to latest version |
 | `phasegate:status` | Display overall harness health summary |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
@@ -514,7 +517,6 @@ The main path is ready for project use, but a few documented behaviors still req
 
 | Work Item | Title | Why it matters |
 |---|---|---|
-| **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh pipeline | `ci:migrate-agents-md` exists as a one-shot CLI but there is no scheduled job, and CLAUDE.md is fully hand-maintained. WI-032 adds an `auto-refresh-agent-context` workflow plus a template-driven CLAUDE.md regenerator that preserves user-owned sections. |
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | Promote `doc-freshness` / `pointer-validation` to L4 validators | Both capabilities exist as `p2:check-freshness` / `p2:validate-pointers` CLI commands but are not registered as L4 validators, so `validate --layer L4` skips them. WI-033 plumbs them through `validator-system` so they run via the standard L4 path and presets. |
 
 `requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see the L3 guide for the current manual setup.

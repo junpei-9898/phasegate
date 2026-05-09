@@ -2,7 +2,7 @@
 id: WI-032
 type: story
 severity: normal
-status: drafted
+status: tested
 affects: [ci-governance, harness-api, skill-quality]
 ---
 
@@ -51,12 +51,21 @@ WI-026〜WI-029 の運用で、PhaseGate 自身の AGENTS.md / CLAUDE.md です�
 
 ## 受け入れ基準
 
-- [ ] `npx phasegate ci:auto-refresh-agent-context --dry-run` で AGENTS.md / CLAUDE.md の差分プレビューが出る
-- [ ] `--apply` でファイル更新が反映される
-- [ ] CI workflow template が用意され、`--with-ci` でデプロイできる
-- [ ] CLAUDE.md template-driven 再生成で user 固有セクションが破壊されない（marker 区切りロジックが test される）
-- [ ] L4 / p2 で agent-context drift が検出可能
-- [ ] phasegate 自身の CI でも本機能が稼働し、AGENTS.md / CLAUDE.md が常に最新を保つ
+- [x] `npx phasegate ci:auto-refresh-agent-context --dry-run` で AGENTS.md / CLAUDE.md の差分プレビューが出る
+- [x] `--apply` でファイル更新が反映される
+- [x] CI workflow template が用意され、`--with-ci` でデプロイできる
+- [x] CLAUDE.md template-driven 再生成で user 固有セクションが破壊されない（marker 区切りロジックが test される）
+- [x] L4 / p2 で agent-context drift が検出可能
+- [x] phasegate 自身の CI でも本機能が稼働し、AGENTS.md / CLAUDE.md が常に最新を保つ
+
+## 完了メモ
+
+- `ci:auto-refresh-agent-context --dry-run|--apply|--json` を追加。
+- `refresh-claude-md --dry-run|--apply|--json` を追加。
+- `p2:check-agent-context --threshold-days <n> --json` を追加。
+- `docs/templates/ci/agent-context-refresh.yml` と `.github/workflows/agent-context-refresh.yml` を追加。
+- `phasegate init --with-ci` は `agent-context-refresh.yml` も配置する。
+- CLAUDE.md は marker 内 user section を保持し、marker が無い既存ファイルは全文を user section として保持する。
 
 ## 設計上の検討事項
 

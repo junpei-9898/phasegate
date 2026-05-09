@@ -9,6 +9,7 @@ import { TemplateGenerator } from './domain/services/template-generator.js';
 import { RepetitionDetector } from './domain/services/repetition-detector.js';
 import { PointerValidator } from './domain/services/pointer-validator.js';
 import { LessonAggregator } from './domain/services/lesson-aggregator.js';
+import { ClaudeMdComposer } from './domain/services/claude-md-composer.js';
 
 import { GenerateCiTemplateUseCase } from './application/usecases/generate-ci-template-usecase.js';
 import { RenderCiTemplateUseCase } from './application/usecases/render-ci-template-usecase.js';
@@ -16,6 +17,9 @@ import { RecordErrorOccurrenceUseCase } from './application/usecases/record-erro
 import { CheckEscalationUseCase } from './application/usecases/check-escalation-usecase.js';
 import { ResetRepetitionUseCase } from './application/usecases/reset-repetition-usecase.js';
 import { MigrateAgentsMdUseCase } from './application/usecases/migrate-agents-md-usecase.js';
+import { RefreshAgentContextUseCase } from './application/usecases/refresh-agent-context-usecase.js';
+import { RefreshClaudeMdUseCase } from './application/usecases/refresh-claude-md-usecase.js';
+import { CheckAgentContextUseCase } from './application/usecases/check-agent-context-usecase.js';
 import { AggregateLessonsUseCase } from './application/usecases/aggregate-lessons-usecase.js';
 import { ValidatePointersUseCase } from './application/usecases/validate-pointers-usecase.js';
 
@@ -26,12 +30,16 @@ import { EscalationLogExecutorAdapter } from './infrastructure/adapters/escalati
 import { YamlTemplateRendererAdapter } from './infrastructure/adapters/yaml-template-renderer-adapter.js';
 import { FileSystemExistenceAdapter } from './infrastructure/adapters/file-system-existence-adapter.js';
 import { AgentsMdFileAdapter } from './infrastructure/adapters/agents-md-file-adapter.js';
+import { AgentContextFileAdapter } from './infrastructure/adapters/agent-context-file-adapter.js';
 import { LessonArtifactFileReaderAdapter } from './infrastructure/adapters/lesson-artifact-file-reader-adapter.js';
 import { HarnessApiCommandExistenceAdapter } from './infrastructure/adapters/harness-api-command-existence-adapter.js';
 import { AdrFoundationExistenceAdapter } from './infrastructure/adapters/adr-foundation-existence-adapter.js';
 
 import { GenerateCiTemplateHandler } from './presentation/handlers/generate-ci-template-handler.js';
 import { MigrateAgentsMdHandler } from './presentation/handlers/migrate-agents-md-handler.js';
+import { RefreshAgentContextHandler } from './presentation/handlers/refresh-agent-context-handler.js';
+import { RefreshClaudeMdHandler } from './presentation/handlers/refresh-claude-md-handler.js';
+import { CheckAgentContextHandler } from './presentation/handlers/check-agent-context-handler.js';
 import { CheckRepetitionHandler } from './presentation/handlers/check-repetition-handler.js';
 import { CreateBaselineHandler } from './presentation/handlers/create-baseline-handler.js';
 
@@ -48,6 +56,9 @@ import { ScaffoldDesignHandler } from './presentation/handlers/scaffold-design-h
 export interface CiGovernanceCompositionRoot {
   generateCiTemplateHandler: GenerateCiTemplateHandler;
   migrateAgentsMdHandler: MigrateAgentsMdHandler;
+  refreshAgentContextHandler: RefreshAgentContextHandler;
+  refreshClaudeMdHandler: RefreshClaudeMdHandler;
+  checkAgentContextHandler: CheckAgentContextHandler;
   checkRepetitionHandler: CheckRepetitionHandler;
   createBaselineHandler: CreateBaselineHandler;
   scaffoldDesignHandler: ScaffoldDesignHandler;
@@ -75,6 +86,7 @@ export function buildCiGovernance(
   const commandExistencePort = new HarnessApiCommandExistenceAdapter();
   const adrExistencePort = new AdrFoundationExistenceAdapter();
   const agentsMdPort = new AgentsMdFileAdapter(baseDir);
+  const agentContextDocumentPort = new AgentContextFileAdapter(baseDir, harnessRoot);
   const lessonArtifactReaderPort = new LessonArtifactFileReaderAdapter(baseDir);
 
   // Domain services
@@ -82,6 +94,7 @@ export function buildCiGovernance(
   const repetitionDetector = new RepetitionDetector(errorRepetitionRepository);
   const pointerValidator = new PointerValidator(commandExistencePort, fileExistencePort, adrExistencePort);
   const lessonAggregator = new LessonAggregator();
+  const claudeMdComposer = new ClaudeMdComposer();
 
   // Use cases
   const generateCiTemplateUseCase = new GenerateCiTemplateUseCase(templateGenerator);
@@ -95,6 +108,9 @@ export function buildCiGovernance(
     lessonAggregator,
     pointerValidator,
   );
+  const refreshClaudeMdUseCase = new RefreshClaudeMdUseCase(agentContextDocumentPort, claudeMdComposer);
+  const refreshAgentContextUseCase = new RefreshAgentContextUseCase(migrateAgentsMdUseCase, refreshClaudeMdUseCase);
+  const checkAgentContextUseCase = new CheckAgentContextUseCase(agentContextDocumentPort);
   const aggregateLessonsUseCase = new AggregateLessonsUseCase(lessonArtifactReaderPort, lessonAggregator);
   const validatePointersUseCase = new ValidatePointersUseCase(agentsMdPort, pointerValidator);
 
@@ -122,6 +138,9 @@ export function buildCiGovernance(
     renderCiTemplateUseCase,
   );
   const migrateAgentsMdHandler = new MigrateAgentsMdHandler(migrateAgentsMdUseCase);
+  const refreshAgentContextHandler = new RefreshAgentContextHandler(refreshAgentContextUseCase);
+  const refreshClaudeMdHandler = new RefreshClaudeMdHandler(refreshClaudeMdUseCase);
+  const checkAgentContextHandler = new CheckAgentContextHandler(checkAgentContextUseCase);
   const checkRepetitionHandler = new CheckRepetitionHandler(checkEscalationUseCase);
   const createBaselineHandler = new CreateBaselineHandler(createBaselineUseCase);
   const scaffoldDesignHandler = new ScaffoldDesignHandler(scaffoldDesignUseCase);
@@ -129,6 +148,9 @@ export function buildCiGovernance(
   return {
     generateCiTemplateHandler,
     migrateAgentsMdHandler,
+    refreshAgentContextHandler,
+    refreshClaudeMdHandler,
+    checkAgentContextHandler,
     checkRepetitionHandler,
     createBaselineHandler,
     scaffoldDesignHandler,

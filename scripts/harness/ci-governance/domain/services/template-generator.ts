@@ -17,6 +17,7 @@ const TRIGGER_CONDITION_MAP: Record<TemplateType, TriggerCondition> = {
   'aidlc-gate': 'pull_request',
   'consistency-check': 'schedule',
   'pre-commit': 'pre-commit',
+  'agent-context-refresh': 'schedule',
 };
 
 export class TemplateGenerator {

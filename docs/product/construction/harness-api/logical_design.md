@@ -1781,3 +1781,14 @@ export function isHarnessApiResponse(value: unknown): value is HarnessApiRespons
 - `--with-husky` とは独立して指定できる。
 
 この配置処理は `setup/skill-deployer.ts` に集約し、`main.ts` は flag 解釈と結果表示だけを担う。
+
+### LD-12: `init --with-ci` は agent context refresh workflow も配置する
+
+<!-- @work-item-id WI-032 -->
+
+WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows/agent-context-refresh.yml` を追加する。
+
+- 配置元は `docs/templates/ci/agent-context-refresh.yml`。
+- 既存 workflow がある場合は上書きせず skipped として扱う。
+- `ci.enabled: true` の設定方針は WI-031 と同じく、新規 config 作成時のみ書き込む。
+- workflow は `ci:auto-refresh-agent-context --apply` を呼び出し、agent context file の変更を PR 化する。

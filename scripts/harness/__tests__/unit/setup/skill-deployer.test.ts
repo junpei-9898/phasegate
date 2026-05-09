@@ -124,7 +124,7 @@ target("initHarnessConfig", () => {
 target("deployCiWorkflows", () => {
   describe("CI workflow をデプロイする", () => {
     context("空のプロジェクトに対して呼ぶと", () => {
-      it("aidlc-gate と consistency-check が作成されること", async () => {
+      it("aidlc-gate と consistency-check と agent-context-refresh が作成されること", async () => {
         // Arrange
         const harnessRoot = process.cwd();
 
@@ -133,6 +133,7 @@ target("deployCiWorkflows", () => {
           const result = await deployCiWorkflows(harnessRoot, projectRoot);
           await access(join(projectRoot, ".github/workflows/aidlc-gate.yml"));
           await access(join(projectRoot, ".github/workflows/consistency-check.yml"));
+          await access(join(projectRoot, ".github/workflows/agent-context-refresh.yml"));
           return result;
         });
 
@@ -141,6 +142,7 @@ target("deployCiWorkflows", () => {
           copiedFiles: [
             ".github/workflows/aidlc-gate.yml",
             ".github/workflows/consistency-check.yml",
+            ".github/workflows/agent-context-refresh.yml",
           ],
           skippedFiles: [],
         });
@@ -167,6 +169,7 @@ target("deployCiWorkflows", () => {
         expect(actual.content).toBe("existing workflow\n");
         expect(actual.result.skippedFiles).toContain(".github/workflows/aidlc-gate.yml");
         expect(actual.result.copiedFiles).toContain(".github/workflows/consistency-check.yml");
+        expect(actual.result.copiedFiles).toContain(".github/workflows/agent-context-refresh.yml");
       });
     });
   });

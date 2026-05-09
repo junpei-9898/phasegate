@@ -123,8 +123,11 @@ Commands:
   phasegate:complete-check       Complete L2-L4 check (--json)
   phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
 
-  ci:generate-template         Generate CI template (--preset <id>, --type <aidlc-gate|consistency-check|pre-commit>, --render, --json)
+  ci:generate-template         Generate CI template (--preset <id>, --type <aidlc-gate|consistency-check|pre-commit|agent-context-refresh>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
+  ci:auto-refresh-agent-context Refresh AGENTS.md / CLAUDE.md (--dry-run, --apply, --json)
+  refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
+  p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --force, --json)
@@ -346,6 +349,7 @@ Options:
                      aidlc-gate        — AIDLC phase gate checks
                      consistency-check — Doc/code consistency checks
                      pre-commit        — Pre-commit hook template
+                     agent-context-refresh — AGENTS.md / CLAUDE.md refresh workflow
   --render         Render the template to stdout
   --json           Output in JSON format
 
@@ -1228,6 +1232,39 @@ Examples:
         const validateOnly = hasFlag(args, "--validate-only");
         const format = json ? "json" : "human";
         const result = await mod.migrateAgentsMdHandler.handle({ dryRun, validateOnly, format });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "ci:auto-refresh-agent-context": {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const dryRun = hasFlag(args, "--dry-run");
+        const apply = hasFlag(args, "--apply");
+        const format = json ? "json" : "human";
+        const result = await mod.refreshAgentContextHandler.handle({ dryRun, apply, format });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "refresh-claude-md": {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const dryRun = hasFlag(args, "--dry-run");
+        const apply = hasFlag(args, "--apply");
+        const format = json ? "json" : "human";
+        const result = await mod.refreshClaudeMdHandler.handle({ dryRun, apply, format });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "p2:check-agent-context": {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const thresholdRaw = parseFlag(args, "--threshold-days");
+        const thresholdDays = thresholdRaw === undefined ? undefined : Number(thresholdRaw);
+        const format = json ? "json" : "human";
+        const result = await mod.checkAgentContextHandler.handle({ thresholdDays, format });
         console.log(result.output);
         process.exit(result.exitCode);
         break;

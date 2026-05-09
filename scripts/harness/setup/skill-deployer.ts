@@ -555,6 +555,10 @@ export async function deployCiWorkflows(harnessRoot: string, projectRoot: string
       relativeSource: join("docs", "templates", "ci", "consistency-check.yml"),
       relativeTarget: join(".github", "workflows", "consistency-check.yml"),
     },
+    {
+      relativeSource: join("docs", "templates", "ci", "agent-context-refresh.yml"),
+      relativeTarget: join(".github", "workflows", "agent-context-refresh.yml"),
+    },
   ];
 
   await fs.mkdir(join(projectRoot, ".github", "workflows"), { recursive: true });

@@ -569,3 +569,12 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 |---|---|---|---|
 | IT-API-InitFlag-WI031-001 | `init --with-ci` が既知 flag として扱われること | `phasegate init --with-ci --yes` | unknown flag エラーにならない |
 | IT-API-InitFlag-WI031-002 | `init --with-ci --with-husky` を併用できること | `phasegate init --with-ci --with-husky --yes` | CI workflow と husky hook がそれぞれ opt-in 配置される |
+
+### 8.3 agent context refresh workflow
+
+<!-- @work-item-id WI-032 -->
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-SETUP-DeployCiWorkflows-WI032-001 | `deployCiWorkflows` が agent context workflow を配置すること | `deployCiWorkflows(harnessRoot, projectRoot)` | `.github/workflows/agent-context-refresh.yml` が作成される |
+| IT-API-InitFlag-WI032-001 | `init --with-ci` が agent context workflow も配置すること | `phasegate init --with-ci --yes` | aidlc / consistency / agent-context-refresh の 3 workflow が存在する |

@@ -403,3 +403,16 @@
 | LessonAggregator | 5 | — | — | 2（変換ルール） | 7 |
 | Work-Item trailer validation | — | — | — | 7（pre-commit/CI/commit-msg統合） | 7 |
 | **合計** | **52** | **10** | **7** | **43** | **112** |
+
+---
+
+## 6. WI-032 agent context refresh ユニットテスト
+
+<!-- @work-item-id WI-032 -->
+
+| 対象 | ケース | 期待結果 |
+|---|---|---|
+| ClaudeMdRefresh | 既存 CLAUDE.md に user section がある | marker 内の内容が保持される |
+| ClaudeMdRefresh | 既存 CLAUDE.md がない | template から新規生成される |
+| AgentContextFreshness | AGENTS.md / CLAUDE.md が存在し threshold 内 | pass |
+| AgentContextFreshness | 片方が存在しない | warning または error を返す |

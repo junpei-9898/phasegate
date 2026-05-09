@@ -444,3 +444,29 @@
 | IT-API-GenerateCiTemplateHandler-WI031-001 | render=true の場合に RenderCiTemplateUseCase が呼ばれること | `{ templateType:'aidlc-gate', render:true }` | `GenerateCiTemplateUseCase` ではなく `RenderCiTemplateUseCase` の content が output になる |
 | IT-API-GenerateCiTemplateHandler-WI031-002 | render=false の場合に既存 summary 出力を維持すること | `{ templateType:'aidlc-gate' }` | `GenerateCiTemplateUseCase` が呼ばれ、summary formatter が使われる |
 | IT-API-GenerateCiTemplateHandler-WI031-003 | render=true かつ format=json の場合に JSON で返ること | `{ templateType:'aidlc-gate', render:true, format:'json' }` | `outputPath`, `content`, `errors` を含む JSON 文字列になる |
+
+---
+
+## 9. WI-032 agent context refresh 統合テスト
+
+<!-- @work-item-id WI-032 -->
+
+### 9.1 RefreshAgentContext
+
+**テスト配置**: `scripts/harness/__tests__/integration/ci-governance/refresh-agent-context-usecase.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-UC-RefreshAgentContext-WI032-001 | dry-run では AGENTS.md / CLAUDE.md を書き換えないこと | `{ dryRun:true }` | `success=true`, `applied=false`, preview が返る |
+| IT-UC-RefreshAgentContext-WI032-002 | apply では AGENTS.md pointer と CLAUDE.md 標準セクションを更新すること | `{ dryRun:false }` | `applied=true`, 対象ファイルが更新される |
+| IT-UC-RefreshAgentContext-WI032-003 | CLAUDE.md の user section が保持されること | 既存 CLAUDE.md に marker 内独自記述あり | marker 内テキストが更新後も残る |
+
+### 9.2 Handler / CLI
+
+**テスト配置**: `scripts/harness/__tests__/integration/ci-governance/refresh-agent-context-handler.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-RefreshAgentContext-WI032-001 | `--dry-run` が use case に伝播すること | `{ dryRun:true }` | exitCode 0、dry-run 表示 |
+| IT-API-RefreshAgentContext-WI032-002 | `--apply --json` が JSON を返すこと | `{ apply:true, format:'json' }` | JSON parse 可能で `applied=true` |
+| IT-API-RefreshAgentContext-WI032-003 | agent-context-refresh template を render できること | `templateType='agent-context-refresh'` | workflow content が返る |

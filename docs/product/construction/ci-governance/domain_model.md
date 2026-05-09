@@ -457,3 +457,28 @@ AgentsMdPointer内のPointerEntryはPointerType（command/file）に依存しな
 | `.harness/error-history.json`スキーマ進化 | 低 | ErrorRepetitionRepositoryPort実装がスキーマバージョン管理を担い、ドメイン集約への影響を遮断する |
 
 **評価結果**: 問題なし。設計を確定する。
+
+---
+
+## 10. WI-032: AgentContextRefresh
+
+<!-- @work-item-id WI-032 -->
+
+### 10.1 新しいドメイン概念
+
+| 概念 | 種別 | 責務 |
+|---|---|---|
+| AgentContextRefresh | UseCase boundary | AGENTS.md pointer 更新と CLAUDE.md 標準セクション更新をまとめる |
+| ClaudeMdDocument | 文書モデル | 標準セクションと user-owned section の境界を保持する |
+| AgentContextFreshness | 検査結果 | AGENTS.md / CLAUDE.md の存在と更新鮮度を表す |
+
+### 10.2 不変条件
+
+- CLAUDE.md 更新では user-owned section marker 内の内容を破壊しない。
+- `--dry-run` は AGENTS.md / CLAUDE.md / workflow を書き換えない。
+- `--apply` は Dead Pointer 検証に失敗した場合、AGENTS.md を更新しない。
+- bundled template は npm package に含める。
+
+### 10.3 skill-quality との境界
+
+skill-quality は lesson artifact を出力するだけで、AGENTS.md / CLAUDE.md を直接更新しない。ci-governance は lesson artifact を読み取り、AGENTS.md pointer へ集約する consumer として振る舞う。

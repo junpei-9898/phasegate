@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.137.0] - 2026-05-09
+
+### Added
+
+- **WI-032 — AGENTS.md / CLAUDE.md auto-refresh pipeline** — `ci:auto-refresh-agent-context --dry-run|--apply|--json` を追加し、lesson artifact 由来の AGENTS.md pointer 更新と CLAUDE.md 標準セクション更新を 1 コマンドで実行できるようにした。
+  - `refresh-claude-md --dry-run|--apply|--json` を追加し、CLAUDE.md の user-owned section を保持しながら bundled template から標準セクションを再生成。
+  - `p2:check-agent-context --threshold-days <n> --json` を追加し、AGENTS.md / CLAUDE.md の鮮度を検査可能にした。
+  - `docs/templates/ci/agent-context-refresh.yml` を追加し、`ci:generate-template --type agent-context-refresh --render` と `phasegate init --with-ci` で配布可能にした。
+  - PhaseGate 自身にも `.github/workflows/agent-context-refresh.yml` を追加し、週次 refresh PR を作成する構成にした。
+
 ## [0.136.0] - 2026-05-09
 
 ### Added

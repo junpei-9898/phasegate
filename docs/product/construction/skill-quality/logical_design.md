@@ -1906,3 +1906,9 @@ H12-04 の機能を `CollectLessonsUseCase` と `WriteLessonArtifactUseCase` の
 - `ValidateSkillStructureUseCase`（ユースケース）
 - `FileSystemSkillFileReaderAdapter`（アダプター）
 - `ValidateSkillStructureHandler`（ハンドラー）
+
+### WI-032 Agent context refresh との境界
+
+<!-- @work-item-id WI-032 -->
+
+skill-quality は lesson artifact の生成責務に留まり、AGENTS.md / CLAUDE.md を直接更新しない。`ci:auto-refresh-agent-context` は ci-governance 側で lesson artifact を読み取り、AGENTS.md pointer と CLAUDE.md 標準セクションを更新する。これにより lesson 収集と agent context 配布の責務を分離する。

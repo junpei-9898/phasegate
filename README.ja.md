@@ -87,7 +87,7 @@ claude
 - `docs/principles/*.md` — アーキテクチャ哲学・テスト規約（immutable）
 - `docs/folder_management_rules.md` — ドキュメント配置ルール（**正本**）
 - `--with-husky` を付けると `.husky/pre-commit` ・ `.husky/commit-msg` も配置
-- `--with-ci` を付けると `.github/workflows/aidlc-gate.yml` ・ `.github/workflows/consistency-check.yml` も配置
+- `--with-ci` を付けると `.github/workflows/aidlc-gate.yml` ・ `.github/workflows/consistency-check.yml` ・ `.github/workflows/agent-context-refresh.yml` も配置
 
 **`init` が生成しないもの**（後で skill が作る）:
 
@@ -296,7 +296,10 @@ npx phasegate <command> [options]
 | `phasegate:detect-drift` | 設計-コード乖離レポート |
 | `migrate work-items --dry-run` / `--apply` | 既存リポジトリの旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を WI 統一レイアウト（`_cross/{WI-XXX}/` / `{unit}/{WI-XXX}/`）へ移行。frontmatter（`type` / `severity` / `legacy_id` / `affects`）を自動注入。冪等。`--json` で CI/スクリプト連携可。詳細: [Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
 | `migrate --schema v3` | `phasegate.config.json` を v3 schema へ昇格（`architecture` キー追加） |
-| `ci:generate-template --type <aidlc-gate\|pre-commit\|consistency-check>` | CI/CD テンプレート生成（`--render` で bundled template を stdout 出力） |
+| `ci:generate-template --type <aidlc-gate\|pre-commit\|consistency-check\|agent-context-refresh>` | CI/CD テンプレート生成（`--render` で bundled template を stdout 出力） |
+| `ci:auto-refresh-agent-context --dry-run` / `--apply` | AGENTS.md pointer と CLAUDE.md 標準セクションを更新 |
+| `refresh-claude-md --dry-run` / `--apply` | user section を保持して CLAUDE.md だけを更新 |
+| `p2:check-agent-context` | AGENTS.md / CLAUDE.md の鮮度を検査 |
 | `list-errors --layer <L0-L4>` | エラー定義一覧 |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | agent hook を起動（stdin から JSON） |
 | `pre-commit` | L2 pre-commit バリデータをステージファイルに適用 |
@@ -452,7 +455,6 @@ reports/
 
 | Work Item | 内容 |
 |---|---|
-| **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh パイプライン |
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 |
 
 L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。現時点では手動セットアップで利用できます。

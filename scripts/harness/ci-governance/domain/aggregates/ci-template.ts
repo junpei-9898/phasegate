@@ -29,7 +29,7 @@ export class CiTemplate {
     if (!isTemplateType(templateType)) {
       throw new CiGovernanceDomainError(
         'CI_TEMPLATE_INVALID_TYPE',
-        `INV-1: templateType must be one of 'aidlc-gate', 'consistency-check', 'pre-commit'. Got: ${templateType}`,
+        `INV-1: templateType must be one of 'aidlc-gate', 'consistency-check', 'pre-commit', 'agent-context-refresh'. Got: ${templateType}`,
       );
     }
     if (!presetRef || presetRef.trim() === '') {

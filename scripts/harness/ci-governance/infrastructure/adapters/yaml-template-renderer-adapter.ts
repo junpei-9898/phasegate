@@ -14,12 +14,14 @@ const OUTPUT_PATH_MAP: Record<string, string> = {
   'aidlc-gate': '.github/workflows/aidlc-gate.yml',
   'consistency-check': '.github/workflows/consistency-check.yml',
   'pre-commit': '.husky/pre-commit',
+  'agent-context-refresh': '.github/workflows/agent-context-refresh.yml',
 };
 
 const TEMPLATE_PATH_MAP: Record<string, string> = {
   'aidlc-gate': 'docs/templates/ci/aidlc-gate.yml',
   'consistency-check': 'docs/templates/ci/consistency-check.yml',
   'pre-commit': 'docs/templates/hooks/pre-commit',
+  'agent-context-refresh': 'docs/templates/ci/agent-context-refresh.yml',
 };
 
 export class YamlTemplateRendererAdapter implements TemplateRendererPort {
