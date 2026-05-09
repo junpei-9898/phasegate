@@ -4,6 +4,7 @@
 @story-id H11-02
 @story-id H11-03
 @story-id H11-04
+@work-item-id WI-097
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01〜H11-04

@@ -1,4 +1,7 @@
-// @layer test
+// @unit ci-governance
+// @layer integration
+// @story H12-04
+
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { GenerateCiTemplateHandler } from '../../../ci-governance/presentation/handlers/generate-ci-template-handler.js';
@@ -53,6 +56,68 @@ target('GenerateCiTemplateHandler', () => {
             format: 'json',
           });
           expect(() => JSON.parse(actual.output)).not.toThrow();
+        });
+      });
+    });
+
+    // IT-API-GenerateCiTemplateHandler-WI031-001
+    describe('render=trueでRenderCiTemplateUseCaseが呼び出されること', () => {
+      context('render=trueを渡した場合', () => {
+        it('rendered contentがoutputになりGenerateCiTemplateUseCaseは呼び出されない', async () => {
+          const generateUseCase = { execute: vi.fn() };
+          const renderUseCase = {
+            execute: vi.fn().mockResolvedValue({
+              outputPath: '.github/workflows/aidlc-gate.yml',
+              content: 'name: AIDLC Quality Gate\n',
+              errors: [],
+            }),
+          };
+          const handler = new GenerateCiTemplateHandler(generateUseCase as any, renderUseCase as any);
+
+          const actual = await handler.handle({
+            presetId: 'standard',
+            templateType: 'aidlc-gate',
+            render: true,
+          });
+
+          expect(actual.exitCode).toBe(0);
+          expect(actual.output).toBe('name: AIDLC Quality Gate\n');
+          expect(renderUseCase.execute).toHaveBeenCalledWith({
+            presetId: 'standard',
+            templateType: 'aidlc-gate',
+          });
+          expect(generateUseCase.execute).not.toHaveBeenCalled();
+        });
+      });
+    });
+
+    // IT-API-GenerateCiTemplateHandler-WI031-003
+    describe('render=trueかつformat=jsonでRenderCiTemplateOutputがJSON形式になること', () => {
+      context('render=trueとformat=jsonを渡した場合', () => {
+        it('outputPathとcontentを含むJSONが返る', async () => {
+          const generateUseCase = { execute: vi.fn() };
+          const renderUseCase = {
+            execute: vi.fn().mockResolvedValue({
+              outputPath: '.github/workflows/aidlc-gate.yml',
+              content: 'name: AIDLC Quality Gate\n',
+              errors: [],
+            }),
+          };
+          const handler = new GenerateCiTemplateHandler(generateUseCase as any, renderUseCase as any);
+
+          const actual = await handler.handle({
+            presetId: 'standard',
+            templateType: 'aidlc-gate',
+            render: true,
+            format: 'json',
+          });
+
+          expect(actual.exitCode).toBe(0);
+          expect(JSON.parse(actual.output)).toEqual({
+            outputPath: '.github/workflows/aidlc-gate.yml',
+            content: 'name: AIDLC Quality Gate\n',
+            errors: [],
+          });
         });
       });
     });

@@ -2,7 +2,7 @@
 id: WI-031
 type: story
 severity: normal
-status: drafted
+status: tested
 affects: [ci-governance, harness-api]
 ---
 
@@ -49,12 +49,18 @@ phasegate には CI/CD ワークフロー template を生成する 2 つの経�
 
 ## 受け入れ基準
 
-- [ ] CLI generator と bundled template の YAML が **byte-for-byte または semantic equivalent** で一致
-- [ ] `npx phasegate init --with-ci` で `.github/workflows/{aidlc-gate,consistency-check}.yml` が配置される
-- [ ] CLI 生成 / bundled の双方で GitHub Issue 自動作成 logic が含まれる
-- [ ] cron 時刻が 1 箇所で定義され、両経路で一致する
-- [ ] unit test で 3 type 全 template の生成内容を回帰
-- [ ] README に `--with-ci` オプションの使い方が追加される
+- [x] CLI generator と bundled template の YAML が **byte-for-byte または semantic equivalent** で一致
+- [x] `npx phasegate init --with-ci` で `.github/workflows/{aidlc-gate,consistency-check}.yml` が配置される
+- [x] CLI 生成 / bundled の双方で GitHub Issue 自動作成 logic が含まれる
+- [x] cron 時刻が 1 箇所で定義され、両経路で一致する
+- [x] unit test で 3 type 全 template の生成内容を回帰
+- [x] README に `--with-ci` オプションの使い方が追加される
+
+## 完了メモ
+
+- `ci:generate-template --render` は `docs/templates/ci/*.yml` / `docs/templates/hooks/pre-commit` を正本として stdout に出力する。
+- `phasegate init --with-ci` は `.github/workflows/aidlc-gate.yml` と `.github/workflows/consistency-check.yml` を opt-in 配置する。
+- 既存 workflow は上書きせず skipped として扱う。
 
 ## スコープ外
 

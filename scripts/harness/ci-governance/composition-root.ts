@@ -70,7 +70,7 @@ export function buildCiGovernance(
   const presetConfigAdapter = new PresetConfigAdapter();
   const errorRepetitionRepository = new ErrorRepetitionJsonRepository(baseDir);
   const escalationExecutorPort = new EscalationLogExecutorAdapter();
-  const templateRendererPort = new YamlTemplateRendererAdapter();
+  const templateRendererPort = new YamlTemplateRendererAdapter(harnessRoot);
   const fileExistencePort = new FileSystemExistenceAdapter(baseDir);
   const commandExistencePort = new HarnessApiCommandExistenceAdapter();
   const adrExistencePort = new AdrFoundationExistenceAdapter();

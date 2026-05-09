@@ -3,7 +3,7 @@
 // @story H13-04
 
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -76,6 +76,24 @@ target("phasegate init flag validation (WI-090)", () => {
           workDir,
         );
         expect(actual.stderr).not.toContain("unknown flag");
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
+    }, 120000);
+
+    it("--with-ci は flag validation で reject されず CI workflow を配置すること", async () => {
+      const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-init-with-ci-"));
+      try {
+        const actual = await runCli(
+          ["init", "--name", "foo", "--skills", "core", "--agent", "codex", "--with-ci", "--yes"],
+          workDir,
+        );
+        const config = JSON.parse(await readFile(path.join(workDir, "phasegate.config.json"), "utf-8"));
+
+        expect(actual.stderr).not.toContain("unknown flag");
+        expect(config.ci.enabled).toBe(true);
+        await access(path.join(workDir, ".github/workflows/aidlc-gate.yml"));
+        await access(path.join(workDir, ".github/workflows/consistency-check.yml"));
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

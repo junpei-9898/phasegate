@@ -418,3 +418,29 @@
 | IT-API-AgentsMdFlow-001 | Handler→MigrateAgentsMdUseCase→LessonAggregator→PointerValidator→AgentsMdPortの全フローが連携できること | `dryRun=false` | LessonArtifactReaderPortモック: 2件返却; AgentsMdPortモック: read→空AgentsMdPointer, write→`{before:20,after:8}`; 全ExistencePortモック: true | `success=true`, `addedPointers=2`, `kpiMet=true` |
 | IT-API-AgentsMdFlow-002 | Dead Pointer検出時は全レイヤーを通してwrite()がスキップされること | `dryRun=false` | LessonArtifactReaderPortモック: 1件返却; AgentsMdPortモック: read→空AgentsMdPointer; FileExistencePortモック: false | `success=false`, AgentsMdPort.write()が呼び出されない |
 | IT-API-AgentsMdFlow-003 | Shared Kernel（HarnessError/HarnessErrorCode）が全レイヤーを通じて正しく伝播されること | `dryRun=false`（重複lessonId入力） | LessonArtifactReaderPortモック: 重複lessonId2件 | 返却されたHarnessErrorのcodeがDUPLICATE_LESSON_IDであること。エラーがレイヤー境界で再包装されず型安全に伝播されること |
+
+---
+
+## 8. WI-031 CI template render 統合テスト
+
+<!-- @work-item-id WI-031 -->
+
+### 8.1 TemplateRendererPort 正本一致
+
+**テスト配置**: `scripts/harness/__tests__/integration/ci-governance/render-ci-template-usecase.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-UC-RenderCiTemplate-WI031-001 | aidlc-gate を render すると bundled template と一致すること | `templateType='aidlc-gate'` | `content` が `docs/templates/ci/aidlc-gate.yml` と一致する |
+| IT-UC-RenderCiTemplate-WI031-002 | consistency-check を render すると bundled template と一致すること | `templateType='consistency-check'` | `content` が `docs/templates/ci/consistency-check.yml` と一致し、GitHub Issue 作成 logic を含む |
+| IT-UC-RenderCiTemplate-WI031-003 | pre-commit を render すると bundled hook と一致すること | `templateType='pre-commit'` | `content` が `docs/templates/hooks/pre-commit` と一致する |
+
+### 8.2 GenerateCiTemplateHandler の `--render`
+
+**テスト配置**: `scripts/harness/__tests__/integration/ci-governance/generate-ci-template-handler.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-GenerateCiTemplateHandler-WI031-001 | render=true の場合に RenderCiTemplateUseCase が呼ばれること | `{ templateType:'aidlc-gate', render:true }` | `GenerateCiTemplateUseCase` ではなく `RenderCiTemplateUseCase` の content が output になる |
+| IT-API-GenerateCiTemplateHandler-WI031-002 | render=false の場合に既存 summary 出力を維持すること | `{ templateType:'aidlc-gate' }` | `GenerateCiTemplateUseCase` が呼ばれ、summary formatter が使われる |
+| IT-API-GenerateCiTemplateHandler-WI031-003 | render=true かつ format=json の場合に JSON で返ること | `{ templateType:'aidlc-gate', render:true, format:'json' }` | `outputPath`, `content`, `errors` を含む JSON 文字列になる |

@@ -70,7 +70,7 @@ Node.js >= 18, npm >= 9, TypeScript 5.x
 npm install --save-dev phasegate
 
 # 2. プロジェクトを初期化
-npx phasegate init --name my-project --with-husky
+npx phasegate init --name my-project --with-husky --with-ci
 
 # 3. AI agent を起動して /product-architect から始める
 claude
@@ -87,6 +87,7 @@ claude
 - `docs/principles/*.md` — アーキテクチャ哲学・テスト規約（immutable）
 - `docs/folder_management_rules.md` — ドキュメント配置ルール（**正本**）
 - `--with-husky` を付けると `.husky/pre-commit` ・ `.husky/commit-msg` も配置
+- `--with-ci` を付けると `.github/workflows/aidlc-gate.yml` ・ `.github/workflows/consistency-check.yml` も配置
 
 **`init` が生成しないもの**（後で skill が作る）:
 
@@ -282,7 +283,7 @@ npx phasegate <command> [options]
 
 | コマンド | 説明 |
 |---|---|
-| `init --name <name>` | 初期化（skills/config/hooks 配置）。`--agent claude\|codex\|both`、`--with-husky`、`--preset <full\|standard\|minimal\|custom>` |
+| `init --name <name>` | 初期化（skills/config/hooks 配置）。`--agent claude\|codex\|both`、`--with-husky`、`--with-ci`、`--preset <full\|standard\|minimal\|custom>` |
 | `update-skills` | スキルを最新版に再デプロイ |
 | `lint` | L1 Biome AST チェック |
 | `validate --layer <L1\|L2\|L3\|L4\|all>` | 指定レイヤーのバリデータ実行（`--format human\|agent\|ci`） |
@@ -295,7 +296,7 @@ npx phasegate <command> [options]
 | `phasegate:detect-drift` | 設計-コード乖離レポート |
 | `migrate work-items --dry-run` / `--apply` | 既存リポジトリの旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を WI 統一レイアウト（`_cross/{WI-XXX}/` / `{unit}/{WI-XXX}/`）へ移行。frontmatter（`type` / `severity` / `legacy_id` / `affects`）を自動注入。冪等。`--json` で CI/スクリプト連携可。詳細: [Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
 | `migrate --schema v3` | `phasegate.config.json` を v3 schema へ昇格（`architecture` キー追加） |
-| `ci:generate-template --type <aidlc-gate\|pre-commit\|consistency-check>` | CI/CD テンプレート生成（`--render` でファイル出力） |
+| `ci:generate-template --type <aidlc-gate\|pre-commit\|consistency-check>` | CI/CD テンプレート生成（`--render` で bundled template を stdout 出力） |
 | `list-errors --layer <L0-L4>` | エラー定義一覧 |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | agent hook を起動（stdin から JSON） |
 | `pre-commit` | L2 pre-commit バリデータをステージファイルに適用 |
@@ -451,7 +452,6 @@ reports/
 
 | Work Item | 内容 |
 |---|---|
-| **[WI-031](docs/inception/_cross/WI-031/description.md)** | CI template の二系統統一 + `phasegate init --with-ci` |
 | **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh パイプライン |
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 |
 

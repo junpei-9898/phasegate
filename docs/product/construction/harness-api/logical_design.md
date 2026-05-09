@@ -1766,3 +1766,18 @@ export function isHarnessApiResponse(value: unknown): value is HarnessApiRespons
 ### LD-10: Shared Kernelへの公開範囲の絞り込み
 
 論理設計固有の判断。`harness-api` の Shared Kernel 公開面を `HarnessApiResponseContract<T>` と型ガード関数のみに絞り込む。`CliCommandDefinition`, `CommandRegistry`, `CheckReadyResult` 等のドメイン型は公開しない。理由: (1) `agent-integration` と `ci-governance` が必要とするのはCLI出力のJSON構造（response envelope）のみ。(2) 内部ドメイン型を公開すると harness-api の内部変更が下流Unitのコンパイルエラーに波及する。(3) `cross_cutting_decisions.md §4` の Shared Kernel 最小化原則に従う。
+
+### LD-11: `init --with-ci` は opt-in 配置に限定する
+
+<!-- @work-item-id WI-031 -->
+
+`phasegate init --with-ci` は GitHub Actions workflow の配置だけを追加する opt-in flag とする。通常の `init` では `.github/workflows/` を作成しない。
+
+- 配置対象は `.github/workflows/aidlc-gate.yml` と `.github/workflows/consistency-check.yml` の 2 ファイル。
+- 配置元は `docs/templates/ci/{aidlc-gate,consistency-check}.yml`。
+- 既存 workflow がある場合は上書きせず skipped として扱う。
+- `phasegate.config.json` を新規作成する場合のみ `ci.enabled: true` を書き込む。
+- 既存 config は破壊的に更新しない。
+- `--with-husky` とは独立して指定できる。
+
+この配置処理は `setup/skill-deployer.ts` に集約し、`main.ts` は flag 解釈と結果表示だけを担う。

@@ -420,10 +420,15 @@ export async function deployHookScripts(harnessRoot: string, projectRoot: string
   };
 }
 
+export interface InitHarnessConfigOptions {
+  ciEnabled?: boolean;
+}
+
 export async function initHarnessConfig(
   projectRoot: string,
   projectName: string,
   phasePreset?: "full" | "standard" | "minimal" | "custom",
+  options: InitHarnessConfigOptions = {},
 ): Promise<{ created: boolean; path: string }> {
   const configPath = join(projectRoot, HARNESS_CONFIG_FILE);
   try {
@@ -461,6 +466,7 @@ export async function initHarnessConfig(
       format: "json",
       outputDir: "reports",
     },
+    ...(options.ciEnabled ? { ci: { enabled: true } } : {}),
   };
 
   await fs.writeFile(configPath, JSON.stringify(template, null, 2) + "\n", "utf-8");
@@ -532,6 +538,46 @@ export interface DeployHuskyHookResult {
   path: string;
 }
 
+export interface DeployCiWorkflowsResult {
+  copiedFiles: string[];
+  skippedFiles: string[];
+}
+
+export async function deployCiWorkflows(harnessRoot: string, projectRoot: string): Promise<DeployCiWorkflowsResult> {
+  const copiedFiles: string[] = [];
+  const skippedFiles: string[] = [];
+  const workflows = [
+    {
+      relativeSource: join("docs", "templates", "ci", "aidlc-gate.yml"),
+      relativeTarget: join(".github", "workflows", "aidlc-gate.yml"),
+    },
+    {
+      relativeSource: join("docs", "templates", "ci", "consistency-check.yml"),
+      relativeTarget: join(".github", "workflows", "consistency-check.yml"),
+    },
+  ];
+
+  await fs.mkdir(join(projectRoot, ".github", "workflows"), { recursive: true });
+
+  for (const workflow of workflows) {
+    const sourcePath = join(harnessRoot, workflow.relativeSource);
+    const targetPath = join(projectRoot, workflow.relativeTarget);
+
+    try {
+      await fs.access(targetPath);
+      skippedFiles.push(workflow.relativeTarget);
+      continue;
+    } catch {
+      // ファイルが存在しない場合のみコピーする
+    }
+
+    await fs.copyFile(sourcePath, targetPath);
+    copiedFiles.push(workflow.relativeTarget);
+  }
+
+  return { copiedFiles, skippedFiles };
+}
+
 export async function deployHuskyHook(harnessRoot: string, projectRoot: string): Promise<DeployHuskyHookResult> {
   const targetPath = join(projectRoot, ".husky", "pre-commit");
 
@@ -540,7 +586,7 @@ export async function deployHuskyHook(harnessRoot: string, projectRoot: string):
     return { created: false, path: targetPath };
   } catch {}
 
-  const sourcePath = join(harnessRoot, "templates", ".husky", "pre-commit");
+  const sourcePath = join(harnessRoot, "docs", "templates", "hooks", "pre-commit");
   await fs.mkdir(join(projectRoot, ".husky"), { recursive: true });
   await fs.copyFile(sourcePath, targetPath);
   await fs.chmod(targetPath, 0o755);
@@ -559,7 +605,7 @@ export async function deployHuskyCommitMsgHook(
     return { created: false, path: targetPath };
   } catch {}
 
-  const sourcePath = join(harnessRoot, "templates", ".husky", "commit-msg");
+  const sourcePath = join(harnessRoot, "docs", "templates", "hooks", "commit-msg");
   await fs.mkdir(join(projectRoot, ".husky"), { recursive: true });
   await fs.copyFile(sourcePath, targetPath);
   await fs.chmod(targetPath, 0o755);

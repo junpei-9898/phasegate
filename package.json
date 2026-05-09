@@ -38,6 +38,7 @@
     "docs/contracts/**",
     "docs/principles/**",
     "docs/guide/**",
+    "docs/templates/**",
     "docs/folder_management_rules.md",
     "LICENSE",
     "CHANGELOG.md"

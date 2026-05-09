@@ -31,7 +31,25 @@ export class GenerateCiTemplateHandler {
   ) {}
 
   async handle(args: GenerateCiTemplateHandlerArgs): Promise<GenerateCiTemplateHandlerResult> {
-    const { presetId, templateType, format = 'human' } = args;
+    const { presetId, templateType, render = false, format = 'human' } = args;
+
+    if (render) {
+      const result = await this.renderUseCase.execute({
+        presetId,
+        templateType: templateType as TemplateType,
+      });
+      const hasErrors = result.errors.length > 0;
+      const output = format === 'json'
+        ? JSON.stringify(result, null, 2)
+        : hasErrors
+          ? result.errors.map((err) => `[${err.code}] ${err.message}`).join('\n')
+          : result.content;
+
+      return {
+        exitCode: hasErrors ? 1 : 0,
+        output,
+      };
+    }
 
     const result = await this.generateUseCase.execute({
       presetId,

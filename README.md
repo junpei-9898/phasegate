@@ -71,7 +71,7 @@ Node.js >= 18, npm >= 9, TypeScript 5.x
 npm install --save-dev phasegate
 
 # 2. Initialize the project
-npx phasegate init --name my-project --with-husky
+npx phasegate init --name my-project --with-husky --with-ci
 
 # 3. Start your AI agent and begin with product design
 claude
@@ -86,6 +86,7 @@ claude
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
 - `.husky/pre-commit` and `.husky/commit-msg` when `--with-husky` is passed
+- `.github/workflows/aidlc-gate.yml` and `.github/workflows/consistency-check.yml` when `--with-ci` is passed
 
 `init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
 
@@ -463,10 +464,11 @@ npx phasegate <command> [options]
 
 | Command | Description |
 |---|---|
-| `init --name <name>` | Initialize project, deploy skills, generate config |
+| `init --name <name>` | Initialize project, deploy skills, generate config. Use `--with-ci` to deploy GitHub Actions workflows. |
 | `lint` | Run L1 Biome AST checks |
 | `validate --layer <L2-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance) |
 | `ci-check` | Full CI check (L2-L4) |
+| `ci:generate-template --type <aidlc-gate\|consistency-check\|pre-commit> --render` | Render the bundled CI/hook template to stdout |
 | `update-skills` | Update skills to latest version |
 | `phasegate:status` | Display overall harness health summary |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
@@ -512,7 +514,6 @@ The main path is ready for project use, but a few documented behaviors still req
 
 | Work Item | Title | Why it matters |
 |---|---|---|
-| **[WI-031](docs/inception/_cross/WI-031/description.md)** | CI template unification + `phasegate init --with-ci` | Today the bundled YAML and the `ci:generate-template` output diverge (different cron schedule, only the bundled one creates GitHub Issues). `phasegate init` does not deploy the workflow, so L4 only runs after the user manually copies the file. WI-031 unifies the two paths and adds an opt-in deploy flag. |
 | **[WI-032](docs/inception/_cross/WI-032/description.md)** | AGENTS.md / CLAUDE.md auto-refresh pipeline | `ci:migrate-agents-md` exists as a one-shot CLI but there is no scheduled job, and CLAUDE.md is fully hand-maintained. WI-032 adds an `auto-refresh-agent-context` workflow plus a template-driven CLAUDE.md regenerator that preserves user-owned sections. |
 | **[WI-033](docs/inception/_cross/WI-033/description.md)** | Promote `doc-freshness` / `pointer-validation` to L4 validators | Both capabilities exist as `p2:check-freshness` / `p2:validate-pointers` CLI commands but are not registered as L4 validators, so `validate --layer L4` skips them. WI-033 plumbs them through `validator-system` so they run via the standard L4 path and presets. |
 

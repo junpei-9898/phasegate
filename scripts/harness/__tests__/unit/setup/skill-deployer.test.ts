@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   deployAgentSkillLinks,
+  deployCiWorkflows,
   deployDesignDocs,
   deployHuskyCommitMsgHook,
   deployHuskyHook,
@@ -30,6 +31,7 @@ async function withTempProject<T>(testFn: (projectRoot: string) => Promise<T>): 
 
 async function readGeneratedConfig(projectRoot: string): Promise<{
   phaseDependencies: { preset: string };
+  ci?: { enabled?: boolean };
 }> {
   const raw = await readFile(join(projectRoot, "phasegate.config.json"), "utf-8");
   return JSON.parse(raw) as { phaseDependencies: { preset: string } };
@@ -98,6 +100,73 @@ target("initHarnessConfig", () => {
 
         // Assert
         expect(actual.phaseDependencies.preset).toBe("custom");
+      });
+    });
+
+    context("ciEnabled を指定する場合", () => {
+      it("ci.enabled=true が書き込まれること", async () => {
+        // Arrange
+        const projectName = "my-project";
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await initHarnessConfig(projectRoot, projectName, undefined, { ciEnabled: true });
+          return readGeneratedConfig(projectRoot);
+        });
+
+        // Assert
+        expect(actual.ci?.enabled).toBe(true);
+      });
+    });
+  });
+});
+
+target("deployCiWorkflows", () => {
+  describe("CI workflow をデプロイする", () => {
+    context("空のプロジェクトに対して呼ぶと", () => {
+      it("aidlc-gate と consistency-check が作成されること", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          const result = await deployCiWorkflows(harnessRoot, projectRoot);
+          await access(join(projectRoot, ".github/workflows/aidlc-gate.yml"));
+          await access(join(projectRoot, ".github/workflows/consistency-check.yml"));
+          return result;
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          copiedFiles: [
+            ".github/workflows/aidlc-gate.yml",
+            ".github/workflows/consistency-check.yml",
+          ],
+          skippedFiles: [],
+        });
+      });
+    });
+
+    context("既に workflow が存在する場合", () => {
+      it("既存ファイルを上書きせず skippedFiles に含めること", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, ".github/workflows"), { recursive: true });
+          await writeFile(join(projectRoot, ".github/workflows/aidlc-gate.yml"), "existing workflow\n", "utf-8");
+
+          const result = await deployCiWorkflows(harnessRoot, projectRoot);
+          const content = await readFile(join(projectRoot, ".github/workflows/aidlc-gate.yml"), "utf-8");
+
+          return { result, content };
+        });
+
+        // Assert
+        expect(actual.content).toBe("existing workflow\n");
+        expect(actual.result.skippedFiles).toContain(".github/workflows/aidlc-gate.yml");
+        expect(actual.result.copiedFiles).toContain(".github/workflows/consistency-check.yml");
       });
     });
   });

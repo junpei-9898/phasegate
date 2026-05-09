@@ -41,6 +41,7 @@ import type { SkillSet } from "./setup/skill-deployer.js";
 import {
   deployAgentSkillLinks,
   deployCodexHooks,
+  deployCiWorkflows,
   deployDesignDocs,
   deployHookScripts,
   deployHuskyCommitMsgHook,
@@ -89,7 +90,7 @@ Usage: phasegate <command> [options]
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
-                                --skills <core|all>, --agent <claude|codex|both>, --with-husky, --yes)
+                                --skills <core|all>, --agent <claude|codex|both>, --with-husky, --with-ci, --yes)
   update-skills                Re-deploy skills from current harness version
 
 Commands:
@@ -251,6 +252,7 @@ Options:
   --skills <core|all>             Skill set to deploy (default: "all")
   --agent <claude|codex|both>     Agent integration target (default: "claude")
   --with-husky                    Install Husky pre-commit hooks
+  --with-ci                       Install GitHub Actions workflows
   --yes                           Skip confirmation prompts
   --help, -h                      Show this help`,
   "update-skills": `Usage: phasegate update-skills [options]
@@ -636,7 +638,7 @@ async function main(): Promise<void> {
     switch (command) {
       // ── harness setup ──
       case "init": {
-        const KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--yes"];
+        const KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--with-ci", "--yes"];
         const flagError = validateKnownFlags(args, KNOWN_INIT_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -674,7 +676,8 @@ async function main(): Promise<void> {
           claude: deployClaude,
           codex: deployCodex,
         });
-        const configResult = await initHarnessConfig(rootDir, projectName, phasePreset);
+        const withCi = hasFlag(args, "--with-ci");
+        const configResult = await initHarnessConfig(rootDir, projectName, phasePreset, { ciEnabled: withCi });
         const hooksResult = deployClaude
           ? await deployHookScripts(harnessRoot, rootDir)
           : {
@@ -689,6 +692,7 @@ async function main(): Promise<void> {
         const withHusky = hasFlag(args, "--with-husky");
         const huskyResult = withHusky ? await deployHuskyHook(harnessRoot, rootDir) : null;
         const huskyCommitMsgResult = withHusky ? await deployHuskyCommitMsgHook(harnessRoot, rootDir) : null;
+        const ciWorkflowResult = withCi ? await deployCiWorkflows(harnessRoot, rootDir) : null;
         console.log(
           `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
         );
@@ -751,6 +755,14 @@ async function main(): Promise<void> {
             console.log(`✓ .husky/commit-msg deployed`);
           } else {
             console.log(`  .husky/commit-msg already exists, skipped`);
+          }
+        }
+        if (ciWorkflowResult !== null) {
+          if (ciWorkflowResult.copiedFiles.length > 0) {
+            console.log(`✓ CI workflows deployed (${ciWorkflowResult.copiedFiles.length} files)`);
+          }
+          for (const skipped of ciWorkflowResult.skippedFiles) {
+            console.log(`  ${skipped} already exists, skipped`);
           }
         }
         console.log(`✓ Harness v${result.version} initialized (agent: ${agent})`);
@@ -1199,7 +1211,7 @@ Examples:
   phasegate ci:generate-template --preset strict --type pre-commit --render`);
           process.exit(0);
         }
-        const mod = buildCiGovernance(rootDir);
+        const mod = buildCiGovernance(rootDir, harnessRoot);
         const presetId = parseFlag(args, "--preset") ?? "default";
         const templateType = parseFlag(args, "--type") ?? "aidlc-gate";
         const render = hasFlag(args, "--render");
@@ -1211,7 +1223,7 @@ Examples:
       }
 
       case "ci:migrate-agents-md": {
-        const mod = buildCiGovernance(rootDir);
+        const mod = buildCiGovernance(rootDir, harnessRoot);
         const dryRun = hasFlag(args, "--dry-run");
         const validateOnly = hasFlag(args, "--validate-only");
         const format = json ? "json" : "human";
@@ -1222,7 +1234,7 @@ Examples:
       }
 
       case "ci:check-repetition": {
-        const mod = buildCiGovernance(rootDir);
+        const mod = buildCiGovernance(rootDir, harnessRoot);
         const errorCode = parseFlag(args, "--code") ?? "";
         const reset = hasFlag(args, "--reset");
         const format = json ? "json" : "human";
@@ -1233,7 +1245,7 @@ Examples:
       }
 
       case "baseline": {
-        const mod = buildCiGovernance(rootDir);
+        const mod = buildCiGovernance(rootDir, harnessRoot);
         const dryRun = hasFlag(args, "--dry-run");
         const force = hasFlag(args, "--force");
         const pathsFlag = parseFlag(args, "--paths");

@@ -544,3 +544,28 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 ```typescript
 // @stub: wave2-pending - validator-system の正式インターフェース確定後に差し替え
 ```
+
+---
+
+## 8. WI-031 `init --with-ci` 統合テスト
+
+<!-- @work-item-id WI-031 -->
+
+### 8.1 setup deployer
+
+**テスト配置**: `scripts/harness/__tests__/unit/setup/skill-deployer.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-SETUP-DeployCiWorkflows-WI031-001 | 空 project に CI workflow を配置すること | `deployCiWorkflows(harnessRoot, projectRoot)` | `.github/workflows/aidlc-gate.yml` と `.github/workflows/consistency-check.yml` が作成される |
+| IT-SETUP-DeployCiWorkflows-WI031-002 | 既存 workflow を上書きしないこと | 既存 `.github/workflows/aidlc-gate.yml` あり | 既存内容を維持し、該当 path が skipped として返る |
+| IT-SETUP-InitHarnessConfig-WI031-001 | CI opt-in config を新規作成すること | `initHarnessConfig(..., { ciEnabled:true })` | `phasegate.config.json` に `ci.enabled=true` が入る |
+
+### 8.2 CLI flag validation
+
+**テスト配置**: `scripts/harness/__tests__/integration/harness-api/init-flag-validation.integration.test.ts`
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-InitFlag-WI031-001 | `init --with-ci` が既知 flag として扱われること | `phasegate init --with-ci --yes` | unknown flag エラーにならない |
+| IT-API-InitFlag-WI031-002 | `init --with-ci --with-husky` を併用できること | `phasegate init --with-ci --with-husky --yes` | CI workflow と husky hook がそれぞれ opt-in 配置される |

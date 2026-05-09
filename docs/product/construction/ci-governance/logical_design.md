@@ -1500,3 +1500,34 @@ WI変更の判定は `docs/inception/**/WI-<number>/**` のstaged pathで行う�
 - AAAコメントを明示する
 - Act結果は `actual` 変数へ代入する
 - UseCaseテストではPortのみをモックし、Domainモデルはモックしない
+
+---
+
+## 9. WI-031: CI template render 経路統一
+
+<!-- @work-item-id WI-031 -->
+
+### 9.1 TemplateRendererPort の正本
+
+`TemplateRendererPort` の GitHub Actions / hook 実装は、TypeScript 内の文字列組み立てではなく、リポジトリ内の bundled template ファイルを正本として読み込む。
+
+| templateType | 正本ファイル | outputPath |
+|---|---|---|
+| `aidlc-gate` | `docs/templates/ci/aidlc-gate.yml` | `.github/workflows/aidlc-gate.yml` |
+| `consistency-check` | `docs/templates/ci/consistency-check.yml` | `.github/workflows/consistency-check.yml` |
+| `pre-commit` | `docs/templates/hooks/pre-commit` | `.husky/pre-commit` |
+
+これにより、bundled template と `ci:generate-template --render` の cron、GitHub Issue 自動作成 logic、実行コマンドの差分をなくす。
+
+### 9.2 `ci:generate-template --render`
+
+`GenerateCiTemplateHandler` は `render=true` の場合、summary 生成用の `GenerateCiTemplateUseCase` ではなく `RenderCiTemplateUseCase` を呼び出し、rendered content を stdout へ返す。
+
+- `--render` なし: 既存の human / JSON summary 出力を維持する。
+- `--render`: raw content を返す。
+- `--render --json`: `RenderCiTemplateOutput` 相当の structured JSON を返す。
+- render 時の validation error は `exitCode=1` として扱う。
+
+### 9.3 設計判断
+
+cron や GitHub Issue 自動作成 logic は bundled template 側を正とし、`TemplateGenerator` の preset / validator list は summary 出力と validation のために残す。template content 自体を preset ごとに差し替える機能は WI-031 の対象外とする。
