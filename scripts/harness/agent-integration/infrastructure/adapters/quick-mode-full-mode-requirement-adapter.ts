@@ -4,6 +4,7 @@
 import type {
   FullModeRequirementQueryPort,
   FullModeRequirementQueryResult,
+  FullModeTargetChange,
 } from '../../domain/ports/full-mode-requirement-query-port.js';
 import type { ClassifyChangeCategoryUseCase } from '../../../quick-mode/application/usecases/classify-change-category-usecase.js';
 
@@ -18,14 +19,20 @@ export class QuickModeFullModeRequirementAdapter implements FullModeRequirementQ
     this.classifyUseCaseFactory = deps.classifyUseCaseFactory;
   }
 
-  async check(targetFilePaths: readonly string[]): Promise<FullModeRequirementQueryResult> {
+  async check(
+    targetFilePaths: readonly string[],
+    targetChanges?: readonly FullModeTargetChange[],
+  ): Promise<FullModeRequirementQueryResult> {
     if (targetFilePaths.length === 0) {
       return { requiresFullMode: false };
     }
 
     try {
       const useCase = this.classifyUseCaseFactory();
-      const contract = await useCase.execute({ paths: [...targetFilePaths] });
+      const contract = await useCase.execute({
+        paths: [...targetFilePaths],
+        targetChanges,
+      });
       if (!contract.fullModeRequired) {
         return {
           requiresFullMode: false,

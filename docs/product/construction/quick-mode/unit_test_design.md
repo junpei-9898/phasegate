@@ -30,6 +30,7 @@ quick-mode は集約・エンティティを持たない。`domain_model.md §2`
 | 値オブジェクト | ValidatorRelaxationProfile | 14 |
 | 値オブジェクト | QuickModeDecision | 8 |
 | ドメインサービス | QuickModeJudgmentEngine | 20 |
+| ドメインサービス | CommentOnlyDiffDetector | 6 |
 | ドメインサービス | ValidatorRelaxationService | 8 |
 | UseCaseクラス | JudgeQuickModeEligibilityUseCase | 14 |
 | UseCaseクラス | BuildRelaxationProfileUseCase | 10 |
@@ -172,6 +173,18 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-CCLS-008 | dominantCategory | 最高リスクカテゴリが正しく選択される | 'domain'と'bugfix'が混在する場合 | dominantCategoryが'domain'であること |
 | UT-CCLS-009 | dominantCategory | 最高リスクカテゴリが正しく選択される | 全ファイルがallowed内（'bugfix'のみ）の場合 | dominantCategoryが拒否対象を示さないこと |
 | UT-CCLS-010 | equals | 2つのChangeClassificationの値等価性を判定する | 同一の分類結果を持つ2つのインスタンスの場合 | trueが返ること |
+
+<!-- @work-item-id WI-015 -->
+### 3.4.1 CommentOnlyDiffDetector / API パス分類
+
+| ケースID | target | describe | context | it（期待値） |
+|----------|--------|----------|---------|-------------|
+| WI015-UT-001 | ChangedFile.create | ChangedFileを生成する | beforeContent/afterContent が渡された場合 | 内容が保持されること |
+| WI015-UT-002 | isCommentOnlyDiff | コメントのみ差分を判定する | 行コメント、ブロックコメント、JSDoc、空白だけが変わる場合 | true が返ること |
+| WI015-UT-003 | isCommentOnlyDiff | コメントのみ差分を判定する | interface の型が変わる場合 | false が返ること |
+| WI015-UT-004 | isCommentOnlyDiff | コメントのみ差分を判定する | 文字列内に `//` や `/* */` が含まれる場合 | 文字列内容の変更として扱うこと |
+| WI015-UT-005 | QuickModeJudgmentEngine.classify | API パスを分類する | `*port.ts` のコメントのみ差分の場合 | `docs` に分類されること |
+| WI015-UT-006 | QuickModeJudgmentEngine.judge | API 契約変更を判定する | `*port.ts` の signature が変わる場合 | `API_CONTRACT` で拒否されること |
 
 ---
 

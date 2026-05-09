@@ -1,13 +1,20 @@
 // @unit agent-integration
 // @layer infrastructure
-// @story H11-05
+// @story H11-02
 
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { QuickModeFullModeRequirementAdapter } from '../../../agent-integration/infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
 
 function createClassifyUseCaseStub(
-  executeImpl: (input: { paths: readonly string[] }) => unknown,
+  executeImpl: (input: {
+    paths: readonly string[];
+    targetChanges?: readonly {
+      filePath: string;
+      beforeContent?: string | null;
+      afterContent?: string | null;
+    }[];
+  }) => unknown,
 ) {
   return {
     execute: vi.fn(executeImpl),
@@ -64,6 +71,33 @@ target('QuickModeFullModeRequirementAdapter.check', () => {
         expect(actual.requiresFullMode).toBe(false);
         expect(actual.dominantCategory).toBe('bugfix');
         expect(actual.rejectionRule).toBeUndefined();
+      });
+    });
+
+    context('targetChanges が渡された場合', () => {
+      it('classify UseCase へ内容付き変更として転送すること', async () => {
+        // Arrange
+        const path = 'scripts/harness/quick-mode/domain/ports/some-port.ts';
+        const targetChanges = [{
+          filePath: path,
+          beforeContent: 'export interface SomePort {}\n',
+          afterContent: '// docs\nexport interface SomePort {}\n',
+        }];
+        const stub = createClassifyUseCaseStub(() => ({
+          dominantCategory: 'docs',
+          perFile: [{ path, category: 'docs' }],
+          fullModeRequired: false,
+        }));
+        const adapter = new QuickModeFullModeRequirementAdapter({
+          classifyUseCaseFactory: () => stub,
+        });
+
+        // Act
+        const actual = await adapter.check([path], targetChanges);
+
+        // Assert
+        expect(actual.requiresFullMode).toBe(false);
+        expect(stub.execute).toHaveBeenCalledWith({ paths: [path], targetChanges });
       });
     });
 

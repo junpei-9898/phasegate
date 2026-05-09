@@ -1,6 +1,6 @@
 // @layer test
 // @unit quick-mode
-// @story H10-05
+// @story H10-06
 import { describe, expect, it, vi } from 'vitest';
 import { target, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { ClassifyChangeCategoryUseCase } from '../../../../../quick-mode/application/usecases/classify-change-category-usecase.js';
@@ -70,6 +70,30 @@ target('ClassifyChangeCategoryUseCase', () => {
         // Assert
         expect(actual.fullModeRequired).toBe(true);
         expect(actual.rejectionRule).toBe('API_CONTRACT');
+      });
+
+      it("*port.ts のコメントのみ差分が渡された場合に dominantCategory='docs'、fullModeRequired=false が返ること", async () => {
+        // Arrange
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config'],
+        });
+        const { sut } = buildSut({
+          getConfig: vi.fn().mockResolvedValue(config),
+        });
+        const path = 'scripts/harness/quick-mode/domain/ports/some-port.ts';
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{
+            filePath: path,
+            beforeContent: 'export interface SomePort {\n  run(): void;\n}\n',
+            afterContent: '// docs\nexport interface SomePort {\n  run(): void;\n}\n',
+          }],
+        });
+        // Assert
+        expect(actual.dominantCategory).toBe('docs');
+        expect(actual.perFile).toEqual([{ path, category: 'docs' }]);
+        expect(actual.fullModeRequired).toBe(false);
       });
 
       // UT-CCC-005

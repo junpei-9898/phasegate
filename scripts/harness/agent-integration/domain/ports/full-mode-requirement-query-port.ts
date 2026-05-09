@@ -8,6 +8,15 @@ export interface FullModeRequirementQueryResult {
   readonly dominantCategory?: string;
 }
 
+export interface FullModeTargetChange {
+  readonly filePath: string;
+  readonly beforeContent?: string | null;
+  readonly afterContent?: string | null;
+}
+
 export interface FullModeRequirementQueryPort {
-  check(targetFilePaths: readonly string[]): Promise<FullModeRequirementQueryResult>;
+  check(
+    targetFilePaths: readonly string[],
+    targetChanges?: readonly FullModeTargetChange[],
+  ): Promise<FullModeRequirementQueryResult>;
 }

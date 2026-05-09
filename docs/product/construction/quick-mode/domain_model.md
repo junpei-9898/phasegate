@@ -28,6 +28,14 @@
 | QuickModeDecision | 値オブジェクト | 最終判定複合VO（eligibility + relaxationProfile?） |
 | QuickModeJudgmentEngine | ドメインサービス | 変更→ChangeClassification→QuickModeEligibility の判定処理 |
 | ValidatorRelaxationService | ドメインサービス | QuickModeConfig → ValidatorRelaxationProfile の生成 |
+| CommentOnlyDiffDetector | ドメインサービス | before/after source からコメント・空白のみの差分かを判定する |
+
+<!-- @work-item-id WI-015 -->
+### WI-015: コメントのみ差分の分類モデル
+
+`ChangedFile` は従来の `filePath` / `changeKind` に加え、hook などの呼び出し元が取得できる場合のみ `beforeContent` / `afterContent` を保持する。content が未指定の場合は従来通りパスのみで分類する。
+
+`CommentOnlyDiffDetector` は TypeScript/JavaScript の行コメント、ブロックコメント、JSDoc、空白を除いたソースを比較し、残るトークンが同一ならコメントのみ差分とみなす。文字列リテラル内の `//` や `/* */` はコメントとして扱わない。
 
 ### 他Unitから受け取るShared Kernel
 
@@ -129,6 +137,9 @@
 | `feature` | 新規実装ファイル追加（domain/・port/以外, changeKind=CREATE） |
 | `domain` | `domain/`配下のファイル（CREATE/MODIFY/DELETE） |
 | `api` | Port/Adapterインターフェースファイル（`*port.ts`, `*adapter.ts`） |
+
+<!-- @work-item-id WI-015 -->
+`beforeContent` / `afterContent` があり、差分がコメントまたは空白のみの場合は、`*port.ts` / `*adapter.ts` より優先して `docs` に分類する。実際の interface、型、export、実装コードの変更は引き続き `api` として扱う。
 
 **混在変更の判定**: `allowedCategories`に含まれる全カテゴリのファイルのみで構成される変更がQuick Mode対象。1つでも`allowedCategories`外（domain/api/feature）が含まれる場合はMIXED_CHANGES拒否。
 

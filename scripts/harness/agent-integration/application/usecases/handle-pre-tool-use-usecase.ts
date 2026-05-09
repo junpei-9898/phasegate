@@ -143,7 +143,10 @@ export class HandlePreToolUseUseCase {
       if (grandfather.allGrandfathered) {
         this.grandfatherLogger("full-mode", input.targetFilePaths);
       } else {
-        const fullModeResult = await this.fullModeRequirementQueryPort.check(input.targetFilePaths);
+        const fullModeResult = await this.fullModeRequirementQueryPort.check(
+          input.targetFilePaths,
+          input.targetChanges,
+        );
         if (fullModeResult.requiresFullMode) {
           // ISSUE-021: 当該Unitの必須設計文書が揃っている場合は full mode block を bypass
           //（hook がスキルコンテキストを参照できない構造的ギャップへの対処）

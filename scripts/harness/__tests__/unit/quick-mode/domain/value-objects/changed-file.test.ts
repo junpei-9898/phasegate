@@ -1,4 +1,6 @@
+// @unit quick-mode
 // @layer test
+// @story H10-06
 import { describe, expect, it } from 'vitest';
 import { target, context, createChangedFile } from '../../../../helpers/test-helpers.js';
 import { ChangedFile } from '../../../../../quick-mode/domain/value-objects/changed-file.js';
@@ -16,6 +18,21 @@ target('ChangedFile', () => {
         // Assert
         expect(actual.filePath).toBe(filePath);
         expect(actual.changeKind).toBe(changeKind);
+      });
+
+      it('beforeContentとafterContentが渡された場合にChangedFileへ保持されること', () => {
+        // Arrange
+        const input = {
+          filePath: 'scripts/harness/quick-mode/domain/ports/example-port.ts',
+          changeKind: 'MODIFY',
+          beforeContent: 'export interface Example {}\n',
+          afterContent: '// note\nexport interface Example {}\n',
+        };
+        // Act
+        const actual = ChangedFile.create(input);
+        // Assert
+        expect(actual.beforeContent).toBe(input.beforeContent);
+        expect(actual.afterContent).toBe(input.afterContent);
       });
     });
 

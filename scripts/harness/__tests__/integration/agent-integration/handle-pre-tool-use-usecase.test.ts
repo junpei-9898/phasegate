@@ -44,10 +44,16 @@ function createDefaultMockStoryReflectionQueryPort() {
 function buildPreToolUseInput(overrides: Partial<{
   toolName: string;
   targetFilePaths: string[];
+  targetChanges: {
+    filePath: string;
+    beforeContent?: string | null;
+    afterContent?: string | null;
+  }[];
 }> = {}) {
   return {
     toolName: 'str_replace_editor',
     targetFilePaths: [],
+    targetChanges: undefined,
     ...overrides,
   };
 }
@@ -722,9 +728,48 @@ target('HandlePreToolUseUseCase.execute', () => {
         expect(actual.fullModeDominantCategory).toBe('domain');
         expect(actual.error?.message).toContain('Full mode 必須変更が検出されました');
         expect(actual.error?.message).toContain('/story-implementor');
-        expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledWith([
-          'scripts/harness/some-unit/domain/new-entity.ts',
-        ]);
+        expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledWith(
+          ['scripts/harness/some-unit/domain/new-entity.ts'],
+          undefined,
+        );
+      });
+    });
+
+    context('targetChanges が渡されたとき', () => {
+      it('FullModeRequirementQueryPort に内容付き変更を渡すこと', async () => {
+        // Arrange
+        const mockConfigQueryPort = createDefaultMockConfigQueryPort();
+        const mockPhaseGateQueryPort = createDefaultMockPhaseGateQueryPort();
+        const mockFullModeRequirementQueryPort = {
+          check: vi.fn().mockResolvedValue({
+            requiresFullMode: false,
+            dominantCategory: 'docs',
+          }),
+        };
+        const useCase = new HandlePreToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          phaseGateQueryPort: mockPhaseGateQueryPort,
+          fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+        });
+        const path = 'scripts/harness/agent-integration/application/ports/cli-executor-port.ts';
+        const targetChanges = [{
+          filePath: path,
+          beforeContent: 'export interface CliExecutorPort {}\n',
+          afterContent: '// docs\nexport interface CliExecutorPort {}\n',
+        }];
+        const input = buildPreToolUseInput({
+          toolName: 'Edit',
+          targetFilePaths: [path],
+          targetChanges,
+        });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.shouldBlock).toBe(false);
+        expect(actual.quickModeAllowed).toEqual({ dominantCategory: 'docs' });
+        expect(mockFullModeRequirementQueryPort.check).toHaveBeenCalledWith([path], targetChanges);
       });
     });
 

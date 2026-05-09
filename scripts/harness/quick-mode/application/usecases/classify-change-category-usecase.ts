@@ -13,6 +13,11 @@ import type { ChangeCategoryClassificationContract, ChangeCategoryPerFile } from
 
 export interface ClassifyChangeCategoryUseCaseInput {
   readonly paths: readonly string[];
+  readonly targetChanges?: readonly {
+    readonly filePath: string;
+    readonly beforeContent?: string | null;
+    readonly afterContent?: string | null;
+  }[];
 }
 
 export interface ClassifyChangeCategoryUseCaseDeps {
@@ -42,9 +47,16 @@ export class ClassifyChangeCategoryUseCase {
       });
     }
 
-    const changedFiles = input.paths.map((p) =>
-      ChangedFile.create({ filePath: p, changeKind: 'MODIFY' })
-    );
+    const targetChanges = new Map((input.targetChanges ?? []).map((change) => [change.filePath, change]));
+    const changedFiles = input.paths.map((p) => {
+      const targetChange = targetChanges.get(p);
+      return ChangedFile.create({
+        filePath: p,
+        changeKind: 'MODIFY',
+        beforeContent: targetChange?.beforeContent ?? null,
+        afterContent: targetChange?.afterContent ?? null,
+      });
+    });
 
     const classification = this.judgmentEngine.classify(changedFiles, config);
     const eligibility = this.judgmentEngine.judge(changedFiles, config);

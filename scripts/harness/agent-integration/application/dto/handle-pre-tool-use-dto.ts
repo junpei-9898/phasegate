@@ -6,6 +6,11 @@
 export interface HandlePreToolUseInput {
   toolName: string;
   targetFilePaths: string[];
+  targetChanges?: {
+    filePath: string;
+    beforeContent?: string | null;
+    afterContent?: string | null;
+  }[];
 }
 
 export interface HandlePreToolUseOutput {

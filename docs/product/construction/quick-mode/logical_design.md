@@ -71,6 +71,7 @@ scripts/harness/
     │   │   └── rejection-rule.ts
     │   ├── services/
     │   │   ├── quick-mode-judgment-engine.ts
+    │   │   ├── comment-only-diff-detector.ts
     │   │   └── validator-relaxation-service.ts
     │   └── ports/
     │       ├── changed-files-port.ts
@@ -147,8 +148,14 @@ scripts/harness/__tests__/
 `domain_model.md §2`・`cross_cutting_decisions.md §6` に従い、quick-mode は集約を持たない。ドメインロジックは値オブジェクトとドメインサービスで完結する純粋な計算処理であり、永続化境界を必要としない。
 
 - `QuickModeJudgmentEngine`: `ChangedFile[] + QuickModeConfig → QuickModeEligibility` の変換
+- `CommentOnlyDiffDetector`: `ChangedFile.beforeContent/afterContent` からコメント・空白のみの差分を判定
 - `ValidatorRelaxationService`: `QuickModeConfig + ValidatorId[] → ValidatorRelaxationProfile` の変換
 - 両サービスとも副作用なし。ポートへのアクセスは Application 層が調停する
+
+<!-- @work-item-id WI-015 -->
+### 2.3 コメントのみ API パス編集の扱い
+
+`QuickModeJudgmentEngine` は分類時に `CommentOnlyDiffDetector` を先に評価する。`*port.ts` / `*adapter.ts` でも、content 付きの差分がコメント・空白のみなら `docs` として扱い、`API_CONTRACT` 拒否対象から除外する。content がない変更は従来通り path-only の `api` 判定を維持する。
 
 ### 2.2 値オブジェクト群
 

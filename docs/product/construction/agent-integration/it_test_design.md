@@ -52,6 +52,9 @@
 
 **テスト方針**: Domainモデル（HookEvent, ProtectedFileList, HookToCliTranslator）は実体を使用。ConfigQueryPortをモックとする。
 
+<!-- @work-item-id WI-015 -->
+`HandlePreToolUseUseCase` は full-mode 判定時に `targetFilePaths` だけでなく、取得できた `beforeContent` / `afterContent` を持つ `targetChanges` を FullModeRequirementQueryPort に渡す。Edit/Write hook の diff 情報が quick-mode に届くことを integration test で検証する。
+
 #### 正常系
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
@@ -69,6 +72,7 @@
 | IT-UC-HandlePreToolUse-006 | toolNameが空文字の場合、入力バリデーションエラーになること | `{ toolName: '', targetFilePaths: ['src/index.ts'] }` | — | バリデーションエラー（HarnessError または例外） |
 | IT-UC-HandlePreToolUse-007 | targetFilePathsが空配列の場合、ブロックなしで通過すること | `{ toolName: 'str_replace_editor', targetFilePaths: [] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `{ shouldBlock: false }` |
 | IT-UC-HandlePreToolUse-008 | biome.jsonブロック時、result.error.messageにブロックされたファイル名（biome.json）が含まれること | `{ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `result.shouldBlock=true` かつ HarnessErrorの`message`または`details`に `"biome.json"` が含まれること |
+| WI015-IT-001 | Edit hook 由来のコメントのみ API パス変更 | `{ toolName: 'Edit', targetFilePaths: ['.../some-port.ts'], targetChanges: [{ beforeContent, afterContent }] }` | FullModeRequirementQueryPort: targetChanges を受け取り `requiresFullMode=false` を返す | `shouldBlock=false` かつ Quick Mode 許可情報が返ること |
 
 ### 2.3 HandlePostToolUseUseCase（H11-03対応）
 

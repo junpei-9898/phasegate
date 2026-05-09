@@ -27,8 +27,19 @@ interface PreToolUseHookInput {
     file_path?: string;
     paths?: string[];
     command?: string;
+    content?: string;
+    old_string?: string;
+    new_string?: string;
+    old_str?: string;
+    new_str?: string;
     [key: string]: unknown;
   };
+}
+
+interface TargetChange {
+  filePath: string;
+  beforeContent?: string | null;
+  afterContent?: string | null;
 }
 
 async function readStdin(): Promise<string> {
@@ -98,6 +109,8 @@ async function main(): Promise<void> {
     targetFilePaths.push(...input.tool_input.paths.map(toRelative));
   }
 
+  const targetChanges = await buildTargetChanges(input, cwd, toRelative);
+
   // Bash 経由書き込みのフェーズゲート対応 (A-2.5)
   // Bash command 文字列からリダイレクト・tee・sed -i・cp・mv・touch 等の
   // 書き込み先ファイルパスを抽出し、フェーズゲートチェック対象に含める。
@@ -141,7 +154,7 @@ async function main(): Promise<void> {
       errorGuidanceQueryPort,
     });
 
-    const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths });
+    const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths, targetChanges });
 
     if (output.shouldBlock) {
       const msg = output.error?.message
@@ -162,6 +175,48 @@ async function main(): Promise<void> {
   } catch (error) {
     process.stderr.write(`実行エラー: ${String(error)}\n`);
     process.exit(2);
+  }
+}
+
+async function buildTargetChanges(
+  input: PreToolUseHookInput,
+  cwd: string,
+  toRelative: (p: string) => string,
+): Promise<TargetChange[]> {
+  const toolInput = input.tool_input;
+  if (toolInput === undefined) {
+    return [];
+  }
+
+  const rawPath = toolInput.file_path ?? toolInput.path;
+  if (rawPath === undefined) {
+    return [];
+  }
+
+  const filePath = toRelative(rawPath);
+  const oldString = typeof toolInput.old_string === 'string' ? toolInput.old_string : toolInput.old_str;
+  const newString = typeof toolInput.new_string === 'string' ? toolInput.new_string : toolInput.new_str;
+  if (typeof oldString === 'string' && typeof newString === 'string') {
+    return [{ filePath, beforeContent: oldString, afterContent: newString }];
+  }
+
+  if (typeof toolInput.content === 'string') {
+    return [{
+      filePath,
+      beforeContent: await readExistingContent(cwd, rawPath),
+      afterContent: toolInput.content,
+    }];
+  }
+
+  return [];
+}
+
+async function readExistingContent(cwd: string, filePath: string): Promise<string | null> {
+  const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath);
+  try {
+    return await fs.readFile(absolutePath, 'utf8');
+  } catch {
+    return null;
   }
 }
 

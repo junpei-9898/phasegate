@@ -2,16 +2,16 @@
 id: WI-015
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-015
-affects: [quick-mode（主）, agent-integration（hook 経路）]
+affects: [quick-mode, agent-integration]
 ---
 
 # ISSUE-015: QuickModeJudgmentEngine がコメントのみの差分も api 変更として分類してしまう
 
 ## ステータス
 
-- **状態**: 🔴 **OPEN**（未着手。v0.84.0 で当該 L1-007 違反自体は別アプローチ（コメント削除）で解消されたが、根本原因の `QuickModeJudgmentEngine` categorizer 粒度改善は未実施）
+- **状態**: ✅ **TESTED**（WI-015 で `QuickModeJudgmentEngine` categorizer にコメントのみ差分判定を追加し、hook 経路から optional content を渡せるようにした）
 - **優先度**: P3
 - **起票日**: 2026-04-23
 - **発見契機**: ISSUE-003 Wave 2a（L1-007 no-comment-flood 解消）で、`scripts/harness/agent-integration/domain/ports/error-guidance-query-port.ts` のコメントブロック削減を PreToolUse hook がブロック。差分がコメント削除のみにもかかわらず `QuickModeJudgmentEngine` が `*port.ts` ファイルパスのみで `api` カテゴリ判定し FULL_MODE 要求した
@@ -105,11 +105,22 @@ ChangedFile { filePath, changeKind, beforeContent?, afterContent? }
 
 ### Acceptance criteria
 
-- [ ] `*port.ts` のコメント削除のみの編集が hook で通る（FULL_MODE_REQUIRED を発火しない）
-- [ ] `*port.ts` の interface 型追加・signature 変更は従来通りブロックされる
-- [ ] 既存テスト（quick-mode unit / agent-integration integration）全て green
-- [ ] 新規テスト: `isCommentOnlyDiff` の単独検証、hook 経路の end-to-end 検証
-- [ ] `phasegate.config.json` スキーマは変更不要（classifier の内部挙動改善に留める）
+- [x] `*port.ts` のコメント削除のみの編集が hook 経路で FULL_MODE_REQUIRED を発火しない
+- [x] `*port.ts` の interface 型追加・signature 変更は quick-mode 判定で従来通り `API_CONTRACT` 扱い
+- [x] 既存テスト（quick-mode unit / agent-integration integration）green
+- [x] 新規テスト: `isCommentOnlyDiff` の単独検証、hook 経路の content 伝播検証
+- [x] `phasegate.config.json` スキーマは変更不要（classifier の内部挙動改善に留める）
+
+### 完了証跡（2026-05-09）
+
+- `pnpm exec vitest run scripts/harness/__tests__/unit/quick-mode/domain/services/comment-only-diff-detector.test.ts scripts/harness/__tests__/unit/quick-mode/domain/value-objects/changed-file.test.ts scripts/harness/__tests__/unit/quick-mode/domain/services/quick-mode-judgment-engine.test.ts scripts/harness/__tests__/unit/quick-mode/application/usecases/classify-change-category-usecase.test.ts` — 4 files / 52 tests passed
+- `pnpm exec vitest run scripts/harness/__tests__/integration/agent-integration/quick-mode-full-mode-requirement-adapter.test.ts scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts` — 2 files / 56 tests passed
+- `pnpm exec vitest run scripts/harness/__tests__/unit/quick-mode scripts/harness/__tests__/integration/quick-mode` — 24 files / 250 tests passed
+- `pnpm exec vitest run scripts/harness/__tests__/integration/agent-integration/quick-mode-full-mode-requirement-adapter.test.ts scripts/harness/__tests__/integration/agent-integration/handle-pre-tool-use-usecase.test.ts scripts/harness/__tests__/integration/agent-integration/codex-payload-compatibility.integration.test.ts` — 3 files / 62 tests passed
+- `pnpm exec tsc --noEmit` — passed
+- `pnpm harness:check-ready` — passed
+- `git diff --check` — passed
+- Dogfood: PreToolUse hook に `Edit` payload を流し、コメントのみ API path 変更が `FULL_MODE_REQUIRED` ではなく既存の `L2-STORY-REFLECTION` 未反映で停止することを確認
 
 ### 実装フェーズ
 

@@ -1,4 +1,6 @@
+// @unit quick-mode
 // @layer test
+// @story H10-06
 import { describe, expect, it } from 'vitest';
 import { target, context, createChangedFile, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { QuickModeJudgmentEngine } from '../../../../../quick-mode/domain/services/quick-mode-judgment-engine.js';
@@ -95,6 +97,24 @@ target('QuickModeJudgmentEngine', () => {
         const actual = engine.classify(files, config);
         // Assert
         expect(actual.hasCategory('api')).toBe(true);
+      });
+
+      it("'*port.ts'のコメントのみ差分が渡された場合に'docs'カテゴリに分類されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
+            changeKind: 'MODIFY',
+            beforeContent: 'export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+            afterContent: '// note\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory('docs')).toBe(true);
+        expect(actual.hasCategory('api')).toBe(false);
       });
 
       // UT-JE-007
@@ -253,6 +273,26 @@ target('QuickModeJudgmentEngine', () => {
         // Assert
         expect(actual.isEligible()).toBe(false);
         expect(actual.rejectionRule).toBe('API_CONTRACT');
+      });
+
+      it("'*port.ts'ファイルのコメントのみ差分はAPI_CONTRACTで拒否されないこと", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
+            changeKind: 'MODIFY',
+            beforeContent: 'export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+            afterContent: '/** docs */\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+          }),
+        ];
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'api'],
+        });
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.isEligible()).toBe(true);
+        expect(actual.rejectionRule).toBeUndefined();
       });
 
       // UT-JE-016

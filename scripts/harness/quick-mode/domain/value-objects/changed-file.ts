@@ -10,14 +10,31 @@ import { type ChangeKind, isChangeKind } from '../types/change-kind.js';
 export class ChangedFile {
   readonly filePath: string;
   readonly changeKind: ChangeKind;
+  readonly beforeContent!: string | null;
+  readonly afterContent!: string | null;
 
-  private constructor(filePath: string, changeKind: ChangeKind) {
+  private constructor(filePath: string, changeKind: ChangeKind, beforeContent: string | null, afterContent: string | null) {
     this.filePath = filePath;
     this.changeKind = changeKind;
+    Object.defineProperty(this, 'beforeContent', {
+      value: beforeContent,
+      enumerable: false,
+      writable: false,
+    });
+    Object.defineProperty(this, 'afterContent', {
+      value: afterContent,
+      enumerable: false,
+      writable: false,
+    });
   }
 
-  static create(params: { filePath: string; changeKind: string }): ChangedFile {
-    const { filePath, changeKind } = params;
+  static create(params: {
+    filePath: string;
+    changeKind: string;
+    beforeContent?: string | null;
+    afterContent?: string | null;
+  }): ChangedFile {
+    const { filePath, changeKind, beforeContent = null, afterContent = null } = params;
 
     if (!filePath) {
       throw new Error('filePath must not be empty');
@@ -29,7 +46,7 @@ export class ChangedFile {
       throw new Error(`changeKind must be one of 'CREATE', 'MODIFY', 'DELETE'. Got: "${changeKind}"`);
     }
 
-    return new ChangedFile(filePath, changeKind);
+    return new ChangedFile(filePath, changeKind, beforeContent, afterContent);
   }
 
   isUnder(directoryPrefix: string): boolean {
@@ -51,6 +68,11 @@ export class ChangedFile {
   }
 
   equals(other: ChangedFile): boolean {
-    return this.filePath === other.filePath && this.changeKind === other.changeKind;
+    return (
+      this.filePath === other.filePath &&
+      this.changeKind === other.changeKind &&
+      this.beforeContent === other.beforeContent &&
+      this.afterContent === other.afterContent
+    );
   }
 }

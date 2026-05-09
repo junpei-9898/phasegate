@@ -8,6 +8,7 @@
 import { ChangeCategory } from '../value-objects/change-category.js';
 import { ChangeClassification } from '../value-objects/change-classification.js';
 import { QuickModeEligibility } from '../value-objects/quick-mode-eligibility.js';
+import { isCommentOnlyDiff } from './comment-only-diff-detector.js';
 import type { ChangedFile } from '../value-objects/changed-file.js';
 import type { QuickModeConfig } from '../value-objects/quick-mode-config.js';
 
@@ -24,6 +25,10 @@ const RISK_PRIORITY: Record<string, number> = {
 
 function categorizeFile(file: ChangedFile): ChangeCategory {
   const { filePath, changeKind } = file;
+
+  if (isCommentOnlyDiff(file)) {
+    return ChangeCategory.fromString('docs');
+  }
 
   // api: *port.ts or *adapter.ts（最高優先度）
   if (filePath.endsWith('port.ts') || filePath.endsWith('adapter.ts')) {
@@ -137,7 +142,7 @@ export class QuickModeJudgmentEngine {
     // 3. API_CONTRACT評価: *port.ts / *adapter.ts の変更
     if (config.isFullModeRequiredFor('apiContractChange')) {
       const apiContractFiles = changedFiles.filter(
-        (f) => f.filePath.endsWith('port.ts') || f.filePath.endsWith('adapter.ts')
+        (f) => (f.filePath.endsWith('port.ts') || f.filePath.endsWith('adapter.ts')) && !isCommentOnlyDiff(f)
       );
 
       if (apiContractFiles.length > 0) {
