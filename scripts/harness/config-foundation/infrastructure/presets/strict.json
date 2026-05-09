@@ -49,5 +49,8 @@
   },
   "validate": {
     "failOnWarning": true
+  },
+  "preCommit": {
+    "implementationExtensions": [".ts"]
   }
 }

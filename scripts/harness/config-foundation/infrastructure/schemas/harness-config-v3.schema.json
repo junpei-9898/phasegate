@@ -357,6 +357,21 @@
         }
       }
     },
+    "preCommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "implementationExtensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^\\.[A-Za-z0-9]+$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
     "planningMode": {
       "type": "object",
       "additionalProperties": false,

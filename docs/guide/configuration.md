@@ -58,6 +58,9 @@ This file is the **Single Source of Truth** for all quality configuration in a P
     "format": "json",
     "outputDir": "reports"
   },
+  "preCommit": {
+    "implementationExtensions": [".ts"]
+  },
   "baseline": {
     "enabled": true,
     "path": ".phasegate/baseline.json"
@@ -143,6 +146,24 @@ Set a flag to `false` only when the project intentionally accepts the risk of me
 | `customRules`      | `array`    | `[]`         | Array of custom phase dependency rules. Only used when `preset` is `"custom"`. |
 | `gates`            | `array`    | `[]`         | Array of custom phase gate definitions. See [gates\[\]](#gates-custom-phase-gates) below. Optional; defaults to empty. |
 | `storyReflection`  | `object`   | preset-based | See [storyReflection](#storyreflection-inception--product-gate) below. Omit entirely for zero-config defaults per preset. |
+
+#### `preCommit`
+
+| Sub-field | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `implementationExtensions` | `string[]` | `[".ts"]` | File extensions treated as implementation files by `phasegate pre-commit`. Add entries such as `".py"` or `".go"` for non-TypeScript projects. |
+
+Example for Python and TypeScript:
+
+```jsonc
+{
+  "preCommit": {
+    "implementationExtensions": [".ts", ".py"]
+  }
+}
+```
+
+The metadata validators read `@unit` and `@layer` with language-agnostic regular expressions, so Python `# @unit api` and Go `// @unit api` style comments are both valid as long as the file extension is included here.
 
 ##### Phase Dependency Presets
 

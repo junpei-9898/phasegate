@@ -52,6 +52,7 @@ export interface HarnessConfigSourceDocument {
   reporting: HarnessConfigResolvedDocument['reporting'];
   ci?: HarnessConfigResolvedDocument['ci'];
   validate?: HarnessConfigResolvedDocument['validate'];
+  preCommit?: Partial<HarnessConfigResolvedDocument['preCommit']>;
   architecture?: ArchitectureConfigSource;
 }
 
@@ -116,6 +117,9 @@ export interface HarnessConfigResolvedDocument {
   };
   validate: {
     failOnWarning: boolean;
+  };
+  preCommit?: {
+    implementationExtensions: string[];
   };
   architecture?: ArchitectureConfigDocument;
 }

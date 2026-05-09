@@ -32,7 +32,7 @@ const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
 const RESET = "\x1b[0m";
 
-const TS_EXTENSION = ".ts";
+const DEFAULT_IMPLEMENTATION_EXTENSIONS = Object.freeze([".ts"]);
 const MD_EXTENSION = ".md";
 const WORK_ITEM_PATH_PATTERN = /(?:^|\/)WI-\d+(?:\/|$)/;
 const WORK_ITEM_TRAILER_PATTERN = /^Work-Item:\s*WI-\d+\s*$/m;
@@ -56,6 +56,17 @@ async function loadTraceabilityModelOptions(): Promise<
   try {
     const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
     return { pathRoots: { designDocsRoot: resolvedConfig.config.paths.designDocs } };
+  } catch (err) {
+    if (err instanceof ConfigNotFoundError) return undefined;
+    throw err;
+  }
+}
+
+async function loadPreCommitImplementationExtensions(): Promise<readonly string[] | undefined> {
+  const configMod = createConfigFoundationModule();
+  try {
+    const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
+    return resolvedConfig.config.preCommit?.implementationExtensions;
   } catch (err) {
     if (err instanceof ConfigNotFoundError) return undefined;
     throw err;
@@ -179,6 +190,7 @@ export interface PreCommitOptions {
    * intentionally opt-in and preserves existing local pre-commit behavior.
    */
   readonly commitMessage?: string;
+  readonly implementationExtensions?: readonly string[];
 }
 
 function getStagedFiles(): string[] {
@@ -233,17 +245,29 @@ function hasWorkItemTrailer(commitMessage: string): boolean {
   return WORK_ITEM_TRAILER_PATTERN.test(commitMessage);
 }
 
+function normalizeImplementationExtensions(extensions: readonly string[] | undefined): readonly string[] {
+  const rawExtensions = extensions === undefined || extensions.length === 0
+    ? DEFAULT_IMPLEMENTATION_EXTENSIONS
+    : extensions;
+  return rawExtensions.map((extension) => extension.startsWith(".") ? extension : `.${extension}`);
+}
+
+function hasAnyExtension(filePath: string, extensions: readonly string[]): boolean {
+  return extensions.some((extension) => filePath.endsWith(extension));
+}
+
 export async function runPreCommit(
   stagedFiles: readonly string[],
   deps: PreCommitDeps,
   options: PreCommitOptions = {},
 ): Promise<PreCommitResult> {
-  const tsFiles = stagedFiles.filter((f) => f.endsWith(TS_EXTENSION));
+  const implementationExtensions = normalizeImplementationExtensions(options.implementationExtensions);
+  const implementationFiles = stagedFiles.filter((f) => hasAnyExtension(f, implementationExtensions));
   const mdFiles = stagedFiles.filter((f) => f.endsWith(MD_EXTENSION) && isMetadataMarkdownFile(f));
-  const testFiles = tsFiles.filter((f) => isTestFile(f));
+  const testFiles = implementationFiles.filter((f) => isTestFile(f));
   const metadataFiles = [...mdFiles, ...testFiles];
 
-  if (tsFiles.length === 0 && mdFiles.length === 0) {
+  if (implementationFiles.length === 0 && mdFiles.length === 0) {
     return {
       exitCode: 0,
       stdout: `${DIM}[phasegate] No staged files to check. Skipping.${RESET}`,
@@ -252,17 +276,18 @@ export async function runPreCommit(
 
   const sections: string[] = [];
   sections.push(
-    `${BOLD}[phasegate]${RESET} Pre-commit check ` + `(${tsFiles.length} .ts file(s), ${mdFiles.length} .md file(s))`,
+    `${BOLD}[phasegate]${RESET} Pre-commit check ` +
+      `(${implementationFiles.length} implementation file(s), ${mdFiles.length} .md file(s))`,
   );
 
   let exitCode: 0 | 1 | 2 = 0;
 
-  if (tsFiles.length > 0) {
+  if (implementationFiles.length > 0) {
     // staged TS file を Unit ごとにグルーピングし、Unit 単位で L2 phase gate
     // （L2-001 の `{unit}_unit.md` 等）を評価する。Unit を特定できないファイルは
     // 別グループ（unitName=''）として従来挙動で評価する。
     const filesByUnit = new Map<string, string[]>();
-    for (const f of tsFiles) {
+    for (const f of implementationFiles) {
       const unit = (await resolveUnitName(f)) ?? "";
       const bucket = filesByUnit.get(unit);
       if (bucket) {
@@ -285,7 +310,7 @@ export async function runPreCommit(
     const merged = mergePerUnitResults(runs);
     const report = buildReport(merged);
     sections.push("");
-    sections.push(`${BOLD}== TypeScript 実装 (${tsFiles.length} file(s)) ==${RESET}`);
+    sections.push(`${BOLD}== 実装ファイル (${implementationFiles.length} file(s)) ==${RESET}`);
     sections.push(new HumanValidationResultFormatter().format(report));
     if (!report.overallPassed) {
       exitCode = maxExitCode(exitCode, 1);
@@ -345,6 +370,7 @@ export async function runPreCommitCli(): Promise<void> {
       },
       {
         commitMessage: process.env.PHASEGATE_COMMIT_MESSAGE,
+        implementationExtensions: await loadPreCommitImplementationExtensions(),
       },
     );
 
@@ -378,7 +404,10 @@ export async function runCommitMsgCli(commitMessagePath: string | undefined): Pr
         runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
         validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
       },
-      { commitMessage },
+      {
+        commitMessage,
+        implementationExtensions: await loadPreCommitImplementationExtensions(),
+      },
     );
 
     process.stdout.write(`${result.stdout}\n`);

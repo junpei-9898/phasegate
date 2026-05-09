@@ -379,3 +379,7 @@ classDiagram
 |---|------|---------|
 | OQ-1 | HarnessConfigV2 DTOへの変換メソッドを集約に持たせるか、専用のAssemblerを作るか | Application層設計 |
 | OQ-2 | Preset定義をハードコードするか外部ファイル化するか | Infrastructure層設計 |
+<!-- @work-item-id WI-012 -->
+## WI-012: preCommit configuration
+
+`HarnessConfigResolvedDocument` may contain `preCommit.implementationExtensions`, a non-empty list of file extensions that the pre-commit entrypoint treats as implementation files. Preset resolution supplies `[".ts"]` when the source config omits the section.

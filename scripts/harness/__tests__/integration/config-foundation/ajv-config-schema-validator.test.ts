@@ -168,6 +168,30 @@ target('AjvConfigSchemaValidator', () => {
       });
     });
 
+    context('preCommit.implementationExtensions (WI-012)', () => {
+      it('拡張子配列を持つ設定を有効として扱うこと', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        document.preCommit = { implementationExtensions: ['.ts', '.py'] };
+        // Act
+        const actual = validator.validate(document as never);
+        // Assert
+        expect(actual).toEqual([]);
+      });
+
+      it('拡張子配列が空の場合は無効として扱うこと', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createValidSourceDocument() as unknown as Record<string, unknown>;
+        document.preCommit = { implementationExtensions: [] };
+        // Act
+        const actual = validator.validate(document as never);
+        // Assert
+        expect(actual.length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
     context('project.paths (ISSUE-007 Wave 8)', () => {
       it('IT-CF-PP-001a: project.paths.source を持つ設定が valid', () => {
         const validator = new AjvConfigSchemaValidator();

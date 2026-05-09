@@ -401,3 +401,11 @@
 1. **test-coverage-checker** でこのテストケース設計の網羅性（不変条件カバレッジ・ドメインロジックカバレッジ）を検証する
 2. **unit-test-logic-designer** で各ケースの疑似コードロジックを設計する
 3. **story-implementor** でTDD実装（RED → GREEN → Refactor）を行う
+<!-- @work-item-id WI-012 -->
+## WI-012: pre-commit extension configuration
+
+| Case | Target | Expected |
+|---|---|---|
+| WI012-UT-001 | `runPreCommit` | `.py` is ignored when `implementationExtensions` is omitted. |
+| WI012-UT-002 | `runPreCommit` | `.py` is passed to L2 validators when `implementationExtensions` contains `".py"`. |
+| WI012-UT-003 | `runPreCommit` | Existing `.ts` behavior remains unchanged. |

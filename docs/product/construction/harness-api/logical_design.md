@@ -1793,3 +1793,7 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 - 既存 workflow がある場合は上書きせず skipped として扱う。
 - `ci.enabled: true` の設定方針は WI-031 と同じく、新規 config 作成時のみ書き込む。
 - workflow は `ci:auto-refresh-agent-context --apply` を呼び出し、agent context file の変更を PR 化する。
+<!-- @work-item-id WI-012 -->
+### WI-012: pre-commit implementation extension configuration
+
+`phasegate pre-commit` treats staged implementation files by matching `preCommit.implementationExtensions` from the resolved config. When omitted, the default is `[".ts"]`, preserving the existing TypeScript-only behavior. The CLI passes the resolved extension list into `runPreCommit`; Markdown metadata detection remains independent and continues to target `docs/inception/` and `docs/product/`.

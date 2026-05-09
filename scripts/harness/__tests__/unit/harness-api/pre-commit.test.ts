@@ -135,8 +135,41 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
       expect(actual.exitCode).toBe(0);
       expect(deps.l2Spy).toHaveBeenCalledTimes(1);
       expect(deps.metadataSpy).toHaveBeenCalledTimes(1);
-      expect(actual.stdout).toContain("TypeScript");
+      expect(actual.stdout).toContain("実装ファイル");
       expect(actual.stdout).toContain("メタデータ注釈");
+    });
+
+    // UT-PC-WI012-01
+    it("implementationExtensions に .py が含まれる場合、staged .py が L2 validator に渡される", async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      const actual = await runPreCommit(
+        ["scripts/harness/sample/application/service.py"],
+        deps,
+        { implementationExtensions: [".ts", ".py"] },
+      );
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(deps.l2Spy).toHaveBeenCalledTimes(1);
+      expect(deps.l2Spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetPaths: ["scripts/harness/sample/application/service.py"],
+          unitName: "sample",
+        }),
+      );
+    });
+
+    // UT-PC-WI012-02
+    it("implementationExtensions が未指定の場合、.py は検証対象外のままになる", async () => {
+      // Arrange
+      const deps = buildDeps();
+      // Act
+      const actual = await runPreCommit(["scripts/harness/sample/application/service.py"], deps);
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("No staged files to check");
+      expect(deps.l2Spy).not.toHaveBeenCalled();
     });
   });
 

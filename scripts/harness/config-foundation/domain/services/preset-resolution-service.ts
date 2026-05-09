@@ -19,6 +19,7 @@ export interface PresetDefinition {
   paths: HarnessConfigResolvedDocument['paths'];
   reporting: HarnessConfigResolvedDocument['reporting'];
   validate: HarnessConfigResolvedDocument['validate'];
+  preCommit?: HarnessConfigResolvedDocument['preCommit'];
 }
 
 export class InvalidPresetDefinitionError extends ConfigFoundationDomainError {
@@ -183,6 +184,11 @@ export class PresetResolutionService {
         presetDefinition.validate,
         sourceDocument.validate,
         'validate',
+      ),
+      preCommit: deepMerge(
+        presetDefinition.preCommit ?? { implementationExtensions: ['.ts'] },
+        sourceDocument.preCommit,
+        'preCommit',
       ),
     };
   }

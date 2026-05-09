@@ -383,3 +383,11 @@ scripts/harness/__tests__/config-foundation/
 | Presentation層（3ハンドラ） | 18 |
 | Facade（load-config） | 3 |
 | **合計** | **79** |
+<!-- @work-item-id WI-012 -->
+## WI-012: preCommit schema validation
+
+| Case | Target | Expected |
+|---|---|---|
+| WI012-IT-001 | AJV schema validator | `preCommit.implementationExtensions: [".ts", ".py"]` is accepted. |
+| WI012-IT-002 | AJV schema validator | Empty `implementationExtensions` is rejected. |
+| WI012-IT-003 | Preset resolution | Omitted `preCommit` resolves to `[".ts"]`. |

@@ -2,16 +2,16 @@
 id: WI-012
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-012
-affects: [harness-api（pre-commit エントリ）, validator-system（任意: ポート拡張の余地あり）]
+affects: [harness-api, config-foundation]
 ---
 
 # ISSUE-012: pre-commit フィルタの拡張子設定化（実装言語の網羅対応）
 
 ## ステータス
 
-- **状態**: 🔴 **OPEN**（未着手、2026-04-23 監査で再確認。`scripts/harness/integrations/pre-commit.ts` の拡張子ハードコード残存）
+- **状態**: ✅ **TESTED**（`preCommit.implementationExtensions` を追加し、pre-commit の実装ファイル判定を設定化）
 - **優先度**: P3
 - **起票日**: 2026-04-19
 - **発見契機**: ISSUE-008 Phase B-3 着手時の調査で、実装メタデータ検証ロジック（軽量/リッチ両方）が既に言語非依存（正規表現ベース）である一方、pre-commit の staged ファイルフィルタだけが `.ts` 固定でハードコードされている事実を確認
@@ -76,12 +76,17 @@ glob パターン（例: `src/**/*.py`）で指定。より柔軟だが過剰仕
 
 ## 受け入れ基準
 
-- [ ] `phasegate.config.json` に `preCommit.implementationExtensions: string[]` を追加（デフォルト `[".ts"]`）
-- [ ] `pre-commit.ts:67` のフィルタが config 参照に変更される
-- [ ] 既存テスト（`.ts` のみ対象の挙動）が後方互換で維持される
-- [ ] 新規テスト: config に `.py` を追加した際、staged `.py` ファイルが検証対象になること
-- [ ] config の ajv schema と VALID / INVALID fixture を追加
-- [ ] ドキュメント更新: `docs/guide/` 配下に「他言語プロジェクトでの導入手順」を追記
+- [x] `phasegate.config.json` に `preCommit.implementationExtensions: string[]` を追加（デフォルト `[".ts"]`）
+- [x] `pre-commit.ts` のフィルタが config 参照に変更される
+- [x] 既存テスト（`.ts` のみ対象の挙動）が後方互換で維持される
+- [x] 新規テスト: config に `.py` を追加した際、staged `.py` ファイルが検証対象になること
+- [x] config の ajv schema に VALID / INVALID ケースを追加
+- [x] ドキュメント更新: `docs/guide/` 配下に「他言語プロジェクトでの導入手順」を追記
+
+### 完了証跡（2026-05-09）
+
+- `pnpm exec vitest run scripts/harness/__tests__/unit/harness-api/pre-commit.test.ts scripts/harness/__tests__/integration/config-foundation/ajv-config-schema-validator.test.ts scripts/harness/__tests__/unit/config-foundation/preset-resolution-service.test.ts` — 3 files / 57 tests passed
+- `pnpm exec tsc --noEmit` — passed
 
 ## 非対象（スコープ外）
 
