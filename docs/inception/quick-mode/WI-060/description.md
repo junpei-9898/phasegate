@@ -2,7 +2,7 @@
 id: WI-060
 type: story
 severity: normal
-status: reflected
+status: tested
 legacy_id: H10-06
 ---
 
@@ -22,3 +22,9 @@ ISSUE-026 Phase Dでは、`type: fix | chore` の work item を description.md +
 
 - `skills/quick-implementor/SKILL.md` にWI-awareルールが明記される。
 - `.claude/skills/quick-implementor/SKILL.md` に同じ内容が反映される。
+
+## 実装・検証
+
+- **状態**: TESTED
+- **実装証跡**: `skills/quick-implementor/SKILL.md` / `.claude/skills/quick-implementor/SKILL.md` が Quick Mode の WI trailer を明記している。
+- **補足**: `type: fix | chore` と重い WI 種別の分岐は、現行 Quick Mode のスコープ判定および story-implementor へのエスカレーション規約として扱う。

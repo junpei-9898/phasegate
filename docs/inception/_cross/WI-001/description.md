@@ -2,7 +2,7 @@
 id: WI-001
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-001
 affects: [agent-integration, phase-dependency-model]
 ---
@@ -18,6 +18,23 @@ affects: [agent-integration, phase-dependency-model]
 - **発見契機**: HF1-06 (FUSE/Hooks モード切替配線) の実装時
 - **影響Unit**: agent-integration, phase-dependency-model
 - **深刻度**: Medium — 設計プロセスのスキップが物理的にブロックされない
+
+> **現在の状態 (2026-05-09)**: TESTED。`checkPhaseGate(..., scope)` が `scope.storyId` 付きの Level 3 成果物をコンテキスト依存で検証し、`check-phase-gate --story` から実行できる。`WriteTargetScope` は現行 WI layout (`docs/inception/{unit}/{WI-XXX}/`, `docs/inception/_cross/{WI-XXX}/`) を Level 3 scope として認識する。以下に残る `issues/` パス表記は起票当時の legacy 記録であり、現在の正本 layout では使わない。
+
+## 実装・検証
+
+- **実装証跡**:
+  - `scripts/harness/phase-dependency-model/domain/models/phase-structure.ts`
+  - `scripts/harness/phase-dependency-model/application/usecases/check-phase-gate-usecase.ts`
+  - `scripts/harness/phase-dependency-model/application/services/evidence-bundle-assembler.ts`
+  - `scripts/harness/phase-dependency-model/presentation/cli/check-phase-gate-command-handler.ts`
+  - `scripts/harness/agent-integration/domain/value-objects/write-target-scope.ts`
+  - `scripts/harness/agent-integration/infrastructure/adapters/phase-gate-query-adapter.ts`
+- **テスト証跡**:
+  - `scripts/harness/__tests__/unit/phase-dependency-model/phase-structure.test.ts`
+  - `scripts/harness/__tests__/unit/phase-dependency-model/check-phase-gate-usecase.test.ts`
+  - `scripts/harness/__tests__/unit/agent-integration/write-target-scope.test.ts`
+- **検証**: 2026-05-09 に上記 3 テストファイルを実行し、175 tests passed。
 
 ## 問題の概要
 

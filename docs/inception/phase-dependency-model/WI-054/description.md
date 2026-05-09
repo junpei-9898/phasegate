@@ -2,7 +2,7 @@
 id: WI-054
 type: story
 severity: normal
-status: reflected
+status: tested
 legacy_id: H02-07
 ---
 
@@ -22,3 +22,9 @@ Phase A-1で product 文書の `@work-item-id` 検出を追加したが、Phase 
 
 - `FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation(productPath, "WI-001")` が、product側 `@issue-id ISSUE-001` と WI frontmatter `legacy_id: ISSUE-001` の組み合わせで true を返す。
 - 既存 `@story-id` / `@issue-id` / `@work-item-id` の直接検出は維持される。
+
+## 実装・検証
+
+- **状態**: TESTED
+- **実装証跡**: `scripts/harness/phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.ts`
+- **テスト証跡**: `scripts/harness/__tests__/unit/phase-dependency-model/file-system-story-reflection-adapter.test.ts` の UT-PD-167 / UT-PD-168
