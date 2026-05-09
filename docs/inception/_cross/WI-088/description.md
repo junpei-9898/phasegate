@@ -2,7 +2,7 @@
 id: WI-088
 type: chore
 severity: normal
-status: drafted
+status: tested
 affects: [skills, setup, docs]
 github_issue: null
 reporter: junpei-9898

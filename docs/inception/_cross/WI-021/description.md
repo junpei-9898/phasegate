@@ -2,7 +2,7 @@
 id: WI-021
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-021
 affects: [agent-integration（hook）/ quick-mode（judgment engine）]
 ---

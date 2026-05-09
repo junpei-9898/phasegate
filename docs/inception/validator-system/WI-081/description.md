@@ -2,7 +2,7 @@
 id: WI-081
 type: story
 severity: normal
-status: drafted
+status: tested
 legacy_id: H08-03
 ---
 

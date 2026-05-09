@@ -2,7 +2,7 @@
 id: WI-056
 type: story
 severity: normal
-status: drafted
+status: tested
 legacy_id: H10-02
 ---
 

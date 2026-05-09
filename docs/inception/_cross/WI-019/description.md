@@ -2,7 +2,7 @@
 id: WI-019
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-019
 affects: [biome-ast-engine（LayerBoundary 定義主体）]
 ---

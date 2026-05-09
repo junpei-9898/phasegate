@@ -2,7 +2,7 @@
 id: WI-087
 type: fix
 severity: high
-status: drafted
+status: tested
 affects: [agent-integration, config-foundation, quick-mode, setup, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/3
 reporter: nakataj-mti

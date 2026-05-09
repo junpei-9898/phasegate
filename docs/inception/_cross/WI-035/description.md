@@ -2,7 +2,7 @@
 id: WI-035
 type: fix
 severity: high
-status: implemented
+status: tested
 affects: [phase2-extensions]
 ---
 

@@ -2,7 +2,7 @@
 id: WI-065
 type: story
 severity: normal
-status: drafted
+status: implemented
 legacy_id: H15-02
 ---
 

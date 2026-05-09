@@ -2,7 +2,7 @@
 id: WI-013
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-013
 affects: [agent-integration（templates 追加）, harness-api（docs）]
 ---

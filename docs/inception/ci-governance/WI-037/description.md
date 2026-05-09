@@ -2,7 +2,7 @@
 id: WI-037
 type: story
 severity: normal
-status: drafted
+status: implemented
 legacy_id: H13-01
 ---
 

@@ -2,7 +2,7 @@
 id: WI-018
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-018
 affects: [agent-integration（主）]
 ---

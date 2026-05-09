@@ -2,7 +2,7 @@
 id: WI-030
 type: refactor
 severity: normal
-status: drafted
+status: reflected
 affects: [docs]
 ---
 

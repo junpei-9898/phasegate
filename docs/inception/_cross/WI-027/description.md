@@ -2,7 +2,7 @@
 id: WI-027
 type: refactor
 severity: normal
-status: drafted
+status: tested
 affects: [traceability-model, phase-dependency-model]
 ---
 

@@ -2,7 +2,7 @@
 id: WI-071
 type: story
 severity: normal
-status: drafted
+status: reflected
 legacy_id: H12-06
 ---
 

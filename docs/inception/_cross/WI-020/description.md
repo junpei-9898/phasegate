@@ -2,7 +2,7 @@
 id: WI-020
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-020
 affects: [config-foundation（主）]
 ---

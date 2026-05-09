@@ -2,7 +2,7 @@
 id: WI-085
 type: fix
 severity: normal
-status: implemented
+status: tested
 affects: [phase-dependency-model, config-foundation, validator-system, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/1
 reporter: nakataj-mti

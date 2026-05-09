@@ -2,7 +2,7 @@
 id: WI-014
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-014
 affects: [biome-ast-engine（主）, config-foundation（schema 拡張）, validator-system（メタデータ規則）, skill-quality（L1-001/L1-002 の `@layer` タグ値）]
 ---

@@ -2,7 +2,7 @@
 id: WI-004
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-004
 affects: [agent-integration（hooks）, setup（skill-deployer）, skills（全Sonnet委任系スキル）]
 ---

@@ -2,7 +2,7 @@
 id: WI-047
 type: story
 severity: normal
-status: drafted
+status: tested
 legacy_id: H07-01
 ---
 

@@ -2,7 +2,7 @@
 id: WI-023
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-023
 ---
 

@@ -2,7 +2,7 @@
 id: WI-086
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [agent-integration, config-foundation, quick-mode, setup, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/2
 reporter: junpei-9898

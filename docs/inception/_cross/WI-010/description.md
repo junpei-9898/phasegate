@@ -2,7 +2,7 @@
 id: WI-010
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-010
 affects: [ほぼ全 Unit の設計文書（adr-foundation, agent-integration, biome-ast-engine, ci-governance, config-foundation, fuse-hooks-engine, harness-api, harness-error, nyquist-validation, phase-dependency-model, phase2-extensions, quick-mode, regression-suite, skill-quality, traceability-model, validator-system）]
 ---

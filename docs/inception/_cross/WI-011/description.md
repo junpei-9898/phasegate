@@ -2,7 +2,7 @@
 id: WI-011
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-011
 affects: [traceability-model（主）, harness-error（エラーメッセージ）, phase2-extensions（drift 検出）]
 ---

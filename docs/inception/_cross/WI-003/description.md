@@ -2,7 +2,7 @@
 id: WI-003
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-003
 affects: [横断（biome-ast-engine, harness-api, ci-governance, regression-suite, skill-quality 等）]
 ---

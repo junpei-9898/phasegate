@@ -2,7 +2,7 @@
 id: WI-034
 type: refactor
 severity: trivial
-status: drafted
+status: tested
 affects: [validator-system, docs]
 ---
 

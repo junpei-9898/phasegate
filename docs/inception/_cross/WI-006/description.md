@@ -2,7 +2,7 @@
 id: WI-006
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-006
 affects: [harness-api（quick-implementor / story-implementor 選択ロジック）, ci-governance（phasegate.config.json スキーマ）, ドキュメント（採用ガイド）]
 ---

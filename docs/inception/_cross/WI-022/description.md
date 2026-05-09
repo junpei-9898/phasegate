@@ -2,7 +2,7 @@
 id: WI-022
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-022
 affects: [biome-ast-engine（`rule-definition-registry.ts` の `no-layer-violation.ignorePatterns`）]
 ---
