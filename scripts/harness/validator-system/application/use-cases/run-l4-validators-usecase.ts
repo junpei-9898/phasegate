@@ -109,7 +109,7 @@ export class RunL4ValidatorsUseCase {
     }
 
     if (!layerConfig.enabled && !input.forceLayerEnabled) {
-      return [];
+      return this.mapper.toContracts(definitions.map((definition) => ValidationResult.skip(definition.validatorId)));
     }
 
     const effectiveLayerConfig = input.forceLayerEnabled && !layerConfig.enabled

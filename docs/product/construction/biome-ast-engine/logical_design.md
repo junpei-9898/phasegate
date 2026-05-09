@@ -968,6 +968,10 @@ interface ClockPort {
 
 `ArchitectureSpec` は `metadataTags.unit` / `metadataTags.layer` を保持し、未指定時は `@unit` / `@layer` を使う。`ResolveEnabledRulesUseCase` は config-foundation から受け取った `architecture.metadataTags` を spec に透過し、`TypeScriptSourceModuleAnalyzerAdapter` は parser 呼び出し時にその tag名だけを検出対象にする。`LintRunner` の L1-001 / L1-002 欠落メッセージと `HarnessErrorFormatterAdapter` の suggestion も同じ tag名を使い、設定上有効な metadata key を user に提示する。
 
+### WI-109: PhaseGate self-lint unit ownership fallback
+
+`TypeScriptSourceModuleAnalyzerAdapter` は `@unit` metadata がない場合でも、PhaseGate 自身の標準配置 `scripts/harness/{unit}/...` と `scripts/harness/__tests__/{scope}/{unit}/...` から Unit 名を一意に導出できるときは `SourceModuleSnapshot.declaredUnit` にその Unit 名を設定する。これは pre-commit の staged-file grouping と同じ ownership 推定規則であり、repository baseline の既存ファイルを 1 件ずつ annotate しなくても self-lint の `require-unit-comment` signal を「Unit ownership が不明なファイル」に集中させるための互換措置である。`@unit` が明示されている場合はコメントを正とし、path-derived Unit は fallback に限る。`@layer` は依存方向判定に必要な architecture metadata のため、引き続き明示コメントのみを使う。@work-item-id WI-109
+
 ---
 
 ## 6. Presentation層設計

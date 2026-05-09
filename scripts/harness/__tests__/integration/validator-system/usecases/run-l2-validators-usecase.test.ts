@@ -30,7 +30,7 @@ function createL2UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target('RunL2ValidatorsUseCase', () => {
   describe('全L2バリデータの実行', () => {
     context('validatorIdsを省略した場合', () => {
-      it('全L2バリデータ（L2-001〜L2-003）が実行され3件の結果が返る (IT-UC-RunL2-001)', async () => {
+      it('全L2バリデータ（L2-001〜L2-003, L2-013）が実行され4件の結果が返る (IT-UC-RunL2-001)', async () => {
         // Arrange
         const usecase = createL2UseCase();
         const input = { targetPaths: ['src/foo.ts'], unitName: 'unit-a', currentPhase: 'implementation' };
@@ -39,8 +39,8 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(3);
-        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003']);
+        expect(actual).toHaveLength(4);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013']);
       });
     });
 
@@ -134,8 +134,96 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(3);
+        expect(actual).toHaveLength(4);
         expect(actual.every((r) => r.passed === true)).toBe(true);
+      });
+    });
+
+    context('CLI E2E coverage portsが注入されている場合', () => {
+      it('L2-013が既存E2Eテスト内容を読んでpassを返す', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L2')),
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          cliCommandRegistryPort: { getRegisteredCommands: async () => ['validate', 'phasegate:ci-check'] },
+          e2eTestFileRegistryPort: {
+            getE2eTestFiles: async () => [
+              "it('validate works', () => run('validate', '--layer', 'L2'));",
+              "it('ci works', () => run('phasegate:ci-check', '--json'));",
+            ],
+          },
+        });
+        const input = { targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
+        expect(l2013?.passed).toBe(true);
+        expect(l2013?.skipped).toBe(false);
+      });
+
+      it('L2-013が真に未カバーのコマンドをfailとして返す', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L2')),
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          cliCommandRegistryPort: { getRegisteredCommands: async () => ['phasegate:missing'] },
+          e2eTestFileRegistryPort: { getE2eTestFiles: async () => ["run('validate')"] },
+        });
+        const input = { targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
+        expect(l2013?.passed).toBe(false);
+        expect(l2013?.errors[0]?.message).toContain('phasegate:missing');
+      });
+
+      it('consumer projectでE2E test suiteが存在しない場合はL2-013をpass扱いにする', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L2')),
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          cliCommandRegistryPort: { getRegisteredCommands: async () => ['validate', 'phasegate:ci-check'] },
+          e2eTestFileRegistryPort: { getE2eTestFiles: async () => [] },
+        });
+        const input = { targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
+        expect(l2013?.passed).toBe(true);
+        expect(l2013?.errors).toEqual([]);
       });
     });
   });

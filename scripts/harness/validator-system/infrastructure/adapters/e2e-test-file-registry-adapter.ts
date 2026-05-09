@@ -6,7 +6,7 @@
  * E2Eテストファイルのパス一覧を提供する。
  */
 import type { E2eTestFileRegistryPort } from '../../domain/ports/e2e-test-file-registry-port.js';
-import { readdir } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export interface E2eTestFileRegistryAdapterOptions {
@@ -22,7 +22,16 @@ export class E2eTestFileRegistryAdapter implements E2eTestFileRegistryPort {
 
   async getE2eTestFiles(): Promise<readonly string[]> {
     if (!this.e2eTestRoot) return [];
-    return this.findFiles(this.e2eTestRoot, /\.test\.ts$/);
+    const filePaths = await this.findFiles(this.e2eTestRoot, /\.test\.ts$/);
+    const contents: string[] = [];
+    for (const filePath of filePaths) {
+      try {
+        contents.push(`${filePath}\n${await readFile(filePath, 'utf-8')}`);
+      } catch {
+        contents.push(filePath);
+      }
+    }
+    return contents;
   }
 
   private async findFiles(dir: string, pattern: RegExp): Promise<string[]> {

@@ -147,8 +147,11 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 | **drift-detect** | L4-001 | Bidirectional design-code drift detection. Compares design documents against the actual codebase to find divergence in either direction. |
 | **consistency-check** | L4-002 | Cross-document layer consistency. Ensures that references between design documents, ADRs, and code remain coherent. |
 | **dead-code** | L4-003 | Detects unused exports and unreachable code that should be removed. |
+| **doc-freshness** | L4-004 | Checks design document freshness against the configured threshold. Also available through the `p2:check-freshness` compatibility command. |
+| **pointer-validation** | L4-005 | Resolves and validates design document pointers. Also available through the `p2:validate-pointers` compatibility command. |
 
-`doc-freshness` and `pointer-validation` are implemented as `phase2-extensions` CLI commands (`p2:check-freshness` and `p2:validate-pointers`). They are not registered as L4 validators yet, so `validate --layer L4` does not run them until WI-033 promotes them into `validator-system`.
+<!-- @work-item-id WI-116 -->
+`doc-freshness` and `pointer-validation` are registered as L4-004/L4-005. The standalone `p2:check-freshness` and `p2:validate-pointers` commands remain as compatibility entry points; WI-033's remaining scope is operational rollout, not validator registration.
 
 ### Drift-detect design pointers
 
@@ -218,6 +221,8 @@ Each error catalog entry declares a `defaultSeverity` of `error` or `warning`. A
 - L4-003 dead-code
 
 **Opt-in to strict mode** via `phasegate.config.json` `validate.failOnWarning: true` or CLI `--fail-on-warning` (CLI > config). The `strict` preset defaults to `failOnWarning: true` to match the precedent set by the `ci-governance` preset adapter.
+
+For L4 specifically, `validate --layer L4` is an explicit operator request and runs L4 validators even when `layers.L4.enabled` is false. `validate --layer all` and `phasegate:ci-check` honor disabled L4 as skipped results, so skipped L4 validators are visible in the report but do not become failures under `--fail-on-warning`. @work-item-id WI-107
 
 History: prior to v0.131.0, the aggregator's `failOnWarning` flag was effectively dead code (`hasFail = !result.passed || ...` masked it), so every warning-only fail produced exit 1 regardless of severity declaration. See ADR-017 for the rationale.
 

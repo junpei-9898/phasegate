@@ -192,6 +192,13 @@ function parseTriStateFlag(args: readonly string[], positiveFlag: string, negati
   return positiveIdx > negativeIdx;
 }
 
+function parseValidateFormat(args: readonly string[]): "human" | "agent" | "ci" | undefined {
+  const raw = parseFlag(args, "--format");
+  if (raw === undefined) return undefined;
+  if (raw === "human" || raw === "agent" || raw === "ci") return raw;
+  throw new Error(`Invalid --format value for validate: '${raw}'. Supported values: human, agent, ci.`);
+}
+
 function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
@@ -1024,7 +1031,7 @@ async function main(): Promise<void> {
         const layer = parseFlag(args, "--layer") as "L0" | "L2" | "L3" | "L4" | "all" | undefined;
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
-        const format = parseFlag(args, "--format") as "human" | "agent" | "ci" | undefined;
+        const format = parseValidateFormat(args);
         // WI-094 / ADR-017: --fail-on-warning / --no-fail-on-warning / 未指定→config値
         const failOnWarning = parseTriStateFlag(args, "--fail-on-warning", "--no-fail-on-warning");
         const noL4 = hasFlag(args, "--no-l4");

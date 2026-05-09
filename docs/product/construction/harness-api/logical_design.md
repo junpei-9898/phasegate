@@ -5,6 +5,8 @@
 @story-id H09-03
 @story-id H09-04
 @work-item-id WI-025
+@work-item-id WI-112
+@work-item-id WI-114
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）
@@ -397,20 +399,30 @@ skills/                  # 実体
 
 | 属性 | 型 | 説明 |
 |------|----|------|
-| drifts | `readonly DriftItem[]` | 乖離項目一覧 |
-| totalCount | `number` | 乖離件数（`drifts.length` と一致） |
+| drifts | `readonly ActionableDriftItem[]` | sampleLimit 件までの乖離サンプル。各項目に category / severity / nextAction を付与する |
+| totalCount | `number` | 元の乖離件数 |
+| rawDriftCount | `number` | `totalCount` と同じ元件数。出力圧縮時も保持する |
+| sampleLimit | `number` | drifts[] に含める最大サンプル件数 |
+| truncated | `boolean` | 元件数が sampleLimit を超えたか |
+| categorySummaries | `readonly DriftCategorySummary[]` | category 別の件数・severity・推奨次アクション |
+| actionPlan | `readonly DriftCategorySummary[]` | 件数順の上位 category summary |
 
-**不変条件**: `totalCount === drifts.length`（INV-7）
+**不変条件**: `create()` は `totalCount === drifts.length`（INV-7）を維持する。repository scale 出力用の `fromDrifts()` は `drifts[]` を sampleLimit 件へ圧縮し、`totalCount/rawDriftCount` に元件数を保持する。@work-item-id WI-114
 
 **メソッド一覧**
 
-##### `static create(drifts: readonly DriftItem[]): DriftReportSummary`
+##### `static create(props: DriftReportSummaryProps): DriftReportSummary`
 
 - 処理フロー: `totalCount = drifts.length` で不変条件を充足させる
 
+##### `static fromDrifts(drifts: readonly DriftItem[], sampleLimit = 20): DriftReportSummary`
+
+- 処理フロー: raw drifts 全件から category summary / actionPlan を作り、`drifts[]` は sampleLimit 件に圧縮する
+- L4 は WI-107 の advisory policy に従うため、drift 有無は gate failure ではなく warning count と action plan として返す
+
 ##### `hasDrift(): boolean`
 
-- 処理フロー: `drifts.length > 0` を返す
+- 処理フロー: `totalCount > 0` を返す
 
 ##### `filterByUnit(unitId: string): readonly DriftItem[]`
 
@@ -590,9 +602,9 @@ FlagDef: { name: string; shortName?: string; type: 'boolean' | 'string'; descrip
 |------------|-------------|--------|
 | `'check-ready'` | `phaseGateQueryPort.queryAllStories()` | → `CheckReadyResult` → Pass/Fail判定 |
 | `'check-phase'` | `phaseGateQueryPort.queryUnit(args.unit)` | → `PhaseInfo` → 単位未検出ならFail |
-| `'ci-check'` | `validatorExecutionPort.runL3Validators()` | → `CiCheckResult` → Pass/Fail判定 |
-| `'detect-drift'` | `validatorExecutionPort.runDriftDetection()` | → `DriftReportSummary` → 乖離有無 |
-| `'status'` | `artifactScannerPort + configQueryPort` | → `StatusDerivationService.derive()` → Pass/Error のみ |
+| `'ci-check'` | `validatorExecutionPort.runAllValidators()` | → `CiCheckResult` → Pass/Fail判定 |
+| `'detect-drift'` | `validatorExecutionPort.runDriftDetection()` | → `DriftReportSummary` → advisory pass + warnings |
+| `'status'` | `artifactScannerPort + configQueryPort + biomeLintPort + validatorExecutionPort` | → `StatusDerivationService.derive()` → Pass/Error のみ |
 | `'lint'` | `biomeLintPort.runLint()` | → errors有無 → Pass/Fail判定 |
 | `'complete-check'` | `validatorExecutionPort.runAllValidators() + biomeLintPort.runLint()` | → 全エラー集約 |
 | `'impact-analysis'` | `impactAnalysisPort.analyze(args.storyId)` | → ストーリー未検出ならFail |
@@ -605,21 +617,23 @@ FlagDef: { name: string; shortName?: string; type: 'boolean' | 'string'; descrip
 
 - なし（純粋な計算関数として設計）
 
-##### `derive(input: { scanResult: ArtifactScanResult; presetInfo: PresetInfo; configSummary: ConfigSummary; phaseGateSummary: PhaseGateSummary }): HarnessStatusSummary`
+##### `derive(input: { scanResult: ArtifactScanResult; presetInfo: PresetInfo; configSummary: ConfigSummary; phaseGateSummary: PhaseGateSummary; liveValidationByLayer?: Record<LayerId, LiveValidationState> }): HarnessStatusSummary`
 
 - 入力: スキャン結果 + 設定情報
 - 出力: `HarnessStatusSummary`
 - 処理フロー:
   1. `scanResult.derivedLayerHealth` を受け取る
   2. `presetInfo.enabledLayers` と `derivedLayerHealth` を突合する
-  3. 有効だが成果物未検出のレイヤーは `lastResult: 'unknown'` を設定する（H09-04のルール）
-  4. 無効なレイヤーは `enabled: false` を設定する
-  5. `HarnessStatusSummary` を構築して返す
+  3. `configurationState`（enabled/disabled）と `cachedArtifactState`（present/missing/unknown）を分離する
+  4. `liveValidationByLayer` があれば `liveValidationState` として保持し、pass/fail は `lastResult` に優先反映する
+  5. 無効なレイヤーは `enabled: false` とし、L4 skipped などの live state は別フィールドで保持する
+  6. `HarnessStatusSummary` を構築して返す
 - 例外: なし（純粋関数。I/O失敗は呼び出し元の `CommandDispatchService` が担う）
 - 不変条件:
-  - `LayerHealth.enabled` は `presetInfo.enabledLayers` に基づく
-  - 対応する成果物が存在すれば `lastResult: 'pass'`
-  - 対応する成果物が存在しない場合は `lastResult: 'unknown'`（実行結果なしとして扱う）
+  - `LayerHealth.configurationState` は `presetInfo.enabledLayers` に基づく
+  - `LayerHealth.cachedArtifactState` は artifact scan に基づく
+  - `LayerHealth.liveValidationState` は lint / validator execution に基づく。@work-item-id WI-112
+  - `lastResult` は後方互換の要約であり、live pass/fail を cached artifact より優先する
 
 ### 2.4 ドメインエラー
 
@@ -1244,15 +1258,15 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 **処理フロー**
 
 1. `DispatchCommandUseCase.execute({ commandName: 'phasegate:detect-drift', args: {}, flags: { json: true } })` を呼ぶ
-2. `DriftReportSummary.hasDrift()` が `true` なら `exitCode: 1`
-3. 乖離項目一覧（direction/unit/element/recommendation）を含む JSON を出力する
+2. `DriftReportSummary.fromDrifts()` で raw drift を category / severity / nextAction 付きの圧縮サマリーへ変換する
+3. 乖離がある場合も WI-107 の L4 advisory policy に従い `status='pass'` / exitCode 0 とし、`summary.warnings` に件数を載せる
+4. sample drifts、categorySummaries、actionPlan を含む JSON を出力する
 
 **終了コード**
 
 | コード | 意味 |
 |------|------|
-| 0 | 乖離なし |
-| 1 | 乖離が1件以上検出 |
+| 0 | 乖離なし、または advisory drift を正常にレポートできた |
 | 2 | 実行エラー |
 
 ### 6.6 StatusHandler
@@ -1272,9 +1286,11 @@ harness-api は `integration_contract.md §3.1` に定義される全8コマン�
 
 **処理フロー**
 
-1. `DeriveHarnessStatusUseCase.execute()` を内部で呼び出す
-2. `DecideExitCodeUseCase.execute({ status, commandName: 'phasegate:status' })` を呼ぶ（`fail` の場合も `0` を返す）
-3. `HarnessStatusSummary`（レイヤー健全性/Phase Gate/プリセット/設定）を JSON で出力する
+1. artifact scan と config/preset を取得する
+2. lint と L2-L4 validator execution を可能な範囲で実行し、live validation state を得る
+3. `StatusDerivationService.derive()` で configuration / cached artifact / live validation を分けた `HarnessStatusSummary` を作る
+4. `DecideExitCodeUseCase.execute({ status, commandName: 'phasegate:status' })` を呼ぶ（`fail` の場合も `0` を返す）
+5. `HarnessStatusSummary`（レイヤー健全性/Phase Gate/プリセット/設定）を JSON で出力する
 
 **終了コード**
 
@@ -1483,8 +1499,8 @@ sequenceDiagram
     participant ValidatorSys as validator-system
 
     Handler->>DispatchSvc: dispatch('phasegate:ci-check', {}, {})
-    DispatchSvc->>Port: runL3Validators()
-    Port->>Adapter: runL3Validators()
+    DispatchSvc->>Port: runAllValidators()
+    Port->>Adapter: runAllValidators()
     Adapter->>ValidatorSys: 実行（L3-001〜L3-004）
     ValidatorSys-->>Adapter: 各バリデータ結果
     Adapter-->>Port: ValidatorCheckItem[]
@@ -1797,3 +1813,11 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 ### WI-012: pre-commit implementation extension configuration
 
 `phasegate pre-commit` treats staged implementation files by matching `preCommit.implementationExtensions` from the resolved config. When omitted, the default is `[".ts"]`, preserving the existing TypeScript-only behavior. The CLI passes the resolved extension list into `runPreCommit`; Markdown metadata detection remains independent and continues to target `docs/inception/` and `docs/product/`.
+
+### WI-109: pre-commit config error boundary
+
+`scripts/harness/integrations/pre-commit.ts` は harness-api の presentation entrypoint として config-foundation の composition root / application mapper を利用するが、config-foundation infrastructure の concrete error class には直接依存しない。設定ファイル未配置を許容する fallback 判定は `Error.name === "ConfigNotFoundError"` の境界で扱い、`file-system-config-repository` の具象 class import を避ける。これにより `phasegate:lint` の `no-layer-violation` は実際の production dependency と同じ方向で検出され、integration entrypoint が infrastructure repository を横断参照しない。@work-item-id WI-109
+
+### WI-108: ci-check L2-L4 contract
+
+`phasegate:ci-check` は README / CLI reference の full CI check 契約に合わせ、`ValidatorExecutionPort.runAllValidators()` を呼んで L2-L4 の validator 結果を `CiCheckResult` に集約する。L4 が config disabled の場合は validator-system 側の skip result をそのまま JSON `data.validatorResults[]` に残し、L3 のみの successful run を L2-L4 full check として報告しない。@work-item-id WI-108

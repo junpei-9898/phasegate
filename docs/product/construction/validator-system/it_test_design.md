@@ -33,7 +33,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-RunL2-001 | validatorIdsを省略した場合、全L2バリデータ（L2-001〜L2-003）が実行される | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ValidatorConfigPort: L2 LayerConfig(enabled=true)を返す。ExecutionService: 3件のpass結果を返す | `ValidationResultContract[]`が3件返る。各`validatorId`が"L2-001"/"L2-002"/"L2-003" |
+| IT-UC-RunL2-001 | validatorIdsを省略した場合、全L2バリデータ（L2-001〜L2-003, L2-013）が実行される | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ValidatorConfigPort: L2 LayerConfig(enabled=true)を返す。ExecutionService: 4件のpass結果を返す | `ValidationResultContract[]`が4件返る。各`validatorId`が"L2-001"/"L2-002"/"L2-003"/"L2-013"。@work-item-id WI-110 |
 | IT-UC-RunL2-002 | validatorIdsに["L2-001"]を指定した場合、phase-gateのみが実行される | `{ validatorIds: ["L2-001"], targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ExecutionService: 1件のpass結果を返す | `ValidationResultContract[]`が1件返る。`validatorId`が"L2-001" |
 | IT-UC-RunL2-003 | L2バリデータがfailした場合、passed=falseかつerrorsを含む結果が返る | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ExecutionService: L2-002がfail（errors: [{code:"L2-002", severity:"error"}]）の結果を返す | `ValidationResultContract`の`passed=false`、`errors`に1件のHarnessErrorが含まれる |
 | IT-UC-RunL2-004 | LayerConfig.enabled=falseの場合、全L2結果がskipped=trueで返る | 有効な入力DTO | ValidatorConfigPort: enabled=falseのLayerConfigを返す | 全`ValidationResultContract`が`skipped=true`、`passed=true`、`errors=[]` |
@@ -44,7 +44,8 @@
 |---------|---------|------|----------|----------|
 | IT-UC-RunL2-005 | 無効なvalidatorId（"L2-999"）を指定した場合、InvalidValidatorIdErrorが送出される | `{ validatorIds: ["L2-999"], targetPaths: [], unitName: "unit-a", currentPhase: "impl" }` | — | `InvalidValidatorIdError` |
 | IT-UC-RunL2-006 | ValidatorConfigPortが例外をthrowした場合、ValidatorExecutionErrorとして伝播する | 有効な入力DTO | ValidatorConfigPort: `Error("config read failed")`をthrow | `ValidatorExecutionError` |
-| IT-UC-RunL2-007 | targetPathsが空配列の場合、実行は続行され空のviotation結果が返る | `{ targetPaths: [], unitName: "unit-a", currentPhase: "impl" }` | ExecutionService: 3件のpass結果を返す | `ValidationResultContract[]`が3件すべて`passed=true` |
+| IT-UC-RunL2-007 | targetPathsが空配列の場合、実行は続行され空のviotation結果が返る | `{ targetPaths: [], unitName: "unit-a", currentPhase: "impl" }` | ExecutionService: 4件のpass結果を返す | `ValidationResultContract[]`が4件すべて`passed=true` |
+| IT-UC-RunL2-008 | consumer project に CLI E2E suite が存在しない場合、L2-013はlimitationとして扱う | `{ targetPaths: [], unitName: "unit-a", currentPhase: "impl" }` | E2eTestFileRegistryPort: `[]`、CliCommandRegistryPort: registered commandsあり | L2-013が missing command failure を返さず、L2 gate を誤失敗させない。@work-item-id WI-111 |
 
 ---
 
@@ -96,7 +97,7 @@
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
 | IT-UC-RunQuick-001 | relaxationProfileのl2.maintained=["L2-002"]の場合、L2-002のみが実行される | `{ relaxationProfile: { l2: { maintained: ["L2-002"], skipped: ["L2-001","L2-003"] }, l3: { maintained: [], skipped: [...] }, l4: { all: false }, phaseExecution: { twoPhaseRequired: false } }, targetPaths: ["src/"], unitName: "unit-a", currentPhase: "impl" }` | ExecutionService.executeWithRelaxation: L2-002のpass結果を返す | `ValidationResultContract[]`にL2-002の結果のみ。L2-001/L2-003は`skipped=true` |
-| IT-UC-RunQuick-002 | L4が常にスキップされることを確認する | `{ relaxationProfile: { ..., l4: { all: false } }, targetPaths: ["src/"], unitName: "unit-a", currentPhase: "impl" }` | ExecutionService: L4関連サービスが呼ばれないことを確認 | L4バリデータの結果が含まれない（またはすべてskipped） |
+| IT-UC-RunQuick-002 | L4が常にスキップされることを確認する | `{ relaxationProfile: { ..., l4: { all: false } }, targetPaths: ["src/"], unitName: "unit-a", currentPhase: "impl" }` | ExecutionService: L4関連サービスが呼ばれないことを確認 | L4バリデータはすべて`skipped=true`として返る |
 | IT-UC-RunQuick-003 | twoPhaseRequired=falseの場合、Phase Gate検証がスキップされる | 有効なrelaxationProfile | ExecutionService.executeWithRelaxation: phaseGate不要の結果を返す | L2-001が`skipped=true` |
 
 #### 異常系
@@ -324,6 +325,11 @@
 | IT-API-RunValidators-003 | `--format ci` | JSON形式でstdout出力。`{ status:"pass", errors:[], summary:{ totalChecks:10, passed:10, failed:0, warnings:0 } }` |
 | IT-API-RunValidators-004 | `--format agent` | AIエージェント向け詳細テキスト形式でstdout出力 |
 | IT-API-RunValidators-005 | `--no-l4` フラグを指定した場合 | L4バリデータが実行されず、totalChecks=7 |
+| IT-API-RunValidators-008 | `--format json` を指定した場合 | 未対応formatとして clear error を出し exit 2 になる。`validate` の対応 format は `human\|agent\|ci` のみ。@work-item-id WI-113 |
+
+### WI-107: L4 advisory / gating policy
+
+`validate --layer L4` は disabled L4 でも明示実行として L4 validator を走らせる。warning は既定では advisory として exit 0 を維持し、`--fail-on-warning` または config `validate.failOnWarning=true` のときだけ gating failure として exit 1 にする。`validate --layer all` は config disabled の L4 を skip として出力に含め、skip は warning gating の対象にしない。@work-item-id WI-107
 
 #### バリデーションテスト
 

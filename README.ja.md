@@ -148,7 +148,8 @@ npx phasegate update-skills   # スキルを最新版に再デプロイ
 |     security, performance, coverage 90%/95%, 要件カバレッジ        |
 +------------------------------------------------------------------+
 | L4  週次 (default off)                                           |
-|     設計-コード乖離, 文書整合性, デッドコード                    |
+|     設計-コード乖離, 文書整合性, デッドコード,                  |
+|     doc-freshness, pointer-validation                            |
 +------------------------------------------------------------------+
 ```
 
@@ -455,7 +456,7 @@ reports/
 
 | Work Item | 内容 |
 |---|---|
-| **[WI-033](docs/inception/_cross/WI-033/description.md)** | `doc-freshness` / `pointer-validation` を L4 validator に昇格 |
+| **[WI-033](docs/inception/_cross/WI-033/description.md)** | L4 運用ロールアウトの仕上げ。`doc-freshness` / `pointer-validation` は L4-004 / L4-005 として登録済みで、`p2:*` 互換コマンドも維持。残りは scheduling / default / 運用 docs の整理。@work-item-id WI-116 |
 
 L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。現時点では手動セットアップで利用できます。
 

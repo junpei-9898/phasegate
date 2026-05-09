@@ -102,6 +102,73 @@ target('TypeScriptSourceModuleAnalyzerAdapter.analyzeMany (metadataTags)', () =>
   });
 });
 
+target('TypeScriptSourceModuleAnalyzerAdapter.analyzeMany (unit path fallback)', () => {
+  describe('PhaseGate標準配置からUnit名を導出する', () => {
+    context('実装ファイルに@unitがない場合', () => {
+      it('scripts/harness/{unit}/... からdeclaredUnitを設定する', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(
+          rootDir,
+          'scripts/harness/harness-api/presentation/handlers/example.ts',
+          '// @layer presentation\nexport const x = 1;\n'
+        );
+        const adapter = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });
+
+        // Act
+        const actual = await adapter.analyzeMany([
+          FilePath.fromWorkspaceRelative('scripts/harness/harness-api/presentation/handlers/example.ts'),
+        ]);
+
+        // Assert
+        expect(actual[0].declaredUnit).toBe('harness-api');
+      });
+    });
+
+    context('test scope配下のファイルに@unitがない場合', () => {
+      it('scripts/harness/__tests__/{scope}/{unit}/... からdeclaredUnitを設定する', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(
+          rootDir,
+          'scripts/harness/__tests__/integration/config-foundation/example.test.ts',
+          '// @layer test\nexport const x = 1;\n'
+        );
+        const adapter = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });
+
+        // Act
+        const actual = await adapter.analyzeMany([
+          FilePath.fromWorkspaceRelative('scripts/harness/__tests__/integration/config-foundation/example.test.ts'),
+        ]);
+
+        // Assert
+        expect(actual[0].declaredUnit).toBe('config-foundation');
+      });
+    });
+
+    context('@unitが明示されている場合', () => {
+      it('path-derived Unit よりコメントを優先する', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        writeFile(
+          rootDir,
+          'scripts/harness/harness-api/presentation/handlers/example.ts',
+          '// @unit explicit-unit\n// @layer presentation\nexport const x = 1;\n'
+        );
+        const adapter = new TypeScriptSourceModuleAnalyzerAdapter({ rootDir });
+
+        // Act
+        const actual = await adapter.analyzeMany([
+          FilePath.fromWorkspaceRelative('scripts/harness/harness-api/presentation/handlers/example.ts'),
+        ]);
+
+        // Assert
+        expect(actual[0].declaredUnit).toBe('explicit-unit');
+      });
+    });
+  });
+});
+
 target('TypeScriptSourceModuleAnalyzerAdapter.analyzeMany (extractImports)', () => {
   describe('export ... from 再エクスポートをedgeとして生成する', () => {
     context('export { X } from "./foo.js" 形式の場合', () => {

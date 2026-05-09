@@ -140,6 +140,7 @@
 |---------|------|---------|
 | UT-DRS-001 | drifts=[], totalCount=0 | 正常に生成される（乖離なし） |
 | UT-DRS-002 | drifts=[2件のDriftItem], totalCount=2 | 正常に生成される |
+| UT-DRS-005 | fromDrifts(drifts=3件, sampleLimit=2) | totalCount/rawDriftCount=3, drifts.length=2, truncated=true, categorySummaries/actionPlan が生成される。@work-item-id WI-114 |
 
 #### 不変条件テスト（INV-7）
 
@@ -185,6 +186,7 @@
 | UT-LYH-001 | layerId=`L1`, enabled=true, lastResult=`pass` | 正常に生成される |
 | UT-LYH-002 | layerId=`L4`, enabled=false, lastResult省略（undefined） | 正常に生成される |
 | UT-LYH-003 | layerId=`L2`, enabled=true, lastResult=`unknown` | 正常に生成される |
+| UT-LYH-006 | configurationState/cachedArtifactState/liveValidationState を指定 | 状態種別が混ざらず個別フィールドに保持される。@work-item-id WI-112 |
 
 #### 制約テスト
 
@@ -288,9 +290,9 @@
 | UT-CDS-001 | commandName=`phasegate:check-ready`, args={}, flags={} | PhaseGateQueryPort.queryAllStories() → 全passed=true | HarnessApiResponse\<CheckReadyResult\>（status=`pass`, exitCode=0）を返す |
 | UT-CDS-002 | commandName=`phasegate:check-ready` | PhaseGateQueryPort.queryAllStories() → 一部passed=false | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
 | UT-CDS-003 | commandName=`phasegate:check-phase`, args={unit: `harness-error`} | PhaseGateQueryPort.queryUnit(`harness-error`) → PhaseInfo | HarnessApiResponse\<PhaseInfo\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-004 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runL3Validators() → 全passed=true | HarnessApiResponse\<CiCheckResult\>（status=`pass`, exitCode=0）を返す |
+| UT-CDS-004 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runAllValidators() → L2/L3/L4 全passedまたはskipped=true | HarnessApiResponse\<CiCheckResult\>（status=`pass`, exitCode=0）を返す。@work-item-id WI-108 |
 | UT-CDS-005 | commandName=`phasegate:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[]=[] | HarnessApiResponse\<DriftReportSummary\>（status=`pass`, exitCode=0）を返す |
-| UT-CDS-006 | commandName=`phasegate:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[1件以上] | HarnessApiResponse（status=`fail`, exitCode=1）を返す |
+| UT-CDS-006 | commandName=`phasegate:detect-drift` | ValidatorExecutionPort.runDriftDetection() → DriftItem[1件以上] | Advisory HarnessApiResponse（status=`pass`, exitCode=0, summary.warnings>=1）を返し、data.categorySummaries/actionPlan に category/severity/nextAction を含む。@work-item-id WI-107 @work-item-id WI-114 |
 | UT-CDS-007 | commandName=`phasegate:lint` | BiomeLintPort.runLint() → pass | HarnessApiResponse（status=`pass`, data=undefined, exitCode=0）を返す |
 | UT-CDS-008 | commandName=`phasegate:impact-analysis`, args={storyId: `H09-01`} | ImpactAnalysisPort.analyze(`H09-01`) → ImpactAnalysisResult | HarnessApiResponse\<ImpactAnalysisResult\>（status=`pass`, exitCode=0）を返す |
 
@@ -298,14 +300,14 @@
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-CDS-009 | commandName=`phasegate:status` | ArtifactScannerPort.scan() → ArtifactScanResult（正常）, ConfigQueryPort → 設定取得成功 | exitCode=0（statusコマンドはfail=1を返さない §9-D5） |
+| UT-CDS-009 | commandName=`phasegate:status` | ArtifactScannerPort.scan() → ArtifactScanResult（正常）, ConfigQueryPort → 設定取得成功, lint/validator → live results | exitCode=0（statusコマンドはfail=1を返さない §9-D5）。data.layers に configurationState/cachedArtifactState/liveValidationState が含まれる。@work-item-id WI-112 |
 | UT-CDS-010 | commandName=`phasegate:status` | ArtifactScannerPort.scan() → LayerHealth全件lastResult=`unknown` | exitCode=0（unknownでも正常取得＝exitCode=0 §9-D5） |
 
 #### 異常系（ポートエラー・未登録コマンド）
 
 | ケースID | 入力 | モック設定 | 期待結果 |
 |---------|------|----------|---------|
-| UT-CDS-011 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runL3Validators() → 例外スロー | HarnessApiResponse（status=`error`, errors=[1件以上], exitCode=2）を返す |
+| UT-CDS-011 | commandName=`phasegate:ci-check` | ValidatorExecutionPort.runAllValidators() → 例外スロー | HarnessApiResponse（status=`error`, errors=[1件以上], exitCode=2）を返す |
 | UT-CDS-012 | commandName=`harness:unknown-command`（未登録） | — | エラーをスロー / HarnessApiResponse（status=`error`, exitCode=2）を返す |
 
 ---
@@ -322,6 +324,7 @@
 | UT-SDS-002 | ArtifactScanResult（L2の成果物が存在しない） | L2のLayerHealth.lastResult=`unknown` |
 | UT-SDS-003 | ArtifactScanResult（L3一部存在・一部不在） | L3のLayerHealth.lastResult=`unknown`（全て揃わない場合はunknown） |
 | UT-SDS-004 | ArtifactScanResult（L1〜L4全て存在） + 全レイヤーenabled=true | HarnessStatusSummaryのlayers=4件、全てlastResult=`pass` |
+| UT-SDS-009 | ArtifactScanResult（L2成果物なし） + liveValidationByLayer.L2=`pass` | L2は cachedArtifactState=`missing` かつ liveValidationState=`pass`、lastResult=`pass` |
 
 #### enabled反映テスト
 

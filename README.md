@@ -156,7 +156,7 @@ npx phasegate update-skills
 | L1 | Editor save / `phasegate lint` | `@unit` / `@layer` metadata, layer violations, AI anti-patterns, dead code |
 | L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`), test quality |
 | L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability |
-| L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code. Doc freshness and pointer checks are standalone `p2:*` commands until WI-033. |
+| L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code, doc freshness, and pointer validation. `p2:*` standalone commands remain available as compatibility entry points. |
 
 ---
 
@@ -466,8 +466,8 @@ npx phasegate <command> [options]
 |---|---|
 | `init --name <name>` | Initialize project, deploy skills, generate config. Use `--with-ci` to deploy GitHub Actions workflows. |
 | `lint` | Run L1 Biome AST checks |
-| `validate --layer <L2-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance) |
-| `ci-check` | Full CI check (L2-L4) |
+| `validate --layer <L1-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance; explicit L4 runs even when scheduled L4 is disabled) |
+| `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped) |
 | `ci:generate-template --type <aidlc-gate\|consistency-check\|pre-commit\|agent-context-refresh> --render` | Render the bundled CI/hook template to stdout |
 | `ci:auto-refresh-agent-context --dry-run` / `--apply` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
 | `refresh-claude-md --dry-run` / `--apply` | Refresh only CLAUDE.md while preserving the user-owned section |
@@ -517,7 +517,7 @@ The main path is ready for project use, but a few documented behaviors still req
 
 | Work Item | Title | Why it matters |
 |---|---|---|
-| **[WI-033](docs/inception/_cross/WI-033/description.md)** | Promote `doc-freshness` / `pointer-validation` to L4 validators | Both capabilities exist as `p2:check-freshness` / `p2:validate-pointers` CLI commands but are not registered as L4 validators, so `validate --layer L4` skips them. WI-033 plumbs them through `validator-system` so they run via the standard L4 path and presets. |
+| **[WI-033](docs/inception/_cross/WI-033/description.md)** | Finish L4 operational rollout | `doc-freshness` and `pointer-validation` are registered as L4-004/L4-005 and also remain available through `p2:*` compatibility commands. Remaining WI-033 work is rollout polish around scheduling, defaults, and operational docs. @work-item-id WI-116 |
 
 `requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see the L3 guide for the current manual setup.
 

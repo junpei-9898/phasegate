@@ -4,6 +4,8 @@
 @story-id H09-02
 @story-id H09-03
 @story-id H09-04
+@work-item-id WI-112
+@work-item-id WI-114
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
@@ -24,10 +26,10 @@
 | CheckReadyResult | 値オブジェクト | 全storyのPhase Gate通過状態（stories[]付き） |
 | PhaseInfo | 値オブジェクト | 指定Unitの現在フェーズ情報（unitId/currentLevel/currentPhase/completedGates） |
 | CiCheckResult | 値オブジェクト | L3バリデータ統合実行結果（validatorResults[] + allPassed） |
-| DriftReportSummary | 値オブジェクト | 乖離レポートCLI出力形式（drifts[] + totalCount） |
+| DriftReportSummary | 値オブジェクト | 乖離レポートCLI出力形式（sampled drifts[] + totalCount + category summaries） |
 | HarnessStatusSummary | 値オブジェクト | ハーネス全体健全性サマリー（layers[]/phaseGateSummary/presetInfo/config） |
 | ArtifactScanResult | 値オブジェクト | 成果物スキャン中間結果（phasegate:status導出用） |
-| LayerHealth | 値オブジェクト | L1-L4各レイヤーの健全性（layerId/enabled/lastResult?） |
+| LayerHealth | 値オブジェクト | L1-L4各レイヤーの健全性（configuration / cached artifact / live validation を分離） |
 | CommandInputSpec | 値オブジェクト | コマンド入力仕様（args/flags定義） |
 | ExitCodeSpec | 値オブジェクト | 終了コード定義（pass:0/fail:1/error:2） |
 | CommandRegistry | ドメインサービス | CliCommandDefinition[]の登録・管理・名前一意性保証 |
@@ -79,10 +81,10 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 | CheckReadyResult | ✓ | ✓ | stories: PhaseGateStoryResult[], allPassed: boolean |
 | PhaseInfo | ✓ | ✓ | unitId: string, currentLevel: number, currentPhase: string, completedGates: string[] |
 | CiCheckResult | ✓ | ✓ | validatorResults: ValidatorCheckItem[], allPassed: boolean |
-| DriftReportSummary | ✓ | ✓ | drifts: DriftItem[], totalCount: number |
+| DriftReportSummary | ✓ | ✓ | drifts: ActionableDriftItem[], totalCount: number, categorySummaries: DriftCategorySummary[], actionPlan: DriftCategorySummary[] |
 | HarnessStatusSummary | ✓ | ✓ | layers: LayerHealth[], phaseGateSummary: PhaseGateSummary, presetInfo: PresetInfo, configSummary: ConfigSummary |
 | ArtifactScanResult | ✓ | ✓ | scannedPaths: string[], foundArtifacts: ArtifactPresence[], derivedLayerHealth: LayerHealth[] |
-| LayerHealth | ✓ | ✓ | layerId: LayerId, enabled: boolean, lastResult?: 'pass' \| 'fail' \| 'unknown' |
+| LayerHealth | ✓ | ✓ | layerId: LayerId, enabled: boolean, lastResult?: 'pass' \| 'fail' \| 'unknown', configurationState, cachedArtifactState, liveValidationState |
 | CommandInputSpec | ✓ | ✓ | args: ArgDef[], flags: FlagDef[] |
 | ExitCodeSpec | ✓ | ✓ | pass: 0, fail: 1, error: 2 |
 
@@ -106,6 +108,8 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 | PhaseGateStoryResult | `{ storyId: string, passed: boolean, missingPhases: string[] }` |
 | ValidatorCheckItem | `{ validatorId: string, passed: boolean, errors: HarnessError[] }` |
 | DriftItem | `{ direction: 'design-to-code' \| 'code-to-design', unit: string, element: string, recommendation: string }` |
+| ActionableDriftItem | `DriftItem & { category: DriftCategory, severity: 'info' \| 'warning' \| 'error', nextAction: string }` |
+| DriftCategorySummary | `{ category: DriftCategory, severity, count, nextAction }` |
 | ArtifactPresence | `{ artifactType: string, present: boolean, lastModified?: string }` |
 
 ---
@@ -162,13 +166,17 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 
 | INV | 内容 |
 |-----|------|
-| INV-7 | totalCount === drifts.length |
+| INV-7 | `create()` では totalCount === drifts.length |
+| INV-7a | `fromDrifts()` は repository scale 出力用に `drifts[]` を sampleLimit 件へ圧縮し、`totalCount/rawDriftCount` に元件数を保持する。@work-item-id WI-114 |
+| INV-7b | L4 drift は WI-107 に従い advisory signal として扱い、`phasegate:detect-drift` は drift ありでも `status='pass'` / exitCode 0 / summary.warnings に件数を載せる |
 
 ### StatusDerivationServiceのルール
 
-- ArtifactScanResultの各レイヤーに対応する成果物（設計文書・テストファイル・メタデータ）が存在すれば `LayerHealth.lastResult = 'pass'`
-- 対応する成果物が存在しない場合は `LayerHealth.lastResult = 'unknown'`（実行結果なしとして扱う）
-- `LayerHealth.enabled` は ConfigQueryPort から取得した HarnessConfigV2.layers.{L}.enabled を反映
+- `LayerHealth.configurationState` は preset/config 上の enabled/disabled を表す。
+- `LayerHealth.cachedArtifactState` はファイルシステム上の成果物有無（present/missing/unknown）を表す。
+- `LayerHealth.liveValidationState` は status 実行時に取得できた lint/validator 実行結果（pass/fail/skipped/not-run/error）を表す。
+- `LayerHealth.lastResult` は後方互換用の要約であり、live validation の pass/fail を優先し、なければ cached artifact から pass/unknown を導出する。@work-item-id WI-112
+- disabled レイヤーでも live validation が skipped と分かる場合は `configurationState='disabled'` と `liveValidationState='skipped'` を併記し、設定無効と未実行を混同しない。
 
 ---
 
@@ -240,7 +248,7 @@ CommandDispatchService.dispatch(definition, args, flags)
   ├── 'check-phase'    → PhaseGateQueryPort.queryUnit(unitId)
   │                      → PhaseInfo → HarnessApiResponse<PhaseInfo>
   │
-  ├── 'ci-check'       → ValidatorExecutionPort.runL3Validators()
+  ├── 'ci-check'       → ValidatorExecutionPort.runAllValidators()
   │                      → ValidatorCheckItem[] → CiCheckResult
   │                      → HarnessApiResponse<CiCheckResult>
   │

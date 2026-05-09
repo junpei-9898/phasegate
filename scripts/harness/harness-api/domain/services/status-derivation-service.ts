@@ -1,4 +1,5 @@
 // @layer domain
+// @unit harness-api
 // status-derivation-service.ts — StatusDerivationService Domain Service
 
 import { LayerHealth, type LayerId } from '../value-objects/layer-health.js';
@@ -88,27 +89,44 @@ export class StatusDerivationService {
     presetInfo: PresetInfo;
     configSummary: ConfigSummary;
     phaseGateSummary: PhaseGateSummary;
+    liveValidationByLayer?: Partial<Record<LayerId, 'pass' | 'fail' | 'skipped' | 'not-run' | 'error'>>;
   }): HarnessStatusSummary {
-    const { scanResult, presetInfo, configSummary, phaseGateSummary } = input;
+    const { scanResult, presetInfo, configSummary, phaseGateSummary, liveValidationByLayer } = input;
 
     const layers: LayerHealth[] = ALL_LAYER_IDS.map((layerId) => {
       const enabled = presetInfo.enabledLayers.includes(layerId);
+      const configurationState = enabled ? 'enabled' : 'disabled';
 
       // Find from derivedLayerHealth
       const existing = scanResult.derivedLayerHealth.find((l) => l.layerId === layerId);
+      const layerArtifacts = scanResult.foundArtifacts.filter((a) => getLayerId(a) === layerId);
+      const hasPresent = layerArtifacts.some((a) => a.present === true);
+      const cachedArtifactState = hasPresent ? 'present' : 'missing';
+      const liveValidationState = liveValidationByLayer?.[layerId] ?? 'not-run';
+      const liveLastResult =
+        liveValidationState === 'pass' || liveValidationState === 'fail'
+          ? liveValidationState
+          : undefined;
 
       if (enabled) {
-        // Check artifacts
-        const layerArtifacts = scanResult.foundArtifacts.filter((a) => getLayerId(a) === layerId);
-        const hasPresent = layerArtifacts.some((a) => a.present === true);
-
-        if (existing && existing.lastResult) {
-          return LayerHealth.create({ layerId, enabled, lastResult: existing.lastResult });
-        }
-        const lastResult = hasPresent ? 'pass' : 'unknown';
-        return LayerHealth.create({ layerId, enabled, lastResult });
+        const lastResult = liveLastResult ?? existing?.lastResult ?? (hasPresent ? 'pass' : 'unknown');
+        return LayerHealth.create({
+          layerId,
+          enabled,
+          lastResult,
+          configurationState,
+          cachedArtifactState,
+          liveValidationState,
+        });
       } else {
-        return LayerHealth.create({ layerId, enabled: false, lastResult: undefined });
+        return LayerHealth.create({
+          layerId,
+          enabled: false,
+          lastResult: undefined,
+          configurationState,
+          cachedArtifactState,
+          liveValidationState,
+        });
       }
     });
 

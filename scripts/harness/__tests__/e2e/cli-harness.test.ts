@@ -182,6 +182,16 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command');
       expect([0, 1]).toContain(actual.exitCode);
     });
+
+    it('validate --layer L2/L3/L4 --format json は未対応formatとして exit 2 を返す', () => {
+      for (const layer of ['L2', 'L3', 'L4'] as const) {
+        const actual = run('validate', '--layer', layer, '--format', 'json');
+
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("Invalid --format value for validate: 'json'");
+        expect(actual.stdout).not.toContain('=== バリデーション結果 ===');
+      }
+    });
   });
 
   describe('biome-ast-engine コマンド群', () => {
@@ -236,6 +246,20 @@ describe('harness CLI E2E', () => {
       const actual = run('phasegate:ci-check');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:ci-check');
+    }, 30_000);
+
+    it('phasegate:ci-check --json は L2-L4 の実行またはskipを返す', () => {
+      const actual = run('phasegate:ci-check', '--json');
+
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout) as {
+        data: { validatorResults: Array<{ validatorId: string; skipped?: boolean }> };
+      };
+      const ids = parsed.data.validatorResults.map((result) => result.validatorId);
+      expect(ids.some((id) => id.startsWith('L2-'))).toBe(true);
+      expect(ids.some((id) => id.startsWith('L3-'))).toBe(true);
+      expect(ids.some((id) => id.startsWith('L4-'))).toBe(true);
+      expect(parsed.data.validatorResults.some((result) => result.validatorId.startsWith('L4-') && result.skipped === true)).toBe(true);
     }, 30_000);
 
     it('phasegate:detect-drift が "Unknown command" にならない', () => {

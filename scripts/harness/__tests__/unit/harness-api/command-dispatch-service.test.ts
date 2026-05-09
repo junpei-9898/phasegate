@@ -1,4 +1,6 @@
 // @layer test
+// @unit harness-api
+// @story H09-02
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CommandDispatchService } from '../../../harness-api/domain/services/command-dispatch-service.js';
@@ -102,14 +104,25 @@ target('CommandDispatchService', () => {
     it('phasegate:ci-checkが全バリデータ通過のpass responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
-      ports.validatorExecutionPort.runL3Validators.mockResolvedValue([
+      ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
+        { validatorId: 'L2-001', passed: true, errors: [] },
         { validatorId: 'L3-001', passed: true, errors: [] },
+        { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
       ]);
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
+      expect(ports.validatorExecutionPort.runAllValidators).toHaveBeenCalledTimes(1);
+      expect(ports.validatorExecutionPort.runL3Validators).not.toHaveBeenCalled();
+      expect(actual.data).toMatchObject({
+        validatorResults: [
+          { validatorId: 'L2-001' },
+          { validatorId: 'L3-001' },
+          { validatorId: 'L4-001', skipped: true },
+        ],
+      });
     });
   });
 
@@ -124,6 +137,37 @@ target('CommandDispatchService', () => {
       const actual = await svc.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
+    });
+
+    it('phasegate:detect-driftが乖離ありでもadvisory pass responseを返すこと', async () => {
+      // Arrange
+      const ports = createMockPorts();
+      ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([
+        { direction: 'code→design', unit: 'validator-system', element: 'RunFullValidationUseCase', recommendation: 'Review design docs' },
+      ]);
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe('pass');
+      expect(actual.exitCode).toBe(0);
+      expect(actual.errors).toEqual([]);
+      expect(actual.summary).toMatchObject({ warnings: 1 });
+      expect(actual.data).toMatchObject({
+        categorySummaries: [
+          {
+            category: 'code-missing-design',
+            severity: 'warning',
+            count: 1,
+          },
+        ],
+        actionPlan: [
+          {
+            category: 'code-missing-design',
+            nextAction: 'Update the matching product/construction docs with the implementation contract.',
+          },
+        ],
+      });
     });
   });
 
@@ -150,11 +194,26 @@ target('CommandDispatchService', () => {
         ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] })
       );
       ports.configQueryPort.getPresetInfo.mockResolvedValue({ name: 'standard', enabledLayers: ['L1', 'L2', 'L3'] });
+      ports.biomeLintPort.runLint.mockResolvedValue({ passed: false, errors: [], warnings: [] });
+      ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
+        { validatorId: 'L2-001', passed: true, errors: [] },
+        { validatorId: 'L3-001', passed: true, errors: [] },
+        { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
+      ]);
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
+      expect(actual.exitCode).toBe(0);
+      expect(actual.data).toMatchObject({
+        layers: [
+          { layerId: 'L1', lastResult: 'fail', configurationState: 'enabled', liveValidationState: 'fail' },
+          { layerId: 'L2', lastResult: 'pass', configurationState: 'enabled', liveValidationState: 'pass' },
+          { layerId: 'L3', lastResult: 'pass', configurationState: 'enabled', liveValidationState: 'pass' },
+          { layerId: 'L4', enabled: false, configurationState: 'disabled', liveValidationState: 'skipped' },
+        ],
+      });
     });
   });
 
@@ -193,7 +252,7 @@ target('CommandDispatchService', () => {
     it('ポートが例外をスローした場合にerror responseを返すこと', async () => {
       // Arrange
       const ports = createMockPorts();
-      ports.validatorExecutionPort.runL3Validators.mockRejectedValue(new Error('port error'));
+      ports.validatorExecutionPort.runAllValidators.mockRejectedValue(new Error('port error'));
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });

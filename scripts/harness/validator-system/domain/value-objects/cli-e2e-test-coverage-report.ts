@@ -9,6 +9,8 @@
 export interface CliCommandCoverageEntry {
   readonly commandName: string;
   readonly hasE2eTest: boolean;
+  readonly status?: 'covered' | 'missing' | 'limitation';
+  readonly evidence?: string;
 }
 
 export class CliE2eTestCoverageReport {
@@ -28,7 +30,11 @@ export class CliE2eTestCoverageReport {
   }
 
   uncoveredCommands(): readonly CliCommandCoverageEntry[] {
-    return this.entries.filter((e) => !e.hasE2eTest);
+    return this.entries.filter((e) => !e.hasE2eTest && e.status !== 'limitation');
+  }
+
+  limitations(): readonly CliCommandCoverageEntry[] {
+    return this.entries.filter((e) => e.status === 'limitation');
   }
 
   hasViolations(): boolean {

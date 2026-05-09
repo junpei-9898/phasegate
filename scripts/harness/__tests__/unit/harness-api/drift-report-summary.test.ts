@@ -1,4 +1,6 @@
 // @layer test
+// @unit harness-api
+// @story H09-03
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { DriftReportSummary } from '../../../harness-api/domain/value-objects/drift-report-summary.js';
@@ -35,6 +37,33 @@ target('DriftReportSummary', () => {
       const actual = DriftReportSummary.create(input);
       // Assert
       expect(actual.totalCount).toBe(2);
+    });
+
+    it('fromDriftsがcategory/severity/nextActionとrepository scale向けの集約を返すこと', () => {
+      // Arrange
+      const drifts = [
+        { direction: 'code→design', unit: 'validator-system', element: 'RunFullValidationUseCase', recommendation: 'Review design docs' },
+        { direction: 'design→code', unit: 'harness-api', element: 'Status contract', recommendation: 'Implement missing code' },
+        { direction: 'code→design', unit: 'traceability-model', element: 'Pointer contract', recommendation: 'Add @work-item-id pointer' },
+      ];
+      // Act
+      const actual = DriftReportSummary.fromDrifts(drifts, 2);
+      // Assert
+      expect(actual.totalCount).toBe(3);
+      expect(actual.rawDriftCount).toBe(3);
+      expect(actual.drifts).toHaveLength(2);
+      expect(actual.truncated).toBe(true);
+      expect(actual.drifts[0]).toMatchObject({
+        category: 'code-missing-design',
+        severity: 'warning',
+        nextAction: 'Update the matching product/construction docs with the implementation contract.',
+      });
+      expect(actual.categorySummaries).toEqual([
+        expect.objectContaining({ category: 'code-missing-design', count: 1 }),
+        expect.objectContaining({ category: 'design-missing-code', count: 1 }),
+        expect.objectContaining({ category: 'missing-pointer', count: 1 }),
+      ]);
+      expect(actual.actionPlan.length).toBeGreaterThan(0);
     });
   });
 

@@ -1,4 +1,6 @@
 // @layer test
+// @unit harness-api
+// @story H09-04
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { LayerHealth } from '../../../harness-api/domain/value-objects/layer-health.js';
@@ -36,6 +38,23 @@ target('LayerHealth', () => {
       const actual = LayerHealth.create(input);
       // Assert
       expect(actual.lastResult).toBe('unknown');
+    });
+
+    it('configuration/cached/live validation stateを分離して保持すること', () => {
+      // Arrange
+      const input = {
+        layerId: 'L4' as const,
+        enabled: false,
+        configurationState: 'disabled' as const,
+        cachedArtifactState: 'missing' as const,
+        liveValidationState: 'skipped' as const,
+      };
+      // Act
+      const actual = LayerHealth.create(input);
+      // Assert
+      expect(actual.configurationState).toBe('disabled');
+      expect(actual.cachedArtifactState).toBe('missing');
+      expect(actual.liveValidationState).toBe('skipped');
     });
   });
 

@@ -146,7 +146,12 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
     }
 
     const legacyId = await this.readLegacyId(storyId);
-    return legacyId !== null && annotationIds.includes(legacyId);
+    if (legacyId === null || !annotationIds.includes(legacyId)) {
+      return false;
+    }
+
+    const unitId = this.extractProductUnitId(productPath);
+    return !(await this.isAmbiguousLegacyId(legacyId, storyId, unitId));
   }
 
   private extractAnnotationIds(content: string): readonly string[] {
@@ -180,6 +185,47 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
     }
 
     return null;
+  }
+
+  private extractProductUnitId(productPath: string): string | null {
+    const normalized = productPath.split(path.sep).join("/");
+    const match = /^docs\/product\/construction\/([^/]+)\//.exec(normalized);
+    return match?.[1] ?? null;
+  }
+
+  private async isAmbiguousLegacyId(legacyId: string, storyId: string, unitId: string | null): Promise<boolean> {
+    const scopedStoryIds = unitId === null
+      ? await this.listAllWorkItemDirectories()
+      : await this.listStoryDirectories(unitId);
+    const matchingStoryIds: string[] = [];
+
+    for (const candidateStoryId of scopedStoryIds) {
+      const candidateLegacyId = await this.readLegacyId(candidateStoryId);
+      if (candidateLegacyId === legacyId) {
+        matchingStoryIds.push(candidateStoryId);
+      }
+    }
+
+    return matchingStoryIds.length > 1 || (matchingStoryIds.length === 1 && matchingStoryIds[0] !== storyId);
+  }
+
+  private async listAllWorkItemDirectories(): Promise<readonly string[]> {
+    const ids = new Set<string>();
+    for (const id of await this.listCrossWorkItemDirectories()) {
+      ids.add(id);
+    }
+
+    const inceptionDir = path.join(this.rootDir, this.inceptionRoot);
+    for (const entry of await this.readDirectories(inceptionDir)) {
+      if (!entry.isDirectory()) continue;
+      const name = entry.name;
+      if (name.startsWith("_") || name.startsWith(".") || name === "issues") continue;
+      for (const id of await this.listUnitWorkItemDirectories(name)) {
+        ids.add(id);
+      }
+    }
+
+    return [...ids].sort();
   }
 
   private async listDescriptionCandidates(storyId: string): Promise<readonly string[]> {

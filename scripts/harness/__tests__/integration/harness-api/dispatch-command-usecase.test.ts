@@ -1,4 +1,6 @@
 // @layer test
+// @unit harness-api
+// @story H09-02
 import { describe, it, vi, expect, beforeEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { DispatchCommandUseCase } from '../../../harness-api/application/usecases/dispatch-command-usecase.js';
@@ -101,15 +103,14 @@ target('DispatchCommandUseCase.execute', () => {
   });
 
   // ─── IT-UC-DispatchCmd-003 ───
-  describe('ci-checkコマンドが全L3バリデータ通過を返すこと', () => {
-    context('ValidatorExecutionPortが4件全通過のValidatorCheckItem[]を返す場合', () => {
+  describe('ci-checkコマンドがL2-L4 full check通過を返すこと', () => {
+    context('ValidatorExecutionPortがL2/L3/L4のValidatorCheckItem[]を返す場合', () => {
       it('response.status=pass・data.allPassed=trueが返される', async () => {
         // Arrange
-        ports.validatorExecutionPort.runL3Validators.mockResolvedValue([
+        ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
+          { validatorId: 'L2-001', passed: true, errors: [] },
           { validatorId: 'L3-001', passed: true, errors: [] },
-          { validatorId: 'L3-002', passed: true, errors: [] },
-          { validatorId: 'L3-003', passed: true, errors: [] },
-          { validatorId: 'L3-004', passed: true, errors: [] },
+          { validatorId: 'L4-001', passed: true, skipped: true, errors: [] },
         ]);
 
         // Act
@@ -119,6 +120,8 @@ target('DispatchCommandUseCase.execute', () => {
         expect(actual.response.status).toBe('pass');
         expect(actual.exitCode).toBe(0);
         expect((actual.response.data as { allPassed: boolean }).allPassed).toBe(true);
+        expect(ports.validatorExecutionPort.runAllValidators).toHaveBeenCalledTimes(1);
+        expect(ports.validatorExecutionPort.runL3Validators).not.toHaveBeenCalled();
       });
     });
   });
@@ -219,7 +222,7 @@ target('DispatchCommandUseCase.execute', () => {
     context('ValidatorExecutionPortがnetwork errorをスローする場合', () => {
       it('response.status=error・exitCode=2が返され、UseCase外に例外が伝播しない', async () => {
         // Arrange
-        ports.validatorExecutionPort.runL3Validators.mockRejectedValue(new Error('network error'));
+        ports.validatorExecutionPort.runAllValidators.mockRejectedValue(new Error('network error'));
 
         // Act
         const actual = await useCase.execute({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
@@ -232,9 +235,9 @@ target('DispatchCommandUseCase.execute', () => {
   });
 
   // ─── IT-UC-DispatchCmd-010 ───
-  describe('detect-driftで乖離が検出された場合、exitCode=1のfail responseを返すこと', () => {
+  describe('detect-driftで乖離が検出された場合、advisory pass responseを返すこと', () => {
     context('ValidatorExecutionPortが1件のDriftItemを返す場合', () => {
-      it('response.status=fail・exitCode=1・data.totalCount=1が返される', async () => {
+      it('response.status=pass・exitCode=0・data.totalCount=1が返される', async () => {
         // Arrange
         ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([
           { direction: 'design-to-code', unit: 'harness-api', element: 'CliCommand', recommendation: 'CommandRegistryへの登録を確認してください' },
@@ -244,8 +247,9 @@ target('DispatchCommandUseCase.execute', () => {
         const actual = await useCase.execute({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
 
         // Assert
-        expect(actual.response.status).toBe('fail');
-        expect(actual.exitCode).toBe(1);
+        expect(actual.response.status).toBe('pass');
+        expect(actual.exitCode).toBe(0);
+        expect(actual.response.summary).toMatchObject({ warnings: 1 });
         expect((actual.response.data as { totalCount: number }).totalCount).toBe(1);
       });
     });

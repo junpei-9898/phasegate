@@ -8,6 +8,7 @@
 @story-id H02-06
 @story-id H02-07
 @work-item-id WI-027
+@work-item-id WI-115
 拡張: `FileSystemStoryReflectionAdapter#readLegacyId` を `_cross/{WI-XXX}/description.md` のみから `{unit}/{WI-XXX}/description.md` も走査するよう拡張する（H-ID 移行で unit-scoped WI が初めて出現したことに伴う対応）。これにより、product 側の既存 `@story-id H{NN}-{NN}` annotation が unit-scoped WI の reflection として継続認識される。
 
 > **作成日**: 2026-03-13
@@ -56,6 +57,7 @@
 - H02-05以降、story reflection の filesystem adapter は `docs/inception/{unit}/{id}` に加えて `docs/inception/_cross/WI-*` を列挙する。port 名は互換維持のため `listStoryDirectories` のままだが、返却値は reflection対象ID（legacy story ID または WI ID）として扱う
 - H02-06以降、`_cross/WI-*` の実在パスは `docs/inception/_cross/{storyId}/...` として解決し、frontmatter `affects` に対象Unitが含まれる場合だけreflection対象にする
 - H02-07以降、`_cross/WI-*` の `legacy_id` は product 文書の旧 `@issue-id` annotation と照合され、WI反映の移行互換として扱う
+- WI-115以降、legacy annotation 解決は product path から得た unit scope 内で行う。同一 unit scope（unit WI + cross WI）に同じ `legacy_id` が複数ある場合は曖昧として false を返し、どちらか一方の WI に誤解決しない。unit context がある場合、別 unit の同一 `legacy_id` は対象外とする。
 
 ### 1.3 ディレクトリ構成（全ファイル一覧）
 

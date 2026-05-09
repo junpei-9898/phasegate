@@ -1781,6 +1781,12 @@ sequenceDiagram
 
 **影響ファイル**: `scripts/harness/validator-system/domain/value-objects/validator-id.ts`
 
+### WI-110 / WI-111: L2-013 ownership and CLI E2E coverage matching
+
+`L2-013 cli-e2e-test-existence` は public CLI 契約に対する pre-commit/CI 前段の coverage signal であり、L1 AST/runtime hygiene ではなく L2 validator として実行する。`RunL1ValidatorsUseCase` は L1-017 / L1-018 のみを返し、`RunL2ValidatorsUseCase` が registry / LayerConfig 上の `L2-013` を実行する。これにより `validate --layer L1` の出力に `L2-*` ID が混入しない。@work-item-id WI-110
+
+CLI coverage matching は E2E test file の path だけではなく file content を読み、`run('command')` / `runInCwd(..., 'command')` / help usage / unknown-command assertion を coverage evidence として扱う。`phasegate:*` package-script style command と direct CLI command は別 command として登録し、実在しない legacy alias は registry から外す。true missing command のみ `missing` として fail し、曖昧な evidence は `limitation` として report に分離できる entry shape を維持する。consumer project に CLI E2E suite が存在しない場合、L2-013 は PhaseGate self-repository coverage rule を適用せず `limitation` として扱い、package 利用者の L2 gate を誤って失敗させない。@work-item-id WI-111
+
 ### 9.2 テストファイルのシンタックス修正
 
 **変更日**: 2026-03-22

@@ -16,6 +16,9 @@ import type { ValidatorConfigPort } from '../../domain/ports/validator-config-po
 import type { PhaseGatePolicyPort } from '../../domain/ports/phase-gate-policy-port.js';
 import type { MetadataPolicyPort } from '../../domain/ports/metadata-policy-port.js';
 import type { TestQualityAnalyzerPort } from '../../domain/ports/test-quality-analyzer-port.js';
+import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-registry-port.js';
+import type { E2eTestFileRegistryPort } from '../../domain/ports/e2e-test-file-registry-port.js';
+import { CliE2eTestExistenceService } from '../../domain/services/cli-e2e-test-existence-service.js';
 
 export interface RunL2ValidatorsUseCaseDeps {
   validatorRegistry: ValidatorRegistry;
@@ -25,6 +28,8 @@ export interface RunL2ValidatorsUseCaseDeps {
   phaseGatePolicyPort?: PhaseGatePolicyPort;
   metadataPolicyPort?: MetadataPolicyPort;
   testQualityAnalyzerPort?: TestQualityAnalyzerPort;
+  cliCommandRegistryPort?: CliCommandRegistryPort;
+  e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
 }
 
 export class RunL2ValidatorsUseCase {
@@ -35,6 +40,9 @@ export class RunL2ValidatorsUseCase {
   private readonly phaseGatePolicyPort?: PhaseGatePolicyPort;
   private readonly metadataPolicyPort?: MetadataPolicyPort;
   private readonly testQualityAnalyzerPort?: TestQualityAnalyzerPort;
+  private readonly cliCommandRegistryPort?: CliCommandRegistryPort;
+  private readonly e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
+  private readonly cliE2eTestExistenceService = new CliE2eTestExistenceService();
 
   constructor(deps: RunL2ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -44,6 +52,8 @@ export class RunL2ValidatorsUseCase {
     this.phaseGatePolicyPort = deps.phaseGatePolicyPort;
     this.metadataPolicyPort = deps.metadataPolicyPort;
     this.testQualityAnalyzerPort = deps.testQualityAnalyzerPort;
+    this.cliCommandRegistryPort = deps.cliCommandRegistryPort;
+    this.e2eTestFileRegistryPort = deps.e2eTestFileRegistryPort;
   }
 
   async execute(input: RunL2ValidatorsInput): Promise<readonly ValidationResultContract[]> {
@@ -118,6 +128,26 @@ export class RunL2ValidatorsUseCase {
           .flatMap((r) => [...r.violations]);
         if (allViolations.length > 0) {
           overrideMap.set('L2-003', ValidationResult.fail(ValidatorId.create('L2-003'), allViolations, 0));
+        }
+      }
+    }
+
+    if (this.cliCommandRegistryPort && this.e2eTestFileRegistryPort) {
+      const l2013Result = overrideMap.get('L2-013');
+      if (l2013Result && !l2013Result.skipped) {
+        const commands = await this.cliCommandRegistryPort.getRegisteredCommands();
+        const e2eFiles = await this.e2eTestFileRegistryPort.getE2eTestFiles();
+        const report = this.cliE2eTestExistenceService.check(commands, e2eFiles);
+        if (report.hasViolations()) {
+          const errors = report.toMessages().map((msg) => ({
+            code: { value: 'L2-013', toString: () => 'L2-013' },
+            severity: { value: 'error', toString: () => 'error' },
+            message: msg,
+            suggestion: 'Add an E2E test for each registered CLI command in cli-harness.test.ts.',
+          }));
+          overrideMap.set('L2-013', ValidationResult.fail(ValidatorId.create('L2-013'), errors, 0));
+        } else {
+          overrideMap.set('L2-013', ValidationResult.pass(ValidatorId.create('L2-013'), 0));
         }
       }
     }

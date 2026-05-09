@@ -18,7 +18,6 @@ import { execSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createConfigFoundationModule } from "../config-foundation/composition-root.js";
 import { toValidatorSystemConfig } from "../config-foundation/application/mappers/validator-system-config-mapper.js";
-import { ConfigNotFoundError } from "../config-foundation/infrastructure/repositories/file-system-config-repository.js";
 import { createTraceabilityModelModule } from "../traceability-model/composition-root.js";
 import type { ValidateMetadataCommandOutput } from "../traceability-model/presentation/cli/validate-metadata-command-handler.js";
 import type { AggregatedValidationReport } from "../validator-system/application/dto/aggregated-validation-report.js";
@@ -38,13 +37,17 @@ const WORK_ITEM_PATH_PATTERN = /(?:^|\/)WI-\d+(?:\/|$)/;
 const WORK_ITEM_TRAILER_PATTERN = /^Work-Item:\s*WI-\d+\s*$/m;
 const TEST_FILE_SUFFIXES = Object.freeze([".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"]);
 
+function isConfigNotFoundError(err: unknown): boolean {
+  return err instanceof Error && err.name === "ConfigNotFoundError";
+}
+
 async function loadValidatorSystemConfig(): Promise<object | undefined> {
   const configMod = createConfigFoundationModule();
   try {
     const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
     return toValidatorSystemConfig(resolvedConfig.config);
   } catch (err) {
-    if (err instanceof ConfigNotFoundError) return undefined;
+    if (isConfigNotFoundError(err)) return undefined;
     throw err;
   }
 }
@@ -57,7 +60,7 @@ async function loadTraceabilityModelOptions(): Promise<
     const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
     return { pathRoots: { designDocsRoot: resolvedConfig.config.paths.designDocs } };
   } catch (err) {
-    if (err instanceof ConfigNotFoundError) return undefined;
+    if (isConfigNotFoundError(err)) return undefined;
     throw err;
   }
 }
@@ -68,7 +71,7 @@ async function loadPreCommitImplementationExtensions(): Promise<readonly string[
     const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
     return resolvedConfig.config.preCommit?.implementationExtensions;
   } catch (err) {
-    if (err instanceof ConfigNotFoundError) return undefined;
+    if (isConfigNotFoundError(err)) return undefined;
     throw err;
   }
 }

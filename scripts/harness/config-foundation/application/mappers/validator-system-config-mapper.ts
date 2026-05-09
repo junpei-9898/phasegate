@@ -11,7 +11,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
   return {
     project: { preset: resolvedConfig.project.preset },
     layers: {
-      L2: { enabled: resolvedConfig.layers.L2.enabled },
+      L2: { enabled: resolvedConfig.layers.L2.enabled, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
       L3: { enabled: resolvedConfig.layers.L3.enabled },
       L4: { enabled: resolvedConfig.layers.L4.enabled, validators: resolvedConfig.layers.L4.validators },
     },

@@ -19,6 +19,36 @@ export interface TypeScriptSourceModuleAnalyzerAdapterDeps {
   readonly rootDir: string;
 }
 
+const HARNESS_ROOT_PREFIX = 'scripts/harness/';
+const TESTS_SEGMENT = '__tests__';
+const TEST_SCOPE_SEGMENTS = new Set(['unit', 'integration', 'e2e']);
+
+function deriveUnitNameFromPath(filePath: FilePath): string | null {
+  const normalizedPath = filePath.toString();
+  if (!normalizedPath.startsWith(HARNESS_ROOT_PREFIX)) {
+    return null;
+  }
+
+  const parts = normalizedPath.slice(HARNESS_ROOT_PREFIX.length).split('/');
+  if (parts.length < 2) {
+    return null;
+  }
+
+  if (parts[0] !== TESTS_SEGMENT) {
+    return parts[0] || null;
+  }
+
+  if (parts.length < 3) {
+    return parts[1] || null;
+  }
+
+  if (TEST_SCOPE_SEGMENTS.has(parts[1])) {
+    return parts[2] || null;
+  }
+
+  return parts[1] || null;
+}
+
 /**
  * SourceModuleAnalyzerPort の実装。
  * TypeScript Compiler API を使用して各ファイルから
@@ -69,7 +99,7 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
         SourceModuleSnapshot.create(
           {
             filePath,
-            declaredUnit: unitResult.unitNames[0] ?? null,
+            declaredUnit: unitResult.unitNames[0] ?? deriveUnitNameFromPath(filePath),
             declaredLayer: layerResult.layerName,
             imports,
             anyTypeCount: anyCount,

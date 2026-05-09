@@ -45,6 +45,7 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
         return results.map((r) => ({
           validatorId: r.validatorId,
           passed: r.passed,
+          skipped: r.skipped,
           errors: r.errors.map((e) => ({ code: e.code, severity: e.severity, message: e.message })),
         }));
       },
@@ -56,6 +57,7 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
         return report.results.map((r) => ({
           validatorId: r.validatorId,
           passed: r.passed,
+          skipped: r.skipped,
           errors: r.errors.map((e) => ({ code: e.code, severity: e.severity, message: e.message })),
         }));
       },

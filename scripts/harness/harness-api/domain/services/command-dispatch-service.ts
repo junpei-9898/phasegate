@@ -1,4 +1,5 @@
 // @layer domain
+// @unit harness-api
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import { CommandRegistry } from './command-registry.js';
@@ -13,6 +14,7 @@ import type { BiomeLintPort } from '../ports/biome-lint-port.js';
 import type { ImpactAnalysisPort } from '../ports/impact-analysis-port.js';
 import type { ArtifactScannerPort } from '../ports/artifact-scanner-port.js';
 import type { ConfigQueryPort } from '../ports/config-query-port.js';
+import type { LayerId } from '../value-objects/layer-health.js';
 
 export interface CommandDispatchPorts {
   validatorExecutionPort: ValidatorExecutionPort;
@@ -33,6 +35,29 @@ export interface DispatchResult<T = unknown> {
 
 function makeError(message: string): HarnessError {
   return { code: 'HARNESS_ERROR', severity: 'error', message };
+}
+
+type LiveValidationState = 'pass' | 'fail' | 'skipped' | 'not-run' | 'error';
+
+function layerIdFromValidatorId(validatorId: string): LayerId | null {
+  const prefix = validatorId.slice(0, 2);
+  return prefix === 'L1' || prefix === 'L2' || prefix === 'L3' || prefix === 'L4' ? prefix : null;
+}
+
+function summarizeLayerResults(items: readonly { validatorId: string; passed: boolean; skipped?: boolean }[]): Partial<Record<LayerId, LiveValidationState>> {
+  const result: Partial<Record<LayerId, LiveValidationState>> = {};
+  for (const layerId of ['L2', 'L3', 'L4'] as const) {
+    const layerItems = items.filter((item) => layerIdFromValidatorId(item.validatorId) === layerId);
+    if (layerItems.length === 0) continue;
+    if (layerItems.every((item) => item.skipped === true)) {
+      result[layerId] = 'skipped';
+    } else if (layerItems.some((item) => !item.passed && item.skipped !== true)) {
+      result[layerId] = 'fail';
+    } else {
+      result[layerId] = 'pass';
+    }
+  }
+  return result;
 }
 
 const KNOWN_COMMANDS = new Set([
@@ -131,7 +156,7 @@ export class CommandDispatchService {
       }
 
       case 'phasegate:ci-check': {
-        const validatorResults = await this.ports.validatorExecutionPort.runL3Validators();
+        const validatorResults = await this.ports.validatorExecutionPort.runAllValidators();
         const result = CiCheckResult.fromResults(validatorResults);
         if (result.allPassed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
@@ -152,13 +177,23 @@ export class CommandDispatchService {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
           return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
         }
-        const errors = drifts.map((d) => makeError(`Drift detected in ${d.unit}: ${d.element}`));
-        const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 }, result);
-        return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
+        const r = HarnessApiResponse.pass({ ...summary, passed: 1, warnings: drifts.length }, result);
+        return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
       }
 
       case 'phasegate:status': {
         const scanResult = await this.ports.artifactScannerPort.scan();
+        const liveValidationByLayer: Partial<Record<LayerId, LiveValidationState>> = {};
+        try {
+          const [lintResult, validatorResults] = await Promise.all([
+            this.ports.biomeLintPort.runLint(),
+            this.ports.validatorExecutionPort.runAllValidators(),
+          ]);
+          liveValidationByLayer.L1 = lintResult.passed ? 'pass' : 'fail';
+          Object.assign(liveValidationByLayer, summarizeLayerResults(validatorResults));
+        } catch {
+          liveValidationByLayer.L1 = liveValidationByLayer.L1 ?? 'error';
+        }
         let presetInfo = { name: 'standard' as const, enabledLayers: ['L1', 'L2', 'L3'] as ('L1' | 'L2' | 'L3' | 'L4')[] };
         const configPort = this.ports.configQueryPort;
         if (configPort.getPresetInfo) {
@@ -172,6 +207,7 @@ export class CommandDispatchService {
           presetInfo,
           configSummary: { configPath: 'phasegate.config.json', lastModified: '', version: '2' },
           phaseGateSummary: { totalStories: 0, passedStories: 0, pendingStories: 0 },
+          liveValidationByLayer,
         });
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, statusSummary);
         return { status: 'pass', errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };

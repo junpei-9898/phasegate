@@ -261,7 +261,7 @@ Commands exposed as npm scripts (`npm run <command>`).
 | `phasegate:status` | `--json` | Health summary |
 | `phasegate:check-ready` | `--json` | Phase Gate pass status for all stories |
 | `phasegate:check-phase` | `--unit <unitId>` `--json` | Current phase for a unit |
-| `phasegate:ci-check` | `--json` | All L3 validators |
+| `phasegate:ci-check` | `--json` | Full CI check (L2-L4; disabled L4 is reported as skipped) |
 | `phasegate:detect-drift` | `--json` | Design-code drift report |
 | `phasegate:lint` | `--target <path>` `--json` | Lint via harness-api |
 | `phasegate:complete-check` | `--json` | L2-L4 full check |

@@ -90,7 +90,7 @@ target('RunL4ValidatorsUseCase', () => {
     });
 
     context('LayerConfig.enabled=falseの場合', () => {
-      it('空のValidationResultContract[]が返る (IT-UC-RunL4-007)', async () => {
+      it('全L4バリデータがskipped=trueで返る (IT-UC-RunL4-007)', async () => {
         // Arrange
         const usecase = createL4UseCase({ enabled: false });
         const input = { strictMode: false };
@@ -99,7 +99,8 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(0);
+        expect(actual).toHaveLength(5);
+        expect(actual.every((result) => result.skipped === true)).toBe(true);
       });
 
       it('drift / consistency / dead-code service が呼ばれないこと (IT-UC-RunL4-008)', async () => {
@@ -132,7 +133,8 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(0);
+        expect(actual).toHaveLength(5);
+        expect(actual.every((result) => result.skipped === true)).toBe(true);
         expect(driftDetect).not.toHaveBeenCalled();
         expect(consistencyCheck).not.toHaveBeenCalled();
         expect(deadCodeDetect).not.toHaveBeenCalled();

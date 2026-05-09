@@ -1,4 +1,6 @@
 // @layer test
+// @unit harness-api
+// @story H09-04
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { StatusDerivationService } from '../../../harness-api/domain/services/status-derivation-service.js';
@@ -48,6 +50,40 @@ target('StatusDerivationService', () => {
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
       // Assert
       expect(actual.getLayerHealth('L3')?.lastResult).toBe('unknown');
+    });
+
+    it('live validation resultがある場合、cached artifact stateと区別してlastResultへ反映すること', () => {
+      // Arrange
+      const svc = new StatusDerivationService();
+      const scanResult = makeScanResult([
+        { layer: 'L1', present: true },
+        { layer: 'L2', present: false },
+      ]);
+      const presetInfo = { name: 'standard' as const, enabledLayers: ['L1' as const, 'L2' as const, 'L3' as const] };
+      const configSummary = { configPath: 'phasegate.config.json', lastModified: '2026-03-19T00:00:00.000Z', version: '2' };
+      const phaseGateSummary = { totalStories: 0, passedStories: 0, pendingStories: 0 };
+      // Act
+      const actual = svc.derive({
+        scanResult,
+        presetInfo,
+        configSummary,
+        phaseGateSummary,
+        liveValidationByLayer: { L2: 'pass', L4: 'skipped' },
+      });
+      // Assert
+      expect(actual.getLayerHealth('L2')).toMatchObject({
+        enabled: true,
+        lastResult: 'pass',
+        configurationState: 'enabled',
+        cachedArtifactState: 'missing',
+        liveValidationState: 'pass',
+      });
+      expect(actual.getLayerHealth('L4')).toMatchObject({
+        enabled: false,
+        lastResult: undefined,
+        configurationState: 'disabled',
+        liveValidationState: 'skipped',
+      });
     });
   });
 

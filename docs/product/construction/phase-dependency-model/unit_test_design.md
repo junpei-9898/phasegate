@@ -7,6 +7,7 @@
 @story-id H02-05
 @story-id H02-06
 @story-id H02-07
+@work-item-id WI-115
 > **Unit ID**: phase-dependency-model
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-04-24（H02-07 / ISSUE-026 Phase C-4 legacy annotation compatibility テストケース追加）
@@ -581,6 +582,9 @@ scripts/harness/__tests__/unit/phase-dependency-model/
 |---------|--------|----------|---------|------------|-------------|
 | UT-PD-167 | `fileContainsStoryAnnotation` | legacy_id 経由の旧issue annotation検出 | `legacy_id: ISSUE-001` と product `@issue-id ISSUE-001` がある場合 | `WI-001` に true を返す | `file-system-story-reflection-adapter.test.ts` |
 | UT-PD-168 | 同上 | legacy_id 不在時の誤検出防止 | product `@issue-id ISSUE-001` のみある場合 | `WI-001` に false を返す | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-170 | 同上 | 同一 unit scope 内の `legacy_id` 重複を曖昧として扱う | `order/WI-074` と `order/WI-075` が同じ `legacy_id` を持つ場合 | product の旧 annotation は `WI-074` に false を返す。@work-item-id WI-115 | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-171 | 同上 | unit context がある場合は別 unit の同一 `legacy_id` を無視する | `order/WI-074` と `payment/WI-075` が同じ `legacy_id` を持つ場合 | order product path では `WI-074` に true を返す。@work-item-id WI-115 | `file-system-story-reflection-adapter.test.ts` |
+| UT-PD-172 | 同上 | unit context がない場合は inception 全体の重複を曖昧として扱う | product path から unit を推定できず、複数 unit に同一 `legacy_id` がある場合 | false を返す。@work-item-id WI-115 | `file-system-story-reflection-adapter.test.ts` |
 
 ---
 

@@ -434,4 +434,91 @@ target("FileSystemStoryReflectionAdapter#fileContainsStoryAnnotation", () => {
       expect(actual).toBe(true);
     });
   });
+
+  // UT-PD-170 (WI-115): 同一 scope で legacy_id が重複する場合は誤解決しない
+  context("同一 unit scope 内で legacy_id が複数 WI に重複する場合", () => {
+    it("旧 H-ID annotation をどちらか一方の WI として誤検出しない", async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, "docs/inception/order/WI-074"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/inception/order/WI-075"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/product/construction/order"), { recursive: true });
+      await writeFile(
+        path.join(rootDir, "docs/inception/order/WI-074/description.md"),
+        "---\nid: WI-074\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(
+        path.join(rootDir, "docs/inception/order/WI-075/description.md"),
+        "---\nid: WI-075\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(path.join(rootDir, "docs/product/construction/order/logical_design.md"), "@story-id H03-04");
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.fileContainsStoryAnnotation(
+        "docs/product/construction/order/logical_design.md",
+        "WI-074",
+      );
+
+      // Assert
+      expect(actual).toBe(false);
+    });
+  });
+
+  // UT-PD-171 (WI-115): unit context がある場合は他 unit の同一 legacy_id に影響されない
+  context("別 unit に同じ legacy_id が存在する場合", () => {
+    it("product path の unit scope 内で WI を解決する", async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, "docs/inception/order/WI-074"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/inception/payment/WI-075"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/product/construction/order"), { recursive: true });
+      await writeFile(
+        path.join(rootDir, "docs/inception/order/WI-074/description.md"),
+        "---\nid: WI-074\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(
+        path.join(rootDir, "docs/inception/payment/WI-075/description.md"),
+        "---\nid: WI-075\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(path.join(rootDir, "docs/product/construction/order/logical_design.md"), "@story-id H03-04");
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.fileContainsStoryAnnotation(
+        "docs/product/construction/order/logical_design.md",
+        "WI-074",
+      );
+
+      // Assert
+      expect(actual).toBe(true);
+    });
+  });
+
+  // UT-PD-172 (WI-115): unit context がない場合は inception 全体の重複を曖昧として扱う
+  context("product path から unit context を推定できない場合", () => {
+    it("別 unit の同一 legacy_id も ambiguity として誤検出しない", async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, "docs/inception/order/WI-074"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/inception/payment/WI-075"), { recursive: true });
+      await mkdir(path.join(rootDir, "docs/product"), { recursive: true });
+      await writeFile(
+        path.join(rootDir, "docs/inception/order/WI-074/description.md"),
+        "---\nid: WI-074\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(
+        path.join(rootDir, "docs/inception/payment/WI-075/description.md"),
+        "---\nid: WI-075\ntype: story\nlegacy_id: H03-04\n---\n",
+      );
+      await writeFile(path.join(rootDir, "docs/product/user_stories.md"), "@story-id H03-04");
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.fileContainsStoryAnnotation(
+        "docs/product/user_stories.md",
+        "WI-074",
+      );
+
+      // Assert
+      expect(actual).toBe(false);
+    });
+  });
 });

@@ -45,7 +45,7 @@ import { join } from 'node:path';
 const DEFAULT_CONFIG = {
   preset: 'standard' as const,
   layers: {
-    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
+    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
   },
@@ -77,6 +77,7 @@ function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L2-001', 'L2', 'always', 'PhaseGatePolicyPort'),
     createDef('L2-002', 'L2', 'always', 'MetadataPolicyPort'),
     createDef('L2-003', 'L2', 'always'),
+    createDef('L2-013', 'L2', 'always', 'CliE2eTestExistenceService'),
     createDef('L3-001', 'L3', 'always'),
     createDef('L3-002', 'L3', 'strictOnly'),
     createDef('L3-003', 'L3', 'always'),
@@ -123,6 +124,18 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
   const performanceScannerPort = new AstPerformanceScannerAdapter();
 
+  const docsRoot = join(process.cwd(), 'docs/product/construction');
+  const cwd = process.cwd();
+  const e2eTestFileRegistryPort = new E2eTestFileRegistryAdapter({ e2eTestRoot: join(cwd, 'scripts/harness/__tests__/e2e') });
+  const cliCommandRegistryPort = new CliCommandRegistryAdapter({
+    commands: [
+      'validate', 'lint', 'ci-check',
+      'phasegate:check-ready', 'phasegate:check-phase', 'phasegate:ci-check',
+      'phasegate:detect-drift', 'phasegate:lint', 'phasegate:complete-check',
+      'phasegate:impact-analysis', 'phasegate:status',
+    ],
+  });
+
   const runL2ValidatorsUseCase = new RunL2ValidatorsUseCase({
     validatorRegistry: registry,
     validatorExecutionService: executionService,
@@ -131,6 +144,8 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     phaseGatePolicyPort,
     metadataPolicyPort,
     testQualityAnalyzerPort,
+    e2eTestFileRegistryPort,
+    cliCommandRegistryPort,
   });
 
   const runL3ValidatorsUseCase = new RunL3ValidatorsUseCase({
@@ -143,7 +158,6 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     performanceScannerPort,
   });
 
-  const docsRoot = join(process.cwd(), 'docs/product/construction');
   const markdownDesignDocumentPort = new MarkdownDesignDocumentAdapter(docsRoot);
   const sourceCodeAnalyzerAdapter = new BiomeAstSourceCodeAnalyzerAdapter();
   const adrReferencePort = new AdrFoundationReferenceAdapter();
@@ -182,26 +196,15 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   });
 
   const aggregateValidationResultsUseCase = new AggregateValidationResultsUseCase();
-  const KNOWN_CLI_COMMANDS = [
-    'validate', 'lint', 'ci-check', 'detect-drift',
-    'phasegate:check-ready', 'phasegate:check-phase', 'phasegate:ci-check',
-    'phasegate:detect-drift', 'phasegate:lint', 'phasegate:complete-check',
-    'phasegate:impact-analysis', 'phasegate:status',
-  ];
-  const cwd = process.cwd();
   const itTestFileAnalyzerPort = new ItTestFileAnalyzerAdapter({
     itTestRoot: join(cwd, 'scripts/harness/__tests__/integration'),
     // アダプター自体のテストファイルは vi.mock() を使用しているため誤検知防止で除外
     excludePattern: /it-test-file-analyzer-adapter\.test\.ts$/,
   });
   const sourceFileTextScannerPort = new SourceFileTextScannerAdapter({ sourceRoot: join(cwd, 'scripts/harness') });
-  const e2eTestFileRegistryPort = new E2eTestFileRegistryAdapter({ e2eTestRoot: join(cwd, 'scripts/harness/__tests__/e2e') });
-  const cliCommandRegistryPort = new CliCommandRegistryAdapter({ commands: KNOWN_CLI_COMMANDS });
   const runL1ValidatorsUseCase = new RunL1ValidatorsUseCase({
     itTestFileAnalyzerPort,
     sourceFileTextScannerPort,
-    e2eTestFileRegistryPort,
-    cliCommandRegistryPort,
     contractMapper,
   });
 
