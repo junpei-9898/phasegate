@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.139.0] - 2026-05-09
+
+### Added
+
+- **WI-012 — pre-commit implementation extension 設定** — `preCommit.implementationExtensions` を config schema / preset / pre-commit adapter に追加し、`.ts` 以外の実装ファイル拡張子を検査対象にできるようにした。
+
+### Fixed
+
+- **WI-015 — quick mode comment-only API diff** — API 面の TypeScript ファイルでコメントのみが変わった場合、quick mode が implementation 証拠なしで `pending` に戻さないようにした。
+- **WI-030 — README / layer-model drift correction** — 公開ドキュメントの validator 数と L0 記述を現行仕様に合わせて更新した。
+- **WI-061 / WI-062 / WI-063 / WI-064 / WI-071 — reflected regression / skill WI closure** — 既存実装と回帰テストの証跡に基づき、対応済み WI を `tested` に整理した。
+
+## [0.138.1] - 2026-05-09
+
 ### Fixed
 
 - **WI-106 — inception WI ID 重複防止** — `docs/inception/**/WI-XXX/description.md` の frontmatter `id` を global scan し、`_cross` と Unit 配下をまたぐ重複、および parent directory 名と `id` の不一致を `validate-metadata` 経路で検出するようにした。
