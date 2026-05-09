@@ -219,23 +219,23 @@ WI-086 のスコープを本 ADR に統合する。
 
 ## 受け入れ基準
 
-- [ ] `templates/.claude/scripts/format-typescript-hook.sh` /
+- [x] `templates/.claude/scripts/format-typescript-hook.sh` /
       `analyze-errors-hook.sh` から `mapfile` が消え、bash 3.2 で動作する
-- [ ] macOS 標準 `/bin/bash` 3.2.57 で hook scripts を直接実行しても
+- [x] macOS 標準 `/bin/bash` 3.2.57 で hook scripts を直接実行しても
       `mapfile: command not found` が出ない
-- [ ] `phasegate init` がモノレポを検出した場合、`targetDirs` を
+- [x] `phasegate init` がモノレポを検出した場合、`targetDirs` を
       ワークスペースのソースディレクトリ配列で生成する
-- [ ] `phasegate init` が `devDependencies` から formatter を検出し、
+- [x] `phasegate init` が `devDependencies` から formatter を検出し、
       `biome` 不在環境では `eslint-prettier` を自動採用する
-- [ ] Quick Mode で書き込み許可時、stderr に 1 行 notice が出る
+- [x] Quick Mode で書き込み許可時、stderr に 1 行 notice が出る
       （exit code は 0 のまま、semantics 不変）
-- [ ] `agentIntegration.stopHook.enforce: true` で Complete Check 失敗時に
-      exit 2 + decision JSON `"deny"` が返る
-- [ ] default（`enforce: false`）では現行挙動を維持（後方互換）
-- [ ] dogfood: pnpm workspaces サンプルで `npx phasegate init` → hook 動作
+- [x] `agentIntegration.stopHook.enforce: true` で Complete Check 失敗時に
+      exit 2 + decision JSON `"block"` が返る
+- [x] default（`enforce: false`）では現行挙動を維持（後方互換）
+- [x] dogfood: pnpm workspaces サンプルで `npx phasegate init` → hook 動作
       → リリースの順を踏む
-- [ ] CHANGELOG に GitHub Issue #2 / #3 参照付きで記載
-- [ ] GitHub Issue #2 / #3 にリリース版コメント + close 完了
+- [x] CHANGELOG に GitHub Issue #2 / #3 参照付きで記載
+- [x] GitHub Issue #2 / #3 にリリース版コメント + close 完了
 
 ## スコープ外
 
@@ -333,3 +333,9 @@ finding #4（Stop hook `--enforce` flag）を `agentIntegration.stopHook.enforce
 - ドキュメント整合: `docs/guide/configuration.md` に `agentIntegration` セクション追加、`docs/guide/hooks-integration.md` の Stop hook 説明に enforce オプション追記
 
 これで WI-087 finding #1〜#4 + WI-086 全 findings の対応が完了。本 WI のスコープ内残作業はなし。
+
+### v0.138.1 監査 — 2026-05-09
+
+GitHub Issue #2 / #3 は `gh issue view` でいずれも `CLOSED` を確認済み。追加 dogfood として
+一時 pnpm workspaces プロジェクトで `phasegate init` を実行し、workspace `src` の自動検出、
+`eslint-prettier` formatter 自動選択、schema v3 初期生成、bash 3.2 互換 hook 起動を確認した。

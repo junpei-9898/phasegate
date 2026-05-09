@@ -2,7 +2,7 @@
 id: WI-086
 type: fix
 severity: high
-status: implemented
+status: tested
 affects: [agent-integration, config-foundation, quick-mode, setup, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/2
 reporter: junpei-9898
@@ -184,17 +184,17 @@ WI-087 の設計に統合。固有スコープ:
 
 ## 受け入れ基準
 
-- [ ] `phasegate init` がモノレポを検出した場合、`targetDirs` を
+- [x] `phasegate init` がモノレポを検出した場合、`targetDirs` を
       ワークスペースのソースディレクトリ配列で生成する
-- [ ] `phasegate init` 直後の新規プロジェクトで v2 schema warning が
+- [x] `phasegate init` 直後の新規プロジェクトで v2 schema warning が
       発生しない（テンプレートが v3 で生成される）
-- [ ] `pre-tool-use` hook の責務が `docs/guide/agent-integration.md` に
+- [x] `pre-tool-use` hook の責務が `docs/guide/hooks-integration.md` に
       明記され、L1 lint は post 側で実行される設計意図がレポーター視点
       でも理解できる
-- [ ] WI-087 finding #2（`mapfile` 互換性）の修正により、モノレポ環境で
+- [x] WI-087 finding #2（`mapfile` 互換性）の修正により、モノレポ環境で
       違反 Write 後に block decision JSON が Claude Code に伝播する
-- [ ] CHANGELOG に GitHub Issue #2 参照付きで記載される
-- [ ] GitHub Issue #2 にリリース版コメント + close 完了
+- [x] CHANGELOG に GitHub Issue #2 参照付きで記載される
+- [x] GitHub Issue #2 にリリース版コメント + close 完了
 
 ## スコープ外
 
@@ -254,3 +254,14 @@ WI-087 Phase C-1 との統合対応で「pre-tool-use の責務範囲明文化�
 これにより、本 issue の主要 4 症状はすべて修正完了 (post-tool-use silent no-op /
 v2 schema warning / モノレポ targetDirs / 責務範囲ドキュメント)。pre-tool-use の
 L1 lint 拡張は別 ADR で検討する方針 (本 issue のスコープ外)。
+
+### v0.138.1 監査 — 2026-05-09
+
+WI-087 の Phase A/B/C-1/C-2 進捗ログ、CHANGELOG、実装ファイル、回帰テストを再確認し、
+WI-086 のリポジトリ内スコープは完了済みと判定。GitHub Issue #2 は `gh issue view` で
+`CLOSED` を確認済み。
+
+dogfood: 一時 pnpm workspaces プロジェクトで `phasegate init --yes --agent claude --skills core` を実行し、
+`hook-config.json` が `targetDirs: [pkg/core/src, services/api/src]` と `formatter: eslint-prettier` を
+生成すること、`phasegate.config.json` に `architecture.preset: clean` が入ること、hook script が
+`/bin/bash` で `mapfile` エラーなく起動することを確認した。

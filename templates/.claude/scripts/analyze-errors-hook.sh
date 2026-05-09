@@ -15,7 +15,7 @@ CONFIG_FILE="$SCRIPT_DIR/hook-config.json"
 TARGET_DIRS=()
 
 if [[ -f "$CONFIG_FILE" ]] && command -v jq >/dev/null 2>&1; then
-    # bash 3.2 (macOS default) has no mapfile; use portable while-read.
+    # bash 3.2 compatible: use portable while-read.
     while IFS= read -r line; do
         [[ -n "$line" ]] && TARGET_DIRS+=("$line")
     done < <(jq -r '.targetDirs[]' "$CONFIG_FILE" 2>/dev/null)

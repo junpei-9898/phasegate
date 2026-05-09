@@ -2,7 +2,7 @@
 id: WI-026
 type: issue
 severity: high
-status: drafted
+status: tested
 legacy_id: ISSUE-026
 affects: [phase-dependency-model, agent-integration, traceability-model, validator-system, config-foundation, docs]
 ---
@@ -225,7 +225,7 @@ TESTED        @work-item-id 付きテストが存在し green
 
 ## 受け入れ基準
 
-> 2026-04-25 ドッグフード結果反映: 既存実装（Phase A〜B + 基本 gate）は仕様通り動作するが、`_cross/{WI-XXX}` dead-lock 修正と H-ID リナンバリングが残作業。残作業は `docs/inception/_shared/wi-026-remediation-plan.md` に分割済み。
+> 2026-05-09 監査更新: 既存実装（Phase A〜D + G1〜G4）は完了済み。`_cross/{WI-XXX}` dead-lock 修正、H-ID リナンバリング、重複 WI ID 防止（WI-106）まで反映済みで、親 WI としての残作業はない。
 
 - [x] 全 work item が `docs/inception/{unit}/{WI-XXX}/` または `docs/inception/_cross/{WI-XXX}/` に統一される（v0.105.0 / WI-027 で 57 件の H-ID directory を WI-028..WI-084 に移行。その後 `_cross/WI-028..WI-036` との衝突を解消するため、該当する unit-scoped WI を WI-097..WI-105 に再採番）
 - [x] `docs/inception/issues/` と `docs/inception/{unit}/issues/` が廃止される（v0.104.0 で物理削除＋ legacy 分岐コード除去）
