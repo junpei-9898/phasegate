@@ -2,7 +2,7 @@
 id: WI-089
 type: chore
 severity: normal
-status: implemented
+status: tested
 affects: [skills, setup, docs]
 github_issue: null
 reporter: junpei-9898
@@ -212,6 +212,11 @@ WI-088 dogfood 検証で挙げた P1 / P2 / P4 / P5 + cohesion audit を反映:
 - **互換性**: SKILL.md 内容変更のみで挙動変更なし、既存テスト影響なし。consumer プロジェクトには `phasegate init` 再実行で新 SKILL.md が deploy される (skill-deployer のロジック自体は無変更)。
 
 **WI-089 全体スコープ**: dogfood feedback の 5 項目中、P1 / P2 / P4 / P5 + cohesion audit を v0.125.0 で完了。**P3 (canonical doc 日本語化)** は別 WI (WI-090 候補) で扱う方針 (本 WI スコープ外)。
+
+### v0.138.1 監査 — 2026-05-09
+
+AC 全件が完了済みで、CHANGELOG / skill 本文 / init 完了メッセージ / dogfood 証跡が残っていることを再確認した。
+副次的に検出された `--skill-set` typo 問題は WI-090 で対応済みのため、本 WI の残作業はない。
 
 ### 副次的検出 (本 WI スコープ外)
 

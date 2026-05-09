@@ -2,7 +2,7 @@
 id: WI-028
 type: refactor
 severity: normal
-status: reflected
+status: tested
 affects: [docs]
 ---
 
@@ -38,7 +38,7 @@ WI-026 (v0.100.0..v0.104.0) で `phasegate migrate work-items` CLI と WI taxono
 
 ## 受け入れ基準
 
-- [ ] `CHANGELOG.md` の `[Unreleased]` が解消され、v0.101..v0.107 の 7 リリースが記録される（残作業）
+- [x] `CHANGELOG.md` に v0.101..v0.107 の 7 リリースが記録される（`[Unreleased]` 見出しは Keep-a-Changelog の通常運用として維持）
 - [x] `README.md` の CLI Reference 表に `migrate work-items` が追加される（v0.108.0）
 - [x] `README.ja.md` の CLI コマンド表に `migrate work-items` が追加される（v0.108.0、v0.112.0 で説明強化）
 - [x] `docs/guide/cli-reference.md` に Work Item Migration セクションが追加され、dry-run / apply 両モードと frontmatter 形式が解説される（v0.108.0）
@@ -51,3 +51,9 @@ WI-026 (v0.100.0..v0.104.0) で `phasegate migrate work-items` CLI と WI taxono
 - 新規コード追加（本 WI は docs only、source 改変なし）
 - README 全体の構成見直し（migrate work-items 追記のみ）
 - WI-029 以降のロードマップ
+
+## 完了メモ
+
+2026-05-09 監査で CHANGELOG.md の v0.101.0〜v0.107.0 記録、README.md / README.ja.md の
+`migrate work-items` 追記、docs/guide/cli-reference.md の Work Item Migration セクションを確認した。
+`[Unreleased]` は未解消ではなく changelog の通常見出しとして残す。

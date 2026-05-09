@@ -2,7 +2,7 @@
 id: WI-029
 type: refactor
 severity: normal
-status: reflected
+status: tested
 affects: [docs]
 ---
 
@@ -47,11 +47,17 @@ affects: [docs]
 
 ## 受け入れ基準
 
-- [ ] `README.md` / `README.ja.md` の L0 description が agent-runtime hooks 実態と一致する
-- [ ] `docs/guide/layer-model.md` の L0 セクションから `hook-config` / `gate-check` 記述が削除され、agent-integration の 5 hook + Husky の 2 hook が表形式で解説される
-- [ ] `CLAUDE.md` から「L0 FUSEフック検証」記述が削除される
-- [ ] `--layer L0` CLI が引き続き動作する（本 WI は docs only、code 不変）
-- [ ] 既存テスト全 PASS、L1 lint violations 0
+- [x] `README.md` / `README.ja.md` の L0 description が agent-runtime hooks 実態と一致する
+- [x] `docs/guide/layer-model.md` の L0 セクションから `hook-config` / `gate-check` 記述が削除され、agent-integration の 5 hook + Husky の 2 hook が表形式で解説される
+- [x] `CLAUDE.md` から「L0 FUSEフック検証」記述が削除される
+- [x] `--layer L0` CLI が引き続き動作する（本 WI は docs only、code 不変）
+- [x] 既存テスト全 PASS、L1 lint violations 0
+
+## 完了メモ
+
+2026-05-09 監査で README.md / README.ja.md / docs/guide/layer-model.md / CLAUDE.md の L0 記述が
+agent runtime hooks + Husky git hooks の実態に揃っていることを確認した。`validate --layer L0` は
+互換 guidance として動作し、L4 は default off として説明されている。
 
 ## 関連
 
