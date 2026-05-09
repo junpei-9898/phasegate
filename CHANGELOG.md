@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.136.0] - 2026-05-09
+
+### Added
+
+- **WI-031 — CI template の二系統統一 + `phasegate init --with-ci`** — `ci:generate-template --render` が bundled template を正本として stdout に出力するようにし、`phasegate init --with-ci` で `.github/workflows/aidlc-gate.yml` と `.github/workflows/consistency-check.yml` を opt-in 配置できるようにした。
+  - `docs/templates/ci/{aidlc-gate,consistency-check}.yml` と `docs/templates/hooks/pre-commit` を render の正本に統一。
+  - `consistency-check` の cron と GitHub Issue 自動作成 logic が CLI render と bundled template で一致。
+  - 既存 workflow は上書きせず skipped として扱い、新規 config 作成時は `ci.enabled: true` を保存。
+  - `docs/templates/**` を npm package 同梱対象に追加。
+
+### Fixed
+
+- **WI-031 / WI-097 — inception 配下の WI ID 重複を解消** — `_cross/WI-031` と `agent-integration/WI-031` が別内容で同一 ID を持っていたため、H11-04 由来の agent-integration 側を `WI-097` に再採番した。
+  - `legacy_id: H11-04` は維持し、agent-integration の product docs に `@work-item-id WI-097` を追記。
+  - 再発防止の follow-up として `WI-106`（inception 全体での WI ID 重複防止）を起票。
+
 ## [0.135.0] - 2026-05-09
 
 ### Added
