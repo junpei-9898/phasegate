@@ -147,8 +147,8 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 | **drift-detect** | L4-001 | Bidirectional design-code drift detection. Compares design documents against the actual codebase to find divergence in either direction. |
 | **consistency-check** | L4-002 | Cross-document layer consistency. Ensures that references between design documents, ADRs, and code remain coherent. |
 | **dead-code** | L4-003 | Detects unused exports and unreachable code that should be removed. |
-| **doc-freshness** | L4-004 | Checks whether design documents exceed the configured freshness threshold. The standalone `p2:check-freshness` CLI remains available. |
-| **pointer-validation** | L4-005 | Validates file-path pointers embedded in design documents. The standalone `p2:validate-pointers` CLI remains available. |
+
+`doc-freshness` and `pointer-validation` are implemented as `phase2-extensions` CLI commands (`p2:check-freshness` and `p2:validate-pointers`). They are not registered as L4 validators yet, so `validate --layer L4` does not run them until WI-033 promotes them into `validator-system`.
 
 ### Drift-detect design pointers
 

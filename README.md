@@ -146,7 +146,7 @@ npx phasegate update-skills
 +------------------------------------------------------------------+
 |  L4  SCHEDULED             Validators (default off)              |
 |  drift-detection, consistency-check, dead-code analysis,         |
-|  doc-freshness, pointer-validation                               |
+|  phase2 freshness/pointer checks via standalone p2:* commands    |
 +------------------------------------------------------------------+
 ```
 
@@ -156,7 +156,7 @@ npx phasegate update-skills
 | L1 | Editor save / `phasegate lint` | `@unit` / `@layer` metadata, layer violations, AI anti-patterns, dead code |
 | L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`), test quality |
 | L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability |
-| L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code, doc freshness, pointer validation |
+| L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code. Doc freshness and pointer checks are standalone `p2:*` commands until WI-033. |
 
 ---
 

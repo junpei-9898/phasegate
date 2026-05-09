@@ -2,7 +2,7 @@
 id: WI-030
 type: refactor
 severity: normal
-status: reflected
+status: tested
 affects: [docs]
 ---
 
@@ -61,8 +61,14 @@ WI-028 / WI-029 で `migrate work-items` および 5-Layer Defense Model のド�
 
 ## 受け入れ基準
 
-- [ ] README.ja.md L180 の cron 時刻と issue 自動化の主張が実態と一致
-- [ ] README.ja.md L408 の feature flag disclaimer が実装状況と一致
-- [ ] docs/guide/layer-model.md L4 セクションから誤った validator 列挙が削除される
-- [ ] README.md / README.ja.md に **Roadmap** 節が追加され、WI-031〜WI-034 が今後の実装予定として参照される
-- [ ] 既存テスト全 PASS、L1 lint violations 0
+- [x] README.ja.md L180 の cron 時刻と issue 自動化の主張が実態と一致
+- [x] README.ja.md L408 の feature flag disclaimer が実装状況と一致
+- [x] docs/guide/layer-model.md L4 セクションから誤った validator 列挙が削除される
+- [x] README.md / README.ja.md に **Roadmap** 節が追加され、WI-031〜WI-034 が今後の実装予定として参照される
+- [x] 既存テスト全 PASS、L1 lint violations 0
+
+### 完了証跡（2026-05-09）
+
+- README.ja.md は 09:00 UTC / GitHub Issue 自動作成の過剰主張と feature flag 未実装 disclaimer が残っていないことを確認済み
+- README.md / README.ja.md に WI-031〜WI-034 の Roadmap 節が存在
+- `docs/guide/layer-model.md` から `doc-freshness` / `pointer-validation` の L4 validator ID 表記を削除し、standalone `p2:*` コマンドである旨に修正
