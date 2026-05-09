@@ -4,6 +4,7 @@
 @story-id H09-02
 @story-id H09-03
 @story-id H09-04
+@work-item-id WI-025
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 init --agent setup の IT 観点を追加）

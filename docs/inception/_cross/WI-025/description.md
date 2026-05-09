@@ -2,7 +2,7 @@
 id: WI-025
 type: issue
 severity: normal
-status: drafted
+status: tested
 legacy_id: ISSUE-025
 affects: [harness-api / setup, agent-integration, docs]
 ---
@@ -11,8 +11,9 @@ affects: [harness-api / setup, agent-integration, docs]
 
 ## ステータス
 
-- **状態**: 🔴 OPEN
+- **状態**: ✅ TESTED（v0.138.0 時点の published dogfood で `init --agent codex` が `.codex/hooks.json` と `.codex/skills -> ../skills` を作成することを確認）
 - **起票日**: 2026-04-24
+- **完了確認日**: 2026-05-09
 - **発見契機**: PhaseGate 自身の Codex ドッグフーディング時に、`npx phasegate init --agent codex` 系のセットアップ結果を確認したところ、Codex hooks は動作する一方で、Codex から project skills を見せるための配線が存在しないことが判明
 - **影響Unit**: harness-api / setup, agent-integration, docs
 - **深刻度**: Medium
@@ -112,13 +113,20 @@ skills/                  # 実体
 
 ## 受け入れ基準
 
-- [ ] `--agent codex` のセットアップ成果物を README / docs / 実装で一貫して定義する
-- [ ] Codex でも project-local PhaseGate skills を解決できるようにする
-- [ ] `.codex/skills` の作成方式を決定し、実装する（symlink or copy のどちらか）
-- [ ] `--agent both` で Claude / Codex の両方が同じ skill 実体を参照できる
-- [ ] `skills/README.md` の説明と実際の `init` 結果が一致する
-- [ ] integration test で `init --agent codex` / `init --agent both` の生成物を検証する
-- [ ] Codex integration docs に「hooks だけでなく skills 導線がどう作られるか」を明記する
+- [x] `--agent codex` のセットアップ成果物を README / docs / 実装で一貫して定義する
+- [x] Codex でも project-local PhaseGate skills を解決できるようにする
+- [x] `.codex/skills` の作成方式を決定し、実装する（`../skills` への symlink）
+- [x] `--agent both` で Claude / Codex の両方が同じ skill 実体を参照できる
+- [x] `skills/README.md` の説明と実際の `init` 結果が一致する
+- [x] integration test で `init --agent codex` / `init --agent both` の生成物を検証する
+- [x] Codex integration docs に「hooks だけでなく skills 導線がどう作られるか」を明記する
+
+## 完了確認
+
+- 実装: `scripts/harness/setup/skill-deployer.ts` の skill 実体配置を `skills/` に統一し、`.claude/skills` / `.codex/skills` は `../skills` への symlink として作成する。
+- CLI: `phasegate init --agent codex` は `.codex/hooks.json` と `.codex/skills` を作成し、`.claude/settings.json` / `.claude/skills` は作成しない。`--agent both` は両 agent の導線を作成する。
+- テスト: `scripts/harness/__tests__/integration/setup/init-codex-agent.integration.test.ts` と `scripts/harness/__tests__/unit/setup/skill-deployer.test.ts` で `codex` / `both` の symlink 生成を検証済み。
+- Dogfood: `phasegate@0.138.0` published package で `init --name dogfood --skills core --agent codex --with-ci --yes` を実行し、`.codex/skills` が配置されることを確認済み。
 
 ## 非対象
 

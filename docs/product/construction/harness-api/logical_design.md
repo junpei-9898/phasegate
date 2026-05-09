@@ -4,6 +4,7 @@
 @story-id H09-02
 @story-id H09-03
 @story-id H09-04
+@work-item-id WI-025
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）

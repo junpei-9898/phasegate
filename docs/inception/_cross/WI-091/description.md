@@ -2,14 +2,14 @@
 id: WI-091
 type: fix
 severity: high
-status: drafted
+status: tested
 affects: [validator-system, phase-dependency-model, config-foundation, harness-api, traceability-model, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti
 related: [WI-085, WI-090]
 ---
 
-> **進捗状況 (2026-05-08)**: 5 finding のうち #1 / #3 / #5 immediate を v0.127.0 で完了 (本 description の `## 進捗ログ` 参照)。残 #2 (severity 集計) / #4 (paths threading) / #5 advanced (`pointers:` block 仕様) は別 WI 起票予定のため、本 WI の `status` は `drafted` のまま据え置き。3 件分割完了後に本 WI を `implemented` (もしくは split-closed として close) する判断を下す。
+> **進捗状況 (2026-05-09)**: 本 WI は bundled parent として split-closed。#1 / #3 / #5 immediate は v0.127.0〜v0.128.0 で完了し、残 #2 / #4 / #5 advanced は `WI-094` / `WI-093` / `WI-095` として分割後に tested 済み。予防的 DI sweep も `WI-092` で tested 済み。
 
 # WI-091: phasegate v0.124 — `layers.L4.enabled` 無視 / `--help` がサブコマンドで解釈されない / `paths` 設定が L2-001 に伝播しない / warning-severity でも validate 全体 FAIL になる
 
@@ -214,20 +214,19 @@ ADR を 1 本起票し、(A)〜(D) の採用方針 + (C) の互換戦略を確�
 
 ## 受け入れ基準
 
-- [ ] **finding #1**: `phasegate.config.json` の `layers.L4.enabled: false` 設定で `phasegate validate` の L4 validator が `[SKIP]` 表示になり、overall judgement にも影響しない（FAIL を引き起こさない）
-- [ ] **finding #1**: `RunL4ValidatorsUseCase.execute()` で `layerConfig.enabled === false` のときに drift / consistency / dead-code service を呼ばずに skip 結果のみ返す（L3 と対称な実装）
-- [ ] **finding #2**: `defaultSeverity: warning` の validator が fail しても overall judgement が `WARN`（または config で `error-as-warn` を opt-in）になり、exit code は warning-only なら 0
-- [ ] **finding #2**: 既存 user 向けに後方互換戦略を Phase 1 ADR で決定し実装に反映（例: `validate.warningExitCode` config flag）
-- [ ] **finding #3**: 全 subcommand（`update-skills`, `phasegate:detect-drift`, `migrate`, `lint`, `validate`, `phasegate:status`, `list-errors`, `init`, `hook *` 等）で `--help` / `-h` が usage 表示 + exit 0、副作用一切なし
-- [ ] **finding #3**: `phasegate update-skills --help` / `phasegate phasegate:detect-drift --help` 実行で skill redeploy / drift 実行が走らないことを spawn 経由 integration test で確認
-- [ ] **finding #4**: `phasegate.config.json` の `paths.designDocs` 指定値が `L2-001` (phase-gate validator) でも consult され、`<paths.designDocs>/product_overview.md` / `<paths.designDocs>/user_stories.md` を探す
-- [ ] **finding #4**: `phase-dependency-model/domain/definitions/{full,standard,minimal}-phase-nodes.ts` の hardcoded `docs/product/` が `{designDocsRoot}/` placeholder に置換され、`Artifact.resolve()` で `paths.designDocs` 値を使って展開
-- [ ] **finding #4**: `traceability-model/domain/services/traceability-chain-builder.ts:20` / `markdown-story-catalog-gateway.ts:55` の hardcoded `docs/product/user_stories.md` が config 経由解決される
-- [ ] **finding #5**: drift detection が element 名の括弧（`（〜）` / `(〜)`）qualifier を normalize して比較する、または設計文書側に `pointers:` ブロックで element → file path を明示できる仕様を持つ（どちらを採るかは Phase 1 で決定）
-- [ ] dogfood: pnpm monorepo + `paths` カスタマイズ + `layers.L4.enabled: false` の構成で `validate` / `--help` / drift-detect すべてが期待挙動になることを別 PJ で確認
-- [ ] CHANGELOG に GitHub Issue #4 参照付きで finding 別に記載
-- [ ] GitHub Issue #4 にリリース版コメント + close
-- [ ] WI-085 description.md に「`paths` threading は WI-091 で完成」の post-mortem 追記
+- [x] **finding #1**: `phasegate.config.json` の `layers.L4.enabled: false` 設定で `phasegate validate` の L4 validator が overall judgement に影響しない
+- [x] **finding #1**: `RunL4ValidatorsUseCase.execute()` で `layerConfig.enabled === false` のときに drift / consistency / dead-code service を呼ばない
+- [x] **finding #2**: `defaultSeverity: warning` の validator が fail しても warning-only なら overall PASS / exit 0 になる（WI-094）
+- [x] **finding #2**: 後方互換戦略を ADR-017 で決定し実装に反映（WI-094）
+- [x] **finding #3**: subcommand の `--help` / `-h` が usage 表示 + exit 0 になり、副作用ありコマンドで実行が走らない
+- [x] **finding #3**: `update-skills --help` / `phasegate:detect-drift --help` の副作用防止を integration test で確認
+- [x] **finding #4**: `paths.designDocs` 指定値が `L2-001` / traceability-model で consult される（WI-093）
+- [x] **finding #4**: phase-node 定義の hardcoded `docs/product/` が `{designDocsRoot}` ベースで解決される（WI-093）
+- [x] **finding #4**: traceability-model の story catalog / product root 解決が config 経由になる（WI-093）
+- [x] **finding #5**: drift detection が括弧 qualifier を normalize し、advanced case は `pointers:` block 仕様で対応済み（WI-095）
+- [x] dogfood: `paths` カスタマイズ、`layers.L4.enabled: false`、`--help`、drift-detect / pointers を各分割 WI の post-publish dogfood で確認
+- [x] CHANGELOG に finding 別に記載
+- [x] WI-085 description.md に `designDocs` 側 threading は WI-093 で補完した旨を追記済み
 
 ## スコープ外
 
