@@ -456,6 +456,8 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 | UT-BA-216 | run | require-unit-commentの違反判定を実行する | metadataTags.unitがカスタム設定されている場合 | 違反メッセージに設定タグ名が使われる |
 | UT-BA-217 | run | require-layer-commentの違反判定を実行する | metadataTags.layerがカスタム設定されている場合 | 違反メッセージに設定タグ名が使われる |
 | UT-BA-218 | execute | architecture preset の metadataTags を architectureSpec として出力する | metadataTagsが指定された場合 | architectureSpecに透過される |
+| UT-BA-219 | format | RuleViolationをHarnessError出力へ整形する | require-unit-commentがカスタムmetadata tag名を含む場合 | suggestionにも設定タグ名が使われる |
+| UT-BA-220 | format | RuleViolationをHarnessError出力へ整形する | require-layer-commentがカスタムmetadata tag名を含む場合 | suggestionにも設定タグ名が使われる |
 
 ---
 

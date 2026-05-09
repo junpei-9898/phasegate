@@ -18,6 +18,20 @@ const RULE_SUGGESTIONS: Readonly<Record<string, string>> = {
   'no-comment-flood': '不要なコメントを整理し自己説明的なコードへ改善する',
 };
 
+const METADATA_TAG_MESSAGE_PATTERN = /(@[a-z][a-zA-Z0-9]*)コメントが必要です/;
+
+const resolveSuggestion = (ruleName: string, message: string): string => {
+  if (ruleName === 'require-unit-comment' || ruleName === 'require-layer-comment') {
+    const tagName = message.match(METADATA_TAG_MESSAGE_PATTERN)?.[1];
+
+    if (tagName) {
+      return `ファイル先頭に ${tagName} コメントを追加する`;
+    }
+  }
+
+  return RULE_SUGGESTIONS[ruleName] ?? '';
+};
+
 /**
  * ViolationFormatterPort の実装。
  * RuleViolation をルール名から L1-001〜L1-008 コードへマッピングし、
@@ -40,7 +54,7 @@ export class HarnessErrorFormatterAdapter implements ViolationFormatterPort {
       violations.map((v) => {
         const ruleName = v.ruleName.toString();
         const code = mapRuleNameToCode(ruleName);
-        const suggestion = RULE_SUGGESTIONS[ruleName] ?? '';
+        const suggestion = resolveSuggestion(ruleName, v.message);
 
         const entry: {
           code: string;

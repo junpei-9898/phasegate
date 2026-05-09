@@ -53,6 +53,7 @@ PhaseGate の L1-001 / L1-002 ルールは、ソースファイル先頭に `// 
 - `parseUnitComment` / `parseLayerComment` は設定 tag名を引数で受け取り、その tagだけを検出する
 - `TypeScriptSourceModuleAnalyzerAdapter` は `ArchitectureSpec.metadataTags` を parser へ渡す
 - `LintRunner` の L1-001 / L1-002 欠落メッセージは設定 tag名を表示する
+- `HarnessErrorFormatterAdapter` の L1-001 / L1-002 suggestion も設定 tag名を表示する
 
 ## 受け入れ基準
 
@@ -70,6 +71,7 @@ PhaseGate の L1-001 / L1-002 ルールは、ソースファイル先頭に `// 
 - `phasegate lint --json --skip-eslint-removal-check --target src/domain/example.ts` dogfood:
   - `architecture.metadataTags={ unit:"@module", layer:"@tier" }` + `// @module` / `// @tier` は `status: success`, `scannedFiles: 1`, `violationCount: 0`
   - 同設定 + 旧 `// @unit` / `// @layer` のみは `status: failure`, `L1-001 @moduleコメントが必要です`, `L1-002 @tierコメントが必要です`
+- follow-up: `suggestion` も `ファイル先頭に @module コメントを追加する` / `ファイル先頭に @tier コメントを追加する` を表示する
 - `phasegate validate --layer L2 --format human`
 - `npm pack --pack-destination /private/tmp`（`phasegate-0.140.0.tgz`、package versionと対象 runtime files の同梱を確認）
 

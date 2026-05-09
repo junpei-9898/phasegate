@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.141.0] - 2026-05-09
+
+### Fixed
+
+- **WI-024 follow-up — metadataTags suggestion text** — `architecture.metadataTags.unit` / `architecture.metadataTags.layer` を使った L1-001 / L1-002 の `suggestion` も、固定の `@unit` / `@layer` ではなく設定タグ名を表示するようにした。
+
 ## [0.140.0] - 2026-05-09
 
 ### Added

@@ -966,7 +966,7 @@ interface ClockPort {
 
 #### WI-024: metadata tag名の設定反映
 
-`ArchitectureSpec` は `metadataTags.unit` / `metadataTags.layer` を保持し、未指定時は `@unit` / `@layer` を使う。`ResolveEnabledRulesUseCase` は config-foundation から受け取った `architecture.metadataTags` を spec に透過し、`TypeScriptSourceModuleAnalyzerAdapter` は parser 呼び出し時にその tag名だけを検出対象にする。`LintRunner` の L1-001 / L1-002 欠落メッセージも同じ spec の tag名を使い、設定上有効な metadata key を user に提示する。
+`ArchitectureSpec` は `metadataTags.unit` / `metadataTags.layer` を保持し、未指定時は `@unit` / `@layer` を使う。`ResolveEnabledRulesUseCase` は config-foundation から受け取った `architecture.metadataTags` を spec に透過し、`TypeScriptSourceModuleAnalyzerAdapter` は parser 呼び出し時にその tag名だけを検出対象にする。`LintRunner` の L1-001 / L1-002 欠落メッセージと `HarnessErrorFormatterAdapter` の suggestion も同じ tag名を使い、設定上有効な metadata key を user に提示する。
 
 ---
 
