@@ -79,7 +79,9 @@ unit 名の sort 順:
 H-ID の sort 順（同一 unit 内）:
 - 文字列 sort（`H02-04` < `H02-05` < `H03-02` ...）
 
-これに従うと、最初の H-ID = `agent-integration/H11-01` が `WI-028` を取る。
+これに従うと、当初の一括移行では最初の H-ID = `agent-integration/H11-01` が `WI-028` を取る。
+
+> 追記: 後続の `_cross/WI-028..WI-036` 起票と番号衝突したため、該当する unit-scoped WI は `WI-097..WI-105` に再採番済み。以後は WI ID を repo 全体で一意に扱う。
 
 **推奨案:** sourcePath 昇順（unit 名 → H-ID 名）。明示的な番号予約や stable mapping を求めない（一括バッチ移行のため最終的な物理 directory 名は重要だが、各 H-ID がどの WI に化けるかの強い制約は無い）。
 
