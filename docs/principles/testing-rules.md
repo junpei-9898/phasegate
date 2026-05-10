@@ -12,6 +12,24 @@
 - 実行結果は `actual` に代入する。
 - テストの関心外の共通準備はヘルパーやファクトリに寄せる。ただし、各テストの前提が読めなくなるほど隠蔽しない。
 
+## Semantic AAA と Assertion Quality
+
+<!-- @work-item-id WI-129, WI-130 -->
+
+AAA は特定の runner やコメント表記ではなく、テストケースが以下の意味構造を持つこととして扱う。
+
+| 構造 | 意味 |
+|------|------|
+| Arrange | 前提条件、入力、fixture、制御可能な依存を組み立てる |
+| Act | 観測したいふるまいを実行する。Unit / Integration では原則 1 つ |
+| Assert | Act の観測結果、状態変化、発行イベント、永続化結果、error contract、interaction を検証する |
+
+Assertion Quality は matcher 名だけで判断しない。観測対象は `observed output` / `state` / `emitted event` / `persisted effect` / `error contract` / `interaction` に分類し、観測強度は `exact value` / `shape` / `invariant` / `range` / `weak truthiness` / `snapshot only` / `interaction only` / `length only` に分類する。
+
+- `toBeTruthy()` 相当の truthiness のみ、snapshot のみ、length のみ、mock call count のみは弱い観測として扱う。
+- error case は error type / code / message / recovery hint などの contract を検証する。
+- E2E の一連のライフサイクルは複数 Act を許可してよいが、各 Act の直後に観測可能な Assert を置く。
+
 ## テスト構造
 
 `target` / `describe` / `context` / `it` は以下の役割で使う。

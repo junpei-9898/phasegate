@@ -46,7 +46,7 @@ flowchart TD
 | L4 Scheduled | drift + consistency + dead-code | skipped |
 | Commit prefix | conventional (`feat:`, `fix:`, ...) | `[quick] ...` |
 
-Both modes keep **L1 in full strength** and **L2 metadata / test-quality** — `@unit` / `@layer` comments and AAA test structure are non-negotiable regardless of flow.
+Both modes keep **L1 in full strength** and **L2 metadata / test-quality** — `@unit` / `@layer` comments, semantic AAA structure, and assertion-strength checks are non-negotiable regardless of flow.
 
 ---
 

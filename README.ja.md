@@ -142,7 +142,7 @@ npx phasegate update-skills   # スキルを最新版に再デプロイ
 |     @unit / @layer メタデータ, レイヤー違反, AI アンチパターン   |
 +------------------------------------------------------------------+
 | L2  pre-commit                                                   |
-|     phase-gate, story-reflection, テスト品質 (AAA/日本語名)       |
+|     phase-gate, story-reflection, テスト品質 (semantic AAA)       |
 +------------------------------------------------------------------+
 | L3  CI/CD                                                        |
 |     security, performance, coverage 90%/95%, 要件カバレッジ        |

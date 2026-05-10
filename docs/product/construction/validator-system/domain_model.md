@@ -29,6 +29,8 @@
 | DriftReport | 値オブジェクト | 設計⇔コード乖離検出結果（direction/unitName/element/recommendation） |
 | ConsistencyReport | 値オブジェクト | 文書間レイヤー整合性検証結果（mismatchPairs/checkTargets） |
 | DeadCodeReport | 値オブジェクト | 未使用エクスポート/到達不能コード一覧 |
+| TestCaseStructure | 値オブジェクト | L2-003 が評価する runner-independent なテストケース意味構造 |
+| SemanticAssertion | 値オブジェクト | Assertion target と strength を matcher 名から分離した観測モデル |
 | ValidatorRegistry | ドメインサービス | 全バリデータ定義カタログ管理・選択実行インターフェース |
 | ValidatorExecutionService | ドメインサービス | 順次実行・結果集約オーケストレーション |
 | DriftDetectionService | ドメインサービス | 設計⇔コード双方向乖離検出（L4-001） |
@@ -86,6 +88,8 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 | DriftReport | ✓ | ✓ | direction: 'design→code'\|'code→design', unitName, element, recommendation |
 | ConsistencyReport | ✓ | ✓ | mismatchPairs: Array\<{expected, actual, location}\>, checkTargets: string[] |
 | DeadCodeReport | ✓ | ✓ | unusedExports: string[], unreachableCode: Array\<{filePath, range}\> |
+| TestCaseStructure | ✓ | ✓ | filePath, name, line, kind, steps, assertions, mocks, allowsMultipleActs |
+| SemanticAssertion | ✓ | ✓ | target, strength, subject, line |
 
 ### ドメインサービス
 
@@ -106,7 +110,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 | ポート名 | 責務 | 利用バリデータ |
 |---------|------|--------------|
 | ValidatorConfigPort | HarnessConfigV2からL2/L3/L4のLayerConfigを取得 | 全バリデータ |
-| TestQualityAnalyzerPort | テストコードのAAAパターン・命名規約解析結果取得 | L2-003 (test-quality) |
+| TestQualityAnalyzerPort | テストコードをTestCaseStructureへ変換し、AAA・Act観測・AssertionStrength・モック方針の解析結果を取得 | L2-003 (test-quality) |
 | SecurityPatternScannerPort | ハードコード秘密・SQLインジェクションパターン検出 | L3-001 (security) |
 | PerformanceScannerPort | バンドルサイズ・O(n²)ループ等のパフォーマンス問題検出 | L3-002 (performance) |
 | CoverageReportPort | テストカバレッジレポート（JSON形式）読み取り | L3-003 (coverage) |
@@ -172,7 +176,26 @@ L4-005: pointer-validation
 |-------------|------|---------|------------------|
 | L2-001 | phase-gate | Phase Gate前提条件の充足確認 | PhaseGatePolicyPort |
 | L2-002 | metadata | @unit/@layer/@story等のメタデータ完全性検証 | MetadataPolicyPort |
-| L2-003 | test-quality | AAAパターン・命名規約・テスト独立性の検証 | — |
+| L2-003 | test-quality | runner-independentなTestCaseStructureに基づくAAA・単一Act・Act観測・AssertionStrength・ドメインモック方針の検証 | — |
+
+### L2-003 Semantic Test Model
+
+<!-- @work-item-id WI-129, WI-130 -->
+
+`L2-003 test-quality` は、特定の test runner 関数名や matcher 名を validator contract にしない。Infrastructure adapter が TypeScript/Vitest/Jest などの構文を以下の意味モデルへ変換し、validator-system はこの抽象モデルを評価する。
+
+| Model | Fields | Rule |
+|---|---|---|
+| TestCaseStructure | filePath, name, line, kind, steps, assertions, mocks, allowsMultipleActs | file 単位ではなく test case 単位で診断する |
+| ArrangeStep | expression, line | Act より前の前提構築 |
+| ActStep | expression, line, observedName? | ふるまい実行。unit/integration では原則1つ |
+| AssertStep | expression, line, assertion | Act の観測結果または外部観測可能な効果を検証 |
+| SemanticAssertion | target, strength, subject, line | assertion matcher 名ではなく観測対象と強さで評価 |
+| TestDoubleReplacement | target, line, dependencyKind | domain/internal replacement は domain layer test で禁止 |
+
+`AssertionTarget` は `observed-output | state | emitted-event | persisted-effect | error-contract | interaction` とする。`AssertionStrength` は `exact-value | shape | invariant | range | weak-truthiness | snapshot-only | interaction-only | length-only` とし、weak truthiness / snapshot only / length only / interaction only は warning として扱う。error case は type / code / message / recovery hint などの contract assertion を要求し、単なる throw 有無だけの確認は弱い assertion とする。
+
+TypeScript adapter はローカル規約として `actual` 変数名を推奨するが、validator の中核は「Act の観測結果が名前付き値として保持され、その値が Assert される」構造である。
 
 ### L3バリデータ（品質特性）
 

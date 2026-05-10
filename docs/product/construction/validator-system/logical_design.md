@@ -10,6 +10,10 @@
 status mismatch policy は validator-system から利用可能な fail signal として扱う。既定は advisory report、CI/L2 相当の検出では `--fail-on-stale` により stale WI status を exit code 1 として扱う。
 @work-item-id WI-140
 `L2-014 work-item-status-staleness` を追加し、標準 `validate --layer L2` 経路で stale WI status を fail signal にする。validator-system は `WorkItemStatusPolicyPort` 経由で traceability-model の report を取得し、stale report を `L2-014` error として返す。local report は advisory、pre-commit / CI が消費する L2 validation は fail policy とする。
+@work-item-id WI-129
+`L2-003 test-quality` は language/framework adapter が `TestCaseStructure` を生成し、validator policy が test case 単位で AAA・単一Act・Act観測・domain mock 方針を評価する二段構成とする。
+@work-item-id WI-130
+Assertion quality は adapter が `SemanticAssertion` に変換し、validator policy が `AssertionTarget` と `AssertionStrength` で弱い観測を warning に分類する。
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H08-01, H08-02, H08-03, H08-04, H08-05, H08-06
@@ -139,6 +143,23 @@ scripts/harness/
             ├── agent-validation-result-formatter.ts   # AIエージェント向け詳細テキスト
             └── ci-validation-result-formatter.ts      # CI/GitHub Actions向けJSON
 ```
+
+### 1.4 L2-003 Adapter / Policy Split
+
+<!-- @work-item-id WI-129, WI-130 -->
+
+`TestQualityAnalyzerPort` の責務は、対象ファイルから `TestCaseStructure` を抽出し、L2-003 の policy violation を `HarnessErrorLike` として返すことである。TypeScript/Vitest 実装は `BiomeAstTestQualityAnalyzerAdapter` に置くが、検査 contract は以下の runner-independent policy とする。
+
+1. 各 test case に Arrange / Act / Assert の意味構造が存在する。
+2. unit/integration test の Act は1つだけである。
+3. Assert は Act が生成した observation、または state / emitted event / persisted effect / error contract / interaction を観測する。
+4. domain layer test では domain/internal dependency replacement を禁止する。
+5. lifecycle/E2E test は複数 Act を許可するが、Act ごとの Assert が読める構造を要求する。
+6. weak truthiness / snapshot only / length only / interaction only / bare error assertion は warning とする。
+
+弱い assertion の分類は adapter constructor option で差し替え可能にし、既定 policy は weak truthiness / snapshot only / length only / interaction only を warning とする。
+
+Quick Mode では従来どおり `L2-003` を maintained validator として扱い、relaxation の対象にしない。
 
 ---
 

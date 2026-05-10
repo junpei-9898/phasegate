@@ -108,7 +108,7 @@ L2 validators run before every commit. They enforce process discipline and test 
 |-----------|-------------|
 | **phase-gate** | Enforces design-before-implementation order. Code changes to `scripts/harness/` are blocked unless the corresponding design documents exist in `docs/product/construction/`. |
 | **metadata** | Verifies completeness of source file annotations: `@unit`, `@layer`, `@US-XXX`, and `@story` |
-| **test-quality** | Enforces test authoring standards: AAA pattern (Arrange/Act/Assert), `actual` variable naming, single-act-per-test, and no mocking in domain layer tests |
+| **test-quality** | Enforces test authoring standards through a runner-independent semantic model: AAA pattern (Arrange/Act/Assert), named Act observation, single-act-per-test, assertion strength, lifecycle/E2E exceptions, and no domain/internal mocking in domain layer tests |
 
 **Command:**
 

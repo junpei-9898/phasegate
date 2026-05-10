@@ -139,7 +139,7 @@ npx phasegate update-skills
 +------------------------------------------------------------------+
 |  L2  PRE-COMMIT            Validators                            |
 |  phase-gate, metadata completeness, story-reflection,            |
-|  test-quality (AAA pattern)                                      |
+|  test-quality (semantic AAA + assertion strength)                |
 +------------------------------------------------------------------+
 |  L3  CI/CD                 Validators                            |
 |  security, performance, coverage threshold, nyquist traceability |

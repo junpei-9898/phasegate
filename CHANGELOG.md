@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.144.0] - 2026-05-10
+
+### Added
+
+- **WI-129 / WI-130 — semantic L2 test-quality validation** — `L2-003 test-quality` を test case 単位の semantic AAA / assertion strength モデルへ更新した。
+  - TypeScript adapter は AST から `TestCaseStructure` / `SemanticAssertion` を構築し、複数 Act、Act 観測不足、Act 以外への Assert、domain/internal mock、weak truthiness / snapshot only / length only / interaction only、error contract 不足を warning として検出する。
+  - lifecycle/E2E と parameterized test の例外を追加し、weak assertion policy は constructor option で差し替え可能にした。
+
 ## [0.142.0] - 2026-05-10
 
 ### Added

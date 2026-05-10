@@ -6,6 +6,8 @@
 @story-id H08-04
 @story-id H08-05
 @story-id H08-06
+@work-item-id WI-129
+@work-item-id WI-130
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **Wave**: 2（品質検証レイヤー）
@@ -19,12 +21,29 @@
 
 - 集約: なし（ValidatorDefinition VOパターン採用）
 - エンティティ: なし
-- 値オブジェクト: ValidatorId, ValidatorDefinition, ValidationRule, ValidationResult, LayerConfig, DriftReport, ConsistencyReport, DeadCodeReport
+- 値オブジェクト: ValidatorId, ValidatorDefinition, ValidationRule, ValidationResult, LayerConfig, DriftReport, ConsistencyReport, DeadCodeReport, TestCaseStructure, SemanticAssertion
 - ドメインサービス: ValidatorRegistry, ValidatorExecutionService, DriftDetectionService, ConsistencyCheckService, DeadCodeDetectionService
 
 ---
 
 ## 2. 値オブジェクトテストケース
+
+### L2-003 Test Quality Semantics
+
+<!-- @work-item-id WI-129, WI-130 -->
+
+| ケースID | 入力 | 期待結果 |
+|---------|------|---------|
+| UT-TQS-001 | Arrange / Act / Assert があり `const actual = ...` を Assert する TypeScript test case | `passed=true` |
+| UT-TQS-002 | 英語 test name | `L2-003` warning |
+| UT-TQS-003 | Act が名前付き観測値に保持されていない test case | `L2-003` warning |
+| UT-TQS-004 | unit/integration test case に Act が複数ある | `L2-003` warning |
+| UT-TQS-005 | Assert が Act の観測結果ではなく入力値だけを検証する | `L2-003` warning |
+| UT-TQS-006 | domain/internal module を `vi.mock` / `jest.mock` で置き換える | `L2-003` warning |
+| UT-TQS-007 | E2E lifecycle test が Act / Assert を繰り返す | lifecycle exception として許可 |
+| UT-TQS-008 | `it.each` parameterized test が semantic AAA を満たす | `passed=true` |
+| UT-TQS-009 | weak truthiness / snapshot only / length only / interaction only | assertion strength warning |
+| UT-TQS-010 | bare `toThrow()` だけの error case | error contract warning |
 
 ### ValidatorId
 
