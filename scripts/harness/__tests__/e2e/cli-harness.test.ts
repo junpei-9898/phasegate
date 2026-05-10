@@ -130,6 +130,21 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: ci:generate-template');
     });
 
+    it('ci:generate-template --render はpreset未指定でもstandardでテンプレートを出力できる', () => {
+      const actual = run('ci:generate-template', '--type', 'agent-context-refresh', '--render');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('name: Agent Context Refresh');
+      expect(actual.stderr).not.toContain('Preset not found: default');
+    });
+
+    it('ci:generate-template --help はpresetの既定値standardを表示する', () => {
+      const actual = run('ci:generate-template', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('Default: standard');
+    });
+
     it('ci:migrate-agents-md --dry-run が "Unknown command" にならない', () => {
       const actual = run('ci:migrate-agents-md', '--dry-run');
 
@@ -173,6 +188,7 @@ describe('harness CLI E2E', () => {
     it('validate --layer L1 が exit 0 または exit 1 で完了する', () => {
       const actual = run('validate', '--layer', 'L1');
 
+      expect(actual.stderr).not.toContain('Unknown command');
       expect([0, 1]).toContain(actual.exitCode);
     });
 
@@ -183,15 +199,16 @@ describe('harness CLI E2E', () => {
       expect([0, 1]).toContain(actual.exitCode);
     });
 
-    it('validate --layer L2/L3/L4 --format json は未対応formatとして exit 2 を返す', () => {
-      for (const layer of ['L2', 'L3', 'L4'] as const) {
+    it.each(['L2', 'L3', 'L4'] as const)(
+      'validate --layer %s --format json は未対応formatとして exit 2 を返す',
+      (layer) => {
         const actual = run('validate', '--layer', layer, '--format', 'json');
 
         expect(actual.exitCode).toBe(2);
         expect(actual.stderr).toContain("Invalid --format value for validate: 'json'");
         expect(actual.stdout).not.toContain('=== バリデーション結果 ===');
-      }
-    });
+      },
+    );
   });
 
   describe('biome-ast-engine コマンド群', () => {
@@ -233,6 +250,7 @@ describe('harness CLI E2E', () => {
     it('phasegate:check-ready が exit 0 または exit 1 で完了する', () => {
       const actual = run('phasegate:check-ready');
 
+      expect(actual.stderr).not.toContain('Unknown command');
       expect([0, 1]).toContain(actual.exitCode);
     }, 30_000);
 
@@ -277,7 +295,9 @@ describe('harness CLI E2E', () => {
     it('phasegate:status --json の stdout が JSON.parse 可能（storyReflection 行が混入しない）', () => {
       const actual = run('phasegate:status', '--json');
 
-      expect(() => JSON.parse(actual.stdout)).not.toThrow();
+      const parsed = JSON.parse(actual.stdout) as { status: string; data: { layers: unknown[] } };
+      expect(parsed.status).toMatch(/^(pass|fail)$/);
+      expect(Array.isArray(parsed.data.layers)).toBe(true);
     }, 30_000);
 
     it('壊れた phasegate.config.json で "not valid JSON" 警告が stderr に出る（--json でも続行する）', () => {

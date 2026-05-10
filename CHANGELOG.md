@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.144.1] - 2026-05-10
+
+### Fixed
+
+- **WI-142 — `ci:generate-template` default preset** — `--preset` 未指定時に存在しない `default` ではなく `standard` を使うようにし、`ci:generate-template --type agent-context-refresh --render` がそのまま成功するようにした。
+  - help / CLI reference も `--preset` の既定値が `standard` である説明に更新した。
+
 ## [0.144.0] - 2026-05-10
 
 ### Added

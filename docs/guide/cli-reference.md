@@ -319,7 +319,7 @@ ISSUE-005 P3-10 で明確化された境界:
 
 | Command | Options | Description |
 |---|---|---|
-| `ci:generate-template` | `--preset <id>` `--type <type>` `--render` `--json` | Generate CI/CD template |
+| `ci:generate-template` | `--preset <id>`（省略時 `standard`） `--type <type>` `--render` `--json` | Generate CI/CD template |
 | `ci:migrate-agents-md` | `--dry-run` `--validate-only` `--json` | Migrate AGENTS.md to pointer format |
 | `ci:auto-refresh-agent-context` | `--dry-run` `--apply` `--json` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
 | `refresh-claude-md` | `--dry-run` `--apply` `--json` | Refresh CLAUDE.md while preserving the user-owned section |

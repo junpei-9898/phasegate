@@ -470,3 +470,5 @@
 | IT-API-RefreshAgentContext-WI032-001 | `--dry-run` が use case に伝播すること | `{ dryRun:true }` | exitCode 0、dry-run 表示 |
 | IT-API-RefreshAgentContext-WI032-002 | `--apply --json` が JSON を返すこと | `{ apply:true, format:'json' }` | JSON parse 可能で `applied=true` |
 | IT-API-RefreshAgentContext-WI032-003 | agent-context-refresh template を render できること | `templateType='agent-context-refresh'` | workflow content が返る |
+| IT-WI142-001 | `--preset` 未指定で agent-context-refresh template を render できること | `ci:generate-template --type agent-context-refresh --render` | 既定 preset `standard` で成功し、workflow YAML が返る。@work-item-id WI-142 |
+| IT-WI142-002 | help が `--preset` の既定値を説明すること | `ci:generate-template --help` | `Default: standard` を含む。@work-item-id WI-142 |

@@ -1223,9 +1223,12 @@ ci-governanceの CLIコマンドはci-governance自身がトップレベルコ�
 | 引数 | 必須 | 説明 |
 |------|------|------|
 | `--template-type <aidlc-gate\|consistency-check\|pre-commit>` | Yes | 生成するテンプレート種別 |
-| `--preset-id <minimal\|standard\|strict>` | No | 使用するPreset ID（省略時はphasegate.config.jsonのプリセット） |
+| `--preset-id <minimal\|standard\|strict>` | No | 使用するPreset ID（省略時は `standard`） |
 | `--dry-run` | No | ファイル書き出しを行わず生成内容を確認のみ |
 | `--format <human\|json>` | No | 出力形式（既定: human） |
+
+<!-- @work-item-id WI-142 -->
+`ci:generate-template` の CLI boundary は、`--preset` 未指定を `standard` に正規化してから Handler / UseCase へ渡す。`default` は `PresetConfigAdapter` の有効 preset ではないため、下位層へ伝播させない。
 
 **処理**
 
