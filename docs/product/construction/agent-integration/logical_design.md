@@ -1518,3 +1518,5 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 - `HookToCliTranslator`（Stop変換ルール）
 - `HandleStopUseCase`（ReentryGuardライフサイクル制御の唯一の制御点）
 - `stop-hook.ts`（Presentation）
+<!-- @work-item-id WI-141 -->
+Agent runtime hooks for Codex and Claude Code must call PhaseGate commands for bypass policy decisions. Bypass rules are not duplicated in agent-specific hook code; agent hooks may surface guidance, but commit/push/CI enforcement is owned by `commit-msg` and `bypass:audit`.

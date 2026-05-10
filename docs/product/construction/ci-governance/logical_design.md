@@ -1562,3 +1562,5 @@ CLAUDE.md は bundled template を正本とし、PhaseGate が所有する標準
 ### 10.3 CI template
 
 `agent-context-refresh.yml` は週次 schedule と手動実行で `ci:auto-refresh-agent-context --apply` を実行し、変更があれば PR を作成する。template は `docs/templates/ci/agent-context-refresh.yml` を正本とし、`ci:generate-template --render --type agent-context-refresh` から取得できる。
+<!-- @work-item-id WI-141 -->
+CI templates may run `phasegate bypass:audit --base <merge-base> --head <head>` before publish/release gates. This command is the final backstop for commits created with `git commit --no-verify`, because Git hooks can be skipped locally but the audited range can still be replayed in CI.

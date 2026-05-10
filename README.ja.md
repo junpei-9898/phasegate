@@ -86,7 +86,7 @@ claude
 - `.codex/hooks.json` — Codex CLI hooks 設定（`--agent codex|both` 時）
 - `docs/principles/*.md` — アーキテクチャ哲学・テスト規約（immutable）
 - `docs/folder_management_rules.md` — ドキュメント配置ルール（**正本**）
-- `--with-husky` を付けると `.husky/pre-commit` ・ `.husky/commit-msg` も配置
+- `--with-husky` を付けると `.husky/pre-commit` ・ `.husky/commit-msg` ・ `.husky/pre-push` も配置
 - `--with-ci` を付けると `.github/workflows/aidlc-gate.yml` ・ `.github/workflows/consistency-check.yml` ・ `.github/workflows/agent-context-refresh.yml` も配置
 
 **`init` が生成しないもの**（後で skill が作る）:
@@ -305,6 +305,7 @@ npx phasegate <command> [options]
 | `list-errors --layer <L0-L4>` | エラー定義一覧 |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | agent hook を起動（stdin から JSON） |
 | `pre-commit` | L2 pre-commit バリデータをステージファイルに適用 |
+| `bypass:audit --base <ref> [--head <ref>]` | push/CI range に pre-commit validation を再適用し、gate failure に structured bypass evidence を要求 |
 
 完全な CLI Reference: [CLI Reference](docs/guide/cli-reference.md)
 

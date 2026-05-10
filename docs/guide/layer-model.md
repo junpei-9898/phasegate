@@ -50,7 +50,8 @@ Deployed by `phasegate init --with-husky` into `.husky/`.
 | Hook file | Invokes | Responsibility |
 |-----------|---------|----------------|
 | **.husky/pre-commit** | `npx phasegate pre-commit` | Runs L2 validators (phase-gate / metadata / story-reflection / test-quality) on staged files. Fails the commit on violation. |
-| **.husky/commit-msg** | `npx phasegate commit-msg $1` | Enforces the `Work-Item: WI-XXX` trailer when WI directories or their contents are staged. Ensures every commit is traceable to a work item. |
+| **.husky/commit-msg** | `npx phasegate commit-msg $1` | Enforces the `Work-Item: WI-XXX` trailer when WI directories or their contents are staged, and validates structured bypass trailers when present. |
+| **.husky/pre-push** | `npx phasegate bypass:audit --base origin/main --head HEAD` | Replays pre-commit validation for the push range so commits created with `git commit --no-verify` still need complete bypass evidence before leaving the workstation. |
 
 ### About `validate --layer L0`
 

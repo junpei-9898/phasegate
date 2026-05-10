@@ -5,9 +5,10 @@
 #
 # 実行タイミング: Pull Request（open / synchronize / reopen）
 # 実行内容:
-#   1. harness:lint  — L1 Biome AST ルール検証
-#   2. harness:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
-#   3. 失敗時: PR にエラーサマリーをコメント
+#   1. bypass:audit — bypass trailer / evidence 監査
+#   2. harness:lint  — L1 Biome AST ルール検証
+#   3. harness:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
+#   4. 失敗時: PR にエラーサマリーをコメント
 
 name: AIDLC Quality Gate
 
@@ -25,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,6 +42,21 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Bypass audit: local `git commit --no-verify` can skip hooks, but CI
+      # replays the gate over the PR range and requires structured evidence.
+      - name: Bypass Audit
+        id: bypass_audit
+        run: |
+          set +e
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          RESULT=$(npx phasegate bypass:audit --base "origin/${{ github.base_ref }}" --head HEAD 2>&1)
+          EXIT_CODE=$?
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $EXIT_CODE
 
       # L1: Biome AST ルール
       - name: L1 Lint (Biome AST)
@@ -75,11 +93,16 @@ jobs:
           script: |
             const lintResult   = `${{ steps.lint.outputs.result }}`;
             const ciResult     = `${{ steps.ci_check.outputs.result }}`;
+            const bypassResult = `${{ steps.bypass_audit.outputs.result }}`;
             const lintFailed   = '${{ steps.lint.outputs.exit_code }}' !== '0';
             const ciFailed     = '${{ steps.ci_check.outputs.exit_code }}' !== '0';
+            const bypassFailed = '${{ steps.bypass_audit.outputs.exit_code }}' !== '0';
 
             let body = '## ❌ AIDLC Quality Gate — 失敗\n\n';
 
+            if (bypassFailed) {
+              body += '### Bypass Audit エラー\n```text\n' + bypassResult + '\n```\n\n';
+            }
             if (lintFailed) {
               body += '### L1 Lint エラー\n```json\n' + lintResult + '\n```\n\n';
             }

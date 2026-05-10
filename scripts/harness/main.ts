@@ -46,6 +46,7 @@ import {
   deployHookScripts,
   deployHuskyCommitMsgHook,
   deployHuskyHook,
+  deployHuskyPrePushHook,
   deploySkills,
   getCategoryForSkill,
   getDeployedVersion,
@@ -154,6 +155,7 @@ Commands:
   hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start/user-prompt-submit)
   pre-commit                              Run L2 pre-commit validators on staged files
   commit-msg <message-file>               Validate commit message trailers against staged files
+  bypass:audit --base <ref> [--head <ref>] Audit bypass evidence for a push/CI commit range
   delegate-sonnet [...args]               Delegate task to Sonnet 4.6 (forwards args to scripts/delegate-sonnet.sh)
 
 Skills:
@@ -718,6 +720,7 @@ async function main(): Promise<void> {
         const withHusky = hasFlag(args, "--with-husky");
         const huskyResult = withHusky ? await deployHuskyHook(harnessRoot, rootDir) : null;
         const huskyCommitMsgResult = withHusky ? await deployHuskyCommitMsgHook(harnessRoot, rootDir) : null;
+        const huskyPrePushResult = withHusky ? await deployHuskyPrePushHook(harnessRoot, rootDir) : null;
         const ciWorkflowResult = withCi ? await deployCiWorkflows(harnessRoot, rootDir) : null;
         console.log(
           `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
@@ -781,6 +784,13 @@ async function main(): Promise<void> {
             console.log(`✓ .husky/commit-msg deployed`);
           } else {
             console.log(`  .husky/commit-msg already exists, skipped`);
+          }
+        }
+        if (huskyPrePushResult !== null) {
+          if (huskyPrePushResult.created) {
+            console.log(`✓ .husky/pre-push deployed`);
+          } else {
+            console.log(`  .husky/pre-push already exists, skipped`);
           }
         }
         if (ciWorkflowResult !== null) {
@@ -1584,6 +1594,15 @@ Examples:
           runCommitMsgCli: (commitMessagePath: string | undefined) => Promise<void>;
         };
         await preCommitMod.runCommitMsgCli(args[1]);
+        break;
+      }
+
+      case "bypass:audit": {
+        const preCommitPath = join(harnessRoot, "scripts/harness/integrations/pre-commit.js");
+        const preCommitMod = (await import(preCommitPath)) as {
+          runBypassAuditCli: (args: readonly string[]) => Promise<void>;
+        };
+        await preCommitMod.runBypassAuditCli(args.slice(1));
         break;
       }
 

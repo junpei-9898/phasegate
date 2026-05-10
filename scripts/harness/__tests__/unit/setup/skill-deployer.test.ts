@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer test
 // @story H13-04
+// @work-item-id WI-141
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -11,6 +12,7 @@ import {
   deployDesignDocs,
   deployHuskyCommitMsgHook,
   deployHuskyHook,
+  deployHuskyPrePushHook,
   deploySkills,
   getCategoryForSkill,
   getSkillsForSet,
@@ -254,6 +256,72 @@ target("deployHuskyCommitMsgHook", () => {
 
         // Assert
         expect(actual).toBe("existing hook\n");
+      });
+    });
+  });
+});
+
+target("deployHuskyPrePushHook", () => {
+  describe("husky pre-push フックをデプロイする", () => {
+    context("空のプロジェクトに対して呼ぶと", () => {
+      it(".husky/pre-push が作成されて created: true を返すこと", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          const result = await deployHuskyPrePushHook(harnessRoot, projectRoot);
+          await access(join(projectRoot, ".husky/pre-push"));
+          return result;
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          created: true,
+          path: actual.path,
+        });
+      });
+
+      it(".husky/pre-push に実行権限 (0o755) が付与されること", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          const result = await deployHuskyPrePushHook(harnessRoot, projectRoot);
+          const fileStats = await stat(join(projectRoot, ".husky/pre-push"));
+          return { result, mode: fileStats.mode & 0o777 };
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          result: {
+            created: true,
+            path: actual.result.path,
+          },
+          mode: 0o755,
+        });
+      });
+    });
+
+    context("既に .husky/pre-push が存在する場合", () => {
+      it("スキップされ created: false を返すこと", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, ".husky"), { recursive: true });
+          await writeFile(join(projectRoot, ".husky/pre-push"), "existing hook\n", "utf-8");
+
+          return deployHuskyPrePushHook(harnessRoot, projectRoot);
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          created: false,
+          path: actual.path,
+        });
       });
     });
   });

@@ -11,6 +11,8 @@
 `main.ts` は dedicated command `work-items:status` を公開し、dry-run/apply/fail-on-stale/json を traceability-model の command handler へ委譲する。`phasegate:status` とは別導線にし、既存 status API の JSON contract を壊さない。
 @work-item-id WI-140
 `work-items:status --apply` に `--allow-downgrade` と `--changed-only` を追加し、既定 apply policy を downgrade 拒否にする。`validate --layer L2` は validator-system の `L2-014` を通じて stale WI status を CI/pre-commit の fail signal として扱う。
+@work-item-id WI-141
+`commit-msg` は bypass trailer の構文・証跡を検証し、`bypass:audit --base <ref> [--head <ref>]` は push/CI の backstop として audited range の変更ファイルに pre-commit validation を再適用する。Git は `--no-verify` の痕跡を commit に保存しないため、PhaseGate は「gate failure を持つ差分が bypass trailer なしで到達した」状態を missing bypass evidence として扱う。
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）

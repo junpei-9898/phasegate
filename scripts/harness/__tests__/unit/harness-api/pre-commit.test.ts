@@ -1,10 +1,14 @@
 // @unit harness-api
 // @layer test
 // @story H03-02
+// @work-item-id WI-141
 
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
 import { expect, it, vi } from "vitest";
 import type { PreCommitDeps } from "../../../integrations/pre-commit.js";
-import { runPreCommit } from "../../../integrations/pre-commit.js";
+import { runBypassAudit, runPreCommit, validateBypassTrailers } from "../../../integrations/pre-commit.js";
 import type { ValidateMetadataCommandOutput } from "../../../traceability-model/presentation/cli/validate-metadata-command-handler.js";
 import type { ValidationResultContract } from "../../../validator-system/application/dto/validation-result-contract.js";
 import { context, target } from "../../helpers/test-helpers.js";
@@ -434,6 +438,172 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).not.toContain("Work-Item trailer");
+    });
+  });
+
+  context("bypass trailer 検証 (WI-141)", () => {
+    it("bypass trailer が一部だけ存在する場合、必須 trailer 欠落として失敗すること", async () => {
+      // Arrange
+      const commitMessage = "fix: bypass\n\nBypass-Reason: known phase-gate debt";
+
+      // Act
+      const actual = await validateBypassTrailers(commitMessage);
+
+      // Assert
+      expect(actual.hasAnyBypassTrailer).toBe(true);
+      expect(actual.complete).toBe(false);
+      expect(actual.errors).toContain("Missing required bypass trailer: Bypass-Evidence");
+      expect(actual.errors).toContain("Missing required bypass trailer: Bypass-Owner");
+    });
+
+    it("command evidence を含む完全な bypass trailer は通過すること", async () => {
+      // Arrange
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: known phase-gate debt",
+        "Bypass-Evidence: command: pnpm test",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await validateBypassTrailers(commitMessage);
+
+      // Assert
+      expect(actual.complete).toBe(true);
+      expect(actual.errors).toEqual([]);
+    });
+
+    it("存在しない report evidence は失敗すること", async () => {
+      // Arrange
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: known phase-gate debt",
+        "Bypass-Evidence: report: missing/report.json",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await validateBypassTrailers(commitMessage);
+
+      // Assert
+      expect(actual.complete).toBe(false);
+      expect(actual.errors).toContain("Bypass-Evidence report does not exist: missing/report.json");
+    });
+
+    it("非 bypass 可能 blocker が残る場合、完全な bypass trailer があっても拒否すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        l2Result: [failingContract("L2-003", "test-quality failed")],
+      });
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: urgent false positive",
+        "Bypass-Evidence: command: pnpm test",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await runPreCommit(["scripts/harness/foo.ts"], deps, {
+        commitMessage,
+        allowConditionalBypass: true,
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.stdout).toContain("Bypass rejected for non-bypassable blocker");
+    });
+
+    it("条件付き blocker だけなら完全な bypass trailer で通過すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        l2Result: [failingContract("L2-001", "phase-gate known debt")],
+      });
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: known phase-gate debt",
+        "Bypass-Evidence: command: pnpm test",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await runPreCommit(["scripts/harness/foo.ts"], deps, {
+        commitMessage,
+        allowConditionalBypass: true,
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("Conditional bypass evidence is complete");
+    });
+
+    it("report evidence が存在する場合は通過すること", async () => {
+      // Arrange
+      const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-bypass-"));
+      await writeFile(path.join(workDir, "report.json"), "{}", "utf-8");
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: known phase-gate debt",
+        "Bypass-Evidence: report: report.json",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await validateBypassTrailers(commitMessage, workDir);
+
+      // Assert
+      expect(actual.complete).toBe(true);
+    });
+  });
+
+  context("bypass:audit range 検証 (WI-141)", () => {
+    it("gate failure があり bypass trailer が無い場合、missing bypass evidence として失敗すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        l2Result: [failingContract("L2-001", "phase-gate known debt")],
+      });
+
+      // Act
+      const actual = await runBypassAudit(deps, {
+        baseRef: "main",
+        headRef: "HEAD",
+        changedFiles: ["scripts/harness/foo.ts"],
+        commitMessages: ["fix: bypass without trailers"],
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.stdout).toContain("Gate failure requires complete bypass trailers");
+    });
+
+    it("条件付き blocker と完全な bypass trailer の場合は通過すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        l2Result: [failingContract("L2-001", "phase-gate known debt")],
+      });
+      const commitMessage = [
+        "fix: bypass",
+        "",
+        "Bypass-Reason: known phase-gate debt",
+        "Bypass-Evidence: command: pnpm test",
+        "Bypass-Owner: platform",
+      ].join("\n");
+
+      // Act
+      const actual = await runBypassAudit(deps, {
+        baseRef: "main",
+        headRef: "HEAD",
+        changedFiles: ["scripts/harness/foo.ts"],
+        commitMessages: [commitMessage],
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("Bypass audit");
     });
   });
 });

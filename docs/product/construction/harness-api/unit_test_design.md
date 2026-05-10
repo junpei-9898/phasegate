@@ -5,6 +5,7 @@
 @story-id H09-03
 @story-id H09-04
 @work-item-id WI-025
+@work-item-id WI-141
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 skill setup の unit 観点を追加）
@@ -15,6 +16,8 @@
 ---
 
 ## 1. 対象ドメインモデル
+
+WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validation と audited range replay を追加する。`Bypass-Reason` / `Bypass-Evidence` / `Bypass-Owner` の完全性、report evidence の存在確認、non-bypassable blocker の拒否を unit test で検証する。
 
 - 集約: なし（domain_model.md §2 §9-D1 集約降格方針）
 - エンティティ: なし

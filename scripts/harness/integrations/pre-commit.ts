@@ -1,7 +1,7 @@
 /**
  * @unit harness-api
  * @layer presentation
- * @work-item-id WI-092
+ * @work-item-id WI-141
  *
  * Pre-commit CLI entry.
  * Runs L2 validators against staged TypeScript files AND design-document
@@ -14,8 +14,8 @@
  *   2 = runtime error
  */
 
-import { execSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { execFileSync, execSync } from "node:child_process";
+import { access, readFile } from "node:fs/promises";
 import { createConfigFoundationModule } from "../config-foundation/composition-root.js";
 import { toValidatorSystemConfig } from "../config-foundation/application/mappers/validator-system-config-mapper.js";
 import { createTraceabilityModelModule } from "../traceability-model/composition-root.js";
@@ -36,6 +36,9 @@ const MD_EXTENSION = ".md";
 const WORK_ITEM_PATH_PATTERN = /(?:^|\/)WI-\d+(?:\/|$)/;
 const WORK_ITEM_TRAILER_PATTERN = /^Work-Item:\s*WI-\d+\s*$/m;
 const TEST_FILE_SUFFIXES = Object.freeze([".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx"]);
+const BYPASS_TRAILER_NAMES = Object.freeze(["Bypass-Reason", "Bypass-Evidence", "Bypass-Owner"]);
+const OPTIONAL_BYPASS_TRAILER_NAMES = Object.freeze(["Bypass-Report"]);
+const NON_BYPASSABLE_VALIDATOR_IDS = Object.freeze(["L2-002", "L2-003", "L2-014"]);
 
 function isConfigNotFoundError(err: unknown): boolean {
   return err instanceof Error && err.name === "ConfigNotFoundError";
@@ -184,6 +187,7 @@ export interface PreCommitDeps {
 export interface PreCommitResult {
   readonly exitCode: 0 | 1 | 2;
   readonly stdout: string;
+  readonly blockerClasses: readonly BypassBlockerClass[];
 }
 
 export interface PreCommitOptions {
@@ -194,6 +198,28 @@ export interface PreCommitOptions {
    */
   readonly commitMessage?: string;
   readonly implementationExtensions?: readonly string[];
+  readonly allowConditionalBypass?: boolean;
+  readonly evidenceRoot?: string;
+}
+
+export interface BypassBlockerClass {
+  readonly code: string;
+  readonly label: string;
+  readonly bypassable: boolean;
+}
+
+export interface BypassTrailerValidationResult {
+  readonly hasAnyBypassTrailer: boolean;
+  readonly complete: boolean;
+  readonly errors: readonly string[];
+}
+
+export interface BypassAuditOptions {
+  readonly baseRef?: string;
+  readonly headRef?: string;
+  readonly commitMessages?: readonly string[];
+  readonly changedFiles?: readonly string[];
+  readonly evidenceRoot?: string;
 }
 
 function getStagedFiles(): string[] {
@@ -248,6 +274,95 @@ function hasWorkItemTrailer(commitMessage: string): boolean {
   return WORK_ITEM_TRAILER_PATTERN.test(commitMessage);
 }
 
+function extractTrailer(commitMessage: string, trailerName: string): string | undefined {
+  const pattern = new RegExp(`^${trailerName}:\\s*(.+?)\\s*$`, "m");
+  return pattern.exec(commitMessage)?.[1]?.trim();
+}
+
+function hasTrailer(commitMessage: string, trailerName: string): boolean {
+  return extractTrailer(commitMessage, trailerName) !== undefined;
+}
+
+function isPathLikeEvidence(value: string): boolean {
+  return value.startsWith("report:");
+}
+
+function evidencePath(value: string): string {
+  return value.slice("report:".length).trim();
+}
+
+async function pathExists(path: string, root = process.cwd()): Promise<boolean> {
+  try {
+    const { resolve } = await import("node:path");
+    await access(resolve(root, path));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function validateBypassTrailers(
+  commitMessage: string,
+  evidenceRoot = process.cwd(),
+): Promise<BypassTrailerValidationResult> {
+  const allTrailerNames = [...BYPASS_TRAILER_NAMES, ...OPTIONAL_BYPASS_TRAILER_NAMES];
+  const hasAnyBypassTrailer = allTrailerNames.some((name) => hasTrailer(commitMessage, name));
+  if (!hasAnyBypassTrailer) {
+    return { hasAnyBypassTrailer: false, complete: false, errors: [] };
+  }
+
+  const errors: string[] = [];
+  for (const name of BYPASS_TRAILER_NAMES) {
+    if (!hasTrailer(commitMessage, name)) {
+      errors.push(`Missing required bypass trailer: ${name}`);
+    }
+  }
+
+  const evidence = extractTrailer(commitMessage, "Bypass-Evidence");
+  if (evidence !== undefined) {
+    if (evidence.startsWith("command:")) {
+      const command = evidence.slice("command:".length).trim();
+      if (command.length === 0) {
+        errors.push("Bypass-Evidence command must not be empty.");
+      }
+    } else if (isPathLikeEvidence(evidence)) {
+      const reportPath = evidencePath(evidence);
+      if (reportPath.length === 0) {
+        errors.push("Bypass-Evidence report path must not be empty.");
+      } else if (!(await pathExists(reportPath, evidenceRoot))) {
+        errors.push(`Bypass-Evidence report does not exist: ${reportPath}`);
+      }
+    } else {
+      errors.push("Bypass-Evidence must start with command: or report:.");
+    }
+  }
+
+  const report = extractTrailer(commitMessage, "Bypass-Report");
+  if (report !== undefined && !(await pathExists(report, evidenceRoot))) {
+    errors.push(`Bypass-Report does not exist: ${report}`);
+  }
+
+  return { hasAnyBypassTrailer: true, complete: errors.length === 0, errors };
+}
+
+function classifyValidatorFailure(result: ValidationResultContract): BypassBlockerClass | undefined {
+  if (result.passed || result.skipped) return undefined;
+  const nonBypassable = NON_BYPASSABLE_VALIDATOR_IDS.includes(result.validatorId);
+  return {
+    code: result.validatorId,
+    label: result.validatorId === "L2-003" ? "test-quality" : result.validatorId,
+    bypassable: !nonBypassable,
+  };
+}
+
+function metadataBlocker(): BypassBlockerClass {
+  return { code: "metadata", label: "metadata", bypassable: false };
+}
+
+function hasNonBypassableBlocker(blockers: readonly BypassBlockerClass[]): boolean {
+  return blockers.some((blocker) => !blocker.bypassable);
+}
+
 function normalizeImplementationExtensions(extensions: readonly string[] | undefined): readonly string[] {
   const rawExtensions = extensions === undefined || extensions.length === 0
     ? DEFAULT_IMPLEMENTATION_EXTENSIONS
@@ -274,6 +389,7 @@ export async function runPreCommit(
     return {
       exitCode: 0,
       stdout: `${DIM}[phasegate] No staged files to check. Skipping.${RESET}`,
+      blockerClasses: [],
     };
   }
 
@@ -284,6 +400,7 @@ export async function runPreCommit(
   );
 
   let exitCode: 0 | 1 | 2 = 0;
+  const blockerClasses: BypassBlockerClass[] = [];
 
   if (implementationFiles.length > 0) {
     // staged TS file を Unit ごとにグルーピングし、Unit 単位で L2 phase gate
@@ -311,6 +428,10 @@ export async function runPreCommit(
     }
 
     const merged = mergePerUnitResults(runs);
+    blockerClasses.push(...merged.flatMap((result) => {
+      const blocker = classifyValidatorFailure(result);
+      return blocker === undefined ? [] : [blocker];
+    }));
     const report = buildReport(merged);
     sections.push("");
     sections.push(`${BOLD}== 実装ファイル (${implementationFiles.length} file(s)) ==${RESET}`);
@@ -328,6 +449,9 @@ export async function runPreCommit(
     sections.push(`${BOLD}== 設計 / テスト メタデータ注釈 (${metadataFiles.length} file(s)) ==${RESET}`);
     sections.push(metadataResult.text);
     exitCode = maxExitCode(exitCode, metadataResult.exitCode);
+    if (metadataResult.exitCode !== 0) {
+      blockerClasses.push(metadataBlocker());
+    }
   }
 
   if (options.commitMessage !== undefined && requiresWorkItemTrailer(stagedFiles)) {
@@ -343,6 +467,29 @@ export async function runPreCommit(
     }
   }
 
+  if (options.commitMessage !== undefined) {
+    const bypassValidation = await validateBypassTrailers(options.commitMessage, options.evidenceRoot);
+    if (bypassValidation.hasAnyBypassTrailer) {
+      sections.push("");
+      sections.push(`${BOLD}== Bypass audit ==${RESET}`);
+      if (!bypassValidation.complete) {
+        for (const error of bypassValidation.errors) {
+          sections.push(`${RED}FAIL${RESET} ${error}`);
+        }
+        exitCode = maxExitCode(exitCode, 1);
+      } else if (hasNonBypassableBlocker(blockerClasses)) {
+        const labels = blockerClasses.filter((blocker) => !blocker.bypassable).map((blocker) => blocker.label);
+        sections.push(`${RED}FAIL${RESET} Bypass rejected for non-bypassable blocker(s): ${labels.join(", ")}`);
+        exitCode = maxExitCode(exitCode, 1);
+      } else if (exitCode !== 0 && options.allowConditionalBypass === true) {
+        sections.push(`${GREEN}PASS${RESET} Conditional bypass evidence is complete.`);
+        exitCode = 0;
+      } else {
+        sections.push(`${GREEN}PASS${RESET} Bypass trailers are complete.`);
+      }
+    }
+  }
+
   sections.push("");
   if (exitCode === 0) {
     sections.push(`${GREEN}[phasegate]${RESET} All checks passed.`);
@@ -353,6 +500,72 @@ export async function runPreCommit(
   return {
     exitCode,
     stdout: sections.join("\n"),
+    blockerClasses,
+  };
+}
+
+function getChangedFilesInRange(baseRef: string, headRef: string): string[] {
+  try {
+    const output = execFileSync("git", ["diff", "--name-only", "--diff-filter=ACM", `${baseRef}..${headRef}`], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return output.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function getCommitMessagesInRange(baseRef: string, headRef: string): string[] {
+  try {
+    const output = execFileSync("git", ["log", "--format=%B%x1e", `${baseRef}..${headRef}`], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return output.split("\x1e").map((message) => message.trim()).filter((message) => message.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function hasCompleteBypassTrailerSet(results: readonly BypassTrailerValidationResult[]): boolean {
+  return results.some((result) => result.hasAnyBypassTrailer && result.complete);
+}
+
+export async function runBypassAudit(
+  deps: PreCommitDeps,
+  options: BypassAuditOptions = {},
+): Promise<PreCommitResult> {
+  const baseRef = options.baseRef ?? "origin/main";
+  const headRef = options.headRef ?? "HEAD";
+  const changedFiles = options.changedFiles ?? getChangedFilesInRange(baseRef, headRef);
+  const commitMessages = options.commitMessages ?? getCommitMessagesInRange(baseRef, headRef);
+  const syntheticCommitMessage = commitMessages.join("\n\n");
+
+  const result = await runPreCommit(changedFiles, deps, {
+    commitMessage: syntheticCommitMessage,
+    allowConditionalBypass: true,
+    evidenceRoot: options.evidenceRoot,
+  });
+  const bypassResults = await Promise.all(
+    commitMessages.map((message) => validateBypassTrailers(message, options.evidenceRoot)),
+  );
+
+  const sections = [
+    `${BOLD}[phasegate]${RESET} Bypass audit (${baseRef}..${headRef})`,
+    result.stdout,
+  ];
+  let exitCode = result.exitCode;
+  if (result.exitCode !== 0 && !hasCompleteBypassTrailerSet(bypassResults)) {
+    sections.push("");
+    sections.push(`${RED}FAIL${RESET} Gate failure requires complete bypass trailers.`);
+    exitCode = 1;
+  }
+
+  return {
+    exitCode,
+    stdout: sections.join("\n"),
+    blockerClasses: result.blockerClasses,
   };
 }
 
@@ -410,6 +623,41 @@ export async function runCommitMsgCli(commitMessagePath: string | undefined): Pr
       {
         commitMessage,
         implementationExtensions: await loadPreCommitImplementationExtensions(),
+        evidenceRoot: process.cwd(),
+      },
+    );
+
+    process.stdout.write(`${result.stdout}\n`);
+    process.exit(result.exitCode);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`${RED}[phasegate] Unexpected error:${RESET} ${msg}\n`);
+    process.exit(2);
+  }
+}
+
+function parseCliFlag(args: readonly string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+  if (index === -1 || index + 1 >= args.length) return undefined;
+  return args[index + 1];
+}
+
+export async function runBypassAuditCli(args: readonly string[] = []): Promise<void> {
+  try {
+    const validatorMod = createValidatorSystemModule(await loadValidatorSystemConfig());
+    const traceabilityMod = createTraceabilityModelModule(
+      process.cwd(),
+      await loadTraceabilityModelOptions(),
+    );
+    const result = await runBypassAudit(
+      {
+        runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
+        validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
+      },
+      {
+        baseRef: parseCliFlag(args, "--base"),
+        headRef: parseCliFlag(args, "--head"),
+        evidenceRoot: process.cwd(),
       },
     );
 

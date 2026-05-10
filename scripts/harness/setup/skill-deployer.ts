@@ -617,6 +617,25 @@ export async function deployHuskyCommitMsgHook(
   return { created: true, path: targetPath };
 }
 
+export async function deployHuskyPrePushHook(
+  harnessRoot: string,
+  projectRoot: string,
+): Promise<DeployHuskyHookResult> {
+  const targetPath = join(projectRoot, ".husky", "pre-push");
+
+  try {
+    await fs.access(targetPath);
+    return { created: false, path: targetPath };
+  } catch {}
+
+  const sourcePath = join(harnessRoot, "docs", "templates", "hooks", "pre-push");
+  await fs.mkdir(join(projectRoot, ".husky"), { recursive: true });
+  await fs.copyFile(sourcePath, targetPath);
+  await fs.chmod(targetPath, 0o755);
+
+  return { created: true, path: targetPath };
+}
+
 export interface DeployCodexHooksResult {
   created: boolean;
   path: string;

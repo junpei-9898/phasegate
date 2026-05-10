@@ -85,7 +85,7 @@ claude
 - `.claude/skills` and/or `.codex/skills` links for agent use
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
-- `.husky/pre-commit` and `.husky/commit-msg` when `--with-husky` is passed
+- `.husky/pre-commit`, `.husky/commit-msg`, and `.husky/pre-push` when `--with-husky` is passed
 - `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml` when `--with-ci` is passed
 
 `init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
@@ -152,7 +152,7 @@ npx phasegate update-skills
 
 | Layer | Trigger | Key Checks |
 |---|---|---|
-| L0 | AI agent runtime (`.claude/settings.json` / `.codex/hooks.json`) + Husky git hooks | PreToolUse blocks Write/Edit/Bash that violate gates; PostToolUse runs lint/format; Stop enforces ReentryGuard + `complete-check`; `.husky/pre-commit` runs `phasegate pre-commit`; `.husky/commit-msg` enforces `Work-Item: WI-XXX` trailer |
+| L0 | AI agent runtime (`.claude/settings.json` / `.codex/hooks.json`) + Husky git hooks | PreToolUse blocks Write/Edit/Bash that violate gates; PostToolUse runs lint/format; Stop enforces ReentryGuard + `complete-check`; `.husky/pre-commit` runs `phasegate pre-commit`; `.husky/commit-msg` enforces `Work-Item: WI-XXX` and bypass trailers; `.husky/pre-push` runs `phasegate bypass:audit` |
 | L1 | Editor save / `phasegate lint` | `@unit` / `@layer` metadata, layer violations, AI anti-patterns, dead code |
 | L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`), test quality |
 | L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability |
@@ -484,6 +484,7 @@ npx phasegate <command> [options]
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
 | `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
 | `pre-commit` | Run L2 pre-commit validators on staged files |
+| `bypass:audit --base <ref> [--head <ref>]` | Replay pre-commit validation over a push/CI range and require structured bypass evidence for gate failures |
 | `delegate-sonnet [...args]` | Delegate task to Sonnet 4.6 (transparent wrapper) |
 | `migrate work-items --dry-run` / `--apply` | Migrate legacy `ISSUE-XXX` / `H{NN}-{NN}` directories under `docs/inception/` to the unified `WI-XXX` layout (frontmatter `type` / `legacy_id` / `affects` injected). Sequential allocator skips numbers already used by existing WIs. See [CLI Reference -- Work Item Migration](docs/guide/cli-reference.md#work-item-migration). |
 | `migrate --schema v3` | Upgrade `phasegate.config.json` to v3 schema by adding the `architecture` key (idempotent). |

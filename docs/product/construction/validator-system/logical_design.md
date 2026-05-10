@@ -1800,3 +1800,5 @@ CLI coverage matching は E2E test file の path だけではなく file content
 **変更内容**: 44ファイルの末尾の裸の `@story-id H08-07` を `// @story-id H08-07`（コメント）に変換。traceability-model の `SourceMetadataParser` が期待するコメント形式（`// @story-id` または `* @story-id`）に合致する。
 
 **影響ファイル**: validator-system / nyquist-validation 配下の16ソースファイル + 28テストファイル
+<!-- @work-item-id WI-141 -->
+Validator failures exposed to bypass audit are classified into non-bypassable and conditional blocker classes. Metadata, test-quality, and work-item-status-staleness failures are non-bypassable; known phase-gate debt, environment failures, and documented false positives may be accepted only with complete bypass trailers and evidence.
