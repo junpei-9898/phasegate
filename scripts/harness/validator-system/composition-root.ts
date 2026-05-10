@@ -22,6 +22,7 @@ import { ItTestFileAnalyzerAdapter } from './infrastructure/adapters/it-test-fil
 import { SourceFileTextScannerAdapter } from './infrastructure/adapters/source-file-text-scanner-adapter.js';
 import { E2eTestFileRegistryAdapter } from './infrastructure/adapters/e2e-test-file-registry-adapter.js';
 import { CliCommandRegistryAdapter } from './infrastructure/adapters/cli-command-registry-adapter.js';
+import { TraceabilityWorkItemStatusPolicyAdapter } from './infrastructure/adapters/traceability-work-item-status-policy-adapter.js';
 import { PhaseDependencyPhaseGatePolicyAdapter } from './infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.js';
 import { TraceabilityMetadataPolicyAdapter } from './infrastructure/adapters/traceability-metadata-policy-adapter.js';
 import { NyquistAcCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
@@ -45,7 +46,7 @@ import { join } from 'node:path';
 const DEFAULT_CONFIG = {
   preset: 'standard' as const,
   layers: {
-    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
+    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
   },
@@ -78,6 +79,7 @@ function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L2-002', 'L2', 'always', 'MetadataPolicyPort'),
     createDef('L2-003', 'L2', 'always'),
     createDef('L2-013', 'L2', 'always', 'CliE2eTestExistenceService'),
+    createDef('L2-014', 'L2', 'always', 'WorkItemStatusPolicyPort'),
     createDef('L3-001', 'L3', 'always'),
     createDef('L3-002', 'L3', 'strictOnly'),
     createDef('L3-003', 'L3', 'always'),
@@ -123,6 +125,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const testQualityAnalyzerPort = new BiomeAstTestQualityAnalyzerAdapter();
   const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
   const performanceScannerPort = new AstPerformanceScannerAdapter();
+  const workItemStatusPolicyPort = new TraceabilityWorkItemStatusPolicyAdapter(process.cwd());
 
   const docsRoot = join(process.cwd(), 'docs/product/construction');
   const cwd = process.cwd();
@@ -146,6 +149,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     testQualityAnalyzerPort,
     e2eTestFileRegistryPort,
     cliCommandRegistryPort,
+    workItemStatusPolicyPort,
   });
 
   const runL3ValidatorsUseCase = new RunL3ValidatorsUseCase({

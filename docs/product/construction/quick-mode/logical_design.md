@@ -1,5 +1,8 @@
 # 論理設計: quick-mode
 
+@work-item-id WI-140
+Quick Mode の validator ID registry / relaxation profile は `L2-014 work-item-status-staleness` を正規 L2 validator として含める。既定の maintainedLayers では L2-014 を維持し、status gate を quick CI の緩和対象から外す。
+
 @story-id H10-01
 @story-id H10-02
 @story-id H10-03

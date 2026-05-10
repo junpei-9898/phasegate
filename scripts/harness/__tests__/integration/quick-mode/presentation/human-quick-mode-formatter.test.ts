@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, it, expect } from 'vitest';
 import { target } from '../../../helpers/test-helpers.js';
 import { HumanQuickModeFormatter } from '../../../../quick-mode/presentation/formatters/human-quick-mode-formatter.js';
@@ -14,7 +17,7 @@ function createApprovedDecision(): QuickModeDecisionContract {
       levelDependencyRelaxed: false as const,
       l1: { all: true as const },
       l2: {
-        maintained: ['L2-002', 'L2-003'],
+        maintained: ['L2-002', 'L2-003', 'L2-014'],
         skipped: ['L2-001'],
       },
       l3: {

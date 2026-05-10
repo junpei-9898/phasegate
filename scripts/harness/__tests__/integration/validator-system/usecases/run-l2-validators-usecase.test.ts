@@ -30,7 +30,7 @@ function createL2UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target('RunL2ValidatorsUseCase', () => {
   describe('全L2バリデータの実行', () => {
     context('validatorIdsを省略した場合', () => {
-      it('全L2バリデータ（L2-001〜L2-003, L2-013）が実行され4件の結果が返る (IT-UC-RunL2-001)', async () => {
+      it('全L2バリデータ（L2-001〜L2-003, L2-013, L2-014）が実行され5件の結果が返る (IT-UC-RunL2-001)', async () => {
         // Arrange
         const usecase = createL2UseCase();
         const input = { targetPaths: ['src/foo.ts'], unitName: 'unit-a', currentPhase: 'implementation' };
@@ -39,8 +39,8 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(4);
-        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013']);
+        expect(actual).toHaveLength(5);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014']);
       });
     });
 
@@ -134,7 +134,7 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(4);
+        expect(actual).toHaveLength(5);
         expect(actual.every((r) => r.passed === true)).toBe(true);
       });
     });
@@ -224,6 +224,51 @@ target('RunL2ValidatorsUseCase', () => {
         const l2013 = actual.find((r) => r.validatorId === 'L2-013');
         expect(l2013?.passed).toBe(true);
         expect(l2013?.errors).toEqual([]);
+      });
+
+      it('L2-014がstale WI statusをfailとして返す', async () => {
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L2')),
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          workItemStatusPolicyPort: {
+            findStaleReports: async () => [{
+              id: 'WI-140',
+              type: 'issue',
+              descriptionPath: 'docs/inception/_cross/WI-140/description.md',
+              currentStatus: 'drafted',
+              derivedStatus: 'implemented',
+              stale: true,
+              reason: 'implementation evidence exists',
+              nextAction: 'status is up to date',
+              evidence: {
+                hasRequiredInceptionArtifacts: true,
+                missingInceptionArtifacts: [],
+                reflectedUnits: ['validator-system'],
+                missingReflectionUnits: [],
+                implementationPaths: ['scripts/harness/validator-system/application/use-cases/run-l2-validators-usecase.ts'],
+                testPaths: [],
+                missingImplementation: false,
+                missingTests: false,
+                validation: { state: 'not-run', source: 'test', blockingValidation: [] },
+              },
+            }],
+          },
+        });
+
+        const actual = await usecase.execute({ targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' });
+
+        const l2014 = actual.find((r) => r.validatorId === 'L2-014');
+        expect(l2014?.passed).toBe(false);
+        expect(l2014?.errors[0]?.message).toContain('WI-140 status is stale');
+        expect(l2014?.errors[0]?.workItemId).toBe('WI-140');
       });
     });
   });

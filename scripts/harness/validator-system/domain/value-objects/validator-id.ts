@@ -5,6 +5,7 @@
  * ValidatorId 値オブジェクト
  * L1-001〜L4-005 のバリデータを識別する不変値オブジェクト
  * Wave 2A で L1-017, L1-018, L2-013 を追加
+ * WI-140 で L2-014 を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -26,6 +27,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   'L2-002': 'metadata',
   'L2-003': 'test-quality',
   'L2-013': 'cli-e2e-test-existence',
+  'L2-014': 'work-item-status-staleness',
   'L3-001': 'security',
   'L3-002': 'performance',
   'L3-003': 'coverage',

@@ -293,7 +293,7 @@ npx phasegate <command> [options]
 | `baseline` | retrofit grandfather snapshot 生成（`--dry-run`, `--force`, `--paths <glob>`, `--json`） |
 | `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | 最小構成の設計文書を `templates/` から生成 |
 | `phasegate:status` | 全体の健全性サマリ |
-| `work-items:status --dry-run` / `--apply` | 成果物から WI status を導出し、必要に応じて `description.md` frontmatter を更新 |
+| `work-items:status --dry-run` / `--apply` | 成果物から WI status を導出し、必要に応じて `description.md` frontmatter を更新。`--apply` は既定で downgrade を拒否し、必要時のみ `--allow-downgrade` を指定 |
 | `phasegate:check-phase --unit <id>` | 指定 Unit の現在フェーズ |
 | `phasegate:detect-drift` | 設計-コード乖離レポート |
 | `migrate work-items --dry-run` / `--apply` | 既存リポジトリの旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を WI 統一レイアウト（`_cross/{WI-XXX}/` / `{unit}/{WI-XXX}/`）へ移行。frontmatter（`type` / `severity` / `legacy_id` / `affects`）を自動注入。冪等。`--json` で CI/スクリプト連携可。詳細: [Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
@@ -407,7 +407,7 @@ TESTED (@work-item-id 付きテストあり / green)
 
 `type: chore` は DRAFTED で完結。`type: fix` は DRAFTED → REFLECTED → IMPLEMENTED の簡略パス。`status` は PhaseGate が自動更新します。
 
-`phasegate work-items:status --dry-run` で current status / derived status / reason / next action を確認できます。単一 WI に絞る場合は `--id WI-XXX`、CI 風に stale status を検出する場合は `--fail-on-stale`、`description.md` frontmatter の `status:` 行だけを書き戻す場合は `--apply` を指定します。
+`phasegate work-items:status --dry-run` で current status / derived status / reason / next action / structured missing evidence を確認できます。単一 WI に絞る場合は `--id WI-XXX`、CI 風に stale status を検出する場合は `--fail-on-stale`、`description.md` frontmatter の `status:` 行だけを書き戻す場合は `--apply` を指定します。標準 L2 validation は `L2-014 work-item-status-staleness` も実行し、stale WI status を pre-commit / CI の fail signal として扱います。
 
 詳細仕様: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
 

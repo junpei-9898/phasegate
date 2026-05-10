@@ -247,7 +247,7 @@ TESTED  (test files annotated with @work-item-id, all green)
 
 `type: chore` ends at DRAFTED. `type: fix` shortcuts via DRAFTED → REFLECTED → IMPLEMENTED. PhaseGate auto-updates `status`.
 
-Use `phasegate work-items:status --dry-run` to inspect current status, derived status, reason, and next action. Add `--id WI-XXX` to scope the report, `--fail-on-stale` for CI-style stale status detection, or `--apply` to update only the `status:` line in each stale `description.md` frontmatter.
+Use `phasegate work-items:status --dry-run` to inspect current status, derived status, reason, next action, and structured missing evidence. Add `--id WI-XXX` to scope the report, `--fail-on-stale` for CI-style stale status detection, or `--apply` to update only the `status:` line in each stale `description.md` frontmatter. Standard L2 validation also runs `L2-014 work-item-status-staleness`; stale WI status fails `validate --layer L2` for pre-commit/CI use.
 
 Full spec: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
 
@@ -476,7 +476,7 @@ npx phasegate <command> [options]
 | `p2:check-agent-context` | Check AGENTS.md / CLAUDE.md freshness |
 | `update-skills` | Update skills to latest version |
 | `phasegate:status` | Display overall harness health summary |
-| `work-items:status --dry-run` / `--apply` | Derive WI status from artifacts and optionally update stale `description.md` frontmatter |
+| `work-items:status --dry-run` / `--apply` | Derive WI status from artifacts and optionally update stale `description.md` frontmatter. Apply refuses downgrades unless `--allow-downgrade` is supplied. |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `check-change-category --paths <csv>` | Classify changed files into Quick Mode categories and report whether Full Mode is required (`--format json`, `--fail-on-full-required`) |
 | `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`). `baseline.enabled` defaults to `true` since v0.71.0. |

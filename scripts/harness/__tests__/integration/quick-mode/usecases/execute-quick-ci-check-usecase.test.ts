@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { ExecuteQuickCiCheckUseCase } from '../../../../quick-mode/application/usecases/execute-quick-ci-check-usecase.js';
@@ -13,7 +16,7 @@ function createApprovedDecision() {
       levelDependencyRelaxed: false,
       l1: { all: true },
       l2: {
-        maintained: ['L2-002', 'L2-003'],
+        maintained: ['L2-002', 'L2-003', 'L2-014'],
         skipped: ['L2-001'],
       },
       l3: {

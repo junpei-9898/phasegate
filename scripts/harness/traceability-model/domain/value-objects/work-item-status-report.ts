@@ -1,6 +1,6 @@
 // @unit traceability-model
 // @layer domain
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import type {
   WorkItemFrontmatter,
@@ -10,10 +10,18 @@ import type {
 
 export interface WorkItemStatusEvidence {
   readonly hasRequiredInceptionArtifacts: boolean;
+  readonly missingInceptionArtifacts: readonly string[];
   readonly reflectedUnits: readonly string[];
   readonly missingReflectionUnits: readonly string[];
   readonly implementationPaths: readonly string[];
   readonly testPaths: readonly string[];
+  readonly missingImplementation: boolean;
+  readonly missingTests: boolean;
+  readonly validation: {
+    readonly state: "passed" | "failed" | "not-run";
+    readonly source: string;
+    readonly blockingValidation: readonly string[];
+  };
 }
 
 export interface WorkItemStatusInput {
@@ -44,4 +52,5 @@ export interface WorkItemStatusReport {
 export interface WorkItemStatusApplyResult {
   readonly updated: readonly WorkItemStatusReport[];
   readonly unchanged: readonly WorkItemStatusReport[];
+  readonly blocked: readonly WorkItemStatusReport[];
 }

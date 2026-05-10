@@ -1,6 +1,6 @@
 // @unit traceability-model
 // @layer infrastructure
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
@@ -97,6 +97,7 @@ export class FileSystemWorkItemStatusGateway implements WorkItemStatusPort {
     return Object.freeze({
       updated: Object.freeze(updated),
       unchanged: Object.freeze(unchanged),
+      blocked: Object.freeze([]),
     });
   }
 

@@ -3,6 +3,8 @@
 @story-id H13-01
 @story-id H13-02
 @story-id H13-03
+@work-item-id WI-140
+CI/pre-commit が消費する標準 L2 gate では、validator-system の `L2-014 work-item-status-staleness` を fail signal として扱う。local `work-items:status --dry-run` は advisory のまま維持し、CI 経路では変更対象 path に紐づく stale WI status を失敗として扱う。
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H13-01, H13-02, H13-03

@@ -1,5 +1,8 @@
 # 論理設計: config-foundation
 
+@work-item-id WI-140
+`toValidatorSystemConfig` は resolved config から validator-system へ渡す L2 validators に `L2-014 work-item-status-staleness` を含める。これにより `validate --layer L2` と harness-api 経由の validation が同じ status gate catalog を使用する。
+
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03

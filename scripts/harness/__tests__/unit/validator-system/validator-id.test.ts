@@ -46,6 +46,13 @@ target('ValidatorId', () => {
       // Assert
       expect(actual).toBeDefined();
     });
+
+    it('L2-014を渡すとwork-item-status-stalenessとして生成されること', () => {
+      const actual = ValidatorId.create('L2-014');
+
+      expect(actual.value).toBe('L2-014');
+      expect(actual.getName()).toBe('work-item-status-staleness');
+    });
   });
 
   context('無効な値が渡された場合', () => {

@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, expect, it, vi } from 'vitest';
 import { target, context, createChangedFile } from '../../../../helpers/test-helpers.js';
 import { ExecuteQuickCiCheckUseCase } from '../../../../../quick-mode/application/usecases/execute-quick-ci-check-usecase.js';
@@ -23,7 +26,7 @@ const NOT_ELIGIBLE_CONTRACT = {
 const PROFILE_CONTRACT = {
   levelDependencyRelaxed: false as const,
   l1: { all: true as const },
-  l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+  l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
   l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
   l4: { all: false as const },
   phaseExecution: { twoPhaseRequired: false as const },

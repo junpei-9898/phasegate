@@ -58,7 +58,7 @@ export const createLayerConfig = (overrides: Partial<LayerConfigProps> = {}): La
   LayerConfig.create({
     layer: 'L2',
     enabled: true,
-    validatorIds: ['L2-001', 'L2-002', 'L2-003'],
+    validatorIds: ['L2-001', 'L2-002', 'L2-003', 'L2-014'],
     thresholds: {},
     strictOnly: false,
     preset: 'standard',
@@ -86,6 +86,7 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]): Validator
     createValidatorDefinition({ validatorId: createValidatorId('L2-001'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L2-002'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L2-003'), layer: 'L2' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L2-014'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-001'), layer: 'L3' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-002'), layer: 'L3' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-003'), layer: 'L3' }),
@@ -124,7 +125,7 @@ export const createQuickModeConfig = (overrides: Partial<{
 }> = {}): QuickModeConfig =>
   QuickModeConfig.create({
     allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-    maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001'],
+    maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
     relaxedGates: ['L2-001'],
     ...overrides,
   });

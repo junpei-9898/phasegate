@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -78,7 +81,7 @@ target('HarnessConfigQuickModeConfigAdapter', () => {
           phaseDependencies: {},
           quickMode: {
             allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-            maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001'],
+            maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
             relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4'],
           },
         }) as never);
@@ -99,7 +102,7 @@ target('HarnessConfigQuickModeConfigAdapter', () => {
         // Assert
         expect(actual.allowedCategories).toEqual(['bugfix', 'docs', 'test', 'config']);
         expect(actual.maintainedLayers).toEqual(
-          expect.arrayContaining(['L1', 'L2-002', 'L2-003', 'L3-001']),
+          expect.arrayContaining(['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001']),
         );
         expect(actual.relaxedGates).toEqual(
           expect.arrayContaining(['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4']),

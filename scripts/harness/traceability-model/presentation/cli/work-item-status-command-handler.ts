@@ -1,6 +1,6 @@
 // @unit traceability-model
 // @layer presentation
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import type { ApplyWorkItemStatusUseCase } from "../../application/usecases/apply-work-item-status-usecase.js";
 import type { DeriveWorkItemStatusUseCase } from "../../application/usecases/derive-work-item-status-usecase.js";
@@ -14,6 +14,8 @@ export interface WorkItemStatusCommandInput {
   readonly apply?: boolean;
   readonly json?: boolean;
   readonly failOnStale?: boolean;
+  readonly allowDowngrade?: boolean;
+  readonly changedOnly?: boolean;
   readonly id?: string;
 }
 
@@ -54,10 +56,14 @@ export class WorkItemStatusCommandHandler {
     }
 
     if (input.apply) {
-      const result = await this.applyWorkItemStatusUseCase.execute({ id: input.id });
-      const reports = Object.freeze([...result.updated, ...result.unchanged]);
+      const result = await this.applyWorkItemStatusUseCase.execute({
+        id: input.id,
+        allowDowngrade: input.allowDowngrade,
+        changedOnly: input.changedOnly,
+      });
+      const reports = Object.freeze([...result.updated, ...result.unchanged, ...result.blocked]);
       return Object.freeze({
-        exitCode: 0,
+        exitCode: result.blocked.length > 0 ? 1 : 0,
         text: input.json ? JSON.stringify(result, null, 2) : this.formatApply(result),
         reports,
       });
@@ -96,6 +102,9 @@ export class WorkItemStatusCommandHandler {
     }
     if (result.updated.length === 0) {
       lines.push("no updates required");
+    }
+    for (const report of result.blocked) {
+      lines.push(`blocked ${report.id}: ${report.currentStatus} -> ${report.derivedStatus} requires --allow-downgrade`);
     }
     lines.push(`unchanged: ${result.unchanged.length}`);
     return lines.join("\n");

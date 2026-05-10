@@ -316,6 +316,8 @@ Options:
   --apply           Update only the status line in each stale description.md frontmatter.
   --id <WI-XXX>     Limit report/apply to one work item.
   --fail-on-stale   Return exit code 1 when dry-run finds stale status.
+  --allow-downgrade Allow apply to lower a frontmatter status.
+  --changed-only    Reserve apply scope for changed WI files; currently accepted as a no-op policy flag.
   --json            Output machine-readable JSON.
   --help, -h        Show this help`,
   "phasegate:detect-drift": `Usage: phasegate phasegate:detect-drift [options]
@@ -983,6 +985,8 @@ async function main(): Promise<void> {
           dryRun: hasFlag(args, "--dry-run"),
           apply: hasFlag(args, "--apply"),
           failOnStale: hasFlag(args, "--fail-on-stale"),
+          allowDowngrade: hasFlag(args, "--allow-downgrade"),
+          changedOnly: hasFlag(args, "--changed-only"),
           id: parseFlag(args, "--id"),
           json,
         });

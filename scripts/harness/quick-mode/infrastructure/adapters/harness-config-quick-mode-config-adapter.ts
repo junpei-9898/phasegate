@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit quick-mode
+ * @work-item-id WI-140
  *
  * phasegate.config.json から QuickModeConfig を取得する Adapter
  */
@@ -25,7 +26,7 @@ export class HarnessConfigParseError extends Error {
 
 const DEFAULT_QUICK_MODE_CONFIG = {
   allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-  maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001'],
+  maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
   relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4'],
 };
 

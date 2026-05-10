@@ -16,8 +16,8 @@ target('L0 Runtime Hook E2E検証', () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(4) + L3(4) + L4(5) = 13
-      expect(actual).toHaveLength(13);
+      // Assert — L2(5) + L3(4) + L4(5) = 14
+      expect(actual).toHaveLength(14);
       const layers = new Set(actual.map((d) => d.validatorId.layer));
       expect(layers.has('L0')).toBe(false);
       expect(layers.has('L2')).toBe(true);
@@ -35,7 +35,7 @@ target('L0 Runtime Hook E2E検証', () => {
         l4Defs: mod.registry.listByLayer('L4'),
       };
       // Assert
-      expect(actual.l2Defs).toHaveLength(4);
+      expect(actual.l2Defs).toHaveLength(5);
       expect(actual.l3Defs).toHaveLength(4);
       expect(actual.l4Defs).toHaveLength(5);
     });
@@ -45,7 +45,7 @@ target('L0 Runtime Hook E2E検証', () => {
       const mod = createValidatorSystemModule({
         preset: 'standard',
         layers: {
-          L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
+          L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014'] },
           L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'] },
           L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
         },
@@ -53,7 +53,7 @@ target('L0 Runtime Hook E2E検証', () => {
       // Act
       const actual = mod.registry.listByLayer('L2');
       // Assert — L0 disabled returns empty
-      expect(actual).toHaveLength(4);
+      expect(actual).toHaveLength(5);
     });
   });
 

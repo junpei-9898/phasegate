@@ -22,6 +22,8 @@ traceability:
 拡張: inception 全体での WI ID 重複を防ぐため、`docs/inception/**/WI-XXX/description.md` の parent directory 名と frontmatter `id` を走査し、重複および不一致を metadata validation の `L2-002` error として返す。
 @work-item-id WI-126
 拡張: WI frontmatter `status` を成果物から導出する。`WorkItemStatusDerivationService` が type 別 shortcut を含む state machine を持ち、`DeriveWorkItemStatusUseCase` / `ApplyWorkItemStatusUseCase` / `WorkItemStatusCommandHandler` が dry-run report と safe apply を提供する。
+@work-item-id WI-140
+拡張: `WorkItemStatusReport.evidence` を machine-readable contract として拡張し、missing inception artifacts / missing reflection units / missing implementation / missing tests / validation state を返す。`--apply` は既定で downgrade を拒否し、明示 `--allow-downgrade` のみ降格を書き戻す。
 
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08

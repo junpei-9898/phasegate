@@ -3,6 +3,7 @@
  * @unit validator-system
  *
  * RunL2ValidatorsUseCase — H08-01: L2バリデータ実行
+ * @work-item-id WI-140
  */
 import { readFile } from 'node:fs/promises';
 import { ValidatorId, InvalidValidatorIdError } from '../../domain/value-objects/validator-id.js';
@@ -19,6 +20,7 @@ import type { TestQualityAnalyzerPort } from '../../domain/ports/test-quality-an
 import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-registry-port.js';
 import type { E2eTestFileRegistryPort } from '../../domain/ports/e2e-test-file-registry-port.js';
 import { CliE2eTestExistenceService } from '../../domain/services/cli-e2e-test-existence-service.js';
+import type { WorkItemStatusPolicyPort } from '../../domain/ports/work-item-status-policy-port.js';
 
 export interface RunL2ValidatorsUseCaseDeps {
   validatorRegistry: ValidatorRegistry;
@@ -30,6 +32,7 @@ export interface RunL2ValidatorsUseCaseDeps {
   testQualityAnalyzerPort?: TestQualityAnalyzerPort;
   cliCommandRegistryPort?: CliCommandRegistryPort;
   e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
+  workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
 }
 
 export class RunL2ValidatorsUseCase {
@@ -42,6 +45,7 @@ export class RunL2ValidatorsUseCase {
   private readonly testQualityAnalyzerPort?: TestQualityAnalyzerPort;
   private readonly cliCommandRegistryPort?: CliCommandRegistryPort;
   private readonly e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
+  private readonly workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
   private readonly cliE2eTestExistenceService = new CliE2eTestExistenceService();
 
   constructor(deps: RunL2ValidatorsUseCaseDeps) {
@@ -54,6 +58,7 @@ export class RunL2ValidatorsUseCase {
     this.testQualityAnalyzerPort = deps.testQualityAnalyzerPort;
     this.cliCommandRegistryPort = deps.cliCommandRegistryPort;
     this.e2eTestFileRegistryPort = deps.e2eTestFileRegistryPort;
+    this.workItemStatusPolicyPort = deps.workItemStatusPolicyPort;
   }
 
   async execute(input: RunL2ValidatorsInput): Promise<readonly ValidationResultContract[]> {
@@ -148,6 +153,29 @@ export class RunL2ValidatorsUseCase {
           overrideMap.set('L2-013', ValidationResult.fail(ValidatorId.create('L2-013'), errors, 0));
         } else {
           overrideMap.set('L2-013', ValidationResult.pass(ValidatorId.create('L2-013'), 0));
+        }
+      }
+    }
+
+    if (this.workItemStatusPolicyPort) {
+      const l2014Result = overrideMap.get('L2-014');
+      if (l2014Result && !l2014Result.skipped) {
+        const staleReports = await this.workItemStatusPolicyPort.findStaleReports(input.targetPaths);
+        if (staleReports.length > 0) {
+          const errors = staleReports.map((report) => ({
+            code: { value: 'L2-014', toString: () => 'L2-014' },
+            severity: { value: 'error', toString: () => 'error' },
+            message: `${report.id} status is stale: current=${report.currentStatus}, derived=${report.derivedStatus}`,
+            suggestion: report.nextAction,
+            workItemId: report.id,
+            descriptionPath: report.descriptionPath,
+            currentStatus: report.currentStatus,
+            derivedStatus: report.derivedStatus,
+            evidence: report.evidence,
+          }));
+          overrideMap.set('L2-014', ValidationResult.fail(ValidatorId.create('L2-014'), errors, 0));
+        } else {
+          overrideMap.set('L2-014', ValidationResult.pass(ValidatorId.create('L2-014'), 0));
         }
       }
     }

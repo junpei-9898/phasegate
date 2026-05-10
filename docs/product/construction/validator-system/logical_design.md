@@ -8,6 +8,8 @@
 @story-id H08-06
 @work-item-id WI-126
 status mismatch policy は validator-system から利用可能な fail signal として扱う。既定は advisory report、CI/L2 相当の検出では `--fail-on-stale` により stale WI status を exit code 1 として扱う。
+@work-item-id WI-140
+`L2-014 work-item-status-staleness` を追加し、標準 `validate --layer L2` 経路で stale WI status を fail signal にする。validator-system は `WorkItemStatusPolicyPort` 経由で traceability-model の report を取得し、stale report を `L2-014` error として返す。local report は advisory、pre-commit / CI が消費する L2 validation は fail policy とする。
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H08-01, H08-02, H08-03, H08-04, H08-05, H08-06
@@ -161,6 +163,7 @@ scripts/harness/
 | `L2-001` | phase-gate | Pre-commit |
 | `L2-002` | metadata | Pre-commit |
 | `L2-003` | test-quality | Pre-commit |
+| `L2-014` | work-item-status-staleness | Pre-commit / CI |
 | `L3-001` | security | CI |
 | `L3-002` | performance | CI |
 | `L3-003` | coverage | CI |

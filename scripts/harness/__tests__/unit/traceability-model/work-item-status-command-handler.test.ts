@@ -1,7 +1,7 @@
 // @unit traceability-model
 // @layer test
 // @story H03-05
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import { describe, expect, it, vi } from "vitest";
 import { WorkItemStatusCommandHandler } from "../../../traceability-model/presentation/cli/work-item-status-command-handler.ts";
@@ -19,10 +19,14 @@ const report: WorkItemStatusReport = {
   nextAction: "add implementation annotated with @work-item-id WI-126",
   evidence: {
     hasRequiredInceptionArtifacts: true,
+    missingInceptionArtifacts: [],
     reflectedUnits: ["traceability-model"],
     missingReflectionUnits: [],
     implementationPaths: [],
     testPaths: [],
+    missingImplementation: true,
+    missingTests: false,
+    validation: { state: "not-run", source: "test", blockingValidation: [] },
   },
 };
 
@@ -48,7 +52,7 @@ target("WorkItemStatusCommandHandler.execute", () => {
     context("--apply の場合", () => {
       it("apply usecase の結果を表示する", async () => {
         const derive = { execute: vi.fn() };
-        const apply = { execute: vi.fn().mockResolvedValue({ updated: [report], unchanged: [] }) };
+        const apply = { execute: vi.fn().mockResolvedValue({ updated: [report], unchanged: [], blocked: [] }) };
         const sut = new WorkItemStatusCommandHandler({
           deriveWorkItemStatusUseCase: derive,
           applyWorkItemStatusUseCase: apply,
@@ -58,7 +62,26 @@ target("WorkItemStatusCommandHandler.execute", () => {
 
         expect(actual.exitCode).toBe(0);
         expect(actual.text).toContain("updated WI-126: drafted -> reflected");
+        expect(apply.execute).toHaveBeenCalledWith({ id: undefined, allowDowngrade: undefined, changedOnly: undefined });
         expect(derive.execute).not.toHaveBeenCalled();
+      });
+    });
+
+    context("--apply が downgrade を block した場合", () => {
+      it("終了コード1とblock理由を返す", async () => {
+        const blockedReport = { ...report, currentStatus: "tested" as const, derivedStatus: "implemented" as const };
+        const derive = { execute: vi.fn() };
+        const apply = { execute: vi.fn().mockResolvedValue({ updated: [], unchanged: [], blocked: [blockedReport] }) };
+        const sut = new WorkItemStatusCommandHandler({
+          deriveWorkItemStatusUseCase: derive,
+          applyWorkItemStatusUseCase: apply,
+        });
+
+        const actual = await sut.execute({ apply: true, allowDowngrade: true, changedOnly: true });
+
+        expect(actual.exitCode).toBe(1);
+        expect(actual.text).toContain("requires --allow-downgrade");
+        expect(apply.execute).toHaveBeenCalledWith({ id: undefined, allowDowngrade: true, changedOnly: true });
       });
     });
   });

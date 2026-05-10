@@ -1,6 +1,6 @@
 // @unit traceability-model
 // @layer domain
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import type { WorkItemStatus } from "../value-objects/work-item-frontmatter.js";
 import type {
@@ -34,10 +34,18 @@ export class WorkItemStatusDerivationService {
       nextAction,
       evidence: Object.freeze({
         hasRequiredInceptionArtifacts: this.hasRequiredInceptionArtifacts(input),
+        missingInceptionArtifacts: Object.freeze([...this.missingInceptionArtifacts(input)]),
         reflectedUnits: Object.freeze([...this.reflectedUnits(input)]),
         missingReflectionUnits: Object.freeze([...this.missingReflectionUnits(input)]),
         implementationPaths: Object.freeze([...input.implementationPaths]),
         testPaths: Object.freeze([...input.testPaths]),
+        missingImplementation: this.missingImplementation(input),
+        missingTests: this.missingTests(input),
+        validation: Object.freeze({
+          state: "not-run" as const,
+          source: "work-items:status",
+          blockingValidation: Object.freeze([]),
+        }),
       }),
     });
   }
@@ -56,10 +64,10 @@ export class WorkItemStatusDerivationService {
       return "drafted";
     }
 
+    if (!reflected) return "drafted";
+    if (!implemented) return "reflected";
     if (tested) return "tested";
-    if (implemented) return "implemented";
-    if (reflected) return "reflected";
-    return "drafted";
+    return "implemented";
   }
 
   private reasonFor(input: WorkItemStatusInput, status: WorkItemStatus): string {
@@ -112,6 +120,14 @@ export class WorkItemStatusDerivationService {
     if (input.frontmatter.type === "chore") return [];
     const reflected = new Set(this.reflectedUnits(input));
     return input.affectedUnits.filter((unit) => !reflected.has(unit));
+  }
+
+  private missingImplementation(input: WorkItemStatusInput): boolean {
+    return input.frontmatter.type !== "chore" && this.missingReflectionUnits(input).length === 0 && input.implementationPaths.length === 0;
+  }
+
+  private missingTests(input: WorkItemStatusInput): boolean {
+    return input.frontmatter.type !== "chore" && input.frontmatter.type !== "fix" && input.implementationPaths.length > 0 && input.testPaths.length === 0;
   }
 
   private extractConstructionUnit(filePath: string): string | null {

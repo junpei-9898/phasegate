@@ -12,12 +12,16 @@ export class ValidationResultContractMapper {
     return {
       validatorId: result.validatorId.value,
       passed: result.passed,
-      errors: result.errors.map((e) => ({
-        code: typeof e.code === 'string' ? e.code : e.code.toString(),
-        severity: typeof e.severity === 'string' ? e.severity : e.severity.toString(),
+      errors: result.errors.map((e) => {
+        const { code, severity, message, suggestion, ...details } = e;
+        return {
+        ...details,
+        code: typeof code === 'string' ? code : code.toString(),
+        severity: typeof severity === 'string' ? severity : severity.toString(),
         message: e.message,
         suggestion: e.suggestion,
-      })),
+        };
+      }),
       durationMs: result.durationMs,
       skipped: result.skipped,
     };

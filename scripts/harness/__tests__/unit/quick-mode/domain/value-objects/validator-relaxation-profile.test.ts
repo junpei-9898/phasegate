@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, expect, it } from 'vitest';
 import { target, context, createValidatorRelaxationProfile } from '../../../../helpers/test-helpers.js';
 import { ValidatorRelaxationProfile } from '../../../../../quick-mode/domain/value-objects/validator-relaxation-profile.js';
@@ -19,13 +22,13 @@ target('ValidatorRelaxationProfile', () => {
       });
 
       // UT-VRP-002
-      it("デフォルトプロファイルのl2がmaintained=[L2-002, L2-003]、skipped=[L2-001]であること", () => {
+      it("デフォルトプロファイルのl2がmaintained=[L2-002, L2-003, L2-014]、skipped=[L2-001]であること", () => {
         // Arrange（なし）
         // Act
         const actual = ValidatorRelaxationProfile.createDefault();
         // Assert
-        expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-002', 'L2-003']));
-        expect(actual.l2.maintained).toHaveLength(2);
+        expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-002', 'L2-003', 'L2-014']));
+        expect(actual.l2.maintained).toHaveLength(3);
         expect(actual.l2.skipped).toEqual(['L2-001']);
       });
 
@@ -47,12 +50,12 @@ target('ValidatorRelaxationProfile', () => {
   target('create', () => {
     describe('カスタム緩和プロファイルを生成する', () => {
       // UT-VRP-004
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
+      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-014}に一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -64,12 +67,12 @@ target('ValidatorRelaxationProfile', () => {
       });
 
       // UT-VRP-005
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致しない場合にエラーが発生すること（INV-P5違反）", () => {
+      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-014}に一致しない場合にエラーが発生すること（INV-P5違反）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002'], skipped: ['L2-001'] }, // L2-003が欠落
+          l2: { maintained: ['L2-002'], skipped: ['L2-001'] }, // L2-003/L2-014が欠落
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -86,7 +89,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -103,7 +106,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003'] }, // L3-004が欠落
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -180,9 +183,9 @@ target('ValidatorRelaxationProfile', () => {
       // UT-VRP-013
       it('l2.maintainedが異なる2つのインスタンスの場合にfalseが返ること', () => {
         // Arrange
-        const sut = createValidatorRelaxationProfile(); // l2.maintained = [L2-002, L2-003]
+        const sut = createValidatorRelaxationProfile(); // l2.maintained = [L2-002, L2-003, L2-014]
         const other = ValidatorRelaxationProfile.create({
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] }, // l3が違う
         });
         // Act

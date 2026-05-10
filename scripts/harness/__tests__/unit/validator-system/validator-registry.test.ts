@@ -11,10 +11,10 @@ target('ValidatorRegistry', () => {
 
   describe('ValidatorDefinitionリストで初期化する', () => {
 
-    it('12件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
+    it('13件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
       // Arrange
-      const ids = ['L2-001','L2-002','L2-003','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
-      const layers = ['L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
+      const ids = ['L2-001','L2-002','L2-003','L2-014','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
+      const layers = ['L2','L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
       const defs = ids.map((id, i) =>
         createValidatorDefinition({ validatorId: createValidatorId(id), layer: layers[i] })
       );
@@ -69,13 +69,13 @@ target('ValidatorRegistry', () => {
 
   describe('getAllDefinitions()で全定義を返す', () => {
 
-    it('12件登録済みのRegistryからgetAllDefinitions()で12件全て返ること (UT-VRG-006/UT-BND-010)', () => {
+    it('13件登録済みのRegistryからgetAllDefinitions()で13件全て返ること (UT-VRG-006/UT-BND-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.getAllDefinitions();
       // Assert
-      expect(actual).toHaveLength(12);
+      expect(actual).toHaveLength(13);
     });
 
     it('getAllDefinitions()の返却配列は外部から変更不能なreadonly配列であること (UT-VRG-007)', () => {
@@ -99,15 +99,15 @@ target('ValidatorRegistry', () => {
 
   describe('listByLayer()でレイヤー別定義一覧を返す', () => {
 
-    it('layer: L2を渡すとL2-001〜L2-003の3件がvalidatorId昇順で返ること (UT-VRG-008)', () => {
+    it('layer: L2を渡すとL2-001〜L2-014の4件がvalidatorId昇順で返ること (UT-VRG-008)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.listByLayer('L2');
       // Assert
-      expect(actual).toHaveLength(3);
+      expect(actual).toHaveLength(4);
       expect(actual[0].validatorId.value).toBe('L2-001');
-      expect(actual[2].validatorId.value).toBe('L2-003');
+      expect(actual[3].validatorId.value).toBe('L2-014');
     });
 
     it('layer: L3を渡すとL3-001〜L3-004の4件が返ること (UT-VRG-009)', () => {

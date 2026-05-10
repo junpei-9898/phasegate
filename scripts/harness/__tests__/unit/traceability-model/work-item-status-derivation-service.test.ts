@@ -1,7 +1,7 @@
 // @unit traceability-model
 // @layer test
 // @story H03-05
-// @work-item-id WI-126
+// @work-item-id WI-126 / WI-140
 
 import { describe, expect, it } from "vitest";
 import { WorkItemStatusDerivationService } from "../../../traceability-model/domain/services/work-item-status-derivation-service.ts";
@@ -56,6 +56,23 @@ target("WorkItemStatusDerivationService.derive", () => {
 
         expect(actual.derivedStatus).toBe("tested");
         expect(actual.nextAction).toBe("status is up to date");
+        expect(actual.evidence.missingTests).toBe(false);
+        expect(actual.evidence.validation.state).toBe("not-run");
+      });
+    });
+
+    context("implementation evidence があるが test evidence がない場合", () => {
+      it("structured missing evidence に missingTests=true を返す", () => {
+        const sut = new WorkItemStatusDerivationService();
+
+        const actual = sut.derive(createInput({
+          implementationPaths: ["scripts/harness/traceability-model/application/usecases/derive-work-item-status-usecase.ts"],
+          testPaths: [],
+        }));
+
+        expect(actual.derivedStatus).toBe("implemented");
+        expect(actual.evidence.missingTests).toBe(true);
+        expect(actual.evidence.missingImplementation).toBe(false);
       });
     });
 

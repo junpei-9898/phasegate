@@ -92,10 +92,14 @@ target("FileSystemWorkItemStatusGateway", () => {
             nextAction: "status is up to date",
             evidence: {
               hasRequiredInceptionArtifacts: true,
+              missingInceptionArtifacts: [],
               reflectedUnits: ["traceability-model"],
               missingReflectionUnits: [],
               implementationPaths: [],
               testPaths: [],
+              missingImplementation: false,
+              missingTests: false,
+              validation: { state: "not-run", source: "test", blockingValidation: [] },
             },
           },
         ]);

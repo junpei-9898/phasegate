@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-02
+// @work-item-id WI-140
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { JudgeQuickModeEligibilityUseCase } from '../../../../quick-mode/application/usecases/judge-quick-mode-eligibility-usecase.js';
@@ -8,7 +11,7 @@ import { QuickModeJudgmentEngine } from '../../../../quick-mode/domain/services/
 function createDefaultQuickModeConfig() {
   return QuickModeConfig.create({
     allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-    maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001'],
+    maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
     relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4'],
   });
 }
