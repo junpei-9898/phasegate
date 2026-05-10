@@ -55,9 +55,16 @@ affects: [validator-system, phase2-extensions]
 - threshold 値の preset ごとのチューニング（既存値を踏襲）
 - p2 系コマンドの完全な移管（CLI は当面双方残す）
 
+## 後続 WI への切り出し
+
+2026-05-09 時点で、本 WI の主目的である `L4-004 doc-freshness` / `L4-005 pointer-validation` の validator 登録と実行配線は完了済み。README に残っていた scheduling / default / operational docs の残スコープは、validator registration とは別の運用ロールアウト課題として WI-128 に切り出す。
+
+本 WI は `status: tested` のまま閉じ、以後の L4 運用改善は WI-128 で扱う。
+
 ## 関連
 
 - `scripts/harness/phase2-extensions/application/usecases/check-doc-freshness-usecase.ts`
 - `scripts/harness/phase2-extensions/application/usecases/validate-pointers-usecase.ts`
 - `scripts/harness/validator-system/composition-root.ts`
 - `scripts/harness/validator-system/domain/value-objects/validator-id.ts`
+- WI-128: L4 operational rollout must be completed after validator registration
