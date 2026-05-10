@@ -40,3 +40,16 @@ README と folder management rules は、WI status を AIDLC state machine と�
 - `docs/product/user_stories.md`
 - `scripts/harness/traceability-model/`
 - WI-074: WorkItem frontmatter parser
+
+## publish / dogfood 結果
+
+2026-05-10 に `phasegate@0.142.0` として npm registry publish 後、公開 package を `/private/tmp/phasegate-published-142-fty4H8` に install して dogfood を実施した。
+
+- `npm view phasegate version`: `0.142.0`
+- `npm view phasegate@0.142.0 version dist.tarball`: `version = '0.142.0'`, tarball URL returned
+- `npm --cache /private/tmp/phasegate-npm-cache install phasegate@0.142.0 --ignore-scripts`: PASS
+- `npx phasegate --version`: `phasegate v0.142.0`
+- `npx phasegate work-items:status --help`: PASS（`--dry-run` / `--apply` / `--id` / `--fail-on-stale` / `--json` を表示）
+- `npx phasegate init --name dogfood-142 --agent codex --skills core --yes`: PASS（`.codex/hooks.json`, `.codex/skills`, design docs, `phasegate.config.json` を生成）
+- `npx phasegate phasegate:check-ready`: PASS (`status: pass`)
+- `npx phasegate work-items:status --dry-run --json`: PASS（新規 init project のため `reports: []`）
