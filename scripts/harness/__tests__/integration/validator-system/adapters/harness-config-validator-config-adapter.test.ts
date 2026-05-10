@@ -137,7 +137,7 @@ target('HarnessConfigValidatorConfigAdapter', () => {
         const actual = await adapter.getLayerConfig('L2');
 
         // Assert
-        expect(actual.validatorIds).toEqual(['L2-001', 'L2-002', 'L2-003']);
+        expect(actual.validatorIds).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013']);
         expect(actual.enabled).toBe(true);
       });
     });

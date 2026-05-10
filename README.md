@@ -247,6 +247,8 @@ TESTED  (test files annotated with @work-item-id, all green)
 
 `type: chore` ends at DRAFTED. `type: fix` shortcuts via DRAFTED → REFLECTED → IMPLEMENTED. PhaseGate auto-updates `status`.
 
+Use `phasegate work-items:status --dry-run` to inspect current status, derived status, reason, and next action. Add `--id WI-XXX` to scope the report, `--fail-on-stale` for CI-style stale status detection, or `--apply` to update only the `status:` line in each stale `description.md` frontmatter.
+
 Full spec: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
 
 ---
@@ -474,6 +476,7 @@ npx phasegate <command> [options]
 | `p2:check-agent-context` | Check AGENTS.md / CLAUDE.md freshness |
 | `update-skills` | Update skills to latest version |
 | `phasegate:status` | Display overall harness health summary |
+| `work-items:status --dry-run` / `--apply` | Derive WI status from artifacts and optionally update stale `description.md` frontmatter |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `check-change-category --paths <csv>` | Classify changed files into Quick Mode categories and report whether Full Mode is required (`--format json`, `--fail-on-full-required`) |
 | `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`). `baseline.enabled` defaults to `true` since v0.71.0. |
@@ -517,9 +520,9 @@ The main path is ready for project use, but a few documented behaviors still req
 
 | Work Item | Title | Why it matters |
 |---|---|---|
-| **[WI-033](docs/inception/_cross/WI-033/description.md)** | Finish L4 operational rollout | `doc-freshness` and `pointer-validation` are registered as L4-004/L4-005 and also remain available through `p2:*` compatibility commands. Remaining WI-033 work is rollout polish around scheduling, defaults, and operational docs. @work-item-id WI-116 |
+| **[WI-128](docs/inception/_cross/WI-128/description.md)** | Finish L4 operational rollout | `doc-freshness` and `pointer-validation` are registered as L4-004/L4-005 and also remain available through `p2:*` compatibility commands. WI-033 is closed; remaining rollout polish around scheduling, defaults, and operational docs is tracked separately. @work-item-id WI-128 |
 
-`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see the L3 guide for the current manual setup.
+`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see [WI-125](docs/inception/_cross/WI-125/description.md) and the L3 guide for the current manual setup.
 
 ---
 

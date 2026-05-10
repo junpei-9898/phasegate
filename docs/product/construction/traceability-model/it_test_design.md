@@ -4,6 +4,8 @@
 @story-id H03-02
 @story-id H03-03
 @work-item-id WI-106
+@work-item-id WI-126
+filesystem gateway は WI description、product construction docs、implementation files、test files を走査し、`@work-item-id WI-XXX` evidence を status input に集約する。apply mode は `description.md` の YAML frontmatter 内 `status:` 行だけを書き換え、本文を保持する。
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03
 > **前提ドキュメント**: `logical_design.md`、`it_test_design_plan.md`、`integration_contract.md`、`testing-rules.md`

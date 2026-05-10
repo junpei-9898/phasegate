@@ -6,6 +6,8 @@
 @story-id H08-04
 @story-id H08-05
 @story-id H08-06
+@work-item-id WI-126
+status mismatch policy は validator-system から利用可能な fail signal として扱う。既定は advisory report、CI/L2 相当の検出では `--fail-on-stale` により stale WI status を exit code 1 として扱う。
 > **Unit ID**: validator-system
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H08-01, H08-02, H08-03, H08-04, H08-05, H08-06

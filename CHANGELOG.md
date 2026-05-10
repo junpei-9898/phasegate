@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.142.0] - 2026-05-10
+
+### Added
+
+- **WI-126 — work item status derivation** — `work-items:status --dry-run|--apply` を追加し、WI frontmatter `status` を inception / product reflection / implementation / test evidence から導出できるようにした。
+  - `--id WI-XXX` で単一 WI に絞り込み、`--fail-on-stale` で stale status を exit code 1 として検出できる。
+  - `--apply` は stale な `description.md` の YAML frontmatter `status:` 行だけを書き戻す。
+  - `fix` / `chore` の shortcut path は README / README.ja の説明と一致する。
+
+### Fixed
+
+- publish 前回帰として、標準 L2 validator set に `L2-013` を含む現行契約と `preCommit.implementationExtensions` default をテスト期待値に反映した。
+
 ## [0.141.0] - 2026-05-09
 
 ### Fixed

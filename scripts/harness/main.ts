@@ -98,6 +98,7 @@ Commands:
   disable-feature <name>       Disable a harness feature
   list-features                List available features
   migrate                      Migrate phasegate.config.json (--schema v3, --config <path>)
+  work-items:status            Report or apply derived WI frontmatter status (--dry-run|--apply, --id, --fail-on-stale, --json)
 
   render-errors                Render harness errors (--format human|agent|ci)
   validate-fix                 Validate fix examples (--code <code>)
@@ -306,6 +307,17 @@ Options:
   "phasegate:status": `Usage: phasegate phasegate:status
 
 Display harness status (enabled validators, schema version, hook deployment).`,
+  "work-items:status": `Usage: phasegate work-items:status (--dry-run|--apply) [options]
+
+Derive WI frontmatter status from inception, product reflection, implementation, and test evidence.
+
+Options:
+  --dry-run         Print current status, derived status, reason, and next action.
+  --apply           Update only the status line in each stale description.md frontmatter.
+  --id <WI-XXX>     Limit report/apply to one work item.
+  --fail-on-stale   Return exit code 1 when dry-run finds stale status.
+  --json            Output machine-readable JSON.
+  --help, -h        Show this help`,
   "phasegate:detect-drift": `Usage: phasegate phasegate:detect-drift [options]
 
 Run L4-001 drift detection between design documents and source code. WARNING: scans the project filesystem.
@@ -955,6 +967,23 @@ async function main(): Promise<void> {
         const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
           filePaths,
+          json,
+        });
+        console.log(result.text);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "work-items:status": {
+        const mod = createTraceabilityModelModule(
+          rootDir,
+          toTraceabilityModelOptions(resolvedConfig),
+        );
+        const result = await mod.workItemStatusCommandHandler.execute({
+          dryRun: hasFlag(args, "--dry-run"),
+          apply: hasFlag(args, "--apply"),
+          failOnStale: hasFlag(args, "--fail-on-stale"),
+          id: parseFlag(args, "--id"),
           json,
         });
         console.log(result.text);

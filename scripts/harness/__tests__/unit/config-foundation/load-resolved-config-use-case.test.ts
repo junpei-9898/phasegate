@@ -114,6 +114,9 @@ function createMinimalResolvedDocument(): HarnessConfigResolvedDocument {
     validate: {
       failOnWarning: false,
     },
+    preCommit: {
+      implementationExtensions: ['.ts'],
+    },
     architecture: {
       preset: 'clean',
       layers: ['domain', 'application', 'infrastructure', 'presentation'],
@@ -144,6 +147,7 @@ function createPresetDefinitions(): Readonly<
       paths: minimal.paths,
       reporting: minimal.reporting,
       validate: minimal.validate,
+      preCommit: minimal.preCommit,
     },
     standard: {
       ...{
@@ -163,6 +167,7 @@ function createPresetDefinitions(): Readonly<
       paths: minimal.paths,
       reporting: minimal.reporting,
       validate: minimal.validate,
+      preCommit: minimal.preCommit,
     },
     strict: {
       ...{

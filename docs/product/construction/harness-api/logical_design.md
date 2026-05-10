@@ -7,6 +7,8 @@
 @work-item-id WI-025
 @work-item-id WI-112
 @work-item-id WI-114
+@work-item-id WI-126
+`main.ts` は dedicated command `work-items:status` を公開し、dry-run/apply/fail-on-stale/json を traceability-model の command handler へ委譲する。`phasegate:status` とは別導線にし、既存 status API の JSON contract を壊さない。
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）

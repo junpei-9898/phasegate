@@ -7,6 +7,8 @@
  */
 
 import { ApplyWorkItemMigrationUseCase } from "./application/usecases/apply-work-item-migration-usecase.js";
+import { ApplyWorkItemStatusUseCase } from "./application/usecases/apply-work-item-status-usecase.js";
+import { DeriveWorkItemStatusUseCase } from "./application/usecases/derive-work-item-status-usecase.js";
 import { PlanWorkItemMigrationUseCase } from "./application/usecases/plan-work-item-migration-usecase.js";
 import { ValidateDesignStoryAnnotationsUseCase } from "./application/usecases/validate-design-story-annotations-usecase.js";
 import { ValidateImplementationMetadataUseCase } from "./application/usecases/validate-implementation-metadata-usecase.js";
@@ -14,17 +16,20 @@ import { ValidateTestStoryMetadataUseCase } from "./application/usecases/validat
 import { MetadataValidator } from "./domain/services/metadata-validator.js";
 import { StoryIdAliasResolver } from "./domain/services/story-id-alias-resolver.js";
 import { TraceabilityChainBuilder } from "./domain/services/traceability-chain-builder.js";
+import { WorkItemStatusDerivationService } from "./domain/services/work-item-status-derivation-service.js";
 import { ProjectRelativePath } from "./domain/value-objects/project-relative-path.js";
 import { FileSystemInceptionPlanGateway } from "./infrastructure/gateways/file-system-inception-plan-gateway.js";
 import { FileSystemMetadataReader } from "./infrastructure/gateways/file-system-metadata-reader.js";
 import { FileSystemWorkItemMigrationApplyGateway } from "./infrastructure/gateways/file-system-work-item-migration-apply-gateway.js";
 import { FileSystemWorkItemMigrationSourceGateway } from "./infrastructure/gateways/file-system-work-item-migration-source-gateway.js";
 import { FileSystemWorkItemIdentityGateway } from "./infrastructure/gateways/file-system-work-item-identity-gateway.js";
+import { FileSystemWorkItemStatusGateway } from "./infrastructure/gateways/file-system-work-item-status-gateway.js";
 import { MarkdownDesignDocumentGateway } from "./infrastructure/gateways/markdown-design-document-gateway.js";
 import { MarkdownStoryCatalogGateway } from "./infrastructure/gateways/markdown-story-catalog-gateway.js";
 import { MarkdownUnitDefinitionGateway } from "./infrastructure/gateways/markdown-unit-definition-gateway.js";
 import { MigrateWorkItemsCommandHandler } from "./presentation/cli/migrate-work-items-command-handler.js";
 import { ValidateMetadataCommandHandler } from "./presentation/cli/validate-metadata-command-handler.js";
+import { WorkItemStatusCommandHandler } from "./presentation/cli/work-item-status-command-handler.js";
 
 export interface TraceabilityModelPathRoots {
   readonly designDocsRoot: string;
@@ -63,6 +68,7 @@ export function createTraceabilityModelModule(
   const workItemMigrationSource = new FileSystemWorkItemMigrationSourceGateway({ rootDir });
   const workItemMigrationApply = new FileSystemWorkItemMigrationApplyGateway({ rootDir });
   const workItemIdentity = new FileSystemWorkItemIdentityGateway({ rootDir });
+  const workItemStatus = new FileSystemWorkItemStatusGateway({ rootDir });
 
   // Domain services
   const metadataValidator = new MetadataValidator({
@@ -78,6 +84,7 @@ export function createTraceabilityModelModule(
     storyCatalogPath,
   });
   const storyIdAliasResolver = new StoryIdAliasResolver(storyCatalog);
+  const workItemStatusDerivationService = new WorkItemStatusDerivationService();
 
   // Usecases
   const validateImplementationMetadataUseCase = new ValidateImplementationMetadataUseCase({
@@ -100,6 +107,14 @@ export function createTraceabilityModelModule(
     planWorkItemMigrationUseCase,
     applyPort: workItemMigrationApply,
   });
+  const deriveWorkItemStatusUseCase = new DeriveWorkItemStatusUseCase({
+    workItemStatusPort: workItemStatus,
+    derivationService: workItemStatusDerivationService,
+  });
+  const applyWorkItemStatusUseCase = new ApplyWorkItemStatusUseCase({
+    deriveWorkItemStatusUseCase,
+    workItemStatusPort: workItemStatus,
+  });
 
   // Presentation handlers
   const validateMetadataCommandHandler = new ValidateMetadataCommandHandler({
@@ -112,10 +127,15 @@ export function createTraceabilityModelModule(
     planWorkItemMigrationUseCase,
     applyWorkItemMigrationUseCase,
   });
+  const workItemStatusCommandHandler = new WorkItemStatusCommandHandler({
+    deriveWorkItemStatusUseCase,
+    applyWorkItemStatusUseCase,
+  });
 
   return {
     validateMetadataCommandHandler,
     migrateWorkItemsCommandHandler,
+    workItemStatusCommandHandler,
     // expose key services for cross-unit use
     storyCatalog,
     traceabilityChainBuilder,

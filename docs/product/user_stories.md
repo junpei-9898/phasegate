@@ -4,7 +4,9 @@
 @story-id H03-04
 @story-id H03-05
 @story-id H13-05
+@work-item-id WI-126
 更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（Phase A-2 / WI frontmatter parser）、H03-05（Phase A-3 / L2 validator 統合）、H13-05（OSS license 変更 Apache-2.0 → MIT, v0.111.0）を追加。
+WI-126 で WI status derivation / safe apply を追加し、`status: drafted | reflected | implemented | tested` を PhaseGate が成果物から更新する運用契約を具体化する。
 
 > **ステータス**: Phase 2（実行）— codex 1stレビュー済み・指摘反映済み
 > **作成日**: 2026-03-12

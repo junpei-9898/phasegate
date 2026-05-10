@@ -8,6 +8,8 @@
 @story-id H03-06
 @story-id H03-07
 @story-id H03-08
+@work-item-id WI-126
+`WorkItemStatusInput` / `WorkItemStatusReport` / `WorkItemStatusEvidence` を追加する。derived status は current status に依存せず、inception artifacts、product reflection、implementation annotation、test annotation から計算する。`fix` は `implemented` で完了可能、`chore` は `drafted` で完結する。
 > **Unit ID**: traceability-model
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-04-24（H03-08 / ISSUE-026 Phase B-3 WI migration apply 反映）

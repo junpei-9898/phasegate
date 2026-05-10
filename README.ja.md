@@ -293,6 +293,7 @@ npx phasegate <command> [options]
 | `baseline` | retrofit grandfather snapshot 生成（`--dry-run`, `--force`, `--paths <glob>`, `--json`） |
 | `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | 最小構成の設計文書を `templates/` から生成 |
 | `phasegate:status` | 全体の健全性サマリ |
+| `work-items:status --dry-run` / `--apply` | 成果物から WI status を導出し、必要に応じて `description.md` frontmatter を更新 |
 | `phasegate:check-phase --unit <id>` | 指定 Unit の現在フェーズ |
 | `phasegate:detect-drift` | 設計-コード乖離レポート |
 | `migrate work-items --dry-run` / `--apply` | 既存リポジトリの旧 `ISSUE-XXX` / `H{NN}-{NN}` directory を WI 統一レイアウト（`_cross/{WI-XXX}/` / `{unit}/{WI-XXX}/`）へ移行。frontmatter（`type` / `severity` / `legacy_id` / `affects`）を自動注入。冪等。`--json` で CI/スクリプト連携可。詳細: [Work Item Migration](docs/guide/cli-reference.md#work-item-migration) |
@@ -406,6 +407,8 @@ TESTED (@work-item-id 付きテストあり / green)
 
 `type: chore` は DRAFTED で完結。`type: fix` は DRAFTED → REFLECTED → IMPLEMENTED の簡略パス。`status` は PhaseGate が自動更新します。
 
+`phasegate work-items:status --dry-run` で current status / derived status / reason / next action を確認できます。単一 WI に絞る場合は `--id WI-XXX`、CI 風に stale status を検出する場合は `--fail-on-stale`、`description.md` frontmatter の `status:` 行だけを書き戻す場合は `--apply` を指定します。
+
 詳細仕様: [`docs/folder_management_rules.md`](docs/folder_management_rules.md)
 
 ---
@@ -456,9 +459,9 @@ reports/
 
 | Work Item | 内容 |
 |---|---|
-| **[WI-033](docs/inception/_cross/WI-033/description.md)** | L4 運用ロールアウトの仕上げ。`doc-freshness` / `pointer-validation` は L4-004 / L4-005 として登録済みで、`p2:*` 互換コマンドも維持。残りは scheduling / default / 運用 docs の整理。@work-item-id WI-116 |
+| **[WI-128](docs/inception/_cross/WI-128/description.md)** | L4 運用ロールアウトの仕上げ。`doc-freshness` / `pointer-validation` は L4-004 / L4-005 として登録済みで、`p2:*` 互換コマンドも維持。WI-033 は完了済みとして閉じ、残りの scheduling / default / 運用 docs は後続 WI で扱う。@work-item-id WI-128 |
 
-L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。現時点では手動セットアップで利用できます。
+L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。[WI-125](docs/inception/_cross/WI-125/description.md) と L3 guide を参照してください。現時点では手動セットアップで利用できます。
 
 ---
 

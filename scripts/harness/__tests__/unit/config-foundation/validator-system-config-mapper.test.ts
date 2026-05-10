@@ -81,7 +81,7 @@ target('toValidatorSystemConfig', () => {
         expect(actual).toEqual({
           project: { preset: 'standard' },
           layers: {
-            L2: { enabled: true },
+            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
             L3: { enabled: true },
             L4: { enabled: false, validators: ['drift-detector'] },
           },
@@ -103,7 +103,7 @@ target('toValidatorSystemConfig', () => {
         expect(actual).toEqual({
           project: { preset: 'standard' },
           layers: {
-            L2: { enabled: true },
+            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013'] },
             L3: { enabled: true },
             L4: { enabled: false, validators: ['drift-detector'] },
           },
