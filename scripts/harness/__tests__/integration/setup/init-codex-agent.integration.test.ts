@@ -11,7 +11,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { access, lstat, mkdtemp, readlink, rm } from 'node:fs/promises';
+import { access, lstat, mkdtemp, readFile, readlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -157,6 +157,26 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
           await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
           expect((await lstat(path.join(projectRoot, '.claude', 'skills'))).isSymbolicLink()).toBe(true);
           expect((await lstat(path.join(projectRoot, '.codex', 'skills'))).isSymbolicLink()).toBe(true);
+        } finally {
+          await rm(projectRoot, { recursive: true, force: true });
+        }
+      }, 60000);
+
+      it('init 直後の doctor が package-json-devdep-missing で失敗しないよう package.json を作成すること', async () => {
+        // Arrange
+        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-both-package-'));
+
+        try {
+          // Act
+          const actual = await runInitCli(projectRoot, ['--agent', 'both', '--with-husky', '--with-ci']);
+
+          // Assert
+          expect(actual.exitCode).toBe(0);
+          expect(actual.stdout).toContain('package.json created with phasegate devDependency');
+          const packageJson = JSON.parse(await readFile(path.join(projectRoot, 'package.json'), 'utf-8')) as {
+            devDependencies?: Record<string, string>;
+          };
+          expect(packageJson.devDependencies?.phasegate).toMatch(/^\^\d+\.\d+\.\d+$/);
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }

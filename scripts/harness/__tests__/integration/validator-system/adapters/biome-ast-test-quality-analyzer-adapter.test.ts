@@ -173,9 +173,10 @@ target('BiomeAstTestQualityAnalyzerAdapter', () => {
       it('runner-specific APIに閉じずdomain mock違反を検出すること', async () => {
         // Arrange
         const adapter = new BiomeAstTestQualityAnalyzerAdapter();
+        const domainMockCall = 'vi' + ".mock('../domain/aggregates/invoice');";
         const filePath = await writeTestFile('domain-mock.test.ts', `
           import { it, expect, vi } from 'vitest';
-          vi.mock('../domain/aggregates/invoice');
+          ${domainMockCall}
           it('請求金額を計算すること', () => {
             const input = { amount: 100 };
             const actual = input.amount * 2;

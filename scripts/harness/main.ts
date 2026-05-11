@@ -8,7 +8,7 @@
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
  */
 
-import { access, readFile as fsReadFile } from "node:fs/promises";
+import { access, readFile as fsReadFile, readlink as fsReadlink, writeFile as fsWriteFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
@@ -24,6 +24,9 @@ import {
 } from "./config-foundation/infrastructure/repositories/file-system-config-repository.js";
 import { createHarnessApiModule } from "./harness-api/composition-root.js";
 import { createHarnessErrorModule } from "./harness-error/composition-root.js";
+import { createInstallationModule } from "./installation/composition-root.js";
+import { SkillDeployerManifestBuilder, type DeployManifestRecord } from "./installation/application/wrappers/skill-deployer-manifest-builder.js";
+import { NodeCryptoHashAdapter } from "./installation/infrastructure/adapters/node-crypto-hash-adapter.js";
 import { CheckStoryReflectionUseCase } from "./phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
 import { createPhaseDependencyModelModule } from "./phase-dependency-model/composition-root.js";
 import { StoryReflectionChecker } from "./phase-dependency-model/domain/services/story-reflection-checker.js";
@@ -84,6 +87,60 @@ async function pathExists(path: string): Promise<boolean> {
   }
 }
 
+interface PackageJsonDocument {
+  readonly [key: string]: unknown;
+  readonly dependencies?: unknown;
+  readonly devDependencies?: unknown;
+}
+
+interface PackageDependencyResult {
+  readonly created: boolean;
+  readonly updated: boolean;
+  readonly alreadyPresent: boolean;
+  readonly skipped: boolean;
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function ensurePhasegatePackageDependency(rootDir: string, version: string): Promise<PackageDependencyResult> {
+  const packageJsonPath = join(rootDir, "package.json");
+  let pkg: PackageJsonDocument = {};
+  let created = false;
+
+  try {
+    const raw = await fsReadFile(packageJsonPath, "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isJsonRecord(parsed)) {
+      return { created: false, updated: false, alreadyPresent: false, skipped: true };
+    }
+    pkg = parsed;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      return { created: false, updated: false, alreadyPresent: false, skipped: true };
+    }
+    created = true;
+  }
+
+  if (
+    (isJsonRecord(pkg.devDependencies) && pkg.devDependencies.phasegate !== undefined) ||
+    (isJsonRecord(pkg.dependencies) && pkg.dependencies.phasegate !== undefined)
+  ) {
+    return { created: false, updated: false, alreadyPresent: true, skipped: false };
+  }
+
+  pkg = {
+    ...pkg,
+    devDependencies: {
+      ...(isJsonRecord(pkg.devDependencies) ? pkg.devDependencies : {}),
+      phasegate: `^${version}`,
+    },
+  };
+  await fsWriteFile(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf-8");
+  return { created, updated: !created, alreadyPresent: false, skipped: false };
+}
+
 function printUsage(): void {
   const usage = `
 Usage: phasegate <command> [options]
@@ -93,6 +150,10 @@ Setup:
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
                                 --skills <core|all>, --agent <claude|codex|both>, --with-husky, --with-ci, --yes)
   update-skills                Re-deploy skills from current harness version
+  doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
+  install                      Install phasegate managed files (stub until WI-146)
+  uninstall                    Uninstall phasegate managed files (stub until WI-147)
+  reconcile                    Reconcile phasegate managed files (stub until WI-148)
 
 Commands:
   enable-feature <name>        Enable a harness feature
@@ -179,6 +240,40 @@ function parseFlag(args: readonly string[], flag: string): string | undefined {
 
 function hasFlag(args: readonly string[], flag: string): boolean {
   return args.includes(flag);
+}
+
+async function createFileManifestRecord(
+  rootDir: string,
+  relativePath: string,
+  mode: "created" | "merged" = "created",
+): Promise<DeployManifestRecord | null> {
+  try {
+    const contentForHash = await fsReadFile(join(rootDir, relativePath), "utf8");
+    return { path: relativePath, mode, contentForHash };
+  } catch {
+    return null;
+  }
+}
+
+async function createSymlinkManifestRecord(rootDir: string, relativePath: string): Promise<DeployManifestRecord | null> {
+  try {
+    const target = await fsReadlink(join(rootDir, relativePath));
+    return { path: relativePath, mode: "symlink", contentForHash: target };
+  } catch {
+    return null;
+  }
+}
+
+async function saveInstallationManifest(
+  rootDir: string,
+  version: string,
+  records: readonly (DeployManifestRecord | null | Promise<DeployManifestRecord | null>)[],
+): Promise<void> {
+  const filteredRecords = (await Promise.all(records)).filter((record) => record !== null);
+  if (filteredRecords.length === 0) return;
+  const mod = createInstallationModule();
+  const builder = new SkillDeployerManifestBuilder(new NodeCryptoHashAdapter());
+  await mod.manifestRepository.save(rootDir, builder.build(version, filteredRecords));
 }
 
 /**
@@ -700,6 +795,7 @@ async function main(): Promise<void> {
         const deployClaude = agent === "claude" || agent === "both";
         const deployCodex = agent === "codex" || agent === "both";
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
+        const packageResult = await ensurePhasegatePackageDependency(rootDir, result.version);
         const skillLinkResult = await deployAgentSkillLinks(rootDir, {
           claude: deployClaude,
           codex: deployCodex,
@@ -722,9 +818,40 @@ async function main(): Promise<void> {
         const huskyCommitMsgResult = withHusky ? await deployHuskyCommitMsgHook(harnessRoot, rootDir) : null;
         const huskyPrePushResult = withHusky ? await deployHuskyPrePushHook(harnessRoot, rootDir) : null;
         const ciWorkflowResult = withCi ? await deployCiWorkflows(harnessRoot, rootDir) : null;
+        await saveInstallationManifest(rootDir, result.version, [
+          ...result.deployedSkills.map((skill) => ({
+            path: join("skills", skill),
+            mode: "created" as const,
+            contentForHash: `${result.version}:${skill}`,
+          })),
+          await createFileManifestRecord(rootDir, join("skills", ".harness-version")),
+          packageResult.created || packageResult.updated ? await createFileManifestRecord(rootDir, "package.json") : null,
+          configResult.created ? await createFileManifestRecord(rootDir, "phasegate.config.json") : null,
+          hooksResult.settingsCreated ? await createFileManifestRecord(rootDir, join(".claude", "settings.json")) : null,
+          hooksResult.hookConfigGenerated
+            ? await createFileManifestRecord(rootDir, join(".claude", "scripts", "hook-config.json"))
+            : null,
+          skillLinkResult.claude !== null ? await createSymlinkManifestRecord(rootDir, join(".claude", "skills")) : null,
+          codexResult?.created ? await createFileManifestRecord(rootDir, join(".codex", "hooks.json")) : null,
+          skillLinkResult.codex !== null ? await createSymlinkManifestRecord(rootDir, join(".codex", "skills")) : null,
+          ...designDocsResult.copiedFiles.map((path) => createFileManifestRecord(rootDir, path)),
+          huskyResult?.created ? await createFileManifestRecord(rootDir, join(".husky", "pre-commit")) : null,
+          huskyCommitMsgResult?.created ? await createFileManifestRecord(rootDir, join(".husky", "commit-msg")) : null,
+          huskyPrePushResult?.created ? await createFileManifestRecord(rootDir, join(".husky", "pre-push")) : null,
+          ...(ciWorkflowResult?.copiedFiles.map((path) => createFileManifestRecord(rootDir, path)) ?? []),
+        ]);
         console.log(
           `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
         );
+        if (packageResult.created) {
+          console.log(`✓ package.json created with phasegate devDependency`);
+        } else if (packageResult.updated) {
+          console.log(`✓ package.json updated with phasegate devDependency`);
+        } else if (packageResult.alreadyPresent) {
+          console.log(`  package.json already declares phasegate, skipped`);
+        } else if (packageResult.skipped) {
+          console.log(`  package.json could not be updated, skipped`);
+        }
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
         } else {
@@ -854,8 +981,51 @@ async function main(): Promise<void> {
           claude: shouldLinkClaude,
           codex: shouldLinkCodex,
         });
+        await saveInstallationManifest(rootDir, current, [
+          ...result.deployedSkills.map((skill) => ({
+            path: join("skills", skill),
+            mode: "created" as const,
+            contentForHash: `${current}:${skill}`,
+          })),
+          await createFileManifestRecord(rootDir, join("skills", ".harness-version")),
+          shouldLinkClaude ? await createSymlinkManifestRecord(rootDir, join(".claude", "skills")) : null,
+          shouldLinkCodex ? await createSymlinkManifestRecord(rootDir, join(".codex", "skills")) : null,
+        ]);
         console.log(`✓ Skills updated (${result.deployedSkills.length} skills redeployed, set: ${updateSkillSet})`);
         process.exit(0);
+        break;
+      }
+
+      case "doctor": {
+        const mod = createInstallationModule();
+        const phasegateVersion = await getHarnessVersion(harnessRoot);
+        const result = await mod.doctorHandler.execute({
+          projectRoot: rootDir,
+          strict: hasFlag(args, "--strict"),
+          json,
+          reportOut: parseFlag(args, "--report-out") ?? null,
+          phasegateVersion,
+        });
+        console.log(result.stdout);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "install": {
+        console.error("Not yet implemented: phasegate install is owned by WI-146");
+        process.exit(2);
+        break;
+      }
+
+      case "uninstall": {
+        console.error("Not yet implemented: phasegate uninstall is owned by WI-147");
+        process.exit(2);
+        break;
+      }
+
+      case "reconcile": {
+        console.error("Not yet implemented: phasegate reconcile is owned by WI-148");
+        process.exit(2);
         break;
       }
 

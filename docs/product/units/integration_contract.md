@@ -4,7 +4,7 @@
 設計要素: L0 legacy validator 撤去後の validator-system / agent-integration 境界。
 
 > **作成日**: 2026-03-12
-> **Unit数**: 14（v1） + 2（Future）
+> **Unit数**: **15**（v1） + 2（Future）  ※ installation unit を WI-144 系で新規追加
 > **ストーリー数**: 54（v1） + 8（Future）= 62
 
 ---
@@ -319,6 +319,22 @@ Future
 | **Wave 2**: コア品質機構 | nyquist-validation, validator-system, harness-api, quick-mode, agent-integration | 22 | nyquist-validation, validator-system, quick-modeは並列可能 | harness-api → agent-integration の順序推奨 | validator-system, nyquist-validationの主要インターフェースが確定後にharness-api着手 |
 | **Wave 3**: 拡張・運用・保証 | skill-quality, ci-governance, regression-suite | 14 | skill-quality, ci-governanceは並列可能 | regression-suite Phase Bは全v1 Unit完了後 | skill-quality → ci-governance: lesson artifact契約の事前合意。regression-suite Phase AはWave 2後半から先行開始可能 |
 | **Future** | phase2-extensions | 3 | — | — | v1全Unit完了後 |
+
+---
+
+## 5.5 installation (新規 / WI-144 系)
+
+> **Unit ID**: installation
+> **担当 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **Wave**: 3（品質防御メタ層）
+> **詳細**: `docs/product/units/installation_unit.md` 参照
+
+phasegate 自身の deploy 状態管理 / 構造健全性検査 / 既存ファイルへの structured merge / clean uninstall を担当する Bounded Context。
+
+- **公開 API**: `phasegate doctor` (WI-145), `phasegate install` (WI-146), `phasegate uninstall` (WI-147), `phasegate reconcile` (WI-148) の 4 CLI コマンド
+- **永続データ**: `.phasegate/manifest.json` (DeploymentManifest schema)
+- **依存**: harness-api (CLI presentation) ← installation → {agent-integration, ci-governance, config-foundation}
+- **TODO**: 詳細な API contract / Shared Kernel 拡張は WI-146/147/148 完了時に拡充する (Phase 1 計画書 Q3=c 採用)
 
 ---
 

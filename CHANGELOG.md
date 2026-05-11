@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.145.1] - 2026-05-11
+
+### Fixed
+
+- **WI-145 post-publish dogfood** — `npx phasegate@0.145.0 init` 直後の `doctor` が `package-json-devdep-missing` で RED になる問題を修正した。
+  - `init` が `package.json` を作成または更新し、`devDependencies.phasegate` を現在の harness version で登録するようにした。
+
+## [0.145.0] - 2026-05-11
+
+### Added
+
+- **WI-145 — installation doctor / manifest foundation** — `phasegate doctor` を追加し、Claude / Codex hooks、Husky hooks、CI workflow、package dependency、skills symlink の 9 checks で inert / partial installation を診断できるようにした。
+  - `--json`、`--strict`、`--report-out` に対応し、4 fixture (`no-phasegate` / `inert-install` / `partial-install` / `full-install`) の golden integration test で出力と exit code を固定した。
+  - init / update-skills 経路で `.phasegate/manifest.json` の薄い書き出しを開始し、manifest entries の `path` / `mode` / `hash` / `deployedAt` を unit test で固定した。
+  - doctor の false positive / false negative を防ぐため、9 checks すべてに unit test を追加した。
+
+### Fixed
+
+- **WI-145 follow-up — L1 blocker cleanup** — validator-system の integration test fixture 内にあった internal module mock 文字列が L1-017 に検出されていた既存違反を解消した。
+
 ## [0.144.1] - 2026-05-10
 
 ### Fixed

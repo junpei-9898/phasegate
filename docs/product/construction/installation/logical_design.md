@@ -1,0 +1,439 @@
+---
+traceability:
+  initial_creation: true
+---
+
+# Logical Design (横断): installation
+
+> **Unit ID**: installation
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **作成日**: 2026-05-11
+> **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
+> **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
+
+## 1. アーキテクチャ層 (Clean Architecture, 4 層)
+
+`phasegate.config.json` の `architecture.preset: "clean"` に準拠。依存方向は厳守: `domain → application → infrastructure/presentation` (infrastructure と presentation の相互参照は禁止、composition root のみで合流)。
+
+### 1.1 domain
+
+- IO を持たない pure functions / value objects
+- 集約 (`DeploymentManifest`, `DiagnosticReport`)、VO (`DeploymentEntry` 等)、interface (`HeuristicCheck`, `MergeStrategy<T>` 等)、静的レジストリ (`RepairTable`)
+- 配置: `scripts/harness/installation/domain/`
+
+**責務の詳細:**
+
+| 構成要素 | 種別 | 役割 |
+|---|---|---|
+| `DeploymentManifest` | 集約 root | deploy された全ファイルを `created` / `merged` 区別付きで記録 |
+| `DeploymentEntry` | VO (集約内部) | 1 ファイル単位の deploy 記録 (`path` / `mode` / `block?` / `hash`) |
+| `DiagnosticReport` | 集約 root | doctor 1 回実行の検査結果を不変条件付きで保持 |
+| `DiagnosticFinding` | VO (集約内部) | 1 件の検出結果 (`checkId` / `severity` / `target` / `message` / `repairMode` / `repairHint?` / `suggestedSkill?`) — domain_model.md §2.2 と同期 |
+| `RepairMode` | VO | `"mechanical" \| "ai-assisted" \| "manual"` の 3 値 |
+| `SuggestedSkill` | VO | `{ skillName, rationale, invokeCommand }` の純粋データ |
+| `Hash` | VO | `sha256:<64 hex>` prefix 付き文字列。`sha256:` prefix で将来のアルゴリズム切替に対応 |
+| `RepairTable` | 静的レジストリ (domain class) | `lookup(checkId): SuggestedSkill \| null` の静的マッピング |
+| `HeuristicCheck` | interface | 9 種実装の strategy 抽象 (実装は application layer) |
+| `MergeStrategy<T>` | interface | install の merge 戦略抽象 (WI-146 で導入、実装は infrastructure) |
+| `UninstallReverseStrategy` | interface | uninstall の reverse-op 抽象 (WI-147 で導入、実装は infrastructure) |
+| `ReconcileStrategy` | interface | reconcile の update 戦略抽象 (WI-148 で導入、実装は infrastructure) |
+
+**domain 層の不変条件 (domain_model_plan.md §2 と同期):**
+
+- `DeploymentManifest`: `entries[].path` がユニーク; `entry.mode == "merged"` ⇒ `entry.block != null`; `entry.hash` は `sha256:` prefix 形式; `version` は semver 形式
+- `DiagnosticReport`: `findings[].checkId` がユニーク; `finding.repairMode == "ai-assisted"` ⇒ `finding.suggestedSkill != null`; `finding.severity == "red"` のとき `overallStatus = "red"`
+- 全 VO / 集約 root は TypeScript `readonly` + `Object.freeze()` で immutability を保証
+
+### 1.2 application
+
+- domain + port interface を所有、infrastructure を知らない
+- Use case 4 種 + Port 4 種 + HeuristicCheck 9 実装
+- 配置: `scripts/harness/installation/application/`
+
+**責務の詳細:**
+
+- Port interface を宣言し、infrastructure adapter との境界を保つ
+- `HeuristicCheck` 9 実装は `FileInspectorPort` を constructor 注入で受け取る (Phase 1 計画書 Q5 承認)
+- 薄い wrapper (`skill-deployer-manifest-builder.ts`) を WI-145 スコープで保持し、WI-146 完了時に削除 (Phase 1 計画書 Q3 承認)
+- use case は副作用を port 経由でのみ実行し、domain ロジックと IO を分離する
+
+### 1.3 infrastructure
+
+- port を実装する adapter、Node.js fs/crypto を直接呼ぶ
+- 新規 npm 依存追加なし (Node.js built-in のみ、Phase 1 計画書 Q1 承認)
+- 配置: `scripts/harness/installation/infrastructure/`
+
+**責務の詳細:**
+
+- `ManifestRepositoryPort` 実装: `.phasegate/manifest.json` の atomic write (tmp → rename)
+- `FileInspectorPort` 実装: Node.js `fs/promises` による read-only 検査
+- `HashCalculatorPort` 実装: Node.js `crypto.createHash("sha256")`
+- `BackupPort` 実装: `.phasegate/backups/{ISO-timestamp}/<relative-path>` への `fs.copyFile`
+- `MergeStrategy<T>` 各実装 (WI-146 で追加): JSON / Shell / YAML-add / package.json の 4 種
+- `UninstallReverseStrategy` 各実装 (WI-147 で追加)
+- `ReconcileStrategy` 各実装 (WI-148 で追加)
+
+### 1.4 presentation
+
+- CLI handler、application use case を呼ぶ、infrastructure adapter を DI 注入
+- 配置: `scripts/harness/installation/presentation/` および `scripts/harness/main.ts` (CLI dispatcher 追記)
+
+**責務の詳細:**
+
+- 引数 parsing (`--dry-run` / `--apply` / `--force` / `--json` / `--strict` / `--report-out`)
+- use case 起動と report 受領
+- output formatting (human readable / json with `schemaVersion: "1.0"`) (Phase 1 計画書 Q4 承認)
+- exit code mapping: `overallStatus == "red" → 1`, `warn && strict → 1`, `warn → 0`, `green → 0`
+- presentation 単独でのロジック実装禁止 (全ロジックは application に委譲)
+
+---
+
+## 2. Use Case 一覧
+
+@work-item-id WI-145
+@work-item-id WI-146
+@work-item-id WI-147
+@work-item-id WI-148
+
+| Use Case | Input | Output | 担当 WI | 副作用 |
+|---|---|---|---|---|
+| `RunDoctorDiagnosticsUseCase` | `{ projectRoot: string, strict: boolean }` | `DiagnosticReport` | WI-145 | なし (read-only) |
+| `InstallUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `InstallReport` | WI-146 | manifest write、file deploy |
+| `UninstallUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `UninstallReport` | WI-147 | manifest archive、file removal |
+| `ReconcileUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `ReconcileReport` | WI-148 | manifest update、file diff apply |
+
+各 report は独立構造 (Phase 1 計画書 Q2 承認、共通基底なし)。schemaVersion は presentation layer の formatter で揃える (Phase 1 計画書 Q4 承認)。
+
+**各 use case の処理概要:**
+
+| Use Case | 処理フロー概要 |
+|---|---|
+| `RunDoctorDiagnosticsUseCase` | `HeuristicCheck[]` を順次実行 → `DiagnosticFinding[]` を収集 → `DiagnosticReport` を構築して返す |
+| `InstallUseCase` | deploy 先ごとに `RepairMode` 判定 → `mechanical` なら merge 実行、`ai-assisted` なら refuse + hint → `ManifestRepositoryPort.save` |
+| `UninstallUseCase` | manifest 読込 → 各 entry の reverse-op 判定 → `created` 削除 / `merged` block 除去 → manifest archive |
+| `ReconcileUseCase` | manifest 読込 → template hash 比較 → 差分 update / skip / refuse → manifest update |
+
+---
+
+## 3. Ports (interface)
+
+### 3.1 ManifestRepositoryPort
+
+@work-item-id WI-145
+
+```typescript
+interface ManifestRepositoryPort {
+  load(projectRoot: string): Promise<DeploymentManifest | null>;
+  save(projectRoot: string, manifest: DeploymentManifest): Promise<void>;
+  exists(projectRoot: string): Promise<boolean>;
+  archive(projectRoot: string): Promise<void>;  // uninstall 用、`.phasegate/manifest.archived-{ISO}.json` へ rename
+}
+```
+
+- 永続先: `.phasegate/manifest.json`
+- 書込: atomic (tmp → rename)
+- `load` は存在しない manifest に `null` を返し、壊れた JSON には `HarnessError` を throw
+
+### 3.2 FileInspectorPort
+
+@work-item-id WI-145
+
+```typescript
+interface FileInspectorPort {
+  exists(absolutePath: string): Promise<boolean>;
+  readText(absolutePath: string): Promise<string | null>;        // 存在しない / 読込失敗 → null
+  readJson<T = unknown>(absolutePath: string): Promise<T | null>; // 存在しない / parse 失敗 → null (例外を投げない)
+  readSymlink(absolutePath: string): Promise<string | null>;     // not a symlink → null
+}
+```
+
+- 副作用なし (read-only)
+- `readSymlink` は symlink でないパスに対して `null` を返す
+- `readJson` は parse 失敗時に例外を投げず `null` を返す: HeuristicCheck が parse 失敗を `manual` finding に変換できるようにするため (固有 logical_design.md §2.2.2)
+
+### 3.3 HashCalculatorPort
+
+@work-item-id WI-145
+
+```typescript
+interface HashCalculatorPort {
+  compute(content: string | Buffer): Hash;  // returns "sha256:<64 hex>"
+}
+```
+
+- 同期処理 (Node.js `crypto.createHash` は同期 API)
+- `Hash` 型は domain VO として `sha256:` prefix + 64 文字 hex の形式制約を持つ
+
+### 3.4 BackupPort
+
+@work-item-id WI-146
+@work-item-id WI-147
+
+```typescript
+interface BackupPort {
+  snapshot(absolutePaths: string[], projectRoot: string): Promise<BackupHandle>;
+  // BackupHandle = { backupDir: string, timestamp: string }
+}
+```
+
+- 配置: `.phasegate/backups/{ISO-timestamp}/<relative-path>` への cp
+- `BackupHandle` は backup 完了後の参照用メタデータ (report に含める)
+
+---
+
+## 4. HeuristicCheck 実装 (application layer, 9 種)
+
+@work-item-id WI-145
+
+各実装は `HeuristicCheck` interface (domain layer) を実装し、`FileInspectorPort` を constructor 注入で受け取る (Phase 1 計画書 Q5 承認: interface は domain, 実装は application)。
+
+| Class | CheckId | 検査内容 | 重大度 |
+|---|---|---|---|
+| `ClaudeHookMissingCheck` | `claude-hook-missing` | `.claude/settings.json` に `"npx phasegate hook"` 文字列が無い (JSON 構造 parse で確認) | red |
+| `CodexHookMissingCheck` | `codex-hook-missing` | `.codex/hooks.json` に `"npx phasegate hook"` 文字列が無い (JSON 構造 parse で確認) | red |
+| `HuskyPreCommitMissingCheck` | `husky-pre-commit-missing` | `.husky/pre-commit` に `phasegate lint` または `phasegate check-phase-gate` が無い | red |
+| `HuskyCommitMsgMissingCheck` | `husky-commit-msg-missing` | `.husky/commit-msg` に `phasegate commit-msg` が無い | red |
+| `HuskyPrePushMissingCheck` | `husky-pre-push-missing` | `.husky/pre-push` に `phasegate bypass:audit` が無い | warn |
+| `CiWorkflowMissingCheck` | `ci-workflow-missing` | `.github/workflows/` に phasegate L3 検査 workflow が存在するか (ファイル名 or 内容で識別) | warn |
+| `PackageJsonDevdepMissingCheck` | `package-json-devdep-missing` | `package.json` の `devDependencies` に `phasegate` 記載があるか (JSON parse で確認) | red |
+| `ClaudeSkillsSymlinkCheck` | `claude-skills-symlink` | `.claude/skills/phasegate` が `node_modules/phasegate/skills` を指す symlink か (`readSymlink` で確認) | red |
+| `CodexSkillsSymlinkCheck` | `codex-skills-symlink` | `.codex/skills/phasegate` symlink 検査 (ClaudeSkillsSymlinkCheck と同様の手順) | red |
+
+各 finding は `RepairTable.lookup(checkId)` で `SuggestedSkill` を取得し、`repairMode = "ai-assisted"` の場合に `suggestedSkill` フィールドに同梱する。
+
+**`HeuristicCheck` interface (domain layer, domain_model.md §3.2 と同期):**
+
+```typescript
+interface HeuristicCheck {
+  readonly checkId: CheckId;  // literal union, domain_model.md §2.7 で定義
+  run(projectRoot: string, inspector: FileInspectorPort): Promise<DiagnosticFinding | null>;  // null = 問題なし (pass)
+}
+```
+
+- インスタンス生成時に `FileInspectorPort` を constructor 注入する設計でも良いが、横断設計では `run` の引数として明示的に渡す方針を採る (テスト時の mock 注入容易化と、`HeuristicCheck` 実装の statelessness を担保するため)
+- 判定ロジックの詳細 (各 check の `repairMode` 分岐ロジック等) は WI-145 固有モード `docs/inception/_cross/WI-145/logical_design.md` §2.2.2 で詳細化済み
+
+---
+
+## 5. Infrastructure Adapters
+
+@work-item-id WI-145
+
+| Adapter | 実装 Port | 実装詳細 |
+|---|---|---|
+| `FileSystemManifestRepositoryAdapter` | `ManifestRepositoryPort` | Node.js `fs/promises`, atomic write (`fs.writeFile` tmp → `fs.rename`), `JSON.parse` / `JSON.stringify` |
+| `NodeFsFileInspectorAdapter` | `FileInspectorPort` | Node.js `fs/promises`, `fs.lstat` で symlink 判定 (`isSymbolicLink()`) |
+| `NodeCryptoHashAdapter` | `HashCalculatorPort` | Node.js `crypto.createHash("sha256")`, 出力 `sha256:<hex>` (prefix 付き) |
+| `FileSystemBackupAdapter` | `BackupPort` | `.phasegate/backups/{toISOString()}/<relative-path>`, `fs.copyFile` recursive |
+
+新規 npm 依存追加なし (Phase 1 計画書 Q1 承認)。全実装は Node.js built-in (`fs/promises`, `crypto`, `path`) のみを使用。
+
+**WI-146/147/148 で追加される adapter (将来):**
+
+| Adapter | 実装 Port | 担当 WI |
+|---|---|---|
+| `JsonMergeStrategyAdapter` | `MergeStrategy<JsonValue>` | WI-146 |
+| `ShellScriptMergeStrategyAdapter` | `MergeStrategy<string>` | WI-146 |
+| `YamlAddStrategyAdapter` | `MergeStrategy<string>` | WI-146 |
+| `PackageJsonMergeStrategyAdapter` | `MergeStrategy<PackageJson>` | WI-146 |
+| `JsonReverseStrategyAdapter` | `UninstallReverseStrategy` | WI-147 |
+| `ShellScriptReverseStrategyAdapter` | `UninstallReverseStrategy` | WI-147 |
+| `PackageJsonReverseStrategyAdapter` | `UninstallReverseStrategy` | WI-147 |
+
+---
+
+## 6. Presentation (CLI Handler)
+
+### 6.1 main.ts (CLI dispatcher) への追記
+
+@work-item-id WI-145
+@work-item-id WI-146
+@work-item-id WI-147
+@work-item-id WI-148
+
+`scripts/harness/main.ts` に以下 case を追加 / 変更:
+
+| case | 担当 WI | 処理 |
+|---|---|---|
+| `"doctor"` | WI-145 | `RunDoctorDiagnosticsUseCase` 起動 → `DiagnosticReport` を human/json 出力 |
+| `"install"` | WI-146 | `InstallUseCase` 起動 → `InstallReport` 出力 |
+| `"uninstall"` | WI-147 | `UninstallUseCase` 起動 → `UninstallReport` 出力 |
+| `"reconcile"` | WI-148 | `ReconcileUseCase` 起動 → `ReconcileReport` 出力 |
+| `"init"` (既存) | WI-148 | deprecation warning 出力後 `install` に委譲 |
+| `"update-skills"` (既存) | WI-148 | `reconcile` へ alias 委譲 |
+
+### 6.2 各 CLI handler の責務 (presentation 単独)
+
+各 handler (`doctor-handler.ts` / `install-handler.ts` / `uninstall-handler.ts` / `reconcile-handler.ts`) は以下に限定:
+
+1. 引数 parsing
+   - `--dry-run` / `--apply` / `--force` (install / uninstall / reconcile の mode)
+   - `--json` (json 出力)
+   - `--strict` (warn も exit code 1 に昇格、doctor 専用)
+   - `--report-out <path>` (json をファイル出力)
+2. use case 起動と report 受領
+3. output formatting
+   - human readable: 色付き summary + findings 一覧 + repair hint
+   - json: `{ schemaVersion: "1.0", ...reportFields }` (Phase 1 計画書 Q4 承認)
+4. exit code mapping
+   - `overallStatus == "red"` → `1`
+   - `warn && --strict` → `1`
+   - `warn` (strict なし) → `0`
+   - `green` → `0`
+
+### 6.3 既存 `scripts/harness/setup/skill-deployer.ts` への薄い wrapper 追加 (Phase 1 計画書 Q3 承認)
+
+@work-item-id WI-145
+
+- `skill-deployer.ts` の関数本体は変更しない (既存 test を破壊しない、back-compat 維持)
+- `installation/application/wrappers/skill-deployer-manifest-builder.ts` (新規) に薄い wrapper:
+  - 既存 `deploySkills` / `deployHookScripts` 等を呼んだ後、deploy された file の存在確認と hash 計算で `DeploymentEntry` を構築
+  - 結果を `DeploymentManifest` に集約し `ManifestRepositoryPort.save` で書き出す
+  - `HashCalculatorPort` を constructor 注入で受け取り、hash 計算を実施
+- WI-146 で `install` use case を完全新規実装した時点で wrapper を削除し、`InstallUseCase` 内で直接 manifest を構築する経路に切り替える (WI-146 で legacy `setup/` 配下の関数群も整理)
+
+**wrapper の配置:**
+
+```text
+scripts/harness/installation/
+└── application/
+    └── wrappers/
+        └── skill-deployer-manifest-builder.ts   // @unit installation / @layer application
+```
+
+---
+
+## 7. Composition Root (DI)
+
+@work-item-id WI-145
+
+`scripts/harness/main.ts` を composition root として、起動時に以下を組み立てる。
+
+**WI-145 完了時点の DI 構成:**
+
+```typescript
+// infrastructure adapters
+const inspector = new NodeFsFileInspectorAdapter();
+const hashCalc = new NodeCryptoHashAdapter();
+const manifestRepo = new FileSystemManifestRepositoryAdapter();
+
+// domain
+const repairTable = new RepairTable();
+
+// application: HeuristicCheck 9 種
+const checks: HeuristicCheck[] = [
+  new ClaudeHookMissingCheck(inspector),
+  new CodexHookMissingCheck(inspector),
+  new HuskyPreCommitMissingCheck(inspector),
+  new HuskyCommitMsgMissingCheck(inspector),
+  new HuskyPrePushMissingCheck(inspector),
+  new CiWorkflowMissingCheck(inspector),
+  new PackageJsonDevdepMissingCheck(inspector),
+  new ClaudeSkillsSymlinkCheck(inspector),
+  new CodexSkillsSymlinkCheck(inspector),
+];
+
+// application: use cases
+const runDoctor = new RunDoctorDiagnosticsUseCase(checks, manifestRepo, repairTable);
+
+// presentation: handlers
+const doctorHandler = new DoctorCliHandler(runDoctor);
+```
+
+**WI-146/147/148 完了後の追加構成 (将来):**
+
+```typescript
+const backup = new FileSystemBackupAdapter();
+const installUseCase = new InstallUseCase(manifestRepo, hashCalc, backup, /* merge strategies */);
+const uninstallUseCase = new UninstallUseCase(manifestRepo, hashCalc, backup, /* reverse strategies */);
+const reconcileUseCase = new ReconcileUseCase(manifestRepo, hashCalc, backup, /* reconcile strategies */);
+```
+
+**依存方向:**
+
+```text
+presentation (main.ts) → application use case → application port (interface)
+                                                        ↑ 実装
+                                               infrastructure adapter
+```
+
+循環なし。composition root (main.ts) のみで infrastructure と presentation が合流する。
+
+---
+
+## 8. テスト設計サマリー
+
+@work-item-id WI-145
+@work-item-id WI-146
+@work-item-id WI-147
+@work-item-id WI-148
+
+### 8.1 Unit tests (`scripts/harness/__tests__/unit/installation/`)
+
+| テスト対象 | テスト内容 | 対応 WI |
+|---|---|---|
+| `DeploymentManifest` | constructor / 不変条件検証 (entries uniqueness, mode-block constraint) | WI-145 |
+| `DeploymentEntry` | VO 生成・equality (path 一致で等価、domain_model_plan.md Q4 承認) | WI-145 |
+| `DiagnosticReport` | overallStatus の derive ロジック、findigs uniqueness | WI-145 |
+| `DiagnosticFinding` | repairMode-suggestedSkill 制約、severity 独立 (domain_model_plan.md Q5 承認) | WI-145 |
+| `RepairTable` | `lookup` の 9 entry full coverage (全 checkId → SuggestedSkill マッピング) | WI-145 |
+| `ClaudeHookMissingCheck` | FileInspectorPort mock 注入、pass / fail / ai-assisted 各パターン | WI-145 |
+| `CodexHookMissingCheck` | 同上 | WI-145 |
+| `HuskyPreCommitMissingCheck` | 同上 | WI-145 |
+| `HuskyCommitMsgMissingCheck` | 同上 | WI-145 |
+| `HuskyPrePushMissingCheck` | 同上 (warn 判定) | WI-145 |
+| `CiWorkflowMissingCheck` | 同上 (warn 判定) | WI-145 |
+| `PackageJsonDevdepMissingCheck` | 同上 | WI-145 |
+| `ClaudeSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
+| `CodexSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
+
+- domain 層のモックは禁止 (CLAUDE.md 規約)
+- application layer の `HeuristicCheck` 実装テストでは `FileInspectorPort` を mock 注入する (port のみ mock 許可)
+
+### 8.2 Integration tests (`scripts/harness/__tests__/integration/installation/`)
+
+| テスト | テスト内容 | 対応 WI |
+|---|---|---|
+| `FileSystemManifestRepositoryAdapter` atomic write | tmpdir fixture、書込→read 一致、tmp file が残らない | WI-145 |
+| doctor: `inert-install` fixture | settings.json 既存だが phasegate hook 無し → 非ゼロ exit、red 一覧出力 (golden test) | WI-145 |
+| doctor: `partial-install` fixture | claude のみ動作、codex 未配線 → 部分的 red (golden test) | WI-145 |
+| doctor: `full-install` fixture | 全部正しく入っている → ゼロ exit、green 出力 (golden test) | WI-145 |
+| doctor: `no-phasegate` fixture | phasegate 未導入 → 全 check red (golden test) | WI-145 |
+| install idempotency | `--apply` 2 回連続で manifest hash 不変 | WI-146 |
+| uninstall reverse | install → uninstall → doctor が「未導入」と判定 | WI-147 |
+| reconcile idempotency | `--apply` 2 回連続で no-op | WI-148 |
+
+### 8.3 Negative tests
+
+| テスト | テスト内容 |
+|---|---|
+| 壊れた manifest JSON | parse 失敗 → `HarnessError` で明示エラー |
+| 権限欠如 (chmod 0) | アクセス不可ファイルへの read 試行 → graceful error |
+| symlink 循環 | `readSymlink` での循環検出 → `HarnessError` |
+| manifest entry の path 消失 | uninstall 実行時に既に存在しない entry → skip + info 出力 |
+| managed block が見つからない `merged` entry | user が手動削除済みと推定 → skip + info 出力 |
+
+---
+
+## 9. 設計判断の根拠 (Phase 1 計画書 Q&A 反映)
+
+| Q | 採用 | 根拠 |
+|---|---|---|
+| Q1 | a (新規 npm 依存ゼロ) | Node.js built-in (`fs/promises`, `crypto`, `path`) で実装可能。ユーザー側 install 負担を増やさない。YAML merge 不要 (別ファイル名追加方式で coexist) |
+| Q2 | a (各 report 独立) | use case ごとに内部構造が異なる (doctor の findings vs install の deployed entries)。共通化は TypeScript generic 型推論の複雑化を招き overkill |
+| Q3 | c (薄い wrapper) | 既存 `skill-deployer.ts` の deploy 関数 / test を破壊しない。WI-146 で `InstallUseCase` 本体置換時に wrapper を削除し、段階的移行を実現 |
+| Q4 | a (schemaVersion を含める) | phasegate version と schema version は独立して進化。CI 連携 consumer が schema 互換性を判定可能。当面 `1.0` 固定 |
+| Q5 | a (HeuristicCheck interface を domain layer) | Clean Architecture DIP に準拠。`RepairTable` と同 layer で判定モデルを統一。application 実装は `FileInspectorPort` に依存するため application 配置が正しい |
+
+---
+
+## 10. 開発者向け備考
+
+- 全 ts ファイル先頭に `// @unit installation` + `// @layer <layer>` を必ず記載
+- `@layer` の有効値: `domain` / `application` / `infrastructure` / `presentation`
+- 依存方向の violation は `npx phasegate validate --layer L1` で検出される
+- composition root (main.ts) のみで infrastructure と presentation が合流する
+- `HarnessError` は harness-error unit 所有のものを再利用 (新規 Shared Kernel は導入しない)
+- `InstallReport` / `UninstallReport` / `ReconcileReport` の詳細スキーマは各 WI 固有モードで定義する (本横断設計のスコープ外)
+- WI-146 完了時に `skill-deployer-manifest-builder.ts` (application/wrappers/) を削除し、cleanup PR を発行すること
+- `update-skills` (WI-148 で `reconcile` alias 化) の互換移行は presentation 層の dispatcher のみで完結し、domain/application は変更しない
