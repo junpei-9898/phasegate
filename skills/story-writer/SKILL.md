@@ -11,6 +11,11 @@ review: opus
 
 ## 前提条件チェック
 
+## Pre-flight check (BLOCKING)
+
+Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
+If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
+
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
 - **要求文書** — 何を作るかを記述した文書。形式は問わない（議事録、要件メモ、口頭要約のテキスト等）
 

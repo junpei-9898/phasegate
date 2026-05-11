@@ -12,6 +12,7 @@ import { HuskyCommitMsgMissingCheck } from "./application/checks/husky-commit-ms
 import { HuskyPreCommitMissingCheck } from "./application/checks/husky-pre-commit-missing-check.js";
 import { HuskyPrePushMissingCheck } from "./application/checks/husky-pre-push-missing-check.js";
 import { PackageJsonDevdepMissingCheck } from "./application/checks/package-json-devdep-missing-check.js";
+import { WiWorkflowDriftCheck } from "./application/checks/wi-workflow-drift-check.js";
 import { RunInstallUseCase } from "./application/usecases/run-install.js";
 import { RunReconcileUseCase } from "./application/usecases/run-reconcile.js";
 import { RunUninstallUseCase } from "./application/usecases/run-uninstall.js";
@@ -49,6 +50,7 @@ export function createInstallationModule() {
     new PackageJsonDevdepMissingCheck(),
     new ClaudeSkillsSymlinkCheck(),
     new CodexSkillsSymlinkCheck(),
+    new WiWorkflowDriftCheck(),
   ];
   const runDoctorDiagnosticsUseCase = new RunDoctorDiagnosticsUseCase(checks, inspector, manifestRepository);
   const runInstallUseCase = new RunInstallUseCase(manifestRepository, hashCalculator);

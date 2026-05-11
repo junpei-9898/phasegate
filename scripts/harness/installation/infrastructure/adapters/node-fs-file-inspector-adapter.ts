@@ -45,7 +45,16 @@ export class NodeFsFileInspectorAdapter implements FileInspectorPort {
   async listFiles(absolutePath: string): Promise<string[]> {
     try {
       const entries = await readdir(absolutePath, { withFileTypes: true });
-      return entries.filter((entry) => entry.isFile()).map((entry) => join(absolutePath, entry.name));
+      const files: string[] = [];
+      for (const entry of entries) {
+        const entryPath = join(absolutePath, entry.name);
+        if (entry.isFile()) {
+          files.push(entryPath);
+        } else if (entry.isDirectory()) {
+          files.push(...(await this.listFiles(entryPath)));
+        }
+      }
+      return files;
     } catch {
       return [];
     }

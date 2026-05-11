@@ -422,6 +422,7 @@ export async function deployHookScripts(harnessRoot: string, projectRoot: string
 
 export interface InitHarnessConfigOptions {
   ciEnabled?: boolean;
+  workflow?: "standard" | "strict";
 }
 
 export async function initHarnessConfig(
@@ -438,6 +439,7 @@ export async function initHarnessConfig(
     // ファイルが存在しない場合はテンプレートを作成
   }
 
+  const strictWorkflow = options.workflow === "strict";
   const template = {
     project: {
       name: projectName,
@@ -447,7 +449,12 @@ export async function initHarnessConfig(
       preset: "clean",
     },
     layers: {},
-    quickMode: {},
+    quickMode: strictWorkflow
+      ? {
+          allowedCategories: ["chore"],
+          relaxedGates: [],
+        }
+      : {},
     phaseDependencies: {
       preset: phasePreset ?? "default",
       override: false,

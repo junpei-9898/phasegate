@@ -6,7 +6,7 @@ traceability:
 # Coverage Report: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **対応 WI**: WI-143 / WI-145 / WI-146 / WI-147 / WI-148
 > **作成日**: 2026-05-11
 > **参照**: `domain_model.md`, `logical_design.md`, `unit_test_design.md`, `it_test_design.md`
 
@@ -40,6 +40,16 @@ traceability:
 | repair hint / suggested skill | `UT-INS-145-HC-*`, formatter unit tests |
 | `repairMode` 3 values and strict handling | `UT-INS-145-UC-003/004`, `IT-INS-145-CLI-006` |
 | Clean Architecture metadata | L1/L2 validation |
+
+## 2.1 WI-143 Doctor Coverage Addendum
+
+@work-item-id WI-143
+
+| Requirement | Tests |
+|---|---|
+| `phasegate doctor` detects WI count 0 + ad-hoc plan >= 1 with non-zero exit | `WiWorkflowDriftCheck` unit test, CLI smoke |
+| `relaxedGates: ["phase-gate"]` + plans-without-WIs is reported as a red flag | `WiWorkflowDriftCheck` unit test |
+| doctor output includes copy-paste migration command | `repairHint: phasegate migrate work-items --apply` unit assertion |
 
 ## 3. Coverage Gates Before Implementation
 

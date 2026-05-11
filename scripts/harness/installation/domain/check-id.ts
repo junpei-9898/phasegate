@@ -12,6 +12,7 @@ export const CHECK_IDS = [
   "package-json-devdep-missing",
   "claude-skills-symlink",
   "codex-skills-symlink",
+  "wi-workflow-drift",
 ] as const;
 
 export type CheckId = (typeof CHECK_IDS)[number];

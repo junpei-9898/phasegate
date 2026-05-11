@@ -8,7 +8,13 @@
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
  */
 
-import { readFile as fsReadFile, readlink as fsReadlink, writeFile as fsWriteFile } from "node:fs/promises";
+import {
+  mkdir as fsMkdir,
+  readFile as fsReadFile,
+  readdir as fsReaddir,
+  readlink as fsReadlink,
+  writeFile as fsWriteFile,
+} from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
@@ -138,9 +144,12 @@ Usage: phasegate <command> [options]
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
-                                --skills <core|all>, --agent <claude|codex|both>, --with-husky, --with-ci, --yes)
+                                --skills <core|all>, --agent <claude|codex|both>, --workflow <standard|strict>,
+                                --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
+  scaffold-wi <unit> <type>    Create docs/inception/{unit}/WI-XXX/description.md
+  emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
   install                      Install phasegate managed files (--dry-run|--apply, --force)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
@@ -230,6 +239,103 @@ function parseFlag(args: readonly string[], flag: string): string | undefined {
 
 function hasFlag(args: readonly string[], flag: string): boolean {
   return args.includes(flag);
+}
+
+type WorkflowMode = "standard" | "strict";
+type ScaffoldWorkItemType = "story" | "issue" | "chore";
+
+function parseWorkflowMode(value: string | undefined): WorkflowMode {
+  return value === "strict" ? "strict" : "standard";
+}
+
+function parseScaffoldWorkItemType(value: string | undefined): ScaffoldWorkItemType | null {
+  if (value === "story" || value === "issue" || value === "chore") return value;
+  return null;
+}
+
+function emitAgentRulesBlock(): string {
+  return [
+    "## PhaseGate WI Workflow (auto-generated; do not edit by hand)",
+    "- All plans/designs/implementations require a WI directory first.",
+    "- Path: `docs/inception/{unit}/WI-XXX/description.md` with required frontmatter.",
+    "- Use `phasegate scaffold-wi <unit> <type>` to create one.",
+    "- Plans written under `docs/inception/codding_plan/` are legacy; new plans go in WI dirs.",
+  ].join("\n");
+}
+
+async function listFilesRecursive(root: string): Promise<string[]> {
+  try {
+    const entries = await fsReaddir(root, { withFileTypes: true });
+    const files: string[] = [];
+    for (const entry of entries) {
+      const path = join(root, entry.name);
+      if (entry.isFile()) {
+        files.push(path);
+      } else if (entry.isDirectory()) {
+        files.push(...(await listFilesRecursive(path)));
+      }
+    }
+    return files;
+  } catch {
+    return [];
+  }
+}
+
+async function nextWorkItemId(rootDir: string): Promise<string> {
+  const files = await listFilesRecursive(join(rootDir, "docs", "inception"));
+  let max = 0;
+  for (const file of files) {
+    const match = file.match(/\/WI-(\d{3})\/description\.md$/);
+    if (match) max = Math.max(max, Number(match[1]));
+  }
+  return `WI-${String(max + 1).padStart(3, "0")}`;
+}
+
+async function countLegacyPlansWithoutWorkItems(rootDir: string): Promise<number> {
+  const files = await listFilesRecursive(join(rootDir, "docs", "inception"));
+  const hasWorkItem = files.some((file) => /\/WI-\d{3}\/description\.md$/.test(file));
+  if (hasWorkItem) return 0;
+  return files.filter((file) => file.includes("/codding_plan/") || file.endsWith("_plan.md")).length;
+}
+
+async function scaffoldInceptionRoots(rootDir: string, unit: string | null = null): Promise<void> {
+  await fsMkdir(join(rootDir, "docs", "inception", "_shared"), { recursive: true });
+  await fsMkdir(join(rootDir, "docs", "inception", "_cross"), { recursive: true });
+  if (unit && unit !== "_cross" && unit !== "_shared") {
+    await fsMkdir(join(rootDir, "docs", "inception", unit), { recursive: true });
+    await fsWriteFile(join(rootDir, "docs", "inception", unit, ".gitkeep"), "", "utf8").catch(() => undefined);
+  }
+}
+
+async function scaffoldWorkItem(rootDir: string, unit: string, type: ScaffoldWorkItemType): Promise<string> {
+  const id = await nextWorkItemId(rootDir);
+  await scaffoldInceptionRoots(rootDir, unit);
+  const targetBase = unit === "_cross" ? join(rootDir, "docs", "inception", "_cross") : join(rootDir, "docs", "inception", unit);
+  const targetDir = join(targetBase, id);
+  await fsMkdir(targetDir, { recursive: true });
+  const descriptionPath = join(targetDir, "description.md");
+  const titleScope = unit === "_cross" ? "Cross-cutting" : unit;
+  const content = [
+    "---",
+    `id: ${id}`,
+    `type: ${type}`,
+    "severity: normal",
+    "status: drafted",
+    "---",
+    "",
+    `# ${id}: ${titleScope} work item`,
+    "",
+    "## Context",
+    "",
+    "TBD",
+    "",
+    "## Acceptance Criteria",
+    "",
+    "- [ ] TBD",
+    "",
+  ].join("\n");
+  await fsWriteFile(descriptionPath, content, "utf8");
+  return descriptionPath;
 }
 
 async function createFileManifestRecord(
@@ -349,6 +455,7 @@ Options:
   --preset <full|standard|minimal|custom>   Phase dependency preset (default: "standard")
   --skills <core|all>             Skill set to deploy (default: "all")
   --agent <claude|codex|both>     Agent integration target (default: "claude")
+  --workflow <standard|strict>    Workflow enforcement defaults (default: "standard")
   --with-husky                    Install Husky pre-commit hooks
   --with-ci                       Install GitHub Actions workflows
   --yes                           Skip confirmation prompts
@@ -777,7 +884,16 @@ async function main(): Promise<void> {
         console.log("Warning: phasegate init is deprecated and will be removed in v1.0.");
         console.log("Use phasegate install for idempotent setup with structured merge.");
         console.log("Existing legacy init behavior is preserved. Run phasegate doctor to verify installation state.");
-        const KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--with-ci", "--yes"];
+        const KNOWN_INIT_FLAGS = [
+          "--name",
+          "--preset",
+          "--skills",
+          "--agent",
+          "--workflow",
+          "--with-husky",
+          "--with-ci",
+          "--yes",
+        ];
         const flagError = validateKnownFlags(args, KNOWN_INIT_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -808,6 +924,12 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         const agent = agentRaw;
+        const workflowRaw = parseFlag(args, "--workflow");
+        if (workflowRaw !== undefined && workflowRaw !== "standard" && workflowRaw !== "strict") {
+          console.error(`Invalid --workflow value: "${workflowRaw}". Use "standard" or "strict".`);
+          process.exit(2);
+        }
+        const workflow = parseWorkflowMode(workflowRaw);
         const deployClaude = agent === "claude" || agent === "both";
         const deployCodex = agent === "codex" || agent === "both";
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
@@ -817,7 +939,13 @@ async function main(): Promise<void> {
           codex: deployCodex,
         });
         const withCi = hasFlag(args, "--with-ci");
-        const configResult = await initHarnessConfig(rootDir, projectName, phasePreset, { ciEnabled: withCi });
+        const configResult = await initHarnessConfig(rootDir, projectName, phasePreset, {
+          ciEnabled: withCi,
+          workflow,
+        });
+        if (workflow === "strict") {
+          await scaffoldInceptionRoots(rootDir);
+        }
         const hooksResult = deployClaude
           ? await deployHookScripts(harnessRoot, rootDir)
           : {
@@ -891,6 +1019,9 @@ async function main(): Promise<void> {
         }
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
+          if (workflow === "strict") {
+            console.log(`✓ strict workflow configured (quickMode.relaxedGates: [], allowedCategories: ["chore"])`);
+          }
         } else {
           console.log(`  phasegate.config.json already exists, skipped`);
         }
@@ -966,6 +1097,13 @@ async function main(): Promise<void> {
           }
         }
         console.log(`✓ Harness v${result.version} initialized (agent: ${agent})`);
+        const legacyPlanCount = await countLegacyPlansWithoutWorkItems(rootDir);
+        if (legacyPlanCount > 0) {
+          console.log("");
+          console.log(`Detected ${legacyPlanCount} legacy plan file(s) with no WI directories.`);
+          console.log("Run migration? [Y/n]");
+          console.log("  phasegate migrate work-items --apply");
+        }
         console.log("");
         console.log("Next steps:");
         if (skillSet === "core") {
@@ -1032,6 +1170,25 @@ async function main(): Promise<void> {
         });
         console.log(result.stdout);
         process.exit(result.exitCode);
+        break;
+      }
+
+      case "emit-agent-rules": {
+        console.log(emitAgentRulesBlock());
+        process.exit(0);
+        break;
+      }
+
+      case "scaffold-wi": {
+        const unit = args[1];
+        const type = parseScaffoldWorkItemType(args[2]);
+        if (!unit || !type) {
+          console.error("Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>");
+          process.exit(2);
+        }
+        const descriptionPath = await scaffoldWorkItem(rootDir, unit, type);
+        console.log(`Created ${descriptionPath}`);
+        process.exit(0);
         break;
       }
 

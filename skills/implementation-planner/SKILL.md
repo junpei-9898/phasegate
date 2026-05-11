@@ -1,6 +1,6 @@
 ---
 name: implementation-planner
-description: "Unit仕様とドメインモデル設計を元に実装計画を立てる。ストーリーIDや機能名から関連Unitを特定し、API設計・レイヤー別実装方針を整理してmdファイルで出力する。使用タイミング: 実装計画を立てて、US-XXXの実装方針を決めて、この機能の設計を整理して、など実装前の計画策定時。"
+description: "Unit仕様とドメインモデル設計を元に実装計画を立てる。WI IDや機能名から関連Unitを特定し、API設計・レイヤー別実装方針を整理してmdファイルで出力する。使用タイミング: 実装計画を立てて、WI-XXXの実装方針を決めて、この機能の設計を整理して、など実装前の計画策定時。"
 model: sonnet
 review: opus
 ---
@@ -35,6 +35,11 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 
 ## ワークフロー
 
+## Pre-flight check (BLOCKING)
+
+Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
+If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
+
 ```
 入力解析 → Unit特定 → ドメインモデル確認 → 既存実装確認 → 計画作成 → 出力
 ```
@@ -42,7 +47,7 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 ### Step 1: 入力解析
 
 ユーザー入力から抽出:
-- ストーリーID（US-XXX形式）
+- WI ID（WI-XXX形式）
 - 機能名・タスク説明
 - 優先度・制約条件
 
@@ -85,6 +90,7 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 計画をmdファイルとして出力。パスの推奨:
 ```
 docs/inception/{task_id}_plan.md
+docs/inception/{unit}/WI-XXX/tdd_implementation_plan.md
 ```
 
 **[Question][Answer]セクション必須**: 不明点や確認事項をまとめ、ユーザーからのフィードバックを受け取れるようにする。

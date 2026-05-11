@@ -18,6 +18,11 @@ Unit単位でアーキテクチャの各層（DB → ドメイン → ユース�
 
 ## 前提条件チェック
 
+## Pre-flight check (BLOCKING)
+
+Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
+If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
+
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
 
 - **横断モード:**
@@ -95,7 +100,7 @@ Unit単位でアーキテクチャの各層（DB → ドメイン → ユース�
 設計方針・スコープ・不明点を整理し、人間の承認を得る。
 
 ### 出力ファイル
-`docs/inception/{unit}/logical_design_plan.md`（横断）または `docs/inception/{unit}/{story_id}/logical_design_plan.md`（ストーリー固有）
+`docs/inception/{unit}/WI-XXX/logical_design_plan.md`
 
 ### 計画ファイルの構成
 
@@ -173,7 +178,7 @@ Unit単位でアーキテクチャの各層（DB → ドメイン → ユース�
 | 種別 | 配置先 |
 |------|--------|
 | 横断成果物 | `docs/product/construction/{unit}/logical_design.md` |
-| ストーリー固有成果物 | `docs/inception/{unit}/{story_id}/logical_design.md` |
+| ストーリー固有成果物 | `docs/inception/{unit}/WI-XXX/logical_design.md` |
 
 > **注意**: ストーリー固有の設計は `docs/inception/` に配置する（`docs/folder_management_rules.md` のルール準拠）。`docs/product/construction/` にはUnit全体の共有設計のみを配置する。
 
@@ -194,22 +199,22 @@ traceability:
 ---
 ```
 
-`initial_creation: true` は「新規作成であり、後述の `@story-id` 注釈が必須」であることを示す。
+`initial_creation: true` は「新規作成であり、後述の `@work-item-id` 注釈が必須」であることを示す。
 
-### 2. `@story-id` インライン注釈
+### 2. `@work-item-id` インライン注釈
 
-ユーザーストーリーに紐づく設計要素の直前に `@story-id HXX-XX` を独立行で記述する。
+WI に紐づく設計要素の直前に `@work-item-id WI-XXX` を独立行で記述する。
 
 ```markdown
-@story-id H03-02
+@work-item-id WI-001
 ### ユースケース: 注文を確定する
 ```
 
 形式ルール:
 - **独立行** — 他のテキストと混在させない
 - **直後に設計要素** — 空行を挟まない
-- **StoryCatalog 存在** — `HXX-XX` は `docs/product/user_stories.md` に存在する ID
-- **複数ストーリー時** — 注釈行を連続で並べ、最後の直後に設計要素を置く
+- **WorkItem 存在** — `WI-XXX` は `docs/inception/{unit}/WI-XXX/description.md` に存在する ID
+- **複数WI時** — 注釈行を連続で並べ、最後の直後に設計要素を置く
 
 ---
 
