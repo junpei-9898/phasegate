@@ -8,7 +8,7 @@
  * 起動時に config-foundation で設定を解決し、他Unit に注入する（Cross-unit wiring）。
  */
 
-import { access, readFile as fsReadFile, readlink as fsReadlink, writeFile as fsWriteFile } from "node:fs/promises";
+import { readFile as fsReadFile, readlink as fsReadlink, writeFile as fsWriteFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
@@ -52,7 +52,6 @@ import {
   deployHuskyPrePushHook,
   deploySkills,
   getCategoryForSkill,
-  getDeployedVersion,
   getHarnessVersion,
   initHarnessConfig,
 } from "./setup/skill-deployer.js";
@@ -76,15 +75,6 @@ function toTraceabilityModelOptions(resolvedConfig: HarnessConfigV2 | undefined)
   return resolvedConfig
     ? { pathRoots: { designDocsRoot: resolvedConfig.paths.designDocs } }
     : undefined;
-}
-
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 interface PackageJsonDocument {
@@ -149,11 +139,11 @@ Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
                                 --skills <core|all>, --agent <claude|codex|both>, --with-husky, --with-ci, --yes)
-  update-skills                Re-deploy skills from current harness version
+  update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
   install                      Install phasegate managed files (--dry-run|--apply, --force)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
-  reconcile                    Reconcile phasegate managed files (stub until WI-148)
+  reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
 
 Commands:
   enable-feature <name>        Enable a harness feature
@@ -365,11 +355,14 @@ Options:
   --help, -h                      Show this help`,
   "update-skills": `Usage: phasegate update-skills [options]
 
-Redeploy skills in .claude/skills/ from the installed phasegate version. WARNING: overwrites existing skill files.
+Compatibility alias for phasegate reconcile. WARNING: this command no longer redeploys skills directly.
+It updates PhaseGate-managed files from the installed manifest.
 
 Options:
-  --skills <core|all>             Skill set to deploy
-  --agent <claude|codex|both>     Agent integration target
+  --dry-run                       Preview target actions without writing (default)
+  --apply                         Write reconcile results and manifest
+  --force                         Force ai-assisted/manual targets after backing up existing files
+  --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
   install: `Usage: phasegate install [options]
 
@@ -378,6 +371,16 @@ Install phasegate managed files with structured merge.
 Options:
   --dry-run                       Preview target actions without writing (default)
   --apply                         Write merge results and manifest
+  --force                         Force ai-assisted/manual targets after backing up existing files
+  --json                          Output machine-readable JSON
+  --help, -h                      Show this help`,
+  reconcile: `Usage: phasegate reconcile [options]
+
+Reconcile PhaseGate-managed files with the current bundled templates.
+
+Options:
+  --dry-run                       Preview target actions without writing (default)
+  --apply                         Write managed updates and manifest
   --force                         Force ai-assisted/manual targets after backing up existing files
   --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
@@ -771,6 +774,9 @@ async function main(): Promise<void> {
     switch (command) {
       // ── harness setup ──
       case "init": {
+        console.log("Warning: phasegate init is deprecated and will be removed in v1.0.");
+        console.log("Use phasegate install for idempotent setup with structured merge.");
+        console.log("Existing legacy init behavior is preserved. Run phasegate doctor to verify installation state.");
         const KNOWN_INIT_FLAGS = ["--name", "--preset", "--skills", "--agent", "--with-husky", "--with-ci", "--yes"];
         const flagError = validateKnownFlags(args, KNOWN_INIT_FLAGS);
         if (flagError) {
@@ -989,41 +995,28 @@ async function main(): Promise<void> {
       }
 
       case "update-skills": {
-        const deployed = await getDeployedVersion(rootDir);
-        const current = await getHarnessVersion(harnessRoot);
-        const previousSkillSet: SkillSet = deployed?.skillSet ?? "all";
-        const overrideSkillSet = parseFlag(args, "--skills");
-        const updateSkillSet: SkillSet =
-          overrideSkillSet === "core" || overrideSkillSet === "all" ? overrideSkillSet : previousSkillSet;
-        if (deployed) {
-          console.log(`Previously deployed: v${deployed.version} (${deployed.deployedAt}, set: ${previousSkillSet})`);
-        } else {
-          console.log("No previously deployed skills found");
+        const KNOWN_RECONCILE_FLAGS = ["--dry-run", "--apply", "--force", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_RECONCILE_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
         }
-        console.log(`Current harness version: v${current}`);
-        const result = await deploySkills(harnessRoot, rootDir, updateSkillSet);
-        const shouldLinkClaude =
-          (await pathExists(join(rootDir, ".claude", "settings.json"))) ||
-          (await pathExists(join(rootDir, ".claude", "skills")));
-        const shouldLinkCodex =
-          (await pathExists(join(rootDir, ".codex", "hooks.json"))) ||
-          (await pathExists(join(rootDir, ".codex", "skills")));
-        await deployAgentSkillLinks(rootDir, {
-          claude: shouldLinkClaude,
-          codex: shouldLinkCodex,
+        const apply = hasFlag(args, "--apply");
+        const dryRun = hasFlag(args, "--dry-run") || !apply;
+        const mod = createInstallationModule();
+        const phasegateVersion = await getHarnessVersion(harnessRoot);
+        const result = await mod.reconcileHandler.execute({
+          projectRoot: rootDir,
+          harnessRoot,
+          phasegateVersion,
+          dryRun,
+          apply,
+          force: hasFlag(args, "--force"),
+          json,
         });
-        await saveInstallationManifest(rootDir, current, [
-          ...result.deployedSkills.map((skill) => ({
-            path: join("skills", skill),
-            mode: "created" as const,
-            contentForHash: `${current}:${skill}`,
-          })),
-          await createFileManifestRecord(rootDir, join("skills", ".harness-version")),
-          shouldLinkClaude ? await createSymlinkManifestRecord(rootDir, join(".claude", "skills")) : null,
-          shouldLinkCodex ? await createSymlinkManifestRecord(rootDir, join(".codex", "skills")) : null,
-        ]);
-        console.log(`✓ Skills updated (${result.deployedSkills.length} skills redeployed, set: ${updateSkillSet})`);
-        process.exit(0);
+        if (!json) console.log("phasegate update-skills is deprecated; running phasegate reconcile.");
+        console.log(result.stdout);
+        process.exit(result.exitCode);
         break;
       }
 
@@ -1091,8 +1084,27 @@ async function main(): Promise<void> {
       }
 
       case "reconcile": {
-        console.error("Not yet implemented: phasegate reconcile is owned by WI-148");
-        process.exit(2);
+        const KNOWN_RECONCILE_FLAGS = ["--dry-run", "--apply", "--force", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_RECONCILE_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const apply = hasFlag(args, "--apply");
+        const dryRun = hasFlag(args, "--dry-run") || !apply;
+        const mod = createInstallationModule();
+        const phasegateVersion = await getHarnessVersion(harnessRoot);
+        const result = await mod.reconcileHandler.execute({
+          projectRoot: rootDir,
+          harnessRoot,
+          phasegateVersion,
+          dryRun,
+          apply,
+          force: hasFlag(args, "--force"),
+          json,
+        });
+        console.log(result.stdout);
+        process.exit(result.exitCode);
         break;
       }
 

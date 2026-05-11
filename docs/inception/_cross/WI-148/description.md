@@ -2,8 +2,8 @@
 id: WI-148
 type: story
 severity: normal
-status: drafted
-affects: [harness-api, setup]
+status: tested
+affects: [installation, harness-api]
 source: internal
 ---
 

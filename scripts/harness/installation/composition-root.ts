@@ -1,6 +1,7 @@
 // @unit installation
 // @layer presentation
 // @work-item-id WI-145
+// @work-item-id WI-148
 
 import { ClaudeHookMissingCheck } from "./application/checks/claude-hook-missing-check.js";
 import { ClaudeSkillsSymlinkCheck } from "./application/checks/claude-skills-symlink-check.js";
@@ -12,6 +13,7 @@ import { HuskyPreCommitMissingCheck } from "./application/checks/husky-pre-commi
 import { HuskyPrePushMissingCheck } from "./application/checks/husky-pre-push-missing-check.js";
 import { PackageJsonDevdepMissingCheck } from "./application/checks/package-json-devdep-missing-check.js";
 import { RunInstallUseCase } from "./application/usecases/run-install.js";
+import { RunReconcileUseCase } from "./application/usecases/run-reconcile.js";
 import { RunUninstallUseCase } from "./application/usecases/run-uninstall.js";
 import { RunDoctorDiagnosticsUseCase } from "./application/usecases/run-doctor-diagnostics.js";
 import type { MergeStrategy } from "./domain/ports/merge-strategy.js";
@@ -22,6 +24,7 @@ import { NodeCryptoHashAdapter } from "./infrastructure/adapters/node-crypto-has
 import { NodeFsFileInspectorAdapter } from "./infrastructure/adapters/node-fs-file-inspector-adapter.js";
 import { DoctorHandler } from "./presentation/cli/doctor-handler.js";
 import { InstallHandler } from "./presentation/cli/install-handler.js";
+import { ReconcileHandler } from "./presentation/cli/reconcile-handler.js";
 import { UninstallHandler } from "./presentation/cli/uninstall-handler.js";
 
 type FutureInstallationStrategyPorts = {
@@ -49,14 +52,17 @@ export function createInstallationModule() {
   ];
   const runDoctorDiagnosticsUseCase = new RunDoctorDiagnosticsUseCase(checks, inspector, manifestRepository);
   const runInstallUseCase = new RunInstallUseCase(manifestRepository, hashCalculator);
+  const runReconcileUseCase = new RunReconcileUseCase(manifestRepository, hashCalculator);
   const runUninstallUseCase = new RunUninstallUseCase(manifestRepository, hashCalculator);
   return {
     manifestRepository,
     runDoctorDiagnosticsUseCase,
     runInstallUseCase,
+    runReconcileUseCase,
     runUninstallUseCase,
     doctorHandler: new DoctorHandler(runDoctorDiagnosticsUseCase),
     installHandler: new InstallHandler(runInstallUseCase),
+    reconcileHandler: new ReconcileHandler(runReconcileUseCase),
     uninstallHandler: new UninstallHandler(runUninstallUseCase),
     futureInstallationStrategyPorts,
   };

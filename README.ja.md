@@ -116,6 +116,15 @@ npx phasegate uninstall --apply
 
 `uninstall` は manifest を読んで、PhaseGate が作成したファイルを削除し、merge した Claude / Codex / Husky / `package.json` から PhaseGate 管理部分だけを取り除きます。ユーザーの既存設定は保持し、manifest は `.phasegate/` 配下に履歴として archive します。
 
+PhaseGate をアップグレードした後は、reconcile で既存の managed files を現在の bundled template に追従できます。
+
+```sh
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
+```
+
+`reconcile` は PhaseGate 管理部分だけを更新し、ユーザーの hook / script / dependency は保持します。新しい deploy target が追加されていれば install と同じく追加し、`.phasegate/manifest.json` の version / hash も更新します。install 後に user 改変された managed file は `--force` 無しでは refuse し、force 時は `.phasegate/backups/reconcile-<timestamp>/` に退避してから上書きします。
+
 ### Codex CLI を使う場合
 
 ```bash

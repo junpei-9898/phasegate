@@ -14,6 +14,9 @@
 @work-item-id WI-141
 `commit-msg` は bypass trailer の構文・証跡を検証し、`bypass:audit --base <ref> [--head <ref>]` は push/CI の backstop として audited range の変更ファイルに pre-commit validation を再適用する。Git は `--no-verify` の痕跡を commit に保存しないため、PhaseGate は「gate failure を持つ差分が bypass trailer なしで到達した」状態を missing bypass evidence として扱う。
 > **Unit ID**: harness-api
+
+@work-item-id WI-148
+`phasegate reconcile` / `phasegate update-skills` / `phasegate init` の command dispatch は `scripts/harness/main.ts` が所有する。WI-148 では `reconcile` を installation unit の handler へ委譲し、`update-skills` を互換 alias として同一 handler に接続し、`init` に deprecation warning を追加する。
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-04-24（ISSUE-025 Codex/Claude 共有 skill 導線の setup 仕様を追記）
 > **対応ストーリー**: H09-01, H09-02, H09-03, H09-04

@@ -73,6 +73,17 @@ npx phasegate uninstall --apply
 
 `uninstall` reads `.phasegate/manifest.json`, deletes files that PhaseGate created, removes only PhaseGate-managed portions from merged JSON, Husky, and `package.json` files, and archives the manifest as `.phasegate/uninstalled-<timestamp>.json`. If a managed file was modified after install, `uninstall --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/uninstall-<timestamp>/`.
 
+After upgrading PhaseGate, reconcile existing managed files with the bundled templates from the new version:
+
+```bash
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
+```
+
+`reconcile` updates PhaseGate-managed portions, preserves user content, adds newly introduced managed targets, and refreshes `.phasegate/manifest.json` with current version/hash metadata. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/reconcile-<timestamp>/`.
+
+`phasegate update-skills` remains available as a compatibility alias for `phasegate reconcile`.
+
 ### Manual Setup Pieces
 
 If you do not use `init` or `install`, copy the design principle documents manually:

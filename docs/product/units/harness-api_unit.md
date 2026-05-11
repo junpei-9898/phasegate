@@ -70,6 +70,14 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 - `phasegate:complete-check`: L1-L4全バリデータの統合実行CLIエントリポイント（実行ロジックはvalidator-system + biome-ast-engine）
 - 上記コマンドの入出力仕様・終了コードを本Unitが定義・管理
 
+### 3.6 installation lifecycle dispatch（WI-148）
+
+@work-item-id WI-148
+
+- `phasegate reconcile --dry-run|--apply [--force] [--json]` を installation unit の `ReconcileHandler` に dispatch する。
+- `phasegate update-skills` は互換 alias として `reconcile` に委譲する。
+- `phasegate init` は legacy deploy 挙動を維持しつつ、v1.0 削除予定の deprecation warning を stdout に表示する。
+
 ---
 
 ## 4. ドメインモデル概要

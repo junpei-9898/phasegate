@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.145.4] - 2026-05-11
+
+### Added
+
+- **WI-148 — manifest-driven reconcile + init deprecation** — `phasegate reconcile --dry-run|--apply [--force] [--json]` を追加し、`.phasegate/manifest.json` に記録済みの PhaseGate managed files を現行 bundled template / package version に追従できるようにした。
+  - `merged` entries は PhaseGate managed portion だけを更新し、user scripts / hooks / dependencies は保持する。
+  - `created` entries は hash が manifest と一致する場合のみ template に追従し、user 改変ありの場合は `--force` 無しで refuse、force 時は `.phasegate/backups/reconcile-*/` に退避してから上書きする。
+  - manifest に無い現行 deploy target は install と同じく追加し、apply 後は manifest の version/hash を更新する。
+  - `update-skills` は互換 alias として `reconcile` に委譲し、`init` 実行時は v1.0 削除予定の deprecation warning を表示する。
+
 ## [0.145.3] - 2026-05-11
 
 ### Added

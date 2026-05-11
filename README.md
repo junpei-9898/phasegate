@@ -109,6 +109,15 @@ npx phasegate uninstall --apply
 
 `uninstall` uses the manifest to delete created files and remove only PhaseGate-managed portions from merged Claude/Codex, Husky, and `package.json` files. User content is preserved, and the manifest is archived under `.phasegate/`.
 
+When you upgrade PhaseGate, reconcile existing managed files with the current bundled templates:
+
+```sh
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
+```
+
+`reconcile` updates only PhaseGate-managed portions, keeps user content, adds newly introduced managed targets, and refreshes `.phasegate/manifest.json` with the current version and hashes. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`; PhaseGate writes a backup under `.phasegate/backups/reconcile-<timestamp>/`.
+
 ### Codex CLI
 
 ```bash
