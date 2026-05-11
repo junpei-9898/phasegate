@@ -334,7 +334,8 @@ phasegate 自身の deploy 状態管理 / 構造健全性検査 / 既存ファ�
 - **公開 API**: `phasegate doctor` (WI-145), `phasegate install` (WI-146), `phasegate uninstall` (WI-147), `phasegate reconcile` (WI-148) の 4 CLI コマンド
 - **永続データ**: `.phasegate/manifest.json` (DeploymentManifest schema)
 - **依存**: harness-api (CLI presentation) ← installation → {agent-integration, ci-governance, config-foundation}
-- **TODO**: 詳細な API contract / Shared Kernel 拡張は WI-146/147/148 完了時に拡充する (Phase 1 計画書 Q3=c 採用)
+- **WI-146 API**: `phasegate install --dry-run|--apply [--force] [--json]` は `.claude/settings.json` / `.codex/hooks.json` / `.husky/*` / `.github/workflows/phasegate-aidlc-gate.yml` / `package.json` / agent skill symlink を structured merge し、結果を manifest に `created` / `merged` / `symlink` として記録する。
+- **TODO**: uninstall / reconcile の詳細 API contract は WI-147/148 完了時に拡充する。
 
 ---
 

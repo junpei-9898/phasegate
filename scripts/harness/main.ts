@@ -151,7 +151,7 @@ Setup:
                                 --skills <core|all>, --agent <claude|codex|both>, --with-husky, --with-ci, --yes)
   update-skills                Re-deploy skills from current harness version
   doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
-  install                      Install phasegate managed files (stub until WI-146)
+  install                      Install phasegate managed files (--dry-run|--apply, --force)
   uninstall                    Uninstall phasegate managed files (stub until WI-147)
   reconcile                    Reconcile phasegate managed files (stub until WI-148)
 
@@ -370,6 +370,16 @@ Redeploy skills in .claude/skills/ from the installed phasegate version. WARNING
 Options:
   --skills <core|all>             Skill set to deploy
   --agent <claude|codex|both>     Agent integration target
+  --help, -h                      Show this help`,
+  install: `Usage: phasegate install [options]
+
+Install phasegate managed files with structured merge.
+
+Options:
+  --dry-run                       Preview target actions without writing (default)
+  --apply                         Write merge results and manifest
+  --force                         Force ai-assisted/manual targets after backing up existing files
+  --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
   validate: `Usage: phasegate validate [options]
 
@@ -840,9 +850,30 @@ async function main(): Promise<void> {
           huskyPrePushResult?.created ? await createFileManifestRecord(rootDir, join(".husky", "pre-push")) : null,
           ...(ciWorkflowResult?.copiedFiles.map((path) => createFileManifestRecord(rootDir, path)) ?? []),
         ]);
+        const installModule = createInstallationModule();
+        const installResult = await installModule.runInstallUseCase.execute({
+          projectRoot: rootDir,
+          harnessRoot,
+          phasegateVersion: result.version,
+          dryRun: false,
+          apply: true,
+          force: false,
+          includeClaude: deployClaude,
+          includeCodex: deployCodex,
+          includeHusky: withHusky,
+          includeCi: withCi,
+        });
         console.log(
           `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
         );
+        if (installResult.changed.length > 0) {
+          console.log(`✓ phasegate install structured merge applied (${installResult.changed.length} targets)`);
+        }
+        if (installResult.refused.length > 0) {
+          console.log(
+            `  phasegate install refused ${installResult.refused.length} ai-assisted/manual targets; run phasegate install --dry-run for details`,
+          );
+        }
         if (packageResult.created) {
           console.log(`✓ package.json created with phasegate devDependency`);
         } else if (packageResult.updated) {
@@ -1012,8 +1043,27 @@ async function main(): Promise<void> {
       }
 
       case "install": {
-        console.error("Not yet implemented: phasegate install is owned by WI-146");
-        process.exit(2);
+        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_INSTALL_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const apply = hasFlag(args, "--apply");
+        const dryRun = hasFlag(args, "--dry-run") || !apply;
+        const mod = createInstallationModule();
+        const phasegateVersion = await getHarnessVersion(harnessRoot);
+        const result = await mod.installHandler.execute({
+          projectRoot: rootDir,
+          harnessRoot,
+          phasegateVersion,
+          dryRun,
+          apply,
+          force: hasFlag(args, "--force"),
+          json,
+        });
+        console.log(result.stdout);
+        process.exit(result.exitCode);
         break;
       }
 
