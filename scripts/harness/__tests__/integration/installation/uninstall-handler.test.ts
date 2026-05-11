@@ -1,0 +1,169 @@
+// @unit installation
+// @layer test
+// @story H11-01
+// @work-item-id WI-147
+
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { createInstallationModule } from "../../../installation/composition-root.js";
+import { target } from "../../helpers/test-helpers.js";
+
+let projectRoot: string | null = null;
+
+async function createProjectRoot(): Promise<string> {
+  projectRoot = await mkdtemp(join(tmpdir(), "phasegate-uninstall-"));
+  return projectRoot;
+}
+
+async function writeProjectFile(root: string, relativePath: string, content: string): Promise<void> {
+  const absolutePath = join(root, relativePath);
+  await mkdir(dirname(absolutePath), { recursive: true });
+  await writeFile(absolutePath, content, "utf8");
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function runInstall(root: string) {
+  const mod = createInstallationModule();
+  return mod.installHandler.execute({
+    projectRoot: root,
+    harnessRoot: resolve("."),
+    phasegateVersion: "0.145.2",
+    dryRun: false,
+    apply: true,
+    force: false,
+    json: true,
+  });
+}
+
+async function runUninstall(root: string, options: { apply?: boolean; force?: boolean } = {}) {
+  const mod = createInstallationModule();
+  const actual = await mod.uninstallHandler.execute({
+    projectRoot: root,
+    harnessRoot: resolve("."),
+    dryRun: !options.apply,
+    apply: options.apply ?? false,
+    force: options.force ?? false,
+    json: true,
+  });
+  return {
+    ...actual,
+    payload: JSON.parse(actual.stdout) as {
+      plan: Array<{ path: string; action: string; repairMode: string; changed: boolean }>;
+      refused: Array<{ path: string }>;
+      backupDir: string | null;
+      archivedManifestPath: string | null;
+    },
+  };
+}
+
+async function arrangeInstalledProject() {
+  const root = await createProjectRoot();
+  await writeProjectFile(
+    root,
+    ".claude/settings.json",
+    JSON.stringify({ hooks: { Stop: [{ matcher: "", hooks: [{ type: "command", command: "custom stop" }] }] } }),
+  );
+  await writeProjectFile(root, ".husky/pre-commit", "echo custom pre-commit\n");
+  const installed = await runInstall(root);
+  expect(installed.exitCode).toBe(1);
+  const forced = await createInstallationModule().installHandler.execute({
+    projectRoot: root,
+    harnessRoot: resolve("."),
+    phasegateVersion: "0.145.2",
+    dryRun: false,
+    apply: true,
+    force: true,
+    json: true,
+  });
+  expect(forced.exitCode).toBe(0);
+  return root;
+}
+
+async function arrangeInstalledProjectWithModifiedWorkflow() {
+  const root = await arrangeInstalledProject();
+  await writeProjectFile(root, ".github/workflows/phasegate-aidlc-gate.yml", "name: user modified\n");
+  return root;
+}
+
+afterEach(async () => {
+  if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
+  projectRoot = null;
+});
+
+target("UninstallHandler", () => {
+  describe("manifest-driven uninstall", () => {
+    it("dry-run は manifest entries を列挙して files を変化させないこと", async () => {
+      // Arrange
+      const root = await arrangeInstalledProject();
+
+      // Act
+      const actual = await runUninstall(root);
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.plan.map((item) => item.path)).toEqual(
+        expect.arrayContaining([".claude/settings.json", ".husky/pre-commit", "package.json", ".claude/skills"]),
+      );
+      expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
+      expect(await readFile(join(root, ".husky/pre-commit"), "utf8")).toContain("phasegate managed");
+    });
+
+    it("apply は created/symlink を削除し merged の user 部分を保持して manifest をarchiveすること", async () => {
+      // Arrange
+      const root = await arrangeInstalledProject();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.archivedManifestPath).toContain("uninstalled-");
+      expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(false);
+      expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/skills"))).toBe(false);
+      expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("custom stop");
+      expect(await readFile(join(root, ".claude/settings.json"), "utf8")).not.toContain("npx phasegate hook stop");
+      expect(await readFile(join(root, ".husky/pre-commit"), "utf8")).toContain("echo custom pre-commit");
+      expect(await readFile(join(root, ".husky/pre-commit"), "utf8")).not.toContain("phasegate managed");
+      expect(await readdir(join(root, ".phasegate"))).toEqual(expect.arrayContaining([expect.stringContaining("uninstalled-")]));
+    });
+
+    it("created entry の hash mismatch は force 無しで refuse して対象を残すこと", async () => {
+      // Arrange
+      const root = await arrangeInstalledProjectWithModifiedWorkflow();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.payload.refused).toEqual(expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]));
+      expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(true);
+      expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
+    });
+
+    it("created entry の hash mismatch は force で backup して削除すること", async () => {
+      // Arrange
+      const root = await arrangeInstalledProjectWithModifiedWorkflow();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true, force: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.backupDir).toContain(".phasegate/backups/uninstall-");
+      expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(false);
+      expect(await readFile(join(actual.payload.backupDir ?? "", ".github/workflows/phasegate-aidlc-gate.yml"), "utf8")).toContain("user modified");
+    });
+  });
+});

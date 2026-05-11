@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.145.3] - 2026-05-11
+
+### Added
+
+- **WI-147 — manifest-driven uninstall** — `phasegate uninstall --dry-run|--apply [--force] [--json]` を追加し、`.phasegate/manifest.json` に記録された managed files を clean removal できるようにした。
+  - `created` / `symlink` entries は削除し、JSON / shell / `package.json` の `merged` entries は PhaseGate managed portion だけを除去して user content を保持する。
+  - hash mismatch は `--force` 無しで refuse し、force 時は `.phasegate/backups/uninstall-*/` に snapshot を保存してから削除する。
+  - uninstall 完了後、manifest は `.phasegate/uninstalled-*.json` に archive される。
+
 ## [0.145.2] - 2026-05-11
 
 ### Added

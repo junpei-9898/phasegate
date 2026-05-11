@@ -152,7 +152,7 @@ Setup:
   update-skills                Re-deploy skills from current harness version
   doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
   install                      Install phasegate managed files (--dry-run|--apply, --force)
-  uninstall                    Uninstall phasegate managed files (stub until WI-147)
+  uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (stub until WI-148)
 
 Commands:
@@ -1068,8 +1068,25 @@ async function main(): Promise<void> {
       }
 
       case "uninstall": {
-        console.error("Not yet implemented: phasegate uninstall is owned by WI-147");
-        process.exit(2);
+        const KNOWN_UNINSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_UNINSTALL_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const apply = hasFlag(args, "--apply");
+        const dryRun = hasFlag(args, "--dry-run") || !apply;
+        const mod = createInstallationModule();
+        const result = await mod.uninstallHandler.execute({
+          projectRoot: rootDir,
+          harnessRoot,
+          dryRun,
+          apply,
+          force: hasFlag(args, "--force"),
+          json,
+        });
+        console.log(result.stdout);
+        process.exit(result.exitCode);
         break;
       }
 

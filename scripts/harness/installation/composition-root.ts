@@ -12,6 +12,7 @@ import { HuskyPreCommitMissingCheck } from "./application/checks/husky-pre-commi
 import { HuskyPrePushMissingCheck } from "./application/checks/husky-pre-push-missing-check.js";
 import { PackageJsonDevdepMissingCheck } from "./application/checks/package-json-devdep-missing-check.js";
 import { RunInstallUseCase } from "./application/usecases/run-install.js";
+import { RunUninstallUseCase } from "./application/usecases/run-uninstall.js";
 import { RunDoctorDiagnosticsUseCase } from "./application/usecases/run-doctor-diagnostics.js";
 import type { MergeStrategy } from "./domain/ports/merge-strategy.js";
 import type { ReconcileStrategy } from "./domain/ports/reconcile-strategy.js";
@@ -21,6 +22,7 @@ import { NodeCryptoHashAdapter } from "./infrastructure/adapters/node-crypto-has
 import { NodeFsFileInspectorAdapter } from "./infrastructure/adapters/node-fs-file-inspector-adapter.js";
 import { DoctorHandler } from "./presentation/cli/doctor-handler.js";
 import { InstallHandler } from "./presentation/cli/install-handler.js";
+import { UninstallHandler } from "./presentation/cli/uninstall-handler.js";
 
 type FutureInstallationStrategyPorts = {
   readonly merge?: MergeStrategy<unknown>;
@@ -47,12 +49,15 @@ export function createInstallationModule() {
   ];
   const runDoctorDiagnosticsUseCase = new RunDoctorDiagnosticsUseCase(checks, inspector, manifestRepository);
   const runInstallUseCase = new RunInstallUseCase(manifestRepository, hashCalculator);
+  const runUninstallUseCase = new RunUninstallUseCase(manifestRepository, hashCalculator);
   return {
     manifestRepository,
     runDoctorDiagnosticsUseCase,
     runInstallUseCase,
+    runUninstallUseCase,
     doctorHandler: new DoctorHandler(runDoctorDiagnosticsUseCase),
     installHandler: new InstallHandler(runInstallUseCase),
+    uninstallHandler: new UninstallHandler(runUninstallUseCase),
     futureInstallationStrategyPorts,
   };
 }

@@ -335,7 +335,8 @@ phasegate 自身の deploy 状態管理 / 構造健全性検査 / 既存ファ�
 - **永続データ**: `.phasegate/manifest.json` (DeploymentManifest schema)
 - **依存**: harness-api (CLI presentation) ← installation → {agent-integration, ci-governance, config-foundation}
 - **WI-146 API**: `phasegate install --dry-run|--apply [--force] [--json]` は `.claude/settings.json` / `.codex/hooks.json` / `.husky/*` / `.github/workflows/phasegate-aidlc-gate.yml` / `package.json` / agent skill symlink を structured merge し、結果を manifest に `created` / `merged` / `symlink` として記録する。
-- **TODO**: uninstall / reconcile の詳細 API contract は WI-147/148 完了時に拡充する。
+- **WI-147 API**: `phasegate uninstall --dry-run|--apply [--force] [--json]` は manifest entries を読み、`created` / `symlink` entries を削除し、`merged` entries は JSON hooks / shell managed block / `package.json` phasegate scripts-devDependency だけを除去する。hash mismatch は force 無しで refuse し、force 時は `.phasegate/backups/uninstall-*/` に snapshot を保存する。完了後 `.phasegate/manifest.json` は `.phasegate/uninstalled-*.json` に rename される。
+- **TODO**: reconcile の詳細 API contract は WI-148 完了時に拡充する。
 
 ---
 

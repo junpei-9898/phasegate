@@ -100,6 +100,15 @@ npx phasegate doctor
 
 `install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`.
 
+To remove PhaseGate from that project later, run:
+
+```bash
+npx phasegate uninstall --dry-run
+npx phasegate uninstall --apply
+```
+
+`uninstall` uses the manifest to delete created files and remove only PhaseGate-managed portions from merged Claude/Codex, Husky, and `package.json` files. User content is preserved, and the manifest is archived under `.phasegate/`.
+
 ### Codex CLI
 
 ```bash

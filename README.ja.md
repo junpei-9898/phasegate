@@ -107,6 +107,15 @@ npx phasegate doctor
 
 `install` は既存の Claude / Codex hooks や Husky script を捨てずに PhaseGate の設定を merge します。書き込み前に変更予定を表示し、package scripts と `phasegate` devDependency、agent skill symlink、未作成の CI workflow、`.phasegate/manifest.json` を整えます。強制的な managed 更新が必要な場合は `npx phasegate install --apply --force` を使います。この場合、置き換え対象は `.phasegate/backups/` に退避されます。
 
+後で PhaseGate を外す場合は、manifest ベースの uninstall を使います。
+
+```bash
+npx phasegate uninstall --dry-run
+npx phasegate uninstall --apply
+```
+
+`uninstall` は manifest を読んで、PhaseGate が作成したファイルを削除し、merge した Claude / Codex / Husky / `package.json` から PhaseGate 管理部分だけを取り除きます。ユーザーの既存設定は保持し、manifest は `.phasegate/` 配下に履歴として archive します。
+
 ### Codex CLI を使う場合
 
 ```bash

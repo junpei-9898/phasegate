@@ -52,8 +52,13 @@ export class FileSystemManifestRepositoryAdapter implements ManifestRepositoryPo
     }
   }
 
-  async archive(_projectRoot: string): Promise<void> {
-    throw new Error("Not yet implemented: manifest archive is owned by WI-147");
+  async archive(projectRoot: string): Promise<string> {
+    const phasegateDir = join(projectRoot, ".phasegate");
+    await mkdir(phasegateDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const archivedPath = join(phasegateDir, `uninstalled-${stamp}.json`);
+    await rename(this.manifestPath(projectRoot), archivedPath);
+    return archivedPath;
   }
 
   private manifestPath(projectRoot: string): string {

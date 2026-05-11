@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.145.2"
+    "phasegate": "^0.145.3"
   }
 }
 ```
@@ -63,6 +63,15 @@ npx phasegate install --apply --force
 ```
 
 Forced updates write backups under `.phasegate/backups/<timestamp>/` before applying changes.
+
+To remove PhaseGate-managed files later, preview and apply uninstall:
+
+```bash
+npx phasegate uninstall --dry-run
+npx phasegate uninstall --apply
+```
+
+`uninstall` reads `.phasegate/manifest.json`, deletes files that PhaseGate created, removes only PhaseGate-managed portions from merged JSON, Husky, and `package.json` files, and archives the manifest as `.phasegate/uninstalled-<timestamp>.json`. If a managed file was modified after install, `uninstall --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/uninstall-<timestamp>/`.
 
 ### Manual Setup Pieces
 

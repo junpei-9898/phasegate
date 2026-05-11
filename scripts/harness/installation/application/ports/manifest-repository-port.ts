@@ -8,5 +8,5 @@ export interface ManifestRepositoryPort {
   load(projectRoot: string): Promise<DeploymentManifest | null>;
   save(projectRoot: string, manifest: DeploymentManifest): Promise<void>;
   exists(projectRoot: string): Promise<boolean>;
-  archive(projectRoot: string): Promise<void>;
+  archive(projectRoot: string): Promise<string>;
 }
