@@ -70,7 +70,7 @@ Node.js >= 18, npm >= 9, TypeScript 5.x
 # 1. Install
 npm install --save-dev phasegate
 
-# 2. Initialize the project
+# 2. Initialize a new project
 npx phasegate init --name my-project --with-husky --with-ci
 
 # 3. Start your AI agent and begin with product design
@@ -89,6 +89,16 @@ claude
 - `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml` when `--with-ci` is passed
 
 `init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
+
+For an existing project, preview and apply a structured install instead:
+
+```bash
+npx phasegate install --dry-run
+npx phasegate install --apply
+npx phasegate doctor
+```
+
+`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`.
 
 ### Codex CLI
 

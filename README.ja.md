@@ -69,7 +69,7 @@ Node.js >= 18, npm >= 9, TypeScript 5.x
 # 1. インストール
 npm install --save-dev phasegate
 
-# 2. プロジェクトを初期化
+# 2. 新規プロジェクトを初期化
 npx phasegate init --name my-project --with-husky --with-ci
 
 # 3. AI agent を起動して /product-architect から始める
@@ -96,6 +96,16 @@ claude
 - `docs/ADR/` — `/skill-creator` や手動で必要に応じて作成
 
 「設計してから書け」を強制する仕組みなので、設計文書はユーザーがスキル経由で作るのが既定動作です。
+
+既存プロジェクトに導入する場合は、構造化 install で差分を確認してから適用します。
+
+```bash
+npx phasegate install --dry-run
+npx phasegate install --apply
+npx phasegate doctor
+```
+
+`install` は既存の Claude / Codex hooks や Husky script を捨てずに PhaseGate の設定を merge します。書き込み前に変更予定を表示し、package scripts と `phasegate` devDependency、agent skill symlink、未作成の CI workflow、`.phasegate/manifest.json` を整えます。強制的な managed 更新が必要な場合は `npx phasegate install --apply --force` を使います。この場合、置き換え対象は `.phasegate/backups/` に退避されます。
 
 ### Codex CLI を使う場合
 

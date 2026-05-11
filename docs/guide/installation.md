@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.14.0"
+    "phasegate": "^0.145.2"
   }
 }
 ```
@@ -30,7 +30,7 @@ npm install
 
 ## Project Setup
 
-### 1. Initialize
+### New Projects
 
 ```bash
 npx phasegate init --name <project-name>
@@ -44,7 +44,29 @@ For Codex, project initialization stops at the project boundary. After `npx phas
 codex features enable codex_hooks
 ```
 
-### 2. Copy design principle documents
+### Existing Projects
+
+Use `install` when the project already has package scripts, hooks, or CI files that should be preserved.
+
+```bash
+npx phasegate install --dry-run
+npx phasegate install --apply
+npx phasegate doctor
+```
+
+`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes the CI workflow when missing, and records managed entries in `.phasegate/manifest.json`.
+
+If a managed update must replace existing custom content, use:
+
+```bash
+npx phasegate install --apply --force
+```
+
+Forced updates write backups under `.phasegate/backups/<timestamp>/` before applying changes.
+
+### Manual Setup Pieces
+
+If you do not use `init` or `install`, copy the design principle documents manually:
 
 ```bash
 cp node_modules/phasegate/docs/folder_management_rules.md docs/
@@ -52,11 +74,11 @@ mkdir -p docs/principles
 cp node_modules/phasegate/docs/principles/*.md docs/principles/
 ```
 
-### 3. Create product overview
+### Create product overview
 
 Create `docs/product/<your_product>_overview.md` as the starting point for AIDLC.
 
-### 4. Start Claude Code
+### Start Claude Code
 
 ```bash
 claude  # at project root
@@ -88,5 +110,6 @@ reports/
 ```bash
 npx phasegate --version
 npx phasegate lint
-npm run phasegate:status
+npx phasegate doctor
+npm run phasegate:check-ready
 ```
