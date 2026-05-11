@@ -2,8 +2,8 @@
 id: WI-147
 type: story
 severity: high
-status: drafted
-affects: [harness-api, setup]
+status: tested
+affects: [installation]
 source: internal
 ---
 

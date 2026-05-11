@@ -2,8 +2,8 @@
 id: WI-146
 type: story
 severity: high
-status: drafted
-affects: [harness-api, setup, agent-integration, ci-governance, config-foundation]
+status: tested
+affects: [installation]
 source: internal
 ---
 
