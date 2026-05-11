@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.145.2] - 2026-05-11
+
+### Added
+
+- **WI-146 — structured install** — `phasegate install --dry-run|--apply [--force] [--json]` を追加し、既存設定を preserve しながら Claude / Codex hooks、Husky hooks、CI workflow、package scripts/devDependency、skills link、manifest entries を構造化 merge できるようにした。
+  - 既存カスタム hook は既定では拒否し、`--force` 時は `.phasegate/backups/` に退避してから managed block を適用する。
+
 ## [0.145.1] - 2026-05-11
 
 ### Fixed
