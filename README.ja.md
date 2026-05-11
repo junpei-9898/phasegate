@@ -18,7 +18,7 @@ Claude Code / Codex / Cursor / Copilot — どの AI agent でも設計意図・
 2. **コミット前に L1〜L3 のバリデーションが自動で走り**、レイヤー違反・テスト品質違反・依存方向違反を弾く
 3. **ブロック時のエラーは AI が読んで自己修正できる形式**（理由・必要な設計文書・次に打つべきスキル名が出る）
 
-`npx phasegate init` を 1 回打てば、上記が全部入ります。
+既存プロジェクトには `npx phasegate install` で既存 hooks / scripts を壊さずに組み込み、新規プロジェクトの legacy bootstrap には `npx phasegate init` を使います。導入後は `phasegate doctor` / `uninstall` / `reconcile` で状態確認・削除・アップグレード追従ができます。
 
 ---
 
@@ -77,7 +77,7 @@ claude
 > /product-architect
 ```
 
-`init` が生成するもの:
+`init` は初期 bootstrap として以下を生成します:
 
 - `phasegate.config.json` — 品質設定の Single Source of Truth
 - `skills/` — 28 の AIDLC スキル一式
@@ -95,7 +95,7 @@ claude
 - `docs/product/` 配下の確定設計文書 — `/domain-designer` `/logical-designer` 等が生成
 - `docs/ADR/` — `/skill-creator` や手動で必要に応じて作成
 
-「設計してから書け」を強制する仕組みなので、設計文書はユーザーがスキル経由で作るのが既定動作です。
+`init` は legacy 互換の bootstrap 経路です。既存 hooks / scripts / package metadata に構造化 merge したい場合は `install` を使います。「設計してから書け」を強制する仕組みなので、設計文書はユーザーがスキル経由で作るのが既定動作です。
 
 既存プロジェクトに導入する場合は、構造化 install で差分を確認してから適用します。
 
@@ -138,8 +138,11 @@ codex features enable codex_hooks   # Codex 本体の feature flag を手動で�
 
 ```bash
 npm update phasegate
-npx phasegate update-skills   # スキルを最新版に再デプロイ
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
 ```
+
+`update-skills` は互換 alias として残っていますが、推奨は `reconcile` です。`.phasegate/manifest.json` に記録された PhaseGate 管理ファイル全体を最新版 template に追従できます。
 
 ---
 
@@ -312,8 +315,12 @@ npx phasegate <command> [options]
 
 | コマンド | 説明 |
 |---|---|
-| `init --name <name>` | 初期化（skills/config/hooks 配置）。`--agent claude\|codex\|both`、`--with-husky`、`--with-ci`、`--preset <full\|standard\|minimal\|custom>` |
-| `update-skills` | スキルを最新版に再デプロイ |
+| `init --name <name>` | 新規プロジェクト向け legacy bootstrap（skills/config/hooks 配置）。既存 hooks/scripts/CI がある場合は `install` を推奨 |
+| `install --dry-run` / `--apply` | 既存設定を保持しながら PhaseGate を構造化 merge し、`.phasegate/manifest.json` を作成 |
+| `doctor` | silent / partial installation を診断し、修復 hint を表示（`--json`, `--strict`, `--report-out <path>`） |
+| `uninstall --dry-run` / `--apply` | manifest に基づいて PhaseGate 管理ファイル・管理 block を削除し、ユーザー設定は保持 |
+| `reconcile --dry-run` / `--apply` | 現在の package template に PhaseGate 管理ファイルを追従し、manifest hash を更新 |
+| `update-skills` | `reconcile` の互換 alias |
 | `lint` | L1 Biome AST チェック |
 | `validate --layer <L1\|L2\|L3\|L4\|all>` | 指定レイヤーのバリデータ実行（`--format human\|agent\|ci`） |
 | `ci-check` | CI フルチェック（L2-L4）。`--quick` で Quick Mode |

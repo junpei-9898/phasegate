@@ -19,7 +19,7 @@ Phasegate adds project-local hooks, validators, and agent skills that keep gener
 2. **Before commit and CI, validators check layer boundaries, metadata, test quality, security, performance, and traceability.**
 3. **Every failure is returned in an agent-readable format** with the reason, missing artifacts, references, and the next skill or command to run.
 
-Run `npx phasegate init` once and the project gets the guardrails, skills, and configuration needed to make that flow repeatable.
+Run `npx phasegate install` to merge those guardrails into an existing project, or `npx phasegate init` for the legacy bootstrap path on a new project. `phasegate doctor`, `uninstall`, and `reconcile` keep the installation observable, removable, and upgradeable.
 
 ---
 
@@ -78,7 +78,7 @@ claude
 > /product-architect
 ```
 
-`init` creates:
+`init` creates the initial project-local harness files:
 
 - `phasegate.config.json` as the quality settings source of truth
 - `skills/` with 28 AIDLC skills
@@ -88,7 +88,7 @@ claude
 - `.husky/pre-commit`, `.husky/commit-msg`, and `.husky/pre-push` when `--with-husky` is passed
 - `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml` when `--with-ci` is passed
 
-`init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
+`init` is the legacy-compatible bootstrap path. For idempotent setup with structured merge into existing hooks, scripts, and package metadata, use `install`. `init` intentionally does **not** create `docs/inception/` work item directories or `docs/product/` design documents. Those are produced later by skills such as `/product-architect`, `/domain-designer`, and `/logical-designer`. That is the core contract: no design, no code.
 
 For an existing project, preview and apply a structured install instead:
 
@@ -131,8 +131,11 @@ Use `--agent both` for projects that use Claude Code and Codex together. Codex n
 
 ```bash
 npm update phasegate
-npx phasegate update-skills
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
 ```
+
+`update-skills` remains available as a compatibility alias, but `reconcile` is the preferred upgrade path because it updates all PhaseGate-managed files recorded in `.phasegate/manifest.json`, not just skills.
 
 ---
 
@@ -494,7 +497,11 @@ npx phasegate <command> [options]
 
 | Command | Description |
 |---|---|
-| `init --name <name>` | Initialize project, deploy skills, generate config. Use `--with-ci` to deploy GitHub Actions workflows. |
+| `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI. Prefer `install` when the project may already have hooks, scripts, or CI files. |
+| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into the current project, preserve existing user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. |
+| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`). |
+| `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`, preserving user content. |
+| `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to the current package templates and refresh manifest hashes. |
 | `lint` | Run L1 Biome AST checks |
 | `validate --layer <L1-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance; explicit L4 runs even when scheduled L4 is disabled) |
 | `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped) |
@@ -502,7 +509,7 @@ npx phasegate <command> [options]
 | `ci:auto-refresh-agent-context --dry-run` / `--apply` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
 | `refresh-claude-md --dry-run` / `--apply` | Refresh only CLAUDE.md while preserving the user-owned section |
 | `p2:check-agent-context` | Check AGENTS.md / CLAUDE.md freshness |
-| `update-skills` | Update skills to latest version |
+| `update-skills` | Compatibility alias for `reconcile` |
 | `phasegate:status` | Display overall harness health summary |
 | `work-items:status --dry-run` / `--apply` | Derive WI status from artifacts and optionally update stale `description.md` frontmatter. Apply refuses downgrades unless `--allow-downgrade` is supplied. |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |

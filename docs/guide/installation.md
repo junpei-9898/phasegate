@@ -6,7 +6,7 @@
 - **npm** 9+ or **pnpm**
 - **TypeScript** 5.x (included as a devDependency)
 
-## Install from GitHub
+## Install from npm
 
 ```bash
 npm install --save-dev phasegate
@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.145.3"
+    "phasegate": "^0.145.4"
   }
 }
 ```
@@ -37,6 +37,8 @@ npx phasegate init --name <project-name>
 ```
 
 This deploys 28 skills to `skills/`, creates the agent-facing skill links (for example `.claude/skills/` or `.codex/skills/`), and generates `phasegate.config.json`.
+
+`init` is the legacy-compatible bootstrap path for new projects. Use `install` when the project may already have hooks, package scripts, or CI files that should be preserved.
 
 For Codex, project initialization stops at the project boundary. After `npx phasegate init --agent codex`, enable the Codex CLI feature flag manually:
 
@@ -82,8 +84,6 @@ npx phasegate reconcile --apply
 
 `reconcile` updates PhaseGate-managed portions, preserves user content, adds newly introduced managed targets, and refreshes `.phasegate/manifest.json` with current version/hash metadata. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/reconcile-<timestamp>/`.
 
-`phasegate update-skills` remains available as a compatibility alias for `phasegate reconcile`.
-
 ### Manual Setup Pieces
 
 If you do not use `init` or `install`, copy the design principle documents manually:
@@ -110,8 +110,11 @@ Run `/product-architect` to begin the AIDLC process.
 
 ```bash
 npm update phasegate
-npx phasegate update-skills
+npx phasegate reconcile --dry-run
+npx phasegate reconcile --apply
 ```
+
+`phasegate update-skills` remains available as a compatibility alias, but `reconcile` is the preferred upgrade path because it updates all managed files recorded in `.phasegate/manifest.json`.
 
 ## Recommended .gitignore additions
 

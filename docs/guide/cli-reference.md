@@ -12,8 +12,12 @@ npx phasegate <command> [options]
 
 | Command | Description |
 |---|---|
-| `init --name <name>` | Deploy skills and generate `phasegate.config.json` |
-| `update-skills` | Re-deploy skills to the latest version |
+| `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI |
+| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, and write `.phasegate/manifest.json` |
+| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`) |
+| `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json` |
+| `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes |
+| `update-skills` | Compatibility alias for `reconcile` |
 | `list-features` | List available features |
 | `enable-feature <name>` | Enable a feature |
 | `disable-feature <name>` | Disable a feature |
