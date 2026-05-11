@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.145.4"
+    "phasegate": "^0.147.0"
   }
 }
 ```

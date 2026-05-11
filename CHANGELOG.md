@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.147.0] - 2026-05-12
+
+### Added
+
+- **WI-144 — install/uninstall idempotency umbrella closure** — publish-ready rollup for the installation lifecycle work delivered across WI-145〜WI-148.
+  - Documents the complete lifecycle commands (`install`, `doctor`, `uninstall`, `reconcile`) in README / README.ja / guide docs.
+  - Marks the WI-144 umbrella as tested after the manifest, doctor, structured install, clean uninstall, reconcile, and init deprecation slices reached tested status.
+
 ## [0.145.4] - 2026-05-11
 
 ### Added
