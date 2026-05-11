@@ -105,3 +105,9 @@
 ## 7. 次のアクション
 
 全観点で100%カバレッジを達成したため、テストロジック設計（実装）に進行可能。
+
+## WI-143: WI-first Workflow Reflection
+
+@work-item-id WI-143
+
+`work-items:status` / metadata validation の正本は WI directory を canonical work item として扱う。WI-143 の doctor drift は、この traceability 前提を setup/doctor 側から保護する補助診断であり、WI count が 0 のまま plan が蓄積する状態を release-visible な red finding にする。

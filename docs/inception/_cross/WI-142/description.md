@@ -2,7 +2,7 @@
 id: WI-142
 type: issue
 severity: normal
-status: drafted
+status: tested
 source: dogfood
 ---
 

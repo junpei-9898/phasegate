@@ -2,7 +2,7 @@
 id: WI-143
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [traceability-model, config-foundation, harness-api, skill-quality, agent-integration, validator-system]
 source: external
 external_ref: https://github.com/junpei-9898/phasegate/issues/5

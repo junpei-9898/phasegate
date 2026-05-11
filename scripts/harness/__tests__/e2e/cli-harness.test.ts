@@ -2,6 +2,10 @@
  * @layer e2e-test
  * @unit harness-api
  * @story H08-01
+ * @work-item-id WI-142
+ * @work-item-id WI-108
+ * @work-item-id WI-109
+ * @work-item-id WI-107
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。

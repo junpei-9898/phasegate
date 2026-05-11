@@ -230,3 +230,21 @@
 3. **stateful mockの実装確認**: IT-API-RepetitionFlow-001では「状態を保持するstateful mock」が必要とされており、テスト実装時にVitest `vi.fn()`の実装設計に注意が必要。
 
 4. **tmpdir管理の標準化**: 複数のInfrastructure Adapterテストで`os.tmpdir()`を使用するため、`scripts/harness/__tests__/helpers/test-helpers.ts`にtmpdir管理ユーティリティを追加することを推奨。
+
+## WI-107: L4 Advisory Policy
+
+@work-item-id WI-107
+
+CI governance treats L4 as scheduled/advisory by default. CI output must show skipped disabled L4 validators and must only turn warnings into failure when warning escalation is explicitly enabled.
+
+## WI-108: L2-L4 CI Contract
+
+@work-item-id WI-108
+
+`phasegate:ci-check` is the public CI command for L2-L4 validation. Templates and command documentation must not describe an L3-only run as the full CI gate.
+
+## WI-109: Self-Lint Gate Readiness
+
+@work-item-id WI-109
+
+CI governance relies on `phasegate:lint` and `phasegate:complete-check` as clean self-checks. The WI-109 boundary correction keeps those commands suitable for release/publish gates by removing the self-lint architecture violation.

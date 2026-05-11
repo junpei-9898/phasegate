@@ -1,6 +1,7 @@
 /**
  * @unit harness-api
  * @layer presentation
+ * @work-item-id WI-142
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。

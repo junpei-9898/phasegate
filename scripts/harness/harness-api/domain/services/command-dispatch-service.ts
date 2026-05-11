@@ -1,5 +1,6 @@
 // @layer domain
 // @unit harness-api
+// @work-item-id WI-108
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import { CommandRegistry } from './command-registry.js';

@@ -377,6 +377,12 @@
 | Medium | HandleStopUseCaseのdeactivate状態検証（ドメイン表現） | IT-UC-HandleStop-002が「clearActiveが呼ばれた」という内部メソッド確認になっている | 「Stop Hook完了後にReentryGuard.isActive()=falseになっていること」に変更 |
 | Low | UT-RG-031とUT-BV-007の重複排除 | UT-RG-031はUT-RG-020と同義のテストケース | 実装フェーズで統合。設計変更は不要 |
 | Low | UT-BV-*セクションの冗長性 | 多くがdomainモデルテストと重複 | 実装フェーズで境界値固有ケースのみ残す（UT-BV-011, UT-BV-012, UT-BV-013は固有） |
+
+## WI-143: Agent Rule Reflection
+
+@work-item-id WI-143
+
+`phasegate emit-agent-rules` provides the AGENTS.md / CLAUDE.md instruction block needed by agent-integration users to keep plan/design work inside WI directories. The command is stdout-only so external agent files can be updated by the user or a deployment workflow without hidden writes.
 | Low | HarnessConfigConfigQueryAdapter Wave 2暫定マッピングの将来対応 | `cascadeUpdate`→PostToolUse、`agentLessonCollection`→PreToolUseのマッピングが暫定 | Wave 3でhooksサブセクション追加後にAdapterのみ差し替え。テスト変更不要 |
 
 ---

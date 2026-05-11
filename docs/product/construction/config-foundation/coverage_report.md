@@ -114,3 +114,9 @@ Unit定義にはAC IDの明記がないため、既存のStory IDを識別子と
 1. `L3Config.coverageThreshold` の小数値許容可否を設計判断として確定する
 2. `project.preset` 単独切替ケースと `DisableFeatureUseCase` の読込失敗ケースを `unit_test_design.md` / `it_test_design.md` に追記する
 3. 追記後に本レポートのサマリー数値を更新し、未カバー項目を解消する
+
+## WI-109: Config Boundary Reflection
+
+@work-item-id WI-109
+
+Config-foundation infrastructure errors remain internal implementation details. Harness-api and integration entrypoints should depend on composition/application contracts and handle missing-config fallback through stable error boundaries rather than importing repository concrete classes.

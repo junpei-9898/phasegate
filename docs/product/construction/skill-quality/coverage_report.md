@@ -243,3 +243,9 @@ Presentation Handler カバレッジ: **6/6 (100%)** 合計 18 件
 - IT 68 件については、`vi.fn()` / `vi.mock()` を使用したポートモック差し替え方式で実装すること
 - Cross-Layer 統合テスト（6 件）は全レイヤーを結合した E2E シナリオとして実行し、ポートのみをモックとする
 - AjvLessonArtifactSchemaAdapter（IT-REPO-LessSchema-001〜002）は `docs/contracts/lesson-artifact.schema.json` 実体を使用し、モックを使わないこと
+
+## WI-143: Skill Gatekeeping Reflection
+
+@work-item-id WI-143
+
+Planning skills that create implementation or design artifacts now carry a blocking WI pre-flight rule. This keeps skill-quality aligned with WI taxonomy by requiring a target `docs/inception/{unit}/WI-XXX/description.md` before plan generation.

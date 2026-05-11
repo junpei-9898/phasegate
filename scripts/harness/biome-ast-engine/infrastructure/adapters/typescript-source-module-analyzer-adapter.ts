@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit biome-ast-engine
+ * @work-item-id WI-109
  */
 
 import * as ts from 'typescript';

@@ -380,3 +380,15 @@ UT-VES-014:
 | UT-VID境界値重複ケースのパラメタライズドテスト整理 | story-implementor（任意フェーズ） | P3 | `unit_test_design.md` §2 ValidatorId境界値テスト整理 |
 | UT-DDS/UT-DCD系テストケース名のユビキタス言語化 | story-implementor（任意フェーズ） | P3 | `unit_test_design.md` §3 DriftDetectionService・DeadCodeDetectionServiceのケース名を改訂 |
 | HarnessError.fix_example/adr_refの明示アサーション追加 | story-implementor（H08-01/02実装） | P3 | `it_test_design.md` 各Adapterテストに`violations[0].fix_example`のアサーション追加 |
+
+## WI-143: Doctor Drift Check
+
+@work-item-id WI-143
+
+The validator surface receives WI-first enforcement through `phasegate doctor` rather than a new L2/L3 validator. Unit tests cover the red finding for zero WI directories plus ad-hoc plans, the `phase-gate` relaxed-gate message, and the non-finding path when a WI directory exists.
+
+## WI-108: CI Check Layer Visibility
+
+@work-item-id WI-108
+
+`phasegate:ci-check --json` exposes L2/L3/L4 validator result items, including disabled L4 validators as `skipped: true`. This ensures validator-system output can prove the public full-CI contract did not silently collapse to L3-only execution.

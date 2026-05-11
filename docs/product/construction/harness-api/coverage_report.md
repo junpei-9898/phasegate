@@ -453,3 +453,9 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 
 9. UT-BND-010 の実装配置（CommandDispatchServiceのunit test内 vs Cross-Layer IT test内）を story の `tdd_implementation_plan.md` で確認する
 10. IT-REPO-ValidatorExec-006 の期待値（length>=4）の具体的な計算根拠をフィクスチャーで明示する
+
+## WI-143: Workflow CLI Coverage
+
+@work-item-id WI-143
+
+`phasegate scaffold-wi`, `phasegate emit-agent-rules`, and `init --workflow strict` are registered at the harness-api CLI boundary. Smoke coverage for WI-143 validates that these commands are reachable and that strict workflow configuration is observable from generated config.

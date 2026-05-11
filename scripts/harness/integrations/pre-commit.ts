@@ -2,6 +2,7 @@
  * @unit harness-api
  * @layer presentation
  * @work-item-id WI-141
+ * @work-item-id WI-109
  *
  * Pre-commit CLI entry.
  * Runs L2 validators against staged TypeScript files AND design-document
