@@ -1,5 +1,10 @@
 # ドメインモデル: traceability-model
 
+<!-- @work-item-id WI-115 -->
+## WI-115 Legacy Identifier Semantics
+
+`legacy_id` is a historical alias in WI frontmatter. It is not globally unique by default; consumers that resolve legacy annotations must use an applicable unit scope or treat duplicate aliases as ambiguous.
+
 @story-id H03-01
 @story-id H03-02
 @story-id H03-03

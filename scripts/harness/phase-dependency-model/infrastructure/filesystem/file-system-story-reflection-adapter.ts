@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit phase-dependency-model
+ * @work-item-id WI-115
  */
 
 import type { Dirent } from "node:fs";

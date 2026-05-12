@@ -5,6 +5,11 @@ traceability:
 
 # 論理設計: traceability-model
 
+<!-- @work-item-id WI-114 -->
+## WI-114 Drift Report Traceability Inputs
+
+Traceability data remains the source material for repository-scale drift analysis. Downstream report compaction must preserve enough source/design identity to group drift by category and produce actionable next steps.
+
 @story-id H03-04
 拡張: ISSUE-026 Phase A-2 で `WorkItemFrontmatter` 型と専用 parser を infrastructure 層に追加（既存 `parseFrontmatterFlags` は据え置き・後方互換）。
 @story-id H03-05

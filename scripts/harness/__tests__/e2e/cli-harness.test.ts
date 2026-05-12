@@ -2,6 +2,7 @@
  * @layer e2e-test
  * @unit harness-api
  * @story H08-01
+ * @work-item-id WI-113
  * @work-item-id WI-142
  * @work-item-id WI-108
  * @work-item-id WI-109

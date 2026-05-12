@@ -1,6 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
+// @work-item-id WI-114
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CommandDispatchService } from '../../../harness-api/domain/services/command-dispatch-service.js';

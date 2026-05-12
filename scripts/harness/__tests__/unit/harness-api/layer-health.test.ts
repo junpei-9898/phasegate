@@ -1,6 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-04
+// @work-item-id WI-112
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { LayerHealth } from '../../../harness-api/domain/value-objects/layer-health.js';

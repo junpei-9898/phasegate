@@ -1,5 +1,6 @@
 // @layer domain
 // @unit harness-api
+// @work-item-id WI-114
 // drift-report-summary.ts — DriftReportSummary Value Object
 
 export interface DriftItem {

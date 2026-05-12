@@ -1,5 +1,10 @@
 # 論理設計: harness-api
 
+<!-- @work-item-id WI-113 -->
+## WI-113 Validate Format Parser Contract
+
+The harness-api CLI boundary rejects unsupported `validate --format` values before dispatching to validator-system. The supported validate formats are `human`, `agent`, and `ci`; `json` is rejected until a schema is explicitly designed.
+
 @story-id H09-01
 @story-id H09-02
 @story-id H09-03

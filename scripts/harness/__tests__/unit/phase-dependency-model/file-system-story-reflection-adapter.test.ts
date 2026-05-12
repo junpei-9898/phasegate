@@ -1,6 +1,7 @@
 // @unit phase-dependency-model
 // @layer infrastructure
 // @story H02-04
+// @work-item-id WI-115
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";

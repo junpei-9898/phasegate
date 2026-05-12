@@ -2,7 +2,7 @@
 id: WI-114
 type: issue
 severity: normal
-status: implemented
+status: tested
 affects: [traceability-model, validator-system]
 source: internal
 ---

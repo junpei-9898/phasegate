@@ -1,5 +1,6 @@
 // @layer domain
 // @unit harness-api
+// @work-item-id WI-112
 // layer-health.ts — LayerHealth Value Object
 
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';

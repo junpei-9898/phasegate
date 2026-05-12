@@ -1,5 +1,15 @@
 # 論理設計: validator-system
 
+<!-- @work-item-id WI-113 -->
+## WI-113 Validate Format Boundary
+
+`validate` accepts only `human`, `agent`, and `ci` output formats. Unsupported values such as `json` are rejected at the CLI boundary before validator execution so every layer selection follows the same fail-fast contract.
+
+<!-- @work-item-id WI-114 -->
+## WI-114 Drift Signal Producer Contract
+
+L4 drift detection remains the producer of raw drift items. Repository-scale compaction and advisory response assembly are owned by harness-api, but validator-system output preserves category data needed for downstream severity and next-action summaries.
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03

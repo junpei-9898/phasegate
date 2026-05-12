@@ -1,5 +1,6 @@
 // @layer domain
 // @unit harness-api
+// @work-item-id WI-112
 // status-derivation-service.ts — StatusDerivationService Domain Service
 
 import { LayerHealth, type LayerId } from '../value-objects/layer-health.js';

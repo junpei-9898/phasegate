@@ -2,7 +2,7 @@
 id: WI-115
 type: issue
 severity: normal
-status: implemented
+status: tested
 affects: [traceability-model, phase-dependency-model, validator-system]
 source: internal
 ---

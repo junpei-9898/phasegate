@@ -2,7 +2,7 @@
 id: WI-112
 type: issue
 severity: normal
-status: implemented
+status: tested
 affects: [harness-api, validator-system]
 source: internal
 ---

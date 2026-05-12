@@ -1,5 +1,20 @@
 # ドメインモデル: validator-system
 
+<!-- @work-item-id WI-112 -->
+## WI-112 Status Live Validation State
+
+`validator-system` provides live validator observations consumed by `phasegate:status`. These observations are distinct from cached artifact presence; status presentation reports live pass/fail/skipped/not-run without converting informational status output into a gate failure.
+
+<!-- @work-item-id WI-116 -->
+## WI-116 Registered L4 Validator Set
+
+The L4 registry includes L4-004 `doc-freshness` and L4-005 `pointer-validation`. Public documentation and CLI error listing treat these IDs as registered validators, with `p2:check-freshness` and `p2:validate-pointers` preserved only as compatibility entry points.
+
+<!-- @work-item-id WI-115 -->
+## WI-115 Legacy Reflection Safety
+
+Validator-system metadata checks rely on phase-dependency-model reflection results. Ambiguous legacy annotations must not be treated as valid reflected evidence, because that would allow validator execution to proceed against the wrong WI.
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03

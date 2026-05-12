@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit validator-system
+ * @work-item-id WI-116
  *
  * ValidatorId 値オブジェクト
  * L1-001〜L4-005 のバリデータを識別する不変値オブジェクト

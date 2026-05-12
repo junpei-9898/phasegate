@@ -1,6 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-03
+// @work-item-id WI-114
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { DriftReportSummary } from '../../../harness-api/domain/value-objects/drift-report-summary.js';

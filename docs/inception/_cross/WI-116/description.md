@@ -2,7 +2,7 @@
 id: WI-116
 type: issue
 severity: trivial
-status: implemented
+status: tested
 affects: [documentation, validator-system]
 source: internal
 ---
