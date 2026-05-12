@@ -349,3 +349,10 @@ classDiagram
 |---|------|---------|
 | OQ-1 | StoryCatalogPortの初期データ読み込みタイミング（起動時一括 vs 遅延） | パフォーマンス設計 |
 | OQ-2 | L2 metadata検証とL4 drift-detect検証の境界をどう実装で分離するか | validator-systemとの連携 |
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-138 -->
+## G4 Traceability Inputs
+
+`traceability-model` remains the owner of WI/status metadata semantics. G4 consumes a narrow `TraceabilityGraphSlice` so validator-system can report affected Unit reflection gaps, implementation/test WI mismatches, and public-doc/contract sync smells without taking ownership of WI frontmatter parsing.
+
+WI-133 boundary coverage uses the same observation-link semantics so boundary cases derived from contracts can be tied back to test observations without introducing a separate traceability graph.

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.151.1] - 2026-05-12
+
+### Fixed
+
+- **G4 post-publish dogfood** — fixes `npx phasegate@0.151.0` failing with `Error: tsx not found` by letting the bin wrapper execute the packaged `tsx` loader via `node --import` when dependency binaries are not linked into PATH.
+
+## [0.151.0] - 2026-05-12
+
+### Added
+
+- **G4 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 — contract, boundary, state machine, error contract, and traceability coverage** — adds `L2-015 contract-traceability-coverage`, a semantic model for public contracts, test observations, boundary cases, state machines, error contracts, and traceability graph slices, plus opt-in `@phasegate-contract` / `@phasegate-observation` extraction and L2 result mapping.
+
 ## [0.150.2] - 2026-05-12
 
 ### Added

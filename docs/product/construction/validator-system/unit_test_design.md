@@ -501,3 +501,14 @@ target('{クラス名またはメソッド名}', () => {
 
 - Missing implementation/test observations for design behaviors are reported.
 - Undesigned public code behaviors and undesigned test observations are reported as warnings.
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 Contract Traceability Unit Tests
+
+- `ContractTraceabilityCoverageService` reports missing required behavior observations for public contracts.
+- Port contracts without `adapter-contract` observations report `missing-port-contract-test`.
+- Config/domain boundary cases without `{contractId}:boundary:{case}` observations report `missing-boundary-test`.
+- Incomplete `ErrorContract` records report shape, exit-code, and missing error-path findings.
+- `StateMachineModel` docs/code mismatches, terminal outgoing transitions, and missing transition observations are reported.
+- `TraceabilityGraphSlice` affected-unit reflection gaps, implementation/test mismatches, and public docs/contract sync gaps are reported.
+- `ValidatorId` accepts `L2-015` as `contract-traceability-coverage`.

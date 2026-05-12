@@ -454,3 +454,11 @@
 - テスト構造: `target()` / `describe()` / `context()` / `it()` のエイリアス使用
 - 実行結果変数: `actual` に統一
 - パターン: AAAパターン（// Arrange / // Act / // Assert）
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 Contract Traceability Integration Tests
+
+- `RunL2ValidatorsUseCase` default execution includes `L2-015`.
+- Injecting `ContractTraceabilityPolicyPort` with an uncovered public contract returns a failing `L2-015` result.
+- `HarnessConfigValidatorConfigAdapter` default L2 validator list includes `L2-015`.
+- `config-foundation` validator-system config mapper propagates `L2-015` in the L2 validator list.

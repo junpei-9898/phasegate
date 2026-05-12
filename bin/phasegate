@@ -7,8 +7,13 @@ SCRIPT_PATH="$(realpath "$0" 2>/dev/null || readlink -f "$0" 2>/dev/null || echo
 PACKAGE_DIR="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)"
 MAIN_TS="$PACKAGE_DIR/scripts/harness/main.ts"
 
-# tsx を探す: npx経由の場合はnode_modules/.binがPATHに入っているので command -v で見つかる
-if command -v tsx >/dev/null 2>&1; then
+# tsx を探す。npm/npx の一時インストールでは dependency bin が PATH や ../.bin に
+# 出ないことがあるため、tsx loader を直接 node --import できる経路も見る。
+if [ -f "$PACKAGE_DIR/node_modules/tsx/dist/loader.mjs" ]; then
+  exec node --import "$PACKAGE_DIR/node_modules/tsx/dist/loader.mjs" "$MAIN_TS" "$@"
+elif [ -f "$PACKAGE_DIR/../tsx/dist/loader.mjs" ]; then
+  exec node --import "$PACKAGE_DIR/../tsx/dist/loader.mjs" "$MAIN_TS" "$@"
+elif command -v tsx >/dev/null 2>&1; then
   exec tsx "$MAIN_TS" "$@"
 elif [ -f "$PACKAGE_DIR/node_modules/.bin/tsx" ]; then
   exec "$PACKAGE_DIR/node_modules/.bin/tsx" "$MAIN_TS" "$@"

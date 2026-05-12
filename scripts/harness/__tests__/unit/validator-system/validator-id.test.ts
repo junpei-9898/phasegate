@@ -2,7 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-116
+ * @work-item-id WI-116 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
  */
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -45,7 +45,7 @@ target('ValidatorId', () => {
       // Act
       const actual = ValidatorId.create(input);
       // Assert
-      expect(actual).toBeDefined();
+      expect(actual.value).toBe('L2-001');
     });
 
     it('L2-014を渡すとwork-item-status-stalenessとして生成されること', () => {
@@ -53,6 +53,13 @@ target('ValidatorId', () => {
 
       expect(actual.value).toBe('L2-014');
       expect(actual.getName()).toBe('work-item-status-staleness');
+    });
+
+    it('L2-015を渡すとcontract-traceability-coverageとして生成されること', () => {
+      const actual = ValidatorId.create('L2-015');
+
+      expect(actual.value).toBe('L2-015');
+      expect(actual.getName()).toBe('contract-traceability-coverage');
     });
   });
 

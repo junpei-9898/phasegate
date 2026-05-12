@@ -2,7 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-110
+ * @work-item-id WI-110 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
@@ -31,7 +31,7 @@ function createL2UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target('RunL2ValidatorsUseCase', () => {
   describe('全L2バリデータの実行', () => {
     context('validatorIdsを省略した場合', () => {
-      it('全L2バリデータ（L2-001〜L2-003, L2-013, L2-014）が実行され5件の結果が返る (IT-UC-RunL2-001)', async () => {
+      it('全L2バリデータ（L2-001〜L2-003, L2-013〜L2-015）が実行され6件の結果が返る (IT-UC-RunL2-001)', async () => {
         // Arrange
         const usecase = createL2UseCase();
         const input = { targetPaths: ['src/foo.ts'], unitName: 'unit-a', currentPhase: 'implementation' };
@@ -40,8 +40,7 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
-        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014']);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']);
       });
     });
 
@@ -55,8 +54,7 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(1);
-        expect(actual[0].validatorId).toBe('L2-001');
+        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001']);
       });
     });
 
@@ -98,8 +96,10 @@ target('RunL2ValidatorsUseCase', () => {
         const usecase = createL2UseCase();
         const input = { validatorIds: ['L2-999'], targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' };
 
-        // Act & Assert
-        await expect(usecase.execute(input)).rejects.toThrow(InvalidValidatorIdError);
+        // Act
+        const actual = usecase.execute(input);
+        // Assert
+        await expect(actual).rejects.toThrow(InvalidValidatorIdError);
       });
     });
 
@@ -120,8 +120,10 @@ target('RunL2ValidatorsUseCase', () => {
         });
         const input = { targetPaths: ['src/foo.ts'], unitName: 'unit-a', currentPhase: 'implementation' };
 
-        // Act & Assert
-        await expect(usecase.execute(input)).rejects.toThrow(ValidatorExecutionError);
+        // Act
+        const actual = usecase.execute(input);
+        // Assert
+        await expect(actual).rejects.toThrow(ValidatorExecutionError);
       });
     });
 
@@ -135,7 +137,7 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']);
         expect(actual.every((r) => r.passed === true)).toBe(true);
       });
     });
@@ -168,9 +170,10 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
-        expect(l2013?.passed).toBe(true);
-        expect(l2013?.skipped).toBe(false);
+        expect(actual.find((r) => r.validatorId === 'L2-013')).toMatchObject({
+          passed: true,
+          skipped: false,
+        });
       });
 
       it('L2-013が真に未カバーのコマンドをfailとして返す', async () => {
@@ -195,9 +198,10 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
-        expect(l2013?.passed).toBe(false);
-        expect(l2013?.errors[0]?.message).toContain('phasegate:missing');
+        expect(actual.find((r) => r.validatorId === 'L2-013')).toMatchObject({
+          passed: false,
+          errors: [expect.objectContaining({ message: expect.stringContaining('phasegate:missing') })],
+        });
       });
 
       it('consumer projectでE2E test suiteが存在しない場合はL2-013をpass扱いにする', async () => {
@@ -222,9 +226,10 @@ target('RunL2ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l2013 = actual.find((r) => r.validatorId === 'L2-013');
-        expect(l2013?.passed).toBe(true);
-        expect(l2013?.errors).toEqual([]);
+        expect(actual.find((r) => r.validatorId === 'L2-013')).toMatchObject({
+          passed: true,
+          errors: [],
+        });
       });
 
       it('L2-014がstale WI statusをfailとして返す', async () => {
@@ -266,10 +271,52 @@ target('RunL2ValidatorsUseCase', () => {
 
         const actual = await usecase.execute({ targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' });
 
-        const l2014 = actual.find((r) => r.validatorId === 'L2-014');
-        expect(l2014?.passed).toBe(false);
-        expect(l2014?.errors[0]?.message).toContain('WI-140 status is stale');
-        expect(l2014?.errors[0]?.workItemId).toBe('WI-140');
+        expect(actual.find((r) => r.validatorId === 'L2-014')).toMatchObject({
+          passed: false,
+          errors: [expect.objectContaining({
+            message: expect.stringContaining('WI-140 status is stale'),
+            workItemId: 'WI-140',
+          })],
+        });
+      });
+
+      it('L2-015がcontract traceability findingをfailとして返す', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L2')),
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          contractTraceabilityPolicyPort: {
+            collect: async () => ({
+              publicContracts: [{
+                id: 'cli.validate',
+                kind: 'cli-command',
+                sourcePath: 'docs/guide/cli-reference.md',
+                requiredBehaviors: ['success'],
+              }],
+              testObservations: [],
+              errorContracts: [],
+              stateMachines: [],
+              traceabilitySlices: [],
+            }),
+          },
+        });
+
+        // Act
+        const actual = await usecase.execute({ targetPaths: [], unitName: 'unit-a', currentPhase: 'impl' });
+
+        // Assert
+        expect(actual.find((r) => r.validatorId === 'L2-015')).toMatchObject({
+          passed: false,
+          errors: [expect.objectContaining({ kind: 'missing-required-behavior-test' })],
+        });
       });
     });
   });

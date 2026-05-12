@@ -1,7 +1,7 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-// @work-item-id WI-092 / WI-033
+// @work-item-id WI-133
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
@@ -81,7 +81,7 @@ target('toValidatorSystemConfig', () => {
         expect(actual).toEqual({
           project: { preset: 'standard' },
           layers: {
-            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014'] },
+            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
             L3: { enabled: true },
             L4: { enabled: false, validators: ['drift-detector'] },
           },
@@ -103,7 +103,7 @@ target('toValidatorSystemConfig', () => {
         expect(actual).toEqual({
           project: { preset: 'standard' },
           layers: {
-            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014'] },
+            L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
             L3: { enabled: true },
             L4: { enabled: false, validators: ['drift-detector'] },
           },
@@ -121,7 +121,7 @@ target('toValidatorSystemConfig', () => {
         const actual = toValidatorSystemConfig(resolvedConfig);
 
         // Assert
-        expect(actual).toBeUndefined();
+        expect(actual).toEqual(undefined);
       });
     });
   });

@@ -414,3 +414,7 @@ classDiagram
     GateDefinition *-- GateStoryAnnotation
     PhaseStructure ..> GlobMatcherPort : uses (custom preset)
 ```
+<!-- @work-item-id WI-138 -->
+## G4 Traceability Graph Boundary
+
+`phase-dependency-model` continues to own phase ordering and prerequisite semantics. WI-138 consumes phase/product reflection evidence as graph edges only; it does not move phase-gate rule evaluation out of phase-dependency-model.

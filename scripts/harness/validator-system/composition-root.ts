@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * DI 組み立て — validator-system の全依存関係を構築する
- * @work-item-id WI-110 / WI-111
+ * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
  */
 import { ValidatorId } from './domain/value-objects/validator-id.js';
 import { ValidatorDefinition } from './domain/value-objects/validator-definition.js';
@@ -24,6 +24,7 @@ import { SourceFileTextScannerAdapter } from './infrastructure/adapters/source-f
 import { E2eTestFileRegistryAdapter } from './infrastructure/adapters/e2e-test-file-registry-adapter.js';
 import { CliCommandRegistryAdapter } from './infrastructure/adapters/cli-command-registry-adapter.js';
 import { TraceabilityWorkItemStatusPolicyAdapter } from './infrastructure/adapters/traceability-work-item-status-policy-adapter.js';
+import { FileSystemContractTraceabilityPolicyAdapter } from './infrastructure/adapters/file-system-contract-traceability-policy-adapter.js';
 import { PhaseDependencyPhaseGatePolicyAdapter } from './infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.js';
 import { TraceabilityMetadataPolicyAdapter } from './infrastructure/adapters/traceability-metadata-policy-adapter.js';
 import { NyquistAcCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
@@ -47,7 +48,7 @@ import { join } from 'node:path';
 const DEFAULT_CONFIG = {
   preset: 'standard' as const,
   layers: {
-    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014'] },
+    L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
   },
@@ -81,6 +82,7 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L2-003', 'L2', 'always'),
     createDef('L2-013', 'L2', 'always', 'CliE2eTestExistenceService'),
     createDef('L2-014', 'L2', 'always', 'WorkItemStatusPolicyPort'),
+    createDef('L2-015', 'L2', 'always', 'ContractTraceabilityPolicyPort'),
     createDef('L3-001', 'L3', 'always'),
     createDef('L3-002', 'L3', 'strictOnly'),
     createDef('L3-003', 'L3', 'always'),
@@ -127,6 +129,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
   const performanceScannerPort = new AstPerformanceScannerAdapter();
   const workItemStatusPolicyPort = new TraceabilityWorkItemStatusPolicyAdapter(process.cwd());
+  const contractTraceabilityPolicyPort = new FileSystemContractTraceabilityPolicyAdapter();
 
   const docsRoot = join(process.cwd(), 'docs/product/construction');
   const cwd = process.cwd();
@@ -151,6 +154,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     e2eTestFileRegistryPort,
     cliCommandRegistryPort,
     workItemStatusPolicyPort,
+    contractTraceabilityPolicyPort,
   });
 
   const runL3ValidatorsUseCase = new RunL3ValidatorsUseCase({

@@ -333,3 +333,16 @@ L4-002 consistency targets are typed observations from product docs: known/unkno
 ## WI-139 Semantic Drift Model
 
 Semantic drift compares `DesignIntent`, `ImplementationBehavior`, and `TestObservation` by `unitName + behaviorId`, producing report kinds for missing code, missing tests, undesigned public behavior, and tests that fix behavior absent from design.
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 Contract Traceability Coverage Model
+
+`L2-015 contract-traceability-coverage` validates a language-independent semantic model:
+
+- `PublicContract`: CLI/API/Port/config/domain/error contract with required behavior cases.
+- `TestObservation`: unit/integration/e2e/adapter-contract evidence linked by semantic `covers` keys.
+- `ErrorContract`: stable code, severity, message, suggestion, documentation reference, exit code, and machine fields.
+- `StateMachineModel`: docs/code states, transitions, terminal states, and invalid transitions.
+- `TraceabilityGraphSlice`: WI, affected Units, product reflection, implementation evidence, test evidence, and public docs/contract sync flags.
+
+The first repository scanner is opt-in annotation based (`@phasegate-contract` / `@phasegate-observation`) to avoid broad false positives while preserving the domain service contract for richer extractors.

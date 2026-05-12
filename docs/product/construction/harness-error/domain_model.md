@@ -277,3 +277,8 @@ classDiagram
 |---|------|---------|
 | OQ-1 | ErrorDefinitionRegistryの初期データをハードコードするか、設定ファイルから読むか | Infrastructure層の実装方式 |
 | OQ-2 | fix_example構文検証で許容するパーサーの範囲（TypeScript AST?正規表現?） | FixExampleValidatorPortアダプターの実装 |
+
+<!-- @work-item-id WI-132, WI-137 -->
+## G4 Error Contract Projection
+
+Harness errors can be projected into `ErrorContract` records for L2-015. Required public error quality fields are stable code, severity, message, concrete suggestion, documentation reference, exit-code contract, and optional machine-readable fields. Error path test coverage is represented by `{errorContractId}:error-path` observations.

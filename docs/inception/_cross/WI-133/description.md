@@ -2,7 +2,7 @@
 id: WI-133
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, traceability-model, config-foundation, documentation]
 source: internal
 ---

@@ -1864,3 +1864,15 @@ Validator-system consumes doc freshness and pointer validation as L4 advisory re
 ## WI-139 Semantic Drift Service
 
 `SemanticDriftService` is a higher-level report producer above L4-001. It checks design-code-test behavior coverage without replacing structural drift detection.
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 L2-015 Contract Traceability Flow
+
+`RunL2ValidatorsUseCase` executes `L2-015` when enabled by `LayerConfig`.
+
+1. `ContractTraceabilityPolicyPort.collect(targetPaths)` extracts opt-in contract and observation records.
+2. `ContractTraceabilityCoverageService.check()` produces findings for missing required behavior tests, missing Port adapter contract tests, missing boundary tests, incomplete error contracts, state machine inconsistencies, and traceability graph gaps.
+3. Findings are mapped to `ValidationResult.fail(ValidatorId.create('L2-015'), errors, 0)`.
+4. No findings yields an explicit pass result.
+
+`FileSystemContractTraceabilityPolicyAdapter` currently reads `@phasegate-contract id=... kind=... behaviors=... boundary=...` and `@phasegate-observation covers=... kind=...` annotations from target paths. Future extractors can feed the same port from AST, Markdown, config schema, or staged-change analysis.

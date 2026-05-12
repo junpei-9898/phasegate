@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * RunL2ValidatorsUseCase — H08-01: L2バリデータ実行
- * @work-item-id WI-110 / WI-111 / WI-140
+ * @work-item-id WI-110 / WI-111 / WI-140 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
  */
 import { readFile } from 'node:fs/promises';
 import { ValidatorId, InvalidValidatorIdError } from '../../domain/value-objects/validator-id.js';
@@ -21,6 +21,8 @@ import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-regi
 import type { E2eTestFileRegistryPort } from '../../domain/ports/e2e-test-file-registry-port.js';
 import { CliE2eTestExistenceService } from '../../domain/services/cli-e2e-test-existence-service.js';
 import type { WorkItemStatusPolicyPort } from '../../domain/ports/work-item-status-policy-port.js';
+import type { ContractTraceabilityPolicyPort } from '../../domain/ports/contract-traceability-policy-port.js';
+import { ContractTraceabilityCoverageService } from '../../domain/services/contract-traceability-coverage-service.js';
 
 export interface RunL2ValidatorsUseCaseDeps {
   validatorRegistry: ValidatorRegistry;
@@ -33,6 +35,7 @@ export interface RunL2ValidatorsUseCaseDeps {
   cliCommandRegistryPort?: CliCommandRegistryPort;
   e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
   workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
+  contractTraceabilityPolicyPort?: ContractTraceabilityPolicyPort;
 }
 
 export class RunL2ValidatorsUseCase {
@@ -46,7 +49,9 @@ export class RunL2ValidatorsUseCase {
   private readonly cliCommandRegistryPort?: CliCommandRegistryPort;
   private readonly e2eTestFileRegistryPort?: E2eTestFileRegistryPort;
   private readonly workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
+  private readonly contractTraceabilityPolicyPort?: ContractTraceabilityPolicyPort;
   private readonly cliE2eTestExistenceService = new CliE2eTestExistenceService();
+  private readonly contractTraceabilityCoverageService = new ContractTraceabilityCoverageService();
 
   constructor(deps: RunL2ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -59,6 +64,7 @@ export class RunL2ValidatorsUseCase {
     this.cliCommandRegistryPort = deps.cliCommandRegistryPort;
     this.e2eTestFileRegistryPort = deps.e2eTestFileRegistryPort;
     this.workItemStatusPolicyPort = deps.workItemStatusPolicyPort;
+    this.contractTraceabilityPolicyPort = deps.contractTraceabilityPolicyPort;
   }
 
   async execute(input: RunL2ValidatorsInput): Promise<readonly ValidationResultContract[]> {
@@ -176,6 +182,28 @@ export class RunL2ValidatorsUseCase {
           overrideMap.set('L2-014', ValidationResult.fail(ValidatorId.create('L2-014'), errors, 0));
         } else {
           overrideMap.set('L2-014', ValidationResult.pass(ValidatorId.create('L2-014'), 0));
+        }
+      }
+    }
+
+    if (this.contractTraceabilityPolicyPort) {
+      const l2015Result = overrideMap.get('L2-015');
+      if (l2015Result && !l2015Result.skipped) {
+        const inputModel = await this.contractTraceabilityPolicyPort.collect(input.targetPaths);
+        const report = this.contractTraceabilityCoverageService.check(inputModel);
+        if (report.hasFindings()) {
+          const errors = report.findings.map((finding) => ({
+            code: { value: 'L2-015', toString: () => 'L2-015' },
+            severity: { value: finding.severity, toString: () => finding.severity },
+            message: finding.message,
+            suggestion: finding.suggestion,
+            kind: finding.kind,
+            subject: finding.subject,
+            sourcePath: finding.sourcePath,
+          }));
+          overrideMap.set('L2-015', ValidationResult.fail(ValidatorId.create('L2-015'), errors, 0));
+        } else {
+          overrideMap.set('L2-015', ValidationResult.pass(ValidatorId.create('L2-015'), 0));
         }
       }
     }

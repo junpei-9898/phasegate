@@ -392,3 +392,13 @@ The validator surface receives WI-first enforcement through `phasegate doctor` r
 @work-item-id WI-108
 
 `phasegate:ci-check --json` exposes L2/L3/L4 validator result items, including disabled L4 validators as `skipped: true`. This ensures validator-system output can prove the public full-CI contract did not silently collapse to L3-only execution.
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 Contract Traceability Coverage
+
+| WI | Evidence |
+|---|---|
+| WI-132 | `contract-traceability-coverage-service.test.ts` required behavior and Port adapter contract cases; `run-l2-validators-usecase.test.ts` L2-015 fail mapping |
+| WI-137 | Error contract shape, exit-code, and error-path cases in `contract-traceability-coverage-service.test.ts` |
+| WI-136 | State machine docs/code mismatch, terminal transition, and missing transition cases in `contract-traceability-coverage-service.test.ts` |
+| WI-133 | Boundary case coverage checks in `contract-traceability-coverage-service.test.ts` |
+| WI-138 | Traceability graph completeness checks in `contract-traceability-coverage-service.test.ts` |

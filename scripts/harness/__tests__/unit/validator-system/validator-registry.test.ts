@@ -11,17 +11,19 @@ target('ValidatorRegistry', () => {
 
   describe('ValidatorDefinitionリストで初期化する', () => {
 
-    it('13件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
+    it('14件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
       // Arrange
-      const ids = ['L2-001','L2-002','L2-003','L2-014','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
-      const layers = ['L2','L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
+      const ids = ['L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
+      const layers = ['L2','L2','L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
       const defs = ids.map((id, i) =>
         createValidatorDefinition({ validatorId: createValidatorId(id), layer: layers[i] })
       );
       // Act
       const actual = new ValidatorRegistry(defs);
       // Assert
-      expect(actual).toBeDefined();
+      expect(actual.getAllDefinitions().map((def) => def.validatorId.value)).toEqual([
+        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005',
+      ]);
     });
 
     it('同一validatorIdを持つDefinitionが重複する場合エラーがthrowされること (UT-VRG-002)', () => {
@@ -31,14 +33,14 @@ target('ValidatorRegistry', () => {
       // Act
       const actual = () => new ValidatorRegistry([def1, def2]);
       // Assert
-      expect(actual).toThrow();
+      expect(actual).toThrowError(/duplicate validatorId "L2-001"/);
     });
 
     it('空リストでValidatorRegistryが生成されること（定義0件） (UT-VRG-003)', () => {
       // Arrange & Act
       const actual = new ValidatorRegistry([]);
       // Assert
-      expect(actual).toBeDefined();
+      expect(actual.getAllDefinitions()).toEqual([]);
     });
   });
 
@@ -69,13 +71,15 @@ target('ValidatorRegistry', () => {
 
   describe('getAllDefinitions()で全定義を返す', () => {
 
-    it('13件登録済みのRegistryからgetAllDefinitions()で13件全て返ること (UT-VRG-006/UT-BND-010)', () => {
+    it('14件登録済みのRegistryからgetAllDefinitions()で14件全て返ること (UT-VRG-006/UT-BND-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.getAllDefinitions();
       // Assert
-      expect(actual).toHaveLength(13);
+      expect(actual.map((def) => def.validatorId.value)).toEqual([
+        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005',
+      ]);
     });
 
     it('getAllDefinitions()の返却配列は外部から変更不能なreadonly配列であること (UT-VRG-007)', () => {
@@ -84,7 +88,22 @@ target('ValidatorRegistry', () => {
       // Act
       const actual = sut.getAllDefinitions();
       // Assert
-      expect(Object.isFrozen(actual) || Array.isArray(actual)).toBe(true);
+      expect(actual).toEqual([
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L2-001' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L2-002' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L2-003' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L2-014' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L2-015' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L3-001' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L3-002' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L3-003' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L3-004' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-001' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-002' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-003' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-004' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-005' }) }),
+      ]);
     });
 
     it('空RegistryのgetAllDefinitions()が空配列を返すこと (UT-BND-011)', () => {
@@ -99,15 +118,13 @@ target('ValidatorRegistry', () => {
 
   describe('listByLayer()でレイヤー別定義一覧を返す', () => {
 
-    it('layer: L2を渡すとL2-001〜L2-014の4件がvalidatorId昇順で返ること (UT-VRG-008)', () => {
+    it('layer: L2を渡すとL2-001〜L2-015の5件がvalidatorId昇順で返ること (UT-VRG-008)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.listByLayer('L2');
       // Assert
-      expect(actual).toHaveLength(4);
-      expect(actual[0].validatorId.value).toBe('L2-001');
-      expect(actual[3].validatorId.value).toBe('L2-014');
+      expect(actual.map((def) => def.validatorId.value)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-014', 'L2-015']);
     });
 
     it('layer: L3を渡すとL3-001〜L3-004の4件が返ること (UT-VRG-009)', () => {
@@ -116,7 +133,7 @@ target('ValidatorRegistry', () => {
       // Act
       const actual = sut.listByLayer('L3');
       // Assert
-      expect(actual).toHaveLength(4);
+      expect(actual.map((def) => def.validatorId.value)).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004']);
     });
 
     it('layer: L4を渡すとL4-001〜L4-005の5件が返ること (UT-VRG-010)', () => {
@@ -125,7 +142,7 @@ target('ValidatorRegistry', () => {
       // Act
       const actual = sut.listByLayer('L4');
       // Assert
-      expect(actual).toHaveLength(5);
+      expect(actual.map((def) => def.validatorId.value)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005']);
     });
   });
 
@@ -138,9 +155,7 @@ target('ValidatorRegistry', () => {
       // Act
       const actual = sut.select(ids);
       // Assert
-      expect(actual).toHaveLength(2);
-      expect(actual[0].validatorId.value).toBe('L2-001');
-      expect(actual[1].validatorId.value).toBe('L3-003');
+      expect(actual.map((def) => def.validatorId.value)).toEqual(['L2-001', 'L3-003']);
     });
 
     context('未登録IDを含む配列が渡された場合', () => {

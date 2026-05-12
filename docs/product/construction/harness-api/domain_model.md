@@ -311,3 +311,7 @@ CommandDispatchServiceはHexagonal Architectureに従い、実行ロジックへ
 ## G3 L4 Advisory Report Semantics
 
 Harness API consumes G3 L4 reports as advisory signals unless the caller opts into fail-on-warning behavior. Drift, consistency, pointer/freshness, and semantic drift report records must preserve category, location, severity, and next action for downstream summaries.
+<!-- @work-item-id WI-132, WI-137, WI-138 -->
+## G4 Public API Contract Projection
+
+Harness API / CLI response contracts can feed L2-015 as `PublicContract` and `ErrorContract` records. The shared response envelope remains owned by harness-api; validator-system only consumes projected semantic contract records and returns standard `ValidationResultContract` findings.

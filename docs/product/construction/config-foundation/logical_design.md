@@ -1364,3 +1364,7 @@ Updated: /path/to/phasegate.config.json
 CI template generation interprets preset policy against the live validator registry. `minimal` excludes L2-L4 metadata, `standard` includes L2/L3 gate metadata and scheduled L4 audit metadata for `consistency-check`, and `strict` includes L2-L4 with strict-only validators. @work-item-id WI-124
 
 L4 remains default-off for standard rollout. Projects opt in through strict preset or explicit `layers.L4.enabled: true`; explicit `validate --layer L4` still runs L4 as an operator-requested audit. @work-item-id WI-128
+<!-- @work-item-id WI-132, WI-133, WI-138 -->
+## G4 Validator Config Propagation
+
+`toValidatorSystemConfig()` includes `L2-015` in the default L2 validator list it passes to validator-system. This keeps contract traceability coverage active for resolved configs in the same way as L2-013 and L2-014.

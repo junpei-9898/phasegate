@@ -2,7 +2,7 @@
 id: WI-137
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [harness-error, validator-system, harness-api, documentation]
 source: internal
 ---

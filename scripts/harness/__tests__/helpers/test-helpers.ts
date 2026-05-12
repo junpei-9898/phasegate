@@ -58,7 +58,7 @@ export const createLayerConfig = (overrides: Partial<LayerConfigProps> = {}): La
   LayerConfig.create({
     layer: 'L2',
     enabled: true,
-    validatorIds: ['L2-001', 'L2-002', 'L2-003', 'L2-014'],
+    validatorIds: ['L2-001', 'L2-002', 'L2-003', 'L2-014', 'L2-015'],
     thresholds: {},
     strictOnly: false,
     preset: 'standard',
@@ -87,6 +87,7 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]): Validator
     createValidatorDefinition({ validatorId: createValidatorId('L2-002'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L2-003'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L2-014'), layer: 'L2' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L2-015'), layer: 'L2' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-001'), layer: 'L3' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-002'), layer: 'L3' }),
     createValidatorDefinition({ validatorId: createValidatorId('L3-003'), layer: 'L3' }),
