@@ -105,10 +105,10 @@ target('StatusDerivationService', () => {
       // Act
       const actual = svc.derive({ scanResult, presetInfo, configSummary, phaseGateSummary });
       // Assert
-      for (const layerId of ['L1', 'L2', 'L3', 'L4'] as const) {
-        expect(actual.getLayerHealth(layerId)?.enabled).toBe(true);
-        expect(actual.getLayerHealth(layerId)?.lastResult).toBe('pass');
-      }
+      expect(actual.getLayerHealth('L1')).toMatchObject({ enabled: true, lastResult: 'pass' });
+      expect(actual.getLayerHealth('L2')).toMatchObject({ enabled: true, lastResult: 'pass' });
+      expect(actual.getLayerHealth('L3')).toMatchObject({ enabled: true, lastResult: 'pass' });
+      expect(actual.getLayerHealth('L4')).toMatchObject({ enabled: true, lastResult: 'pass' });
     });
   });
 

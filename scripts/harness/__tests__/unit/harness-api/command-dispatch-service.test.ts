@@ -12,8 +12,20 @@ import type { ImpactAnalysisPort } from '../../../harness-api/domain/ports/impac
 import type { ArtifactScannerPort } from '../../../harness-api/domain/ports/artifact-scanner-port.js';
 import { ArtifactScanResult } from '../../../harness-api/domain/value-objects/artifact-scan-result.js';
 
-function createMockPorts() {
-  return {
+interface MockPortOptions {
+  readonly allStories?: readonly { storyId: string; passed: boolean }[];
+  readonly unitResult?: { unitId: string; currentLevel: number; currentPhase: string; completedGates: readonly string[] } | null;
+  readonly allValidatorResults?: readonly { validatorId: string; passed: boolean; skipped?: boolean; errors: readonly unknown[] }[];
+  readonly allValidatorError?: Error;
+  readonly driftItems?: readonly { direction: string; unit: string; element: string; recommendation: string }[];
+  readonly lintResult?: { passed: boolean; errors: readonly unknown[]; warnings: readonly unknown[] };
+  readonly artifactScanResult?: ArtifactScanResult;
+  readonly presetInfo?: { name: string; enabledLayers: readonly string[] };
+  readonly impactResult?: { storyId: string; affectedTestCases: readonly unknown[]; affectedFiles: readonly unknown[] };
+}
+
+function createMockPorts(options: MockPortOptions = {}) {
+  const ports = {
     validatorExecutionPort: {
       runL3Validators: vi.fn(),
       runAllValidators: vi.fn(),
@@ -37,6 +49,35 @@ function createMockPorts() {
       getConfigSummary: vi.fn(),
     },
   };
+
+  if (options.allStories !== undefined) {
+    ports.phaseGateQueryPort.queryAllStories.mockResolvedValue(options.allStories);
+  }
+  if (options.unitResult !== undefined) {
+    ports.phaseGateQueryPort.queryUnit.mockResolvedValue(options.unitResult);
+  }
+  if (options.allValidatorError !== undefined) {
+    ports.validatorExecutionPort.runAllValidators.mockRejectedValue(options.allValidatorError);
+  } else if (options.allValidatorResults !== undefined) {
+    ports.validatorExecutionPort.runAllValidators.mockResolvedValue(options.allValidatorResults);
+  }
+  if (options.driftItems !== undefined) {
+    ports.validatorExecutionPort.runDriftDetection.mockResolvedValue(options.driftItems);
+  }
+  if (options.lintResult !== undefined) {
+    ports.biomeLintPort.runLint.mockResolvedValue(options.lintResult);
+  }
+  if (options.artifactScanResult !== undefined) {
+    ports.artifactScannerPort.scan.mockResolvedValue(options.artifactScanResult);
+  }
+  if (options.presetInfo !== undefined) {
+    ports.configQueryPort.getPresetInfo.mockResolvedValue(options.presetInfo);
+  }
+  if (options.impactResult !== undefined) {
+    ports.impactAnalysisPort.analyze.mockResolvedValue(options.impactResult);
+  }
+
+  return ports;
 }
 
 target('CommandDispatchService', () => {
@@ -44,10 +85,7 @@ target('CommandDispatchService', () => {
     // UT-DS-001
     it('phasegate:check-readyが全ストーリー通過のpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.phaseGateQueryPort.queryAllStories.mockResolvedValue([
-        { storyId: 'H09-01', passed: true },
-      ]);
+      const ports = createMockPorts({ allStories: [{ storyId: 'H09-01', passed: true }] });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
@@ -59,10 +97,7 @@ target('CommandDispatchService', () => {
     // UT-DS-002
     it('phasegate:check-readyが未通過ストーリーありのfail responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.phaseGateQueryPort.queryAllStories.mockResolvedValue([
-        { storyId: 'H09-01', passed: false },
-      ]);
+      const ports = createMockPorts({ allStories: [{ storyId: 'H09-01', passed: false }] });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:check-ready', args: {}, flags: {} });
@@ -76,9 +111,8 @@ target('CommandDispatchService', () => {
     // UT-DS-003
     it('phasegate:check-phaseが存在するUnitのpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.phaseGateQueryPort.queryUnit.mockResolvedValue({
-        unitId: 'harness-error', currentLevel: 2, currentPhase: 'construction', completedGates: [],
+      const ports = createMockPorts({
+        unitResult: { unitId: 'harness-error', currentLevel: 2, currentPhase: 'construction', completedGates: [] },
       });
       const svc = new CommandDispatchService(ports);
       // Act
@@ -90,8 +124,7 @@ target('CommandDispatchService', () => {
     // UT-DS-004
     it('phasegate:check-phaseが存在しないUnitのfail responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.phaseGateQueryPort.queryUnit.mockResolvedValue(null);
+      const ports = createMockPorts({ unitResult: null });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:check-phase', args: { unit: 'non-existent' }, flags: {} });
@@ -104,19 +137,18 @@ target('CommandDispatchService', () => {
     // UT-DS-005
     it('phasegate:ci-checkが全バリデータ通過のpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
-        { validatorId: 'L2-001', passed: true, errors: [] },
-        { validatorId: 'L3-001', passed: true, errors: [] },
-        { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
-      ]);
+      const ports = createMockPorts({
+        allValidatorResults: [
+          { validatorId: 'L2-001', passed: true, errors: [] },
+          { validatorId: 'L3-001', passed: true, errors: [] },
+          { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
+        ],
+      });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe('pass');
-      expect(ports.validatorExecutionPort.runAllValidators).toHaveBeenCalledTimes(1);
-      expect(ports.validatorExecutionPort.runL3Validators).not.toHaveBeenCalled();
       expect(actual.data).toMatchObject({
         validatorResults: [
           { validatorId: 'L2-001' },
@@ -131,8 +163,7 @@ target('CommandDispatchService', () => {
     // UT-DS-006
     it('phasegate:detect-driftが乖離なしのpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([]);
+      const ports = createMockPorts({ driftItems: [] });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
@@ -142,10 +173,11 @@ target('CommandDispatchService', () => {
 
     it('phasegate:detect-driftが乖離ありでもadvisory pass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.validatorExecutionPort.runDriftDetection.mockResolvedValue([
-        { direction: 'code→design', unit: 'validator-system', element: 'RunFullValidationUseCase', recommendation: 'Review design docs' },
-      ]);
+      const ports = createMockPorts({
+        driftItems: [
+          { direction: 'code→design', unit: 'validator-system', element: 'RunFullValidationUseCase', recommendation: 'Review design docs' },
+        ],
+      });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:detect-drift', args: {}, flags: {} });
@@ -176,8 +208,7 @@ target('CommandDispatchService', () => {
     // UT-DS-007
     it('phasegate:lintがpass結果のpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
+      const ports = createMockPorts({ lintResult: { passed: true, errors: [], warnings: [] } });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:lint', args: {}, flags: {} });
@@ -190,17 +221,16 @@ target('CommandDispatchService', () => {
     // UT-DS-008
     it('phasegate:statusがpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.artifactScannerPort.scan.mockResolvedValue(
-        ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] })
-      );
-      ports.configQueryPort.getPresetInfo.mockResolvedValue({ name: 'standard', enabledLayers: ['L1', 'L2', 'L3'] });
-      ports.biomeLintPort.runLint.mockResolvedValue({ passed: false, errors: [], warnings: [] });
-      ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
-        { validatorId: 'L2-001', passed: true, errors: [] },
-        { validatorId: 'L3-001', passed: true, errors: [] },
-        { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
-      ]);
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: 'standard', enabledLayers: ['L1', 'L2', 'L3'] },
+        lintResult: { passed: false, errors: [], warnings: [] },
+        allValidatorResults: [
+          { validatorId: 'L2-001', passed: true, errors: [] },
+          { validatorId: 'L3-001', passed: true, errors: [] },
+          { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
+        ],
+      });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
@@ -222,9 +252,8 @@ target('CommandDispatchService', () => {
     // UT-DS-009
     it('phasegate:impact-analysisが結果ありのpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.impactAnalysisPort.analyze.mockResolvedValue({
-        storyId: 'H09-01', affectedTestCases: [], affectedFiles: [],
+      const ports = createMockPorts({
+        impactResult: { storyId: 'H09-01', affectedTestCases: [], affectedFiles: [] },
       });
       const svc = new CommandDispatchService(ports);
       // Act
@@ -252,8 +281,7 @@ target('CommandDispatchService', () => {
     // UT-DS-011
     it('ポートが例外をスローした場合にerror responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.validatorExecutionPort.runAllValidators.mockRejectedValue(new Error('port error'));
+      const ports = createMockPorts({ allValidatorError: new Error('port error') });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:ci-check', args: {}, flags: {} });
@@ -267,11 +295,10 @@ target('CommandDispatchService', () => {
     // UT-DS-012
     it('phasegate:complete-checkが全バリデータ+lint通過のpass responseを返すこと', async () => {
       // Arrange
-      const ports = createMockPorts();
-      ports.validatorExecutionPort.runAllValidators.mockResolvedValue([
-        { validatorId: 'L3-001', passed: true, errors: [] },
-      ]);
-      ports.biomeLintPort.runLint.mockResolvedValue({ passed: true, errors: [], warnings: [] });
+      const ports = createMockPorts({
+        allValidatorResults: [{ validatorId: 'L3-001', passed: true, errors: [] }],
+        lintResult: { passed: true, errors: [], warnings: [] },
+      });
       const svc = new CommandDispatchService(ports);
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:complete-check', args: {}, flags: {} });

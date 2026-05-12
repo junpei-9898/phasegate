@@ -28,7 +28,7 @@ target('LayerHealth', () => {
       const actual = LayerHealth.create(input);
       // Assert
       expect(actual.enabled).toBe(false);
-      expect(actual.lastResult).toBeUndefined();
+      expect(actual.lastResult).toBe(undefined);
     });
 
     // UT-LYH-003
@@ -67,7 +67,7 @@ target('LayerHealth', () => {
       // Act
       const actual = () => LayerHealth.create(input);
       // Assert
-      expect(actual).toThrow();
+      expect(actual).toThrow("invalid layerId 'L5'");
     });
 
     // UT-LYH-005
@@ -77,7 +77,7 @@ target('LayerHealth', () => {
       // Act
       const actual = () => LayerHealth.create(input);
       // Assert
-      expect(actual).toThrow();
+      expect(actual).toThrow("invalid lastResult 'running'");
     });
   });
 

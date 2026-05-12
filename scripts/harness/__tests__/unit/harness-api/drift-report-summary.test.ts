@@ -26,7 +26,7 @@ target('DriftReportSummary', () => {
       const actual = DriftReportSummary.create(input);
       // Assert
       expect(actual.totalCount).toBe(0);
-      expect(actual.drifts).toHaveLength(0);
+      expect(actual.drifts).toEqual([]);
     });
 
     // UT-DRS-002
@@ -52,7 +52,10 @@ target('DriftReportSummary', () => {
       // Assert
       expect(actual.totalCount).toBe(3);
       expect(actual.rawDriftCount).toBe(3);
-      expect(actual.drifts).toHaveLength(2);
+      expect(actual.drifts).toEqual([
+        expect.objectContaining({ unit: 'validator-system' }),
+        expect.objectContaining({ unit: 'harness-api' }),
+      ]);
       expect(actual.truncated).toBe(true);
       expect(actual.drifts[0]).toMatchObject({
         category: 'code-missing-design',
@@ -64,7 +67,11 @@ target('DriftReportSummary', () => {
         expect.objectContaining({ category: 'design-missing-code', count: 1 }),
         expect.objectContaining({ category: 'missing-pointer', count: 1 }),
       ]);
-      expect(actual.actionPlan.length).toBeGreaterThan(0);
+      expect(actual.actionPlan).toEqual([
+        expect.objectContaining({ category: 'code-missing-design' }),
+        expect.objectContaining({ category: 'design-missing-code' }),
+        expect.objectContaining({ category: 'missing-pointer' }),
+      ]);
     });
   });
 
@@ -77,7 +84,7 @@ target('DriftReportSummary', () => {
       // Act
       const actual = () => DriftReportSummary.create(input);
       // Assert
-      expect(actual).toThrow();
+      expect(actual).toThrow('totalCount=3 does not match drifts.length=2');
     });
 
     // UT-DRS-004 (INV-7逆)
@@ -88,7 +95,7 @@ target('DriftReportSummary', () => {
       // Act
       const actual = () => DriftReportSummary.create(input);
       // Assert
-      expect(actual).toThrow();
+      expect(actual).toThrow('totalCount=0 does not match drifts.length=2');
     });
   });
 
@@ -111,6 +118,6 @@ target('DriftReportSummary', () => {
     // Act
     const actual = () => DriftReportSummary.create(input);
     // Assert
-    expect(actual).toThrow();
+    expect(actual).toThrow('totalCount=4 does not match drifts.length=3');
   });
 });
