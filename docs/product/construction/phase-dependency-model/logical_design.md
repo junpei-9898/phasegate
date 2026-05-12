@@ -1,5 +1,11 @@
 # 論理設計: phase-dependency-model
 
+## WI-091 / WI-093 Configuration Threading Corrections
+
+<!-- @work-item-id WI-085, WI-091, WI-093 -->
+
+Phase dependency validation receives resolved runtime configuration through its application boundary before constructing artifact evidence. Layer enablement and custom documentation roots are therefore evaluated from the effective config instead of hardcoded default paths.
+
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03

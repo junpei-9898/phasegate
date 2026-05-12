@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-091
  * @work-item-id WI-117, WI-118
  *
  * MarkdownDesignDocumentAdapter — DesignDocumentPort実装

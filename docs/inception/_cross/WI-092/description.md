@@ -2,7 +2,7 @@
 id: WI-092
 type: fix
 severity: normal
-status: tested
+status: implemented
 affects: [harness-api, validator-system, integrations]
 github_issue: null
 reporter: junpei-9898

@@ -2,7 +2,7 @@
 id: WI-091
 type: fix
 severity: high
-status: tested
+status: implemented
 affects: [validator-system, phase-dependency-model, config-foundation, harness-api, traceability-model, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti

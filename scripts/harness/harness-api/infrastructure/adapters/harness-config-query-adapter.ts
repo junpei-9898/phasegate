@@ -1,6 +1,7 @@
 // @layer infrastructure
 // @unit harness-api
 // @work-item-id WI-123
+// @work-item-id WI-096
 // harness-config-query-adapter.ts — HarnessConfigQueryAdapter
 
 import * as fs from 'node:fs/promises';

@@ -1,5 +1,11 @@
 # 論理設計: config-foundation
 
+## WI-085 / WI-086 / WI-087 / WI-091 Configuration Surface
+
+<!-- @work-item-id WI-085, WI-086, WI-087, WI-091 -->
+
+The config foundation owns schema and resolution behavior for customizable documentation paths, agent hook installation defaults, workspace target detection inputs, and layer enablement overrides. Downstream units consume resolved config values rather than duplicating preset-only assumptions.
+
 @work-item-id WI-140
 `toValidatorSystemConfig` は resolved config から validator-system へ渡す L2 validators に `L2-014 work-item-status-staleness` を含める。これにより `validate --layer L2` と harness-api 経由の validation が同じ status gate catalog を使用する。
 

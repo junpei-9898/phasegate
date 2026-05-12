@@ -1,6 +1,7 @@
 /**
  * @unit harness-api
  * @layer presentation
+ * @work-item-id WI-090 / WI-091
  * @work-item-id WI-113 / WI-142
  *
  * Phasegate CLI エントリポイント。

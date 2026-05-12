@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit phase2-extensions
+ * @work-item-id WI-035
  */
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs/promises';

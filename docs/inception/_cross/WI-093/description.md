@@ -2,7 +2,7 @@
 id: WI-093
 type: fix
 severity: high
-status: tested
+status: implemented
 affects: [phase-dependency-model, traceability-model, validator-system, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti

@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit config-foundation
+ * @work-item-id WI-012
  */
 import { ConfigFoundationDomainError } from './errors/config-foundation-domain-error.js';
 import { ConfigValidationError } from './errors/config-validation-error.js';

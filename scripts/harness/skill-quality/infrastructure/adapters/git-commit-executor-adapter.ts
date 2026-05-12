@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit skill-quality
+ * @work-item-id WI-036
  */
 import { execFileSync } from 'node:child_process';
 import type { CommitExecutorPort } from '../../domain/ports/commit-executor-port.js';

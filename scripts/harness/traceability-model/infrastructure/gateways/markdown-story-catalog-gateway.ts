@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit traceability-model
+ * @work-item-id WI-093
  *
  * user_stories.md を読み込み StoryCatalogPort を実装するゲートウェイ
  */

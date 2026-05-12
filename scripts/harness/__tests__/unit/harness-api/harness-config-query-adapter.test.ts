@@ -1,6 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-04
+// @work-item-id WI-096
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';

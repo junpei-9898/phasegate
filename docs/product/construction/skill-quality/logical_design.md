@@ -1,5 +1,11 @@
 # 論理設計: skill-quality
 
+## WI-036 Git Commit Executor Hardening
+
+<!-- @work-item-id WI-036 -->
+
+Skill-quality commit execution invokes `git commit` through an argument-array executor. Commit messages derived from agent workflow text are treated as argv values, preventing shell expansion of backticks, command substitutions, or separator characters.
+
 @story-id H12-01
 @story-id H12-02
 @story-id H12-03

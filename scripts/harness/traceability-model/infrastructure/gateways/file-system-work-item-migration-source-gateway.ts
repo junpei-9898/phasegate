@@ -1,5 +1,6 @@
 // @unit traceability-model
 // @layer infrastructure
+// @work-item-id WI-027
 
 import * as fs from "node:fs";
 import { readdir, readFile } from "node:fs/promises";

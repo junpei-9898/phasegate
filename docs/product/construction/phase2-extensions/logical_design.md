@@ -1,5 +1,11 @@
 # 論理設計: phase2-extensions
 
+## WI-035 Git Log Executor Hardening
+
+<!-- @work-item-id WI-035 -->
+
+Git log based document-age adapters invoke `git` through argument arrays instead of interpolated shell command strings. File paths discovered from repository contents are passed after `--` as argv values, so shell metacharacters in document names are not evaluated by `/bin/sh`.
+
 > **Unit ID**: phase2-extensions
 > **作成日**: 2026-03-20
 > **対応ストーリー**: HF2-01, HF2-02, HF2-03, HF2-04

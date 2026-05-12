@@ -1,5 +1,6 @@
 // @unit traceability-model
 // @layer domain
+// @work-item-id WI-027
 
 import type {
   LegacyIssueDirectory,

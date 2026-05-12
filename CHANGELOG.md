@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.3] - 2026-05-12
+
+### Fixed
+
+- **Historical WI status closure / WI-012 / WI-027 / WI-035 / WI-036 / WI-085 / WI-086 / WI-087 / WI-088 / WI-089 / WI-090 / WI-091 / WI-092 / WI-093 / WI-096** — completes missing product reflection and implementation traceability evidence for the remaining targeted historical WI backlog, then applies derived statuses for fix/chore items so the target set no longer reports stale.
+
 ## [0.152.2] - 2026-05-12
 
 ### Fixed

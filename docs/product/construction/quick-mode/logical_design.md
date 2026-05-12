@@ -1,5 +1,11 @@
 # 論理設計: quick-mode
 
+## WI-086 / WI-087 Quick Mode Hook Visibility
+
+<!-- @work-item-id WI-086, WI-087 -->
+
+Quick Mode remains a narrow bypass for low-risk categories while hook execution still emits an observable allow/deny outcome. This avoids silent no-op behavior when workspace detection or hook configuration changes the target file set.
+
 @work-item-id WI-140
 Quick Mode の validator ID registry / relaxation profile は `L2-014 work-item-status-staleness` を正規 L2 validator として含める。既定の maintainedLayers では L2-014 を維持し、status gate を quick CI の緩和対象から外す。
 

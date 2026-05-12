@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit traceability-model
+ * @work-item-id WI-093
  *
  * traceability-model ユニットの Composition Root。
  * 全コンポーネントを生成・配線し、外部に公開するハンドラー群を返す。

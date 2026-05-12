@@ -1,5 +1,11 @@
 # 論理設計: validator-system
 
+## WI-085 / WI-091 / WI-092 / WI-093 Runtime Configuration Threading
+
+<!-- @work-item-id WI-085, WI-091, WI-092, WI-093 -->
+
+Validator-system module construction accepts effective configuration from harness-api and pre-commit entry points. Layer enablement, design document roots, and validator catalog defaults are resolved before validators execute so CLI, hook, and status paths report the same operational surface.
+
 <!-- @work-item-id WI-113 -->
 ## WI-113 Validate Format Boundary
 

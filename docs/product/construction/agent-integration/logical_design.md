@@ -1,5 +1,11 @@
 # 論理設計: agent-integration
 
+## WI-086 / WI-087 Hook Deployment Compatibility
+
+<!-- @work-item-id WI-086, WI-087 -->
+
+Agent hook integration supports real-world repository layouts by consuming generated hook configuration instead of assuming a single `src` target. Deployed hook scripts remain compatible with macOS default shell environments and expose visible outcomes when Quick Mode allows a change.
+
 @story-id H11-01
 @story-id H11-02
 @story-id H11-03

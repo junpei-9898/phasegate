@@ -1,5 +1,15 @@
 # 論理設計: harness-api
 
+<!-- @work-item-id WI-090 -->
+## WI-090 CLI Unknown Flag Contract
+
+The harness-api command parser rejects unknown flags before dispatch and provides typo-oriented feedback for known alternatives. `phasegate init` therefore fails fast when a caller uses an unsupported option such as `--skill-set` instead of silently applying defaults.
+
+<!-- @work-item-id WI-091, WI-092 -->
+## WI-091 / WI-092 Validator-System Dispatch Configuration
+
+CLI dispatch resolves project config before creating validator-system modules, then threads effective layer enablement and path configuration into validation commands. Direct `phasegate:detect-drift` remains available while `validate --layer` honors user layer overrides.
+
 <!-- @work-item-id WI-113 -->
 ## WI-113 Validate Format Parser Contract
 

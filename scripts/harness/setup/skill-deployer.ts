@@ -1,5 +1,6 @@
 // @unit harness-api
 // @layer infrastructure
+// @work-item-id WI-086 / WI-087
 // @work-item-id WI-127
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 

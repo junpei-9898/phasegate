@@ -944,6 +944,8 @@ interface InceptionPlanPort {
 
 ### 5.4 StoryCatalogParser
 
+<!-- @work-item-id WI-091, WI-093 -->
+
 **役割**
 
 - product root の `user_stories.md` から正規 StoryId 一覧と `旧US` 対応表を抽出する。

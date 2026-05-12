@@ -2,7 +2,7 @@
 id: WI-090
 type: fix
 severity: normal
-status: tested
+status: implemented
 affects: [harness-api, setup]
 github_issue: null
 reporter: junpei-9898
