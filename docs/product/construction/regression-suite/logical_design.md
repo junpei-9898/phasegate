@@ -1204,3 +1204,9 @@ regression-suite の場合:
 - `ConfigureCiGateUseCase`
 - `CiGateResultWriterPort`、`JsonCiGateResultWriterAdapter`
 - `StaticSuiteRegistryAdapter`（v0-migration 定義を追加）
+# Public CLI and Report Path Reflection
+
+@work-item-id WI-150
+@work-item-id WI-158
+
+Regression-suite public commands are developer/regression binary subcommands. Suite result JSON is written under fixed `reports/regression/`; this output is not controlled by `reporting.outputDir`.

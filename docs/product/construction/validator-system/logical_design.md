@@ -1893,3 +1893,8 @@ L3/L4 semantic validators use lightweight static analysis as operational signals
 - L4-003 dead-code scanning consumes a real import/export graph and reports reviewable unused export candidates.
 - L4-002 architecture semantic analysis treats side-effect capability boundaries and decision placement as preset-driven policies separate from import direction checks.
 - Decision-placement rollout is advisory first: findings include evidence, confidence, and suggested owner zone before any hard gate behavior.
+# Layer Status Semantics Reflection
+
+@work-item-id WI-151
+
+Validator-system owns the meaning of layer validator outcomes. Public documentation must distinguish configured layer enablement, cached artifact availability, and live validation result. L2-013 `cli-e2e-test-existence` is part of the L2 public validator table.

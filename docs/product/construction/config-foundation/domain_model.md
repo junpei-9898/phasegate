@@ -100,9 +100,15 @@ phasegate.config.jsonファイル全体を1つのHarnessConfig集約で管理す
 | **PlanningModeConfig** | ✅ | ✅ | `{ default, perPhase }`。**構造**のみ所有、正規定義はphase-dependency-model |
 | **HarnessesConfig** | ✅ | ✅ | `{ agentLessonCollection, cascadeUpdate, bundleSizeLimit, deadCodeGC }` |
 | **PathsConfig** | ✅ | ✅ | `{ designDocs, inceptionDocs }` ドキュメントパス設定 |
-| **ReportingConfig** | ✅ | ✅ | `{ format, outputDir }` レポート設定 |
+| **ReportingConfig** | ✅ | ✅ | `{ format, outputDir }` レポート設定。`outputDir` は phase-dependency / phase-gate 系の設定可能な report root であり、doctor の `--report-out` や regression-suite の固定 `reports/regression/` 出力を包括しない。<!-- @work-item-id WI-158 --> |
 | **FeatureToggle** | ✅ | ✅ | `{ name: FeatureName, enabled: boolean }` |
 | **FeatureName** | ✅ | ✅ | 機能名文字列。FeatureRegistryで有効な名前を検証 |
+
+### Public configuration contract notes
+
+@work-item-id WI-149
+
+`paths.designDocs` is the construction document root used by phase-gate resolution, not a synonym for the broader product-doc root.
 
 ### ドメインサービス
 

@@ -160,6 +160,12 @@ scripts/harness/
 | suggestion | `string` | 修正方針。空文字不可 | Yes |
 | adrRef | `AdrRef \| null` | 参照ADR。定義で必須な場合は省略不可 | No |
 | fixExample | `FixExample \| null` | 修正コード例。定義で必須な場合は省略不可 | No |
+| suggestedSkill | `string \| null` | エージェントが次に起動すべき skill 名。公開DTOでは `suggested_skill` | No |
+| scaffoldCommand | `string \| null` | 最小雛形を生成する CLI 例。公開DTOでは `scaffold_command` | No |
+| templatePath | `string \| null` | 参照すべきテンプレート path。公開DTOでは `template_path` | No |
+
+<!-- @work-item-id WI-149 -->
+Recovery metadata (`suggestedSkill`, `scaffoldCommand`, `templatePath`) is resolved in `HarnessErrorFactory` from either the incoming draft or the `ErrorDefinition` defaults. `HarnessErrorContractMapper` projects it to the snake_case public contract without changing the existing required fields.
 
 #### メソッド一覧
 
@@ -195,7 +201,7 @@ scripts/harness/
 - 出力: Shared Kernel公開契約 `HarnessErrorContract`
 - 処理フロー:
   1. `ErrorCode` / `Severity` / `AdrRef` / `FixExample` を文字列へ投影する
-  2. `{ code, severity, message, suggestion, adr_ref, fix_example }` の平坦な DTO を生成する
+  2. `{ code, severity, message, suggestion, adr_ref, fix_example, suggested_skill, scaffold_command, template_path }` の平坦な DTO を生成する
   3. `Object.freeze()` で凍結し返却する
 - 例外: なし
 - 不変条件: 公開DTOの `severity` は readonly で変更不可

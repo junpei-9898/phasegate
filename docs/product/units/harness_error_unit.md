@@ -1,5 +1,6 @@
 # Unit定義: harness-error
 
+@story-id H06-01
 > **Unit ID**: harness-error
 > **作成日**: 2026-03-12
 > **Wave**: 1（基盤構築）
@@ -9,7 +10,7 @@
 
 ## 1. 概要
 
-HarnessError統一フォーマットの定義、fix_example品質保証、severity権限契約を担うUnit。全バリデータ（L1-L4）のエラー出力を`{code, severity, message, suggestion, adr_ref, fix_example}`に統一し、AIエージェントがエラーメッセージとfix_exampleから自律的に自己修正できる「Error as Teacher」原則を実現する。
+HarnessError統一フォーマットの定義、fix_example品質保証、severity権限契約を担うUnit。全バリデータ（L1-L4）のエラー出力を`{code, severity, message, suggestion, adr_ref, fix_example, suggested_skill, scaffold_command, template_path}`に統一し、AIエージェントがエラーメッセージとfix_exampleから自律的に自己修正できる「Error as Teacher」原則を実現する。追加の recovery metadata は任意フィールドであり、既存必須フィールドの互換性を維持する。<!-- @work-item-id WI-149 -->
 
 v0（harness-dx）ではAGENTS.mdポインタ型移行（US-035）も含んでいたが、v1ではAGENTS.md管理をci-governanceに移管し、**HarnessError型の定義・品質保証・権限契約に専任**する。`HarnessError`型はShared Kernelとして全Unitが参照する最重要の共有型である。新規追加のfix_example品質保証（H06-02）とseverity権限契約（H06-03）により、エラー品質の継続的保証とオーケストレーション層による勝手な緩和の防止を実現する。
 
@@ -29,7 +30,7 @@ v0（harness-dx）ではAGENTS.mdポインタ型移行（US-035）も含んで�
 
 ### 3.1 HarnessError統一フォーマット（H06-01）
 
-- HarnessError型を`{code, severity, message, suggestion, adr_ref, fix_example}`で定義
+- HarnessError型を`{code, severity, message, suggestion, adr_ref, fix_example, suggested_skill, scaffold_command, template_path}`で定義
 - L1-L4全バリデータのエラー出力をHarnessErrorフォーマットに統一
 - 全バリデータのHarnessErrorに`adr_ref`フィールド（関連ADRへの参照）を付与
 - 全バリデータのHarnessErrorに`fix_example`フィールド（修正コード例）を付与
@@ -60,6 +61,9 @@ v0（harness-dx）ではAGENTS.mdポインタ型移行（US-035）も含んで�
   - `suggestion`: 修正の方向性を示すテキスト
   - `adr_ref`: 関連ADRへの参照（例: `ADR-003`）
   - `fix_example`: 修正コード例（AIエージェントの自己修正用）
+  - `suggested_skill`: 次に起動すべき skill 名（任意）
+  - `scaffold_command`: 最小雛形生成や修復に使う CLI 例（任意）
+  - `template_path`: 参照すべきテンプレート path（任意）
 - **ErrorCode（値オブジェクト）**: バリデータID + 連番のエラーコード体系
 - **Severity（値オブジェクト）**: error / warning の列挙型。read-only契約を型レベルで表現
 - **FixExample（値オブジェクト）**: 修正コード例。構文的妥当性の検証メソッドを持つ

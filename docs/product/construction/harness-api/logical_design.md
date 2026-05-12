@@ -15,6 +15,11 @@ CLI dispatch resolves project config before creating validator-system modules, t
 
 The harness-api CLI boundary rejects unsupported `validate --format` values before dispatching to validator-system. The supported validate formats are `human`, `agent`, and `ci`; `json` is rejected until a schema is explicitly designed.
 
+<!-- @work-item-id WI-149, WI-150 -->
+## Public CLI Catalog Contract
+
+The harness-api public surface distinguishes binary subcommands from package scripts. `phasegate:*` names are binary subcommands unless a project `package.json` defines the matching script. README documents common entry points; `docs/guide/cli-reference.md` is the exhaustive public catalog aligned with `phasegate --help`.
+
 @story-id H09-01
 @story-id H09-02
 @story-id H09-03

@@ -1165,3 +1165,8 @@ sequenceDiagram
 - Act 結果は `actual` 変数へ代入する
 - UseCase テストでは Port のみをモックし、Domain モデルはモックしない
 - テスト配置: ユニットテスト `scripts/harness/__tests__/unit/quick-mode/`、統合テスト `scripts/harness/__tests__/integration/quick-mode/`
+# Layer Status Semantics Reflection
+
+@work-item-id WI-151
+
+Quick Mode documentation consumes layer status semantics for CI decisions. Disabled or skipped layers are not failures, warning-only L4 findings are advisory unless warning strictness is enabled, and `ci-check --quick --fail-on-reject --dry-run --files` must be documented as the public quick CI path.

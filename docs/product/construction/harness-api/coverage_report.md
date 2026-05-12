@@ -73,10 +73,10 @@ harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された�
 | AC内容 | 対応テストケース | カバー状況 |
 |-------|---------------|---------|
 | ファイルシステム上の成果物存在からハーネス検査状態を導出 | UT-SDS-001〜004, IT-UC-DeriveStatus-001/002, IT-REPO-ArtifactScan-001〜005 | ✓ COVERED |
-| L1-L4各レイヤーの健全性（有効/無効/最終実行結果）を含む | UT-HSS-001, IT-API-Status-001, IT-API-StatusInteg-001/002 | ✓ COVERED |
+| L1-L4各レイヤーの健全性（`configurationState` / `cachedArtifactState` / `liveValidationState`）を含む | UT-HSS-001, IT-API-Status-001, IT-API-StatusInteg-001/002 | ✓ COVERED <!-- @work-item-id WI-151 --> |
 | Phase Gate通過状態のサマリーを含む | IT-UC-DeriveStatus-001, IT-API-StatusInteg-001 | ✓ COVERED（phaseGateSummaryフィールドの具体的な値検証が1ケースのみ）|
 | プリセット名と有効設定のサマリーを含む | IT-UC-DeriveStatus-001/002/006, IT-REPO-ConfigQuery-001/002 | ✓ COVERED |
-| JSON形式での出力が可能 | IT-API-Status-001/002 | ✓ COVERED |
+| JSON形式で stdout へ出力可能 | IT-API-Status-001/002 | ✓ COVERED <!-- @work-item-id WI-158 --> |
 
 **AC合計**: 17AC全てにカバーするテストケースが存在する（**AC カバレッジ: 100%**）
 

@@ -115,7 +115,9 @@ All ADRs are in `docs/ADR/`. All have **Accepted** status.
 
 ### User-Facing Commands
 
-See [README.md](README.md#cli-reference) for user-facing command details.
+<!-- @work-item-id WI-150 -->
+
+See [README.md](README.md#cli-reference) for the short onboarding list and [docs/guide/cli-reference.md](docs/guide/cli-reference.md) for the full catalog. When documenting commands, distinguish binary subcommands (`npx phasegate phasegate:status`) from npm scripts (`pnpm phasegate:status`). A `phasegate:*` name is not automatically an npm script; it is only a script when `package.json` defines it.
 
 ### Developer Commands
 
@@ -157,6 +159,8 @@ These commands are for phasegate's own development and quality assurance.
 | `skill:collect-lessons` | Collect agent lessons | `--story <storyId>` `--sources <paths>` `--write-artifact` |
 | `skill:apply-cascade-update` | Apply cascade update | `--story <storyId>` `--dry-run` |
 | `skill:validate-structure` | Validate skill structure | `--file <path>` `--json` |
+
+The plan-checker workflow is exposed through the skill-quality command family. Use the implemented `skill:*` names as canonical public names; `harness:skill-quality:plan-checker` is not a package script and should not be documented as one unless a future package script is added. @work-item-id WI-149
 
 #### CI/CD
 

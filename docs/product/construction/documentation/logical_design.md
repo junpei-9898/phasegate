@@ -22,3 +22,11 @@ README / guide documentation describes L2 test-quality as semantic AAA plus asse
 ## WI-139 Semantic Drift Documentation
 
 Documentation explains semantic drift as design intent / implementation behavior / test observation comparison. It is an upper-level L4 signal and does not replace structural L4-001 drift reports.
+# Public Contract Drift Remediation
+
+@work-item-id WI-149
+@work-item-id WI-150
+@work-item-id WI-151
+@work-item-id WI-158
+
+Documentation owns the public wording contract across README and `docs/guide/*`. README stays an entry point, while `docs/guide/cli-reference.md` owns the complete command catalog. Layer/status semantics and report output path semantics must be documented in guides before release.

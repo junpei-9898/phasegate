@@ -420,10 +420,23 @@ Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well
 
 #### `reporting`
 
+<!-- @work-item-id WI-158 -->
+
 | Sub-field   | Type     | Default     | Description                                           |
 |-------------|----------|-------------|-------------------------------------------------------|
 | `format`    | `string` | `"json"`    | Output format for validation reports.                 |
-| `outputDir` | `string` | `"reports"` | Directory where reports are written.                  |
+| `outputDir` | `string` | `"reports"` | Configured report directory used by phase-gate / story-reflection reporting paths and status-derived phase dependency output. |
+
+`reporting.outputDir` is not a blanket sink for every command that writes a file:
+
+| Producer | Output path contract |
+|---|---|
+| Phase dependency / phase-gate reporting | Uses resolved `reporting.outputDir`; if no config can be read by the story-reflection provider, the legacy fallback is `.harness/reports`. |
+| `doctor --report-out <path>` | Writes exactly to `<path>` relative to the project root, or to the absolute path supplied. It does not derive a path from `reporting.outputDir`. |
+| `phasegate:status --json` / `phasegate:detect-drift --json` | Writes to stdout. Redirect explicitly if a persisted report is needed. |
+| `regression:*` suites | Write CI gate result JSON under fixed `reports/regression/`; this is a regression-suite contract and currently does not consult `reporting.outputDir`. |
+
+Use `reports/` as the canonical default for project-visible reports. Treat `.harness/reports` as a legacy fallback used only where the phase-dependency provider has no resolved config.
 
 #### `validate` (severity policy, ADR-017 / WI-094)
 
@@ -548,6 +561,8 @@ If you move your design documents to a non-default location, update `paths` acco
 
 **How paths flow into the L2 phase-gate validator (since v0.117.0 / WI-085):**
 
+<!-- @work-item-id WI-149 -->
+
 `STANDARD_PHASE_NODES` / `FULL_PHASE_NODES` / `MINIMAL_PHASE_NODES` express artifact locations using two placeholders, expanded at validation time from `paths`:
 
 | Placeholder | Resolved from | Default |
@@ -555,7 +570,7 @@ If you move your design documents to a non-default location, update `paths` acco
 | `{designDocsRoot}` | `paths.designDocs` | `docs/product/construction` |
 | `{inceptionDocsRoot}` | `paths.inceptionDocs` | `docs/inception` |
 
-Setting `paths.designDocs` to `mydocs/product/construction` makes the L2 phase-gate require `mydocs/product/construction/{unit}/domain_model.md` instead of the default. Default values match the v0.115.0 layout for full backward compatibility.
+Setting `paths.designDocs` to `mydocs/product/construction` makes the L2 phase-gate require `mydocs/product/construction/{unit}/domain_model.md` instead of the default. This setting points to the construction subtree, not the broader product root; product-wide artifacts under `docs/product/` stay literal unless you define a custom `phaseDependencies.gates[]` preset. Default values match the v0.115.0 layout for full backward compatibility.
 
 **Out of scope (paths handled by literal references):**
 

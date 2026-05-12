@@ -492,40 +492,53 @@ Because Codex's native `apply_patch` tool is routed through an internal `ApplyPa
 
 ## CLI Reference
 
+<!-- @work-item-id WI-150 -->
+
 ```bash
 npx phasegate <command> [options]
 ```
 
+README keeps only the entry points most users need. The full public/compatibility/internal catalog, including commands shown by `phasegate --help`, lives in [CLI Reference](docs/guide/cli-reference.md).
+
 | Command | Description |
 |---|---|
-| `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI. Prefer `install` when the project may already have hooks, scripts, or CI files. |
-| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into the current project, preserve existing user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. |
-| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`). |
+| `init --name <name>` | Legacy-compatible bootstrap for new projects. Supports `--skills <core\|all>`, `--agent <claude\|codex\|both>`, `--with-husky`, `--with-ci`, and `--yes`. Prefer `install` when the project may already have hooks, scripts, or CI files. |
+| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into the current project, preserve existing user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. Use `--force` only for managed-file replacement. |
+| `doctor` | Diagnose silent or partial installations (`--json`, `--strict`, `--report-out <path>`). `--report-out` is an explicit file path, not `reporting.outputDir`. |
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`, preserving user content. |
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to the current package templates and refresh manifest hashes. |
-| `lint` | Run L1 Biome AST checks |
-| `validate --layer <L1-L4\|all>` | Run validators for specified layer (`--layer L0` prints runtime hook guidance; explicit L4 runs even when scheduled L4 is disabled) |
-| `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped) |
+| `lint` / `phasegate:lint` | Run L1 Biome AST checks. The `phasegate:*` form is a binary subcommand, not an npm script unless `package.json` defines it locally. |
+| `validate --layer <L1-L4\|all>` | Run validators for the specified layer (`--layer L0` prints runtime hook guidance). `--fail-on-warning` / `--no-fail-on-warning` override config. |
+| `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped). Supports `--quick`, `--fail-on-reject`, `--dry-run`, and `--files`. |
 | `ci:generate-template --type <aidlc-gate\|consistency-check\|pre-commit\|agent-context-refresh> --render` | Render the bundled CI/hook template to stdout |
 | `ci:auto-refresh-agent-context --dry-run` / `--apply` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
 | `refresh-claude-md --dry-run` / `--apply` | Refresh only CLAUDE.md while preserving the user-owned section |
 | `p2:check-agent-context` | Check AGENTS.md / CLAUDE.md freshness |
 | `update-skills` | Compatibility alias for `reconcile` |
-| `phasegate:status` | Display overall harness health summary |
+| `phasegate:status --json` | Display overall harness health summary, including configuration, cached artifact, and live validation state where available |
+| `phasegate:detect-drift --json` | Design/code drift summary. Drift findings are advisory unless strict warning handling is enabled. |
 | `work-items:status --dry-run` / `--apply` | Derive WI status from artifacts and optionally update stale `description.md` frontmatter. Apply refuses downgrades unless `--allow-downgrade` is supplied. |
 | `phasegate:check-phase --unit <id>` | Check current phase for a Unit |
 | `check-change-category --paths <csv>` | Classify changed files into Quick Mode categories and report whether Full Mode is required (`--format json`, `--fail-on-full-required`) |
 | `baseline` | Create `.phasegate/baseline.json` snapshot for Phase A-2 retrofit grandfather (`--dry-run`, `--force`, `--paths <glob,glob,...>`, `--json`). `baseline.enabled` defaults to `true` since v0.71.0. |
 | `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | Generate minimum viable design doc from `templates/*.template.md` into `docs/product/construction/{unit}/*.md` (`--force`, `--json`). Materializes the `scaffold: ...` line emitted by phase-gate errors. |
+| `scaffold-wi <unit> <type>` | Create `docs/inception/{unit}/WI-XXX/description.md` using the next free WI number. |
+| `emit-agent-rules` | Print the AGENTS.md / CLAUDE.md WI workflow rules block. |
 | `list-errors --layer <L0-L4>` | List error definitions with fix examples |
-| `hook <pre-tool-use\|post-tool-use\|stop>` | Run a Claude Code hook (reads JSON from stdin) |
+| `hook <pre-tool-use\|post-tool-use\|stop\|session-start\|user-prompt-submit>` | Run an agent hook (reads JSON from stdin; session-start/user-prompt-submit write JSON context) |
 | `pre-commit` | Run L2 pre-commit validators on staged files |
 | `bypass:audit --base <ref> [--head <ref>]` | Replay pre-commit validation over a push/CI range and require structured bypass evidence for gate failures |
 | `delegate-sonnet [...args]` | Delegate task to Sonnet 4.6 (transparent wrapper) |
 | `migrate work-items --dry-run` / `--apply` | Migrate legacy `ISSUE-XXX` / `H{NN}-{NN}` directories under `docs/inception/` to the unified `WI-XXX` layout (frontmatter `type` / `legacy_id` / `affects` injected). Sequential allocator skips numbers already used by existing WIs. See [CLI Reference -- Work Item Migration](docs/guide/cli-reference.md#work-item-migration). |
 | `migrate --schema v3` | Upgrade `phasegate.config.json` to v3 schema by adding the `architecture` key (idempotent). |
 
-See the [Japanese README](README.ja.md) for the complete CLI reference.
+### L4 warnings and strictness
+
+<!-- @work-item-id WI-151 -->
+
+Standard projects keep `layers.L4.enabled: false`; `validate --layer all` and `phasegate:ci-check` report disabled L4 validators as skipped. Explicit `validate --layer L4` runs the scheduled validators on demand. Warning-only L4 drift/consistency/dead-code findings remain advisory unless `validate.failOnWarning: true`, the `strict` preset, or `--fail-on-warning` is used. Use that strict mode only after the project has real drift keys, consistency targets, pointer/freshness ownership, and semantic drift coverage.
+
+See the [CLI Reference](docs/guide/cli-reference.md) for the complete catalog and the [Japanese README](README.ja.md) for Japanese-language onboarding.
 
 ---
 

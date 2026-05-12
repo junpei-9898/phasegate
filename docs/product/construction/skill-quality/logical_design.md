@@ -1478,7 +1478,7 @@ requiredSections = [
 
 **ファイル**: `run-plan-checker-loop-handler.ts`
 
-**コマンド**: `harness:skill-quality:plan-checker`
+**コマンド**: internal handler only; no public package script is currently exposed for this plan-checker loop. Public documentation must not advertise `harness:skill-quality:plan-checker` as an npm script unless `package.json` adds it. <!-- @work-item-id WI-149, WI-150 -->
 
 **引数**
 

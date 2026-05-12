@@ -102,13 +102,17 @@ npx phasegate lint
 
 ## L2: Pre-commit Validators
 
+<!-- @work-item-id WI-151 -->
+
 L2 validators run before every commit. They enforce process discipline and test quality standards.
 
-| Validator | Description |
-|-----------|-------------|
-| **phase-gate** | Enforces design-before-implementation order. Code changes to `scripts/harness/` are blocked unless the corresponding design documents exist in `docs/product/construction/`. |
-| **metadata** | Verifies completeness of source file annotations: `@unit`, `@layer`, `@US-XXX`, and `@story` |
-| **test-quality** | Enforces test authoring standards through a runner-independent semantic model: AAA pattern (Arrange/Act/Assert), named Act observation, single-act-per-test, assertion strength, lifecycle/E2E exceptions, and no domain/internal mocking in domain layer tests |
+| Validator | ID | Description |
+|-----------|----|-------------|
+| **phase-gate** | L2-001 | Enforces design-before-implementation order. Code changes to `scripts/harness/` are blocked unless the corresponding design documents exist in `docs/product/construction/` or the configured `paths.designDocs` root. |
+| **metadata** | L2-002 | Verifies completeness of source file annotations such as `@unit`, `@layer`, and story/WI metadata. |
+| **test-quality** | L2-003 | Enforces test authoring standards through a runner-independent semantic model: AAA pattern, named Act observation, single-act-per-test, assertion strength, lifecycle/E2E exceptions, and no domain/internal mocking in domain layer tests. |
+| **cli-e2e-test-existence** | L2-013 | Checks that public CLI commands have corresponding CLI/e2e coverage or an explicit documented reason for compatibility/internal handling. |
+| **work-item-status-staleness** | L2-014 | Compares `description.md` frontmatter status with derived artifact evidence and reports stale WI status. |
 
 **Command:**
 
@@ -139,6 +143,8 @@ npx phasegate validate --layer L3
 
 ## L4: Scheduled Validators
 
+<!-- @work-item-id WI-151 -->
+
 L4 validators are designed to run on a weekly schedule and detect slow-moving drift that accumulates over time.
 
 > **Status**: L4 is **disabled by default** (`layers.L4.enabled: false` in `phasegate.config.json`). Projects opt in by flipping the flag and scheduling the command via CI cron (see `ci:generate-template --type consistency-check --render`). Implementation-wise the validators listed below are functional; the default-off state is a conservative rollout choice, not a missing feature. @work-item-id WI-128
@@ -162,6 +168,18 @@ npx phasegate validate --layer L4
 ```
 
 Use a weekly cron such as `0 9 * * 1` for the generated consistency-check workflow. Standard projects normally keep L4 default-off and run the scheduled audit as advisory. Strict projects may opt into `layers.L4.enabled: true` and `failOnWarning` behavior when L4 warnings should block promotion. @work-item-id WI-128
+
+### Status and drift states
+
+`phasegate:status --json` separates three ideas that should not be collapsed in CI or agent logic:
+
+| State key | Meaning |
+|---|---|
+| `configurationState` | The resolved config intent for the layer or check. Disabled configuration means the layer should be skipped in aggregate execution. |
+| `cachedArtifactState` | Whether a persisted artifact/report exists. `missing` means no report artifact is available; it is not proof that validation failed. |
+| `liveValidationState` | The current live execution result: pass, fail, or skipped. This is the gate signal to use for current decisions. |
+
+For drift output, treat `missing` and `limitation` differently. `missing` means expected product docs, pointers, reports, or code evidence are absent. `limitation` means the current detector cannot prove the condition even though inputs may exist; keep those findings advisory until detector coverage is improved.
 
 ### Drift-detect design pointers
 

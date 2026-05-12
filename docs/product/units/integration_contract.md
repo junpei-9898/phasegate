@@ -39,8 +39,14 @@ interface HarnessError {
   suggestion: string;    // 修正方法の提案
   adr_ref?: string;      // 関連ADRへの参照 e.g., "ADR-003"
   fix_example?: string;  // 修正コード例（AIエージェントの自己修正用）
+  suggested_skill?: string;    // 次に起動すべき skill 名
+  scaffold_command?: string;   // 雛形生成や修復に使う CLI 例
+  template_path?: string;      // 参照テンプレート path
 }
 ```
+
+<!-- @work-item-id WI-149 -->
+`suggested_skill`, `scaffold_command`, and `template_path` are additive recovery metadata. Consumers must continue to accept HarnessError payloads where these fields are absent.
 
 #### HarnessConfigV2型
 
@@ -197,13 +203,16 @@ archgate:                                              # optional: ADR→Harness
 | `phasegate:check-ready` | 全storyのPhase Gate通過状態を返却 | なし | HarnessApiResponse（Phase Gate通過状態） | 0: 全通過 / 1: 未通過あり / 2: エラー |
 | `phasegate:check-phase <unit>` | 指定Unitの現在フェーズを返却 | Unit名 | PhaseInfo（Level/スキル名） | 0: 正常 / 1: Unit未検出 / 2: エラー |
 | `phasegate:ci-check` | 全L3バリデータの統合実行 | なし | CiCheckResult（バリデータ別Pass/Fail + HarnessError一覧） | 0: Pass / 1: Fail / 2: エラー |
-| `phasegate:detect-drift` | 設計⇔コード双方向乖離検出 | `--json`（オプション） | DriftReportSummary（方向/unit/要素/推奨アクション） | 0: 乖離なし / 1: 乖離あり / 2: エラー |
-| `phasegate:status` | ハーネス全体の健全性サマリー | なし | HarnessStatusSummary（L1-L4健全性/Phase Gate/Preset/設定） | 0: 正常 / 2: エラー |
+| `phasegate:detect-drift` | 設計⇔コード双方向乖離検出 | `--json`（オプション） | DriftReportSummary（方向/unit/要素/推奨アクション） | 0: 正常（drift findings は advisory） / 2: エラー |
+| `phasegate:status` | ハーネス全体の健全性サマリー | `--json`（オプション） | HarnessStatusSummary（`configurationState` / `cachedArtifactState` / `liveValidationState` を含む L1-L4健全性/Phase Gate/Preset/設定） | 0: 正常 / 2: エラー |
 | `phasegate:lint` | L1 Biomeバリデータ実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
 | `phasegate:complete-check` | L1-L4全バリデータ統合実行 | なし | HarnessApiResponse | 0: Pass / 1: Fail / 2: エラー |
 | `phasegate:impact-analysis <HXX-XX>` | 変更影響テストケース特定 | ストーリーID（HXX-XX形式） | ImpactAnalysisResult | 0: 正常 / 1: ストーリー未検出 / 2: エラー |
 
 > **実行ロジック所有**: `phasegate:lint` → biome-ast-engine、`phasegate:ci-check` / `phasegate:complete-check` / `phasegate:detect-drift` → validator-system + biome-ast-engine、`phasegate:status` → config-foundation + validator-system、`phasegate:impact-analysis` → nyquist-validation
+
+<!-- @work-item-id WI-151, WI-158 -->
+Status and drift commands emit JSON to stdout and separate configured state, cached artifacts, and live validation result. Persisted report paths are command-specific; do not infer `reporting.outputDir` from this CLI envelope.
 
 ### 3.2 config-foundation所有コマンド
 

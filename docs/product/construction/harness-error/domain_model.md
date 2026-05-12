@@ -37,7 +37,10 @@
 
 | 契約 | 消費Unit | 内容 |
 |------|---------|------|
-| HarnessError型 | 全Unit | `{ code, severity, message, suggestion, adr_ref?, fix_example? }` |
+| HarnessError型 | 全Unit | `{ code, severity, message, suggestion, adr_ref?, fix_example?, suggested_skill?, scaffold_command?, template_path? }` |
+
+<!-- @work-item-id WI-149 -->
+`suggested_skill`, `scaffold_command`, and `template_path` are optional recovery metadata. They do not replace `suggestion`; they make the next action machine-readable for agents and public CLI output. Existing fields remain stable and additive-only.
 
 ### Shared Kernel利用表
 
@@ -114,6 +117,7 @@ HarnessErrorは**リッチファクトリ付き不変値オブジェクト**と�
 | INV-6 | fix_exampleが指定される場合、構文的に妥当なコード片である | HarnessErrorFactory生成時（構文チェック） |
 | INV-7 | ErrorDefinitionでfixExampleRequired=trueのコードにはfix_exampleが必須 | HarnessErrorFactory生成時 |
 | INV-8 | 生成後のHarnessErrorは不変（Object.freeze適用） | HarnessErrorFactory生成直後 |
+| INV-9 | `suggested_skill` / `scaffold_command` / `template_path` は ErrorDefinition の既定値または生成入力から解決され、存在する場合は空文字不可 | HarnessErrorFactory生成時 |
 
 ### Shared Kernelに対する前提条件
 

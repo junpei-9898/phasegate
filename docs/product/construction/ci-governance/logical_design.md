@@ -1589,3 +1589,8 @@ The `consistency-check` generated workflow is the recommended L4 scheduled audit
 ## WI-122 Pointer Policy In CI
 
 CI governance treats pointer validation results according to semantic pointer policy. Broken product-doc and ADR pointers may fail, implementation/reference pointers may warn, and external URL pointers skip unless policy explicitly includes them.
+# Public CLI Catalog Reflection
+
+@work-item-id WI-150
+
+CI governance consumes the public command catalog for generated workflows and agent-context pointers. The documented CLI surface must identify `ci:generate-template`, `ci:auto-refresh-agent-context`, `p2:check-agent-context`, and repetition checks as binary subcommands, not implied npm scripts.

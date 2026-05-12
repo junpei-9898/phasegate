@@ -94,6 +94,14 @@ Use /quick-implementor skill for version changes in package.json.
 - By default, the hook exits with the inner CLI's exit code, which Claude Code shows as a transcript warning but does not turn-block on.
 - Set `agentIntegration.stopHook.enforce: true` in `phasegate.config.json` to enable **strict mode**: on Complete Check failure, the hook emits `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exits with code 2, hard-blocking Claude Code's turn end. Reentry-detection still exits 0 regardless of this setting. See `docs/guide/configuration.md` `agentIntegration` section for details.
 
+## Git hook metadata validation
+
+<!-- @work-item-id WI-149 -->
+
+When installed with Husky, `.husky/pre-commit` invokes `npx phasegate pre-commit`. That path runs the same L2 pre-commit contract used by CI and includes staged Markdown metadata validation in addition to implementation metadata checks. In practice, staged `docs/inception/**/description.md` files are checked for WI frontmatter shape, `docs/product/**` reflection updates are checked for `@work-item-id WI-XXX`, and staged implementation/test files are checked for source metadata.
+
+`validate-metadata <files>` remains available as a direct metadata command, but the public pre-commit contract for users is `phasegate pre-commit`; do not wire a separate Markdown metadata hook unless you have a project-specific reason.
+
 ## Optional Shell Script Hooks
 
 Additional hooks can be placed in `.claude/scripts/`:

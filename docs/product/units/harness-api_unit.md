@@ -59,16 +59,23 @@ v0には対応するUnitが存在しない新規Unitである。v0ではCLIコ�
 ### 3.4 phasegate:status（H09-04）
 
 - ファイルシステム上の成果物（設計文書、テストファイル、メタデータ）の存在からハーネス検査状態を導出（成果物駆動の状態導出）
-- レスポンスにL1-L4各レイヤーの健全性（有効/無効/最終実行結果）を含める
+- レスポンスにL1-L4各レイヤーの健全性（`configurationState`, `cachedArtifactState`, `liveValidationState`）を含める。`missing` は成果物不存在、`limitation` は検出器の証明不能状態として区別する。<!-- @work-item-id WI-151 -->
 - レスポンスにPhase Gate通過状態のサマリーを含める
 - レスポンスにプリセット名と有効な設定のサマリーを含める
-- JSON形式での出力が可能
+- JSON形式で stdout へ出力する。永続化が必要な場合は呼び出し側がリダイレクトする。<!-- @work-item-id WI-158 -->
 
 ### 3.5 phasegate:lint / phasegate:complete-check（CLI Command Registry所有）
 
 - `phasegate:lint`: L1 BiomeバリデータのCLIエントリポイント（実行ロジックはbiome-ast-engine）
 - `phasegate:complete-check`: L1-L4全バリデータの統合実行CLIエントリポイント（実行ロジックはvalidator-system + biome-ast-engine）
 - 上記コマンドの入出力仕様・終了コードを本Unitが定義・管理
+
+### 3.5.1 public CLI catalog contract
+
+@work-item-id WI-149
+@work-item-id WI-150
+
+The harness-api public surface distinguishes binary subcommands from package scripts. `phasegate:*` names are binary subcommands unless a project `package.json` defines the matching script. README documents the common entry points; `docs/guide/cli-reference.md` is the exhaustive public catalog aligned with `phasegate --help`.
 
 ### 3.6 installation lifecycle dispatch（WI-148）
 

@@ -6,21 +6,41 @@ Entry point:
 npx phasegate <command> [options]
 ```
 
+<!-- @work-item-id WI-150 -->
+
+Command names in this document are split into three surfaces:
+
+| Surface | How to run | Contract |
+|---|---|---|
+| Binary subcommand | `npx phasegate <command>` | Public CLI shipped by the package. This includes `phasegate:*` compatibility subcommands shown by `phasegate --help`. |
+| npm script | `npm run <script>` / `pnpm <script>` | Only available when the consuming project's `package.json` defines that script. The package itself currently defines `phasegate`, `phasegate:status`, `phasegate:enable`, `phasegate:disable`, `phasegate:check-phase`, `phasegate:check-ready`, and `harness:*` aliases. |
+| Internal / compatibility | `npx phasegate <command>` | Supported for migration, dogfooding, or legacy workflows; prefer the canonical command listed in the description when one exists. |
+
 ---
 
 ## Setup
 
 | Command | Description |
 |---|---|
-| `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI |
-| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, and write `.phasegate/manifest.json` |
-| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`) |
-| `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json` |
-| `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes |
-| `update-skills` | Compatibility alias for `reconcile` |
+| `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI. Options: `--preset <full\|standard\|minimal\|custom>`, `--skills <core\|all>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--yes`. |
+| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. `--force` replaces managed targets after backup. |
+| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`). `--report-out` writes exactly to the supplied path, not to `reporting.outputDir`. |
+| `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`; `--force` handles managed conflict cases. |
+| `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes; `--force` allows managed-file replacement with backup. |
+| `update-skills` | Compatibility alias for `reconcile`; use `reconcile` for new automation. |
+| `scaffold-wi <unit> <type>` | Create `docs/inception/{unit}/WI-XXX/description.md` using the next free WI number. |
+| `emit-agent-rules` | Print the AGENTS.md / CLAUDE.md WI workflow rules block. |
 | `list-features` | List available features |
 | `enable-feature <name>` | Enable a feature |
 | `disable-feature <name>` | Disable a feature |
+
+### Setup JSON and report outputs
+
+<!-- @work-item-id WI-158 -->
+
+Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is.
+
+This is separate from `reporting.outputDir`. The configured report directory is used by phase-dependency / phase-gate reporting, while regression-suite result files are fixed under `reports/regression/` and status/drift JSON is emitted to stdout.
 
 ---
 
@@ -29,8 +49,8 @@ npx phasegate <command> [options]
 | Command | Options | Description |
 |---|---|---|
 | `lint` | `--target <path>` `--json` | L1 Biome AST check |
-| `validate` | `--layer L1\|L2\|L3\|L4\|all` `--unit <name>` `--format human\|agent\|ci` | L2-L4 validators |
-| `ci-check` | `--quick` `--fail-on-reject` `--dry-run` `--files` | Full CI check (L2-L4) |
+| `validate` | `--layer L0\|L1\|L2\|L3\|L4\|all` `--unit <name>` `--format human\|agent\|ci` `--fail-on-warning` `--no-fail-on-warning` `--no-l4` | Validators. `--layer L0` prints runtime hook guidance. Explicit `--layer L4` runs L4 on demand; `all` and CI-style execution honor disabled L4 unless overridden by command-specific behavior. |
+| `ci-check` | `--quick` `--fail-on-reject` `--dry-run` `--files` | Full CI check (L2-L4). `--quick` applies Quick Mode relaxation policy, `--fail-on-reject` turns a rejected quick decision into a failing exit, `--dry-run` reports without enforcing, and `--files` supplies the changed-file set. |
 | `validate-metadata <files>` | | Validate implementation metadata |
 | `check-phase-gate` | `--level 1\|2\|3` | Phase gate check |
 
@@ -258,7 +278,9 @@ unit-scoped WI（H-ID 由来）の reflection check でも継続認識される�
 
 ## Harness API
 
-Commands exposed as npm scripts (`npm run <command>`).
+<!-- @work-item-id WI-150 -->
+
+The following are binary subcommands (`npx phasegate <command>`). Do not assume they are npm scripts unless the consuming project defines a matching `package.json` script. In this package, only `phasegate:status`, `phasegate:check-ready`, and `phasegate:check-phase` are currently exposed as package scripts among the `phasegate:*` commands.
 
 | Command | Options | Description |
 |---|---|---|
@@ -270,6 +292,23 @@ Commands exposed as npm scripts (`npm run <command>`).
 | `phasegate:lint` | `--target <path>` `--json` | Lint via harness-api |
 | `phasegate:complete-check` | `--json` | L2-L4 full check |
 | `phasegate:impact-analysis` | `<storyId>` `--json` | Story impact analysis |
+| `phasegate:generate-matrix` | `--requirements <path>` `--tests <path>` `--out <path>` `--json` | Generate the requirement-test matrix |
+
+### Status and drift JSON semantics
+
+<!-- @work-item-id WI-151 -->
+
+`phasegate:status --json` is intended for humans, CI, and agents that need to distinguish configured intent from observed results. Layer entries may include:
+
+| Key | Meaning | How to use it |
+|---|---|---|
+| `configurationState` | Whether the layer is enabled by resolved config (`enabled` / `disabled`) | Use this to explain why a layer should run or be skipped. |
+| `cachedArtifactState` | Whether a previously generated artifact/report is present (`present` / `missing`) | Use this to decide whether a report needs to be generated before relying on cached evidence. `missing` means no artifact exists; it is not the same as a validator limitation. |
+| `liveValidationState` | Result of the current live check (`pass` / `fail` / `skipped`) | Use this as the current gate signal. `skipped` usually follows disabled configuration. |
+
+`phasegate:detect-drift --json` returns drift findings from live design/code comparison. A finding with a real mismatch is different from a validator `limitation`: `missing` means expected evidence or artifacts were absent, while `limitation` means the validator cannot currently prove the condition and should be treated as advisory until coverage is improved.
+
+L4 warning findings fail the process only when warning strictness is enabled (`validate.failOnWarning: true`, the `strict` preset, or `--fail-on-warning`). `--no-fail-on-warning` forces advisory behavior for the current command.
 
 ---
 
@@ -334,15 +373,17 @@ ISSUE-005 P3-10 で明確化された境界:
 
 ## Regression Tests
 
+<!-- @work-item-id WI-150, WI-158 -->
+
 | Command | Description |
 |---|---|
-| `regression:run-k-requirements` | K1-K15 non-negotiable requirements |
-| `regression:run-gng-gate` | Go/No-Go Gate 3 quality conditions |
-| `regression:run-agent-guard` | Agent-independence guard |
-| `regression:run-k14-k15` | K14/K15 regression |
-| `regression:configure-ci-gate` | Configure CI gate |
-| `regression:analyze-migration` | Analyze v0 test migration |
-| `regression:migrate-v0-tests` | Execute v0 test migration |
+| `regression:run-k-requirements` | K1-K15 non-negotiable requirements. Writes suite result JSON under fixed `reports/regression/`. |
+| `regression:run-gng-gate` | Go/No-Go Gate 3 quality conditions. Writes suite result JSON under fixed `reports/regression/`. |
+| `regression:run-agent-guard` | Agent-independence guard. Writes suite result JSON under fixed `reports/regression/`. |
+| `regression:run-k14-k15` | K14/K15 regression. Writes suite result JSON under fixed `reports/regression/`. |
+| `regression:configure-ci-gate` | Configure CI gate (`--suites <ids>`, `--threshold <n>`). |
+| `regression:analyze-migration` | Analyze v0 test migration (`--dry-run`). |
+| `regression:migrate-v0-tests` | Execute v0 test migration (`--confirm`). |
 
 ---
 
@@ -362,6 +403,7 @@ ISSUE-005 P3-10 で明確化された境界:
 | `p2:check-freshness` | `--pattern <glob>` `--dry-run` `--format text\|json` | Compatibility entry point for L4-004 doc freshness; canonical L4 execution is `validate --layer L4` |
 | `p2:validate-pointers` | `--include-urls` `--format text\|json` | Compatibility entry point for L4-005 pointer validation; canonical L4 execution is `validate --layer L4` |
 | `p2:generate-e2e-template` | `--phase <phase>` `--output <path>` | Generate E2E test template |
+| `p2:check-initial-creation` | `--pattern <glob>` `--format text\|json` | Compatibility detector for long-lived `initial_creation: true` docs. |
 
 ### `phasegate:generate-matrix`
 
