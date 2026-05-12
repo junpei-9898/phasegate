@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * RunL2ValidatorsUseCase — H08-01: L2バリデータ実行
- * @work-item-id WI-140
+ * @work-item-id WI-110 / WI-111 / WI-140
  */
 import { readFile } from 'node:fs/promises';
 import { ValidatorId, InvalidValidatorIdError } from '../../domain/value-objects/validator-id.js';

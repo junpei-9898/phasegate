@@ -1,6 +1,7 @@
 /**
  * @layer test
  * @unit validator-system
+ * @work-item-id WI-111
  * @story H08-01
  */
 import { describe, expect, it } from 'vitest';
@@ -123,6 +124,34 @@ target('CliE2eTestExistenceService', () => {
         // Assert
         expect(actual.hasViolations()).toBe(false);
         expect(actual.entries[0]).toMatchObject({ commandName: 'init', status: 'covered' });
+      });
+    });
+
+    context('E2Eファイル内容にhelp usage assertionが含まれる場合', () => {
+      it('help出力の検証としてcoveredに分類されること', () => {
+        // Arrange
+        const sut = new CliE2eTestExistenceService();
+        const commands = ['validate'];
+        const e2eFiles = ['expect(stdout).toContain("Usage: phasegate validate")'];
+        // Act
+        const actual = sut.check(commands, e2eFiles);
+        // Assert
+        expect(actual.hasViolations()).toBe(false);
+        expect(actual.entries[0]).toMatchObject({ commandName: 'validate', status: 'covered' });
+      });
+    });
+
+    context('E2Eファイル内容にunknown-command assertionが含まれる場合', () => {
+      it('alias/error path coverageとしてcoveredに分類されること', () => {
+        // Arrange
+        const sut = new CliE2eTestExistenceService();
+        const commands = ['legacy-alias'];
+        const e2eFiles = ['expect(stderr).toContain("Unknown command: legacy-alias")'];
+        // Act
+        const actual = sut.check(commands, e2eFiles);
+        // Assert
+        expect(actual.hasViolations()).toBe(false);
+        expect(actual.entries[0]).toMatchObject({ commandName: 'legacy-alias', status: 'covered' });
       });
     });
 

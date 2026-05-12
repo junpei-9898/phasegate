@@ -4,6 +4,7 @@
  *
  * RunL1ValidatorsUseCase — H08-07/H08-08: L1バリデータ実行
  * L1-017 ITテスト内部モック検出、L1-018 スタブコメント残存検出を実行する。
+ * @work-item-id WI-110
  */
 import { ValidatorId } from '../../domain/value-objects/validator-id.js';
 import { ValidationResult } from '../../domain/value-objects/validation-result.js';

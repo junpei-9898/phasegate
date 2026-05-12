@@ -2,7 +2,7 @@
 id: WI-111
 type: issue
 severity: normal
-status: implemented
+status: tested
 affects: [validator-system]
 source: internal
 ---

@@ -3,6 +3,7 @@
  * @unit validator-system
  *
  * DI 組み立て — validator-system の全依存関係を構築する
+ * @work-item-id WI-110 / WI-111
  */
 import { ValidatorId } from './domain/value-objects/validator-id.js';
 import { ValidatorDefinition } from './domain/value-objects/validator-definition.js';

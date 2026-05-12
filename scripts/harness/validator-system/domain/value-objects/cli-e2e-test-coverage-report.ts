@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit validator-system
+ * @work-item-id WI-111
  *
  * CliE2eTestCoverageReport 値オブジェクト
  * CLIコマンド一覧とE2Eテストカバレッジ状況を表す不変値オブジェクト

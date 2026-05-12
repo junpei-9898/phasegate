@@ -1,5 +1,6 @@
 // @unit validator-system
 // @layer infrastructure
+// @work-item-id WI-111
 
 import type { CliCommandRegistryPort } from '../../domain/ports/cli-command-registry-port.js';
 

@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit validator-system
+ * @work-item-id WI-111
  *
  * CliCommandRegistryPort — 登録済みCLIコマンド一覧取得ポート
  */

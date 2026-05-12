@@ -1,5 +1,6 @@
 // @unit validator-system
 // @layer domain
+// @work-item-id WI-111
 
 import { CliE2eTestCoverageReport, type CliCommandCoverageEntry } from '../value-objects/cli-e2e-test-coverage-report.js';
 

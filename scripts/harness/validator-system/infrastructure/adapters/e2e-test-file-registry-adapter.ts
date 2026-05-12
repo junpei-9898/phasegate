@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-111
  *
  * E2eTestFileRegistryAdapter — E2eTestFileRegistryPort実装
  * E2Eテストファイルのパス一覧を提供する。

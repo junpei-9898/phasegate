@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit validator-system
+ * @work-item-id WI-111
  *
  * E2eTestFileRegistryPort — E2Eテストファイル一覧取得ポート
  */
