@@ -6,6 +6,8 @@
 @story-id H09-04
 @work-item-id WI-112
 @work-item-id WI-114
+@work-item-id WI-119
+@work-item-id WI-121
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
@@ -35,6 +37,8 @@
 | CommandRegistry | ドメインサービス | CliCommandDefinition[]の登録・管理・名前一意性保証 |
 | CommandDispatchService | ドメインサービス | CLI入力→実行ロジック委譲→HarnessApiResponse変換→ExitCode決定 |
 | StatusDerivationService | ドメインサービス | ArtifactScanResult→LayerHealth[]→HarnessStatusSummary導出（H09-04） |
+
+G5 semantic validator output remains validator-system owned. harness-api preserves L3/L4 `validatorResults[]` for WI-119 dead-code graph findings and WI-121 performance operational signals without duplicating policy.
 
 ### 他Unitから受け取るShared Kernel
 

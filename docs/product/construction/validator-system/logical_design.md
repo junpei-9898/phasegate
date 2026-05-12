@@ -1876,3 +1876,14 @@ Validator-system consumes doc freshness and pointer validation as L4 advisory re
 4. No findings yields an explicit pass result.
 
 `FileSystemContractTraceabilityPolicyAdapter` currently reads `@phasegate-contract id=... kind=... behaviors=... boundary=...` and `@phasegate-observation covers=... kind=...` annotations from target paths. Future extractors can feed the same port from AST, Markdown, config schema, or staged-change analysis.
+## G5 Semantic Analysis Validators
+
+<!-- @work-item-id WI-119, WI-120, WI-121, WI-134, WI-135 -->
+
+L3/L4 semantic validators use lightweight static analysis as operational signals:
+
+- L3-001 security scanning detects structured token families, keyword-context secrets, allowlisted fixtures, and redacted findings.
+- L3-002 performance scanning detects file-size thresholds, await-in-loop, synchronous I/O, and suppressible accepted batch/migration cases.
+- L4-003 dead-code scanning consumes a real import/export graph and reports reviewable unused export candidates.
+- L4-002 architecture semantic analysis treats side-effect capability boundaries and decision placement as preset-driven policies separate from import direction checks.
+- Decision-placement rollout is advisory first: findings include evidence, confidence, and suggested owner zone before any hard gate behavior.

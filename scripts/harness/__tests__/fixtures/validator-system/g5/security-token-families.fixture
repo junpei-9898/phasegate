@@ -1,0 +1,5 @@
+const openai = "sk-abcdefghijklmnopqrstuvwxyz123456";
+const github = "ghp_abcdefghijklmnopqrstuvwxyz123456";
+const aws = "AKIAABCDEFGHIJKLMNOP";
+const npmToken = "npm_abcdefghijklmnopqrstuvwxyz123456";
+const slackToken = "xoxb-FAKEFAKEFAKEFAKEFAKE";

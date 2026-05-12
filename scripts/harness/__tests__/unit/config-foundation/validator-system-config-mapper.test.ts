@@ -70,7 +70,7 @@ function createResolvedConfig(): HarnessConfigV2 {
 target('toValidatorSystemConfig', () => {
   describe('resolved configをvalidator-system用configに変換する場合', () => {
     context('L4が無効でvalidator配列が設定されている場合', () => {
-      it('L4のvalidator配列と各レイヤーの有効状態が渡されること', () => {
+      it('validator配列をvalidator-systemのID語彙に正規化して渡すこと', () => {
         // Arrange
         const resolvedConfig = createResolvedConfig();
 
@@ -82,9 +82,11 @@ target('toValidatorSystemConfig', () => {
           project: { preset: 'standard' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true },
-            L4: { enabled: false, validators: ['drift-detector'] },
+            L3: { enabled: true, coverageThreshold: 80 },
+            L4: { enabled: false, validators: ['L4-001'] },
           },
+          harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
+          architecture: undefined,
           validate: { failOnWarning: false },
         });
       });
@@ -104,9 +106,11 @@ target('toValidatorSystemConfig', () => {
           project: { preset: 'standard' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true },
-            L4: { enabled: false, validators: ['drift-detector'] },
+            L3: { enabled: true, coverageThreshold: 80 },
+            L4: { enabled: false, validators: ['L4-001'] },
           },
+          harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
+          architecture: undefined,
           validate: { failOnWarning: true },
         });
       });

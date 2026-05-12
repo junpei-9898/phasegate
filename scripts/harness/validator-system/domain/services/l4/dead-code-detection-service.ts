@@ -9,8 +9,8 @@ import { DeadCodeReport } from '../../value-objects/dead-code-report.js';
 
 export interface DeadCodeSourceAnalysisPort {
   getImportGraph(): Promise<{
-    nodes?: readonly { filePath: string; exports: readonly string[] }[];
-    edges?: readonly { from: string; to: string; importedNames: readonly string[] }[];
+    nodes?: readonly { filePath: string; exports: readonly string[]; excludedReason?: string }[];
+    edges?: readonly { from: string; to: string; importedNames: readonly string[]; kind?: string }[];
     unusedExports?: readonly string[];
     unreachableCode?: readonly { filePath: string; range: { startLine: number; endLine: number } }[];
   }>;

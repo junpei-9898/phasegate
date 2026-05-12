@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.1] - 2026-05-12
+
+### Fixed
+
+- **G5 post-publish dogfood / WI-134 / WI-135** — wires architecture semantic policy into `L4-002` runtime validation so side-effect capability denials and decision-placement advisories are reported with file zone, evidence, confidence, and suggested owner zone.
+
+## [0.152.0] - 2026-05-12
+
+### Added
+
+- **G5 / WI-119 / WI-120 / WI-121 / WI-134 / WI-135 — architecture semantic analysis** — strengthens code semantic analysis across L3/L4 validators and architecture presets.
+  - L4-003 dead-code detection now builds a real import/export/re-export/dynamic-import graph and reports unused export candidates with reviewable reasons while preserving public/test/generated boundaries.
+  - L3-001 security scanning detects representative OpenAI, GitHub, AWS, npm, Slack, and keyword-context token families, supports explicit fixture allowlisting, and redacts secret values from findings.
+  - L3-002 performance scanning defines practical static scope with file-size thresholds, await-in-loop, synchronous I/O, large literal checks, and inline suppression for accepted migration/batch cases.
+  - Architecture presets now expose side-effect capability policies and advisory decision-placement responsibilities separately from dependency-direction checks.
+
 ## [0.151.1] - 2026-05-12
 
 ### Fixed

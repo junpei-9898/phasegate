@@ -443,3 +443,8 @@ classDiagram
 | OQ-1 | RuleDefinitionのconfigフィールドの型 | `Record<string, unknown>` で許容。errorCode/description/suggestionを別フィールドとして型付け |
 | OQ-2 | ImportGraphBuilderの対象ファイル範囲制御 | SourceModuleAnalyzerPortで解析対象を制御し、BuilderはSnapshot配列を受け取る設計に |
 | OQ-3（追加） | BiomeNative型ルールはいつ使われるか | Biome v2 GritQLのコメントパターン対応が成熟次第。現時点では全ルールExternalAnalyzer |
+## Architecture Semantic Policy Primitives
+
+<!-- @work-item-id WI-119, WI-134, WI-135 -->
+
+The AST engine exposes language-specific source facts while keeping validator policy language-independent. Architecture specs can carry side-effect capability policies and decision responsibility policies in addition to layer dependency rules.

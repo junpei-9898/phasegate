@@ -1,0 +1,2 @@
+// phasegate-allow-secret-fixture
+const example = "sk-abcdefghijklmnopqrstuvwxyz123456";

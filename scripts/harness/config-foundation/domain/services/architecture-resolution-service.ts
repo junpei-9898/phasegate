@@ -8,6 +8,8 @@ import {
   freezeArchitectureDocument,
   type ArchitectureConfigDocument,
   type ArchitectureConfigSource,
+  type CapabilityPolicy,
+  type DecisionPolicy,
   type ArchitectureLayerDetection,
   type ArchitectureMetadataTags,
   type ArchitecturePresetId,
@@ -45,6 +47,32 @@ const cloneDependencies = (
     cloned[key] = [...value];
   }
 
+  return cloned;
+};
+
+const cloneCapabilityPolicies = (
+  source: Readonly<Record<string, CapabilityPolicy>>
+): Record<string, CapabilityPolicy> => {
+  const cloned: Record<string, CapabilityPolicy> = {};
+  for (const [key, value] of Object.entries(source)) {
+    cloned[key] = {
+      allowed: [...value.allowed],
+      denied: [...value.denied],
+    };
+  }
+  return cloned;
+};
+
+const cloneDecisionPolicies = (
+  source: Readonly<Record<string, DecisionPolicy>>
+): Record<string, DecisionPolicy> => {
+  const cloned: Record<string, DecisionPolicy> = {};
+  for (const [key, value] of Object.entries(source)) {
+    cloned[key] = {
+      expected: [...value.expected],
+      advisoryOnly: value.advisoryOnly,
+    };
+  }
   return cloned;
 };
 
@@ -90,6 +118,28 @@ const mergeDependencies = (
   }
 
   return preset !== null ? cloneDependencies(preset.allowedDependencies) : {};
+};
+
+const mergeCapabilityPolicies = (
+  preset: ArchitecturePresetDefinition | null,
+  override: Readonly<Record<string, CapabilityPolicy>> | undefined
+): Record<string, CapabilityPolicy> => {
+  if (override !== undefined) {
+    return cloneCapabilityPolicies(override);
+  }
+
+  return preset !== null ? cloneCapabilityPolicies(preset.capabilityPolicies) : {};
+};
+
+const mergeDecisionPolicies = (
+  preset: ArchitecturePresetDefinition | null,
+  override: Readonly<Record<string, DecisionPolicy>> | undefined
+): Record<string, DecisionPolicy> => {
+  if (override !== undefined) {
+    return cloneDecisionPolicies(override);
+  }
+
+  return preset !== null ? cloneDecisionPolicies(preset.decisionPolicies) : {};
 };
 
 const mergeMetadataTags = (
@@ -230,6 +280,14 @@ export class ArchitectureResolutionService {
       presetDefinition,
       effectiveSource.allowedDependencies
     );
+    const capabilityPolicies = mergeCapabilityPolicies(
+      presetDefinition,
+      effectiveSource.capabilityPolicies,
+    );
+    const decisionPolicies = mergeDecisionPolicies(
+      presetDefinition,
+      effectiveSource.decisionPolicies,
+    );
 
     validateDependencyKeys(layers, allowedDependencies);
     validateDependencyValues(layers, allowedDependencies);
@@ -247,6 +305,8 @@ export class ArchitectureResolutionService {
       allowedDependencies: freezeDependencies(allowedDependencies),
       metadataTags: mergeMetadataTags(effectiveSource.metadataTags),
       layerDetection,
+      capabilityPolicies,
+      decisionPolicies,
     });
 
     return Object.freeze({

@@ -346,3 +346,13 @@ Semantic drift compares `DesignIntent`, `ImplementationBehavior`, and `TestObser
 - `TraceabilityGraphSlice`: WI, affected Units, product reflection, implementation evidence, test evidence, and public docs/contract sync flags.
 
 The first repository scanner is opt-in annotation based (`@phasegate-contract` / `@phasegate-observation`) to avoid broad false positives while preserving the domain service contract for richer extractors.
+## G5 Semantic Analysis Model
+
+<!-- @work-item-id WI-119, WI-120, WI-121, WI-134, WI-135 -->
+
+- `SecurityTokenFamily`: stable L3-001 rule id, severity, token-family pattern, and redacted reporting behavior.
+- `PerformanceSmell`: L3-002 smell id, location, metric, threshold, suppression state, and suggestion.
+- `ImportGraphData`: L4-003 source-analysis graph with import/export edges and dead-code candidates.
+- `EffectCapability`: semantic side-effect category such as filesystem, network, database, process-env, time, random, subprocess, or user-io.
+- `DecisionSignal`: business-rule branch, validation rule, error construction, state transition, or policy selection evidence.
+- `ArchitectureSemanticFinding`: L4-002 warning that combines observed file zone, evidence, confidence, and suggested owner zone for capability or decision-placement policy.

@@ -17,6 +17,7 @@ import type { ValidatorConfigPort } from '../../domain/ports/validator-config-po
 import type { DriftDetectionService } from '../../domain/services/l4/drift-detection-service.js';
 import type { ConsistencyCheckService } from '../../domain/services/l4/consistency-check-service.js';
 import type { DeadCodeDetectionService } from '../../domain/services/l4/dead-code-detection-service.js';
+import type { ArchitectureSemanticAnalysisService } from '../../domain/services/l4/architecture-semantic-analysis-service.js';
 
 interface ScheduledHarnessErrorContract {
   readonly severity: string;
@@ -65,6 +66,7 @@ export interface RunL4ValidatorsUseCaseDeps {
   driftDetectionService?: DriftDetectionService;
   consistencyCheckService?: ConsistencyCheckService;
   deadCodeDetectionService?: DeadCodeDetectionService;
+  architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 }
@@ -77,6 +79,7 @@ export class RunL4ValidatorsUseCase {
   private readonly driftDetectionService?: DriftDetectionService;
   private readonly consistencyCheckService?: ConsistencyCheckService;
   private readonly deadCodeDetectionService?: DeadCodeDetectionService;
+  private readonly architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   private readonly checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   private readonly validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 
@@ -88,6 +91,7 @@ export class RunL4ValidatorsUseCase {
     this.driftDetectionService = deps.driftDetectionService;
     this.consistencyCheckService = deps.consistencyCheckService;
     this.deadCodeDetectionService = deps.deadCodeDetectionService;
+    this.architectureSemanticAnalysisService = deps.architectureSemanticAnalysisService;
     this.checkDocFreshnessUseCase = deps.checkDocFreshnessUseCase;
     this.validateDocPointersUseCase = deps.validateDocPointersUseCase;
   }
@@ -148,10 +152,13 @@ export class RunL4ValidatorsUseCase {
       const l4002Result = overrideMap.get('L4-002');
       if (l4002Result && !l4002Result.skipped) {
         const report = await this.consistencyCheckService.check(input.targetUnits ? [...input.targetUnits] : undefined);
-        if (report.hasMismatches()) {
+        const architectureSemanticErrors = this.architectureSemanticAnalysisService
+          ? await this.architectureSemanticAnalysisService.analyze()
+          : [];
+        if (report.hasMismatches() || architectureSemanticErrors.length > 0) {
           overrideMap.set(
             'L4-002',
-            ValidationResult.fail(ValidatorId.create('L4-002'), [...report.toHarnessErrors()], 0),
+            ValidationResult.fail(ValidatorId.create('L4-002'), [...report.toHarnessErrors(), ...architectureSemanticErrors], 0),
           );
         }
       }

@@ -2,7 +2,7 @@
 id: WI-134
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, config-foundation, biome-ast-engine, documentation]
 source: internal
 ---
@@ -28,11 +28,11 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] side effect boundary が import dependency boundary と別概念として docs に定義されている。
-- [ ] architecture preset が capability policy を持てる。
-- [ ] Clean / Layered / MVC / Vertical Slice で異なる allowed effects を表現できる。
-- [ ] denied capability の検出が file zone と effect semantic model の照合で行われる。
-- [ ] L1-003 / L1-004 の既存挙動と競合しない。
+- [x] side effect boundary が import dependency boundary と別概念として docs に定義されている。
+- [x] architecture preset が capability policy を持てる。
+- [x] Clean / Layered / MVC / Vertical Slice で異なる allowed effects を表現できる。
+- [x] denied capability の検出が file zone と effect semantic model の照合で行われる。
+- [x] L1-003 / L1-004 の既存挙動と競合しない。
 
 ## 関連
 

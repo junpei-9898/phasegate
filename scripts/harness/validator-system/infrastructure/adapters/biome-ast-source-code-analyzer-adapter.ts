@@ -131,8 +131,11 @@ function extractExports(sourceFile: ts.SourceFile): SourceAnalysisResult['export
           exports.push({ name: element.name.text, type: 'type' });
         }
       }
-    } else if (ts.isExportDeclaration(node) && !node.exportClause && ts.isStringLiteral(node.moduleSpecifier)) {
-      exports.push({ name: `* from ${node.moduleSpecifier.text}`, type: 'type' });
+    } else if (ts.isExportDeclaration(node) && !node.exportClause) {
+      const moduleSpecifier = node.moduleSpecifier;
+      if (moduleSpecifier !== undefined && ts.isStringLiteral(moduleSpecifier)) {
+        exports.push({ name: `* from ${moduleSpecifier.text}`, type: 'type' });
+      }
     }
 
     const hasDefault = modifiers?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword) ?? false;

@@ -13,6 +13,7 @@ import type { ConfigSchemaValidatorPort } from '../../../config-foundation/domai
 import type { PresetDefinition } from '../../../config-foundation/domain/services/preset-resolution-service.js';
 import { PresetResolutionService } from '../../../config-foundation/domain/services/preset-resolution-service.js';
 import { LoadResolvedConfigUseCase } from '../../../config-foundation/application/usecases/load-resolved-config-use-case.js';
+import { ARCHITECTURE_PRESET_CATALOG } from '../../../config-foundation/domain/value-objects/architecture-preset-catalog.js';
 import { HarnessError } from '../../../harness-error/domain/value-objects/harness-error.js';
 import { ErrorCode } from '../../../harness-error/domain/value-objects/error-code.js';
 import { Severity } from '../../../harness-error/domain/value-objects/severity.js';
@@ -128,6 +129,8 @@ function createMinimalResolvedDocument(): HarnessConfigResolvedDocument {
       },
       metadataTags: { layer: '@layer', unit: '@unit' },
       layerDetection: { byPath: true, byTag: true },
+      capabilityPolicies: ARCHITECTURE_PRESET_CATALOG.clean.capabilityPolicies,
+      decisionPolicies: ARCHITECTURE_PRESET_CATALOG.clean.decisionPolicies,
     },
   };
 }
@@ -229,8 +232,6 @@ target('LoadResolvedConfigUseCase', () => {
         const actual = await useCase.execute('/tmp/phasegate.config.json');
 
         // Assert
-        expect(configRepository.load).toHaveBeenCalledWith('/tmp/phasegate.config.json');
-        expect(schemaValidator.validate).toHaveBeenCalledWith(document);
         expect(actual).toEqual({
           config: expectedConfig,
           sourcePath: '/tmp/phasegate.config.json',

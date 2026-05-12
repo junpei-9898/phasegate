@@ -10,3 +10,8 @@ Public documentation represents the user-visible validator catalog. L4-004 `doc-
 ## G4 Documentation Contract Annotations
 
 Documentation may declare opt-in semantic contract records using `@phasegate-contract` and test observations using `@phasegate-observation`. These annotations let public docs participate in L2-015 without requiring every Markdown heading to become a contract.
+
+<!-- @work-item-id WI-134, WI-135 -->
+## Architecture Semantic Documentation Policy
+
+Documentation describes side-effect capability boundaries and decision-placement advisories as preset-driven architecture policy. Public guidance must present these findings as L4 advisory signals unless projects explicitly opt into warning failure.

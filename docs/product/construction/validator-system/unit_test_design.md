@@ -512,3 +512,13 @@ target('{クラス名またはメソッド名}', () => {
 - `StateMachineModel` docs/code mismatches, terminal outgoing transitions, and missing transition observations are reported.
 - `TraceabilityGraphSlice` affected-unit reflection gaps, implementation/test mismatches, and public docs/contract sync gaps are reported.
 - `ValidatorId` accepts `L2-015` as `contract-traceability-coverage`.
+## G5 Semantic Analysis Tests
+
+<!-- @work-item-id WI-119, WI-120, WI-121, WI-134, WI-135 -->
+
+- L3-001 detects representative OpenAI/GitHub/AWS/npm/Slack token fixtures and redacts raw values.
+- L3-001 respects explicit fixture/docs allowlist markers.
+- L3-002 detects await-in-loop and synchronous I/O, and respects inline performance suppression.
+- L4-003 reports unused exports but preserves barrel re-export references and public/test boundaries.
+- Architecture semantic policy fixtures cover capability boundaries and advisory decision-placement findings.
+- L4 use case integration tests verify semantic findings are included in `L4-002` output.

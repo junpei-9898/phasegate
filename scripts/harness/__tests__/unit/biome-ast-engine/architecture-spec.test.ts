@@ -50,18 +50,34 @@ target('CLEAN_PRESET_SPEC', () => {
       });
     });
 
+    context('semantic policy を確認する場合', () => {
+      it('side effect capability と decision placement が dependency boundary と別に定義される (WI-134, WI-135)', () => {
+        // Arrange
+
+        // Act
+        const actual = CLEAN_PRESET_SPEC;
+
+        // Assert
+        expect(actual.capabilityPolicies.domain.denied).toContain('filesystem');
+        expect(actual.capabilityPolicies.infrastructure.allowed).toContain('network');
+        expect(actual.decisionPolicies.domain.expected).toContain('business-rule-branch');
+        expect(actual.decisionPolicies.application.advisoryOnly).toBe(true);
+      });
+    });
+
     context('layers 配列を書き換えようとした場合', () => {
       it('frozen のため書き換えが拒否される', () => {
         // Arrange
         const spec = CLEAN_PRESET_SPEC;
 
         // Act
-        const act = () => {
+        const actual = () => {
           (spec.layers as string[]).push('extra');
         };
 
         // Assert
-        expect(act).toThrow();
+        expect(actual).toThrow(TypeError);
+        expect(spec.layers).toEqual(['domain', 'application', 'infrastructure', 'presentation']);
       });
     });
   });
@@ -83,6 +99,8 @@ target('freezeArchitectureSpec', () => {
             unit: '@module',
             layer: '@tier',
           },
+          capabilityPolicies: {},
+          decisionPolicies: {},
         };
 
         // Act

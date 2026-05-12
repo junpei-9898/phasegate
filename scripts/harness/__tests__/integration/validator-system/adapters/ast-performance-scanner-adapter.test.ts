@@ -6,6 +6,12 @@
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { AstPerformanceScannerAdapter } from '../../../../validator-system/infrastructure/adapters/ast-performance-scanner-adapter.js';
+import { join } from 'node:path';
+
+const FIXTURES_DIR = join(
+  process.cwd(),
+  'scripts/harness/__tests__/fixtures/validator-system/g5'
+);
 
 target('AstPerformanceScannerAdapter', () => {
   describe('scan', () => {
@@ -20,8 +26,7 @@ target('AstPerformanceScannerAdapter', () => {
         const actual = await adapter.scan(targetPaths, thresholds);
 
         // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.findings).toHaveLength(0);
+        expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
 
@@ -36,8 +41,7 @@ target('AstPerformanceScannerAdapter', () => {
         const actual = await adapter.scan(targetPaths, thresholds);
 
         // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.findings).toHaveLength(0);
+        expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
 
@@ -52,7 +56,38 @@ target('AstPerformanceScannerAdapter', () => {
         const actual = await adapter.scan(targetPaths, thresholds);
 
         // Assert
-        expect(Array.isArray(actual.findings)).toBe(true);
+        expect(actual).toEqual({ passed: true, findings: [] });
+      });
+    });
+
+    context('同期I/Oを含むファイルの場合', () => {
+      it('L3-002 finding を返す (WI-121)', async () => {
+        // Arrange
+        const filePath = join(FIXTURES_DIR, 'perf-sync-io.ts');
+        const adapter = new AstPerformanceScannerAdapter();
+
+        // Act
+        const actual = await adapter.scan([filePath], {});
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.findings.map((finding) => finding.message)).toEqual([
+          `同期I/O呼び出しを検出しました: ${filePath} metric=sync-io threshold=0`,
+        ]);
+      });
+    });
+
+    context('performance suppression marker を含む場合', () => {
+      it('許容済み batch/migration smell を抑制する (WI-121)', async () => {
+        // Arrange
+        const filePath = join(FIXTURES_DIR, 'perf-suppressed.ts');
+        const adapter = new AstPerformanceScannerAdapter();
+
+        // Act
+        const actual = await adapter.scan([filePath], {});
+
+        // Assert
+        expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
   });

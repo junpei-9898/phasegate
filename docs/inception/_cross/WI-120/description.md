@@ -2,7 +2,7 @@
 id: WI-120
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, ci-governance]
 source: internal
 ---
@@ -28,11 +28,11 @@ L3-001 はセキュリティ validator として登録済みで、API key / pass
 
 ## 受け入れ基準
 
-- [ ] OpenAI / GitHub / AWS / npm など代表 token family の fixture を検出できる。
-- [ ] docs example や dummy token fixture を allowlist できる。
-- [ ] report に secret 実値が出力されない。
-- [ ] false positive を抑えるための rule id / ignore comment / config がある。
-- [ ] L3-001 が CI で hard gate として使える運用説明を持つ。
+- [x] OpenAI / GitHub / AWS / npm など代表 token family の fixture を検出できる。
+- [x] docs example や dummy token fixture を allowlist できる。
+- [x] report に secret 実値が出力されない。
+- [x] false positive を抑えるための rule id / ignore comment / config がある。
+- [x] L3-001 が CI で hard gate として使える運用説明を持つ。
 
 ## 関連
 

@@ -25,8 +25,7 @@ target('FileSystemSecurityPatternScannerAdapter', () => {
         const actual = await adapter.scan([fixturePath]);
 
         // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.findings).toHaveLength(0);
+        expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
 
@@ -70,8 +69,51 @@ target('FileSystemSecurityPatternScannerAdapter', () => {
         const actual = await adapter.scan(['/nonexistent/path/file.ts']);
 
         // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.findings).toHaveLength(0);
+        expect(actual).toEqual({ passed: true, findings: [] });
+      });
+    });
+
+    context('代表的な token family を含むファイルの場合', () => {
+      it('OpenAI/GitHub/AWS/npm/Slack を検出し、実値は出力しない (WI-120)', async () => {
+        // Arrange
+        const secretPath = join(FIXTURES_DIR, 'g5/security-token-families.fixture');
+        const openai = 'sk-abcdefghijklmnopqrstuvwxyz123456';
+        const github = 'ghp_abcdefghijklmnopqrstuvwxyz123456';
+        const aws = 'AKIAABCDEFGHIJKLMNOP';
+        const npm = 'npm_abcdefghijklmnopqrstuvwxyz123456';
+        const slack = 'xoxb-' + 'FAKEFAKEFAKEFAKEFAKE';
+        const adapter = new FileSystemSecurityPatternScannerAdapter();
+
+        // Act
+        const actual = await adapter.scan([secretPath]);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.findings.map((finding) => finding.code.toString()).every((code) => code === 'L3-001')).toBe(true);
+        expect(JSON.stringify(actual.findings)).not.toContain(openai);
+        expect(JSON.stringify(actual.findings)).not.toContain(github);
+        expect(JSON.stringify(actual.findings)).not.toContain(aws);
+        expect(JSON.stringify(actual.findings)).not.toContain(npm);
+        expect(JSON.stringify(actual.findings)).not.toContain(slack);
+        expect(JSON.stringify(actual.findings)).toContain('secret.openai');
+        expect(JSON.stringify(actual.findings)).toContain('secret.github');
+        expect(JSON.stringify(actual.findings)).toContain('secret.aws-access-key');
+        expect(JSON.stringify(actual.findings)).toContain('secret.npm');
+        expect(JSON.stringify(actual.findings)).toContain('secret.slack');
+      });
+    });
+
+    context('fixture allowlist marker を含む場合', () => {
+      it('dummy token を findings から除外する (WI-120)', async () => {
+        // Arrange
+        const fixturePath = join(FIXTURES_DIR, 'g5/security-allowlisted.fixture');
+        const adapter = new FileSystemSecurityPatternScannerAdapter();
+
+        // Act
+        const actual = await adapter.scan([fixturePath]);
+
+        // Assert
+        expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
   });

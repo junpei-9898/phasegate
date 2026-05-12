@@ -2,7 +2,7 @@
 id: WI-121
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, harness-api, config-foundation]
 source: internal
 ---
@@ -28,11 +28,11 @@ L3-002 は performance validator として存在するが、現状の検出対�
 
 ## 受け入れ基準
 
-- [ ] L3-002 が skip される条件と実行される条件が docs / tests で固定されている。
-- [ ] await-in-loop 以外に、少なくとも 1 種類の実務的 performance smell を検出できる。
-- [ ] 許容パターンを config または inline annotation で抑制できる。
-- [ ] threshold 超過 report が対象 path / metric / threshold / suggestion を含む。
-- [ ] `phasegate:status --json` で L3-002 の skip/pass/fail が誤解なく読める。
+- [x] L3-002 が skip される条件と実行される条件が docs / tests で固定されている。
+- [x] await-in-loop 以外に、少なくとも 1 種類の実務的 performance smell を検出できる。
+- [x] 許容パターンを config または inline annotation で抑制できる。
+- [x] threshold 超過 report が対象 path / metric / threshold / suggestion を含む。
+- [x] `phasegate:status --json` で L3-002 の skip/pass/fail が誤解なく読める。
 
 ## 関連
 

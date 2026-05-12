@@ -2,7 +2,7 @@
 id: WI-119
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, biome-ast-engine, harness-api]
 source: internal
 ---
@@ -28,11 +28,11 @@ L4-003 は「未使用コード検出」として存在するが、現状は imp
 
 ## 受け入れ基準
 
-- [ ] 未参照 export を fixture で検出できる。
-- [ ] barrel re-export 経由で参照される export を未使用扱いしない。
-- [ ] CLI entrypoint / package public API / test fixture の除外方針が docs / tests に残っている。
-- [ ] `validate --layer L4 --fail-on-warning` のときだけ gate failure にできる。
-- [ ] L4-003 の output が削除候補としてレビュー可能な粒度になっている。
+- [x] 未参照 export を fixture で検出できる。
+- [x] barrel re-export 経由で参照される export を未使用扱いしない。
+- [x] CLI entrypoint / package public API / test fixture の除外方針が docs / tests に残っている。
+- [x] `validate --layer L4 --fail-on-warning` のときだけ gate failure にできる。
+- [x] L4-003 の output が削除候補としてレビュー可能な粒度になっている。
 
 ## 関連
 

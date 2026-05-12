@@ -12,6 +12,16 @@
     "paths",
     "reporting"
   ],
+  "$defs": {
+    "effectCapability": {
+      "type": "string",
+      "enum": ["filesystem", "network", "database", "process-env", "time", "random", "subprocess", "user-io"]
+    },
+    "decisionSignal": {
+      "type": "string",
+      "enum": ["business-rule-branch", "validation-rule", "error-construction", "state-transition", "policy-selection"]
+    }
+  },
   "properties": {
     "project": {
       "type": "object",
@@ -564,6 +574,42 @@
           "properties": {
             "byPath": { "type": "boolean" },
             "byTag": { "type": "boolean" }
+          }
+        },
+        "capabilityPolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["allowed", "denied"],
+            "properties": {
+              "allowed": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/effectCapability" },
+                "uniqueItems": true
+              },
+              "denied": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/effectCapability" },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "decisionPolicies": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["expected", "advisoryOnly"],
+            "properties": {
+              "expected": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/decisionSignal" },
+                "uniqueItems": true
+              },
+              "advisoryOnly": { "type": "boolean" }
+            }
           }
         }
       },

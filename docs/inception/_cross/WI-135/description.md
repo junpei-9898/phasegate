@@ -2,7 +2,7 @@
 id: WI-135
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [validator-system, config-foundation, traceability-model, documentation]
 source: internal
 ---
@@ -28,11 +28,11 @@ Layer dependency が正しくても、UseCase に業務ルールが集中する�
 
 ## 受け入れ基準
 
-- [ ] decision placement が architecture preset に依存する policy として定義されている。
-- [ ] UseCase に過剰な business rule branch がある場合に advisory を出せる。
-- [ ] Adapter / Mapper / Presentation に domain decision が混ざる smell を report できる。
-- [ ] finding に confidence / evidence / suggested owner zone が含まれる。
-- [ ] hard fail ではなく advisory rollout から開始する方針が docs にある。
+- [x] decision placement が architecture preset に依存する policy として定義されている。
+- [x] UseCase に過剰な business rule branch がある場合に advisory を出せる。
+- [x] Adapter / Mapper / Presentation に domain decision が混ざる smell を report できる。
+- [x] finding に confidence / evidence / suggested owner zone が含まれる。
+- [x] hard fail ではなく advisory rollout から開始する方針が docs にある。
 
 ## 関連
 

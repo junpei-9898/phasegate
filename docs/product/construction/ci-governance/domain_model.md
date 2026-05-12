@@ -3,6 +3,7 @@
 @story-id H13-01
 @story-id H13-02
 @story-id H13-03
+@work-item-id WI-120
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
@@ -31,6 +32,8 @@
 | PointerValidator | ドメインサービス | PointerEntry[]の実在性検証（CommandExistencePort + FileExistencePort） |
 | LessonAggregator | ドメインサービス | LessonArtifact[] → AgentsMdPointerへの集約・反映（重複lessonId検出） |
 | LessonArtifactSchema | Cross-Unit Contract | `docs/contracts/lesson-artifact.schema.json`に配置。skill-qualityが参照するJSONスキーマ |
+
+WI-120 L3-001 security findings are CI gate inputs. Secret scanner messages must use stable rule ids and redacted values so CI logs can fail safely without leaking token contents.
 
 ### 他Unitから受け取るShared Kernel
 

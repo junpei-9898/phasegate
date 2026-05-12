@@ -35,9 +35,11 @@ import { MarkdownDesignDocumentAdapter } from './infrastructure/adapters/markdow
 import { BiomeAstSourceCodeAnalyzerAdapter } from './infrastructure/adapters/biome-ast-source-code-analyzer-adapter.js';
 import { AdrFoundationReferenceAdapter } from './infrastructure/adapters/adr-foundation-reference-adapter.js';
 import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/import-graph-source-analysis-adapter.js';
+import { FileSystemArchitectureSemanticSourceAdapter } from './infrastructure/adapters/file-system-architecture-semantic-source-adapter.js';
 import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
 import { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
+import { ArchitectureSemanticAnalysisService, type ArchitectureSemanticPolicy } from './domain/services/l4/architecture-semantic-analysis-service.js';
 import { buildPhase2Extensions } from '../phase2-extensions/composition-root.js';
 import { RunValidatorsHandler } from './presentation/handlers/run-validators-handler.js';
 import { RunQuickModeHandler } from './presentation/handlers/run-quick-mode-handler.js';
@@ -53,6 +55,20 @@ const DEFAULT_CONFIG = {
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
   },
   validate: { failOnWarning: false },
+  architecture: {
+    capabilityPolicies: {
+      domain: { allowed: [], denied: ['filesystem', 'network', 'database', 'process-env', 'subprocess', 'user-io'] },
+      application: { allowed: ['time', 'random'], denied: ['filesystem', 'network', 'database', 'subprocess'] },
+      infrastructure: { allowed: ['filesystem', 'network', 'database', 'process-env', 'time', 'random', 'subprocess', 'user-io'], denied: [] },
+      presentation: { allowed: ['user-io', 'time'], denied: ['database', 'subprocess'] },
+    },
+    decisionPolicies: {
+      domain: { expected: ['business-rule-branch', 'validation-rule', 'state-transition'], advisoryOnly: true },
+      application: { expected: ['policy-selection', 'error-construction'], advisoryOnly: true },
+      infrastructure: { expected: ['error-construction'], advisoryOnly: true },
+      presentation: { expected: ['validation-rule', 'error-construction'], advisoryOnly: true },
+    },
+  },
 };
 
 /** バリデータ定義カタログ */
@@ -171,6 +187,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const sourceCodeAnalyzerAdapter = new BiomeAstSourceCodeAnalyzerAdapter();
   const adrReferencePort = new AdrFoundationReferenceAdapter();
   const sourceAnalysisPort = new ImportGraphSourceAnalysisAdapter();
+  const architectureSemanticSourcePort = new FileSystemArchitectureSemanticSourceAdapter();
 
   const driftDetectionService = new DriftDetectionService({
     designDocumentPort: markdownDesignDocumentPort,
@@ -183,6 +200,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const deadCodeDetectionService = new DeadCodeDetectionService({
     sourceAnalysisPort,
   });
+  const architectureSemanticAnalysisService = new ArchitectureSemanticAnalysisService({
+    sourcePort: architectureSemanticSourcePort,
+    policy: toArchitectureSemanticPolicy(configData),
+  });
   const phase2Extensions = buildPhase2Extensions(process.cwd(), configData as never);
 
   const runL4ValidatorsUseCase = new RunL4ValidatorsUseCase({
@@ -193,6 +214,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     driftDetectionService,
     consistencyCheckService,
     deadCodeDetectionService,
+    architectureSemanticAnalysisService,
     checkDocFreshnessUseCase: phase2Extensions.checkDocFreshnessUseCase,
     validateDocPointersUseCase: phase2Extensions.validateDocPointersUseCase,
   });
@@ -246,4 +268,12 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     driftDetectionService,
     handlers,
   };
+}
+
+function toArchitectureSemanticPolicy(configData: typeof DEFAULT_CONFIG): ArchitectureSemanticPolicy {
+  const architecture = configData.architecture;
+  return {
+    capabilityPolicies: architecture?.capabilityPolicies ?? DEFAULT_CONFIG.architecture.capabilityPolicies,
+    decisionPolicies: architecture?.decisionPolicies ?? DEFAULT_CONFIG.architecture.decisionPolicies,
+  } as ArchitectureSemanticPolicy;
 }

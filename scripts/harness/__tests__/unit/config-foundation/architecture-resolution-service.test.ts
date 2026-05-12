@@ -1,6 +1,7 @@
 // @layer test
 // @unit config-foundation
-// @story ISSUE-014
+// @story H04-01
+// @work-item-id WI-134, WI-135
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ArchitectureResolutionService } from '../../../config-foundation/domain/services/architecture-resolution-service.js';
@@ -114,10 +115,10 @@ target('ArchitectureResolutionService.resolve', () => {
         const sut = new ArchitectureResolutionService();
 
         // Act
-        const act = () => sut.resolve({ preset: 'custom' });
+        const actual = () => sut.resolve({ preset: 'custom' });
 
         // Assert
-        expect(act).toThrow(ConfigValidationError);
+        expect(actual).toThrow(ConfigValidationError);
       });
     });
 
@@ -172,7 +173,7 @@ target('ArchitectureResolutionService.resolve', () => {
         const sut = new ArchitectureResolutionService();
 
         // Act
-        const act = () =>
+        const actual = () =>
           sut.resolve({
             preset: 'custom',
             layers: ['domain', 'application'],
@@ -184,7 +185,8 @@ target('ArchitectureResolutionService.resolve', () => {
           });
 
         // Assert
-        expect(act).toThrow(/C2/);
+        expect(actual).toThrow(ConfigValidationError);
+        expect(actual).toThrow(/C2/);
       });
     });
 
@@ -194,7 +196,7 @@ target('ArchitectureResolutionService.resolve', () => {
         const sut = new ArchitectureResolutionService();
 
         // Act
-        const act = () =>
+        const actual = () =>
           sut.resolve({
             preset: 'custom',
             layers: ['domain', 'application'],
@@ -205,7 +207,8 @@ target('ArchitectureResolutionService.resolve', () => {
           });
 
         // Assert
-        expect(act).toThrow(/C3/);
+        expect(actual).toThrow(ConfigValidationError);
+        expect(actual).toThrow(/C3/);
       });
     });
 
@@ -278,14 +281,14 @@ target('ArchitectureResolutionService.resolve', () => {
         const sut = new ArchitectureResolutionService();
 
         // Act
-        const act = () =>
+        const actual = () =>
           sut.resolve({
             preset: 'clean',
             layerDetection: { byPath: false, byTag: false },
           });
 
         // Assert
-        expect(act).toThrow(ConfigValidationError);
+        expect(actual).toThrow(ConfigValidationError);
       });
     });
 
@@ -324,3 +327,20 @@ target('ArchitectureResolutionService.resolve', () => {
     });
   });
 });
+  describe('semantic policy', () => {
+    context('clean preset を解決した場合', () => {
+      it('capability policy と decision policy を含む (WI-134, WI-135)', () => {
+        // Arrange
+        const sut = new ArchitectureResolutionService();
+
+        // Act
+        const actual = sut.resolve({ preset: 'clean' });
+
+        // Assert
+        expect(actual.document.capabilityPolicies.domain.denied).toContain('filesystem');
+        expect(actual.document.capabilityPolicies.infrastructure.allowed).toContain('database');
+        expect(actual.document.decisionPolicies.domain.expected).toContain('business-rule-branch');
+        expect(actual.document.decisionPolicies.domain.advisoryOnly).toBe(true);
+      });
+    });
+  });

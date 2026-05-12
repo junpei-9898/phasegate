@@ -386,3 +386,10 @@ classDiagram
 ## WI-012: preCommit configuration
 
 `HarnessConfigResolvedDocument` may contain `preCommit.implementationExtensions`, a non-empty list of file extensions that the pre-commit entrypoint treats as implementation files. Preset resolution supplies `[".ts"]` when the source config omits the section.
+## Architecture Preset Semantic Policy
+
+<!-- @work-item-id WI-121, WI-134, WI-135 -->
+
+Architecture presets may define capability and decision-placement policy next to dependency direction. Custom presets can override zone capability allowances and advisory decision responsibility without changing validator implementations.
+
+L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into validator-system config so WI-121 operational signals remain configurable by consumer projects.
