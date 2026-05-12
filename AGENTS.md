@@ -23,6 +23,12 @@
 
 詳細なコマンド、バリデーター、L4 検出器は README / docs / CLI help を正とする。実装前後は必要に応じて `pnpm harness:check-ready` や該当レイヤーの検証を実行する。
 
+## Git hook bypass の扱い
+
+`git commit --no-verify` / `git push --no-verify` などの hook bypass は安易に使用しない。pre-commit / pre-push が失敗した場合は、まずエラー内容を確認し、修正して通常の commit / push を通す。
+
+やむを得ず `--no-verify` を使う必要がある場合は、実行前に理由・残るリスク・確認済みの代替検証をユーザーへ説明し、明示的な許可を得る。
+
 ## エラー発生時の対処
 
 1. エラーコードを確認（例: `HARNESS-PG-001`）
