@@ -22,9 +22,9 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] 各 report 出力がどの config に従うか、固定パスなのか、legacy fallback なのかが分かる。
-- [ ] doctor / status / regression-suite の説明と矛盾しない。
-- [ ] docs だけで足りない場合は、実装 fallback や tests の見直し範囲が分かる。
+- [x] 各 report 出力がどの config に従うか、固定パスなのか、legacy fallback なのかが分かる。
+- [x] doctor / status / regression-suite の説明と矛盾しない。
+- [x] docs だけで足りない場合は、実装 fallback や tests の見直し範囲が分かる。
 
 ## 依存
 

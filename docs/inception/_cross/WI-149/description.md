@@ -34,9 +34,9 @@ PhaseGate の実装契約、product docs、README / guide / DEVELOPMENT.md の�
 
 ## 受け入れ基準
 
-- [ ] 上記 4 件について、実装・product docs・guide の説明が同じ名前・同じ意味で読める。
-- [ ] `skill:run-plan-checker` / `harness:skill-quality:plan-checker` のどちらを正とするかが決まっている。
-- [ ] 修正箇所に `@work-item-id WI-149` が付く。
+- [x] 上記 4 件について、実装・product docs・guide の説明が同じ名前・同じ意味で読める。
+- [x] `skill:run-plan-checker` / `harness:skill-quality:plan-checker` のどちらを正とするかが決まっている。
+- [x] 修正箇所に `@work-item-id WI-149` が付く。
 
 ## 依存
 

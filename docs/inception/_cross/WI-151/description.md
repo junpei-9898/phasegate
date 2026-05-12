@@ -32,9 +32,9 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] JSON 出力の主要キーと、それを人間・CI・agent がどう使うかが説明されている。
-- [ ] L4 warning を失敗扱いにする条件が README からも分かる。
-- [ ] `L2-013` が layer guide の validator 表に載る。
+- [x] JSON 出力の主要キーと、それを人間・CI・agent がどう使うかが説明されている。
+- [x] L4 warning を失敗扱いにする条件が README からも分かる。
+- [x] `L2-013` が layer guide の validator 表に載る。
 
 ## 依存
 

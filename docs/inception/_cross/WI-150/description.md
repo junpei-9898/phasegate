@@ -37,11 +37,11 @@ PhaseGate の CLI は npm scripts、binary subcommands、compatibility commands�
 
 ## 受け入れ基準
 
-- [ ] README は入口として主要コマンドと参照先を示し、全列挙は CLI reference に寄せる。
-- [ ] CLI reference は npm script 名、binary subcommand、help 表示のどれを指すかを混同しない。
-- [ ] `package.json` scripts に存在しない `phasegate:*` command を「npm script」と誤読させない。
-- [ ] `scripts/harness/main.ts` help に載る公開 command は、public docs に載せるか internal / compatibility 扱いとして理由を明確にする。
-- [ ] regression-suite / skill-quality / quick CI の使い道が、初見でも辿れる。
+- [x] README は入口として主要コマンドと参照先を示し、全列挙は CLI reference に寄せる。
+- [x] CLI reference は npm script 名、binary subcommand、help 表示のどれを指すかを混同しない。
+- [x] `package.json` scripts に存在しない `phasegate:*` command を「npm script」と誤読させない。
+- [x] `scripts/harness/main.ts` help に載る公開 command は、public docs に載せるか internal / compatibility 扱いとして理由を明確にする。
+- [x] regression-suite / skill-quality / quick CI の使い道が、初見でも辿れる。
 
 ## 依存
 
