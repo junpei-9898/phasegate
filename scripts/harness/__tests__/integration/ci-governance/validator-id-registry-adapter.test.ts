@@ -1,7 +1,7 @@
 // @layer test
 // @unit ci-governance
 // @story H08-03
-// @work-item-id WI-124
+// @work-item-id WI-124 / WI-128
 
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';

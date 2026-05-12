@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.2] - 2026-05-12
+
+### Fixed
+
+- **WI status evidence closure / WI-119 / WI-120 / WI-121 / WI-127 / WI-128** — adds missing implementation/test traceability annotations and applies derived WI statuses so the remaining G1/G5 backlog items no longer report stale or reflected-only status.
+
 ## [0.152.1] - 2026-05-12
 
 ### Fixed

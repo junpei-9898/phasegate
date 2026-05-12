@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-120
  *
  * FileSystemSecurityPatternScannerAdapter — SecurityPatternScannerPort実装
  */

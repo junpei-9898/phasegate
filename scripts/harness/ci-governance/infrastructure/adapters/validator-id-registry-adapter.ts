@@ -1,6 +1,6 @@
 // @unit ci-governance
 // @layer infrastructure
-// @work-item-id WI-124
+// @work-item-id WI-124 / WI-128
 
 import type { ValidatorIdRegistryPort } from '../../domain/ports/validator-id-registry-port.js';
 import { buildDefaultRegistry } from '../../../validator-system/composition-root.js';

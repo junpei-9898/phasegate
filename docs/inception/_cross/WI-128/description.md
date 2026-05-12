@@ -2,7 +2,7 @@
 id: WI-128
 type: issue
 severity: normal
-status: reflected
+status: tested
 affects: [validator-system, phase2-extensions, ci-governance, documentation]
 source: internal
 ---

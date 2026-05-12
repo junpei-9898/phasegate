@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-119
  *
  * ImportGraphSourceAnalysisAdapter — SourceAnalysisPort実装
  */

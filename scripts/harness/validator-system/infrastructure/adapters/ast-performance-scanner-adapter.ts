@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-121
  *
  * AstPerformanceScannerAdapter — PerformanceScannerPort実装
  * TypeScript Compiler API によるループ内 await 検出 + ファイルサイズチェック（L3-002）
