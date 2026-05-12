@@ -77,9 +77,9 @@ target('ConsistencyCheckService', () => {
       const adrPort = createMockAdrReferencePort();
       const sut = new ConsistencyCheckService({ designDocumentPort: designPort, adrReferencePort: adrPort });
       // Act
-      await sut.check();
+      const actual = await sut.check();
       // Assert
-      expect(designPort.getLayerAnnotations).toHaveBeenCalled();
+      expect(actual.hasMismatches()).toBe(false);
     });
 
     context('DesignDocumentPortがエラーをthrowする場合', () => {
@@ -90,10 +90,10 @@ target('ConsistencyCheckService', () => {
         };
         const adrPort = createMockAdrReferencePort();
         const sut = new ConsistencyCheckService({ designDocumentPort: designPort, adrReferencePort: adrPort });
-        // Act
-        const actual = sut.check();
-        // Assert
-        await expect(actual).rejects.toThrow();
+      // Act
+      const actual = sut.check();
+      // Assert
+      await expect(actual).rejects.toThrow('Port error');
       });
     });
   });

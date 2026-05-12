@@ -54,11 +54,14 @@ target('SemanticDriftService', () => {
         testObservations: [{ unitName: 'validator-system', behaviorId: 'accidental-contract', source: 'service.test.ts' }],
       });
       // Assert
-      expect(actual).toHaveLength(1);
-      expect(actual[0]).toMatchObject({
-        kind: 'test-observation-missing-design',
-        severity: 'warning',
-      });
+      expect(actual).toEqual([
+        expect.objectContaining({
+          kind: 'test-observation-missing-design',
+          severity: 'warning',
+          unitName: 'validator-system',
+          behaviorId: 'accidental-contract',
+        }),
+      ]);
     });
   });
 });

@@ -74,10 +74,9 @@ target('DriftDetectionService', () => {
       const sourcePort = createMockSourceCodeAnalyzerPort();
       const sut = new DriftDetectionService({ designDocumentPort: designPort, sourceCodeAnalyzerPort: sourcePort });
       // Act
-      await sut.detect();
+      const actual = await sut.detect();
       // Assert
-      expect(designPort.getElements).toHaveBeenCalled();
-      expect(sourcePort.getElements).toHaveBeenCalled();
+      expect(actual).toEqual([]);
     });
 
     context('DesignDocumentPortがエラーをthrowする場合', () => {
@@ -88,10 +87,10 @@ target('DriftDetectionService', () => {
         };
         const sourcePort = createMockSourceCodeAnalyzerPort();
         const sut = new DriftDetectionService({ designDocumentPort: designPort, sourceCodeAnalyzerPort: sourcePort });
-        // Act
-        const actual = sut.detect();
-        // Assert
-        await expect(actual).rejects.toThrow();
+      // Act
+      const actual = sut.detect();
+      // Assert
+      await expect(actual).rejects.toThrow('DesignDoc read error');
       });
     });
   });
@@ -114,10 +113,10 @@ target('DriftDetectionService', () => {
       // Act
       const actual = await sut.detect();
       // Assert
-      const fooReport = actual.find((r) => r.element === 'Foo');
-      const barReport = actual.find((r) => r.element === 'Bar');
-      expect(fooReport?.unitName).toBe('unit-a');
-      expect(barReport?.unitName).toBe('unit-b');
+      expect(actual.map((report) => ({ element: report.element, unitName: report.unitName }))).toEqual([
+        { element: 'Foo', unitName: 'unit-a' },
+        { element: 'Bar', unitName: 'unit-b' },
+      ]);
     });
 
     it('code→design の drift も sourceCode 側の unit map で解決される (UT-DDS-008)', async () => {
@@ -137,8 +136,9 @@ target('DriftDetectionService', () => {
       // Act
       const actual = await sut.detect();
       // Assert
-      const bazReport = actual.find((r) => r.element === 'Baz');
-      expect(bazReport?.unitName).toBe('unit-c');
+      expect(actual.map((report) => ({ element: report.element, unitName: report.unitName }))).toEqual([
+        { element: 'Baz', unitName: 'unit-c' },
+      ]);
     });
 
     it('getElementUnitMap 未実装ポートでは従来挙動 (targetUnits[0] or unknown) を保つ (UT-DDS-009)', async () => {
@@ -152,8 +152,9 @@ target('DriftDetectionService', () => {
       // Act
       const actual = await sut.detect();
       // Assert
-      const fooReport = actual.find((r) => r.element === 'Foo');
-      expect(fooReport?.unitName).toBe('unknown');
+      expect(actual.map((report) => ({ element: report.element, unitName: report.unitName }))).toEqual([
+        { element: 'Foo', unitName: 'unknown' },
+      ]);
     });
   });
 
@@ -233,9 +234,17 @@ target('DriftDetectionService', () => {
       const actual = await sut.detect();
 
       // Assert
-      expect(actual).toHaveLength(1);
-      expect(actual[0].unitName).toBe('unit-b');
-      expect(actual[0].element).toBe('SharedName');
+      expect(actual.map((report) => ({
+        direction: report.direction,
+        element: report.element,
+        unitName: report.unitName,
+      }))).toEqual([
+        {
+          direction: 'design→code',
+          element: 'SharedName',
+          unitName: 'unit-b',
+        },
+      ]);
     });
 
     it('pointer match は同一ファイル内の無関係 export を blanket match しない', async () => {
