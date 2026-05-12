@@ -5,8 +5,8 @@
 #
 # 実行タイミング: 毎週月曜 09:00 UTC（手動トリガーも可）
 # 実行内容:
-#   1. harness:detect-drift   — L4 設計⇔コード乖離検出（drift-detect）
-#   2. harness:complete-check — L4 全バリデータ（drift-detect / consistency-check / dead-code）
+#   1. phasegate:detect-drift — L4 設計⇔コード乖離検出（drift-detect）
+#   2. validate --layer L4 — L4 全バリデータ（drift-detect / consistency-check / dead-code / doc-freshness / pointer-validation）
 #   3. 乖離検出時: GitHub Issue を自動作成
 
 name: AIDLC Consistency Check (Weekly)
@@ -46,7 +46,7 @@ jobs:
         id: drift
         run: |
           set +e
-          RESULT=$(pnpm run harness harness:detect-drift --json 2>&1)
+          RESULT=$(npx phasegate phasegate:detect-drift --json 2>&1)
           EXIT_CODE=$?
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$RESULT" >> $GITHUB_OUTPUT
@@ -54,12 +54,12 @@ jobs:
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           exit 0   # Issue作成のため常に続行
 
-      # L4: 全バリデータ（drift-detect + consistency-check + dead-code）
+      # L4: 全バリデータ（drift-detect + consistency-check + dead-code + doc-freshness + pointer-validation）
       - name: L4 Complete Check
         id: complete
         run: |
           set +e
-          RESULT=$(pnpm run harness harness:complete-check --json 2>&1)
+          RESULT=$(npx phasegate validate --layer L4 --format ci 2>&1)
           EXIT_CODE=$?
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$RESULT" >> $GITHUB_OUTPUT
@@ -95,7 +95,7 @@ jobs:
             body += '### 対処方法\n';
             body += '1. 乖離の内容を確認し、設計文書またはコードのどちらを修正すべきか判断\n';
             body += '2. `cascade-updater` スキルで設計文書を更新、または実装を修正\n';
-            body += '3. `pnpm run harness harness:detect-drift` で再検証して乖離が解消されたことを確認\n';
+            body += '3. `npx phasegate validate --layer L4` で再検証して乖離が解消されたことを確認\n';
 
             github.rest.issues.create({
               owner: context.repo.owner,

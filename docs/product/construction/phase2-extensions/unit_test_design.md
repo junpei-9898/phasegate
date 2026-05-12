@@ -307,3 +307,9 @@
 | **合計** | **41** | **7** | **4** | **30** | **82** |
 
 > 不変条件テストは各生成テストの異常系に含んでいるため別カウントなし。
+<!-- @work-item-id WI-122 -->
+## WI-122 Pointer And Freshness Tests
+
+- Pointer policy returns fail/warn/skip by semantic type.
+- Broken product-doc pointers include owner, semantic type, severity, and next action.
+- Related source change freshness produces `stale-after-source-change`.

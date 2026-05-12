@@ -359,6 +359,19 @@ ISSUE-005 P3-10 で明確化された境界:
 
 | Command | Options | Description |
 |---|---|---|
-| `p2:check-freshness` | `--pattern <glob>` `--dry-run` `--format text\|json` | Design doc freshness check |
-| `p2:validate-pointers` | `--include-urls` `--format text\|json` | Validate file pointers in docs |
+| `p2:check-freshness` | `--pattern <glob>` `--dry-run` `--format text\|json` | Compatibility entry point for L4-004 doc freshness; canonical L4 execution is `validate --layer L4` |
+| `p2:validate-pointers` | `--include-urls` `--format text\|json` | Compatibility entry point for L4-005 pointer validation; canonical L4 execution is `validate --layer L4` |
 | `p2:generate-e2e-template` | `--phase <phase>` `--output <path>` | Generate E2E test template |
+
+### `phasegate:generate-matrix`
+
+<!-- @work-item-id WI-125, WI-131 -->
+
+Generates `.harness/requirement-test-matrix.json` from product acceptance criteria and test metadata.
+
+```bash
+phasegate phasegate:generate-matrix --requirements docs/product/user_stories.md --tests scripts/harness/__tests__ --out .harness/requirement-test-matrix.json
+phasegate validate --layer L3
+```
+
+Use `--json` to inspect `missingTests`, `orphanTests`, preserved references, and intent coverage.

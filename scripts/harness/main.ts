@@ -185,6 +185,7 @@ Commands:
   phasegate:lint                Lint via harness-api (--target <path>, --json)
   phasegate:complete-check       Complete L2-L4 check (--json)
   phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
+  phasegate:generate-matrix      Generate requirement-test matrix (--requirements, --tests, --out, --json)
 
   ci:generate-template         Generate CI template (--preset <id>, default: standard; --type <aidlc-gate|consistency-check|pre-commit|agent-context-refresh>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
@@ -1649,6 +1650,21 @@ async function main(): Promise<void> {
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
         await mod.handlers.impactAnalysis.handle({ storyId }, flags);
+        break;
+      }
+
+      case "phasegate:generate-matrix": {
+        const { createNyquistValidationModule } = await import("./nyquist-validation/composition-root.js");
+        const mod = createNyquistValidationModule({
+          getStoryIds: async () => [],
+        });
+        const flags: Record<string, boolean | string> = {};
+        if (json) flags.json = true;
+        await mod.handlers.generateMatrixHandler.handle({
+          requirementsPath: parseFlag(args, "--requirements") ?? "docs/product/user_stories.md",
+          testRoot: parseFlag(args, "--tests") ?? "scripts/harness/__tests__",
+          matrixFilePath: parseFlag(args, "--out") ?? ".harness/requirement-test-matrix.json",
+        }, flags);
         break;
       }
 

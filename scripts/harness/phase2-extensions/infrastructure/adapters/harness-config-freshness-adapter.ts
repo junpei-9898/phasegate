@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit phase2-extensions
+ * @work-item-id WI-122
  */
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
 import { DocFreshnessRule } from '../../domain/aggregates/doc-freshness-rule.js';
@@ -25,6 +26,8 @@ type Phase2RuleConfig = {
       ruleId: string;
       documentPattern: string;
       failOnBroken?: boolean;
+      owner?: string;
+      pointerPolicies?: Record<string, 'fail' | 'warn' | 'skip'>;
     }>;
   };
 };
@@ -73,6 +76,14 @@ export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
           ruleId: 'default-pointer-rule',
           documentPattern: `${designDocsRoot}/**/*.md`,
           failOnBroken: true,
+          owner: 'documentation',
+          pointerPolicies: {
+            'product-doc': 'fail',
+            adr: 'fail',
+            implementation: 'warn',
+            reference: 'warn',
+            'external-url': 'skip',
+          },
         }),
       ];
     }
@@ -82,6 +93,8 @@ export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
         ruleId: rule.ruleId,
         documentPattern: rule.documentPattern,
         failOnBroken: rule.failOnBroken ?? true,
+        owner: rule.owner,
+        pointerPolicies: rule.pointerPolicies,
       }),
     );
   }

@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase2-extensions
+// @story HF2-01
+// @work-item-id WI-122
 import { beforeEach, expect, it } from 'vitest';
 import { context, target } from '../../../helpers/test-helpers.js';
 import { createDocFreshnessRule, createDocumentAge } from '../../../helpers/phase2-extensions-test-factories.js';
@@ -50,6 +53,17 @@ target('UT-P2-008 FreshnessCheckService', () => {
       const actual = service.check(rule, documentAge, 'docs/design.md');
       // Assert
       expect(actual.level).toBe('ok');
+    });
+
+    it('related-source-change source の古い文書を stale-after-source-change と分類する', () => {
+      // Arrange
+      const rule = createDocFreshnessRule({ warnThresholdDays: 14, errorThresholdDays: 30 });
+      const documentAge = createDocumentAge({ ageInDays: 20, source: 'related-source-change' });
+      // Act
+      const actual = service.check(rule, documentAge, 'docs/design.md');
+      // Assert
+      expect(actual.category).toBe('stale-after-source-change');
+      expect(actual.nextAction).toBe('Refresh the document against the related WI/product/source change');
     });
   });
 });

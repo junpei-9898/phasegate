@@ -1,14 +1,25 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-117, WI-118
  *
  * MarkdownDesignDocumentAdapter — DesignDocumentPort実装
  */
 import type { DesignDocumentPort, StructuredDesignDoc } from '../../domain/ports/design-document-port.js';
+import type { DriftElementRecord } from '../../domain/services/l4/drift-detection-service.js';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const ADR_PATTERN = /ADR-\d{3}/g;
+const WORK_ITEM_PATTERN = /@work-item-id\s+(WI-\d{3})/g;
+const LAYER_PATTERN = /@layer\s+([a-z0-9-]+)/gi;
+const UNIT_PATTERN = /@unit\s+([a-z0-9-]+)/gi;
+const CONSTRUCTION_DOC_NAMES = [
+  'domain_model.md',
+  'logical_design.md',
+  'unit_test_design.md',
+  'it_test_design.md',
+];
 
 // ISSUE-005 P3-8: メタ見出し / 議論用セクションを drift 対象から除外するマーカー。
 // 見出し行の直後 (同一行末 or 次の非空行) に置かれたコメントを拾う。
@@ -111,26 +122,28 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
     const results: StructuredDesignDoc[] = [];
 
     for (const unitName of unitNames) {
-      const docPath = join(this.docsRoot, unitName, 'domain_model.md');
-      const cached = this.cache.get(docPath);
-      if (cached) {
-        results.push(cached);
-        continue;
-      }
+      for (const docName of CONSTRUCTION_DOC_NAMES) {
+        const docPath = join(this.docsRoot, unitName, docName);
+        const cached = this.cache.get(docPath);
+        if (cached) {
+          results.push(cached);
+          continue;
+        }
 
-      try {
-        const markdown = await readFile(docPath, 'utf8');
-        const doc: StructuredDesignDoc = {
-          unitName,
-          docPath,
-          concepts: extractConcepts(markdown).map((concept) => ({ ...concept, type: 'class' })),
-          layerDependencies: [],
-          adrRefs: Array.from(new Set(markdown.match(ADR_PATTERN) ?? [])),
-        };
-        this.cache.set(docPath, doc);
-        results.push(doc);
-      } catch {
-        continue;
+        try {
+          const markdown = await readFile(docPath, 'utf8');
+          const doc: StructuredDesignDoc = {
+            unitName,
+            docPath,
+            concepts: extractConcepts(markdown).map((concept) => ({ ...concept, type: 'class' })),
+            layerDependencies: extractLayerDependencies(markdown),
+            adrRefs: Array.from(new Set(markdown.match(ADR_PATTERN) ?? [])),
+          };
+          this.cache.set(docPath, doc);
+          results.push(doc);
+        } catch {
+          continue;
+        }
       }
     }
 
@@ -138,12 +151,48 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
   }
 
   async getLayerAnnotations(targetDocs?: readonly string[]): Promise<Record<string, string>> {
-    return {};
+    const docs = targetDocs && targetDocs.length > 0
+      ? await this.loadExplicitDocs(targetDocs)
+      : await this.loadDesignDocuments();
+    const annotations: Record<string, string> = {};
+
+    for (const doc of docs) {
+      const markdown = await readFile(doc.docPath, 'utf8');
+      const layers = Array.from(new Set(Array.from(markdown.matchAll(LAYER_PATTERN)).map((match) => match[1])));
+      const units = Array.from(new Set(Array.from(markdown.matchAll(UNIT_PATTERN)).map((match) => match[1])));
+      const workItems = Array.from(new Set(Array.from(markdown.matchAll(WORK_ITEM_PATTERN)).map((match) => match[1])));
+
+      for (const layer of layers) {
+        annotations[`${doc.docPath}#layer:${layer}`] = isKnownLayer(layer) ? 'layer:known' : 'layer:unknown';
+      }
+      for (const unit of units) {
+        annotations[`${doc.docPath}#unit:${unit}`] = unit === doc.unitName ? 'unit:matched' : `unit:mismatch:${doc.unitName}`;
+      }
+      for (const adrRef of doc.adrRefs) {
+        annotations[adrRef] = 'adr:referenced';
+      }
+      for (const workItemId of workItems) {
+        annotations[`${doc.docPath}#work-item:${workItemId}`] = 'work-item:referenced';
+      }
+    }
+
+    return annotations;
   }
 
   async getElements(targetUnits?: readonly string[]): Promise<string[]> {
     const docs = await this.loadDesignDocuments(targetUnits);
     return docs.flatMap((doc) => doc.concepts.map((concept) => concept.name));
+  }
+
+  async getElementRecords(targetUnits?: readonly string[]): Promise<readonly DriftElementRecord[]> {
+    const docs = await this.loadDesignDocuments(targetUnits);
+    return docs.flatMap((doc) =>
+      doc.concepts.map((concept) => ({
+        element: concept.name,
+        unitName: doc.unitName,
+        pointers: concept.pointers ?? [],
+      }))
+    );
   }
 
   async getElementPointers(targetUnits?: readonly string[]): Promise<Record<string, readonly string[]>> {
@@ -176,6 +225,26 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
     return map;
   }
 
+  private async loadExplicitDocs(targetDocs: readonly string[]): Promise<readonly StructuredDesignDoc[]> {
+    const docs: StructuredDesignDoc[] = [];
+    for (const docPath of targetDocs) {
+      try {
+        const markdown = await readFile(docPath, 'utf8');
+        const unitName = inferUnitNameFromDocPath(this.docsRoot, docPath);
+        docs.push({
+          unitName,
+          docPath,
+          concepts: extractConcepts(markdown).map((concept) => ({ ...concept, type: 'class' })),
+          layerDependencies: extractLayerDependencies(markdown),
+          adrRefs: Array.from(new Set(markdown.match(ADR_PATTERN) ?? [])),
+        });
+      } catch {
+        continue;
+      }
+    }
+    return docs;
+  }
+
   private async listUnitNames(): Promise<string[]> {
     try {
       const entries = await readdir(this.docsRoot, { withFileTypes: true });
@@ -184,4 +253,26 @@ export class MarkdownDesignDocumentAdapter implements DesignDocumentPort {
       return [];
     }
   }
+}
+
+function extractLayerDependencies(markdown: string): Array<{ from: string; to: string }> {
+  const dependencies: Array<{ from: string; to: string }> = [];
+  const dependencyPattern = /([a-z0-9-]+)\s*(?:->|→)\s*([a-z0-9-]+)/gi;
+  for (const match of markdown.matchAll(dependencyPattern)) {
+    dependencies.push({ from: match[1], to: match[2] });
+  }
+  return dependencies;
+}
+
+function isKnownLayer(layer: string): boolean {
+  return ['domain', 'application', 'infrastructure', 'presentation', 'test'].includes(layer);
+}
+
+function inferUnitNameFromDocPath(docsRoot: string, docPath: string): string {
+  const normalizedRoot = docsRoot.replace(/\\/g, '/').replace(/\/+$/, '');
+  const normalizedPath = docPath.replace(/\\/g, '/');
+  const relativePath = normalizedPath.startsWith(`${normalizedRoot}/`)
+    ? normalizedPath.slice(normalizedRoot.length + 1)
+    : normalizedPath;
+  return relativePath.split('/')[0] || 'unknown';
 }

@@ -22,5 +22,13 @@ export type {
 } from './presentation/handlers/calculate-coverage-handler.js';
 export { AnalyzeImpactHandler } from './presentation/handlers/analyze-impact-handler.js';
 export type { AnalyzeImpactHandlerArgs, AnalyzeImpactHandlerDeps } from './presentation/handlers/analyze-impact-handler.js';
+export { GenerateMatrixHandler } from './presentation/handlers/generate-matrix-handler.js';
+export { GenerateRequirementTestMatrixUseCase } from './application/usecases/generate-requirement-test-matrix-usecase.js';
+export { RequirementIntentCoverageService } from './domain/services/requirement-intent-coverage-service.js';
+export type {
+  GenerateMatrixOutput,
+  RequirementTestMatrixDto,
+  MatrixGenerationReportDto,
+} from './application/dto/generate-matrix-output.js';
 
 // @story-id H08-07

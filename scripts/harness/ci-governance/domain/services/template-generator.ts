@@ -31,8 +31,9 @@ export class TemplateGenerator {
     templateType: TemplateType,
   ): Promise<Result<TemplateConfig, Array<{ code: string; message: string }>>> {
     try {
+      const listValidatorIds = this.validatorIdRegistryPort.listForPreset ?? this.validatorIdRegistryPort.listAll;
       const [validatorIds, presetConfig] = await Promise.all([
-        this.validatorIdRegistryPort.listAll(),
+        listValidatorIds.call(this.validatorIdRegistryPort, presetId, templateType),
         this.presetConfigPort.getPreset(presetId),
       ]);
 

@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit validator-system
+ * @work-item-id WI-118
  *
  * ConsistencyReport 値オブジェクト
  * 設計文書間のレイヤー整合性検証結果VO（L4-002専用）
@@ -11,6 +12,7 @@ export interface MismatchPair {
   readonly expected: string;
   readonly actual: string;
   readonly location: string;
+  readonly nextAction?: string;
 }
 
 export interface ConsistencyReportProps {
@@ -49,7 +51,7 @@ export class ConsistencyReport {
       code: { value: 'L4-002', toString: () => 'L4-002' },
       severity: { value: 'warning', toString: () => 'warning' },
       message: `レイヤー整合性違反: expected "${pair.expected}" but got "${pair.actual}" at ${pair.location}`,
-      suggestion: '設計文書間のレイヤー依存方向を統一してください',
+      suggestion: pair.nextAction ?? '設計文書間のレイヤー依存方向を統一してください',
     }));
   }
 }

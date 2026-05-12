@@ -1,6 +1,6 @@
 # Skills Overview
 
-Phasegate provides 28 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` deploys the skill bodies to `skills/` and exposes them to enabled agents through `.claude/skills/` / `.codex/skills/` links.
+Phasegate provides 30 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` deploys the skill bodies to `skills/` and exposes them to enabled agents through `.claude/skills/` / `.codex/skills/` links.
 
 ## AIDLC Process — Skill Execution Order
 
@@ -105,3 +105,10 @@ Skills run per User Story:
 | `/pointer-validator` | Validate file pointers (relative path references) in design documents. Detects broken links. |
 | `/engineering-perspective` | Design review from Kent Beck, Martin Fowler, Uncle Bob, and Eric Evans perspectives. Multi-angle quality evaluation. |
 | `/skill-creator` | Create and update Agent Skills. Packaging, scripting, references, and asset management. |
+
+### Operations (2 skills)
+
+| Skill | Description |
+|---|---|
+| `/phasegate-config-doctor` | Diagnose and explain PhaseGate configuration, installation, and hook setup issues. |
+| `/phasegate-toolkit-guide` | Operator guide for PhaseGate toolkit usage, rollout choices, and command selection. |

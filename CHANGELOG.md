@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.150.2] - 2026-05-12
+
+### Added
+
+- **G3 / WI-117 / WI-118 / WI-122 / WI-139 — L4 drift, consistency, docs, and semantic drift semantics** — L4 drift detection now compares unit-scoped records, prefers `@unit` metadata, handles product construction docs and re-export/default export surfaces more precisely, reports real product-doc consistency targets, adds operational pointer/freshness semantics, and introduces semantic drift reports across design intent, implementation behavior, and test observations.
+
+## [0.150.1] - 2026-05-12
+
+### Fixed
+
+- **WI-125 post-publish dogfood** — republish patch for `phasegate:generate-matrix` after `phasegate@0.150.0` dogfood showed the published tarball did not include the new command.
+
+## [0.150.0] - 2026-05-12
+
+### Added
+
+- **G1 / WI-123 / WI-124 / WI-127 / WI-128 — Gate reliability and operational transparency** — `phasegate:status --json` now reports hook/baseline operational health, CI template validator IDs are derived from the live validator-system registry, L4 scheduled audit docs/templates use canonical L4 commands, and README/guide feature inventory matches the shipped 30 skills.
+- **G2 / WI-125 / WI-129 / WI-130 / WI-131 — L2 test-quality core and Nyquist matrix generation** — `L2-003 test-quality` uses semantic AAA / assertion strength analysis, and `phasegate:generate-matrix` generates `requirement-test-matrix.json` from product ACs and test metadata with missing/orphan/intent coverage reporting.
+
 ## [0.147.0] - 2026-05-12
 
 ### Added

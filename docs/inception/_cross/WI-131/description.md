@@ -2,7 +2,7 @@
 id: WI-131
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [nyquist-validation, traceability-model, validator-system, documentation]
 source: internal
 ---

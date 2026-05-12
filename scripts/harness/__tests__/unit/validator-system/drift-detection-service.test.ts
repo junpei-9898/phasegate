@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-04
+ * @work-item-id WI-117
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -207,6 +208,71 @@ target('DriftDetectionService', () => {
 
       // Assert
       expect(actual.map((report) => report.direction)).toEqual(['code→design', 'design→code']);
+    });
+  });
+
+  describe('detect() — WI-117 precision', () => {
+    it('同名 element が別 Unit にある場合、unit+element key で code 欠落を検出する', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn(),
+        getElementRecords: vi.fn().mockResolvedValue([
+          { unitName: 'unit-a', element: 'SharedName' },
+          { unitName: 'unit-b', element: 'SharedName' },
+        ]),
+      };
+      const sourcePort = {
+        getElements: vi.fn(),
+        getElementRecords: vi.fn().mockResolvedValue([
+          { unitName: 'unit-a', element: 'SharedName' },
+        ]),
+      };
+      const sut = new DriftDetectionService({ designDocumentPort: designPort, sourceCodeAnalyzerPort: sourcePort });
+
+      // Act
+      const actual = await sut.detect();
+
+      // Assert
+      expect(actual).toHaveLength(1);
+      expect(actual[0].unitName).toBe('unit-b');
+      expect(actual[0].element).toBe('SharedName');
+    });
+
+    it('pointer match は同一ファイル内の無関係 export を blanket match しない', async () => {
+      // Arrange
+      const designPort = {
+        getElements: vi.fn(),
+        getElementRecords: vi.fn().mockResolvedValue([
+          {
+            unitName: 'sample-unit',
+            element: 'DesignedFacade',
+            pointers: ['scripts/harness/sample-unit/domain/facade.ts'],
+          },
+        ]),
+      };
+      const sourcePort = {
+        getElements: vi.fn(),
+        getElementRecords: vi.fn().mockResolvedValue([
+          {
+            unitName: 'sample-unit',
+            element: 'DesignedFacade',
+            filePaths: ['/repo/scripts/harness/sample-unit/domain/facade.ts'],
+          },
+          {
+            unitName: 'sample-unit',
+            element: 'AccidentalExport',
+            filePaths: ['/repo/scripts/harness/sample-unit/domain/facade.ts'],
+          },
+        ]),
+      };
+      const sut = new DriftDetectionService({ designDocumentPort: designPort, sourceCodeAnalyzerPort: sourcePort });
+
+      // Act
+      const actual = await sut.detect();
+
+      // Assert
+      expect(actual.map((report) => report.element)).toEqual(['AccidentalExport']);
+      expect(actual[0].direction).toBe('code→design');
     });
   });
 });

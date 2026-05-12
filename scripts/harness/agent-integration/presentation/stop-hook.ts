@@ -11,6 +11,7 @@ import { EnvFileReentryGuardStateAdapter } from '../infrastructure/adapters/env-
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
 import { HarnessApiCliCommandRegistryAdapter } from '../infrastructure/adapters/harness-api-cli-command-registry-adapter.js';
 import { ChildProcessCliExecutorAdapter } from '../infrastructure/adapters/child-process-cli-executor-adapter.js';
+import { recordHookSkipEvent } from './hook-skip-event-recorder.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -82,6 +83,12 @@ async function main(): Promise<void> {
     const output = await useCase.execute({ sessionId });
 
     if (output.skipReason === 'REENTRY_DETECTED') {
+      await recordHookSkipEvent({
+        projectRoot: path.dirname(configPath),
+        hookType: 'stop',
+        reason: output.skipReason,
+        targetPaths: [],
+      });
       process.stderr.write('ReentryGuard: 再入検出によりスキップ\n');
       process.exit(0);
     }

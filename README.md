@@ -81,7 +81,7 @@ claude
 `init` creates the initial project-local harness files:
 
 - `phasegate.config.json` as the quality settings source of truth
-- `skills/` with 28 AIDLC skills
+- `skills/` with 30 AIDLC skills
 - `.claude/skills` and/or `.codex/skills` links for agent use
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
@@ -145,7 +145,7 @@ npx phasegate reconcile --apply
 |---|---|
 | **Phase gates** | Blocks implementation writes until required design documents exist and have been reflected into product docs |
 | **5-layer validation** | Runs checks from agent runtime and editor time through pre-commit, CI, and scheduled audits |
-| **28 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
+| **30 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
 | **Quick Mode** | Keeps bugfixes, docs, test-only changes, and config changes lightweight while preserving traceability |
 | **Claude Code / Codex hooks** | Runs checks around Write/Edit/Bash operations and session boundaries |
 | **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
@@ -177,7 +177,7 @@ npx phasegate reconcile --apply
 +------------------------------------------------------------------+
 |  L4  SCHEDULED             Validators (default off)              |
 |  drift-detection, consistency-check, dead-code analysis,         |
-|  phase2 freshness/pointer checks via standalone p2:* commands    |
+|  doc-freshness and pointer-validation via L4 + p2:* compatibility|
 +------------------------------------------------------------------+
 ```
 
@@ -191,7 +191,7 @@ npx phasegate reconcile --apply
 
 ---
 
-## 28 Skills
+## 30 Skills
 
 Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**: product definition, design, test design, and TDD implementation. Each skill consumes the artifacts from the previous phase.
 
@@ -204,6 +204,7 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**: product defi
 | **Test Engineering (7)** | `/unit-test-designer` `/it-test-designer` `/scenario-test-designer` `/unit-test-logic-designer` `/it-test-logic-designer` `/scenario-test-logic-designer` `/test-coverage-checker` |
 | **Implementation (4)** | `/story-implementor` `/quick-implementor` `/implementation-planner` `/implementation-readiness-checker` |
 | **Verification (8)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-freshness-checker` `/pointer-validator` `/engineering-perspective` `/skill-creator` |
+| **Operations (2)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` |
 
 Details, prerequisites, and generated artifacts: [Skills Overview](docs/guide/skills-overview.md)
 
@@ -535,7 +536,7 @@ Detailed guides are available under `docs/guide/`:
 - [Installation](docs/guide/installation.md) -- Detailed install and setup instructions
 - [Configuration](docs/guide/configuration.md) -- `phasegate.config.json` full reference
 - [CLI Reference](docs/guide/cli-reference.md) -- All CLI commands and options
-- [Skills Overview](docs/guide/skills-overview.md) -- 28 skills with AIDLC execution order
+- [Skills Overview](docs/guide/skills-overview.md) -- 30 skills with AIDLC execution order
 - [5-Layer Defense Model](docs/guide/layer-model.md) -- L0-L4 layer details and HarnessError format
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
 - [Codex Integration](docs/guide/codex-integration.md) -- Codex CLI setup, coverage matrix, and native `apply_patch` limitation
@@ -558,7 +559,7 @@ The main path is ready for project use, but a few documented behaviors still req
 |---|---|---|
 | **[WI-128](docs/inception/_cross/WI-128/description.md)** | Finish L4 operational rollout | `doc-freshness` and `pointer-validation` are registered as L4-004/L4-005 and also remain available through `p2:*` compatibility commands. WI-033 is closed; remaining rollout polish around scheduling, defaults, and operational docs is tracked separately. @work-item-id WI-128 |
 
-`requirement-test-matrix.json` auto-generation for L3 Nyquist Validation is not automated yet; see [WI-125](docs/inception/_cross/WI-125/description.md) and the L3 guide for the current manual setup.
+`requirement-test-matrix.json` can be generated with `phasegate:generate-matrix` from product acceptance criteria and test metadata, then consumed by L3 Nyquist Validation. Use `--json` to inspect missing tests, orphan tests, preserved references, and intent coverage warnings.
 
 ---
 

@@ -1567,3 +1567,25 @@ CLAUDE.md は bundled template を正本とし、PhaseGate が所有する標準
 `agent-context-refresh.yml` は週次 schedule と手動実行で `ci:auto-refresh-agent-context --apply` を実行し、変更があれば PR を作成する。template は `docs/templates/ci/agent-context-refresh.yml` を正本とし、`ci:generate-template --render --type agent-context-refresh` から取得できる。
 <!-- @work-item-id WI-141 -->
 CI templates may run `phasegate bypass:audit --base <merge-base> --head <head>` before publish/release gates. This command is the final backstop for commits created with `git commit --no-verify`, because Git hooks can be skipped locally but the audited range can still be replayed in CI.
+
+## 11. WI-124: live validator registry for CI template generation
+
+`ci:generate-template` derives `targetValidatorIds` from the validator-system registry rather than a local stub list. The registry adapter keeps `listAll()` for compatibility and adds preset-aware selection for generated template metadata.
+
+- `minimal` omits L2-L4 validator metadata.
+- `standard` includes L2/L3 for gate templates and includes the L4 surface only for the scheduled `consistency-check` audit template.
+- `strict` includes L2/L3/L4 and keeps strict-only validators visible.
+
+The generated set is explainable against validator-system definitions and the L2-L4 / L4 advisory policy. @work-item-id WI-124
+
+### WI-123 / WI-127 / WI-128 operational docs cross-ref
+
+Baseline grandfather remains owned by ci-governance. `phasegate:status --json` reports baseline debt and sha mismatch counts without treating grandfather state as a gate failure. @work-item-id WI-123
+
+README feature inventory is documentation-owned, but CI governance docs must stay consistent with the generated template surface and shipped skill count. @work-item-id WI-127
+
+The `consistency-check` generated workflow is the recommended L4 scheduled audit entry point and uses canonical `phasegate:detect-drift` / `validate --layer L4` commands. @work-item-id WI-128
+<!-- @work-item-id WI-122 -->
+## WI-122 Pointer Policy In CI
+
+CI governance treats pointer validation results according to semantic pointer policy. Broken product-doc and ADR pointers may fail, implementation/reference pointers may warn, and external URL pointers skip unless policy explicitly includes them.

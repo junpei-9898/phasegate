@@ -319,3 +319,17 @@ drift-detect（L4-001）はMarkdownパースと比較ロジックを伴う。ド
 ### D4: DeadCodeDetectionServiceとbiome-ast-engine疎結合
 
 dead-code検出（L4-003）はimportグラフ解析を伴うが、biome-ast-engineのImportGraphを直接importするのではなく、SourceAnalysisPortを通じて構造化データを受け取ることで依存を疎結合に保つ。
+<!-- @work-item-id WI-117 -->
+## WI-117 Unit-Scoped Drift Records
+
+L4-001 compares `DriftElementRecord` values by `unitName + element`. Records may carry design pointers or source file paths, but pointer matches never blanket-match unrelated exports in the same file.
+
+<!-- @work-item-id WI-118 -->
+## WI-118 Product Consistency Targets
+
+L4-002 consistency targets are typed observations from product docs: known/unknown layer vocabulary, Unit annotation matches/mismatches, ADR references, and work item annotations.
+
+<!-- @work-item-id WI-139 -->
+## WI-139 Semantic Drift Model
+
+Semantic drift compares `DesignIntent`, `ImplementationBehavior`, and `TestObservation` by `unitName + behaviorId`, producing report kinds for missing code, missing tests, undesigned public behavior, and tests that fix behavior absent from design.

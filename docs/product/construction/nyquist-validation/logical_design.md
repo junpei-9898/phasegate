@@ -1282,3 +1282,19 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 **決定**: `docs/contracts/requirement-test-matrix.schema.json` に配置する。
 
 **根拠**: `integration_contract.md §2.2` において `RequirementTestMatrix Schema` は nyquist-validation が所有しつつ複数の Unit（skill-quality の test-coverage-checker、harness-api、regression-suite）が参照するクロスユニット契約として定義されている。スクリプトコードの内部に隠蔽するのではなく、`docs/contracts/` という外部参照可能な場所に配置することで、他 Unit が安定した参照パスでスキーマを取得できる。また、スキーマ変更時の影響範囲が明確になり、変更差分のレビューが容易になる。
+
+## Matrix Auto-Generation CLI
+
+<!-- @work-item-id WI-125, WI-131 -->
+
+`phasegate:generate-matrix` は `docs/product/user_stories.md` と test files の metadata から `.harness/requirement-test-matrix.json` を生成する。生成後に `validate --layer L3` または Nyquist handler が同じ matrix を読む。
+
+処理順序:
+
+1. `MarkdownRequirementSourceAdapter` が `HNN-NN` heading と `AC-N` 行を読む。
+2. `TypeScriptTestReferenceSourceAdapter` が `@story` / test name / file path を読む。
+3. `GenerateRequirementTestMatrixUseCase` が AC ごとの test reference を構築し、既存 matrix の手動 reference を保持する。
+4. `EvaluateRequirementIntentCoverageUseCase` が generated mapping を `observed`, `weakly-observed`, `unobserved` に分類する。
+5. `GenerateMatrixHandler` が matrix と report を出力する。
+
+未知 story の test は matrix に入れず `orphanTests` として報告する。AC に対応する test がない場合は `missingTests` として報告する。

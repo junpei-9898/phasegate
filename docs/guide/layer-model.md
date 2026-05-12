@@ -141,7 +141,7 @@ npx phasegate validate --layer L3
 
 L4 validators are designed to run on a weekly schedule and detect slow-moving drift that accumulates over time.
 
-> **Status**: L4 is **disabled by default** (`layers.L4.enabled: false` in `phasegate.config.json`). Projects opt in by flipping the flag and scheduling the command via CI cron (see `ci:generate-template --type consistency-check`). Implementation-wise the validators listed below are functional; the default-off state is a conservative rollout choice, not a missing feature.
+> **Status**: L4 is **disabled by default** (`layers.L4.enabled: false` in `phasegate.config.json`). Projects opt in by flipping the flag and scheduling the command via CI cron (see `ci:generate-template --type consistency-check --render`). Implementation-wise the validators listed below are functional; the default-off state is a conservative rollout choice, not a missing feature. @work-item-id WI-128
 
 | Validator | ID | Description |
 |-----------|-----|-------------|
@@ -152,7 +152,16 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 | **pointer-validation** | L4-005 | Resolves and validates design document pointers. Also available through the `p2:validate-pointers` compatibility command. |
 
 <!-- @work-item-id WI-116 -->
-`doc-freshness` and `pointer-validation` are registered as L4-004/L4-005. The standalone `p2:check-freshness` and `p2:validate-pointers` commands remain as compatibility entry points; WI-033's remaining scope is operational rollout, not validator registration.
+`doc-freshness` and `pointer-validation` are registered as L4-004/L4-005. The standalone `p2:check-freshness` and `p2:validate-pointers` commands remain as compatibility entry points; canonical L4 execution is `validate --layer L4`. WI-033 remains closed as validator registration work; WI-128 tracks scheduling/default/policy rollout.
+
+Recommended weekly audit:
+
+```bash
+npx phasegate ci:generate-template --type consistency-check --render
+npx phasegate validate --layer L4
+```
+
+Use a weekly cron such as `0 9 * * 1` for the generated consistency-check workflow. Standard projects normally keep L4 default-off and run the scheduled audit as advisory. Strict projects may opt into `layers.L4.enabled: true` and `failOnWarning` behavior when L4 warnings should block promotion. @work-item-id WI-128
 
 ### Drift-detect design pointers
 
@@ -244,3 +253,7 @@ Presets control which layers are active. Choose based on project maturity and te
 - **strict** — Full defense. Enables scheduled drift detection (L4). Runtime L0 hooks are configured through the agent and Husky hook files, not through validator presets.
 
 Presets are configured in `phasegate.config.json`, the single source of truth for all quality settings.
+<!-- @work-item-id WI-117, WI-118, WI-122, WI-139 -->
+## G3 L4 Advisory Preconditions
+
+L4 drift / consistency / docs semantic findings are advisory by default. Use fail-on-warning only when reports include Unit-scoped drift keys, real product-doc consistency targets, pointer/freshness owner and policy metadata, and semantic drift behavior coverage. This avoids treating parser limitations as blocking quality gates.

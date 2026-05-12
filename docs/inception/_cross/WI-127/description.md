@@ -2,7 +2,7 @@
 id: WI-127
 type: fix
 severity: normal
-status: drafted
+status: reflected
 affects: [documentation, ci-governance]
 source: internal
 ---

@@ -2,7 +2,7 @@
 id: WI-122
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [phase2-extensions, validator-system, ci-governance, harness-api]
 source: internal
 ---

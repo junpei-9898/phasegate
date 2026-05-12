@@ -1,4 +1,7 @@
 // @layer test
+// @unit phase2-extensions
+// @story HF2-02
+// @work-item-id WI-122
 import { expect, it } from 'vitest';
 import { context, target } from '../../../helpers/test-helpers.js';
 import { PointerRule } from '../../../../phase2-extensions/domain/aggregates/pointer-rule.js';
@@ -18,10 +21,10 @@ target('UT-P2-007 PointerRule', () => {
     });
 
     it('ruleId が空文字のとき Phase2ExtensionsDomainError をスローする', () => {
-      // Arrange / Act / Assert
-      expect(() => PointerRule.create({ ruleId: '', documentPattern: 'docs/**/*.md', failOnBroken: true })).toThrow(
-        Phase2ExtensionsDomainError,
-      );
+      // Arrange
+      const actual = () => PointerRule.create({ ruleId: '', documentPattern: 'docs/**/*.md', failOnBroken: true });
+      // Act / Assert
+      expect(actual).toThrow(Phase2ExtensionsDomainError);
     });
   });
 
@@ -33,6 +36,30 @@ target('UT-P2-007 PointerRule', () => {
       const actual = rule.shouldFailOnBroken();
       // Assert
       expect(actual).toBe(true);
+    });
+  });
+
+  context('policyFor(pointerType)', () => {
+    it('pointerPolicies で pointer type ごとの fail/warn/skip を返す', () => {
+      // Arrange
+      const rule = PointerRule.create({
+        ruleId: 'r',
+        documentPattern: 'docs/**/*.md',
+        failOnBroken: true,
+        pointerPolicies: { 'product-doc': 'fail', implementation: 'warn', 'external-url': 'skip' },
+      });
+      // Act
+      const actual = {
+        productDoc: rule.policyFor('product-doc'),
+        implementation: rule.policyFor('implementation'),
+        externalUrl: rule.policyFor('external-url'),
+      };
+      // Assert
+      expect(actual).toEqual({
+        productDoc: 'fail',
+        implementation: 'warn',
+        externalUrl: 'skip',
+      });
     });
   });
 });

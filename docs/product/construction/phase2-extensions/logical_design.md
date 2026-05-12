@@ -505,3 +505,13 @@ HF2-01 (doc-freshness-checker) に frontmatter セマンティクスチェック
 ### D5: 既存 frontmatter-flag-parser の再利用
 
 `scripts/harness/traceability-model/infrastructure/parsers/frontmatter-flag-parser.ts` は軽量かつ安定した YAML frontmatter パーサーである。HF2-04 の `MarkdownFrontmatterReaderAdapter` からこれを直接 import して再利用する。`FrontmatterReaderPort` で 1 段階 wrap することで、将来 parser が traceability-model 内で拡張された場合の影響範囲を adapter 層に閉じ込める。
+
+### WI-128: compatibility command position
+
+`p2:check-freshness` and `p2:validate-pointers` remain compatibility entry points for existing automation. The canonical L4 validator IDs are L4-004 `doc-freshness` and L4-005 `pointer-validation`, and the canonical L4 execution path is `validate --layer L4`. @work-item-id WI-128
+<!-- @work-item-id WI-122 -->
+## WI-122 Operational Semantics
+
+`ValidateDocPointersUseCase` classifies raw pointers into semantic pointer types before applying fail/warn/skip policy. Broken pointer output includes owner, semantic type, source document, severity, and next action. External URLs skip by default unless explicitly included by policy.
+
+`CheckDocFreshnessUseCase` remains threshold based but consumes `DocumentAgeSource` so stable old docs can be distinguished from docs stale after related source/WI/product changes.

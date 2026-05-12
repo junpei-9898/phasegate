@@ -1833,3 +1833,34 @@ CLI coverage matching は E2E test file の path だけではなく file content
 **影響ファイル**: validator-system / nyquist-validation 配下の16ソースファイル + 28テストファイル
 <!-- @work-item-id WI-141 -->
 Validator failures exposed to bypass audit are classified into non-bypassable and conditional blocker classes. Metadata, test-quality, and work-item-status-staleness failures are non-bypassable; known phase-gate debt, environment failures, and documented false positives may be accepted only with complete bypass trailers and evidence.
+
+### WI-124 / WI-128: registry and L4 operational policy
+
+The validator-system registry is the source used by CI template generation for validator IDs. CI consumers must not maintain a duplicate stub list of L2-L4 validators. @work-item-id WI-124
+
+L4-004 `doc-freshness` and L4-005 `pointer-validation` are registered validators. `validate --layer L4` is the canonical explicit execution path; `p2:*` freshness/pointer commands remain compatibility entry points. `validate --layer all` and `phasegate:ci-check` honor disabled L4 as skipped unless project config/preset enables L4. @work-item-id WI-128
+
+### WI-125 / WI-131: Nyquist Generation and Intent Coverage Integration
+
+<!-- @work-item-id WI-125, WI-131 -->
+
+validator-system continues to own L2/L3 gate orchestration and consumes Nyquist outputs through the existing `NyquistAcCoveragePolicyAdapter`. Matrix generation and intent coverage are implemented in nyquist-validation and exposed through `phasegate:generate-matrix`; validator-system treats the generated matrix as L3 input and does not duplicate product-doc or test-metadata extraction.
+<!-- @work-item-id WI-117 -->
+## WI-117 Drift Precision
+
+`DriftDetectionService` uses `getElementRecords()` when available and falls back to legacy element lists. `MarkdownDesignDocumentAdapter` reads multiple construction docs, and `BiomeAstSourceCodeAnalyzerAdapter` prefers `@unit` metadata over path-derived Unit names while extracting direct exports, re-exports, wildcard re-exports, and default exports.
+
+<!-- @work-item-id WI-118 -->
+## WI-118 Consistency Semantics
+
+`ConsistencyCheckService` interprets typed product-doc annotations rather than assuming every document should share one layer value. Unknown layer vocabulary, Unit mismatches, and missing ADR references are L4-002 advisory findings with location / expected / actual / next-action data.
+
+<!-- @work-item-id WI-122 -->
+## WI-122 Docs Validator Semantics
+
+Validator-system consumes doc freshness and pointer validation as L4 advisory report semantics. Pointer/freshness outputs preserve owner, semantic pointer type, source document, severity, and next action so L4-004/L4-005 can align with the same fail-on-warning policy as other L4 reports.
+
+<!-- @work-item-id WI-139 -->
+## WI-139 Semantic Drift Service
+
+`SemanticDriftService` is a higher-level report producer above L4-001. It checks design-code-test behavior coverage without replacing structural drift detection.

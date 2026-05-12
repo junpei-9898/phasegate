@@ -1,4 +1,6 @@
 // @layer test
+// @unit phase2-extensions
+// @work-item-id WI-122
 import { DocFreshnessRule } from '../../phase2-extensions/domain/aggregates/doc-freshness-rule.js';
 import { PointerRule } from '../../phase2-extensions/domain/aggregates/pointer-rule.js';
 import { DocumentAge } from '../../phase2-extensions/domain/value-objects/document-age.js';
@@ -20,7 +22,7 @@ export const createFreshnessThreshold = (
 export const createDocumentAge = (
   overrides: Partial<{
     ageInDays: number;
-    source: 'git-log' | 'file-mtime';
+    source: 'git-log' | 'file-mtime' | 'related-source-change';
   }> = {},
 ): DocumentAge =>
   DocumentAge.create({
@@ -79,10 +81,14 @@ export const createPointerRule = (
     ruleId: string;
     documentPattern: string;
     failOnBroken: boolean;
+    owner: string;
+    pointerPolicies: Record<string, 'fail' | 'warn' | 'skip'>;
   }> = {},
 ): PointerRule =>
   PointerRule.create({
     ruleId: overrides.ruleId ?? 'docs-pointers',
     documentPattern: overrides.documentPattern ?? 'docs/**/*.md',
     failOnBroken: overrides.failOnBroken ?? true,
+    owner: overrides.owner,
+    pointerPolicies: overrides.pointerPolicies,
   });

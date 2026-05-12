@@ -16,6 +16,7 @@ import type { ImpactAnalysisPort } from '../ports/impact-analysis-port.js';
 import type { ArtifactScannerPort } from '../ports/artifact-scanner-port.js';
 import type { ConfigQueryPort } from '../ports/config-query-port.js';
 import type { LayerId } from '../value-objects/layer-health.js';
+import type { BaselineHealth, HookHealth, OperationalWarning } from '../value-objects/harness-status-summary.js';
 
 export interface CommandDispatchPorts {
   validatorExecutionPort: ValidatorExecutionPort;
@@ -23,7 +24,13 @@ export interface CommandDispatchPorts {
   biomeLintPort: BiomeLintPort;
   impactAnalysisPort: ImpactAnalysisPort;
   artifactScannerPort: ArtifactScannerPort;
-  configQueryPort: { getConfig?: () => Promise<unknown>; getPresetInfo?: () => Promise<unknown>; getConfigSummary?: () => Promise<unknown> };
+  configQueryPort: {
+    getConfig?: () => Promise<unknown>;
+    getPresetInfo?: () => Promise<unknown>;
+    getConfigSummary?: () => Promise<unknown>;
+    getHookHealth?: () => Promise<HookHealth>;
+    getBaselineHealth?: () => Promise<BaselineHealth>;
+  };
 }
 
 export interface DispatchResult<T = unknown> {
@@ -59,6 +66,38 @@ function summarizeLayerResults(items: readonly { validatorId: string; passed: bo
     }
   }
   return result;
+}
+
+function buildOperationalWarnings(
+  hookHealth: HookHealth | undefined,
+  baselineHealth: BaselineHealth | undefined,
+): OperationalWarning[] {
+  const warnings: OperationalWarning[] = [];
+  const skipCount = hookHealth === undefined
+    ? 0
+    : Object.values(hookHealth.skipCountsByReason).reduce((sum, count) => sum + count, 0);
+  if (hookHealth !== undefined && skipCount > 0) {
+    warnings.push({
+      code: 'HOOK_SKIP_OBSERVED',
+      message: `Hook skip events observed: ${skipCount}`,
+      nextAction: 'Inspect hookHealth.latestSkip and re-enable hooks or resolve reentry/timeout causes.',
+    });
+  }
+  if (baselineHealth !== undefined && baselineHealth.shaMismatchCount > 0) {
+    warnings.push({
+      code: 'BASELINE_SHA_MISMATCH',
+      message: `${baselineHealth.shaMismatchCount} baseline files changed since the snapshot.`,
+      nextAction: 'Add or update design coverage for changed files and remove resolved entries from the baseline.',
+    });
+  }
+  if (baselineHealth !== undefined && baselineHealth.grandfatheredFileCount > 50 && baselineHealth.removalRate < 0.5) {
+    warnings.push({
+      code: 'BASELINE_DEBT_HIGH',
+      message: `Baseline grandfather debt remains high: ${baselineHealth.grandfatheredFileCount} files.`,
+      nextAction: 'Plan a retrofit cleanup batch and reduce the baseline snapshot.',
+    });
+  }
+  return warnings;
 }
 
 const KNOWN_COMMANDS = new Set([
@@ -203,12 +242,20 @@ export class CommandDispatchService {
         } else if (configPort.getConfig) {
           await configPort.getConfig();
         }
+        const [hookHealth, baselineHealth] = await Promise.all([
+          configPort.getHookHealth?.(),
+          configPort.getBaselineHealth?.(),
+        ]);
+        const operationalWarnings: OperationalWarning[] = buildOperationalWarnings(hookHealth, baselineHealth);
         const statusSummary = this.statusDerivationService.derive({
           scanResult,
           presetInfo,
           configSummary: { configPath: 'phasegate.config.json', lastModified: '', version: '2' },
           phaseGateSummary: { totalStories: 0, passedStories: 0, pendingStories: 0 },
           liveValidationByLayer,
+          hookHealth,
+          baselineHealth,
+          operationalWarnings,
         });
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, statusSummary);
         return { status: 'pass', errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };

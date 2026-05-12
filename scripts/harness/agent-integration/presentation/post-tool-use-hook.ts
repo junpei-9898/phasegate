@@ -10,6 +10,7 @@ import { HandlePostToolUseUseCase } from '../application/usecases/handle-post-to
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
 import { HarnessApiCliCommandRegistryAdapter } from '../infrastructure/adapters/harness-api-cli-command-registry-adapter.js';
 import { ChildProcessCliExecutorAdapter } from '../infrastructure/adapters/child-process-cli-executor-adapter.js';
+import { recordHookSkipEvent } from './hook-skip-event-recorder.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -80,6 +81,12 @@ async function main(): Promise<void> {
     const output = await useCase.execute({ toolName, affectedFilePaths: [] });
 
     if (output.skipReason) {
+      await recordHookSkipEvent({
+        projectRoot: path.dirname(configPath),
+        hookType: 'post-tool-use',
+        reason: output.skipReason,
+        targetPaths: [],
+      });
       process.stderr.write(`スキップ: ${output.skipReason}\n`);
       process.exit(0);
     }

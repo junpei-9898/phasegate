@@ -1,12 +1,14 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-117
  *
  * BiomeAstSourceCodeAnalyzerAdapter — SourceCodeAnalyzerPort実装
  * TypeScript Compiler API を使用してエクスポートを正確に抽出する（L4-001, L4-003）
  */
 import * as ts from 'typescript';
 import type { SourceCodeAnalyzerPort, SourceAnalysisResult } from '../../domain/ports/source-code-analyzer-port.js';
+import type { DriftElementRecord } from '../../domain/services/l4/drift-detection-service.js';
 import { readdir } from 'node:fs/promises';
 import { basename, join, relative, sep } from 'node:path';
 
@@ -44,7 +46,7 @@ export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort
       const sourceFile = program.getSourceFile(filePath);
       if (!sourceFile) continue;
       results.push({
-        unitName: resolveUnitName(this.sourceRoot, filePath),
+        unitName: resolveUnitName(this.sourceRoot, filePath, sourceFile.text),
         filePath,
         exports: extractExports(sourceFile),
         imports: extractImports(sourceFile),
@@ -86,6 +88,17 @@ export class BiomeAstSourceCodeAnalyzerAdapter implements SourceCodeAnalyzerPort
     }
     return map;
   }
+
+  async getElementRecords(targetUnits?: readonly string[]): Promise<readonly DriftElementRecord[]> {
+    const results = await this.analyzeExports(targetUnits);
+    return results.flatMap((result) =>
+      result.exports.map((entry) => ({
+        element: entry.name,
+        unitName: result.unitName,
+        filePaths: [result.filePath],
+      }))
+    );
+  }
 }
 
 type ExportType = SourceAnalysisResult['exports'][number]['type'];
@@ -112,6 +125,19 @@ function extractExports(sourceFile: ts.SourceFile): SourceAnalysisResult['export
           exports.push({ name: decl.name.text, type: 'const' });
         }
       }
+    } else if (ts.isExportDeclaration(node) && node.exportClause) {
+      if (ts.isNamedExports(node.exportClause)) {
+        for (const element of node.exportClause.elements) {
+          exports.push({ name: element.name.text, type: 'type' });
+        }
+      }
+    } else if (ts.isExportDeclaration(node) && !node.exportClause && ts.isStringLiteral(node.moduleSpecifier)) {
+      exports.push({ name: `* from ${node.moduleSpecifier.text}`, type: 'type' });
+    }
+
+    const hasDefault = modifiers?.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword) ?? false;
+    if (hasDefault) {
+      exports.push({ name: 'default', type: 'type' });
     }
   });
 
@@ -182,7 +208,10 @@ async function walkTsFiles(root: string, excludePattern: RegExp): Promise<string
   }
 }
 
-function resolveUnitName(sourceRoot: string, filePath: string): string {
+function resolveUnitName(sourceRoot: string, filePath: string, sourceText: string): string {
+  const unitMatch = /@unit\s+([a-z0-9-]+)/i.exec(sourceText);
+  if (unitMatch) return unitMatch[1];
+
   const relativePath = relative(sourceRoot, filePath);
   const [firstSegment] = relativePath.split(sep);
   return firstSegment || basename(filePath);

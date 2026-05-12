@@ -1912,3 +1912,9 @@ H12-04 の機能を `CollectLessonsUseCase` と `WriteLessonArtifactUseCase` の
 <!-- @work-item-id WI-032 -->
 
 skill-quality は lesson artifact の生成責務に留まり、AGENTS.md / CLAUDE.md を直接更新しない。`ci:auto-refresh-agent-context` は ci-governance 側で lesson artifact を読み取り、AGENTS.md pointer と CLAUDE.md 標準セクションを更新する。これにより lesson 収集と agent context 配布の責務を分離する。
+
+### G2 Test Quality / Nyquist Integration Boundary
+
+<!-- @work-item-id WI-125, WI-129, WI-130 -->
+
+skill-quality consumes L2 test-quality and Nyquist signals instead of duplicating their validators. `test-coverage-checker` and `implementation-readiness-checker` may use the generated requirement-test matrix and requirement coverage report as input, while semantic AAA, assertion strength, and matrix generation remain owned by validator-system / nyquist-validation.

@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-03
+ * @work-item-id WI-117, WI-118
  */
 import { describe, expect, it } from 'vitest';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
@@ -13,7 +14,7 @@ import { MarkdownDesignDocumentAdapter } from '../../../../validator-system/infr
 target('MarkdownDesignDocumentAdapter', () => {
   describe('loadDesignDocuments', () => {
     context('存在するUnitを指定した場合', () => {
-      it('domain_model.mdから構造化ドキュメントを返す (IT-REPO-DesignDoc-001)', async () => {
+      it('product construction docsから構造化ドキュメントを返す (IT-REPO-DesignDoc-001)', async () => {
         // Arrange
         const adapter = new MarkdownDesignDocumentAdapter('docs/product/construction');
 
@@ -21,7 +22,7 @@ target('MarkdownDesignDocumentAdapter', () => {
         const actual = await adapter.loadDesignDocuments(['harness-error']);
 
         // Assert
-        expect(actual).toHaveLength(1);
+        expect(actual.length).toBeGreaterThanOrEqual(1);
         expect(actual[0]?.unitName).toBe('harness-error');
         expect(actual[0]?.concepts.length).toBeGreaterThan(0);
       });
@@ -50,6 +51,35 @@ target('MarkdownDesignDocumentAdapter', () => {
 
         // Assert
         expect(typeof actual).toBe('object');
+      });
+
+      it('product docs の layer / unit / ADR annotation を typed target として返す (IT-REPO-DesignDoc-013)', async () => {
+        // Arrange
+        const root = await mkdtemp(path.join(tmpdir(), 'phasegate-wi118-'));
+        try {
+          const unitDir = path.join(root, 'test-unit');
+          await mkdir(unitDir, { recursive: true });
+          const docPath = path.join(unitDir, 'logical_design.md');
+          await writeFile(
+            docPath,
+            [
+              '<!-- @unit wrong-unit -->',
+              '<!-- @layer invalid-layer -->',
+              'ADR-999',
+              '',
+            ].join('\n'),
+            'utf-8',
+          );
+          const adapter = new MarkdownDesignDocumentAdapter(root);
+          // Act
+          const actual = await adapter.getLayerAnnotations([docPath]);
+          // Assert
+          expect(actual[`${docPath}#unit:wrong-unit`]).toBe('unit:mismatch:test-unit');
+          expect(actual[`${docPath}#layer:invalid-layer`]).toBe('layer:unknown');
+          expect(actual['ADR-999']).toBe('adr:referenced');
+        } finally {
+          await rm(root, { recursive: true, force: true });
+        }
       });
     });
 

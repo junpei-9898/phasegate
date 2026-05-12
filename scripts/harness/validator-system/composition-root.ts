@@ -55,7 +55,7 @@ const DEFAULT_CONFIG = {
 };
 
 /** バリデータ定義カタログ */
-function buildDefaultRegistry(): ValidatorRegistry {
+export function buildDefaultRegistry(): ValidatorRegistry {
   const defaultRule = ValidationRule.create({
     ruleName: 'default-rule',
     errorTemplate: { code: 'L2-001', severity: 'error', messageTemplate: '{{message}}' },

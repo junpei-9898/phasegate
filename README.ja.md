@@ -80,7 +80,7 @@ claude
 `init` は初期 bootstrap として以下を生成します:
 
 - `phasegate.config.json` — 品質設定の Single Source of Truth
-- `skills/` — 28 の AIDLC スキル一式
+- `skills/` — 30 の AIDLC スキル一式
 - `.claude/skills/` ・ `.codex/skills/` — agent 向けの skill symlink
 - `.claude/settings.json` — PreToolUse / PostToolUse / Stop hook
 - `.codex/hooks.json` — Codex CLI hooks 設定（`--agent codex|both` 時）
@@ -152,7 +152,7 @@ npx phasegate reconcile --apply
 |---|---|
 | **フェーズゲート** | 設計文書がないと実装ファイルへの Write/Edit/Bash をブロック。AIDLC 準拠 / カスタム gate の両方をサポート |
 | **5 層バリデーション (L0-L4)** | エディタ保存 → pre-commit → CI → 週次まで段階的に品質チェック |
-| **28 AIDLC スキル** | 要求定義 → ドメイン設計 → テスト設計 → TDD 実装をスキルとして提供 |
+| **30 AIDLC スキル** | 要求定義 → ドメイン設計 → テスト設計 → TDD 実装をスキルとして提供 |
 | **Quick Mode** | バグ修正・docs・テスト追加など軽微変更ではゲートを緩和して高速化 |
 | **Claude Code / Codex Hooks** | Write/Edit/Bash 時に自動でゲートチェック・lint を実行 |
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
@@ -198,13 +198,13 @@ npx phasegate reconcile --apply
 
 ---
 
-## 28 AIDLC スキル
+## 30 AIDLC スキル
 
 AIDLC (AI-Driven Development Life Cycle) は **要求定義 → 設計 → テスト設計 → TDD 実装** の順序を強制するプロセスです。各スキルは前のレベルの成果物を入力にします。
 
 **最初の一歩**: Claude Code / Codex 内で `/product-architect` を実行。
 
-### 5 グループ（28 スキル）
+### 6 グループ（30 スキル）
 
 | グループ | スキル |
 |---|---|
@@ -213,6 +213,7 @@ AIDLC (AI-Driven Development Life Cycle) は **要求定義 → 設計 → テ�
 | **Test Engineering (7)** | `/unit-test-designer` `/it-test-designer` `/scenario-test-designer` `/unit-test-logic-designer` `/it-test-logic-designer` `/scenario-test-logic-designer` `/test-coverage-checker` |
 | **Implementation (4)** | `/story-implementor` `/quick-implementor` `/implementation-planner` `/implementation-readiness-checker` |
 | **Verification (8)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-freshness-checker` `/pointer-validator` `/engineering-perspective` `/skill-creator` |
+| **Operations (2)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` |
 
 各スキルの詳細・成果物・前提条件: [Skills Overview](docs/guide/skills-overview.md)
 
@@ -497,7 +498,7 @@ reports/
 |---|---|
 | **[WI-128](docs/inception/_cross/WI-128/description.md)** | L4 運用ロールアウトの仕上げ。`doc-freshness` / `pointer-validation` は L4-004 / L4-005 として登録済みで、`p2:*` 互換コマンドも維持。WI-033 は完了済みとして閉じ、残りの scheduling / default / 運用 docs は後続 WI で扱う。@work-item-id WI-128 |
 
-L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ未自動化です。[WI-125](docs/inception/_cross/WI-125/description.md) と L3 guide を参照してください。現時点では手動セットアップで利用できます。
+L3 Nyquist Validation の `requirement-test-matrix.json` は `phasegate:generate-matrix` で product docs の受け入れ基準と test metadata から生成できます。`--json` では missing tests / orphan tests / preserved references / intent coverage warnings を確認できます。
 
 ---
 
@@ -506,7 +507,7 @@ L3 Nyquist Validation の `requirement-test-matrix.json` 自動生成はまだ�
 - [Installation](docs/guide/installation.md) — 詳細インストール手順
 - [Configuration](docs/guide/configuration.md) — `phasegate.config.json` 完全リファレンス
 - [CLI Reference](docs/guide/cli-reference.md) — 全 CLI コマンド・オプション
-- [Skills Overview](docs/guide/skills-overview.md) — 28 スキルの実行順序と成果物
+- [Skills Overview](docs/guide/skills-overview.md) — 30 スキルの実行順序と成果物
 - [5-Layer Defense Model](docs/guide/layer-model.md) — L0-L4 詳細・HarnessError 形式
 - [Hooks Integration](docs/guide/hooks-integration.md) — Claude Code Hooks 設定
 - [Codex Integration](docs/guide/codex-integration.md) — Codex CLI セットアップ・カバレッジ

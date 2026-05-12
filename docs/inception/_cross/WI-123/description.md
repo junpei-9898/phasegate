@@ -2,7 +2,7 @@
 id: WI-123
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [agent-integration, ci-governance, harness-api]
 source: internal
 ---

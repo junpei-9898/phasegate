@@ -303,3 +303,11 @@ CommandDispatchServiceはHexagonal Architectureに従い、実行ロジックへ
 ### D5: phasegate:statusのExitCode設計
 
 `phasegate:status` コマンドはExitCode 0（正常）または 2（実行エラー）のみを返す（Fail=1を返さない）。理由: statusコマンドはハーネスの「状態表示」であり、Fail状態自体が正常な表示結果であるため。L4の健全性が「unknown」であっても、それは状態として正常に取得・表示できている。他のコマンド（check-ready/ci-check等）はゲートとしてPass/Failを判定するのに対し、statusは情報提供用コマンドという責務の違いを終了コードに反映する。
+
+### D6: operational transparency fields in phasegate:status
+
+`HarnessStatusSummary` includes `hookHealth`, `baselineHealth`, and `operationalWarnings` in addition to layer health. Hook health reports configured hook files, latest skip event, skip counts by reason, and the Codex native `apply_patch` pre-edit limitation with the L2 pre-commit backstop. Baseline health reports grandfathered file count, sha mismatch count, missing file count, and removal rate. These are informational health signals and do not convert hook skip or baseline grandfather state into validator failure. @work-item-id WI-123
+<!-- @work-item-id WI-117, WI-118, WI-122, WI-139 -->
+## G3 L4 Advisory Report Semantics
+
+Harness API consumes G3 L4 reports as advisory signals unless the caller opts into fail-on-warning behavior. Drift, consistency, pointer/freshness, and semantic drift report records must preserve category, location, severity, and next action for downstream summaries.

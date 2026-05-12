@@ -5,4 +5,5 @@
 
 export interface ValidatorIdRegistryPort {
   listAll(): Promise<string[]>;
+  listForPreset?(presetId: string, templateType: string): Promise<string[]>;
 }

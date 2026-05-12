@@ -1835,3 +1835,7 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 ### WI-108: ci-check L2-L4 contract
 
 `phasegate:ci-check` は README / CLI reference の full CI check 契約に合わせ、`ValidatorExecutionPort.runAllValidators()` を呼んで L2-L4 の validator 結果を `CiCheckResult` に集約する。L4 が config disabled の場合は validator-system 側の skip result をそのまま JSON `data.validatorResults[]` に残し、L3 のみの successful run を L2-L4 full check として報告しない。@work-item-id WI-108
+<!-- @work-item-id WI-117, WI-118, WI-122, WI-139 -->
+## G3 L4 Report Integration
+
+`phasegate:detect-drift` and `validate --layer L4` expose G3 findings as advisory by default. A fail-on-warning caller may promote warnings to non-zero exit only after L4-001 precision, L4-002 semantics, L4-004/L4-005 operational policy, and WI-139 semantic drift coverage are all available in report payloads.

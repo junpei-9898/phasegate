@@ -1,4 +1,5 @@
 // @layer domain
+// @unit harness-api
 // harness-status-summary.ts — HarnessStatusSummary Value Object
 
 import type { LayerHealth, LayerId } from './layer-health.js';
@@ -20,11 +21,48 @@ export interface ConfigSummary {
   version: string;
 }
 
+export interface HookSkipState {
+  hookType: string;
+  reason: 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED' | 'REENTRY_DETECTED' | string;
+  targetPaths: readonly string[];
+  observedAt: string;
+}
+
+export interface HookHealth {
+  enabled: boolean;
+  configuredHooks: readonly string[];
+  latestSkip: HookSkipState | null;
+  skipCountsByReason: Readonly<Record<string, number>>;
+  applyPatchBypass: {
+    nativeApplyPatchIntercepted: boolean;
+    backstop: 'pre-commit';
+    documentationUrl: string;
+  };
+}
+
+export interface BaselineHealth {
+  enabled: boolean;
+  path: string;
+  grandfatheredFileCount: number;
+  shaMismatchCount: number;
+  missingFileCount: number;
+  removalRate: number;
+}
+
+export interface OperationalWarning {
+  code: string;
+  message: string;
+  nextAction: string;
+}
+
 export interface HarnessStatusSummaryProps {
   layers: readonly LayerHealth[];
   phaseGateSummary: PhaseGateSummary;
   presetInfo: PresetInfo;
   configSummary: ConfigSummary;
+  hookHealth?: HookHealth;
+  baselineHealth?: BaselineHealth;
+  operationalWarnings?: readonly OperationalWarning[];
 }
 
 const REQUIRED_LAYER_IDS: readonly LayerId[] = ['L1', 'L2', 'L3', 'L4'];
@@ -34,12 +72,18 @@ export class HarnessStatusSummary {
   readonly phaseGateSummary: PhaseGateSummary;
   readonly presetInfo: PresetInfo;
   readonly configSummary: ConfigSummary;
+  readonly hookHealth: HookHealth | undefined;
+  readonly baselineHealth: BaselineHealth | undefined;
+  readonly operationalWarnings: readonly OperationalWarning[];
 
   private constructor(props: HarnessStatusSummaryProps) {
     this.layers = Object.freeze([...props.layers]);
     this.phaseGateSummary = props.phaseGateSummary;
     this.presetInfo = props.presetInfo;
     this.configSummary = props.configSummary;
+    this.hookHealth = props.hookHealth;
+    this.baselineHealth = props.baselineHealth;
+    this.operationalWarnings = Object.freeze([...(props.operationalWarnings ?? [])]);
     Object.freeze(this);
   }
 

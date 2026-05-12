@@ -1138,3 +1138,7 @@ return { harnessLintCommandHandler, executeLintUseCase } as const;
 **変更内容**: `listSourceFiles(targets)` 内で `stat()` を使ってファイル/ディレクトリを判定し、ファイルの場合は `walkDirectory()` を呼ばずに直接追加する。
 
 **影響ファイル**: `scripts/harness/biome-ast-engine/infrastructure/adapters/node-workspace-file-adapter.ts`
+<!-- @work-item-id WI-117, WI-139 -->
+## G3 Export And Behavior Extraction Contract
+
+AST extraction used by L4 precision must expose public exports including direct declarations, named re-exports, wildcard re-exports, and default exports. Future semantic drift adapters may map those public surfaces into implementation behavior records keyed by Unit and behavior ID.

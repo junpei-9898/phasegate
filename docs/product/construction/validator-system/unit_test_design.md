@@ -484,3 +484,20 @@ target('{クラス名またはメソッド名}', () => {
 | ConsistencyCheckService | CCS |
 | DeadCodeDetectionService | DCD |
 | 境界値・異常系共通 | BND |
+<!-- @work-item-id WI-117 -->
+## WI-117 Drift Precision Tests
+
+- Same element name in multiple Units is compared by Unit-scoped key.
+- Explicit pointer matching does not hide unrelated exports in the same file.
+
+<!-- @work-item-id WI-118 -->
+## WI-118 Consistency Semantics Tests
+
+- Known layer annotations pass.
+- Unknown layer vocabulary, missing ADR references, and Unit mismatches produce L4-002 mismatches with location / expected / actual.
+
+<!-- @work-item-id WI-139 -->
+## WI-139 Semantic Drift Tests
+
+- Missing implementation/test observations for design behaviors are reported.
+- Undesigned public code behaviors and undesigned test observations are reported as warnings.

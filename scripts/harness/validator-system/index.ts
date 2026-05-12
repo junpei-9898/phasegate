@@ -18,6 +18,7 @@ export { LayerConfig } from './domain/value-objects/layer-config.js';
 export { DriftReport } from './domain/value-objects/drift-report.js';
 export { ConsistencyReport } from './domain/value-objects/consistency-report.js';
 export { DeadCodeReport } from './domain/value-objects/dead-code-report.js';
+export { SemanticDriftReport } from './domain/value-objects/semantic-drift-report.js';
 
 // --- Domain Services ---
 export { ValidatorRegistry, UnknownValidatorError } from './domain/services/validator-registry.js';
@@ -25,6 +26,7 @@ export { ValidatorExecutionService, ValidatorExecutionError } from './domain/ser
 export { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 export { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
 export { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
+export { SemanticDriftService } from './domain/services/l4/semantic-drift-service.js';
 
 // --- Application DTOs ---
 export type { ValidationResultContract } from './application/dto/validation-result-contract.js';

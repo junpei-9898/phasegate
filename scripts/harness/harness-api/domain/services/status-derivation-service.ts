@@ -4,7 +4,7 @@
 // status-derivation-service.ts — StatusDerivationService Domain Service
 
 import { LayerHealth, type LayerId } from '../value-objects/layer-health.js';
-import { HarnessStatusSummary, type PresetInfo, type ConfigSummary, type PhaseGateSummary } from '../value-objects/harness-status-summary.js';
+import { HarnessStatusSummary, type PresetInfo, type ConfigSummary, type PhaseGateSummary, type HookHealth, type BaselineHealth, type OperationalWarning } from '../value-objects/harness-status-summary.js';
 import type { ArtifactScanResult, ArtifactPresence } from '../value-objects/artifact-scan-result.js';
 
 const ALL_LAYER_IDS: readonly LayerId[] = ['L1', 'L2', 'L3', 'L4'];
@@ -91,6 +91,9 @@ export class StatusDerivationService {
     configSummary: ConfigSummary;
     phaseGateSummary: PhaseGateSummary;
     liveValidationByLayer?: Partial<Record<LayerId, 'pass' | 'fail' | 'skipped' | 'not-run' | 'error'>>;
+    hookHealth?: HookHealth;
+    baselineHealth?: BaselineHealth;
+    operationalWarnings?: readonly OperationalWarning[];
   }): HarnessStatusSummary {
     const { scanResult, presetInfo, configSummary, phaseGateSummary, liveValidationByLayer } = input;
 
@@ -136,6 +139,9 @@ export class StatusDerivationService {
       phaseGateSummary,
       presetInfo,
       configSummary,
+      hookHealth: input.hookHealth,
+      baselineHealth: input.baselineHealth,
+      operationalWarnings: input.operationalWarnings,
     });
   }
 }

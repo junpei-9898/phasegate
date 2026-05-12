@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit phase2-extensions
+ * @work-item-id WI-122
  */
 import type { FreshnessConfigPort } from '../../domain/ports/freshness-config-port.js';
 import type { DocumentScannerPort } from '../../domain/ports/document-scanner-port.js';
@@ -35,6 +36,7 @@ export class ValidateDocPointersUseCase {
 
       const results = [];
       let totalDocuments = 0;
+      let skippedUrlPointers = 0;
 
       for (const rule of filteredRules) {
         const documentPaths = await this.documentScannerPort.scan(rule.documentPattern);
@@ -45,7 +47,13 @@ export class ValidateDocPointersUseCase {
           const validationResults = await this.pointerResolutionService.resolve(pointers);
 
           for (const validationResult of validationResults) {
-            if (validationResult.pointer.isUrl() && !input.includeUrlPointers) {
+            const semanticPointerType = classifyPointerTarget(validationResult.pointer.target, validationResult.pointer.type);
+            const severity = validationResult.pointer.isUrl() && !input.includeUrlPointers
+              ? 'skip'
+              : rule.policyFor(semanticPointerType);
+
+            if (severity === 'skip') {
+              if (validationResult.pointer.isUrl()) skippedUrlPointers += 1;
               continue;
             }
 
@@ -53,8 +61,14 @@ export class ValidateDocPointersUseCase {
               documentPath,
               pointerTarget: validationResult.pointer.target,
               pointerType: validationResult.pointer.type,
+              semanticPointerType,
+              owner: rule.owner,
+              severity,
               isResolvable: validationResult.isResolvable,
               errorMessage: validationResult.errorMessage,
+              nextAction: validationResult.isResolvable
+                ? 'no action required'
+                : `Fix ${semanticPointerType} pointer or change policy for owner ${rule.owner}`,
             });
           }
 
@@ -66,9 +80,7 @@ export class ValidateDocPointersUseCase {
       }
 
       const brokenPointers = results.filter((result) => !result.isResolvable).length;
-      const skippedUrlPointers = results.filter((result) => result.pointerType === 'url').length;
-      const failingRules = filteredRules.filter((rule) => rule.shouldFailOnBroken());
-      const passed = failingRules.length === 0 || brokenPointers === 0;
+      const passed = !results.some((result) => !result.isResolvable && result.severity === 'fail');
 
       return {
         results,
@@ -95,4 +107,12 @@ export class ValidateDocPointersUseCase {
       };
     }
   }
+}
+
+function classifyPointerTarget(target: string, rawType: 'file-path' | 'url'): 'reference' | 'implementation' | 'adr' | 'product-doc' | 'external-url' {
+  if (rawType === 'url') return 'external-url';
+  if (/docs\/ADR\/|ADR-\d{3}/i.test(target)) return 'adr';
+  if (/docs\/product\//.test(target)) return 'product-doc';
+  if (/scripts\/harness\/|\.ts$/.test(target)) return 'implementation';
+  return 'reference';
 }

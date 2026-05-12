@@ -6,6 +6,9 @@
  * 全コンポーネントを生成・配線し、UseCase群を外部に公開する。
  */
 import { FileSystemMatrixFileAdapter } from './infrastructure/adapters/file-system-matrix-file-adapter.js';
+import { FileSystemGeneratedMatrixAdapter } from './infrastructure/adapters/file-system-generated-matrix-adapter.js';
+import { MarkdownRequirementSourceAdapter } from './infrastructure/adapters/markdown-requirement-source-adapter.js';
+import { TypeScriptTestReferenceSourceAdapter } from './infrastructure/adapters/type-script-test-reference-source-adapter.js';
 import { AjvJsonSchemaValidatorAdapter } from './infrastructure/adapters/ajv-json-schema-validator-adapter.js';
 import { ConfigFoundationCoverageThresholdAdapter } from './infrastructure/adapters/config-foundation-coverage-threshold-adapter.js';
 import { TraceabilityModelStoryRegistryAdapter } from './infrastructure/adapters/traceability-model-story-registry-adapter.js';
@@ -13,14 +16,17 @@ import { MatrixValidationService } from './domain/services/matrix-validation-ser
 import { AcCoverageGatePolicy } from './domain/services/ac-coverage-gate-policy.js';
 import { CoverageCalculationService } from './domain/services/coverage-calculation-service.js';
 import { ImpactAnalysisService } from './domain/services/impact-analysis-service.js';
+import { RequirementIntentCoverageService } from './domain/services/requirement-intent-coverage-service.js';
 import { ValidateMatrixUseCase } from './application/usecases/validate-matrix-usecase.js';
 import { CheckAcCoverageGateUseCase } from './application/usecases/check-ac-coverage-gate-usecase.js';
 import { CalculateCoverageUseCase } from './application/usecases/calculate-coverage-usecase.js';
 import { AnalyzeImpactUseCase } from './application/usecases/analyze-impact-usecase.js';
+import { GenerateRequirementTestMatrixUseCase } from './application/usecases/generate-requirement-test-matrix-usecase.js';
 import { ValidateMatrixHandler } from './presentation/handlers/validate-matrix-handler.js';
 import { CheckAcCoverageGateHandler } from './presentation/handlers/check-ac-coverage-gate-handler.js';
 import { CalculateCoverageHandler } from './presentation/handlers/calculate-coverage-handler.js';
 import { AnalyzeImpactHandler } from './presentation/handlers/analyze-impact-handler.js';
+import { GenerateMatrixHandler } from './presentation/handlers/generate-matrix-handler.js';
 
 export interface NyquistValidationModuleDeps {
   /** traceability-model の storyCatalog.getAllStoryIds() を渡す */
@@ -32,6 +38,9 @@ export interface NyquistValidationModuleDeps {
 export function createNyquistValidationModule(deps: NyquistValidationModuleDeps) {
   // Infrastructure adapters
   const matrixFilePort = new FileSystemMatrixFileAdapter();
+  const generatedMatrixPort = new FileSystemGeneratedMatrixAdapter();
+  const requirementSourcePort = new MarkdownRequirementSourceAdapter();
+  const testReferenceSourcePort = new TypeScriptTestReferenceSourceAdapter();
   const ajvValidator = new AjvJsonSchemaValidatorAdapter();
   const coverageThresholdPort = new ConfigFoundationCoverageThresholdAdapter({
     getPreset: deps.getPreset,
@@ -45,6 +54,7 @@ export function createNyquistValidationModule(deps: NyquistValidationModuleDeps)
   const acCoverageGatePolicy = new AcCoverageGatePolicy();
   const coverageCalculationService = new CoverageCalculationService();
   const impactAnalysisService = new ImpactAnalysisService();
+  const intentCoverageService = new RequirementIntentCoverageService();
 
   // Application UseCases
   const validateMatrixUseCase = new ValidateMatrixUseCase({
@@ -75,6 +85,13 @@ export function createNyquistValidationModule(deps: NyquistValidationModuleDeps)
     impactAnalysisService,
   });
 
+  const generateMatrixUseCase = new GenerateRequirementTestMatrixUseCase({
+    requirementSourcePort,
+    testReferenceSourcePort,
+    matrixPort: generatedMatrixPort,
+    intentCoverageService,
+  });
+
   const validateMatrixHandler = new ValidateMatrixHandler({
     validateMatrixUseCase,
   });
@@ -91,16 +108,22 @@ export function createNyquistValidationModule(deps: NyquistValidationModuleDeps)
     analyzeImpactUseCase,
   });
 
+  const generateMatrixHandler = new GenerateMatrixHandler({
+    useCase: generateMatrixUseCase,
+  });
+
   return {
     validateMatrixUseCase,
     checkAcCoverageGateUseCase,
     calculateCoverageUseCase,
     analyzeImpactUseCase,
+    generateMatrixUseCase,
     handlers: {
       validateMatrixHandler,
       checkAcCoverageGateHandler,
       calculateCoverageHandler,
       analyzeImpactHandler,
+      generateMatrixHandler,
     },
   } as const;
 }

@@ -7,12 +7,14 @@
  * @work-item-id WI-108
  * @work-item-id WI-109
  * @work-item-id WI-107
+ * @work-item-id WI-125
+ * @work-item-id WI-131
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { run, runInCwd, withTempDir } from './cli-test-helpers.js';
 
@@ -343,6 +345,71 @@ describe('harness CLI E2E', () => {
       const actual = run('phasegate:impact-analysis', 'H99-01');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:impact-analysis');
+    }, 30_000);
+
+    it('phasegate:generate-matrix が product docs とtest metadataからmatrixを生成する', () => {
+      const actual = withTempDir((cwd) => {
+        mkdirSync(join(cwd, 'docs/product'), { recursive: true });
+        mkdirSync(join(cwd, 'scripts/harness/__tests__/unit'), { recursive: true });
+        writeFileSync(join(cwd, 'docs/product/user_stories.md'), `
+# User Stories
+
+### H07-01: requirement-test-matrix.json新設
+
+#### 受け入れ基準
+
+- [ ] AC-1: requirement-test-matrix.jsonのJSONスキーマが定義されている
+- [ ] AC-2: テスト参照を生成できる
+`);
+        writeFileSync(join(cwd, 'scripts/harness/__tests__/unit/matrix-generation.test.ts'), `
+/**
+ * @layer test
+ * @unit nyquist-validation
+ * @story H07-01
+ */
+import { describe, expect, it } from 'vitest';
+
+describe('matrix generation dogfood', () => {
+  it('matrixを生成できること', () => {
+    const actual = 'H07-01';
+    expect(actual).toBe('H07-01');
+  });
+});
+`);
+
+        return runInCwd(
+          cwd,
+          'phasegate:generate-matrix',
+          '--requirements',
+          'docs/product/user_stories.md',
+          '--tests',
+          'scripts/harness/__tests__',
+          '--out',
+          '.harness/requirement-test-matrix.json',
+          '--json',
+        );
+      });
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stderr).not.toContain('Unknown command: phasegate:generate-matrix');
+      const parsed = JSON.parse(actual.stdout) as {
+        matrix: {
+          stories: Array<{
+            storyId: string;
+            storyMappings: Array<{
+              testReferences: Array<{ filePath?: string; testName?: string; testType?: string }>;
+            }>;
+          }>;
+        };
+      };
+      expect(parsed.matrix.stories[0].storyId).toBe('H07-01');
+      expect(parsed.matrix.stories[0].storyMappings[0].testReferences).toContainEqual(
+        expect.objectContaining({
+          filePath: expect.stringContaining('matrix-generation.test.ts'),
+          testName: 'matrixを生成できること',
+          testType: 'unit',
+        }),
+      );
     }, 30_000);
   });
 

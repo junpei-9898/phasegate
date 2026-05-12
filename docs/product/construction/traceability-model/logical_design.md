@@ -1080,3 +1080,15 @@ CLI/CI/Hookのプレゼンテーション責務は以下のUnit側アダプタ�
 - `scripts/harness/core/metadata-parser.ts` の既存テストを壊さないこと
 - `scripts/harness/validators/metadata.ts` の既存呼び出し契約を維持すること
 - `shared-kernel/story-id.ts` の import path を固定し、他Unitが `traceability-model` 内部実装へ直接依存しないこと
+
+## 8. G2 Test Traceability Contracts
+
+<!-- @work-item-id WI-125, WI-129, WI-130, WI-131 -->
+
+Traceability metadata supplies evidence for the G2 test-quality flow. `@story` remains the story-level bridge used by Nyquist matrix generation, while `@work-item-id` identifies WI-scoped implementation and test evidence for work item status derivation.
+
+The traceability-model unit does not evaluate semantic AAA, assertion strength, or AC intent coverage itself. Those checks are owned by validator-system and nyquist-validation, and traceability-model provides stable metadata parsing and WI status derivation signals for those units.
+<!-- @work-item-id WI-117, WI-118, WI-139 -->
+## G3 Traceability Semantics
+
+Traceability consumers compare design/code/test semantics by Unit-scoped keys. `@unit` metadata is the primary source for implementation ownership, and product-doc `@work-item-id` annotations remain the canonical reflection link.

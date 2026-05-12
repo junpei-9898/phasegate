@@ -432,3 +432,17 @@
 1. **test-coverage-checker** — テストケース設計の網羅性チェック（カバレッジ90%以上を確認）
 2. **unit-test-logic-designer** — ユニットテストの疑似コード設計
 3. **story-implementor** — TDD実装
+
+## Matrix Auto-Generation and Intent Coverage
+
+<!-- @work-item-id WI-125, WI-131 -->
+
+| ID | Target | Scenario | Expected |
+|---|---|---|---|
+| UT-NQ-GEN-001 | GenerateRequirementTestMatrixUseCase | product docs AC と `@story` test がある | matrix stories が生成される |
+| UT-NQ-GEN-002 | GenerateRequirementTestMatrixUseCase | 既存 matrix に手動 reference がある | reference が保持される |
+| UT-NQ-GEN-003 | GenerateRequirementTestMatrixUseCase | test がない AC がある | `missingTests` に出る |
+| UT-NQ-GEN-004 | GenerateRequirementTestMatrixUseCase | unknown story の test がある | `orphanTests` に出る |
+| UT-NQ-INTENT-001 | EvaluateRequirementIntentCoverageUseCase | test reference がある AC | `observed` |
+| UT-NQ-INTENT-002 | EvaluateRequirementIntentCoverageUseCase | testName がない reference | `weakly-observed` |
+| UT-NQ-INTENT-003 | EvaluateRequirementIntentCoverageUseCase | reference がない AC | `unobserved` |

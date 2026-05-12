@@ -413,3 +413,9 @@ Pointer[]の検証はPointerResolverPort（外部依存）への委譲が必要�
 | Git logコマンドの実行失敗（CIサーバー設定依存） | 低 | DocumentAgePortがmtimeフォールバックを実装。DocumentAge.sourceで取得元を明示しログで診断可能 |
 | 正規表現によるPointer抽出の網羅性 | 中 | Phase 2初期はMarkdown標準形式（`[text](path)`）に限定。エッジケースはUnit Testで網羅的に検証 |
 | HarnessConfigV2への設定追加（config-foundationスキーマ変更） | 低 | FreshnessConfigPortがアダプタとして吸収。ドメインモデルへの影響を遮断 |
+<!-- @work-item-id WI-122 -->
+## WI-122 Pointer And Freshness Semantics
+
+`PointerRule` owns operational pointer policy through `owner` and per semantic pointer type `pointerPolicies`. Pointer reports distinguish `reference`, `implementation`, `adr`, `product-doc`, and `external-url`.
+
+`FreshnessCheckResult` distinguishes stable aging from `stale-after-source-change` and carries a next action for operational triage.

@@ -239,3 +239,18 @@ H07-04のimpact-analysisの「間接影響分析」（依存する設計要素�
 ### D5: @storyアノテーション整合性の責務分離
 
 MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合に限定し、ファイルシステム上の`@story`アノテーションとの突き合わせはvalidator-systemのL2-002（metadata）バリデータに委ねた。実装複雑度の抑制と責務分離の両立を図る。
+
+## Matrix Auto-Generation and Intent Coverage
+
+<!-- @work-item-id WI-125, WI-131 -->
+
+`RequirementTestMatrixGenerator` は product docs の acceptance criteria と test metadata を source として `requirement-test-matrix.json` を生成する。既存 matrix の test references は schema 互換の範囲で保持し、unknown story / missing test / orphan test を report する。
+
+`RequirementIntentCoverage` は generated matrix を observation basis として、AC ごとに `observed`, `weakly-observed`, `unobserved` を分類する。test name だけでは強い対応とみなさず、assertion target / expected outcome が未接続の場合は `weakly-observed` として warning を出す。
+
+| Model | Role |
+|---|---|
+| RequirementSource | product docs から抽出した `storyId` と `acIds` |
+| TestReferenceSource | test files から抽出した `storyId`, `filePath`, `testType`, `testName?` |
+| MatrixGenerationReport | `unknownStories`, `missingTests`, `orphanTests`, `preservedReferences` |
+| IntentCoverageItem | AC 単位の `observed` / `weakly-observed` / `unobserved` |
