@@ -119,10 +119,15 @@ docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 - 「phasegate のインストール方法は？」
 - 「monorepo で使うときは？」
 - 「既存プロジェクトに後から導入したい」
+- 「doctor の repairMode / suggestedSkill って何？」
+- 「.phasegate/manifest.json や hook-skip-events は何？」
 
 **参照先**:
 - 新規導入: `docs/guide/installation.md`
 - 既存プロジェクト導入: `docs/guide/retrofit-adoption.md`
+- setup artifact / doctor finding / legacy artifact: `docs/guide/setup-artifacts.md`
+
+`setup-artifacts.md` は managed target / generated artifact / runtime state / legacy artifact / user-level setting の分類を持つ。`doctor --report-out` は明示 path への出力で、`.phasegate/last-doctor-report.json` は固定生成物ではない点もここを参照する。<!-- @work-item-id WI-153 -->
 
 ### 8. skill 一覧と使い分け
 

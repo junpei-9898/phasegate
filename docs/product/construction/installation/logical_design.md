@@ -6,7 +6,7 @@ traceability:
 # Logical Design (横断): installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
 > **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
@@ -33,7 +33,7 @@ traceability:
 | `SuggestedSkill` | VO | `{ skillName, rationale, invokeCommand }` の純粋データ |
 | `Hash` | VO | `sha256:<64 hex>` prefix 付き文字列。`sha256:` prefix で将来のアルゴリズム切替に対応 |
 | `RepairTable` | 静的レジストリ (domain class) | `lookup(checkId): SuggestedSkill \| null` の静的マッピング |
-| `HeuristicCheck` | interface | 9 種実装の strategy 抽象 (実装は application layer) |
+| `HeuristicCheck` | interface | 10 種実装の strategy 抽象 (実装は application layer) |
 | `MergeStrategy<T>` | interface | install の merge 戦略抽象 (WI-146 で導入、実装は infrastructure) |
 | `UninstallReverseStrategy` | interface | uninstall の reverse-op 抽象 (WI-147 で導入、実装は infrastructure) |
 | `ReconcileStrategy` | interface | reconcile の update 戦略抽象 (WI-148 で導入、実装は infrastructure) |
@@ -47,13 +47,13 @@ traceability:
 ### 1.2 application
 
 - domain + port interface を所有、infrastructure を知らない
-- Use case 4 種 + Port 4 種 + HeuristicCheck 9 実装
+- Use case 4 種 + Port 4 種 + HeuristicCheck 10 実装
 - 配置: `scripts/harness/installation/application/`
 
 **責務の詳細:**
 
 - Port interface を宣言し、infrastructure adapter との境界を保つ
-- `HeuristicCheck` 9 実装は `FileInspectorPort` を constructor 注入で受け取る (Phase 1 計画書 Q5 承認)
+- `HeuristicCheck` 10 実装は `FileInspectorPort` を use case から受け取る stateless strategy として実行する (Phase 1 計画書 Q5 承認後の実装反映)
 - 薄い wrapper (`skill-deployer-manifest-builder.ts`) を WI-145 スコープで保持し、WI-146 完了時に削除 (Phase 1 計画書 Q3 承認)
 - use case は副作用を port 経由でのみ実行し、domain ロジックと IO を分離する
 
@@ -108,7 +108,7 @@ traceability:
 
 | Use Case | 処理フロー概要 |
 |---|---|
-| `RunDoctorDiagnosticsUseCase` | `HeuristicCheck[]` を順次実行 → `DiagnosticFinding[]` を収集 → `DiagnosticReport` を構築して返す |
+| `RunDoctorDiagnosticsUseCase` | manifest parse を事前確認 → `HeuristicCheck[]` を順次実行 → `DiagnosticFinding[]` を収集 → `DiagnosticReport` を構築して返す |
 | `InstallUseCase` | deploy 先ごとに `RepairMode` 判定 → `mechanical` なら merge 実行、`ai-assisted` なら refuse + hint → `ManifestRepositoryPort.save` |
 | `UninstallUseCase` | manifest 読込 → 各 entry の reverse-op 判定 → `created` 削除 / `merged` block 除去 → manifest archive |
 | `ReconcileUseCase` | manifest 読込 → template hash 比較 → 差分 update / skip / refuse → manifest update |
@@ -181,9 +181,10 @@ interface BackupPort {
 
 ---
 
-## 4. HeuristicCheck 実装 (application layer, 9 種)
+## 4. HeuristicCheck 実装 (application layer, 10 種)
 
 @work-item-id WI-145
+@work-item-id WI-169
 
 各実装は `HeuristicCheck` interface (domain layer) を実装し、`FileInspectorPort` を constructor 注入で受け取る (Phase 1 計画書 Q5 承認: interface は domain, 実装は application)。
 
@@ -196,10 +197,11 @@ interface BackupPort {
 | `HuskyPrePushMissingCheck` | `husky-pre-push-missing` | `.husky/pre-push` に `phasegate bypass:audit` が無い | warn |
 | `CiWorkflowMissingCheck` | `ci-workflow-missing` | `.github/workflows/` に phasegate L3 検査 workflow が存在するか (ファイル名 or 内容で識別) | warn |
 | `PackageJsonDevdepMissingCheck` | `package-json-devdep-missing` | `package.json` の `devDependencies` に `phasegate` 記載があるか (JSON parse で確認) | red |
-| `ClaudeSkillsSymlinkCheck` | `claude-skills-symlink` | `.claude/skills/phasegate` が `node_modules/phasegate/skills` を指す symlink か (`readSymlink` で確認) | red |
-| `CodexSkillsSymlinkCheck` | `codex-skills-symlink` | `.codex/skills/phasegate` symlink 検査 (ClaudeSkillsSymlinkCheck と同様の手順) | red |
+| `ClaudeSkillsSymlinkCheck` | `claude-skills-symlink` | `.claude/skills` が `../skills` または project `skills` を指す symlink か (`readSymlink` で確認) | red |
+| `CodexSkillsSymlinkCheck` | `codex-skills-symlink` | `.codex/skills` symlink 検査 (ClaudeSkillsSymlinkCheck と同様の手順) | red |
+| `WiWorkflowDriftCheck` | `wi-workflow-drift` | inception WI frontmatter と成果物状態の drift を確認し、`work-items:status` で同期できる状態かを通知 | warn |
 
-各 finding は `RepairTable.lookup(checkId)` で `SuggestedSkill` を取得し、`repairMode = "ai-assisted"` の場合に `suggestedSkill` フィールドに同梱する。
+各 finding は `RepairTable.lookup(checkId)` で `SuggestedSkill` を取得し、`repairMode = "ai-assisted"` の場合に `suggestedSkill` フィールドに同梱する。`repairMode = "mechanical"` の場合は `repairHint` を優先し、skill hint は出さない。
 
 **`HeuristicCheck` interface (domain layer, domain_model.md §3.2 と同期):**
 
@@ -259,7 +261,7 @@ interface HeuristicCheck {
 | `"install"` | WI-146 | `InstallUseCase` 起動 → `InstallReport` 出力 |
 | `"uninstall"` | WI-147 | `UninstallUseCase` 起動 → `UninstallReport` 出力 |
 | `"reconcile"` | WI-148 | `ReconcileUseCase` 起動 → `ReconcileReport` 出力 |
-| `"init"` (既存) | WI-148 | deprecation warning 出力後 `install` に委譲 |
+| `"init"` (既存) | WI-148 | legacy-compatible bootstrap として維持し、manifest 書き出しは wrapper 経由で行う |
 | `"update-skills"` (既存) | WI-148 | `reconcile` へ alias 委譲 |
 
 ### 6.2 各 CLI handler の責務 (presentation 単独)
@@ -320,7 +322,7 @@ const manifestRepo = new FileSystemManifestRepositoryAdapter();
 // domain
 const repairTable = new RepairTable();
 
-// application: HeuristicCheck 9 種
+// application: HeuristicCheck 10 種
 const checks: HeuristicCheck[] = [
   new ClaudeHookMissingCheck(inspector),
   new CodexHookMissingCheck(inspector),
@@ -331,6 +333,7 @@ const checks: HeuristicCheck[] = [
   new PackageJsonDevdepMissingCheck(inspector),
   new ClaudeSkillsSymlinkCheck(inspector),
   new CodexSkillsSymlinkCheck(inspector),
+  new WiWorkflowDriftCheck(inspector),
 ];
 
 // application: use cases
@@ -340,14 +343,15 @@ const runDoctor = new RunDoctorDiagnosticsUseCase(checks, manifestRepo, repairTa
 const doctorHandler = new DoctorCliHandler(runDoctor);
 ```
 
-**WI-146/147/148 完了後の追加構成 (将来):**
+**WI-146/147/148 完了後の追加構成:**
 
 ```typescript
-const backup = new FileSystemBackupAdapter();
-const installUseCase = new InstallUseCase(manifestRepo, hashCalc, backup, /* merge strategies */);
-const uninstallUseCase = new UninstallUseCase(manifestRepo, hashCalc, backup, /* reverse strategies */);
-const reconcileUseCase = new ReconcileUseCase(manifestRepo, hashCalc, backup, /* reconcile strategies */);
+const installUseCase = new RunInstallUseCase(manifestRepo, hashCalc);
+const uninstallUseCase = new RunUninstallUseCase(manifestRepo, hashCalc);
+const reconcileUseCase = new RunReconcileUseCase(manifestRepo, hashCalc);
 ```
+
+Install / reconcile / uninstall use cases currently keep merge/reverse strategy behavior inside the use case implementation. `futureInstallationStrategyPorts` remains an explicit extension point; it is not an unimplemented runtime dependency. @work-item-id WI-169
 
 **依存方向:**
 
@@ -376,7 +380,7 @@ presentation (main.ts) → application use case → application port (interface)
 | `DeploymentEntry` | VO 生成・equality (path 一致で等価、domain_model_plan.md Q4 承認) | WI-145 |
 | `DiagnosticReport` | overallStatus の derive ロジック、findigs uniqueness | WI-145 |
 | `DiagnosticFinding` | repairMode-suggestedSkill 制約、severity 独立 (domain_model_plan.md Q5 承認) | WI-145 |
-| `RepairTable` | `lookup` の 9 entry full coverage (全 checkId → SuggestedSkill マッピング) | WI-145 |
+| `RepairTable` | `lookup` の 10 entry full coverage (全 checkId → SuggestedSkill マッピング) | WI-145 / WI-169 |
 | `ClaudeHookMissingCheck` | FileInspectorPort mock 注入、pass / fail / ai-assisted 各パターン | WI-145 |
 | `CodexHookMissingCheck` | 同上 | WI-145 |
 | `HuskyPreCommitMissingCheck` | 同上 | WI-145 |
@@ -386,6 +390,7 @@ presentation (main.ts) → application use case → application port (interface)
 | `PackageJsonDevdepMissingCheck` | 同上 | WI-145 |
 | `ClaudeSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
 | `CodexSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
+| `WiWorkflowDriftCheck` | WI frontmatter drift の warn finding | WI-169 |
 
 - domain 層のモックは禁止 (CLAUDE.md 規約)
 - application layer の `HeuristicCheck` 実装テストでは `FileInspectorPort` を mock 注入する (port のみ mock 許可)
@@ -402,6 +407,7 @@ presentation (main.ts) → application use case → application port (interface)
 | install idempotency | `--apply` 2 回連続で manifest hash 不変 | WI-146 |
 | uninstall reverse | install → uninstall → doctor が「未導入」と判定 | WI-147 |
 | reconcile idempotency | `--apply` 2 回連続で no-op | WI-148 |
+| manifest parse error | 壊れた `.phasegate/manifest.json` を明示エラーとして扱い、silent green にしない | WI-169 |
 
 ### 8.3 Negative tests
 

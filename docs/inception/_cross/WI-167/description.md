@@ -1,0 +1,34 @@
+---
+id: WI-167
+type: issue
+severity: normal
+status: drafted
+affects: [documentation, validator-system, traceability-model]
+source: internal
+---
+
+# WI-167: Product Unit Boundary And Catalog Cleanup
+
+> 起票日: 2026-05-12
+> 起票経緯: product construction と product unit catalog の所有境界を整理するため。
+
+## スコープ
+
+- `docs/product/construction/docs/*`
+- `docs/product/construction/documentation/*`
+- `docs/product/units/*`
+- `docs/product/environment_contract.md`
+- hyphen / underscore の unit file 二重定義
+- `{unit}_unit.md` placeholder
+- 旧 Unit 数・旧 validator registry 参照
+
+## 受け入れ基準
+
+- [ ] `docs` Unit が現役、legacy、alias のどれか明確になる。
+- [ ] metadata / story reflection が二重 Unit を誤解しない。
+- [ ] WI-127..139 の product reflection 所有者が説明可能。
+- [ ] `docs/product/units/*` が product construction の実 Unit 境界と矛盾しない。
+
+## 依存
+
+なし。product docs cleanup として独立可能。

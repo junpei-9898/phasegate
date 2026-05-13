@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.6] - 2026-05-13
+
+### Changed
+
+- **WI-152 / WI-153 / WI-154 / WI-157 / WI-169 — setup lifecycle documentation refresh** — adds the setup artifact inventory, aligns installation product construction docs with the current doctor/install/reconcile contract, refreshes bundled setup guidance skills, and modernizes developer skill documentation before publish prep.
+
 ## [0.152.3] - 2026-05-12
 
 ### Fixed

@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.147.0"
+    "phasegate": "^0.152.6"
   }
 }
 ```
@@ -56,7 +56,7 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes the CI workflow when missing, and records managed entries in `.phasegate/manifest.json`.
+`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 -->
 
 If a managed update must replace existing custom content, use:
 
@@ -115,6 +115,8 @@ npx phasegate reconcile --apply
 ```
 
 `phasegate update-skills` remains available as a compatibility alias, but `reconcile` is the preferred upgrade path because it updates all managed files recorded in `.phasegate/manifest.json`.
+
+`doctor --report-out <path>` writes exactly to the provided path. `.phasegate/last-doctor-report.json` is not a fixed output file unless you choose that path explicitly. <!-- @work-item-id WI-152 -->
 
 ## Recommended .gitignore additions
 

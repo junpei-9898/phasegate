@@ -9,7 +9,7 @@ description: 現在の phasegate.config.json を schema + プロジェクト検�
 
 ## このスキルが解決する問題
 
-phasegate を導入した直後の config は単純な default で、実プロジェクトの構造 (monorepo / formatter 選定 / architecture style / Quick Mode の運用方針) に最適化されていない。AI が schema を知らずに勘で書き換えると壊れるため、**schema + 検出結果に基づいた決定的提案** が必要。
+phasegate を導入した直後の config は単純な default で、実プロジェクトの構造 (monorepo / formatter 選定 / architecture style / Quick Mode の運用方針) に最適化されていない。さらに setup lifecycle は `phasegate.config.json` だけでは完結せず、manifest、hook JSON、Husky、CI、skill link、doctor finding を合わせて読む必要がある。AI が schema や setup contract を知らずに勘で書き換えると壊れるため、**schema + 検出結果に基づいた決定的提案** が必要。<!-- @work-item-id WI-153 -->
 
 ## 設計原則
 
@@ -18,7 +18,7 @@ phasegate を導入した直後の config は単純な default で、実プロ�
 3. **AI 推論は判断要素のみ** — architecture preset 選定、relaxedGates 推奨値などは AI が判断するが根拠を必ず示す
 4. **schema は enum 違反確認時のみ Read** — 日常診断は本 SKILL 内の判定基準で十分。schema 全文 Read は値域不明時に限定する
 5. **read-only な Q&A は phasegate-toolkit-guide に委譲** — 「L2 って何？」など概念質問は本 skill スコープ外
-6. **変更後は L2 検証必須** — `npx phasegate validate --layer L2` を走らせてからユーザーに完了報告
+6. **変更後は対象別に検証** — config 変更は `npx phasegate validate --layer L2`、setup lifecycle 変更は `npx phasegate doctor`、hook/script/metadata 変更は `npx phasegate lint` または `npm run phasegate:check-ready` を走らせてからユーザーに完了報告
 
 ## 診断プロセス
 
@@ -33,10 +33,18 @@ phasegate を導入した直後の config は単純な default で、実プロ�
 | pnpm workspace | `pnpm-workspace.yaml` (存在すれば) | workspace 検出 |
 | lerna config | `lerna.json` (存在すれば) | workspace 検出 |
 | hook config | `.claude/scripts/hook-config.json` | 既存 hook 設定確認 |
+| doctor report | 明示された report path、またはユーザーが指定した `.phasegate/last-doctor-report.json` | `repairMode` / `repairHint` / `suggestedSkill` の確認 |
+| manifest | `.phasegate/manifest.json` | install / reconcile / uninstall の managed target と hash 状態確認 |
+| Claude hooks | `.claude/settings.json` | managed hook JSON と user customization の確認 |
+| Codex hooks | `.codex/hooks.json` | managed hook JSON と Codex hook 配線確認 |
+| Husky scripts | `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push` | pre-commit backstop と bypass audit の確認 |
+| CI workflows | `.github/workflows/*` | `phasegate-aidlc-gate.yml` や既存 workflow との競合確認 |
 
 **schema は必要なときだけ Read** (enum 違反疑い時など): `node_modules/phasegate/scripts/harness/config-foundation/infrastructure/schemas/harness-config-v3.schema.json` (or `harness-config-v2.schema.json` if v2)。
 
 phasegate リポジトリ自体 (dogfood) の場合は `node_modules/phasegate/` を `scripts/harness/config-foundation/...` に置換。
+
+`doctor --report-out <path>` は指定された path にだけ書く。`.phasegate/last-doctor-report.json` は固定生成物ではないため、存在しない場合は `npx phasegate doctor --json` を実行して現状を読み取る。<!-- @work-item-id WI-152 -->
 
 ### Step 1.5: Fresh init 判定 (重要)
 
@@ -115,6 +123,15 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 - `formatter: "biome"` だが `@biomejs/biome` が devDependencies に無い → WARN: prettier に切り替え推奨
 - v0.119 未満で deploy された hook script (bash 4 `mapfile` 使用) → WARN: macOS の bash 3.2 で silent fail。`phasegate init` 再実行で更新
 
+#### 観点 9: setup lifecycle と doctor finding
+
+- `phasegate doctor --json` の finding に `repairMode: "ai-assisted"` と `suggestedSkill.skillName = "phasegate-config-doctor"` がある → 本 skill が merge 方針、保持する user content、実行すべき `install --apply` / `--force` / `reconcile --apply` を提案する
+- `repairHint` がある mechanical finding → 原則として hint のコマンドを優先し、実行前に対象ファイルと manifest の差分を確認
+- manifest parse error → `.phasegate/manifest.json` を手で修復する前に backup / uninstall / reinstall の選択肢を提示
+- reconcile / uninstall が refuse → user modified managed target として扱い、`--force` のリスクと backup path を説明して承認を取る
+- Codex の `codex_hooks` feature flag は user-level setting。project-local `install` では変更されないため、必要なら `codex features enable codex_hooks` を案内
+- Codex native `apply_patch` bypass は hook で完全捕捉できない。`.husky/pre-commit` の `phasegate pre-commit` が backstop になるため、Husky 配線を診断対象に含める
+
 ### Step 3: 診断レポート
 
 診断結果を以下の形式で提示する:
@@ -179,13 +196,21 @@ options:
 
 ユーザーが適用対象を確定したら `Edit` で `phasegate.config.json` を変更。
 
-**変更後の必須検証**:
+**変更後の検証**:
 
 ```bash
 npx phasegate validate --layer L2
 ```
 
-L2 でエラーが出た場合は変更を **rollback** し、ユーザーに報告 (silent に進めない)。
+setup target を触った場合は以下も使い分ける:
+
+```bash
+npx phasegate doctor
+npx phasegate lint
+npm run phasegate:check-ready
+```
+
+検証でエラーが出た場合は変更を **rollback** し、ユーザーに報告 (silent に進めない)。
 
 ## phasegate-toolkit-guide との使い分け
 

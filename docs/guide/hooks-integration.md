@@ -4,6 +4,8 @@ Phasegate integrates natively with Claude Code through its hooks system. This en
 
 ## Setup
 
+For new or existing projects, prefer `npx phasegate install --dry-run` followed by `npx phasegate install --apply` so existing hook JSON is merged instead of replaced. Manual editing is still possible, but then `phasegate doctor` may report missing managed targets until the expected PhaseGate entries, skill links, Husky scripts, CI workflow, and manifest are present. See [Setup Artifacts](setup-artifacts.md). <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 -->
+
 Add the following to `.claude/settings.json`:
 
 ```jsonc
@@ -130,3 +132,5 @@ Additional hooks can be placed in `.claude/scripts/`:
 | targetDirs | Directories where hooks apply (relative to project root) | [] (skip if empty) |
 | formatter | "biome" or "eslint-prettier" | "biome" |
 | formatterArgs | Arguments passed to formatter | ["check", "--write"] |
+
+Legacy `.harness-hooks.yml` and old Fuse hook files are not part of the current install lifecycle. Keep them only for archived integrations; new setup should use `install`, `doctor`, `reconcile`, `lint`, and `validate`. <!-- @work-item-id WI-157 -->

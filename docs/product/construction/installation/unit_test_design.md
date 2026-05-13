@@ -16,7 +16,7 @@ traceability:
 
 ### 1.1 Scope
 
-WI-145 の unit test は、manifest / doctor の domain invariant、9 種 heuristic check、doctor report formatting を検証する。IO は Port mock に限定し、domain object は実体を使う。
+WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 種 heuristic check、doctor report formatting を検証する。IO は Port mock に限定し、domain object は実体を使う。
 
 ### 1.2 Domain Test Cases
 
@@ -44,8 +44,9 @@ WI-145 の unit test は、manifest / doctor の domain invariant、9 種 heuris
 | UT-INS-145-HC-005 | `HuskyPrePushMissingCheck` | `phasegate bypass:audit` あり | missing は warn + mechanical |
 | UT-INS-145-HC-006 | `CiWorkflowMissingCheck` | phasegate workflow file あり | workflow missing は warn + manual |
 | UT-INS-145-HC-007 | `PackageJsonDevdepMissingCheck` | `devDependencies.phasegate` あり | package missing / devDep missing |
-| UT-INS-145-HC-008 | `ClaudeSkillsSymlinkCheck` | `.claude/skills/phasegate` symlink target が phasegate skills | missing / wrong target |
-| UT-INS-145-HC-009 | `CodexSkillsSymlinkCheck` | `.codex/skills/phasegate` symlink target が phasegate skills | missing / wrong target |
+| UT-INS-145-HC-008 | `ClaudeSkillsSymlinkCheck` | `.claude/skills` symlink target が project `skills` | missing / wrong target |
+| UT-INS-145-HC-009 | `CodexSkillsSymlinkCheck` | `.codex/skills` symlink target が project `skills` | missing / wrong target |
+| UT-INS-169-HC-010 | `WiWorkflowDriftCheck` | WI frontmatter drift | no drift / warn drift |
 
 ### 1.4 UseCase / Formatter Test Cases
 

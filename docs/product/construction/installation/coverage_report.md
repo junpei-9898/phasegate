@@ -20,7 +20,7 @@ traceability:
 | Domain invariant | PASS | Hash, Manifest, Entry, Finding, Report, RepairTable を正常・異常で検証 |
 | Application branch | PASS | 9 HeuristicCheck の pass / missing / custom / malformed 系分岐を設計 |
 | Infrastructure | PASS | manifest atomic write, file inspector, crypto hash を temp fs で検証 |
-| CLI / scenario | PASS | doctor human/json/report-out/strict と command stub を検証 |
+| CLI / scenario | PASS | doctor human/json/report-out/strict と install/uninstall/reconcile dry-run lifecycle report を検証 |
 | Fixture finalization | WARN | 4 fixture の正確な file tree は実装時に builder で固定 |
 
 ## 2. WI-145 Acceptance Mapping

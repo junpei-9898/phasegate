@@ -139,7 +139,7 @@ These commands are for phasegate's own development and quality assurance.
 
 | Command | Description |
 |---|---|
-| `hooks:config validate` | Validate .harness-hooks.yml |
+| `hooks:config validate` | Compatibility validator for legacy `.harness-hooks.yml`; new setup uses `install`, `doctor`, `reconcile`, `lint`, and `validate` |
 | `hooks:gate-check --story <id>` | Completion gate check |
 
 #### Phase 2 Extensions
@@ -183,6 +183,8 @@ The plan-checker workflow is exposed through the skill-quality command family. U
 |---|---|
 | `skills list` | List available skills |
 | `skills info <name>` | Show skill details |
+
+`install`, `doctor`, `uninstall`, and `reconcile` are the current setup lifecycle commands. They operate on managed targets recorded in `.phasegate/manifest.json`; see `docs/guide/setup-artifacts.md` for the managed target / generated artifact / runtime state / legacy artifact split. @work-item-id WI-154
 
 ---
 
@@ -413,12 +415,11 @@ Phase B (v1.1 target):
 - JSON-based `gates[]` array for user-defined phase dependencies
 - DAG validation (cycle detection)
 
-### Skill Separation (Planned)
+### Skill Packaging
 
 **Planning doc**: `docs/inception/_shared/skill_separation_plan.md`
 
-Proposal to split 28 skills into 3 tiers: Core (8), AIDLC Workflow (18), Utility (2).
-Init command: `npx phasegate init --skills core|aidlc|all`
+The shipped catalog currently contains 30 skills. `npx phasegate init --skills core|all` is the implemented public selector; `aidlc` is not accepted by the current CLI. When adding or retiring a skill, update `skills/*/SKILL.md`, `docs/guide/skills-overview.md`, README skill counts, and any setup guidance skill references in the same change. @work-item-id WI-154
 
 ### Harness→Phasegate Rename (Planned, Breaking Change)
 
@@ -475,7 +476,7 @@ phasegate/
 ├── .claude/
 │   ├── settings.json                # Claude Code hooks configuration
 │   └── scripts/                     # Shell script hooks
-├── skills/                          # 28 skills
+├── skills/                          # 30 skills
 ├── templates/                       # Config templates
 └── docs/
     ├── ADR/                         # 13 Architecture Decision Records

@@ -391,7 +391,7 @@ ISSUE-005 P3-10 で明確化された境界:
 
 | Command | Options | Description |
 |---|---|---|
-| `hooks:config validate` | | Validate `.harness-hooks.yml` |
+| `hooks:config validate` | | Compatibility validator for legacy `.harness-hooks.yml`; new setup should use `install`, `doctor`, `reconcile`, `lint`, and `validate` |
 | `hooks:gate-check` | `--story <id>` | Completion gate check |
 
 ---

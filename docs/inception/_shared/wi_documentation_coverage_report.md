@@ -357,6 +357,78 @@ README は導入・概念・主要 CLI の入口として整っており、`docs
 9. docs contract schemas も setup artifact。
    - `docs/contracts/requirement-test-matrix.schema.json` と `docs/contracts/lesson-artifact.schema.json` は runtime config ではないが、Nyquist / skill-quality の file contract なので、package/install/docs consistency 監査に含めるべき。
 
+## 追加調査: WI-117..139 の product construction 反映
+
+ユーザー指摘に基づき、`docs/product/construction` 配下 20 Unit / 117 Markdown を追加調査した。6 サブエージェントで Unit 群を分担し、親エージェント側でも `@work-item-id WI-117..WI-139` と公開 docs の露出を突き合わせた。
+
+結論として、WI-117..139 は product construction に「反映はある」が、複数箇所で末尾追記に留まり、主設計・DTO・validator catalog・test design・coverage report まで統合されていない。既存の本レポートと backlog は README / guide / setup / skills 側の漏れを主に拾っていたため、product construction 正本内の矛盾を追加 WI として扱う必要がある。
+
+### 反映済みの主な evidence
+
+| 範囲 | 主な product reflection |
+|---|---|
+| WI-117 / WI-118 / WI-139 | `docs/product/construction/validator-system/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/harness-api/domain_model.md`, `logical_design.md`; `docs/product/construction/traceability-model/logical_design.md` |
+| WI-119 / WI-120 / WI-121 | `docs/product/construction/validator-system/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/biome-ast-engine/domain_model.md`, `logical_design.md`; `docs/product/construction/ci-governance/domain_model.md`; `docs/product/construction/harness-api/domain_model.md` |
+| WI-122 | `docs/product/construction/validator-system/logical_design.md`; `docs/product/construction/phase2-extensions/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/ci-governance/logical_design.md` |
+| WI-123 | `docs/product/construction/harness-api/domain_model.md`; `docs/product/construction/ci-governance/logical_design.md`; `docs/product/construction/agent-integration/logical_design.md` |
+| WI-124 / WI-128 | `docs/product/construction/validator-system/logical_design.md`; `docs/product/construction/ci-governance/logical_design.md`; `docs/product/construction/config-foundation/logical_design.md`; `docs/product/construction/phase2-extensions/logical_design.md`; `docs/product/construction/documentation/logical_design.md` |
+| WI-125 / WI-126 / WI-131 | `docs/product/construction/nyquist-validation/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/traceability-model/domain_model.md`, `logical_design.md`, `unit_test_design.md`, `it_test_design.md`; `docs/product/construction/phase-dependency-model/logical_design.md` |
+| WI-129 / WI-130 | `docs/product/construction/validator-system/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/skill-quality/logical_design.md`; `docs/product/construction/documentation/logical_design.md` |
+| WI-132..WI-138 | `docs/product/construction/validator-system/domain_model.md`, `logical_design.md`, `unit_test_design.md`, `it_test_design.md`, `coverage_report.md`; `docs/product/construction/documentation/domain_model.md`; `docs/product/construction/traceability-model/domain_model.md`; `docs/product/construction/harness-error/domain_model.md`; `docs/product/construction/phase-dependency-model/domain_model.md` |
+| WI-134 / WI-135 | `docs/product/construction/validator-system/domain_model.md`, `logical_design.md`, `unit_test_design.md`; `docs/product/construction/config-foundation/domain_model.md`; `docs/product/construction/biome-ast-engine/domain_model.md`; `docs/product/construction/documentation/domain_model.md` |
+
+### 追加で見つかった product construction gaps
+
+1. Validator catalog / invariant が WI-117..139 の追加に追いついていない。
+   - `L2-015 contract-traceability-coverage` は末尾に追記されているが、main catalog / `ValidatorId` invariant / default L2 execution の説明が旧 `L2-001..L2-003` 前提のまま残る。
+   - `L4-004` / `L4-005` は登録済みとして追記される一方、古い sequence / coverage では `L4-001..L4-003` や `L4-004` invalid 前提が残る。
+   - `L2-013`, `L2-014`, `L2-015`, `L4-004`, `L4-005` を含む validator catalog 正規化が必要。
+
+2. G5 operational validators が product docs の主設計に統合されていない。
+   - `WI-119`: dead-code graph は `exportedSymbols: string[]` や export 一覧止まりの箇所があり、re-export / `export *` / dynamic import / public API boundary / generated fixture exclusion / unused export report の設計が薄い。
+   - `WI-120`: L3 security は token family / entropy / redaction / allowlist / fixture policy が末尾 summary 中心で、主 scanner contract に統合されていない。
+   - `WI-121`: L3 performance は standard で skip する旧説明と、standard でも warning signal とする WI 側設計の関係が曖昧。
+   - `WI-134` / `WI-135`: side-effect capability / decision placement は名前だけの反映に近く、preset 別 allowed/denied capability, confidence, suggested owner zone, opt-in hard gate の contract が不足。
+
+3. G4 contract traceability / documentation contract が公開面・product 面とも薄い。
+   - product docs には `L2-015`, `PublicContract`, `TestObservation`, `ErrorContract`, `StateMachineModel`, `TraceabilityGraphSlice` の追記がある。
+   - しかし README / layer guide には `L2-015`, `@phasegate-contract`, `@phasegate-observation` の使い方がほぼ出ていない。
+   - `documentation` Unit は annotation 名のみで、boundary case, state machine, error contract, traceability graph の semantics が construction docs として展開されていない。
+
+4. Harness API / status / drift payload schema が旧説明に残っている。
+   - `HarnessStatusSummary` の hook / baseline / operational warnings は追記されているが、型表・handler flow・IT test design は layers / phaseGate / preset / config 中心の旧 schema のまま残る。
+   - drift / consistency / semantic drift の payload も `location`, precision source, unit-resolution warning, expected/actual, `unitName + behaviorId` などが正本化されていない。
+
+5. Phase2 pointer / freshness semantics が DTO・test design に統合されていない。
+   - `WI-122` の owner / pointer type / severity / next action は追記済み。
+   - 一方で旧 DTO / config example は `file-path | url`, `allowedPointerTypes`, `failOnBroken`, URL skip などの説明に留まり、pointer type 別 fail/warn/skip, external URL, stable docs vs stale docs の区別が正本側で弱い。
+
+6. CI template / L4 rollout が ci-governance と setup/integrations に十分反映されていない。
+   - `WI-124` live validator registry は追記済みだが、主設計・Port・UT/IT は `listAll` / stub validator list 前提が残る。
+   - `WI-128` scheduled L4 audit / compatibility command policy は説明があるが、generated template tests が live L4 surface / advisory policy / failOnWarning を固定していない。
+   - `setup` / `integrations` product docs は WI-124 / WI-128 の生成・配線面をほぼ持たない。
+
+7. Agent hook skip observability の product reflection が薄い。
+   - `agent-integration` は `WI-123` の logical_design 1 段落のみで、`HookSkipEvent`, recording port, JSONL schema, best-effort failure, PostToolUse / Stop tests, coverage mapping が見当たらない。
+
+8. Product coverage report / test design の追随が弱い。
+   - `config-foundation`, `biome-ast-engine`, `traceability-model`, `phase-dependency-model` の coverage report は旧 Hxx / K3.5 中心で、WI-119 / 124 / 128 / 132..139 の反映不足を拾えていない。
+   - `nyquist-validation` は WI-125 / WI-131 の domain / logical / unit test design はあるが、GenerateMatrixHandler / CLI / E2E flow の IT test design が薄い。
+   - `documentation` Unit には coverage report がない。
+
+9. Unit 境界の曖昧さがある。
+   - `docs/product/construction/docs` と `docs/product/construction/documentation` が併存する。
+   - WI-127..139 の reflection は `documentation` 側に寄っており、`docs` Unit が現役なのか legacy/alias なのか明確でない。
+
+10. 低優先だが ADR consistency ownership が曖昧。
+   - `WI-118` は ADR 参照切れを consistency target にするが、`adr-foundation` が schema/status owner で、`validator-system` が detector ownerである境界が product docs 上で明確でない。
+
+### 既存 backlog への影響
+
+既存の `WI-149..WI-158` 候補は、P0 docs mismatch、CLI catalog、status/drift guide、setup inventory、guidance skills、DEVELOPMENT/skills README、traceability cleanup、drift guardrail、legacy cleanup、report path normalization を扱う。今回の追加調査で、これに加えて product construction 正本そのものを修正する WI が必要と判断した。
+
+追加候補は `docs/inception/_shared/wi_documentation_improvement_backlog.md` に `WI-159` 以降として整理した。
+
 ## 備考
 
 今回の作業では既存の未コミット変更には触れず、このレポートのみを新規追加した。サブエージェント容量エラーにより一部範囲は親エージェントが同じ観点でローカル補完したため、必要なら次工程で P0/P1 の各項目を個別 WI として再調査・修正文書化する。

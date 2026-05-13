@@ -6,7 +6,7 @@ traceability:
 # Domain Model: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/domain_model_plan.md`
 
@@ -137,7 +137,8 @@ traceability:
 ### 2.7 CheckId
 
 @work-item-id WI-145
-- 型: 9 種の文字列 literal union (WI-145 §3.2 の 9 check に対応)
+@work-item-id WI-169
+- 型: 10 種の文字列 literal union。WI-145 の setup target checks に WI workflow drift check を追加した現行 doctor contract。
 
 ```typescript
 type CheckId =
@@ -150,6 +151,7 @@ type CheckId =
   | "package-json-devdep-missing"
   | "claude-skills-symlink"
   | "codex-skills-symlink"
+  | "wi-workflow-drift"
 ```
 
 - 各 CheckId と対応する severity のデフォルト値:
@@ -165,6 +167,7 @@ type CheckId =
 | `package-json-devdep-missing` | red |
 | `claude-skills-symlink` | red |
 | `codex-skills-symlink` | red |
+| `wi-workflow-drift` | warn |
 
 ---
 
@@ -179,21 +182,25 @@ type CheckId =
 - 内部実装: `readonly Map<CheckId, SuggestedSkill>` でハードコード (9 entries)
 - 将来拡張: WI-148 で user-config による override が必要になった場合、API を変えずに拡張できる設計
 
-CheckId → SuggestedSkill マッピング表 (9 件):
+CheckId → SuggestedSkill マッピング表 (10 件):
+
+@work-item-id WI-153
+@work-item-id WI-169
 
 | CheckId | skillName | rationale | invokeCommand |
 |---|---|---|---|
-| `claude-hook-missing` | `phasegate-setup` | `.claude/settings.json` に phasegate hook が登録されていません。再 install が必要です。 | `npx phasegate install --force` |
-| `codex-hook-missing` | `phasegate-setup` | `.codex/hooks.json` に phasegate hook が登録されていません。再 install が必要です。 | `npx phasegate install --force` |
-| `husky-pre-commit-missing` | `phasegate-setup` | `.husky/pre-commit` に phasegate lint hook が登録されていません。install で managed block を追記します。 | `npx phasegate install --apply` |
-| `husky-commit-msg-missing` | `phasegate-setup` | `.husky/commit-msg` に phasegate commit-msg hook が登録されていません。install で managed block を追記します。 | `npx phasegate install --apply` |
-| `husky-pre-push-missing` | `phasegate-setup` | `.husky/pre-push` に phasegate bypass:audit hook が見つかりません。推奨設定を確認してください。 | `npx phasegate install --apply` |
-| `ci-workflow-missing` | `phasegate-ci-setup` | `.github/workflows/` に phasegate CI workflow が存在しません。CI ゲートが機能していません。 | `npx phasegate install --apply` |
-| `package-json-devdep-missing` | `phasegate-setup` | `package.json` の `devDependencies` に `phasegate` が登録されていません。devDep を追加します。 | `npx phasegate install --apply` |
-| `claude-skills-symlink` | `phasegate-skills-link` | `.claude/skills` が phasegate `skills/` を指していません。symlink を再作成します。 | `npx phasegate install --force` |
-| `codex-skills-symlink` | `phasegate-skills-link` | `.codex/skills` が phasegate `skills/` を指していません。symlink を再作成します。 | `npx phasegate install --force` |
+| `claude-hook-missing` | `phasegate-config-doctor` | 既存設定にユーザーのカスタマイズがある場合、merge 位置と保持方針の判断が必要です。 | `invoke /phasegate-config-doctor` |
+| `codex-hook-missing` | `phasegate-config-doctor` | 既存設定にユーザーのカスタマイズがある場合、merge 位置と保持方針の判断が必要です。 | `invoke /phasegate-config-doctor` |
+| `husky-pre-commit-missing` | `phasegate-config-doctor` | 既存設定にユーザーのカスタマイズがある場合、merge 位置と保持方針の判断が必要です。 | `invoke /phasegate-config-doctor` |
+| `husky-commit-msg-missing` | `phasegate-config-doctor` | 既存設定にユーザーのカスタマイズがある場合、merge 位置と保持方針の判断が必要です。 | `invoke /phasegate-config-doctor` |
+| `husky-pre-push-missing` | null | mechanical repair hint を優先する。 | null |
+| `ci-workflow-missing` | `phasegate-toolkit-guide` | 既存 CI workflow との意味的な競合は人間の判断が必要です。 | `invoke /phasegate-toolkit-guide` |
+| `package-json-devdep-missing` | null | mechanical repair hint を優先する。 | null |
+| `claude-skills-symlink` | null | symlink 再作成は mechanical repair として扱う。 | null |
+| `codex-skills-symlink` | null | symlink 再作成は mechanical repair として扱う。 | null |
+| `wi-workflow-drift` | null | WI status は `work-items:status` の dry-run/apply contract で扱う。 | null |
 
-> [TODO: Opus review] 各 skillName / invokeCommand の妥当性は WI-145 logical_design でレビュー (本ドキュメントは方針提示)
+`SuggestedSkill.invokeCommand` は skill 起動 hint であり、CLI が自動実行するコマンドではない。mechanical finding は `repairHint` を優先する。
 
 ### 3.2 HeuristicCheck (interface, domain layer 配置)
 

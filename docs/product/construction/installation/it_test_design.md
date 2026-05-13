@@ -41,7 +41,7 @@ WI-145 の integration test は、実ファイルシステム上の manifest I/O
 | IT-INS-145-CLI-005 | `phasegate doctor --json` | `inert-install` | valid JSON、`schemaVersion="1.0"` |
 | IT-INS-145-CLI-006 | `phasegate doctor --strict` | warn only project | exitCode 1 |
 | IT-INS-145-CLI-007 | `phasegate doctor --report-out <path>` | `partial-install` | report file に JSON 診断結果を保存 |
-| IT-INS-145-CLI-008 | `phasegate install/uninstall/reconcile` | 任意 | 後続 WI stub として未実装を明確に返し、file を変更しない |
+| IT-INS-145-CLI-008 | `phasegate install/uninstall/reconcile --dry-run` | 任意 | 構造化 lifecycle report を返し、dry-run では file を変更しない |
 
 ### 1.4 Fixture Contract
 
