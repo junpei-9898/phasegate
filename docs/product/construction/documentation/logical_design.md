@@ -36,3 +36,14 @@ Documentation owns the public wording contract across README and `docs/guide/*`.
 <!-- @work-item-id WI-167 -->
 
 `documentation` is the active Unit for public guides, README feature inventory, and user-visible contract wording. Historical `docs` construction files remain legacy alias material only. Product reflection for WI-127..139 and later documentation-facing work belongs here unless a WI explicitly affects another runtime Unit. Hyphenated Unit IDs are the canonical names used by source metadata; underscore-named unit files under `docs/product/units/` are compatibility aliases and must not define different ownership.
+
+<!-- @work-item-id WI-176 -->
+## WI-176 Claude Code Readiness Documentation
+
+README and `docs/guide/*` document `plan.agentReadiness` as the agent-specific view of setup state. Public wording must make the row meanings explicit:
+
+- `claude`: `.claude/settings.json`, `CLAUDE.md`, and shared skills.
+- `codex`: `.codex/hooks.json`, `AGENTS.md`, shared skills, and manual user-level hook caveats.
+- `shared`: package/config/skills plus selected Husky and CI managed targets.
+
+Documentation must also state that manual external actions remain outside local proof even when local readiness is configured.

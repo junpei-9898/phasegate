@@ -1553,3 +1553,11 @@ These planners provide guidance and validation steps. Actual enforcement remains
 <!-- @work-item-id WI-175 -->
 
 Agent-facing setup plans include completeness entries and external manual actions so an agent can explain both what PhaseGate configured and what remains outside local automation. Agent workflows should treat `configured` and `planned` local areas as evidence, and should separately report `manual` external actions such as `codex features enable codex_hooks` or a first GitHub Actions run.
+
+### WI-176 Agent-Specific Readiness Consumption
+
+<!-- @work-item-id WI-176 -->
+
+Agent integration consumes `plan.agentReadiness` as startup guidance. Claude Code should inspect the `claude` and `shared` rows before planning work from `CLAUDE.md`; Codex should inspect the `codex` and `shared` rows and still surface user-level `codex_hooks` enablement as manual external work.
+
+Runtime hooks remain the enforcement layer. The readiness rows are explanatory context for the agent, not proof that the runtime has fired hooks or that external services are configured.

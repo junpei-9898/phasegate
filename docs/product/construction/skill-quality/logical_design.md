@@ -1937,3 +1937,10 @@ Skill-quality tools may read legacy `@story-id` annotations to preserve old casc
 `phasegate-toolkit-guide` points users and agents to getting-started, recipes, troubleshooting, setup artifacts, and CLI reference before answering onboarding questions. `phasegate-config-doctor` uses `setup:agent` and `config:plan` as read-only planning inputs when a request involves setup repair or configuration change.
 
 Skill-quality remains responsible for bundled skill content and structure validation, not for mutating `AGENTS.md` or `CLAUDE.md` directly.
+
+<!-- @work-item-id WI-176 -->
+## WI-176 Claude Code Setup Guidance in Skills
+
+`phasegate-toolkit-guide` and `phasegate-config-doctor` should treat `setup:agent --agent claude --dry-run --json` as the first diagnostic command for Claude Code setup questions. Skill guidance may explain `plan.agentReadiness`, but file mutation remains owned by setup / installation commands.
+
+The skills should preserve the distinction between local readiness and manual external actions so an agent does not claim hosted CI, Codex user-level hooks, or team policy acceptance as complete from local files alone.

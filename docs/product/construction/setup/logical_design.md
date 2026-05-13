@@ -41,3 +41,10 @@ Setup exposes first-run decisions as user-answerable paths rather than a raw com
 - `AGENTS.md` and `CLAUDE.md` are managed setup targets for selected agents; `AGENT.md` singular remains user-owned/unsupported.
 
 Setup lifecycle commands must preserve user content outside managed markers and route ambiguous merge choices through ai-assisted review instead of silent overwrite.
+
+<!-- @work-item-id WI-176 -->
+## WI-176 Agent-Specific Setup Readiness
+
+`setup:agent` reports `plan.agentReadiness` in addition to area-based completeness. Setup owns the local file evidence for the `claude`, `codex`, and `shared` rows, including selected hook files, agent context files, shared skills, package/config, Husky, and CI targets.
+
+The setup contract keeps local readiness separate from external actions. A configured Claude row means `.claude/settings.json`, `CLAUDE.md`, and shared skills are present; it does not prove that the Claude Code application has opened the repository. A configured shared row does not prove hosted CI has executed.
