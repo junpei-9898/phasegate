@@ -7,7 +7,7 @@
 // @story H11-06
 
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -159,6 +159,33 @@ target("agent setup planner CLI", () => {
           expect.objectContaining({ path: "CLAUDE.md", action: "will-skip", changed: false }),
         ]),
       );
+    }, 120000);
+
+    it("setup:agent apply が structured install error を返した場合は exit 1 で終了すること", async () => {
+      // Act
+      const actual = await withTempProject(async (projectRoot) => {
+        await writeFile(join(projectRoot, ".codex"), "not a directory", "utf8");
+        return await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"], projectRoot);
+      });
+
+      // Assert
+      const parsed = JSON.parse(actual.stdout) as {
+        installResult: {
+          error: {
+            target: string;
+            operation: string;
+            code: string;
+            partialChanges: string[];
+          };
+        };
+      };
+      expect(actual.exitCode).toBe(1);
+      expect(parsed.installResult.error).toMatchObject({
+        target: ".codex/hooks.json",
+        operation: "mkdir",
+        partialChanges: [".claude/settings.json", "CLAUDE.md"],
+      });
+      expect(["EEXIST", "ENOTDIR"]).toContain(parsed.installResult.error.code);
     }, 120000);
   });
 });

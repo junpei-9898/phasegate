@@ -1747,7 +1747,7 @@ async function main(): Promise<void> {
           console.log("Validation:");
           for (const command of plan.validation) console.log(`- ${command}`);
         }
-        process.exit(0);
+        process.exit(hasStructuredInstallError(installResult) ? 1 : 0);
         break;
       }
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.153.1] - 2026-05-13
+
+### Fixed
+
+- **WI-175 — setup apply structured error exit code** — makes `setup:agent --apply --json` exit non-zero when the underlying install result contains a structured target-aware apply error.
+
 ## [0.153.0] - 2026-05-13
 
 ### Added
