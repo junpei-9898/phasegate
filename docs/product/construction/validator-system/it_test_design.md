@@ -33,7 +33,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-RunL2-001 | validatorIdsを省略した場合、全L2バリデータ（L2-001〜L2-003, L2-013）が実行される | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ValidatorConfigPort: L2 LayerConfig(enabled=true)を返す。ExecutionService: 4件のpass結果を返す | `ValidationResultContract[]`が4件返る。各`validatorId`が"L2-001"/"L2-002"/"L2-003"/"L2-013"。@work-item-id WI-110 |
+| IT-UC-RunL2-001 | validatorIdsを省略した場合、全L2バリデータ（L2-001〜L2-003, L2-013〜L2-015）が実行される | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ValidatorConfigPort: L2 LayerConfig(enabled=true)を返す。ExecutionService: 6件のpass結果を返す | `ValidationResultContract[]`が6件返る。各`validatorId`が"L2-001"/"L2-002"/"L2-003"/"L2-013"/"L2-014"/"L2-015"。@work-item-id WI-110 |
 | IT-UC-RunL2-002 | validatorIdsに["L2-001"]を指定した場合、phase-gateのみが実行される | `{ validatorIds: ["L2-001"], targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ExecutionService: 1件のpass結果を返す | `ValidationResultContract[]`が1件返る。`validatorId`が"L2-001" |
 | IT-UC-RunL2-003 | L2バリデータがfailした場合、passed=falseかつerrorsを含む結果が返る | `{ targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" }` | ExecutionService: L2-002がfail（errors: [{code:"L2-002", severity:"error"}]）の結果を返す | `ValidationResultContract`の`passed=false`、`errors`に1件のHarnessErrorが含まれる |
 | IT-UC-RunL2-004 | LayerConfig.enabled=falseの場合、全L2結果がskipped=trueで返る | 有効な入力DTO | ValidatorConfigPort: enabled=falseのLayerConfigを返す | 全`ValidationResultContract`が`skipped=true`、`passed=true`、`errors=[]` |
@@ -462,3 +462,12 @@
 - Injecting `ContractTraceabilityPolicyPort` with an uncovered public contract returns a failing `L2-015` result.
 - `HarnessConfigValidatorConfigAdapter` default L2 validator list includes `L2-015`.
 - `config-foundation` validator-system config mapper propagates `L2-015` in the L2 validator list.
+
+<!-- @work-item-id WI-159, WI-164 -->
+## P1 Validator Catalog Regression Cases
+
+- `RunL2ValidatorsUseCase` default execution returns `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015` in registry order.
+- `RunFullValidationUseCase` with `targetLayers=["L4"]` force-enables disabled L4 for explicit `validate --layer L4`.
+- `RunFullValidationUseCase` with aggregate/all execution keeps disabled L4 as skipped results and does not fail solely because L4 is skipped.
+- `RunL4ValidatorsUseCase` maps `L4-004` freshness warnings and `L4-005` broken pointer warnings into standard `ValidationResultContract` errors with validator IDs preserved.
+- Quick Mode relaxation profile containing canonical L2 skipped IDs (`L2-001`, `L2-013`, `L2-015`) executes without `InvalidRelaxationProfileError`.

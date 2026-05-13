@@ -228,8 +228,8 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-VRP-001 | createDefault | デフォルト緩和プロファイルを生成する | 引数なしで呼び出した場合 | levelDependencyRelaxed=false、l1.all=true、l4.all=false、phaseExecution.twoPhaseRequired=falseのプロファイルが生成されること |
 | UT-VRP-002 | createDefault | デフォルト緩和プロファイルを生成する | デフォルトプロファイルのl2の場合 | maintained=[L2-002, L2-003]、skipped=[L2-001]であること |
 | UT-VRP-003 | createDefault | デフォルト緩和プロファイルを生成する | デフォルトプロファイルのl3の場合 | maintained=[L3-001]、skipped=[L3-002, L3-003, L3-004]であること |
-| UT-VRP-004 | create | カスタム緩和プロファイルを生成する | l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致する場合 | ValidatorRelaxationProfileが生成されること（INV-P5） |
-| UT-VRP-005 | create | カスタム緩和プロファイルを生成する | l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致しない場合 | エラーが発生すること（INV-P5違反） |
+| UT-VRP-004 | create | カスタム緩和プロファイルを生成する | l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}に一致する場合 | ValidatorRelaxationProfileが生成されること（INV-P5） |
+| UT-VRP-005 | create | カスタム緩和プロファイルを生成する | l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}に一致しない場合 | エラーが発生すること（INV-P5違反） |
 | UT-VRP-006 | create | カスタム緩和プロファイルを生成する | l3.maintained∪l3.skippedが{L3-001, L3-002, L3-003, L3-004}に一致する場合 | ValidatorRelaxationProfileが生成されること（INV-P6） |
 | UT-VRP-007 | create | カスタム緩和プロファイルを生成する | l3.maintained∪l3.skippedが{L3-001, L3-002, L3-003, L3-004}に一致しない場合 | エラーが発生すること（INV-P6違反） |
 
@@ -494,7 +494,7 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-EDGE-005 | ChangeCategory | 8個目の値（定義外の文字列） | UnknownChangeCategoryErrorが発生すること |
 | UT-EDGE-006 | QuickModeEligibility | eligible=false、rejectedFiles=[] | エラーが発生すること（INV-E2） |
 | UT-EDGE-007 | QuickModeEligibility | eligible=true/false、reason='' | エラーが発生すること（INV-E3） |
-| UT-EDGE-008 | ValidatorRelaxationProfile | l2.maintained∪l2.skipped ≠ {L2-001, L2-002, L2-003} | エラーが発生すること（INV-P5） |
+| UT-EDGE-008 | ValidatorRelaxationProfile | l2.maintained∪l2.skipped ≠ {L2-001, L2-002, L2-003, L2-013, L2-014, L2-015} | エラーが発生すること（INV-P5） |
 | UT-EDGE-009 | ValidatorRelaxationProfile | l3.maintained∪l3.skipped ≠ {L3-001, L3-002, L3-003, L3-004} | エラーが発生すること（INV-P6） |
 | UT-EDGE-010 | QuickModeJudgmentEngine.judge | changedFiles=[] | eligible=trueが返ること |
 | UT-EDGE-011 | QuickModeJudgmentEngine.judge | MIXED_CHANGESとNEW_DOMAINが重複する場合 | MIXED_CHANGESが優先されること |

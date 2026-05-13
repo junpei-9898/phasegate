@@ -14,3 +14,10 @@ Setup lifecycle documentation must match public help: `init`, `install`, `doctor
 Setup artifacts are classified as managed targets, generated artifacts, runtime state/reports, legacy artifacts, and user-level settings. Product docs and public guides use the same vocabulary so `phasegate.config.json`, hook JSON, manifest, reports, and Codex user feature flags are not conflated. `docs/guide/setup-artifacts.md` is the public inventory. @work-item-id WI-152 @work-item-id WI-169
 
 Legacy `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, and `.harness/context-priority.json` are compatibility artifacts, not current install targets. `hooks:config validate` remains compatibility-only. @work-item-id WI-157
+
+<!-- @work-item-id WI-163 -->
+## WI-163 Generated CI Wiring
+
+Setup owns placement of generated CI workflow targets as managed setup artifacts. The current install lifecycle manages `.github/workflows/phasegate-aidlc-gate.yml` as the default project gate target; scheduled L4 audit templates remain generated CI artifacts rather than hidden install state unless a user explicitly installs/renders them.
+
+`install`, `doctor`, and `reconcile` should report CI workflow drift as setup target drift, while validator ID selection inside a workflow remains ci-governance / validator-system responsibility.

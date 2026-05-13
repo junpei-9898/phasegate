@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.7] - 2026-05-13
+
+### Changed
+
+- **WI-159 / WI-160 / WI-161 / WI-162 / WI-163 / WI-164 — validator and JSON contract foundation** — aligns the public validator catalog, Quick Mode relaxation contract, contract traceability guide, status/drift JSON semantics, G5 operational validator payload docs, CI/L4 rollout docs, and pointer/freshness semantics.
+
+### Fixed
+
+- **WI-159 — Quick Mode validator catalog** — includes `L2-013` and `L2-015` in the Quick Mode validator ID registry and relaxation invariant so skipped/maintained L2 sets match the validator-system catalog.
+
 ## [0.152.6] - 2026-05-13
 
 ### Changed

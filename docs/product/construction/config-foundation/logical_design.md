@@ -1374,3 +1374,10 @@ L4 remains default-off for standard rollout. Projects opt in through strict pres
 ## G4 Validator Config Propagation
 
 `toValidatorSystemConfig()` includes `L2-015` in the default L2 validator list it passes to validator-system. This keeps contract traceability coverage active for resolved configs in the same way as L2-013 and L2-014.
+
+<!-- @work-item-id WI-161, WI-163 -->
+## P1 Validator Config Boundaries
+
+Config-foundation owns resolved config projection, not every scanner policy. The public schema exposes `validate.failOnWarning`, `layers.*.enabled`, configured validator IDs, `harnesses.bundleSizeLimit`, `harnesses.deadCodeGC`, and architecture `capabilityPolicies` / `decisionPolicies`.
+
+Operational scanner details such as L3-002 `largeLiteralEntries`, sync I/O detection, loop-await detection, security fixture allowlist markers, and dead-code graph exclusion rules are validator-system policy unless this Unit explicitly adds schema fields. CI template generation receives preset and layer state from config-foundation, then asks ci-governance/validator-system for the live validator surface.

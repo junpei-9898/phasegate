@@ -37,6 +37,8 @@ Exit criteria:
 
 P0 の次。validator catalog と JSON payload は他の product reflection の基準になる。
 
+Status: 完了済み (2026-05-13)。`L2-015` / `L4-004` / `L4-005` を含む validator catalog、Quick Mode exact-ID contract、contract traceability guide、status/drift JSON semantics、G5 operational validator payload、CI/L4 rollout、pointer freshness semantics を public guide / product construction / quick-mode runtime に反映した。
+
 | WI | 理由 | 推奨まとめ方 |
 |---|---|---|
 | WI-159 | validator catalog / execution contract の親。L2/L3/L4 と Quick Mode の意味を先に固定する。 | P1 batch 1 |

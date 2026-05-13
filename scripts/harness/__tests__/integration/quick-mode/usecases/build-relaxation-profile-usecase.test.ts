@@ -17,7 +17,7 @@ function createDefaultQuickModeConfig() {
 
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002', 'L1-003', 'L1-004', 'L1-005', 'L1-006', 'L1-007', 'L1-008',
-  'L2-001', 'L2-002', 'L2-003', 'L2-014',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
   'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
@@ -47,7 +47,7 @@ target('BuildRelaxationProfileUseCase', () => {
       expect(actual.levelDependencyRelaxed).toBe(false);
       expect(actual.l1.all).toBe(true);
       expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-002', 'L2-003', 'L2-014']));
-      expect(actual.l2.skipped).toEqual(expect.arrayContaining(['L2-001']));
+      expect(actual.l2.skipped).toEqual(expect.arrayContaining(['L2-001', 'L2-013', 'L2-015']));
       expect(actual.l3.maintained).toEqual(expect.arrayContaining(['L3-001']));
       expect(actual.l3.skipped).toEqual(expect.arrayContaining(['L3-002', 'L3-003', 'L3-004']));
       expect(actual.l4.all).toBe(false);
@@ -81,12 +81,10 @@ target('BuildRelaxationProfileUseCase', () => {
       expect(actual.l4.all).toBe(false);
       // INV-P4
       expect(actual.phaseExecution.twoPhaseRequired).toBe(false);
-      // INV-P5: l2.maintained ∪ l2.skipped = {L2-001,L2-002,L2-003,L2-014}
-      const l2All = [...actual.l2.maintained, ...actual.l2.skipped].sort();
-      expect(l2All).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-014'].sort());
+      // INV-P5: l2.maintained ∪ l2.skipped = canonical L2 catalog
+      expect([...actual.l2.maintained, ...actual.l2.skipped].sort()).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'].sort());
       // INV-P6: l3.maintained ∪ l3.skipped = {L3-001,L3-002,L3-003,L3-004}
-      const l3All = [...actual.l3.maintained, ...actual.l3.skipped].sort();
-      expect(l3All).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004'].sort());
+      expect([...actual.l3.maintained, ...actual.l3.skipped].sort()).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004'].sort());
     });
 
     // IT-UC-Build-003
@@ -94,7 +92,7 @@ target('BuildRelaxationProfileUseCase', () => {
       // Arrange
             const customConfig = QuickModeConfig.create({
         allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-        maintainedLayers: ['L1', 'L2-001', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
+        maintainedLayers: ['L1', 'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015', 'L3-001'],
         relaxedGates: ['L3-002', 'L3-003', 'L3-004', 'L4'],
       });
       const mockQuickModeConfigPort = {
@@ -114,7 +112,7 @@ target('BuildRelaxationProfileUseCase', () => {
         eligibility: { eligible: true, reason: 'すべてのファイルが許可カテゴリ内です' },
       });
       // Assert
-      expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-001', 'L2-002', 'L2-003', 'L2-014']));
+      expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']));
       expect(actual.l2.skipped).toEqual([]);
       expect(actual.l3.maintained).toEqual(expect.arrayContaining(['L3-001']));
     });
@@ -136,15 +134,17 @@ target('BuildRelaxationProfileUseCase', () => {
         validatorIdRegistryPort: mockValidatorIdRegistryPort,
         relaxationService,
       });
-      // Act & Assert
-      await expect(usecase.execute({
+      // Act
+      const actual = usecase.execute({
         eligibility: {
           eligible: false,
           reason: 'MIXED_CHANGES ルールにより拒否されました',
           rejectionRule: 'MIXED_CHANGES',
           rejectedFiles: [{ filePath: 'src/x.ts', changeKind: 'MODIFY' }],
         },
-      })).rejects.toThrow();
+      });
+      // Assert
+      await expect(actual).rejects.toThrow('Cannot build relaxation profile: Quick Mode is not eligible');
     });
 
     // IT-UC-Build-005
@@ -163,20 +163,17 @@ target('BuildRelaxationProfileUseCase', () => {
         relaxationService,
       });
       // Act
-      try {
-        await usecase.execute({
-          eligibility: {
-            eligible: false,
-            reason: '拒否',
-            rejectionRule: 'MIXED_CHANGES',
-            rejectedFiles: [{ filePath: 'src/x.ts', changeKind: 'MODIFY' }],
-          },
-        });
-      } catch {
-        // エラーは期待通り
-      }
+      const actual = usecase.execute({
+        eligibility: {
+          eligible: false,
+          reason: '拒否',
+          rejectionRule: 'MIXED_CHANGES',
+          rejectedFiles: [{ filePath: 'src/x.ts', changeKind: 'MODIFY' }],
+        },
+      });
       // Assert
-      expect(mockQuickModeConfigPort.getConfig).not.toHaveBeenCalled();
+      await expect(actual).rejects.toThrow('Cannot build relaxation profile: Quick Mode is not eligible');
+      expect(mockQuickModeConfigPort.getConfig.mock.calls).toEqual([]);
     });
   });
 
@@ -198,10 +195,12 @@ target('BuildRelaxationProfileUseCase', () => {
         validatorIdRegistryPort: mockValidatorIdRegistryPort,
         relaxationService,
       });
-      // Act & Assert
-      await expect(usecase.execute({
+      // Act
+      const actual = usecase.execute({
         eligibility: { eligible: true, reason: 'ok' },
-      })).rejects.toThrow('config not found');
+      });
+      // Assert
+      await expect(actual).rejects.toThrow('config not found');
     });
 
     // IT-UC-Build-007
@@ -221,10 +220,12 @@ target('BuildRelaxationProfileUseCase', () => {
         validatorIdRegistryPort: mockValidatorIdRegistryPort,
         relaxationService,
       });
-      // Act & Assert
-      await expect(usecase.execute({
+      // Act
+      const actual = usecase.execute({
         eligibility: { eligible: true, reason: 'ok' },
-      })).rejects.toThrow('registry error');
+      });
+      // Assert
+      await expect(actual).rejects.toThrow('registry error');
     });
   });
 });

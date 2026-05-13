@@ -2,7 +2,7 @@
 id: WI-161
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [validator-system, biome-ast-engine, config-foundation, documentation]
 source: internal
 ---
@@ -33,11 +33,17 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] `ArchitectureConfig` / presets が capability policy と decision responsibility を正式に持つのか、validator-side default policy なのかが明確。
-- [ ] dead-code graph の false positive boundary が product docs と coverage report に反映される。
-- [ ] L3 security/performance の report payload、suppression、redaction の読み方が public docs に出る。
-- [ ] performance/security/dead-code の report payload と config knobs が schema, config guide, product docs の間で矛盾しない。
+- [x] `ArchitectureConfig` / presets が capability policy と decision responsibility を正式に持つのか、validator-side default policy なのかが明確。
+- [x] dead-code graph の false positive boundary が product docs と coverage report に反映される。
+- [x] L3 security/performance の report payload、suppression、redaction の読み方が public docs に出る。
+- [x] performance/security/dead-code の report payload と config knobs が schema, config guide, product docs の間で矛盾しない。
 
 ## 依存
 
 `WI-159`。
+
+## 対応結果
+
+- `docs/guide/layer-model.md` に L3 security/performance payload と L4-003 dead-code graph boundaries を追加した。
+- `validator-system`, `biome-ast-engine`, `config-foundation` product docs に security redaction, performance suppression/threshold, dead-code import/export graph, capability/decision policy の境界を反映した。
+- config knobs は public schema に存在する `validate.failOnWarning`, `layers.*`, `harnesses.bundleSizeLimit`, `harnesses.deadCodeGC`, architecture policies に限定し、scanner-internal knobs を public config と混同しない方針にした。

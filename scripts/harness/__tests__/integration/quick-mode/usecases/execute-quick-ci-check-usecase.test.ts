@@ -17,7 +17,7 @@ function createApprovedDecision() {
       l1: { all: true },
       l2: {
         maintained: ['L2-002', 'L2-003', 'L2-014'],
-        skipped: ['L2-001'],
+        skipped: ['L2-001', 'L2-013', 'L2-015'],
       },
       l3: {
         maintained: ['L3-001'],
@@ -49,9 +49,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
       // Act
       const actual = await usecase.execute({ changedFiles: undefined, dryRun: false });
       // Assert
-      expect(actual.eligibility.eligible).toBe(true);
-      expect(actual.relaxationProfile).toBeDefined();
-      expect(actual.relaxationProfile!.levelDependencyRelaxed).toBe(false);
+      expect(actual).toEqual({
+        eligibility: approvedEligibility,
+        relaxationProfile: defaultProfile,
+      });
     });
 
     // IT-UC-Execute-002
@@ -76,8 +77,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
       // Act
       const actual = await usecase.execute({ changedFiles: undefined, dryRun: false });
       // Assert
-      expect(actual.eligibility.eligible).toBe(false);
-      expect(actual.relaxationProfile).toBeUndefined();
+      expect(actual).toEqual({
+        eligibility: rejectedEligibility,
+        relaxationProfile: undefined,
+      });
     });
 
     // IT-UC-Execute-003
@@ -100,9 +103,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         buildUseCase: mockBuildUseCase as never,
       });
       // Act
-      await usecase.execute({ changedFiles: undefined, dryRun: false });
+      const actual = await usecase.execute({ changedFiles: undefined, dryRun: false });
       // Assert
-      expect(mockBuildUseCase.execute).not.toHaveBeenCalled();
+      expect(actual.relaxationProfile).toEqual(undefined);
+      expect(mockBuildUseCase.execute.mock.calls).toEqual([]);
     });
 
     // IT-UC-Execute-004
@@ -125,9 +129,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         validatorExecutionPort: mockValidatorExecutionPort,
       });
       // Act
-      await usecase.execute({ changedFiles: undefined, dryRun: true });
+      const actual = await usecase.execute({ changedFiles: undefined, dryRun: true });
       // Assert
-      expect(mockValidatorExecutionPort.executeWithProfile).not.toHaveBeenCalled();
+      expect(actual.relaxationProfile).toEqual(defaultProfile);
+      expect(mockValidatorExecutionPort.executeWithProfile.mock.calls).toEqual([]);
     });
 
     // IT-UC-Execute-005
@@ -150,11 +155,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         buildUseCase: mockBuildUseCase as never,
       });
       // Act
-      await usecase.execute({ changedFiles, dryRun: false });
+      const actual = await usecase.execute({ changedFiles, dryRun: false });
       // Assert
-      expect(mockJudgeUseCase.execute).toHaveBeenCalledWith(
-        expect.objectContaining({ changedFiles }),
-      );
+      expect(actual.relaxationProfile).toEqual(undefined);
+      expect(mockJudgeUseCase.execute.mock.calls).toEqual([[{ changedFiles }]]);
     });
 
     // IT-UC-Execute-008
@@ -179,9 +183,11 @@ target('ExecuteQuickCiCheckUseCase', () => {
       // Act
       const actual = await usecase.execute({ changedFiles: undefined, dryRun: true });
       // Assert
-      expect(actual.eligibility.eligible).toBe(true);
-      expect(actual.relaxationProfile).toBeDefined();
-      expect(mockValidatorExecutionPort.executeWithProfile).not.toHaveBeenCalled();
+      expect(actual).toEqual({
+        eligibility: approvedEligibility,
+        relaxationProfile: defaultProfile,
+      });
+      expect(mockValidatorExecutionPort.executeWithProfile.mock.calls).toEqual([]);
     });
   });
 
@@ -199,9 +205,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         judgeUseCase: mockJudgeUseCase as never,
         buildUseCase: mockBuildUseCase as never,
       });
-      // Act & Assert
-      await expect(usecase.execute({ changedFiles: undefined, dryRun: false }))
-        .rejects.toThrow('judge failed');
+      // Act
+      const actual = usecase.execute({ changedFiles: undefined, dryRun: false });
+      // Assert
+      await expect(actual).rejects.toThrow('judge failed');
     });
 
     // IT-UC-Execute-007
@@ -217,9 +224,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         judgeUseCase: mockJudgeUseCase as never,
         buildUseCase: mockBuildUseCase as never,
       });
-      // Act & Assert
-      await expect(usecase.execute({ changedFiles: undefined, dryRun: false }))
-        .rejects.toThrow('build failed');
+      // Act
+      const actual = usecase.execute({ changedFiles: undefined, dryRun: false });
+      // Assert
+      await expect(actual).rejects.toThrow('build failed');
     });
   });
 });

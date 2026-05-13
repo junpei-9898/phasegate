@@ -551,6 +551,7 @@ Detailed guides are available under `docs/guide/`:
 - [CLI Reference](docs/guide/cli-reference.md) -- All CLI commands and options
 - [Skills Overview](docs/guide/skills-overview.md) -- 30 skills with AIDLC execution order
 - [5-Layer Defense Model](docs/guide/layer-model.md) -- L0-L4 layer details and HarnessError format
+- [Contract Traceability](docs/guide/contract-traceability.md) -- `L2-015` public contract, boundary, error, state, and observation annotations
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
 - [Codex Integration](docs/guide/codex-integration.md) -- Codex CLI setup, coverage matrix, and native `apply_patch` limitation
 - [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) -- When to use `/story-implementor` vs `/quick-implementor`, with decision flow and case studies

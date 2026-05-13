@@ -55,7 +55,7 @@ function createApprovedDecision() {
       l1: { all: true },
       l2: {
         maintained: ['L2-002', 'L2-003'],
-        skipped: ['L2-001'],
+        skipped: ['L2-001', 'L2-013', 'L2-015'],
       },
       l3: {
         maintained: ['L3-001'],
@@ -80,12 +80,12 @@ function createRejectedDecision(rule = 'MIXED_CHANGES') {
   };
 }
 
-// 全 ValidatorId 一覧（18件）
+// 全 ValidatorId 一覧（23件）
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002', 'L1-003', 'L1-004', 'L1-005', 'L1-006', 'L1-007', 'L1-008',
-  'L2-001', 'L2-002', 'L2-003',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
 ```
 
@@ -104,7 +104,7 @@ const mockQuickModeConfigPort = {
   getQuickModeConfig: vi.fn().mockReturnValue(createDefaultQuickModeConfig()),
 };
 
-// ValidatorIdRegistryPort モック（全18件）
+// ValidatorIdRegistryPort モック（全23件）
 const mockValidatorIdRegistryPort = {
   getAllValidatorIds: vi.fn().mockReturnValue(ALL_VALIDATOR_IDS),
 };
@@ -534,9 +534,9 @@ target('BuildRelaxationProfileUseCase', () => {
       expect(actual.l4.all).toBe(false);
       // INV-P4
       expect(actual.phaseExecution.twoPhaseRequired).toBe(false);
-      // INV-P5: l2.maintained ∪ l2.skipped = {L2-001,L2-002,L2-003}
+      // INV-P5: l2.maintained ∪ l2.skipped = {L2-001,L2-002,L2-003,L2-013,L2-014,L2-015}
       const l2All = [...actual.l2.maintained, ...actual.l2.skipped].sort();
-      expect(l2All).toEqual(['L2-001', 'L2-002', 'L2-003'].sort());
+      expect(l2All).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'].sort());
       // INV-P6: l3.maintained ∪ l3.skipped = {L3-001,L3-002,L3-003,L3-004}
       const l3All = [...actual.l3.maintained, ...actual.l3.skipped].sort();
       expect(l3All).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004'].sort());
@@ -547,7 +547,7 @@ target('BuildRelaxationProfileUseCase', () => {
       // Arrange
       const customConfig = {
         allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-        maintainedLayers: ['L1', 'L2-001', 'L2-002', 'L2-003', 'L3-001'],
+        maintainedLayers: ['L1', 'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015', 'L3-001'],
         relaxedGates: ['L3-002', 'L3-003', 'L3-004', 'L4'],
       };
       const mockQuickModeConfigPort = {
@@ -569,7 +569,7 @@ target('BuildRelaxationProfileUseCase', () => {
       });
 
       // Assert
-      expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-001', 'L2-002', 'L2-003']));
+      expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']));
       expect(actual.l2.skipped).toEqual([]);
       expect(actual.l3.maintained).toEqual(expect.arrayContaining(['L3-001']));
     });
@@ -1277,12 +1277,12 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Assert
       const expected = [
         'L1-001', 'L1-002', 'L1-003', 'L1-004', 'L1-005', 'L1-006', 'L1-007', 'L1-008',
-        'L2-001', 'L2-002', 'L2-003',
+        'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
         'L3-001', 'L3-002', 'L3-003', 'L3-004',
-        'L4-001', 'L4-002', 'L4-003',
+        'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
       ];
       expect(actual).toEqual(expect.arrayContaining(expected));
-      expect(actual).toHaveLength(18);
+      expect(actual).toHaveLength(23);
     });
 
     // IT-REPO-Registry-002
@@ -1298,7 +1298,7 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
     });
 
     // IT-REPO-Registry-003
-    it('L2 IDが3件（L2-001〜L2-003）含まれること', () => {
+    it('L2 IDが6件（L2-001〜L2-015）含まれること', () => {
       // Arrange
       const adapter = new ValidatorSystemValidatorIdRegistryAdapter();
 
@@ -1306,7 +1306,7 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       const actual = adapter.getAllValidatorIds();
 
       // Assert
-      expect(actual.filter((id: string) => id.startsWith('L2'))).toHaveLength(3);
+      expect(actual.filter((id: string) => id.startsWith('L2'))).toHaveLength(6);
     });
 
     // IT-REPO-Registry-004

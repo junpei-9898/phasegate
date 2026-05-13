@@ -998,12 +998,12 @@ target('ValidatorRelaxationProfile', () => {
   target('create', () => {
     describe('カスタム緩和プロファイルを生成する', () => {
       // UT-VRP-004
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
+      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}に一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false,
           l1: { all: true },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false },
           phaseExecution: { twoPhaseRequired: false },
@@ -1015,12 +1015,12 @@ target('ValidatorRelaxationProfile', () => {
       });
 
       // UT-VRP-005
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003}に一致しない場合にエラーが発生すること（INV-P5違反）", () => {
+      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}に一致しない場合にエラーが発生すること（INV-P5違反）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false,
           l1: { all: true },
-          l2: { maintained: ['L2-002'], skipped: ['L2-001'] }, // L2-003が欠落
+          l2: { maintained: ['L2-002'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false },
           phaseExecution: { twoPhaseRequired: false },
@@ -1037,7 +1037,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false,
           l1: { all: true },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] },
           l4: { all: false },
           phaseExecution: { twoPhaseRequired: false },
@@ -1054,7 +1054,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false,
           l1: { all: true },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003'] }, // L3-004が欠落
           l4: { all: false },
           phaseExecution: { twoPhaseRequired: false },
@@ -1135,7 +1135,7 @@ target('ValidatorRelaxationProfile', () => {
         const other = ValidatorRelaxationProfile.create({
           levelDependencyRelaxed: false,
           l1: { all: true },
-          l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] }, // l3が違う
           l4: { all: false },
           phaseExecution: { twoPhaseRequired: false },
@@ -1653,9 +1653,9 @@ const service = new ValidatorRelaxationService();
 // L1〜L4の全ValidatorId一覧（テスト用）
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
-  'L2-001', 'L2-002', 'L2-003',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
 
 target('ValidatorRelaxationService', () => {
@@ -2014,9 +2014,9 @@ import type { ValidatorIdRegistryPort } from '../../../../harness/quick-mode/app
 
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
-  'L2-001', 'L2-002', 'L2-003',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
 
 const buildSut = (overrides?: {
@@ -2197,7 +2197,7 @@ const NOT_ELIGIBLE_CONTRACT = {
 const PROFILE_CONTRACT = {
   levelDependencyRelaxed: false,
   l1: { all: true },
-  l2: { maintained: ['L2-002', 'L2-003'], skipped: ['L2-001'] },
+  l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
   l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
   l4: { all: false },
   phaseExecution: { twoPhaseRequired: false },
@@ -2510,7 +2510,7 @@ target('QuickModeDecisionContractMapper', () => {
 | UT-EDGE-005 | ChangeCategory | 定義外の文字列 | `'unknown-category'` | `UnknownChangeCategoryError` が発生すること |
 | UT-EDGE-006 | QuickModeEligibility | eligible=false、rejectedFiles=[] | `rejected('MIXED_CHANGES', [], 'r')` | エラーが発生すること（INV-E2） |
 | UT-EDGE-007 | QuickModeEligibility | eligible=true/false、reason='' | `eligible('')` / `rejected('...', [f], '')` | エラーが発生すること（INV-E3） |
-| UT-EDGE-008 | ValidatorRelaxationProfile | l2のunion ≠ {L2-001, L2-002, L2-003} | `l2.maintained=['L2-002'], l2.skipped=['L2-001']` | エラーが発生すること（INV-P5） |
+| UT-EDGE-008 | ValidatorRelaxationProfile | l2のunion ≠ {L2-001, L2-002, L2-003, L2-013, L2-014, L2-015} | `l2.maintained=['L2-002'], l2.skipped=['L2-001']` | エラーが発生すること（INV-P5） |
 | UT-EDGE-009 | ValidatorRelaxationProfile | l3のunion ≠ {L3-001, L3-002, L3-003, L3-004} | `l3.maintained=['L3-001'], l3.skipped=['L3-002', 'L3-003']` | エラーが発生すること（INV-P6） |
 | UT-EDGE-010 | QuickModeJudgmentEngine.judge | changedFiles=[] | `[]` | `eligible=true` が返ること |
 | UT-EDGE-011 | QuickModeJudgmentEngine.judge | MIXED_CHANGESとNEW_DOMAINが重複 | domain/配下のCREATEファイルをallowed外で渡す | `MIXED_CHANGES` が優先されること |

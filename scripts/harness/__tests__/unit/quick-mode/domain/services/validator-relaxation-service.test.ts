@@ -10,7 +10,7 @@ const service = new ValidatorRelaxationService();
 // L1〜L4の全ValidatorId一覧（テスト用）
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
-  'L2-001', 'L2-002', 'L2-003', 'L2-014',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
   'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
@@ -45,13 +45,13 @@ target('ValidatorRelaxationService', () => {
       });
 
       // UT-VRS-003
-      it('relaxedGatesにL2-001のみが含まれる設定が渡された場合にl2.skippedにL2-001のみが含まれること', () => {
+      it('デフォルト維持対象外のL2がl2.skippedに含まれること', () => {
         // Arrange
         const config = createQuickModeConfig({ relaxedGates: ['L2-001'] });
         // Act
         const actual = service.build(config, ALL_VALIDATOR_IDS);
         // Assert
-        expect(actual.l2.skipped).toEqual(['L2-001']);
+        expect(actual.l2.skipped).toEqual(['L2-001', 'L2-013', 'L2-015']);
         expect(actual.l2.maintained).toContain('L2-014');
       });
 
@@ -81,9 +81,12 @@ target('ValidatorRelaxationService', () => {
         const config = createQuickModeConfig();
         const allValidatorIdsWithUnknown = [...ALL_VALIDATOR_IDS, 'X1-999'];
         // Act
-        const actual = () => service.build(config, allValidatorIdsWithUnknown);
+        const actual = service.build(config, allValidatorIdsWithUnknown);
         // Assert
-        expect(actual).not.toThrow();
+        expect(actual.l2).toEqual({
+          maintained: ['L2-002', 'L2-003', 'L2-014'],
+          skipped: ['L2-001', 'L2-013', 'L2-015'],
+        });
       });
 
       // UT-VRS-007

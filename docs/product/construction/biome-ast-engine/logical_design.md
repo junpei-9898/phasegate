@@ -1142,3 +1142,15 @@ return { harnessLintCommandHandler, executeLintUseCase } as const;
 ## G3 Export And Behavior Extraction Contract
 
 AST extraction used by L4 precision must expose public exports including direct declarations, named re-exports, wildcard re-exports, and default exports. Future semantic drift adapters may map those public surfaces into implementation behavior records keyed by Unit and behavior ID.
+
+<!-- @work-item-id WI-161 -->
+## WI-161 G5 Adapter Boundary
+
+The TypeScript source analyzer must preserve enough structure for validator-system to distinguish:
+
+- real public exports from generated, test, fixture, and private implementation exports;
+- static imports, dynamic imports, direct re-exports, and wildcard re-exports;
+- suppressible performance smells from unsuppressed findings;
+- side-effect capability observations from layer dependency violations.
+
+The adapter does not decide fail/pass policy. It returns source facts and locations so validator-system can produce stable report payloads.

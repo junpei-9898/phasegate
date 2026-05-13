@@ -41,12 +41,12 @@ flowchart TD
 | Test design doc | Required before coding | Not required |
 | Coverage target | 90% or above | Existing coverage maintained |
 | L1 Biome rules | All 8 rules | **All 8 rules** |
-| L2 Pre-commit | phase-gate + metadata + test-quality | **metadata + test-quality** (phase-gate relaxed) |
+| L2 Pre-commit | phase-gate + metadata + test-quality + CLI E2E coverage + WI status + contract traceability | **metadata + test-quality + WI status** (phase-gate, CLI E2E coverage, and contract traceability relaxed) |
 | L3 CI | security + performance + coverage + nyquist | security only |
 | L4 Scheduled | drift + consistency + dead-code | skipped |
 | Commit prefix | conventional (`feat:`, `fix:`, ...) | `[quick] ...` |
 
-Both modes keep **L1 in full strength** and **L2 metadata / test-quality** — `@unit` / `@layer` comments, semantic AAA structure, and assertion-strength checks are non-negotiable regardless of flow.
+Both modes keep **L1 in full strength** and **L2 metadata / test-quality / WI status** — `@unit` / `@layer` comments, semantic AAA structure, assertion-strength checks, and stale WI status checks are non-negotiable regardless of flow. Quick Mode treats `maintainedLayers` entries as exact validator IDs; `L2` is not expanded into every L2 validator. <!-- @work-item-id WI-159 -->
 
 ---
 

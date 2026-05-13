@@ -106,7 +106,7 @@
 |---------|------|------------|
 | ChangedFilesPort | git diff等から変更ファイル一覧を取得（filePath + changeKind） | QuickModeJudgmentEngine |
 | QuickModeConfigPort | HarnessConfigV2.quickModeセクションを取得 → QuickModeConfig生成 | QuickModeJudgmentEngine, ValidatorRelaxationService |
-| ValidatorIdRegistryPort | validator-systemのValidatorId一覧を参照（RelaxationProfile生成時にL2-001〜L4-003を列挙） | ValidatorRelaxationService |
+| ValidatorIdRegistryPort | validator-systemのValidatorId一覧を参照（RelaxationProfile生成時にL2-001〜L4-005を列挙） | ValidatorRelaxationService |
 
 ---
 
@@ -164,8 +164,8 @@ interface ValidatorRelaxationProfile {
   levelDependencyRelaxed: false;          // 常にfalse（K14保証）
   l1: { all: true };                       // L1は全維持（緩和なし）
   l2: {
-    maintained: ValidatorId[];            // ["L2-002", "L2-003"] (metadataとtest-quality維持)
-    skipped: ValidatorId[];               // ["L2-001"] (phase-gate スキップ)
+    maintained: ValidatorId[];            // ["L2-002", "L2-003", "L2-014"] (metadata/test-quality/WI status維持)
+    skipped: ValidatorId[];               // ["L2-001", "L2-013", "L2-015"] (phase-gate/CLI E2E/contract traceabilityスキップ)
   };
   l3: {
     maintained: ValidatorId[];            // ["L3-001"] (security のみ維持)
@@ -180,7 +180,7 @@ interface ValidatorRelaxationProfile {
 
 **デフォルト緩和プロファイル**（`maintainedLayers`/`relaxedGates`設定がデフォルト値の場合）:
 - L1: 全維持
-- L2: L2-001（phase-gate）スキップ / L2-002, L2-003 維持
+- L2: L2-001（phase-gate）, L2-013（CLI E2E coverage）, L2-015（contract traceability）スキップ / L2-002, L2-003, L2-014 維持
 - L3: L3-001（security）のみ維持 / L3-002, L3-003, L3-004 スキップ
 - L4: 全スキップ
 - 2-Phase Execution: 緩和（単フェーズ実行可）
@@ -243,3 +243,10 @@ MIXED_CHANGES / NEW_DOMAIN / API_CONTRACT の3拒否ルールは`allowedCategori
 H10-04はSKILL.mdドキュメントの生成であり、ドメインモデルの設計対象外。SKILL.mdはdocs/skills/配下のドキュメント成果物であり、H10-01〜H10-03の実装ロジックが確定した後にskill-creatorスキルで作成する。
 
 H10-06はISSUE-026 Phase D-1として、同じくquick-implementorのスキル契約をWI-awareに更新する作業である。`type: fix | chore` をQuick Mode適用候補、`type: story | issue | refactor` をFull Mode対象として扱うルール、および `Work-Item: WI-XXX` trailer をスキル側の手順に追加する。QuickModeJudgmentEngine自体はファイルカテゴリ判定を維持し、WI frontmatterの運用判断はスキル入口契約で扱う。
+
+<!-- @work-item-id WI-159 -->
+## WI-159 Validator Catalog Alignment
+
+Quick Mode consumes a validator ID catalog that matches validator-system for the public L2/L3/L4 surface. The L2 set is `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015`.
+
+`maintainedLayers` is an exact-ID list, not a layer expander. The only shorthand interpreted by the current model is `L1` for full L1 behavior and `L4` as an all-skipped layer marker in `relaxedGates`. Therefore `maintainedLayers: ["L2"]` does not keep every L2 validator active; users must list all L2 IDs explicitly when they need that behavior.

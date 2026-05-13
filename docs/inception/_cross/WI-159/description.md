@@ -2,7 +2,7 @@
 id: WI-159
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [validator-system, quick-mode, documentation]
 source: internal
 ---
@@ -34,11 +34,18 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] `ValidatorId` の有効範囲、L2/L3/L4 default execution、`validate --layer all` の skip 仕様が同じ表現で揃う。
-- [ ] `L4-004` / `L4-005` を invalid とする古い coverage / test description が残らない。
-- [ ] Quick Mode が layer shorthand を展開するのか validator id の完全一致だけを扱うのかが、実装・product docs・guide で一致する。
-- [ ] public guide にも `L2-013`, `L2-014`, `L2-015`, `L4-004`, `L4-005` が載る。
+- [x] `ValidatorId` の有効範囲、L2/L3/L4 default execution、`validate --layer all` の skip 仕様が同じ表現で揃う。
+- [x] `L4-004` / `L4-005` を invalid とする古い coverage / test description が残らない。
+- [x] Quick Mode が layer shorthand を展開するのか validator id の完全一致だけを扱うのかが、実装・product docs・guide で一致する。
+- [x] public guide にも `L2-013`, `L2-014`, `L2-015`, `L4-004`, `L4-005` が載る。
 
 ## 依存
 
 `WI-151` と強く関連。公開 guide 側は `WI-151`、product 正本側は本 WI に分ける。
+
+## 対応結果
+
+- Quick Mode の validator ID registry と `ValidatorRelaxationProfile` を canonical L2 catalog（`L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015`）に更新した。
+- `docs/guide/layer-model.md`, `docs/guide/configuration.md`, `docs/guide/quick-vs-full-mode.md` に validator catalog / Quick Mode exact-ID contract / L4 skip semantics を反映した。
+- `docs/product/construction/validator-system/*` と `docs/product/construction/quick-mode/*` の旧 `L2-001..L2-003` 前提を更新した。
+- 検証: quick-mode unit/integration 24 files / 250 tests passed。

@@ -448,3 +448,17 @@ classDiagram
 <!-- @work-item-id WI-119, WI-134, WI-135 -->
 
 The AST engine exposes language-specific source facts while keeping validator policy language-independent. Architecture specs can carry side-effect capability policies and decision responsibility policies in addition to layer dependency rules.
+
+<!-- @work-item-id WI-161 -->
+## WI-161 Operational Validator Source Facts
+
+Biome AST engine supplies source facts for G5 validators without owning validator policy.
+
+| Source fact | Consumer |
+|---|---|
+| Token-family candidates and keyword context | `L3-001 security` scanner for redacted secret findings. |
+| Await-in-loop, sync I/O, large literal size, and suppression marker evidence | `L3-002 performance` scanner. |
+| Direct export, default export, named re-export, wildcard re-export, dynamic import, and generated/test/fixture classification | `L4-003 dead-code` graph. |
+| Side-effect capability evidence and decision signal evidence | `L4-002 architecture semantic analysis`. |
+
+Architecture `capabilityPolicies` and `decisionPolicies` are resolved from config-foundation presets. The AST engine reports observations; validator-system decides severity and whether a finding is advisory.

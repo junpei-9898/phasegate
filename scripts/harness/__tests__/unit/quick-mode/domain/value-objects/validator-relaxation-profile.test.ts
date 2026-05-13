@@ -22,14 +22,13 @@ target('ValidatorRelaxationProfile', () => {
       });
 
       // UT-VRP-002
-      it("デフォルトプロファイルのl2がmaintained=[L2-002, L2-003, L2-014]、skipped=[L2-001]であること", () => {
+      it("デフォルトプロファイルのl2がL2-002/L2-003/L2-014を維持し、それ以外のL2をスキップすること", () => {
         // Arrange（なし）
         // Act
         const actual = ValidatorRelaxationProfile.createDefault();
         // Assert
-        expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-002', 'L2-003', 'L2-014']));
-        expect(actual.l2.maintained).toHaveLength(3);
-        expect(actual.l2.skipped).toEqual(['L2-001']);
+        expect(actual.l2.maintained).toEqual(['L2-002', 'L2-003', 'L2-014']);
+        expect(actual.l2.skipped).toEqual(['L2-001', 'L2-013', 'L2-015']);
       });
 
       // UT-VRP-003
@@ -39,10 +38,7 @@ target('ValidatorRelaxationProfile', () => {
         const actual = ValidatorRelaxationProfile.createDefault();
         // Assert
         expect(actual.l3.maintained).toEqual(['L3-001']);
-        expect(actual.l3.skipped).toEqual(
-          expect.arrayContaining(['L3-002', 'L3-003', 'L3-004'])
-        );
-        expect(actual.l3.skipped).toHaveLength(3);
+        expect(actual.l3.skipped).toEqual(['L3-002', 'L3-003', 'L3-004']);
       });
     });
   });
@@ -50,12 +46,12 @@ target('ValidatorRelaxationProfile', () => {
   target('create', () => {
     describe('カスタム緩和プロファイルを生成する', () => {
       // UT-VRP-004
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-014}に一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
+      it("l2.maintained∪l2.skippedが正規L2カタログに一致する場合にValidatorRelaxationProfileが生成されること（INV-P5）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -63,16 +59,19 @@ target('ValidatorRelaxationProfile', () => {
         // Act
         const actual = ValidatorRelaxationProfile.create(input);
         // Assert
-        expect(actual).toBeDefined();
+        expect(actual.l2).toEqual({
+          maintained: ['L2-002', 'L2-003', 'L2-014'],
+          skipped: ['L2-001', 'L2-013', 'L2-015'],
+        });
       });
 
       // UT-VRP-005
-      it("l2.maintained∪l2.skippedが{L2-001, L2-002, L2-003, L2-014}に一致しない場合にエラーが発生すること（INV-P5違反）", () => {
+      it("l2.maintained∪l2.skippedが正規L2カタログに一致しない場合にエラーが発生すること（INV-P5違反）", () => {
         // Arrange
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002'], skipped: ['L2-001'] }, // L2-003/L2-014が欠落
+          l2: { maintained: ['L2-002'], skipped: ['L2-001'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -80,7 +79,9 @@ target('ValidatorRelaxationProfile', () => {
         // Act
         const actual = () => ValidatorRelaxationProfile.create(input);
         // Assert
-        expect(actual).toThrowError();
+        expect(actual).toThrowError(
+          'INV-P5 violated: l2.maintained ∪ l2.skipped must equal {L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}. Got: {L2-001, L2-002}'
+        );
       });
 
       // UT-VRP-006
@@ -89,7 +90,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] },
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -97,7 +98,10 @@ target('ValidatorRelaxationProfile', () => {
         // Act
         const actual = ValidatorRelaxationProfile.create(input);
         // Assert
-        expect(actual).toBeDefined();
+        expect(actual.l3).toEqual({
+          maintained: ['L3-001', 'L3-002'],
+          skipped: ['L3-003', 'L3-004'],
+        });
       });
 
       // UT-VRP-007
@@ -106,7 +110,7 @@ target('ValidatorRelaxationProfile', () => {
         const input = {
           levelDependencyRelaxed: false as const,
           l1: { all: true as const },
-          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003'] }, // L3-004が欠落
           l4: { all: false as const },
           phaseExecution: { twoPhaseRequired: false as const },
@@ -114,7 +118,9 @@ target('ValidatorRelaxationProfile', () => {
         // Act
         const actual = () => ValidatorRelaxationProfile.create(input);
         // Assert
-        expect(actual).toThrowError();
+        expect(actual).toThrowError(
+          'INV-P6 violated: l3.maintained ∪ l3.skipped must equal {L3-001, L3-002, L3-003, L3-004}. Got: {L3-001, L3-002, L3-003}'
+        );
       });
     });
   });
@@ -185,7 +191,7 @@ target('ValidatorRelaxationProfile', () => {
         // Arrange
         const sut = createValidatorRelaxationProfile(); // l2.maintained = [L2-002, L2-003, L2-014]
         const other = ValidatorRelaxationProfile.create({
-          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+          l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
           l3: { maintained: ['L3-001', 'L3-002'], skipped: ['L3-003', 'L3-004'] }, // l3が違う
         });
         // Act

@@ -24,8 +24,8 @@ It is not the whole setup state. Hook JSON, Husky scripts, CI workflow files, sk
   },
   "quickMode": {
     "allowedCategories": ["bugfix", "docs", "test", "config"],
-    "maintainedLayers": ["L1", "L2"],
-    "relaxedGates": ["phase-gate", "2-phase-execution"],
+    "maintainedLayers": ["L1", "L2-002", "L2-003", "L2-014", "L3-001"],
+    "relaxedGates": ["L2-001", "L3-002", "L3-003", "L3-004", "L4"],
     "fullModeRequiredWhen": {
       "mixedCategories": true,
       "newDomainFile": true,
@@ -121,8 +121,8 @@ The five layers are:
 | Sub-field              | Type       | Default                                 | Description                                                                 |
 |------------------------|------------|-----------------------------------------|-----------------------------------------------------------------------------|
 | `allowedCategories`    | `string[]` | `["bugfix", "docs", "test", "config"]`  | Change categories permitted under Quick Mode. Any category outside this list requires the full `story-implementor` workflow. |
-| `maintainedLayers`     | `string[]` | `["L1", "L2"]`                          | Layers that remain fully enforced even in Quick Mode.                       |
-| `relaxedGates`         | `string[]` | `["phase-gate", "2-phase-execution"]`   | Gates that are relaxed (not skipped) when Quick Mode is active.             |
+| `maintainedLayers`     | `string[]` | `["L1", "L2-002", "L2-003", "L2-014", "L3-001"]` | Exact validator IDs that remain enforced in Quick Mode. `L1` is the only layer shorthand; `L2` is not expanded. |
+| `relaxedGates`         | `string[]` | `["L2-001", "L3-002", "L3-003", "L3-004", "L4"]` | Validators/layers relaxed by Quick Mode. `L4` means all L4 validators are skipped. |
 | `fullModeRequiredWhen` | `object`   | all flags `true`                        | Conditions that force a Quick Mode change to escalate to the full `/story-implementor` flow. See below. |
 
 ##### `fullModeRequiredWhen`
@@ -138,6 +138,9 @@ Introduced in ISSUE-006 Story A (v0.63.0) and wired into the pre-tool-use hook b
 **Use `npx phasegate check-change-category --paths <csv>`** to dry-run the classifier against an arbitrary file list (see [CLI Reference](cli-reference.md#check-change-category-の使い方)). Combining `--fail-on-full-required` with a CI job makes "Quick Mode PR that should have been Full" a hard build failure.
 
 Set a flag to `false` only when the project intentionally accepts the risk of merging that category of change without the design ceremony -- e.g. an early-stage prototype where new domain files are expected to churn.
+
+<!-- @work-item-id WI-159 -->
+Quick Mode uses exact validator IDs for `maintainedLayers`. To keep all L2 validators active, list `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015` explicitly. The default keeps metadata, test-quality, work-item status, and security checks active while skipping phase-gate, CLI E2E coverage, contract traceability coverage, performance, coverage, nyquist, and L4 scheduled validators.
 
 #### `phaseDependencies`
 
@@ -446,7 +449,7 @@ Controls how warning-severity validator failures are aggregated into the overall
 
 | Sub-field        | Type      | Default by preset                                                | Description                                                                                                                                                          |
 |------------------|-----------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `failOnWarning`  | `boolean` | `false` (`minimal` / `standard`), `true` (`strict`)              | When `true`, warning-only validator fails (e.g. L4-001 drift, L4-002 consistency, L4-003 dead-code) count as overall FAIL / exit 1. When `false`, they count as PASS / exit 0. |
+| `failOnWarning`  | `boolean` | `false` (`minimal` / `standard`), `true` (`strict`)              | When `true`, warning-only validator fails (for example L4-001 drift, L4-002 consistency, L4-003 dead-code, L4-004 doc-freshness, or L4-005 pointer-validation) count as overall FAIL / exit 1. When `false`, they count as PASS / exit 0. |
 
 CLI override: `--fail-on-warning` / `--no-fail-on-warning` (CLI > config). Both unspecified → config value used.
 

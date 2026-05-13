@@ -185,7 +185,7 @@ Quick Mode では従来どおり `L2-003` を maintained validator として扱�
 
 #### 2.1.1 ValidatorId
 
-**責務**: L2-001〜L4-003の10バリデータを識別する不変値オブジェクト。
+**責務**: L2-001〜L4-005の15バリデータを識別する不変値オブジェクト。
 
 | 属性 | 型 | 説明 |
 |------|----|------|
@@ -228,7 +228,7 @@ Quick Mode では従来どおり `L2-003` を maintained validator として扱�
 
 **バリデーションルール**
 
-- L2-001〜L4-003以外は `InvalidValidatorIdError`
+- L2-001〜L4-005以外は `InvalidValidatorIdError`
 - 大文字・小文字の正規化は行わない。入力値が正規形であることを要求する
 
 ---
@@ -409,11 +409,11 @@ Quick Mode では従来どおり `L2-003` を maintained validator として扱�
 
 #### 2.2.1 ValidatorRegistry
 
-**責務**: 全10バリデータ定義のカタログ管理と選択実行インターフェースの提供。`domain_model.md §D1` に従い、biome-ast-engineの`RuleDefinitionRegistry`パターンを踏襲する。
+**責務**: L2-L4の15バリデータ定義のカタログ管理と選択実行インターフェースの提供。`domain_model.md §D1` に従い、biome-ast-engineの`RuleDefinitionRegistry`パターンを踏襲する。
 
 **コンストラクタ依存**
 
-- `definitions: readonly ValidatorDefinition[]` — 全10定義の静的リスト
+- `definitions: readonly ValidatorDefinition[]` — L2-L4の15定義の静的リスト
 
 ##### `getDefinition(validatorId: ValidatorId): ValidatorDefinition`
 
@@ -860,7 +860,7 @@ export interface ValidatorRelaxationProfile {
 
 **対応ストーリー**: H08-01（L2バリデータ実行）
 
-**責務**: phase-gate（L2-001）・metadata（L2-002）・test-quality（L2-003）の3バリデータをPre-commit文脈で実行し、`ValidationResultContract[]` を返す。
+**責務**: phase-gate（L2-001）・metadata（L2-002）・test-quality（L2-003）・CLI E2E coverage（L2-013）・WI status staleness（L2-014）・contract traceability coverage（L2-015）の6バリデータをPre-commit文脈で実行し、`ValidationResultContract[]` を返す。
 
 **コンストラクタ依存**
 
@@ -873,7 +873,7 @@ export interface ValidatorRelaxationProfile {
 
 | 項目 | 型 | 必須 | 説明 |
 |------|----|------|------|
-| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L2（L2-001〜L2-003） |
+| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L2（L2-001, L2-002, L2-003, L2-013, L2-014, L2-015） |
 | targetPaths | `readonly string[]` | Yes | 検証対象ファイルパス一覧 |
 | unitName | `string` | Yes | 検証対象Unit名（Phase Gate確認用） |
 | currentPhase | `string` | Yes | 現在フェーズ（Phase Gate確認用） |
@@ -1507,7 +1507,7 @@ sequenceDiagram
     Handler->>FullUC: execute(RunFullValidationInput)
 
     FullUC->>L2UC: execute(RunL2ValidatorsInput)
-    L2UC->>Registry: select(["L2-001","L2-002","L2-003"])
+    L2UC->>Registry: select(["L2-001","L2-002","L2-003","L2-013","L2-014","L2-015"])
     Registry-->>L2UC: ValidatorDefinition[]
     L2UC->>ConfigPort: getLayerConfig("L2")
     ConfigPort-->>L2UC: LayerConfig(L2)
@@ -1779,7 +1779,7 @@ sequenceDiagram
 
 ### 8.4 Domain層テスト方針
 
-- `ValidatorId.create()` の有効値・無効値境界を網羅する（L2-001〜L4-003の10種とそれ以外）
+- `ValidatorId.create()` の有効値・無効値境界を網羅する（L2-001〜L4-005の15種とそれ以外）
 - `ValidationResult.pass()` / `.fail()` / `.skip()` の不変条件（INV-5〜INV-8）を各ファクトリメソッドで検証する
 - `LayerConfig.isValidatorEnabled()` の `strictOnly` 分岐を全ケース検証する
 - `DriftReport.direction` がINV-10に従うことを生成テストで確認する
@@ -1882,6 +1882,17 @@ Validator-system consumes doc freshness and pointer validation as L4 advisory re
 4. No findings yields an explicit pass result.
 
 `FileSystemContractTraceabilityPolicyAdapter` currently reads `@phasegate-contract id=... kind=... behaviors=... boundary=...` and `@phasegate-observation covers=... kind=...` annotations from target paths. Future extractors can feed the same port from AST, Markdown, config schema, or staged-change analysis.
+
+<!-- @work-item-id WI-159, WI-160, WI-161, WI-164 -->
+## P1 Execution And JSON Contract Reconciliation
+
+`RunL2ValidatorsUseCase` resolves default IDs from `ValidatorRegistry.listByLayer("L2")`, so the default set is the registered catalog, not a hard-coded `L2-001..L2-003` subset. `RunFullValidationUseCase` receives `targetLayers`; when the caller asks for exactly `["L4"]`, it passes `forceLayerEnabled=true` so explicit `validate --layer L4` runs even if config disables L4. Aggregate/all execution leaves disabled L4 as skipped.
+
+Quick Mode receives a relaxation profile from the quick-mode Unit. That profile is validator-ID based: skipped/maintained lists are compared to exact IDs. Validator-system does not expand `"L2"` shorthand; an invalid or partial relaxation profile fails before execution.
+
+`L2-015` consumes `PublicContract`, `BoundaryCase`, `ErrorContract`, `StateMachineModel`, and `TraceabilityGraphSlice` records through `ContractTraceabilityPolicyPort`. Findings map to standard `ValidationResultContract` fields plus `kind`, `subject`, and `sourcePath`.
+
+`L4-004` and `L4-005` are bridged from phase2-extensions. They map freshness and pointer outputs into `ValidationResult.fail()` only when non-ok results or execution errors exist; otherwise they return explicit pass results. Broken pointer findings are warnings unless the underlying execution error declares error severity.
 ## G5 Semantic Analysis Validators
 
 <!-- @work-item-id WI-119, WI-120, WI-121, WI-134, WI-135 -->

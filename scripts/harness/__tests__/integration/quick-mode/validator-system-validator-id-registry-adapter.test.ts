@@ -16,12 +16,11 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Assert
       const expected = [
         'L1-001', 'L1-002', 'L1-003', 'L1-004', 'L1-005', 'L1-006', 'L1-007', 'L1-008',
-        'L2-001', 'L2-002', 'L2-003', 'L2-014',
+        'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
         'L3-001', 'L3-002', 'L3-003', 'L3-004',
         'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
       ];
-      expect(actual).toEqual(expect.arrayContaining(expected));
-      expect(actual).toHaveLength(21);
+      expect(actual).toEqual(expected);
     });
 
     // IT-REPO-Registry-002
@@ -31,17 +30,21 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Act
       const actual = adapter.getAllValidatorIds();
       // Assert
-      expect(actual.filter((id: string) => id.startsWith('L1'))).toHaveLength(8);
+      expect(actual.filter((id: string) => id.startsWith('L1'))).toEqual([
+        'L1-001', 'L1-002', 'L1-003', 'L1-004', 'L1-005', 'L1-006', 'L1-007', 'L1-008',
+      ]);
     });
 
     // IT-REPO-Registry-003
-    it('L2 IDが4件（L2-001〜L2-014）含まれること', () => {
+    it('L2 IDが6件（L2-001〜L2-015）含まれること', () => {
       // Arrange
       const adapter = new ValidatorSystemValidatorIdRegistryAdapter();
       // Act
       const actual = adapter.getAllValidatorIds();
       // Assert
-      expect(actual.filter((id: string) => id.startsWith('L2'))).toHaveLength(4);
+      expect(actual.filter((id: string) => id.startsWith('L2'))).toEqual([
+        'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
+      ]);
     });
 
     // IT-REPO-Registry-004
@@ -51,7 +54,9 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Act
       const actual = adapter.getAllValidatorIds();
       // Assert
-      expect(actual.filter((id: string) => id.startsWith('L3'))).toHaveLength(4);
+      expect(actual.filter((id: string) => id.startsWith('L3'))).toEqual([
+        'L3-001', 'L3-002', 'L3-003', 'L3-004',
+      ]);
     });
 
     // IT-REPO-Registry-005
@@ -61,7 +66,9 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Act
       const actual = adapter.getAllValidatorIds();
       // Assert
-      expect(actual.filter((id: string) => id.startsWith('L4'))).toHaveLength(5);
+      expect(actual.filter((id: string) => id.startsWith('L4'))).toEqual([
+        'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
+      ]);
     });
 
     // IT-REPO-Registry-006
@@ -71,9 +78,11 @@ target('ValidatorSystemValidatorIdRegistryAdapter', () => {
       // Act
       const actual = adapter.getAllValidatorIds();
       // Assert
-      expect(() => {
+      const actualMutation = () => {
         (actual as string[]).push('INVALID-ID');
-      }).toThrow();
+      };
+      // Assert
+      expect(actualMutation).toThrowError("Cannot add property 23, object is not extensible");
     });
   });
 });

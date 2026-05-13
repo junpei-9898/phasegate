@@ -9,7 +9,7 @@ import type { ValidatorIdRegistryPort } from '../../../../../quick-mode/applicat
 
 const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
-  'L2-001', 'L2-002', 'L2-003', 'L2-014',
+  'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
   'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
 ];
@@ -54,6 +54,7 @@ target('BuildRelaxationProfileUseCase', () => {
         const actual = await sut.execute({ eligibilityContract });
         // Assert
         expect(actual.l2.skipped).toContain('L2-001');
+        expect(actual.l2.skipped).toEqual(expect.arrayContaining(['L2-013', 'L2-015']));
         expect(actual.l2.maintained).toEqual(expect.arrayContaining(['L2-002', 'L2-003', 'L2-014']));
         expect(actual.l3.maintained).toContain('L3-001');
         expect(actual.l3.skipped).toEqual(
@@ -87,7 +88,7 @@ target('BuildRelaxationProfileUseCase', () => {
         // Act
         const actual = sut.execute({ eligibilityContract });
         // Assert
-        await expect(actual).rejects.toThrow();
+        await expect(actual).rejects.toThrow('Cannot build relaxation profile: Quick Mode is not eligible');
       });
     });
 
@@ -155,7 +156,12 @@ target('BuildRelaxationProfileUseCase', () => {
         // Act
         const actual = await sut.execute({ eligibilityContract });
         // Assert
+        expect(actual.l2).toEqual({
+          maintained: ['L2-002', 'L2-003', 'L2-014'],
+          skipped: ['L2-001', 'L2-013', 'L2-015'],
+        });
         expect(Object.isFrozen(actual)).toBe(true);
+        expect(Object.isFrozen(actual.l2)).toBe(true);
       });
     });
   });

@@ -91,7 +91,7 @@
 | INV-P2 | l1.allは常にtrue（L1緩和禁止） | UT-VRP-001, UT-VRS-004, UT-BUC-005, IT-UC-Build-002 | COVERED |
 | INV-P3 | l4.allは常にfalse（L4全スキップ） | UT-VRP-001, UT-VRS-005, UT-BUC-006, IT-UC-Build-002 | COVERED |
 | INV-P4 | phaseExecution.twoPhaseRequiredは常にfalse | UT-VRP-001, UT-VRS-008, UT-BUC-007, IT-UC-Build-002 | COVERED |
-| INV-P5 | l2.maintained∪l2.skipped = {L2-001, L2-002, L2-003} | UT-VRP-004, UT-VRP-005, UT-EDGE-008, IT-UC-Build-002 | COVERED |
+| INV-P5 | l2.maintained∪l2.skipped = {L2-001, L2-002, L2-003, L2-013, L2-014, L2-015} | UT-VRP-004, UT-VRP-005, UT-EDGE-008, IT-UC-Build-002 | COVERED |
 | INV-P6 | l3.maintained∪l3.skipped = {L3-001, L3-002, L3-003, L3-004} | UT-VRP-006, UT-VRP-007, UT-EDGE-009, IT-UC-Build-002 | COVERED |
 
 ### QuickModeDecision 不変条件（INV-D1〜D2）

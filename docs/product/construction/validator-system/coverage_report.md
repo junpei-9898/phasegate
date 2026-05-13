@@ -122,7 +122,7 @@
 | 不変条件 | 内容 | 対応テストケース | カバー状況 |
 |---------|------|----------------|----------|
 | INV-1 | ValidatorIdは `L{n}-{nnn}` 形式 | UT-VID-005〜UT-VID-012（形式違反）、UT-VID-001〜004（正常形式） | **カバー済み** |
-| INV-2 | 有効範囲はL2-001〜L4-003の10バリデータのみ | UT-VID-006〜007（L1/L5無効）、UT-VID-008（L2-004無効）、UT-BND-003（L4-004無効） | **カバー済み** |
+| INV-2 | 有効範囲はL2-001〜L4-005の15バリデータのみ | UT-VID-006〜007（L0/L5無効）、未登録ID無効、L4-004/L4-005有効境界 | **カバー済み** |
 | INV-3 | externalPolicyRef持ちバリデータのポリシー解決はRegistry経由 | UT-VDF-004〜005（requiresExternalPolicy）、UT-VRG-004（getDefinition）  | **カバー済み** |
 | INV-4 | strictOnly=trueはstrictプリセット未設定時スキップ | UT-VES-002〜003（strictOnly制御）、IT-UC-RunL3-002〜003 | **カバー済み** |
 | INV-5 | passed=trueの場合errors[]は空配列 | UT-VRS-005（矛盾状態のエラー）、UT-VRS-001（pass正常系） | **カバー済み** |

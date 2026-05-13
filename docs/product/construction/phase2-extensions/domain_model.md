@@ -419,3 +419,18 @@ Pointer[]の検証はPointerResolverPort（外部依存）への委譲が必要�
 `PointerRule` owns operational pointer policy through `owner` and per semantic pointer type `pointerPolicies`. Pointer reports distinguish `reference`, `implementation`, `adr`, `product-doc`, and `external-url`.
 
 `FreshnessCheckResult` distinguishes stable aging from `stale-after-source-change` and carries a next action for operational triage.
+
+<!-- @work-item-id WI-164 -->
+## WI-164 Pointer Freshness Contract
+
+Pointer freshness is an operational contract shared with validator-system `L4-004` and `L4-005`.
+
+| Concept | Contract |
+|---|---|
+| `owner` | Unit or workflow responsible for repairing the pointer/freshness policy result. |
+| Semantic pointer type | `reference`, `implementation`, `adr`, `product-doc`, or `external-url`. |
+| Source document | Document path where the pointer or freshness rule was observed. |
+| Severity | `ok`, `warn`, or `error` at phase2 level; mapped to validator `warning` or `error` by validator-system. |
+| Next action | Human/agent repair instruction, carried through report formatting. |
+
+External URL pointers are skipped by default because URL checking requires network access and can make CI nondeterministic. `allowedPointerTypes` and `failOnBroken` are compatibility configuration concepts; the current semantic model interprets them through per-type policy so product-doc/ADR pointers can fail while implementation/reference pointers warn.

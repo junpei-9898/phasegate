@@ -198,3 +198,8 @@
 | Git log タイムゾーン差異 | 低 | GitLogDocumentAgeAdapterでISO 8601パース（タイムゾーン付き）を実装時に検証 |
 | fast-glob の除外パターン（.git等） | 低 | FileSystemDocumentScannerAdapterのIT-P2-024で検証済み |
 | HarnessConfigV2スキーマ変更 | 低 | HarnessConfigFreshnessAdapterがアダプタとして吸収。ドメインモデルへの影響なし |
+
+<!-- @work-item-id WI-164 -->
+## WI-164 Coverage Reflection
+
+Pointer/freshness coverage is considered complete when tests prove owner, semantic pointer type, source document, severity, and next action survive from phase2-extensions output into validator-system `L4-004` / `L4-005` report mapping. External URL default-skip behavior remains a deliberate CI determinism boundary, not uncovered validation.

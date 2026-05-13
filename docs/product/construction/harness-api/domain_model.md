@@ -319,3 +319,19 @@ Harness API consumes G3 L4 reports as advisory signals unless the caller opts in
 ## G4 Public API Contract Projection
 
 Harness API / CLI response contracts can feed L2-015 as `PublicContract` and `ErrorContract` records. The shared response envelope remains owned by harness-api; validator-system only consumes projected semantic contract records and returns standard `ValidationResultContract` findings.
+
+<!-- @work-item-id WI-162 -->
+## WI-162 Status And Drift Payload Schema
+
+`phasegate:status --json` owns the public health payload for agents and CI. `HarnessStatusSummary` contains:
+
+| Field | Meaning |
+|---|---|
+| `layers[].configurationState` | Resolved layer intent: `enabled` or `disabled`. |
+| `layers[].cachedArtifactState` | Whether cached report/artifact evidence exists: `present`, `missing`, or `unknown`. |
+| `layers[].liveValidationState` | Current execution signal: `pass`, `fail`, `skipped`, `not-run`, or `error`. |
+| `hookHealth` | Hook enablement, configured hook names, latest skip event, skip counts, and Codex `apply_patch` backstop status. |
+| `baselineHealth` | Baseline enabled state, path, grandfathered count, SHA mismatches, missing files, and removal rate. |
+| `operationalWarnings` | Non-gating warnings with `code`, `message`, and `nextAction`. |
+
+`phasegate:detect-drift --json` preserves `category`, `severity`, and `nextAction` in addition to the raw drift item. Structural drift remains `L4-001`; semantic drift is keyed by `unitName + behaviorId` across `DesignIntent`, `ImplementationBehavior`, and `TestObservation`.

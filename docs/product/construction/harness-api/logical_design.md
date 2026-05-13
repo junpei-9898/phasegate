@@ -1854,3 +1854,10 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 ## G3 L4 Report Integration
 
 `phasegate:detect-drift` and `validate --layer L4` expose G3 findings as advisory by default. A fail-on-warning caller may promote warnings to non-zero exit only after L4-001 precision, L4-002 semantics, L4-004/L4-005 operational policy, and WI-139 semantic drift coverage are all available in report payloads.
+
+<!-- @work-item-id WI-162 -->
+## WI-162 Handler Flow
+
+`status-handler` dispatches to `DeriveHarnessStatusUseCase`, which gathers artifact scan, preset/config summary, phase-gate summary, hook health, baseline health, optional live validation state, and operational warnings before calling `StatusDerivationService.derive()`. The handler writes the response envelope to stdout and keeps exit code 0 for representable health states, including `fail` layer states.
+
+`detect-drift-handler` dispatches through `ValidatorExecutionPort.runDriftDetection()`, maps raw drift items into `DriftReportSummary.fromDrifts()`, and returns category summaries plus sampled findings. Precision source and unit resolution warnings remain payload fields or operational warnings; they are not converted into hard failures unless the caller later runs a fail-on-warning validation path.

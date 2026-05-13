@@ -1594,3 +1594,18 @@ CI governance treats pointer validation results according to semantic pointer po
 @work-item-id WI-150
 
 CI governance consumes the public command catalog for generated workflows and agent-context pointers. The documented CLI surface must identify `ci:generate-template`, `ci:auto-refresh-agent-context`, `p2:check-agent-context`, and repetition checks as binary subcommands, not implied npm scripts.
+
+<!-- @work-item-id WI-163 -->
+## WI-163 CI Template And L4 Rollout Contract
+
+`ci:generate-template` uses the live validator-system registry through `ValidatorIdRegistryPort`; CI governance must not keep a duplicate stub validator list. Template metadata may filter by preset, but the source of available IDs is validator-system.
+
+| Template type | Validator policy |
+|---|---|
+| `aidlc-gate` | Uses L2/L3 gate metadata for normal CI. |
+| `consistency-check` | Scheduled L4 audit template; default standard rollout is advisory. |
+| `agent-context-refresh` | Agent context maintenance and PR creation, not a validator catalog source. |
+
+Scheduled L4 remains default-off for standard projects and is run by cron/manual workflow as an audit. Strict projects or explicit `layers.L4.enabled: true` may combine scheduled L4 with `failOnWarning`.
+
+`p2:*` commands are compatibility entry points. Canonical generated templates should prefer `validate --layer L4`, `phasegate:detect-drift`, and the public setup/install lifecycle commands.

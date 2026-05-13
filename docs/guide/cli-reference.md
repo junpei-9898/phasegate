@@ -296,7 +296,7 @@ The following are binary subcommands (`npx phasegate <command>`). Do not assume 
 
 ### Status and drift JSON semantics
 
-<!-- @work-item-id WI-151 -->
+<!-- @work-item-id WI-151, WI-162 -->
 
 `phasegate:status --json` is intended for humans, CI, and agents that need to distinguish configured intent from observed results. Layer entries may include:
 
@@ -307,6 +307,16 @@ The following are binary subcommands (`npx phasegate <command>`). Do not assume 
 | `liveValidationState` | Result of the current live check (`pass` / `fail` / `skipped`) | Use this as the current gate signal. `skipped` usually follows disabled configuration. |
 
 `phasegate:detect-drift --json` returns drift findings from live design/code comparison. A finding with a real mismatch is different from a validator `limitation`: `missing` means expected evidence or artifacts were absent, while `limitation` means the validator cannot currently prove the condition and should be treated as advisory until coverage is improved.
+
+Status JSON may also include:
+
+| Key | Meaning |
+|---|---|
+| `hookHealth` | Configured hook files, latest skipped hook event, skip counts by reason, and the Codex native `apply_patch` limitation with the pre-commit backstop. |
+| `baselineHealth` | Baseline enabled state, baseline path, grandfathered file count, SHA mismatch count, missing file count, and removal rate. |
+| `operationalWarnings` | Non-gating warnings with `code`, `message`, and `nextAction`. |
+
+Drift JSON findings should preserve the most precise available `location`, `unit`, `category`, `severity`, and `nextAction`. Structural drift (`L4-001`) compares product design and code structure. Semantic drift compares `DesignIntent`, `ImplementationBehavior`, and `TestObservation` by `unitName + behaviorId`; it is an L4 report producer above structural drift and does not replace `L4-001`.
 
 L4 warning findings fail the process only when warning strictness is enabled (`validate.failOnWarning: true`, the `strict` preset, or `--fail-on-warning`). `--no-fail-on-warning` forces advisory behavior for the current command.
 

@@ -103,7 +103,7 @@ export const createLayerConfig = (overrides: Partial<LayerConfigProps> = {}) =>
   LayerConfig.create({
     layer: 'L2',
     enabled: true,
-    validatorIds: ['L2-001', 'L2-002', 'L2-003'],
+    validatorIds: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'],
     thresholds: {},
     strictOnly: false,
     preset: 'standard',
@@ -1547,7 +1547,7 @@ target('ValidatorRegistry', () => {
   describe('listByLayer()でレイヤー別定義一覧を返す', () => {
 
     // UT-VRG-008
-    it('layer: L2を渡すとL2-001〜L2-003の3件がvalidatorId昇順で返ること', () => {
+    it('layer: L2を渡すとL2-001〜L2-015の6件がvalidatorId昇順で返ること', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act

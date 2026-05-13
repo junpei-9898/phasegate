@@ -358,3 +358,10 @@ classDiagram
 `traceability-model` remains the owner of WI/status metadata semantics. G4 consumes a narrow `TraceabilityGraphSlice` so validator-system can report affected Unit reflection gaps, implementation/test WI mismatches, and public-doc/contract sync smells without taking ownership of WI frontmatter parsing.
 
 WI-133 boundary coverage uses the same observation-link semantics so boundary cases derived from contracts can be tied back to test observations without introducing a separate traceability graph.
+
+<!-- @work-item-id WI-160 -->
+## WI-160 TraceabilityGraphSlice Contract
+
+`TraceabilityGraphSlice` is the traceability-model projection consumed by `L2-015`. It keeps WI identity, affected Units, product reflection, implementation evidence, test evidence, and public-doc sync state in one narrow model. validator-system may report graph gaps, but traceability-model remains the owner of WI frontmatter parsing and legacy ID resolution.
+
+Severity policy for WI-133 boundary coverage is implemented as validator policy behavior. It is not a separate public config schema field unless config-foundation explicitly adds one.

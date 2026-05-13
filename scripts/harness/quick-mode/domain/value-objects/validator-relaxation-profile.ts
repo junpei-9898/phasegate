@@ -6,7 +6,7 @@
  * Quick Mode時のバリデータ実行構成を表す値オブジェクト
  */
 
-const L2_IDS = ['L2-001', 'L2-002', 'L2-003', 'L2-014'] as const;
+const L2_IDS = ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] as const;
 const L3_IDS = ['L3-001', 'L3-002', 'L3-003', 'L3-004'] as const;
 
 type L2Id = (typeof L2_IDS)[number];
@@ -49,7 +49,7 @@ export class ValidatorRelaxationProfile {
     return new ValidatorRelaxationProfile({
       levelDependencyRelaxed: false,
       l1: { all: true },
-      l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+      l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
       l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
       l4: { all: false },
       phaseExecution: { twoPhaseRequired: false },
@@ -66,7 +66,7 @@ export class ValidatorRelaxationProfile {
   }): ValidatorRelaxationProfile {
     const { l2, l3 } = params;
 
-    // INV-P5: l2.maintained ∪ l2.skipped = {L2-001, L2-002, L2-003, L2-014}
+    // INV-P5: l2.maintained ∪ l2.skipped = the canonical L2 validator catalog.
     const l2Union = [...l2.maintained, ...l2.skipped].sort();
     const l2Expected = [...L2_IDS].sort();
     if (JSON.stringify(l2Union) !== JSON.stringify(l2Expected)) {

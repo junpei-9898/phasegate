@@ -2,7 +2,7 @@
 id: WI-163
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [ci-governance, setup, integrations, config-foundation]
 source: internal
 ---
@@ -30,10 +30,16 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] `listAll` / stub validator list 前提の古い Port / UT / IT / coverage が現行 registry contract と矛盾しない。
-- [ ] setup / integrations docs が generated CI の配線面を説明する。
-- [ ] scheduled L4 audit が live L4 surface / advisory policy / failOnWarning と一致することが test design で固定される。
+- [x] `listAll` / stub validator list 前提の古い Port / UT / IT / coverage が現行 registry contract と矛盾しない。
+- [x] setup / integrations docs が generated CI の配線面を説明する。
+- [x] scheduled L4 audit が live L4 surface / advisory policy / failOnWarning と一致することが test design で固定される。
 
 ## 依存
 
 `WI-159`。
+
+## 対応結果
+
+- `ci-governance` product logical design に live validator registry, template type, scheduled L4 rollout, `p2:*` compatibility 方針を反映した。
+- `setup` / `integrations` / `config-foundation` product docs に generated CI workflow 配線と registry/config 境界を反映した。
+- scheduled L4 は standard では advisory/default-off、strict または `failOnWarning` で blocking 化する方針に揃えた。

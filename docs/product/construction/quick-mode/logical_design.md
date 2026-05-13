@@ -7,7 +7,7 @@
 Quick Mode remains a narrow bypass for low-risk categories while hook execution still emits an observable allow/deny outcome. This avoids silent no-op behavior when workspace detection or hook configuration changes the target file set.
 
 @work-item-id WI-140
-Quick Mode の validator ID registry / relaxation profile は `L2-014 work-item-status-staleness` を正規 L2 validator として含める。既定の maintainedLayers では L2-014 を維持し、status gate を quick CI の緩和対象から外す。
+Quick Mode の validator ID registry / relaxation profile は `L2-013 cli-e2e-test-existence`, `L2-014 work-item-status-staleness`, `L2-015 contract-traceability-coverage` を正規 L2 validator として含める。既定の maintainedLayers では L2-014 を維持し、L2-013 / L2-015 は Quick Mode の緩和対象として明示的に skipped に入れる。
 
 @story-id H10-01
 @story-id H10-02
@@ -334,7 +334,7 @@ Quick Mode時のバリデータ実行構成を表す値オブジェクト。
 **生成ルール**
 
 - `levelDependencyRelaxed` は型システムで `false` リテラル型を指定し、`true` を代入不可にする
-- `l2.maintained` と `l2.skipped` の和集合が `["L2-001", "L2-002", "L2-003"]` と一致すること
+- `l2.maintained` と `l2.skipped` の和集合が `["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015"]` と一致すること
 - `l3.maintained` と `l3.skipped` の和集合が `["L3-001", "L3-002", "L3-003", "L3-004"]` と一致すること
 - `Object.freeze()` を再帰的に適用する
 
@@ -352,7 +352,7 @@ Quick Mode時のバリデータ実行構成を表す値オブジェクト。
 - `INV-P2`: `l1.all` は常に `true`（L1緩和は禁止）
 - `INV-P3`: `l4.all` は常に `false`（L4は全スキップ）
 - `INV-P4`: `phaseExecution.twoPhaseRequired` は常に `false`
-- `INV-P5`: `l2.maintained ∪ l2.skipped = {L2-001, L2-002, L2-003}`
+- `INV-P5`: `l2.maintained ∪ l2.skipped = {L2-001, L2-002, L2-003, L2-013, L2-014, L2-015}`
 - `INV-P6`: `l3.maintained ∪ l3.skipped = {L3-001, L3-002, L3-003, L3-004}`
 
 #### 2.2.7 QuickModeDecision
@@ -751,7 +751,7 @@ interface QuickModeDecisionContract {
 
 - Wave 2 では validator-system の確定 ID 一覧（L1-001〜L4-005）を静的定義として保持する
 - validator-system の正式 Registry が整備された段階でこの Adapter の内部実装のみを差し替える
-- 静的リストは `L1-001, L1-002, ..., L1-008, L2-001, L2-002, L2-003, L3-001, L3-002, L3-003, L3-004, L4-001, L4-002, L4-003, L4-004, L4-005` で構成する
+- 静的リストは `L1-001, L1-002, ..., L1-008, L2-001, L2-002, L2-003, L2-013, L2-014, L2-015, L3-001, L3-002, L3-003, L3-004, L4-001, L4-002, L4-003, L4-004, L4-005` で構成する
 
 **外部I/O詳細**
 
@@ -1090,7 +1090,7 @@ sequenceDiagram
 - `eligible=true` の場合のみ `ValidatorRelaxationProfile` を生成する
 - `eligible=false` の入力を受け取った場合は `QuickModeNotEligibleError` を投げる
 - 生成されるプロファイルは `INV-P1` 〜 `INV-P6` を全て満たすこと
-- デフォルト設定の場合: L1全維持 / L2-001スキップ・L2-002+L2-003維持 / L3-001維持・L3-002〜L3-004スキップ / L4全スキップ
+- デフォルト設定の場合: L1全維持 / L2-001・L2-013・L2-015スキップ、L2-002・L2-003・L2-014維持 / L3-001維持・L3-002〜L3-004スキップ / L4全スキップ
 
 ### 9.3 H10-03 phasegate:ci-check --quick統合
 

@@ -113,6 +113,7 @@ L2 validators run before every commit. They enforce process discipline and test 
 | **test-quality** | L2-003 | Enforces test authoring standards through a runner-independent semantic model: AAA pattern, named Act observation, single-act-per-test, assertion strength, lifecycle/E2E exceptions, and no domain/internal mocking in domain layer tests. |
 | **cli-e2e-test-existence** | L2-013 | Checks that public CLI commands have corresponding CLI/e2e coverage or an explicit documented reason for compatibility/internal handling. |
 | **work-item-status-staleness** | L2-014 | Compares `description.md` frontmatter status with derived artifact evidence and reports stale WI status. |
+| **contract-traceability-coverage** | L2-015 | Checks opt-in public contract, boundary, error, state-machine, and traceability observations declared with `@phasegate-contract` / `@phasegate-observation`. |
 
 **Command:**
 
@@ -132,6 +133,16 @@ L3 validators run in the CI/CD pipeline before a merge is permitted. They cover 
 | **performance** | Detects `await`-in-loop, N+1 query patterns, and bundle size regressions |
 | **coverage** | Enforces test coverage thresholds. Standard preset requires 90%; strict preset requires 95%. |
 | **nyquist** | Bidirectional requirements-test traceability. Validates that every requirement in `requirement-test-matrix.json` has corresponding tests and vice versa. |
+
+<!-- @work-item-id WI-161 -->
+Operational L3 findings use stable payloads:
+
+| Validator | Key payload fields |
+|---|---|
+| `L3-001 security` | `ruleId`, redacted value or redaction marker, token family, file location, fixture/allowlist context, suggestion. |
+| `L3-002 performance` | smell id, file location, observed metric, threshold, optional suppression marker, suggestion. |
+
+Security findings must redact matched token values. Fixture allowlists are for tests and examples only. Performance suppression should be explicit in source, and suppressed findings remain visible as accepted risk rather than disappearing from the model.
 
 **Command:**
 
@@ -168,6 +179,44 @@ npx phasegate validate --layer L4
 ```
 
 Use a weekly cron such as `0 9 * * 1` for the generated consistency-check workflow. Standard projects normally keep L4 default-off and run the scheduled audit as advisory. Strict projects may opt into `layers.L4.enabled: true` and `failOnWarning` behavior when L4 warnings should block promotion. @work-item-id WI-128
+
+### Validator execution contract
+
+<!-- @work-item-id WI-159, WI-164 -->
+
+The canonical validator catalog is:
+
+| Layer | Validator IDs |
+|---|---|
+| L2 | `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015` |
+| L3 | `L3-001`, `L3-002`, `L3-003`, `L3-004` |
+| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005` |
+
+`validate --layer L2` runs all enabled L2 validators. `validate --layer L4` is an explicit operator request and runs L4 even when standard preset config leaves `layers.L4.enabled: false`. `validate --layer all`, `phasegate:ci-check`, and aggregate CI-style commands preserve disabled L4 entries as skipped results; skipped results do not fail the process and are not promoted by `--fail-on-warning`.
+
+Quick Mode does not expand `maintainedLayers: ["L2"]` into every L2 validator. It treats entries as exact validator IDs, plus `L1` for all L1 lint behavior and `L4` as an all-skipped layer marker. The default Quick Mode profile maintains `L2-002`, `L2-003`, `L2-014`, and `L3-001`; it skips `L2-001`, `L2-013`, `L2-015`, `L3-002`, `L3-003`, `L3-004`, and all L4 validators.
+
+### L4 pointer and freshness report shape
+
+<!-- @work-item-id WI-164 -->
+
+`L4-004 doc-freshness` and `L4-005 pointer-validation` findings are registered L4 validator results, not separate hidden checks. Reports should be read with these fields:
+
+| Field | Meaning |
+|---|---|
+| `owner` | Unit or workflow responsible for the document/pointer policy. |
+| `pointerType` | Semantic type such as `reference`, `implementation`, `adr`, `product-doc`, or `external-url`. |
+| `sourceDocument` / `documentPath` | Document where the freshness or pointer finding originated. |
+| `severity` | `warning` or `error`; warning remains advisory unless fail-on-warning is active. |
+| `nextAction` / `suggestion` | Human or agent action that repairs the stale document or broken pointer. |
+
+External URL pointers are skipped by default unless a policy explicitly asks for URL validation.
+
+### Dead-code graph boundaries
+
+<!-- @work-item-id WI-161 -->
+
+`L4-003 dead-code` uses import/export graph analysis rather than simple text search. It accounts for direct exports, named re-exports, wildcard re-exports, default exports, dynamic imports, public API boundaries, and generated/test/fixture exclusions. Because module boundaries and public entrypoints can be project-specific, dead-code findings are warnings by default and become blocking only under fail-on-warning policy.
 
 ### Status and drift states
 

@@ -37,7 +37,7 @@ Validator-system metadata checks rely on phase-dependency-model reflection resul
 | 概念 | 分類 | 説明 |
 |------|------|------|
 | ValidatorDefinition | 値オブジェクト | バリデータの不変定義（validatorId/layer/rules/errorTemplate/externalPolicyRef?） |
-| ValidatorId | 値オブジェクト | `L{n}-{nnn}` 形式のバリデータ識別子（L2-001〜L4-003） |
+| ValidatorId | 値オブジェクト | `L{n}-{nnn}` 形式のバリデータ識別子（L2-001〜L4-005） |
 | ValidationResult | 値オブジェクト | バリデーション実行結果スナップショット（pass/fail + HarnessError[]） |
 | ValidationRule | 値オブジェクト | ルール名・検証ロジック参照・エラーテンプレートの不変定義 |
 | LayerConfig | 値オブジェクト | HarnessConfigV2から注入されるL2/L3/L4設定（enabled/閾値/Preset） |
@@ -64,7 +64,7 @@ Validator-system metadata checks rely on phase-dependency-model reflection resul
 
 | 契約 | 消費Unit | 内容 |
 |------|---------|------|
-| ValidatorRegistry インターフェース | harness-api, quick-mode | ValidatorId一覧（L2-001〜L4-003）+ 選択実行API |
+| ValidatorRegistry インターフェース | harness-api, quick-mode | ValidatorId一覧（L2-001〜L4-005）+ 選択実行API |
 | ValidationResult Contract | harness-api | `{ validatorId, passed, errors: HarnessError[] }` |
 
 ---
@@ -95,7 +95,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 
 | 値オブジェクト | 不変 | 値等価性 | 説明 |
 |-------------|------|---------|------|
-| ValidatorId | ✓ | ✓ | `L{n}-{nnn}` 形式。有効範囲: L2-001〜L4-003 |
+| ValidatorId | ✓ | ✓ | `L{n}-{nnn}` 形式。有効範囲: L2-001〜L4-005 |
 | ValidatorDefinition | ✓ | ✓ | バリデータ不変定義。validatorId/layer/rules[]/enabledCondition/externalPolicyRef? |
 | ValidationRule | ✓ | ✓ | ルール名・エラーテンプレート・fixExample |
 | ValidationResult | ✓ | ✓ | passed: boolean, validatorId, errors: HarnessError[], durationMs: number |
@@ -110,7 +110,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 
 | サービス | 責務 | 参照するポート |
 |---------|------|--------------|
-| ValidatorRegistry | 全ValidatorDefinitionのカタログ管理（L2-001〜L4-003の定義登録・ID検索・選択実行委譲） | — |
+| ValidatorRegistry | 全ValidatorDefinitionのカタログ管理（L2-001〜L4-005の定義登録・ID検索・選択実行委譲） | — |
 | ValidatorExecutionService | 指定ValidatorId[]の順次実行・ValidationResult[]集約 | ValidatorConfigPort（LayerConfig取得） |
 | DriftDetectionService | 設計文書とソースコードの双方向乖離検出→DriftReport生成 | DesignDocumentPort, SourceCodeAnalyzerPort |
 | ConsistencyCheckService | 設計文書間レイヤー整合性の検証→ConsistencyReport生成 | DesignDocumentPort |
@@ -144,7 +144,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 ### ValidatorId不変条件
 
 - **INV-1**: ValidatorIdは `L{n}-{nnn}` 形式（正規表現: `/^L[2-4]-\d{3}$/`）
-- **INV-2**: 有効範囲は L2-001〜L4-003 の10バリデータ
+- **INV-2**: 有効範囲は L2-001〜L4-005 の15バリデータ
 
 ```
 L2-001: phase-gate
@@ -248,7 +248,7 @@ validator-system/
 │   │   ├── consistency-report.ts     # 整合性検証結果VO
 │   │   └── dead-code-report.ts       # 未使用コード検出結果VO
 │   ├── services/
-│   │   ├── validator-registry.ts     # カタログ管理・選択実行（全10定義を保持）
+│   │   ├── validator-registry.ts     # カタログ管理・選択実行（L2-L4の15定義を保持）
 │   │   ├── validator-execution-service.ts  # 順次実行・結果集約
 │   │   ├── l4/
 │   │   │   ├── drift-detection-service.ts
@@ -287,6 +287,9 @@ enabled=trueバリデータ → 各Analyzerポート呼び出し
 （L2-001）PhaseGatePolicyPort → 前提条件チェック
 （L2-002）MetadataPolicyPort → メタデータ完全性チェック
 （L2-003）TestQualityAnalyzerPort → AAAパターンチェック
+（L2-013）CliE2eTestExistenceService → public CLI E2E coverageチェック
+（L2-014）WorkItemStatusPolicyPort → WI status stalenessチェック
+（L2-015）ContractTraceabilityPolicyPort → public contract coverageチェック
 （L3-001）SecurityPatternScannerPort → セキュリティパターン検出
 （L3-002）PerformanceScannerPort → パフォーマンス問題検出
 （L3-003）CoverageReportPort → カバレッジ閾値比較
@@ -356,3 +359,26 @@ The first repository scanner is opt-in annotation based (`@phasegate-contract` /
 - `EffectCapability`: semantic side-effect category such as filesystem, network, database, process-env, time, random, subprocess, or user-io.
 - `DecisionSignal`: business-rule branch, validation rule, error construction, state transition, or policy selection evidence.
 - `ArchitectureSemanticFinding`: L4-002 warning that combines observed file zone, evidence, confidence, and suggested owner zone for capability or decision-placement policy.
+
+<!-- @work-item-id WI-159, WI-161, WI-164 -->
+## P1 Validator Catalog Contract
+
+The canonical validator-system catalog is:
+
+| Layer | IDs | Execution notes |
+|---|---|---|
+| L2 | `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015` | Default L2 execution runs all six IDs when enabled. |
+| L3 | `L3-001`, `L3-002`, `L3-003`, `L3-004` | `L3-002` may be strict-only depending on resolved config/preset. |
+| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005` | Disabled L4 returns skipped results in aggregate execution; explicit `validate --layer L4` force-enables the layer for the operator request. |
+
+Skip results are first-class validation results and do not fail aggregation. Warning findings fail only when `failOnWarning` is active. L4-004 and L4-005 are valid registered validators, with `p2:check-freshness` and `p2:validate-pointers` retained only as compatibility commands.
+
+## P1 Operational Validator Payloads
+
+<!-- @work-item-id WI-161 -->
+
+`L3-001 security` findings carry a stable rule id, redacted value or redaction marker, token family, file location, and fixture/allowlist context. Allowlisted fixture findings must not leak the matched secret.
+
+`L3-002 performance` findings carry smell id, file location, observed metric, threshold, optional suppression marker, and suggestion. The current operational knobs are validator-side defaults plus resolved `bundleSizeLimit`; `largeLiteralEntries`, sync I/O, loop-await, and accepted batch/migration suppression are scanner policy concepts, not new public top-level config fields unless `configuration.md` documents them.
+
+`L4-003 dead-code` consumes real import/export graph data, including direct exports, re-exports, wildcard exports, dynamic import visibility, public API boundaries, and generated/test/fixture exclusions. Candidates are reviewable warnings by default because false positives are possible at package boundaries.

@@ -26,7 +26,7 @@ const NOT_ELIGIBLE_CONTRACT = {
 const PROFILE_CONTRACT = {
   levelDependencyRelaxed: false as const,
   l1: { all: true as const },
-  l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001'] },
+  l2: { maintained: ['L2-002', 'L2-003', 'L2-014'], skipped: ['L2-001', 'L2-013', 'L2-015'] },
   l3: { maintained: ['L3-001'], skipped: ['L3-002', 'L3-003', 'L3-004'] },
   l4: { all: false as const },
   phaseExecution: { twoPhaseRequired: false as const },
@@ -66,8 +66,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Act
         const actual = await sut.execute({ dryRun: false });
         // Assert
-        expect(actual.eligibility.eligible).toBe(false);
-        expect(actual.relaxationProfile).toBeUndefined();
+        expect(actual).toEqual({
+          eligibility: NOT_ELIGIBLE_CONTRACT,
+          relaxationProfile: undefined,
+        });
       });
 
       // UT-EUC-002
@@ -77,9 +79,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
           judgeExecute: vi.fn().mockResolvedValue(NOT_ELIGIBLE_CONTRACT),
         });
         // Act
-        await sut.execute({ dryRun: false });
+        const actual = await sut.execute({ dryRun: false });
         // Assert
-        expect(buildUseCase.execute).not.toHaveBeenCalled();
+        expect(actual.relaxationProfile).toEqual(undefined);
+        expect(buildUseCase.execute.mock.calls).toEqual([]);
       });
 
       // UT-EUC-003
@@ -89,8 +92,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Act
         const actual = await sut.execute({ dryRun: false });
         // Assert
-        expect(actual.eligibility.eligible).toBe(true);
-        expect(actual.relaxationProfile).toBeDefined();
+        expect(actual).toEqual({
+          eligibility: ELIGIBLE_CONTRACT,
+          relaxationProfile: PROFILE_CONTRACT,
+        });
       });
 
       // UT-EUC-004
@@ -98,9 +103,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Arrange
         const { sut, validatorExecutionPort } = buildSut();
         // Act
-        await sut.execute({ dryRun: false });
+        const actual = await sut.execute({ dryRun: false });
         // Assert
-        expect(validatorExecutionPort.executeWithProfile).toHaveBeenCalledOnce();
+        expect(actual.relaxationProfile).toEqual(PROFILE_CONTRACT);
+        expect((validatorExecutionPort.executeWithProfile as ReturnType<typeof vi.fn>).mock.calls).toEqual([[PROFILE_CONTRACT]]);
       });
 
       // UT-EUC-005
@@ -108,9 +114,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Arrange
         const { sut, validatorExecutionPort } = buildSut();
         // Act
-        await sut.execute({ dryRun: true });
+        const actual = await sut.execute({ dryRun: true });
         // Assert
-        expect(validatorExecutionPort.executeWithProfile).not.toHaveBeenCalled();
+        expect(actual.relaxationProfile).toEqual(PROFILE_CONTRACT);
+        expect((validatorExecutionPort.executeWithProfile as ReturnType<typeof vi.fn>).mock.calls).toEqual([]);
       });
 
       // UT-EUC-006
@@ -120,7 +127,7 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Act
         const actual = await sut.execute({ dryRun: true });
         // Assert
-        expect(actual.relaxationProfile).toBeDefined();
+        expect(actual.relaxationProfile).toEqual(PROFILE_CONTRACT);
       });
 
       // UT-EUC-007
@@ -128,11 +135,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         // Arrange
         const { sut, judgeUseCase } = buildSut();
         // Act
-        await sut.execute({ dryRun: false });
+        const actual = await sut.execute({ dryRun: false });
         // Assert
-        expect(judgeUseCase.execute).toHaveBeenCalledWith(
-          expect.objectContaining({ changedFiles: undefined })
-        );
+        expect(actual.eligibility).toEqual(ELIGIBLE_CONTRACT);
+        expect(judgeUseCase.execute.mock.calls).toEqual([[{ changedFiles: undefined }]]);
       });
 
       // UT-EUC-008
@@ -141,11 +147,10 @@ target('ExecuteQuickCiCheckUseCase', () => {
         const { sut, judgeUseCase } = buildSut();
         const changedFiles = [createChangedFile()];
         // Act
-        await sut.execute({ dryRun: false, changedFiles });
+        const actual = await sut.execute({ dryRun: false, changedFiles });
         // Assert
-        expect(judgeUseCase.execute).toHaveBeenCalledWith(
-          expect.objectContaining({ changedFiles })
-        );
+        expect(actual.eligibility).toEqual(ELIGIBLE_CONTRACT);
+        expect(judgeUseCase.execute.mock.calls).toEqual([[{ changedFiles }]]);
       });
     });
 

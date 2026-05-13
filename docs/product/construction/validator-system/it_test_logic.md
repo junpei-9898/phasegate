@@ -45,7 +45,7 @@ function createLayerConfig(layer: 'L2' | 'L3' | 'L4', overrides?: Partial<LayerC
   return {
     layer,
     enabled: true,
-    validatorIds: layer === 'L2' ? ['L2-001', 'L2-002', 'L2-003']
+    validatorIds: layer === 'L2' ? ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']
                 : layer === 'L3' ? ['L3-001', 'L3-002', 'L3-003', 'L3-004']
                 : ['L4-001', 'L4-002', 'L4-003'],
     thresholds: layer === 'L3' ? { coverageThreshold: 90, bundleSizeLimit: 512000 } : {},
@@ -159,7 +159,7 @@ function createValidHarnessConfigFixture() {
   return {
     preset: 'standard',
     layers: {
-      L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
+      L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
       L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
       L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003'] },
     },
@@ -208,7 +208,7 @@ target('RunL2ValidatorsUseCase', () => {
   describe('全L2バリデータの実行', () => {
     context('validatorIdsを省略した場合', () => {
       // IT-UC-RunL2-001
-      it('全L2バリデータ（L2-001〜L2-003）が実行され3件の結果が返る', async () => {
+      it('全L2バリデータ（L2-001〜L2-015）が実行され6件の結果が返る', async () => {
         // Arrange
         const mockValidatorConfigPort = {
           getLayerConfig: vi.fn().mockReturnValue(createLayerConfig('L2')),
@@ -221,7 +221,7 @@ target('RunL2ValidatorsUseCase', () => {
 
         // Assert
         expect(actual).toHaveLength(3);
-        expect(actual.map(r => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003']);
+        expect(actual.map(r => r.validatorId)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']);
       });
     });
 
@@ -1134,7 +1134,7 @@ target('HarnessConfigValidatorConfigAdapter', () => {
         // Assert
         expect(actual.layer).toBe('L2');
         expect(actual.enabled).toBe(true);
-        expect(actual.validatorIds).toEqual(['L2-001', 'L2-002', 'L2-003']);
+        expect(actual.validatorIds).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']);
         expect(actual.strictOnly).toBe(false);
       });
 

@@ -355,3 +355,13 @@ tmp/
 | `harness-config-initial-creation-expiration-adapter.test.ts` | HarnessConfigInitialCreationExpirationAdapter (HF2-04) | 3 |
 | `check-initial-creation-expiration-handler.test.ts` | CheckInitialCreationExpirationHandler (HF2-04) | 4 |
 | **合計** | | **61** |
+
+<!-- @work-item-id WI-164 -->
+## WI-164 Pointer Freshness Integration Cases
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-P2-WI164-001 | broken product-doc pointer carries owner/type/source/severity/next action | product-doc pointer to missing file | JSON result includes semantic pointer type, source document, warning/error severity, and repair action |
+| IT-P2-WI164-002 | external-url pointer is skipped by default | `https://example.com` pointer with default policy | result is skipped/resolvable without network access |
+| IT-P2-WI164-003 | L4 bridge can consume freshness output | stale document fixture | validator-system can map result to `L4-004` warning |
+| IT-P2-WI164-004 | L4 bridge can consume pointer output | broken pointer fixture | validator-system can map result to `L4-005` warning |

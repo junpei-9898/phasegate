@@ -579,3 +579,13 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 |---|---|---|---|
 | IT-SETUP-DeployCiWorkflows-WI032-001 | `deployCiWorkflows` が agent context workflow を配置すること | `deployCiWorkflows(harnessRoot, projectRoot)` | `.github/workflows/agent-context-refresh.yml` が作成される |
 | IT-API-InitFlag-WI032-001 | `init --with-ci` が agent context workflow も配置すること | `phasegate init --with-ci --yes` | aidlc / consistency / agent-context-refresh の 3 workflow が存在する |
+
+<!-- @work-item-id WI-162 -->
+## WI-162 Status And Drift JSON Integration Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-Status-WI162-001 | hook/baseline/operational warning を含む status JSON を返すこと | `phasegate:status --json` | `data.hookHealth`, `data.baselineHealth`, `data.operationalWarnings[]` が envelope 内に保持される |
+| IT-API-Status-WI162-002 | disabled L4 と missing cached artifact を分離すること | standard preset + L4 reportなし | `configurationState="disabled"`, `cachedArtifactState="missing"`, `liveValidationState` が別キーで返る |
+| IT-API-Drift-WI162-001 | drift category と next action を返すこと | `phasegate:detect-drift --json` | `data.categorySummaries[]` と sampled `drifts[].nextAction` が返る |
+| IT-API-Drift-WI162-002 | semantic drift と structural drift の責務境界を維持すること | semantic behavior gap fixture | semantic record は `unitName + behaviorId` で説明され、structural `L4-001` の raw mismatch と混同されない |
