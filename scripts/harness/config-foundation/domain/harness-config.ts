@@ -54,6 +54,7 @@ export interface HarnessConfigSourceDocument {
   ci?: HarnessConfigResolvedDocument['ci'];
   validate?: HarnessConfigResolvedDocument['validate'];
   preCommit?: Partial<HarnessConfigResolvedDocument['preCommit']>;
+  phase2Extensions?: HarnessConfigResolvedDocument['phase2Extensions'];
   architecture?: ArchitectureConfigSource;
 }
 
@@ -121,6 +122,16 @@ export interface HarnessConfigResolvedDocument {
   };
   preCommit?: {
     implementationExtensions: string[];
+  };
+  phase2Extensions?: {
+    initialCreationExpirationRules?: Array<{
+      ruleId: string;
+      documentPattern: string;
+      daysThreshold: number;
+      commitCountThreshold: number;
+      evaluationMode: 'or' | 'and';
+      enabled?: boolean;
+    }>;
   };
   architecture?: ArchitectureConfigDocument;
 }

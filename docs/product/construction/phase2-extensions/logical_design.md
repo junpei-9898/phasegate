@@ -354,9 +354,11 @@ interface GenerateE2ETemplateOutput {
 - ドメインサービス: `InitialCreationExpirationCheckService`
 - 新規ポート: `InitialCreationExpirationConfigPort`, `FrontmatterReaderPort`, `InitialCreationAgePort`
 - UseCase: `CheckInitialCreationExpirationUseCase`
-- CLI ハンドラー: `CheckInitialCreationExpirationHandler`（`phasegate p2:check-initial-creation` として露出想定）
+- CLI ハンドラー: `CheckInitialCreationExpirationHandler`（`phasegate p2:check-initial-creation` として公開 compatibility command。`phase2Extensions.initialCreationExpirationRules` で設定可能） <!-- @work-item-id WI-170 -->
 
 詳細なドメイン・フロー・テスト観点は `docs/inception/phase2-extensions/HF2-04/logical_design.md` を参照。
+
+**公開設定契約**: `phase2Extensions.initialCreationExpirationRules` は config-foundation schema の optional top-level section として検証される。未指定時は `daysThreshold=90`, `commitCountThreshold=5`, `evaluationMode=or` の default rule を用いる。`initial_creation:true` は新規文書の初期充填期間だけ残し、長期運用文書では削除する。
 
 **HarnessError コード**: `L4-231` (閾値超過 WARN), `L4-232` (frontmatter parse 失敗 WARN), 既存 `L4-299` (config load 失敗 error) を再利用。
 

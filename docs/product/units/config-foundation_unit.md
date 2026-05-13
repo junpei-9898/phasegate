@@ -1,5 +1,7 @@
 # Unit定義: config-foundation
 
+@story-id H04-01
+設計要素: config-foundation Unit definition.
 > **Unit ID**: config-foundation
 > **作成日**: 2026-03-12
 > **Wave**: 1（基盤構築）
@@ -44,6 +46,7 @@ configurable_phase_gate_plan による拡張では、`phaseDependencies` セク�
 - `layers`セクションでL1-L4の有効/無効・バリデータ構成・閾値が設定可能
 - `quickMode`セクションで`allowedCategories` / `maintainedLayers` / `relaxedGates`が設定可能
 - `phaseDependencies`セクションで `preset`（`default`/`full`/`standard`/`minimal`/`custom`）と `storyReflection` サブセクション（`enabled`, `mappings`）が optional で指定可能
+- `phase2Extensions.initialCreationExpirationRules` を public compatibility 設定として optional に受け付ける。config-foundation は構造と schema validation を所有し、実行時の意味論は phase2-extensions が解釈する。<!-- @work-item-id WI-170 -->
 - JSONスキーマバリデーション（スキーマファイル定義 + バリデーション実行）
 - 有効・無効なサンプル設定ファイルによる検証
 
@@ -100,6 +103,7 @@ configurable_phase_gate_plan による拡張では、`phaseDependencies` セク�
 | **Preset ID Registry** | 提供 | harness-api, quick-mode, validator-system | プリセットID（minimal/standard/strict）と有効レイヤー定義 |
 | **Validator ID Registry** | 消費 | validator-system | phasegate:enable/disableの対象機能名として参照 |
 | **phaseDependencies 構造定義** | 提供 | phase-dependency-model | `preset` / `storyReflection` を含む構造。意味論解釈は相手側の責務 |
+| **phase2Extensions.initialCreationExpirationRules 構造定義** | 提供 | phase2-extensions | public compatibility 設定の schema contract。実行時解釈は phase2-extensions 側の責務。<!-- @work-item-id WI-170 --> |
 
 ---
 

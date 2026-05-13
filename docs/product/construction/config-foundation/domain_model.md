@@ -99,6 +99,7 @@ phasegate.config.jsonファイル全体を1つのHarnessConfig集約で管理す
 | **PhaseDependenciesConfig** | ✅ | ✅ | `{ preset, override, customRules }`。**構造**のみ所有、意味論はphase-dependency-model |
 | **PlanningModeConfig** | ✅ | ✅ | `{ default, perPhase }`。**構造**のみ所有、正規定義はphase-dependency-model |
 | **HarnessesConfig** | ✅ | ✅ | `{ agentLessonCollection, cascadeUpdate, bundleSizeLimit, deadCodeGC }` |
+| **Phase2ExtensionsConfig** | ✅ | ✅ | `phase2Extensions.initialCreationExpirationRules` の公開互換設定。構造と schema validation を config-foundation が所有し、実行時の意味論は phase2-extensions が解釈する。<!-- @work-item-id WI-170 --> |
 | **PathsConfig** | ✅ | ✅ | `{ designDocs, inceptionDocs }` ドキュメントパス設定 |
 | **ReportingConfig** | ✅ | ✅ | `{ format, outputDir }` レポート設定。`outputDir` は phase-dependency / phase-gate 系の設定可能な report root であり、doctor の `--report-out` や regression-suite の固定 `reports/regression/` 出力を包括しない。<!-- @work-item-id WI-158 --> |
 | **FeatureToggle** | ✅ | ✅ | `{ name: FeatureName, enabled: boolean }` |

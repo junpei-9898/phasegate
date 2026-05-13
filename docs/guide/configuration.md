@@ -75,6 +75,18 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
   "baseline": {
     "enabled": true,
     "path": ".phasegate/baseline.json"
+  },
+  "phase2Extensions": {
+    "initialCreationExpirationRules": [
+      {
+        "ruleId": "stale-initial-creation",
+        "documentPattern": "docs/**/*.md",
+        "daysThreshold": 90,
+        "commitCountThreshold": 5,
+        "evaluationMode": "or",
+        "enabled": true
+      }
+    ]
   }
 }
 ```
@@ -178,6 +190,29 @@ Example for Python and TypeScript:
 ```
 
 The metadata validators read `@unit` and `@layer` with language-agnostic regular expressions, so Python `# @unit api` and Go `// @unit api` style comments are both valid as long as the file extension is included here.
+
+#### `phase2Extensions`
+
+<!-- @work-item-id WI-170 -->
+
+`phase2Extensions.initialCreationExpirationRules` is a public compatibility contract for `phasegate p2:check-initial-creation`. The command detects documents that still carry `traceability.initial_creation: true` after they have aged past configured thresholds. Regular scheduled drift checks should still run through `phasegate validate --layer L4`.
+
+| Sub-field | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `initialCreationExpirationRules` | `array` | built-in `90 days / 5 commits / or` rule | Rules used by `p2:check-initial-creation`. Omit to use the built-in rule. |
+
+Rule fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ruleId` | `string` | Stable identifier shown in diagnostics. |
+| `documentPattern` | `string` | Glob for candidate Markdown documents. |
+| `daysThreshold` | `number` | Non-negative age threshold in days. |
+| `commitCountThreshold` | `number` | Non-negative threshold for the number of commits touching the document. |
+| `evaluationMode` | `"or"` \| `"and"` | `"or"` reports when either threshold is met; `"and"` requires both. |
+| `enabled` | `boolean` | Optional. Defaults to `true`. |
+
+Keep `initial_creation: true` only while a document is genuinely new and still being filled. Remove it once the expected initial content exists; otherwise this compatibility command reports the document after the configured age or commit-count threshold.
 
 ##### Phase Dependency Presets
 

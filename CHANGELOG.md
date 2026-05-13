@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.0] - 2026-05-13
+
+### Added
+
+- **WI-170 — phase2 initial-creation expiration public contract** — documents `p2:check-initial-creation` as a public compatibility command and adds schema/type support for `phase2Extensions.initialCreationExpirationRules` in v2 and v3 config documents.
+
 ## [0.159.0] - 2026-05-13
 
 ### Added

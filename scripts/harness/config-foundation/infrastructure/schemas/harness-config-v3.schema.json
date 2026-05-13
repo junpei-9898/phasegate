@@ -619,6 +619,55 @@
           "then": { "required": ["preset", "layers", "allowedDependencies"] }
         }
       ]
+    },
+    "phase2Extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initialCreationExpirationRules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ruleId",
+              "documentPattern",
+              "daysThreshold",
+              "commitCountThreshold",
+              "evaluationMode"
+            ],
+            "properties": {
+              "ruleId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "documentPattern": {
+                "type": "string",
+                "minLength": 1
+              },
+              "daysThreshold": {
+                "type": "number",
+                "minimum": 0
+              },
+              "commitCountThreshold": {
+                "type": "number",
+                "minimum": 0
+              },
+              "evaluationMode": {
+                "type": "string",
+                "enum": [
+                  "or",
+                  "and"
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          },
+          "uniqueItems": true
+        }
+      }
     }
   }
 }

@@ -415,7 +415,7 @@ ISSUE-005 P3-10 で明確化された境界:
 | `p2:check-freshness` | `--pattern <glob>` `--dry-run` `--format text\|json` | Compatibility entry point for L4-004 doc freshness; canonical L4 execution is `validate --layer L4` |
 | `p2:validate-pointers` | `--include-urls` `--format text\|json` | Compatibility entry point for L4-005 pointer validation; canonical L4 execution is `validate --layer L4` |
 | `p2:generate-e2e-template` | `--phase <phase>` `--output <path>` | Generate E2E test template |
-| `p2:check-initial-creation` | `--pattern <glob>` `--format text\|json` | Compatibility detector for long-lived `initial_creation: true` docs. |
+| `p2:check-initial-creation` | `--pattern <glob>` `--format text\|json` | Public compatibility detector for long-lived `initial_creation: true` docs; configured by `phase2Extensions.initialCreationExpirationRules`. |
 
 ### `phasegate:generate-matrix`
 

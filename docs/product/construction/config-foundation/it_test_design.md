@@ -391,3 +391,13 @@ scripts/harness/__tests__/config-foundation/
 | WI012-IT-001 | AJV schema validator | `preCommit.implementationExtensions: [".ts", ".py"]` is accepted. |
 | WI012-IT-002 | AJV schema validator | Empty `implementationExtensions` is rejected. |
 | WI012-IT-003 | Preset resolution | Omitted `preCommit` resolves to `[".ts"]`. |
+
+## WI-170: phase2Extensions schema contract
+
+<!-- @work-item-id WI-170 -->
+
+| Case | Target | Expected |
+|---|---|---|
+| WI170-IT-001 | AJV schema validator v2 | `phase2Extensions.initialCreationExpirationRules` accepts ruleId, documentPattern, non-negative thresholds, `evaluationMode: "or" | "and"`, and optional enabled. |
+| WI170-IT-002 | AJV schema validator v2 | Unsupported `evaluationMode` is rejected at `/phase2Extensions/initialCreationExpirationRules/0/evaluationMode`. |
+| WI170-IT-003 | AJV schema validator v3 | The same `phase2Extensions.initialCreationExpirationRules` contract is accepted for architecture-key v3 documents. |

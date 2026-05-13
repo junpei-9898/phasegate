@@ -324,6 +324,9 @@ tmp/
 | IT-P2-056 | 未指定時は default rule を返す | config=undefined or 該当キーなし | InitialCreationExpirationRule[1] with days=90/commit=5/or |
 | IT-P2-057 | enabled=false も尊重される | config rule enabled=false | 読み込まれるが rule.isEnabled()=false |
 
+<!-- @work-item-id WI-170 -->
+`phase2Extensions.initialCreationExpirationRules` は公開 compatibility config として config-foundation schema 側でも検証する。`evaluationMode` は `or` / `and` のみ有効で、閾値は non-negative number とする。
+
 ### CheckInitialCreationExpirationHandler
 
 | ケースID | シナリオ | 入力 | 期待結果 |

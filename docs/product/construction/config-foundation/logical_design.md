@@ -131,7 +131,8 @@ scripts/harness/
 │   │   ├── repositories/
 │   │   │   └── file-system-config-repository.ts
 │   │   ├── schemas/
-│   │   │   └── harness-config-v2.schema.json
+│   │   │   ├── harness-config-v2.schema.json
+│   │   │   └── harness-config-v3.schema.json
 │   │   ├── validators/
 │   │   │   └── ajv-config-schema-validator.ts
 │   │   └── preset-definition-store.ts
@@ -164,6 +165,7 @@ export type { HarnessConfigV2Props } from '../config-foundation/domain/harness-c
 
 - `scripts/harness/shared-kernel/harness-config.ts` は上記2行のみを公開し、独自ロジック・型変換・再定義を持たない
 - 他Unitは Shared Kernel 公開境界として `shared-kernel/harness-config.ts` を参照し、`config-foundation/domain/` を直接importしない
+- `phase2Extensions.initialCreationExpirationRules` は `p2:check-initial-creation` の公開 compatibility config として schema 検証対象に含める <!-- @work-item-id WI-170 -->
 
 ### 1.4 Preset定義の論理構造
 

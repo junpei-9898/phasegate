@@ -221,7 +221,7 @@ Commands:
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
   p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
-  p2:check-initial-creation      Detect long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
+  p2:check-initial-creation      Public compatibility detector for long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
   hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start/user-prompt-submit)
   pre-commit                              Run L2 pre-commit validators on staged files
   commit-msg <message-file>               Validate commit message trailers against staged files

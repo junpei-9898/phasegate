@@ -1,5 +1,7 @@
 # Unit定義: phase2-extensions
 
+@story-id HF2-01
+設計要素: phase2-extensions Unit definition.
 > **Phase**: Future（v1スコープ外）
 
 > **Unit ID**: phase2-extensions
@@ -32,7 +34,7 @@ v1完了後のPhase 2で追加するL4拡張バリデータおよびE2Eテスト
 ### 3.1 doc-freshness-checker（HF2-01）
 
 - 設計文書の最終更新日からの経過日数を検出するL4バリデータ
-- 閾値（日数）がphasegate.config.jsonで設定可能
+- 閾値（日数）とコミット数閾値が `phase2Extensions.initialCreationExpirationRules` で設定可能。`p2:check-initial-creation` は public compatibility command としてこの設定を参照する。<!-- @work-item-id WI-170 -->
 - 閾値超過時のHarnessErrorにadr_ref + 推奨アクション（文書レビュー・更新の推奨）を含む
 - validator-systemのL4バリデータ拡張インターフェースを使用して登録
 
@@ -88,6 +90,7 @@ v1完了後のPhase 2で追加するL4拡張バリデータおよびE2Eテスト
 |------|------|---------|------|
 | **ADR Frontmatter Schema** | 消費 | adr-foundation | doc-freshness-checkerのHarnessErrorに含むadr_refの参照形式 |
 | **AGENTS.md Schema** | 消費 | ci-governance | pointer-validatorがAGENTS.md内ポインタを検証する際の正構造参照 |
+| **phase2Extensions.initialCreationExpirationRules** | 消費 | config-foundation | initial_creation expiration detector の public compatibility 設定。config-foundation が schema contract を所有する。<!-- @work-item-id WI-170 --> |
 
 ### 5.4 実装時依存
 
