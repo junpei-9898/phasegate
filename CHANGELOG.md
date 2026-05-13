@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.158.0] - 2026-05-13
+
+### Changed
+
+- **WI-180 — scoped-out doctor effective repair contract** — adds current-scope repair target and repair-mode applicability fields to doctor JSON, lists scoped-out check IDs in human output, and updates docs/skills so single-agent diagnostics are harder to misread.
+
 ## [0.157.0] - 2026-05-13
 
 ### Changed

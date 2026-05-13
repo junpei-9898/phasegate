@@ -93,3 +93,12 @@ The install / doctor / uninstall / reconcile lifecycle is implementation-owned b
 | Scoped-out findings suppress repair guidance | Doctor integration tests assert `repairHint: null` and `suggestedSkill: null` for `scopedOutFindings[]`. |
 | Full-scope findings retain repair guidance | Doctor integration tests run the same fixture with default scope and assert Codex findings keep mechanical repair hints. |
 | Human output is not misleading | Doctor integration tests assert the scoped-out summary describes items as informational and not repair targets. |
+
+<!-- @work-item-id WI-180 -->
+## WI-180 Scoped-Out Effective Repair Contract Coverage
+
+| Requirement | Evidence |
+|---|---|
+| Scoped-out repair mode is not mistaken for current-scope repair | Doctor integration tests assert `repairModeApplicability: "only-if-agent-selected"` and `currentScopeRepairTarget: false`. |
+| Applicable findings remain current-scope repair targets | Doctor integration tests assert `currentScopeRepairTarget: true` and applicable repair fields for full-scope findings. |
+| Human output names scoped-out checks | Doctor integration tests assert the summary includes the check ID list and not-repair-target wording. |

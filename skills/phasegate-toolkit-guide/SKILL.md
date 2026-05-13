@@ -132,7 +132,7 @@ docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 
 `setup-artifacts.md` は managed target / generated artifact / runtime state / legacy artifact / user-level setting の分類を持つ。`doctor --report-out` は明示 path への出力で、`.phasegate/last-doctor-report.json` は固定生成物ではない点もここを参照する。<!-- @work-item-id WI-153 -->
 
-Claude-only / Codex-only setup の確認では、full `phasegate doctor` と scoped doctor を区別する。ユーザーが `setup:agent --agent claude` を選んだ場合は `phasegate doctor --agent claude --json` を優先し、`scopedOutFindings` の Codex finding は「未選択 agent の not-applicable 情報」であり修復対象ではないと説明する。`repairHint: null` / `suggestedSkill: null` は意図的な抑制で、`repairHintApplicability: "only-if-agent-selected"` はその agent を選んだ場合だけ修復 guidance が意味を持つという印である。full doctor は両 agent を導入したい場合の診断として扱う。<!-- @work-item-id WI-178, WI-179 -->
+Claude-only / Codex-only setup の確認では、full `phasegate doctor` と scoped doctor を区別する。ユーザーが `setup:agent --agent claude` を選んだ場合は `phasegate doctor --agent claude --json` を優先し、`scopedOutFindings` の Codex finding は「未選択 agent の not-applicable 情報」であり修復対象ではないと説明する。`repairHint: null` / `suggestedSkill: null` は意図的な抑制で、`currentScopeRepairTarget: false` と `repairModeApplicability: "only-if-agent-selected"` は `repairMode` が current scope の修復指示ではないという印である。full doctor は両 agent を導入したい場合の診断として扱う。<!-- @work-item-id WI-178, WI-179, WI-180 -->
 
 `setup:agent` は初回 setup / retrofit / CI-only / agent hook 有効化の agent-readable planner、`config:plan` は安全な設定変更 intent planner。質問が「次に何を実行するか」「この変更はどの file/validation に対応するか」に寄っている場合は、これらの guide と CLI を案内する。<!-- @work-item-id WI-171, WI-172, WI-173 -->
 

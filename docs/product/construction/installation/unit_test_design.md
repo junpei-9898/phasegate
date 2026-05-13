@@ -59,6 +59,16 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | UT-INS-145-UC-005 | `DiagnosticReportFormatter` | human output | checkId / target / repairMode / hint を含む |
 | UT-INS-145-UC-006 | `DiagnosticReportFormatter` | json output | `schemaVersion="1.0"` の stable JSON |
 
+### 1.4.1 WI-180 Formatter Contract Cases
+
+<!-- @work-item-id WI-180 -->
+
+| Case ID | 対象 | 前提 | 期待結果 |
+|---|---|---|---|
+| UT-INS-180-UC-001 | `DiagnosticReportFormatter` | applicable finding | `currentScopeRepairTarget: true` と applicable repair applicability fields を出力する |
+| UT-INS-180-UC-002 | `DiagnosticReportFormatter` | scoped-out finding | `currentScopeRepairTarget: false` と only-if-selected repair applicability fields を出力する |
+| UT-INS-180-UC-003 | `DiagnosticReportFormatter` | scoped-out human output | checkId 一覧と not repair target wording を出力する |
+
 ### 1.5 Placement
 
 | 種別 | 配置 |

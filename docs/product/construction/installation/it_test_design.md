@@ -120,3 +120,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `doctor --agent claude --json` on a Claude-only fixture | Codex-only `scopedOutFindings[]` set `repairHint` and `suggestedSkill` to `null` and explain `repairHintApplicability: "only-if-agent-selected"`. |
 | Default `doctor --json` on the same fixture | Codex findings remain applicable red findings and keep existing mechanical repair hints. |
 | `doctor --agent claude` human output | Scoped-out summary says the items are informational and not repair targets for the selected agent. |
+
+<!-- @work-item-id WI-180 -->
+## 2.7 Scoped-Out Doctor Effective Repair Contract Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `doctor --agent claude --json` on a Claude-only fixture | Codex-only `scopedOutFindings[]` expose `currentScopeRepairTarget: false`, `repairModeApplicability: "only-if-agent-selected"`, and suppressed repair guidance. |
+| Default `doctor --json` on the same fixture | Codex findings expose `currentScopeRepairTarget: true`, `repairModeApplicability: "applicable"`, and existing repair hints. |
+| `doctor --agent claude` human output | Scoped-out summary lists the scoped-out check IDs and says they are not repair targets for the selected scope. |

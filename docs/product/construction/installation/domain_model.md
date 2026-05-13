@@ -456,3 +456,9 @@ Readiness rows are derived from local file checks. They do not persist to `.phas
 @work-item-id WI-179
 
 Scoped-out findings are diagnostic context, not selected-agent repair work. Their JSON representation suppresses `repairHint` and `suggestedSkill`, then adds `repairHintApplicability: "only-if-agent-selected"` so agents can explain that repair guidance only becomes actionable if the user chooses that agent. Applicable findings use `repairHintApplicability: "applicable"` and keep the existing repair contract.
+
+### Effective repair applicability fields
+
+@work-item-id WI-180
+
+Doctor JSON exposes whether each finding is repair work for the current scope. Applicable `findings[]` set `currentScopeRepairTarget: true`, `repairHintApplicability: "applicable"`, and `repairModeApplicability: "applicable"`. Scoped-out findings set `currentScopeRepairTarget: false`, preserve original `repairMode` as diagnostic context, and mark both `repairHintApplicability` and `repairModeApplicability` as `"only-if-agent-selected"`.

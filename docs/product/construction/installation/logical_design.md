@@ -507,3 +507,10 @@ Structured errors must preserve `target`, `operation`, `code`, `likelyCause`, `r
 Scoped doctor reports must keep unselected-agent findings visible for explanation while suppressing selected-agent repair guidance. `scopedOutFindings[]` items are serialized with `applicability: "not-applicable"`, `repairHint: null`, `suggestedSkill: null`, and `repairHintApplicability: "only-if-agent-selected"`.
 
 Applicable `findings[]` retain their existing repair hints and suggested skills, with `repairHintApplicability: "applicable"` added for explicit machine interpretation. Human output describes scoped-out findings as informational and not repair targets for the selected `--agent`.
+
+<!-- @work-item-id WI-180 -->
+## 17. Scoped-Out Doctor Effective Repair Contract
+
+Scoped doctor reports must expose an effective repair contract that can be read from a single finding item. Applicable `findings[]` include `currentScopeRepairTarget: true` and `repairModeApplicability: "applicable"` in addition to the existing repair hint applicability marker.
+
+`scopedOutFindings[]` preserve the original `repairMode` but mark `currentScopeRepairTarget: false` and `repairModeApplicability: "only-if-agent-selected"`. Human output lists the scoped-out `checkId` values and states that they are not repair targets for the selected scope.

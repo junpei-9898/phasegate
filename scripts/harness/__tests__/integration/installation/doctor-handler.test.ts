@@ -4,6 +4,7 @@
 // @work-item-id WI-145
 // @work-item-id WI-178
 // @work-item-id WI-179
+// @work-item-id WI-180
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -142,7 +143,16 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
       readonly schemaVersion: string;
       readonly scope: { readonly agent: string; readonly description: string };
       readonly overallStatus: string;
-      readonly findings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string; repairHint: string | null; repairHintApplicability: string }>;
+      readonly findings: Array<{
+        checkId: string;
+        severity: "red" | "warn";
+        repairMode: string;
+        applicability: string;
+        currentScopeRepairTarget: boolean;
+        repairHint: string | null;
+        repairHintApplicability: string;
+        repairModeApplicability: string;
+      }>;
       readonly scopedOutFindings: Array<{
         checkId: string;
         severity: "red" | "warn";
@@ -150,7 +160,9 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
         repairHint: string | null;
         suggestedSkill: unknown | null;
         applicability: string;
+        currentScopeRepairTarget: boolean;
         repairHintApplicability: string;
+        repairModeApplicability: string;
         scopeReason: string;
       }>;
       readonly exitCode: number;
@@ -248,9 +260,29 @@ target("DoctorHandler", () => {
         { checkId: "codex-hook-missing", applicability: "not-applicable" },
         { checkId: "codex-skills-symlink", applicability: "not-applicable" },
       ]);
-      expect(actual.payload.scopedOutFindings.map(({ repairHint, suggestedSkill, repairHintApplicability }) => ({ repairHint, suggestedSkill, repairHintApplicability }))).toEqual([
-        { repairHint: null, suggestedSkill: null, repairHintApplicability: "only-if-agent-selected" },
-        { repairHint: null, suggestedSkill: null, repairHintApplicability: "only-if-agent-selected" },
+      expect(
+        actual.payload.scopedOutFindings.map(({ repairHint, suggestedSkill, currentScopeRepairTarget, repairHintApplicability, repairModeApplicability }) => ({
+          repairHint,
+          suggestedSkill,
+          currentScopeRepairTarget,
+          repairHintApplicability,
+          repairModeApplicability,
+        })),
+      ).toEqual([
+        {
+          repairHint: null,
+          suggestedSkill: null,
+          currentScopeRepairTarget: false,
+          repairHintApplicability: "only-if-agent-selected",
+          repairModeApplicability: "only-if-agent-selected",
+        },
+        {
+          repairHint: null,
+          suggestedSkill: null,
+          currentScopeRepairTarget: false,
+          repairHintApplicability: "only-if-agent-selected",
+          repairModeApplicability: "only-if-agent-selected",
+        },
       ]);
     });
 
@@ -263,9 +295,29 @@ target("DoctorHandler", () => {
         { checkId: "codex-hook-missing", severity: "red" },
         { checkId: "codex-skills-symlink", severity: "red" },
       ]);
-      expect(actual.payload.findings.map(({ checkId, repairHint, repairHintApplicability }) => ({ checkId, repairHint, repairHintApplicability }))).toEqual([
-        { checkId: "codex-hook-missing", repairHint: "npx phasegate install --apply", repairHintApplicability: "applicable" },
-        { checkId: "codex-skills-symlink", repairHint: "npx phasegate install --apply", repairHintApplicability: "applicable" },
+      expect(
+        actual.payload.findings.map(({ checkId, currentScopeRepairTarget, repairHint, repairHintApplicability, repairModeApplicability }) => ({
+          checkId,
+          currentScopeRepairTarget,
+          repairHint,
+          repairHintApplicability,
+          repairModeApplicability,
+        })),
+      ).toEqual([
+        {
+          checkId: "codex-hook-missing",
+          currentScopeRepairTarget: true,
+          repairHint: "npx phasegate install --apply",
+          repairHintApplicability: "applicable",
+          repairModeApplicability: "applicable",
+        },
+        {
+          checkId: "codex-skills-symlink",
+          currentScopeRepairTarget: true,
+          repairHint: "npx phasegate install --apply",
+          repairHintApplicability: "applicable",
+          repairModeApplicability: "applicable",
+        },
       ]);
       expect(actual.payload.scopedOutFindings).toEqual([]);
     });
@@ -274,7 +326,7 @@ target("DoctorHandler", () => {
       const actual = await runDoctorHumanFixture("claude-only-install", false, "claude");
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain("Scoped out: 2 informational findings not applicable to --agent claude; not repair targets for this scope.");
+      expect(actual.stdout).toContain("Scoped out: 2 informational findings not applicable to --agent claude; not repair targets for this scope: codex-hook-missing, codex-skills-symlink.");
     });
   });
 

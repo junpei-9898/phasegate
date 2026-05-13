@@ -61,3 +61,8 @@ Troubleshooting documentation explains that `phasegate doctor` defaults to full/
 ## WI-179 Scoped-Out Repair Guidance Documentation
 
 Public CLI and troubleshooting docs explain that `scopedOutFindings[]` are explanatory records for unselected agents. Their `repairHint` and `suggestedSkill` fields are intentionally `null` in scoped reports, and `repairHintApplicability: "only-if-agent-selected"` means the repair guidance becomes relevant only if the user switches to or installs that agent.
+
+<!-- @work-item-id WI-180 -->
+## WI-180 Scoped-Out Effective Repair Documentation
+
+Public CLI and troubleshooting docs explain `currentScopeRepairTarget` and `repairModeApplicability` so agents do not treat scoped-out `repairMode: "mechanical"` as current repair work. The human doctor summary also exposes scoped-out check IDs for quick terminal inspection.

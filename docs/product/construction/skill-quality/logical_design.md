@@ -1958,3 +1958,8 @@ Both skills route agents away from repeated setup once local readiness is comple
 ## WI-179 Scoped-Out Repair Guidance in Skills
 
 `phasegate-toolkit-guide` and `phasegate-config-doctor` should treat `scopedOutFindings[].repairHint: null` and `scopedOutFindings[].suggestedSkill: null` as intentional suppression, not missing data. `repairHintApplicability: "only-if-agent-selected"` means the agent may mention the unselected-agent context, but should not propose that repair unless the user asks to enable that agent.
+
+<!-- @work-item-id WI-180 -->
+## WI-180 Scoped-Out Effective Repair Guidance in Skills
+
+`phasegate-toolkit-guide` and `phasegate-config-doctor` should prefer `currentScopeRepairTarget` and `repairModeApplicability` over raw `repairMode` when deciding whether to suggest repair. Scoped-out findings with `currentScopeRepairTarget: false` are explanatory context even when the original `repairMode` is mechanical.
