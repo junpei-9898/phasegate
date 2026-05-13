@@ -2,6 +2,7 @@
 // @layer presentation
 // @work-item-id WI-145
 // @work-item-id WI-178
+// @work-item-id WI-179
 
 import type { DoctorAgentScope, ScopedOutDiagnosticFinding } from "../../application/usecases/run-doctor-diagnostics.js";
 import type { DiagnosticReport } from "../../domain/diagnostic-report.js";
@@ -30,12 +31,19 @@ export class DiagnosticReportFormatter {
         findings: input.report.findings.map((finding) => ({
           ...finding.toJSON(),
           applicability: "applicable",
+          repairHintApplicability: "applicable",
         })),
-        scopedOutFindings: input.scopedOutFindings.map(({ finding, scopeReason }) => ({
-          ...finding.toJSON(),
-          applicability: "not-applicable",
-          scopeReason,
-        })),
+        scopedOutFindings: input.scopedOutFindings.map(({ finding, scopeReason }) => {
+          const json = finding.toJSON();
+          return {
+            ...json,
+            repairHint: null,
+            suggestedSkill: null,
+            applicability: "not-applicable",
+            repairHintApplicability: "only-if-agent-selected",
+            scopeReason,
+          };
+        }),
         exitCode: input.exitCode,
       },
       null,
@@ -65,7 +73,7 @@ export class DiagnosticReportFormatter {
     const warnCount = input.report.findings.filter((finding) => finding.severity === "warn").length;
     lines.push(`Status: ${input.report.overallStatus.toUpperCase()} (${input.report.findings.length} findings: ${redCount} red, ${warnCount} warn)`);
     if (input.scopedOutFindings.length > 0) {
-      lines.push(`Scoped out: ${input.scopedOutFindings.length} findings not applicable to --agent ${input.agent}`);
+      lines.push(`Scoped out: ${input.scopedOutFindings.length} informational findings not applicable to --agent ${input.agent}; not repair targets for this scope.`);
     }
     lines.push(`Exit: ${input.exitCode}`);
     return lines.join("\n");

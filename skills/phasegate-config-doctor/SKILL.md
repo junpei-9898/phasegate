@@ -127,7 +127,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 #### 観点 9: setup lifecycle と doctor finding
 
 - `phasegate doctor --json` の finding に `repairMode: "ai-assisted"` と `suggestedSkill.skillName = "phasegate-config-doctor"` がある → 本 skill が merge 方針、保持する user content、実行すべき `install --apply` / `--force` / `reconcile --apply` を提案する
-- Claude-only / Codex-only 導入後は `phasegate doctor --agent claude --json` または `phasegate doctor --agent codex --json` を使って selected agent の readiness を読む。`scopedOutFindings` は未選択 agent の `not-applicable` 情報なので、ユーザーがその agent を導入したいと言っていない限り repair 提案にしない。<!-- @work-item-id WI-178 -->
+- Claude-only / Codex-only 導入後は `phasegate doctor --agent claude --json` または `phasegate doctor --agent codex --json` を使って selected agent の readiness を読む。`scopedOutFindings` は未選択 agent の `not-applicable` 情報なので、ユーザーがその agent を導入したいと言っていない限り repair 提案にしない。`repairHint: null` / `suggestedSkill: null` は意図的な抑制で、`repairHintApplicability: "only-if-agent-selected"` はその agent を選んだ場合だけ修復 guidance が意味を持つという印である。<!-- @work-item-id WI-178, WI-179 -->
 - `repairHint` がある mechanical finding → 原則として hint のコマンドを優先し、実行前に対象ファイルと manifest の差分を確認
 - manifest parse error → `.phasegate/manifest.json` を手で修復する前に backup / uninstall / reinstall の選択肢を提示
 - reconcile / uninstall が refuse → user modified managed target として扱い、`--force` のリスクと backup path を説明して承認を取る

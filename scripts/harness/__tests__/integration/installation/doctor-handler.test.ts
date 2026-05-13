@@ -3,6 +3,7 @@
 // @story H11-01
 // @work-item-id WI-145
 // @work-item-id WI-178
+// @work-item-id WI-179
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -141,11 +142,34 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
       readonly schemaVersion: string;
       readonly scope: { readonly agent: string; readonly description: string };
       readonly overallStatus: string;
-      readonly findings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string }>;
-      readonly scopedOutFindings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string; scopeReason: string }>;
+      readonly findings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string; repairHint: string | null; repairHintApplicability: string }>;
+      readonly scopedOutFindings: Array<{
+        checkId: string;
+        severity: "red" | "warn";
+        repairMode: string;
+        repairHint: string | null;
+        suggestedSkill: unknown | null;
+        applicability: string;
+        repairHintApplicability: string;
+        scopeReason: string;
+      }>;
       readonly exitCode: number;
     },
   };
+}
+
+async function runDoctorHumanFixture(fixture: FixtureName, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
+  const root = await createProjectRoot();
+  await buildFixture(root, fixture);
+  const mod = createInstallationModule();
+  return await mod.doctorHandler.execute({
+    projectRoot: root,
+    strict,
+    json: false,
+    reportOut: null,
+    phasegateVersion: "0.145.0",
+    agent,
+  });
 }
 
 async function runDoctorFixture(fixture: FixtureName, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
@@ -224,6 +248,10 @@ target("DoctorHandler", () => {
         { checkId: "codex-hook-missing", applicability: "not-applicable" },
         { checkId: "codex-skills-symlink", applicability: "not-applicable" },
       ]);
+      expect(actual.payload.scopedOutFindings.map(({ repairHint, suggestedSkill, repairHintApplicability }) => ({ repairHint, suggestedSkill, repairHintApplicability }))).toEqual([
+        { repairHint: null, suggestedSkill: null, repairHintApplicability: "only-if-agent-selected" },
+        { repairHint: null, suggestedSkill: null, repairHintApplicability: "only-if-agent-selected" },
+      ]);
     });
 
     it("既定の full scope では同じ fixture の Codex 欠落を red として検出すること", async () => {
@@ -235,7 +263,18 @@ target("DoctorHandler", () => {
         { checkId: "codex-hook-missing", severity: "red" },
         { checkId: "codex-skills-symlink", severity: "red" },
       ]);
+      expect(actual.payload.findings.map(({ checkId, repairHint, repairHintApplicability }) => ({ checkId, repairHint, repairHintApplicability }))).toEqual([
+        { checkId: "codex-hook-missing", repairHint: "npx phasegate install --apply", repairHintApplicability: "applicable" },
+        { checkId: "codex-skills-symlink", repairHint: "npx phasegate install --apply", repairHintApplicability: "applicable" },
+      ]);
       expect(actual.payload.scopedOutFindings).toEqual([]);
+    });
+
+    it("human output では scoped-out finding を repair target ではないと説明すること", async () => {
+      const actual = await runDoctorHumanFixture("claude-only-install", false, "claude");
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("Scoped out: 2 informational findings not applicable to --agent claude; not repair targets for this scope.");
     });
   });
 

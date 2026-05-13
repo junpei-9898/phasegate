@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.157.0] - 2026-05-13
+
+### Changed
+
+- **WI-179 — scoped-out doctor repair guidance** — suppresses `repairHint` and `suggestedSkill` for unselected-agent `scopedOutFindings`, adds explicit repair applicability markers, and updates CLI/troubleshooting/skill guidance so scoped doctor output is harder to misread as repair work.
+
 ## [0.154.0] - 2026-05-13
 
 ### Added

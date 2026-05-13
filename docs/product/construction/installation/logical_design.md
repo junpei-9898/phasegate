@@ -500,3 +500,10 @@ Equivalent install options and setup intent options must render the same managed
 Target-aware apply errors are part of the agent contract. `RunInstallUseCase` classifies permission denial (`EPERM`, `EACCES`, `EROFS`) separately from incompatible parent paths (`EEXIST`, `ENOTDIR`) so Claude Code can explain whether the user should grant filesystem access, move a conflicting `.claude` / `.codex` path, or use ai-assisted managed-target recovery.
 
 Structured errors must preserve `target`, `operation`, `code`, `likelyCause`, `recovery`, and `partialChanges` in JSON output. Human and skill guidance can then describe partial setup state before retrying the same apply command.
+
+<!-- @work-item-id WI-179 -->
+## 16. Scoped-Out Doctor Repair Guidance
+
+Scoped doctor reports must keep unselected-agent findings visible for explanation while suppressing selected-agent repair guidance. `scopedOutFindings[]` items are serialized with `applicability: "not-applicable"`, `repairHint: null`, `suggestedSkill: null`, and `repairHintApplicability: "only-if-agent-selected"`.
+
+Applicable `findings[]` retain their existing repair hints and suggested skills, with `repairHintApplicability: "applicable"` added for explicit machine interpretation. Human output describes scoped-out findings as informational and not repair targets for the selected `--agent`.

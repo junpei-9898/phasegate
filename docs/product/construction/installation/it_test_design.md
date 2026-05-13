@@ -111,3 +111,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` followed by reading `CLAUDE.md` | Managed Claude context contains the post-readiness workflow from configured readiness to WI planning, product reflection, and validation. |
 | `ci:auto-refresh-agent-context --apply` with existing Claude user section | User-owned Claude instructions are preserved while the managed post-readiness workflow is refreshed. |
 | `setup:agent --apply --json` with `.codex` or `.claude` path conflict | Structured error distinguishes incompatible parent paths from permission denial and includes recovery guidance plus partial changes. |
+
+<!-- @work-item-id WI-179 -->
+## 2.6 Scoped-Out Doctor Repair Guidance Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `doctor --agent claude --json` on a Claude-only fixture | Codex-only `scopedOutFindings[]` set `repairHint` and `suggestedSkill` to `null` and explain `repairHintApplicability: "only-if-agent-selected"`. |
+| Default `doctor --json` on the same fixture | Codex findings remain applicable red findings and keep existing mechanical repair hints. |
+| `doctor --agent claude` human output | Scoped-out summary says the items are informational and not repair targets for the selected agent. |

@@ -84,3 +84,12 @@ The install / doctor / uninstall / reconcile lifecycle is implementation-owned b
 | AGENTS lesson pointers do not replace setup instructions | `AgentsMdFileAdapter` integration covers dedicated lesson pointer section preservation. |
 | Agent setup planner has dry-run/apply contract | CLI smoke and product design require `setup:agent --dry-run --json` and `--apply` to expose plan and install result. |
 | Config change planner has intent mapping | CLI smoke and guide recipes cover `config:plan --intent <intent> --json`. |
+
+<!-- @work-item-id WI-179 -->
+## WI-179 Scoped-Out Repair Guidance Coverage
+
+| Requirement | Evidence |
+|---|---|
+| Scoped-out findings suppress repair guidance | Doctor integration tests assert `repairHint: null` and `suggestedSkill: null` for `scopedOutFindings[]`. |
+| Full-scope findings retain repair guidance | Doctor integration tests run the same fixture with default scope and assert Codex findings keep mechanical repair hints. |
+| Human output is not misleading | Doctor integration tests assert the scoped-out summary describes items as informational and not repair targets. |

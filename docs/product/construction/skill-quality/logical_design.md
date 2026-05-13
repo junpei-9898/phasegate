@@ -1953,3 +1953,8 @@ The skills should preserve the distinction between local readiness and manual ex
 For Claude-only or Codex-only setup, guidance skills should distinguish scoped doctor readiness from full doctor diagnostics. A full `doctor` red finding for an unselected agent is not a selected-agent readiness failure; agents should prefer `phasegate doctor --agent <selected>` when the user's setup intentionally selected one agent. @work-item-id WI-178
 
 Both skills route agents away from repeated setup once local readiness is complete and toward WI planning, product reflection, validation, and commit preparation.
+
+<!-- @work-item-id WI-179 -->
+## WI-179 Scoped-Out Repair Guidance in Skills
+
+`phasegate-toolkit-guide` and `phasegate-config-doctor` should treat `scopedOutFindings[].repairHint: null` and `scopedOutFindings[].suggestedSkill: null` as intentional suppression, not missing data. `repairHintApplicability: "only-if-agent-selected"` means the agent may mention the unselected-agent context, but should not propose that repair unless the user asks to enable that agent.

@@ -450,3 +450,9 @@ Readiness rows are derived from local file checks. They do not persist to `.phas
 ### Agent-scoped doctor report
 
 `phasegate doctor` may run with an optional agent scope. The default `both` scope preserves full-install diagnostics. A single-agent scope (`claude` or `codex`) keeps shared targets applicable while marking the unselected agent's hook and skill-link findings as not applicable to the selected readiness path. Scoped-out findings are still present in JSON for explanation, but they do not contribute to `overallStatus` or `exitCode`. @work-item-id WI-178
+
+### Scoped-out repair applicability
+
+@work-item-id WI-179
+
+Scoped-out findings are diagnostic context, not selected-agent repair work. Their JSON representation suppresses `repairHint` and `suggestedSkill`, then adds `repairHintApplicability: "only-if-agent-selected"` so agents can explain that repair guidance only becomes actionable if the user chooses that agent. Applicable findings use `repairHintApplicability: "applicable"` and keep the existing repair contract.

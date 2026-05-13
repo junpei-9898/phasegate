@@ -56,3 +56,8 @@ Public troubleshooting documentation explains the difference between readiness c
 Troubleshooting documentation also maps structured apply errors to likely environmental causes: permission denial, incompatible existing paths, and managed target hash/refusal. It points agents to `phasegate-config-doctor` for ai-assisted merge/recovery and `phasegate-toolkit-guide` for read-only setup guidance.
 
 Troubleshooting documentation explains that `phasegate doctor` defaults to full/both-agent diagnostics, while `phasegate doctor --agent claude` and `--agent codex` evaluate the selected agent plus shared targets. Scoped-out findings are informational and should not be repaired unless the user intends to enable that agent. @work-item-id WI-178
+
+<!-- @work-item-id WI-179 -->
+## WI-179 Scoped-Out Repair Guidance Documentation
+
+Public CLI and troubleshooting docs explain that `scopedOutFindings[]` are explanatory records for unselected agents. Their `repairHint` and `suggestedSkill` fields are intentionally `null` in scoped reports, and `repairHintApplicability: "only-if-agent-selected"` means the repair guidance becomes relevant only if the user switches to or installs that agent.

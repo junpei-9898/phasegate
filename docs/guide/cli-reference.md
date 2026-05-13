@@ -40,7 +40,7 @@ Command names in this document are split into three surfaces:
 
 <!-- @work-item-id WI-158 -->
 
-Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --agent claude --json` and `doctor --agent codex --json` include `scope` and `scopedOutFindings` so agents can distinguish selected-agent readiness from full-install diagnostics. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is. <!-- @work-item-id WI-178 -->
+Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --agent claude --json` and `doctor --agent codex --json` include `scope` and `scopedOutFindings` so agents can distinguish selected-agent readiness from full-install diagnostics. Scoped-out findings suppress immediate repair guidance with `repairHint: null`, `suggestedSkill: null`, and `repairHintApplicability: "only-if-agent-selected"`. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is. <!-- @work-item-id WI-178, WI-179 -->
 
 This is separate from `reporting.outputDir`. The configured report directory is used by phase-dependency / phase-gate reporting, while regression-suite result files are fixed under `reports/regression/` and status/drift JSON is emitted to stdout.
 
