@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-<!-- @work-item-id WI-174 -->
+<!-- @work-item-id WI-174, WI-176 -->
 
 <!-- phasegate:managed-section:start -->
 ## 必読ドキュメント
@@ -12,6 +12,14 @@
 ## PhaseGate Commands
 
 {{PHASEGATE_COMMANDS}}
+
+## Setup Readiness
+
+Before planning implementation work in a new or upgraded repository, run `phasegate setup:agent --agent claude --dry-run --json` and inspect `plan.agentReadiness`.
+
+- `agent=claude` covers `.claude/settings.json`, `CLAUDE.md`, and shared skills.
+- `agent=shared` covers package scripts, `phasegate.config.json`, skills, and selected Husky/CI targets.
+- `manual` or `external-actions` entries require user or hosted-service confirmation; do not treat local readiness as proof that external CI or user-level agent settings are complete.
 
 ## Phase Presets
 

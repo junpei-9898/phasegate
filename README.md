@@ -109,7 +109,7 @@ npx phasegate setup:agent --intent recommended --dry-run --json
 npx phasegate config:plan --intent codex-hooks --dry-run --json
 ```
 
-`setup:agent --json` includes `plan.completeness`, which separates local configured/planned areas from external manual checks such as Codex user-level feature enablement or the first CI run. `config:plan` includes a read-only `configPatch` preview when an intent would change `phasegate.config.json`. <!-- @work-item-id WI-175 -->
+`setup:agent --json` includes `plan.completeness`, which separates local configured/planned areas from external manual checks such as Codex user-level feature enablement or the first CI run. It also includes `plan.agentReadiness` so Claude Code, Codex, and shared setup state can be evaluated separately. `config:plan` includes a read-only `configPatch` preview when an intent would change `phasegate.config.json`. <!-- @work-item-id WI-175, WI-176 -->
 
 The first command reports detected setup state, missing questions, planned managed targets, rollback, and validation. The second maps a configuration change intent to files, commands, risks, and checks. <!-- @work-item-id WI-172, WI-173 -->
 

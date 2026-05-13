@@ -5,6 +5,7 @@
  * @work-item-id WI-113 / WI-142
  * @work-item-id WI-171 / WI-172 / WI-173
  * @work-item-id WI-175
+ * @work-item-id WI-176
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -734,6 +735,14 @@ interface SetupCompletenessEntry {
   readonly risk: string | null;
 }
 
+interface AgentReadinessEntry {
+  readonly agent: "claude" | "codex" | "shared";
+  readonly status: SetupCompletenessStatus;
+  readonly evidence: readonly string[];
+  readonly nextAction: string | null;
+  readonly risk: string | null;
+}
+
 interface ConfigPatchOperation {
   readonly op: "add" | "replace";
   readonly pointer: string;
@@ -931,6 +940,117 @@ function buildSetupCompleteness(input: {
   return entries;
 }
 
+function setupReadinessEntry(input: {
+  readonly agent: AgentReadinessEntry["agent"];
+  readonly included: boolean;
+  readonly configured: boolean;
+  readonly configuredEvidence: readonly string[];
+  readonly plannedEvidence: readonly string[];
+  readonly nextAction: string;
+  readonly risk?: string;
+}): AgentReadinessEntry {
+  if (!input.included) {
+    return {
+      agent: input.agent,
+      status: "not-applicable",
+      evidence: ["Not selected for this setup run."],
+      nextAction: null,
+      risk: null,
+    };
+  }
+  if (input.configured) {
+    return {
+      agent: input.agent,
+      status: "configured",
+      evidence: input.configuredEvidence,
+      nextAction: null,
+      risk: input.risk ?? null,
+    };
+  }
+  return {
+    agent: input.agent,
+    status: "planned",
+    evidence: input.plannedEvidence,
+    nextAction: input.nextAction,
+    risk: input.risk ?? null,
+  };
+}
+
+function buildAgentReadiness(input: {
+  readonly agent: AgentTarget;
+  readonly withHusky: boolean;
+  readonly withCi: boolean;
+  readonly checks: {
+    readonly packageJson: boolean;
+    readonly phasegateConfig: boolean;
+    readonly claudeSettings: boolean;
+    readonly codexHooks: boolean;
+    readonly agentsMd: boolean;
+    readonly claudeMd: boolean;
+    readonly huskyPreCommit: boolean;
+    readonly ciWorkflow: boolean;
+    readonly skillsVersion: boolean;
+  };
+}): readonly AgentReadinessEntry[] {
+  const includeClaude = input.agent === "claude" || input.agent === "both";
+  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const sharedConfigured =
+    input.checks.packageJson &&
+    input.checks.phasegateConfig &&
+    input.checks.skillsVersion &&
+    (!input.withHusky || input.checks.huskyPreCommit) &&
+    (!input.withCi || input.checks.ciWorkflow);
+
+  return [
+    setupReadinessEntry({
+      agent: "claude",
+      included: includeClaude,
+      configured: input.checks.claudeSettings && input.checks.claudeMd && input.checks.skillsVersion,
+      configuredEvidence: [
+        ".claude/settings.json is present.",
+        "CLAUDE.md is present.",
+        "skills/.harness-version is present for the .claude/skills link target.",
+      ],
+      plannedEvidence: [
+        "setup:agent will create or refresh .claude/settings.json.",
+        "setup:agent will create or refresh the CLAUDE.md PhaseGate managed section.",
+        "setup:agent will deploy bundled skills for Claude Code.",
+      ],
+      nextAction: "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
+    }),
+    setupReadinessEntry({
+      agent: "codex",
+      included: includeCodex,
+      configured: input.checks.codexHooks && input.checks.agentsMd && input.checks.skillsVersion,
+      configuredEvidence: [
+        ".codex/hooks.json is present.",
+        "AGENTS.md is present.",
+        "skills/.harness-version is present for the .codex/skills link target.",
+      ],
+      plannedEvidence: [
+        "setup:agent will create or refresh .codex/hooks.json.",
+        "setup:agent will create or refresh the AGENTS.md PhaseGate managed section.",
+        "setup:agent will deploy bundled skills for Codex.",
+      ],
+      nextAction: "Run setup:agent --agent codex --apply, then enable codex_hooks at user level if needed.",
+      risk: "Codex user-level hook feature enablement remains a manual external check.",
+    }),
+    setupReadinessEntry({
+      agent: "shared",
+      included: true,
+      configured: sharedConfigured,
+      configuredEvidence: [
+        "package.json, phasegate.config.json, skills, and selected Husky/CI targets are present.",
+      ],
+      plannedEvidence: [
+        "setup:agent will create or refresh package scripts, phasegate.config.json, skills, and selected Husky/CI targets.",
+      ],
+      nextAction: "Run setup:agent --apply, then phasegate doctor, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.",
+      risk: input.withCi ? "A hosted CI run remains an external manual check." : undefined,
+    }),
+  ];
+}
+
 async function buildAgentSetupPlan(rootDir: string, input: {
   readonly intent: SetupIntent;
   readonly agent: AgentTarget;
@@ -970,6 +1090,7 @@ async function buildAgentSetupPlan(rootDir: string, input: {
     agent: input.agent,
     detected: checks,
     completeness: buildSetupCompleteness({ ...input, checks }),
+    agentReadiness: buildAgentReadiness({ ...input, checks }),
     questions,
     changes,
     risks: [

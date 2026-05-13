@@ -90,3 +90,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `setup:agent --dry-run --json` | Emits detected state, questions, changes, risks, rollback, and validation without writing files. |
 | `setup:agent --apply --json` | Calls the structured install path for selected agent/Husky/CI targets and returns install result. |
 | `config:plan --intent codex-hooks --json` | Emits target files, commands, risks, rollback, and validation for the chosen intent. |
+
+<!-- @work-item-id WI-176 -->
+## 2.4 Claude Code Readiness Tests
+
+| Command | Expectation |
+|---|---|
+| `setup:agent --agent claude --intent strict --with-husky --dry-run --json` | `plan.agentReadiness` marks Claude planned, Codex not-applicable, and shared planned. |
+| `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` followed by dry-run | Claude, Codex, and shared readiness rows are configured while external actions remain manual. |
+| Registry dogfood after publish | Fresh project Claude setup creates `.claude/settings.json`, `CLAUDE.md`, `.claude/skills`, shared config, selected hooks, and validation commands pass. |

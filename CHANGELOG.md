@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.154.0] - 2026-05-13
+
+### Added
+
+- **WI-176 — Claude Code dogfood readiness** — adds `setup:agent` agent-specific readiness output for Claude, Codex, and shared setup state, plus Claude Code managed context and guide updates for recovery and validation.
+
 ## [0.153.1] - 2026-05-13
 
 ### Fixed

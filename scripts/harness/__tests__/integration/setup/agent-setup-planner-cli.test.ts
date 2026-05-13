@@ -4,6 +4,7 @@
 // @work-item-id WI-172
 // @work-item-id WI-173
 // @work-item-id WI-175
+// @work-item-id WI-176
 // @story H11-06
 
 import { spawn } from "node:child_process";
@@ -65,6 +66,7 @@ target("agent setup planner CLI", () => {
           changes: string[];
           validation: string[];
           completeness: Array<{ area: string; status: string; nextAction: string | null }>;
+          agentReadiness: Array<{ agent: string; status: string; nextAction: string | null; evidence: string[] }>;
         };
         applied: boolean;
       };
@@ -78,6 +80,39 @@ target("agent setup planner CLI", () => {
           expect.objectContaining({ area: "local-config", status: "planned" }),
           expect.objectContaining({ area: "ci", status: "planned" }),
           expect.objectContaining({ area: "external-actions", status: "manual" }),
+        ]),
+      );
+      expect(parsed.plan.agentReadiness).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ agent: "claude", status: "planned" }),
+          expect.objectContaining({ agent: "codex", status: "planned" }),
+          expect.objectContaining({ agent: "shared", status: "planned" }),
+        ]),
+      );
+    }, 120000);
+
+    it("setup:agent --agent claude が Claude 固有 readiness と Codex 非対象を返すこと", async () => {
+      // Act
+      const actual = await withTempProject(async (projectRoot) => {
+        return await runCli(["setup:agent", "--agent", "claude", "--intent", "strict", "--with-husky", "--dry-run", "--json"], projectRoot);
+      });
+
+      // Assert
+      const parsed = JSON.parse(actual.stdout) as {
+        plan: {
+          agentReadiness: Array<{ agent: string; status: string; nextAction: string | null; evidence: string[] }>;
+        };
+      };
+      expect(actual.exitCode).toBe(0);
+      expect(parsed.plan.agentReadiness).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            agent: "claude",
+            status: "planned",
+            nextAction: "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
+          }),
+          expect.objectContaining({ agent: "codex", status: "not-applicable", nextAction: null }),
+          expect.objectContaining({ agent: "shared", status: "planned" }),
         ]),
       );
     }, 120000);
@@ -141,7 +176,12 @@ target("agent setup planner CLI", () => {
       });
 
       // Assert
-      const setup = JSON.parse(actual.dryRun.stdout) as { plan: { completeness: Array<{ area: string; status: string }> } };
+      const setup = JSON.parse(actual.dryRun.stdout) as {
+        plan: {
+          completeness: Array<{ area: string; status: string }>;
+          agentReadiness: Array<{ agent: string; status: string }>;
+        };
+      };
       const install = JSON.parse(actual.installDryRun.stdout) as { plan: Array<{ path: string; action: string; changed: boolean }> };
       expect(actual.apply.exitCode).toBe(0);
       expect(actual.dryRun.exitCode).toBe(0);
@@ -151,6 +191,13 @@ target("agent setup planner CLI", () => {
           expect.objectContaining({ area: "local-config", status: "configured" }),
           expect.objectContaining({ area: "agent-context", status: "configured" }),
           expect.objectContaining({ area: "ci", status: "configured" }),
+        ]),
+      );
+      expect(setup.plan.agentReadiness).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ agent: "claude", status: "configured" }),
+          expect.objectContaining({ agent: "codex", status: "configured" }),
+          expect.objectContaining({ agent: "shared", status: "configured" }),
         ]),
       );
       expect(install.plan.filter((item) => item.path === "AGENTS.md" || item.path === "CLAUDE.md")).toEqual(

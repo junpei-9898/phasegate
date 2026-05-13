@@ -94,6 +94,7 @@ traceability:
 @work-item-id WI-146
 @work-item-id WI-147
 @work-item-id WI-148
+@work-item-id WI-176
 
 | Use Case | Input | Output | 担当 WI | 副作用 |
 |---|---|---|---|---|
@@ -101,8 +102,23 @@ traceability:
 | `InstallUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `InstallReport` | WI-146 | manifest write、file deploy |
 | `UninstallUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `UninstallReport` | WI-147 | manifest archive、file removal |
 | `ReconcileUseCase` | `{ projectRoot: string, mode: "dry-run" \| "apply" \| "force" }` | `ReconcileReport` | WI-148 | manifest update、file diff apply |
+| `BuildAgentSetupPlan` | `{ intent, agent, withHusky, withCi, workflow }` | setup plan DTO | WI-176 | なし (read-only planning) |
 
 各 report は独立構造 (Phase 1 計画書 Q2 承認、共通基底なし)。schemaVersion は presentation layer の formatter で揃える (Phase 1 計画書 Q4 承認)。
+
+### 2.1 Agent-Specific Readiness View
+
+@work-item-id WI-176
+
+`setup:agent --json` exposes `plan.agentReadiness` in addition to the area-based `plan.completeness`.
+
+| Row | Meaning |
+|---|---|
+| `claude` | Claude Code local runtime context: `.claude/settings.json`, `CLAUDE.md`, and shared skills |
+| `codex` | Codex local runtime context: `.codex/hooks.json`, `AGENTS.md`, and shared skills |
+| `shared` | package/config/skills plus selected Husky and CI managed targets |
+
+The readiness view is intentionally local. It must not claim that Claude Code has opened the repository, that Codex user-level features are enabled, or that hosted CI has executed successfully.
 
 **各 use case の処理概要:**
 

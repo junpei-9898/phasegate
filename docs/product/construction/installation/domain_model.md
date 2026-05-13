@@ -431,3 +431,18 @@ Agent context files are modeled as deployment entries with a markdown managed-bl
 | Singular `AGENT.md` | Unsupported as a managed target; user-owned if present. |
 
 The deployment manifest records `AGENTS.md` and `CLAUDE.md` using the same hash/change detection rules as other merged targets. A hash mismatch requires ai-assisted or forced handling before replacing a managed section.
+
+<!-- @work-item-id WI-176 -->
+## 9. Agent Readiness DTO
+
+`AgentReadinessEntry` is a setup planning DTO, not a persisted deployment model.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `agent` | `claude \| codex \| shared` | Readiness row identity |
+| `status` | `configured \| planned \| manual \| not-applicable \| unknown` | Local setup state using the same vocabulary as setup completeness |
+| `evidence` | `string[]` | Local evidence or planned target explanation |
+| `nextAction` | `string \| null` | Command or manual instruction when work remains |
+| `risk` | `string \| null` | External or residual caveat |
+
+Readiness rows are derived from local file checks. They do not persist to `.phasegate/manifest.json`, and they do not replace `doctor` diagnostics.

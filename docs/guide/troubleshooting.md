@@ -1,6 +1,6 @@
 # Troubleshooting
 
-<!-- @work-item-id WI-171, WI-172, WI-173, WI-175 -->
+<!-- @work-item-id WI-171, WI-172, WI-173, WI-175, WI-176 -->
 
 Start with:
 
@@ -71,3 +71,17 @@ Check `plan.completeness` in `setup:agent --json`:
 - `not-applicable`: the current intent/options did not select that area.
 
 When `install` or `setup:agent --apply` returns a structured `error`, use its `target`, `operation`, `code`, `recovery`, and `partialChanges` fields before rerunning.
+
+## Claude Code Setup Still Feels Unclear
+
+Run the Claude-specific planner path:
+
+```bash
+npx phasegate setup:agent --agent claude --intent strict --with-husky --dry-run --json
+```
+
+Check `plan.agentReadiness`:
+
+- `agent=claude`: local Claude Code targets (`.claude/settings.json`, `CLAUDE.md`, skills).
+- `agent=shared`: package/config/skills plus selected Husky and CI targets.
+- `agent=codex`: should be `not-applicable` unless you selected `--agent both` or `--agent codex`.
