@@ -24,7 +24,7 @@ Command names in this document are split into three surfaces:
 |---|---|
 | `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI. Options: `--preset <full\|standard\|minimal\|custom>`, `--skills <core\|all>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--yes`. |
 | `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, create selected `AGENTS.md` / `CLAUDE.md` managed sections, and write `.phasegate/manifest.json`. `--agent <claude\|codex\|both>`, `--skills <core\|all>`, and `--workflow <standard\|strict>` affect rendered agent context; `--force` replaces managed targets after backup. |
-| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`). `--report-out` writes exactly to the supplied path, not to `reporting.outputDir`. |
+| `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--agent <claude\|codex\|both>`, `--report-out <path>`). `--agent` defaults to `both`; single-agent scopes keep shared targets applicable and mark the other agent's findings as not applicable. `--report-out` writes exactly to the supplied path, not to `reporting.outputDir`. |
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`; `--force` handles managed conflict cases. |
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes; `--force` allows managed-file replacement with backup. |
 | `setup:agent` | Agent-readable setup planner and optional apply path. Options: `--intent <minimal\|recommended\|strict\|ci-only\|agent-hooks\|retrofit>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-172 --> |
@@ -40,7 +40,7 @@ Command names in this document are split into three surfaces:
 
 <!-- @work-item-id WI-158 -->
 
-Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is.
+Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --agent claude --json` and `doctor --agent codex --json` include `scope` and `scopedOutFindings` so agents can distinguish selected-agent readiness from full-install diagnostics. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is. <!-- @work-item-id WI-178 -->
 
 This is separate from `reporting.outputDir`. The configured report directory is used by phase-dependency / phase-gate reporting, while regression-suite result files are fixed under `reports/regression/` and status/drift JSON is emitted to stdout.
 

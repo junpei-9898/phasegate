@@ -288,6 +288,8 @@ interface HeuristicCheck {
    - `--dry-run` / `--apply` / `--force` (install / uninstall / reconcile の mode)
    - `--json` (json 出力)
    - `--strict` (warn も exit code 1 に昇格、doctor 専用)
+
+`doctor` also accepts `--agent <claude|codex|both>`. `both` is the default and keeps the historical full-install behavior. `claude` and `codex` scopes keep shared setup checks active but scope out findings that belong only to the unselected agent, allowing a Claude-only setup to validate without treating missing Codex files as a selected-agent readiness failure. @work-item-id WI-178
    - `--report-out <path>` (json をファイル出力)
 2. use case 起動と report 受領
 3. output formatting

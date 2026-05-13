@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-145
+// @work-item-id WI-178
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -23,7 +24,7 @@ interface ExpectedFinding {
   readonly repairMode: "mechanical" | "manual" | "ai-assisted";
 }
 
-type FixtureName = "no-phasegate" | "inert-install" | "partial-install" | "full-install";
+type FixtureName = "no-phasegate" | "inert-install" | "partial-install" | "full-install" | "claude-only-install";
 
 let projectRoot: string | null = null;
 
@@ -98,6 +99,14 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   await writeProjectFile(root, ".claude/settings.json", JSON.stringify({ hooks: { Stop: [{ command: "npx phasegate hook stop" }] } }));
   await writeProjectFile(root, ".husky/pre-commit", standardPreCommitHook());
 
+  if (fixture === "claude-only-install") {
+    await writeProjectFile(root, ".husky/commit-msg", 'npx phasegate commit-msg "$1"\n');
+    await writeProjectFile(root, ".husky/pre-push", "npx phasegate bypass:audit --base origin/main --head HEAD\n");
+    await writeProjectFile(root, ".github/workflows/phasegate-aidlc-gate.yml", "name: phasegate\n");
+    await createSkillLink(root, ".claude/skills");
+    return;
+  }
+
   if (fixture === "partial-install") {
     await writeProjectFile(root, ".codex/hooks.json", JSON.stringify({ hooks: [{ command: "custom hook" }] }));
     await writeProjectFile(root, ".husky/commit-msg", "custom commit message hook\n");
@@ -116,7 +125,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   }
 }
 
-async function runDoctor(root: string, strict: boolean) {
+async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
   const mod = createInstallationModule();
   const actual = await mod.doctorHandler.execute({
     projectRoot: root,
@@ -124,16 +133,41 @@ async function runDoctor(root: string, strict: boolean) {
     json: true,
     reportOut: null,
     phasegateVersion: "0.145.0",
+    agent,
   });
   return {
     ...actual,
     payload: JSON.parse(actual.stdout) as {
       readonly schemaVersion: string;
+      readonly scope: { readonly agent: string; readonly description: string };
       readonly overallStatus: string;
-      readonly findings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string }>;
+      readonly findings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string }>;
+      readonly scopedOutFindings: Array<{ checkId: string; severity: "red" | "warn"; repairMode: string; applicability: string; scopeReason: string }>;
       readonly exitCode: number;
     },
   };
+}
+
+async function runDoctorFixture(fixture: FixtureName, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
+  const root = await createProjectRoot();
+  await buildFixture(root, fixture);
+  return await runDoctor(root, strict, agent);
+}
+
+async function runDoctorReportOutFixture(fixture: FixtureName, reportOut: string) {
+  const root = await createProjectRoot();
+  await buildFixture(root, fixture);
+  const mod = createInstallationModule();
+  const output = await mod.doctorHandler.execute({
+    projectRoot: root,
+    strict: false,
+    json: false,
+    reportOut,
+    phasegateVersion: "0.145.0",
+    agent: "both",
+  });
+  const report = JSON.parse(await readFile(join(root, reportOut), "utf8")) as { overallStatus: string; findings: unknown[] };
+  return { output, report };
 }
 
 function standardPreCommitHook(): string {
@@ -170,10 +204,7 @@ target("DoctorHandler", () => {
 
   describe("doctor --strict", () => {
     it("warn のみの fixture でも exitCode 1 を返すこと", async () => {
-      const root = await createProjectRoot();
-      await buildFixture(root, "inert-install");
-
-      const actual = await runDoctor(root, true);
+      const actual = await runDoctorFixture("inert-install", true);
 
       expect(actual.payload.overallStatus).toBe("warn");
       expect(actual.exitCode).toBe(1);
@@ -181,26 +212,41 @@ target("DoctorHandler", () => {
     });
   });
 
-  describe("doctor --report-out", () => {
-    it("指定pathにJSON reportを書き出すこと", async () => {
-      const root = await createProjectRoot();
-      await buildFixture(root, "full-install");
-      const reportOut = "reports/doctor.json";
-      const mod = createInstallationModule();
-
-      const actual = await mod.doctorHandler.execute({
-        projectRoot: root,
-        strict: false,
-        json: false,
-        reportOut,
-        phasegateVersion: "0.145.0",
-      });
-      const report = JSON.parse(await readFile(join(root, reportOut), "utf8")) as { overallStatus: string; findings: unknown[] };
+  describe("doctor --agent", () => {
+    it("Claude scope では Codex-only finding を not-applicable として exitCode に含めないこと", async () => {
+      const actual = await runDoctorFixture("claude-only-install", false, "claude");
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain("Status: GREEN");
-      expect(report.overallStatus).toBe("green");
-      expect(report.findings).toHaveLength(0);
+      expect(actual.payload.scope.agent).toBe("claude");
+      expect(actual.payload.overallStatus).toBe("green");
+      expect(actual.payload.findings).toEqual([]);
+      expect(actual.payload.scopedOutFindings.map(({ checkId, applicability }) => ({ checkId, applicability }))).toEqual([
+        { checkId: "codex-hook-missing", applicability: "not-applicable" },
+        { checkId: "codex-skills-symlink", applicability: "not-applicable" },
+      ]);
+    });
+
+    it("既定の full scope では同じ fixture の Codex 欠落を red として検出すること", async () => {
+      const actual = await runDoctorFixture("claude-only-install", false);
+
+      expect(actual.exitCode).toBe(1);
+      expect(actual.payload.scope.agent).toBe("both");
+      expect(actual.payload.findings.map(({ checkId, severity }) => ({ checkId, severity }))).toEqual([
+        { checkId: "codex-hook-missing", severity: "red" },
+        { checkId: "codex-skills-symlink", severity: "red" },
+      ]);
+      expect(actual.payload.scopedOutFindings).toEqual([]);
+    });
+  });
+
+  describe("doctor --report-out", () => {
+    it("指定pathにJSON reportを書き出すこと", async () => {
+      const actual = await runDoctorReportOutFixture("full-install", "reports/doctor.json");
+
+      expect(actual.output.exitCode).toBe(0);
+      expect(actual.output.stdout).toContain("Status: GREEN");
+      expect(actual.report.overallStatus).toBe("green");
+      expect(actual.report.findings).toEqual([]);
     });
   });
 });

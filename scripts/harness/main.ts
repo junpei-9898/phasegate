@@ -152,7 +152,7 @@ Setup:
                                 --skills <core|all>, --agent <claude|codex|both>, --workflow <standard|strict>,
                                 --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
-  doctor                       Diagnose silent installation failures (--json, --strict, --report-out <path>)
+  doctor                       Diagnose silent installation failures (--json, --strict, --agent <claude|codex|both>, --report-out <path>)
   scaffold-wi <unit> <type>    Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
   install                      Install phasegate managed files (--dry-run|--apply, --force)
@@ -772,6 +772,16 @@ function parseAgentTarget(value: string | undefined, fallback: AgentTarget = "bo
   return fallback;
 }
 
+function parseRequiredAgentTarget(value: string | undefined, fallback: AgentTarget = "both"): AgentTarget | null {
+  if (value === undefined) return fallback;
+  if (value === "claude" || value === "codex" || value === "both") return value;
+  return null;
+}
+
+function doctorValidationCommand(agent: AgentTarget): string {
+  return agent === "both" ? "phasegate doctor" : `phasegate doctor --agent ${agent}`;
+}
+
 function parseSetupIntent(value: string | undefined): SetupIntent {
   if (
     value === "minimal" ||
@@ -863,6 +873,7 @@ function buildSetupCompleteness(input: {
 }): readonly SetupCompletenessEntry[] {
   const includeClaude = input.agent === "claude" || input.agent === "both";
   const includeCodex = input.agent === "codex" || input.agent === "both";
+  const doctorCommand = doctorValidationCommand(input.agent);
   const agentHooksConfigured = (!includeClaude || input.checks.claudeSettings) && (!includeCodex || input.checks.codexHooks);
   const agentContextConfigured = (!includeClaude || input.checks.claudeMd) && (!includeCodex || input.checks.agentsMd);
   const entries: SetupCompletenessEntry[] = [
@@ -872,7 +883,7 @@ function buildSetupCompleteness(input: {
       configured: input.checks.packageJson && input.checks.phasegateConfig,
       configuredEvidence: "package.json and phasegate.config.json are present.",
       plannedEvidence: "setup:agent will create or merge package.json scripts and phasegate.config.json.",
-      nextAction: "Run setup:agent --apply, then phasegate doctor.",
+      nextAction: `Run setup:agent --apply, then ${doctorCommand}.`,
     }),
     setupCompletenessEntry({
       area: "agent-hooks",
@@ -922,7 +933,7 @@ function buildSetupCompleteness(input: {
       configured: input.checks.packageJson && input.checks.phasegateConfig,
       configuredEvidence: "Local validation commands can be run against the configured project.",
       plannedEvidence: "Validation commands are planned after setup apply.",
-      nextAction: "Run phasegate doctor, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.",
+      nextAction: `Run ${doctorCommand}, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.`,
     }),
   ];
 
@@ -994,6 +1005,7 @@ function buildAgentReadiness(input: {
 }): readonly AgentReadinessEntry[] {
   const includeClaude = input.agent === "claude" || input.agent === "both";
   const includeCodex = input.agent === "codex" || input.agent === "both";
+  const doctorCommand = doctorValidationCommand(input.agent);
   const sharedConfigured =
     input.checks.packageJson &&
     input.checks.phasegateConfig &&
@@ -1045,7 +1057,7 @@ function buildAgentReadiness(input: {
       plannedEvidence: [
         "setup:agent will create or refresh package scripts, phasegate.config.json, skills, and selected Husky/CI targets.",
       ],
-      nextAction: "Run setup:agent --apply, then phasegate doctor, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.",
+      nextAction: `Run setup:agent --apply, then ${doctorCommand}, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.`,
       risk: input.withCi ? "A hosted CI run remains an external manual check." : undefined,
     }),
   ];
@@ -1103,7 +1115,7 @@ async function buildAgentSetupPlan(rootDir: string, input: {
       "Backups are written under .phasegate/backups when force is used on changed managed files.",
     ],
     validation: [
-      "phasegate doctor",
+      doctorValidationCommand(input.agent),
       "phasegate phasegate:check-ready",
       "phasegate validate --layer L2 --format human",
     ],
@@ -1728,6 +1740,17 @@ async function main(): Promise<void> {
       }
 
       case "doctor": {
+        const KNOWN_DOCTOR_FLAGS = ["--json", "--strict", "--agent", "--report-out"];
+        const flagError = validateKnownFlags(args, KNOWN_DOCTOR_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const agent = parseRequiredAgentTarget(parseFlag(args, "--agent"), "both");
+        if (agent === null) {
+          console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use "claude", "codex", or "both".`);
+          process.exit(2);
+        }
         const mod = createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.doctorHandler.execute({
@@ -1736,6 +1759,7 @@ async function main(): Promise<void> {
           json,
           reportOut: parseFlag(args, "--report-out") ?? null,
           phasegateVersion,
+          agent,
         });
         console.log(result.stdout);
         process.exit(result.exitCode);

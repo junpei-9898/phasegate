@@ -1,10 +1,11 @@
 // @unit installation
 // @layer presentation
 // @work-item-id WI-145
+// @work-item-id WI-178
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
-import type { RunDoctorDiagnosticsUseCase } from "../../application/usecases/run-doctor-diagnostics.js";
+import type { DoctorAgentScope, RunDoctorDiagnosticsUseCase } from "../../application/usecases/run-doctor-diagnostics.js";
 import { DiagnosticReportFormatter } from "../formatters/diagnostic-report-formatter.js";
 
 export interface DoctorHandlerInput {
@@ -13,6 +14,7 @@ export interface DoctorHandlerInput {
   readonly json: boolean;
   readonly reportOut: string | null;
   readonly phasegateVersion: string;
+  readonly agent?: DoctorAgentScope;
 }
 
 export interface DoctorHandlerOutput {
@@ -30,9 +32,12 @@ export class DoctorHandler {
     const result = await this.useCase.execute({
       projectRoot: input.projectRoot,
       strict: input.strict,
+      agent: input.agent,
     });
     const formatInput = {
       report: result.report,
+      agent: result.agent,
+      scopedOutFindings: result.scopedOutFindings,
       phasegateVersion: input.phasegateVersion,
       projectRoot: input.projectRoot,
       exitCode: result.exitCode,

@@ -446,3 +446,7 @@ The deployment manifest records `AGENTS.md` and `CLAUDE.md` using the same hash/
 | `risk` | `string \| null` | External or residual caveat |
 
 Readiness rows are derived from local file checks. They do not persist to `.phasegate/manifest.json`, and they do not replace `doctor` diagnostics.
+
+### Agent-scoped doctor report
+
+`phasegate doctor` may run with an optional agent scope. The default `both` scope preserves full-install diagnostics. A single-agent scope (`claude` or `codex`) keeps shared targets applicable while marking the unselected agent's hook and skill-link findings as not applicable to the selected readiness path. Scoped-out findings are still present in JSON for explanation, but they do not contribute to `overallStatus` or `exitCode`. @work-item-id WI-178

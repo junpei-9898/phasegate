@@ -63,6 +63,8 @@ The planner output is intentionally agent-readable: detected state, questions, p
 
 `doctor` green means the local managed setup is consistent for the inspected targets. It does not prove user-level Codex feature flags, hosted GitHub Actions execution, npm registry state, or team policy acceptance.
 
+By default, `phasegate doctor` inspects the full Claude + Codex + shared setup. For a deliberate single-agent setup, use `phasegate doctor --agent claude --json` or `phasegate doctor --agent codex --json`. Single-agent reports keep shared targets applicable and place the unselected agent's findings under `scopedOutFindings` with `applicability: "not-applicable"`; those findings are explanatory, not repair targets for the selected agent. <!-- @work-item-id WI-178 -->
+
 Check `plan.completeness` in `setup:agent --json`:
 
 - `configured`: PhaseGate found local evidence.

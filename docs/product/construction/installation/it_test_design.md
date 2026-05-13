@@ -41,6 +41,9 @@ WI-145 の integration test は、実ファイルシステム上の manifest I/O
 | IT-INS-145-CLI-005 | `phasegate doctor --json` | `inert-install` | valid JSON、`schemaVersion="1.0"` |
 | IT-INS-145-CLI-006 | `phasegate doctor --strict` | warn only project | exitCode 1 |
 | IT-INS-145-CLI-007 | `phasegate doctor --report-out <path>` | `partial-install` | report file に JSON 診断結果を保存 |
+
+| IT-INS-178-CLI-001 | `phasegate doctor --agent claude --json` | Claude-only install | exitCode 0 for agent-specific Codex omissions; JSON includes `scope.agent="claude"` and `scopedOutFindings` for Codex-only checks. |
+| IT-INS-178-CLI-002 | `phasegate doctor --json` | Same Claude-only install | exitCode 1 and red Codex findings remain visible under the default full scope. |
 | IT-INS-145-CLI-008 | `phasegate install/uninstall/reconcile --dry-run` | 任意 | 構造化 lifecycle report を返し、dry-run では file を変更しない |
 
 ### 1.4 Fixture Contract

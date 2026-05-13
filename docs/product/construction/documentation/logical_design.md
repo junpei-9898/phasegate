@@ -54,3 +54,5 @@ Documentation must also state that manual external actions remain outside local 
 Public troubleshooting documentation explains the difference between readiness completion and work-start actions. When Claude and shared readiness are configured, docs route the user to WI confirmation or creation, inception planning/design, product reflection with `@work-item-id`, and validation.
 
 Troubleshooting documentation also maps structured apply errors to likely environmental causes: permission denial, incompatible existing paths, and managed target hash/refusal. It points agents to `phasegate-config-doctor` for ai-assisted merge/recovery and `phasegate-toolkit-guide` for read-only setup guidance.
+
+Troubleshooting documentation explains that `phasegate doctor` defaults to full/both-agent diagnostics, while `phasegate doctor --agent claude` and `--agent codex` evaluate the selected agent plus shared targets. Scoped-out findings are informational and should not be repaired unless the user intends to enable that agent. @work-item-id WI-178

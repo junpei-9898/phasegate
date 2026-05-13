@@ -1950,4 +1950,6 @@ The skills should preserve the distinction between local readiness and manual ex
 
 `phasegate-toolkit-guide` should answer read-only questions about Claude Code readiness and point to the shortest post-readiness workflow once `claude` and `shared` rows are configured. `phasegate-config-doctor` should handle setup repair, managed target conflicts, and structured install errors by reading `target`, `operation`, `code`, `likelyCause`, `recovery`, and `partialChanges`.
 
+For Claude-only or Codex-only setup, guidance skills should distinguish scoped doctor readiness from full doctor diagnostics. A full `doctor` red finding for an unselected agent is not a selected-agent readiness failure; agents should prefer `phasegate doctor --agent <selected>` when the user's setup intentionally selected one agent. @work-item-id WI-178
+
 Both skills route agents away from repeated setup once local readiness is complete and toward WI planning, product reflection, validation, and commit preparation.

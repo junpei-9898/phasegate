@@ -30,6 +30,8 @@ Setup owns placement of generated CI workflow targets as managed setup artifacts
 
 `install`, `doctor`, and `reconcile` should report CI workflow drift as setup target drift, while validator ID selection inside a workflow remains ci-governance / validator-system responsibility.
 
+`setup:agent` validation guidance should match the selected agent. For single-agent setup it recommends the corresponding scoped doctor command, such as `phasegate doctor --agent claude`, so unselected agent targets are not mistaken for selected-agent readiness failures. Full/both-agent setup continues to recommend the default full doctor path. @work-item-id WI-178
+
 <!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
 ## P3 User Onboarding And Agent Setup
 

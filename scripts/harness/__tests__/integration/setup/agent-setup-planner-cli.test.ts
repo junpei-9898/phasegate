@@ -101,10 +101,12 @@ target("agent setup planner CLI", () => {
       // Assert
       const parsed = JSON.parse(actual.stdout) as {
         plan: {
+          validation: string[];
           agentReadiness: Array<{ agent: string; status: string; nextAction: string | null; evidence: string[] }>;
         };
       };
       expect(actual.exitCode).toBe(0);
+      expect(parsed.plan.validation).toContain("phasegate doctor --agent claude");
       expect(parsed.plan.agentReadiness).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
