@@ -1861,3 +1861,8 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 `status-handler` dispatches to `DeriveHarnessStatusUseCase`, which gathers artifact scan, preset/config summary, phase-gate summary, hook health, baseline health, optional live validation state, and operational warnings before calling `StatusDerivationService.derive()`. The handler writes the response envelope to stdout and keeps exit code 0 for representable health states, including `fail` layer states.
 
 `detect-drift-handler` dispatches through `ValidatorExecutionPort.runDriftDetection()`, maps raw drift items into `DriftReportSummary.fromDrifts()`, and returns category summaries plus sampled findings. Precision source and unit resolution warnings remain payload fields or operational warnings; they are not converted into hard failures unless the caller later runs a fail-on-warning validation path.
+
+<!-- @work-item-id WI-155 -->
+## WI-155 Work-Item Traceability In CLI Contracts
+
+Harness API treats `Work-Item: WI-XXX` commit trailers, `@work-item-id WI-XXX` product annotations, and legacy `@story-id` records as separate evidence channels. CLI status and drift payloads may reference WI-derived metadata, but product reflection remains satisfied only by accumulated product docs carrying `@work-item-id`. Existing H/US annotations stay readable through WI `legacy_id`; new command contract sections must use Work Item IDs.

@@ -2,7 +2,7 @@
 id: WI-155
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [documentation, ci-governance, harness-api, harness-error, nyquist-validation, skill-quality, agent-integration]
 source: internal
 ---
@@ -29,10 +29,16 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] 新規追記は `@work-item-id` を使う。
-- [ ] legacy ID は履歴として残してよいが、現行 WI との対応が機械的に追える。
-- [ ] product docs に反映するだけで、ソース変更は原則しない。
+- [x] 新規追記は `@work-item-id` を使う。
+- [x] legacy ID は履歴として残してよいが、現行 WI との対応が機械的に追える。
+- [x] product docs に反映するだけで、ソース変更は原則しない。
 
 ## 依存
 
 `WI-149` の HarnessError product docs 修正と重複しやすい。`WI-149` で P0 を先に直し、こちらは残りの体系化に限定する。
+
+## 対応結果
+
+- ADR-013 と product construction docs に Work Item ID 優先の reflection 方針を追記した。
+- ci-governance / harness-api / harness-error / nyquist-validation / skill-quality の product docs に `@work-item-id WI-155` 付きで legacy annotation と現行 WI の責務境界を反映した。
+- ソース変更は行わず、product/public docs の整理に限定した。

@@ -113,3 +113,9 @@ HTTP APIエンドポイントは存在せず、外部境界はCLI/validatorと�
 1. `UT-PD-115〜133` と `IT-PD-088〜102` を含めて `unit_test_logic.md` / `it_test_logic.md` へ詳細化する。
 2. 実装時は `changedFiles`、`override`、`recommends`、`preset=default + customRules` を回帰テストの固定観点にする。
 3. 現行カバレッジは100%のため、テストロジック設計へ進む。
+
+## WI-165: Coverage Refresh For WI-117..148
+
+@work-item-id WI-165
+
+Phase-dependency coverage remains focused on design order and phase gate scope. WI-117..148 reflection does not add new phase graph nodes; it adds downstream product evidence and setup lifecycle surfaces. Therefore this report considers the existing `changedFiles`, custom path, recommends, and override cases sufficient, and treats WI status freshness as validator-system `L2-014` rather than a phase-dependency rule.

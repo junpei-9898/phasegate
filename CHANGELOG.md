@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.8] - 2026-05-13
+
+### Changed
+
+- **WI-155 / WI-165 / WI-166 / WI-167 / WI-168 — product reflection and catalog cleanup** — aligns product unit catalog policy, ADR validator catalog references, Work Item reflection wording, hook skip observability docs, and coverage/test design refresh for WI-117..148 follow-up semantics.
+
 ## [0.152.7] - 2026-05-13
 
 ### Changed

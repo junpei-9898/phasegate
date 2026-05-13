@@ -60,3 +60,16 @@ traceability:
 - Unit tests must avoid real filesystem access except `NodeCryptoHashAdapter`.
 - Integration tests must isolate filesystem effects in temp project roots.
 - Human formatter tests must avoid brittle full snapshots.
+
+## WI-165: Coverage Refresh For WI-145..148 / WI-169
+
+@work-item-id WI-165
+
+The install / doctor / uninstall / reconcile lifecycle is implementation-owned by the installation Unit. Any remaining `futureInstallationStrategyPorts` wording in logical design is an extension point, not a runtime stub. Coverage expectations:
+
+| Lifecycle command | Current status |
+|---|---|
+| `doctor` | Implemented and covered by silent-failure, report-out, strict, and suggested-skill cases. |
+| `install` | Implemented as managed target merge/apply behavior with dry-run/apply lifecycle tests. |
+| `uninstall` | Implemented as reverse lifecycle behavior with manifest/archive expectations. |
+| `reconcile` | Implemented as refresh/idempotency lifecycle and `update-skills` compatibility path. |

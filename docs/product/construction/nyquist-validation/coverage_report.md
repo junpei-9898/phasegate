@@ -420,3 +420,9 @@ IT-API-CalcCoverageHandler-006-revised: スキーマバリデーションエラ�
 | unit-test-logic-designer: 上記改善反映後に疑似コード設計を実施する | — | 次フェーズ |
 | it-test-logic-designer: it_test_design.mdに基づきITテストの疑似コード設計を実施する | — | 次フェーズ |
 | story-implementor: H07-01からH07-04の順にTDD実装を実施する | — | 次フェーズ以降 |
+
+## WI-155: Traceability Reflection Coverage
+
+@work-item-id WI-155
+
+Coverage report interpretation keeps H story IDs as requirement identifiers while using Work Item IDs for product reflection. WI-125/WI-131 matrix generation and intent coverage are traceable through `@work-item-id`; legacy annotations remain accepted only as source evidence for tests and historical requirement rows.

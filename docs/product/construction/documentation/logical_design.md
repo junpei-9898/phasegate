@@ -30,3 +30,9 @@ Documentation explains semantic drift as design intent / implementation behavior
 @work-item-id WI-158
 
 Documentation owns the public wording contract across README and `docs/guide/*`. README stays an entry point, while `docs/guide/cli-reference.md` owns the complete command catalog. Layer/status semantics and report output path semantics must be documented in guides before release.
+
+## WI-167 Product Documentation Unit Catalog
+
+<!-- @work-item-id WI-167 -->
+
+`documentation` is the active Unit for public guides, README feature inventory, and user-visible contract wording. Historical `docs` construction files remain legacy alias material only. Product reflection for WI-127..139 and later documentation-facing work belongs here unless a WI explicitly affects another runtime Unit. Hyphenated Unit IDs are the canonical names used by source metadata; underscore-named unit files under `docs/product/units/` are compatibility aliases and must not define different ownership.

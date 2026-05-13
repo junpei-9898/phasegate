@@ -335,3 +335,8 @@ Harness API / CLI response contracts can feed L2-015 as `PublicContract` and `Er
 | `operationalWarnings` | Non-gating warnings with `code`, `message`, and `nextAction`. |
 
 `phasegate:detect-drift --json` preserves `category`, `severity`, and `nextAction` in addition to the raw drift item. Structural drift remains `L4-001`; semantic drift is keyed by `unitName + behaviorId` across `DesignIntent`, `ImplementationBehavior`, and `TestObservation`.
+
+<!-- @work-item-id WI-166 -->
+## WI-166 Hook Skip Status Projection
+
+Harness API reads `.phasegate/hook-skip-events.jsonl` as the shared hook skip record used by both `agent-integration` and public setup diagnostics. Status projection keeps the event diagnostic: it reports latest event, counts by reason, and recommended next action in `hookHealth` / `operationalWarnings`, but it does not turn skip history into a validator failure. The event schema is append-only and tolerant of malformed lines so a partial runtime log cannot break `phasegate:status --json`.

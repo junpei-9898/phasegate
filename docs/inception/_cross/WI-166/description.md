@@ -2,7 +2,7 @@
 id: WI-166
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [agent-integration, harness-api, setup, documentation]
 source: internal
 ---
@@ -33,10 +33,16 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] logical_design 1 段落だけでなく domain / test / coverage に WI-123 が追える。
-- [ ] harness-api の status schema と同じ hook skip record を参照する。
-- [ ] public operational docs でも `.phasegate/hook-skip-events.jsonl` の目的、限界、改善アクションが辿れる。
+- [x] logical_design 1 段落だけでなく domain / test / coverage に WI-123 が追える。
+- [x] harness-api の status schema と同じ hook skip record を参照する。
+- [x] public operational docs でも `.phasegate/hook-skip-events.jsonl` の目的、限界、改善アクションが辿れる。
 
 ## 依存
 
 `WI-162` と整合する。
+
+## 対応結果
+
+- agent-integration domain/logical/unit test/IT/coverage docs に HookSkipEvent と recorder/status projection の境界を追加した。
+- harness-api domain/IT/coverage docs に `.phasegate/hook-skip-events.jsonl` の status projection を追加した。
+- `docs/guide/setup-artifacts.md` に hook skip events の目的、限界、改善アクションを追加した。

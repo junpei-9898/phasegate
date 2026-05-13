@@ -178,6 +178,18 @@
 | IT-REPO-AjvValidator-007 | validate | 複数フィールドが同時に不正 | `allErrors: true`設定により、全エラーが一括でerrorsに格納される |
 | IT-REPO-AjvValidator-008 | validate | `null`またはプリミティブ型 | `valid: false`、errorsにtypeエラー含む |
 
+<!-- @work-item-id WI-165 -->
+## WI-165 Matrix Generation And Intent Coverage E2E Flow
+
+Nyquist IT design must cover the public CLI flow added after the original H07 design:
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-NYQ-WI165-001 | generated matrix が validation flow に入ること | `phasegate:generate-matrix` の出力 matrix | `ValidateMatrixUseCase` が同じ schema で pass/fail を判定できる |
+| IT-NYQ-WI165-002 | intent coverage report が missing / weak observation を返すこと | AC に弱い assertion の test だけがある fixture | `observed`, `weakly-observed`, `unobserved` の分類が返る |
+| IT-NYQ-WI165-003 | unknown story の test が orphan として扱われること | matrix source に存在しない `@story` | matrix 本体に入らず `orphanTests` に報告される |
+| IT-NYQ-WI165-004 | L3 `nyquist` validator と CLI生成 matrix の契約が一致すること | generated matrix + `validate --layer L3` | `L3-004` が同じ matrix path/shape を読む |
+
 ---
 
 ## 4. Controller/APIテストケース（Handlerテスト）

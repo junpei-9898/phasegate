@@ -111,3 +111,9 @@
 @work-item-id WI-143
 
 `work-items:status` / metadata validation の正本は WI directory を canonical work item として扱う。WI-143 の doctor drift は、この traceability 前提を setup/doctor 側から保護する補助診断であり、WI count が 0 のまま plan が蓄積する状態を release-visible な red finding にする。
+
+## WI-165: Coverage Refresh For WI-117..148
+
+@work-item-id WI-165
+
+Traceability coverage now distinguishes three evidence types: legacy story IDs preserved by alias resolution, canonical Work Item IDs used for product reflection, and semantic contract graph slices introduced by WI-160. WI-117/WI-118/WI-139 L4 records are validator-system outputs; traceability-model owns metadata extraction and alias resolution only.

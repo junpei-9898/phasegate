@@ -26,6 +26,11 @@ The documentation Unit owns public explanation of the annotation syntax and find
 
 Public docs should link users to `docs/guide/contract-traceability.md` rather than exposing validator-system internals.
 
+<!-- @work-item-id WI-167 -->
+## Documentation Unit Boundary Model
+
+The documentation domain owns public wording and guide discoverability. It does not own validator execution, setup mutation, or runtime status derivation. Legacy `docs` reflections and underscore unit aliases are modeled as `DocumentationAlias` records: they can point to the active Unit and preserve old traceability, but they cannot introduce a competing product boundary.
+
 <!-- @work-item-id WI-134, WI-135 -->
 ## Architecture Semantic Documentation Policy
 

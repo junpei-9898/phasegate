@@ -1609,3 +1609,8 @@ CI governance consumes the public command catalog for generated workflows and ag
 Scheduled L4 remains default-off for standard projects and is run by cron/manual workflow as an audit. Strict projects or explicit `layers.L4.enabled: true` may combine scheduled L4 with `failOnWarning`.
 
 `p2:*` commands are compatibility entry points. Canonical generated templates should prefer `validate --layer L4`, `phasegate:detect-drift`, and the public setup/install lifecycle commands.
+
+<!-- @work-item-id WI-155 -->
+## WI-155 Traceability Reflection Cleanup
+
+CI governance product docs preserve legacy `@story-id H13-*` annotations as history, but new cross-unit reflection uses `@work-item-id`. Work-Item commit trailer enforcement is owned by `commit-msg` / `bypass:audit`, while product reflection evidence is the accumulated `@work-item-id WI-XXX` tag in relevant construction docs. `Work-Item: WI-XXX` trailers are audit history, not a replacement for product reflection.

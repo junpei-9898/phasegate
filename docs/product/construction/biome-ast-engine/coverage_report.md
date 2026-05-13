@@ -141,3 +141,9 @@
 
 1. K3.5水準の精度維持を定量的に証明する専用テストケースの設計を検討する（現在はパリティ回帰で間接カバー）
 2. 本レポートの98%カバレッジを維持しつつ、実装フェーズに移行する
+
+## WI-165: Coverage Refresh For WI-117..148
+
+@work-item-id WI-165
+
+Biome AST coverage is evaluated as source-fact production for upper validators. WI-161 source facts, WI-119/WI-121 semantic scans, and L4-003 import/export graph behavior are consumed by validator-system; this Unit should prove AST/source snapshots are stable and should not duplicate validator policy. K3.5 legacy wording is retained as history, while current coverage maps to `@unit`/`@layer` metadata, source fact extraction, and graph inputs.

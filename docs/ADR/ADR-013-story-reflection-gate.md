@@ -16,7 +16,7 @@ Phase Gate（L2-001）は設計文書の**存在**を検証するが、inception
 
 ## Decision
 
-`phaseDependencies.storyReflection` を導入し、**実装着手時（`src/` / `scripts/harness/` への Write/Edit）に inception → product 反映を機械的に検証**する。
+`phaseDependencies.storyReflection` を導入し、**実装着手時（`src/` / `scripts/harness/` への Write/Edit）に inception → product 反映を機械的に検証**する。現行の新規 reflection は `@work-item-id WI-XXX` を正とし、既存の `@story-id HXX-XX` / `@story-id US-XXX` は WI frontmatter の `legacy_id` 経由で履歴として解決する。<!-- @work-item-id WI-155 -->
 
 ### 設計原則
 
@@ -72,7 +72,7 @@ inception/order/US-002/logical_design.md は存在しますが、
 ### 関連コンポーネント
 
 - `PhaseConfigProviderPort.getStoryReflectionConfig()` — プリセット + config から有効な mappings を解決
-- `FileSystemStoryReflectionAdapter` — inception ディレクトリ列挙と product 文書内 `@story-id` 検索
+- `FileSystemStoryReflectionAdapter` — inception ディレクトリ列挙と product 文書内 `@work-item-id` / legacy `@story-id` 検索
 - `HandlePreToolUseUseCase` — src/ への Write 発火時に storyReflection チェックを呼び出し、未反映ならブロック
 - Quick Mode (`relaxedGates: ["phase-gate"]`) 時は storyReflection も緩和される（§4.6）
 

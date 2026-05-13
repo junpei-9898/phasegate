@@ -1924,3 +1924,9 @@ skill-quality は lesson artifact の生成責務に留まり、AGENTS.md / CLAU
 <!-- @work-item-id WI-125, WI-129, WI-130 -->
 
 skill-quality consumes L2 test-quality and Nyquist signals instead of duplicating their validators. `test-coverage-checker` and `implementation-readiness-checker` may use the generated requirement-test matrix and requirement coverage report as input, while semantic AAA, assertion strength, and matrix generation remain owned by validator-system / nyquist-validation.
+
+### WI-155 Reflection Annotation Policy
+
+<!-- @work-item-id WI-155 -->
+
+Skill-quality tools may read legacy `@story-id` annotations to preserve old cascade-updater behavior, but generated or refreshed product sections must emit `@work-item-id WI-XXX`. This keeps skill output compatible with the current metadata validator without erasing historical H/US IDs.

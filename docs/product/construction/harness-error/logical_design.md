@@ -1138,3 +1138,8 @@ export function isHarnessError(value: unknown): value is HarnessErrorContract;
 | fix_example構文検証 | TypeScript Compiler API を採用 |
 | 旧 `severity: "info"` の扱い | legacy adapter で `warning` に変換し、canonical 契約には入れない |
 | Presentation層の責務 | トップレベルCLI所有ではなく、harness-api/CI から利用される内部 handler / formatter を提供 |
+
+<!-- @work-item-id WI-155 -->
+## WI-155 Error Traceability Reflection
+
+HarnessError docs keep legacy story annotations for historical error-definition work, but new recovery metadata and validator payload changes must be reflected with `@work-item-id`. Error payloads may include `suggested_skill`, `scaffold_command`, validator IDs, or traceability keys; those fields are runtime contract data and do not replace product reflection annotations.

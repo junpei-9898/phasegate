@@ -4,7 +4,7 @@
 設計要素: L0 legacy validator 撤去後の validator-system / agent-integration 境界。
 
 > **作成日**: 2026-03-12
-> **Unit数**: **15**（v1） + 2（Future）  ※ installation unit を WI-144 系で新規追加
+> **Unit数**: **15**（v1） + 2（Future）  ※ installation unit を WI-144 系で新規追加。現行 Unit catalog では kebab-case Unit ID を正本とし、underscore 形式の `*_unit.md` は後方互換 alias として扱う。@work-item-id WI-167
 > **ストーリー数**: 54（v1） + 8（Future）= 62
 
 ---
@@ -129,7 +129,7 @@ domain層は外部に依存しない。application層はdomain層のみに依存
 | 契約 | 所有Unit | 消費Unit | 内容 |
 |------|---------|---------|------|
 | **Harness API Response DTO** | harness-api | agent-integration, ci-governance, regression-suite | CLI出力のJSON構造 `{ status, errors[], summary, data }` |
-| **Validator ID Registry** | validator-system | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite, Future: phase2-extensions | 確定ID: L2-001〜L4-003（10バリデータ）。予約レンジ: L4-004〜（phase2-extensions）。実行インターフェース含む |
+| **Validator ID Registry** | validator-system | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite, phase2-extensions | 現行正本: L2 `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015`; L3 `L3-001`..`L3-004`; L4 `L4-001`..`L4-005`。L4-004/L4-005 は phase2-extensions 由来だが validator-system registry に登録済み。実行インターフェース含む。@work-item-id WI-168 |
 | **Preset ID Registry** | config-foundation | harness-api, quick-mode, validator-system, ci-governance, regression-suite | プリセットID（minimal/standard/strict）と有効レイヤー定義 |
 | **RequirementTestMatrix Schema** | nyquist-validation | skill-quality (test-coverage-checker), harness-api, regression-suite | requirement-test-matrix.jsonのJSONスキーマ |
 | **AGENTS.md Schema** | ci-governance | regression-suite | AGENTS.mdの最終文書構造定義（ポインタ型） |

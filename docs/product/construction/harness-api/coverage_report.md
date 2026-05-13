@@ -459,3 +459,15 @@ logical_design.md §3 の4UseCaseについて、正常系/異常系/境界値の
 @work-item-id WI-143
 
 `phasegate scaffold-wi`, `phasegate emit-agent-rules`, and `init --workflow strict` are registered at the harness-api CLI boundary. Smoke coverage for WI-143 validates that these commands are reachable and that strict workflow configuration is observable from generated config.
+
+## WI-166: Hook Skip Status Coverage
+
+@work-item-id WI-166
+
+Harness API coverage includes the shared hook skip record shape from agent-integration and status projection behavior:
+
+| Coverage item | Evidence |
+|---|---|
+| Valid JSON Lines event | `hookHealth.latestSkipEvent` and reason counts are derived. |
+| Malformed runtime log line | Status remains informational and does not fail. |
+| Codex native pre-edit gap | `operationalWarnings[].nextAction` points to hook enablement or L2 pre-commit backstop. |

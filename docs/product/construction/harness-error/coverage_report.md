@@ -149,3 +149,9 @@
 1. ユニットテスト設計（112ケース）とITテスト設計（146ケース）の合計258ケースを実装する。
 2. 回帰テスト（IT-HE-142〜146）は`buildErrorDefinitionRegistry`で構築した実レジストリを使用するため、ErrorDefinition静的定義（`infrastructure/registry/l1〜l4-error-definitions.ts`）の完成後に実装する。
 3. CI契約テスト（IT-HE-146）はGitHub Actions workflow定義の完成後に実装する。
+
+## WI-155: Error Contract Traceability Reflection
+
+@work-item-id WI-155
+
+HarnessError coverage uses Work Item IDs for new product reflection and preserves legacy story IDs only as historical mapping evidence. Recovery metadata fields such as `suggested_skill`, `scaffold_command`, and validator IDs are validated as payload contract fields, not as substitutes for `@work-item-id` annotations in product docs.

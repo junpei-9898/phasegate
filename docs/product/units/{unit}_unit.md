@@ -1,4 +1,11 @@
+---
+traceability:
+  initial_creation: true
+---
+
 # Unit Definition Placeholder
+
+<!-- @work-item-id WI-167 -->
 
 > **注意**: このファイルは Phase Gate の Level 1 `unit-designer` ノードが参照する `{unit}` placeholder パスのための stub です。
 >
@@ -12,10 +19,9 @@
 
 実際の Unit 定義は以下に配置されています:
 
-- `docs/product/units/agent_integration_unit.md`
-- `docs/product/units/phase_dependency_model_unit.md`
-- `docs/product/units/traceability_model_unit.md`
-- `docs/product/units/biome_ast_engine_unit.md`
+- Canonical Unit IDs use kebab-case, matching source `@unit` metadata and `docs/product/construction/{unit}/`.
+- Kebab-case `{unit}_unit.md` files are the preferred product unit entrypoints when present.
+- Underscore files such as `agent_integration_unit.md` and `phase_dependency_model_unit.md` are compatibility aliases or historical definitions; they must not define different ownership from the kebab-case Unit.
 - その他すべての Unit 定義ファイル
 
 ## ステータス

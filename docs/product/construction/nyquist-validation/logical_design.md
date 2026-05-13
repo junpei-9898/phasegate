@@ -1298,3 +1298,9 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 5. `GenerateMatrixHandler` が matrix と report を出力する。
 
 未知 story の test は matrix に入れず `orphanTests` として報告する。AC に対応する test がない場合は `missingTests` として報告する。
+
+### WI-155 Work-Item Traceability Boundary
+
+<!-- @work-item-id WI-155 -->
+
+Nyquist keeps legacy H story identifiers inside requirement-test-matrix records because acceptance criteria still use H/AC notation. Product reflection around matrix generation and intent coverage, however, must be tracked with `@work-item-id WI-XXX`. The matrix generator may read legacy `@story` / `@story-id` annotations as source evidence, but it must not require new product docs to add only legacy annotations.

@@ -53,6 +53,23 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 - `.harness/reports` is a legacy fallback used only when a phase-dependency provider cannot resolve project config.
 - `.phasegate/hook-skip-events.jsonl` records hook bypass/skip observations for diagnosis; it is runtime state, not a managed install target.
 
+## Hook Skip Events
+
+<!-- @work-item-id WI-166 -->
+
+`.phasegate/hook-skip-events.jsonl` is a best-effort JSON Lines runtime log written by agent hooks when a hook intentionally skips or cannot complete its normal validation path. Each record is diagnostic evidence for `phasegate status --json`, not a gate result by itself.
+
+Typical fields are:
+
+| Field | Meaning |
+|---|---|
+| `hookType` | Hook family, for example `PostToolUse` or `Stop`. |
+| `reason` | Stable skip reason such as disabled hook, reentry detection, timeout, or unsupported native pre-edit path. |
+| `targetPaths` | Files or paths relevant to the hook event when available. |
+| `timestamp` | Event time in ISO format. |
+
+Recording is best-effort. A write failure must not change the original hook exit code. Operators should use the latest skip event and counts in `phasegate status --json` to decide whether to run `phasegate doctor`, refresh hooks with `reconcile`, enable Codex hook support, or rely on the L2 pre-commit backstop for edits that native hooks cannot observe before mutation.
+
 ## Legacy Retirement
 
 Current setup does not require `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, or `.harness/context-priority.json`. Treat them as project-local compatibility artifacts. Before deleting them, check whether an archived workflow or local script still references them; otherwise prefer documenting them as retired rather than wiring new guidance around them.

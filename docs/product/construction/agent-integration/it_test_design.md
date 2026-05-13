@@ -524,6 +524,18 @@ afterEach(async () => {
 
 **フィクスチャ配置先**: `scripts/harness/__tests__/integration/agent-integration/fixtures/`
 
+<!-- @work-item-id WI-166 -->
+## 15. Hook skip observability integration tests
+
+**テスト方針**: PostToolUse / Stop hook の skip path は実ファイルシステム上の temp project に `.phasegate/hook-skip-events.jsonl` を作り、JSON Lines として読めることを確認する。Recorder の write failure は明示的に注入し、元の hook exit code / result が変わらないことを検証する。
+
+| ケースID | シナリオ | 入力/事前状態 | 期待結果 |
+|---|---|---|---|
+| IT-HOOK-SKIP-001 | PostToolUse が disabled の場合に skip event を記録すること | PostToolUse hook disabled config | JSON Lines に `hookType`, `reason`, `targetPaths`, `timestamp` が追記される |
+| IT-HOOK-SKIP-002 | Stop hook が reentry 検出時に skip event を記録すること | ReentryGuard active | `reason="REENTRY_DETECTED"` の record が追記され、hook は再入をブロックしない |
+| IT-HOOK-SKIP-003 | Recorder の書込失敗が hook result を変えないこと | `.phasegate` 書込不可 fixture | 元の skip result / exit code を維持し、write error は診断ログに限定 |
+| IT-HOOK-SKIP-004 | harness-api status と同じ record shape を生成すること | 生成済み JSON Lines | `phasegate:status --json` の `hookHealth.latestSkipEvent` で読める shape と一致 |
+
 ---
 
 ## 14. ISSUE-001 テストケースサマリー

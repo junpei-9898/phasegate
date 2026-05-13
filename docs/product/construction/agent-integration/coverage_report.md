@@ -383,7 +383,23 @@
 @work-item-id WI-143
 
 `phasegate emit-agent-rules` provides the AGENTS.md / CLAUDE.md instruction block needed by agent-integration users to keep plan/design work inside WI directories. The command is stdout-only so external agent files can be updated by the user or a deployment workflow without hidden writes.
-| Low | HarnessConfigConfigQueryAdapter Wave 2暫定マッピングの将来対応 | `cascadeUpdate`→PostToolUse、`agentLessonCollection`→PreToolUseのマッピングが暫定 | Wave 3でhooksサブセクション追加後にAdapterのみ差し替え。テスト変更不要 |
+
+## WI-166: Hook Skip Observability Reflection
+
+@work-item-id WI-166
+
+WI-123 hook skip observability is now reflected across domain, logical design, integration/unit test design, and harness-api status projection. Coverage expectation:
+
+| Surface | Evidence |
+|---|---|
+| Domain | `HookSkipEvent` / `HookSkipEventRecord` / `HookSkipEventRecorderPort` are named concepts. |
+| Logical design | best-effort JSON Lines append and Claude/Codex hook coverage differences are documented. |
+| Harness API | `hookHealth` consumes the same `.phasegate/hook-skip-events.jsonl` record and keeps it informational. |
+| Public docs | `docs/guide/setup-artifacts.md` explains purpose, limits, and operator actions. |
+
+Remaining risk is operational rather than design coverage: corrupted or partially-written JSON Lines entries must be skipped without failing status output.
+
+Additional low-priority follow-up: `HarnessConfigConfigQueryAdapter` still maps `cascadeUpdate` to PostToolUse and `agentLessonCollection` to PreToolUse until a future hooks subsection exists in config. This remains an adapter-only follow-up and does not change current test design.
 
 ---
 

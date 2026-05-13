@@ -58,6 +58,8 @@ Exit criteria:
 
 P0/P1 の正本化後にまとめて行う。ここを先にやると、後で terminology が再変更されやすい。
 
+Status: 完了済み (2026-05-13)。product unit catalog / ADR / integration contract の旧 validator catalog 再導入を防止し、legacy annotation と Work Item reflection の境界、hook skip observability、coverage/test design refresh を product/public docs に反映した。
+
 | WI | 理由 | 推奨まとめ方 |
 |---|---|---|
 | WI-155 | legacy annotation 依存を減らし、product docs の traceability を揃える。 | P2 batch |
@@ -101,7 +103,7 @@ Exit criteria:
 1. Batch A: WI-152, WI-153, WI-169, WI-157, WI-154
 2. Batch B: WI-159, WI-160, WI-164
 3. Batch C: WI-161, WI-162, WI-163, WI-166
-4. Batch D: WI-167, WI-168, WI-155, WI-165
+4. Batch D: WI-167, WI-168, WI-155, WI-165 (完了済み)
 5. Batch E: WI-171, WI-174
 6. Batch F: WI-172, WI-173
 7. Batch G: WI-156, WI-170 decision

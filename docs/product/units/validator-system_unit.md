@@ -14,7 +14,7 @@ traceability:
 
 ## 1. 概要
 
-L2 test-quality、L3 security/performance/coverage、L4 drift-detect/consistency-check/dead-codeの全バリデータを集約管理するUnit。4層防御モデル（L1-L4）のうちL2-L4を担当し、HarnessError出力パイプラインとconfig参照を共通基盤として、品質検証ルールをドメインとして統一的に扱う。
+L2 phase gate / metadata / test-quality / CLI E2E / WI status / contract traceability、L3 security/performance/coverage/nyquist、L4 drift-detect/consistency-check/dead-code/doc-freshness/pointer-validation の全バリデータを集約管理するUnit。4層防御モデル（L1-L4）のうちL2-L4を担当し、HarnessError出力パイプラインとconfig参照を共通基盤として、品質検証ルールをドメインとして統一的に扱う。
 
 v0には対応するUnitが存在しない新規Unitである。v0では各品質チェックが個別に散在していたが、v1ではバリデータIDレジストリによる一元管理と、l2/l3/l4サブモジュールによる内部分離を両立させ、**統一的なバリデータ実行インターフェース**を提供する。harness-apiやquick-mode等のConsumerが、バリデータID指定で任意のバリデータを選択実行できるアーキテクチャを実現する。
 
@@ -88,7 +88,7 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 ## 4. ドメインモデル概要
 
 - **ValidatorDefinition（値オブジェクト）**: バリデータの定義を表すVO（集約なし）。`validatorId`, `layer`, `enabled` は外部依存値（HarnessConfigV2から導出）のためライフサイクルを持たない。domain_model.md §2 設計決定D1（ValidatorDefinition VOパターン）参照
-- **ValidatorId（値オブジェクト）**: レイヤー + 連番のバリデータID体系（L2-001〜L4-003）
+- **ValidatorId（値オブジェクト）**: レイヤー + 連番のバリデータID体系（現行正本は L2-001/L2-002/L2-003/L2-013/L2-014/L2-015、L3-001..L3-004、L4-001..L4-005）
 - **ValidationResult（値オブジェクト）**: バリデータ実行結果（pass/fail + HarnessError一覧）
 - **ValidationRule（値オブジェクト）**: 個別の検証ルール定義（ルール名・検証ロジック・エラーテンプレート）
 - **LayerConfig（値オブジェクト）**: レイヤー別の有効/無効・閾値設定（config-foundationから取得）
@@ -113,7 +113,7 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 
 | 契約 | 役割 | 相手Unit | 内容 |
 |------|------|---------|------|
-| **Validator ID Registry** | 提供 | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite | バリデータID一覧（L2-001〜L4-003）と実行インターフェース。以下の正規対応表を含む: |
+| **Validator ID Registry** | 提供 | harness-api, quick-mode, config-foundation, skill-quality, ci-governance, regression-suite | 現行の L2/L3/L4 バリデータID一覧と実行インターフェース。以下の正規対応表を含む。@work-item-id WI-168 |
 
 #### Validator ID Registry 正規対応表
 
@@ -122,6 +122,9 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 | phase-gate | L2-001 | L2 | H02-01（phase-dependency-model提供、本Unit実行） |
 | metadata | L2-002 | L2 | H03-01（traceability-model提供、本Unit実行） |
 | test-quality | L2-003 | L2 | H08-01 |
+| cli-e2e | L2-013 | L2 | WI-141（agent/harness CLI経路提供、本Unit実行） |
+| wi-status | L2-014 | L2 | WI-143（traceability/work-items status提供、本Unit実行） |
+| contract-traceability | L2-015 | L2 | WI-160 / WI-132..138 |
 | security | L3-001 | L3 | H08-02 |
 | performance | L3-002 | L3 | H08-02 |
 | coverage | L3-003 | L3 | H08-03 |
@@ -129,6 +132,8 @@ v0には対応するUnitが存在しない新規Unitである。v0では各品�
 | drift-detect | L4-001 | L4 | H08-04 |
 | consistency-check | L4-002 | L4 | H08-05 |
 | dead-code | L4-003 | L4 | H08-06 |
+| doc-freshness | L4-004 | L4 | WI-122 / WI-164（phase2-extensions提供、本Unit登録） |
+| pointer-validation | L4-005 | L4 | WI-122 / WI-164（phase2-extensions提供、本Unit登録） |
 | **Phase Dependency 3層構造** | 消費 | phase-dependency-model | L2 phase-gateバリデータのフェーズ遷移条件 |
 | **@unit/@layerメタデータ仕様** | 消費 | traceability-model | L2 metadataバリデータの検証対象 |
 | **ADR Frontmatter Schema** | 消費 | adr-foundation | `adr_ref`フィールドの参照先ADR実在性検証 |

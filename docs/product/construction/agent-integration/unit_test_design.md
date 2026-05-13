@@ -445,8 +445,20 @@
 | PhaseGateQueryResult（ISSUE-001） | 値オブジェクト | 16件（UT-PGR-001〜UT-PGR-043） |
 | HookToCliTranslator | ドメインサービス | 11件（UT-HTC-001〜UT-HTC-030） |
 | FallbackVerificationService | ドメインサービス | 10件（UT-FVS-001〜UT-FVS-030） |
+| HookSkipEvent（WI-166） | 値オブジェクト | 5件（UT-HSE-001〜UT-HSE-005） |
 | 境界値・異常系 | 横断 | 19件（UT-BV-001〜UT-BV-019） |
-| **合計** | | **131件** |
+| **合計** | | **136件** |
+
+<!-- @work-item-id WI-166 -->
+### 6.1 HookSkipEvent test additions
+
+| ケースID | 対象 | 入力 | 期待結果 |
+|---|---|---|---|
+| UT-HSE-001 | HookSkipEvent | hookType/reason/timestamp/targetPaths を持つ record | 生成成功し JSON Lines に serializable |
+| UT-HSE-002 | HookSkipEvent | reason が未知文字列 | forward-compatible reason として保持 |
+| UT-HSE-003 | HookSkipEvent | timestamp が空 | invariant error |
+| UT-HSE-004 | HookSkipEventRecorderPort failure policy | append が失敗 | 呼び出し元 hook result を変更しない |
+| UT-HSE-005 | SkipReason | `REENTRY_DETECTED`, `HOOK_DISABLED`, `TIMEOUT_EXCEEDED` | status projection で reason count に使える stable key |
 
 ---
 

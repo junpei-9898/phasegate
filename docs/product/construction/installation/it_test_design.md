@@ -55,3 +55,18 @@ WI-145 の integration test は、実ファイルシステム上の manifest I/O
 ### 1.5 Golden Policy
 
 JSON は schema と主要 field を exact match し、human output は全文 snapshot ではなく重要行の包含を検証する。project root は `<PROJECT_ROOT>` に normalize する。
+
+## 2. WI-165 lifecycle status refresh
+
+@work-item-id WI-165
+
+WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only test placeholders. Integration test design treats each command as an observable CLI flow:
+
+| Command | IT expectation |
+|---|---|
+| `phasegate install --dry-run/--apply` | dry-run changes no files; apply writes managed targets, package metadata, skills links, and manifest entries. |
+| `phasegate uninstall --dry-run/--apply` | dry-run reports planned reversals; apply removes/reverses managed entries and archives manifest state. |
+| `phasegate reconcile --dry-run/--apply` | dry-run reports drift; apply refreshes managed targets idempotently. |
+| `phasegate update-skills` | compatibility alias for reconcile path, not a separate lifecycle owner. |
+
+`futureInstallationStrategyPorts` remains an extension point for extracting merge/reverse strategies; it is not an unimplemented runtime dependency and should not be counted as a coverage gap.

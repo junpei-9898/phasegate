@@ -10,13 +10,16 @@ AIエージェントは設計文書を無視して直接コードを書くこと
 
 ## Decision
 
-L2（Pre-commit）で以下の3バリデータにより設計-実装の順序を機械的に強制する。
+L2（Pre-commit）で以下のバリデータにより設計-実装の順序、メタデータ、テスト品質、CLI E2E、WI status、公開 contract traceability を機械的に強制または報告する。初期ADRの3バリデータ記述は履歴であり、現行 catalog は validator-system registry を正とする。<!-- @work-item-id WI-168 -->
 
 | バリデータ | コード | 検出対象 |
 |-----------|--------|---------|
 | phase-gate | L2-001 | 設計文書なしの実装コード変更を拒否 |
 | metadata | L2-002 | @unit/@layer/@US-XXX メタデータの完全性検証 |
 | test-quality | L2-003 | AAA パターン、actual 命名、日本語テスト名の検証 |
+| cli-e2e | L2-013 | public CLI entrypoint の基本 E2E 契約 |
+| wi-status | L2-014 | WI status と acceptance criteria の陳腐化検出 |
+| contract-traceability | L2-015 | public contract / boundary / observation の traceability coverage |
 
 ### Phase Gate の3層検証
 
@@ -27,7 +30,7 @@ L2（Pre-commit）で以下の3バリデータにより設計-実装の順序を
 ## Consequences
 
 - 設計文書なしのコード変更が物理的に不可能になる
-- `@US-XXX` によるトレーサビリティが機械的に保証される
+- `@work-item-id WI-XXX` と legacy annotation の対応によりトレーサビリティが機械的に保証される
 - テスト品質ルール（AAA, actual 命名）が全テストに強制される
 
 ## 関連要件

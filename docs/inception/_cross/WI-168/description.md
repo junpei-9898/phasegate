@@ -2,7 +2,7 @@
 id: WI-168
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [documentation, validator-system, integrations]
 source: internal
 ---
@@ -22,10 +22,16 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] 上位 product contract が `L2-001..L4-003` だけを正とする古い validator catalog を残さない。
-- [ ] ADR と product unit docs が、現行 CLI / validator / installation lifecycle と矛盾しない。
-- [ ] `WI-159` の Unit 内正本化と責務が分離され、再発防止の参照先が明確になる。
+- [x] 上位 product contract が `L2-001..L4-003` だけを正とする古い validator catalog を残さない。
+- [x] ADR と product unit docs が、現行 CLI / validator / installation lifecycle と矛盾しない。
+- [x] `WI-159` の Unit 内正本化と責務が分離され、再発防止の参照先が明確になる。
 
 ## 依存
 
 `WI-159` と並行可能。ただし validator catalog 名称は `WI-159` に合わせる。
+
+## 対応結果
+
+- integration contract / environment contract / validator-system Unit doc を現行 L2/L3/L4 catalog に同期した。
+- ADR-002 / ADR-004 / ADR-013 に現行 Work Item / validator catalog 方針を追記した。
+- 上位 docs は validator-system registry と public layer guide を参照し、古い `L2-001..L4-003` 限定 catalog を再導入しない方針にした。

@@ -589,3 +589,12 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 | IT-API-Status-WI162-002 | disabled L4 と missing cached artifact を分離すること | standard preset + L4 reportなし | `configurationState="disabled"`, `cachedArtifactState="missing"`, `liveValidationState` が別キーで返る |
 | IT-API-Drift-WI162-001 | drift category と next action を返すこと | `phasegate:detect-drift --json` | `data.categorySummaries[]` と sampled `drifts[].nextAction` が返る |
 | IT-API-Drift-WI162-002 | semantic drift と structural drift の責務境界を維持すること | semantic behavior gap fixture | semantic record は `unitName + behaviorId` で説明され、structural `L4-001` の raw mismatch と混同されない |
+
+<!-- @work-item-id WI-166 -->
+## WI-166 Hook Skip Status Integration Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-Status-WI166-001 | hook skip JSON Lines を status に投影すること | `.phasegate/hook-skip-events.jsonl` に valid event あり | `data.hookHealth.latestSkipEvent` と reason count が返る |
+| IT-API-Status-WI166-002 | malformed line があっても status が失敗しないこと | valid line + broken line | broken line は operational warning になり、exit code 0 を維持 |
+| IT-API-Status-WI166-003 | Codex apply_patch backstop を operational warning に出すこと | native pre-edit hook gap がある runtime | L2 pre-commit backstop の `nextAction` が返る |

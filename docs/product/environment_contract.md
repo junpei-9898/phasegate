@@ -1,8 +1,13 @@
+---
+traceability:
+  initial_creation: true
+---
+
 # 環境契約書（Environment Contract）
 
 > **作成日**: 2026-03-13
 > **対象Wave**: Wave 1〜Wave 3（全14Unit）
-> **対象Unit**: config-foundation, harness-error, phase-dependency-model, traceability-model, adr-foundation, biome-ast-engine, validator-system, nyquist-validation, quick-mode, harness-api, agent-integration, skill-quality, ci-governance, regression-suite
+> **対象Unit**: config-foundation, harness-error, phase-dependency-model, traceability-model, adr-foundation, biome-ast-engine, validator-system, nyquist-validation, quick-mode, harness-api, agent-integration, skill-quality, ci-governance, regression-suite, installation
 > **前提**: `docs/inception/_shared/environment_design_plan.md`（Q1-Q5確定済み）
 > **最終更新**: 2026-03-19（Wave 2+3追記）
 
@@ -33,6 +38,8 @@ v0アーカイブ契約からWave 1 v1環境へ移行するための差分を、
 | M-017 | 回帰テストスイートディレクトリ新設 | `scripts/harness/__tests__/` | `regression/` サブディレクトリを新設し、regression-suiteの4テストスイートファイル（k-requirements, gng-gate, agent-independence, v0-migration）を格納する |
 | M-018 | package.jsonスクリプト追加 | `package.json` | `phasegate:complete-check`, `phasegate:impact-analysis`, `phasegate:ci-template` の3スクリプトを新規追加する。既存スクリプト（phasegate:check-phase / phasegate:check-ready / phasegate:lint / phasegate:ci-check / phasegate:detect-drift）はWave 2実装完了まで互換入口を維持し、完了後にharness-api向けに切り替える |
 | M-019 | ts-morph依存追加 | `package.json` | agent-integrationのImportAnalyzerPortアダプタで使用する `ts-morph` を devDependencies に追加する（TypeScript Compiler APIラッパー） |
+| M-020 | product unit catalog reconciliation | `docs/product/units/*`, `docs/product/construction/*` | kebab-case Unit ID を現行正本とし、underscore ファイルと `{unit}_unit.md` は metadata / phase-gate 互換 alias として扱う。alias は新規責務を持たず、対応する construction Unit の正本へ誘導する。@work-item-id WI-167 |
+| M-021 | validator registry catalog refresh | `docs/product/units/integration_contract.md`, `docs/product/units/validator-system_unit.md`, `docs/ADR/*` | 上位契約は `L2-001..L4-003` だけを validator catalog として再導入しない。現行正本は validator-system product construction と public layer guide の L2/L3/L4 catalog に従う。@work-item-id WI-168 |
 
 ---
 

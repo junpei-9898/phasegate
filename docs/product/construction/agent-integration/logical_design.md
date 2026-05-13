@@ -1530,3 +1530,6 @@ Agent runtime hooks for Codex and Claude Code must call PhaseGate commands for b
 ### WI-123: hook skip observability
 
 PostToolUse and Stop hook adapters record hook skips to `.phasegate/hook-skip-events.jsonl` on a best-effort basis. The record includes hook type, skip reason, target paths, and timestamp. Recording failure never changes hook behavior or exit code. `phasegate:status --json` consumes this file through harness-api and surfaces skip counts and latest skip state. @work-item-id WI-123
+
+<!-- @work-item-id WI-166 -->
+The shared record is the same hook skip observation consumed by harness-api status. Agent-integration owns event creation and append behavior; harness-api owns status projection. Claude and Codex hooks have different native event coverage: PostToolUse / Stop skip recording is runtime-observable, while native pre-edit gaps such as Codex `apply_patch` are surfaced as an operational warning with the L2 pre-commit backstop rather than as a pre-edit event.

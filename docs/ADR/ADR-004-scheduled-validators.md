@@ -10,13 +10,15 @@ Accepted
 
 ## Decision
 
-L4（Scheduled）で以下の3バリデータを週次で実行する。
+L4（Scheduled）で以下のバリデータを週次または明示実行で扱う。初期ADRの3バリデータ記述は履歴であり、現行 catalog は validator-system registry と `docs/guide/layer-model.md` を正とする。<!-- @work-item-id WI-168 -->
 
 | バリデータ | コード | 検出対象 |
 |-----------|--------|---------|
 | drift-detect | L4-001 | 設計にあるがコードにない / コードにあるが設計にない双方向乖離 |
 | consistency-check | L4-002 | 文書間のレイヤー整合性の破綻 |
 | dead-code | L4-003 | 未使用エクスポート、到達不能コード |
+| doc-freshness | L4-004 | 設計文書の freshness threshold 超過 |
+| pointer-validation | L4-005 | 設計文書 pointer の owner/type/source/severity/nextAction 付き検証 |
 
 ### 技術的実装
 
@@ -28,7 +30,7 @@ L4（Scheduled）で以下の3バリデータを週次で実行する。
 
 - 設計-実装の乖離が週次で自動検出される
 - 未使用コードの蓄積が防止される
-- strict プリセットでのみ L4 が有効（standard/minimal ではスキップ）
+- L4 は default-off の scheduled/advisory 層として扱い、strict または明示 `validate --layer L4` で実行できる。fail-on-warning policy がない限り warning-only findings は gate failure へ昇格しない。
 
 ## 関連要件
 
