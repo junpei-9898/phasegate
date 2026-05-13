@@ -62,4 +62,4 @@ npx phasegate check-change-category --paths <changed-files> --format json
 npx phasegate ci-check --quick --dry-run
 ```
 
-Use `config:plan` before changing `phasegate.config.json`. It separates repo-managed artifacts from user-level settings and lists the checks needed after the change.
+Use `config:plan` before changing `phasegate.config.json`. It separates repo-managed artifacts from user-level settings, previews the local config before/after for config-backed intents, and lists the checks needed after the change. <!-- @work-item-id WI-175 -->

@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-146
 // @work-item-id WI-174
+// @work-item-id WI-175
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -47,6 +48,16 @@ export interface RunInstallResult {
   readonly refused: readonly InstallPlanItem[];
   readonly changed: readonly InstallPlanItem[];
   readonly backupDir: string | null;
+  readonly error?: TargetAwareApplyError;
+}
+
+export interface TargetAwareApplyError {
+  readonly target: string;
+  readonly operation: string;
+  readonly code: string;
+  readonly likelyCause: string;
+  readonly recovery: string;
+  readonly partialChanges: readonly string[];
 }
 
 interface InstallTarget {
@@ -216,6 +227,26 @@ function hasCustomJson(content: string | null): boolean {
   }
 }
 
+function errorCode(error: unknown): string {
+  if (isRecord(error) && typeof error.code === "string") return error.code;
+  return "UNKNOWN";
+}
+
+function likelyCauseFor(code: string): string {
+  if (code === "EPERM") return "The filesystem or sandbox denied this write operation.";
+  if (code === "EACCES") return "The current user does not have permission to write this target.";
+  if (code === "EROFS") return "The project is on a read-only filesystem.";
+  if (code === "ENOTDIR") return "A parent path exists but is not a directory.";
+  return "The managed target could not be written.";
+}
+
+function recoveryFor(code: string, target: string): string {
+  if (code === "EPERM") return `Review sandbox or filesystem permissions for ${target}, then rerun phasegate setup:agent --apply or phasegate install --apply.`;
+  if (code === "EACCES") return `Fix ownership or permissions for ${target}, then rerun phasegate install --apply.`;
+  if (code === "EROFS") return `Move the project to a writable filesystem or rerun in a writable workspace before applying ${target}.`;
+  return `Inspect ${target}, run phasegate install --dry-run --json, then rerun with --apply after resolving the filesystem issue.`;
+}
+
 function shellRepairMode(content: string | null): RepairMode {
   if (content === null || content.trim().length === 0 || content.includes(SHELL_BEGIN)) return "mechanical";
   return "ai-assisted";
@@ -289,9 +320,23 @@ export class RunInstallUseCase {
         await this.backup(input.projectRoot, target.path, backupDir);
       }
 
-      await mkdir(dirname(absolutePath), { recursive: true });
-      await writeFile(absolutePath, next, "utf8");
-      if (target.executable) await chmod(absolutePath, 0o755);
+        try {
+          await mkdir(dirname(absolutePath), { recursive: true });
+        } catch (error) {
+          return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "mkdir", error);
+        }
+        try {
+          await writeFile(absolutePath, next, "utf8");
+        } catch (error) {
+          return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "writeFile", error);
+        }
+        if (target.executable) {
+          try {
+            await chmod(absolutePath, 0o755);
+          } catch (error) {
+            return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "chmod", error);
+          }
+        }
       changed.push(item);
 
       const mode = before === null ? "created" : "merged";
@@ -320,9 +365,17 @@ export class RunInstallUseCase {
       const item = await this.planSkillLink(input.projectRoot, linkPath);
       plan.push(item);
       if (!input.apply || !item.changed) continue;
-      await mkdir(join(input.projectRoot, "skills"), { recursive: true });
-      await mkdir(dirname(join(input.projectRoot, linkPath)), { recursive: true });
-      await symlink("../skills", join(input.projectRoot, linkPath), process.platform === "win32" ? "junction" : "dir");
+      try {
+        await mkdir(join(input.projectRoot, "skills"), { recursive: true });
+        await mkdir(dirname(join(input.projectRoot, linkPath)), { recursive: true });
+      } catch (error) {
+        return this.withApplyError({ plan, refused, changed, backupDir }, linkPath, "mkdir", error);
+      }
+      try {
+        await symlink("../skills", join(input.projectRoot, linkPath), process.platform === "win32" ? "junction" : "dir");
+      } catch (error) {
+        return this.withApplyError({ plan, refused, changed, backupDir }, linkPath, "symlink", error);
+      }
       changed.push(item);
       const hash = this.hashCalculator.compute("../skills");
       const existingEntry = baseManifest.findEntry(linkPath);
@@ -342,10 +395,34 @@ export class RunInstallUseCase {
     }
 
     if (input.apply && changed.length > 0) {
-      await this.manifestRepository.save(input.projectRoot, manifest);
+      try {
+        await this.manifestRepository.save(input.projectRoot, manifest);
+      } catch (error) {
+        return this.withApplyError({ plan, refused, changed, backupDir }, ".phasegate/manifest.json", "manifest-save", error);
+      }
     }
 
     return { plan, refused, changed, backupDir };
+  }
+
+  private withApplyError(
+    result: RunInstallResult,
+    target: string,
+    operation: string,
+    error: unknown,
+  ): RunInstallResult {
+    const code = errorCode(error);
+    return {
+      ...result,
+      error: {
+        target,
+        operation,
+        code,
+        likelyCause: likelyCauseFor(code),
+        recovery: recoveryFor(code, target),
+        partialChanges: result.changed.map((item) => item.path),
+      },
+    };
   }
 
   private createTargets(options: {

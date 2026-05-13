@@ -1,6 +1,7 @@
 // @unit installation
 // @layer presentation
 // @work-item-id WI-146
+// @work-item-id WI-175
 
 import type { RunInstallUseCase } from "../../application/usecases/run-install.js";
 
@@ -34,7 +35,7 @@ export class InstallHandler {
     if (input.json) {
       return {
         stdout: JSON.stringify(result, null, 2),
-        exitCode: result.refused.length > 0 ? 1 : 0,
+        exitCode: result.refused.length > 0 || result.error !== undefined ? 1 : 0,
       };
     }
     const lines = [
@@ -45,13 +46,20 @@ export class InstallHandler {
       }),
     ];
     if (result.backupDir !== null) lines.push(`backups: ${result.backupDir}`);
+    if (result.error !== undefined) {
+      lines.push("");
+      lines.push(`Apply error: ${result.error.target} ${result.error.operation} failed with ${result.error.code}`);
+      lines.push(`Cause: ${result.error.likelyCause}`);
+      lines.push(`Recovery: ${result.error.recovery}`);
+      if (result.error.partialChanges.length > 0) lines.push(`Partial changes: ${result.error.partialChanges.join(", ")}`);
+    }
     if (result.refused.length > 0) {
       lines.push("");
       lines.push("Refused ai-assisted/manual targets. Re-run with --force after reviewing the hint.");
     }
     return {
       stdout: lines.join("\n"),
-      exitCode: result.refused.length > 0 ? 1 : 0,
+      exitCode: result.refused.length > 0 || result.error !== undefined ? 1 : 0,
     };
   }
 }

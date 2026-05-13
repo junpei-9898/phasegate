@@ -1391,3 +1391,9 @@ Config-foundation remains the owner of schema and resolved config behavior. The 
 
 <!-- @work-item-id WI-172 -->
 `setup:agent` may recommend creating or preserving `phasegate.config.json` as part of first-run setup, but config-foundation still owns the schema and default resolution. Setup orchestration delegates actual config creation to the existing initialization helper rather than maintaining a second config writer.
+
+### WI-175 Config Plan Patch Preview
+
+<!-- @work-item-id WI-175 -->
+
+`config:plan` exposes a read-only `configPatch` preview for intents that touch `phasegate.config.json`. The preview contains `path`, `applicability`, `blockedReason`, `before`, `after`, and JSON pointer operations. Intents that only manage files or require external user-level actions return `configPatch.applicability = "not-applicable"` and explain the reason through managed targets and external actions.

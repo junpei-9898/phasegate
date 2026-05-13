@@ -1,6 +1,6 @@
 # Getting Started
 
-<!-- @work-item-id WI-171 -->
+<!-- @work-item-id WI-171, WI-175 -->
 
 Use this page when you want the shortest path from "PhaseGate is installed" to "the next command is obvious".
 
@@ -31,6 +31,8 @@ The first successful run is:
 - L2 validators pass or report only issues you intentionally left for a later rollout.
 - The active agent can read `AGENTS.md` or `CLAUDE.md` and see the PhaseGate managed instructions.
 
+`setup:agent --json` also returns `plan.completeness`. Treat `configured` and `planned` as local repository evidence, and treat `manual` entries as work PhaseGate cannot prove from local files, such as Codex user-level feature enablement or the first hosted CI run.
+
 ## Daily Use
 
 ```bash
@@ -48,7 +50,7 @@ npx phasegate setup:agent --dry-run --json
 npx phasegate config:plan --intent codex-hooks --dry-run --json
 ```
 
-`setup:agent` reads repository setup state and returns missing targets, questions, risk, rollback, and validation steps. `config:plan` maps natural-language change intents such as "enable Codex hooks" or "make L4 stricter" to concrete files, commands, and checks.
+`setup:agent` reads repository setup state and returns missing targets, completeness, questions, risk, rollback, and validation steps. `config:plan` maps natural-language change intents such as "enable Codex hooks" or "make L4 stricter" to concrete files, commands, checks, and a read-only `phasegate.config.json` patch preview when the intent changes local config.
 
 ## CI Use
 

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-<!-- @work-item-id WI-171, WI-172, WI-173 -->
+<!-- @work-item-id WI-171, WI-172, WI-173, WI-175 -->
 
 Start with:
 
@@ -58,3 +58,16 @@ npx phasegate config:plan --intent codex-hooks --dry-run --json
 ```
 
 The planner output is intentionally agent-readable: detected state, questions, planned targets, risks, rollback, and validation commands are all explicit.
+
+## Setup Completeness Still Has Manual Checks
+
+`doctor` green means the local managed setup is consistent for the inspected targets. It does not prove user-level Codex feature flags, hosted GitHub Actions execution, npm registry state, or team policy acceptance.
+
+Check `plan.completeness` in `setup:agent --json`:
+
+- `configured`: PhaseGate found local evidence.
+- `planned`: `--apply` will create or refresh the local target.
+- `manual`: complete the listed external action yourself.
+- `not-applicable`: the current intent/options did not select that area.
+
+When `install` or `setup:agent --apply` returns a structured `error`, use its `target`, `operation`, `code`, `recovery`, and `partialChanges` fields before rerunning.

@@ -468,3 +468,10 @@ The command may call `RunInstallUseCase` in `--apply` mode, but its dry-run JSON
 ## 13. Configuration Change Planner
 
 `config:plan` maps safe natural-language configuration intents to target files, commands, risks, rollback, and post-change validation. It does not directly edit `phasegate.config.json`; it provides a stable agent-readable plan so a config doctor workflow can ask for approval, apply an explicit diff, and then run the listed checks.
+
+<!-- @work-item-id WI-175 -->
+## 14. Target-Aware Apply Confidence
+
+Install and setup apply paths should preserve a machine-readable result even when an anticipated filesystem permission error occurs. For `EPERM`, `EACCES`, readonly filesystem, or symlink denial failures, the CLI result includes the target path, failed operation, error code, likely cause, recovery guidance, and already changed targets.
+
+Equivalent install options and setup intent options must render the same managed agent context. Strict setup with both agents, Husky, CI, all skills, and strict workflow must not introduce direct-install drift for `AGENTS.md` or `CLAUDE.md`.

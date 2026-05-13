@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.153.0] - 2026-05-13
+
+### Added
+
+- **WI-175 — agent setup completeness and confidence** — adds `setup:agent` completeness summaries, `config:plan` managed/external action separation with `phasegate.config.json` patch previews, target-aware install permission error guidance, and regression coverage for strict setup no-diff behavior.
+
 ## [0.152.9] - 2026-05-13
 
 ### Added

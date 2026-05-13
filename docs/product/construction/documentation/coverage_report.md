@@ -29,3 +29,9 @@ Legacy `docs` Unit reflection is treated as alias history. New public documentat
 | `docs/guide/recipes.md` | Provides first-run, retrofit, agent hooks, CI, strict L4, and config-change recipes. |
 | `docs/guide/troubleshooting.md` | Explains doctor finding fields, repair hints, suggested skills, refused managed targets, and Codex hook checks. |
 | `docs/guide/setup-artifacts.md` | Lists `AGENTS.md` / `CLAUDE.md` as managed targets and separates lesson pointers from standard managed instructions. |
+
+## WI-175 Documentation Coverage
+
+<!-- @work-item-id WI-175 -->
+
+Public setup documentation must explain how to read `setup:agent` completeness summaries, why external manual checks are separate from local readiness, and how `config:plan` patch previews should be reviewed before editing `phasegate.config.json`.

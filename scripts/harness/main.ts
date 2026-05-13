@@ -4,6 +4,7 @@
  * @work-item-id WI-090 / WI-091
  * @work-item-id WI-113 / WI-142
  * @work-item-id WI-171 / WI-172 / WI-173
+ * @work-item-id WI-175
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -723,6 +724,31 @@ type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
 type AgentTarget = "claude" | "codex" | "both";
 type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
 type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict";
+type SetupCompletenessStatus = "configured" | "planned" | "manual" | "not-applicable" | "unknown";
+
+interface SetupCompletenessEntry {
+  readonly area: string;
+  readonly status: SetupCompletenessStatus;
+  readonly evidence: readonly string[];
+  readonly nextAction: string | null;
+  readonly risk: string | null;
+}
+
+interface ConfigPatchOperation {
+  readonly op: "add" | "replace";
+  readonly pointer: string;
+  readonly before: unknown;
+  readonly after: unknown;
+}
+
+interface ConfigPatchPreview {
+  readonly path: "phasegate.config.json";
+  readonly applicability: "applicable" | "not-applicable" | "blocked";
+  readonly blockedReason: string | null;
+  readonly before: unknown;
+  readonly after: unknown;
+  readonly operations: readonly ConfigPatchOperation[];
+}
 
 function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
   if (value === undefined) return undefined;
@@ -773,6 +799,138 @@ async function projectFileExists(rootDir: string, relativePath: string): Promise
   }
 }
 
+function setupCompletenessEntry(input: {
+  readonly area: string;
+  readonly included: boolean;
+  readonly configured: boolean;
+  readonly plannedEvidence: string;
+  readonly configuredEvidence: string;
+  readonly nextAction: string;
+  readonly risk?: string;
+}): SetupCompletenessEntry {
+  if (!input.included) {
+    return {
+      area: input.area,
+      status: "not-applicable",
+      evidence: ["Not selected for this setup intent/options."],
+      nextAction: null,
+      risk: null,
+    };
+  }
+  if (input.configured) {
+    return {
+      area: input.area,
+      status: "configured",
+      evidence: [input.configuredEvidence],
+      nextAction: null,
+      risk: input.risk ?? null,
+    };
+  }
+  return {
+    area: input.area,
+    status: "planned",
+    evidence: [input.plannedEvidence],
+    nextAction: input.nextAction,
+    risk: input.risk ?? null,
+  };
+}
+
+function buildSetupCompleteness(input: {
+  readonly intent: SetupIntent;
+  readonly agent: AgentTarget;
+  readonly withHusky: boolean;
+  readonly withCi: boolean;
+  readonly checks: {
+    readonly packageJson: boolean;
+    readonly phasegateConfig: boolean;
+    readonly claudeSettings: boolean;
+    readonly codexHooks: boolean;
+    readonly agentsMd: boolean;
+    readonly claudeMd: boolean;
+    readonly huskyPreCommit: boolean;
+    readonly ciWorkflow: boolean;
+    readonly skillsVersion: boolean;
+  };
+}): readonly SetupCompletenessEntry[] {
+  const includeClaude = input.agent === "claude" || input.agent === "both";
+  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const agentHooksConfigured = (!includeClaude || input.checks.claudeSettings) && (!includeCodex || input.checks.codexHooks);
+  const agentContextConfigured = (!includeClaude || input.checks.claudeMd) && (!includeCodex || input.checks.agentsMd);
+  const entries: SetupCompletenessEntry[] = [
+    setupCompletenessEntry({
+      area: "local-config",
+      included: true,
+      configured: input.checks.packageJson && input.checks.phasegateConfig,
+      configuredEvidence: "package.json and phasegate.config.json are present.",
+      plannedEvidence: "setup:agent will create or merge package.json scripts and phasegate.config.json.",
+      nextAction: "Run setup:agent --apply, then phasegate doctor.",
+    }),
+    setupCompletenessEntry({
+      area: "agent-hooks",
+      included: includeClaude || includeCodex,
+      configured: agentHooksConfigured,
+      configuredEvidence: "Selected agent hook settings are present.",
+      plannedEvidence: "setup:agent will create or refresh selected agent hook settings.",
+      nextAction: "Run setup:agent --apply for selected agents.",
+      risk: includeCodex ? "Codex user-level hook feature enablement remains a manual external check." : undefined,
+    }),
+    setupCompletenessEntry({
+      area: "agent-context",
+      included: includeClaude || includeCodex,
+      configured: agentContextConfigured,
+      configuredEvidence: "Selected AGENTS.md / CLAUDE.md managed context files are present.",
+      plannedEvidence: "setup:agent will create or refresh selected managed agent context sections.",
+      nextAction: "Run setup:agent --apply and review preserved user-owned content.",
+    }),
+    setupCompletenessEntry({
+      area: "skills",
+      included: true,
+      configured: input.checks.skillsVersion,
+      configuredEvidence: "skills/.harness-version is present.",
+      plannedEvidence: "setup:agent will deploy bundled PhaseGate skills.",
+      nextAction: "Run setup:agent --apply to deploy skills.",
+    }),
+    setupCompletenessEntry({
+      area: "git-hooks",
+      included: input.withHusky,
+      configured: input.checks.huskyPreCommit,
+      configuredEvidence: ".husky/pre-commit is present.",
+      plannedEvidence: "setup:agent will create or refresh Husky pre-commit, commit-msg, and pre-push hooks.",
+      nextAction: "Run setup:agent --apply --with-husky.",
+    }),
+    setupCompletenessEntry({
+      area: "ci",
+      included: input.withCi,
+      configured: input.checks.ciWorkflow,
+      configuredEvidence: ".github/workflows/phasegate-aidlc-gate.yml is present.",
+      plannedEvidence: "setup:agent will create or refresh the GitHub Actions PhaseGate workflow.",
+      nextAction: "Run setup:agent --apply --with-ci.",
+      risk: "A hosted CI run is still an external manual check.",
+    }),
+    setupCompletenessEntry({
+      area: "validation",
+      included: true,
+      configured: input.checks.packageJson && input.checks.phasegateConfig,
+      configuredEvidence: "Local validation commands can be run against the configured project.",
+      plannedEvidence: "Validation commands are planned after setup apply.",
+      nextAction: "Run phasegate doctor, phasegate phasegate:check-ready, and phasegate validate --layer L2 --format human.",
+    }),
+  ];
+
+  const externalActions: string[] = [];
+  if (includeCodex) externalActions.push("Run codex features enable codex_hooks if Codex hooks are not enabled for the user.");
+  if (input.withCi) externalActions.push("Trigger or inspect the first GitHub Actions PhaseGate workflow run.");
+  if (input.intent === "strict") externalActions.push("Confirm team policy accepts strict local and CI enforcement.");
+  entries.push({
+    area: "external-actions",
+    status: externalActions.length > 0 ? "manual" : "not-applicable",
+    evidence: externalActions.length > 0 ? externalActions : ["No external manual checks selected for this setup run."],
+    nextAction: externalActions.length > 0 ? externalActions.join(" ") : null,
+    risk: externalActions.length > 0 ? "PhaseGate cannot prove these user-level or hosted-service states from local files." : null,
+  });
+  return entries;
+}
+
 async function buildAgentSetupPlan(rootDir: string, input: {
   readonly intent: SetupIntent;
   readonly agent: AgentTarget;
@@ -789,6 +947,7 @@ async function buildAgentSetupPlan(rootDir: string, input: {
     claudeMd: await projectFileExists(rootDir, "CLAUDE.md"),
     huskyPreCommit: await projectFileExists(rootDir, ".husky/pre-commit"),
     ciWorkflow: await projectFileExists(rootDir, ".github/workflows/phasegate-aidlc-gate.yml"),
+    skillsVersion: await projectFileExists(rootDir, "skills/.harness-version"),
   };
   const includeClaude = input.agent === "claude" || input.agent === "both";
   const includeCodex = input.agent === "codex" || input.agent === "both";
@@ -810,6 +969,7 @@ async function buildAgentSetupPlan(rootDir: string, input: {
     intent: input.intent,
     agent: input.agent,
     detected: checks,
+    completeness: buildSetupCompleteness({ ...input, checks }),
     questions,
     changes,
     risks: [
@@ -829,47 +989,148 @@ async function buildAgentSetupPlan(rootDir: string, input: {
   };
 }
 
-function buildConfigChangePlan(intent: ConfigChangeIntent) {
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function readProjectJson(rootDir: string, relativePath: string): Promise<unknown | null> {
+  try {
+    return JSON.parse(await fsReadFile(join(rootDir, relativePath), "utf8")) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function withNestedValue(source: unknown, path: readonly string[], value: unknown): Record<string, unknown> {
+  const root = isPlainRecord(source) ? { ...source } : {};
+  let cursor = root;
+  for (const segment of path.slice(0, -1)) {
+    const next = cursor[segment];
+    cursor[segment] = isPlainRecord(next) ? { ...next } : {};
+    cursor = cursor[segment] as Record<string, unknown>;
+  }
+  cursor[path[path.length - 1]] = value;
+  return root;
+}
+
+function getNestedValue(source: unknown, path: readonly string[]): unknown {
+  let cursor = source;
+  for (const segment of path) {
+    if (!isPlainRecord(cursor)) return undefined;
+    cursor = cursor[segment];
+  }
+  return cursor;
+}
+
+function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | null): ConfigPatchPreview {
+  const configIntents: Record<ConfigChangeIntent, readonly { readonly pointer: string; readonly path: readonly string[]; readonly value: unknown }[]> = {
+    "l4-strict": [
+      { pointer: "/layers/L4/enabled", path: ["layers", "L4", "enabled"], value: true },
+      { pointer: "/layers/L4/failOnWarning", path: ["layers", "L4", "failOnWarning"], value: true },
+    ],
+    "ci-fail-on-warning": [
+      { pointer: "/ci/enabled", path: ["ci", "enabled"], value: true },
+      { pointer: "/layers/L4/failOnWarning", path: ["layers", "L4", "failOnWarning"], value: true },
+    ],
+    "quick-mode-strict": [
+      { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["chore"] },
+      { pointer: "/quickMode/relaxedGates", path: ["quickMode", "relaxedGates"], value: [] },
+    ],
+    "codex-hooks": [],
+    "baseline-reset": [],
+  };
+  const changes = configIntents[intent];
+  if (changes.length === 0) {
+    return {
+      path: "phasegate.config.json",
+      applicability: "not-applicable",
+      blockedReason: "Selected intent does not require a local phasegate.config.json mutation.",
+      before,
+      after: before,
+      operations: [],
+    };
+  }
+  let after: unknown = before;
+  const operations: ConfigPatchOperation[] = [];
+  for (const change of changes) {
+    const previous = getNestedValue(after, change.path);
+    after = withNestedValue(after, change.path, change.value);
+    operations.push({
+      op: previous === undefined ? "add" : "replace",
+      pointer: change.pointer,
+      before: previous ?? null,
+      after: change.value,
+    });
+  }
+  return {
+    path: "phasegate.config.json",
+    applicability: "applicable",
+    blockedReason: null,
+    before,
+    after,
+    operations,
+  };
+}
+
+function hasStructuredInstallError(value: unknown): boolean {
+  return isPlainRecord(value) && isPlainRecord(value.error);
+}
+
+async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent) {
   const catalog: Record<ConfigChangeIntent, {
     readonly targets: readonly string[];
+    readonly managedTargets: readonly string[];
+    readonly externalActions: readonly { readonly id: string; readonly label: string; readonly command: string | null; readonly blocking: boolean }[];
     readonly commands: readonly string[];
     readonly validations: readonly string[];
     readonly risks: readonly string[];
   }> = {
     "l4-strict": {
       targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: layers.L4.failOnWarning"],
+      managedTargets: ["phasegate.config.json"],
+      externalActions: [],
       commands: ["phasegate validate --layer L4 --fail-on-warning --format human"],
       validations: ["phasegate phasegate:detect-drift --json", "phasegate phasegate:check-ready"],
       risks: ["L4 findings may be advisory today but become blocking when fail-on-warning is enabled."],
     },
     "codex-hooks": {
       targets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
+      managedTargets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
+      externalActions: [{ id: "codex-hooks-feature", label: "Enable Codex user-level hooks feature.", command: "codex features enable codex_hooks", blocking: true }],
       commands: ["phasegate install --agent codex --apply", "codex features enable codex_hooks"],
       validations: ["phasegate doctor --json", "phasegate phasegate:status --json"],
       risks: ["Codex apply_patch writes still require the pre-commit backstop for full coverage."],
     },
     "ci-fail-on-warning": {
       targets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
+      managedTargets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
+      externalActions: [{ id: "github-actions-first-run", label: "Trigger or inspect the first GitHub Actions PhaseGate run.", command: null, blocking: false }],
       commands: ["phasegate install --with-ci --apply", "phasegate validate --layer L4 --fail-on-warning"],
       validations: ["phasegate doctor", "phasegate ci:generate-template --type aidlc-gate --render"],
       risks: ["Existing warning-only projects may start failing CI after rollout."],
     },
     "baseline-reset": {
       targets: [".phasegate/baseline.json"],
+      managedTargets: [".phasegate/baseline.json"],
+      externalActions: [],
       commands: ["phasegate baseline --dry-run", "phasegate baseline --force --json"],
       validations: ["phasegate phasegate:status --json", "phasegate phasegate:check-ready"],
       risks: ["A reset can hide historical drift if reviewed without the generated diff."],
     },
     "quick-mode-strict": {
       targets: ["phasegate.config.json: quickMode"],
+      managedTargets: ["phasegate.config.json"],
+      externalActions: [],
       commands: ["phasegate check-change-category --paths <changed-files> --format json"],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
       risks: ["More changes will require Full Mode validation before commit."],
     },
   };
+  const before = await readProjectJson(rootDir, "phasegate.config.json");
   return {
     intent,
     ...catalog[intent],
+    configPatch: buildConfigPatchPreview(intent, before),
     diffExplanation: "Review the listed targets first, apply through PhaseGate managed commands where possible, then run the validations in order.",
     rollback: "Use git diff for config changes; use phasegate uninstall/reconcile dry-runs for managed setup targets.",
   };
@@ -1315,7 +1576,7 @@ async function main(): Promise<void> {
           console.log("  • Q&A about phasegate concepts: invoke /phasegate-toolkit-guide");
           console.log("  • Diagnose & tune phasegate.config.json: invoke /phasegate-config-doctor");
         }
-        process.exit(0);
+        process.exit(hasStructuredInstallError(installResult) ? 1 : 0);
         break;
       }
 
@@ -1436,7 +1697,7 @@ async function main(): Promise<void> {
         const workflow = parseWorkflowMode(parseFlag(args, "--workflow") ?? (intent === "strict" ? "strict" : "standard"));
         const withCi = hasFlag(args, "--with-ci") || intent === "ci-only" || intent === "strict";
         const withHusky = hasFlag(args, "--with-husky") || intent === "agent-hooks" || intent === "strict";
-        const plan = await buildAgentSetupPlan(rootDir, { intent, agent, withHusky, withCi, workflow });
+        let plan = await buildAgentSetupPlan(rootDir, { intent, agent, withHusky, withCi, workflow });
         const apply = hasFlag(args, "--apply");
         let installResult: unknown = null;
         let bootstrapResult: unknown = null;
@@ -1469,6 +1730,7 @@ async function main(): Promise<void> {
             workflow,
             agent,
           });
+          plan = await buildAgentSetupPlan(rootDir, { intent, agent, withHusky, withCi, workflow });
         }
         const output = { plan, applied: apply, bootstrapResult, installResult };
         if (json) {
@@ -1496,7 +1758,7 @@ async function main(): Promise<void> {
           console.error(flagError);
           process.exit(2);
         }
-        const plan = buildConfigChangePlan(parseConfigChangeIntent(parseFlag(args, "--intent")));
+        const plan = await buildConfigChangePlan(rootDir, parseConfigChangeIntent(parseFlag(args, "--intent")));
         if (json) {
           console.log(JSON.stringify(plan, null, 2));
         } else {

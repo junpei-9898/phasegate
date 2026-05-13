@@ -1547,3 +1547,9 @@ The hook runtime remains responsible for enforcement. The context file is guidan
 Agent-facing setup and configuration changes are exposed through CLI planning payloads before mutation. Agents should use `setup:agent --dry-run --json` to decide which setup questions remain, and `config:plan --intent <intent> --json` to explain config/setup changes before editing files.
 
 These planners provide guidance and validation steps. Actual enforcement remains in hooks, doctor, validate, check-ready, and git/CI backstops.
+
+### WI-175 Agent-Readable Setup Confidence
+
+<!-- @work-item-id WI-175 -->
+
+Agent-facing setup plans include completeness entries and external manual actions so an agent can explain both what PhaseGate configured and what remains outside local automation. Agent workflows should treat `configured` and `planned` local areas as evidence, and should separately report `manual` external actions such as `codex features enable codex_hooks` or a first GitHub Actions run.
