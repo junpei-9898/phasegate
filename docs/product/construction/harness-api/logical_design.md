@@ -1866,3 +1866,8 @@ WI-032 以降、`phasegate init --with-ci` の配置対象に `.github/workflows
 ## WI-155 Work-Item Traceability In CLI Contracts
 
 Harness API treats `Work-Item: WI-XXX` commit trailers, `@work-item-id WI-XXX` product annotations, and legacy `@story-id` records as separate evidence channels. CLI status and drift payloads may reference WI-derived metadata, but product reflection remains satisfied only by accumulated product docs carrying `@work-item-id`. Existing H/US annotations stay readable through WI `legacy_id`; new command contract sections must use Work Item IDs.
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Agent Setup Planner Observable Contract
+
+Harness API integration tests cover `setup:agent` as the observable CLI boundary for Claude Code setup. The contract includes generated Claude context that routes configured readiness into WI planning/product reflection/validation, and structured setup errors that preserve target-aware recovery fields for agents.

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-<!-- @work-item-id WI-171, WI-172, WI-173, WI-175, WI-176 -->
+<!-- @work-item-id WI-171, WI-172, WI-173, WI-175, WI-176, WI-177 -->
 
 Start with:
 
@@ -72,6 +72,14 @@ Check `plan.completeness` in `setup:agent --json`:
 
 When `install` or `setup:agent --apply` returns a structured `error`, use its `target`, `operation`, `code`, `recovery`, and `partialChanges` fields before rerunning.
 
+Common structured setup errors:
+
+| Code | Usually means | First recovery step |
+|---|---|---|
+| `EPERM` / `EACCES` | The current sandbox, user, or filesystem denied the write. | Ask the user to rerun in a writable workspace or approve the write, then retry the same `--apply` command. |
+| `EEXIST` / `ENOTDIR` | A parent path such as `.claude` or `.codex` exists as a file or incompatible path. | Inspect the path, decide whether it is user-owned, then move or rename it before rerunning. |
+| hash mismatch / refused target | A PhaseGate managed target contains user edits outside the expected hash. | Use `invoke /phasegate-config-doctor` and explain backup, merge, and `--force` tradeoffs before applying. |
+
 ## Claude Code Setup Still Feels Unclear
 
 Run the Claude-specific planner path:
@@ -85,3 +93,5 @@ Check `plan.agentReadiness`:
 - `agent=claude`: local Claude Code targets (`.claude/settings.json`, `CLAUDE.md`, skills).
 - `agent=shared`: package/config/skills plus selected Husky and CI targets.
 - `agent=codex`: should be `not-applicable` unless you selected `--agent both` or `--agent codex`.
+
+When `claude` and `shared` are `configured`, the next step is work planning, not more setup. Confirm or create the WI under `docs/inception/**/{WI-XXX}/description.md`, write the needed inception plan/design files, reflect accepted design into `docs/product/...` with `@work-item-id WI-XXX`, then run `npx phasegate phasegate:check-ready` or the relevant `validate --layer ...` command.

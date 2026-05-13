@@ -48,3 +48,10 @@ Setup lifecycle commands must preserve user content outside managed markers and 
 `setup:agent` reports `plan.agentReadiness` in addition to area-based completeness. Setup owns the local file evidence for the `claude`, `codex`, and `shared` rows, including selected hook files, agent context files, shared skills, package/config, Husky, and CI targets.
 
 The setup contract keeps local readiness separate from external actions. A configured Claude row means `.claude/settings.json`, `CLAUDE.md`, and shared skills are present; it does not prove that the Claude Code application has opened the repository. A configured shared row does not prove hosted CI has executed.
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Claude Code Post-Readiness Workflow
+
+Setup-managed Claude context must tell the agent what to do after local readiness is configured. The managed `CLAUDE.md` section therefore bridges setup into the work lifecycle: confirm or create a WI, prepare inception planning/design artifacts, reflect accepted design into product docs with `@work-item-id`, and run readiness or layer validation before commit.
+
+This guidance remains inside the managed section so `install`, `reconcile`, and `ci:auto-refresh-agent-context` can update it without overwriting user-owned instructions outside PhaseGate markers.

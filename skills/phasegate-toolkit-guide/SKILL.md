@@ -134,6 +134,8 @@ docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 
 `setup:agent` は初回 setup / retrofit / CI-only / agent hook 有効化の agent-readable planner、`config:plan` は安全な設定変更 intent planner。質問が「次に何を実行するか」「この変更はどの file/validation に対応するか」に寄っている場合は、これらの guide と CLI を案内する。<!-- @work-item-id WI-171, WI-172, WI-173 -->
 
+Claude Code readiness の質問では `npx phasegate setup:agent --agent claude --dry-run --json` を案内し、`plan.agentReadiness` の `claude` / `shared` が `configured` なら setup ではなく作業導線へ進める。最短ルートは、WI の確認または起票、`docs/inception/.../{WI-XXX}/` への計画/設計、`docs/product/...` への `@work-item-id WI-XXX` 反映、`phasegate phasegate:check-ready` または該当 `validate` の実行である。`setup:agent --apply --json` の structured `error` は troubleshooting に委譲し、`target` / `operation` / `code` / `recovery` を読ませる。<!-- @work-item-id WI-177 -->
+
 ### 8. skill 一覧と使い分け
 
 ユーザー質問例:

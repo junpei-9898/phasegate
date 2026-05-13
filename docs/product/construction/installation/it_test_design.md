@@ -99,3 +99,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `setup:agent --agent claude --intent strict --with-husky --dry-run --json` | `plan.agentReadiness` marks Claude planned, Codex not-applicable, and shared planned. |
 | `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` followed by dry-run | Claude, Codex, and shared readiness rows are configured while external actions remain manual. |
 | Registry dogfood after publish | Fresh project Claude setup creates `.claude/settings.json`, `CLAUDE.md`, `.claude/skills`, shared config, selected hooks, and validation commands pass. |
+
+<!-- @work-item-id WI-177 -->
+## 2.5 Claude Code Post-Readiness and Recovery Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` followed by reading `CLAUDE.md` | Managed Claude context contains the post-readiness workflow from configured readiness to WI planning, product reflection, and validation. |
+| `ci:auto-refresh-agent-context --apply` with existing Claude user section | User-owned Claude instructions are preserved while the managed post-readiness workflow is refreshed. |
+| `setup:agent --apply --json` with `.codex` or `.claude` path conflict | Structured error distinguishes incompatible parent paths from permission denial and includes recovery guidance plus partial changes. |

@@ -1561,3 +1561,10 @@ Agent-facing setup plans include completeness entries and external manual action
 Agent integration consumes `plan.agentReadiness` as startup guidance. Claude Code should inspect the `claude` and `shared` rows before planning work from `CLAUDE.md`; Codex should inspect the `codex` and `shared` rows and still surface user-level `codex_hooks` enablement as manual external work.
 
 Runtime hooks remain the enforcement layer. The readiness rows are explanatory context for the agent, not proof that the runtime has fired hooks or that external services are configured.
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Claude Code Work Routing After Readiness
+
+Agent integration treats configured Claude readiness as the start of normal work routing. Once managed Claude context and shared setup are present, Claude Code should use the repository instructions to identify the WI, prepare inception artifacts, confirm product reflection, and run validation instead of repeatedly rechecking setup.
+
+Structured setup failures are explanatory input for the agent. The agent should report target-aware filesystem or permission causes to the user and should not present a sandbox/path conflict as a PhaseGate implementation defect unless the recovery guidance itself is inconsistent.

@@ -3,6 +3,7 @@
 // @work-item-id WI-146
 // @work-item-id WI-174
 // @work-item-id WI-175
+// @work-item-id WI-177
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -236,14 +237,16 @@ function likelyCauseFor(code: string): string {
   if (code === "EPERM") return "The filesystem or sandbox denied this write operation.";
   if (code === "EACCES") return "The current user does not have permission to write this target.";
   if (code === "EROFS") return "The project is on a read-only filesystem.";
+  if (code === "EEXIST") return "A parent path already exists as a file or incompatible filesystem entry.";
   if (code === "ENOTDIR") return "A parent path exists but is not a directory.";
   return "The managed target could not be written.";
 }
 
 function recoveryFor(code: string, target: string): string {
-  if (code === "EPERM") return `Review sandbox or filesystem permissions for ${target}, then rerun phasegate setup:agent --apply or phasegate install --apply.`;
+  if (code === "EPERM") return `Review sandbox or filesystem permissions for ${target}, ask the user for write access when needed, then rerun phasegate setup:agent --apply or phasegate install --apply.`;
   if (code === "EACCES") return `Fix ownership or permissions for ${target}, then rerun phasegate install --apply.`;
   if (code === "EROFS") return `Move the project to a writable filesystem or rerun in a writable workspace before applying ${target}.`;
+  if (code === "EEXIST" || code === "ENOTDIR") return `Inspect the parent path for ${target}; if it is user-owned, rename or move it before rerunning phasegate install --dry-run --json and then --apply.`;
   return `Inspect ${target}, run phasegate install --dry-run --json, then rerun with --apply after resolving the filesystem issue.`;
 }
 

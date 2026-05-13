@@ -5,10 +5,11 @@
 // @work-item-id WI-173
 // @work-item-id WI-175
 // @work-item-id WI-176
+// @work-item-id WI-177
 // @story H11-06
 
 import { spawn } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -172,7 +173,8 @@ target("agent setup planner CLI", () => {
         const apply = await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"], projectRoot);
         const dryRun = await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"], projectRoot);
         const installDryRun = await runCli(["install", "--agent", "both", "--workflow", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"], projectRoot);
-        return { apply, dryRun, installDryRun };
+        const claudeMd = await readFile(join(projectRoot, "CLAUDE.md"), "utf8");
+        return { apply, dryRun, installDryRun, claudeMd };
       });
 
       // Assert
@@ -206,6 +208,8 @@ target("agent setup planner CLI", () => {
           expect.objectContaining({ path: "CLAUDE.md", action: "will-skip", changed: false }),
         ]),
       );
+      expect(actual.claudeMd).toContain("After the `claude` and `shared` rows are `configured`");
+      expect(actual.claudeMd).toContain("Reflect the accepted design into the relevant `docs/product/...` files with `@work-item-id WI-XXX`");
     }, 120000);
 
     it("setup:agent apply が structured install error を返した場合は exit 1 で終了すること", async () => {
@@ -222,6 +226,8 @@ target("agent setup planner CLI", () => {
             target: string;
             operation: string;
             code: string;
+            likelyCause: string;
+            recovery: string;
             partialChanges: string[];
           };
         };
@@ -233,6 +239,8 @@ target("agent setup planner CLI", () => {
         partialChanges: [".claude/settings.json", "CLAUDE.md"],
       });
       expect(["EEXIST", "ENOTDIR"]).toContain(parsed.installResult.error.code);
+      expect(parsed.installResult.error.likelyCause).toMatch(/parent path|managed target/i);
+      expect(parsed.installResult.error.recovery).toContain("phasegate install --dry-run --json");
     }, 120000);
   });
 });

@@ -47,3 +47,10 @@ README and `docs/guide/*` document `plan.agentReadiness` as the agent-specific v
 - `shared`: package/config/skills plus selected Husky and CI managed targets.
 
 Documentation must also state that manual external actions remain outside local proof even when local readiness is configured.
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Claude Code Post-Readiness and Recovery Docs
+
+Public troubleshooting documentation explains the difference between readiness completion and work-start actions. When Claude and shared readiness are configured, docs route the user to WI confirmation or creation, inception planning/design, product reflection with `@work-item-id`, and validation.
+
+Troubleshooting documentation also maps structured apply errors to likely environmental causes: permission denial, incompatible existing paths, and managed target hash/refusal. It points agents to `phasegate-config-doctor` for ai-assisted merge/recovery and `phasegate-toolkit-guide` for read-only setup guidance.

@@ -1944,3 +1944,10 @@ Skill-quality remains responsible for bundled skill content and structure valida
 `phasegate-toolkit-guide` and `phasegate-config-doctor` should treat `setup:agent --agent claude --dry-run --json` as the first diagnostic command for Claude Code setup questions. Skill guidance may explain `plan.agentReadiness`, but file mutation remains owned by setup / installation commands.
 
 The skills should preserve the distinction between local readiness and manual external actions so an agent does not claim hosted CI, Codex user-level hooks, or team policy acceptance as complete from local files alone.
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Post-Readiness Skill Routing
+
+`phasegate-toolkit-guide` should answer read-only questions about Claude Code readiness and point to the shortest post-readiness workflow once `claude` and `shared` rows are configured. `phasegate-config-doctor` should handle setup repair, managed target conflicts, and structured install errors by reading `target`, `operation`, `code`, `likelyCause`, `recovery`, and `partialChanges`.
+
+Both skills route agents away from repeated setup once local readiness is complete and toward WI planning, product reflection, validation, and commit preparation.

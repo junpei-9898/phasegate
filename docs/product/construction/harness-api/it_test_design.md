@@ -598,3 +598,11 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 | IT-API-Status-WI166-001 | hook skip JSON Lines を status に投影すること | `.phasegate/hook-skip-events.jsonl` に valid event あり | `data.hookHealth.latestSkipEvent` と reason count が返る |
 | IT-API-Status-WI166-002 | malformed line があっても status が失敗しないこと | valid line + broken line | broken line は operational warning になり、exit code 0 を維持 |
 | IT-API-Status-WI166-003 | Codex apply_patch backstop を operational warning に出すこと | native pre-edit hook gap がある runtime | L2 pre-commit backstop の `nextAction` が返る |
+
+<!-- @work-item-id WI-177 -->
+## WI-177 Agent Setup Planner Integration Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-WI177-001 | setup apply 後に generated CLAUDE.md が post-readiness workflow を含むこと | `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` | `CLAUDE.md` に WI planning、product reflection、validation の導線が含まれる |
+| IT-API-WI177-002 | setup apply の path conflict が recovery を説明すること | `.codex` が file の状態で `setup:agent --apply --json` | structured error に target, operation, code, likelyCause, recovery, partialChanges が含まれる |

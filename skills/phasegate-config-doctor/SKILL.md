@@ -133,6 +133,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 - Codex の `codex_hooks` feature flag は user-level setting。project-local `install` では変更されないため、必要なら `codex features enable codex_hooks` を案内
 - Codex native `apply_patch` bypass は hook で完全捕捉できない。`.husky/pre-commit` の `phasegate pre-commit` が backstop になるため、Husky 配線を診断対象に含める
 - 初回 setup / retrofit / CI-only / agent-hooks の判断が曖昧な場合は `npx phasegate setup:agent --dry-run --json` を先に使い、検出済み状態、質問、変更案、rollback、validation を根拠として提案する。<!-- @work-item-id WI-172 -->
+- Claude Code setup 相談では `npx phasegate setup:agent --agent claude --dry-run --json` を先に使い、`plan.agentReadiness` の `claude` / `shared` が `configured` なら setup 修復ではなく WI 起票、inception 計画、product reflection、validation の順で作業開始を案内する。`setup:agent --apply --json` または `install --apply --json` の structured `error` がある場合は、`target`, `operation`, `code`, `likelyCause`, `recovery`, `partialChanges` を読み、`.claude` が file として存在する path conflict、sandbox/permission denial、PhaseGate managed target hash mismatch を区別して説明する。<!-- @work-item-id WI-177 -->
 - 「L4 を厳しめにして」「Codex hook を有効にして」「CI で warning を fail にして」などの自然言語依頼は、`npx phasegate config:plan --intent <intent> --dry-run --json` で対象ファイル、コマンド、リスク、検証を確認してから diff を提案する。<!-- @work-item-id WI-173 -->
 - `AGENTS.md` は標準運用ルールの managed section と lesson pointer section を分ける。`ci:auto-refresh-agent-context --apply` は lesson pointers 専用 section を更新し、標準運用ルールや user-owned content を置換してはいけない。<!-- @work-item-id WI-174 -->
 

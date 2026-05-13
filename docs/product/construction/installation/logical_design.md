@@ -491,3 +491,10 @@ The command may call `RunInstallUseCase` in `--apply` mode, but its dry-run JSON
 Install and setup apply paths should preserve a machine-readable result even when an anticipated filesystem permission error occurs. For `EPERM`, `EACCES`, readonly filesystem, or symlink denial failures, the CLI result includes the target path, failed operation, error code, likely cause, recovery guidance, and already changed targets.
 
 Equivalent install options and setup intent options must render the same managed agent context. Strict setup with both agents, Husky, CI, all skills, and strict workflow must not introduce direct-install drift for `AGENTS.md` or `CLAUDE.md`.
+
+<!-- @work-item-id WI-177 -->
+## 15. Claude Code Recovery Guidance
+
+Target-aware apply errors are part of the agent contract. `RunInstallUseCase` classifies permission denial (`EPERM`, `EACCES`, `EROFS`) separately from incompatible parent paths (`EEXIST`, `ENOTDIR`) so Claude Code can explain whether the user should grant filesystem access, move a conflicting `.claude` / `.codex` path, or use ai-assisted managed-target recovery.
+
+Structured errors must preserve `target`, `operation`, `code`, `likelyCause`, `recovery`, and `partialChanges` in JSON output. Human and skill guidance can then describe partial setup state before retrying the same apply command.
