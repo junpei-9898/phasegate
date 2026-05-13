@@ -421,6 +421,8 @@ Phase B (v1.1 target):
 
 The shipped catalog currently contains 30 skills. `npx phasegate init --skills core|all` is the implemented public selector; `aidlc` is not accepted by the current CLI. When adding or retiring a skill, update `skills/*/SKILL.md`, `docs/guide/skills-overview.md`, README skill counts, and any setup guidance skill references in the same change. @work-item-id WI-154
 
+Before release, run `npx phasegate validate --layer L4 --format human` or the equivalent package script path to catch scheduled documentation drift, including `L4-006 skill-catalog-drift`. Command/script drift and install target drift remain manual release checklist items until dedicated validators are added. @work-item-id WI-156
+
 ### Harness→Phasegate Rename (Planned, Breaking Change)
 
 **Planning doc**: `docs/inception/_shared/harness_to_phasegate_rename_plan.md`

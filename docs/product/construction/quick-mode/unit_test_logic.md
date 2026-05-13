@@ -1655,14 +1655,14 @@ const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
   'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006',
 ];
 
 target('ValidatorRelaxationService', () => {
   target('build', () => {
     describe('QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する', () => {
       // UT-VRS-001
-      it('デフォルト設定と全ValidatorId（L1-001〜L4-005）が渡された場合にデフォルト緩和プロファイルが生成されること', () => {
+      it('デフォルト設定と全ValidatorId（L1-001〜L4-006）が渡された場合にデフォルト緩和プロファイルが生成されること', () => {
         // Arrange
         const config = createQuickModeConfig(); // relaxedGates: ['L2-001'], maintainedLayers: ['L1']
         // Act
@@ -2016,7 +2016,7 @@ const ALL_VALIDATOR_IDS = [
   'L1-001', 'L1-002',
   'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
   'L3-001', 'L3-002', 'L3-003', 'L3-004',
-  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
+  'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006',
 ];
 
 const buildSut = (overrides?: {

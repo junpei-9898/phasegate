@@ -1,7 +1,7 @@
 // @layer test
 // @unit ci-governance
 // @story H08-03
-// @work-item-id WI-124 / WI-128
+// @work-item-id WI-124 / WI-128 / WI-156
 
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -18,6 +18,7 @@ target('ValidatorIdRegistryAdapter', () => {
         expect(actual).toContain('L2-001');
         expect(actual).toContain('L4-004');
         expect(actual).toContain('L4-005');
+        expect(actual).toContain('L4-006');
         expect(actual).not.toContain('v1');
       });
     });
@@ -46,6 +47,7 @@ target('ValidatorIdRegistryAdapter', () => {
           'L4-003',
           'L4-004',
           'L4-005',
+          'L4-006',
         ]);
       });
     });

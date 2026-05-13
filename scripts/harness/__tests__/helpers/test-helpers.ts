@@ -97,6 +97,7 @@ export const createValidatorRegistry = (defs?: ValidatorDefinition[]): Validator
     createValidatorDefinition({ validatorId: createValidatorId('L4-003'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-004'), layer: 'L4' }),
     createValidatorDefinition({ validatorId: createValidatorId('L4-005'), layer: 'L4' }),
+    createValidatorDefinition({ validatorId: createValidatorId('L4-006'), layer: 'L4' }),
   ];
   return new ValidatorRegistry(definitions);
 };

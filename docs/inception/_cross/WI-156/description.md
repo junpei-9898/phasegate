@@ -2,8 +2,8 @@
 id: WI-156
 type: story
 severity: high
-status: drafted
-affects: [documentation, validator-system, config-foundation, setup, skills]
+status: tested
+affects: [documentation, validator-system, config-foundation, setup, skill-quality]
 source: internal
 ---
 
@@ -33,9 +33,15 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] 少なくとも command/script drift, install target drift, skill count drift のいずれかを自動検出できる。
-- [ ] 手動チェックに残すものと自動チェックにするものが明確に分かれる。
-- [ ] 失敗時の remediation が docs に書かれている。
+- [x] 少なくとも command/script drift, install target drift, skill count drift のいずれかを自動検出できる。
+- [x] 手動チェックに残すものと自動チェックにするものが明確に分かれる。
+- [x] 失敗時の remediation が docs に書かれている。
+
+## 実装方針
+
+まず `skill count drift` を `L4-006 skill-catalog-drift` として自動検出する。`skills/*/SKILL.md` の実数と、`skills/README.md` / `README.md` / `DEVELOPMENT.md` / public guide の宣言数、および `docs/guide/skills-overview.md` のカテゴリ合計を比較する。
+
+`command/script drift` と `install target drift` は本 WI では release checklist 上の手動確認に残し、別 WI で自動化する。
 
 ## 依存
 

@@ -25,7 +25,7 @@ export function createLayerConfig(layer: 'L2' | 'L3' | 'L4', overrides: Partial<
   const defaultValidatorIds: Record<string, string[]> = {
     L2: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'],
     L3: ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
-    L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'],
+    L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'],
   };
   const defaultThresholds: Record<string, Record<string, number>> = {
     L2: {},
@@ -103,6 +103,7 @@ export function createFullRegistry(): ValidatorRegistry {
     createDef('L4-003', 'L4', 'strictOnly'),
     createDef('L4-004', 'L4'),
     createDef('L4-005', 'L4'),
+    createDef('L4-006', 'L4'),
   ]);
 }
 

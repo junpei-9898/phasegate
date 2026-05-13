@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit harness-error
+ * @work-item-id WI-156
  */
 export interface ValidatorIssueSnapshot {
   readonly code: string;
@@ -66,6 +67,7 @@ const DEFAULT_VALIDATOR_IDS = [
   'dead-code',
   'doc-freshness',
   'pointer-validation',
+  'skill-catalog-drift',
 ] as const;
 
 export const DEFAULT_VALIDATOR_ENTRYPOINTS = new Map<

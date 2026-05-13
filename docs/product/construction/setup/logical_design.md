@@ -23,6 +23,8 @@ Setup artifacts are classified as managed targets, generated artifacts, runtime 
 
 Legacy `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, and `.harness/context-priority.json` are compatibility artifacts, not current install targets. `hooks:config validate` remains compatibility-only. @work-item-id WI-157
 
+Setup target and command/script drift remain release checklist responsibilities until a dedicated automated validator owns them. L4-006 only automates shipped skill catalog count drift; setup docs and release operators must still compare public setup/install target names against the current setup lifecycle and CLI help before publishing. @work-item-id WI-156
+
 <!-- @work-item-id WI-163 -->
 ## WI-163 Generated CI Wiring
 

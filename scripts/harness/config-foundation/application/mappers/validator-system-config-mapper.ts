@@ -1,7 +1,7 @@
 /**
  * @layer application
  * @unit config-foundation
- * @work-item-id WI-133
+ * @work-item-id WI-133 / WI-156
  */
 import type { HarnessConfigV2 } from '../../domain/harness-config.js';
 
@@ -25,6 +25,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
     'doc-freshness-checker': 'L4-004',
     'pointer-validation': 'L4-005',
     'pointer-validator': 'L4-005',
+    'skill-catalog-drift': 'L4-006',
   }, /^L4-\d{3}$/);
 
   return {

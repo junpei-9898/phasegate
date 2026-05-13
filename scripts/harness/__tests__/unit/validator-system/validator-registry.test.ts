@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
+ * @work-item-id WI-156
  */
 import { describe, expect, it } from 'vitest';
 import { target, context, createValidatorId, createValidatorDefinition, createValidatorRegistry } from '../../helpers/test-helpers.js';
@@ -11,10 +12,10 @@ target('ValidatorRegistry', () => {
 
   describe('ValidatorDefinitionリストで初期化する', () => {
 
-    it('14件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
+    it('15件の有効なValidatorDefinitionリストでValidatorRegistryが生成されること (UT-VRG-001)', () => {
       // Arrange
-      const ids = ['L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005'];
-      const layers = ['L2','L2','L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4'] as const;
+      const ids = ['L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005','L4-006'];
+      const layers = ['L2','L2','L2','L2','L2','L3','L3','L3','L3','L4','L4','L4','L4','L4','L4'] as const;
       const defs = ids.map((id, i) =>
         createValidatorDefinition({ validatorId: createValidatorId(id), layer: layers[i] })
       );
@@ -22,7 +23,7 @@ target('ValidatorRegistry', () => {
       const actual = new ValidatorRegistry(defs);
       // Assert
       expect(actual.getAllDefinitions().map((def) => def.validatorId.value)).toEqual([
-        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005',
+        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005','L4-006',
       ]);
     });
 
@@ -71,14 +72,14 @@ target('ValidatorRegistry', () => {
 
   describe('getAllDefinitions()で全定義を返す', () => {
 
-    it('14件登録済みのRegistryからgetAllDefinitions()で14件全て返ること (UT-VRG-006/UT-BND-010)', () => {
+    it('15件登録済みのRegistryからgetAllDefinitions()で15件全て返ること (UT-VRG-006/UT-BND-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.getAllDefinitions();
       // Assert
       expect(actual.map((def) => def.validatorId.value)).toEqual([
-        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005',
+        'L2-001','L2-002','L2-003','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005','L4-006',
       ]);
     });
 
@@ -103,6 +104,7 @@ target('ValidatorRegistry', () => {
         expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-003' }) }),
         expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-004' }) }),
         expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-005' }) }),
+        expect.objectContaining({ validatorId: expect.objectContaining({ value: 'L4-006' }) }),
       ]);
     });
 
@@ -136,13 +138,13 @@ target('ValidatorRegistry', () => {
       expect(actual.map((def) => def.validatorId.value)).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004']);
     });
 
-    it('layer: L4を渡すとL4-001〜L4-005の5件が返ること (UT-VRG-010)', () => {
+    it('layer: L4を渡すとL4-001〜L4-006の6件が返ること (UT-VRG-010)', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act
       const actual = sut.listByLayer('L4');
       // Assert
-      expect(actual.map((def) => def.validatorId.value)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005']);
+      expect(actual.map((def) => def.validatorId.value)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006']);
     });
   });
 

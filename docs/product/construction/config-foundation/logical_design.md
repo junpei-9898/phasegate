@@ -1397,3 +1397,9 @@ Config-foundation remains the owner of schema and resolved config behavior. The 
 <!-- @work-item-id WI-175 -->
 
 `config:plan` exposes a read-only `configPatch` preview for intents that touch `phasegate.config.json`. The preview contains `path`, `applicability`, `blockedReason`, `before`, `after`, and JSON pointer operations. Intents that only manage files or require external user-level actions return `configPatch.applicability = "not-applicable"` and explain the reason through managed targets and external actions.
+
+### WI-156 L4-006 Config Projection
+
+<!-- @work-item-id WI-156 -->
+
+Preset L4 validator lists include `skill-catalog-drift` so resolved config can thread `L4-006` into validator-system. `toValidatorSystemConfig()` maps the public alias `skill-catalog-drift` to `L4-006` alongside the existing L4 aliases.

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.159.0] - 2026-05-13
+
+### Added
+
+- **WI-156 — documentation drift guardrail** — adds `L4-006 skill-catalog-drift` to compare the shipped `skills/*/SKILL.md` catalog with maintained skill-count declarations and skills overview category totals, plus release checklist guidance for remaining manual drift checks.
+
 ## [0.158.0] - 2026-05-13
 
 ### Changed

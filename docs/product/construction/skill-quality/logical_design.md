@@ -1356,7 +1356,7 @@ requiredSections = [
 **実装方針**
 
 - validator-system の Validator ID Registry インターフェースを呼び出す
-- validator-system の確定 ID（L1-001〜L4-005）を静的マップとしてフォールバックで保持する
+- validator-system の確定 ID（L1-001〜L4-006）を静的マップとしてフォールバックで保持する。@work-item-id WI-156
 - validator-system の正式 Registry が整備されたらアダプター内部実装のみ差し替える
 
 ---
@@ -1937,6 +1937,11 @@ Skill-quality tools may read legacy `@story-id` annotations to preserve old casc
 `phasegate-toolkit-guide` points users and agents to getting-started, recipes, troubleshooting, setup artifacts, and CLI reference before answering onboarding questions. `phasegate-config-doctor` uses `setup:agent` and `config:plan` as read-only planning inputs when a request involves setup repair or configuration change.
 
 Skill-quality remains responsible for bundled skill content and structure validation, not for mutating `AGENTS.md` or `CLAUDE.md` directly.
+
+<!-- @work-item-id WI-156 -->
+## WI-156 Validator Registry Bridge Refresh
+
+The skill-quality fallback validator ID bridge includes `L4-006` so planning and coverage workflows that read the static fallback do not silently omit the skill catalog drift guardrail.
 
 <!-- @work-item-id WI-176 -->
 ## WI-176 Claude Code Setup Guidance in Skills

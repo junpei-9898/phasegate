@@ -2,7 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-116 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
+ * @work-item-id WI-116 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156
  */
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -30,13 +30,13 @@ target('ValidatorId', () => {
       expect(actual.value).toBe('L3-003');
     });
 
-    it('L4-005（有効範囲最大値）を渡すとValidatorIdが生成されること (UT-VID-003/UT-BND-002)', () => {
+    it('L4-006（有効範囲最大値）を渡すとValidatorIdが生成されること (UT-VID-003/UT-BND-002)', () => {
       // Arrange
-      const input = 'L4-005';
+      const input = 'L4-006';
       // Act
       const actual = ValidatorId.create(input);
       // Assert
-      expect(actual.value).toBe('L4-005');
+      expect(actual.value).toBe('L4-006');
     });
 
     it('L2-001（有効範囲最小値）を渡すとValidatorIdが生成されること (UT-VID-004/UT-BND-001)', () => {
@@ -137,9 +137,9 @@ target('ValidatorId', () => {
       expect(actual).toThrow(InvalidValidatorIdError);
     });
 
-    it('L4-006（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
+    it('L4-007（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
       // Arrange
-      const input = 'L4-006';
+      const input = 'L4-007';
       // Act
       const actual = () => ValidatorId.create(input);
       // Assert
@@ -213,6 +213,15 @@ target('ValidatorId', () => {
       const actual = sut.getName();
       // Assert
       expect(actual).toBe('pointer-validation');
+    });
+
+    it('L4-006のValidatorIdからskill-catalog-driftを返すこと', () => {
+      // Arrange
+      const sut = ValidatorId.create('L4-006');
+      // Act
+      const actual = sut.getName();
+      // Assert
+      expect(actual).toBe('skill-catalog-drift');
     });
   });
 

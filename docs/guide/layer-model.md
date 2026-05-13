@@ -167,6 +167,7 @@ L4 validators are designed to run on a weekly schedule and detect slow-moving dr
 | **dead-code** | L4-003 | Detects unused exports and unreachable code that should be removed. |
 | **doc-freshness** | L4-004 | Checks design document freshness against the configured threshold. Also available through the `p2:check-freshness` compatibility command. |
 | **pointer-validation** | L4-005 | Resolves and validates design document pointers. Also available through the `p2:validate-pointers` compatibility command. |
+| **skill-catalog-drift** | L4-006 | Compares `skills/*/SKILL.md` count with maintained public/operator skill-count declarations and `skills-overview` category totals. |
 
 <!-- @work-item-id WI-116 -->
 `doc-freshness` and `pointer-validation` are registered as L4-004/L4-005. The standalone `p2:check-freshness` and `p2:validate-pointers` commands remain as compatibility entry points; canonical L4 execution is `validate --layer L4`. WI-033 remains closed as validator registration work; WI-128 tracks scheduling/default/policy rollout.
@@ -190,7 +191,7 @@ The canonical validator catalog is:
 |---|---|
 | L2 | `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015` |
 | L3 | `L3-001`, `L3-002`, `L3-003`, `L3-004` |
-| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005` |
+| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005`, `L4-006` |
 
 `validate --layer L2` runs all enabled L2 validators. `validate --layer L4` is an explicit operator request and runs L4 even when standard preset config leaves `layers.L4.enabled: false`. `validate --layer all`, `phasegate:ci-check`, and aggregate CI-style commands preserve disabled L4 entries as skipped results; skipped results do not fail the process and are not promoted by `--fail-on-warning`.
 

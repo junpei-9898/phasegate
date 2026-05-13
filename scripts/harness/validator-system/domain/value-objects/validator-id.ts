@@ -1,13 +1,14 @@
 /**
  * @layer domain
  * @unit validator-system
- * @work-item-id WI-116
+ * @work-item-id WI-116 / WI-156
  *
  * ValidatorId 値オブジェクト
- * L1-001〜L4-005 のバリデータを識別する不変値オブジェクト
+ * L1-001〜L4-006 のバリデータを識別する不変値オブジェクト
  * Wave 2A で L1-017, L1-018, L2-013 を追加
  * WI-140 で L2-014 を追加
  * WI-132/WI-133/WI-136/WI-137/WI-138 で L2-015 を追加
+ * WI-156 で L4-006 を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -40,6 +41,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   'L4-003': 'dead-code',
   'L4-004': 'doc-freshness',
   'L4-005': 'pointer-validation',
+  'L4-006': 'skill-catalog-drift',
 };
 
 /** バリデータ名 -> バリデータID の逆引きマップ */
@@ -50,6 +52,7 @@ const NAME_TO_ID_MAP: Record<string, string> = {
   'dead-code-detector': 'L4-003',
   'doc-freshness-checker': 'L4-004',
   'pointer-validator': 'L4-005',
+  'skill-catalog-drift': 'L4-006',
 };
 
 /** 有効なValidatorID集合 */

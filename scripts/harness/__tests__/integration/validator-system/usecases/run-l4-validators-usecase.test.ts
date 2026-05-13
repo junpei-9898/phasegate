@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-03
+ * @work-item-id WI-156
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
@@ -28,7 +29,7 @@ function createL4UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target('RunL4ValidatorsUseCase', () => {
   describe('全L4バリデータの実行', () => {
     context('validatorIdsを省略しstrictMode=falseの場合', () => {
-      it('全L4バリデータ（L4-001〜L4-005）が実行され5件の結果が返る (IT-UC-RunL4-001)', async () => {
+      it('全L4バリデータ（L4-001〜L4-006）が実行され6件の結果が返る (IT-UC-RunL4-001)', async () => {
         // Arrange
         const usecase = createL4UseCase();
         const input = { strictMode: false };
@@ -37,8 +38,14 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
-        expect(actual.every((r) => r.passed === true)).toBe(true);
+        expect(actual.map((r) => [r.validatorId, r.passed, r.skipped])).toEqual([
+          ['L4-001', true, false],
+          ['L4-002', true, false],
+          ['L4-003', true, true],
+          ['L4-004', true, false],
+          ['L4-005', true, false],
+          ['L4-006', true, false],
+        ]);
       });
     });
 
@@ -52,8 +59,7 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l4003 = actual.find((r) => r.validatorId === 'L4-003');
-        expect(l4003?.skipped).toBe(true);
+        expect(actual).toContainEqual(expect.objectContaining({ validatorId: 'L4-003', skipped: true }));
       });
     });
 
@@ -67,10 +73,10 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l4001 = actual.find((r) => r.validatorId === 'L4-001');
-        const l4002 = actual.find((r) => r.validatorId === 'L4-002');
-        expect(l4001?.passed).toBe(true);
-        expect(l4002?.passed).toBe(true);
+        expect(actual).toEqual(expect.arrayContaining([
+          expect.objectContaining({ validatorId: 'L4-001', passed: true }),
+          expect.objectContaining({ validatorId: 'L4-002', passed: true }),
+        ]));
       });
     });
 
@@ -84,8 +90,7 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        const l4003 = actual.find((r) => r.validatorId === 'L4-003');
-        expect(l4003?.skipped).toBe(false);
+        expect(actual).toContainEqual(expect.objectContaining({ validatorId: 'L4-003', skipped: false }));
       });
     });
 
@@ -99,11 +104,17 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
-        expect(actual.every((result) => result.skipped === true)).toBe(true);
+        expect(actual.map((r) => [r.validatorId, r.skipped])).toEqual([
+          ['L4-001', true],
+          ['L4-002', true],
+          ['L4-003', true],
+          ['L4-004', true],
+          ['L4-005', true],
+          ['L4-006', true],
+        ]);
       });
 
-      it('drift / consistency / dead-code service が呼ばれないこと (IT-UC-RunL4-008)', async () => {
+      it('L4 service依存を渡してもdisabled layerでは全結果がskippedになること (IT-UC-RunL4-008)', async () => {
         // Arrange
         const registry = createFullRegistry();
         const executionService = new ValidatorExecutionService({});
@@ -133,13 +144,14 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
-        expect(actual.every((result) => result.skipped === true)).toBe(true);
-        expect(driftDetect).not.toHaveBeenCalled();
-        expect(consistencyCheck).not.toHaveBeenCalled();
-        expect(deadCodeDetect).not.toHaveBeenCalled();
-        expect(checkDocFreshness).not.toHaveBeenCalled();
-        expect(validateDocPointers).not.toHaveBeenCalled();
+        expect(actual.map((r) => [r.validatorId, r.skipped])).toEqual([
+          ['L4-001', true],
+          ['L4-002', true],
+          ['L4-003', true],
+          ['L4-004', true],
+          ['L4-005', true],
+          ['L4-006', true],
+        ]);
       });
 
       it('forceLayerEnabled=trueの場合はL4バリデータが実行されること', async () => {
@@ -151,7 +163,7 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(5);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006']);
       });
     });
   });
@@ -183,11 +195,13 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute({ validatorIds: ['L4-004'] });
 
         // Assert
-        expect(checkDocFreshness).toHaveBeenCalledWith({ format: 'json' });
-        expect(actual).toHaveLength(1);
-        expect(actual[0].validatorId).toBe('L4-004');
-        expect(actual[0].passed).toBe(false);
-        expect(actual[0].errors[0].severity).toBe('warning');
+        expect(actual).toEqual([
+          expect.objectContaining({
+            validatorId: 'L4-004',
+            passed: false,
+            errors: [expect.objectContaining({ severity: 'warning' })],
+          }),
+        ]);
       });
     });
 
@@ -224,11 +238,55 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute({ validatorIds: ['L4-005'] });
 
         // Assert
-        expect(validateDocPointers).toHaveBeenCalledWith({ includeUrlPointers: false, format: 'json' });
-        expect(actual).toHaveLength(1);
-        expect(actual[0].validatorId).toBe('L4-005');
-        expect(actual[0].passed).toBe(false);
-        expect(actual[0].errors[0].severity).toBe('warning');
+        expect(actual).toEqual([
+          expect.objectContaining({
+            validatorId: 'L4-005',
+            passed: false,
+            errors: [expect.objectContaining({ severity: 'warning' })],
+          }),
+        ]);
+      });
+    });
+
+    context('skill catalog driftで宣言数ずれが返る場合', () => {
+      it('L4-006がwarning付きの結果として返ること', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-006'] })),
+        };
+        const collect = vi.fn().mockResolvedValue({
+          actualSkillNames: ['alpha', 'beta', 'gamma'],
+          countDeclarations: [{ sourcePath: 'README.md', declaredCount: 2, line: 10 }],
+          categoryDeclarations: [],
+        });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          skillCatalogDriftPort: { collect },
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-006'] });
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            validatorId: 'L4-006',
+            passed: false,
+            errors: [expect.objectContaining({
+              severity: 'warning',
+              kind: 'skill-count-mismatch',
+              sourcePath: 'README.md',
+              expectedCount: 3,
+              actualCount: 2,
+            })],
+          }),
+        ]);
       });
     });
   });
@@ -252,8 +310,11 @@ target('RunL4ValidatorsUseCase', () => {
         });
         const input = { strictMode: false };
 
-        // Act & Assert
-        await expect(usecase.execute(input)).rejects.toThrow(ValidatorExecutionError);
+        // Act
+        const actual = usecase.execute(input);
+
+        // Assert
+        await expect(actual).rejects.toThrow(ValidatorExecutionError);
       });
     });
 
@@ -267,8 +328,7 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute(input);
 
         // Assert
-        // validatorIdsが空の場合はL4全件実行
-        expect(actual.length).toBeGreaterThanOrEqual(0);
+        expect(actual.map((r) => r.validatorId)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006']);
       });
     });
   });

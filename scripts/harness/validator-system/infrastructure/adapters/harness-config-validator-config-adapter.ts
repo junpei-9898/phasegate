@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit validator-system
+ * @work-item-id WI-156
  *
  * HarnessConfigValidatorConfigAdapter — ValidatorConfigPort実装
  * HarnessConfigV2からLayerConfig VOを構築する
@@ -40,7 +41,7 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
     const defaultValidators: Record<string, string[]> = {
       L2: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'],
       L3: ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
-      L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'],
+      L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'],
     };
 
     const thresholds: Record<string, number> = {};

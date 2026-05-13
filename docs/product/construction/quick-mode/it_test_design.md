@@ -81,7 +81,7 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-Build-001 | eligible=trueのeligibilityを渡すとデフォルト緩和プロファイルが生成される | `{ eligibility: { eligible: true, reason: '...' } }` | `quickModeConfigPort.getQuickModeConfig()` → デフォルト設定, `validatorIdRegistryPort.getAllValidatorIds()` → `['L1-001',...,'L4-005']`（23件） | `{ levelDependencyRelaxed: false, l1: {all:true}, l2: {maintained:['L2-002','L2-003','L2-014'], skipped:['L2-001','L2-013','L2-015']}, l3: {maintained:['L3-001'], skipped:['L3-002','L3-003','L3-004']}, l4: {all:false}, phaseExecution: {twoPhaseRequired:false} }` |
+| IT-UC-Build-001 | eligible=trueのeligibilityを渡すとデフォルト緩和プロファイルが生成される | `{ eligibility: { eligible: true, reason: '...' } }` | `quickModeConfigPort.getQuickModeConfig()` → デフォルト設定, `validatorIdRegistryPort.getAllValidatorIds()` → `['L1-001',...,'L4-006']`（24件） | `{ levelDependencyRelaxed: false, l1: {all:true}, l2: {maintained:['L2-002','L2-003','L2-014'], skipped:['L2-001','L2-013','L2-015']}, l3: {maintained:['L3-001'], skipped:['L3-002','L3-003','L3-004']}, l4: {all:false}, phaseExecution: {twoPhaseRequired:false} }`. @work-item-id WI-156 |
 | IT-UC-Build-002 | 返却されるDTOがINV-P1〜INV-P6の不変条件をすべて満たすこと | `{ eligibility: { eligible: true, reason: '...' } }` | デフォルト設定, 全ID一覧 | `levelDependencyRelaxed === false`, `l1.all === true`, `l4.all === false`, `phaseExecution.twoPhaseRequired === false`, `l2.maintained∪l2.skipped = {L2-001,L2-002,L2-003,L2-013,L2-014,L2-015}`, `l3.maintained∪l3.skipped = {L3-001,L3-002,L3-003,L3-004}` |
 | IT-UC-Build-003 | カスタムmaintainedLayers設定でプロファイルが正しく生成される | `{ eligibility: { eligible: true, reason: '...' } }` | `quickModeConfigPort.getQuickModeConfig()` → `{ allowedCategories: ['bugfix','docs','test','config'], maintainedLayers: ['L1','L2-001','L2-002','L2-003','L2-013','L2-014','L2-015','L3-001'], relaxedGates: ['L3-002','L3-003','L3-004','L4'] }`, 全ID一覧 | `l2.maintained` が全L2 IDを含み、`l2.skipped === []`（全L2維持）, `l3.maintained === ['L3-001']` |
 
@@ -182,11 +182,11 @@
 
 | ケースID | 操作 | 入力 | 事前データ | 期待結果 |
 |---------|------|------|----------|---------|
-| IT-REPO-Registry-001 | getAllValidatorIdsが全ID（L1-001〜L4-005）を返すこと | なし | 静的定義 | 返却配列が `['L1-001','L1-002','L1-003','L1-004','L1-005','L1-006','L1-007','L1-008','L2-001','L2-002','L2-003','L2-013','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005']` の全23件を含む（順序を問わず） |
+| IT-REPO-Registry-001 | getAllValidatorIdsが全ID（L1-001〜L4-006）を返すこと | なし | 静的定義 | 返却配列が `['L1-001','L1-002','L1-003','L1-004','L1-005','L1-006','L1-007','L1-008','L2-001','L2-002','L2-003','L2-013','L2-014','L2-015','L3-001','L3-002','L3-003','L3-004','L4-001','L4-002','L4-003','L4-004','L4-005','L4-006']` の全24件を含む（順序を問わず）。@work-item-id WI-156 |
 | IT-REPO-Registry-002 | L1 IDが8件（L1-001〜L1-008）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L1')).length === 8` |
 | IT-REPO-Registry-003 | L2 IDが6件（L2-001〜L2-015）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L2')).length === 6` |
 | IT-REPO-Registry-004 | L3 IDが4件（L3-001〜L3-004）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L3')).length === 4` |
-| IT-REPO-Registry-005 | L4 IDが5件（L4-001〜L4-005）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L4')).length === 5` |
+| IT-REPO-Registry-005 | L4 IDが6件（L4-001〜L4-006）含まれること | なし | 静的定義 | `actual.filter(id => id.startsWith('L4')).length === 6`. @work-item-id WI-156 |
 | IT-REPO-Registry-006 | 返却値がreadonly配列であること | なし | 静的定義 | 返却されたオブジェクトへの要素追加がエラーまたはsilentlyスキップされる |
 
 ---

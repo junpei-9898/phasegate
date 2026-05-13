@@ -76,8 +76,10 @@
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-RunL4-001 | validatorIdsを省略した場合、全L4バリデータ（L4-001〜L4-005）が実行される | `{ strictMode: false }` | ValidatorConfigPort: L4 LayerConfig(enabled=true)。ExecutionService: 5件のpass結果 | `ValidationResultContract[]`が5件返る |
+| IT-UC-RunL4-001 | validatorIdsを省略した場合、全L4バリデータ（L4-001〜L4-006）が実行される | `{ strictMode: false }` | ValidatorConfigPort: L4 LayerConfig(enabled=true)。ExecutionService: 6件のpass結果 | `ValidationResultContract[]`が6件返る。@work-item-id WI-156 |
 | IT-UC-RunL4-002 | strictMode=falseの場合、L4-003（dead-code/strictOnly）がスキップされる | `{ strictMode: false }` | LayerConfig: strictOnly=false | L4-003の結果が`skipped=true` |
+| IT-UC-RunL4-009 | skill count drift がある場合、L4-006 が warning finding を返す | `{ validatorIds: ["L4-006"] }` | SkillCatalogDriftService: documented count mismatch を返す | `L4-006` が `passed=false`、`errors[0].severity="warning"`、source path と expected count を含む。@work-item-id WI-156 |
+| IT-REPO-SkillCatalog-001 | skills overview category headings are not total count declarations | temp repository with 2 skills and category headings `(1 skills)` | FileSystemSkillCatalogDriftAdapter | total declarations are only maintained total phrases; category headings are reported separately. @work-item-id WI-156 |
 | IT-UC-RunL4-003 | targetUnitsを指定した場合、対象Unitのみが検査される | `{ targetUnits: ["harness-error"], strictMode: false }` | DriftDetectionService/ConsistencyCheckService: targetUnitsを受け取ってpass結果を返す | L4-001/L4-002の結果が`passed=true` |
 | IT-UC-RunL4-004 | L4-001（drift-detect）がfailした場合、DriftReportが含まれたエラーが返る | `{ strictMode: false }` | ExecutionService: L4-001がfail（errors: [{code:"L4-001"}]）の結果を返す | L4-001の`passed=false`、`errors`にL4-001エラー |
 

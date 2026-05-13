@@ -1,6 +1,7 @@
 // @layer test
 // @unit validator-system
 // @story H08-01
+// @work-item-id WI-156
 /**
  * T-042: L0 runtime hook 案内 E2E検証
  * validate --layer L0 が legacy validator ではなく runtime hook 案内を返すこと
@@ -16,11 +17,11 @@ target('L0 Runtime Hook E2E検証', () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(6) + L3(4) + L4(5) = 15
+      // Assert — L2(6) + L3(4) + L4(6) = 16
       expect(actual.map((d) => d.validatorId.value)).toEqual([
         'L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015',
         'L3-001', 'L3-002', 'L3-003', 'L3-004',
-        'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005',
+        'L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006',
       ]);
       const layers = new Set(actual.map((d) => d.validatorId.layer));
       expect(layers.has('L0')).toBe(false);
@@ -41,7 +42,7 @@ target('L0 Runtime Hook E2E検証', () => {
       // Assert
       expect(actual.l2Defs.map((d) => d.validatorId.value)).toEqual(['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015']);
       expect(actual.l3Defs.map((d) => d.validatorId.value)).toEqual(['L3-001', 'L3-002', 'L3-003', 'L3-004']);
-      expect(actual.l4Defs.map((d) => d.validatorId.value)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005']);
+      expect(actual.l4Defs.map((d) => d.validatorId.value)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006']);
     });
 
     it('T-042-03 L0設定がなくてもL2-L4が機能すること', () => {
@@ -51,7 +52,7 @@ target('L0 Runtime Hook E2E検証', () => {
         layers: {
           L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
           L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'] },
-          L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
+          L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'] },
         },
       });
       // Act

@@ -19,6 +19,7 @@ L4（Scheduled）で以下のバリデータを週次または明示実行で扱
 | dead-code | L4-003 | 未使用エクスポート、到達不能コード |
 | doc-freshness | L4-004 | 設計文書の freshness threshold 超過 |
 | pointer-validation | L4-005 | 設計文書 pointer の owner/type/source/severity/nextAction 付き検証 |
+| skill-catalog-drift | L4-006 | `skills/*/SKILL.md` 実数と maintained docs の skill count 宣言差分検出 | <!-- @work-item-id WI-156 -->
 
 ### 技術的実装
 

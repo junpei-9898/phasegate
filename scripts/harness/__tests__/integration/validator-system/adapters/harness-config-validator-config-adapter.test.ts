@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
+ * @work-item-id WI-156
  */
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
@@ -17,7 +18,7 @@ target('HarnessConfigValidatorConfigAdapter', () => {
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003'] },
             L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
-            L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
+            L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'] },
           },
         });
 
@@ -58,7 +59,7 @@ target('HarnessConfigValidatorConfigAdapter', () => {
         const adapter = new HarnessConfigValidatorConfigAdapter({
           preset: 'standard',
           layers: {
-            L4: { enabled: true, validators: ['drift-detector', 'doc-freshness-checker', 'pointer-validator'] },
+            L4: { enabled: true, validators: ['drift-detector', 'doc-freshness-checker', 'pointer-validator', 'skill-catalog-drift'] },
           },
         });
 
@@ -68,7 +69,7 @@ target('HarnessConfigValidatorConfigAdapter', () => {
         // Assert
         expect(actual.layer).toBe('L4');
         expect(actual.enabled).toBe(true);
-        expect(actual.validatorIds).toEqual(['L4-001', 'L4-004', 'L4-005']);
+        expect(actual.validatorIds).toEqual(['L4-001', 'L4-004', 'L4-005', 'L4-006']);
       });
     });
 

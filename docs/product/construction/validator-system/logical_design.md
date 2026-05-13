@@ -862,6 +862,17 @@ export interface ValidatorRelaxationProfile {
 
 **責務**: phase-gate（L2-001）・metadata（L2-002）・test-quality（L2-003）・CLI E2E coverage（L2-013）・WI status staleness（L2-014）・contract traceability coverage（L2-015）の6バリデータをPre-commit文脈で実行し、`ValidationResultContract[]` を返す。
 
+<!-- @work-item-id WI-156 -->
+#### L4-006: skill-catalog-drift
+
+`L4-006 skill-catalog-drift` is a scheduled documentation drift guardrail. `RunL4ValidatorsUseCase` invokes `SkillCatalogDriftService` through the file-system adapter when `L4-006` is enabled. The adapter reads:
+
+- actual skill directories from first-level `skills/*/SKILL.md`
+- maintained total declarations in README / DEVELOPMENT / public guide / `skills/README.md`
+- category heading counts in `docs/guide/skills-overview.md`
+
+Any mismatch is returned as a warning `ValidationResultContract` error with code `L4-006` and a remediation that tells maintainers to update either the skill catalog or the documented count in the same release change.
+
 **コンストラクタ依存**
 
 - `validatorRegistry: ValidatorRegistry`
@@ -943,7 +954,7 @@ export interface ValidatorRelaxationProfile {
 **対応ストーリー**: H08-03（L4バリデータ実行）
 
 <!-- @work-item-id WI-033 -->
-**責務**: drift-detect（L4-001）・consistency-check（L4-002）・dead-code（L4-003）・doc-freshness（L4-004）・pointer-validation（L4-005）の5バリデータをScheduled文脈で実行し、`ValidationResultContract[]` を返す。
+**責務**: drift-detect（L4-001）・consistency-check（L4-002）・dead-code（L4-003）・doc-freshness（L4-004）・pointer-validation（L4-005）・skill-catalog-drift（L4-006）の6バリデータをScheduled文脈で実行し、`ValidationResultContract[]` を返す。@work-item-id WI-156
 
 **コンストラクタ依存**
 
@@ -956,7 +967,7 @@ export interface ValidatorRelaxationProfile {
 
 | 項目 | 型 | 必須 | 説明 |
 |------|----|------|------|
-| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L4（L4-001〜L4-005） |
+| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L4（L4-001〜L4-006） |
 | targetUnits | `readonly string[] \| undefined` | No | 対象Unitフィルタ（省略時は全Unit） |
 | strictMode | `boolean` | No | strictプリセット判定フラグ（L4-003のgcRecommended制御） |
 | forceLayerEnabled | `boolean` | No | 明示的な `validate --layer L4` 実行時に、デフォルト無効のL4を一時的に実行する |
@@ -969,7 +980,7 @@ export interface ValidatorRelaxationProfile {
 2. `validatorConfigPort.getLayerConfig("L4")` で `LayerConfig` を取得する
 3. `L4-003`（dead-code）の `enabledCondition === "strictOnly"` を確認する
 4. `LayerConfig.thresholds` から `schedule` 設定を参照する
-5. `validatorExecutionService.execute()` を呼ぶ。L4-001はDriftDetectionService、L4-002はConsistencyCheckService、L4-003はDeadCodeDetectionService、L4-004/L4-005はphase2-extensionsの既存use caseに委譲される
+5. `validatorExecutionService.execute()` を呼ぶ。L4-001はDriftDetectionService、L4-002はConsistencyCheckService、L4-003はDeadCodeDetectionService、L4-004/L4-005はphase2-extensionsの既存use case、L4-006はSkillCatalogDriftServiceに委譲される
 6. 結果を変換して返す
 
 **例外**

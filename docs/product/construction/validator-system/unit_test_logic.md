@@ -1569,7 +1569,7 @@ target('ValidatorRegistry', () => {
     });
 
     // UT-VRG-010
-    it('layer: L4を渡すとL4-001〜L4-005の5件が返ること', () => {
+    it('layer: L4を渡すとL4-001〜L4-006の6件が返ること', () => {
       // Arrange
       const sut = createValidatorRegistry();
       // Act

@@ -336,7 +336,7 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 
 | ケースID | target | describe | context | it（期待値） |
 |----------|--------|----------|---------|-------------|
-| UT-VRS-001 | build | QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する | デフォルト設定と全ValidatorId（L1-001〜L4-005）が渡された場合 | デフォルト緩和プロファイル（L2-001スキップ・L2-002+L2-003維持・L3-001維持・L3-002〜L3-004スキップ）が生成されること |
+| UT-VRS-001 | build | QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する | デフォルト設定と全ValidatorId（L1-001〜L4-006）が渡された場合 | デフォルト緩和プロファイル（L2-001スキップ・L2-002+L2-003維持・L3-001維持・L3-002〜L3-004スキップ）が生成されること。@work-item-id WI-156 |
 | UT-VRS-002 | build | QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する | maintainedLayersにL2-001が含まれる設定が渡された場合 | l2.maintainedにL2-001が含まれること |
 | UT-VRS-003 | build | QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する | relaxedGatesにL2-001のみが含まれる設定が渡された場合 | l2.skippedにL2-001のみが含まれること |
 | UT-VRS-004 | build | QuickModeConfigと全ValidatorId一覧からValidatorRelaxationProfileを生成する | L1の全IDが渡された場合 | l1.all=trueが設定されること（INV-P2保証） |

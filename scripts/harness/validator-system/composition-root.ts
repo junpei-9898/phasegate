@@ -3,7 +3,7 @@
  * @unit validator-system
  *
  * DI 組み立て — validator-system の全依存関係を構築する
- * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
+ * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156
  */
 import { ValidatorId } from './domain/value-objects/validator-id.js';
 import { ValidatorDefinition } from './domain/value-objects/validator-definition.js';
@@ -36,6 +36,7 @@ import { BiomeAstSourceCodeAnalyzerAdapter } from './infrastructure/adapters/bio
 import { AdrFoundationReferenceAdapter } from './infrastructure/adapters/adr-foundation-reference-adapter.js';
 import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/import-graph-source-analysis-adapter.js';
 import { FileSystemArchitectureSemanticSourceAdapter } from './infrastructure/adapters/file-system-architecture-semantic-source-adapter.js';
+import { FileSystemSkillCatalogDriftAdapter } from './infrastructure/adapters/file-system-skill-catalog-drift-adapter.js';
 import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
 import { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
@@ -52,7 +53,7 @@ const DEFAULT_CONFIG = {
   layers: {
     L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
-    L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005'] },
+    L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'] },
   },
   validate: { failOnWarning: false },
   architecture: {
@@ -108,6 +109,7 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L4-003', 'L4', 'strictOnly'),
     createDef('L4-004', 'L4', 'always'),
     createDef('L4-005', 'L4', 'always'),
+    createDef('L4-006', 'L4', 'always', 'SkillCatalogDriftPort'),
   ];
 
   return new ValidatorRegistry(definitions);
@@ -188,6 +190,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const adrReferencePort = new AdrFoundationReferenceAdapter();
   const sourceAnalysisPort = new ImportGraphSourceAnalysisAdapter();
   const architectureSemanticSourcePort = new FileSystemArchitectureSemanticSourceAdapter();
+  const skillCatalogDriftPort = new FileSystemSkillCatalogDriftAdapter(cwd);
 
   const driftDetectionService = new DriftDetectionService({
     designDocumentPort: markdownDesignDocumentPort,
@@ -215,6 +218,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     consistencyCheckService,
     deadCodeDetectionService,
     architectureSemanticAnalysisService,
+    skillCatalogDriftPort,
     checkDocFreshnessUseCase: phase2Extensions.checkDocFreshnessUseCase,
     validateDocPointersUseCase: phase2Extensions.validateDocPointersUseCase,
   });

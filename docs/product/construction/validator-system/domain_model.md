@@ -10,6 +10,13 @@
 
 The L4 registry includes L4-004 `doc-freshness` and L4-005 `pointer-validation`. Public documentation and CLI error listing treat these IDs as registered validators, with `p2:check-freshness` and `p2:validate-pointers` preserved only as compatibility entry points.
 
+<!-- @work-item-id WI-156 -->
+## WI-156 Skill Catalog Drift Guardrail
+
+The L4 registry includes L4-006 `skill-catalog-drift` as the first documentation drift guardrail. The validator compares the actual first-level `skills/*/SKILL.md` catalog with maintained public/operator skill-count declarations and the category total in `docs/guide/skills-overview.md`.
+
+`SkillCatalogDriftReport` findings are warning-level scheduled findings by default. They are intended for release-before checks and become blocking only when the caller opts into strict warning handling.
+
 <!-- @work-item-id WI-115 -->
 ## WI-115 Legacy Reflection Safety
 
@@ -37,7 +44,7 @@ Validator-system metadata checks rely on phase-dependency-model reflection resul
 | 概念 | 分類 | 説明 |
 |------|------|------|
 | ValidatorDefinition | 値オブジェクト | バリデータの不変定義（validatorId/layer/rules/errorTemplate/externalPolicyRef?） |
-| ValidatorId | 値オブジェクト | `L{n}-{nnn}` 形式のバリデータ識別子（L2-001〜L4-005） |
+| ValidatorId | 値オブジェクト | `L{n}-{nnn}` 形式のバリデータ識別子（L2-001〜L4-006） |
 | ValidationResult | 値オブジェクト | バリデーション実行結果スナップショット（pass/fail + HarnessError[]） |
 | ValidationRule | 値オブジェクト | ルール名・検証ロジック参照・エラーテンプレートの不変定義 |
 | LayerConfig | 値オブジェクト | HarnessConfigV2から注入されるL2/L3/L4設定（enabled/閾値/Preset） |
@@ -51,6 +58,7 @@ Validator-system metadata checks rely on phase-dependency-model reflection resul
 | DriftDetectionService | ドメインサービス | 設計⇔コード双方向乖離検出（L4-001） |
 | ConsistencyCheckService | ドメインサービス | 文書間レイヤー整合性検証（L4-002） |
 | DeadCodeDetectionService | ドメインサービス | 未使用エクスポート・到達不能コード検出（L4-003） |
+| SkillCatalogDriftService | ドメインサービス | `skills/*/SKILL.md` 実数と maintained docs の skill count 宣言差分を検出（L4-006） |
 
 ### 他Unitから受け取るShared Kernel
 
@@ -64,7 +72,7 @@ Validator-system metadata checks rely on phase-dependency-model reflection resul
 
 | 契約 | 消費Unit | 内容 |
 |------|---------|------|
-| ValidatorRegistry インターフェース | harness-api, quick-mode | ValidatorId一覧（L2-001〜L4-005）+ 選択実行API |
+| ValidatorRegistry インターフェース | harness-api, quick-mode | ValidatorId一覧（L2-001〜L4-006）+ 選択実行API |
 | ValidationResult Contract | harness-api | `{ validatorId, passed, errors: HarnessError[] }` |
 
 ---
@@ -95,7 +103,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 
 | 値オブジェクト | 不変 | 値等価性 | 説明 |
 |-------------|------|---------|------|
-| ValidatorId | ✓ | ✓ | `L{n}-{nnn}` 形式。有効範囲: L2-001〜L4-005 |
+| ValidatorId | ✓ | ✓ | `L{n}-{nnn}` 形式。有効範囲: L2-001〜L4-006 |
 | ValidatorDefinition | ✓ | ✓ | バリデータ不変定義。validatorId/layer/rules[]/enabledCondition/externalPolicyRef? |
 | ValidationRule | ✓ | ✓ | ルール名・エラーテンプレート・fixExample |
 | ValidationResult | ✓ | ✓ | passed: boolean, validatorId, errors: HarnessError[], durationMs: number |
@@ -110,7 +118,7 @@ Unit定義では「Validator（集約ルート）」と記載されていたが�
 
 | サービス | 責務 | 参照するポート |
 |---------|------|--------------|
-| ValidatorRegistry | 全ValidatorDefinitionのカタログ管理（L2-001〜L4-005の定義登録・ID検索・選択実行委譲） | — |
+| ValidatorRegistry | 全ValidatorDefinitionのカタログ管理（L2-001〜L4-006の定義登録・ID検索・選択実行委譲） | — |
 | ValidatorExecutionService | 指定ValidatorId[]の順次実行・ValidationResult[]集約 | ValidatorConfigPort（LayerConfig取得） |
 | DriftDetectionService | 設計文書とソースコードの双方向乖離検出→DriftReport生成 | DesignDocumentPort, SourceCodeAnalyzerPort |
 | ConsistencyCheckService | 設計文書間レイヤー整合性の検証→ConsistencyReport生成 | DesignDocumentPort |
@@ -369,7 +377,7 @@ The canonical validator-system catalog is:
 |---|---|---|
 | L2 | `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, `L2-015` | Default L2 execution runs all six IDs when enabled. |
 | L3 | `L3-001`, `L3-002`, `L3-003`, `L3-004` | `L3-002` may be strict-only depending on resolved config/preset. |
-| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005` | Disabled L4 returns skipped results in aggregate execution; explicit `validate --layer L4` force-enables the layer for the operator request. |
+| L4 | `L4-001`, `L4-002`, `L4-003`, `L4-004`, `L4-005`, `L4-006` | Disabled L4 returns skipped results in aggregate execution; explicit `validate --layer L4` force-enables the layer for the operator request. @work-item-id WI-156 |
 
 Skip results are first-class validation results and do not fail aggregation. Warning findings fail only when `failOnWarning` is active. L4-004 and L4-005 are valid registered validators, with `p2:check-freshness` and `p2:validate-pointers` retained only as compatibility commands.
 

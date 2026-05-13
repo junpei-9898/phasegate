@@ -551,7 +551,7 @@ README keeps only the entry points most users need. The full public/compatibilit
 
 <!-- @work-item-id WI-151 -->
 
-Standard projects keep `layers.L4.enabled: false`; `validate --layer all` and `phasegate:ci-check` report disabled L4 validators as skipped. Explicit `validate --layer L4` runs the scheduled validators on demand. Warning-only L4 drift/consistency/dead-code findings remain advisory unless `validate.failOnWarning: true`, the `strict` preset, or `--fail-on-warning` is used. Use that strict mode only after the project has real drift keys, consistency targets, pointer/freshness ownership, and semantic drift coverage.
+Standard projects keep `layers.L4.enabled: false`; `validate --layer all` and `phasegate:ci-check` report disabled L4 validators as skipped. Explicit `validate --layer L4` runs the scheduled validators on demand. Warning-only L4 drift/consistency/dead-code/skill-catalog findings remain advisory unless `validate.failOnWarning: true`, the `strict` preset, or `--fail-on-warning` is used. Use that strict mode only after the project has real drift keys, consistency targets, pointer/freshness ownership, semantic drift coverage, and maintained skill-count declarations.
 
 See the [CLI Reference](docs/guide/cli-reference.md) for the complete catalog and the [Japanese README](README.ja.md) for Japanese-language onboarding.
 

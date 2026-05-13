@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit harness-error
+ * @work-item-id WI-156
  */
 import { AdrRef } from '../../domain/value-objects/adr-ref.js';
 import { ErrorCode } from '../../domain/value-objects/error-code.js';
@@ -63,5 +64,12 @@ export const L4_ERROR_DEFINITIONS = Object.freeze([
     category: 'consistency',
     ownerValidatorId: 'pointer-validation',
     defaultFixExample: 'const actual = "fix unresolved document pointer";',
+  }),
+  createDefinition({
+    code: 'L4-006',
+    title: 'スキルカタログ数とドキュメント宣言が一致しない',
+    category: 'consistency',
+    ownerValidatorId: 'skill-catalog-drift',
+    defaultFixExample: 'const actual = "update skill count declarations with the skill catalog";',
   }),
 ]);

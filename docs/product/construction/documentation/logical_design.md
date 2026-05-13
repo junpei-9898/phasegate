@@ -66,3 +66,8 @@ Public CLI and troubleshooting docs explain that `scopedOutFindings[]` are expla
 ## WI-180 Scoped-Out Effective Repair Documentation
 
 Public CLI and troubleshooting docs explain `currentScopeRepairTarget` and `repairModeApplicability` so agents do not treat scoped-out `repairMode: "mechanical"` as current repair work. The human doctor summary also exposes scoped-out check IDs for quick terminal inspection.
+
+<!-- @work-item-id WI-156 -->
+## WI-156 Documentation Drift Guardrail
+
+Public/operator docs document `L4-006 skill-catalog-drift` as the first automated documentation drift guardrail from the P4 backlog. Documentation must state that skill count drift is automated, while command/script drift and install target drift remain manual release checklist items until separate validators exist.

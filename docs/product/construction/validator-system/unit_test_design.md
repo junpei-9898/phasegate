@@ -1,5 +1,15 @@
 # ユニットテスト設計: validator-system
 
+<!-- @work-item-id WI-156 -->
+## WI-156 Skill Catalog Drift Tests
+
+| Case ID | Target | Scenario | Expected |
+|---|---|---|---|
+| UT-WI156-001 | `SkillCatalogDriftService` | Actual skill count and all maintained declarations match | No findings. |
+| UT-WI156-002 | `SkillCatalogDriftService` | One maintained total declaration differs | `skill-count-mismatch` finding with source path and expected count. |
+| UT-WI156-003 | `SkillCatalogDriftService` | Skills overview category counts sum to a different total | `skill-category-total-mismatch` finding. |
+| UT-WI156-004 | `ValidatorId` | `L4-006` is created | Name is `skill-catalog-drift`. |
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03
@@ -286,7 +296,7 @@
 |---------|------|---------|
 | UT-VRG-008 | `layer: "L2"` | L2-001, L2-002, L2-003, L2-013, L2-014, L2-015の6件のDefinitionをvalidatorId昇順で返す |
 | UT-VRG-009 | `layer: "L3"` | L3-001〜L3-004の4件のDefinitionを返す |
-| UT-VRG-010 | `layer: "L4"` | L4-001〜L4-005の5件のDefinitionを返す |
+| UT-VRG-010 | `layer: "L4"` | L4-001〜L4-006の6件のDefinitionを返す。@work-item-id WI-156 |
 
 #### `select()` テスト
 

@@ -458,7 +458,7 @@ Controls how warning-severity validator failures are aggregated into the overall
 
 | Sub-field        | Type      | Default by preset                                                | Description                                                                                                                                                          |
 |------------------|-----------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `failOnWarning`  | `boolean` | `false` (`minimal` / `standard`), `true` (`strict`)              | When `true`, warning-only validator fails (for example L4-001 drift, L4-002 consistency, L4-003 dead-code, L4-004 doc-freshness, or L4-005 pointer-validation) count as overall FAIL / exit 1. When `false`, they count as PASS / exit 0. |
+| `failOnWarning`  | `boolean` | `false` (`minimal` / `standard`), `true` (`strict`)              | When `true`, warning-only validator fails (for example L4-001 drift, L4-002 consistency, L4-003 dead-code, L4-004 doc-freshness, L4-005 pointer-validation, or L4-006 skill-catalog-drift) count as overall FAIL / exit 1. When `false`, they count as PASS / exit 0. |
 
 CLI override: `--fail-on-warning` / `--no-fail-on-warning` (CLI > config). Both unspecified → config value used.
 

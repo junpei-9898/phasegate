@@ -286,3 +286,10 @@ classDiagram
 ## G4 Error Contract Projection
 
 Harness errors can be projected into `ErrorContract` records for L2-015. Required public error quality fields are stable code, severity, message, concrete suggestion, documentation reference, exit-code contract, and optional machine-readable fields. Error path test coverage is represented by `{errorContractId}:error-path` observations.
+
+<!-- @work-item-id WI-156 -->
+## WI-156 L4-006 Error Definition
+
+Harness-error registers `L4-006` as the warning-level skill catalog drift definition owned by `skill-catalog-drift`. The default remediation instructs maintainers to update skill count declarations with the actual `skills/*/SKILL.md` catalog.
+
+The validator registry bridge exposes `skill-catalog-drift` as a registered ownerValidatorId so error-definition startup validation and fix-example validation routing remain complete.

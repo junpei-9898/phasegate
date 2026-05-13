@@ -15,7 +15,7 @@
     },
     "L4": {
       "enabled": false,
-      "validators": ["drift-detector", "doc-freshness-checker", "pointer-validator"],
+      "validators": ["drift-detector", "doc-freshness-checker", "pointer-validator", "skill-catalog-drift"],
       "schedule": "0 0 * * *"
     }
   },

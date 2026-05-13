@@ -1,7 +1,7 @@
 /**
  * @layer application
  * @unit validator-system
- * @work-item-id WI-107
+ * @work-item-id WI-107 / WI-156
  *
  * RunL4ValidatorsUseCase — H08-03: L4バリデータ実行
  */
@@ -18,6 +18,8 @@ import type { DriftDetectionService } from '../../domain/services/l4/drift-detec
 import type { ConsistencyCheckService } from '../../domain/services/l4/consistency-check-service.js';
 import type { DeadCodeDetectionService } from '../../domain/services/l4/dead-code-detection-service.js';
 import type { ArchitectureSemanticAnalysisService } from '../../domain/services/l4/architecture-semantic-analysis-service.js';
+import { SkillCatalogDriftService } from '../../domain/services/l4/skill-catalog-drift-service.js';
+import type { SkillCatalogDriftPort } from '../../domain/ports/skill-catalog-drift-port.js';
 
 interface ScheduledHarnessErrorContract {
   readonly severity: string;
@@ -67,6 +69,7 @@ export interface RunL4ValidatorsUseCaseDeps {
   consistencyCheckService?: ConsistencyCheckService;
   deadCodeDetectionService?: DeadCodeDetectionService;
   architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
+  skillCatalogDriftPort?: SkillCatalogDriftPort;
   checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 }
@@ -80,6 +83,8 @@ export class RunL4ValidatorsUseCase {
   private readonly consistencyCheckService?: ConsistencyCheckService;
   private readonly deadCodeDetectionService?: DeadCodeDetectionService;
   private readonly architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
+  private readonly skillCatalogDriftPort?: SkillCatalogDriftPort;
+  private readonly skillCatalogDriftService = new SkillCatalogDriftService();
   private readonly checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   private readonly validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 
@@ -92,6 +97,7 @@ export class RunL4ValidatorsUseCase {
     this.consistencyCheckService = deps.consistencyCheckService;
     this.deadCodeDetectionService = deps.deadCodeDetectionService;
     this.architectureSemanticAnalysisService = deps.architectureSemanticAnalysisService;
+    this.skillCatalogDriftPort = deps.skillCatalogDriftPort;
     this.checkDocFreshnessUseCase = deps.checkDocFreshnessUseCase;
     this.validateDocPointersUseCase = deps.validateDocPointersUseCase;
   }
@@ -202,6 +208,20 @@ export class RunL4ValidatorsUseCase {
           errors.length > 0
             ? ValidationResult.fail(ValidatorId.create('L4-005'), errors, 0)
             : ValidationResult.pass(ValidatorId.create('L4-005'), 0),
+        );
+      }
+    }
+
+    if (this.skillCatalogDriftPort) {
+      const l4006Result = overrideMap.get('L4-006');
+      if (l4006Result && !l4006Result.skipped) {
+        const snapshot = await this.skillCatalogDriftPort.collect();
+        const report = this.skillCatalogDriftService.check(snapshot);
+        overrideMap.set(
+          'L4-006',
+          report.hasFindings()
+            ? ValidationResult.fail(ValidatorId.create('L4-006'), report.toHarnessErrors(), 0)
+            : ValidationResult.pass(ValidatorId.create('L4-006'), 0),
         );
       }
     }
