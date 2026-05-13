@@ -17,7 +17,7 @@ Or add it directly to your `package.json`:
 ```json
 {
   "devDependencies": {
-    "phasegate": "^0.152.8"
+    "phasegate": "^0.152.9"
   }
 }
 ```
@@ -38,7 +38,7 @@ npx phasegate init --name <project-name>
 
 This deploys 30 skills to `skills/`, creates the agent-facing skill links (for example `.claude/skills/` or `.codex/skills/`), and generates `phasegate.config.json`.
 
-`init` is the legacy-compatible bootstrap path for new projects. Use `install` when the project may already have hooks, package scripts, or CI files that should be preserved.
+`init` is the legacy-compatible bootstrap path for new projects. It also runs the structured install path for the selected agent target so `CLAUDE.md` and/or `AGENTS.md` receive a PhaseGate managed section. Use `install` when the project may already have hooks, package scripts, or CI files that should be preserved. <!-- @work-item-id WI-174 -->
 
 For Codex, project initialization stops at the project boundary. After `npx phasegate init --agent codex`, enable the Codex CLI feature flag manually:
 
@@ -56,7 +56,16 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 -->
+`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes `CLAUDE.md` / `AGENTS.md` managed sections for selected agent targets, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 --> <!-- @work-item-id WI-174 -->
+
+For agent-readable planning before writing files:
+
+```bash
+npx phasegate setup:agent --intent recommended --dry-run --json
+npx phasegate setup:agent --intent strict --with-ci --with-husky --dry-run --json
+```
+
+The setup plan includes detected state, questions, planned changes, risks, rollback, and validation commands. <!-- @work-item-id WI-172 -->
 
 If a managed update must replace existing custom content, use:
 
@@ -73,7 +82,7 @@ npx phasegate uninstall --dry-run
 npx phasegate uninstall --apply
 ```
 
-`uninstall` reads `.phasegate/manifest.json`, deletes files that PhaseGate created, removes only PhaseGate-managed portions from merged JSON, Husky, and `package.json` files, and archives the manifest as `.phasegate/uninstalled-<timestamp>.json`. If a managed file was modified after install, `uninstall --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/uninstall-<timestamp>/`.
+`uninstall` reads `.phasegate/manifest.json`, deletes files that PhaseGate created, removes only PhaseGate-managed portions from merged JSON, markdown agent context files, Husky, and `package.json` files, and archives the manifest as `.phasegate/uninstalled-<timestamp>.json`. If a managed file was modified after install, `uninstall --apply` refuses that entry until you rerun with `--force`, which creates a backup under `.phasegate/backups/uninstall-<timestamp>/`. <!-- @work-item-id WI-174 -->
 
 After upgrading PhaseGate, reconcile existing managed files with the bundled templates from the new version:
 

@@ -23,10 +23,12 @@ Command names in this document are split into three surfaces:
 | Command | Description |
 |---|---|
 | `init --name <name>` | Legacy-compatible bootstrap for new projects: deploy skills, generate config, and optionally add hooks/CI. Options: `--preset <full\|standard\|minimal\|custom>`, `--skills <core\|all>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--yes`. |
-| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. `--force` replaces managed targets after backup. |
+| `install --dry-run` / `--apply` | Idempotently merge PhaseGate into an existing project, preserve user content, add package scripts/devDependency, create selected `AGENTS.md` / `CLAUDE.md` managed sections, and write `.phasegate/manifest.json`. `--agent <claude\|codex\|both>`, `--skills <core\|all>`, and `--workflow <standard\|strict>` affect rendered agent context; `--force` replaces managed targets after backup. |
 | `doctor` | Diagnose silent or partial installations and report repair hints (`--json`, `--strict`, `--report-out <path>`). `--report-out` writes exactly to the supplied path, not to `reporting.outputDir`. |
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`; `--force` handles managed conflict cases. |
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes; `--force` allows managed-file replacement with backup. |
+| `setup:agent` | Agent-readable setup planner and optional apply path. Options: `--intent <minimal\|recommended\|strict\|ci-only\|agent-hooks\|retrofit>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-172 --> |
+| `config:plan` | Agent-readable configuration change planner. Options: `--intent <l4-strict\|codex-hooks\|ci-fail-on-warning\|baseline-reset\|quick-mode-strict>`, `--dry-run`, `--json`. <!-- @work-item-id WI-173 --> |
 | `update-skills` | Compatibility alias for `reconcile`; use `reconcile` for new automation. |
 | `scaffold-wi <unit> <type>` | Create `docs/inception/{unit}/WI-XXX/description.md` using the next free WI number. |
 | `emit-agent-rules` | Print the AGENTS.md / CLAUDE.md WI workflow rules block. |
@@ -374,7 +376,7 @@ ISSUE-005 P3-10 で明確化された境界:
 |---|---|---|
 | `ci:generate-template` | `--preset <id>`（省略時 `standard`） `--type <type>` `--render` `--json` | Generate CI/CD template |
 | `ci:migrate-agents-md` | `--dry-run` `--validate-only` `--json` | Migrate AGENTS.md to pointer format |
-| `ci:auto-refresh-agent-context` | `--dry-run` `--apply` `--json` | Refresh AGENTS.md pointers and CLAUDE.md standard sections |
+| `ci:auto-refresh-agent-context` | `--dry-run` `--apply` `--json` | Refresh AGENTS.md lesson pointers in a dedicated section and CLAUDE.md standard sections without replacing user-owned agent instructions |
 | `refresh-claude-md` | `--dry-run` `--apply` `--json` | Refresh CLAUDE.md while preserving the user-owned section |
 | `p2:check-agent-context` | `--threshold-days <n>` `--json` | Check AGENTS.md / CLAUDE.md freshness |
 | `ci:check-repetition` | `--code <errorCode>` `--reset` `--json` | Detect repetitive errors |

@@ -132,3 +132,13 @@ This coverage report now treats WI-117..148 cross-unit reflection as current pro
 | WI-124 / WI-128 | CI preset metadata and default-off L4 policy are covered through live validator registry integration, not a duplicated config list. |
 | WI-132 / WI-133 / WI-138 | Contract traceability severity and graph policy are validator-system owned; config-foundation only documents policy inputs that are actually present. |
 | WI-145..148 / WI-169 | install / doctor / uninstall / reconcile lifecycle is implemented in installation Unit; config docs should not describe remaining strategy ports as runtime stubs. |
+
+<!-- @work-item-id WI-173 -->
+## WI-173 Config Change Workflow Coverage
+
+| Requirement | Coverage expectation |
+|---|---|
+| Natural-language config intent maps to concrete targets | `config:plan --intent <intent> --json` enumerates target config paths or managed artifacts. |
+| Agent explains risk before editing | Planner output includes `risks`, `diffExplanation`, and `rollback`. |
+| Post-change validation is explicit | Planner output includes validation commands such as `phasegate:check-ready`, `validate --layer L4`, or `ci-check --quick`. |
+| User-level and repo-managed state are separated | Codex feature flag and managed hook/context files are represented as separate commands/targets. |

@@ -1930,3 +1930,10 @@ skill-quality consumes L2 test-quality and Nyquist signals instead of duplicatin
 <!-- @work-item-id WI-155 -->
 
 Skill-quality tools may read legacy `@story-id` annotations to preserve old cascade-updater behavior, but generated or refreshed product sections must emit `@work-item-id WI-XXX`. This keeps skill output compatible with the current metadata validator without erasing historical H/US IDs.
+
+<!-- @work-item-id WI-171, WI-172, WI-173 -->
+## P3 Setup Guidance Skill Reflection
+
+`phasegate-toolkit-guide` points users and agents to getting-started, recipes, troubleshooting, setup artifacts, and CLI reference before answering onboarding questions. `phasegate-config-doctor` uses `setup:agent` and `config:plan` as read-only planning inputs when a request involves setup repair or configuration change.
+
+Skill-quality remains responsible for bundled skill content and structure validation, not for mutating `AGENTS.md` or `CLAUDE.md` directly.

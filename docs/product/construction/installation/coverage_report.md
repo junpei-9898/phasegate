@@ -73,3 +73,14 @@ The install / doctor / uninstall / reconcile lifecycle is implementation-owned b
 | `install` | Implemented as managed target merge/apply behavior with dry-run/apply lifecycle tests. |
 | `uninstall` | Implemented as reverse lifecycle behavior with manifest/archive expectations. |
 | `reconcile` | Implemented as refresh/idempotency lifecycle and `update-skills` compatibility path. |
+
+<!-- @work-item-id WI-172, WI-173, WI-174 -->
+## WI-172..174 P3 Coverage
+
+| Requirement | Evidence |
+|---|---|
+| Agent context files are lifecycle managed targets | `InstallHandler` integration covers `AGENTS.md` / `CLAUDE.md` manifest entries and user content preservation. |
+| Uninstall removes only markdown managed section | `RunUninstallUseCase` unit covers `reverseManagedMarkdown`. |
+| AGENTS lesson pointers do not replace setup instructions | `AgentsMdFileAdapter` integration covers dedicated lesson pointer section preservation. |
+| Agent setup planner has dry-run/apply contract | CLI smoke and product design require `setup:agent --dry-run --json` and `--apply` to expose plan and install result. |
+| Config change planner has intent mapping | CLI smoke and guide recipes cover `config:plan --intent <intent> --json`. |

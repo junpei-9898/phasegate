@@ -12,6 +12,13 @@ export interface InstallHandlerInput {
   readonly apply: boolean;
   readonly force: boolean;
   readonly json: boolean;
+  readonly includeClaude?: boolean;
+  readonly includeCodex?: boolean;
+  readonly includeHusky?: boolean;
+  readonly includeCi?: boolean;
+  readonly skillSet?: "core" | "all";
+  readonly workflow?: "standard" | "strict";
+  readonly agent?: "claude" | "codex" | "both";
 }
 
 export interface InstallHandlerResult {

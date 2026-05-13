@@ -10,7 +10,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 
 | Class | Examples | Owner | Lifecycle |
 |---|---|---|---|
-| Managed target | `.claude/settings.json`, `.codex/hooks.json`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
+| Managed target | `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init`; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
@@ -22,11 +22,14 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 `install --apply` and `reconcile --apply` manage only explicit targets. The current structured lifecycle covers:
 
 - Agent hook JSON: `.claude/settings.json`, `.codex/hooks.json`
+- Agent context files: `CLAUDE.md` and `AGENTS.md` managed sections. `AGENT.md` singular is not a PhaseGate managed target; treat it as user-owned content or migrate it manually. <!-- @work-item-id WI-174 -->
 - Husky scripts when requested: `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`
 - CI workflow when requested: `.github/workflows/phasegate-aidlc-gate.yml`
 - Agent skill links: `.claude/skills`, `.codex/skills`
 - Package metadata: PhaseGate scripts and `devDependencies.phasegate` in `package.json`
 - Manifest: `.phasegate/manifest.json`
+
+`AGENTS.md` has two PhaseGate sections with separate ownership. `<!-- phasegate:managed-section:start -->` contains standard setup/WI workflow instructions. `<!-- phasegate:lesson-pointers:start -->` is reserved for `ci:auto-refresh-agent-context` lesson pointers. Refreshing lesson pointers must not replace the standard managed section or user-owned content. <!-- @work-item-id WI-174 -->
 
 `init --with-ci` still deploys the legacy-compatible template set, including `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml`. Structured `install` uses `.github/workflows/phasegate-aidlc-gate.yml` so it can coexist with existing project CI without taking over a generic workflow filename.
 

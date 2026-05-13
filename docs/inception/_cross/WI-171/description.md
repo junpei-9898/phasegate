@@ -2,8 +2,8 @@
 id: WI-171
 type: story
 severity: high
-status: drafted
-affects: [documentation, setup, skills, agent-integration]
+status: tested
+affects: [documentation, setup, skill-quality, agent-integration]
 source: internal
 ---
 
@@ -31,11 +31,15 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] README から 5 分以内に「次に実行する command」と「成功状態」が分かる。
-- [ ] 初回導入時の分岐が、利用者の回答可能な質問として表現されている。
-- [ ] `doctor` finding / error code / `suggestedSkill` / `repairHint` の読み方が、初心者向けの troubleshooting から辿れる。
-- [ ] 全機能の網羅表ではなく、first-run / daily-use / CI-use / agent-use の recipe として読める。
+- [x] README から 5 分以内に「次に実行する command」と「成功状態」が分かる。
+- [x] 初回導入時の分岐が、利用者の回答可能な質問として表現されている。
+- [x] `doctor` finding / error code / `suggestedSkill` / `repairHint` の読み方が、初心者向けの troubleshooting から辿れる。
+- [x] 全機能の網羅表ではなく、first-run / daily-use / CI-use / agent-use の recipe として読める。
 
 ## 依存
 
 `WI-149`, `WI-150`, `WI-152`, `WI-153` の用語と command catalog に合わせる。
+
+## 対応結果
+
+`docs/guide/getting-started.md`, `docs/guide/recipes.md`, `docs/guide/troubleshooting.md` を追加し、README / installation / CLI reference から first-run, daily-use, CI-use, agent-use の導線を辿れるようにした。

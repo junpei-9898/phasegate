@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.152.9] - 2026-05-13
+
+### Added
+
+- **WI-171 / WI-172 / WI-173 / WI-174 — user onboarding and agent-driven setup** — adds first-run recipes and troubleshooting guides, managed `AGENTS.md` / `CLAUDE.md` setup sections, dedicated AGENTS lesson pointer refresh, `setup:agent` setup planning/apply flow, and `config:plan` configuration-change intent planning.
+
 ## [0.152.8] - 2026-05-13
 
 ### Changed

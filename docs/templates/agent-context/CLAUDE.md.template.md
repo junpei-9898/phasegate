@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+<!-- @work-item-id WI-174 -->
+
+<!-- phasegate:managed-section:start -->
 ## 必読ドキュメント
 
 - `docs/folder_management_rules.md`
@@ -27,3 +30,4 @@
 ## Agent Context Refresh
 
 Run `phasegate ci:auto-refresh-agent-context --dry-run` to preview updates and `phasegate ci:auto-refresh-agent-context --apply` to write AGENTS.md / CLAUDE.md.
+<!-- phasegate:managed-section:end -->

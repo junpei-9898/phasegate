@@ -249,3 +249,12 @@ Presentation Handler カバレッジ: **6/6 (100%)** 合計 18 件
 @work-item-id WI-143
 
 Planning skills that create implementation or design artifacts now carry a blocking WI pre-flight rule. This keeps skill-quality aligned with WI taxonomy by requiring a target `docs/inception/{unit}/WI-XXX/description.md` before plan generation.
+
+<!-- @work-item-id WI-171, WI-172, WI-173 -->
+## P3 Guidance Skill Coverage
+
+| Skill | Coverage expectation |
+|---|---|
+| `phasegate-toolkit-guide` | Routes onboarding questions to getting-started, recipes, troubleshooting, installation, setup artifacts, and CLI reference. |
+| `phasegate-config-doctor` | Uses `setup:agent` / `config:plan` outputs for setup repair and config change recommendations. |
+| Lesson collection skills | Continue to output lesson artifacts only; AGENTS.md mutation remains ci-governance responsibility. |

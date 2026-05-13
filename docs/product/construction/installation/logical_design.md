@@ -443,3 +443,28 @@ presentation (main.ts) → application use case → application port (interface)
 - `InstallReport` / `UninstallReport` / `ReconcileReport` の詳細スキーマは各 WI 固有モードで定義する (本横断設計のスコープ外)
 - WI-146 完了時に `skill-deployer-manifest-builder.ts` (application/wrappers/) を削除し、cleanup PR を発行すること
 - `update-skills` (WI-148 で `reconcile` alias 化) の互換移行は presentation 層の dispatcher のみで完結し、domain/application は変更しない
+
+<!-- @work-item-id WI-174 -->
+## 11. Agent Context Managed Targets
+
+`install`, `init`, `reconcile`, and `uninstall` treat `CLAUDE.md` and `AGENTS.md` as markdown managed targets alongside hook JSON, Husky scripts, CI workflow, package metadata, and skill links.
+
+| Target | Owner | Merge rule |
+|---|---|---|
+| `CLAUDE.md` | Claude-facing setup instructions | Replace only `<!-- phasegate:managed-section:start -->` through `<!-- phasegate:managed-section:end -->`; preserve content outside markers. |
+| `AGENTS.md` | Codex-facing setup instructions | Replace only the PhaseGate managed section; lesson pointers have a separate `phasegate:lesson-pointers` section owned by ci-governance. |
+| `AGENT.md` | User-owned | Not a PhaseGate managed target. CLI/docs should treat it as unsupported singular spelling and avoid writing it. |
+
+`RunInstallUseCase` renders agent context text from setup options (`--agent`, `--skills`, `--workflow`, Husky, CI) and records the markdown file in `.phasegate/manifest.json`. `RunReconcileUseCase` refreshes only the managed section from bundled templates. `RunUninstallUseCase` removes only the managed section when the manifest entry is merged, or deletes the file only when PhaseGate created the whole file.
+
+<!-- @work-item-id WI-172 -->
+## 12. Agent-Driven Setup Planner
+
+`setup:agent` is a presentation-level orchestration command for first-run and retrofit setup. It reads repository state, classifies setup intent (`minimal`, `recommended`, `strict`, `ci-only`, `agent-hooks`, `retrofit`), and returns an agent-readable plan containing detected files, questions, changes, risk, rollback, and validation commands.
+
+The command may call `RunInstallUseCase` in `--apply` mode, but its dry-run JSON plan is the primary contract. It must not silently decide user-owned policy such as Codex user-level feature flags or existing custom workflow semantics.
+
+<!-- @work-item-id WI-173 -->
+## 13. Configuration Change Planner
+
+`config:plan` maps safe natural-language configuration intents to target files, commands, risks, rollback, and post-change validation. It does not directly edit `phasegate.config.json`; it provides a stable agent-readable plan so a config doctor workflow can ask for approval, apply an explicit diff, and then run the listed checks.

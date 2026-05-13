@@ -39,6 +39,7 @@ phasegate を導入した直後の config は単純な default で、実プロ�
 | Codex hooks | `.codex/hooks.json` | managed hook JSON と Codex hook 配線確認 |
 | Husky scripts | `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push` | pre-commit backstop と bypass audit の確認 |
 | CI workflows | `.github/workflows/*` | `phasegate-aidlc-gate.yml` や既存 workflow との競合確認 |
+| agent context | `AGENTS.md`, `CLAUDE.md` | PhaseGate managed section、lesson pointer section、user-owned content の境界確認 |
 
 **schema は必要なときだけ Read** (enum 違反疑い時など): `node_modules/phasegate/scripts/harness/config-foundation/infrastructure/schemas/harness-config-v3.schema.json` (or `harness-config-v2.schema.json` if v2)。
 
@@ -131,6 +132,9 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 - reconcile / uninstall が refuse → user modified managed target として扱い、`--force` のリスクと backup path を説明して承認を取る
 - Codex の `codex_hooks` feature flag は user-level setting。project-local `install` では変更されないため、必要なら `codex features enable codex_hooks` を案内
 - Codex native `apply_patch` bypass は hook で完全捕捉できない。`.husky/pre-commit` の `phasegate pre-commit` が backstop になるため、Husky 配線を診断対象に含める
+- 初回 setup / retrofit / CI-only / agent-hooks の判断が曖昧な場合は `npx phasegate setup:agent --dry-run --json` を先に使い、検出済み状態、質問、変更案、rollback、validation を根拠として提案する。<!-- @work-item-id WI-172 -->
+- 「L4 を厳しめにして」「Codex hook を有効にして」「CI で warning を fail にして」などの自然言語依頼は、`npx phasegate config:plan --intent <intent> --dry-run --json` で対象ファイル、コマンド、リスク、検証を確認してから diff を提案する。<!-- @work-item-id WI-173 -->
+- `AGENTS.md` は標準運用ルールの managed section と lesson pointer section を分ける。`ci:auto-refresh-agent-context --apply` は lesson pointers 専用 section を更新し、標準運用ルールや user-owned content を置換してはいけない。<!-- @work-item-id WI-174 -->
 
 ### Step 3: 診断レポート
 

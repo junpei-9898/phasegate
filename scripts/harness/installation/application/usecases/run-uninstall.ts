@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-147
+// @work-item-id WI-174
 
 import { access, copyFile, lstat, mkdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -10,7 +11,7 @@ import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
 type UninstallAction = "missing-manifest" | "delete" | "unlink" | "reverse-merge" | "skip" | "refuse";
-type StrategyType = "created" | "json" | "shell" | "package-json" | "symlink" | "yaml-add" | "unknown";
+type StrategyType = "created" | "json" | "shell" | "package-json" | "markdown-managed" | "symlink" | "yaml-add" | "unknown";
 
 export interface UninstallPlanItem {
   readonly path: string;
@@ -42,6 +43,8 @@ export interface RunUninstallResult {
 const SKILL_HINT = "invoke /phasegate-config-doctor";
 const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
+const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
+const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const PHASEGATE_SCRIPT_PREFIX = "phasegate:";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -105,6 +108,11 @@ export function reverseJsonMerge(currentContent: string, templateContent: string
 
 export function reverseShellMerge(currentContent: string): string {
   const pattern = new RegExp(`\\n?${escapeRegExp(SHELL_BEGIN)}[\\s\\S]*?${escapeRegExp(SHELL_END)}\\n?`);
+  return currentContent.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s*$/, "\n").replace(/^\n/, "");
+}
+
+export function reverseManagedMarkdown(currentContent: string): string {
+  const pattern = new RegExp(`\\n?${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}\\n?`);
   return currentContent.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s*$/, "\n").replace(/^\n/, "");
 }
 
@@ -300,6 +308,7 @@ export class RunUninstallUseCase {
 
   private async reverseMerged(harnessRoot: string, path: string, currentContent: string, strategy: StrategyType): Promise<string> {
     if (strategy === "shell") return currentContent.includes(SHELL_BEGIN) ? reverseShellMerge(currentContent) : currentContent;
+    if (strategy === "markdown-managed") return currentContent.includes(MARKDOWN_BEGIN) ? reverseManagedMarkdown(currentContent) : currentContent;
     if (strategy === "package-json") return reversePackageJsonMerge(currentContent);
     if (strategy === "json") return reverseJsonMerge(currentContent, await readFile(join(harnessRoot, this.templateFor(path)), "utf8"));
     throw new Error(`Unsupported merged strategy: ${strategy}`);
@@ -309,6 +318,7 @@ export class RunUninstallUseCase {
     if (mode === "symlink") return "symlink";
     if (mode === "created") return path.endsWith(".yml") || path.endsWith(".yaml") ? "yaml-add" : "created";
     if (path === "package.json") return "package-json";
+    if (path === "AGENTS.md" || path === "CLAUDE.md") return "markdown-managed";
     if (path.endsWith(".json")) return "json";
     if (path.startsWith(".husky/")) return "shell";
     return "unknown";
@@ -317,6 +327,8 @@ export class RunUninstallUseCase {
   private templateFor(path: string): string {
     if (path === ".claude/settings.json") return "templates/.claude/settings.json";
     if (path === ".codex/hooks.json") return "templates/.codex/hooks.json";
+    if (path === "CLAUDE.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
+    if (path === "AGENTS.md") return "docs/templates/agent-context/AGENTS.md.template.md";
     throw new Error(`No template for ${path}`);
   }
 

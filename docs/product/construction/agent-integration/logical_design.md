@@ -1533,3 +1533,17 @@ PostToolUse and Stop hook adapters record hook skips to `.phasegate/hook-skip-ev
 
 <!-- @work-item-id WI-166 -->
 The shared record is the same hook skip observation consumed by harness-api status. Agent-integration owns event creation and append behavior; harness-api owns status projection. Claude and Codex hooks have different native event coverage: PostToolUse / Stop skip recording is runtime-observable, while native pre-edit gaps such as Codex `apply_patch` are surfaced as an operational warning with the L2 pre-commit backstop rather than as a pre-edit event.
+
+<!-- @work-item-id WI-171, WI-174 -->
+### WI-171 / WI-174 Agent Onboarding Context
+
+Agent integration assumes the active agent can read the repository-root context file created by setup: `CLAUDE.md` for Claude and `AGENTS.md` for Codex. These files do not replace hook JSON; they explain the managed hook state, required documents, WI workflow, and next manual action such as `codex features enable codex_hooks`.
+
+The hook runtime remains responsible for enforcement. The context file is guidance and recovery surface, updated through the installation lifecycle so first-time users and agents can follow the same first-run / daily-use / CI-use / agent-use recipes.
+
+<!-- @work-item-id WI-172, WI-173 -->
+### WI-172 / WI-173 Agent Planning Contracts
+
+Agent-facing setup and configuration changes are exposed through CLI planning payloads before mutation. Agents should use `setup:agent --dry-run --json` to decide which setup questions remain, and `config:plan --intent <intent> --json` to explain config/setup changes before editing files.
+
+These planners provide guidance and validation steps. Actual enforcement remains in hooks, doctor, validate, check-ready, and git/CI backstops.

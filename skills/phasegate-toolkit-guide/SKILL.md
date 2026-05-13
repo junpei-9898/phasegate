@@ -123,11 +123,16 @@ docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 - 「.phasegate/manifest.json や hook-skip-events は何？」
 
 **参照先**:
+- 最短導線: `docs/guide/getting-started.md`
+- recipes: `docs/guide/recipes.md`
+- troubleshooting: `docs/guide/troubleshooting.md`
 - 新規導入: `docs/guide/installation.md`
 - 既存プロジェクト導入: `docs/guide/retrofit-adoption.md`
 - setup artifact / doctor finding / legacy artifact: `docs/guide/setup-artifacts.md`
 
 `setup-artifacts.md` は managed target / generated artifact / runtime state / legacy artifact / user-level setting の分類を持つ。`doctor --report-out` は明示 path への出力で、`.phasegate/last-doctor-report.json` は固定生成物ではない点もここを参照する。<!-- @work-item-id WI-153 -->
+
+`setup:agent` は初回 setup / retrofit / CI-only / agent hook 有効化の agent-readable planner、`config:plan` は安全な設定変更 intent planner。質問が「次に何を実行するか」「この変更はどの file/validation に対応するか」に寄っている場合は、これらの guide と CLI を案内する。<!-- @work-item-id WI-171, WI-172, WI-173 -->
 
 ### 8. skill 一覧と使い分け
 

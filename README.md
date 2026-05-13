@@ -60,6 +60,8 @@ The point is not just to fail the edit. The error gives the AI agent enough stru
 
 ## Quick Start
 
+For a guided first run, start with [Getting Started](docs/guide/getting-started.md). It maps new repo, existing repo, CI-only, agent-hook, and strict rollout paths to the next command and success state. <!-- @work-item-id WI-171 -->
+
 ### Requirements
 
 Node.js >= 18, npm >= 9, TypeScript 5.x
@@ -98,7 +100,16 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`.
+`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 -->
+
+For agent-driven setup planning, use:
+
+```bash
+npx phasegate setup:agent --intent recommended --dry-run --json
+npx phasegate config:plan --intent codex-hooks --dry-run --json
+```
+
+The first command reports detected setup state, missing questions, planned managed targets, rollback, and validation. The second maps a configuration change intent to files, commands, risks, and checks. <!-- @work-item-id WI-172, WI-173 -->
 
 To remove PhaseGate from that project later, run:
 
@@ -507,6 +518,8 @@ README keeps only the entry points most users need. The full public/compatibilit
 | `doctor` | Diagnose silent or partial installations (`--json`, `--strict`, `--report-out <path>`). `--report-out` is an explicit file path, not `reporting.outputDir`. |
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`, preserving user content. |
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to the current package templates and refresh manifest hashes. |
+| `setup:agent --dry-run` / `--apply` | Diagnose repository setup and produce or apply an agent-readable setup plan with questions, risks, rollback, and validation. |
+| `config:plan --intent <intent>` | Map a safe configuration-change intent to target files, commands, risks, rollback, and validation. |
 | `lint` / `phasegate:lint` | Run L1 Biome AST checks. The `phasegate:*` form is a binary subcommand, not an npm script unless `package.json` defines it locally. |
 | `validate --layer <L1-L4\|all>` | Run validators for the specified layer (`--layer L0` prints runtime hook guidance). `--fail-on-warning` / `--no-fail-on-warning` override config. |
 | `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped). Supports `--quick`, `--fail-on-reject`, `--dry-run`, and `--files`. |
@@ -547,6 +560,9 @@ See the [CLI Reference](docs/guide/cli-reference.md) for the complete catalog an
 Detailed guides are available under `docs/guide/`:
 
 - [Installation](docs/guide/installation.md) -- Detailed install and setup instructions
+- [Getting Started](docs/guide/getting-started.md) -- First-run, daily-use, CI-use, and agent-use paths
+- [Recipes](docs/guide/recipes.md) -- Focused onboarding and configuration recipes
+- [Troubleshooting](docs/guide/troubleshooting.md) -- Doctor finding, repairHint, suggestedSkill, and setup recovery guide
 - [Configuration](docs/guide/configuration.md) -- `phasegate.config.json` full reference
 - [CLI Reference](docs/guide/cli-reference.md) -- All CLI commands and options
 - [Skills Overview](docs/guide/skills-overview.md) -- 30 skills with AIDLC execution order

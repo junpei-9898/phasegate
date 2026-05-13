@@ -8,6 +8,15 @@ This file is the **Single Source of Truth** for all quality configuration in a P
 
 It is not the whole setup state. Hook JSON, Husky scripts, CI workflow files, skill links, `.phasegate/manifest.json`, runtime reports, and Codex user-level feature flags are tracked separately. Use [Setup Artifacts](setup-artifacts.md) when auditing whether a project is fully installed. <!-- @work-item-id WI-152 -->
 
+For agent-assisted changes, preview the intent before editing the config:
+
+```bash
+npx phasegate config:plan --intent l4-strict --dry-run --json
+npx phasegate config:plan --intent quick-mode-strict --dry-run --json
+```
+
+The plan identifies target fields, managed artifacts, commands, validation, risks, and rollback so an agent can explain the change before applying it. <!-- @work-item-id WI-173 -->
+
 ### Full Reference
 
 ```jsonc

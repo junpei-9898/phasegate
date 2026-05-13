@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-148
+// @work-item-id WI-174
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -12,7 +13,7 @@ import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
 type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "symlink" | "unknown";
+type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "symlink" | "unknown";
 
 export interface ReconcilePlanItem {
   readonly path: string;
@@ -52,6 +53,8 @@ interface ReconcileTarget {
 const SKILL_HINT = "invoke /phasegate-config-doctor";
 const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
+const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
+const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -134,6 +137,41 @@ function reconcileShell(existing: string | null, incoming: string): string {
   const pattern = new RegExp(`${escapeRegExp(SHELL_BEGIN)}[\\s\\S]*?${escapeRegExp(SHELL_END)}`);
   if (pattern.test(existing)) return existing.replace(pattern, incomingBlock).replace(/\s*$/, "\n");
   return `${existing.replace(/\s*$/, "\n\n")}${incomingBlock}\n`;
+}
+
+function managedMarkdownBlock(content: string): string {
+  const start = content.indexOf(MARKDOWN_BEGIN);
+  const end = content.indexOf(MARKDOWN_END);
+  if (start === -1 || end === -1 || end < start) return content.trim();
+  return content.slice(start, end + MARKDOWN_END.length).trim();
+}
+
+function reconcileManagedMarkdown(existing: string | null, incoming: string): string {
+  const block = managedMarkdownBlock(incoming);
+  if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
+  const pattern = new RegExp(`${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}`);
+  if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
+  return `${block}\n\n${existing.replace(/\s*$/, "\n")}`;
+}
+
+function renderAgentContextTemplate(template: string): string {
+  const commands = [
+    "- `phasegate doctor`",
+    "- `phasegate phasegate:check-ready`",
+    "- `phasegate validate --layer L2 --format human`",
+    "- `phasegate setup:agent --dry-run`",
+    "- `phasegate config:plan --intent l4-strict --dry-run`",
+  ].join("\n");
+  return template
+    .replaceAll("{{PHASEGATE_AGENT}}", "both")
+    .replaceAll("{{PHASEGATE_SKILLS_MODE}}", "all")
+    .replaceAll("{{PHASEGATE_WORKFLOW}}", "standard")
+    .replaceAll("{{PHASEGATE_HUSKY_STATE}}", "managed")
+    .replaceAll("{{PHASEGATE_CI_STATE}}", "managed")
+    .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
+    .replaceAll("{{PHASEGATE_SKILLS}}", "- all bundled skills")
+    .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
+    .replaceAll("{{PHASEGATE_USER_SECTION}}", "Project-specific agent instructions go here.");
 }
 
 function reconcilePackageJson(existing: Record<string, unknown>, version: string): Record<string, unknown> {
@@ -259,7 +297,8 @@ export class RunReconcileUseCase {
     if (before === null) return this.planMissingTarget(input, target);
     const currentHash = this.hashCalculator.compute(before);
     const matchesManifest = currentHash.equals(entry.hash);
-    const template = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
+    const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
+    const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
     const next = entry.mode === "created" && target.strategy !== "package-json"
       ? template
       : this.reconcileContent(target, before, template, input.phasegateVersion);
@@ -290,7 +329,8 @@ export class RunReconcileUseCase {
     if (target.strategy === "symlink") return this.planSymlink(input.projectRoot, target.path);
     const absolutePath = this.resolveProjectPath(input.projectRoot, target.path);
     const before = await readTextOrNull(absolutePath);
-    const template = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
+    const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
+    const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
     const next = before === null && target.strategy !== "package-json"
       ? template
       : this.reconcileContent(target, before, template, input.phasegateVersion);
@@ -350,6 +390,7 @@ export class RunReconcileUseCase {
   private reconcileContent(target: ReconcileTarget, before: string | null, template: string, version: string): string {
     if (target.strategy === "yaml-add") return template;
     if (target.strategy === "shell") return reconcileShell(before, template);
+    if (target.strategy === "markdown-managed") return reconcileManagedMarkdown(before, template);
     if (target.strategy === "package-json") {
       const existing = before === null ? {} : (JSON.parse(before) as unknown);
       return `${JSON.stringify(reconcilePackageJson(isRecord(existing) ? existing : {}, version), null, 2)}\n`;
@@ -362,7 +403,19 @@ export class RunReconcileUseCase {
   private createTargets(): readonly ReconcileTarget[] {
     return [
       { path: ".claude/settings.json", strategy: "json", templatePath: "templates/.claude/settings.json" },
+      {
+        path: "CLAUDE.md",
+        strategy: "markdown-managed",
+        templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
+        block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate CLAUDE.md managed section" },
+      },
       { path: ".codex/hooks.json", strategy: "json", templatePath: "templates/.codex/hooks.json" },
+      {
+        path: "AGENTS.md",
+        strategy: "markdown-managed",
+        templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
+        block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate AGENTS.md managed section" },
+      },
       {
         path: ".husky/pre-commit",
         strategy: "shell",
@@ -401,7 +454,7 @@ export class RunReconcileUseCase {
 
   private managedBlockFor(path: string, strategy: StrategyType): ManagedBlockInput | null {
     if (strategy === "shell") return { start: SHELL_BEGIN, end: SHELL_END, content: `phasegate ${path} managed block` };
-    if (strategy === "json" || strategy === "package-json") {
+    if (strategy === "json" || strategy === "package-json" || strategy === "markdown-managed") {
       return { start: "phasegate structured merge", end: "phasegate structured merge", content: `${strategy}:${path}` };
     }
     return null;

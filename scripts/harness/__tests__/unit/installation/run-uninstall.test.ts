@@ -2,9 +2,10 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-147
+// @work-item-id WI-174
 
 import { describe, expect, it } from "vitest";
-import { reverseJsonMerge, reversePackageJsonMerge, reverseShellMerge } from "../../../installation/application/usecases/run-uninstall.js";
+import { reverseJsonMerge, reverseManagedMarkdown, reversePackageJsonMerge, reverseShellMerge } from "../../../installation/application/usecases/run-uninstall.js";
 import { target } from "../../helpers/test-helpers.js";
 
 target("RunUninstallUseCase", () => {
@@ -70,6 +71,31 @@ target("RunUninstallUseCase", () => {
       expect(actual).toContain("\"test\": \"vitest\"");
       expect(actual).toContain("\"vitest\": \"^3.0.0\"");
       expect(actual).not.toContain("phasegate");
+    });
+
+    it("markdown managed section だけを削除して user content を保持すること", () => {
+      // Arrange
+      const current = [
+        "# AGENTS.md",
+        "",
+        "<!-- phasegate:managed-section:start -->",
+        "## PhaseGate Managed Instructions",
+        "- managed",
+        "<!-- phasegate:managed-section:end -->",
+        "",
+        "## User Notes",
+        "keep this",
+        "",
+      ].join("\n");
+
+      // Act
+      const actual = reverseManagedMarkdown(current);
+
+      // Assert
+      expect(actual).toContain("# AGENTS.md");
+      expect(actual).toContain("keep this");
+      expect(actual).not.toContain("PhaseGate Managed Instructions");
+      expect(actual).not.toContain("phasegate:managed-section:start");
     });
   });
 });

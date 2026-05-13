@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-146
+// @work-item-id WI-174
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -12,7 +13,7 @@ import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.j
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json";
+type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed";
 
 export interface InstallPlanItem {
   readonly path: string;
@@ -36,6 +37,9 @@ export interface RunInstallInput {
   readonly includeCodex?: boolean;
   readonly includeHusky?: boolean;
   readonly includeCi?: boolean;
+  readonly skillSet?: "core" | "all";
+  readonly workflow?: "standard" | "strict";
+  readonly agent?: "claude" | "codex" | "both";
 }
 
 export interface RunInstallResult {
@@ -58,6 +62,8 @@ const PHASEGATE_SCRIPT_VERSION = "^0.0.0";
 
 const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
+const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
+const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -131,6 +137,50 @@ function mergeShell(existing: string | null, incoming: string): string {
   return `${existing.replace(/\s*$/, "\n\n")}${block}\n`;
 }
 
+function managedMarkdownBlock(content: string): string {
+  const start = content.indexOf(MARKDOWN_BEGIN);
+  const end = content.indexOf(MARKDOWN_END);
+  if (start === -1 || end === -1 || end < start) return content.trim();
+  return content.slice(start, end + MARKDOWN_END.length).trim();
+}
+
+function mergeManagedMarkdown(existing: string | null, incoming: string): string {
+  const block = managedMarkdownBlock(incoming);
+  if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
+  const pattern = new RegExp(`${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}`);
+  if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
+  return `${block}\n\n${existing.replace(/\s*$/, "\n")}`;
+}
+
+function renderAgentContextTemplate(
+  template: string,
+  options: {
+    readonly agent: "claude" | "codex" | "both";
+    readonly skillSet: "core" | "all";
+    readonly workflow: "standard" | "strict";
+    readonly includeHusky: boolean;
+    readonly includeCi: boolean;
+  },
+): string {
+  const commands = [
+    "- `phasegate doctor`",
+    "- `phasegate phasegate:check-ready`",
+    "- `phasegate validate --layer L2 --format human`",
+    "- `phasegate setup:agent --dry-run`",
+    "- `phasegate config:plan --intent l4-strict --dry-run`",
+  ].join("\n");
+  return template
+    .replaceAll("{{PHASEGATE_AGENT}}", options.agent)
+    .replaceAll("{{PHASEGATE_SKILLS_MODE}}", options.skillSet)
+    .replaceAll("{{PHASEGATE_WORKFLOW}}", options.workflow)
+    .replaceAll("{{PHASEGATE_HUSKY_STATE}}", options.includeHusky ? "managed" : "not managed by this setup run")
+    .replaceAll("{{PHASEGATE_CI_STATE}}", options.includeCi ? "managed" : "not managed by this setup run")
+    .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
+    .replaceAll("{{PHASEGATE_SKILLS}}", options.skillSet === "core" ? "- core skills" : "- all bundled skills")
+    .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
+    .replaceAll("{{PHASEGATE_USER_SECTION}}", "Project-specific agent instructions go here.");
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -192,6 +242,9 @@ export class RunInstallUseCase {
     const includeCodex = input.includeCodex ?? true;
     const includeHusky = input.includeHusky ?? true;
     const includeCi = input.includeCi ?? true;
+    const skillSet = input.skillSet ?? "all";
+    const workflow = input.workflow ?? "standard";
+    const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
     const targets = this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
     const existingManifest = await this.manifestRepository.load(input.projectRoot);
     const baseManifest = existingManifest ?? DeploymentManifest.create(input.phasegateVersion);
@@ -205,7 +258,10 @@ export class RunInstallUseCase {
     for (const target of targets) {
       const absolutePath = join(input.projectRoot, target.path);
       const before = await readTextOrNull(absolutePath);
-      const template = await readFile(join(input.harnessRoot, target.templatePath), "utf8");
+      const rawTemplate = await readFile(join(input.harnessRoot, target.templatePath), "utf8");
+      const template = target.strategy === "markdown-managed"
+        ? renderAgentContextTemplate(rawTemplate, { agent, skillSet, workflow, includeHusky, includeCi })
+        : rawTemplate;
       const repairMode = this.repairMode(target, before);
       const next = this.merge(target, before, template, input.phasegateVersion);
       const didChange = before !== next;
@@ -300,10 +356,26 @@ export class RunInstallUseCase {
   }): readonly InstallTarget[] {
     return [
       ...(options.includeClaude
-        ? [{ path: ".claude/settings.json", strategy: "json" as const, templatePath: "templates/.claude/settings.json" }]
+        ? [
+            { path: ".claude/settings.json", strategy: "json" as const, templatePath: "templates/.claude/settings.json" },
+            {
+              path: "CLAUDE.md",
+              strategy: "markdown-managed" as const,
+              templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate CLAUDE.md managed section" },
+            },
+          ]
         : []),
       ...(options.includeCodex
-        ? [{ path: ".codex/hooks.json", strategy: "json" as const, templatePath: "templates/.codex/hooks.json" }]
+        ? [
+            { path: ".codex/hooks.json", strategy: "json" as const, templatePath: "templates/.codex/hooks.json" },
+            {
+              path: "AGENTS.md",
+              strategy: "markdown-managed" as const,
+              templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate AGENTS.md managed section" },
+            },
+          ]
         : []),
       ...(options.includeHusky
         ? [
@@ -346,6 +418,7 @@ export class RunInstallUseCase {
   private repairMode(target: InstallTarget, before: string | null): RepairMode {
     if (target.strategy === "shell") return shellRepairMode(before);
     if (target.strategy === "json") return jsonRepairMode(before);
+    if (target.strategy === "markdown-managed") return "mechanical";
     return "mechanical";
   }
 
@@ -358,6 +431,7 @@ export class RunInstallUseCase {
   private merge(target: InstallTarget, before: string | null, template: string, version: string): string {
     if (target.strategy === "yaml-add") return before ?? template;
     if (target.strategy === "shell") return mergeShell(before, template);
+    if (target.strategy === "markdown-managed") return mergeManagedMarkdown(before, template);
     if (target.strategy === "package-json") {
       const existing = before === null ? {} : (JSON.parse(before) as unknown);
       const merged = mergePackageJson(isRecord(existing) ? existing : {}, version || PHASEGATE_SCRIPT_VERSION);

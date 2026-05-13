@@ -1381,3 +1381,13 @@ L4 remains default-off for standard rollout. Projects opt in through strict pres
 Config-foundation owns resolved config projection, not every scanner policy. The public schema exposes `validate.failOnWarning`, `layers.*.enabled`, configured validator IDs, `harnesses.bundleSizeLimit`, `harnesses.deadCodeGC`, and architecture `capabilityPolicies` / `decisionPolicies`.
 
 Operational scanner details such as L3-002 `largeLiteralEntries`, sync I/O detection, loop-await detection, security fixture allowlist markers, and dead-code graph exclusion rules are validator-system policy unless this Unit explicitly adds schema fields. CI template generation receives preset and layer state from config-foundation, then asks ci-governance/validator-system for the live validator surface.
+
+<!-- @work-item-id WI-173 -->
+## P3 Configuration Change Planning Boundary
+
+`config:plan` is a planning surface for configuration changes, not a config mutation use case. It maps operator intent (`l4-strict`, `codex-hooks`, `ci-fail-on-warning`, `baseline-reset`, `quick-mode-strict`) to the config paths, managed setup targets, commands, risks, rollback, and validation checks that an agent must explain before editing.
+
+Config-foundation remains the owner of schema and resolved config behavior. The planner must not invent schema fields; when a change requires mutation, the agent applies an explicit diff and then runs the planner-listed validations.
+
+<!-- @work-item-id WI-172 -->
+`setup:agent` may recommend creating or preserving `phasegate.config.json` as part of first-run setup, but config-foundation still owns the schema and default resolution. Setup orchestration delegates actual config creation to the existing initialization helper rather than maintaining a second config writer.

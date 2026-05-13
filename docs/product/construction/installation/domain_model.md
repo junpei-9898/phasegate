@@ -417,3 +417,17 @@ classDiagram
 - `DeploymentManifest.addEntry` / `removeEntry` / `findEntry` は pure function (新インスタンス返却) — 直接変更しない
 - `DiagnosticReport.create` の `overallStatus` 計算ルール: findings に `severity == "red"` が 1 件でも存在 → `"red"` / `severity == "warn"` が 1 件以上で red なし → `"warn"` / findings が空または全て pass → `"green"`
 - 新規実装は `scripts/harness/installation/{domain,application,infrastructure,presentation}/` 配下に Clean Architecture 4 層で配置する (installation_unit.md §6 制約)
+
+<!-- @work-item-id WI-174 -->
+## 8. Agent Context File Target Model
+
+Agent context files are modeled as deployment entries with a markdown managed-block strategy.
+
+| Concept | Meaning |
+|---|---|
+| Markdown managed block | The text between `<!-- phasegate:managed-section:start -->` and `<!-- phasegate:managed-section:end -->`. |
+| User-owned context | Any text outside PhaseGate markers. Install/reconcile/uninstall must preserve it. |
+| Lesson pointer block | The `AGENTS.md` section between `<!-- phasegate:lesson-pointers:start -->` and `<!-- phasegate:lesson-pointers:end -->`; owned by ci-governance, not installation. |
+| Singular `AGENT.md` | Unsupported as a managed target; user-owned if present. |
+
+The deployment manifest records `AGENTS.md` and `CLAUDE.md` using the same hash/change detection rules as other merged targets. A hash mismatch requires ai-assisted or forced handling before replacing a managed section.

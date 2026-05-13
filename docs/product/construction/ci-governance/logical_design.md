@@ -1614,3 +1614,10 @@ Scheduled L4 remains default-off for standard projects and is run by cron/manual
 ## WI-155 Traceability Reflection Cleanup
 
 CI governance product docs preserve legacy `@story-id H13-*` annotations as history, but new cross-unit reflection uses `@work-item-id`. Work-Item commit trailer enforcement is owned by `commit-msg` / `bypass:audit`, while product reflection evidence is the accumulated `@work-item-id WI-XXX` tag in relevant construction docs. `Work-Item: WI-XXX` trailers are audit history, not a replacement for product reflection.
+
+<!-- @work-item-id WI-174 -->
+## WI-174 AGENTS.md Dedicated Lesson Pointer Section
+
+`ci:auto-refresh-agent-context` must not serialize `AGENTS.md` as a pointer-only document. CI governance writes lesson pointers only between `<!-- phasegate:lesson-pointers:start -->` and `<!-- phasegate:lesson-pointers:end -->`. The PhaseGate standard operations block is owned by installation as `phasegate:managed-section`, and arbitrary content outside both marker pairs is user-owned.
+
+This keeps lesson aggregation compatible with Codex-facing setup instructions and prevents auto-refresh from replacing the standard WI workflow, hook bypass policy, and setup next steps.

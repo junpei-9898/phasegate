@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-146
+// @work-item-id WI-174
 
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -98,6 +99,13 @@ async function arrangeCustomHuskyAndForce() {
   return refuseThenForceAndRead(root);
 }
 
+async function arrangeExistingAgentsMdInstallAndRead(): Promise<string> {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, "AGENTS.md", "# Existing Agent Notes\n\nkeep user text\n");
+  await runInstall(root, { apply: true });
+  return await readFile(join(root, "AGENTS.md"), "utf8");
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -118,7 +126,9 @@ target("InstallHandler", () => {
       expect(actual.manifest.entries).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ path: ".claude/settings.json", mode: "merged" }),
+          expect.objectContaining({ path: "CLAUDE.md", mode: "created" }),
           expect.objectContaining({ path: ".codex/hooks.json", mode: "merged" }),
+          expect.objectContaining({ path: "AGENTS.md", mode: "created" }),
           expect.objectContaining({ path: "package.json", mode: "created" }),
           expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml", mode: "created" }),
         ]),
@@ -145,6 +155,16 @@ target("InstallHandler", () => {
       expect(actual.forced.stdout).toContain(".phasegate/backups");
       expect(actual.content).toContain("echo custom");
       expect(actual.content).toContain("# === phasegate managed (BEGIN) ===");
+    });
+
+    it("既存 AGENTS.md の user content を保持して managed section を追加すること", async () => {
+      // Act
+      const actual = await arrangeExistingAgentsMdInstallAndRead();
+
+      // Assert
+      expect(actual).toContain("<!-- phasegate:managed-section:start -->");
+      expect(actual).toContain("PhaseGate Managed Instructions");
+      expect(actual).toContain("keep user text");
     });
   });
 });

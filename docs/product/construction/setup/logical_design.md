@@ -21,3 +21,15 @@ Legacy `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`,
 Setup owns placement of generated CI workflow targets as managed setup artifacts. The current install lifecycle manages `.github/workflows/phasegate-aidlc-gate.yml` as the default project gate target; scheduled L4 audit templates remain generated CI artifacts rather than hidden install state unless a user explicitly installs/renders them.
 
 `install`, `doctor`, and `reconcile` should report CI workflow drift as setup target drift, while validator ID selection inside a workflow remains ci-governance / validator-system responsibility.
+
+<!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
+## P3 User Onboarding And Agent Setup
+
+Setup exposes first-run decisions as user-answerable paths rather than a raw command catalog:
+
+- `getting-started` documents first-run / daily-use / CI-use / agent-use success states.
+- `setup:agent` reads repository state and emits an agent-readable plan before writing setup files.
+- `config:plan` maps later setup/configuration change intent to targets, commands, risk, rollback, and validation.
+- `AGENTS.md` and `CLAUDE.md` are managed setup targets for selected agents; `AGENT.md` singular remains user-owned/unsupported.
+
+Setup lifecycle commands must preserve user content outside managed markers and route ambiguous merge choices through ai-assisted review instead of silent overwrite.

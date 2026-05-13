@@ -2,7 +2,7 @@
 id: WI-174
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [setup, installation, ci-governance, agent-integration, documentation]
 source: internal
 ---
@@ -78,17 +78,17 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] `phasegate init/install --agent claude --apply` 相当の導線で `CLAUDE.md` の PhaseGate managed section が作成または merge される。
-- [ ] `phasegate init/install --agent codex --apply` 相当の導線で `AGENTS.md` の PhaseGate managed section が作成または merge される。
-- [ ] `--agent both` では `CLAUDE.md` / `AGENTS.md` の両方が対象になり、各 agent 固有の hook / skill 導線が説明される。
-- [ ] 既存 `CLAUDE.md` / `AGENTS.md` の user-owned content は破壊されない。
-- [ ] `--skills core|all`, `--with-ci`, `--with-husky`, `--workflow strict` の差分が文言に反映される。
-- [ ] `ci:auto-refresh-agent-context --apply` は `AGENTS.md` の標準運用ルールを pointer list で置き換えない。
-- [ ] lesson pointers は `AGENTS.md` の dedicated section に追加 / 更新される。
-- [ ] `reconcile --apply` で agent context managed section が新 template に追従する。
-- [ ] `uninstall --apply` で PhaseGate managed section のみが削除される。
-- [ ] `AGENT.md` 単数の扱いが docs / CLI output / tests で一貫する。
-- [ ] README / installation guide / Codex integration guide / Claude integration guide が、初回 setup 後に作られる agent context files を正しく説明する。
+- [x] `phasegate init/install --agent claude --apply` 相当の導線で `CLAUDE.md` の PhaseGate managed section が作成または merge される。
+- [x] `phasegate init/install --agent codex --apply` 相当の導線で `AGENTS.md` の PhaseGate managed section が作成または merge される。
+- [x] `--agent both` では `CLAUDE.md` / `AGENTS.md` の両方が対象になり、各 agent 固有の hook / skill 導線が説明される。
+- [x] 既存 `CLAUDE.md` / `AGENTS.md` の user-owned content は破壊されない。
+- [x] `--skills core|all`, `--with-ci`, `--with-husky`, `--workflow strict` の差分が文言に反映される。
+- [x] `ci:auto-refresh-agent-context --apply` は `AGENTS.md` の標準運用ルールを pointer list で置き換えない。
+- [x] lesson pointers は `AGENTS.md` の dedicated section に追加 / 更新される。
+- [x] `reconcile --apply` で agent context managed section が新 template に追従する。
+- [x] `uninstall --apply` で PhaseGate managed section のみが削除される。
+- [x] `AGENT.md` 単数の扱いが docs / CLI output / tests で一貫する。
+- [x] README / installation guide / Codex integration guide / Claude integration guide が、初回 setup 後に作られる agent context files を正しく説明する。
 
 ## 非スコープ
 
@@ -105,3 +105,6 @@ source: internal
 - WI-148: `phasegate reconcile` / `init` deprecation。本 WI は reconcile 対象の拡張に関係する。
 - WI-169: Installation lifecycle product construction completion。本 WI の完了後、product docs へ installation target と agent context lifecycle を反映する。
 
+## 対応結果
+
+`AGENTS.md` / `CLAUDE.md` templates と markdown managed merge / reconcile / uninstall を追加した。`AGENTS.md` lesson pointers は dedicated section に分離し、standard managed section と user-owned content を保持する。

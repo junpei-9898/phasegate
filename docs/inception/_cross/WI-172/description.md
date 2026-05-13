@@ -2,8 +2,8 @@
 id: WI-172
 type: story
 severity: high
-status: drafted
-affects: [setup, agent-integration, config-foundation, skills, documentation]
+status: tested
+affects: [setup, agent-integration, config-foundation, skill-quality, documentation]
 source: internal
 ---
 
@@ -31,12 +31,16 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] agent が `init` 後に repo 状態を読み、足りない情報だけを質問できる。
-- [ ] 質問への回答から、`phasegate.config.json`, hooks, workflows, skills, baseline などの変更案を生成できる。
-- [ ] 適用前に差分・理由・リスク・rollback path を説明できる。
-- [ ] 適用後に `doctor` / `check-ready` 相当の検証を実行し、完了・警告・追加質問を区別して報告できる。
-- [ ] 非対話 CI や human-only 利用者向けに、同じ判断を docs / JSON plan / dry-run で確認できる。
+- [x] agent が `init` 後に repo 状態を読み、足りない情報だけを質問できる。
+- [x] 質問への回答から、`phasegate.config.json`, hooks, workflows, skills, baseline などの変更案を生成できる。
+- [x] 適用前に差分・理由・リスク・rollback path を説明できる。
+- [x] 適用後に `doctor` / `check-ready` 相当の検証を実行し、完了・警告・追加質問を区別して報告できる。
+- [x] 非対話 CI や human-only 利用者向けに、同じ判断を docs / JSON plan / dry-run で確認できる。
 
 ## 依存
 
 `WI-152`, `WI-153`, `WI-156`, `WI-169`, `WI-171`。
+
+## 対応結果
+
+`phasegate setup:agent` を追加し、repo setup state の検出、intent 別質問、変更案、リスク、rollback、validation を JSON / human で出力できるようにした。`--apply` は structured install path に委譲する。

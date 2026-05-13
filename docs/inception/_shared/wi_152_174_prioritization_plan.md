@@ -78,6 +78,8 @@ Exit criteria:
 
 公開体験として価値は高いが、P0/P1 の contract が固まる前に着手すると手戻りが大きい。
 
+Status: 完了済み (2026-05-13)。first-run / daily-use / CI-use / agent-use の公開導線、agent context managed targets、`setup:agent` planner、`config:plan` workflow を実装し、README / guide / skills / product construction に反映した。
+
 | WI | 理由 | 推奨まとめ方 |
 |---|---|---|
 | WI-171 | first-time user onboarding。P0 の setup contract と P1 の validation semantics を recipe に落とす。 | P3 batch 1 |
@@ -104,8 +106,8 @@ Exit criteria:
 2. Batch B: WI-159, WI-160, WI-164
 3. Batch C: WI-161, WI-162, WI-163, WI-166
 4. Batch D: WI-167, WI-168, WI-155, WI-165 (完了済み)
-5. Batch E: WI-171, WI-174
-6. Batch F: WI-172, WI-173
+5. Batch E: WI-171, WI-174 (完了済み)
+6. Batch F: WI-172, WI-173 (完了済み)
 7. Batch G: WI-156, WI-170 decision
 
 ## 実行上の注意

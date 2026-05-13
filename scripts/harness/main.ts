@@ -3,6 +3,7 @@
  * @layer presentation
  * @work-item-id WI-090 / WI-091
  * @work-item-id WI-113 / WI-142
+ * @work-item-id WI-171 / WI-172 / WI-173
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -155,6 +156,8 @@ Setup:
   install                      Install phasegate managed files (--dry-run|--apply, --force)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
+  setup:agent                  Diagnose repo setup and produce/apply an agent-readable setup plan
+  config:plan                  Produce an agent-readable configuration change plan
 
 Commands:
   enable-feature <name>        Enable a harness feature
@@ -193,6 +196,8 @@ Commands:
   ci:auto-refresh-agent-context Refresh AGENTS.md / CLAUDE.md (--dry-run, --apply, --json)
   refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
   p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
+  setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both>, --dry-run|--apply, --json)
+  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict>, --dry-run, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --force, --json)
@@ -482,7 +487,37 @@ Options:
   --dry-run                       Preview target actions without writing (default)
   --apply                         Write merge results and manifest
   --force                         Force ai-assisted/manual targets after backing up existing files
+  --agent <claude|codex|both>     Agent context and hook targets (default: both)
+  --skills <core|all>             Rendered agent context skill mode (default: all)
+  --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
+  --with-husky                    Include Husky hook targets
+  --with-ci                       Include GitHub Actions target
   --json                          Output machine-readable JSON
+  --help, -h                      Show this help`,
+  "setup:agent": `Usage: phasegate setup:agent [options]
+
+Diagnose repository setup and produce an agent-readable setup plan.
+
+Options:
+  --intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>
+  --agent <claude|codex|both>
+  --workflow <standard|strict>
+  --with-husky
+  --with-ci
+  --dry-run
+  --apply
+  --json
+  --help, -h                      Show this help`,
+  "config:plan": `Usage: phasegate config:plan --intent <intent> [options]
+
+Produce an agent-readable configuration change plan.
+
+Intents:
+  l4-strict, codex-hooks, ci-fail-on-warning, baseline-reset, quick-mode-strict
+
+Options:
+  --dry-run
+  --json
   --help, -h                      Show this help`,
   reconcile: `Usage: phasegate reconcile [options]
 
@@ -685,6 +720,9 @@ function parseCoverageThreshold(raw: string | undefined): number {
 }
 
 type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
+type AgentTarget = "claude" | "codex" | "both";
+type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
+type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict";
 
 function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
   if (value === undefined) return undefined;
@@ -692,6 +730,149 @@ function parseInitPhasePreset(value: string | undefined): InitPhasePreset | unde
     return value;
   }
   return undefined;
+}
+
+function parseAgentTarget(value: string | undefined, fallback: AgentTarget = "both"): AgentTarget {
+  if (value === "claude" || value === "codex" || value === "both") return value;
+  return fallback;
+}
+
+function parseSetupIntent(value: string | undefined): SetupIntent {
+  if (
+    value === "minimal" ||
+    value === "recommended" ||
+    value === "strict" ||
+    value === "ci-only" ||
+    value === "agent-hooks" ||
+    value === "retrofit"
+  ) {
+    return value;
+  }
+  return "recommended";
+}
+
+function parseConfigChangeIntent(value: string | undefined): ConfigChangeIntent {
+  if (
+    value === "l4-strict" ||
+    value === "codex-hooks" ||
+    value === "ci-fail-on-warning" ||
+    value === "baseline-reset" ||
+    value === "quick-mode-strict"
+  ) {
+    return value;
+  }
+  return "l4-strict";
+}
+
+async function projectFileExists(rootDir: string, relativePath: string): Promise<boolean> {
+  try {
+    await fsReadFile(join(rootDir, relativePath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function buildAgentSetupPlan(rootDir: string, input: {
+  readonly intent: SetupIntent;
+  readonly agent: AgentTarget;
+  readonly withHusky: boolean;
+  readonly withCi: boolean;
+  readonly workflow: WorkflowMode;
+}) {
+  const checks = {
+    packageJson: await projectFileExists(rootDir, "package.json"),
+    phasegateConfig: await projectFileExists(rootDir, "phasegate.config.json"),
+    claudeSettings: await projectFileExists(rootDir, ".claude/settings.json"),
+    codexHooks: await projectFileExists(rootDir, ".codex/hooks.json"),
+    agentsMd: await projectFileExists(rootDir, "AGENTS.md"),
+    claudeMd: await projectFileExists(rootDir, "CLAUDE.md"),
+    huskyPreCommit: await projectFileExists(rootDir, ".husky/pre-commit"),
+    ciWorkflow: await projectFileExists(rootDir, ".github/workflows/phasegate-aidlc-gate.yml"),
+  };
+  const includeClaude = input.agent === "claude" || input.agent === "both";
+  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const changes = [
+    !checks.packageJson ? "Add phasegate devDependency and phasegate scripts to package.json." : "Keep existing package.json and merge missing phasegate scripts only.",
+    !checks.phasegateConfig ? `Create phasegate.config.json for ${input.workflow} workflow.` : "Keep existing phasegate.config.json; review config:plan before changing policy.",
+    includeClaude ? "Create or refresh .claude/settings.json and CLAUDE.md managed section." : null,
+    includeCodex ? "Create or refresh .codex/hooks.json and AGENTS.md managed section." : null,
+    input.withHusky ? "Create or refresh Husky pre-commit, commit-msg, and pre-push backstops." : "Leave Husky hooks unmanaged in this setup run.",
+    input.withCi ? "Create or refresh GitHub Actions PhaseGate workflow." : "Leave CI workflow unmanaged in this setup run.",
+  ].filter((item): item is string => item !== null);
+  const questions = [
+    input.intent === "recommended" ? "Do you want both Claude and Codex context files, or only the agent you actively use?" : null,
+    input.intent === "retrofit" ? "Should existing hooks/workflows be preserved as user-owned content or migrated into PhaseGate managed blocks?" : null,
+    input.intent === "ci-only" ? "Should local hooks remain disabled while CI enforces the same checks?" : null,
+    input.workflow !== "strict" ? "Do you want strict WI/product reflection enforcement now, or after the first green run?" : null,
+  ].filter((item): item is string => item !== null);
+  return {
+    intent: input.intent,
+    agent: input.agent,
+    detected: checks,
+    questions,
+    changes,
+    risks: [
+      "Existing user content outside PhaseGate managed markers is preserved.",
+      "Manual review is still required when a managed target has complex user edits and --force is not used.",
+    ],
+    rollback: [
+      "Run phasegate uninstall --dry-run to preview reversal.",
+      "Run phasegate uninstall --apply after reviewing the managed targets.",
+      "Backups are written under .phasegate/backups when force is used on changed managed files.",
+    ],
+    validation: [
+      "phasegate doctor",
+      "phasegate phasegate:check-ready",
+      "phasegate validate --layer L2 --format human",
+    ],
+  };
+}
+
+function buildConfigChangePlan(intent: ConfigChangeIntent) {
+  const catalog: Record<ConfigChangeIntent, {
+    readonly targets: readonly string[];
+    readonly commands: readonly string[];
+    readonly validations: readonly string[];
+    readonly risks: readonly string[];
+  }> = {
+    "l4-strict": {
+      targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: layers.L4.failOnWarning"],
+      commands: ["phasegate validate --layer L4 --fail-on-warning --format human"],
+      validations: ["phasegate phasegate:detect-drift --json", "phasegate phasegate:check-ready"],
+      risks: ["L4 findings may be advisory today but become blocking when fail-on-warning is enabled."],
+    },
+    "codex-hooks": {
+      targets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
+      commands: ["phasegate install --agent codex --apply", "codex features enable codex_hooks"],
+      validations: ["phasegate doctor --json", "phasegate phasegate:status --json"],
+      risks: ["Codex apply_patch writes still require the pre-commit backstop for full coverage."],
+    },
+    "ci-fail-on-warning": {
+      targets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
+      commands: ["phasegate install --with-ci --apply", "phasegate validate --layer L4 --fail-on-warning"],
+      validations: ["phasegate doctor", "phasegate ci:generate-template --type aidlc-gate --render"],
+      risks: ["Existing warning-only projects may start failing CI after rollout."],
+    },
+    "baseline-reset": {
+      targets: [".phasegate/baseline.json"],
+      commands: ["phasegate baseline --dry-run", "phasegate baseline --force --json"],
+      validations: ["phasegate phasegate:status --json", "phasegate phasegate:check-ready"],
+      risks: ["A reset can hide historical drift if reviewed without the generated diff."],
+    },
+    "quick-mode-strict": {
+      targets: ["phasegate.config.json: quickMode"],
+      commands: ["phasegate check-change-category --paths <changed-files> --format json"],
+      validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
+      risks: ["More changes will require Full Mode validation before commit."],
+    },
+  };
+  return {
+    intent,
+    ...catalog[intent],
+    diffExplanation: "Review the listed targets first, apply through PhaseGate managed commands where possible, then run the validations in order.",
+    rollback: "Use git diff for config changes; use phasegate uninstall/reconcile dry-runs for managed setup targets.",
+  };
 }
 
 type RuleSeverity = "error" | "warning" | "off";
@@ -999,6 +1180,9 @@ async function main(): Promise<void> {
           includeCodex: deployCodex,
           includeHusky: withHusky,
           includeCi: withCi,
+          skillSet,
+          workflow,
+          agent,
         });
         console.log(
           `✓ Skills deployed to ${result.targetDir} (${result.deployedSkills.length} skills, set: ${skillSet})`,
@@ -1196,7 +1380,7 @@ async function main(): Promise<void> {
       }
 
       case "install": {
-        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json"];
+        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json", "--agent", "--skills", "--workflow", "--with-husky", "--with-ci"];
         const flagError = validateKnownFlags(args, KNOWN_INSTALL_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -1204,6 +1388,19 @@ async function main(): Promise<void> {
         }
         const apply = hasFlag(args, "--apply");
         const dryRun = hasFlag(args, "--dry-run") || !apply;
+        const agent = parseAgentTarget(parseFlag(args, "--agent"), "both");
+        const skillSetRaw = parseFlag(args, "--skills") ?? "all";
+        if (skillSetRaw !== "core" && skillSetRaw !== "all") {
+          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
+          process.exit(2);
+        }
+        const workflowRaw = parseFlag(args, "--workflow");
+        if (workflowRaw !== undefined && workflowRaw !== "standard" && workflowRaw !== "strict") {
+          console.error(`Invalid --workflow value: "${workflowRaw}". Use "standard" or "strict".`);
+          process.exit(2);
+        }
+        const includeClaude = agent === "claude" || agent === "both";
+        const includeCodex = agent === "codex" || agent === "both";
         const mod = createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.installHandler.execute({
@@ -1213,10 +1410,105 @@ async function main(): Promise<void> {
           dryRun,
           apply,
           force: hasFlag(args, "--force"),
+          includeClaude,
+          includeCodex,
+          includeHusky: true,
+          includeCi: true,
+          skillSet: skillSetRaw,
+          workflow: parseWorkflowMode(workflowRaw),
+          agent,
           json,
         });
         console.log(result.stdout);
         process.exit(result.exitCode);
+        break;
+      }
+
+      case "setup:agent": {
+        const KNOWN_SETUP_AGENT_FLAGS = ["--intent", "--agent", "--workflow", "--with-husky", "--with-ci", "--dry-run", "--apply", "--force", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_SETUP_AGENT_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const intent = parseSetupIntent(parseFlag(args, "--intent"));
+        const agent = parseAgentTarget(parseFlag(args, "--agent"), "both");
+        const workflow = parseWorkflowMode(parseFlag(args, "--workflow") ?? (intent === "strict" ? "strict" : "standard"));
+        const withCi = hasFlag(args, "--with-ci") || intent === "ci-only" || intent === "strict";
+        const withHusky = hasFlag(args, "--with-husky") || intent === "agent-hooks" || intent === "strict";
+        const plan = await buildAgentSetupPlan(rootDir, { intent, agent, withHusky, withCi, workflow });
+        const apply = hasFlag(args, "--apply");
+        let installResult: unknown = null;
+        let bootstrapResult: unknown = null;
+        if (apply) {
+          const skillResult = await deploySkills(harnessRoot, rootDir, "all");
+          const packageResult = await ensurePhasegatePackageDependency(rootDir, skillResult.version);
+          const configResult = await initHarnessConfig(rootDir, "my-project", workflow === "strict" ? "full" : "standard", {
+            ciEnabled: withCi,
+            workflow,
+          });
+          bootstrapResult = {
+            skillsDeployed: skillResult.deployedSkills.length,
+            packageDependency: packageResult,
+            configCreated: configResult.created,
+          };
+          const mod = createInstallationModule();
+          const phasegateVersion = await getHarnessVersion(harnessRoot);
+          installResult = await mod.runInstallUseCase.execute({
+            projectRoot: rootDir,
+            harnessRoot,
+            phasegateVersion,
+            dryRun: false,
+            apply: true,
+            force: hasFlag(args, "--force"),
+            includeClaude: agent === "claude" || agent === "both",
+            includeCodex: agent === "codex" || agent === "both",
+            includeHusky: withHusky,
+            includeCi: withCi,
+            skillSet: "all",
+            workflow,
+            agent,
+          });
+        }
+        const output = { plan, applied: apply, bootstrapResult, installResult };
+        if (json) {
+          console.log(JSON.stringify(output, null, 2));
+        } else {
+          console.log(`phasegate setup:agent ${apply ? "apply" : "dry-run"} (${intent}, ${agent})`);
+          for (const change of plan.changes) console.log(`- ${change}`);
+          if (plan.questions.length > 0) {
+            console.log("");
+            console.log("Questions:");
+            for (const question of plan.questions) console.log(`- ${question}`);
+          }
+          console.log("");
+          console.log("Validation:");
+          for (const command of plan.validation) console.log(`- ${command}`);
+        }
+        process.exit(0);
+        break;
+      }
+
+      case "config:plan": {
+        const KNOWN_CONFIG_PLAN_FLAGS = ["--intent", "--dry-run", "--json"];
+        const flagError = validateKnownFlags(args, KNOWN_CONFIG_PLAN_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const plan = buildConfigChangePlan(parseConfigChangeIntent(parseFlag(args, "--intent")));
+        if (json) {
+          console.log(JSON.stringify(plan, null, 2));
+        } else {
+          console.log(`phasegate config:plan (${plan.intent})`);
+          console.log("Targets:");
+          for (const target of plan.targets) console.log(`- ${target}`);
+          console.log("Commands:");
+          for (const command of plan.commands) console.log(`- ${command}`);
+          console.log("Validation:");
+          for (const validation of plan.validations) console.log(`- ${validation}`);
+        }
+        process.exit(0);
         break;
       }
 

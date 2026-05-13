@@ -2,8 +2,8 @@
 id: WI-173
 type: story
 severity: high
-status: drafted
-affects: [setup, agent-integration, config-foundation, skills, documentation]
+status: tested
+affects: [setup, agent-integration, config-foundation, skill-quality, documentation]
 source: internal
 ---
 
@@ -40,11 +40,15 @@ source: internal
 
 ## 受け入れ基準
 
-- [ ] 「L4 を厳しめにして」「Codex hook を有効にして」「CI では warning を fail にして」などの依頼から、agent が変更対象と検証手順を選べる。
-- [ ] repo managed artifact と user-level / local-only artifact を混同しない。
-- [ ] agent が変更前後の差分、理由、残るリスク、確認済み検証を説明できる。
-- [ ] 設定変更後に drift guardrail または doctor によって、docs / schema / install target / runtime state の不整合を検出できる。
+- [x] 「L4 を厳しめにして」「Codex hook を有効にして」「CI では warning を fail にして」などの依頼から、agent が変更対象と検証手順を選べる。
+- [x] repo managed artifact と user-level / local-only artifact を混同しない。
+- [x] agent が変更前後の差分、理由、残るリスク、確認済み検証を説明できる。
+- [x] 設定変更後に drift guardrail または doctor によって、docs / schema / install target / runtime state の不整合を検出できる。
 
 ## 依存
 
 `WI-152`, `WI-153`, `WI-156`, `WI-171`, `WI-172`。
+
+## 対応結果
+
+`phasegate config:plan` を追加し、`l4-strict`, `codex-hooks`, `ci-fail-on-warning`, `baseline-reset`, `quick-mode-strict` の intent から target / command / risk / rollback / validation を出力できるようにした。

@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit ci-governance
+ * @work-item-id WI-174
  *
  * AgentsMdPort実装（AGENTS.mdファイルI/O）
  */
@@ -13,6 +14,7 @@ import { PointerEntry } from '../../domain/value-objects/pointer-entry.js';
 
 export class AgentsMdFileAdapter implements AgentsMdPort {
   private readonly filePath: string;
+  private lastReadContent: string | null = null;
 
   constructor(baseDir: string) {
     this.filePath = path.join(baseDir, 'AGENTS.md');
@@ -21,8 +23,10 @@ export class AgentsMdFileAdapter implements AgentsMdPort {
   async read(): Promise<AgentsMdPointer> {
     try {
       const content = await fs.readFile(this.filePath, 'utf-8');
+      this.lastReadContent = content;
       return this.parseAgentsMd(content);
     } catch {
+      this.lastReadContent = null;
       return AgentsMdPointer.create();
     }
   }
@@ -36,7 +40,7 @@ export class AgentsMdFileAdapter implements AgentsMdPort {
       before = 0;
     }
 
-    const content = this.serializeAgentsMd(pointer);
+    const content = this.serializeAgentsMd(pointer, this.lastReadContent ?? null);
     await fs.writeFile(this.filePath, content, 'utf-8');
     const after = content.split('\n').length;
 
@@ -81,11 +85,28 @@ export class AgentsMdFileAdapter implements AgentsMdPort {
     return AgentsMdPointer.create(pointers, adrLinks);
   }
 
-  private serializeAgentsMd(pointer: AgentsMdPointer): string {
-    const lines: string[] = ['# AGENTS.md', ''];
+  private serializeAgentsMd(pointer: AgentsMdPointer, existing: string | null): string {
+    const section = this.serializeLessonPointerSection(pointer);
+    if (existing !== null && existing.trim().length > 0) {
+      const start = '<!-- phasegate:lesson-pointers:start -->';
+      const end = '<!-- phasegate:lesson-pointers:end -->';
+      const pattern = new RegExp(`${this.escapeRegExp(start)}[\\s\\S]*?${this.escapeRegExp(end)}`);
+      if (pattern.test(existing)) {
+        return existing.replace(pattern, section.trim()).replace(/\s*$/, '\n');
+      }
+      return `${existing.replace(/\s*$/, '\n\n')}${section}`;
+    }
+    return ['# AGENTS.md', '', section].join('\n');
+  }
+
+  private serializeLessonPointerSection(pointer: AgentsMdPointer): string {
+    const lines: string[] = [
+      '<!-- phasegate:lesson-pointers:start -->',
+      '## PhaseGate Lesson Pointers',
+      '',
+    ];
 
     if (pointer.pointers.length > 0) {
-      lines.push('## Pointers', '');
       for (const entry of pointer.pointers) {
         if (entry.isCommand()) {
           lines.push(`- [cmd:${entry.key}](${entry.command ?? ''}) ${entry.description}`);
@@ -97,13 +118,18 @@ export class AgentsMdFileAdapter implements AgentsMdPort {
     }
 
     if (pointer.adrLinks.length > 0) {
-      lines.push('## ADR Links', '');
+      lines.push('### ADR Links', '');
       for (const adr of pointer.adrLinks) {
         lines.push(`- ADR: ${adr}`);
       }
       lines.push('');
     }
 
+    lines.push('<!-- phasegate:lesson-pointers:end -->', '');
     return lines.join('\n');
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

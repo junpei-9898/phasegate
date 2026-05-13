@@ -70,3 +70,23 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `phasegate update-skills` | compatibility alias for reconcile path, not a separate lifecycle owner. |
 
 `futureInstallationStrategyPorts` remains an extension point for extracting merge/reverse strategies; it is not an unimplemented runtime dependency and should not be counted as a coverage gap.
+
+<!-- @work-item-id WI-174 -->
+## 2.2 Agent Context Managed Target Tests
+
+| Case | Expectation |
+|---|---|
+| `install --apply` with missing `AGENTS.md` / `CLAUDE.md` | Creates selected agent context files and records them in `.phasegate/manifest.json`. |
+| Existing `AGENTS.md` with user content | Adds or replaces only PhaseGate managed section and preserves user content. |
+| `ci:auto-refresh-agent-context --apply` after install | Updates only AGENTS lesson pointer section, not the standard managed section. |
+| `reconcile --apply` after template update | Refreshes only the managed section. |
+| `uninstall --apply` | Removes only the managed section for merged files and preserves user content. |
+
+<!-- @work-item-id WI-172, WI-173 -->
+## 2.3 Agent Planner CLI Tests
+
+| Command | Expectation |
+|---|---|
+| `setup:agent --dry-run --json` | Emits detected state, questions, changes, risks, rollback, and validation without writing files. |
+| `setup:agent --apply --json` | Calls the structured install path for selected agent/Husky/CI targets and returns install result. |
+| `config:plan --intent codex-hooks --json` | Emits target files, commands, risks, rollback, and validation for the chosen intent. |
