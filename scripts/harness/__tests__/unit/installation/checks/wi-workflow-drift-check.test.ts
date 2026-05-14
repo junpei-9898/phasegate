@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-143
+// @work-item-id WI-187
 
 import { describe, expect, it, vi } from "vitest";
 import { WiWorkflowDriftCheck } from "../../../../installation/application/checks/wi-workflow-drift-check.js";
@@ -10,7 +11,7 @@ import { createInspector, projectFile } from "./check-test-helpers.js";
 
 target("WiWorkflowDriftCheck", () => {
   describe("run", () => {
-    it("WI 0件かつ ad-hoc plan がある場合は red finding を返すこと", async () => {
+    it("WI 0件かつ ad-hoc plan がある場合は no-op repair hint なしの red finding を返すこと", async () => {
       const inspector = createInspector({
         listFiles: vi.fn().mockResolvedValue([projectFile("docs/inception/codding_plan/foo_plan.md")]),
       });
@@ -22,7 +23,9 @@ target("WiWorkflowDriftCheck", () => {
       expect(actual.toJSON()).toMatchObject({
         checkId: "wi-workflow-drift",
         severity: "red",
-        repairHint: "phasegate migrate work-items --apply",
+        repairMode: "manual",
+        repairHint: null,
+        suggestedSkill: null,
       });
     });
 

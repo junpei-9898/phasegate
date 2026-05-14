@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-143
+// @work-item-id WI-187
 
 import { join, relative, sep } from "node:path";
 import { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
@@ -37,8 +38,8 @@ export class WiWorkflowDriftCheck implements HeuristicCheck {
       severity: "red",
       target: "docs/inception",
       message,
-      repairMode: "mechanical",
-      repairHint: "phasegate migrate work-items --apply",
+      repairMode: "manual",
+      repairHint: null,
       suggestedSkill: null,
     });
   }

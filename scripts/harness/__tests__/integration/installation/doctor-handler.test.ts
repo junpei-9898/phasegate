@@ -5,12 +5,14 @@
 // @work-item-id WI-178
 // @work-item-id WI-179
 // @work-item-id WI-180
+// @work-item-id WI-187
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createInstallationModule } from "../../../installation/composition-root.js";
+import { createTraceabilityModelModule } from "../../../traceability-model/composition-root.js";
 import { target } from "../../helpers/test-helpers.js";
 
 interface FixtureExpectation {
@@ -127,6 +129,29 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   }
 }
 
+async function buildAdHocPlanDriftFixture(root: string): Promise<void> {
+  await writeProjectFile(root, "docs/inception/_shared/story_writer_plan.md", "# Ad-hoc plan\n");
+}
+
+async function runAdHocPlanDriftRepairRegression() {
+  const root = await createProjectRoot();
+  await buildAdHocPlanDriftFixture(root);
+  const before = await runDoctor(root, false);
+  const migration = await createTraceabilityModelModule(root).migrateWorkItemsCommandHandler.execute({ apply: true, json: true });
+  const after = await runDoctor(root, false);
+  return {
+    before: before.payload.findings.find((finding) => finding.checkId === "wi-workflow-drift"),
+    migration: JSON.parse(migration.text) as {
+      readonly applied: unknown[];
+      readonly skipped: unknown[];
+      readonly warnings: unknown[];
+      readonly blocked: boolean;
+    },
+    migrationExitCode: migration.exitCode,
+    after: after.payload.findings.find((finding) => finding.checkId === "wi-workflow-drift"),
+  };
+}
+
 async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
   const mod = createInstallationModule();
   const actual = await mod.doctorHandler.execute({
@@ -150,6 +175,7 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
         applicability: string;
         currentScopeRepairTarget: boolean;
         repairHint: string | null;
+        suggestedSkill: unknown | null;
         repairHintApplicability: string;
         repairModeApplicability: string;
       }>;
@@ -338,6 +364,31 @@ target("DoctorHandler", () => {
       expect(actual.output.stdout).toContain("Status: GREEN");
       expect(actual.report.overallStatus).toBe("green");
       expect(actual.report.findings).toEqual([]);
+    });
+  });
+
+  describe("WI-187 wi-workflow-drift repair contract", () => {
+    it("migrate work-items が no-op になる ad-hoc plan drift では repairHint を出さないこと", async () => {
+      const actual = await runAdHocPlanDriftRepairRegression();
+
+      expect(actual.before).toMatchObject({
+        severity: "red",
+        repairMode: "manual",
+        repairHint: null,
+        suggestedSkill: null,
+      });
+      expect(actual.migrationExitCode).toBe(0);
+      expect(actual.migration).toMatchObject({
+        applied: [],
+        skipped: [],
+        warnings: [],
+        blocked: false,
+      });
+      expect(actual.after).toMatchObject({
+        severity: "red",
+        repairMode: "manual",
+        repairHint: null,
+      });
     });
   });
 });

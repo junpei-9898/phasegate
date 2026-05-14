@@ -23,6 +23,9 @@ Traceability data remains the source material for repository-scale drift analysi
 @work-item-id WI-027
 拡張: WI-026 残作業 G2-1/G2-2 で `migrate work-items` を `H{NN}-{NN}` directory にも対応させる。
 `WorkItemMigrationSourcePort` に既存 WI ID 列挙メソッドを追加し、`WorkItemMigrationPlanner` が空き番号の若い順に H-ID へ sequential WI-XXX を採番する（H-ID 由来は frontmatter `type: story` + `legacy_id: H{NN}-{NN}` を生成）。
+
+<!-- @work-item-id WI-187 -->
+`migrate work-items` intentionally does not scan `docs/inception/_shared/**/*_plan.md` as migration sources. Those files require manual classification before conversion to WI directories. Downstream repair guidance must treat this as a migration boundary, not as a missed candidate.
 @work-item-id WI-106
 拡張: inception 全体での WI ID 重複を防ぐため、`docs/inception/**/WI-XXX/description.md` の parent directory 名と frontmatter `id` を走査し、重複および不一致を metadata validation の `L2-002` error として返す。
 @work-item-id WI-126

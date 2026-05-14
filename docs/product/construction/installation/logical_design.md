@@ -235,7 +235,7 @@ interface BackupPort {
 | `PackageJsonDevdepMissingCheck` | `package-json-devdep-missing` | `package.json` の `devDependencies` に `phasegate` 記載があるか (JSON parse で確認) | red |
 | `ClaudeSkillsSymlinkCheck` | `claude-skills-symlink` | `.claude/skills` が `../skills` または project `skills` を指す symlink か (`readSymlink` で確認) | red |
 | `CodexSkillsSymlinkCheck` | `codex-skills-symlink` | `.codex/skills` symlink 検査 (ClaudeSkillsSymlinkCheck と同様の手順) | red |
-| `WiWorkflowDriftCheck` | `wi-workflow-drift` | inception WI frontmatter と成果物状態の drift を確認し、`work-items:status` で同期できる状態かを通知 | warn |
+| `WiWorkflowDriftCheck` | `wi-workflow-drift` | inception WI frontmatter と成果物状態の drift を確認し、ad-hoc plan drift を manual repair として通知 | red |
 
 各 finding は `RepairTable.lookup(checkId)` で `SuggestedSkill` を取得し、`repairMode = "ai-assisted"` の場合に `suggestedSkill` フィールドに同梱する。`repairMode = "mechanical"` の場合は `repairHint` を優先し、skill hint は出さない。
 
@@ -428,7 +428,10 @@ presentation (main.ts) → application use case → application port (interface)
 | `PackageJsonDevdepMissingCheck` | 同上 | WI-145 |
 | `ClaudeSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
 | `CodexSkillsSymlinkCheck` | 同上 (symlink 検証) | WI-145 |
-| `WiWorkflowDriftCheck` | WI frontmatter drift の warn finding | WI-169 |
+| `WiWorkflowDriftCheck` | WI frontmatter drift の red/manual finding | WI-169 / WI-187 |
+
+<!-- @work-item-id WI-187 -->
+`WiWorkflowDriftCheck` must not label ad-hoc plan drift as mechanical repair. When it finds zero WI directories and one or more ad-hoc plans, it emits a red diagnostic with `repairMode: "manual"` and `repairHint: null`. The check may mention `quickMode.relaxedGates` in the message, but it must not suggest `phasegate migrate work-items --apply`, because that command does not consume `_shared/**/*_plan.md` files and would leave the same doctor finding in place.
 
 - domain 層のモックは禁止 (CLAUDE.md 規約)
 - application layer の `HeuristicCheck` 実装テストでは `FileInspectorPort` を mock 注入する (port のみ mock 許可)

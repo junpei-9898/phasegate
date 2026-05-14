@@ -146,3 +146,11 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `doctor --agent claude --json` on a Claude-only fixture | Codex-only `scopedOutFindings[]` expose `currentScopeRepairTarget: false`, `repairModeApplicability: "only-if-agent-selected"`, and suppressed repair guidance. |
 | Default `doctor --json` on the same fixture | Codex findings expose `currentScopeRepairTarget: true`, `repairModeApplicability: "applicable"`, and existing repair hints. |
 | `doctor --agent claude` human output | Scoped-out summary lists the scoped-out check IDs and says they are not repair targets for the selected scope. |
+
+<!-- @work-item-id WI-187 -->
+## 2.9 Doctor No-op Repair Guard Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `doctor --json` on a project with only `docs/inception/_shared/*_plan.md` | `wi-workflow-drift` is red/manual and has `repairHint: null`. |
+| `migrate work-items --apply` on that project followed by `doctor --json` | Migration applies zero candidates and the same drift remains, so doctor must not have exposed the migration command as a repair hint. |

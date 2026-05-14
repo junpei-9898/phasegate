@@ -198,9 +198,12 @@ CheckId → SuggestedSkill マッピング表 (10 件):
 | `package-json-devdep-missing` | null | mechanical repair hint を優先する。 | null |
 | `claude-skills-symlink` | null | symlink 再作成は mechanical repair として扱う。 | null |
 | `codex-skills-symlink` | null | symlink 再作成は mechanical repair として扱う。 | null |
-| `wi-workflow-drift` | null | WI status は `work-items:status` の dry-run/apply contract で扱う。 | null |
+| `wi-workflow-drift` | null | `_shared` ad-hoc plan drift は `migrate work-items` で機械的に解消できないため、doctor は no-op repair hint を出さない。 | null |
 
 `SuggestedSkill.invokeCommand` は skill 起動 hint であり、CLI が自動実行するコマンドではない。mechanical finding は `repairHint` を優先する。
+
+<!-- @work-item-id WI-187 -->
+`wi-workflow-drift` は red finding だが、ad-hoc plan に対する修復契約は `repairMode: "manual"` / `repairHint: null` とする。`migrate work-items --apply` は旧 issue/H-ID directory を WI layout に移す migration であり、`docs/inception/_shared/**/*_plan.md` から WI id、unit、type、severity を推測しない。doctor が no-op command を提示すると agent automation が `doctor -> repairHint -> doctor` のループに入るため、解消不能な drift は copy-paste repair hint として出力しない。
 
 ### 3.2 HeuristicCheck (interface, domain layer 配置)
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.3] - 2026-05-14
+
+### Fixed
+
+- **WI-187 — doctor no-op repair semantics** — stops `phasegate doctor` from advertising `migrate work-items --apply` as a mechanical repair for `_shared` ad-hoc plan drift, marks the finding manual with `repairHint: null`, and adds a regression flow proving the migration command would apply zero candidates and leave the doctor finding unresolved.
+
 ## [0.160.2] - 2026-05-14
 
 ### Fixed

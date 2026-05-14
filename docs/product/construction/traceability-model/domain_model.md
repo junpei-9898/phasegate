@@ -48,6 +48,9 @@
 | WorkItemMigrationPlanner | ドメインサービス | `ISSUE-XXX` から `WI-XXX` への移行計画を生成 |
 | WorkItemMigrationApplyResult | 値オブジェクト | WI移行applyの適用済み/スキップ/警告/blocked状態 |
 
+<!-- @work-item-id WI-187 -->
+`WorkItemMigrationPlan` candidates are limited to legacy work-item directories whose identity can be derived without guessing user intent. `_shared/**/*_plan.md` files are not migration candidates because they do not encode a WI id, owning unit, type, severity, or `description.md` frontmatter. This boundary is part of the doctor repair contract: installation doctor must not advertise `migrate work-items --apply` as a repair for `_shared` ad-hoc plan drift.
+
 ### 他Unitから受け取るShared Kernel
 
 | 型名 | 所有Unit | 自Unitでの扱い | 変更可否 |

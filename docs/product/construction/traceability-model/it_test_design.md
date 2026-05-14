@@ -40,6 +40,9 @@ filesystem gateway は WI description、product construction docs、implementati
 | infrastructure | Gateway | MarkdownDesignDocumentGateway | markdown-design-document-gateway.test.ts |
 | infrastructure | Gateway | FileSystemInceptionPlanGateway | file-system-inception-plan-gateway.test.ts |
 | infrastructure | Gateway | FileSystemWorkItemIdentityGateway | file-system-work-item-identity-gateway.test.ts |
+
+<!-- @work-item-id WI-187 -->
+`migrate work-items --apply` on a project that only contains `_shared` ad-hoc plans produces zero applied candidates. Installation doctor regression coverage pairs that no-op migration result with a rerun doctor assertion so the traceability migration boundary cannot be misrepresented as a mechanical repair.
 | infrastructure | Adapter | LegacyMetadataValidatorAdapter | legacy-metadata-validator-adapter.test.ts |
 | integration | 統合 | shared-kernel StoryId export | shared-kernel-story-id.integration.test.ts |
 | integration | 統合 | legacy adapter連携 | metadata-validator-adapter.integration.test.ts |

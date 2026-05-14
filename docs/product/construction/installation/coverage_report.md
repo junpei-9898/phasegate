@@ -49,7 +49,7 @@ traceability:
 |---|---|
 | `phasegate doctor` detects WI count 0 + ad-hoc plan >= 1 with non-zero exit | `WiWorkflowDriftCheck` unit test, CLI smoke |
 | `relaxedGates: ["phase-gate"]` + plans-without-WIs is reported as a red flag | `WiWorkflowDriftCheck` unit test |
-| doctor output includes copy-paste migration command | `repairHint: phasegate migrate work-items --apply` unit assertion |
+| doctor suppresses no-op migration repair for ad-hoc plan drift | `WiWorkflowDriftCheck` unit test asserts `repairMode: manual` and `repairHint: null`; doctor integration test runs migration apply and reruns doctor to prove the old command would not clear the finding. <!-- @work-item-id WI-187 --> |
 
 ## 3. Coverage Gates Before Implementation
 
