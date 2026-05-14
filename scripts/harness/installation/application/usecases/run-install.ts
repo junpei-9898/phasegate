@@ -4,6 +4,8 @@
 // @work-item-id WI-174
 // @work-item-id WI-175
 // @work-item-id WI-177
+// @work-item-id WI-182
+// @work-item-id WI-183
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
 import { dirname, join } from "node:path";

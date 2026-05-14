@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit skill-quality
+ * @work-item-id WI-181
  * Composition Root - wires all dependencies together
  */
 

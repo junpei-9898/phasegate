@@ -3,6 +3,8 @@
 @story-id H13-01
 @story-id H13-02
 @story-id H13-03
+@work-item-id WI-182
+@work-item-id WI-183
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-20
 > **対応ストーリー**: H13-01, H13-02, H13-03
@@ -113,6 +115,16 @@
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
 | IT-UC-GenerateCiTemplate-006 | ValidatorIdRegistryPortが空リストを返す場合にINV-2違反エラーが返ること | `presetId='minimal'`, `templateType='aidlc-gate'` | ValidatorIdRegistryPort: `listAll()`→[] | `validationErrors`にINV-2違反（CI_TEMPLATE_EMPTY_VALIDATORS）が含まれる |
+
+#### Downstream Contract
+
+@work-item-id WI-182
+@work-item-id WI-183
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---------|---------|------|---------|
+| IT-UC-RenderCiTemplate-WI182-001 | pre-commit render が downstream package bin を呼ぶ | `templateType='pre-commit', render=true` | `npx phasegate` を含み、`scripts/harness/main.ts` と `pnpm run harness` を含まない |
+| IT-UC-RenderCiTemplate-WI183-001 | aidlc-gate render が lockfile 別 install と package bin を使う | `templateType='aidlc-gate', render=true` | pnpm/yarn/npm 分岐、`npx phasegate lint --json`、`npx phasegate phasegate:ci-check --json` を含み、`pnpm run harness` を含まない |
 
 ---
 

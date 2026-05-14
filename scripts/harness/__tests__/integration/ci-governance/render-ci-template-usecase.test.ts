@@ -1,6 +1,8 @@
 // @unit ci-governance
 // @layer integration
 // @story H12-04
+// @work-item-id WI-182
+// @work-item-id WI-183
 
 import { describe, it, vi, expect } from 'vitest';
 import { readFile } from 'node:fs/promises';
@@ -25,7 +27,7 @@ target('RenderCiTemplateUseCase', () => {
           const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
           const actual = await useCase.execute({ presetId: 'standard', templateType: 'aidlc-gate' });
           expect(actual.outputPath).toBe('.github/workflows/aidlc-gate.yml');
-          expect(actual.errors).toHaveLength(0);
+          expect(actual.errors).toEqual([]);
         });
       });
     });
@@ -65,7 +67,7 @@ target('RenderCiTemplateUseCase', () => {
           // Assert
           expect(actual.content).toBe(expected);
           expect(actual.outputPath).toBe('.github/workflows/aidlc-gate.yml');
-          expect(actual.errors).toHaveLength(0);
+          expect(actual.errors).toEqual([]);
         });
       });
     });
@@ -89,7 +91,7 @@ target('RenderCiTemplateUseCase', () => {
           expect(actual.content).toBe(expected);
           expect(actual.content).toContain('github.rest.issues.create');
           expect(actual.outputPath).toBe('.github/workflows/consistency-check.yml');
-          expect(actual.errors).toHaveLength(0);
+          expect(actual.errors).toEqual([]);
         });
       });
     });
@@ -112,7 +114,56 @@ target('RenderCiTemplateUseCase', () => {
           // Assert
           expect(actual.content).toBe(expected);
           expect(actual.outputPath).toBe('.husky/pre-commit');
-          expect(actual.errors).toHaveLength(0);
+          expect(actual.errors).toEqual([]);
+        });
+      });
+    });
+
+    // IT-UC-RenderCiTemplate-WI182-001
+    describe('pre-commitテンプレートがdownstream package binを呼ぶこと', () => {
+      context('実ファイルのYamlTemplateRendererAdapterでrenderする場合', () => {
+        it('monorepo-only scripts/harness/main.ts ではなく npx phasegate を使用する', async () => {
+          // Arrange
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const rendererPort = new YamlTemplateRendererAdapter(process.cwd());
+          const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
+
+          // Act
+          const actual = await useCase.execute({ presetId: 'standard', templateType: 'pre-commit' });
+
+          // Assert
+          expect(actual.content).toContain('PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"');
+          expect(actual.content).toContain('$PHASEGATE_CMD lint');
+          expect(actual.content).toContain('$PHASEGATE_CMD validate --layer L2 --format human');
+          expect(actual.content).not.toContain('scripts/harness/main.ts');
+          expect(actual.content).not.toContain('pnpm run harness');
+        });
+      });
+    });
+
+    // IT-UC-RenderCiTemplate-WI183-001
+    describe('aidlc-gateテンプレートがpackage-manager固定と不存在scriptを避けること', () => {
+      context('実ファイルのYamlTemplateRendererAdapterでrenderする場合', () => {
+        it('lockfile別installとphasegate bin呼び出しを生成する', async () => {
+          // Arrange
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1', 'v2']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const rendererPort = new YamlTemplateRendererAdapter(process.cwd());
+          const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
+
+          // Act
+          const actual = await useCase.execute({ presetId: 'standard', templateType: 'aidlc-gate' });
+
+          // Assert
+          expect(actual.content).toContain('if [ -f pnpm-lock.yaml ]; then');
+          expect(actual.content).toContain('npm ci');
+          expect(actual.content).toContain('RESULT=$(npx phasegate lint --json 2>&1)');
+          expect(actual.content).toContain('RESULT=$(npx phasegate phasegate:ci-check --json 2>&1)');
+          expect(actual.content).not.toContain('pnpm run harness');
+          expect(actual.content).not.toContain("cache: 'pnpm'");
         });
       });
     });
@@ -135,7 +186,7 @@ target('RenderCiTemplateUseCase', () => {
           // Assert
           expect(actual.content).toBe(expected);
           expect(actual.outputPath).toBe('.github/workflows/agent-context-refresh.yml');
-          expect(actual.errors).toHaveLength(0);
+          expect(actual.errors).toEqual([]);
         });
       });
     });
@@ -152,8 +203,10 @@ target('RenderCiTemplateUseCase', () => {
           const rendererPort = { render: vi.fn() };
           const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
           const actual = await useCase.execute({ presetId: 'standard', templateType: 'aidlc-gate' });
-          expect(rendererPort.render).not.toHaveBeenCalled();
-          expect(actual.errors.length).toBeGreaterThan(0);
+          expect(actual.errors).toEqual([{
+            code: 'CI_TEMPLATE_EMPTY_VALIDATORS',
+            message: 'INV-2: ValidatorIdRegistryPort returned empty list. targetValidatorIds cannot be empty.',
+          }]);
         });
       });
     });

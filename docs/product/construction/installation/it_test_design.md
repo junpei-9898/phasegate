@@ -6,7 +6,7 @@ traceability:
 # Integration Test Design: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-182 / WI-183
 > **作成日**: 2026-05-11
 > **参照**: `logical_design.md`, `unit_test_design.md`, `docs/principles/testing-rules.md`
 
@@ -111,6 +111,16 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` followed by reading `CLAUDE.md` | Managed Claude context contains the post-readiness workflow from configured readiness to WI planning, product reflection, and validation. |
 | `ci:auto-refresh-agent-context --apply` with existing Claude user section | User-owned Claude instructions are preserved while the managed post-readiness workflow is refreshed. |
 | `setup:agent --apply --json` with `.codex` or `.claude` path conflict | Structured error distinguishes incompatible parent paths from permission denial and includes recovery guidance plus partial changes. |
+
+<!-- @work-item-id WI-182, WI-183 -->
+## 2.8 Downstream Template Contract Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --apply` on an empty downstream project | `.husky/pre-commit` uses `npx phasegate` and does not reference `scripts/harness/main.ts`. |
+| `install --apply` with CI enabled | `.github/workflows/phasegate-aidlc-gate.yml` detects npm/yarn/pnpm lockfiles and does not call nonexistent `pnpm run harness ...` scripts. |
+| `ci:generate-template --type pre-commit --render` | Rendered content matches the same downstream hook contract used by install. |
+| `ci:generate-template --type aidlc-gate --render` | Rendered workflow matches the same package-manager-neutral contract used by install. |
 
 <!-- @work-item-id WI-179 -->
 ## 2.6 Scoped-Out Doctor Repair Guidance Tests

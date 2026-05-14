@@ -1,10 +1,8 @@
 #!/usr/bin/env sh
 # GSDLC Quality Harness — Pre-commit Hook テンプレート
 #
-# 使い方:
-#   1. このファイルを .husky/pre-commit にコピーする
-#   2. chmod +x .husky/pre-commit
-#   3. pnpm add --save-dev husky && npx husky install
+# Managed by phasegate install / ci:generate-template.
+# Requires phasegate to be available through package.json devDependencies or npx.
 #
 # 実行内容:
 #   L1: Biome AST ルール（require-unit-comment, no-layer-violation など 8ルール）
@@ -15,7 +13,7 @@
 
 . "$(dirname -- "$0")/_/husky.sh"
 
-HARNESS_CMD="npx tsx scripts/harness/main.ts"
+PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"
 
 echo "🔍 AIDLC Quality Gate (Pre-commit)"
 echo "──────────────────────────────────"
@@ -24,14 +22,14 @@ echo "────────────────────────�
 # L1: Biome AST ルール
 # -----------------------------------------------------------------------
 echo "▶ L1 Lint (Biome AST)..."
-$HARNESS_CMD lint
+$PHASEGATE_CMD lint
 L1_EXIT=$?
 
 if [ $L1_EXIT -ne 0 ]; then
   echo ""
   echo "❌ L1 Lint が失敗しました。"
   echo "   修正してから再度コミットしてください。"
-  echo "   詳細: pnpm run harness lint"
+  echo "   詳細: npx phasegate lint"
   exit 1
 fi
 echo "✅ L1 Lint: passed"
@@ -42,10 +40,10 @@ echo "✅ L1 Lint: passed"
 # Quick Mode では phase-gate をスキップ
 if [ "${HARNESS_QUICK_MODE:-0}" = "1" ]; then
   echo "▶ L2 Validators (Quick Mode: phase-gate スキップ)..."
-  $HARNESS_CMD check-phase-gate --skip-phase-gate
+  $PHASEGATE_CMD validate --layer L2 --format human --no-l4
 else
   echo "▶ L2 Validators (phase-gate / metadata / test-quality)..."
-  $HARNESS_CMD check-phase-gate
+  $PHASEGATE_CMD validate --layer L2 --format human
 fi
 L2_EXIT=$?
 
@@ -53,7 +51,7 @@ if [ $L2_EXIT -ne 0 ]; then
   echo ""
   echo "❌ L2 Validators が失敗しました。"
   echo "   修正してから再度コミットしてください。"
-  echo "   詳細: pnpm run harness check-phase-gate"
+  echo "   詳細: npx phasegate validate --layer L2 --format human"
   exit 1
 fi
 echo "✅ L2 Validators: passed"

@@ -3,6 +3,8 @@
 // @story H11-01
 // @work-item-id WI-146
 // @work-item-id WI-174
+// @work-item-id WI-182
+// @work-item-id WI-183
 
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -106,6 +108,15 @@ async function arrangeExistingAgentsMdInstallAndRead(): Promise<string> {
   return await readFile(join(root, "AGENTS.md"), "utf8");
 }
 
+async function installAndReadDownstreamTemplates(root: string) {
+  const result = await runInstall(root, { apply: true });
+  return {
+    result,
+    preCommit: await readFile(join(root, ".husky/pre-commit"), "utf8"),
+    aidlcGate: await readFile(join(root, ".github/workflows/phasegate-aidlc-gate.yml"), "utf8"),
+  };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -165,6 +176,24 @@ target("InstallHandler", () => {
       expect(actual).toContain("<!-- phasegate:managed-section:start -->");
       expect(actual).toContain("PhaseGate Managed Instructions");
       expect(actual).toContain("keep user text");
+    });
+
+    it("downstream install が package bin 経由の hook/workflow を配布すること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+
+      // Act
+      const actual = await installAndReadDownstreamTemplates(root);
+
+      // Assert
+      expect(actual.result.exitCode).toBe(0);
+      expect(actual.preCommit).toContain('PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"');
+      expect(actual.preCommit).toContain("$PHASEGATE_CMD lint");
+      expect(actual.preCommit).not.toContain("scripts/harness/main.ts");
+      expect(actual.aidlcGate).toContain("if [ -f pnpm-lock.yaml ]; then");
+      expect(actual.aidlcGate).toContain("RESULT=$(npx phasegate lint --json 2>&1)");
+      expect(actual.aidlcGate).toContain("RESULT=$(npx phasegate phasegate:ci-check --json 2>&1)");
+      expect(actual.aidlcGate).not.toContain("pnpm run harness");
     });
   });
 });

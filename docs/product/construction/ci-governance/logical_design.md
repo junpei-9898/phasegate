@@ -4,6 +4,8 @@
 @story-id H13-02
 @story-id H13-03
 @work-item-id WI-140
+@work-item-id WI-182
+@work-item-id WI-183
 CI/pre-commit が消費する標準 L2 gate では、validator-system の `L2-014 work-item-status-staleness` を fail signal として扱う。local `work-items:status --dry-run` は advisory のまま維持し、CI 経路では変更対象 path に紐づく stale WI status を失敗として扱う。
 > **Unit ID**: ci-governance
 > **作成日**: 2026-03-19
@@ -49,6 +51,13 @@ domain <- application <- presentation
 - Infrastructure層は `domain/ports/` に定義されたポートインターフェースのみを実装する
 - Presentation層はApplication層経由でのみDomainを利用する
 - Shared Kernelのインポートは `scripts/harness/shared-kernel/` 経由のみとし、他Unitのドメイン内部ディレクトリを直接importしない
+
+### 1.2.1 Downstream Template Entry Points
+
+@work-item-id WI-182
+@work-item-id WI-183
+
+`YamlTemplateRendererAdapter` が返す bundled templates は、npm package 利用者の checkout に存在しない repository-local script を呼ばない。pre-commit は `npx phasegate` を既定の `PHASEGATE_CMD` とし、AIDLC workflow は lockfile に基づいて install command を選択してから `npx phasegate lint --json` / `npx phasegate phasegate:ci-check --json` を実行する。
 
 ### 1.3 ディレクトリ構成（全ファイル一覧）
 

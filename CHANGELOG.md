@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.1] - 2026-05-14
+
+### Fixed
+
+- **WI-181 / WI-182 / WI-183 — downstream install and package contract** — declares `tinyglobby` as a packaged runtime dependency, updates pre-commit and AIDLC workflow templates to call the published `phasegate` bin instead of monorepo-only scripts, and makes the workflow choose npm/yarn/pnpm install commands from lockfiles.
+
 ## [0.160.0] - 2026-05-13
 
 ### Added

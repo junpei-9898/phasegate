@@ -1,13 +1,13 @@
 # Phasegate — PR検証ワークフロー
 #
 # 使い方:
-#   このファイルを .github/workflows/aidlc-gate.yml にコピーして使用する。
+#   phasegate install または ci:generate-template で配置する。
 #
 # 実行タイミング: Pull Request（open / synchronize / reopen）
 # 実行内容:
 #   1. bypass:audit — bypass trailer / evidence 監査
-#   2. harness:lint  — L1 Biome AST ルール検証
-#   3. harness:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
+#   2. phasegate lint  — L1 Biome AST ルール検証
+#   3. phasegate:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
 #   4. 失敗時: PR にエラーサマリーをコメント
 
 name: AIDLC Quality Gate
@@ -33,15 +33,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            yarn install --immutable || yarn install --frozen-lockfile
+          elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       # Bypass audit: local `git commit --no-verify` can skip hooks, but CI
       # replays the gate over the PR range and requires structured evidence.
@@ -63,7 +69,7 @@ jobs:
         id: lint
         run: |
           set +e
-          RESULT=$(pnpm run harness lint --json 2>&1)
+          RESULT=$(npx phasegate lint --json 2>&1)
           EXIT_CODE=$?
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$RESULT" >> $GITHUB_OUTPUT
@@ -77,7 +83,7 @@ jobs:
         if: always()
         run: |
           set +e
-          RESULT=$(pnpm run harness harness:ci-check --json 2>&1)
+          RESULT=$(npx phasegate phasegate:ci-check --json 2>&1)
           EXIT_CODE=$?
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$RESULT" >> $GITHUB_OUTPUT

@@ -6,7 +6,7 @@ traceability:
 # Logical Design (横断): installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
 > **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
@@ -106,7 +106,21 @@ traceability:
 
 各 report は独立構造 (Phase 1 計画書 Q2 承認、共通基底なし)。schemaVersion は presentation layer の formatter で揃える (Phase 1 計画書 Q4 承認)。
 
-### 2.1 Agent-Specific Readiness View
+### 2.1 Downstream Install Template Contract
+
+@work-item-id WI-181
+@work-item-id WI-182
+@work-item-id WI-183
+
+`install` が配布する package / Husky / GitHub Actions target は、published package の runtime contract に閉じる。package metadata は runtime import に必要な dependency を `dependencies` に置き、checkout 内部の `scripts/harness/main.ts` や repository-local `pnpm run harness ...` script に依存しない。downstream project では `package.json` に `phasegate` devDependency が追加されるため、managed hook/workflow は `npx phasegate ...` を runtime entrypoint とする。
+
+| Target | Contract |
+|---|---|
+| `package.json` | packaged `skill:apply-cascade-update` が `tinyglobby` を解決できるよう runtime dependency を宣言する。 |
+| `.husky/pre-commit` | `PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"` で `lint` と `validate --layer L2 --format human` を実行する。 |
+| `.github/workflows/phasegate-aidlc-gate.yml` | lockfile から pnpm/yarn/npm install を選択し、`npx phasegate lint --json` と `npx phasegate phasegate:ci-check --json` を実行する。 |
+
+### 2.2 Agent-Specific Readiness View
 
 @work-item-id WI-176
 
