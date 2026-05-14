@@ -8,6 +8,9 @@
 @story-id H12-06
 @story-id H12-07
 > **Unit ID**: skill-quality
+
+<!-- @work-item-id WI-184 -->
+Skill catalog CLI entries are concrete skill directories containing `SKILL.md`. The catalog category model includes `core`, `aidlc`, `utility`, and `guidance`; every category returned by the setup catalog map must be renderable by `phasegate skills list`.
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
 > **Wave**: 2（品質検証レイヤー）

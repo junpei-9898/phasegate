@@ -7,6 +7,9 @@
 @story-id H12-05
 @story-id H12-06
 > **Unit ID**: skill-quality
+
+<!-- @work-item-id WI-184 -->
+Skill catalog CLI regression coverage includes a real `skills list` process test for guidance-category skills and helper-level coverage for an empty catalog plus shared `skills/<name>/SKILL.md` path resolution.
 > **作成日**: 2026-03-20
 > **対応ストーリー**: H12-01, H12-02, H12-03, H12-04, H12-05, H12-06
 > **Wave**: 3

@@ -2,6 +2,7 @@
 // @layer test
 // @story H13-04
 // @work-item-id WI-141
+// @work-item-id WI-184
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,8 +16,10 @@ import {
   deployHuskyPrePushHook,
   deploySkills,
   getCategoryForSkill,
+  getSkillMarkdownPath,
   getSkillsForSet,
   initHarnessConfig,
+  listAvailableSkillNames,
   SKILL_CATEGORIES,
 } from "../../../setup/skill-deployer.js";
 import { context, target } from "../../helpers/test-helpers.ts";
@@ -541,6 +544,47 @@ target("SKILL_CATEGORIES / getSkillsForSet (WI-088 guidance category)", () => {
 
         // Assert
         expect(actual).not.toContain("phasegate-config-doctor");
+      });
+    });
+  });
+});
+
+target("skill catalog source helpers (WI-184)", () => {
+  describe("listAvailableSkillNames", () => {
+    context("skills directory does not exist", () => {
+      it("空配列を返し undefined accumulator に依存しないこと", async () => {
+        // Arrange
+        const expectedSkills: string[] = [];
+
+        // Act
+        const actual = await withTempProject((projectRoot) => listAvailableSkillNames(projectRoot));
+
+        // Assert
+        expect(actual).toEqual(expectedSkills);
+      });
+    });
+
+    context("SKILL.md を持つ skill directory が存在する場合", () => {
+      it("skills info と同じ SKILL.md path source から catalog 名を列挙すること", async () => {
+        // Arrange
+        const skillName = "alpha";
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await mkdir(join(projectRoot, "skills", skillName), { recursive: true });
+          await mkdir(join(projectRoot, "skills", "without-skill-md"), { recursive: true });
+          await writeFile(getSkillMarkdownPath(projectRoot, skillName), "# Alpha\n");
+
+          return {
+            listed: await listAvailableSkillNames(projectRoot),
+            skillMarkdownPath: getSkillMarkdownPath(projectRoot, skillName),
+            expectedSkillMarkdownPath: join(projectRoot, "skills", skillName, "SKILL.md"),
+          };
+        });
+
+        // Assert
+        expect(actual.listed).toEqual(["alpha"]);
+        expect(actual.skillMarkdownPath).toBe(actual.expectedSkillMarkdownPath);
       });
     });
   });

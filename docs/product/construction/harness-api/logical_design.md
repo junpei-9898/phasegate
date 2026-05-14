@@ -20,6 +20,9 @@ The harness-api CLI boundary rejects unsupported `validate --format` values befo
 
 The harness-api public surface distinguishes binary subcommands from package scripts. `phasegate:*` names are binary subcommands unless a project `package.json` defines the matching script. README documents common entry points; `docs/guide/cli-reference.md` is the exhaustive public catalog aligned with `phasegate --help`.
 
+<!-- @work-item-id WI-184 -->
+The `skills list` command renders the package skill catalog by scanning `skills/*/SKILL.md`, grouping entries across `core`, `aidlc`, `utility`, `guidance`, and `unknown`. The `skills info <name>` command resolves the same `SKILL.md` path helper, so list membership and info lookup share a catalog source.
+
 @story-id H09-01
 @story-id H09-02
 @story-id H09-03

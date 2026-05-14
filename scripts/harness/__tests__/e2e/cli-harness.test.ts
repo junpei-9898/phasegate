@@ -9,6 +9,7 @@
  * @work-item-id WI-107
  * @work-item-id WI-125
  * @work-item-id WI-131
+ * @work-item-id WI-184
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -166,6 +167,16 @@ describe('harness CLI E2E', () => {
   });
 
   describe('skill-quality コマンド群', () => {
+    it('skills list が guidance skill を含む catalog を exit 0 で列挙する', () => {
+      const actual = run('skills', 'list');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stderr).toBe('');
+      expect(actual.stdout).toContain('Available skills');
+      expect(actual.stdout).toContain('[Guidance]');
+      expect(actual.stdout).toContain('/phasegate-config-doctor');
+    });
+
     it('skill:validate-structure --file が "Unknown command" にならない', () => {
       const actual = run('skill:validate-structure', '--file', 'nonexistent-skill.md');
 

@@ -38,6 +38,9 @@
 | CommandDispatchService | ドメインサービス | CLI入力→実行ロジック委譲→HarnessApiResponse変換→ExitCode決定 |
 | StatusDerivationService | ドメインサービス | ArtifactScanResult→LayerHealth[]→HarnessStatusSummary導出（H09-04） |
 
+<!-- @work-item-id WI-184 -->
+`skills list` treats `core`, `aidlc`, `utility`, and `guidance` as first-class skill catalog categories. The command uses the same `skills/<name>/SKILL.md` source rule as `skills info <name>` and treats a missing `skills/` directory as an empty catalog.
+
 G5 semantic validator output remains validator-system owned. harness-api preserves L3/L4 `validatorResults[]` for WI-119 dead-code graph findings and WI-121 performance operational signals without duplicating policy.
 
 ### 他Unitから受け取るShared Kernel

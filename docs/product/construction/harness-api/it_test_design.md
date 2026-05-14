@@ -21,6 +21,9 @@
 - **Presentation Handler**: CheckReadyHandler, CheckPhaseHandler, CiCheckHandler, DetectDriftHandler, StatusHandler, LintHandler, CompleteCheckHandler, ImpactAnalysisHandler
 - **Cross-Layer Integration**: CommandDispatch統合フロー, StatusDerivation統合フロー, Shared Kernel Contract検証
 
+<!-- @work-item-id WI-184 -->
+`skills list` regression coverage runs the real CLI entrypoint and asserts exit 0 with guidance skills present. Catalog helper coverage verifies that a missing `skills/` directory returns an empty catalog and that list/info resolve entries through the same `skills/<name>/SKILL.md` path.
+
 ---
 
 ## 2. UseCaseテストケース

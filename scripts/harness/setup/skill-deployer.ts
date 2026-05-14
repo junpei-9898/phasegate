@@ -2,6 +2,7 @@
 // @layer infrastructure
 // @work-item-id WI-086 / WI-087
 // @work-item-id WI-127
+// @work-item-id WI-184
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
 import { promises as fs } from "node:fs";
@@ -76,6 +77,33 @@ export function getCategoryForSkill(skillName: string): SkillCategory | null {
     }
   }
   return null;
+}
+
+export function getSkillMarkdownPath(harnessRoot: string, skillName: string): string {
+  return join(harnessRoot, SKILLS_SOURCE_DIR, skillName, "SKILL.md");
+}
+
+export async function listAvailableSkillNames(harnessRoot: string): Promise<string[]> {
+  const skillsRoot = join(harnessRoot, SKILLS_SOURCE_DIR);
+  let entries;
+  try {
+    entries = await fs.readdir(skillsRoot, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const skills: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    try {
+      await fs.access(getSkillMarkdownPath(harnessRoot, entry.name));
+      skills.push(entry.name);
+    } catch {
+      // Directories without SKILL.md are not catalog entries.
+    }
+  }
+
+  return skills.sort();
 }
 
 export interface DeployResult {

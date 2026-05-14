@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.4] - 2026-05-14
+
+### Fixed
+
+- **WI-184 — skill catalog CLI** — fixes `phasegate skills list` so guidance-category skills no longer crash an undefined accumulator, shares the `SKILL.md` catalog path with `skills info`, and covers empty skill catalogs.
+
 ## [0.160.3] - 2026-05-14
 
 ### Fixed

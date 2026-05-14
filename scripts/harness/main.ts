@@ -6,6 +6,7 @@
  * @work-item-id WI-171 / WI-172 / WI-173
  * @work-item-id WI-175
  * @work-item-id WI-176
+ * @work-item-id WI-184
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -64,7 +65,9 @@ import {
   deploySkills,
   getCategoryForSkill,
   getHarnessVersion,
+  getSkillMarkdownPath,
   initHarnessConfig,
+  listAvailableSkillNames,
 } from "./setup/skill-deployer.js";
 import { createSkillQualityHandlers } from "./skill-quality/composition-root.js";
 import { createTraceabilityModelModule } from "./traceability-model/composition-root.js";
@@ -2753,25 +2756,16 @@ Examples:
       // ── skills ──
       case "skills": {
         const subCommand = args[1];
-        const skillsRoot = join(harnessRoot, "skills");
 
         if (subCommand === "list") {
-          const { promises: fs } = await import("node:fs");
-          const entries = await fs.readdir(skillsRoot, { withFileTypes: true });
-          const skills: string[] = [];
-          for (const entry of entries) {
-            if (entry.isDirectory()) {
-              try {
-                await fs.access(join(skillsRoot, entry.name, "SKILL.md"));
-                skills.push(entry.name);
-              } catch {
-                // skip directories without SKILL.md
-              }
-            }
-          }
-          skills.sort();
-
-          const grouped: Record<string, string[]> = { core: [], aidlc: [], utility: [], unknown: [] };
+          const skills = await listAvailableSkillNames(harnessRoot);
+          const grouped: Record<"core" | "aidlc" | "utility" | "guidance" | "unknown", string[]> = {
+            core: [],
+            aidlc: [],
+            utility: [],
+            guidance: [],
+            unknown: [],
+          };
           for (const name of skills) {
             const cat = getCategoryForSkill(name) ?? "unknown";
             grouped[cat].push(name);
@@ -2783,8 +2777,9 @@ Examples:
             core: "Core — Quality Defense",
             aidlc: "AIDLC — Development Workflow",
             utility: "Utility",
+            guidance: "Guidance",
           };
-          for (const cat of ["core", "aidlc", "utility", "unknown"] as const) {
+          for (const cat of ["core", "aidlc", "utility", "guidance", "unknown"] as const) {
             if (grouped[cat].length === 0) continue;
             const label = labels[cat] ?? "Other";
             console.log(`  [${label}] (${grouped[cat].length})`);
@@ -2803,7 +2798,7 @@ Examples:
             process.exit(2);
           }
           const { promises: fs } = await import("node:fs");
-          const skillMdPath = join(skillsRoot, skillName, "SKILL.md");
+          const skillMdPath = getSkillMarkdownPath(harnessRoot, skillName);
           try {
             const content = await fs.readFile(skillMdPath, "utf-8");
             console.log(content);

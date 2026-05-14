@@ -25,6 +25,9 @@ Skill-quality commit execution invokes `git commit` through an argument-array ex
 @story-id H12-05
 @story-id H12-06
 > **Unit ID**: skill-quality
+
+<!-- @work-item-id WI-184 -->
+The public `phasegate skills list` flow consumes the skill-quality catalog source by scanning `skills/*/SKILL.md`, then groups entries using the setup skill category map. `skills info <name>` resolves the same `SKILL.md` path helper, so listing and detail lookup cannot drift to separate catalog definitions.
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H12-01, H12-02, H12-03, H12-04, H12-05, H12-06
 > **モード**: Unit横断設計（Phase 2）
