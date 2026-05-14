@@ -1,5 +1,6 @@
 // @unit ci-governance
 // @layer application
+// @work-item-id WI-189
 
 import { DesignPhase } from '../../domain/value-objects/design-phase.js';
 import type { TemplateRepositoryPort } from '../../domain/ports/template-repository-port.js';
@@ -21,11 +22,25 @@ export class ScaffoldDesignUseCase {
     }
     const phase = DesignPhase.create(input.phase);
     const unit = input.unit.trim();
+    const dryRun = input.dryRun === true;
     const force = input.force === true;
 
     const templatePath = this.templates.resolvePath(phase);
     const targetPath = this.writer.resolvePath(unit, phase);
     const alreadyExists = await this.writer.exists(unit, phase);
+
+    if (dryRun) {
+      return {
+        targetPath,
+        templatePath,
+        unit,
+        phase: phase.value,
+        dryRun: true,
+        written: false,
+        alreadyExists,
+        overwritten: false,
+      };
+    }
 
     if (alreadyExists && !force) {
       return {
@@ -33,6 +48,7 @@ export class ScaffoldDesignUseCase {
         templatePath,
         unit,
         phase: phase.value,
+        dryRun: false,
         written: false,
         alreadyExists: true,
         overwritten: false,
@@ -48,6 +64,7 @@ export class ScaffoldDesignUseCase {
       templatePath,
       unit,
       phase: phase.value,
+      dryRun: false,
       written: true,
       alreadyExists,
       overwritten: alreadyExists && force,

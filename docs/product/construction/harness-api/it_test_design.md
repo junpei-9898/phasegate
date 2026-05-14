@@ -609,3 +609,15 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 |---|---|---|---|
 | IT-API-WI177-001 | setup apply 後に generated CLAUDE.md が post-readiness workflow を含むこと | `setup:agent --agent both --intent strict --with-ci --with-husky --apply --json` | `CLAUDE.md` に WI planning、product reflection、validation の導線が含まれる |
 | IT-API-WI177-002 | setup apply の path conflict が recovery を説明すること | `.codex` が file の状態で `setup:agent --apply --json` | structured error に target, operation, code, likelyCause, recovery, partialChanges が含まれる |
+
+<!-- @work-item-id WI-189 -->
+## WI-189 CLI UX Regression Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-WI189-001 | validate の JSON format alias が fatal にならないこと | `validate --layer L2 --format json` | exit 0/1、stdout が JSON parse 可能、stderr に invalid format が出ない |
+| IT-API-WI189-002 | validate の global JSON flag が JSON formatter を選ぶこと | `validate --layer L2 --json` | exit 0/1、stdout が JSON parse 可能 |
+| IT-API-WI189-003 | config:plan 推奨 command が main help に掲載されること | `phasegate --help` | `check-change-category` を含む |
+| IT-API-WI189-004 | scaffold-wi の help signature が一致すること | `phasegate --help`, `scaffold-wi --help` | 両方が `<unit|_cross> <story|issue|chore>` を示す |
+| IT-API-WI189-005 | delegate-sonnet help が forwarded args を説明すること | `delegate-sonnet --help` | `Usage: phasegate delegate-sonnet [...args]` を含む |
+| IT-API-WI189-006 | bypass:audit empty range が range no-op を説明すること | `runBypassAudit(..., changedFiles: [])` | "No changed files in range" を含み "No staged files" を含まない |

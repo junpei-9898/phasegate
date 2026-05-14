@@ -10,6 +10,7 @@
  * @work-item-id WI-125
  * @work-item-id WI-131
  * @work-item-id WI-184
+ * @work-item-id WI-189
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -28,6 +29,8 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('Usage: phasegate <command>');
       expect(actual.stdout).toContain('enable-feature');
       expect(actual.stdout).toContain('lint');
+      expect(actual.stdout).toContain('check-change-category');
+      expect(actual.stdout).toContain('scaffold-wi <unit|_cross> <story|issue|chore>');
     });
 
     it('引数なしでUsageが表示され exit 0 で終了する', () => {
@@ -217,16 +220,42 @@ describe('harness CLI E2E', () => {
       expect([0, 1]).toContain(actual.exitCode);
     });
 
-    it.each(['L2', 'L3', 'L4'] as const)(
-      'validate --layer %s --format json は未対応formatとして exit 2 を返す',
-      (layer) => {
-        const actual = run('validate', '--layer', layer, '--format', 'json');
+    it.each([
+      ['--format json', ['--format', 'json']],
+      ['--json', ['--json']],
+    ] as const)(
+      'validate --layer L2 %s はJSONを返す',
+      (_label, formatArgs) => {
+        const actual = run('validate', '--layer', 'L2', ...formatArgs);
 
-        expect(actual.exitCode).toBe(2);
-        expect(actual.stderr).toContain("Invalid --format value for validate: 'json'");
-        expect(actual.stdout).not.toContain('=== バリデーション結果 ===');
+        expect(actual.stderr).not.toContain('Invalid --format value for validate');
+        expect([0, 1]).toContain(actual.exitCode);
+        const parsed = JSON.parse(actual.stdout);
+        expect(parsed).toHaveProperty('overallPassed');
       },
     );
+
+    it('scaffold-wi --help は main help と同じ positional signature を表示する', () => {
+      const actual = run('scaffold-wi', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>');
+    });
+
+    it('scaffold-design --help は dry-run/apply contract を表示する', () => {
+      const actual = run('scaffold-design', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('--dry-run');
+      expect(actual.stdout).toContain('--apply');
+    });
+
+    it('delegate-sonnet --help は forwarded args contract を表示する', () => {
+      const actual = run('delegate-sonnet', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('Usage: phasegate delegate-sonnet [...args]');
+    });
   });
 
   describe('biome-ast-engine コマンド群', () => {

@@ -1610,6 +1610,19 @@ CI governance treats pointer validation results according to semantic pointer po
 
 CI governance consumes the public command catalog for generated workflows and agent-context pointers. The documented CLI surface must identify `ci:generate-template`, `ci:auto-refresh-agent-context`, `p2:check-agent-context`, and repetition checks as binary subcommands, not implied npm scripts.
 
+## WI-189 Scaffold Design Write Mode
+
+<!-- @work-item-id WI-189 -->
+
+`scaffold-design` follows the explicit write-side command contract used by setup lifecycle commands:
+
+- `--dry-run` previews the target path, template path, and existing-file state without writing.
+- `--apply` writes the scaffold.
+- no mode defaults to dry-run.
+- `--dry-run --apply` is a command error.
+
+The JSON result includes `dryRun`, `written`, `alreadyExists`, and `overwritten` so automation can distinguish previews from applied writes.
+
 <!-- @work-item-id WI-163 -->
 ## WI-163 CI Template And L4 Rollout Contract
 

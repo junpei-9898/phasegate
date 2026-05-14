@@ -3,6 +3,7 @@
  * @layer presentation
  * @work-item-id WI-141
  * @work-item-id WI-109
+ * @work-item-id WI-189
  *
  * Pre-commit CLI entry.
  * Runs L2 validators against staged TypeScript files AND design-document
@@ -533,6 +534,11 @@ function hasCompleteBypassTrailerSet(results: readonly BypassTrailerValidationRe
   return results.some((result) => result.hasAnyBypassTrailer && result.complete);
 }
 
+function toBypassAuditStdout(stdout: string, changedFiles: readonly string[]): string {
+  if (changedFiles.length > 0) return stdout;
+  return stdout.replace("No staged files to check. Skipping.", "No changed files in range to check. Skipping.");
+}
+
 export async function runBypassAudit(
   deps: PreCommitDeps,
   options: BypassAuditOptions = {},
@@ -554,7 +560,7 @@ export async function runBypassAudit(
 
   const sections = [
     `${BOLD}[phasegate]${RESET} Bypass audit (${baseRef}..${headRef})`,
-    result.stdout,
+    toBypassAuditStdout(result.stdout, changedFiles),
   ];
   let exitCode = result.exitCode;
   if (result.exitCode !== 0 && !hasCompleteBypassTrailerSet(bypassResults)) {

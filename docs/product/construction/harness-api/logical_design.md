@@ -1888,3 +1888,13 @@ Gate commands remain explicit:
 | `phasegate:check-ready` | story phase readiness | exits 1 on pending/failed stories |
 | `validate --layer <Lx>` | requested validator layer | exits 1 on layer validation failure |
 | `phasegate:status` | operational health summary | JSON `status` may fail, exit remains 0 for informational consumption |
+
+## WI-189 CLI UX Consistency Contract
+
+<!-- @work-item-id WI-189 -->
+
+`main.ts` is the public CLI catalog boundary. Top-level help, subcommand help, and parser behavior must describe the same command signatures and flags.
+
+`validate --format json` is supported as a compatibility alias for the existing CI JSON formatter. `validate --json` selects the same JSON output when `--format` is omitted. The command must not fatal on `json` while the global JSON flag is advertised.
+
+Range audit commands must describe the actual checked input. `bypass:audit --base <ref> --head <ref>` audits changed files in the ref range; an empty range reports "No changed files in range" rather than staged-file wording.

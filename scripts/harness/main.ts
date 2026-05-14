@@ -7,6 +7,7 @@
  * @work-item-id WI-175
  * @work-item-id WI-176
  * @work-item-id WI-184
+ * @work-item-id WI-189
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -156,7 +157,8 @@ Setup:
                                 --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --agent <claude|codex|both>, --report-out <path>)
-  scaffold-wi <unit> <type>    Create docs/inception/{unit}/WI-XXX/description.md
+  scaffold-wi <unit|_cross> <story|issue|chore>
+                               Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
   install                      Install phasegate managed files (--dry-run|--apply, --force)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
@@ -183,8 +185,9 @@ Commands:
 
   lint                         Run lint checks (--json, --target <path>)
 
-  validate                     Run validators (--layer L2|L3|L4|all; L0 prints runtime hook info, --unit, --format human|agent|ci)
+  validate                     Run validators (--layer L2|L3|L4|all; L0 prints runtime hook info, --unit, --format human|agent|ci|json, --json)
   ci-check                     CI check (--quick for quick mode, --fail-on-reject, --dry-run, --files)
+  check-change-category        Classify changed paths for quick mode (--paths <csv>, --format human|json)
 
   phasegate:check-ready         Check ready status (--json)
   phasegate:check-phase         Check phase gate (--unit <unitId>, --json)
@@ -211,7 +214,7 @@ Gate semantics:
   config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict>, --dry-run, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
-  scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --force, --json)
+  scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
 
   skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed)
   skill:check-coverage         Check coverage (--story <storyId>, --json)
@@ -409,7 +412,8 @@ function parseValidateFormat(args: readonly string[]): "human" | "agent" | "ci" 
   const raw = parseFlag(args, "--format");
   if (raw === undefined) return undefined;
   if (raw === "human" || raw === "agent" || raw === "ci") return raw;
-  throw new Error(`Invalid --format value for validate: '${raw}'. Supported values: human, agent, ci.`);
+  if (raw === "json") return "ci";
+  throw new Error(`Invalid --format value for validate: '${raw}'. Supported values: human, agent, ci, json.`);
 }
 
 function levenshtein(a: string, b: string): number {
@@ -546,7 +550,8 @@ Run validators against the project. Without --layer, runs all enabled validator 
 
 Options:
   --layer <L0|L2|L3|L4>           Run only the specified validator layer; L0 prints runtime hook info
-  --json                          Output machine-readable JSON
+  --format <human|agent|ci|json>  Output format; json is an alias for ci JSON
+  --json                          Output machine-readable JSON when --format is omitted
   --help, -h                      Show this help`,
   lint: `Usage: phasegate lint [options]
 
@@ -626,6 +631,28 @@ Options:
 Examples:
   phasegate check-change-category --paths src/foo.ts,src/bar.ts
   phasegate check-change-category --paths src/foo.ts --format json`,
+  "scaffold-wi": `Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>
+
+Create docs/inception/{unit}/WI-XXX/description.md.
+
+Arguments:
+  <unit|_cross>              Unit id or _cross for cross-cutting work items.
+  <story|issue|chore>        Work item type.
+
+Options:
+  --help, -h                 Show this help`,
+  "scaffold-design": `Usage: phasegate scaffold-design --unit <id> --phase <phase> [options]
+
+Scaffold a product construction design document.
+
+Options:
+  --unit <id>                Unit id under docs/product/construction.
+  --phase <phase>            logical, domain, uiux, unit-test, or it-test.
+  --dry-run                  Preview target and template without writing (default).
+  --apply                    Write the scaffold.
+  --force                    Overwrite an existing target when applying.
+  --json                     Output machine-readable JSON.
+  --help, -h                 Show this help`,
   "ci:generate-template": `Usage: phasegate ci:generate-template [options]
 
 Generates a CI template configuration.
@@ -643,6 +670,15 @@ Options:
 Examples:
   phasegate ci:generate-template --type aidlc-gate
   phasegate ci:generate-template --preset strict --type pre-commit --render`,
+  "delegate-sonnet": `Usage: phasegate delegate-sonnet [...args]
+
+Delegate a task to Sonnet 4.6 by forwarding all args to scripts/delegate-sonnet.sh.
+
+Arguments:
+  [...args]                  Task text and options consumed by the delegate script.
+
+Options:
+  --help, -h                 Show this help`,
 };
 
 function printSubcommandHelp(command: string): void {
@@ -2191,7 +2227,7 @@ async function main(): Promise<void> {
         const layer = parseFlag(args, "--layer") as "L0" | "L2" | "L3" | "L4" | "all" | undefined;
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
-        const format = parseValidateFormat(args);
+        const format = parseValidateFormat(args) ?? (json ? "ci" : undefined);
         // WI-094 / ADR-017: --fail-on-warning / --no-fail-on-warning / 未指定→config値
         const failOnWarning = parseTriStateFlag(args, "--fail-on-warning", "--no-fail-on-warning");
         const noL4 = hasFlag(args, "--no-l4");
@@ -2206,7 +2242,7 @@ async function main(): Promise<void> {
           targetPaths,
         });
         console.log(result.output);
-        if (layer === "L2" || layer === "all") {
+        if ((layer === "L2" || layer === "all") && format !== "ci") {
           await printStoryReflectionValidationSummary(rootDir, unit);
         }
         process.exit(result.exitCode);
@@ -2492,11 +2528,15 @@ Examples:
         const mod = buildCiGovernance(rootDir, harnessRoot);
         const unit = parseFlag(args, "--unit") ?? "";
         const phase = parseFlag(args, "--phase") ?? "";
+        const dryRun = hasFlag(args, "--dry-run");
+        const apply = hasFlag(args, "--apply");
         const force = hasFlag(args, "--force");
         const format = json ? "json" : "human";
         const result = await mod.scaffoldDesignHandler.handle({
           unit,
           phase,
+          dryRun,
+          apply,
           force,
           format,
         });

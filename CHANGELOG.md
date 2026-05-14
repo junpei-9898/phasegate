@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.5] - 2026-05-14
+
+### Fixed
+
+- **WI-189 — umbrella CLI UX cleanup** — aligns `validate --format json` with the global JSON contract, makes `scaffold-design` default to dry-run with explicit `--apply`, fixes bypass audit empty-range wording, and synchronizes public help for scaffold, quick-mode, and delegate commands.
+
 ## [0.160.4] - 2026-05-14
 
 ### Fixed

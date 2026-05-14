@@ -492,3 +492,14 @@
 | IT-API-RefreshAgentContext-WI032-003 | agent-context-refresh template を render できること | `templateType='agent-context-refresh'` | workflow content が返る |
 | IT-WI142-001 | `--preset` 未指定で agent-context-refresh template を render できること | `ci:generate-template --type agent-context-refresh --render` | 既定 preset `standard` で成功し、workflow YAML が返る。@work-item-id WI-142 |
 | IT-WI142-002 | help が `--preset` の既定値を説明すること | `ci:generate-template --help` | `Default: standard` を含む。@work-item-id WI-142 |
+
+## WI-189 Scaffold Design Mode Tests
+
+<!-- @work-item-id WI-189 -->
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-CG-WI189-001 | default scaffold-design は dry-run preview になること | `{ unit:'demo', phase:'logical' }` | exit 0、`writer.write` 未呼び出し、`dryRun=true`, `written=false` |
+| IT-CG-WI189-002 | apply 指定で既存 write behavior を実行すること | `{ unit:'demo', phase:'logical', apply:true }` | exit 0、`writer.write` 呼び出し、`written=true` |
+| IT-CG-WI189-003 | dry-run と apply の同時指定を拒否すること | `{ dryRun:true, apply:true }` | exit 2、`writer.write` 未呼び出し |
+| IT-CG-WI189-004 | JSON 出力に write mode を含めること | `{ format:'json', dryRun:true }` | parse 可能で `dryRun=true` |
