@@ -1097,3 +1097,8 @@ The traceability-model unit does not evaluate semantic AAA, assertion strength, 
 ## G3 Traceability Semantics
 
 Traceability consumers compare design/code/test semantics by Unit-scoped keys. `@unit` metadata is the primary source for implementation ownership, and product-doc `@work-item-id` annotations remain the canonical reflection link.
+## WI Migration Help And Drift Counting
+
+<!-- @work-item-id WI-193, WI-195 -->
+
+`migrate work-items` remains distinct from `_shared` ad-hoc plan drift. Doctor counts `_shared/**/*.md` recursively for drift visibility, but does not map those files into migration candidates or expose `migrate work-items --apply` as a repair hint.

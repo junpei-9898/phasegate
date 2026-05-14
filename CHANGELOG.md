@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.6] - 2026-05-14
+
+### Fixed
+
+- **WI-190..WI-196 — post-0.160.5 dogfood regressions** — aligns agent context refresh with reconcile rendering, adds retrofit planning-mode config plans, makes cascade update dry-runs non-mutating and explicit, fixes doctor `_shared` drift counts, removes pnpm-only scheduled CI templates, exposes `migrate work-items` help, and accepts positional `delegate-sonnet` prompts.
+
 ## [0.160.5] - 2026-05-14
 
 ### Fixed

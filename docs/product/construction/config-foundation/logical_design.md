@@ -1405,3 +1405,8 @@ Config-foundation remains the owner of schema and resolved config behavior. The 
 <!-- @work-item-id WI-156 -->
 
 Preset L4 validator lists include `skill-catalog-drift` so resolved config can thread `L4-006` into validator-system. `toValidatorSystemConfig()` maps the public alias `skill-catalog-drift` to `L4-006` alongside the existing L4 aliases.
+## Manual Planning Mode
+
+<!-- @work-item-id WI-191 -->
+
+`planningMode.default` and `planningMode.perPhase` accept `manual` in addition to `interactive` and `embedded-qa`. Manual mode is intended for reviewed retrofit adoption paths where existing plan evidence is accepted through an explicit configuration patch plan.

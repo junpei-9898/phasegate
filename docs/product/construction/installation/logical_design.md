@@ -537,3 +537,14 @@ Applicable `findings[]` retain their existing repair hints and suggested skills,
 Scoped doctor reports must expose an effective repair contract that can be read from a single finding item. Applicable `findings[]` include `currentScopeRepairTarget: true` and `repairModeApplicability: "applicable"` in addition to the existing repair hint applicability marker.
 
 `scopedOutFindings[]` preserve the original `repairMode` but mark `currentScopeRepairTarget: false` and `repairModeApplicability: "only-if-agent-selected"`. Human output lists the scoped-out `checkId` values and states that they are not repair targets for the selected scope.
+## Managed Context And Drift Diagnostics
+
+<!-- @work-item-id WI-190, WI-193, WI-194 -->
+
+- Reconcile remains the repair path for installed managed markdown sections, but its rendered CLAUDE.md contract must match the auto-refresh renderer so refresh/reconcile loops do not create phantom drift.
+- `wi-workflow-drift` counts `_shared/**/*.md` recursively as ad-hoc inception drift when no WI directories exist. It preserves the manual repair contract: `repairMode` is `manual` and `repairHint` is `null`.
+- Installed CI workflow templates must use package-manager-neutral install logic and packaged `npx phasegate` commands.
+
+<!-- @work-item-id WI-191 -->
+
+Installation setup guidance treats retrofit bootstrap as a config-plan workflow rather than an unmanaged protected-file edit. Agents must present the `retrofit-bootstrap` plan for review before applying a `phasegate.config.json` relaxation.

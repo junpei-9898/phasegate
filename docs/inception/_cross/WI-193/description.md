@@ -2,7 +2,7 @@
 id: WI-193
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [installation, traceability-model]
 source: github#18
 external_ref: https://github.com/junpei-9898/phasegate/issues/18

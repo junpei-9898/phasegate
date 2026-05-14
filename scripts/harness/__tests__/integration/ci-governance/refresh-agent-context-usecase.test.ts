@@ -1,6 +1,7 @@
 // @unit ci-governance
 // @layer integration
 // @work-item-id WI-032
+// @work-item-id WI-190
 // @story H13-03
 
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -19,6 +20,33 @@ async function withTempProject<T>(testFn: (projectRoot: string) => Promise<T>): 
   }
 }
 
+async function previewAgentContext(harnessRoot: string) {
+  return await withTempProject(async (projectRoot) => {
+    const mod = buildCiGovernance(projectRoot, harnessRoot);
+    return await mod.refreshAgentContextHandler.handle({ dryRun: true, format: 'json' });
+  });
+}
+
+async function applyAgentContextWithUserSection(harnessRoot: string) {
+  return await withTempProject(async (projectRoot) => {
+    await writeFile(
+      join(projectRoot, 'CLAUDE.md'),
+      [
+        '# CLAUDE.md',
+        '<!-- phasegate:user-section:start -->',
+        '既存の独自指示',
+        '<!-- phasegate:user-section:end -->',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+    const mod = buildCiGovernance(projectRoot, harnessRoot);
+    const result = await mod.refreshAgentContextHandler.handle({ apply: true, format: 'json' });
+    const content = await readFile(join(projectRoot, 'CLAUDE.md'), 'utf-8');
+    return { result, content };
+  });
+}
+
 target('RefreshAgentContextUseCase', () => {
   describe('AGENTS.md と CLAUDE.md を更新する', () => {
     context('dry-run で実行する場合', () => {
@@ -27,16 +55,14 @@ target('RefreshAgentContextUseCase', () => {
         const harnessRoot = process.cwd();
 
         // Act
-        const actual = await withTempProject(async (projectRoot) => {
-          const mod = buildCiGovernance(projectRoot, harnessRoot);
-          return await mod.refreshAgentContextHandler.handle({ dryRun: true, format: 'json' });
-        });
+        const actual = await previewAgentContext(harnessRoot);
 
         // Assert
-        const parsed = JSON.parse(actual.output);
         expect(actual.exitCode).toBe(0);
-        expect(parsed.applied).toBe(false);
-        expect(parsed.claudeMd.preview).toContain('phasegate ci:auto-refresh-agent-context --apply');
+        expect(JSON.parse(actual.output).applied).toBe(false);
+        expect(JSON.parse(actual.output).claudeMd.preview).toContain('phasegate doctor');
+        expect(JSON.parse(actual.output).claudeMd.preview).toContain('phasegate config:plan --intent l4-strict --dry-run');
+        expect(JSON.parse(actual.output).claudeMd.preview).not.toContain('- `phasegate ci:auto-refresh-agent-context --apply`');
       });
     });
 
@@ -46,28 +72,11 @@ target('RefreshAgentContextUseCase', () => {
         const harnessRoot = process.cwd();
 
         // Act
-        const actual = await withTempProject(async (projectRoot) => {
-          await writeFile(
-            join(projectRoot, 'CLAUDE.md'),
-            [
-              '# CLAUDE.md',
-              '<!-- phasegate:user-section:start -->',
-              '既存の独自指示',
-              '<!-- phasegate:user-section:end -->',
-              '',
-            ].join('\n'),
-            'utf-8',
-          );
-          const mod = buildCiGovernance(projectRoot, harnessRoot);
-          const result = await mod.refreshAgentContextHandler.handle({ apply: true, format: 'json' });
-          const content = await readFile(join(projectRoot, 'CLAUDE.md'), 'utf-8');
-          return { result, content };
-        });
+        const actual = await applyAgentContextWithUserSection(harnessRoot);
 
         // Assert
-        const parsed = JSON.parse(actual.result.output);
         expect(actual.result.exitCode).toBe(0);
-        expect(parsed.applied).toBe(true);
+        expect(JSON.parse(actual.result.output).applied).toBe(true);
         expect(actual.content).toContain('既存の独自指示');
         expect(actual.content).toContain('PhaseGate Commands');
       });

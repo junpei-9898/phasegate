@@ -1983,3 +1983,8 @@ Both skills route agents away from repeated setup once local readiness is comple
 ## WI-180 Scoped-Out Effective Repair Guidance in Skills
 
 `phasegate-toolkit-guide` and `phasegate-config-doctor` should prefer `currentScopeRepairTarget` and `repairModeApplicability` over raw `repairMode` when deciding whether to suggest repair. Scoped-out findings with `currentScopeRepairTarget: false` are explanatory context even when the original `repairMode` is mechanical.
+## Cascade Update Dry-Run Contract
+
+<!-- @work-item-id WI-192 -->
+
+`skill:apply-cascade-update --dry-run` is a preview operation. It may resolve targets and read files, but it must not call the write port. Human output uses preview wording (`Would update ...`), and JSON output includes `dryRun: true` with the computed target count and tags.

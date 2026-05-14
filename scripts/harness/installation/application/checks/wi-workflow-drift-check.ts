@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-143
 // @work-item-id WI-187
+// @work-item-id WI-193
 
 import { join, relative, sep } from "node:path";
 import { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
@@ -61,5 +62,6 @@ function isWorkItemDescription(path: string): boolean {
 function isAdHocPlan(path: string): boolean {
   if (!path.startsWith("docs/inception/")) return false;
   if (/\/WI-\d{3}\//.test(path)) return false;
+  if (path.startsWith("docs/inception/_shared/") && path.endsWith(".md")) return true;
   return path.includes("/codding_plan/") || path.endsWith("_plan.md");
 }

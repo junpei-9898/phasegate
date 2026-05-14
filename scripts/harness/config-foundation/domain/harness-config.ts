@@ -29,7 +29,7 @@ import type {
 
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
 export type PresetId = 'minimal' | 'standard' | 'strict';
-export type PlanningModeValue = 'interactive' | 'embedded-qa';
+export type PlanningModeValue = 'interactive' | 'embedded-qa' | 'manual';
 export type { PhaseDependenciesPresetId };
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>

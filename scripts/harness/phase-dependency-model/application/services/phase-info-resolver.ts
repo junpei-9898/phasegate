@@ -125,7 +125,7 @@ export class PhaseInfoResolver {
           blockers.push(`QAが未完了です: ${node.nodeKey()}`);
         }
         if (!actual.planningModeMatch) {
-          blockers.push(`Planning Mode要件を満たしていません: ${node.nodeKey()}`);
+          blockers.push(`Planning Mode evidence requirement is not satisfied: ${node.nodeKey()}`);
         }
       }
     }

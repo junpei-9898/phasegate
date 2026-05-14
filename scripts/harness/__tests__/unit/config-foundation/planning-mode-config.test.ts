@@ -1,4 +1,6 @@
+// @unit config-foundation
 // @layer test
+// @story H04-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { PlanningModeConfig } from '../../../config-foundation/domain/value-objects/planning-mode-config.js';
@@ -34,6 +36,16 @@ target('PlanningModeConfig', () => {
       });
     });
 
+    context('defaultがmanualの場合', () => {
+      it('生成できる', () => {
+        const input = { default: 'manual', perPhase: {} };
+
+        const actual = new PlanningModeConfig(input);
+
+        expect(actual.defaultMode).toBe('manual');
+      });
+    });
+
     // UT-CF-119
     context('defaultが未知の値の場合', () => {
       it('生成に失敗する', () => {
@@ -54,7 +66,7 @@ target('PlanningModeConfig', () => {
         // Arrange
         const input = {
           default: 'interactive',
-          perPhase: { design: 'embedded-qa' },
+          perPhase: { design: 'embedded-qa', retrofit: 'manual' },
         };
 
         // Act
@@ -62,6 +74,7 @@ target('PlanningModeConfig', () => {
 
         // Assert
         expect(actual.perPhase['design']).toBe('embedded-qa');
+        expect(actual.perPhase['retrofit']).toBe('manual');
       });
     });
 

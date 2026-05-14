@@ -11,6 +11,9 @@
  * @work-item-id WI-131
  * @work-item-id WI-184
  * @work-item-id WI-189
+ * @work-item-id WI-191
+ * @work-item-id WI-195
+ * @work-item-id WI-196
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -30,6 +33,7 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('enable-feature');
       expect(actual.stdout).toContain('lint');
       expect(actual.stdout).toContain('check-change-category');
+      expect(actual.stdout).toContain('migrate work-items');
       expect(actual.stdout).toContain('scaffold-wi <unit|_cross> <story|issue|chore>');
     });
 
@@ -255,6 +259,26 @@ describe('harness CLI E2E', () => {
 
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).toContain('Usage: phasegate delegate-sonnet [...args]');
+    });
+
+    it('config:plan --intent retrofit-bootstrap は manual planning mode patch を返す', () => {
+      const actual = run('config:plan', '--intent', 'retrofit-bootstrap', '--json');
+
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout);
+      expect(parsed.intent).toBe('retrofit-bootstrap');
+      expect(parsed.configPatch.operations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ pointer: '/planningMode/default', after: 'manual' }),
+        expect.objectContaining({ pointer: '/phaseDependencies/override', after: true }),
+      ]));
+    });
+
+    it('delegate-sonnet positional task は dry-run で prompt として扱われる', () => {
+      const actual = run('delegate-sonnet', 'test task', '--dry-run');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('test task');
+      expect(actual.stderr).not.toContain('Unknown option');
     });
   });
 

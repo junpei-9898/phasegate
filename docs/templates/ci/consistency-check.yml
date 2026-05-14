@@ -1,4 +1,5 @@
 # Phasegate — 週次整合性チェックワークフロー
+# @work-item-id WI-194
 #
 # 使い方:
 #   このファイルを .github/workflows/consistency-check.yml にコピーして使用する。
@@ -31,15 +32,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            yarn install --immutable || yarn install --frozen-lockfile
+          elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       # L4-001: Drift Detection（設計⇔コード双方向乖離）
       - name: L4 Drift Detection

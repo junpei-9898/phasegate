@@ -3,7 +3,7 @@
  * @unit phase-dependency-model
  */
 
-export type PlanningModeValue = 'interactive' | 'embedded-qa';
+export type PlanningModeValue = 'interactive' | 'embedded-qa' | 'manual';
 
 export class InvalidPlanningModeError extends Error {
   constructor(value: string) {
@@ -21,7 +21,7 @@ export class PlanningMode {
   }
 
   static create(value: string): PlanningMode {
-    if (value !== 'interactive' && value !== 'embedded-qa') {
+    if (value !== 'interactive' && value !== 'embedded-qa' && value !== 'manual') {
       throw new InvalidPlanningModeError(value);
     }
 

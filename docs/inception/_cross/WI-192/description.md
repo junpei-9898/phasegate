@@ -2,7 +2,7 @@
 id: WI-192
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [skill-quality]
 source: github#17
 external_ref: https://github.com/junpei-9898/phasegate/issues/17

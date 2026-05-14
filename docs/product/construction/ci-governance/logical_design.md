@@ -1649,3 +1649,9 @@ CI governance product docs preserve legacy `@story-id H13-*` annotations as hist
 `ci:auto-refresh-agent-context` must not serialize `AGENTS.md` as a pointer-only document. CI governance writes lesson pointers only between `<!-- phasegate:lesson-pointers:start -->` and `<!-- phasegate:lesson-pointers:end -->`. The PhaseGate standard operations block is owned by installation as `phasegate:managed-section`, and arbitrary content outside both marker pairs is user-owned.
 
 This keeps lesson aggregation compatible with Codex-facing setup instructions and prevents auto-refresh from replacing the standard WI workflow, hook bypass policy, and setup next steps.
+## Agent Context / CI Template Regression Fixes
+
+<!-- @work-item-id WI-190, WI-194 -->
+
+- `RefreshClaudeMdUseCase` renders CLAUDE.md with the same command, skill, preset, and default user-section values used by install/reconcile managed-section rendering. This keeps `ci:auto-refresh-agent-context --apply` and `reconcile --dry-run` idempotent for CLAUDE.md managed content.
+- `agent-context-refresh.yml` and `consistency-check.yml` use lockfile-based dependency installation and packaged `npx phasegate` invocations. Scheduled workflows must not assume pnpm, `pnpm/action-setup`, or a repository-local `harness` script.

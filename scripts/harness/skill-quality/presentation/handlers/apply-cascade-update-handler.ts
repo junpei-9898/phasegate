@@ -1,12 +1,14 @@
 /**
  * @layer presentation
  * @unit skill-quality
+ * @work-item-id WI-192
  */
 import type { ApplyCascadeUpdateUseCase } from '../../application/usecases/apply-cascade-update-usecase.js';
 
 export interface ApplyCascadeUpdateArgs {
   storyId: string;
   dryRun?: boolean;
+  format?: 'human' | 'json';
 }
 
 export class ApplyCascadeUpdateHandler {
@@ -15,8 +17,15 @@ export class ApplyCascadeUpdateHandler {
   async handle(args: ApplyCascadeUpdateArgs): Promise<{ exitCode: number; message: string }> {
     try {
       const output = await this.useCase.execute({ storyId: args.storyId, dryRun: args.dryRun });
+      if (args.format === 'json') {
+        return {
+          exitCode: output.errors.length > 0 ? 1 : 0,
+          message: JSON.stringify({ dryRun: args.dryRun === true, ...output }, null, 2),
+        };
+      }
       const tagsLine = output.appliedStoryIds.join(', ');
-      let msg = `Updated ${output.updatedCount} files with tags: ${tagsLine}`;
+      const verb = args.dryRun ? 'Would update' : 'Updated';
+      let msg = `${verb} ${output.updatedCount} files with tags: ${tagsLine}`;
 
       if (output.errors.length > 0) {
         const errLines = output.errors.map((e) => `  - ${e}`).join('\n');

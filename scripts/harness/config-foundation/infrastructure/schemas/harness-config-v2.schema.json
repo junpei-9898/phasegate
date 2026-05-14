@@ -384,7 +384,8 @@
           "type": "string",
           "enum": [
             "interactive",
-            "embedded-qa"
+            "embedded-qa",
+            "manual"
           ]
         },
         "perPhase": {
@@ -393,7 +394,8 @@
             "type": "string",
             "enum": [
               "interactive",
-              "embedded-qa"
+              "embedded-qa",
+              "manual"
             ]
           }
         }

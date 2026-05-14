@@ -2,7 +2,7 @@
 id: WI-194
 type: issue
 severity: high
-status: drafted
+status: tested
 affects: [ci-governance, installation]
 source: github#19
 external_ref: https://github.com/junpei-9898/phasegate/issues/19

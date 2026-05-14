@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit ci-governance
+ * @work-item-id WI-190
  */
 
 import type { AgentContextDocumentPort } from '../../domain/ports/agent-context-document-port.js';
@@ -12,12 +13,11 @@ const CLAUDE_MD_PATH = 'CLAUDE.md';
 const CLAUDE_MD_TEMPLATE_PATH = 'docs/templates/agent-context/CLAUDE.md.template.md';
 
 const PHASEGATE_COMMANDS = [
-  'phasegate init --with-ci',
-  'phasegate ci:auto-refresh-agent-context --dry-run',
-  'phasegate ci:auto-refresh-agent-context --apply',
-  'phasegate refresh-claude-md --apply',
-  'phasegate p2:check-agent-context',
+  'phasegate doctor',
   'phasegate phasegate:check-ready',
+  'phasegate validate --layer L2 --format human',
+  'phasegate setup:agent --dry-run',
+  'phasegate config:plan --intent l4-strict --dry-run',
 ];
 
 const PHASE_PRESETS = ['minimal', 'standard', 'full', 'custom'];
@@ -37,7 +37,7 @@ export class RefreshClaudeMdUseCase {
       ]);
       const nextContent = this.composer.compose(template, existing, {
         commands: PHASEGATE_COMMANDS,
-        skills,
+        skills: ['all bundled skills'],
         presets: PHASE_PRESETS,
       });
       const changed = existing !== nextContent;

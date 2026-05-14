@@ -1260,3 +1260,8 @@ scripts/harness/phase-dependency-model/
 - 既存の `full` / `standard` / `minimal` プリセット利用者は `gates[]` を定義しないため、新経路は発火しない
 - `PhaseStructure.fromPresetRules()` は既存テストと同じ挙動を維持
 - `custom` プリセット利用者のみ `gates[]` を定義する必要がある（スキーマで `custom` 時 `gates[]` を required にするかは B-4-1 で決定）
+## Manual Planning Evidence Mode
+
+<!-- @work-item-id WI-191 -->
+
+`PlanningMode("manual")` does not require a QA section or answered Q&A. Phase-gate blocker wording distinguishes missing plan/QA content from a planning evidence mode mismatch so retrofit users can see whether the missing artifact is document content or execution evidence.

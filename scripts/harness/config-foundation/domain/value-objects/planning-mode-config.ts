@@ -3,11 +3,11 @@
  * @unit config-foundation
  *
  * Planning Mode設定を表す値オブジェクト
- * defaultMode と perPhase の値は列挙値 "interactive" | "embedded-qa" のみ許容
+ * defaultMode と perPhase の値は列挙値 "interactive" | "embedded-qa" | "manual" のみ許容
  */
 import { ConfigValidationError } from '../errors/config-validation-error.js';
 
-const VALID_MODES = ['interactive', 'embedded-qa'] as const;
+const VALID_MODES = ['interactive', 'embedded-qa', 'manual'] as const;
 type PlanningMode = (typeof VALID_MODES)[number];
 
 export interface PlanningModeConfigProps {

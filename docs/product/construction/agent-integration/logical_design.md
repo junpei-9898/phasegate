@@ -1568,3 +1568,8 @@ Runtime hooks remain the enforcement layer. The readiness rows are explanatory c
 Agent integration treats configured Claude readiness as the start of normal work routing. Once managed Claude context and shared setup are present, Claude Code should use the repository instructions to identify the WI, prepare inception artifacts, confirm product reflection, and run validation instead of repeatedly rechecking setup.
 
 Structured setup failures are explanatory input for the agent. The agent should report target-aware filesystem or permission causes to the user and should not present a sandbox/path conflict as a PhaseGate implementation defect unless the recovery guidance itself is inconsistent.
+## Delegate Sonnet Argument Boundary
+
+<!-- @work-item-id WI-196 -->
+
+The PhaseGate CLI delegates `delegate-sonnet` arguments to `scripts/delegate-sonnet.sh`. Non-option positional text is prompt content for the delegated script, while PhaseGate-owned help handling remains at the top-level CLI boundary.

@@ -2,6 +2,7 @@
  * @layer infrastructure
  * @unit ci-governance
  * @work-item-id WI-182 / WI-183
+ * @work-item-id WI-194
  *
  * TemplateRendererPort実装（YAML書き出し）
  */

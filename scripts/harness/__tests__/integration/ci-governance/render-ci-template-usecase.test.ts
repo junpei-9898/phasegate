@@ -3,6 +3,7 @@
 // @story H12-04
 // @work-item-id WI-182
 // @work-item-id WI-183
+// @work-item-id WI-194
 
 import { describe, it, vi, expect } from 'vitest';
 import { readFile } from 'node:fs/promises';
@@ -11,6 +12,18 @@ import { target, context } from '../../helpers/test-helpers.js';
 import { RenderCiTemplateUseCase } from '../../../ci-governance/application/usecases/render-ci-template-usecase.js';
 import { TemplateGenerator } from '../../../ci-governance/domain/services/template-generator.js';
 import { YamlTemplateRendererAdapter } from '../../../ci-governance/infrastructure/adapters/yaml-template-renderer-adapter.js';
+import type { RenderCiTemplateOutput } from '../../../ci-governance/application/dto/render-ci-template-output.js';
+
+async function renderScheduledTemplates(useCase: RenderCiTemplateUseCase): Promise<{
+  consistency: RenderCiTemplateOutput;
+  refresh: RenderCiTemplateOutput;
+}> {
+  const [consistency, refresh] = await Promise.all([
+    useCase.execute({ presetId: 'standard', templateType: 'consistency-check' }),
+    useCase.execute({ presetId: 'standard', templateType: 'agent-context-refresh' }),
+  ]);
+  return { consistency, refresh };
+}
 
 target('RenderCiTemplateUseCase', () => {
   describe('正常系', () => {
@@ -187,6 +200,34 @@ target('RenderCiTemplateUseCase', () => {
           expect(actual.content).toBe(expected);
           expect(actual.outputPath).toBe('.github/workflows/agent-context-refresh.yml');
           expect(actual.errors).toEqual([]);
+        });
+      });
+    });
+
+    describe('remaining scheduled templatesがpackage-manager固定とmonorepo scriptを避けること', () => {
+      context('consistency-check と agent-context-refresh をrenderする場合', () => {
+        it('lockfile別installとphasegate bin呼び出しを生成する', async () => {
+          const validatorPort = { listAll: vi.fn().mockResolvedValue(['v1']) };
+          const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
+          const generator = new TemplateGenerator(validatorPort, presetPort);
+          const rendererPort = new YamlTemplateRendererAdapter(process.cwd());
+          const useCase = new RenderCiTemplateUseCase(generator, rendererPort);
+
+          // Act
+          const actual = await renderScheduledTemplates(useCase);
+
+          // Assert
+          expect(actual.consistency.content).toContain('if [ -f pnpm-lock.yaml ]; then');
+          expect(actual.consistency.content).toContain('npm ci');
+          expect(actual.consistency.content).not.toContain("cache: 'pnpm'");
+          expect(actual.consistency.content).not.toContain('pnpm/action-setup');
+          expect(actual.consistency.content).not.toContain('pnpm run harness');
+          expect(actual.refresh.content).toContain('if [ -f pnpm-lock.yaml ]; then');
+          expect(actual.refresh.content).toContain('npm ci');
+          expect(actual.refresh.content).not.toContain("cache: 'pnpm'");
+          expect(actual.refresh.content).not.toContain('pnpm/action-setup');
+          expect(actual.refresh.content).not.toContain('pnpm run harness');
+          expect(actual.refresh.content).toContain('npx phasegate ci:auto-refresh-agent-context --apply');
         });
       });
     });

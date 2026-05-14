@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit skill-quality
+ * @work-item-id WI-192
  */
 import { CascadeUpdateResult } from '../../domain/value-objects/cascade-update-result.js';
 import type { CascadeUpdateService } from '../../domain/services/cascade-update-service.js';
@@ -35,7 +36,7 @@ export class ApplyCascadeUpdateUseCase {
             const updatedContent = content.includes(target.storyIdTag)
               ? content
               : `${content}\n${target.storyIdTag}`;
-            if (!input.dryRun) {
+            if (!input.dryRun && updatedContent !== content) {
               await this.fileSystemPort.write(filePath, updatedContent);
             }
             updatedCount++;

@@ -8,6 +8,9 @@
  * @work-item-id WI-176
  * @work-item-id WI-184
  * @work-item-id WI-189
+ * @work-item-id WI-191
+ * @work-item-id WI-195
+ * @work-item-id WI-196
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -171,6 +174,7 @@ Commands:
   disable-feature <name>       Disable a harness feature
   list-features                List available features
   migrate                      Migrate phasegate.config.json (--schema v3, --config <path>)
+  migrate work-items           Migrate legacy inception work item directories (--dry-run|--apply)
   work-items:status            Report or apply derived WI frontmatter status (--dry-run|--apply, --id, --fail-on-stale, --json)
 
   render-errors                Render harness errors (--format human|agent|ci)
@@ -211,7 +215,7 @@ Gate semantics:
   refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
   p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
   setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both>, --dry-run|--apply, --json)
-  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict>, --dry-run, --json)
+  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|retrofit-bootstrap|planning-mode-relax>, --dry-run, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
@@ -528,7 +532,7 @@ Options:
 Produce an agent-readable configuration change plan.
 
 Intents:
-  l4-strict, codex-hooks, ci-fail-on-warning, baseline-reset, quick-mode-strict
+  l4-strict, codex-hooks, ci-fail-on-warning, baseline-reset, quick-mode-strict, retrofit-bootstrap, planning-mode-relax
 
 Options:
   --dry-run
@@ -562,10 +566,11 @@ Options:
   --help, -h                      Show this help`,
   migrate: `Usage: phasegate migrate [options]
 
-Migrate phasegate.config.json from older schema versions. Backs up the original to phasegate.config.json.bak.
+Migrate phasegate.config.json from older schema versions, or migrate legacy inception work item directories.
 
 Options:
   --dry-run                       Preview changes without writing
+  --apply                         Apply migration when supported
   --help, -h                      Show this help`,
   "list-errors": `Usage: phasegate list-errors [options]
 
@@ -769,7 +774,7 @@ function parseCoverageThreshold(raw: string | undefined): number {
 type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
 type AgentTarget = "claude" | "codex" | "both";
 type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
-type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict";
+type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict" | "retrofit-bootstrap" | "planning-mode-relax";
 type SetupCompletenessStatus = "configured" | "planned" | "manual" | "not-applicable" | "unknown";
 
 interface SetupCompletenessEntry {
@@ -847,7 +852,9 @@ function parseConfigChangeIntent(value: string | undefined): ConfigChangeIntent 
     value === "codex-hooks" ||
     value === "ci-fail-on-warning" ||
     value === "baseline-reset" ||
-    value === "quick-mode-strict"
+    value === "quick-mode-strict" ||
+    value === "retrofit-bootstrap" ||
+    value === "planning-mode-relax"
   ) {
     return value;
   }
@@ -1216,6 +1223,14 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
     ],
     "codex-hooks": [],
     "baseline-reset": [],
+    "retrofit-bootstrap": [
+      { pointer: "/planningMode/default", path: ["planningMode", "default"], value: "manual" },
+      { pointer: "/phaseDependencies/override", path: ["phaseDependencies", "override"], value: true },
+      { pointer: "/quickMode/relaxedGates", path: ["quickMode", "relaxedGates"], value: ["phase-gate"] },
+    ],
+    "planning-mode-relax": [
+      { pointer: "/planningMode/default", path: ["planningMode", "default"], value: "manual" },
+    ],
   };
   const changes = configIntents[intent];
   if (changes.length === 0) {
@@ -1302,6 +1317,22 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       commands: ["phasegate check-change-category --paths <changed-files> --format json"],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
       risks: ["More changes will require Full Mode validation before commit."],
+    },
+    "retrofit-bootstrap": {
+      targets: ["phasegate.config.json: planningMode.default", "phasegate.config.json: phaseDependencies.override", "phasegate.config.json: quickMode.relaxedGates"],
+      managedTargets: ["phasegate.config.json"],
+      externalActions: [],
+      commands: ["phasegate baseline --dry-run", "phasegate config:plan --intent retrofit-bootstrap --json"],
+      validations: ["phasegate validate-metadata docs/inception/_shared/*.md", "phasegate check-phase-gate --level 2"],
+      risks: ["Manual planning mode accepts existing retrofit planning evidence; review the patch before applying it to avoid weakening greenfield projects."],
+    },
+    "planning-mode-relax": {
+      targets: ["phasegate.config.json: planningMode.default"],
+      managedTargets: ["phasegate.config.json"],
+      externalActions: [],
+      commands: ["phasegate config:plan --intent planning-mode-relax --json"],
+      validations: ["phasegate check-phase-gate --level 2", "phasegate phasegate:check-ready"],
+      risks: ["Manual planning mode reduces PhaseGate's QA enforcement for plan documents until strict planning is restored."],
     },
   };
   const before = await readProjectJson(rootDir, "phasegate.config.json");
@@ -2587,7 +2618,7 @@ Examples:
         const mod = createSkillQualityHandlers();
         const storyId = parseFlag(args, "--story") ?? "";
         const dryRun = hasFlag(args, "--dry-run");
-        const result = await mod.applyCascadeUpdateHandler.handle({ storyId, dryRun });
+        const result = await mod.applyCascadeUpdateHandler.handle({ storyId, dryRun, format: json ? "json" : "human" });
         console.log(result.message);
         process.exit(result.exitCode);
         break;
@@ -2780,6 +2811,10 @@ Examples:
       }
 
       case "delegate-sonnet": {
+        if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+          printSubcommandHelp("delegate-sonnet");
+          process.exit(0);
+        }
         const { spawn } = await import("node:child_process");
         const scriptPath = join(harnessRoot, "scripts/delegate-sonnet.sh");
         const forwardArgs = args.slice(1);

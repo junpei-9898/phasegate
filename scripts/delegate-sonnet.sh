@@ -4,11 +4,12 @@
 # Usage:
 #   bash scripts/delegate-sonnet.sh --prompt "プロンプト" --output "出力パス"
 #   bash scripts/delegate-sonnet.sh --prompt-file /tmp/prompt.md --output "出力パス"
+#   bash scripts/delegate-sonnet.sh "プロンプト" --output "出力パス"
 #
 # Options:
 #   --prompt        委任プロンプト（直接指定、2000文字以下推奨）
 #   --prompt-file   委任プロンプトファイル（長文の場合）
-#   --output        出力ファイルパス
+#   --output        出力ファイルパス（省略時: .phasegate/delegate-sonnet-output.md）
 #   --max-turns     最大ターン数（デフォルト: 30）
 #   --dry-run       プロンプトを表示するだけで実行しない
 
@@ -20,6 +21,7 @@ PROMPT_FILE=""
 OUTPUT_PATH=""
 MAX_TURNS=30
 DRY_RUN=false
+POSITIONAL_ARGS=()
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -43,12 +45,27 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=true
       shift
       ;;
+    --)
+      shift
+      if [[ $# -gt 0 ]]; then
+        POSITIONAL_ARGS+=("$@")
+      fi
+      break
+      ;;
     *)
-      echo "Unknown option: $1" >&2
-      exit 1
+      if [[ "$1" == --* ]]; then
+        echo "Unknown option: $1" >&2
+        exit 1
+      fi
+      POSITIONAL_ARGS+=("$1")
+      shift
       ;;
   esac
 done
+
+if [[ -z "$PROMPT" && ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
+  PROMPT="${POSITIONAL_ARGS[*]}"
+fi
 
 # --- バリデーション ---
 if [[ -z "$PROMPT" && -z "$PROMPT_FILE" ]]; then
@@ -56,10 +73,7 @@ if [[ -z "$PROMPT" && -z "$PROMPT_FILE" ]]; then
   exit 1
 fi
 
-if [[ -z "$OUTPUT_PATH" ]]; then
-  echo "Error: --output is required" >&2
-  exit 1
-fi
+OUTPUT_PATH="${OUTPUT_PATH:-.phasegate/delegate-sonnet-output.md}"
 
 if [[ -n "$PROMPT_FILE" && ! -f "$PROMPT_FILE" ]]; then
   echo "Error: Prompt file not found: $PROMPT_FILE" >&2

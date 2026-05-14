@@ -1,4 +1,6 @@
+// @unit phase-dependency-model
 // @layer test
+// @story H02-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -6,6 +8,15 @@ import {
 } from '../../../phase-dependency-model/domain/values/planning-mode.js';
 
 target('PlanningMode.equals', () => {
+  describe('manual mode', () => {
+    it('QAセクションと回答済みQAを要求しない', () => {
+      const actual = PlanningMode.create('manual');
+
+      expect(actual.requiresQaSection()).toBe(false);
+      expect(actual.requiresAnsweredQa()).toBe(false);
+    });
+  });
+
   describe('値等価性を判定する', () => {
     // UT-PD-069
     context('同一値のPlanningModeを比較する場合', () => {

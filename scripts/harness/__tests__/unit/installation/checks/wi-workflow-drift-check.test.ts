@@ -3,6 +3,7 @@
 // @story H11-01
 // @work-item-id WI-143
 // @work-item-id WI-187
+// @work-item-id WI-193
 
 import { describe, expect, it, vi } from "vitest";
 import { WiWorkflowDriftCheck } from "../../../../installation/application/checks/wi-workflow-drift-check.js";
@@ -40,6 +41,27 @@ target("WiWorkflowDriftCheck", () => {
 
       if (actual === null) throw new Error("expected relaxed phase-gate finding");
       expect(actual.message).toContain("quickMode.relaxedGates includes phase-gate");
+    });
+
+    it("_shared 配下の markdown を再帰的な ad-hoc plan 候補として数えること", async () => {
+      const inspector = createInspector({
+        listFiles: vi.fn().mockResolvedValue([
+          projectFile("docs/inception/_shared/story_writer_plan.md"),
+          projectFile("docs/inception/_shared/roadmap.md"),
+          projectFile("docs/inception/_shared/mockup_design_brief/nested/brief.md"),
+        ]),
+      });
+      const sut = new WiWorkflowDriftCheck();
+
+      const actual = await sut.run("/tmp/project", inspector);
+
+      expect(actual).toMatchObject({
+        checkId: "wi-workflow-drift",
+        severity: "red",
+        message: "WI-first drift detected: 0 WI directories and 3 ad-hoc plan file(s).",
+        repairMode: "manual",
+        repairHint: null,
+      });
     });
 
     it("WI description が存在する場合は drift finding を返さないこと", async () => {

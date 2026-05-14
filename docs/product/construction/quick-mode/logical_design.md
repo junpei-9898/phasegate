@@ -1175,3 +1175,8 @@ Quick Mode documentation consumes layer status semantics for CI decisions. Disab
 ## WI-156 Validator ID Catalog Refresh
 
 Quick Mode's static validator ID registry includes `L4-006` so `relaxedGates: ["L4"]` continues to mean every registered L4 validator, including skill catalog drift. The relaxation profile still stores L4 as an all-layer marker rather than enumerating individual L4 IDs.
+## Retrofit Relaxed Gate Contract
+
+<!-- @work-item-id WI-191 -->
+
+`config:plan --intent retrofit-bootstrap` may propose `quickMode.relaxedGates = ["phase-gate"]` only as an explicit retrofit bootstrap patch. This is a reviewed escape hatch, not an automatic quick-mode downgrade.

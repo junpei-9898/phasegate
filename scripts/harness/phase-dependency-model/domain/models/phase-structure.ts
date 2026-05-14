@@ -270,7 +270,7 @@ export class PhaseStructure {
         }
 
         if (!planEvidence.planningModeMatch) {
-          blockers.push(`Planning Mode要件を満たしていません: ${node.nodeKey()}`);
+          blockers.push(`Planning Mode evidence requirement is not satisfied: ${node.nodeKey()}`);
         }
       }
 

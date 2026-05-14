@@ -1898,3 +1898,10 @@ Gate commands remain explicit:
 `validate --format json` is supported as a compatibility alias for the existing CI JSON formatter. `validate --json` selects the same JSON output when `--format` is omitted. The command must not fatal on `json` while the global JSON flag is advertised.
 
 Range audit commands must describe the actual checked input. `bypass:audit --base <ref> --head <ref>` audits changed files in the ref range; an empty range reports "No changed files in range" rather than staged-file wording.
+## Retrofit And Public CLI Surface
+
+<!-- @work-item-id WI-191, WI-195, WI-196 -->
+
+- `config:plan` exposes retrofit escape hatches as reviewable plans: `retrofit-bootstrap` and `planning-mode-relax`. These intents return patch operations for `phasegate.config.json` and do not directly edit protected files.
+- Main help includes `migrate work-items` when the subcommand remains invocable, and `migrate --help` describes `--dry-run|--apply`.
+- `delegate-sonnet [...args]` accepts positional task text as a prompt-compatible pass-through path, matching the documented help contract.

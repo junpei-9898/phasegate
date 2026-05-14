@@ -11,7 +11,7 @@ export interface ClaudeMdTemplateValues {
 
 const USER_SECTION_START = '<!-- phasegate:user-section:start -->';
 const USER_SECTION_END = '<!-- phasegate:user-section:end -->';
-const DEFAULT_USER_SECTION = 'プロジェクト固有の指示をここに記載してください。';
+const DEFAULT_USER_SECTION = 'Project-specific agent instructions go here.';
 
 export class ClaudeMdComposer {
   compose(template: string, existing: string | null, values: ClaudeMdTemplateValues): string {
