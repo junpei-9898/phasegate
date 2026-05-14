@@ -50,3 +50,12 @@ $ pnpm exec tsx scripts/harness/main.ts phasegate:status --json
 - `pnpm exec vitest run scripts/harness/__tests__/e2e/cli-harness.test.ts -t "legacy|ci:generate-template --kind|ci:generate-template --output"`
 - `pnpm test`
 - `pnpm harness:check-ready`
+
+## Post-publish Dogfood
+
+2026-05-15 に published `phasegate@0.160.7` から取得した tarball を `/private/tmp/phasegate-wi197-200-dogfood/package` に展開し、依存関係を install して検証した。
+
+- `npm view phasegate version` -> `0.160.7`
+- `/private/tmp/phasegate-wi197-200-dogfood/package/bin/phasegate --version` -> `phasegate v0.160.7`
+- `phasegate status --json` -> deprecated warning: `use 'phasegate phasegate:status'` を出力し、`Unknown command` ではなく status handler へ到達。
+- `phasegate complete-check --json` -> deprecated warning: `use 'phasegate phasegate:complete-check'` を出力し、`Unknown command` ではなく complete-check handler へ到達。

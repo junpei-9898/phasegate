@@ -55,3 +55,12 @@ $ phasegate uninstall --dry-run --json
 - `pnpm exec vitest run scripts/harness/__tests__/integration/installation/uninstall-handler.test.ts`
 - `pnpm test`
 - `pnpm harness:check-ready`
+
+## Post-publish Dogfood
+
+2026-05-15 に published `phasegate@0.160.7` から取得した tarball を展開し、`/private/tmp/phasegate-wi197-200-dogfood/proj-uninstall` で検証した。
+
+- `phasegate uninstall --dry-run --json` -> `package.json` plan entry が `protected:true`。
+- `phasegate uninstall --apply --json` -> exit 1、`refused` に `package.json` / `protected:true` が含まれる。
+- apply refusal 後も `.phasegate/manifest.json` は保持された。
+- `package-lock.json` の protected candidate は integration test で検証済み。

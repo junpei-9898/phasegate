@@ -58,3 +58,12 @@ $ pnpm exec tsx scripts/harness/main.ts ci:generate-template --type consistency-
 - `pnpm exec vitest run scripts/harness/__tests__/e2e/cli-harness.test.ts -t "legacy|ci:generate-template --kind|ci:generate-template --output"`
 - `pnpm test`
 - `pnpm harness:check-ready`
+
+## Post-publish Dogfood
+
+2026-05-15 に published `phasegate@0.160.7` から取得した tarball を展開し、`/private/tmp/phasegate-wi197-200-dogfood` で検証した。
+
+- `phasegate ci:generate-template --kind consistency-check` -> exit 2、`unknown flag '--kind'`。
+- `phasegate ci:generate-template --type aidlc-gate --output /private/tmp/phasegate-wi197-200-dogfood/aidlc-gate.yml` -> exit 2、`unknown flag '--output'`、file 未作成。
+- `phasegate ci:generate-template --type consistency-check --render` -> exit 0、workflow YAML を stdout に出力。
+- `phasegate ci:generate-template --type aidlc-gate` -> exit 0、human output は `CI Template Plan Ready` と `Output: no file written; use --render to print template YAML` を表示。

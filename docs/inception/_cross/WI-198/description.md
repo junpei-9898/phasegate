@@ -54,3 +54,11 @@ Issue 本文は `AGENTS.md` なども divergent としているが、現 checkou
 - `pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts integration/installation/reconcile-handler.test.ts integration/ci-governance/refresh-agent-context-usecase.test.ts integration/installation/install-handler.test.ts`
 - `pnpm test`
 - `pnpm harness:check-ready`
+
+## Post-publish Dogfood
+
+2026-05-15 に published `phasegate@0.160.7` から取得した tarball を展開し、`/private/tmp/phasegate-wi197-200-dogfood/proj-refresh` で検証した。
+
+- `phasegate install --apply --force --agent both --with-ci --with-husky --json` -> exit 0。
+- `phasegate ci:auto-refresh-agent-context --apply --json` -> exit 0、`success:true`。
+- `phasegate reconcile --dry-run --json` -> exit 0、`AGENTS.md` / `CLAUDE.md` / `package.json` はすべて `changed:false` で、refresh 直後の不要差分なし。
