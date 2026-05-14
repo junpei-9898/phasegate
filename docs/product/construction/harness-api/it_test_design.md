@@ -621,3 +621,11 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 | IT-API-WI189-004 | scaffold-wi の help signature が一致すること | `phasegate --help`, `scaffold-wi --help` | 両方が `<unit|_cross> <story|issue|chore>` を示す |
 | IT-API-WI189-005 | delegate-sonnet help が forwarded args を説明すること | `delegate-sonnet --help` | `Usage: phasegate delegate-sonnet [...args]` を含む |
 | IT-API-WI189-006 | bypass:audit empty range が range no-op を説明すること | `runBypassAudit(..., changedFiles: [])` | "No changed files in range" を含み "No staged files" を含まない |
+
+<!-- @work-item-id WI-197 -->
+## WI-197 Legacy Alias E2E Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-WI197-001 | legacy status alias が canonical handler を実行すること | `phasegate status --json` | JSON parse 可能な `phasegate:status` payload を返し、stderr に canonical command warning を出す |
+| IT-API-WI197-002 | legacy complete-check alias が canonical handler を実行すること | `phasegate complete-check` | `Unknown command` にならず、exit 0/1 の gate result と canonical command warning を返す |

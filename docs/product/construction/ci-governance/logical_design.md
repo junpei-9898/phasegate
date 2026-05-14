@@ -1651,7 +1651,9 @@ CI governance product docs preserve legacy `@story-id H13-*` annotations as hist
 This keeps lesson aggregation compatible with Codex-facing setup instructions and prevents auto-refresh from replacing the standard WI workflow, hook bypass policy, and setup next steps.
 ## Agent Context / CI Template Regression Fixes
 
-<!-- @work-item-id WI-190, WI-194 -->
+<!-- @work-item-id WI-190, WI-194, WI-198, WI-200 -->
 
 - `RefreshClaudeMdUseCase` renders CLAUDE.md with the same command, skill, preset, and default user-section values used by install/reconcile managed-section rendering. This keeps `ci:auto-refresh-agent-context --apply` and `reconcile --dry-run` idempotent for CLAUDE.md managed content.
+- `ci:auto-refresh-agent-context` owns AGENTS.md lesson pointers only; installation owns the PhaseGate managed section. Refresh followed by reconcile must not restore the default lesson pointer placeholder or plan package metadata updates.
 - `agent-context-refresh.yml` and `consistency-check.yml` use lockfile-based dependency installation and packaged `npx phasegate` invocations. Scheduled workflows must not assume pnpm, `pnpm/action-setup`, or a repository-local `harness` script.
+- `ci:generate-template` rejects unknown `--*` options before defaulting template type. `--kind` and `--output` are rejected unless formally implemented, and non-render human output describes a plan rather than implying a file was written.

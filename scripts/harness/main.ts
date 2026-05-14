@@ -11,6 +11,8 @@
  * @work-item-id WI-191
  * @work-item-id WI-195
  * @work-item-id WI-196
+ * @work-item-id WI-197
+ * @work-item-id WI-200
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -2402,6 +2404,16 @@ async function main(): Promise<void> {
         break;
       }
 
+      case "status": {
+        console.error("Warning: 'phasegate status' is deprecated; use 'phasegate phasegate:status'.");
+        const mod = createHarnessApiModule();
+        const flags: Record<string, boolean | string> = {};
+        if (json) flags.json = true;
+        await mod.handlers.status.handle({}, flags);
+        if (!json) await printStoryReflectionStatusLine(rootDir);
+        break;
+      }
+
       case "phasegate:lint": {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
@@ -2413,6 +2425,15 @@ async function main(): Promise<void> {
       }
 
       case "phasegate:complete-check": {
+        const mod = createHarnessApiModule();
+        const flags: Record<string, boolean | string> = {};
+        if (json) flags.json = true;
+        await mod.handlers.completeCheck.handle({}, flags);
+        break;
+      }
+
+      case "complete-check": {
+        console.error("Warning: 'phasegate complete-check' is deprecated; use 'phasegate phasegate:complete-check'.");
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -2465,6 +2486,11 @@ Examples:
   phasegate ci:generate-template --type aidlc-gate
   phasegate ci:generate-template --preset strict --type pre-commit --render`);
           process.exit(0);
+        }
+        const flagError = validateKnownFlags(args.slice(1), ["--preset", "--type", "--render", "--json", "--help"]);
+        if (flagError !== null) {
+          console.error(flagError);
+          process.exit(2);
         }
         const mod = buildCiGovernance(rootDir, harnessRoot);
         const presetId = parseFlag(args, "--preset") ?? "standard";

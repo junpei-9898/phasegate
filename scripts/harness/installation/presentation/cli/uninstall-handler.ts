@@ -1,6 +1,7 @@
 // @unit installation
 // @layer presentation
 // @work-item-id WI-147
+// @work-item-id WI-199
 
 import type { RunUninstallUseCase } from "../../application/usecases/run-uninstall.js";
 
@@ -33,14 +34,15 @@ export class UninstallHandler {
       input.apply ? "phasegate uninstall apply" : "phasegate uninstall dry-run",
       ...result.plan.map((item) => {
         const hint = item.skillHint ? `; hint: ${item.skillHint}` : "";
-        return `- ${item.path}: ${item.action} (${item.repairMode}, ${item.strategy}); diff: ${item.diff}${hint}`;
+        const protectedMarker = item.protected ? "; protected: true" : "";
+        return `- ${item.path}: ${item.action} (${item.repairMode}, ${item.strategy}${protectedMarker}); diff: ${item.diff}${hint}`;
       }),
     ];
     if (result.backupDir !== null) lines.push(`backups: ${result.backupDir}`);
     if (result.archivedManifestPath !== null) lines.push(`archived manifest: ${result.archivedManifestPath}`);
     if (result.refused.length > 0) {
       lines.push("");
-      lines.push("Refused ai-assisted/manual targets. Re-run with --force after reviewing the hint.");
+      lines.push("Refused protected, ai-assisted, or manual targets. Re-run with --force after reviewing the plan.");
     }
     return {
       stdout: lines.join("\n"),

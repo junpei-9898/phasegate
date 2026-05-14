@@ -348,3 +348,9 @@ Harness API reads `.phasegate/hook-skip-events.jsonl` as the shared hook skip re
 <!-- @work-item-id WI-186 -->
 
 `HarnessStatusSummary` contains layer health for L1-L4 and is used by `phasegate:status` to expose live validation state. Enabled layers with live state `fail` or `error` make the status response `fail`; disabled layers and skipped/not-run live states do not create a failing top-level verdict. This separates the machine-readable health verdict from the informational command exit-code rule.
+
+## WI-197 Alias Command Model
+
+<!-- @work-item-id WI-197 -->
+
+Legacy alias names are presentation-level command identities, not separate domain commands. `status` maps to `phasegate:status`; `complete-check` maps to `phasegate:complete-check`. The response envelope, status derivation, validator execution, and exit-code rules are inherited from the canonical command.

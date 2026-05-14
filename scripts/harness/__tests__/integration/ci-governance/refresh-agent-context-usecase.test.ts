@@ -2,13 +2,15 @@
 // @layer integration
 // @work-item-id WI-032
 // @work-item-id WI-190
+// @work-item-id WI-198
 // @story H13-03
 
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildCiGovernance } from '../../../ci-governance/composition-root.js';
+import { createInstallationModule } from '../../../installation/composition-root.js';
 import { context, target } from '../../helpers/test-helpers.js';
 
 async function withTempProject<T>(testFn: (projectRoot: string) => Promise<T>): Promise<T> {
@@ -47,6 +49,47 @@ async function applyAgentContextWithUserSection(harnessRoot: string) {
   });
 }
 
+async function installRefreshThenDryRunReconcile(harnessRoot: string) {
+  return await withTempProject(async (projectRoot) => {
+    const installation = createInstallationModule();
+    const installed = await installation.installHandler.execute({
+      projectRoot,
+      harnessRoot,
+      phasegateVersion: '0.160.7',
+      dryRun: false,
+      apply: true,
+      force: true,
+      json: true,
+    });
+    expect(installed.exitCode).toBe(0);
+
+    const refreshed = await buildCiGovernance(projectRoot, harnessRoot).refreshAgentContextHandler.handle({
+      apply: true,
+      format: 'json',
+    });
+    expect(refreshed.exitCode).toBe(0);
+
+    const reconciled = await installation.reconcileHandler.execute({
+      projectRoot,
+      harnessRoot,
+      phasegateVersion: '0.160.7',
+      dryRun: true,
+      apply: false,
+      force: false,
+      json: true,
+    });
+    const plan = (JSON.parse(reconciled.stdout) as {
+      plan: Array<{ path: string; changed: boolean }>;
+    }).plan;
+    const byPath = new Map(plan.map((item) => [item.path, item]));
+    return {
+      claudeMdChanged: byPath.get('CLAUDE.md')?.changed,
+      agentsMdChanged: byPath.get('AGENTS.md')?.changed,
+      packageJsonChanged: byPath.get('package.json')?.changed,
+    };
+  });
+}
+
 target('RefreshAgentContextUseCase', () => {
   describe('AGENTS.md と CLAUDE.md を更新する', () => {
     context('dry-run で実行する場合', () => {
@@ -79,6 +122,19 @@ target('RefreshAgentContextUseCase', () => {
         expect(JSON.parse(actual.result.output).applied).toBe(true);
         expect(actual.content).toContain('既存の独自指示');
         expect(actual.content).toContain('PhaseGate Commands');
+      });
+
+      it('refresh apply 直後の reconcile dry-run は managed agent context を no-op と判定すること', async () => {
+        // Arrange
+        const harnessRoot = resolve(process.cwd());
+
+        // Act
+        const actual = await installRefreshThenDryRunReconcile(harnessRoot);
+
+        // Assert
+        expect(actual.claudeMdChanged).toBe(false);
+        expect(actual.agentsMdChanged).toBe(false);
+        expect(actual.packageJsonChanged).toBe(false);
       });
     });
 

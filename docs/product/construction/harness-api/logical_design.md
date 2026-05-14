@@ -1905,3 +1905,9 @@ Range audit commands must describe the actual checked input. `bypass:audit --bas
 - `config:plan` exposes retrofit escape hatches as reviewable plans: `retrofit-bootstrap` and `planning-mode-relax`. These intents return patch operations for `phasegate.config.json` and do not directly edit protected files.
 - Main help includes `migrate work-items` when the subcommand remains invocable, and `migrate --help` describes `--dry-run|--apply`.
 - `delegate-sonnet [...args]` accepts positional task text as a prompt-compatible pass-through path, matching the documented help contract.
+
+## Legacy Health Aliases
+
+<!-- @work-item-id WI-197 -->
+
+`status` and `complete-check` remain public compatibility aliases for `phasegate:status` and `phasegate:complete-check`. Alias dispatch uses the same handlers as the namespaced commands and emits a deprecation warning that names the canonical command. Unknown command handling remains unchanged for non-aliased input.

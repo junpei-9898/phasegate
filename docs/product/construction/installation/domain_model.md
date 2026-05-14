@@ -465,3 +465,9 @@ Scoped-out findings are diagnostic context, not selected-agent repair work. Thei
 @work-item-id WI-180
 
 Doctor JSON exposes whether each finding is repair work for the current scope. Applicable `findings[]` set `currentScopeRepairTarget: true`, `repairHintApplicability: "applicable"`, and `repairModeApplicability: "applicable"`. Scoped-out findings set `currentScopeRepairTarget: false`, preserve original `repairMode` as diagnostic context, and mark both `repairHintApplicability` and `repairModeApplicability` as `"only-if-agent-selected"`.
+
+## Protected Lifecycle Target Marker
+
+<!-- @work-item-id WI-199 -->
+
+`UninstallPlanItem` includes `protected: boolean`. The marker is derived from PhaseGate's protected lifecycle target list and is present in JSON output for both dry-run and apply results. Protected entries remain normal plan items for review, but changed protected entries also satisfy the force-required refusal predicate during apply.

@@ -485,3 +485,9 @@ AgentsMdPointer内のPointerEntryはPointerType（command/file）に依存しな
 ### 10.3 skill-quality との境界
 
 skill-quality は lesson artifact を出力するだけで、AGENTS.md / CLAUDE.md を直接更新しない。ci-governance は lesson artifact を読み取り、AGENTS.md pointer へ集約する consumer として振る舞う。
+
+## 11. Generate Template Option Contract
+
+<!-- @work-item-id WI-200 -->
+
+`ci:generate-template` has an explicit presentation option set: `--preset`, `--type`, `--render`, `--json`, and help flags. Unsupported options are command-input errors rather than domain defaults. `--output` is not a domain concept until a file-writer port is introduced, so the command rejects it instead of silently producing no file.

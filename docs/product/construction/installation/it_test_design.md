@@ -154,3 +154,13 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 |---|---|
 | `doctor --json` on a project with only `docs/inception/_shared/*_plan.md` | `wi-workflow-drift` is red/manual and has `repairHint: null`. |
 | `migrate work-items --apply` on that project followed by `doctor --json` | Migration applies zero candidates and the same drift remains, so doctor must not have exposed the migration command as a repair hint. |
+
+<!-- @work-item-id WI-198, WI-199 -->
+## 2.10 Reconcile Idempotency And Protected Uninstall Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --apply` -> `ci:auto-refresh-agent-context --apply` -> `reconcile --dry-run --json` | `CLAUDE.md`, `AGENTS.md`, and `package.json` plan items are `changed:false`. |
+| `uninstall --dry-run --json` after install | `package.json` plan item includes `protected:true`. |
+| manifest contains `package-lock.json` | `package-lock.json` plan item includes `protected:true`. |
+| `uninstall --apply --json` without force | changed protected `package.json` mutation is listed in `refused[]` and manifest remains. |

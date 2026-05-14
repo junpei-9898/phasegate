@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-146
 // @work-item-id WI-174
+// @work-item-id WI-198
 // @work-item-id WI-175
 // @work-item-id WI-177
 // @work-item-id WI-182
@@ -190,7 +191,7 @@ function renderAgentContextTemplate(
     .replaceAll("{{PHASEGATE_HUSKY_STATE}}", options.includeHusky ? "managed" : "not managed by this setup run")
     .replaceAll("{{PHASEGATE_CI_STATE}}", options.includeCi ? "managed" : "not managed by this setup run")
     .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
-    .replaceAll("{{PHASEGATE_SKILLS}}", options.skillSet === "core" ? "- core skills" : "- all bundled skills")
+    .replaceAll("{{PHASEGATE_SKILLS}}", options.skillSet === "core" ? "- `core skills`" : "- `all bundled skills`")
     .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
     .replaceAll("{{PHASEGATE_USER_SECTION}}", "Project-specific agent instructions go here.");
 }

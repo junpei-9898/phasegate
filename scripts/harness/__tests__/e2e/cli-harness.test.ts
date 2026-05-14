@@ -14,6 +14,8 @@
  * @work-item-id WI-191
  * @work-item-id WI-195
  * @work-item-id WI-196
+ * @work-item-id WI-197
+ * @work-item-id WI-200
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -151,6 +153,20 @@ describe('harness CLI E2E', () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).toContain('name: Agent Context Refresh');
       expect(actual.stderr).not.toContain('Preset not found: default');
+    });
+
+    it('ci:generate-template --kind は unknown option として exit 2 を返す', () => {
+      const actual = run('ci:generate-template', '--kind', 'consistency-check');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain("unknown flag '--kind'");
+    });
+
+    it('ci:generate-template --output は unknown option として exit 2 を返す', () => {
+      const actual = run('ci:generate-template', '--type', 'aidlc-gate', '--output', '/tmp/aidlc-gate.yml');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain("unknown flag '--output'");
     });
 
     it('ci:generate-template --help はpresetの既定値standardを表示する', () => {
@@ -363,6 +379,16 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: phasegate:status');
     }, 30_000);
 
+    it('legacy status alias は phasegate:status handler を実行し migration warning を出す', () => {
+      const actual = run('status', '--json');
+
+      const parsed = JSON.parse(actual.stdout) as { status: string; data: { layers: unknown[] } };
+      expect(actual.exitCode).toBe(0);
+      expect(parsed.status).toMatch(/^(pass|fail)$/);
+      expect(Array.isArray(parsed.data.layers)).toBe(true);
+      expect(actual.stderr).toContain("use 'phasegate phasegate:status'");
+    }, 30_000);
+
     it('phasegate:status --json の stdout が JSON.parse 可能（storyReflection 行が混入しない）', () => {
       const actual = run('phasegate:status', '--json');
 
@@ -396,6 +422,14 @@ describe('harness CLI E2E', () => {
       const actual = run('phasegate:complete-check');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:complete-check');
+    }, 30_000);
+
+    it('legacy complete-check alias は phasegate:complete-check handler を実行し migration warning を出す', () => {
+      const actual = run('complete-check');
+
+      expect(actual.stderr).not.toContain('Unknown command: complete-check');
+      expect(actual.stderr).toContain("use 'phasegate phasegate:complete-check'");
+      expect([0, 1]).toContain(actual.exitCode);
     }, 30_000);
 
     it('phasegate:impact-analysis storyId なしで exit 0 または exit 2 が返る', () => {

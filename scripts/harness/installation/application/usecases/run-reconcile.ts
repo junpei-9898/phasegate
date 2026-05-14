@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-148
 // @work-item-id WI-174
+// @work-item-id WI-198
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -156,12 +157,12 @@ function reconcileManagedMarkdown(existing: string | null, incoming: string): st
 
 function renderAgentContextTemplate(template: string): string {
   const commands = [
-    "- `phasegate doctor`",
-    "- `phasegate phasegate:check-ready`",
-    "- `phasegate validate --layer L2 --format human`",
-    "- `phasegate setup:agent --dry-run`",
-    "- `phasegate config:plan --intent l4-strict --dry-run`",
-  ].join("\n");
+    "phasegate doctor",
+    "phasegate phasegate:check-ready",
+    "phasegate validate --layer L2 --format human",
+    "phasegate setup:agent --dry-run",
+    "phasegate config:plan --intent l4-strict --dry-run",
+  ].map((command) => `- \`${command}\``).join("\n");
   return template
     .replaceAll("{{PHASEGATE_AGENT}}", "both")
     .replaceAll("{{PHASEGATE_SKILLS_MODE}}", "all")
@@ -169,7 +170,7 @@ function renderAgentContextTemplate(template: string): string {
     .replaceAll("{{PHASEGATE_HUSKY_STATE}}", "managed")
     .replaceAll("{{PHASEGATE_CI_STATE}}", "managed")
     .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
-    .replaceAll("{{PHASEGATE_SKILLS}}", "- all bundled skills")
+    .replaceAll("{{PHASEGATE_SKILLS}}", "- `all bundled skills`")
     .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
     .replaceAll("{{PHASEGATE_USER_SECTION}}", "Project-specific agent instructions go here.");
 }
@@ -299,7 +300,7 @@ export class RunReconcileUseCase {
     const matchesManifest = currentHash.equals(entry.hash);
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
     const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
-    const next = entry.mode === "created" && target.strategy !== "package-json"
+    const next = entry.mode === "created" && target.strategy !== "package-json" && target.strategy !== "markdown-managed"
       ? template
       : this.reconcileContent(target, before, template, input.phasegateVersion);
     const changed = before !== next;

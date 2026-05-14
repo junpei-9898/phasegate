@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-147
 // @work-item-id WI-174
+// @work-item-id WI-199
 
 import { access, copyFile, lstat, mkdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -19,6 +20,7 @@ export interface UninstallPlanItem {
   readonly repairMode: RepairMode;
   readonly strategy: StrategyType;
   readonly changed: boolean;
+  readonly protected: boolean;
   readonly summary: string;
   readonly diff: string;
   readonly skillHint: string | null;
@@ -46,6 +48,7 @@ const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const PHASEGATE_SCRIPT_PREFIX = "phasegate:";
+const PROTECTED_UNINSTALL_PATHS = new Set(["package.json", "package-lock.json"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -175,7 +178,7 @@ export class RunUninstallUseCase {
       const outcome = await this.planEntry(input, entry);
       outcomes.push({ entry, ...outcome });
       plan.push(outcome.item);
-      if (input.apply && outcome.item.changed && (outcome.item.repairMode === "ai-assisted" || outcome.item.repairMode === "manual") && !input.force) {
+      if (input.apply && outcome.item.changed && this.requiresForce(outcome.item) && !input.force) {
         refused.push({ ...outcome.item, action: "refuse" });
       }
     }
@@ -372,6 +375,14 @@ export class RunUninstallUseCase {
     diff: string,
     skillHint: string | null,
   ): UninstallPlanItem {
-    return { path, action, repairMode, strategy, changed, summary, diff, skillHint };
+    return { path, action, repairMode, strategy, changed, protected: this.isProtectedPath(path), summary, diff, skillHint };
+  }
+
+  private requiresForce(item: UninstallPlanItem): boolean {
+    return item.protected || item.repairMode === "ai-assisted" || item.repairMode === "manual";
+  }
+
+  private isProtectedPath(path: string): boolean {
+    return PROTECTED_UNINSTALL_PATHS.has(path);
   }
 }

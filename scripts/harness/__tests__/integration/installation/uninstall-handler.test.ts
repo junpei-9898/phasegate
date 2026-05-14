@@ -2,7 +2,9 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-147
+// @work-item-id WI-199
 
+import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -58,8 +60,8 @@ async function runUninstall(root: string, options: { apply?: boolean; force?: bo
   return {
     ...actual,
     payload: JSON.parse(actual.stdout) as {
-      plan: Array<{ path: string; action: string; repairMode: string; changed: boolean }>;
-      refused: Array<{ path: string }>;
+      plan: Array<{ path: string; action: string; repairMode: string; changed: boolean; protected: boolean }>;
+      refused: Array<{ path: string; protected?: boolean }>;
       backupDir: string | null;
       archivedManifestPath: string | null;
     },
@@ -95,6 +97,29 @@ async function arrangeInstalledProjectWithModifiedWorkflow() {
   return root;
 }
 
+async function arrangeInstalledProjectWithPackageLock() {
+  const root = await arrangeInstalledProject();
+  const packageLock = JSON.stringify({ name: "fixture", lockfileVersion: 3 }, null, 2) + "\n";
+  await writeProjectFile(root, "package-lock.json", packageLock);
+  await addManifestEntry(root, "package-lock.json", packageLock);
+  return root;
+}
+
+async function addManifestEntry(root: string, relativePath: string, content: string): Promise<void> {
+  const manifestPath = join(root, ".phasegate", "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+    entries: Array<Record<string, unknown>>;
+  };
+  manifest.entries.push({
+    path: relativePath,
+    mode: "merged",
+    block: { start: "phasegate structured merge", end: "phasegate structured merge", content: `json:${relativePath}` },
+    hash: `sha256:${createHash("sha256").update(content).digest("hex")}`,
+    deployedAt: new Date().toISOString(),
+  });
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -123,7 +148,7 @@ target("UninstallHandler", () => {
       const root = await arrangeInstalledProject();
 
       // Act
-      const actual = await runUninstall(root, { apply: true });
+      const actual = await runUninstall(root, { apply: true, force: true });
 
       // Assert
       expect(actual.exitCode).toBe(0);
@@ -149,6 +174,47 @@ target("UninstallHandler", () => {
       expect(actual.exitCode).toBe(1);
       expect(actual.payload.refused).toEqual(expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]));
       expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(true);
+      expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
+    });
+
+    it("protected file は dry-run JSON plan で machine-readable marker を返すこと", async () => {
+      // Arrange
+      const root = await arrangeInstalledProject();
+
+      // Act
+      const actual = await runUninstall(root);
+
+      // Assert
+      expect(actual.payload.plan).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "package.json", protected: true, changed: true }),
+      ]));
+    });
+
+    it("package-lock.json candidate も protected marker を返すこと", async () => {
+      // Arrange
+      const root = await arrangeInstalledProjectWithPackageLock();
+
+      // Act
+      const actual = await runUninstall(root);
+
+      // Assert
+      expect(actual.payload.plan).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "package-lock.json", protected: true }),
+      ]));
+    });
+
+    it("protected file mutation は force 無しの apply で refuse すること", async () => {
+      // Arrange
+      const root = await arrangeInstalledProject();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.payload.refused).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "package.json", protected: true }),
+      ]));
       expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
     });
 

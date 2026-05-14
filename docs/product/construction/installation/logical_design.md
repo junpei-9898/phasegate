@@ -539,12 +539,19 @@ Scoped doctor reports must expose an effective repair contract that can be read 
 `scopedOutFindings[]` preserve the original `repairMode` but mark `currentScopeRepairTarget: false` and `repairModeApplicability: "only-if-agent-selected"`. Human output lists the scoped-out `checkId` values and states that they are not repair targets for the selected scope.
 ## Managed Context And Drift Diagnostics
 
-<!-- @work-item-id WI-190, WI-193, WI-194 -->
+<!-- @work-item-id WI-190, WI-193, WI-194, WI-198 -->
 
 - Reconcile remains the repair path for installed managed markdown sections, but its rendered CLAUDE.md contract must match the auto-refresh renderer so refresh/reconcile loops do not create phantom drift.
+- Markdown managed entries created by install are reconciled by replacing only the managed section, not by restoring the whole bundled file. This preserves AGENTS.md lesson pointers and user-owned content after `ci:auto-refresh-agent-context --apply`.
 - `wi-workflow-drift` counts `_shared/**/*.md` recursively as ad-hoc inception drift when no WI directories exist. It preserves the manual repair contract: `repairMode` is `manual` and `repairHint` is `null`.
 - Installed CI workflow templates must use package-manager-neutral install logic and packaged `npx phasegate` commands.
 
 <!-- @work-item-id WI-191 -->
 
 Installation setup guidance treats retrofit bootstrap as a config-plan workflow rather than an unmanaged protected-file edit. Agents must present the `retrofit-bootstrap` plan for review before applying a `phasegate.config.json` relaxation.
+
+## Protected Uninstall Planning
+
+<!-- @work-item-id WI-199 -->
+
+Uninstall planning marks protected package metadata paths with `protected:true` in each machine-readable plan item. A changed protected item is refused during apply unless the caller explicitly uses `--force`, so automation can detect `package.json` / lockfile mutation without maintaining its own path allowlist. Human output also labels protected entries in the plan.

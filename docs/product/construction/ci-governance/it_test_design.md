@@ -503,3 +503,13 @@
 | IT-CG-WI189-002 | apply 指定で既存 write behavior を実行すること | `{ unit:'demo', phase:'logical', apply:true }` | exit 0、`writer.write` 呼び出し、`written=true` |
 | IT-CG-WI189-003 | dry-run と apply の同時指定を拒否すること | `{ dryRun:true, apply:true }` | exit 2、`writer.write` 未呼び出し |
 | IT-CG-WI189-004 | JSON 出力に write mode を含めること | `{ format:'json', dryRun:true }` | parse 可能で `dryRun=true` |
+
+<!-- @work-item-id WI-198, WI-200 -->
+## WI-198 / WI-200 Regression Tests
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-CG-WI198-001 | refresh apply 後の reconcile が agent context を no-op と判定すること | install -> `ci:auto-refresh-agent-context --apply` -> reconcile dry-run | `CLAUDE.md`, `AGENTS.md`, `package.json` が `changed:false` |
+| IT-CG-WI200-001 | `--kind` を unknown option として拒否すること | `ci:generate-template --kind consistency-check` | exit 2、stderr に unknown flag |
+| IT-CG-WI200-002 | `--output` を unknown option として拒否すること | `ci:generate-template --type aidlc-gate --output /tmp/x.yml` | exit 2、file write 成功を示さない |
+| IT-CG-WI200-003 | valid render は維持すること | `ci:generate-template --type consistency-check --render` | workflow YAML が stdout に出る |
