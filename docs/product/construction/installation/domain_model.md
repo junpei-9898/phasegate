@@ -167,7 +167,7 @@ type CheckId =
 | `package-json-devdep-missing` | red |
 | `claude-skills-symlink` | red |
 | `codex-skills-symlink` | red |
-| `wi-workflow-drift` | warn |
+| `wi-workflow-drift` | red |
 
 ---
 
