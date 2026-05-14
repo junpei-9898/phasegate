@@ -1,7 +1,7 @@
 /**
  * @layer infrastructure
  * @unit phase2-extensions
- * @work-item-id WI-122
+ * @work-item-id WI-122, WI-185
  */
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
 import { DocFreshnessRule } from '../../domain/aggregates/doc-freshness-rule.js';
@@ -32,16 +32,20 @@ type Phase2RuleConfig = {
   };
 };
 
+function getPhase2RuleConfig(config: HarnessConfigV2 | Phase2RuleConfig | undefined): Phase2RuleConfig['phase2Extensions'] {
+  return (config as Phase2RuleConfig | undefined)?.phase2Extensions;
+}
+
 function normalizePathPatternRoot(value: string | undefined): string {
   const normalized = value?.replace(/\\/g, '/').replace(/\/+$/g, '');
-  return normalized && normalized.length > 0 ? normalized : 'docs/product/construction';
+  return normalized && normalized.length > 0 ? normalized : 'docs';
 }
 
 export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
   constructor(private readonly config?: HarnessConfigV2 | Phase2RuleConfig) {}
 
   async loadRules(): Promise<DocFreshnessRule[]> {
-    const configRules = this.config && 'phase2Extensions' in this.config ? this.config.phase2Extensions?.freshnessRules : undefined;
+    const configRules = getPhase2RuleConfig(this.config)?.freshnessRules;
     if (!configRules || configRules.length === 0) {
       const designDocsRoot = normalizePathPatternRoot(this.config?.paths?.designDocs);
       return [
@@ -68,7 +72,7 @@ export class HarnessConfigFreshnessAdapter implements FreshnessConfigPort {
   }
 
   async loadPointerRules(): Promise<PointerRule[]> {
-    const configRules = this.config && 'phase2Extensions' in this.config ? this.config.phase2Extensions?.pointerRules : undefined;
+    const configRules = getPhase2RuleConfig(this.config)?.pointerRules;
     if (!configRules || configRules.length === 0) {
       const designDocsRoot = normalizePathPatternRoot(this.config?.paths?.designDocs);
       return [

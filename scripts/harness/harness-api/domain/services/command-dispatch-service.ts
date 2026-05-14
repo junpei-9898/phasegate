@@ -1,6 +1,6 @@
 // @layer domain
 // @unit harness-api
-// @work-item-id WI-108 / WI-114
+// @work-item-id WI-108 / WI-114, WI-186
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import { CommandRegistry } from './command-registry.js';
@@ -66,6 +66,16 @@ function summarizeLayerResults(items: readonly { validatorId: string; passed: bo
     }
   }
   return result;
+}
+
+function hasEnabledLiveFailure(
+  enabledLayers: readonly LayerId[],
+  liveValidationByLayer: Partial<Record<LayerId, LiveValidationState>>,
+): boolean {
+  return enabledLayers.some((layerId) => {
+    const liveState = liveValidationByLayer[layerId];
+    return liveState === 'fail' || liveState === 'error';
+  });
 }
 
 function buildOperationalWarnings(
@@ -257,6 +267,13 @@ export class CommandDispatchService {
           baselineHealth,
           operationalWarnings,
         });
+        if (hasEnabledLiveFailure(presetInfo.enabledLayers, liveValidationByLayer)) {
+          const errors = statusSummary.layers
+            .filter((layer) => layer.enabled && (layer.liveValidationState === 'fail' || layer.liveValidationState === 'error'))
+            .map((layer) => makeError(`Layer ${layer.layerId} live validation ${layer.liveValidationState}`));
+          const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 }, statusSummary);
+          return { status: 'fail', errors: r.errors, summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
+        }
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, statusSummary);
         return { status: 'pass', errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
       }

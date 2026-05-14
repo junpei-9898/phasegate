@@ -1,9 +1,11 @@
 /**
  * @layer application
  * @unit skill-quality
+ * @work-item-id WI-188
  */
 import { CoverageReport } from '../../domain/value-objects/coverage-report.js';
 import { RequirementCoverageResult } from '../../domain/value-objects/requirement-coverage-result.js';
+import { CodeCoverageResult } from '../../domain/value-objects/code-coverage-result.js';
 import type { RequirementTestMatrixPort } from '../../domain/ports/requirement-test-matrix-port.js';
 import type { CoverageRunnerPort } from '../../domain/ports/coverage-runner-port.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
@@ -25,6 +27,20 @@ export class CheckCoverageUseCase {
       matrix.covered,
       matrix.uncoveredIds,
     );
+    if (matrix.total === 0) {
+      const coverageReport = CoverageReport.create(
+        requirementCoverage,
+        CodeCoverageResult.create(100, 100, 100),
+      );
+      return {
+        coverageReport,
+        meetsThreshold: true,
+        requirementThreshold: threshold.requirement,
+        codeThreshold: threshold.code,
+        skipped: true,
+        skipReason: 'no-tests',
+      };
+    }
     const codeCoverage = await this.coverageRunnerPort.run(input.storyId);
     const coverageReport = CoverageReport.create(requirementCoverage, codeCoverage);
     const meetsThreshold = coverageReport.meetsThreshold(threshold.requirement, threshold.code);

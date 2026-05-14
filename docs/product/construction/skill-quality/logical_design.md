@@ -12,6 +12,12 @@ Skill-quality commit execution invokes `git commit` through an argument-array ex
 
 `ApplyCascadeUpdateUseCase` receives file discovery through `FileSystemPort.glob`; the Node composition root implements that port with `tinyglobby`. Because `skill:apply-cascade-update` is a packaged runtime command, `tinyglobby` is part of the npm runtime dependency contract rather than a dev-only/transitive dependency.
 
+## WI-188 Coverage Check Prerequisite Guard
+
+<!-- @work-item-id WI-188 -->
+
+`skill:check-coverage --story` validates the requested story against `.harness/requirement-test-matrix.json` before code coverage execution. Unknown story IDs return a story-not-found error. Story entries with zero mapped tests return a deterministic skipped/no-tests code coverage result and do not invoke Vitest. When a coverage summary is absent, the coverage runner requires local `node_modules/vitest`; missing dependency produces guidance instead of invoking `npx`.
+
 @story-id H12-01
 @story-id H12-02
 @story-id H12-03

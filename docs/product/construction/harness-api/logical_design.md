@@ -1871,3 +1871,17 @@ Harness API treats `Work-Item: WI-XXX` commit trailers, `@work-item-id WI-XXX` p
 ## WI-177 Agent Setup Planner Observable Contract
 
 Harness API integration tests cover `setup:agent` as the observable CLI boundary for Claude Code setup. The contract includes generated Claude context that routes configured readiness into WI planning/product reflection/validation, and structured setup errors that preserve target-aware recovery fields for agents.
+# WI-186 Health Command Gate Semantics
+
+<!-- @work-item-id WI-186 -->
+
+`phasegate:status` is an informational health command whose JSON verdict is derived from enabled layer live validation state. If an enabled layer reports live `fail` or `error`, the response `status` is `fail` and the layer `lastResult` also reflects failure. The command still follows the informational exit-code contract and exits 0 for `status=fail`; only runtime/command errors exit 2.
+
+Gate commands remain explicit:
+
+| Command | Coverage | Gate behavior |
+| --- | --- | --- |
+| `phasegate:complete-check` | lint + all validators | exits 1 on any lint/validator failure |
+| `phasegate:check-ready` | story phase readiness | exits 1 on pending/failed stories |
+| `validate --layer <Lx>` | requested validator layer | exits 1 on layer validation failure |
+| `phasegate:status` | operational health summary | JSON `status` may fail, exit remains 0 for informational consumption |

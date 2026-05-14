@@ -415,3 +415,11 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 | WI012-UT-001 | `runPreCommit` | `.py` is ignored when `implementationExtensions` is omitted. |
 | WI012-UT-002 | `runPreCommit` | `.py` is passed to L2 validators when `implementationExtensions` contains `".py"`. |
 | WI012-UT-003 | `runPreCommit` | Existing `.ts` behavior remains unchanged. |
+# WI-186 health verdict regression
+
+<!-- @work-item-id WI-186 -->
+
+| ID | 観点 | 入力 | 期待結果 |
+| --- | --- | --- | --- |
+| UT-WI186-001 | status live failure verdict | L1 live validation fails in standard preset | response `status=fail`, `exitCode=0`, L1 `lastResult=fail` |
+| UT-WI186-002 | status live pass verdict | all enabled live states pass | response `status=pass`, `exitCode=0` |

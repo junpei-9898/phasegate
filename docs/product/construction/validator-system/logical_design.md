@@ -11,6 +11,12 @@ Validator-system module construction accepts effective configuration from harnes
 
 `validate` accepts only `human`, `agent`, and `ci` output formats. Unsupported values such as `json` are rejected at the CLI boundary before validator execution so every layer selection follows the same fail-fast contract.
 
+<!-- @work-item-id WI-185 -->
+L4 document freshness and pointer validators consume phase2-extensions through project-root scan semantics. Validator-system must treat zero-document L4 outputs from packaged downstream execution as meaningful only when the caller project truly has no matching docs; default phase2 document scans use downstream `docs/**/*.md` with configured exclusions rather than the installed package tree.
+
+<!-- @work-item-id WI-186 -->
+Layer validation results are the gate source for `validate --layer <Lx>` and for live layer state consumed by harness-api status. When a live enabled layer reports fail/error, downstream health summaries must not convert that signal to a passing top-level JSON verdict.
+
 <!-- @work-item-id WI-114 -->
 ## WI-114 Drift Signal Producer Contract
 

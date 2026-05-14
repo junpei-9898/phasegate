@@ -1,5 +1,13 @@
 # ITテスト設計: ci-governance
 
+# WI-185 downstream L4 scan contract
+
+<!-- @work-item-id WI-185 -->
+
+| ID | 観点 | 入力 | 期待結果 |
+| --- | --- | --- | --- |
+| IT-WI185-CG-001 | scheduled L4 trust | downstream docs exist and P2 commands run through package bin | freshness/pointer summaries report scanned documents rather than false green zero totals |
+
 @story-id H13-01
 @story-id H13-02
 @story-id H13-03

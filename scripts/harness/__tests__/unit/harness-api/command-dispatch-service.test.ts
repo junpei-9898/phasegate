@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114
+// @work-item-id WI-114, WI-186
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { CommandDispatchService } from '../../../harness-api/domain/services/command-dispatch-service.js';
@@ -219,7 +219,7 @@ target('CommandDispatchService', () => {
 
   describe('dispatch: status', () => {
     // UT-DS-008
-    it('phasegate:statusがpass responseを返すこと', async () => {
+    it('phasegate:statusが有効 layer の live fail を top-level fail response に反映すること', async () => {
       // Arrange
       const ports = createMockPorts({
         artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
@@ -235,8 +235,15 @@ target('CommandDispatchService', () => {
       // Act
       const actual = await svc.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
       // Assert
-      expect(actual.status).toBe('pass');
+      expect(actual.status).toBe('fail');
       expect(actual.exitCode).toBe(0);
+      expect(actual.errors).toEqual([
+        {
+          code: 'HARNESS_ERROR',
+          severity: 'error',
+          message: 'Layer L1 live validation fail',
+        },
+      ]);
       expect(actual.data).toMatchObject({
         layers: [
           { layerId: 'L1', lastResult: 'fail', configurationState: 'enabled', liveValidationState: 'fail' },
@@ -245,6 +252,29 @@ target('CommandDispatchService', () => {
           { layerId: 'L4', enabled: false, configurationState: 'disabled', liveValidationState: 'skipped' },
         ],
       });
+    });
+
+    it('phasegate:statusが全 enabled layer pass の場合は pass response を返すこと', async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: 'standard', enabledLayers: ['L1', 'L2', 'L3'] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [
+          { validatorId: 'L2-001', passed: true, errors: [] },
+          { validatorId: 'L3-001', passed: true, errors: [] },
+          { validatorId: 'L4-001', passed: false, skipped: true, errors: [] },
+        ],
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: 'phasegate:status', args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe('pass');
+      expect(actual.exitCode).toBe(0);
+      expect(actual.errors).toEqual([]);
     });
   });
 

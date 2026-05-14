@@ -122,6 +122,13 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `ci:generate-template --type pre-commit --render` | Rendered content matches the same downstream hook contract used by install. |
 | `ci:generate-template --type aidlc-gate --render` | Rendered workflow matches the same package-manager-neutral contract used by install. |
 
+<!-- @work-item-id WI-186 -->
+## 2.8.1 Installed Health/Gate Contract
+
+| Command / Flow | Expectation |
+|---|---|
+| generated hooks/CI and CLI help | Blocking paths use gate commands, while `phasegate:status` remains informational with JSON health verdict. |
+
 <!-- @work-item-id WI-179 -->
 ## 2.6 Scoped-Out Doctor Repair Guidance Tests
 

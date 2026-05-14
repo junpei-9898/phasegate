@@ -28,6 +28,7 @@ export type SkillQualityErrorCode =
   | "GIT_COMMIT_FAILED"
   | "COVERAGE_RUN_FAILED"
   | "MATRIX_FILE_NOT_FOUND"
+  | "STORY_NOT_FOUND"
   | "LESSON_ARTIFACT_SCHEMA_VIOLATION";
 
 export class SkillQualityError extends Error {

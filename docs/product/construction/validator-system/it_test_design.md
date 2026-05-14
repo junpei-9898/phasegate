@@ -1,5 +1,14 @@
 # ITテスト設計: validator-system
 
+## WI-185 / WI-186 validator trust regressions
+
+<!-- @work-item-id WI-185, WI-186 -->
+
+| ID | 観点 | 入力 | 期待結果 |
+| --- | --- | --- | --- |
+| IT-WI185-VS-001 | L4 document command project-root semantics | downstream package-bin execution with caller docs | P2 freshness/pointer result count is non-zero |
+| IT-WI186-VS-001 | live layer fail propagation | validator/lint live state includes enabled layer failure | harness-api status JSON is `status=fail` and layer `lastResult=fail` |
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03

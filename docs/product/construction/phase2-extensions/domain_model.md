@@ -434,3 +434,8 @@ Pointer freshness is an operational contract shared with validator-system `L4-00
 | Next action | Human/agent repair instruction, carried through report formatting. |
 
 External URL pointers are skipped by default because URL checking requires network access and can make CI nondeterministic. `allowedPointerTypes` and `failOnBroken` are compatibility configuration concepts; the current semantic model interprets them through per-type policy so product-doc/ADR pointers can fail while implementation/reference pointers warn.
+# WI-185 Project Root Document Scan Model
+
+<!-- @work-item-id WI-185 -->
+
+Phase2 document validation uses a `DocumentScannerPort` rooted at the caller project. A scan pattern may be a recursive glob such as `docs/**/*.md`, a narrower glob such as `docs/sub/*.md`, or a single file path such as `docs/sub/doc1.md`. Scanner results are project-relative paths. Freshness, pointer, and initial-creation validators must use equivalent project-root semantics so downstream package execution does not depend on where the npm package is installed.

@@ -193,6 +193,12 @@ Commands:
   phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
   phasegate:generate-matrix      Generate requirement-test matrix (--requirements, --tests, --out, --json)
 
+Gate semantics:
+  phasegate:complete-check       Gate: lint + all validators; exits 1 on failure
+  phasegate:check-ready          Gate: story phase readiness; exits 1 on pending/failed stories
+  validate --layer <Lx>          Gate: requested validator layer; exits 1 on layer failure
+  phasegate:status              Informational health; JSON status may be fail, exit remains 0 unless command error
+
   ci:generate-template         Generate CI template (--preset <id>, default: standard; --type <aidlc-gate|consistency-check|pre-commit|agent-context-refresh>, --render, --json)
   ci:migrate-agents-md         Migrate AGENTS.md (--dry-run, --validate-only, --json)
   ci:auto-refresh-agent-context Refresh AGENTS.md / CLAUDE.md (--dry-run, --apply, --json)
@@ -219,7 +225,7 @@ Commands:
   regression:migrate-v0-tests    Execute V0 test migration (--confirm)
 
   p2:check-freshness             Check doc freshness (--pattern <glob>, --dry-run, --format text|json)
-  p2:validate-pointers           Validate doc pointers (--include-urls, --format text|json)
+  p2:validate-pointers           Validate doc pointers (--pattern <glob>, --include-urls, --format text|json)
   p2:generate-e2e-template       Generate E2E test template (--phase <phase>, --output <path>)
   p2:check-initial-creation      Public compatibility detector for long-lived initial_creation:true docs (--pattern <glob>, --format text|json)
   hook <pre-tool-use|post-tool-use|stop|session-start|user-prompt-submit>  Run agent hook (reads JSON from stdin; writes JSON to stdout for session-start/user-prompt-submit)

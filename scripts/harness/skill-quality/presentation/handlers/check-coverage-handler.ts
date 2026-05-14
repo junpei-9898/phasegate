@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit skill-quality
+ * @work-item-id WI-188
  */
 import type { CheckCoverageUseCase } from '../../application/usecases/check-coverage-usecase.js';
 
@@ -24,6 +25,10 @@ export class CheckCoverageHandler {
       const reqRate = output.coverageReport.requirementCoverage.coverageRate.toFixed(1);
       const codeRate = output.coverageReport.codeCoverage.lineCoverage.toFixed(1);
       const msg = `Requirement coverage: ${reqRate}% (threshold: ${output.requirementThreshold}%)\nCode coverage: ${codeRate}% (threshold: ${output.codeThreshold}%)`;
+
+      if (output.skipped === true && output.skipReason === 'no-tests') {
+        return { exitCode: 0, message: `Coverage SKIPPED (no tests)\n${msg}` };
+      }
 
       if (output.meetsThreshold) {
         return { exitCode: 0, message: `Coverage OK\n${msg}` };

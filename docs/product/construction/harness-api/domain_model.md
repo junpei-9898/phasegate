@@ -340,3 +340,8 @@ Harness API / CLI response contracts can feed L2-015 as `PublicContract` and `Er
 ## WI-166 Hook Skip Status Projection
 
 Harness API reads `.phasegate/hook-skip-events.jsonl` as the shared hook skip record used by both `agent-integration` and public setup diagnostics. Status projection keeps the event diagnostic: it reports latest event, counts by reason, and recommended next action in `hookHealth` / `operationalWarnings`, but it does not turn skip history into a validator failure. The event schema is append-only and tolerant of malformed lines so a partial runtime log cannot break `phasegate:status --json`.
+## WI-186 Status Verdict Model
+
+<!-- @work-item-id WI-186 -->
+
+`HarnessStatusSummary` contains layer health for L1-L4 and is used by `phasegate:status` to expose live validation state. Enabled layers with live state `fail` or `error` make the status response `fail`; disabled layers and skipped/not-run live states do not create a failing top-level verdict. This separates the machine-readable health verdict from the informational command exit-code rule.

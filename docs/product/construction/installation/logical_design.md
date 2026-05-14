@@ -120,6 +120,12 @@ traceability:
 | `.husky/pre-commit` | `PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"` で `lint` と `validate --layer L2 --format human` を実行する。 |
 | `.github/workflows/phasegate-aidlc-gate.yml` | lockfile から pnpm/yarn/npm install を選択し、`npx phasegate lint --json` と `npx phasegate phasegate:ci-check --json` を実行する。 |
 
+### 2.1.1 Health Surface Guidance
+
+@work-item-id WI-186
+
+Installed hooks and CI templates use gate commands for blocking decisions: `phasegate:complete-check`, `validate --layer <Lx>`, or generated CI check commands. `phasegate:status` is an informational diagnostics surface; its JSON `status` can be `fail` while the command exits 0 so agent and setup flows can inspect health without conflating diagnostics with gate execution.
+
 ### 2.2 Agent-Specific Readiness View
 
 @work-item-id WI-176

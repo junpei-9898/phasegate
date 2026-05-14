@@ -9,4 +9,6 @@ export interface CheckCoverageOutput {
   readonly meetsThreshold: boolean;
   readonly requirementThreshold: number;
   readonly codeThreshold: number;
+  readonly skipped?: boolean;
+  readonly skipReason?: 'no-tests';
 }

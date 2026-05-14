@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit phase2-extensions
+ * @work-item-id WI-185
  */
 import type { CheckDocFreshnessInput } from '../dto/check-doc-freshness-input.js';
 import type { CheckDocFreshnessOutput } from '../dto/check-doc-freshness-output.js';
@@ -29,18 +30,16 @@ export class CheckDocFreshnessUseCase {
   async execute(input: CheckDocFreshnessInput): Promise<CheckDocFreshnessOutput> {
     try {
       const rules = await this.freshnessConfigPort.loadRules();
-      const filteredRules = input.targetPattern
-        ? rules.filter((rule) => rule.documentPattern === input.targetPattern)
-        : rules;
 
       const results = [];
 
-      for (const rule of filteredRules) {
+      for (const rule of rules) {
         if (!rule.isEnabled()) {
           continue;
         }
 
-        const documentPaths = await this.documentScannerPort.scan(rule.documentPattern);
+        const scanPattern = input.targetPattern ?? rule.documentPattern;
+        const documentPaths = await this.documentScannerPort.scan(scanPattern);
         for (const documentPath of documentPaths) {
           const age = await this.documentAgePort.getAge(documentPath);
           results.push(this.freshnessCheckService.check(rule, age, documentPath));

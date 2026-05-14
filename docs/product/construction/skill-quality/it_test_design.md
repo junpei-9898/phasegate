@@ -556,3 +556,12 @@ const target = new AtomicCommitService(
 | Cross-Layer | Lesson Artifact システム統合 | 2 |
 | Cross-Layer | SKILL.md 検証統合 | 2 |
 | **合計** | | **80** |
+## WI-188 coverage prerequisite regressions
+
+<!-- @work-item-id WI-188 -->
+
+| ID | 観点 | 入力 | 期待結果 |
+| --- | --- | --- | --- |
+| IT-WI188-001 | unknown story | matrix exists but lacks requested story | `STORY_NOT_FOUND` error and coverage runner is not called |
+| IT-WI188-002 | no tests | matrix entry has `total=0` | no-tests result is returned and coverage runner is not called |
+| IT-WI188-003 | missing local Vitest | no summary and no local `node_modules/vitest` | dependency guidance error is returned without `npx` execution |

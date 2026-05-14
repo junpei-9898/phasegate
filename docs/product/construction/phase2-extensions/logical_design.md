@@ -1,5 +1,11 @@
 # 論理設計: phase2-extensions
 
+## WI-185 Downstream Project Root Scan Contract
+
+<!-- @work-item-id WI-185 -->
+
+`p2:check-freshness`, `p2:validate-pointers`, and `p2:check-initial-creation` share the `FileSystemDocumentScannerAdapter` project-root contract. The scanner receives the downstream cwd from the composition root and returns relative paths from that root. CLI `--pattern` is a scan override: when supplied, freshness and pointer validation scan that explicit glob or single-file path instead of filtering configured rules by exact document pattern. This prevents downstream packaged commands from reporting false green zero-document results when docs exist in the caller project.
+
 ## WI-035 Git Log Executor Hardening
 
 <!-- @work-item-id WI-035 -->

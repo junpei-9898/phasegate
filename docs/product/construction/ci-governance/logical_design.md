@@ -1,5 +1,11 @@
 # 論理設計: ci-governance
 
+# WI-185 L4 Downstream Scan Trust
+
+<!-- @work-item-id WI-185 -->
+
+CI and scheduled L4 governance consume P2 freshness/pointer validators as downstream project checks. Generated or documented L4 invocations must rely on the package bin resolving caller project docs, and a green result with zero scanned documents is not acceptable evidence unless the caller project has no matching `docs/**/*.md` files.
+
 @story-id H13-01
 @story-id H13-02
 @story-id H13-03

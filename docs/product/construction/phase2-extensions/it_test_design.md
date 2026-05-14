@@ -368,3 +368,13 @@ tmp/
 | IT-P2-WI164-002 | external-url pointer is skipped by default | `https://example.com` pointer with default policy | result is skipped/resolvable without network access |
 | IT-P2-WI164-003 | L4 bridge can consume freshness output | stale document fixture | validator-system can map result to `L4-004` warning |
 | IT-P2-WI164-004 | L4 bridge can consume pointer output | broken pointer fixture | validator-system can map result to `L4-005` warning |
+# WI-185 downstream document scan regressions
+
+<!-- @work-item-id WI-185 -->
+
+| ID | 観点 | 入力 | 期待結果 |
+| --- | --- | --- | --- |
+| IT-WI185-001 | downstream default freshness scan | temp project with `docs/product/construction/**/*.md`, no `--pattern` | freshness summary total is greater than 0 |
+| IT-WI185-002 | explicit glob freshness scan | `--pattern docs/sub/*.md` | matching document is scanned |
+| IT-WI185-003 | explicit single-file freshness scan | `--pattern docs/sub/doc1.md` | exactly the requested document is scanned |
+| IT-WI185-004 | pointer explicit pattern scan | `p2:validate-pointers --pattern docs/sub/doc1.md` | summary totalDocuments is 1 |

@@ -481,3 +481,8 @@ LessonArtifactSchemaPortを導入することで、ci-governanceスキーマへ�
 ### 評価結果
 
 ドメインスメルなし。SOLID原則遵守。集約降格方針（横断契約§6）に準拠した最小集約構成。設計を確定する。
+## WI-188 Coverage Check Guard Model
+
+<!-- @work-item-id WI-188 -->
+
+`RequirementTestMatrixPort.read(storyId)` is strict for story-indexed matrices: a requested story must exist as an explicit entry. A zero-test entry is not treated as full coverage; it is a `no-tests` precondition that short-circuits code coverage execution. `CoverageRunnerPort` may read an existing summary or run a local Vitest binary, but it must not use `npx` auto-install paths.

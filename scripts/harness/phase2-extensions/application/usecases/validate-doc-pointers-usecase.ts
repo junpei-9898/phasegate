@@ -1,7 +1,7 @@
 /**
  * @layer application
  * @unit phase2-extensions
- * @work-item-id WI-122
+ * @work-item-id WI-122, WI-185
  */
 import type { FreshnessConfigPort } from '../../domain/ports/freshness-config-port.js';
 import type { DocumentScannerPort } from '../../domain/ports/document-scanner-port.js';
@@ -30,16 +30,14 @@ export class ValidateDocPointersUseCase {
   async execute(input: ValidateDocPointersInput): Promise<ValidateDocPointersOutput> {
     try {
       const rules = await this.freshnessConfigPort.loadPointerRules();
-      const filteredRules = input.targetPattern
-        ? rules.filter((rule) => rule.documentPattern === input.targetPattern)
-        : rules;
 
       const results = [];
       let totalDocuments = 0;
       let skippedUrlPointers = 0;
 
-      for (const rule of filteredRules) {
-        const documentPaths = await this.documentScannerPort.scan(rule.documentPattern);
+      for (const rule of rules) {
+        const scanPattern = input.targetPattern ?? rule.documentPattern;
+        const documentPaths = await this.documentScannerPort.scan(scanPattern);
         totalDocuments += documentPaths.length;
 
         for (const documentPath of documentPaths) {

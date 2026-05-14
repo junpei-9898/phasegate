@@ -1,16 +1,14 @@
 /**
  * @layer infrastructure
  * @unit skill-quality
+ * @work-item-id WI-188
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import * as path from 'node:path';
 import type { CoverageRunnerPort } from '../../domain/ports/coverage-runner-port.js';
 import { CodeCoverageResult } from '../../domain/value-objects/code-coverage-result.js';
 import { SkillQualityError } from '../../domain/errors/skill-quality-error.js';
-
-const COVERAGE_SUMMARY_PATH = path.join(process.cwd(), '.harness', 'coverage-summary.json');
-const COVERAGE_REPORTS_DIR = path.join(process.cwd(), '.harness');
 
 interface CoverageSummary {
   total: {
@@ -20,15 +18,15 @@ interface CoverageSummary {
   };
 }
 
-function parseCoverageSummary(): CodeCoverageResult {
-  if (!existsSync(COVERAGE_SUMMARY_PATH)) {
+function parseCoverageSummary(coverageSummaryPath: string): CodeCoverageResult {
+  if (!existsSync(coverageSummaryPath)) {
     throw new SkillQualityError(
       'INVALID_COVERAGE_REPORT',
-      `Coverage summary not found at ${COVERAGE_SUMMARY_PATH}. Run: pnpm test --coverage first.`,
+      `Coverage summary not found at ${coverageSummaryPath}. Run: pnpm test --coverage first.`,
     );
   }
   try {
-    const raw = readFileSync(COVERAGE_SUMMARY_PATH, 'utf-8');
+    const raw = readFileSync(coverageSummaryPath, 'utf-8');
     const data = JSON.parse(raw) as CoverageSummary;
     const line = Math.round(data.total.lines.pct);
     const branch = Math.round(data.total.branches.pct);
@@ -43,19 +41,36 @@ function parseCoverageSummary(): CodeCoverageResult {
 }
 
 export class VitestCoverageRunnerAdapter implements CoverageRunnerPort {
+  constructor(
+    private readonly projectRoot: string = process.cwd(),
+    private readonly execFile: typeof execFileSync = execFileSync,
+  ) {}
+
   async run(_storyId: string): Promise<CodeCoverageResult> {
+    const coverageSummaryPath = path.join(this.projectRoot, '.harness', 'coverage-summary.json');
+    const coverageReportsDir = path.join(this.projectRoot, '.harness');
+    const vitestBin = path.join(this.projectRoot, 'node_modules', '.bin', 'vitest');
+
     // Use pre-existing summary if available
-    if (existsSync(COVERAGE_SUMMARY_PATH)) {
-      return parseCoverageSummary();
+    if (existsSync(coverageSummaryPath)) {
+      return parseCoverageSummary(coverageSummaryPath);
     }
 
-    // Try to run vitest coverage (requires @vitest/coverage-v8)
-    try {
-      execSync(
-        `npx vitest run --coverage --coverage.reporter=json-summary "--coverage.reportsDirectory=${COVERAGE_REPORTS_DIR}"`,
-        { stdio: 'pipe', cwd: process.cwd() },
+    if (!existsSync(vitestBin) && !existsSync(path.join(this.projectRoot, 'node_modules', 'vitest', 'package.json'))) {
+      throw new SkillQualityError(
+        'COVERAGE_RUN_FAILED',
+        'Install vitest locally before running coverage: npm install -D vitest @vitest/coverage-v8',
       );
-      return parseCoverageSummary();
+    }
+
+    // Run the local Vitest binary only; never use npx auto-install.
+    try {
+      this.execFile(
+        vitestBin,
+        ['run', '--coverage', '--coverage.reporter=json-summary', `--coverage.reportsDirectory=${coverageReportsDir}`],
+        { stdio: 'pipe', cwd: this.projectRoot },
+      );
+      return parseCoverageSummary(coverageSummaryPath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('coverage-v8') || msg.includes('MISSING DEPENDENCY')) {

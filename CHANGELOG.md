@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.2] - 2026-05-14
+
+### Fixed
+
+- **WI-185 / WI-186 / WI-188 — validator and gate trust** — fixes downstream P2 freshness/pointer scans so package-bin execution resolves caller project docs, makes `phasegate:status` JSON fail when enabled live layer validation fails while preserving its informational exit-code contract, and prevents `skill:check-coverage` from launching Vitest or network-prone auto-install paths before story/test prerequisites are validated.
+
 ## [0.160.1] - 2026-05-14
 
 ### Fixed
