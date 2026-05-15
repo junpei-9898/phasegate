@@ -2,6 +2,7 @@
  * @layer application
  * @unit agent-integration
  * @story H11-02
+ * @work-item-id WI-201
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -237,6 +238,31 @@ export class HandlePreToolUseUseCase {
     unitId: string | undefined,
   ): HandlePreToolUseOutput {
     const fp = blockedFilePath ?? "不明なファイル";
+    if (result.dominantCategory === "config" && /(?:^|\/)phasegate\.config\.json$/.test(fp)) {
+      const dryRunCommand = "phasegate config:plan --intent retrofit-bootstrap --dry-run --json";
+      const applyCommand = "phasegate config:plan --intent retrofit-bootstrap --apply --json";
+      const lines = [
+        `Full mode 必須変更が検出されました: ${fp}`,
+        "カテゴリ: config",
+      ];
+      if (result.rejectionRule) {
+        lines.push(`判定ルール: ${result.rejectionRule}`);
+      }
+      if (result.rejectionReason) {
+        lines.push(`理由: ${result.rejectionReason}`);
+      }
+      lines.push(`次のアクション: ${dryRunCommand} で差分を確認し、承認後に ${applyCommand} を実行してください。`);
+
+      return {
+        shouldBlock: true,
+        blockedFilePath,
+        blockReason: "FULL_MODE_REQUIRED",
+        error: { message: lines.join("\n") },
+        fullModeRejectionRule: result.rejectionRule,
+        fullModeDominantCategory: result.dominantCategory,
+        nextAction: `${dryRunCommand} && ${applyCommand}`,
+      };
+    }
     const lines: string[] = [`Full mode 必須変更が検出されました: ${fp}`];
     if (result.dominantCategory) {
       lines.push(`カテゴリ: ${result.dominantCategory}`);
@@ -372,6 +398,11 @@ export class HandlePreToolUseUseCase {
       pattern: /(?:^|\/)package\.json$/,
       message: (fp) =>
         `保護ファイルへの書き込みがブロックされました: ${fp}\nバージョン変更を含む package.json の更新は /quick-implementor スキルを使用してください。`,
+    },
+    {
+      pattern: /(?:^|\/)phasegate\.config\.json$/,
+      message: (fp) =>
+        `保護ファイルへの書き込みがブロックされました: ${fp}\n設定変更は CLI 経由で計画・適用してください: phasegate config:plan --intent retrofit-bootstrap --dry-run --json / phasegate config:plan --intent retrofit-bootstrap --apply --json`,
     },
     {
       pattern: /(?:^|\/)harness\.config\.json$/,

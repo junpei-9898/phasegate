@@ -550,6 +550,10 @@ Scoped doctor reports must expose an effective repair contract that can be read 
 
 Installation setup guidance treats retrofit bootstrap as a config-plan workflow rather than an unmanaged protected-file edit. Agents must present the `retrofit-bootstrap` plan for review before applying a `phasegate.config.json` relaxation.
 
+<!-- @work-item-id WI-201 -->
+
+Retrofit bootstrap remains incomplete until the reviewed `config:plan` operations have a managed apply command. Agent setup guidance should recommend `config:plan --intent retrofit-bootstrap --dry-run --json` for review and `config:plan --intent retrofit-bootstrap --apply --json` for the approved mutation path, instead of asking the agent to edit `phasegate.config.json` directly.
+
 ## Protected Uninstall Planning
 
 <!-- @work-item-id WI-199 -->

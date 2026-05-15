@@ -16,6 +16,7 @@
  * @work-item-id WI-196
  * @work-item-id WI-197
  * @work-item-id WI-200
+ * @work-item-id WI-201
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -287,6 +288,55 @@ describe('harness CLI E2E', () => {
         expect.objectContaining({ pointer: '/planningMode/default', after: 'manual' }),
         expect.objectContaining({ pointer: '/phaseDependencies/override', after: true }),
       ]));
+    });
+
+    it('config:plan --intent retrofit-bootstrap --apply --json は config を更新し backup を返す', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'apply-test');
+        expect(init.exitCode).toBe(0);
+
+        const result = runInCwd(cwd, 'config:plan', '--intent', 'retrofit-bootstrap', '--apply', '--json');
+        const parsed = JSON.parse(result.stdout);
+        const config = JSON.parse(readFileSync(join(cwd, 'phasegate.config.json'), 'utf-8')) as {
+          planningMode: { default: string };
+          phaseDependencies: { override: boolean };
+          quickMode: { relaxedGates: string[] };
+        };
+
+        expect(config.planningMode.default).toBe('manual');
+        expect(config.phaseDependencies.override).toBe(true);
+        expect(config.quickMode.relaxedGates).toContain('phase-gate');
+        expect(JSON.parse(readFileSync(join(cwd, parsed.applyResult.backupPath), 'utf-8'))).toEqual(expect.any(Object));
+        return result;
+      });
+
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout);
+      expect(parsed.applyResult.changed).toBe(true);
+      expect(parsed.applyResult.backupPath).toContain('.phasegate/backups/phasegate.config.');
+      expect(parsed.applyResult.appliedOperations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ pointer: '/planningMode/default' }),
+      ]));
+    });
+
+    it('config:plan --apply は non-applicable intent を拒否する', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'apply-refuse-test');
+        expect(init.exitCode).toBe(0);
+        return runInCwd(cwd, 'config:plan', '--intent', 'codex-hooks', '--apply', '--json');
+      });
+
+      expect(actual.exitCode).toBe(1);
+      const parsed = JSON.parse(actual.stdout);
+      expect(parsed.refused).toBe(true);
+      expect(parsed.configPatch.applicability).toBe('not-applicable');
+    });
+
+    it('config:plan unknown flag validation は維持される', () => {
+      const actual = run('config:plan', '--intent', 'retrofit-bootstrap', '--output', 'x');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain("unknown flag '--output'");
     });
 
     it('delegate-sonnet positional task は dry-run で prompt として扱われる', () => {

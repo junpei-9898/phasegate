@@ -1906,6 +1906,10 @@ Range audit commands must describe the actual checked input. `bypass:audit --bas
 - Main help includes `migrate work-items` when the subcommand remains invocable, and `migrate --help` describes `--dry-run|--apply`.
 - `delegate-sonnet [...args]` accepts positional task text as a prompt-compatible pass-through path, matching the documented help contract.
 
+<!-- @work-item-id WI-201 -->
+
+The public CLI should add an apply variant for applicable config plans without weakening unknown-flag validation. `config:plan --intent retrofit-bootstrap --apply --json` is the intended managed mutation surface after dry-run review; unsupported flags such as `--output` must continue to fail with exit 2.
+
 ## Legacy Health Aliases
 
 <!-- @work-item-id WI-197 -->

@@ -13,6 +13,7 @@
  * @work-item-id WI-196
  * @work-item-id WI-197
  * @work-item-id WI-200
+ * @work-item-id WI-201
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -25,6 +26,7 @@ import {
   readFile as fsReadFile,
   readdir as fsReaddir,
   readlink as fsReadlink,
+  rename as fsRename,
   writeFile as fsWriteFile,
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -811,6 +813,12 @@ interface ConfigPatchPreview {
   readonly operations: readonly ConfigPatchOperation[];
 }
 
+interface ConfigApplyResult {
+  readonly changed: boolean;
+  readonly backupPath: string;
+  readonly appliedOperations: readonly ConfigPatchOperation[];
+}
+
 function parseInitPhasePreset(value: string | undefined): InitPhasePreset | undefined {
   if (value === undefined) return undefined;
   if (value === "full" || value === "standard" || value === "minimal" || value === "custom") {
@@ -1267,6 +1275,40 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
   };
 }
 
+function configPlanBackupPath(rootDir: string, now: Date): string {
+  const stamp = now.toISOString().replaceAll(":", "-");
+  return join(rootDir, ".phasegate", "backups", `phasegate.config.${stamp}.json`);
+}
+
+async function applyConfigPlan(rootDir: string, plan: Awaited<ReturnType<typeof buildConfigChangePlan>>): Promise<ConfigApplyResult> {
+  const patch = plan.configPatch;
+  if (patch.applicability !== "applicable") {
+    throw new Error(`config plan is not applicable: ${patch.blockedReason ?? patch.applicability}`);
+  }
+  if (patch.operations.length === 0) {
+    throw new Error("config plan has no operations to apply.");
+  }
+  if (!isPlainRecord(patch.after)) {
+    throw new Error("config plan after-state must be a JSON object.");
+  }
+
+  const configPath = join(rootDir, patch.path);
+  const backupPath = configPlanBackupPath(rootDir, new Date());
+  await fsMkdir(dirname(backupPath), { recursive: true });
+  const beforeText = patch.before === null ? "" : `${JSON.stringify(patch.before, null, 2)}\n`;
+  await fsWriteFile(backupPath, beforeText, "utf8");
+
+  const tempPath = `${configPath}.tmp-${process.pid}-${Date.now()}`;
+  await fsWriteFile(tempPath, `${JSON.stringify(patch.after, null, 2)}\n`, "utf8");
+  await fsRename(tempPath, configPath);
+
+  return {
+    changed: true,
+    backupPath: backupPath.slice(rootDir.length + 1),
+    appliedOperations: patch.operations,
+  };
+}
+
 function hasStructuredInstallError(value: unknown): boolean {
   return isPlainRecord(value) && isPlainRecord(value.error);
 }
@@ -1284,7 +1326,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: layers.L4.failOnWarning"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate validate --layer L4 --fail-on-warning --format human"],
+      commands: ["phasegate config:plan --intent l4-strict --apply --json", "phasegate validate --layer L4 --fail-on-warning --format human"],
       validations: ["phasegate phasegate:detect-drift --json", "phasegate phasegate:check-ready"],
       risks: ["L4 findings may be advisory today but become blocking when fail-on-warning is enabled."],
     },
@@ -1300,7 +1342,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
       managedTargets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
       externalActions: [{ id: "github-actions-first-run", label: "Trigger or inspect the first GitHub Actions PhaseGate run.", command: null, blocking: false }],
-      commands: ["phasegate install --with-ci --apply", "phasegate validate --layer L4 --fail-on-warning"],
+      commands: ["phasegate install --with-ci --apply", "phasegate config:plan --intent ci-fail-on-warning --apply --json", "phasegate validate --layer L4 --fail-on-warning"],
       validations: ["phasegate doctor", "phasegate ci:generate-template --type aidlc-gate --render"],
       risks: ["Existing warning-only projects may start failing CI after rollout."],
     },
@@ -1316,7 +1358,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: quickMode"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate check-change-category --paths <changed-files> --format json"],
+      commands: ["phasegate config:plan --intent quick-mode-strict --apply --json", "phasegate check-change-category --paths <changed-files> --format json"],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
       risks: ["More changes will require Full Mode validation before commit."],
     },
@@ -1324,7 +1366,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: planningMode.default", "phasegate.config.json: phaseDependencies.override", "phasegate.config.json: quickMode.relaxedGates"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate baseline --dry-run", "phasegate config:plan --intent retrofit-bootstrap --json"],
+      commands: ["phasegate baseline --dry-run", "phasegate config:plan --intent retrofit-bootstrap --json", "phasegate config:plan --intent retrofit-bootstrap --apply --json"],
       validations: ["phasegate validate-metadata docs/inception/_shared/*.md", "phasegate check-phase-gate --level 2"],
       risks: ["Manual planning mode accepts existing retrofit planning evidence; review the patch before applying it to avoid weakening greenfield projects."],
     },
@@ -1332,7 +1374,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: planningMode.default"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate config:plan --intent planning-mode-relax --json"],
+      commands: ["phasegate config:plan --intent planning-mode-relax --json", "phasegate config:plan --intent planning-mode-relax --apply --json"],
       validations: ["phasegate check-phase-gate --level 2", "phasegate phasegate:check-ready"],
       risks: ["Manual planning mode reduces PhaseGate's QA enforcement for plan documents until strict planning is restored."],
     },
@@ -1975,13 +2017,42 @@ async function main(): Promise<void> {
       }
 
       case "config:plan": {
-        const KNOWN_CONFIG_PLAN_FLAGS = ["--intent", "--dry-run", "--json"];
+        const KNOWN_CONFIG_PLAN_FLAGS = ["--intent", "--dry-run", "--apply", "--json"];
         const flagError = validateKnownFlags(args, KNOWN_CONFIG_PLAN_FLAGS);
         if (flagError) {
           console.error(flagError);
           process.exit(2);
         }
+        const apply = hasFlag(args, "--apply");
+        if (apply && hasFlag(args, "--dry-run")) {
+          console.error("Error: --apply and --dry-run cannot be used together.");
+          process.exit(2);
+        }
         const plan = await buildConfigChangePlan(rootDir, parseConfigChangeIntent(parseFlag(args, "--intent")));
+        if (apply) {
+          try {
+            const applyResult = await applyConfigPlan(rootDir, plan);
+            const output = { ...plan, applyResult };
+            if (json) {
+              console.log(JSON.stringify(output, null, 2));
+            } else {
+              console.log(`phasegate config:plan apply (${plan.intent})`);
+              console.log(`changed: ${applyResult.changed}`);
+              console.log(`backup: ${applyResult.backupPath}`);
+              console.log("Applied operations:");
+              for (const operation of applyResult.appliedOperations) console.log(`- ${operation.op} ${operation.pointer}`);
+            }
+            process.exit(0);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (json) {
+              console.log(JSON.stringify({ intent: plan.intent, refused: true, error: message, configPatch: plan.configPatch }, null, 2));
+            } else {
+              console.error(`Error: ${message}`);
+            }
+            process.exit(1);
+          }
+        }
         if (json) {
           console.log(JSON.stringify(plan, null, 2));
         } else {

@@ -1546,6 +1546,10 @@ The hook runtime remains responsible for enforcement. The context file is guidan
 
 Agent-facing setup and configuration changes are exposed through CLI planning payloads before mutation. Agents should use `setup:agent --dry-run --json` to decide which setup questions remain, and `config:plan --intent <intent> --json` to explain config/setup changes before editing files.
 
+<!-- @work-item-id WI-201 -->
+
+When pre-tool-use full-mode enforcement blocks `phasegate.config.json`, recovery guidance must account for config-plan workflows. For config category blocks, the message should mention the reviewed `config:plan --intent retrofit-bootstrap --dry-run` path and the managed `--apply` path once available. This is guidance-only for external edit tools; the hook must not broadly allow arbitrary `Edit` / `Write` mutations of protected config files.
+
 These planners provide guidance and validation steps. Actual enforcement remains in hooks, doctor, validate, check-ready, and git/CI backstops.
 
 ### WI-175 Agent-Readable Setup Confidence

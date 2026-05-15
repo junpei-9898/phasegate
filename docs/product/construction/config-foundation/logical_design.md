@@ -1400,6 +1400,12 @@ Config-foundation remains the owner of schema and resolved config behavior. The 
 
 `config:plan` exposes a read-only `configPatch` preview for intents that touch `phasegate.config.json`. The preview contains `path`, `applicability`, `blockedReason`, `before`, `after`, and JSON pointer operations. Intents that only manage files or require external user-level actions return `configPatch.applicability = "not-applicable"` and explain the reason through managed targets and external actions.
 
+### WI-201 Managed Config Apply Path
+
+<!-- @work-item-id WI-201 -->
+
+Applicable config plans need a PhaseGate-owned apply path for retrofit bootstrap. `config:plan --apply` should apply only the generated `configPatch.after` for intents whose `configPatch.applicability` is `applicable`, preserve dry-run as the review contract, and write rollback evidence before mutating `phasegate.config.json`. Non-applicable or blocked patch previews must refuse apply rather than becoming a generic JSON Patch executor.
+
 ### WI-156 L4-006 Config Projection
 
 <!-- @work-item-id WI-156 -->

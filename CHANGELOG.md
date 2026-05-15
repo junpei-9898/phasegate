@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.8] - 2026-05-15
+
+### Fixed
+
+- **WI-201 — managed config plan apply path** — adds `config:plan --apply` for applicable config patch plans, records rollback backups before mutating `phasegate.config.json`, advertises managed apply commands in config-plan guidance, and points config edit blocks back to the reviewed dry-run/apply workflow.
+
 ## [0.160.6] - 2026-05-14
 
 ### Fixed
