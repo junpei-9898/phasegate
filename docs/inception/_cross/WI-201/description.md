@@ -90,3 +90,8 @@ Full mode 必須変更が検出されました: phasegate.config.json
 - `npx phasegate config:plan --intent codex-hooks --apply --json` -> exit 1、`refused = true`、`configPatch.applicability = "not-applicable"`
 - `npx phasegate config:plan --intent retrofit-bootstrap --output x` -> exit 2、unknown flag として拒否
 - `npx phasegate config:plan --intent quick-mode-strict --apply --json` で strict 相当にした後、`phasegate.config.json` への `Edit` payload を `npx phasegate hook pre-tool-use` に渡すと exit 2 で block。message は `config:plan --intent retrofit-bootstrap --dry-run --json` と `config:plan --intent retrofit-bootstrap --apply --json` を案内し、`/story-implementor` へ誤誘導しない。
+
+2026-05-15 に help discoverability fix を含む published `phasegate@0.160.9` で追加確認した。
+
+- `npm view phasegate version` -> `0.160.9`
+- `npx phasegate@latest config:plan --help` -> Options に `--dry-run`, `--apply`, `--json`, `--help, -h` を表示
