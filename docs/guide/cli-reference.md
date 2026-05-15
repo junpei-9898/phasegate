@@ -28,7 +28,7 @@ Command names in this document are split into three surfaces:
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`; `--force` handles managed conflict cases. |
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes; `--force` allows managed-file replacement with backup. |
 | `setup:agent` | Agent-readable setup planner and optional apply path. Options: `--intent <minimal\|recommended\|strict\|ci-only\|agent-hooks\|retrofit>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-172 --> |
-| `config:plan` | Agent-readable configuration change planner. Options: `--intent <l4-strict\|codex-hooks\|ci-fail-on-warning\|baseline-reset\|quick-mode-strict>`, `--dry-run`, `--json`. <!-- @work-item-id WI-173 --> |
+| `config:plan` | Agent-readable configuration change planner. Options: `--intent <l4-strict\|codex-hooks\|ci-fail-on-warning\|baseline-reset\|quick-mode-strict\|retrofit-bootstrap\|planning-mode-relax>`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-173 --> <!-- @work-item-id WI-201 --> |
 | `update-skills` | Compatibility alias for `reconcile`; use `reconcile` for new automation. |
 | `scaffold-wi <unit> <type>` | Create `docs/inception/{unit}/WI-XXX/description.md` using the next free WI number. |
 | `emit-agent-rules` | Print the AGENTS.md / CLAUDE.md WI workflow rules block. |

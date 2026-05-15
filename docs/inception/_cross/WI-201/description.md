@@ -70,6 +70,7 @@ Full mode 必須変更が検出されました: phasegate.config.json
 - [x] `config:plan --intent retrofit-bootstrap --apply --json` が dry-run と同じ plan をもとに `phasegate.config.json` を managed path で更新する。
 - [x] apply 前に既存 config の backup または rollback evidence が残る。
 - [x] `config:plan` の `commands` / human output が apply 可能な intent では `--apply` を案内する。
+- [x] `config:plan --help` の Options が `--apply` を案内し、agent が managed apply path を発見できる。
 - [x] pre-tool-use hook の full-mode block guidance が `phasegate.config.json` の config category では `config:plan --intent retrofit-bootstrap --dry-run` / `--apply` を候補として示す。
 - [x] `Edit` / `Write` で protected-file 防御を弱めず、CLI managed apply path のみで bypass が成立する。
 

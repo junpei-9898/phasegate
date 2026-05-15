@@ -278,6 +278,15 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('Usage: phasegate delegate-sonnet [...args]');
     });
 
+    it('config:plan --help は apply contract を表示する', () => {
+      const actual = run('config:plan', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('--dry-run');
+      expect(actual.stdout).toContain('--apply');
+      expect(actual.stdout).toContain('--json');
+    });
+
     it('config:plan --intent retrofit-bootstrap は manual planning mode patch を返す', () => {
       const actual = run('config:plan', '--intent', 'retrofit-bootstrap', '--json');
 

@@ -624,6 +624,7 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 | IT-API-WI201-001 | retrofit bootstrap config plan を managed apply できること | `phasegate config:plan --intent retrofit-bootstrap --apply --json` | `changed:true`, backup path, applied operations |
 | IT-API-WI201-002 | config plan の unknown flag validation が維持されること | `phasegate config:plan --intent retrofit-bootstrap --output x` | exit 2 |
 | IT-API-WI201-003 | config edit hook block が config-plan recovery を案内すること | pre-tool-use `Edit` for `phasegate.config.json` | dry-run/apply guidance を含む |
+| IT-API-WI201-004 | config plan の subcommand help が apply contract を案内すること | `phasegate config:plan --help` | Options に `--dry-run`, `--apply`, `--json` を含む |
 | IT-API-WI189-004 | scaffold-wi の help signature が一致すること | `phasegate --help`, `scaffold-wi --help` | 両方が `<unit|_cross> <story|issue|chore>` を示す |
 | IT-API-WI189-005 | delegate-sonnet help が forwarded args を説明すること | `delegate-sonnet --help` | `Usage: phasegate delegate-sonnet [...args]` を含む |
 | IT-API-WI189-006 | bypass:audit empty range が range no-op を説明すること | `runBypassAudit(..., changedFiles: [])` | "No changed files in range" を含み "No staged files" を含まない |

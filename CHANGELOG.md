@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.9] - 2026-05-15
+
+### Fixed
+
+- **WI-201 — config plan apply discoverability** — documents `config:plan --apply` in subcommand help, top-level help, and CLI reference so agents can discover the managed config apply path from `--help`.
+
 ## [0.160.8] - 2026-05-15
 
 ### Fixed

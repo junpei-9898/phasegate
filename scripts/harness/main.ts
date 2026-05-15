@@ -219,7 +219,7 @@ Gate semantics:
   refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
   p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
   setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both>, --dry-run|--apply, --json)
-  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|retrofit-bootstrap|planning-mode-relax>, --dry-run, --json)
+  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|retrofit-bootstrap|planning-mode-relax>, --dry-run|--apply, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
@@ -540,6 +540,7 @@ Intents:
 
 Options:
   --dry-run
+  --apply
   --json
   --help, -h                      Show this help`,
   reconcile: `Usage: phasegate reconcile [options]
