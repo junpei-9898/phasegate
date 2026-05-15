@@ -67,8 +67,25 @@ Full mode 必須変更が検出されました: phasegate.config.json
 
 ## 受け入れ基準
 
-- [ ] `config:plan --intent retrofit-bootstrap --apply --json` が dry-run と同じ plan をもとに `phasegate.config.json` を managed path で更新する。
-- [ ] apply 前に既存 config の backup または rollback evidence が残る。
-- [ ] `config:plan` の `commands` / human output が apply 可能な intent では `--apply` を案内する。
-- [ ] pre-tool-use hook の full-mode block guidance が `phasegate.config.json` の config category では `config:plan --intent retrofit-bootstrap --dry-run` / `--apply` を候補として示す。
-- [ ] `Edit` / `Write` で protected-file 防御を弱めず、CLI managed apply path のみで bypass が成立する。
+- [x] `config:plan --intent retrofit-bootstrap --apply --json` が dry-run と同じ plan をもとに `phasegate.config.json` を managed path で更新する。
+- [x] apply 前に既存 config の backup または rollback evidence が残る。
+- [x] `config:plan` の `commands` / human output が apply 可能な intent では `--apply` を案内する。
+- [x] pre-tool-use hook の full-mode block guidance が `phasegate.config.json` の config category では `config:plan --intent retrofit-bootstrap --dry-run` / `--apply` を候補として示す。
+- [x] `Edit` / `Write` で protected-file 防御を弱めず、CLI managed apply path のみで bypass が成立する。
+
+## 公開版ドッグフード
+
+2026-05-15 に published `phasegate@0.160.8` から取得した tarball を `/private/tmp/phasegate-wi201-dogfood` に展開し、公開版 CLI のみで検証した。
+
+- `npm view phasegate version` -> `0.160.8`
+- `npm pack phasegate@0.160.8 --pack-destination /private/tmp/phasegate-wi201-dogfood` -> tarball 取得成功
+- `/private/tmp/phasegate-wi201-dogfood/project` で `npm --cache /private/tmp/phasegate-wi201-dogfood/npm-cache install /private/tmp/phasegate-wi201-dogfood/phasegate-0.160.8.tgz` -> install 成功
+- `npx phasegate --version` -> `phasegate v0.160.8`
+- `npx phasegate init --name wi201-dogfood --preset standard --agent codex --yes` -> `phasegate.config.json` と Codex hooks を生成
+- `npx phasegate config:plan --intent retrofit-bootstrap --json` -> `commands` に `phasegate config:plan --intent retrofit-bootstrap --apply --json` を含み、`configPatch.applicability = "applicable"`、operations は `/planningMode/default`, `/phaseDependencies/override`, `/quickMode/relaxedGates`
+- `npx phasegate config:plan --intent retrofit-bootstrap --apply --json` -> exit 0、`applyResult.changed = true`、backup path `.phasegate/backups/phasegate.config.2026-05-15T01-47-29.064Z.json`、applied operations 3 件
+- apply 後の `phasegate.config.json` は `planningMode.default = "manual"`, `phaseDependencies.override = true`, `quickMode.relaxedGates = ["phase-gate"]`
+- backup file は apply 前の `planningMode.default = "interactive"`, `phaseDependencies.override = false`, `quickMode = {}` を保持
+- `npx phasegate config:plan --intent codex-hooks --apply --json` -> exit 1、`refused = true`、`configPatch.applicability = "not-applicable"`
+- `npx phasegate config:plan --intent retrofit-bootstrap --output x` -> exit 2、unknown flag として拒否
+- `npx phasegate config:plan --intent quick-mode-strict --apply --json` で strict 相当にした後、`phasegate.config.json` への `Edit` payload を `npx phasegate hook pre-tool-use` に渡すと exit 2 で block。message は `config:plan --intent retrofit-bootstrap --dry-run --json` と `config:plan --intent retrofit-bootstrap --apply --json` を案内し、`/story-implementor` へ誤誘導しない。
