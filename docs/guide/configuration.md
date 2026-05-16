@@ -548,11 +548,13 @@ Controls how phasegate's agent-side hooks integrate with Claude Code. Currently 
 
 | Sub-field          | Type      | Default | Description                                                                                                          |
 |--------------------|-----------|---------|----------------------------------------------------------------------------------------------------------------------|
-| `stopHook.enforce` | `boolean` | `false` | When `true`, a non-zero exit from `phasegate:complete-check` causes the Stop hook to emit `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exit with code 2, blocking Claude Code's turn. When `false` (default), the hook exits with the inner CLI's exit code, which Claude Code surfaces only as a transcript warning. |
+| `stopHook.enforce` | `boolean` | `false` | When `true`, a non-zero exit from `phasegate:complete-check` causes the Stop hook to emit `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exit with code 2, blocking Claude Code's turn. If command invocation itself fails, the reason is `Complete Check execution failed (exitCode=N)`. When `false` (default), the hook exits with the inner CLI's exit code, which Claude Code surfaces only as a transcript warning. |
 
 Use `enforce: true` when your team treats Complete Check failures as hard gates (e.g., disallow ending a session with failing tests or lint). Leave it as default `false` for an opt-in / advisory experience.
 
 Reentry-detection cases (`REENTRY_DETECTED`) always exit with code 0 regardless of this setting; strict mode applies only to actual Complete Check failures.
+
+The built-in Stop hook invokes the packaged PhaseGate CLI command directly; projects initialized or reconciled by PhaseGate do not need a local `scripts/harness/cli/complete-check.ts` wrapper for this setting. <!-- @work-item-id WI-203 -->
 
 ---
 

@@ -488,3 +488,12 @@ story-implementor ← TDD実装
 ```
 
 **推奨**: `test-coverage-checker` スキルを実行し、ドメインモデルの不変条件・状態遷移・ビジネスルールに対するカバレッジを確認してから次フェーズに進んでください。
+
+## 9. WI-203 Stop Hook CLI Executor Tests
+
+<!-- @work-item-id WI-203 -->
+
+| ケースID | 対象 | 入力 | 期待結果 |
+|---|---|---|---|
+| UT-AI-WI203-001 | `ChildProcessCliExecutorAdapter` | `execute("phasegate:complete-check", [])` | `npx tsx <package>/scripts/harness/main.ts phasegate:complete-check` を spawn し、`scripts/harness/cli/complete-check.ts` を参照しない |
+| UT-AI-WI203-002 | `ChildProcessCliExecutorAdapter` | `execute("custom-check", ["--flag"])` | legacy extension 互換として `scripts/harness/cli/custom-check.ts --flag` を spawn する |

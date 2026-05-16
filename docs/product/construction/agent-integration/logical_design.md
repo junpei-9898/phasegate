@@ -1577,3 +1577,11 @@ Structured setup failures are explanatory input for the agent. The agent should 
 <!-- @work-item-id WI-196 -->
 
 The PhaseGate CLI delegates `delegate-sonnet` arguments to `scripts/delegate-sonnet.sh`. Non-option positional text is prompt content for the delegated script, while PhaseGate-owned help handling remains at the top-level CLI boundary.
+
+## WI-203 Stop Hook Complete Check Execution
+
+<!-- @work-item-id WI-203 -->
+
+Stop hook execution treats `phasegate:complete-check` as a canonical harness-api command, not as a mandatory project-local wrapper file. `ChildProcessCliExecutorAdapter` resolves namespaced `phasegate:*` commands to the package's `scripts/harness/main.ts` entrypoint and passes the command name through unchanged. This keeps Stop hook behavior aligned with the public CLI registry and avoids depending on unmanaged downstream files such as `scripts/harness/cli/complete-check.ts`.
+
+Legacy non-namespaced extension commands may still resolve through `scripts/harness/cli/{slug}.ts` for compatibility. Strict stop-hook failure reporting distinguishes a Complete Check validation failure from an execution wiring failure when stderr indicates a missing module or legacy wrapper path.

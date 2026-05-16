@@ -548,3 +548,13 @@ afterEach(async () => {
 | §11 Presentation Hook Adapter issue パス対応 | 3 | pre-tool-use-hook.ts | 追加 |
 | §12 統合フロー issue パス対応 | 3 | HandlePreToolUseUseCase End-to-End | 追加 |
 | **合計** | **23** | | |
+
+## 16. WI-203 Stop Hook Strict Mode Regression
+
+<!-- @work-item-id WI-203 -->
+
+| ケースID | シナリオ | 入力/事前状態 | 期待結果 |
+|---|---|---|---|
+| IT-AI-WI203-001 | downstream project に wrapper が存在しない状態で Stop hook を実行する | `agentIntegration.stopHook.enforce=true`, `scripts/harness/cli/complete-check.ts` なし | Stop hook は missing wrapper を理由に block せず、canonical `phasegate:complete-check` の実行結果だけで終了コードを決める |
+| IT-AI-WI203-002 | strict mode で Complete Check 自体が fail する | canonical command が exit 1 | stdout reason は `Complete Check failed (exitCode=1)` |
+| IT-AI-WI203-003 | strict mode で command wiring が fail する | stderr に missing module / legacy wrapper path | stdout reason は `Complete Check execution failed (exitCode=N)` |

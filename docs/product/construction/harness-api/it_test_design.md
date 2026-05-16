@@ -636,3 +636,11 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 |---|---|---|---|
 | IT-API-WI197-001 | legacy status alias が canonical handler を実行すること | `phasegate status --json` | JSON parse 可能な `phasegate:status` payload を返し、stderr に canonical command warning を出す |
 | IT-API-WI197-002 | legacy complete-check alias が canonical handler を実行すること | `phasegate complete-check` | `Unknown command` にならず、exit 0/1 の gate result と canonical command warning を返す |
+
+<!-- @work-item-id WI-203 -->
+## WI-203 Complete Check Consumer Regression
+
+| ケースID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-API-WI203-001 | package CLI entrypoint 経由で canonical command を実行する | `main.ts phasegate:complete-check` | wrapper file の有無に依存せず harness-api の CompleteCheckHandler が dispatch される |
+| IT-API-WI203-002 | Stop hook からの canonical command consumption を検証する | `hook stop` が内部で `phasegate:complete-check` を委譲 | `Unknown command` や missing wrapper ではなく canonical command の exit code が返る |

@@ -93,8 +93,9 @@ Use /quick-implementor skill for version changes in package.json.
 
 ### Stop (before session end)
 - Runs `phasegate:complete-check` (L2-L4 full validation)
+- The built-in Stop hook runs the packaged PhaseGate CLI command; downstream projects do not need to provide `scripts/harness/cli/complete-check.ts`.
 - By default, the hook exits with the inner CLI's exit code, which Claude Code shows as a transcript warning but does not turn-block on.
-- Set `agentIntegration.stopHook.enforce: true` in `phasegate.config.json` to enable **strict mode**: on Complete Check failure, the hook emits `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exits with code 2, hard-blocking Claude Code's turn end. Reentry-detection still exits 0 regardless of this setting. See `docs/guide/configuration.md` `agentIntegration` section for details.
+- Set `agentIntegration.stopHook.enforce: true` in `phasegate.config.json` to enable **strict mode**: on Complete Check failure, the hook emits `{"decision":"block","reason":"Complete Check failed (exitCode=N)"}` on stdout and exits with code 2, hard-blocking Claude Code's turn end. If the command cannot be invoked at all, strict mode reports `Complete Check execution failed (exitCode=N)` instead. Reentry-detection still exits 0 regardless of this setting. See `docs/guide/configuration.md` `agentIntegration` section for details. <!-- @work-item-id WI-203 -->
 
 ## Git hook metadata validation
 

@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit agent-integration
+ * @work-item-id WI-203
  *
  * Stop Hook Adapter
  * Claude Code の Stop Hook エントリポイント
@@ -17,6 +18,20 @@ import * as fs from 'node:fs/promises';
 
 interface StopHookInput {
   session_id?: string;
+}
+
+function isCompleteCheckExecutionWiringFailure(stderr: string): boolean {
+  return (
+    /scripts\/harness\/cli\/complete-check\.ts/.test(stderr) ||
+    /ERR_MODULE_NOT_FOUND|Cannot find module/i.test(stderr)
+  );
+}
+
+function formatCompleteCheckFailureReason(exitCode: number, stderr: string): string {
+  if (isCompleteCheckExecutionWiringFailure(stderr)) {
+    return `Complete Check execution failed (exitCode=${exitCode})`;
+  }
+  return `Complete Check failed (exitCode=${exitCode})`;
 }
 
 async function readStdin(): Promise<string> {
@@ -97,10 +112,10 @@ async function main(): Promise<void> {
       if (output.cliResult.exitCode !== 0) {
         // WI-087 finding #4: enforce=true なら exit 2 + decision JSON で turn block
         if (output.shouldEnforceFailure === true) {
-          const reason = `Complete Check failed (exitCode=${output.cliResult.exitCode})`;
+          const reason = formatCompleteCheckFailureReason(output.cliResult.exitCode, output.cliResult.stderr);
           process.stdout.write(`${JSON.stringify({ decision: 'block', reason })}\n`);
           process.stderr.write(
-            `Complete Check失敗 (exitCode=${output.cliResult.exitCode}) — strict mode により turn を block します\n`,
+            `${reason} — strict mode により turn を block します\n`,
           );
           process.exit(2);
         }

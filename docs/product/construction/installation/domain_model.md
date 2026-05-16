@@ -471,3 +471,9 @@ Doctor JSON exposes whether each finding is repair work for the current scope. A
 <!-- @work-item-id WI-199 -->
 
 `UninstallPlanItem` includes `protected: boolean`. The marker is derived from PhaseGate's protected lifecycle target list and is present in JSON output for both dry-run and apply results. Protected entries remain normal plan items for review, but changed protected entries also satisfy the force-required refusal predicate during apply.
+
+## Complete Check Wrapper Target Classification
+
+<!-- @work-item-id WI-203 -->
+
+`scripts/harness/cli/complete-check.ts` is not a PhaseGate managed setup target. The installation domain classifies hook JSON, agent context files, Husky hooks, CI workflows, skills, package metadata, and manifest entries as managed artifacts, while built-in harness commands remain package-owned runtime behavior. If a downstream project intentionally creates a wrapper under `scripts/harness/cli/`, that file is user-owned extension content.

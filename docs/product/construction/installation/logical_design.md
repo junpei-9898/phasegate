@@ -559,3 +559,9 @@ Retrofit bootstrap remains incomplete until the reviewed `config:plan` operation
 <!-- @work-item-id WI-199 -->
 
 Uninstall planning marks protected package metadata paths with `protected:true` in each machine-readable plan item. A changed protected item is refused during apply unless the caller explicitly uses `--force`, so automation can detect `package.json` / lockfile mutation without maintaining its own path allowlist. Human output also labels protected entries in the plan.
+
+## WI-203 Complete Check Wrapper Non-Target
+
+<!-- @work-item-id WI-203 -->
+
+Install and reconcile do not manage `scripts/harness/cli/complete-check.ts` as a downstream target. The built-in Stop hook calls the packaged canonical CLI command instead. Therefore a missing downstream wrapper is not a doctor/install/reconcile repair item, and setup plans should not ask users to create that file for the standard `phasegate:complete-check` flow.

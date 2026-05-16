@@ -320,3 +320,18 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 - **ISP**: PhaseGateQueryPortは`checkGate()`の単一メソッドのみ。ConfigQueryPortに`getProjectPaths()`を追加したがインターフェース肥大化は最小限
 
 **評価結果**: 問題なし。設計を確定する。
+
+## 9. Stop Hook Command Execution Boundary
+
+<!-- @work-item-id WI-203 -->
+
+`phasegate:complete-check` is a canonical command identity owned by harness-api and consumed by agent-integration. The Stop hook invariant is that this command identity remains executable through the packaged PhaseGate CLI even when the downstream project has no `scripts/harness/cli/complete-check.ts` wrapper.
+
+Failure classification has two meanings:
+
+| Classification | Meaning | Stop hook strict-mode reason |
+|---|---|---|
+| Complete Check failure | The canonical command ran and validators or lint returned non-zero. | `Complete Check failed (exitCode=N)` |
+| Execution wiring failure | The hook could not invoke the intended command path, e.g. a missing module or obsolete wrapper path. | `Complete Check execution failed (exitCode=N)` |
+
+This boundary keeps project-specific command wrappers optional extension points rather than runtime prerequisites for the built-in Stop hook.

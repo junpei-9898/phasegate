@@ -1,22 +1,36 @@
 /**
  * @layer infrastructure
  * @unit agent-integration
+ * @work-item-id WI-203
  *
  * ChildProcessCliExecutorAdapter
  * CliExecutorPort の実装。子プロセスで CLI コマンドを実行する
  */
 
 import { spawn } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { CliExecutorPort, CliExecutionResult } from '../../application/ports/cli-executor-port.js';
 import { TimeoutError } from '../../application/ports/cli-executor-port.js';
 
+function getHarnessMainPath(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), '../../../main.ts');
+}
+
 /**
  * CommandName を実行可能なコマンドに変換する
- * 例: 'phasegate:lint' → ['npx', 'tsx', 'scripts/harness/cli/lint.ts']
+ * 例: 'phasegate:lint' → ['npx', 'tsx', '<package>/scripts/harness/main.ts', 'phasegate:lint']
  * テスト時は直接スクリプトパスで execute を呼ぶことも可能
  */
 function resolveCommand(commandName: string): { cmd: string; args: string[] } {
-  // コマンド名をファイルパスに変換
+  if (commandName.startsWith('phasegate:')) {
+    return {
+      cmd: 'npx',
+      args: ['tsx', getHarnessMainPath(), commandName],
+    };
+  }
+
+  // Legacy extension commands may still be provided as project-local wrappers.
   const slug = commandName.replace('phasegate:', '');
   return {
     cmd: 'npx',

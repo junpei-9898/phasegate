@@ -354,3 +354,9 @@ Harness API reads `.phasegate/hook-skip-events.jsonl` as the shared hook skip re
 <!-- @work-item-id WI-197 -->
 
 Legacy alias names are presentation-level command identities, not separate domain commands. `status` maps to `phasegate:status`; `complete-check` maps to `phasegate:complete-check`. The response envelope, status derivation, validator execution, and exit-code rules are inherited from the canonical command.
+
+## WI-203 Complete Check Command Identity
+
+<!-- @work-item-id WI-203 -->
+
+`phasegate:complete-check` is a registry-backed command identity. It is not modeled as a downstream filesystem artifact. Consumers may run the command through `main.ts` / the `phasegate` binary, but they must not require a project to contain `scripts/harness/cli/complete-check.ts` unless that project deliberately provides a custom extension wrapper outside the built-in command contract.

@@ -76,3 +76,12 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | Domain | `scripts/harness/__tests__/unit/installation/*.test.ts` |
 | Checks | `scripts/harness/__tests__/unit/installation/checks/*.test.ts` |
 | UseCase / Formatter | `scripts/harness/__tests__/unit/installation/*.test.ts` |
+
+<!-- @work-item-id WI-203 -->
+## 1.6 Complete Check Wrapper Non-Target Cases
+
+| Case ID | 対象 | 前提 | 期待結果 |
+|---|---|---|---|
+| UT-INS-WI203-001 | install target planning | standard setup | `scripts/harness/cli/complete-check.ts` is not emitted as a managed target |
+| UT-INS-WI203-002 | reconcile target planning | standard setup | missing `scripts/harness/cli/complete-check.ts` does not become a repair plan item |
+| UT-INS-WI203-003 | doctor checks | standard setup without wrapper | missing wrapper is not a diagnostic finding |

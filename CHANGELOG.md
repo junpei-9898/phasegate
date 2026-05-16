@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.10] - 2026-05-16
+
+### Fixed
+
+- **WI-203 — Stop hook Complete Check execution** — resolves built-in `phasegate:*` hook commands through the packaged CLI entrypoint instead of unmanaged downstream wrapper files, distinguishes Complete Check validation failures from command wiring failures in strict Stop hook output, and documents that `scripts/harness/cli/complete-check.ts` is not required by standard install/reconcile.
+
 ## [0.160.9] - 2026-05-15
 
 ### Fixed

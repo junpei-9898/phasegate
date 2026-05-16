@@ -1915,3 +1915,9 @@ The public CLI should add an apply variant for applicable config plans without w
 <!-- @work-item-id WI-197 -->
 
 `status` and `complete-check` remain public compatibility aliases for `phasegate:status` and `phasegate:complete-check`. Alias dispatch uses the same handlers as the namespaced commands and emits a deprecation warning that names the canonical command. Unknown command handling remains unchanged for non-aliased input.
+
+## WI-203 Canonical Complete Check Consumption
+
+<!-- @work-item-id WI-203 -->
+
+`phasegate:complete-check` remains the public canonical command for L2-L4 Complete Check. Internal consumers such as agent-integration must dispatch this command through the packaged CLI entrypoint or command registry rather than inventing a separate project-local wrapper requirement. This preserves the public CLI contract for package installs, source checkouts, and downstream projects initialized by `phasegate init`.

@@ -164,3 +164,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `uninstall --dry-run --json` after install | `package.json` plan item includes `protected:true`. |
 | manifest contains `package-lock.json` | `package-lock.json` plan item includes `protected:true`. |
 | `uninstall --apply --json` without force | changed protected `package.json` mutation is listed in `refused[]` and manifest remains. |
+
+<!-- @work-item-id WI-203 -->
+## 2.11 Complete Check Wrapper Non-Target Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --dry-run --json` in a fresh downstream project | plan entries do not include `scripts/harness/cli/complete-check.ts` and Stop hook remains configured through `npx phasegate hook stop`. |
+| `reconcile --dry-run --json` in the same project | plan entries do not include `scripts/harness/cli/complete-check.ts`; no repair is proposed for the absent wrapper. |
+| `doctor --json` after install | missing `scripts/harness/cli/complete-check.ts` is not reported as setup drift. |
