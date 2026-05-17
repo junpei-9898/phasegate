@@ -36,6 +36,7 @@ async function withTempProject<T>(testFn: (projectRoot: string) => Promise<T>): 
 
 async function readGeneratedConfig(projectRoot: string): Promise<{
   phaseDependencies: { preset: string };
+  quickMode?: { allowedCategories?: string[]; relaxedGates?: string[] };
   ci?: { enabled?: boolean };
 }> {
   const raw = await readFile(join(projectRoot, "phasegate.config.json"), "utf-8");
@@ -121,6 +122,23 @@ target("initHarnessConfig", () => {
 
         // Assert
         expect(actual.ci?.enabled).toBe(true);
+      });
+    });
+
+    context("strict workflow を指定する場合", () => {
+      it("quick-implementor と整合する Quick Mode category を生成し relaxedGates は空にすること", async () => {
+        // Arrange
+        const projectName = "my-project";
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await initHarnessConfig(projectRoot, projectName, undefined, { workflow: "strict" });
+          return readGeneratedConfig(projectRoot);
+        });
+
+        // Assert
+        expect(actual.quickMode?.allowedCategories).toEqual(["bugfix", "docs", "test", "config"]);
+        expect(actual.quickMode?.relaxedGates).toEqual([]);
       });
     });
   });

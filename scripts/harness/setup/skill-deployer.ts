@@ -481,7 +481,7 @@ export async function initHarnessConfig(
     layers: {},
     quickMode: strictWorkflow
       ? {
-          allowedCategories: ["chore"],
+          allowedCategories: ["bugfix", "docs", "test", "config"],
           relaxedGates: [],
         }
       : {},

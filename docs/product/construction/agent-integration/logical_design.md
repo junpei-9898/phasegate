@@ -1548,7 +1548,11 @@ Agent-facing setup and configuration changes are exposed through CLI planning pa
 
 <!-- @work-item-id WI-201 -->
 
-When pre-tool-use full-mode enforcement blocks `phasegate.config.json`, recovery guidance must account for config-plan workflows. For config category blocks, the message should mention the reviewed `config:plan --intent retrofit-bootstrap --dry-run` path and the managed `--apply` path once available. This is guidance-only for external edit tools; the hook must not broadly allow arbitrary `Edit` / `Write` mutations of protected config files.
+When pre-tool-use full-mode enforcement blocks `phasegate.config.json`, recovery guidance must account for config-plan workflows. For config category blocks caused by over-narrowed `quickMode.allowedCategories`, the message should mention the reviewed `config:plan --intent quick-mode-relax --dry-run` path and the managed `--apply` path. Retrofit setup guidance remains reserved for retrofit planning/bootstrap changes. This is guidance-only for external edit tools; the hook must not broadly allow arbitrary `Edit` / `Write` mutations of protected config files. @work-item-id WI-204
+
+Pre-tool-use input may carry optional caller skill context (`caller_skill` or an equivalent environment variable). The hook uses this context only to tailor recovery guidance; enforcement remains based on protected-file, phase-gate, and Quick Mode classification results. When caller context is absent, the existing generic story-implementor fallback remains compatible. @work-item-id WI-202
+
+The hook's project policy applies to the project rooted by the resolved `phasegate.config.json`. Absolute write targets outside that project root are treated as runtime/user-level artifacts and are excluded from PhaseGate project checks instead of being classified as project changes. This prevents project Quick Mode policy from blocking external memory/state writes while preserving protection for project-local files. @work-item-id WI-204
 
 These planners provide guidance and validation steps. Actual enforcement remains in hooks, doctor, validate, check-ready, and git/CI backstops.
 

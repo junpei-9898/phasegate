@@ -1,7 +1,11 @@
 // @unit harness-api
 // @layer integration
+// @story H08-01
+// @work-item-id WI-204
 
 import { spawn } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -73,6 +77,44 @@ target('CLI hook dispatch (ISSUE-004 Phase B)', () => {
         const actual = await runCli(args, stdin);
         // Assert: dispatch reached pre-tool-use-hook (would have exit 2 if "Unknown command")
         expect(actual.exitCode).toBe(0);
+      }, 30000);
+    });
+
+    context('hook pre-tool-use に CWD 外 runtime path の JSON を渡した場合', () => {
+      it('project 外 absolute path は project policy 対象外としてexit 0で終了すること', async () => {
+        // Arrange
+        const projectRoot = mkdtempSync(path.join(tmpdir(), 'phasegate-external-hook-'));
+        const configWriteResult = writeFileSync(path.join(projectRoot, 'phasegate.config.json'), `${JSON.stringify({
+          project: { name: 'external-hook', preset: 'standard' },
+          architecture: { preset: 'clean' },
+          layers: {},
+          quickMode: { allowedCategories: ['bugfix'], relaxedGates: [] },
+          phaseDependencies: { preset: 'default', override: false, customRules: [] },
+          planningMode: { default: 'interactive', perPhase: {} },
+          harnesses: {},
+          paths: {
+            designDocs: 'docs/product/construction',
+            inceptionDocs: 'docs/inception',
+          },
+          reporting: { format: 'json', outputDir: 'reports' },
+        }, null, 2)}\n`, 'utf8');
+        void configWriteResult;
+        const args = ['hook', 'pre-tool-use'];
+        const stdin = JSON.stringify({
+          cwd: projectRoot,
+          tool_name: 'Write',
+          tool_input: {
+            file_path: path.join(tmpdir(), 'phasegate-external-memory.md'),
+            content: 'memory\n',
+          },
+        });
+
+        // Act
+        const actual = await runCli(args, stdin);
+
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stderr).not.toContain('Full mode 必須変更が検出されました');
       }, 30000);
     });
   });

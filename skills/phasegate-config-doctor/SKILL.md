@@ -13,7 +13,7 @@ phasegate を導入した直後の config は単純な default で、実プロ�
 
 ## 設計原則
 
-1. **silent 書き換え禁止** — 提案は diff として提示し、`AskUserQuestion` で承認を取ってから Edit
+1. **silent 書き換え禁止** — 提案は diff として提示し、`AskUserQuestion` で承認を取ってから適用する。`config:plan` で表現できる変更は managed command を優先し、直接 `Edit` は hook が許可する範囲に限定する
 2. **検出結果を優先** — 機械的に決定可能な部分 (workspace 構造、formatter、bash 互換性) は AI 推論ではなく検出結果を採用
 3. **AI 推論は判断要素のみ** — architecture preset 選定、relaxedGates 推奨値などは AI が判断するが根拠を必ず示す
 4. **schema は enum 違反確認時のみ Read** — 日常診断は本 SKILL 内の判定基準で十分。schema 全文 Read は値域不明時に限定する
@@ -200,7 +200,14 @@ options:
   - label: "適用しない (情報のみ受け取る)"
 ```
 
-ユーザーが適用対象を確定したら `Edit` で `phasegate.config.json` を変更。
+ユーザーが適用対象を確定したら、対応する managed intent がある場合は `config:plan` で適用する。
+
+```bash
+npx phasegate config:plan --intent quick-mode-relax --dry-run --json
+npx phasegate config:plan --intent quick-mode-relax --apply --json
+```
+
+managed intent がない個別提案のみ、hook が `config` category を許可していることを確認したうえで `Edit` で `phasegate.config.json` を変更する。
 
 **変更後の検証**:
 

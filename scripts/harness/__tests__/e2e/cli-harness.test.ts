@@ -285,6 +285,7 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('--dry-run');
       expect(actual.stdout).toContain('--apply');
       expect(actual.stdout).toContain('--json');
+      expect(actual.stdout).toContain('quick-mode-relax');
     });
 
     it('config:plan --intent retrofit-bootstrap は manual planning mode patch を返す', () => {
@@ -297,6 +298,49 @@ describe('harness CLI E2E', () => {
         expect.objectContaining({ pointer: '/planningMode/default', after: 'manual' }),
         expect.objectContaining({ pointer: '/phaseDependencies/override', after: true }),
       ]));
+    });
+
+    it('config:plan --intent quick-mode-relax は allowedCategories recovery patch を返す', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'relax-test');
+        expect(init.exitCode).toBe(0);
+
+        const strict = runInCwd(cwd, 'config:plan', '--intent', 'quick-mode-strict', '--apply', '--json');
+        expect(strict.exitCode).toBe(0);
+
+        return runInCwd(cwd, 'config:plan', '--intent', 'quick-mode-relax', '--json');
+      });
+
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout);
+      expect(parsed.intent).toBe('quick-mode-relax');
+      expect(parsed.configPatch.operations).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          pointer: '/quickMode/allowedCategories',
+          after: ['bugfix', 'docs', 'test', 'config'],
+        }),
+      ]));
+    });
+
+    it('config:plan --intent quick-mode-relax --apply --json は allowedCategories を復旧する', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'relax-apply-test');
+        expect(init.exitCode).toBe(0);
+
+        const strict = runInCwd(cwd, 'config:plan', '--intent', 'quick-mode-strict', '--apply', '--json');
+        expect(strict.exitCode).toBe(0);
+
+        const result = runInCwd(cwd, 'config:plan', '--intent', 'quick-mode-relax', '--apply', '--json');
+        const config = JSON.parse(readFileSync(join(cwd, 'phasegate.config.json'), 'utf-8')) as {
+          quickMode: { allowedCategories: string[] };
+        };
+        expect(config.quickMode.allowedCategories).toEqual(['bugfix', 'docs', 'test', 'config']);
+        return result;
+      });
+
+      expect(actual.exitCode).toBe(0);
+      const parsed = JSON.parse(actual.stdout);
+      expect(parsed.applyResult.changed).toBe(true);
     });
 
     it('config:plan --intent retrofit-bootstrap --apply --json は config を更新し backup を返す', () => {

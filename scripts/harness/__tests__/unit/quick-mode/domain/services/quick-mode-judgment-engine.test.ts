@@ -19,7 +19,11 @@ target('QuickModeJudgmentEngine', () => {
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.dominantCategory).toBeNull();
+        expect(actual).toMatchObject({
+          dominantCategory: null,
+          totalFiles: 0,
+        });
+        expect(actual.categorizedFiles.size).toBe(0);
       });
 
       // UT-JE-002
@@ -65,6 +69,26 @@ target('QuickModeJudgmentEngine', () => {
         const actual = engine.classify(files, config);
         // Assert
         expect(actual.hasCategory('config')).toBe(true);
+      });
+
+      it("'phasegate.config.json' は content snippet が同一でも 'config' カテゴリに分類されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: 'phasegate.config.json',
+            changeKind: 'MODIFY',
+            beforeContent: '"allowedCategories": [',
+            afterContent: '"allowedCategories": [',
+          }),
+        ];
+        const config = createQuickModeConfig({ allowedCategories: ['bugfix'] });
+
+        // Act
+        const actual = engine.classify(files, config);
+
+        // Assert
+        expect(actual.hasCategory('config')).toBe(true);
+        expect(actual.hasCategory('docs')).toBe(false);
       });
 
       // UT-JE-005
@@ -291,8 +315,11 @@ target('QuickModeJudgmentEngine', () => {
         // Act
         const actual = engine.judge(files, config);
         // Assert
-        expect(actual.isEligible()).toBe(true);
-        expect(actual.rejectionRule).toBeUndefined();
+        expect(actual).toMatchObject({
+          eligible: true,
+          rejectionRule: undefined,
+          rejectedFiles: undefined,
+        });
       });
 
       // UT-JE-016
@@ -357,10 +384,15 @@ target('QuickModeJudgmentEngine', () => {
       const files = [createChangedFile()];
       const config = createQuickModeConfig();
       // Act
-      const actual = engine.judge(files, config);
-      // Assert
-      // QuickModeEligibilityはlevelDependencyRelaxedプロパティを持たない
-      expect((actual as unknown as Record<string, unknown>)['levelDependencyRelaxed']).toBeUndefined();
+        const actual = engine.judge(files, config);
+        // Assert
+        // QuickModeEligibilityはlevelDependencyRelaxedプロパティを持たない
+        expect(actual).toMatchObject({
+          eligible: true,
+          rejectionRule: undefined,
+          rejectedFiles: undefined,
+        });
+        expect(actual).not.toHaveProperty('levelDependencyRelaxed');
     });
 
     // UT-JE-020

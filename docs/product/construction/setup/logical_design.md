@@ -46,6 +46,12 @@ Setup exposes first-run decisions as user-answerable paths rather than a raw com
 
 Setup lifecycle commands must preserve user content outside managed markers and route ambiguous merge choices through ai-assisted review instead of silent overwrite.
 
+@work-item-id WI-202
+`phasegate init --workflow strict` must not generate a Quick Mode category set that contradicts the shipped quick-implementor skill scope. Strict workflow keeps strict gate behavior through `quickMode.relaxedGates: []`, while allowed change categories remain the supported low-risk set (`bugfix`, `docs`, `test`, `config`) so small edits do not immediately lose their official Quick Mode path.
+
+@work-item-id WI-204
+`config:plan` must include an explicit relaxation/recovery intent for Quick Mode category narrowing. `quick-mode-relax` restores the supported low-risk `quickMode.allowedCategories` set and is the managed recovery path after `quick-mode-strict` or manual over-narrowing blocks direct `phasegate.config.json` edits.
+
 <!-- @work-item-id WI-176 -->
 ## WI-176 Agent-Specific Setup Readiness
 

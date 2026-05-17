@@ -22,6 +22,7 @@ import * as fs from 'node:fs/promises';
 interface PreToolUseHookInput {
   cwd?: string;
   tool_name?: string;
+  caller_skill?: string;
   tool_input?: {
     path?: string;
     file_path?: string;
@@ -50,8 +51,8 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-async function findConfigPath(): Promise<string> {
-  let dir = process.cwd();
+async function findConfigPath(startDir: string): Promise<string> {
+  let dir = startDir;
   while (true) {
     const candidate = path.join(dir, 'phasegate.config.json');
     try {
@@ -63,7 +64,11 @@ async function findConfigPath(): Promise<string> {
       dir = parent;
     }
   }
-  return path.join(process.cwd(), 'phasegate.config.json');
+  return path.join(startDir, 'phasegate.config.json');
+}
+
+function isProjectExternalAbsolutePath(filePath: string): boolean {
+  return path.isAbsolute(filePath);
 }
 
 async function main(): Promise<void> {
@@ -89,7 +94,7 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const cwd = input.cwd ?? process.cwd();
+  const cwd = path.resolve(input.cwd ?? process.cwd());
   const toRelative = (p: string): string => {
     if (path.isAbsolute(p)) {
       const rel = path.relative(cwd, p);
@@ -128,7 +133,9 @@ async function main(): Promise<void> {
   }
 
   try {
-    const configPath = await findConfigPath();
+    const configPath = await findConfigPath(cwd);
+    const projectTargetFilePaths = targetFilePaths.filter((filePath) => !isProjectExternalAbsolutePath(filePath));
+    const projectTargetChanges = targetChanges.filter((change) => !isProjectExternalAbsolutePath(change.filePath));
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const phaseGateQueryPort = new PhaseGateQueryAdapter();
     const storyReflectionQueryPort = new FileSystemStoryReflectionQueryAdapter({
@@ -154,7 +161,13 @@ async function main(): Promise<void> {
       errorGuidanceQueryPort,
     });
 
-    const output = await useCase.execute({ toolName: effectiveToolName, targetFilePaths, targetChanges });
+    const callerSkill = input.caller_skill ?? process.env.PHASEGATE_CALLER_SKILL;
+    const output = await useCase.execute({
+      toolName: effectiveToolName,
+      targetFilePaths: projectTargetFilePaths,
+      callerSkill,
+      targetChanges: projectTargetChanges,
+    });
 
     if (output.shouldBlock) {
       const msg = output.error?.message

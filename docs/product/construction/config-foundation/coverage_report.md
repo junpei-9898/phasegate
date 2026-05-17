@@ -33,7 +33,7 @@ Unit定義にはAC IDの明記がないため、既存のStory IDを識別子と
 | H04-01 | v2スキーマに `project` / `layers` / `quickMode` / `phaseDependencies` / `planningMode` / `paths` / `reporting` / `harnesses` を含む | IT-CF-043, IT-CF-044, IT-CF-077, IT-CF-079 | ○ |
 | H04-01 | `layers` セクションでL1-L4の有効/無効・バリデータ構成・閾値を設定できる | UT-CF-055-063, UT-CF-166-176, IT-CF-003, IT-CF-056-057 | ○ |
 | H04-01 | `quickMode` セクションで `allowedCategories` / `maintainedLayers` / `relaxedGates` を設定できる | UT-CF-093-103, IT-CF-043, IT-CF-077 | ○ |
-| WI-143 | `phasegate init --workflow strict` が `quickMode.allowedCategories=["chore"]` / `quickMode.relaxedGates=[]` を生成する | CLI smoke | ○ |
+| WI-143, WI-202 | `phasegate init --workflow strict` が supported Quick Mode categories / `quickMode.relaxedGates=[]` を生成する | CLI smoke, unit coverage | ○ |
 | H04-01 | JSONスキーマバリデーションを実行できる | IT-CF-005, IT-CF-011, IT-CF-043-050, IT-CF-079 | ○ |
 | H04-01 | 有効・無効なサンプル設定ファイルで検証できる | IT-CF-035-042, IT-CF-077-079 | ○ |
 | H04-02 | `minimal` Presetを定義できる | UT-CF-007, UT-CF-166, IT-CF-004, IT-CF-031, IT-CF-056 | ○ |

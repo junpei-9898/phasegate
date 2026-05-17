@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.11] - 2026-05-17
+
+### Fixed
+
+- **WI-202 / WI-204 — Quick Mode strict recovery** — aligns strict init Quick Mode categories with quick-implementor scope, adds `config:plan --intent quick-mode-relax` for managed `allowedCategories` recovery, updates config edit block guidance to the matching recovery intent, and excludes CWD-external runtime paths from project-local hook policy.
+
 ## [0.160.10] - 2026-05-16
 
 ### Fixed

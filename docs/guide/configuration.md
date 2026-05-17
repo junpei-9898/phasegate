@@ -13,9 +13,10 @@ For agent-assisted changes, preview the intent before editing the config:
 ```bash
 npx phasegate config:plan --intent l4-strict --dry-run --json
 npx phasegate config:plan --intent quick-mode-strict --dry-run --json
+npx phasegate config:plan --intent quick-mode-relax --dry-run --json
 ```
 
-The plan identifies target fields, managed artifacts, commands, validation, risks, and rollback so an agent can explain the change before applying it. <!-- @work-item-id WI-173 -->
+The plan identifies target fields, managed artifacts, commands, validation, risks, and rollback so an agent can explain the change before applying it. Use `quick-mode-relax` to restore the supported Quick Mode category set after an over-narrowed strict configuration. <!-- @work-item-id WI-173 --> <!-- @work-item-id WI-204 -->
 
 ### Full Reference
 

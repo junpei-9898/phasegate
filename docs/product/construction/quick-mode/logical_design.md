@@ -1180,3 +1180,7 @@ Quick Mode's static validator ID registry includes `L4-006` so `relaxedGates: ["
 <!-- @work-item-id WI-191 -->
 
 `config:plan --intent retrofit-bootstrap` may propose `quickMode.relaxedGates = ["phase-gate"]` only as an explicit retrofit bootstrap patch. This is a reviewed escape hatch, not an automatic quick-mode downgrade.
+
+`quickMode.allowedCategories` defaults and setup workflow presets must stay aligned with the public Quick Mode scope: `bugfix`, `docs`, `test`, and `config` are the supported low-risk categories, while `domain`, `api`, and `feature` remain non-configurable rejection categories. Strict workflow may tighten maintained/relaxed gates, but it must not emit unsupported category names such as `chore` or remove all categories that the quick-implementor skill advertises as supported. @work-item-id WI-202
+
+When an operator intentionally narrows `allowedCategories`, a managed recovery path must exist. `config:plan --intent quick-mode-relax` restores the supported category set so agents can recover from strict or over-narrowed configs without directly editing `phasegate.config.json`. @work-item-id WI-204

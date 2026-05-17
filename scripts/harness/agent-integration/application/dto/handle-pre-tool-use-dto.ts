@@ -6,6 +6,7 @@
 export interface HandlePreToolUseInput {
   toolName: string;
   targetFilePaths: string[];
+  callerSkill?: string;
   targetChanges?: {
     filePath: string;
     beforeContent?: string | null;

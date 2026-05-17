@@ -59,8 +59,8 @@ describe('HandlePreToolUseUseCase config-plan guidance', () => {
       blockedFilePath: 'phasegate.config.json',
       blockReason: 'PROTECTED_FILE',
     });
-    expect(actual.error?.message).toContain('config:plan --intent retrofit-bootstrap --dry-run --json');
-    expect(actual.error?.message).toContain('config:plan --intent retrofit-bootstrap --apply --json');
+    expect(actual.error?.message).toContain('config:plan --intent quick-mode-relax --dry-run --json');
+    expect(actual.error?.message).toContain('config:plan --intent quick-mode-relax --apply --json');
   });
 
   it('phasegate.config.json の full-mode config ブロックは story 実装ではなく config plan 復旧を案内すること', async () => {
@@ -92,8 +92,39 @@ describe('HandlePreToolUseUseCase config-plan guidance', () => {
       fullModeRejectionRule: 'MIXED_CHANGES',
       fullModeDominantCategory: 'config',
     });
-    expect(actual.error?.message).toContain('config:plan --intent retrofit-bootstrap --dry-run --json');
-    expect(actual.error?.message).toContain('config:plan --intent retrofit-bootstrap --apply --json');
+    expect(actual.error?.message).toContain('config:plan --intent quick-mode-relax --dry-run --json');
+    expect(actual.error?.message).toContain('config:plan --intent quick-mode-relax --apply --json');
+    expect(actual.error?.message).not.toContain('/story-implementor');
+  });
+
+  it('quick-implementor caller context は supported category block に quick-mode-relax guidance を返すこと', async () => {
+    const mockFullModeRequirementQueryPort = {
+      check: vi.fn().mockResolvedValue({
+        requiresFullMode: true,
+        rejectionRule: 'MIXED_CHANGES' as const,
+        rejectionReason: 'allowedCategories外のファイルが含まれています: docs/README.md',
+        dominantCategory: 'docs',
+      }),
+    };
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createDefaultMockConfigQueryPort(),
+      phaseGateQueryPort: createDefaultMockPhaseGateQueryPort(),
+      fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
+    });
+
+    const actual = await useCase.execute({
+      toolName: 'Edit',
+      targetFilePaths: ['docs/README.md'],
+      callerSkill: 'quick-implementor',
+    });
+
+    expect(actual).toMatchObject({
+      shouldBlock: true,
+      blockReason: 'FULL_MODE_REQUIRED',
+      fullModeDominantCategory: 'docs',
+    });
+    expect(actual.error?.message).toContain('Quick Mode の許可カテゴリを確認してください');
+    expect(actual.error?.message).toContain('config:plan --intent quick-mode-relax --dry-run --json');
     expect(actual.error?.message).not.toContain('/story-implementor');
   });
 });

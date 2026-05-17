@@ -26,6 +26,16 @@ const RISK_PRIORITY: Record<string, number> = {
 function categorizeFile(file: ChangedFile): ChangeCategory {
   const { filePath, changeKind } = file;
 
+  // Config files must stay config even when Edit payload snippets look like
+  // comment/whitespace-only diffs. Config recovery guidance depends on this.
+  if (
+    filePath.endsWith('.config.json') ||
+    filePath.endsWith('.config.ts') ||
+    filePath.endsWith('phasegate.config.json')
+  ) {
+    return ChangeCategory.fromString('config');
+  }
+
   if (isCommentOnlyDiff(file)) {
     return ChangeCategory.fromString('docs');
   }
@@ -52,15 +62,6 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
   // docs: docs/ 配下
   if (filePath.startsWith('docs/') || filePath.includes('/docs/')) {
     return ChangeCategory.fromString('docs');
-  }
-
-  // config: *.config.json / *.config.ts / phasegate.config.json
-  if (
-    filePath.endsWith('.config.json') ||
-    filePath.endsWith('.config.ts') ||
-    filePath.endsWith('phasegate.config.json')
-  ) {
-    return ChangeCategory.fromString('config');
   }
 
   // feature: domain/ 以外の CREATE

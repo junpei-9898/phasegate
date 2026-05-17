@@ -219,7 +219,7 @@ Gate semantics:
   refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
   p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
   setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both>, --dry-run|--apply, --json)
-  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|retrofit-bootstrap|planning-mode-relax>, --dry-run|--apply, --json)
+  config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|quick-mode-relax|retrofit-bootstrap|planning-mode-relax>, --dry-run|--apply, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
@@ -536,7 +536,7 @@ Options:
 Produce an agent-readable configuration change plan.
 
 Intents:
-  l4-strict, codex-hooks, ci-fail-on-warning, baseline-reset, quick-mode-strict, retrofit-bootstrap, planning-mode-relax
+  l4-strict, codex-hooks, ci-fail-on-warning, baseline-reset, quick-mode-strict, quick-mode-relax, retrofit-bootstrap, planning-mode-relax
 
 Options:
   --dry-run
@@ -779,7 +779,7 @@ function parseCoverageThreshold(raw: string | undefined): number {
 type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
 type AgentTarget = "claude" | "codex" | "both";
 type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
-type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict" | "retrofit-bootstrap" | "planning-mode-relax";
+type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict" | "quick-mode-relax" | "retrofit-bootstrap" | "planning-mode-relax";
 type SetupCompletenessStatus = "configured" | "planned" | "manual" | "not-applicable" | "unknown";
 
 interface SetupCompletenessEntry {
@@ -864,6 +864,7 @@ function parseConfigChangeIntent(value: string | undefined): ConfigChangeIntent 
     value === "ci-fail-on-warning" ||
     value === "baseline-reset" ||
     value === "quick-mode-strict" ||
+    value === "quick-mode-relax" ||
     value === "retrofit-bootstrap" ||
     value === "planning-mode-relax"
   ) {
@@ -1229,8 +1230,11 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
       { pointer: "/layers/L4/failOnWarning", path: ["layers", "L4", "failOnWarning"], value: true },
     ],
     "quick-mode-strict": [
-      { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["chore"] },
+      { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["bugfix"] },
       { pointer: "/quickMode/relaxedGates", path: ["quickMode", "relaxedGates"], value: [] },
+    ],
+    "quick-mode-relax": [
+      { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["bugfix", "docs", "test", "config"] },
     ],
     "codex-hooks": [],
     "baseline-reset": [],
@@ -1362,6 +1366,14 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       commands: ["phasegate config:plan --intent quick-mode-strict --apply --json", "phasegate check-change-category --paths <changed-files> --format json"],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
       risks: ["More changes will require Full Mode validation before commit."],
+    },
+    "quick-mode-relax": {
+      targets: ["phasegate.config.json: quickMode.allowedCategories"],
+      managedTargets: ["phasegate.config.json"],
+      externalActions: [],
+      commands: ["phasegate config:plan --intent quick-mode-relax --json", "phasegate config:plan --intent quick-mode-relax --apply --json", "phasegate check-change-category --paths <changed-files> --format json"],
+      validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
+      risks: ["Small bugfix/docs/test/config changes can proceed through Quick Mode again; protected files remain governed by hook and managed command policies."],
     },
     "retrofit-bootstrap": {
       targets: ["phasegate.config.json: planningMode.default", "phasegate.config.json: phaseDependencies.override", "phasegate.config.json: quickMode.relaxedGates"],
@@ -1722,7 +1734,7 @@ async function main(): Promise<void> {
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
           if (workflow === "strict") {
-            console.log(`✓ strict workflow configured (quickMode.relaxedGates: [], allowedCategories: ["chore"])`);
+            console.log(`✓ strict workflow configured (quickMode.relaxedGates: [], allowedCategories: ["bugfix","docs","test","config"])`);
           }
         } else {
           console.log(`  phasegate.config.json already exists, skipped`);
