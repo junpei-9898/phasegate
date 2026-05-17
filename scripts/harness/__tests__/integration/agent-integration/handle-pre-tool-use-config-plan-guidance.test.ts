@@ -2,6 +2,7 @@
 // @layer application
 // @story H11-02
 // @work-item-id WI-201
+// @work-item-id WI-202 / WI-204
 
 import { describe, expect, it, vi } from 'vitest';
 import { HandlePreToolUseUseCase } from '../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js';

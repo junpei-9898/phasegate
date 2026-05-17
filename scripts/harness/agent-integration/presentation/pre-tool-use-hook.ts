@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit agent-integration
+ * @work-item-id WI-202 / WI-204
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント

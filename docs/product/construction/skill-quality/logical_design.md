@@ -1953,6 +1953,10 @@ Skill-quality tools may read legacy `@story-id` annotations to preserve old casc
 
 Skill-quality remains responsible for bundled skill content and structure validation, not for mutating `AGENTS.md` or `CLAUDE.md` directly.
 
+### WI-204 Config Doctor Managed Recovery
+
+`phasegate-config-doctor` must prefer managed configuration plans when a supported intent exists. For Quick Mode category recovery, the skill routes agents to `phasegate config:plan --intent quick-mode-relax --dry-run --json` for review and `--apply --json` after approval, rather than treating direct `Edit` of `phasegate.config.json` as the universal official path. Direct edits remain limited to hook-compatible cases where no managed intent applies. @work-item-id WI-204
+
 <!-- @work-item-id WI-156 -->
 ## WI-156 Validator Registry Bridge Refresh
 

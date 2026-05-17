@@ -1,6 +1,7 @@
 // @unit quick-mode
 // @layer test
 // @story H10-06
+// @work-item-id WI-204
 import { describe, expect, it } from 'vitest';
 import { target, context, createChangedFile, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { QuickModeJudgmentEngine } from '../../../../../quick-mode/domain/services/quick-mode-judgment-engine.js';

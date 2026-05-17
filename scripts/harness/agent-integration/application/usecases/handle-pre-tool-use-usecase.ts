@@ -3,6 +3,7 @@
  * @unit agent-integration
  * @story H11-02
  * @work-item-id WI-201
+ * @work-item-id WI-202 / WI-204
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション

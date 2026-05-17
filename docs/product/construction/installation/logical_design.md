@@ -565,3 +565,7 @@ Uninstall planning marks protected package metadata paths with `protected:true` 
 <!-- @work-item-id WI-203 -->
 
 Install and reconcile do not manage `scripts/harness/cli/complete-check.ts` as a downstream target. The built-in Stop hook calls the packaged canonical CLI command instead. Therefore a missing downstream wrapper is not a doctor/install/reconcile repair item, and setup plans should not ask users to create that file for the standard `phasegate:complete-check` flow.
+
+## WI-202 Strict Quick Mode Install Defaults
+
+`phasegate init --workflow strict` installs a strict workflow without contradicting the bundled quick-implementor scope. The generated `phasegate.config.json` keeps `quickMode.relaxedGates: []` for stricter gates and emits `quickMode.allowedCategories: ["bugfix", "docs", "test", "config"]` so the installed project has an official Quick Mode path for small bugfix, docs, test, and config changes. @work-item-id WI-202

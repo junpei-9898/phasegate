@@ -1389,6 +1389,8 @@ Operational scanner details such as L3-002 `largeLiteralEntries`, sync I/O detec
 
 `config:plan` is a planning surface for configuration changes, not a config mutation use case. It maps operator intent (`l4-strict`, `codex-hooks`, `ci-fail-on-warning`, `baseline-reset`, `quick-mode-strict`, `quick-mode-relax`) to the config paths, managed setup targets, commands, risks, rollback, and validation checks that an agent must explain before editing. @work-item-id WI-204
 
+The strict Quick Mode category baseline remains aligned with the public quick-implementor scope. Config-foundation treats `bugfix`, `docs`, `test`, and `config` as the supported low-risk category set for generated defaults and recovery plans; unsupported labels such as `chore` must not become emitted defaults. @work-item-id WI-202
+
 Config-foundation remains the owner of schema and resolved config behavior. The planner must not invent schema fields; when a change requires mutation, the agent applies an explicit diff and then runs the planner-listed validations.
 
 <!-- @work-item-id WI-172 -->

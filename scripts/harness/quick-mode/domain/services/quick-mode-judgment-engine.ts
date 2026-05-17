@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit quick-mode
+ * @work-item-id WI-204
  *
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */

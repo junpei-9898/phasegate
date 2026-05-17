@@ -14,6 +14,7 @@
  * @work-item-id WI-197
  * @work-item-id WI-200
  * @work-item-id WI-201
+ * @work-item-id WI-202 / WI-204
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。

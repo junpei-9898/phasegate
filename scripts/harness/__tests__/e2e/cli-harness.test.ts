@@ -17,6 +17,7 @@
  * @work-item-id WI-197
  * @work-item-id WI-200
  * @work-item-id WI-201
+ * @work-item-id WI-202 / WI-204
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
