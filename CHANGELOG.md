@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.12] - 2026-05-20
+
+### Added
+
+- **WI-206 — hook-visible Full Mode sessions** — adds `phasegate session begin/end` for TTL-scoped Full Mode authorization, lets PreToolUse allow matching unit/category edits through `.phasegate/session.json`, updates `/story-implementor` to use the session route, and improves full-mode block guidance so users are not sent to a guide-only route.
+
 ## [0.160.11] - 2026-05-17
 
 ### Fixed

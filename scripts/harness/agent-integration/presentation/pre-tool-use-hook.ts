@@ -2,6 +2,7 @@
  * @layer presentation
  * @unit agent-integration
  * @work-item-id WI-202 / WI-204
+ * @work-item-id WI-206
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -16,6 +17,7 @@ import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapter
 import { QuickModeFullModeRequirementAdapter } from '../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
 import { CiGovernanceBaselineGrandfatherAdapter } from '../infrastructure/adapters/ci-governance-baseline-grandfather-adapter.js';
 import { HarnessErrorGuidanceAdapter } from '../infrastructure/adapters/harness-error-guidance-adapter.js';
+import { FileSystemFullModeSessionQueryAdapter } from '../infrastructure/adapters/file-system-full-mode-session-query-adapter.js';
 import { createQuickModeCompositionRoot } from '../../quick-mode/composition-root.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
@@ -153,6 +155,10 @@ async function main(): Promise<void> {
     const errorGuidanceQueryPort = new HarnessErrorGuidanceAdapter({
       rootDir: path.dirname(configPath),
     });
+    const fullModeSessionQueryPort = new FileSystemFullModeSessionQueryAdapter({
+      rootDir: path.dirname(configPath),
+      configQueryPort,
+    });
     const useCase = new HandlePreToolUseUseCase({
       configQueryPort,
       phaseGateQueryPort,
@@ -160,6 +166,7 @@ async function main(): Promise<void> {
       fullModeRequirementQueryPort,
       baselineGrandfatherQueryPort,
       errorGuidanceQueryPort,
+      fullModeSessionQueryPort,
     });
 
     const callerSkill = input.caller_skill ?? process.env.PHASEGATE_CALLER_SKILL;
@@ -183,6 +190,12 @@ async function main(): Promise<void> {
       const cat = output.quickModeAllowed.dominantCategory;
       const suffix = cat !== undefined && cat !== '' ? `, category=${cat}` : '';
       process.stderr.write(`phasegate: write allowed (Quick Mode${suffix})\n`);
+    }
+    if (output.fullModeSessionAllowed !== undefined) {
+      const session = output.fullModeSessionAllowed;
+      const workItem = session.workItemId !== undefined ? `, workItem=${session.workItemId}` : '';
+      const unit = session.unit !== undefined ? `, unit=${session.unit}` : '';
+      process.stderr.write(`phasegate: write allowed (Full Mode session${workItem}${unit})\n`);
     }
 
     process.exit(0);

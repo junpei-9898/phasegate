@@ -4,6 +4,7 @@
  * @story H11-02
  * @work-item-id WI-201
  * @work-item-id WI-202 / WI-204
+ * @work-item-id WI-206
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -15,6 +16,10 @@ import type {
 } from "../../domain/ports/baseline-grandfather-query-port.js";
 import type { ConfigQueryPort } from "../../domain/ports/config-query-port.js";
 import type { ErrorGuidance, ErrorGuidanceQueryPort } from "../../domain/ports/error-guidance-query-port.js";
+import type {
+  FullModeSessionQueryPort,
+  FullModeSessionQueryResult,
+} from "../../domain/ports/full-mode-session-query-port.js";
 import type { FullModeRequirementQueryPort } from "../../domain/ports/full-mode-requirement-query-port.js";
 import type { PhaseGateQueryPort } from "../../domain/ports/phase-gate-query-port.js";
 import type { StoryReflectionQueryPort } from "../../domain/ports/story-reflection-query-port.js";
@@ -32,6 +37,7 @@ export interface HandlePreToolUseUseCasePorts {
   baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
   grandfatherLogger?: (reason: string, targetFilePaths: readonly string[]) => void;
   errorGuidanceQueryPort?: ErrorGuidanceQueryPort;
+  fullModeSessionQueryPort?: FullModeSessionQueryPort;
 }
 
 export class HandlePreToolUseInputValidationError extends Error {
@@ -57,6 +63,7 @@ export class HandlePreToolUseUseCase {
   private readonly fullModeRequirementQueryPort?: FullModeRequirementQueryPort;
   private readonly baselineGrandfatherQueryPort?: BaselineGrandfatherQueryPort;
   private readonly errorGuidanceQueryPort?: ErrorGuidanceQueryPort;
+  private readonly fullModeSessionQueryPort?: FullModeSessionQueryPort;
   private readonly grandfatherLogger: (reason: string, targetFilePaths: readonly string[]) => void;
 
   constructor(ports: HandlePreToolUseUseCasePorts) {
@@ -66,6 +73,7 @@ export class HandlePreToolUseUseCase {
     this.fullModeRequirementQueryPort = ports.fullModeRequirementQueryPort;
     this.baselineGrandfatherQueryPort = ports.baselineGrandfatherQueryPort;
     this.errorGuidanceQueryPort = ports.errorGuidanceQueryPort;
+    this.fullModeSessionQueryPort = ports.fullModeSessionQueryPort;
     this.grandfatherLogger =
       ports.grandfatherLogger ??
       ((reason, paths) => process.stderr.write(`[baseline] grandfather skip (${reason}): ${paths.join(", ")}\n`));
@@ -150,12 +158,27 @@ export class HandlePreToolUseUseCase {
           input.targetChanges,
         );
         if (fullModeResult.requiresFullMode) {
+          const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
+          const sessionResult = await this.checkFullModeSession(
+            input.targetFilePaths,
+            unitIdForGuidance,
+            fullModeResult.dominantCategory,
+          );
+          if (sessionResult.allowed) {
+            return {
+              shouldBlock: false,
+              fullModeSessionAllowed: {
+                workItemId: sessionResult.workItemId,
+                unit: sessionResult.unit,
+                expiresAt: sessionResult.expiresAt,
+              },
+            };
+          }
           // ISSUE-021: 当該Unitの必須設計文書が揃っている場合は full mode block を bypass
           //（hook がスキルコンテキストを参照できない構造的ギャップへの対処）
           const bypassedByDesignDocs = await this.isFullModeBypassedByDesignDocs(input.targetFilePaths);
           if (!bypassedByDesignDocs) {
             const guidance = await this.resolveGuidance("L2-001");
-            const unitIdForGuidance = this.deriveUnitIdFromPaths(input.targetFilePaths);
             return HandlePreToolUseUseCase.buildFullModeRequiredBlockOutput(
               input.targetFilePaths[0],
               fullModeResult,
@@ -225,6 +248,25 @@ export class HandlePreToolUseUseCase {
       return await this.errorGuidanceQueryPort.getGuidance(errorCode);
     } catch {
       return null;
+    }
+  }
+
+  private async checkFullModeSession(
+    targetFilePaths: readonly string[],
+    unitId: string | undefined,
+    dominantCategory: string | undefined,
+  ): Promise<FullModeSessionQueryResult> {
+    if (this.fullModeSessionQueryPort === undefined) {
+      return { active: false, allowed: false };
+    }
+    try {
+      return await this.fullModeSessionQueryPort.check({
+        targetFilePaths,
+        unitId,
+        dominantCategory,
+      });
+    } catch {
+      return { active: false, allowed: false };
     }
   }
 
@@ -305,6 +347,12 @@ export class HandlePreToolUseUseCase {
     }
     const suggestedSkill = guidance?.suggestedSkill ?? "/story-implementor";
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
+    if (unitId !== undefined && unitId !== "") {
+      lines.push(
+        `  実装フェーズ開始時: phasegate session begin --mode full --unit ${unitId} --work-item <WI-XXX> --reason "<reason>" --duration 1h`,
+      );
+      lines.push("  実装完了時: phasegate session end --work-item <WI-XXX>");
+    }
     HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance, unitId);
 
     return {

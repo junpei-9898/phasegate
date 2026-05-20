@@ -1554,6 +1554,8 @@ Pre-tool-use input may carry optional caller skill context (`caller_skill` or an
 
 The hook's project policy applies to the project rooted by the resolved `phasegate.config.json`. Absolute write targets outside that project root are treated as runtime/user-level artifacts and are excluded from PhaseGate project checks instead of being classified as project changes. This prevents project Quick Mode policy from blocking external memory/state writes while preserving protection for project-local files. @work-item-id WI-204
 
+Full-mode-required edits need a hook-visible authorization path that is independent from skill prose. `phasegate session begin --mode full --unit <unit> --work-item <WI-XXX> --reason <text> --duration <ttl>` writes `.phasegate/session.json`; PreToolUse reads that file before returning `FULL_MODE_REQUIRED` and allows only unexpired sessions whose unit and category match the current target paths. `phasegate session end --work-item <WI-XXX>` removes the marker. `/story-implementor` may instruct users to run these commands, but the hook must trust only the session marker and existing design-doc bypass, not the caller skill name. @work-item-id WI-206
+
 These planners provide guidance and validation steps. Actual enforcement remains in hooks, doctor, validate, check-ready, and git/CI backstops.
 
 ### WI-175 Agent-Readable Setup Confidence

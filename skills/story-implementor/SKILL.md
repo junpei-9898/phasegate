@@ -263,6 +263,23 @@ TDD実装の順序・スコープ・不明点を整理し、人間の承認を�
 ### 開始条件
 - 人間がPhase 1の計画を承認した
 - QAセクションの全[Question]に[Answer]が記入されている（QAがある場合）
+- Quick Mode の許可カテゴリ外（domain/application/infrastructure/presentation/config）を変更する場合、実装前に hook-visible Full Mode session を開始している
+
+### Full Mode session
+
+Quick Mode の許可カテゴリ外を変更する Phase 2 では、手作業で `quickMode.allowedCategories` を広げない。以下の CLI で対象 Unit / WI に限定した一時 session を作成し、実装完了時に終了する。
+
+```bash
+phasegate session begin --mode full --unit <unit> --work-item <WI-XXX> --reason "story-implementor Phase 2" --duration 1h
+```
+
+実装完了または中断時:
+
+```bash
+phasegate session end --work-item <WI-XXX>
+```
+
+PreToolUse hook は `.phasegate/session.json` の TTL・unit・カテゴリを検証する。スキル名だけでは hook 通過の根拠にならない。
 
 ### ワークフロー
 

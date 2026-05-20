@@ -30,4 +30,9 @@ export interface HandlePreToolUseOutput {
   quickModeAllowed?: {
     dominantCategory?: string;
   };
+  fullModeSessionAllowed?: {
+    workItemId?: string;
+    unit?: string;
+    expiresAt?: string;
+  };
 }

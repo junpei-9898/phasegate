@@ -29,6 +29,7 @@ Command names in this document are split into three surfaces:
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to current package templates and refresh manifest hashes; `--force` allows managed-file replacement with backup. |
 | `setup:agent` | Agent-readable setup planner and optional apply path. Options: `--intent <minimal\|recommended\|strict\|ci-only\|agent-hooks\|retrofit>`, `--agent <claude\|codex\|both>`, `--workflow <standard\|strict>`, `--with-husky`, `--with-ci`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-172 --> |
 | `config:plan` | Agent-readable configuration change planner. Options: `--intent <l4-strict\|codex-hooks\|ci-fail-on-warning\|baseline-reset\|quick-mode-strict\|quick-mode-relax\|retrofit-bootstrap\|planning-mode-relax>`, `--dry-run`, `--apply`, `--json`. <!-- @work-item-id WI-173 --> <!-- @work-item-id WI-201 --> <!-- @work-item-id WI-204 --> |
+| `session begin` / `session end` | Hook-visible Full Mode session manager. Use `session begin --mode full --unit <unit> --work-item <WI-XXX> --reason <text> --duration <ttl>` before implementation that must touch Quick Mode disallowed categories, and `session end --work-item <WI-XXX>` after completion. <!-- @work-item-id WI-206 --> |
 | `update-skills` | Compatibility alias for `reconcile`; use `reconcile` for new automation. |
 | `scaffold-wi <unit> <type>` | Create `docs/inception/{unit}/WI-XXX/description.md` using the next free WI number. |
 | `emit-agent-rules` | Print the AGENTS.md / CLAUDE.md WI workflow rules block. |

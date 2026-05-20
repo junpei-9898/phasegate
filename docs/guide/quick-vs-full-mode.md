@@ -62,6 +62,15 @@ Even when you launch `/quick-implementor`, the harness re-checks whether the in-
 
 Introduced in v0.63.0 (ISSUE-006 Story A — config-driven flags + `check-change-category` CLI) and wired into the hook in v0.64.0 (Story B). Each flag can be flipped to `false` only when a project intentionally accepts the risk of merging that category of change without the design ceremony — e.g. early-stage prototypes where new domain files churn freely.
 
+When the escalation is intentional, do not widen `quickMode.allowedCategories` by hand. Start a hook-visible Full Mode session for the approved Unit/WI before the implementation step, then end it after completion:
+
+```bash
+npx phasegate session begin --mode full --unit <unit> --work-item <WI-XXX> --reason "story-implementor Phase 2" --duration 1h
+npx phasegate session end --work-item <WI-XXX>
+```
+
+The PreToolUse hook validates `.phasegate/session.json` by TTL, unit, and dominant category. The `/story-implementor` skill is still the design/TDD guide; the session marker is the authorization the hook can actually observe. <!-- @work-item-id WI-206 -->
+
 ### Dry-running the classifier
 
 Use `check-change-category` to evaluate an arbitrary file list without actually starting an implementation:

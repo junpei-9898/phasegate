@@ -1978,6 +1978,12 @@ For Claude-only or Codex-only setup, guidance skills should distinguish scoped d
 
 Both skills route agents away from repeated setup once local readiness is complete and toward WI planning, product reflection, validation, and commit preparation.
 
+## WI-206 Story Implementor Full Mode Session Preamble
+
+<!-- @work-item-id WI-206 -->
+
+`story-implementor` remains a planning and TDD execution guide, but Phase 2 guidance must create hook-visible authorization before touching Quick Mode disallowed categories. The skill instructs agents to run `phasegate session begin --mode full --unit <unit> --work-item <WI-XXX> --reason "story-implementor Phase 2" --duration 1h` at implementation start and `phasegate session end --work-item <WI-XXX>` at completion or interruption. The skill text is not itself an authorization signal; PreToolUse trusts the session marker.
+
 <!-- @work-item-id WI-179 -->
 ## WI-179 Scoped-Out Repair Guidance in Skills
 

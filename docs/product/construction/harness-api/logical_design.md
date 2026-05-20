@@ -1921,3 +1921,9 @@ The public CLI should add an apply variant for applicable config plans without w
 <!-- @work-item-id WI-203 -->
 
 `phasegate:complete-check` remains the public canonical command for L2-L4 Complete Check. Internal consumers such as agent-integration must dispatch this command through the packaged CLI entrypoint or command registry rather than inventing a separate project-local wrapper requirement. This preserves the public CLI contract for package installs, source checkouts, and downstream projects initialized by `phasegate init`.
+
+## WI-206 Full Mode Session CLI
+
+<!-- @work-item-id WI-206 -->
+
+The public CLI exposes `phasegate session begin` and `phasegate session end` as the managed surface for hook-visible Full Mode authorization. `session begin --mode full --unit <unit> --work-item <WI-XXX> --reason <text> --duration <ttl>` writes `.phasegate/session.json` with a finite expiry and the allowed full-mode layer categories. `session end --work-item <WI-XXX>` removes the marker and may refuse a mismatched work item. The command is intentionally explicit so agents can avoid hand-editing `quickMode.allowedCategories`.

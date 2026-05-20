@@ -29,6 +29,7 @@
 | ProtectedFileList | 値オブジェクト | PreToolUseでブロック対象とするファイルパスパターンリスト（matches()メソッド付き） |
 | HookTranslationResult | 値オブジェクト | HookEvent→CLIコマンド変換結果（shouldBlock/cliCommand?/cliArgs/expectedExitCode/skipReason?/timeoutMs?） |
 | HookSkipEvent | 値オブジェクト | hook skip observability の append-only record。`hookType`, `reason`, `targetPaths`, `timestamp` を保持し、`.phasegate/hook-skip-events.jsonl` に記録される。@work-item-id WI-166 |
+| FullModeSession | 値オブジェクト | `mode`, `unit`, `workItemId`, `allowedCategories`, `reason`, `startedAt`, `expiresAt` を持つ hook-visible authorization marker。`.phasegate/session.json` に保存され、PreToolUse の full-mode-required 判定を TTL・unit・category で限定的に bypass する。@work-item-id WI-206 |
 | FallbackCapabilitySpec | 値オブジェクト | CLI/FSフォールバック仕様の宣言（supportedCommands[]/noAgentApiImports） |
 | WriteTargetScope | 値オブジェクト | ファイルパスから推定されたフェーズゲートスコープ。`level: 1\|2\|3`, `unitId?: string`, `storyId?: string` を保持。storyId は US ID / issue ID / WI ID を格納する（v2.2.0追加、ISSUE-026で `_cross/WI-*` 対応） |
 | ProjectPaths | 値オブジェクト | `phasegate.config.json` の `project.paths` セクションを型安全に保持。`source: string[]`, `docs.construction: string`, `docs.inception: string`（v2.2.0追加） |
@@ -136,6 +137,7 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | ConfigQueryPort | HarnessConfigV2からHook有効/無効設定・保護対象ファイルパターン・プロジェクトパス取得。v2.2.0で `getProjectPaths(): ProjectPaths` 追加、`checkDesignDocsExist()` 削除 | HookToCliTranslator |
 | PhaseGateQueryPort | phase-dependency-modelの `checkPhaseGate()` を呼び出す契約。`checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult>`（v2.2.0追加） | HookToCliTranslator（AsyncHookToCliTranslator） |
 | HookSkipEventRecorderPort | hook skip event を best-effort で append する。write failure は元 hook result を変更せず、必要なら debug log に限定する。@work-item-id WI-166 | HandlePostToolUseUseCase, HandleStopUseCase |
+| FullModeSessionQueryPort | `.phasegate/session.json` から full-mode session を読み取り、現在の target paths / unit / dominant category が許可範囲内かを判定する。期限切れ・unit 不一致・カテゴリ不一致・不正 JSON は fail closed。@work-item-id WI-206 | HandlePreToolUseUseCase |
 
 ---
 

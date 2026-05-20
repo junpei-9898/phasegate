@@ -74,6 +74,14 @@
 | IT-UC-HandlePreToolUse-008 | biome.jsonブロック時、result.error.messageにブロックされたファイル名（biome.json）が含まれること | `{ toolName: 'str_replace_editor', targetFilePaths: ['biome.json'] }` | ConfigQueryPort: getProtectedFilePatterns=[]を返す | `result.shouldBlock=true` かつ HarnessErrorの`message`または`details`に `"biome.json"` が含まれること |
 | WI015-IT-001 | Edit hook 由来のコメントのみ API パス変更 | `{ toolName: 'Edit', targetFilePaths: ['.../some-port.ts'], targetChanges: [{ beforeContent, afterContent }] }` | FullModeRequirementQueryPort: targetChanges を受け取り `requiresFullMode=false` を返す | `shouldBlock=false` かつ Quick Mode 許可情報が返ること |
 
+`HandlePreToolUseUseCase` は full-mode-required 判定で product design-doc bypass が成立しない場合でも、`FullModeSessionQueryPort` が active/allowed を返せば `FULL_MODE_REQUIRED` を返さず通過させる。session は `unit`, `dominantCategory`, TTL を検証し、不一致または期限切れなら従来通り block する。@work-item-id WI-206
+
+| ID | 条件 | 入力 | Mock | 期待 |
+|----|------|------|------|------|
+| WI206-IT-001 | full-mode session が対象 unit/category を許可 | `scripts/harness/some-unit/domain/new-entity.ts` | FullModeRequirement: `requiresFullMode=true, dominantCategory=domain`; DesignDocs: false; FullModeSession: allowed | `shouldBlock=false`, `fullModeSessionAllowed` あり |
+| WI206-IT-002 | session が期限切れまたは不一致 | 同上 | FullModeSession: `allowed=false` | `FULL_MODE_REQUIRED` block |
+| WI206-IT-003 | CLI begin/end | `phasegate session begin ...`, `phasegate session end ...` | 実FS | `.phasegate/session.json` が作成・削除される |
+
 ### 2.3 HandlePostToolUseUseCase（H11-03対応）
 
 **テスト方針**: Domainモデル実体を使用。ConfigQueryPortとCliExecutorPortをモックとする。

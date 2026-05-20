@@ -28,6 +28,7 @@ import {
   readdir as fsReaddir,
   readlink as fsReadlink,
   rename as fsRename,
+  rm as fsRm,
   writeFile as fsWriteFile,
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -181,6 +182,7 @@ Commands:
   migrate                      Migrate phasegate.config.json (--schema v3, --config <path>)
   migrate work-items           Migrate legacy inception work item directories (--dry-run|--apply)
   work-items:status            Report or apply derived WI frontmatter status (--dry-run|--apply, --id, --fail-on-stale, --json)
+  session begin|end            Manage hook-visible Full Mode sessions
 
   render-errors                Render harness errors (--format human|agent|ci)
   validate-fix                 Validate fix examples (--code <code>)
@@ -224,6 +226,8 @@ Gate semantics:
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
+  session begin                Start a Full Mode session (--mode full, --unit, --work-item, --reason, --duration)
+  session end                  End a Full Mode session (--work-item)
 
   skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed)
   skill:check-coverage         Check coverage (--story <storyId>, --json)
@@ -477,6 +481,109 @@ function validateKnownFlags(args: readonly string[], known: readonly string[]): 
   return null;
 }
 
+const FULL_MODE_SESSION_ALLOWED_CATEGORIES = Object.freeze([
+  "domain",
+  "application",
+  "infrastructure",
+  "presentation",
+  "config",
+]);
+
+interface FullModeSessionFile {
+  readonly mode: "full";
+  readonly unit: string;
+  readonly workItemId: string;
+  readonly allowedCategories: readonly string[];
+  readonly reason: string;
+  readonly startedAt: string;
+  readonly expiresAt: string;
+}
+
+function parseSessionDurationMs(raw: string | undefined): number {
+  const value = raw ?? "1h";
+  const match = value.match(/^(\d+)(s|m|h)$/);
+  if (match === null) {
+    throw new Error("Invalid --duration. Use values like 30m, 1h, or 3600s.");
+  }
+  const amount = Number(match[1]);
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    throw new Error("Invalid --duration. Duration must be a positive integer.");
+  }
+  const unit = match[2];
+  const multiplier = unit === "s" ? 1_000 : unit === "m" ? 60_000 : 3_600_000;
+  return amount * multiplier;
+}
+
+function validateWorkItemId(value: string | undefined): string {
+  if (value === undefined || !/^WI-\d+$/.test(value)) {
+    throw new Error("--work-item must be a WI id such as WI-206.");
+  }
+  return value;
+}
+
+function validateSessionUnit(value: string | undefined): string {
+  if (value === undefined || !/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(value)) {
+    throw new Error("--unit must be a non-empty unit id.");
+  }
+  return value;
+}
+
+async function readFullModeSession(sessionPath: string): Promise<FullModeSessionFile | null> {
+  try {
+    return JSON.parse(await fsReadFile(sessionPath, "utf8")) as FullModeSessionFile;
+  } catch {
+    return null;
+  }
+}
+
+async function beginFullModeSession(rootDir: string, args: readonly string[]): Promise<FullModeSessionFile> {
+  if ((parseFlag(args, "--mode") ?? "full") !== "full") {
+    throw new Error("--mode must be full.");
+  }
+  const unit = validateSessionUnit(parseFlag(args, "--unit"));
+  const workItemId = validateWorkItemId(parseFlag(args, "--work-item"));
+  const reason = parseFlag(args, "--reason");
+  if (reason === undefined || reason.trim() === "") {
+    throw new Error("--reason is required.");
+  }
+  const startedAt = new Date();
+  const expiresAt = new Date(startedAt.getTime() + parseSessionDurationMs(parseFlag(args, "--duration")));
+  const session: FullModeSessionFile = {
+    mode: "full",
+    unit,
+    workItemId,
+    allowedCategories: FULL_MODE_SESSION_ALLOWED_CATEGORIES,
+    reason,
+    startedAt: startedAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+  };
+  const phasegateDir = join(rootDir, ".phasegate");
+  await fsMkdir(phasegateDir, { recursive: true });
+  await fsWriteFile(join(phasegateDir, "session.json"), `${JSON.stringify(session, null, 2)}\n`, "utf8");
+  return session;
+}
+
+async function endFullModeSession(
+  rootDir: string,
+  args: readonly string[],
+): Promise<{ removed: boolean; session: FullModeSessionFile | null }> {
+  const sessionPath = join(rootDir, ".phasegate", "session.json");
+  const session = await readFullModeSession(sessionPath);
+  const requestedWorkItemId = parseFlag(args, "--work-item");
+  if (requestedWorkItemId !== undefined && session?.workItemId !== requestedWorkItemId) {
+    throw new Error(`Active session work item is ${session?.workItemId ?? "<none>"}, not ${requestedWorkItemId}.`);
+  }
+  try {
+    await fsRm(sessionPath);
+    return { removed: true, session };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { removed: false, session: null };
+    }
+    throw error;
+  }
+}
+
 const SUBCOMMAND_HELP: Record<string, string> = {
   init: `Usage: phasegate init [options]
 
@@ -662,6 +769,22 @@ Options:
   --dry-run                  Preview target and template without writing (default).
   --apply                    Write the scaffold.
   --force                    Overwrite an existing target when applying.
+  --json                     Output machine-readable JSON.
+  --help, -h                 Show this help`,
+  session: `Usage: phasegate session <begin|end> [options]
+
+Manage hook-visible Full Mode sessions.
+
+Begin options:
+  --mode full                Required session mode.
+  --unit <id>                Unit id allowed by the session.
+  --work-item <WI-XXX>       Work item authorizing the session.
+  --reason <text>            Human-readable reason for audit.
+  --duration <ttl>           TTL such as 30m, 1h, or 3600s. Default: 1h.
+  --json                     Output machine-readable JSON.
+
+End options:
+  --work-item <WI-XXX>       Optional safety check before removing the session.
   --json                     Output machine-readable JSON.
   --help, -h                 Show this help`,
   "ci:generate-template": `Usage: phasegate ci:generate-template [options]
@@ -2079,6 +2202,61 @@ async function main(): Promise<void> {
           for (const validation of plan.validations) console.log(`- ${validation}`);
         }
         process.exit(0);
+        break;
+      }
+
+      case "session": {
+        const subcommand = args[1];
+        const knownFlags = ["--mode", "--unit", "--work-item", "--reason", "--duration", "--json"];
+        const flagError = validateKnownFlags(args.slice(2), knownFlags);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        if (subcommand === "begin") {
+          try {
+            const session = await beginFullModeSession(rootDir, args);
+            if (json) {
+              console.log(JSON.stringify({ ok: true, sessionPath: ".phasegate/session.json", session }, null, 2));
+            } else {
+              console.log(
+                `Full Mode session started: ${session.workItemId} unit=${session.unit} expiresAt=${session.expiresAt}`,
+              );
+            }
+            process.exit(0);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (json) {
+              console.log(JSON.stringify({ ok: false, error: message }, null, 2));
+            } else {
+              console.error(`Error: ${message}`);
+            }
+            process.exit(2);
+          }
+        }
+        if (subcommand === "end") {
+          try {
+            const result = await endFullModeSession(rootDir, args);
+            if (json) {
+              console.log(JSON.stringify({ ok: true, ...result }, null, 2));
+            } else if (result.removed) {
+              console.log(`Full Mode session ended: ${result.session?.workItemId ?? "<unknown>"}`);
+            } else {
+              console.log("No Full Mode session was active.");
+            }
+            process.exit(0);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (json) {
+              console.log(JSON.stringify({ ok: false, error: message }, null, 2));
+            } else {
+              console.error(`Error: ${message}`);
+            }
+            process.exit(2);
+          }
+        }
+        console.error("Error: session subcommand must be begin or end.");
+        process.exit(2);
         break;
       }
 
