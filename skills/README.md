@@ -16,6 +16,8 @@
 
 `.agent/skills` は旧 setup 由来の互換パスです。新規導入では管理対象にしません。<!-- @work-item-id WI-157 -->
 
+`phasegate install --personal` はチーム所有リポジトリでの個人評価用です。このモードでは `.claude/skills` / `.codex/skills` のリンクを作成せず、`.phasegate-local/config.json` と `.git/info/exclude` の local-only managed block だけを扱います。通常の共有導入が必要になった時点で `phasegate install --dry-run` / `phasegate install --apply` を使います。<!-- @work-item-id WI-207 -->
+
 ## 新しいスキルの追加
 
 新しいスキルを追加する場合は、この `skills` ディレクトリに直接追加してください。あわせて `docs/guide/skills-overview.md`、README の skill 数、必要なら `skills/phasegate-toolkit-guide/SKILL.md` の参照先を更新します。シンボリックリンクを通じて、対応エージェントから利用可能になります。<!-- @work-item-id WI-154 -->

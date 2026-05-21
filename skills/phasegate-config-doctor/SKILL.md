@@ -35,6 +35,8 @@ phasegate を導入した直後の config は単純な default で、実プロ�
 | hook config | `.claude/scripts/hook-config.json` | 既存 hook 設定確認 |
 | doctor report | 明示された report path、またはユーザーが指定した `.phasegate/last-doctor-report.json` | `repairMode` / `repairHint` / `suggestedSkill` の確認 |
 | manifest | `.phasegate/manifest.json` | install / reconcile / uninstall の managed target と hash 状態確認 |
+| personal config | `.phasegate-local/config.json` | `install --personal` の local-only 設定確認 |
+| git local exclude | `.git/info/exclude` | `install --personal` の repository-local ignore block 確認 |
 | Claude hooks | `.claude/settings.json` | managed hook JSON と user customization の確認 |
 | Codex hooks | `.codex/hooks.json` | managed hook JSON と Codex hook 配線確認 |
 | Husky scripts | `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push` | pre-commit backstop と bypass audit の確認 |
@@ -127,6 +129,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 #### 観点 9: setup lifecycle と doctor finding
 
 - `phasegate doctor --json` の finding に `repairMode: "ai-assisted"` と `suggestedSkill.skillName = "phasegate-config-doctor"` がある → 本 skill が merge 方針、保持する user content、実行すべき `install --apply` / `--force` / `reconcile --apply` を提案する
+- チーム所有リポジトリで個人評価だけを行う相談では、通常の `install --apply` ではなく `phasegate install --personal --dry-run` を先に提案する。personal install は `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, `.codex/hooks.json`, skill symlink を変更対象にしない。変更対象は `.phasegate-local/config.json`, `.phasegate/manifest.json`, `.git/info/exclude` の managed block に限定し、Codex user-level hook setup は manual action として扱う。<!-- @work-item-id WI-207 -->
 - Claude-only / Codex-only 導入後は `phasegate doctor --agent claude --json` または `phasegate doctor --agent codex --json` を使って selected agent の readiness を読む。`scopedOutFindings` は未選択 agent の `not-applicable` 情報なので、ユーザーがその agent を導入したいと言っていない限り repair 提案にしない。`repairHint: null` / `suggestedSkill: null` は意図的な抑制で、`currentScopeRepairTarget: false` と `repairModeApplicability: "only-if-agent-selected"` は raw `repairMode` が current scope の修復指示ではないという印である。<!-- @work-item-id WI-178, WI-179, WI-180 -->
 - `repairHint` がある mechanical finding → 原則として hint のコマンドを優先し、実行前に対象ファイルと manifest の差分を確認
 - manifest parse error → `.phasegate/manifest.json` を手で修復する前に backup / uninstall / reinstall の選択肢を提示
