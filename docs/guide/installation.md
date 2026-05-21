@@ -43,7 +43,7 @@ This deploys 30 skills to `skills/`, creates the agent-facing skill links (for e
 For Codex, project initialization stops at the project boundary. After `npx phasegate init --agent codex`, enable the Codex CLI feature flag manually:
 
 ```bash
-codex features enable codex_hooks
+codex features enable hooks
 ```
 
 ### Existing Projects
@@ -57,6 +57,15 @@ npx phasegate doctor
 ```
 
 `install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, creates `.claude/skills` and `.codex/skills` links, writes `CLAUDE.md` / `AGENTS.md` managed sections for selected agent targets, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 --> <!-- @work-item-id WI-174 -->
+
+For personal evaluation inside a team-owned repository:
+
+```bash
+npx phasegate install --personal --dry-run
+npx phasegate install --personal --apply
+```
+
+Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, and `.gitignore` are not touched. PhaseGate writes only local artifacts: `.phasegate-local/config.json`, `.phasegate/manifest.json`, and a managed block in `.git/info/exclude`. Codex user-level hook setup is reported as a manual action instead of writing project-local `.codex/hooks.json`. <!-- @work-item-id WI-207 -->
 
 For agent-readable planning before writing files:
 

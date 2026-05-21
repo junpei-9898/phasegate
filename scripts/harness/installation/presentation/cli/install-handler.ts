@@ -2,6 +2,7 @@
 // @layer presentation
 // @work-item-id WI-146
 // @work-item-id WI-175
+// @work-item-id WI-207
 
 import type { RunInstallUseCase } from "../../application/usecases/run-install.js";
 
@@ -20,6 +21,7 @@ export interface InstallHandlerInput {
   readonly skillSet?: "core" | "all";
   readonly workflow?: "standard" | "strict";
   readonly agent?: "claude" | "codex" | "both";
+  readonly personal?: boolean;
 }
 
 export interface InstallHandlerResult {
@@ -39,7 +41,7 @@ export class InstallHandler {
       };
     }
     const lines = [
-      input.apply ? "phasegate install apply" : "phasegate install dry-run",
+      input.apply ? `phasegate install${input.personal ? " --personal" : ""} apply` : `phasegate install${input.personal ? " --personal" : ""} dry-run`,
       ...result.plan.map((item) => {
         const hint = item.skillHint ? `; hint: ${item.skillHint}` : "";
         return `- ${item.path}: ${item.action} (${item.repairMode}, ${item.strategy}); diff: ${item.diff}${hint}`;

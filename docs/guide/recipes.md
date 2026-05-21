@@ -24,12 +24,21 @@ npx phasegate baseline --dry-run
 
 Use this when a repository already has meaningful history or custom automation. Treat any refused target as an agent-assisted review task instead of forcing it blindly.
 
+## Personal Evaluation Recipe
+
+```bash
+npx phasegate install --personal --dry-run
+npx phasegate install --personal --apply
+```
+
+Use this inside a team-owned repository when you want local PhaseGate artifacts without changing `package.json`, agent context files, Husky hooks, CI workflows, or team `.gitignore`. <!-- @work-item-id WI-207 -->
+
 ## Agent Hooks Recipe
 
 ```bash
 npx phasegate setup:agent --intent agent-hooks --agent both --with-husky --dry-run --json
 npx phasegate install --agent both --apply
-codex features enable codex_hooks
+codex features enable hooks
 npx phasegate doctor --json
 ```
 

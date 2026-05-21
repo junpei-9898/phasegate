@@ -5,6 +5,7 @@
 // @work-item-id WI-174
 // @work-item-id WI-182
 // @work-item-id WI-183
+// @work-item-id WI-207
 
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -26,7 +27,7 @@ async function writeProjectFile(root: string, relativePath: string, content: str
   await writeFile(absolutePath, content, "utf8");
 }
 
-async function runInstall(root: string, options: { apply?: boolean; force?: boolean } = {}) {
+async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean } = {}) {
   const mod = createInstallationModule();
   return mod.installHandler.execute({
     projectRoot: root,
@@ -36,6 +37,7 @@ async function runInstall(root: string, options: { apply?: boolean; force?: bool
     apply: options.apply ?? false,
     force: options.force ?? false,
     json: true,
+    personal: options.personal ?? false,
   });
 }
 
@@ -117,6 +119,33 @@ async function installAndReadDownstreamTemplates(root: string) {
   };
 }
 
+const TEAM_OWNED_FILES = [
+  "package.json",
+  "AGENTS.md",
+  "CLAUDE.md",
+  ".husky/pre-commit",
+  ".husky/commit-msg",
+  ".husky/pre-push",
+  ".github/workflows/phasegate-aidlc-gate.yml",
+  ".gitignore",
+] as const;
+
+async function snapshotFiles(root: string, paths: readonly string[]): Promise<Record<string, string>> {
+  const entries: Array<[string, string]> = [];
+  for (const path of paths) {
+    entries.push([path, await readFile(join(root, path), "utf8")]);
+  }
+  return Object.fromEntries(entries);
+}
+
+async function arrangeTeamOwnedFiles(root: string): Promise<Record<string, string>> {
+  for (const path of TEAM_OWNED_FILES) {
+    await writeProjectFile(root, path, `team-owned ${path}\n`);
+  }
+  await writeProjectFile(root, ".git/info/exclude", "# user local excludes\n");
+  return snapshotFiles(root, TEAM_OWNED_FILES);
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -194,6 +223,28 @@ target("InstallHandler", () => {
       expect(actual.aidlcGate).toContain("RESULT=$(npx phasegate lint --json 2>&1)");
       expect(actual.aidlcGate).toContain("RESULT=$(npx phasegate phasegate:ci-check --json 2>&1)");
       expect(actual.aidlcGate).not.toContain("pnpm run harness");
+    });
+
+    it("personal install は team-owned files を plan/apply 対象にせず local artifacts だけを作成すること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+      const before = await arrangeTeamOwnedFiles(root);
+
+      // Act
+      const actual = await runInstall(root, { apply: true, personal: true });
+      const parsed = JSON.parse(actual.stdout) as {
+        plan: Array<{ path: string }>;
+        changed: Array<{ path: string }>;
+      };
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(parsed.plan.map((item) => item.path)).not.toEqual(expect.arrayContaining([...TEAM_OWNED_FILES]));
+      expect(parsed.changed.map((item) => item.path)).toEqual(expect.arrayContaining([".phasegate-local/config.json", ".git/info/exclude"]));
+      expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
+      expect(await readFile(join(root, ".phasegate-local/config.json"), "utf8")).toContain('"personal": true');
+      expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toContain("# phasegate personal install exclude (BEGIN)");
+      expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(".phasegate-local/config.json");
     });
   });
 });

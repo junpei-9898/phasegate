@@ -32,7 +32,7 @@
 
 ### Codex Notes
 
-- Enable native hook execution with `codex features enable codex_hooks` when Codex hooks are installed.
+- Enable native hook execution with `codex features enable hooks` when Codex hooks are installed.
 - Keep local-only Codex settings outside repository-managed targets unless PhaseGate explicitly reports them as managed.
 <!-- phasegate:managed-section:end -->
 

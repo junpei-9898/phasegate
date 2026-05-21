@@ -15,18 +15,29 @@ import { access, lstat, mkdtemp, readFile, readlink, rm } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { context, target } from '../../helpers/test-helpers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_ROOT = path.resolve(__dirname, '../../../../..');
 const MAIN_TS = path.join(HARNESS_ROOT, 'scripts/harness/main.ts');
 const TSX_LOADER = path.join(HARNESS_ROOT, 'node_modules', 'tsx', 'dist', 'loader.mjs');
+let projectRoot: string | null = null;
 
 interface CliResult {
   exitCode: number;
   stdout: string;
   stderr: string;
+}
+
+interface InitInspection extends CliResult {
+  hasHarnessVersion: boolean;
+  hasClaudeSettings: boolean;
+  hasClaudeSkills: boolean;
+  claudeSkillsLink: string | null;
+  hasCodexHooks: boolean;
+  hasCodexSkills: boolean;
+  codexSkillsLink: string | null;
 }
 
 function runInitCli(projectRoot: string, extraArgs: string[] = []): Promise<CliResult> {
@@ -48,31 +59,67 @@ function runInitCli(projectRoot: string, extraArgs: string[] = []): Promise<CliR
   });
 }
 
+async function createProjectRoot(prefix: string): Promise<string> {
+  projectRoot = await mkdtemp(path.join(tmpdir(), prefix));
+  return projectRoot;
+}
+
+async function fileExists(targetPath: string): Promise<boolean> {
+  try {
+    await access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function symlinkTarget(targetPath: string): Promise<string | null> {
+  try {
+    const stat = await lstat(targetPath);
+    if (!stat.isSymbolicLink()) return null;
+    return await readlink(targetPath);
+  } catch {
+    return null;
+  }
+}
+
+async function runInitAndInspect(projectRoot: string, extraArgs: string[] = []): Promise<InitInspection> {
+  const cli = await runInitCli(projectRoot, extraArgs);
+  return {
+    ...cli,
+    hasHarnessVersion: await fileExists(path.join(projectRoot, 'skills', '.harness-version')),
+    hasClaudeSettings: await fileExists(path.join(projectRoot, '.claude', 'settings.json')),
+    hasClaudeSkills: await fileExists(path.join(projectRoot, '.claude', 'skills')),
+    claudeSkillsLink: await symlinkTarget(path.join(projectRoot, '.claude', 'skills')),
+    hasCodexHooks: await fileExists(path.join(projectRoot, '.codex', 'hooks.json')),
+    hasCodexSkills: await fileExists(path.join(projectRoot, '.codex', 'skills')),
+    codexSkillsLink: await symlinkTarget(path.join(projectRoot, '.codex', 'skills')),
+  };
+}
+
+afterEach(async () => {
+  if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
+  projectRoot = null;
+});
+
 target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
   describe('--agent claude (デフォルト) の挙動', () => {
     context('--agent 指定なしの場合', () => {
       it('.claude/ が配置され .codex/ は配置されないこと', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-claude-'));
+        const projectRoot = await createProjectRoot('init-agent-claude-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot);
+        // Act
+        const actual = await runInitAndInspect(projectRoot);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          expect(actual.stdout).toContain('agent: claude');
-          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
-          await expect(lstat(path.join(projectRoot, '.claude', 'skills'))).resolves.toMatchObject({
-            isSymbolicLink: expect.any(Function),
-          });
-          const actualLink = await readlink(path.join(projectRoot, '.claude', 'skills'));
-          expect(actualLink).toBe('../skills');
-          await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).rejects.toThrow();
-          await expect(access(path.join(projectRoot, '.codex', 'skills'))).rejects.toThrow();
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stdout).toContain('agent: claude');
+        expect(actual.hasHarnessVersion).toBe(true);
+        expect(actual.hasClaudeSkills).toBe(true);
+        expect(actual.claudeSkillsLink).toBe('../skills');
+        expect(actual.hasCodexHooks).toBe(false);
+        expect(actual.hasCodexSkills).toBe(false);
       }, 60000);
     });
   });
@@ -81,60 +128,46 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
     context('--agent codex を指定した場合', () => {
       it('.codex/hooks.json が配置されること', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-codex-'));
+        const projectRoot = await createProjectRoot('init-agent-codex-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'codex']);
+        // Act
+        const actual = await runInitAndInspect(projectRoot, ['--agent', 'codex']);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          expect(actual.stdout).toContain('agent: codex');
-          expect(actual.stdout).toContain('.codex/hooks.json deployed');
-          expect(actual.stdout).toContain('.codex/skills linked to skills/');
-          await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).resolves.toBeUndefined();
-          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
-          const actualStats = await lstat(path.join(projectRoot, '.codex', 'skills'));
-          expect(actualStats.isSymbolicLink()).toBe(true);
-          const actualLink = await readlink(path.join(projectRoot, '.codex', 'skills'));
-          expect(actualLink).toBe('../skills');
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stdout).toContain('agent: codex');
+        expect(actual.stdout).toContain('.codex/hooks.json deployed');
+        expect(actual.stdout).toContain('.codex/skills linked to skills/');
+        expect(actual.hasCodexHooks).toBe(true);
+        expect(actual.hasHarnessVersion).toBe(true);
+        expect(actual.hasCodexSkills).toBe(true);
+        expect(actual.codexSkillsLink).toBe('../skills');
       }, 60000);
 
-      it('Codex 有効化手順 (codex features enable codex_hooks) が次ステップに案内されること', async () => {
+      it('Codex 有効化手順 (codex features enable hooks) が次ステップに案内されること', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-codex-'));
+        const projectRoot = await createProjectRoot('init-agent-codex-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'codex']);
+        // Act
+        const actual = await runInitAndInspect(projectRoot, ['--agent', 'codex']);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          expect(actual.stdout).toContain('codex features enable codex_hooks');
-          expect(actual.stdout).toContain('codex-integration.md');
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stdout).toContain('codex features enable hooks');
+        expect(actual.stdout).toContain('codex-integration.md');
       }, 60000);
 
       it('--agent codex 単独指定時は .claude/ は配置されないこと', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-codex-only-'));
+        const projectRoot = await createProjectRoot('init-agent-codex-only-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'codex']);
+        // Act
+        const actual = await runInitAndInspect(projectRoot, ['--agent', 'codex']);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          await expect(access(path.join(projectRoot, '.claude', 'settings.json'))).rejects.toThrow();
-          await expect(access(path.join(projectRoot, '.claude', 'skills'))).rejects.toThrow();
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.hasClaudeSettings).toBe(false);
+        expect(actual.hasClaudeSkills).toBe(false);
       }, 60000);
     });
   });
@@ -143,43 +176,35 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
     context('--agent both を指定した場合', () => {
       it('.claude/settings.json と .codex/hooks.json の両方が配置されること', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-both-'));
+        const projectRoot = await createProjectRoot('init-agent-both-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'both']);
+        // Act
+        const actual = await runInitAndInspect(projectRoot, ['--agent', 'both']);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          expect(actual.stdout).toContain('agent: both');
-          await expect(access(path.join(projectRoot, '.claude', 'settings.json'))).resolves.toBeUndefined();
-          await expect(access(path.join(projectRoot, '.codex', 'hooks.json'))).resolves.toBeUndefined();
-          await expect(access(path.join(projectRoot, 'skills', '.harness-version'))).resolves.toBeUndefined();
-          expect((await lstat(path.join(projectRoot, '.claude', 'skills'))).isSymbolicLink()).toBe(true);
-          expect((await lstat(path.join(projectRoot, '.codex', 'skills'))).isSymbolicLink()).toBe(true);
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stdout).toContain('agent: both');
+        expect(actual.hasClaudeSettings).toBe(true);
+        expect(actual.hasCodexHooks).toBe(true);
+        expect(actual.hasHarnessVersion).toBe(true);
+        expect(actual.claudeSkillsLink).toBe('../skills');
+        expect(actual.codexSkillsLink).toBe('../skills');
       }, 60000);
 
       it('init 直後の doctor が package-json-devdep-missing で失敗しないよう package.json を作成すること', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-both-package-'));
+        const projectRoot = await createProjectRoot('init-agent-both-package-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'both', '--with-husky', '--with-ci']);
+        // Act
+        const actual = await runInitCli(projectRoot, ['--agent', 'both', '--with-husky', '--with-ci']);
 
-          // Assert
-          expect(actual.exitCode).toBe(0);
-          expect(actual.stdout).toContain('package.json created with phasegate devDependency');
-          const packageJson = JSON.parse(await readFile(path.join(projectRoot, 'package.json'), 'utf-8')) as {
-            devDependencies?: Record<string, string>;
-          };
-          expect(packageJson.devDependencies?.phasegate).toMatch(/^\^\d+\.\d+\.\d+$/);
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stdout).toContain('package.json created with phasegate devDependency');
+        const packageJson = JSON.parse(await readFile(path.join(projectRoot, 'package.json'), 'utf-8')) as {
+          devDependencies?: Record<string, string>;
+        };
+        expect(packageJson.devDependencies?.phasegate).toMatch(/^\^\d+\.\d+\.\d+$/);
       }, 60000);
     });
   });
@@ -188,18 +213,14 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
     context('--agent に未定義の値を指定した場合', () => {
       it('exit 2 でエラー終了すること', async () => {
         // Arrange
-        const projectRoot = await mkdtemp(path.join(tmpdir(), 'init-agent-invalid-'));
+        const projectRoot = await createProjectRoot('init-agent-invalid-');
 
-        try {
-          // Act
-          const actual = await runInitCli(projectRoot, ['--agent', 'cursor']);
+        // Act
+        const actual = await runInitCli(projectRoot, ['--agent', 'cursor']);
 
-          // Assert
-          expect(actual.exitCode).toBe(2);
-          expect(actual.stderr).toContain('Invalid --agent value');
-        } finally {
-          await rm(projectRoot, { recursive: true, force: true });
-        }
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain('Invalid --agent value');
       }, 60000);
     });
   });

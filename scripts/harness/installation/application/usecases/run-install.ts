@@ -7,6 +7,7 @@
 // @work-item-id WI-177
 // @work-item-id WI-182
 // @work-item-id WI-183
+// @work-item-id WI-207
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -18,7 +19,7 @@ import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.j
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed";
+type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "text-managed" | "copy";
 
 export interface InstallPlanItem {
   readonly path: string;
@@ -45,6 +46,7 @@ export interface RunInstallInput {
   readonly skillSet?: "core" | "all";
   readonly workflow?: "standard" | "strict";
   readonly agent?: "claude" | "codex" | "both";
+  readonly personal?: boolean;
 }
 
 export interface RunInstallResult {
@@ -79,6 +81,8 @@ const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
+const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
+const TEXT_END = "# phasegate personal install exclude (END)";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -148,6 +152,14 @@ function mergeShell(existing: string | null, incoming: string): string {
   const block = `${SHELL_BEGIN}\n${incoming.trim()}\n${SHELL_END}`;
   if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
   const pattern = new RegExp(`${escapeRegExp(SHELL_BEGIN)}[\\s\\S]*?${escapeRegExp(SHELL_END)}`);
+  if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
+  return `${existing.replace(/\s*$/, "\n\n")}${block}\n`;
+}
+
+function mergeTextManaged(existing: string | null, incoming: string): string {
+  const block = `${TEXT_BEGIN}\n${incoming.trim()}\n${TEXT_END}`;
+  if (existing === null || existing.trim().length === 0) return `${block}\n`;
+  const pattern = new RegExp(`${escapeRegExp(TEXT_BEGIN)}[\\s\\S]*?${escapeRegExp(TEXT_END)}`);
   if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
   return `${existing.replace(/\s*$/, "\n\n")}${block}\n`;
 }
@@ -282,7 +294,9 @@ export class RunInstallUseCase {
     const skillSet = input.skillSet ?? "all";
     const workflow = input.workflow ?? "standard";
     const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
-    const targets = this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
+    const targets = input.personal
+      ? this.createPersonalTargets()
+      : this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
     const existingManifest = await this.manifestRepository.load(input.projectRoot);
     const baseManifest = existingManifest ?? DeploymentManifest.create(input.phasegateVersion);
     let manifest = baseManifest;
@@ -363,7 +377,7 @@ export class RunInstallUseCase {
       }
     }
 
-    const linkPaths = [
+    const linkPaths = input.personal ? [] : [
       ...(includeClaude ? [".claude/skills"] : []),
       ...(includeCodex ? [".codex/skills"] : []),
     ];
@@ -398,6 +412,19 @@ export class RunInstallUseCase {
           }),
         );
       }
+    }
+
+    if (input.personal && includeCodex) {
+      plan.push({
+        path: "~/.codex/hooks.json",
+        action: "will-skip",
+        repairMode: "manual",
+        strategy: "json",
+        changed: false,
+        summary: "~/.codex/hooks.json: personal mode does not write user-level Codex settings; configure hooks manually",
+        diff: "manual user-level Codex hook setup required",
+        skillHint: null,
+      });
     }
 
     if (input.apply && changed.length > 0) {
@@ -498,8 +525,26 @@ export class RunInstallUseCase {
     ];
   }
 
+  private createPersonalTargets(): readonly InstallTarget[] {
+    return [
+      {
+        path: ".phasegate-local/config.json",
+        strategy: "copy" as const,
+        templatePath: "docs/templates/personal/phasegate-local-config.json",
+      },
+      {
+        path: ".git/info/exclude",
+        strategy: "text-managed" as const,
+        templatePath: "docs/templates/personal/git-info-exclude",
+        block: { start: TEXT_BEGIN, end: TEXT_END, content: "phasegate personal install exclude block" },
+      },
+    ];
+  }
+
   private repairMode(target: InstallTarget, before: string | null): RepairMode {
     if (target.strategy === "shell") return shellRepairMode(before);
+    if (target.strategy === "text-managed") return "mechanical";
+    if (target.strategy === "copy") return "mechanical";
     if (target.strategy === "json") return jsonRepairMode(before);
     if (target.strategy === "markdown-managed") return "mechanical";
     return "mechanical";
@@ -513,7 +558,9 @@ export class RunInstallUseCase {
 
   private merge(target: InstallTarget, before: string | null, template: string, version: string): string {
     if (target.strategy === "yaml-add") return before ?? template;
+    if (target.strategy === "copy") return before ?? template;
     if (target.strategy === "shell") return mergeShell(before, template);
+    if (target.strategy === "text-managed") return mergeTextManaged(before, template);
     if (target.strategy === "markdown-managed") return mergeManagedMarkdown(before, template);
     if (target.strategy === "package-json") {
       const existing = before === null ? {} : (JSON.parse(before) as unknown);

@@ -34,6 +34,12 @@ Setup owns placement of generated CI workflow targets as managed setup artifacts
 
 `setup:agent` validation guidance should match the selected agent. For single-agent setup it recommends the corresponding scoped doctor command, such as `phasegate doctor --agent claude`, so unselected agent targets are not mistaken for selected-agent readiness failures. Full/both-agent setup continues to recommend the default full doctor path. @work-item-id WI-178
 
+@work-item-id WI-205
+Codex user-level hook enablement guidance uses the current Codex CLI feature flag name: `codex features enable hooks` and `[features] hooks = true`. The project-local managed artifacts remain `.codex/hooks.json`, `AGENTS.md`, and `.codex/skills`; setup must not present the deprecated `codex_hooks` alias as the recommended path.
+
+@work-item-id WI-207
+Personal install is intentionally separate from `setup:agent --apply`. Setup planning may explain personal install as an alternative for team repositories, but the current apply path continues to represent team/project setup. Local-only installation is owned by `phasegate install --personal` so setup does not accidentally mutate `package.json`, shared agent context, Husky, or CI targets for a personal evaluation.
+
 <!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
 ## P3 User Onboarding And Agent Setup
 

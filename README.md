@@ -102,6 +102,15 @@ npx phasegate doctor
 
 `install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 -->
 
+For personal evaluation inside a team-owned repository, use local-only install:
+
+```bash
+npx phasegate install --personal --dry-run
+npx phasegate install --personal --apply
+```
+
+`--personal` does not plan or write `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, or `.gitignore`. It creates `.phasegate-local/config.json`, adds a managed local-only block to `.git/info/exclude`, records personal artifacts in `.phasegate/manifest.json`, and reports Codex user-level hook setup as a manual action instead of writing `.codex/hooks.json`. <!-- @work-item-id WI-207 -->
+
 For agent-driven setup planning, use:
 
 ```bash
@@ -135,7 +144,7 @@ npx phasegate reconcile --apply
 
 ```bash
 npx phasegate init --name my-project --agent codex --with-husky
-codex features enable codex_hooks
+codex features enable hooks
 ```
 
 Use `--agent both` for projects that use Claude Code and Codex together. Codex native `apply_patch` currently cannot be intercepted before the edit, so those violations are caught at pre-commit; Bash-based writes are blocked before execution.
@@ -482,12 +491,12 @@ Phasegate also integrates with [OpenAI Codex CLI](https://developers.openai.com/
 npx phasegate init --name my-project --agent codex --with-husky
 
 # 2. Enable the Codex CLI feature flag manually on your machine
-codex features enable codex_hooks
+codex features enable hooks
 ```
 
 For dual-agent projects (Claude + Codex), use `--agent both`.
 
-`init` sets up files inside the project. The Codex CLI user-level setting (`codex_hooks`) remains an explicit manual step.
+`init` sets up files inside the project. The Codex CLI user-level hooks feature remains an explicit manual step.
 
 ### Coverage and known limitation
 

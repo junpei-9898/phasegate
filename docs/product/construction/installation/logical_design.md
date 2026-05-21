@@ -6,7 +6,7 @@ traceability:
 # Logical Design (横断): installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
 > **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
@@ -105,6 +105,22 @@ traceability:
 | `BuildAgentSetupPlan` | `{ intent, agent, withHusky, withCi, workflow }` | setup plan DTO | WI-176 | なし (read-only planning) |
 
 各 report は独立構造 (Phase 1 計画書 Q2 承認、共通基底なし)。schemaVersion は presentation layer の formatter で揃える (Phase 1 計画書 Q4 承認)。
+
+### 2.1 Personal Install Target Routing
+
+@work-item-id WI-207
+
+`RunInstallUseCase` accepts `personal?: boolean`. When `personal` is true, install target creation is replaced with a personal-only target set and agent skill symlink creation is skipped.
+
+| Target | Strategy | Behavior |
+|---|---|---|
+| `.phasegate-local/config.json` | `copy` | Create local config parking file only when absent; existing content is preserved. |
+| `.git/info/exclude` | `text-managed` | Append or replace a bounded PhaseGate personal exclude block. |
+| `~/.codex/hooks.json` | manual plan item | Report user-level Codex hook setup guidance without writing outside the project. |
+
+The personal target set excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.codex/hooks.json`, `.claude/settings.json`, `.husky/*`, `.github/workflows/*`, `.gitignore`, and agent skill symlinks from both dry-run and apply plans. `phasegate install --personal` also forces Husky and CI inclusion off at the CLI boundary.
+
+`RunUninstallUseCase` treats `.git/info/exclude` as `text-managed`; uninstall removes only the managed personal exclude block and deletes created `.phasegate-local/config.json` through the existing manifest-driven created-file path.
 
 ### 2.1 Downstream Install Template Contract
 

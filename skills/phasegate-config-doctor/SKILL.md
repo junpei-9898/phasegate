@@ -131,7 +131,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 - `repairHint` がある mechanical finding → 原則として hint のコマンドを優先し、実行前に対象ファイルと manifest の差分を確認
 - manifest parse error → `.phasegate/manifest.json` を手で修復する前に backup / uninstall / reinstall の選択肢を提示
 - reconcile / uninstall が refuse → user modified managed target として扱い、`--force` のリスクと backup path を説明して承認を取る
-- Codex の `codex_hooks` feature flag は user-level setting。project-local `install` では変更されないため、必要なら `codex features enable codex_hooks` を案内
+- Codex の `hooks` feature flag は user-level setting。project-local `install` では変更されないため、必要なら `codex features enable hooks` を案内。`codex_hooks` は legacy alias として扱う。<!-- @work-item-id WI-205 -->
 - Codex native `apply_patch` bypass は hook で完全捕捉できない。`.husky/pre-commit` の `phasegate pre-commit` が backstop になるため、Husky 配線を診断対象に含める
 - 初回 setup / retrofit / CI-only / agent-hooks の判断が曖昧な場合は `npx phasegate setup:agent --dry-run --json` を先に使い、検出済み状態、質問、変更案、rollback、validation を根拠として提案する。<!-- @work-item-id WI-172 -->
 - Claude Code setup 相談では `npx phasegate setup:agent --agent claude --dry-run --json` を先に使い、`plan.agentReadiness` の `claude` / `shared` が `configured` なら setup 修復ではなく WI 起票、inception 計画、product reflection、validation の順で作業開始を案内する。`setup:agent --apply --json` または `install --apply --json` の structured `error` がある場合は、`target`, `operation`, `code`, `likelyCause`, `recovery`, `partialChanges` を読み、`.claude` が file として存在する path conflict、sandbox/permission denial、PhaseGate managed target hash mismatch を区別して説明する。<!-- @work-item-id WI-177 -->

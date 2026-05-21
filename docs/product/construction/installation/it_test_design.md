@@ -6,7 +6,7 @@ traceability:
 # Integration Test Design: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-182 / WI-183
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-182 / WI-183 / WI-207
 > **作成日**: 2026-05-11
 > **参照**: `logical_design.md`, `unit_test_design.md`, `docs/principles/testing-rules.md`
 
@@ -73,6 +73,15 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `phasegate update-skills` | compatibility alias for reconcile path, not a separate lifecycle owner. |
 
 `futureInstallationStrategyPorts` remains an extension point for extracting merge/reverse strategies; it is not an unimplemented runtime dependency and should not be counted as a coverage gap.
+
+<!-- @work-item-id WI-207 -->
+## 2.1 Personal Install Regression Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --personal --apply` with existing team-owned files | Plan excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, and `.gitignore`; apply leaves their bytes unchanged. |
+| `install --personal --apply` | Creates `.phasegate-local/config.json`, writes only a managed block to `.git/info/exclude`, and records personal artifacts in `.phasegate/manifest.json`. |
+| `uninstall --apply` after personal install | Removes `.phasegate-local/config.json`, reverses the `.git/info/exclude` block, archives the manifest, and leaves team-owned files byte-identical. |
 
 <!-- @work-item-id WI-174 -->
 ## 2.2 Agent Context Managed Target Tests

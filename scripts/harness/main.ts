@@ -15,6 +15,8 @@
  * @work-item-id WI-200
  * @work-item-id WI-201
  * @work-item-id WI-202 / WI-204
+ * @work-item-id WI-205
+ * @work-item-id WI-206
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -169,7 +171,7 @@ Setup:
   scaffold-wi <unit|_cross> <story|issue|chore>
                                Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
-  install                      Install phasegate managed files (--dry-run|--apply, --force)
+  install                      Install phasegate managed files (--dry-run|--apply, --force, --personal)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
   setup:agent                  Diagnose repo setup and produce/apply an agent-readable setup plan
@@ -623,6 +625,7 @@ Options:
   --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
   --with-husky                    Include Husky hook targets
   --with-ci                       Include GitHub Actions target
+  --personal                      Use local-only install: no package.json, agent docs, Husky, CI, or .gitignore writes
   --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
   "setup:agent": `Usage: phasegate setup:agent [options]
@@ -1126,7 +1129,7 @@ function buildSetupCompleteness(input: {
   ];
 
   const externalActions: string[] = [];
-  if (includeCodex) externalActions.push("Run codex features enable codex_hooks if Codex hooks are not enabled for the user.");
+  if (includeCodex) externalActions.push("Run codex features enable hooks if Codex hooks are not enabled for the user.");
   if (input.withCi) externalActions.push("Trigger or inspect the first GitHub Actions PhaseGate workflow run.");
   if (input.intent === "strict") externalActions.push("Confirm team policy accepts strict local and CI enforcement.");
   entries.push({
@@ -1232,7 +1235,7 @@ function buildAgentReadiness(input: {
         "setup:agent will create or refresh the AGENTS.md PhaseGate managed section.",
         "setup:agent will deploy bundled skills for Codex.",
       ],
-      nextAction: "Run setup:agent --agent codex --apply, then enable codex_hooks at user level if needed.",
+      nextAction: "Run setup:agent --agent codex --apply, then enable hooks at user level if needed.",
       risk: "Codex user-level hook feature enablement remains a manual external check.",
     }),
     setupReadinessEntry({
@@ -1462,8 +1465,8 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
     "codex-hooks": {
       targets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
       managedTargets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
-      externalActions: [{ id: "codex-hooks-feature", label: "Enable Codex user-level hooks feature.", command: "codex features enable codex_hooks", blocking: true }],
-      commands: ["phasegate install --agent codex --apply", "codex features enable codex_hooks"],
+      externalActions: [{ id: "codex-hooks-feature", label: "Enable Codex user-level hooks feature.", command: "codex features enable hooks", blocking: true }],
+      commands: ["phasegate install --agent codex --apply", "codex features enable hooks"],
       validations: ["phasegate doctor --json", "phasegate phasegate:status --json"],
       risks: ["Codex apply_patch writes still require the pre-commit backstop for full coverage."],
     },
@@ -1954,7 +1957,7 @@ async function main(): Promise<void> {
           console.log("  3. Edit .claude/scripts/hook-config.json to set target directories");
         }
         if (deployCodex) {
-          console.log(`  ${deployClaude ? "4" : "3"}. Enable Codex hooks: codex features enable codex_hooks`);
+          console.log(`  ${deployClaude ? "4" : "3"}. Enable Codex hooks: codex features enable hooks`);
           console.log(
             `  ${deployClaude ? "5" : "4"}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`,
           );
@@ -2043,7 +2046,7 @@ async function main(): Promise<void> {
       }
 
       case "install": {
-        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json", "--agent", "--skills", "--workflow", "--with-husky", "--with-ci"];
+        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json", "--agent", "--skills", "--workflow", "--with-husky", "--with-ci", "--personal"];
         const flagError = validateKnownFlags(args, KNOWN_INSTALL_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -2064,6 +2067,7 @@ async function main(): Promise<void> {
         }
         const includeClaude = agent === "claude" || agent === "both";
         const includeCodex = agent === "codex" || agent === "both";
+        const personal = hasFlag(args, "--personal");
         const mod = createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.installHandler.execute({
@@ -2075,11 +2079,12 @@ async function main(): Promise<void> {
           force: hasFlag(args, "--force"),
           includeClaude,
           includeCodex,
-          includeHusky: true,
-          includeCi: true,
+          includeHusky: personal ? false : true,
+          includeCi: personal ? false : true,
           skillSet: skillSetRaw,
           workflow: parseWorkflowMode(workflowRaw),
           agent,
+          personal,
           json,
         });
         console.log(result.stdout);

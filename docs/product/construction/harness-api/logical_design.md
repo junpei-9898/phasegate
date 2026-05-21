@@ -5,6 +5,11 @@
 
 The harness-api command parser rejects unknown flags before dispatch and provides typo-oriented feedback for known alternatives. `phasegate init` therefore fails fast when a caller uses an unsupported option such as `--skill-set` instead of silently applying defaults.
 
+<!-- @work-item-id WI-207 -->
+## WI-207 Personal Install CLI Surface
+
+The top-level `install` command accepts `--personal` as the local-only lifecycle intent. The CLI boundary validates the flag, forces Husky and CI target inclusion off for this mode, and delegates the personal target routing to the installation unit. The default `install` command remains the team/project install path.
+
 <!-- @work-item-id WI-091, WI-092 -->
 ## WI-091 / WI-092 Validator-System Dispatch Configuration
 

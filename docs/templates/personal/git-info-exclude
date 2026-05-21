@@ -1,0 +1,6 @@
+.phasegate/
+.phasegate-local/
+.codex/
+.claude/
+skills/
+phasegate.config.json

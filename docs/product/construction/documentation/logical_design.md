@@ -71,3 +71,10 @@ Public CLI and troubleshooting docs explain `currentScopeRepairTarget` and `repa
 ## WI-156 Documentation Drift Guardrail
 
 Public/operator docs document `L4-006 skill-catalog-drift` as the first automated documentation drift guardrail from the P4 backlog. Documentation must state that skill count drift is automated, while command/script drift and install target drift remain manual release checklist items until separate validators exist.
+
+<!-- @work-item-id WI-207 -->
+## WI-207 Personal Install Documentation
+
+README and installation/setup artifact guides document `phasegate install --personal` for developers evaluating PhaseGate inside team-owned repositories. Public wording must state that `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, and team `.gitignore` are not planned or written in personal mode.
+
+Documentation also lists the local-only artifacts: `.phasegate-local/config.json`, `.phasegate/manifest.json`, and the managed block in `.git/info/exclude`. Codex user-level hooks are documented as manual guidance rather than a project-local `.codex/hooks.json` write.

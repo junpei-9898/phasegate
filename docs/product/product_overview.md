@@ -1,5 +1,6 @@
 # Phasegate — Product Overview
 
+@story-id H01-01
 > **ステータス**: 確定版（self-hosting 遡及作成 2026-04-05）
 > **前提文書**: `docs/inception/_shared/product_overview_plan.md`
 > **関連文書**: `docs/product/harness_product_overview.md`（詳細仕様）
@@ -27,6 +28,7 @@ AI エージェント（Claude Code, Codex, Cursor, Copilot）による実装は
 | Phase Dependency Model | 必要な設計文書が無ければ実装をブロック |
 | Quick Mode | バグ修正・docs・テスト・設定の軽量ゲート |
 | Preset System | minimal / standard / full / custom の段階適用 |
+| Personal Install | team PJ に個人だけが導入する場合、team-owned files を変更せず local-only artifact と user-level guidance で評価できる。 <!-- @work-item-id WI-207 --> |
 
 ## 4. スコープ（v1.0）
 

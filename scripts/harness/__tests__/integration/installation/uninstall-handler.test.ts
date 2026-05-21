@@ -3,6 +3,7 @@
 // @story H11-01
 // @work-item-id WI-147
 // @work-item-id WI-199
+// @work-item-id WI-207
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -34,7 +35,7 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-async function runInstall(root: string) {
+async function runInstall(root: string, options: { personal?: boolean } = {}) {
   const mod = createInstallationModule();
   return mod.installHandler.execute({
     projectRoot: root,
@@ -44,6 +45,7 @@ async function runInstall(root: string) {
     apply: true,
     force: false,
     json: true,
+    personal: options.personal ?? false,
   });
 }
 
@@ -118,6 +120,37 @@ async function addManifestEntry(root: string, relativePath: string, content: str
     deployedAt: new Date().toISOString(),
   });
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
+const TEAM_OWNED_FILES = [
+  "package.json",
+  "AGENTS.md",
+  "CLAUDE.md",
+  ".husky/pre-commit",
+  ".husky/commit-msg",
+  ".husky/pre-push",
+  ".github/workflows/phasegate-aidlc-gate.yml",
+  ".gitignore",
+] as const;
+
+async function snapshotFiles(root: string, paths: readonly string[]): Promise<Record<string, string>> {
+  const entries: Array<[string, string]> = [];
+  for (const path of paths) {
+    entries.push([path, await readFile(join(root, path), "utf8")]);
+  }
+  return Object.fromEntries(entries);
+}
+
+async function arrangePersonalInstalledProject() {
+  const root = await createProjectRoot();
+  for (const path of TEAM_OWNED_FILES) {
+    await writeProjectFile(root, path, `team-owned ${path}\n`);
+  }
+  await writeProjectFile(root, ".git/info/exclude", "# user local excludes\n");
+  const before = await snapshotFiles(root, TEAM_OWNED_FILES);
+  const installed = await runInstall(root, { personal: true });
+  expect(installed.exitCode).toBe(0);
+  return { root, before };
 }
 
 afterEach(async () => {
@@ -230,6 +263,21 @@ target("UninstallHandler", () => {
       expect(actual.payload.backupDir).toContain(".phasegate/backups/uninstall-");
       expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(false);
       expect(await readFile(join(actual.payload.backupDir ?? "", ".github/workflows/phasegate-aidlc-gate.yml"), "utf8")).toContain("user modified");
+    });
+
+    it("personal install の uninstall は personal artifact だけを削除して team-owned files を変化させないこと", async () => {
+      // Arrange
+      const { root, before } = await arrangePersonalInstalledProject();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.plan.map((item) => item.path)).toEqual(expect.arrayContaining([".phasegate-local/config.json", ".git/info/exclude"]));
+      expect(await fileExists(join(root, ".phasegate-local/config.json"))).toBe(false);
+      expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toBe("# user local excludes\n");
+      expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
     });
   });
 });

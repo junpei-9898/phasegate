@@ -6,7 +6,7 @@ traceability:
 # Domain Model: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-207
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/domain_model_plan.md`
 
@@ -133,6 +133,19 @@ traceability:
   - `.husky/pre-commit` など shell script: `{ start: "# === phasegate managed (BEGIN) ===", end: "# === phasegate managed (END) ===", content: <shell スクリプト断片> }`
   - `.claude/settings.json` / `.codex/hooks.json` など JSON: `{ start: "phasegate-managed-start", end: "phasegate-managed-end", content: <hooks 設定 JSON 部分文字列> }`
 - immutability: 全フィールドを TypeScript `readonly` + constructor で `Object.freeze(this)`
+
+### 2.6.1 Personal Install Mode
+
+@work-item-id WI-207
+
+- 役割: team repository に個人だけが PhaseGate を導入する lifecycle variant。
+- team-owned file: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`。
+- personal artifact: `.phasegate-local/config.json`, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
+- 不変条件:
+  - install plan / apply に team-owned file を含めない。
+  - `.gitignore` は touch せず、local ignore は `.git/info/exclude` に限定する。
+  - Codex hook は project-local `.codex/hooks.json` を作らず、user-level 設定の manual guidance として表現する。
+  - uninstall は personal artifact のみを撤去し、team-owned file bytes を変化させない。
 
 ### 2.7 CheckId
 

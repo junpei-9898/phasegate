@@ -14,8 +14,9 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init`; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
+| Personal install artifact | `.phasegate-local/config.json`, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal`; team `.gitignore` and team-owned files are not modified |
 | Legacy artifact | `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, `.harness/context-priority.json`, `.harness/reports` fallback | Compatibility only | Not required for current install lifecycle unless a project intentionally keeps an archived integration |
-| User-level setting | Codex CLI `codex_hooks` feature flag | User machine | Must be enabled manually with `codex features enable codex_hooks`; project commands do not modify it |
+| User-level setting | Codex CLI `hooks` feature flag | User machine | Must be enabled manually with `codex features enable hooks`; project commands do not modify it |
 
 ## Managed Targets
 

@@ -42,7 +42,7 @@ Check both project and user-level state:
 
 ```bash
 npx phasegate doctor --json
-codex features enable codex_hooks
+codex features enable hooks
 npx phasegate phasegate:status --json
 ```
 

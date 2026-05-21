@@ -140,9 +140,9 @@ target("agent setup planner CLI", () => {
       expect(parsed.targets).toContain("AGENTS.md");
       expect(parsed.managedTargets).toContain(".codex/hooks.json");
       expect(parsed.externalActions).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: "codex-hooks-feature", command: "codex features enable codex_hooks" })]),
+        expect.arrayContaining([expect.objectContaining({ id: "codex-hooks-feature", command: "codex features enable hooks" })]),
       );
-      expect(parsed.commands).toContain("codex features enable codex_hooks");
+      expect(parsed.commands).toContain("codex features enable hooks");
       expect(parsed.validations).toContain("phasegate doctor --json");
       expect(parsed.configPatch.applicability).toBe("not-applicable");
       expect(parsed.configPatch.blockedReason).toBe("Selected intent does not require a local phasegate.config.json mutation.");

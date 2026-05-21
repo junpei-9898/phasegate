@@ -1537,7 +1537,7 @@ The shared record is the same hook skip observation consumed by harness-api stat
 <!-- @work-item-id WI-171, WI-174 -->
 ### WI-171 / WI-174 Agent Onboarding Context
 
-Agent integration assumes the active agent can read the repository-root context file created by setup: `CLAUDE.md` for Claude and `AGENTS.md` for Codex. These files do not replace hook JSON; they explain the managed hook state, required documents, WI workflow, and next manual action such as `codex features enable codex_hooks`.
+Agent integration assumes the active agent can read the repository-root context file created by setup: `CLAUDE.md` for Claude and `AGENTS.md` for Codex. These files do not replace hook JSON; they explain the managed hook state, required documents, WI workflow, and next manual action such as `codex features enable hooks`. @work-item-id WI-205
 
 The hook runtime remains responsible for enforcement. The context file is guidance and recovery surface, updated through the installation lifecycle so first-time users and agents can follow the same first-run / daily-use / CI-use / agent-use recipes.
 
@@ -1562,13 +1562,13 @@ These planners provide guidance and validation steps. Actual enforcement remains
 
 <!-- @work-item-id WI-175 -->
 
-Agent-facing setup plans include completeness entries and external manual actions so an agent can explain both what PhaseGate configured and what remains outside local automation. Agent workflows should treat `configured` and `planned` local areas as evidence, and should separately report `manual` external actions such as `codex features enable codex_hooks` or a first GitHub Actions run.
+Agent-facing setup plans include completeness entries and external manual actions so an agent can explain both what PhaseGate configured and what remains outside local automation. Agent workflows should treat `configured` and `planned` local areas as evidence, and should separately report `manual` external actions such as `codex features enable hooks` or a first GitHub Actions run. @work-item-id WI-205
 
 ### WI-176 Agent-Specific Readiness Consumption
 
 <!-- @work-item-id WI-176 -->
 
-Agent integration consumes `plan.agentReadiness` as startup guidance. Claude Code should inspect the `claude` and `shared` rows before planning work from `CLAUDE.md`; Codex should inspect the `codex` and `shared` rows and still surface user-level `codex_hooks` enablement as manual external work.
+Agent integration consumes `plan.agentReadiness` as startup guidance. Claude Code should inspect the `claude` and `shared` rows before planning work from `CLAUDE.md`; Codex should inspect the `codex` and `shared` rows and still surface user-level `hooks` enablement as manual external work. @work-item-id WI-205
 
 Runtime hooks remain the enforcement layer. The readiness rows are explanatory context for the agent, not proof that the runtime has fired hooks or that external services are configured.
 
