@@ -2,6 +2,7 @@
 // @layer presentation
 // @work-item-id WI-145
 // @work-item-id WI-178
+// @work-item-id WI-208
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
@@ -37,6 +38,7 @@ export class DoctorHandler {
     const formatInput = {
       report: result.report,
       agent: result.agent,
+      installationMode: result.installationMode,
       scopedOutFindings: result.scopedOutFindings,
       phasegateVersion: input.phasegateVersion,
       projectRoot: input.projectRoot,

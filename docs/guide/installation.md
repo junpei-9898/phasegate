@@ -61,11 +61,11 @@ npx phasegate doctor
 For personal evaluation inside a team-owned repository:
 
 ```bash
-npx phasegate install --personal --dry-run
-npx phasegate install --personal --apply
+npx phasegate install --personal --agent claude --dry-run
+npx phasegate install --personal --agent claude --apply
 ```
 
-Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, and `.gitignore` are not touched. PhaseGate writes only local artifacts: `.phasegate-local/config.json`, `.phasegate/manifest.json`, and a managed block in `.git/info/exclude`. Codex user-level hook setup is reported as a manual action instead of writing project-local `.codex/hooks.json`. <!-- @work-item-id WI-207 -->
+Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and CI settings are not touched. For Claude Code, PhaseGate writes local-only artifacts under `.phasegate-local/`, creates ignored root `.claude/settings.json` and `.claude/skills` shims for Claude discovery, records `.phasegate/manifest.json`, and manages a local exclude block in `.git/info/exclude`. Codex user-level hook setup is reported as a manual action instead of writing project-local `.codex/hooks.json`. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 -->
 
 For agent-readable planning before writing files:
 

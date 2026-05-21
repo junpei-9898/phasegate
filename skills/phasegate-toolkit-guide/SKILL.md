@@ -130,7 +130,7 @@ docs/guide/                          # phasegate リポジトリ自体 (dogfood)
 - 既存プロジェクト導入: `docs/guide/retrofit-adoption.md`
 - setup artifact / doctor finding / legacy artifact: `docs/guide/setup-artifacts.md`
 
-チーム所有リポジトリで個人評価だけを行いたい場合は、`docs/guide/installation.md` の personal install セクションを読む。`phasegate install --personal` は `package.json`、`AGENTS.md`、`CLAUDE.md`、`.husky/*`、`.github/workflows/*`、`.gitignore`、`.codex/hooks.json`、skill symlink を変更せず、`.phasegate-local/config.json` と `.git/info/exclude` の managed block を使う。Codex user-level hook setup は manual action として説明する。<!-- @work-item-id WI-207 -->
+チーム所有リポジトリで個人評価だけを行いたい場合は、`docs/guide/installation.md` の personal install セクションを読む。`phasegate install --personal --agent claude` は `package.json`、`AGENTS.md`、`CLAUDE.md`、`.husky/*`、`.github/workflows/*`、`.gitignore`、GitHub CLI config、repo secrets、CI settings、`.codex/hooks.json` を変更せず、`.phasegate-local/phasegate.config.json`、`.phasegate-local/claude/settings.json`、`.phasegate-local/skills/`、ignored root `.claude/settings.json` / `.claude/skills` shim、`.git/info/exclude` の managed block を使う。Codex user-level hook setup は manual action として説明する。<!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 -->
 
 `setup-artifacts.md` は managed target / generated artifact / runtime state / legacy artifact / user-level setting の分類を持つ。`doctor --report-out` は明示 path への出力で、`.phasegate/last-doctor-report.json` は固定生成物ではない点もここを参照する。<!-- @work-item-id WI-153 -->
 

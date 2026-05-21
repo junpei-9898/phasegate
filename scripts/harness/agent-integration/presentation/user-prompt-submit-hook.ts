@@ -1,12 +1,13 @@
 // @unit agent-integration
 // @layer presentation
+// @work-item-id WI-208
 
-import * as path from 'node:path';
 import {
   buildUserPromptSubmitContext,
   collectPhasegateStatus,
   collectRecentViolations,
   findConfigPath,
+  projectRootForConfig,
 } from './phasegate-status-context.js';
 
 async function readStdin(): Promise<string> {
@@ -29,7 +30,7 @@ async function main(): Promise<void> {
   // 違反検知の起点は config が見つかったディレクトリ (= project root)。
   // config が無ければ cwd をそのまま使う。
   const configPath = await findConfigPath(cwd);
-  const projectRoot = configPath !== null ? path.dirname(configPath) : cwd;
+  const projectRoot = configPath !== null ? projectRootForConfig(configPath) : cwd;
   const violations = await collectRecentViolations(projectRoot, status);
   const additionalContext = buildUserPromptSubmitContext(status, violations);
 

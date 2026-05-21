@@ -3,6 +3,7 @@
  * @unit agent-integration
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-206
+ * @work-item-id WI-208
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -57,17 +58,26 @@ async function readStdin(): Promise<string> {
 async function findConfigPath(startDir: string): Promise<string> {
   let dir = startDir;
   while (true) {
-    const candidate = path.join(dir, 'phasegate.config.json');
-    try {
-      await fs.access(candidate);
-      return candidate;
-    } catch {
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
+    const candidates = [
+      path.join(dir, 'phasegate.config.json'),
+      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+    ];
+    for (const candidate of candidates) {
+      try {
+        await fs.access(candidate);
+        return candidate;
+      } catch {}
     }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
   return path.join(startDir, 'phasegate.config.json');
+}
+
+function projectRootForConfig(configPath: string): string {
+  const configDir = path.dirname(configPath);
+  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
 }
 
 function isProjectExternalAbsolutePath(filePath: string): boolean {
@@ -139,24 +149,25 @@ async function main(): Promise<void> {
     const configPath = await findConfigPath(cwd);
     const projectTargetFilePaths = targetFilePaths.filter((filePath) => !isProjectExternalAbsolutePath(filePath));
     const projectTargetChanges = targetChanges.filter((change) => !isProjectExternalAbsolutePath(change.filePath));
+    const projectRoot = projectRootForConfig(configPath);
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const phaseGateQueryPort = new PhaseGateQueryAdapter();
     const storyReflectionQueryPort = new FileSystemStoryReflectionQueryAdapter({
-      rootDir: path.dirname(configPath),
+      rootDir: projectRoot,
       configPath,
     });
     const fullModeRequirementQueryPort = new QuickModeFullModeRequirementAdapter({
       classifyUseCaseFactory: () => createQuickModeCompositionRoot().classifyUseCase,
     });
     const baselineGrandfatherQueryPort = new CiGovernanceBaselineGrandfatherAdapter({
-      baseDir: path.dirname(configPath),
+      baseDir: projectRoot,
       configQueryPort,
     });
     const errorGuidanceQueryPort = new HarnessErrorGuidanceAdapter({
-      rootDir: path.dirname(configPath),
+      rootDir: projectRoot,
     });
     const fullModeSessionQueryPort = new FileSystemFullModeSessionQueryAdapter({
-      rootDir: path.dirname(configPath),
+      rootDir: projectRoot,
       configQueryPort,
     });
     const useCase = new HandlePreToolUseUseCase({

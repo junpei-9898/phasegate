@@ -6,6 +6,9 @@
 
 Agent hook integration supports real-world repository layouts by consuming generated hook configuration instead of assuming a single `src` target. Deployed hook scripts remain compatible with macOS default shell environments and expose visible outcomes when Quick Mode allows a change.
 
+@work-item-id WI-208
+Hook adapters resolve PhaseGate config through the same personal fallback as config-foundation. If `.phasegate-local/phasegate.config.json` is selected, hook-local project root remains the repository root so story reflection, status context, skip-event logs, and validator execution do not accidentally treat `.phasegate-local/` as the project.
+
 @story-id H11-01
 @story-id H11-02
 @story-id H11-03

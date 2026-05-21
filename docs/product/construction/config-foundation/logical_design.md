@@ -9,6 +9,9 @@ The config foundation owns schema and resolution behavior for customizable docum
 @work-item-id WI-140
 `toValidatorSystemConfig` は resolved config から validator-system へ渡す L2 validators に `L2-014 work-item-status-staleness` を含める。これにより `validate --layer L2` と harness-api 経由の validation が同じ status gate catalog を使用する。
 
+@work-item-id WI-208
+Config resolution probes root `phasegate.config.json` first and then `.phasegate-local/phasegate.config.json` in the same directory before walking to the parent. The fallback preserves project root semantics: a config loaded from `.phasegate-local/phasegate.config.json` belongs to the directory that contains `.phasegate-local`, not to the sandbox directory itself.
+
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03

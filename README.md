@@ -105,11 +105,11 @@ npx phasegate doctor
 For personal evaluation inside a team-owned repository, use local-only install:
 
 ```bash
-npx phasegate install --personal --dry-run
-npx phasegate install --personal --apply
+npx phasegate install --personal --agent claude --dry-run
+npx phasegate install --personal --agent claude --apply
 ```
 
-`--personal` does not plan or write `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, or `.gitignore`. It creates `.phasegate-local/config.json`, adds a managed local-only block to `.git/info/exclude`, records personal artifacts in `.phasegate/manifest.json`, and reports Codex user-level hook setup as a manual action instead of writing `.codex/hooks.json`. <!-- @work-item-id WI-207 -->
+`--personal` does not plan or write `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, or CI settings. For Claude Code it automatically creates `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, ignored root `.claude/settings.json` and `.claude/skills` shims, a managed local-only block in `.git/info/exclude`, and `.phasegate/manifest.json`. Codex user-level hook setup remains a manual action instead of a project-local `.codex/hooks.json` write. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 -->
 
 For agent-driven setup planning, use:
 

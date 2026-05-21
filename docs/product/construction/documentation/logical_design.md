@@ -78,3 +78,6 @@ Public/operator docs document `L4-006 skill-catalog-drift` as the first automate
 README and installation/setup artifact guides document `phasegate install --personal` for developers evaluating PhaseGate inside team-owned repositories. Public wording must state that `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, and team `.gitignore` are not planned or written in personal mode.
 
 Documentation also lists the local-only artifacts: `.phasegate-local/config.json`, `.phasegate/manifest.json`, and the managed block in `.git/info/exclude`. Codex user-level hooks are documented as manual guidance rather than a project-local `.codex/hooks.json` write.
+
+@work-item-id WI-208
+Public docs and setup skills must describe personal install as an automatic local-only agent bootstrap. For Claude Code, the documented artifact list is `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, ignored root `.claude/settings.json` and `.claude/skills` shims, `.phasegate/manifest.json`, and the managed `.git/info/exclude` block. GitHub CLI auth, repo secrets, and CI setup remain excluded from personal apply.

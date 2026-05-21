@@ -6,7 +6,7 @@ traceability:
 # Logical Design (横断): installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207 / WI-208
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
 > **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
@@ -109,18 +109,23 @@ traceability:
 ### 2.1 Personal Install Target Routing
 
 @work-item-id WI-207
+@work-item-id WI-208
 
-`RunInstallUseCase` accepts `personal?: boolean`. When `personal` is true, install target creation is replaced with a personal-only target set and agent skill symlink creation is skipped.
+`RunInstallUseCase` accepts `personal?: boolean`. When `personal` is true, install target creation is replaced with a personal-only target set. Agent-visible files are created only as local-only sandbox artifacts or root shims recorded in the manifest.
 
 | Target | Strategy | Behavior |
 |---|---|---|
-| `.phasegate-local/config.json` | `copy` | Create local config parking file only when absent; existing content is preserved. |
+| `.phasegate-local/phasegate.config.json` | `copy` | Create local config parking file only when absent; existing content is preserved. |
+| `.phasegate-local/claude/settings.json` | `copy` | Copy Claude Code hook settings into the personal sandbox for `--agent claude` / `both`. |
+| `.phasegate-local/skills/` | `copy-dir` | Deploy selected bundled skills into the personal sandbox. |
+| `.claude/settings.json` | `symlink` | Create a root-discoverable shim to `../.phasegate-local/claude/settings.json` only when no conflicting path exists. |
+| `.claude/skills` | `symlink` | Create a root-discoverable shim to `../.phasegate-local/skills` only when no conflicting path exists. |
 | `.git/info/exclude` | `text-managed` | Append or replace a bounded PhaseGate personal exclude block. |
 | `~/.codex/hooks.json` | manual plan item | Report user-level Codex hook setup guidance without writing outside the project. |
 
-The personal target set excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.codex/hooks.json`, `.claude/settings.json`, `.husky/*`, `.github/workflows/*`, `.gitignore`, and agent skill symlinks from both dry-run and apply plans. `phasegate install --personal` also forces Husky and CI inclusion off at the CLI boundary.
+The personal target set excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.codex/hooks.json`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and hosted CI config from both dry-run and apply plans. `phasegate install --personal` also forces Husky and CI inclusion off at the CLI boundary.
 
-`RunUninstallUseCase` treats `.git/info/exclude` as `text-managed`; uninstall removes only the managed personal exclude block and deletes created `.phasegate-local/config.json` through the existing manifest-driven created-file path.
+`RunUninstallUseCase` treats `.git/info/exclude` as `text-managed`; uninstall removes only the managed personal exclude block and deletes created personal sandbox artifacts and matching root shims through the manifest-driven path. Symlink removal is allowed when the current symlink target hashes to the manifest entry hash.
 
 ### 2.1 Downstream Install Template Contract
 

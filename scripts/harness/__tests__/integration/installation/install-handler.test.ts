@@ -6,8 +6,9 @@
 // @work-item-id WI-182
 // @work-item-id WI-183
 // @work-item-id WI-207
+// @work-item-id WI-208
 
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,8 +28,9 @@ async function writeProjectFile(root: string, relativePath: string, content: str
   await writeFile(absolutePath, content, "utf8");
 }
 
-async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean } = {}) {
+async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean; agent?: "claude" | "codex" | "both" } = {}) {
   const mod = createInstallationModule();
+  const agent = options.agent ?? "both";
   return mod.installHandler.execute({
     projectRoot: root,
     harnessRoot: resolve("."),
@@ -38,6 +40,9 @@ async function runInstall(root: string, options: { apply?: boolean; force?: bool
     force: options.force ?? false,
     json: true,
     personal: options.personal ?? false,
+    agent,
+    includeClaude: agent === "claude" || agent === "both",
+    includeCodex: agent === "codex" || agent === "both",
   });
 }
 
@@ -146,6 +151,41 @@ async function arrangeTeamOwnedFiles(root: string): Promise<Record<string, strin
   return snapshotFiles(root, TEAM_OWNED_FILES);
 }
 
+async function arrangePersonalClaudeDoctorResult() {
+  const root = await createProjectRoot();
+  await runInstall(root, { apply: true, personal: true, agent: "claude" });
+  const doctor = await createInstallationModule().doctorHandler.execute({
+    projectRoot: root,
+    strict: false,
+    json: true,
+    reportOut: null,
+    phasegateVersion: "0.145.1",
+    agent: "claude",
+  });
+  return {
+    exitCode: doctor.exitCode,
+    payload: JSON.parse(doctor.stdout) as {
+      scope: { installationMode: string };
+      findings: Array<{ checkId: string }>;
+      scopedOutFindings: Array<{ checkId: string; scopeReason: string }>;
+    },
+  };
+}
+
+async function arrangePersonalInstallWithExistingClaudeSettings() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".claude/settings.json", "{\"custom\": true}\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "claude" });
+  const parsed = JSON.parse(installed.stdout) as {
+    plan: Array<{ path: string; changed: boolean; repairMode: string; summary: string }>;
+  };
+  return {
+    exitCode: installed.exitCode,
+    settingsPlan: parsed.plan.find((item) => item.path === ".claude/settings.json"),
+    settingsContent: await readFile(join(root, ".claude/settings.json"), "utf8"),
+  };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -225,13 +265,13 @@ target("InstallHandler", () => {
       expect(actual.aidlcGate).not.toContain("pnpm run harness");
     });
 
-    it("personal install は team-owned files を plan/apply 対象にせず local artifacts だけを作成すること", async () => {
+    it("personal Claude install は team-owned files を変更せず sandbox と root shim を自動初期化すること", async () => {
       // Arrange
       const root = await createProjectRoot();
       const before = await arrangeTeamOwnedFiles(root);
 
       // Act
-      const actual = await runInstall(root, { apply: true, personal: true });
+      const actual = await runInstall(root, { apply: true, personal: true, agent: "claude" });
       const parsed = JSON.parse(actual.stdout) as {
         plan: Array<{ path: string }>;
         changed: Array<{ path: string }>;
@@ -240,11 +280,51 @@ target("InstallHandler", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(parsed.plan.map((item) => item.path)).not.toEqual(expect.arrayContaining([...TEAM_OWNED_FILES]));
-      expect(parsed.changed.map((item) => item.path)).toEqual(expect.arrayContaining([".phasegate-local/config.json", ".git/info/exclude"]));
+      expect(parsed.changed.map((item) => item.path)).toEqual(
+        expect.arrayContaining([
+          ".phasegate-local/phasegate.config.json",
+          ".phasegate-local/claude/settings.json",
+          ".phasegate-local/skills",
+          ".claude/settings.json",
+          ".claude/skills",
+          ".git/info/exclude",
+        ]),
+      );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
-      expect(await readFile(join(root, ".phasegate-local/config.json"), "utf8")).toContain('"personal": true');
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"name": "personal-phasegate"');
+      expect(await readFile(join(root, ".phasegate-local/claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
+      expect(await readFile(join(root, ".phasegate-local/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
+      expect((await lstat(join(root, ".claude/settings.json"))).isSymbolicLink()).toBe(true);
+      expect(await readlink(join(root, ".claude/settings.json"))).toBe("../.phasegate-local/claude/settings.json");
+      expect(await readlink(join(root, ".claude/skills"))).toBe("../.phasegate-local/skills");
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toContain("# phasegate personal install exclude (BEGIN)");
-      expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(".phasegate-local/config.json");
+      expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(".phasegate-local/phasegate.config.json");
+
+    });
+
+    it("personal Claude doctor は team/project targets を scoped out すること", async () => {
+      // Arrange
+      // Act
+      const actual = await arrangePersonalClaudeDoctorResult();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.scope.installationMode).toBe("personal");
+      expect(actual.payload.findings).toEqual([]);
+      expect(actual.payload.scopedOutFindings.map((item) => item.checkId)).toEqual(
+        expect.arrayContaining(["package-json-devdep-missing", "husky-pre-commit-missing", "codex-hook-missing"]),
+      );
+    });
+
+    it("personal Claude install は既存 .claude/settings.json を上書きしないこと", async () => {
+      // Arrange
+      // Act
+      const actual = await arrangePersonalInstallWithExistingClaudeSettings();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.settingsPlan).toMatchObject({ changed: false, repairMode: "manual" });
+      expect(actual.settingsContent).toBe("{\"custom\": true}\n");
     });
   });
 });

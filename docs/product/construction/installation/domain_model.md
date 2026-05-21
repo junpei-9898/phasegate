@@ -6,7 +6,7 @@ traceability:
 # Domain Model: installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-207
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-207 / WI-208
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/domain_model_plan.md`
 
@@ -137,15 +137,21 @@ traceability:
 ### 2.6.1 Personal Install Mode
 
 @work-item-id WI-207
+@work-item-id WI-208
 
 - 役割: team repository に個人だけが PhaseGate を導入する lifecycle variant。
 - team-owned file: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`。
-- personal artifact: `.phasegate-local/config.json`, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
+- personal artifact: `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, root `.claude/*` shim, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
+- personal sandbox: substantive PhaseGate files are parked under `.phasegate-local/` so team-owned project root files remain untouched.
+- root shim: Claude Code discovery requires root `.claude/settings.json` and `.claude/skills`; in personal mode these entries are symlinks into `.phasegate-local/`.
 - 不変条件:
   - install plan / apply に team-owned file を含めない。
   - `.gitignore` は touch せず、local ignore は `.git/info/exclude` に限定する。
+  - `--agent claude` は Claude Code hooks/settings と skills を local-only artifact として自動初期化する。
+  - 既存の non-PhaseGate `.claude/settings.json` / `.claude/skills` は上書きせず manual review として扱う。
   - Codex hook は project-local `.codex/hooks.json` を作らず、user-level 設定の manual guidance として表現する。
-  - uninstall は personal artifact のみを撤去し、team-owned file bytes を変化させない。
+  - GitHub CLI 認証、repo secrets、hosted CI state は personal apply target に含めない。
+  - uninstall は personal artifact と root shim のみを撤去し、team-owned file bytes を変化させない。
 
 ### 2.7 CheckId
 

@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit agent-integration
+ * @work-item-id WI-208
  *
  * PostToolUse Hook Adapter
  * Claude Code の PostToolUse Hook エントリポイント
@@ -30,17 +31,26 @@ async function readStdin(): Promise<string> {
 async function findConfigPath(): Promise<string> {
   let dir = process.cwd();
   while (true) {
-    const candidate = path.join(dir, 'phasegate.config.json');
-    try {
-      await fs.access(candidate);
-      return candidate;
-    } catch {
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
+    const candidates = [
+      path.join(dir, 'phasegate.config.json'),
+      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+    ];
+    for (const candidate of candidates) {
+      try {
+        await fs.access(candidate);
+        return candidate;
+      } catch {}
     }
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
   return path.join(process.cwd(), 'phasegate.config.json');
+}
+
+function projectRootForConfig(configPath: string): string {
+  const configDir = path.dirname(configPath);
+  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
 }
 
 async function main(): Promise<void> {
@@ -82,7 +92,7 @@ async function main(): Promise<void> {
 
     if (output.skipReason) {
       await recordHookSkipEvent({
-        projectRoot: path.dirname(configPath),
+        projectRoot: projectRootForConfig(configPath),
         hookType: 'post-tool-use',
         reason: output.skipReason,
         targetPaths: [],

@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit agent-integration
+ * @work-item-id WI-208
  *
  * Phasegate 状態を context 文字列として組み立てる共有ヘルパー。
  * SessionStart / UserPromptSubmit hook が共通で使用する。
@@ -54,16 +55,25 @@ const DEFAULT_PROTECTED_PATTERNS = [
 export async function findConfigPath(startDir: string): Promise<string | null> {
   let dir = startDir;
   while (true) {
-    const candidate = path.join(dir, 'phasegate.config.json');
-    try {
-      await fs.access(candidate);
-      return candidate;
-    } catch {
-      const parent = path.dirname(dir);
-      if (parent === dir) return null;
-      dir = parent;
+    const candidates = [
+      path.join(dir, 'phasegate.config.json'),
+      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+    ];
+    for (const candidate of candidates) {
+      try {
+        await fs.access(candidate);
+        return candidate;
+      } catch {}
     }
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
   }
+}
+
+export function projectRootForConfig(configPath: string): string {
+  const configDir = path.dirname(configPath);
+  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
 }
 
 async function loadConfig(configPath: string): Promise<PhasegateConfig> {
@@ -122,7 +132,7 @@ export async function collectPhasegateStatus(cwd: string): Promise<PhasegateStat
   const configPath = await findConfigPath(cwd);
   const configFound = configPath !== null;
   const config: PhasegateConfig = configFound ? await loadConfig(configPath) : {};
-  const projectRoot = configFound ? path.dirname(configPath) : cwd;
+  const projectRoot = configFound ? projectRootForConfig(configPath) : cwd;
 
   const protectedPatterns = computeProtectedPatterns(config);
   const blockedUnits = await findBlockedUnits(projectRoot, config);

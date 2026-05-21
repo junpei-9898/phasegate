@@ -7,6 +7,7 @@ import path from 'node:path';
 import type { ConfigRepositoryPort } from '../../domain/ports/config-repository-port.js';
 
 const DEFAULT_CONFIG_FILE_NAME = 'phasegate.config.json';
+const PERSONAL_CONFIG_PATH = path.join('.phasegate-local', DEFAULT_CONFIG_FILE_NAME);
 
 export class ConfigNotFoundError extends Error {
   readonly configPath: string;
@@ -45,10 +46,15 @@ async function findNearestConfig(startDirectory: string): Promise<string | null>
   let currentDirectory = path.resolve(startDirectory);
 
   while (true) {
-    const candidate = path.join(currentDirectory, DEFAULT_CONFIG_FILE_NAME);
+    const candidates = [
+      path.join(currentDirectory, DEFAULT_CONFIG_FILE_NAME),
+      path.join(currentDirectory, PERSONAL_CONFIG_PATH),
+    ];
 
-    if (await exists(candidate)) {
-      return candidate;
+    for (const candidate of candidates) {
+      if (await exists(candidate)) {
+        return candidate;
+      }
     }
 
     const parentDirectory = path.dirname(currentDirectory);

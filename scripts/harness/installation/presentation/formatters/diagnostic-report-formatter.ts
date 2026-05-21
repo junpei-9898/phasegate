@@ -4,6 +4,7 @@
 // @work-item-id WI-178
 // @work-item-id WI-179
 // @work-item-id WI-180
+// @work-item-id WI-208
 
 import type { DoctorAgentScope, ScopedOutDiagnosticFinding } from "../../application/usecases/run-doctor-diagnostics.js";
 import type { DiagnosticReport } from "../../domain/diagnostic-report.js";
@@ -11,6 +12,7 @@ import type { DiagnosticReport } from "../../domain/diagnostic-report.js";
 export interface DiagnosticReportFormatterInput {
   readonly report: DiagnosticReport;
   readonly agent: DoctorAgentScope;
+  readonly installationMode: "project" | "personal";
   readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
   readonly phasegateVersion: string;
   readonly projectRoot: string;
@@ -26,7 +28,8 @@ export class DiagnosticReportFormatter {
         projectRoot: input.projectRoot,
         scope: {
           agent: input.agent,
-          description: scopeDescription(input.agent),
+          installationMode: input.installationMode,
+          description: scopeDescription(input.agent, input.installationMode),
         },
         overallStatus: input.report.overallStatus,
         findings: input.report.findings.map((finding) => ({
@@ -60,7 +63,7 @@ export class DiagnosticReportFormatter {
     const lines = [
       `phasegate doctor v${input.phasegateVersion}`,
       `Project: ${input.projectRoot}`,
-      `Scope: ${input.agent} (${scopeDescription(input.agent)})`,
+      `Scope: ${input.agent} / ${input.installationMode} (${scopeDescription(input.agent, input.installationMode)})`,
       "",
     ];
     for (const finding of input.report.findings) {
@@ -86,7 +89,12 @@ export class DiagnosticReportFormatter {
   }
 }
 
-function scopeDescription(agent: DoctorAgentScope): string {
+function scopeDescription(agent: DoctorAgentScope, installationMode: "project" | "personal"): string {
+  if (installationMode === "personal") {
+    if (agent === "claude") return "Personal Claude Code sandbox; team/project Husky, CI, package, and Codex-only findings are not repair targets.";
+    if (agent === "codex") return "Personal Codex sandbox; team/project Husky, CI, package, and Claude-only findings are not repair targets.";
+    return "Personal sandbox diagnostics; team/project Husky, CI, and package findings are not repair targets.";
+  }
   if (agent === "claude") return "Claude Code and shared setup targets; Codex-only findings are not applicable.";
   if (agent === "codex") return "Codex and shared setup targets; Claude-only findings are not applicable.";
   return "Full setup diagnostics for Claude, Codex, and shared targets.";

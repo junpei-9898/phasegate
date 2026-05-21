@@ -8,8 +8,9 @@
 // @work-item-id WI-182
 // @work-item-id WI-183
 // @work-item-id WI-207
+// @work-item-id WI-208
 
-import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink } from "node:fs/promises";
+import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
@@ -19,7 +20,7 @@ import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.j
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "text-managed" | "copy";
+type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "text-managed" | "copy" | "copy-dir" | "symlink";
 
 export interface InstallPlanItem {
   readonly path: string;
@@ -83,6 +84,8 @@ const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
+const PERSONAL_CLAUDE_SETTINGS_LINK = "../.phasegate-local/claude/settings.json";
+const PERSONAL_CLAUDE_SKILLS_LINK = "../.phasegate-local/skills";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -102,6 +105,20 @@ async function readTextOrNull(path: string): Promise<string | null> {
     return await readFile(path, "utf8");
   } catch {
     return null;
+  }
+}
+
+async function copyDirectory(src: string, dest: string): Promise<void> {
+  await mkdir(dest, { recursive: true });
+  const entries = await readdir(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = join(src, entry.name);
+    const destPath = join(dest, entry.name);
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else if (entry.isFile()) {
+      await copyFile(srcPath, destPath);
+    }
   }
 }
 
@@ -295,7 +312,7 @@ export class RunInstallUseCase {
     const workflow = input.workflow ?? "standard";
     const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
     const targets = input.personal
-      ? this.createPersonalTargets()
+      ? this.createPersonalTargets({ includeClaude })
       : this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
     const existingManifest = await this.manifestRepository.load(input.projectRoot);
     const baseManifest = existingManifest ?? DeploymentManifest.create(input.phasegateVersion);
@@ -340,23 +357,23 @@ export class RunInstallUseCase {
         await this.backup(input.projectRoot, target.path, backupDir);
       }
 
+      try {
+        await mkdir(dirname(absolutePath), { recursive: true });
+      } catch (error) {
+        return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "mkdir", error);
+      }
+      try {
+        await writeFile(absolutePath, next, "utf8");
+      } catch (error) {
+        return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "writeFile", error);
+      }
+      if (target.executable) {
         try {
-          await mkdir(dirname(absolutePath), { recursive: true });
+          await chmod(absolutePath, 0o755);
         } catch (error) {
-          return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "mkdir", error);
+          return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "chmod", error);
         }
-        try {
-          await writeFile(absolutePath, next, "utf8");
-        } catch (error) {
-          return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "writeFile", error);
-        }
-        if (target.executable) {
-          try {
-            await chmod(absolutePath, 0o755);
-          } catch (error) {
-            return this.withApplyError({ plan, refused, changed, backupDir }, target.path, "chmod", error);
-          }
-        }
+      }
       changed.push(item);
 
       const mode = before === null ? "created" : "merged";
@@ -377,41 +394,63 @@ export class RunInstallUseCase {
       }
     }
 
-    const linkPaths = input.personal ? [] : [
-      ...(includeClaude ? [".claude/skills"] : []),
-      ...(includeCodex ? [".codex/skills"] : []),
-    ];
-    for (const linkPath of linkPaths) {
-      const item = await this.planSkillLink(input.projectRoot, linkPath);
+    if (input.personal && includeClaude) {
+      const item = await this.planPersonalSkills(input);
+      plan.push(item);
+      if (input.apply && item.changed) {
+        try {
+          await copyDirectory(join(input.harnessRoot, "skills"), join(input.projectRoot, ".phasegate-local", "skills"));
+          await writeFile(
+            join(input.projectRoot, ".phasegate-local", "skills", ".harness-version"),
+            `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
+            "utf8",
+          );
+        } catch (error) {
+          return this.withApplyError({ plan, refused, changed, backupDir }, item.path, "copyDirectory", error);
+        }
+        changed.push(item);
+        manifest = this.addManifestEntry(baseManifest, manifest, {
+          path: item.path,
+          mode: "created",
+          contentForHash: this.personalSkillsHashInput(input.phasegateVersion, skillSet),
+        });
+      }
+    }
+
+    const linkSpecs = input.personal
+      ? [
+          ...(includeClaude
+            ? [
+                { path: ".claude/settings.json", target: PERSONAL_CLAUDE_SETTINGS_LINK },
+                { path: ".claude/skills", target: PERSONAL_CLAUDE_SKILLS_LINK },
+              ]
+            : []),
+        ]
+      : [
+          ...(includeClaude ? [{ path: ".claude/skills", target: "../skills" }] : []),
+          ...(includeCodex ? [{ path: ".codex/skills", target: "../skills" }] : []),
+        ];
+    for (const linkSpec of linkSpecs) {
+      const item = await this.planSkillLink(input.projectRoot, linkSpec.path, linkSpec.target);
       plan.push(item);
       if (!input.apply || !item.changed) continue;
       try {
-        await mkdir(join(input.projectRoot, "skills"), { recursive: true });
-        await mkdir(dirname(join(input.projectRoot, linkPath)), { recursive: true });
+        if (!input.personal) await mkdir(join(input.projectRoot, "skills"), { recursive: true });
+        await mkdir(dirname(join(input.projectRoot, linkSpec.path)), { recursive: true });
       } catch (error) {
-        return this.withApplyError({ plan, refused, changed, backupDir }, linkPath, "mkdir", error);
+        return this.withApplyError({ plan, refused, changed, backupDir }, linkSpec.path, "mkdir", error);
       }
       try {
-        await symlink("../skills", join(input.projectRoot, linkPath), process.platform === "win32" ? "junction" : "dir");
+        await symlink(linkSpec.target, join(input.projectRoot, linkSpec.path), process.platform === "win32" ? "junction" : "dir");
       } catch (error) {
-        return this.withApplyError({ plan, refused, changed, backupDir }, linkPath, "symlink", error);
+        return this.withApplyError({ plan, refused, changed, backupDir }, linkSpec.path, "symlink", error);
       }
       changed.push(item);
-      const hash = this.hashCalculator.compute("../skills");
-      const existingEntry = baseManifest.findEntry(linkPath);
-      if (existingEntry !== null && existingEntry.hash.equals(hash)) {
-        manifest = manifest.addEntry(existingEntry);
-      } else {
-        manifest = manifest.addEntry(
-          DeploymentEntry.create({
-            path: linkPath,
-            mode: "symlink",
-            block: null,
-            hash,
-            deployedAt: new Date().toISOString(),
-          }),
-        );
-      }
+      manifest = this.addManifestEntry(baseManifest, manifest, {
+        path: linkSpec.path,
+        mode: "symlink",
+        contentForHash: linkSpec.target,
+      });
     }
 
     if (input.personal && includeCodex) {
@@ -525,13 +564,22 @@ export class RunInstallUseCase {
     ];
   }
 
-  private createPersonalTargets(): readonly InstallTarget[] {
+  private createPersonalTargets(options: { readonly includeClaude: boolean }): readonly InstallTarget[] {
     return [
       {
-        path: ".phasegate-local/config.json",
+        path: ".phasegate-local/phasegate.config.json",
         strategy: "copy" as const,
         templatePath: "docs/templates/personal/phasegate-local-config.json",
       },
+      ...(options.includeClaude
+        ? [
+            {
+              path: ".phasegate-local/claude/settings.json",
+              strategy: "copy" as const,
+              templatePath: "templates/.claude/settings.json",
+            },
+          ]
+        : []),
       {
         path: ".git/info/exclude",
         strategy: "text-managed" as const,
@@ -545,6 +593,8 @@ export class RunInstallUseCase {
     if (target.strategy === "shell") return shellRepairMode(before);
     if (target.strategy === "text-managed") return "mechanical";
     if (target.strategy === "copy") return "mechanical";
+    if (target.strategy === "copy-dir") return "mechanical";
+    if (target.strategy === "symlink") return "mechanical";
     if (target.strategy === "json") return jsonRepairMode(before);
     if (target.strategy === "markdown-managed") return "mechanical";
     return "mechanical";
@@ -589,16 +639,59 @@ export class RunInstallUseCase {
     };
   }
 
-  private async planSkillLink(projectRoot: string, relativePath: string): Promise<InstallPlanItem> {
+  private async planPersonalSkills(input: RunInstallInput): Promise<InstallPlanItem> {
+    const versionPath = join(input.projectRoot, ".phasegate-local", "skills", ".harness-version");
+    const current = await readTextOrNull(versionPath);
+    const expectedNeedle = `"version": "${input.phasegateVersion}"`;
+    const changed = current === null || !current.includes(expectedNeedle);
+    return {
+      path: ".phasegate-local/skills",
+      action: changed ? "missing" : "will-skip",
+      repairMode: "mechanical",
+      strategy: "copy-dir",
+      changed,
+      summary: changed ? ".phasegate-local/skills: deploy bundled skills" : ".phasegate-local/skills: already up to date",
+      diff: changed ? "+ bundled skills" : "no changes",
+      skillHint: null,
+    };
+  }
+
+  private personalSkillsHashInput(version: string, skillSet: "core" | "all"): string {
+    return `personal-skills:${version}:${skillSet}`;
+  }
+
+  private addManifestEntry(
+    baseManifest: DeploymentManifest,
+    manifest: DeploymentManifest,
+    input: { readonly path: string; readonly mode: "created" | "symlink"; readonly contentForHash: string },
+  ): DeploymentManifest {
+    const hash = this.hashCalculator.compute(input.contentForHash);
+    const existingEntry = baseManifest.findEntry(input.path);
+    if (existingEntry !== null && existingEntry.hash.equals(hash)) {
+      return manifest.addEntry(existingEntry);
+    }
+    return manifest.addEntry(
+      DeploymentEntry.create({
+        path: input.path,
+        mode: input.mode,
+        block: null,
+        hash,
+        deployedAt: new Date().toISOString(),
+      }),
+    );
+  }
+
+  private async planSkillLink(projectRoot: string, relativePath: string, target: string): Promise<InstallPlanItem> {
     const absolutePath = join(projectRoot, relativePath);
+    const parentPath = dirname(absolutePath);
     try {
       const stat = await lstat(absolutePath);
-      if (stat.isSymbolicLink() && (await readlink(absolutePath)) === "../skills") {
+      if (stat.isSymbolicLink() && (await readlink(absolutePath)) === target) {
         return {
           path: relativePath,
           action: "will-skip",
           repairMode: "mechanical",
-          strategy: "yaml-add",
+          strategy: "symlink",
           changed: false,
           summary: `${relativePath}: already linked`,
           diff: "no changes",
@@ -609,21 +702,36 @@ export class RunInstallUseCase {
         path: relativePath,
         action: "will-merge",
         repairMode: "manual",
-        strategy: "yaml-add",
+        strategy: "symlink",
         changed: false,
         summary: `${relativePath}: existing non-phasegate path requires manual review`,
         diff: "manual review required",
         skillHint: null,
       };
     } catch {
+      try {
+        const parentStat = await lstat(parentPath);
+        if (!parentStat.isDirectory()) {
+          return {
+            path: relativePath,
+            action: "will-merge",
+            repairMode: "manual",
+            strategy: "symlink",
+            changed: false,
+            summary: `${relativePath}: parent path exists and requires manual review`,
+            diff: "manual review required",
+            skillHint: null,
+          };
+        }
+      } catch {}
       return {
         path: relativePath,
         action: "missing",
         repairMode: "mechanical",
-        strategy: "yaml-add",
+        strategy: "symlink",
         changed: true,
         summary: `${relativePath}: create symlink`,
-        diff: "+ symlink ../skills",
+        diff: `+ symlink ${target}`,
         skillHint: null,
       };
     }

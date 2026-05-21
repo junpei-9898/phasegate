@@ -171,7 +171,7 @@ Setup:
   scaffold-wi <unit|_cross> <story|issue|chore>
                                Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
-  install                      Install phasegate managed files (--dry-run|--apply, --force, --personal)
+  install                      Install phasegate managed files (--dry-run|--apply, --force, --personal, --agent <claude|codex|both>)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
   setup:agent                  Diagnose repo setup and produce/apply an agent-readable setup plan
@@ -625,7 +625,8 @@ Options:
   --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
   --with-husky                    Include Husky hook targets
   --with-ci                       Include GitHub Actions target
-  --personal                      Use local-only install: no package.json, agent docs, Husky, CI, or .gitignore writes
+  --personal                      Use local-only install: no package.json, agent docs, Husky, CI, .gitignore, GitHub CLI, secrets, or CI setting writes.
+                                  With --agent claude, initializes .phasegate-local config/settings/skills and ignored .claude shims.
   --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
   "setup:agent": `Usage: phasegate setup:agent [options]

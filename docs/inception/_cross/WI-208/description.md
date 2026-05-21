@@ -2,7 +2,7 @@
 id: WI-208
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [installation, setup, config-foundation, agent-integration, documentation]
 source: user-feedback
 ---

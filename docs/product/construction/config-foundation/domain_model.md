@@ -19,6 +19,7 @@
 | 概念 | 分類 | 説明 |
 |------|------|------|
 | HarnessConfig | 集約ルート | phasegate.config.json全体の整合性境界 |
+| PersonalConfigFallback | 値オブジェクト相当の探索契約 | root `phasegate.config.json` が無い場合に `.phasegate-local/phasegate.config.json` を同一project rootのlocal-only configとして扱う探索規則。@work-item-id WI-208 |
 | Preset | 値オブジェクト | minimal/standard/strict |
 | LayerConfig | 値オブジェクト | L1-L4の個別設定 |
 | ArchitectureConfig | 値オブジェクト | architecture preset/layers/allowedDependencies/metadataTags設定 |

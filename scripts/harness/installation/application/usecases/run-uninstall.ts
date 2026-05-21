@@ -4,6 +4,7 @@
 // @work-item-id WI-174
 // @work-item-id WI-199
 // @work-item-id WI-207
+// @work-item-id WI-208
 
 import { access, copyFile, lstat, mkdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -163,6 +164,7 @@ export class RunUninstallUseCase {
         repairMode: "manual",
         strategy: "unknown",
         changed: false,
+        protected: false,
         summary: "manifest missing; run phasegate doctor and clean up manually",
         diff: "manual cleanup required",
         skillHint: SKILL_HINT,
@@ -216,8 +218,12 @@ export class RunUninstallUseCase {
     readonly apply: () => Promise<void>;
   }> {
     const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
-    const currentContent = await readTextOrNull(absolutePath);
     const strategy = this.strategyFor(entry.path, entry.mode);
+    if (entry.mode === "symlink") return this.planSymlink(input.projectRoot, entry);
+    if (entry.mode === "created" && await this.isDirectory(absolutePath)) {
+      return this.planCreatedDirectory(input.projectRoot, entry);
+    }
+    const currentContent = await readTextOrNull(absolutePath);
     if (currentContent === null && strategy !== "symlink") {
       return {
         item: this.item(entry.path, "skip", "mechanical", strategy, false, `${entry.path}: already absent`, "no changes", null),
@@ -226,7 +232,6 @@ export class RunUninstallUseCase {
       };
     }
 
-    if (entry.mode === "symlink") return this.planSymlink(input.projectRoot, entry);
     if (entry.mode === "created") return this.planCreated(input.projectRoot, entry, currentContent ?? "");
     return this.planMerged(input, entry, currentContent ?? "", strategy);
   }
@@ -240,9 +245,9 @@ export class RunUninstallUseCase {
     } catch {
       target = null;
     }
-    if (target === "../skills") {
+    if (target !== null && this.hashCalculator.compute(target).equals(entry.hash)) {
       return {
-        item: this.item(entry.path, "unlink", "mechanical", "symlink", true, `${entry.path}: remove symlink`, "- symlink ../skills", null),
+        item: this.item(entry.path, "unlink", "mechanical", "symlink", true, `${entry.path}: remove symlink`, `- symlink ${target}`, null),
         needsBackup: false,
         apply: async () => {
           await rm(absolutePath, { force: true });
@@ -253,6 +258,35 @@ export class RunUninstallUseCase {
       item: this.item(entry.path, "skip", "manual", "symlink", false, `${entry.path}: non-phasegate symlink/path skipped`, "manual review required", null),
       needsBackup: false,
       apply: async () => {},
+    };
+  }
+
+  private async isDirectory(path: string): Promise<boolean> {
+    try {
+      const stat = await lstat(path);
+      return stat.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
+  private async planCreatedDirectory(projectRoot: string, entry: DeploymentEntry) {
+    const absolutePath = this.resolveProjectPath(projectRoot, entry.path);
+    return {
+      item: this.item(
+        entry.path,
+        "delete",
+        "mechanical",
+        "created",
+        true,
+        `${entry.path}: delete created directory`,
+        "- directory",
+        null,
+      ),
+      needsBackup: false,
+      apply: async () => {
+        await rm(absolutePath, { recursive: true, force: true });
+      },
     };
   }
 

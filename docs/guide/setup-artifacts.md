@@ -5,6 +5,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 <!-- @work-item-id WI-152 -->
 <!-- @work-item-id WI-157 -->
 <!-- @work-item-id WI-169 -->
+<!-- @work-item-id WI-208 -->
 
 ## Artifact Classes
 
@@ -14,7 +15,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init`; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
-| Personal install artifact | `.phasegate-local/config.json`, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal`; team `.gitignore` and team-owned files are not modified |
+| Personal install artifact | `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, ignored root `.claude/settings.json` and `.claude/skills` shims, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal --agent claude`; team `.gitignore`, team-owned files, GitHub CLI config, repo secrets, and CI settings are not modified |
 | Legacy artifact | `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, `.harness/context-priority.json`, `.harness/reports` fallback | Compatibility only | Not required for current install lifecycle unless a project intentionally keeps an archived integration |
 | User-level setting | Codex CLI `hooks` feature flag | User machine | Must be enabled manually with `codex features enable hooks`; project commands do not modify it |
 
@@ -33,6 +34,12 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 `AGENTS.md` has two PhaseGate sections with separate ownership. `<!-- phasegate:managed-section:start -->` contains standard setup/WI workflow instructions. `<!-- phasegate:lesson-pointers:start -->` is reserved for `ci:auto-refresh-agent-context` lesson pointers. Refreshing lesson pointers must not replace the standard managed section or user-owned content. <!-- @work-item-id WI-174 -->
 
 `init --with-ci` still deploys the legacy-compatible template set, including `.github/workflows/aidlc-gate.yml`, `.github/workflows/consistency-check.yml`, and `.github/workflows/agent-context-refresh.yml`. Structured `install` uses `.github/workflows/phasegate-aidlc-gate.yml` so it can coexist with existing project CI without taking over a generic workflow filename.
+
+## Personal Install Artifacts
+
+`phasegate install --personal --agent claude --apply` is a local-only bootstrap for evaluating PhaseGate in a team-owned repository. Substantive files are stored under `.phasegate-local/`, while root `.claude/settings.json` and `.claude/skills` are symlinks so Claude Code can discover the settings and skills. The root shims are hidden by `.git/info/exclude`; PhaseGate does not edit team `.gitignore`.
+
+If `.claude/settings.json` or `.claude/skills` already exists and is not the PhaseGate personal shim, personal install reports manual review and preserves the existing path.
 
 ## Doctor Findings
 

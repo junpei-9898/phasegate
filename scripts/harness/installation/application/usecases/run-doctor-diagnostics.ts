@@ -2,6 +2,7 @@
 // @layer application
 // @work-item-id WI-145
 // @work-item-id WI-178
+// @work-item-id WI-208
 
 import { DiagnosticReport } from "../../domain/diagnostic-report.js";
 import type { CheckId } from "../../domain/check-id.js";
@@ -26,12 +27,20 @@ export interface RunDoctorDiagnosticsInput {
 export interface RunDoctorDiagnosticsOutput {
   readonly report: DiagnosticReport;
   readonly agent: DoctorAgentScope;
+  readonly installationMode: "project" | "personal";
   readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
   readonly exitCode: number;
 }
 
 const CLAUDE_ONLY_CHECKS = new Set<CheckId>(["claude-hook-missing", "claude-skills-symlink"]);
 const CODEX_ONLY_CHECKS = new Set<CheckId>(["codex-hook-missing", "codex-skills-symlink"]);
+const PERSONAL_SCOPED_OUT_CHECKS = new Set<CheckId>([
+  "husky-pre-commit-missing",
+  "husky-commit-msg-missing",
+  "husky-pre-push-missing",
+  "ci-workflow-missing",
+  "package-json-devdep-missing",
+]);
 
 export class RunDoctorDiagnosticsUseCase {
   constructor(
@@ -42,15 +51,20 @@ export class RunDoctorDiagnosticsUseCase {
 
   async execute(input: RunDoctorDiagnosticsInput): Promise<RunDoctorDiagnosticsOutput> {
     const agent = input.agent ?? "both";
-    await this.manifestRepository.load(input.projectRoot).catch(() => null);
+    const manifest = await this.manifestRepository.load(input.projectRoot).catch(() => null);
+    const installationMode = manifest?.findEntry(".phasegate-local/phasegate.config.json") !== null && manifest !== null ? "personal" : "project";
     const rawFindings = (await Promise.all(
       this.checks.map((check) => check.run(input.projectRoot, this.inspector)),
     )).filter((finding) => finding !== null);
-    const { findings, scopedOutFindings } = this.applyAgentScope(rawFindings, agent);
+    const { findings, scopedOutFindings } = this.applyPersonalScope(
+      this.applyAgentScope(rawFindings, agent),
+      installationMode,
+    );
     const report = DiagnosticReport.create(findings);
     return {
       report,
       agent,
+      installationMode,
       scopedOutFindings,
       exitCode: this.decideExitCode(report, input.strict),
     };
@@ -69,6 +83,26 @@ export class RunDoctorDiagnosticsUseCase {
         scopedOut.push({
           finding,
           scopeReason: `${finding.checkId} belongs to an unselected agent for doctor --agent ${agent}.`,
+        });
+      } else {
+        applicable.push(finding);
+      }
+    }
+    return { findings: applicable, scopedOutFindings: scopedOut };
+  }
+
+  private applyPersonalScope(
+    scoped: { readonly findings: readonly DiagnosticFinding[]; readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[] },
+    installationMode: "project" | "personal",
+  ): { readonly findings: readonly DiagnosticFinding[]; readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[] } {
+    if (installationMode !== "personal") return scoped;
+    const applicable: DiagnosticFinding[] = [];
+    const scopedOut: ScopedOutDiagnosticFinding[] = [...scoped.scopedOutFindings];
+    for (const finding of scoped.findings) {
+      if (PERSONAL_SCOPED_OUT_CHECKS.has(finding.checkId)) {
+        scopedOut.push({
+          finding,
+          scopeReason: `${finding.checkId} is a team/project install target and is intentionally out of scope for personal install.`,
         });
       } else {
         applicable.push(finding);

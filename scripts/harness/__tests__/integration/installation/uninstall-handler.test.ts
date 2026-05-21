@@ -4,6 +4,7 @@
 // @work-item-id WI-147
 // @work-item-id WI-199
 // @work-item-id WI-207
+// @work-item-id WI-208
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -35,8 +36,9 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-async function runInstall(root: string, options: { personal?: boolean } = {}) {
+async function runInstall(root: string, options: { personal?: boolean; agent?: "claude" | "codex" | "both" } = {}) {
   const mod = createInstallationModule();
+  const agent = options.agent ?? "both";
   return mod.installHandler.execute({
     projectRoot: root,
     harnessRoot: resolve("."),
@@ -46,6 +48,9 @@ async function runInstall(root: string, options: { personal?: boolean } = {}) {
     force: false,
     json: true,
     personal: options.personal ?? false,
+    agent,
+    includeClaude: agent === "claude" || agent === "both",
+    includeCodex: agent === "codex" || agent === "both",
   });
 }
 
@@ -148,7 +153,7 @@ async function arrangePersonalInstalledProject() {
   }
   await writeProjectFile(root, ".git/info/exclude", "# user local excludes\n");
   const before = await snapshotFiles(root, TEAM_OWNED_FILES);
-  const installed = await runInstall(root, { personal: true });
+  const installed = await runInstall(root, { personal: true, agent: "claude" });
   expect(installed.exitCode).toBe(0);
   return { root, before };
 }
@@ -274,8 +279,19 @@ target("UninstallHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(0);
-      expect(actual.payload.plan.map((item) => item.path)).toEqual(expect.arrayContaining([".phasegate-local/config.json", ".git/info/exclude"]));
-      expect(await fileExists(join(root, ".phasegate-local/config.json"))).toBe(false);
+      expect(actual.payload.plan.map((item) => item.path)).toEqual(
+        expect.arrayContaining([
+          ".phasegate-local/phasegate.config.json",
+          ".phasegate-local/claude/settings.json",
+          ".phasegate-local/skills",
+          ".claude/settings.json",
+          ".claude/skills",
+          ".git/info/exclude",
+        ]),
+      );
+      expect(await fileExists(join(root, ".phasegate-local/phasegate.config.json"))).toBe(false);
+      expect(await fileExists(join(root, ".phasegate-local/skills"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/settings.json"))).toBe(false);
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toBe("# user local excludes\n");
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
     });
