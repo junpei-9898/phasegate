@@ -94,3 +94,11 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | UT-INS-WI210-001 | skills doctor check | symlink points to `../skills` but target is empty | red mechanical finding |
 | UT-INS-WI210-002 | skills doctor check | symlink target contains `.harness-version` or `SKILL.md` | no finding |
 | UT-INS-WI210-003 | uninstall planning | manifest has per-skill entries and user-owned `skills/user-owned` exists | managed skill entries are deleted, user-owned skill remains |
+
+<!-- @work-item-id WI-213 -->
+## 1.8 Personal Core Defense Cases
+
+| Case ID | Target | Preconditions | Expected result |
+|---|---|---|---|
+| UT-INS-WI213-001 | personal install planning | `--personal --agent claude` | plan includes `.claude/CLAUDE.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/*` |
+| UT-INS-WI213-002 | personal config template | default personal config | design/inception paths are under `.phasegate-local/` |

@@ -603,3 +603,9 @@ Install and reconcile do not manage `scripts/harness/cli/complete-check.ts` as a
 `RunReconcileUseCase` repairs older project installs that contain managed agent skill links but no root skill bodies. The repair deploys the current bundled shared skills and adds granular manifest entries for `skills/.harness-version` and each bundled skill directory. `update-skills` remains an alias of this reconcile path.
 
 Doctor skill checks validate both the agent-facing path and the linked target content. A symlink to `../skills` with an empty target is a red mechanical finding. `RunUninstallUseCase` removes only manifest-managed skill entries and links, so user-owned directories under `skills/` are preserved.
+
+## WI-213 Personal Core Defense Deployment
+
+<!-- @work-item-id WI-213 -->
+
+`RunInstallUseCase` deploys local-only equivalents for personal install: `.claude/CLAUDE.local.md` or `.codex/AGENTS.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/folder_management_rules.md` plus `.phasegate-local/docs/principles/*.md`. The hook templates avoid Husky bootstrap and call the packaged `phasegate` CLI directly. The personal config template points `paths.designDocs` and `paths.inceptionDocs` into `.phasegate-local/`, preserving the no-team-file contract while making validator inputs resolvable.

@@ -97,7 +97,17 @@ claude
 
 `init` は legacy 互換の bootstrap 経路です。既存 hooks / scripts / package metadata に構造化 merge したい場合は `install` を使います。「設計してから書け」を強制する仕組みなので、設計文書はユーザーがスキル経由で作るのが既定動作です。
 
-既存プロジェクトに導入する場合は、構造化 install で差分を確認してから適用します。
+既存プロジェクトへの導入は、**チーム共通で入れる (team install)** か **自分だけで試す (personal install)** かで手順が変わります。誰のリポジトリで誰がメンテするかで選んでください。
+
+| シナリオ | コマンド | 影響範囲 |
+|---|---|---|
+| 新規プロジェクトを bootstrap | `npx phasegate init --name <name> --with-husky --with-ci` | リポジトリ全体（team） |
+| 既存プロジェクトにチーム共通で導入 | `npx phasegate install --apply` | リポジトリ全体（team） |
+| チーム所有リポジトリで個人評価 | `npx phasegate install --personal --agent claude --apply` | 自分の作業コピーのみ（ローカル） |
+
+#### team install — チーム共通で導入する場合
+
+`package.json` / `CLAUDE.md` / `.husky/*` / `.github/workflows/*` などのチーム共有ファイルを merge 対象に含めます。**この変更はコミット後にチーム全員へ影響します**。事前に dry-run で差分を確認してから apply してください。
 
 ```bash
 npx phasegate install --dry-run
@@ -106,6 +116,24 @@ npx phasegate doctor
 ```
 
 `install` は既存の Claude / Codex hooks や Husky script を捨てずに PhaseGate の設定を merge します。書き込み前に変更予定を表示し、package scripts と `phasegate` devDependency、root `skills/` への selected bundled skills 配布、agent skill symlink、未作成の CI workflow、`.phasegate/manifest.json` を整えます。強制的な managed 更新が必要な場合は `npx phasegate install --apply --force` を使います。この場合、置き換え対象は `.phasegate/backups/` に退避されます。<!-- @work-item-id WI-210 -->
+
+#### personal install — 自分だけで試す場合（チーム所有リポジトリで評価したい）
+
+チーム所有のリポジトリで自分だけ PhaseGate を試したい場合は `--personal` フラグを使います。**チーム共有ファイルには一切触れず、自分の agent runtime だけを設定する** ローカル専用パスです。
+
+```bash
+npx phasegate install --personal --agent claude --dry-run
+npx phasegate install --personal --agent claude --apply
+```
+
+| 項目 | personal install の挙動 |
+|---|---|
+| **触らないファイル** | `package.json` / `AGENTS.md` / `CLAUDE.md` / `.husky/*` / `.github/workflows/*` / `.gitignore` / GitHub CLI 設定 / repo secrets / CI 設定 |
+| **作るファイル** | `.phasegate-local/phasegate.config.json`（ローカル専用 config）／ `.claude/CLAUDE.local.md` または `.codex/AGENTS.local.md`（agent context）／ `.claude/settings.json` + `.claude/skills/` または `.codex/hooks.json` + `.codex/skills/`（選択した agent の runtime artifact）／ `.git/hooks/pre-commit` + `.git/hooks/commit-msg`（ローカル git hook）／ `.phasegate-local/docs/`（設計原則文書コピー）／ `.phasegate/manifest.json` |
+| **コミット漏れ対策** | `.git/info/exclude` にローカル専用 block を管理して、個人用ファイルが誤ってチームの commit に混ざらないようにする。commit 時の L2 防御は `.git/hooks/` で発火する |
+| **Codex hook flag** | user-level feature flag の有効化は手動アクションとして残る（`codex features enable hooks`） |
+
+Codex を併用する場合は `--agent codex` または `--agent both` を指定します。アンインストールは team install と同様に `npx phasegate uninstall --apply` を使えば manifest 経由でローカル成果物のみが除去されます。<!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 -->
 
 後で PhaseGate を外す場合は、manifest ベースの uninstall を使います。
 

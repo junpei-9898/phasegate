@@ -11,6 +11,7 @@
 // @work-item-id WI-208
 // @work-item-id WI-209
 // @work-item-id WI-210
+// @work-item-id WI-213
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -625,6 +626,12 @@ export class RunInstallUseCase {
       ...(options.includeClaude
         ? [
             {
+              path: ".claude/CLAUDE.local.md",
+              strategy: "markdown-managed" as const,
+              templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal CLAUDE.local.md managed section" },
+            },
+            {
               path: ".claude/settings.json",
               strategy: "copy" as const,
               templatePath: "templates/.claude/settings.json",
@@ -634,12 +641,50 @@ export class RunInstallUseCase {
       ...(options.includeCodex
         ? [
             {
+              path: ".codex/AGENTS.local.md",
+              strategy: "markdown-managed" as const,
+              templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal AGENTS.local.md managed section" },
+            },
+            {
               path: ".codex/hooks.json",
               strategy: "copy" as const,
               templatePath: "templates/.codex/hooks.json",
             },
           ]
         : []),
+      {
+        path: ".git/hooks/pre-commit",
+        strategy: "copy" as const,
+        templatePath: "docs/templates/personal/hooks/pre-commit",
+        executable: true,
+      },
+      {
+        path: ".git/hooks/commit-msg",
+        strategy: "copy" as const,
+        templatePath: "docs/templates/personal/hooks/commit-msg",
+        executable: true,
+      },
+      {
+        path: ".phasegate-local/docs/folder_management_rules.md",
+        strategy: "copy" as const,
+        templatePath: "docs/folder_management_rules.md",
+      },
+      {
+        path: ".phasegate-local/docs/principles/architecture-philosophy.md",
+        strategy: "copy" as const,
+        templatePath: "docs/principles/architecture-philosophy.md",
+      },
+      {
+        path: ".phasegate-local/docs/principles/model-routing.md",
+        strategy: "copy" as const,
+        templatePath: "docs/principles/model-routing.md",
+      },
+      {
+        path: ".phasegate-local/docs/principles/testing-rules.md",
+        strategy: "copy" as const,
+        templatePath: "docs/principles/testing-rules.md",
+      },
       {
         path: ".git/info/exclude",
         strategy: "text-managed" as const,

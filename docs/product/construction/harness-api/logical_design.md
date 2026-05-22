@@ -1932,3 +1932,8 @@ The public CLI should add an apply variant for applicable config plans without w
 <!-- @work-item-id WI-206 -->
 
 The public CLI exposes `phasegate session begin` and `phasegate session end` as the managed surface for hook-visible Full Mode authorization. `session begin --mode full --unit <unit> --work-item <WI-XXX> --reason <text> --duration <ttl>` writes `.phasegate/session.json` with a finite expiry and the allowed full-mode layer categories. `session end --work-item <WI-XXX>` removes the marker and may refuse a mismatched work item. The command is intentionally explicit so agents can avoid hand-editing `quickMode.allowedCategories`.
+## WI-213 Personal Doctor Flag Alias
+
+<!-- @work-item-id WI-213 -->
+
+The CLI accepts `doctor --personal` as a scope hint for personal-install diagnostics. Installation mode remains inferred from the manifest so project installs are not misclassified, but the flag is recognized to keep personal install guidance executable.

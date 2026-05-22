@@ -87,3 +87,8 @@ Public docs and setup skills must describe personal install agent runtime paths 
 
 @work-item-id WI-210
 Public docs must distinguish project install and personal install skill topology. Project install deploys selected bundled skill bodies to root `skills/` and exposes them through `.claude/skills` / `.codex/skills` symlinks. Personal install keeps local-only real per-agent skill directories. Reconcile/update-skills are documented as the repair path for older project installs whose skill links exist but whose shared `skills/` target is empty.
+## WI-213 Personal Install Documentation
+
+<!-- @work-item-id WI-213 -->
+
+README and installation guide content describe personal install as a local-only setup that still deploys functional local alternatives for agent context, commit-time hooks, and reference docs. The docs continue to state that team-owned files are not mutated.

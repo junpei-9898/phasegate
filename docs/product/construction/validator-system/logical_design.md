@@ -1926,3 +1926,8 @@ L3/L4 semantic validators use lightweight static analysis as operational signals
 @work-item-id WI-151
 
 Validator-system owns the meaning of layer validator outcomes. Public documentation must distinguish configured layer enablement, cached artifact availability, and live validation result. L2-013 `cli-e2e-test-existence` is part of the L2 public validator table.
+## WI-213 Personal Validator Inputs
+
+<!-- @work-item-id WI-213 -->
+
+Personal install config points validator document roots at `.phasegate-local/product/construction` and `.phasegate-local/inception`. This keeps personal validator execution local-only instead of requiring team-owned `docs/product` and `docs/inception` directories.

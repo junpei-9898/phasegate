@@ -109,7 +109,7 @@ npx phasegate install --personal --agent claude --dry-run
 npx phasegate install --personal --agent claude --apply
 ```
 
-`--personal` does not plan or write `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, or CI settings. It creates `.phasegate-local/phasegate.config.json`, real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), a managed local-only block in `.git/info/exclude`, and `.phasegate/manifest.json`. Codex user-level hook feature enablement remains a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 -->
+`--personal` does not plan or write `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, or CI settings. It creates `.phasegate-local/phasegate.config.json`, local agent context (`.claude/CLAUDE.local.md` and/or `.codex/AGENTS.local.md`), real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), local git hooks under `.git/hooks/`, local reference docs under `.phasegate-local/docs/`, a managed local-only block in `.git/info/exclude`, and `.phasegate/manifest.json`. Codex user-level hook feature enablement remains a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 -->
 
 For agent-driven setup planning, use:
 

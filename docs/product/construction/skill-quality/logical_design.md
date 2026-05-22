@@ -1998,3 +1998,8 @@ Both skills route agents away from repeated setup once local readiness is comple
 <!-- @work-item-id WI-192 -->
 
 `skill:apply-cascade-update --dry-run` is a preview operation. It may resolve targets and read files, but it must not call the write port. Human output uses preview wording (`Would update ...`), and JSON output includes `dryRun: true` with the computed target count and tags.
+## WI-213 Personal Skill Reference Docs
+
+<!-- @work-item-id WI-213 -->
+
+Personal install copies bundled skill reference dependencies into `.phasegate-local/docs/`, including `folder_management_rules.md` and `principles/*.md`. Skills can resolve the documented PhaseGate rules in a local-only sandbox without writing root `docs/` files.

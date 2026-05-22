@@ -1594,3 +1594,8 @@ The PhaseGate CLI delegates `delegate-sonnet` arguments to `scripts/delegate-son
 Stop hook execution treats `phasegate:complete-check` as a canonical harness-api command, not as a mandatory project-local wrapper file. `ChildProcessCliExecutorAdapter` resolves namespaced `phasegate:*` commands to the package's `scripts/harness/main.ts` entrypoint and passes the command name through unchanged. This keeps Stop hook behavior aligned with the public CLI registry and avoids depending on unmanaged downstream files such as `scripts/harness/cli/complete-check.ts`.
 
 Legacy non-namespaced extension commands may still resolve through `scripts/harness/cli/{slug}.ts` for compatibility. Strict stop-hook failure reporting distinguishes a Complete Check validation failure from an execution wiring failure when stderr indicates a missing module or legacy wrapper path.
+## WI-213 Personal Agent Context
+
+<!-- @work-item-id WI-213 -->
+
+Personal install deploys local-only agent context files for the selected agent. Claude receives `.claude/CLAUDE.local.md`; Codex receives `.codex/AGENTS.local.md`. These files carry the same PhaseGate rule block as project agent context without mutating team-owned `CLAUDE.md` or `AGENTS.md`.

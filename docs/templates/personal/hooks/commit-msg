@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# PhaseGate personal commit-msg hook.
+# Local-only counterpart of the Husky commit-msg defense.
+
+PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"
+
+$PHASEGATE_CMD commit-msg "$1"

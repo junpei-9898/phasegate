@@ -17,6 +17,7 @@
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-205
  * @work-item-id WI-206
+ * @work-item-id WI-213
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -167,7 +168,7 @@ Setup:
                                 --skills <core|all>, --agent <claude|codex|both>, --workflow <standard|strict>,
                                 --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
-  doctor                       Diagnose silent installation failures (--json, --strict, --agent <claude|codex|both>, --report-out <path>)
+  doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both>, --report-out <path>)
   scaffold-wi <unit|_cross> <story|issue|chore>
                                Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
@@ -2001,7 +2002,7 @@ async function main(): Promise<void> {
       }
 
       case "doctor": {
-        const KNOWN_DOCTOR_FLAGS = ["--json", "--strict", "--agent", "--report-out"];
+        const KNOWN_DOCTOR_FLAGS = ["--json", "--strict", "--personal", "--agent", "--report-out"];
         const flagError = validateKnownFlags(args, KNOWN_DOCTOR_FLAGS);
         if (flagError) {
           console.error(flagError);

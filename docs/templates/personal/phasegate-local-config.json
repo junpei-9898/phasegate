@@ -54,8 +54,8 @@
     "deadCodeGC": false
   },
   "paths": {
-    "designDocs": "docs/product/construction",
-    "inceptionDocs": "docs/inception"
+    "designDocs": ".phasegate-local/product/construction",
+    "inceptionDocs": ".phasegate-local/inception"
   },
   "reporting": {
     "format": "json",

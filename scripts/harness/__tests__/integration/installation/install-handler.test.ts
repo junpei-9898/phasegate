@@ -9,6 +9,7 @@
 // @work-item-id WI-208
 // @work-item-id WI-209
 // @work-item-id WI-210
+// @work-item-id WI-213
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -333,15 +334,26 @@ target("InstallHandler", () => {
       expect(parsed.changed.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
+          ".claude/CLAUDE.local.md",
           ".claude/settings.json",
           ".claude/skills",
+          ".git/hooks/pre-commit",
+          ".git/hooks/commit-msg",
+          ".phasegate-local/docs/folder_management_rules.md",
+          ".phasegate-local/docs/principles/testing-rules.md",
           ".git/info/exclude",
         ]),
       );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"name": "personal-phasegate"');
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"designDocs": ".phasegate-local/product/construction"');
+      expect(await readFile(join(root, ".claude/CLAUDE.local.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".claude/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
+      expect(await readFile(join(root, ".git/hooks/pre-commit"), "utf8")).toContain("validate --layer L2");
+      expect(await readFile(join(root, ".git/hooks/commit-msg"), "utf8")).toContain('commit-msg "$1"');
+      expect(await readFile(join(root, ".phasegate-local/docs/folder_management_rules.md"), "utf8")).toContain("docs ディレクトリ管理ガイド");
+      expect(await readFile(join(root, ".phasegate-local/docs/principles/testing-rules.md"), "utf8")).toContain("テスト");
       expect((await lstat(join(root, ".claude/settings.json"))).isSymbolicLink()).toBe(false);
       expect((await lstat(join(root, ".claude/skills"))).isDirectory()).toBe(true);
       expect((await lstat(join(root, ".claude/skills"))).isSymbolicLink()).toBe(false);
@@ -368,12 +380,18 @@ target("InstallHandler", () => {
       expect(parsed.changed.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
+          ".codex/AGENTS.local.md",
           ".codex/hooks.json",
           ".codex/skills",
+          ".git/hooks/pre-commit",
+          ".git/hooks/commit-msg",
+          ".phasegate-local/docs/folder_management_rules.md",
+          ".phasegate-local/docs/principles/testing-rules.md",
           ".git/info/exclude",
         ]),
       );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
+      expect(await readFile(join(root, ".codex/AGENTS.local.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".codex/hooks.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".codex/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
       expect((await lstat(join(root, ".codex/hooks.json"))).isSymbolicLink()).toBe(false);

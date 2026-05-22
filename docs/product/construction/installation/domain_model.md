@@ -506,3 +506,9 @@ Doctor JSON exposes whether each finding is repair work for the current scope. A
 Project install treats root `skills/` as the shared bundled skill target for Claude and Codex. `.claude/skills` and `.codex/skills` are agent-facing links to that shared directory, but the link is valid only when the target contains PhaseGate skill content such as `SKILL.md` files or `skills/.harness-version`.
 
 Shared skill manifest ownership is recorded per deployed skill directory plus `skills/.harness-version`, not as a single root `skills/` directory. This lets uninstall remove PhaseGate-managed bundled skills while preserving user-owned skill directories under the same root. Personal install remains a separate local-only model with real per-agent skill directories.
+
+## Personal Core Defense Artifacts
+
+<!-- @work-item-id WI-213 -->
+
+Personal install owns local-only counterparts for the PhaseGate core defenses: agent context files under selected agent directories, git hooks under `.git/hooks/`, reference docs under `.phasegate-local/docs/`, and a personal config whose design/inception paths stay under `.phasegate-local/`. These artifacts are manifest-managed but remain excluded from team commits.

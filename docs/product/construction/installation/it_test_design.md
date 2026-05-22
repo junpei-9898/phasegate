@@ -194,3 +194,12 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | old install with skill links and empty root `skills/` -> `doctor --json` | selected agent skill check is red. |
 | same old install -> `reconcile --apply` | shared bundled skills are deployed and doctor returns green. |
 | install -> add `skills/user-owned/SKILL.md` -> uninstall | managed shared skills and links are removed while `skills/user-owned/SKILL.md` remains. |
+
+<!-- @work-item-id WI-213 -->
+## 2.13 Personal Core Defense Install Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --personal --agent claude --apply` | Creates `.claude/CLAUDE.local.md`, `.claude/settings.json`, `.claude/skills`, local hooks, and local reference docs. |
+| `install --personal --agent codex --apply` | Creates `.codex/AGENTS.local.md`, `.codex/hooks.json`, `.codex/skills`, local hooks, and local reference docs. |
+| personal install with team-owned files present | `AGENTS.md`, `CLAUDE.md`, `.husky/*`, and root `docs/principles/*` remain unchanged. |

@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+# PhaseGate personal pre-commit hook.
+# Local-only counterpart of the Husky pre-commit defense.
+
+PHASEGATE_CMD="${PHASEGATE_CMD:-npx phasegate}"
+
+echo "PhaseGate personal pre-commit"
+
+$PHASEGATE_CMD lint
+L1_EXIT=$?
+if [ $L1_EXIT -ne 0 ]; then
+  echo "PhaseGate lint failed."
+  exit 1
+fi
+
+if [ "${HARNESS_QUICK_MODE:-0}" = "1" ]; then
+  $PHASEGATE_CMD validate --layer L2 --format human --no-l4
+else
+  $PHASEGATE_CMD validate --layer L2 --format human
+fi
+
