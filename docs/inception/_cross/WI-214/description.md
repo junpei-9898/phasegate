@@ -91,3 +91,16 @@ phasegate は v0.115 以降 `paths.designDocs` / `paths.inceptionDocs` を導入
 | `pnpm harness:check-ready` | PASS |
 | `git diff --check` | PASS |
 | `npm pack --dry-run` | PASS: `phasegate@0.160.18` |
+
+## Published Dogfood Evidence (2026-05-22)
+
+Published package: `phasegate@0.160.18` (`npm view phasegate version` returned `0.160.18`).
+
+| Flow | Command / Check | Result |
+|---|---|---|
+| Personal install from npm | `npx phasegate@latest install --personal --agent both --apply --json` in `/private/tmp/phasegate-wi214-published.dZeN1m` | PASS. `refused: []`; created `.phasegate-local/phasegate.config.json`, local agent context, local hooks, local docs, and per-agent skills. |
+| Personal doctor from npm | `npx phasegate@latest doctor --personal --agent both --json` | PASS. `phasegateVersion: 0.160.18`, `overallStatus: green`, `findings: []`, `installationMode: personal`. |
+| Personal path mapping | Read `.phasegate-local/phasegate.config.json` | PASS. `paths.principlesDocs` is `.phasegate-local/docs/principles`; `paths.folderRulesDoc` is `.phasegate-local/docs/folder_management_rules.md`. |
+| Personal local docs | `ls -l .phasegate-local/docs/folder_management_rules.md .phasegate-local/docs/principles/*.md` | PASS. Folder rules and all three principles docs exist; `.git/hooks/pre-commit` and `.git/hooks/commit-msg` are executable. |
+| Custom repo paths from npm | Existing `phasegate.config.json` with `documentation/principles` and `documentation/folder_rules.md`, then `npx phasegate@latest init --name custom-path-dogfood --agent codex --yes` in `/private/tmp/phasegate-wi214-custom.AS5Ms9` | PASS. `Design docs deployed (4 files)` and files were created under `documentation/`, not `docs/`. |
+| Custom path preservation | Read `phasegate.config.json` after init | PASS. `paths.designDocs`, `paths.inceptionDocs`, `paths.principlesDocs`, and `paths.folderRulesDoc` retained the custom `documentation/...` values. |
