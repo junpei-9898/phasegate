@@ -100,6 +100,18 @@ skills/logical-designer/SKILL.md:183:    > **注意**: `docs/folder_management_r
 | skill の principles 文書依存 | `grep -l "docs/principles\|docs/folder_management_rules" skills/*/SKILL.md` | 20+ skill が参照 |
 | personal config が要求するパスと実体の整合 | `docs/templates/personal/phasegate-local-config.json` | `paths.designDocs: docs/product/construction` を要求するが personal は配置しない |
 
+## Published Dogfood Evidence (2026-05-22)
+
+公開済み `phasegate@0.160.17` で downstream personal install を検証した。
+
+| 観点 | 確認方法 | 観察結果 |
+|---|---|---|
+| registry version | `npm view phasegate version` | `0.160.17` |
+| personal install apply | `/private/tmp/phasegate-published-wi213.07EAbx` で `npx phasegate@0.160.17 install --personal --agent both --apply --json` | `refused: []`。`.claude/CLAUDE.local.md` / `.codex/AGENTS.local.md` / `.git/hooks/pre-commit` / `.git/hooks/commit-msg` / `.phasegate-local/docs/*` が `changed` に含まれる |
+| personal doctor | 同一 downstream で `npx phasegate@0.160.17 doctor --personal --agent both --json` | `overallStatus: green`, `findings: []`, `installationMode: personal` |
+| local-only config paths | `.phasegate-local/phasegate.config.json` | `paths.designDocs: .phasegate-local/product/construction`, `paths.inceptionDocs: .phasegate-local/inception` |
+| local hook executability | `ls -l .git/hooks/pre-commit .git/hooks/commit-msg` | 両方 executable (`-rwxr-xr-x`) |
+
 ## Related
 
 - WI-207 / WI-208 / WI-209 — personal install の original 設計を入れた WI 群。本 WI はそれらの contract 拡張。
