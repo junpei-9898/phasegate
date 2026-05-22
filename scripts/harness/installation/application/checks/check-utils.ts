@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-145
+// @work-item-id WI-209
 
 import { join } from "node:path";
 import type { CheckId } from "../../domain/check-id.js";
@@ -62,4 +63,8 @@ export function skillTargetLooksValid(target: string | null): boolean {
   if (target === null) return false;
   const normalized = target.replaceAll("\\", "/").replace(/\/+$/, "");
   return normalized === "skills" || normalized === "../skills" || normalized.endsWith("/skills");
+}
+
+export function skillDirectoryLooksValid(files: readonly string[]): boolean {
+  return files.some((file) => file.endsWith("/SKILL.md") || file.endsWith("\\SKILL.md") || file.endsWith(".harness-version"));
 }

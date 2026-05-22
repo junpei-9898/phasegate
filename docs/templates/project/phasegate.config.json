@@ -1,0 +1,29 @@
+{
+  "project": {
+    "name": "phasegate-project",
+    "preset": "standard"
+  },
+  "architecture": {
+    "preset": "clean"
+  },
+  "layers": {},
+  "quickMode": {},
+  "phaseDependencies": {
+    "preset": "default",
+    "override": false,
+    "customRules": []
+  },
+  "planningMode": {
+    "default": "interactive",
+    "perPhase": {}
+  },
+  "harnesses": {},
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception"
+  },
+  "reporting": {
+    "format": "json",
+    "outputDir": "reports"
+  }
+}

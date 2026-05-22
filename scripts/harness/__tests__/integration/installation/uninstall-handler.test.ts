@@ -5,6 +5,7 @@
 // @work-item-id WI-199
 // @work-item-id WI-207
 // @work-item-id WI-208
+// @work-item-id WI-209
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -282,16 +283,14 @@ target("UninstallHandler", () => {
       expect(actual.payload.plan.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
-          ".phasegate-local/claude/settings.json",
-          ".phasegate-local/skills",
           ".claude/settings.json",
           ".claude/skills",
           ".git/info/exclude",
         ]),
       );
       expect(await fileExists(join(root, ".phasegate-local/phasegate.config.json"))).toBe(false);
-      expect(await fileExists(join(root, ".phasegate-local/skills"))).toBe(false);
       expect(await fileExists(join(root, ".claude/settings.json"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/skills"))).toBe(false);
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toBe("# user local excludes\n");
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
     });

@@ -80,4 +80,7 @@ README and installation/setup artifact guides document `phasegate install --pers
 Documentation also lists the local-only artifacts: `.phasegate-local/config.json`, `.phasegate/manifest.json`, and the managed block in `.git/info/exclude`. Codex user-level hooks are documented as manual guidance rather than a project-local `.codex/hooks.json` write.
 
 @work-item-id WI-208
-Public docs and setup skills must describe personal install as an automatic local-only agent bootstrap. For Claude Code, the documented artifact list is `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, ignored root `.claude/settings.json` and `.claude/skills` shims, `.phasegate/manifest.json`, and the managed `.git/info/exclude` block. GitHub CLI auth, repo secrets, and CI setup remain excluded from personal apply.
+Public docs and setup skills must describe personal install as an automatic local-only agent bootstrap. GitHub CLI auth, repo secrets, and CI setup remain excluded from personal apply.
+
+@work-item-id WI-209
+Public docs and setup skills must describe personal install agent runtime paths as real files/directories instead of symlink shims. The documented Claude Code artifacts are `.claude/settings.json` and `.claude/skills/`; the documented Codex artifacts are `.codex/hooks.json` and `.codex/skills/`. `.phasegate-local/phasegate.config.json` remains the local config fallback, and `.git/info/exclude` keeps these runtime artifacts local-only.

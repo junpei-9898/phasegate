@@ -41,7 +41,10 @@ Codex user-level hook enablement guidance uses the current Codex CLI feature fla
 Personal install is intentionally separate from `setup:agent --apply`. Setup planning may explain personal install as an alternative for team repositories, but the current apply path continues to represent team/project setup. Local-only installation is owned by `phasegate install --personal` so setup does not accidentally mutate `package.json`, shared agent context, Husky, or CI targets for a personal evaluation.
 
 @work-item-id WI-208
-Personal install is a complete local-only bootstrap path for selected agents. For Claude Code, `phasegate install --personal --agent claude --apply` creates a `.phasegate-local/` sandbox containing config, Claude settings, and skills, plus ignored root `.claude/*` shims for Claude discovery. Fine-grained setup/config tuning may still be delegated to setup skills after this bootstrap, but the initial personal agent runtime is not a manual file-creation task.
+Personal install is a complete local-only bootstrap path for selected agents. Fine-grained setup/config tuning may still be delegated to setup skills after this bootstrap, but the initial personal agent runtime is not a manual file-creation task.
+
+@work-item-id WI-209
+Personal install exposes selected agent runtime paths as real project-local artifacts, not symlink shims. Claude Code receives `.claude/settings.json` and `.claude/skills/`; Codex receives `.codex/hooks.json` and `.codex/skills/`. These paths remain local-only through `.git/info/exclude`, while `.phasegate-local/phasegate.config.json` remains the personal PhaseGate config fallback.
 
 <!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
 ## P3 User Onboarding And Agent Setup

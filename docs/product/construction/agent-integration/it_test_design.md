@@ -5,6 +5,7 @@
 @story-id H11-03
 @story-id H11-04
 @work-item-id WI-097
+@work-item-id WI-209
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01, H11-02, H11-03, H11-04
@@ -23,6 +24,8 @@
 - **Infrastructure Adapter**: EnvFileReentryGuardStateAdapter, HarnessConfigConfigQueryAdapter, HarnessApiCliCommandRegistryAdapter, TsMorphImportAnalyzerAdapter, ChildProcessCliExecutorAdapter
 - **Presentation Hook Adapter**: pre-tool-use-hook.ts, post-tool-use-hook.ts, stop-hook.ts
 - **統合フロー**: Hook Flow Integration（UseCase + Adapter結合）
+
+WI-209 dogfooding validates that installed personal and project/team agent runtime surfaces can execute `session-start`, `user-prompt-submit`, and `pre-tool-use` through the packaged CLI contract. The agent-integration regression target is the spawned CLI helper behavior: child processes must settle or be killed on timeout, and `pre-tool-use` must block protected-file writes after install-created config discovery succeeds.
 
 ---
 

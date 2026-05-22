@@ -6,7 +6,7 @@ traceability:
 # Logical Design (横断): installation
 
 > **Unit ID**: installation
-> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207 / WI-208
+> **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207 / WI-208 / WI-209
 > **作成日**: 2026-05-11
 > **承認済 Phase 1 計画**: `docs/inception/installation/logical_design_plan.md`
 > **対応 domain_model**: `docs/product/construction/installation/domain_model.md`
@@ -110,22 +110,25 @@ traceability:
 
 @work-item-id WI-207
 @work-item-id WI-208
+@work-item-id WI-209
 
-`RunInstallUseCase` accepts `personal?: boolean`. When `personal` is true, install target creation is replaced with a personal-only target set. Agent-visible files are created only as local-only sandbox artifacts or root shims recorded in the manifest.
+`RunInstallUseCase` accepts `personal?: boolean`. When `personal` is true, install target creation is replaced with a personal-only target set. Agent-visible files are created only as local-only real runtime artifacts recorded in the manifest.
 
 | Target | Strategy | Behavior |
 |---|---|---|
 | `.phasegate-local/phasegate.config.json` | `copy` | Create local config parking file only when absent; existing content is preserved. |
-| `.phasegate-local/claude/settings.json` | `copy` | Copy Claude Code hook settings into the personal sandbox for `--agent claude` / `both`. |
-| `.phasegate-local/skills/` | `copy-dir` | Deploy selected bundled skills into the personal sandbox. |
-| `.claude/settings.json` | `symlink` | Create a root-discoverable shim to `../.phasegate-local/claude/settings.json` only when no conflicting path exists. |
-| `.claude/skills` | `symlink` | Create a root-discoverable shim to `../.phasegate-local/skills` only when no conflicting path exists. |
+| `.claude/settings.json` | `copy` | Copy Claude Code hook settings as a regular file for `--agent claude` / `both`. |
+| `.claude/skills/` | `copy-dir` | Deploy bundled skills as a regular directory for Claude Code discovery. |
+| `.codex/hooks.json` | `copy` | Copy Codex project-local hooks as a regular file for `--agent codex` / `both`. |
+| `.codex/skills/` | `copy-dir` | Deploy bundled skills as a regular directory for Codex discovery. |
 | `.git/info/exclude` | `text-managed` | Append or replace a bounded PhaseGate personal exclude block. |
-| `~/.codex/hooks.json` | manual plan item | Report user-level Codex hook setup guidance without writing outside the project. |
+| `~/.codex/config.toml` | manual plan item | Report user-level Codex hook feature enablement guidance without writing outside the project. |
 
-The personal target set excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.codex/hooks.json`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and hosted CI config from both dry-run and apply plans. `phasegate install --personal` also forces Husky and CI inclusion off at the CLI boundary.
+The personal target set excludes `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and hosted CI config from both dry-run and apply plans. `phasegate install --personal` also forces Husky and CI inclusion off at the CLI boundary.
 
-`RunUninstallUseCase` treats `.git/info/exclude` as `text-managed`; uninstall removes only the managed personal exclude block and deletes created personal sandbox artifacts and matching root shims through the manifest-driven path. Symlink removal is allowed when the current symlink target hashes to the manifest entry hash.
+Existing non-managed `.claude/*` / `.codex/*` paths are manual review targets and are not overwritten. `RunUninstallUseCase` treats `.git/info/exclude` as `text-managed`; uninstall removes only the managed personal exclude block and deletes manifest-recorded real runtime artifacts.
+
+For project/team install, `RunInstallUseCase` creates `phasegate.config.json` from a standard project template when absent. Agent hook targets depend on this config at runtime, so the same install transaction that writes `.claude/settings.json` / `.codex/hooks.json` must also make the project config discoverable. Existing `phasegate.config.json` content is preserved. @work-item-id WI-209
 
 ### 2.1 Downstream Install Template Contract
 

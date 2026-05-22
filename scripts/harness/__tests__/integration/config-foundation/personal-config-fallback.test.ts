@@ -6,7 +6,7 @@
 import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FileSystemConfigRepository } from "../../../config-foundation/infrastructure/repositories/file-system-config-repository.js";
 import { target } from "../../helpers/test-helpers.js";
 import { createValidSourceDocument } from "./config-foundation-test-fixtures.js";
@@ -27,13 +27,12 @@ async function writeJson(relativePath: string, document: unknown): Promise<void>
 
 async function loadFromPersonalOnlyConfigProject() {
   const root = await createProjectRoot();
-  const previousCwd = process.cwd();
   const sut = new FileSystemConfigRepository();
   const expectedDocument = createValidSourceDocument({ project: { name: "personal-config", preset: "standard" } });
   const expectedConfigPath = path.join(root, ".phasegate-local", "phasegate.config.json");
   await writeJson(".phasegate-local/phasegate.config.json", expectedDocument);
   await mkdir(path.join(root, "sub", "sub2"), { recursive: true });
-  process.chdir(path.join(root, "sub", "sub2"));
+  const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(path.join(root, "sub", "sub2"));
   try {
     const loaded = await sut.load();
     return {
@@ -43,20 +42,19 @@ async function loadFromPersonalOnlyConfigProject() {
       expectedDocument,
     };
   } finally {
-    process.chdir(previousCwd);
+    cwdSpy.mockRestore();
   }
 }
 
 async function loadFromRootAndPersonalConfigProject() {
   const root = await createProjectRoot();
-  const previousCwd = process.cwd();
   const sut = new FileSystemConfigRepository();
   const expectedDocument = createValidSourceDocument({ project: { name: "root-config", preset: "standard" } });
   const personalDocument = createValidSourceDocument({ project: { name: "personal-config", preset: "standard" } });
   const expectedConfigPath = path.join(root, "phasegate.config.json");
   await writeJson("phasegate.config.json", expectedDocument);
   await writeJson(".phasegate-local/phasegate.config.json", personalDocument);
-  process.chdir(root);
+  const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(root);
   try {
     const loaded = await sut.load();
     return {
@@ -66,7 +64,7 @@ async function loadFromRootAndPersonalConfigProject() {
       expectedDocument,
     };
   } finally {
-    process.chdir(previousCwd);
+    cwdSpy.mockRestore();
   }
 }
 

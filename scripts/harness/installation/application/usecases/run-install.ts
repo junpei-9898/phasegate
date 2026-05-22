@@ -9,6 +9,7 @@
 // @work-item-id WI-183
 // @work-item-id WI-207
 // @work-item-id WI-208
+// @work-item-id WI-209
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -84,8 +85,7 @@ const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
-const PERSONAL_CLAUDE_SETTINGS_LINK = "../.phasegate-local/claude/settings.json";
-const PERSONAL_CLAUDE_SKILLS_LINK = "../.phasegate-local/skills";
+const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/settings.json", ".codex/hooks.json"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -312,7 +312,7 @@ export class RunInstallUseCase {
     const workflow = input.workflow ?? "standard";
     const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
     const targets = input.personal
-      ? this.createPersonalTargets({ includeClaude })
+      ? this.createPersonalTargets({ includeClaude, includeCodex })
       : this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
     const existingManifest = await this.manifestRepository.load(input.projectRoot);
     const baseManifest = existingManifest ?? DeploymentManifest.create(input.phasegateVersion);
@@ -330,8 +330,14 @@ export class RunInstallUseCase {
       const template = target.strategy === "markdown-managed"
         ? renderAgentContextTemplate(rawTemplate, { agent, skillSet, workflow, includeHusky, includeCi })
         : rawTemplate;
-      const repairMode = this.repairMode(target, before);
-      const next = this.merge(target, before, template, input.phasegateVersion);
+      const existingEntry = baseManifest.findEntry(target.path);
+      const beforeHash = before === null ? null : this.hashCalculator.compute(before);
+      const unmanagedPersonalRuntimeFile = input.personal
+        && PERSONAL_AGENT_RUNTIME_FILES.has(target.path)
+        && before !== null
+        && (existingEntry === null || beforeHash === null || !beforeHash.equals(existingEntry.hash));
+      const repairMode = unmanagedPersonalRuntimeFile ? "manual" : this.repairMode(target, before);
+      const next = unmanagedPersonalRuntimeFile ? before : this.merge(target, before, template, input.phasegateVersion);
       const didChange = before !== next;
       const action = this.actionFor(before, didChange, input.force);
       const item: InstallPlanItem = {
@@ -340,8 +346,10 @@ export class RunInstallUseCase {
         repairMode,
         strategy: target.strategy,
         changed: didChange,
-        summary: didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
-        diff: this.diffSummary(before, next),
+        summary: unmanagedPersonalRuntimeFile
+          ? `${target.path}: existing non-phasegate path requires manual review`
+          : didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
+        diff: unmanagedPersonalRuntimeFile ? "manual review required" : this.diffSummary(before, next),
         skillHint: repairMode === "ai-assisted" ? SKILL_HINT : null,
       };
       plan.push(item);
@@ -378,9 +386,9 @@ export class RunInstallUseCase {
 
       const mode = before === null ? "created" : "merged";
       const hash = this.hashCalculator.compute(next);
-      const existingEntry = baseManifest.findEntry(target.path);
-      if (existingEntry !== null && existingEntry.hash.equals(hash)) {
-        manifest = manifest.addEntry(existingEntry);
+      const manifestEntry = baseManifest.findEntry(target.path);
+      if (manifestEntry !== null && manifestEntry.hash.equals(hash)) {
+        manifest = manifest.addEntry(manifestEntry);
       } else {
         manifest = manifest.addEntry(
           DeploymentEntry.create({
@@ -394,14 +402,20 @@ export class RunInstallUseCase {
       }
     }
 
-    if (input.personal && includeClaude) {
-      const item = await this.planPersonalSkills(input);
+    const personalSkillTargets = input.personal
+      ? [
+          ...(includeClaude ? [".claude/skills"] : []),
+          ...(includeCodex ? [".codex/skills"] : []),
+        ]
+      : [];
+    for (const skillPath of personalSkillTargets) {
+      const item = await this.planPersonalSkillDirectory(input, skillPath, baseManifest);
       plan.push(item);
-      if (input.apply && item.changed) {
+      if (input.apply && item.changed && item.repairMode === "mechanical") {
         try {
-          await copyDirectory(join(input.harnessRoot, "skills"), join(input.projectRoot, ".phasegate-local", "skills"));
+          await copyDirectory(join(input.harnessRoot, "skills"), join(input.projectRoot, skillPath));
           await writeFile(
-            join(input.projectRoot, ".phasegate-local", "skills", ".harness-version"),
+            join(input.projectRoot, skillPath, ".harness-version"),
             `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
             "utf8",
           );
@@ -412,20 +426,13 @@ export class RunInstallUseCase {
         manifest = this.addManifestEntry(baseManifest, manifest, {
           path: item.path,
           mode: "created",
-          contentForHash: this.personalSkillsHashInput(input.phasegateVersion, skillSet),
+          contentForHash: this.personalSkillsHashInput(item.path, input.phasegateVersion, skillSet),
         });
       }
     }
 
     const linkSpecs = input.personal
-      ? [
-          ...(includeClaude
-            ? [
-                { path: ".claude/settings.json", target: PERSONAL_CLAUDE_SETTINGS_LINK },
-                { path: ".claude/skills", target: PERSONAL_CLAUDE_SKILLS_LINK },
-              ]
-            : []),
-        ]
+      ? []
       : [
           ...(includeClaude ? [{ path: ".claude/skills", target: "../skills" }] : []),
           ...(includeCodex ? [{ path: ".codex/skills", target: "../skills" }] : []),
@@ -455,13 +462,13 @@ export class RunInstallUseCase {
 
     if (input.personal && includeCodex) {
       plan.push({
-        path: "~/.codex/hooks.json",
+        path: "~/.codex/config.toml",
         action: "will-skip",
         repairMode: "manual",
         strategy: "json",
         changed: false,
-        summary: "~/.codex/hooks.json: personal mode does not write user-level Codex settings; configure hooks manually",
-        diff: "manual user-level Codex hook setup required",
+        summary: "~/.codex/config.toml: personal mode does not write user-level Codex feature flags; enable hooks manually when needed",
+        diff: "manual Codex hooks feature enablement may be required",
         skillHint: null,
       });
     }
@@ -504,6 +511,11 @@ export class RunInstallUseCase {
     readonly includeCi: boolean;
   }): readonly InstallTarget[] {
     return [
+      {
+        path: "phasegate.config.json",
+        strategy: "copy" as const,
+        templatePath: "docs/templates/project/phasegate.config.json",
+      },
       ...(options.includeClaude
         ? [
             { path: ".claude/settings.json", strategy: "json" as const, templatePath: "templates/.claude/settings.json" },
@@ -564,7 +576,7 @@ export class RunInstallUseCase {
     ];
   }
 
-  private createPersonalTargets(options: { readonly includeClaude: boolean }): readonly InstallTarget[] {
+  private createPersonalTargets(options: { readonly includeClaude: boolean; readonly includeCodex: boolean }): readonly InstallTarget[] {
     return [
       {
         path: ".phasegate-local/phasegate.config.json",
@@ -574,9 +586,18 @@ export class RunInstallUseCase {
       ...(options.includeClaude
         ? [
             {
-              path: ".phasegate-local/claude/settings.json",
+              path: ".claude/settings.json",
               strategy: "copy" as const,
               templatePath: "templates/.claude/settings.json",
+            },
+          ]
+        : []),
+      ...(options.includeCodex
+        ? [
+            {
+              path: ".codex/hooks.json",
+              strategy: "copy" as const,
+              templatePath: "templates/.codex/hooks.json",
             },
           ]
         : []),
@@ -639,25 +660,35 @@ export class RunInstallUseCase {
     };
   }
 
-  private async planPersonalSkills(input: RunInstallInput): Promise<InstallPlanItem> {
-    const versionPath = join(input.projectRoot, ".phasegate-local", "skills", ".harness-version");
+  private async planPersonalSkillDirectory(
+    input: RunInstallInput,
+    relativePath: string,
+    baseManifest: DeploymentManifest,
+  ): Promise<InstallPlanItem> {
+    const absolutePath = join(input.projectRoot, relativePath);
+    const versionPath = join(absolutePath, ".harness-version");
     const current = await readTextOrNull(versionPath);
     const expectedNeedle = `"version": "${input.phasegateVersion}"`;
-    const changed = current === null || !current.includes(expectedNeedle);
+    const manifestEntry = baseManifest.findEntry(relativePath);
+    const pathExists = await exists(absolutePath);
+    const unmanagedExisting = pathExists && (current === null || manifestEntry === null);
+    const changed = !unmanagedExisting && (current === null || !current.includes(expectedNeedle));
     return {
-      path: ".phasegate-local/skills",
-      action: changed ? "missing" : "will-skip",
-      repairMode: "mechanical",
+      path: relativePath,
+      action: changed ? "missing" : unmanagedExisting ? "will-merge" : "will-skip",
+      repairMode: unmanagedExisting ? "manual" : "mechanical",
       strategy: "copy-dir",
       changed,
-      summary: changed ? ".phasegate-local/skills: deploy bundled skills" : ".phasegate-local/skills: already up to date",
-      diff: changed ? "+ bundled skills" : "no changes",
+      summary: unmanagedExisting
+        ? `${relativePath}: existing non-phasegate directory requires manual review`
+        : changed ? `${relativePath}: deploy bundled skills` : `${relativePath}: already up to date`,
+      diff: unmanagedExisting ? "manual review required" : changed ? "+ bundled skills" : "no changes",
       skillHint: null,
     };
   }
 
-  private personalSkillsHashInput(version: string, skillSet: "core" | "all"): string {
-    return `personal-skills:${version}:${skillSet}`;
+  private personalSkillsHashInput(path: string, version: string, skillSet: "core" | "all"): string {
+    return `personal-skills:${path}:${version}:${skillSet}`;
   }
 
   private addManifestEntry(

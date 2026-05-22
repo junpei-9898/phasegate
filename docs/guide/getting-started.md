@@ -12,7 +12,7 @@ Start with one question: what kind of repository are you setting up?
 |---|---|---|
 | New project with agent hooks | `npx phasegate init --name <project> --agent both --with-husky --with-ci` | `phasegate.config.json`, skills, hooks, agent context files, Husky, and CI targets exist |
 | Existing repository | `npx phasegate install --dry-run` then `npx phasegate install --apply` | Existing hooks/scripts are preserved and `.phasegate/manifest.json` records managed targets |
-| Personal evaluation in a team repository | `npx phasegate install --personal --agent claude --dry-run` then `npx phasegate install --personal --agent claude --apply` | Team-owned files stay untouched; `.phasegate-local/` stores config/settings/skills and ignored `.claude/*` shims expose them to Claude Code |
+| Personal evaluation in a team repository | `npx phasegate install --personal --agent claude --dry-run` then `npx phasegate install --personal --agent claude --apply` | Team-owned files stay untouched; `.phasegate-local/` stores config and ignored real `.claude/*` / `.codex/*` runtime artifacts expose hooks and skills to selected agents |
 | CI-only rollout | `npx phasegate setup:agent --intent ci-only --with-ci --dry-run --json` | The plan explains CI changes without requiring local hooks |
 | Codex-only project | `npx phasegate init --agent codex --with-husky` | `.codex/hooks.json`, `AGENTS.md`, `.codex/skills`, and pre-commit backstop are present |
 | Strict validation rollout | `npx phasegate setup:agent --intent strict --dry-run --json` | The plan lists strict checks, L4 risk, rollback, and validation commands |

@@ -65,7 +65,7 @@ npx phasegate install --personal --agent claude --dry-run
 npx phasegate install --personal --agent claude --apply
 ```
 
-Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and CI settings are not touched. For Claude Code, PhaseGate writes local-only artifacts under `.phasegate-local/`, creates ignored root `.claude/settings.json` and `.claude/skills` shims for Claude discovery, records `.phasegate/manifest.json`, and manages a local exclude block in `.git/info/exclude`. Codex user-level hook setup is reported as a manual action instead of writing project-local `.codex/hooks.json`. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 -->
+Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and CI settings are not touched. PhaseGate writes `.phasegate-local/phasegate.config.json`, creates real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), records `.phasegate/manifest.json`, and manages a local exclude block in `.git/info/exclude`. Codex user-level hook feature enablement is still reported as a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 -->
 
 For agent-readable planning before writing files:
 

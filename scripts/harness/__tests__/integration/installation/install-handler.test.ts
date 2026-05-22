@@ -7,8 +7,9 @@
 // @work-item-id WI-183
 // @work-item-id WI-207
 // @work-item-id WI-208
+// @work-item-id WI-209
 
-import { lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -52,6 +53,7 @@ async function installAndReadJsonMerge(root: string) {
     result,
     claude: await readFile(join(root, ".claude/settings.json"), "utf8"),
     codex: await readFile(join(root, ".codex/hooks.json"), "utf8"),
+    config: await readFile(join(root, "phasegate.config.json"), "utf8"),
     manifest: JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
       entries: Array<{ path: string; mode: string }>;
     },
@@ -77,6 +79,7 @@ async function installTwiceAndReadIdempotency(root: string) {
   await runInstall(root, { apply: true });
   const firstManifest = await readFile(join(root, ".phasegate", "manifest.json"), "utf8");
   const firstPackage = await readFile(join(root, "package.json"), "utf8");
+  const firstConfig = await readFile(join(root, "phasegate.config.json"), "utf8");
   const secondResult = await runInstall(root, { apply: true });
   return {
     secondResult,
@@ -84,6 +87,8 @@ async function installTwiceAndReadIdempotency(root: string) {
     secondManifest: await readFile(join(root, ".phasegate", "manifest.json"), "utf8"),
     firstPackage,
     secondPackage: await readFile(join(root, "package.json"), "utf8"),
+    firstConfig,
+    secondConfig: await readFile(join(root, "phasegate.config.json"), "utf8"),
   };
 }
 
@@ -186,6 +191,20 @@ async function arrangePersonalInstallWithExistingClaudeSettings() {
   };
 }
 
+async function arrangePersonalInstallWithExistingCodexHooks() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".codex/hooks.json", "{\"custom\": true}\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+  const parsed = JSON.parse(installed.stdout) as {
+    plan: Array<{ path: string; changed: boolean; repairMode: string; summary: string }>;
+  };
+  return {
+    exitCode: installed.exitCode,
+    hooksPlan: parsed.plan.find((item) => item.path === ".codex/hooks.json"),
+    hooksContent: await readFile(join(root, ".codex/hooks.json"), "utf8"),
+  };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -203,8 +222,10 @@ target("InstallHandler", () => {
       expect(actual.claude).toContain("npx phasegate hook stop");
       expect(actual.codex).toContain("custom");
       expect(actual.codex).toContain("npx phasegate hook pre-tool-use");
+      expect(actual.config).toContain('"name": "phasegate-project"');
       expect(actual.manifest.entries).toEqual(
         expect.arrayContaining([
+          expect.objectContaining({ path: "phasegate.config.json", mode: "created" }),
           expect.objectContaining({ path: ".claude/settings.json", mode: "merged" }),
           expect.objectContaining({ path: "CLAUDE.md", mode: "created" }),
           expect.objectContaining({ path: ".codex/hooks.json", mode: "merged" }),
@@ -223,6 +244,7 @@ target("InstallHandler", () => {
       expect(actual.secondResult.exitCode).toBe(0);
       expect(actual.secondManifest).toBe(actual.firstManifest);
       expect(actual.secondPackage).toBe(actual.firstPackage);
+      expect(actual.secondConfig).toBe(actual.firstConfig);
     });
 
     it("custom Husky script は force 無しで refuse し force で backup を取ること", async () => {
@@ -265,7 +287,7 @@ target("InstallHandler", () => {
       expect(actual.aidlcGate).not.toContain("pnpm run harness");
     });
 
-    it("personal Claude install は team-owned files を変更せず sandbox と root shim を自動初期化すること", async () => {
+    it("personal Claude install は team-owned files を変更せず real runtime artifacts を自動初期化すること", async () => {
       // Arrange
       const root = await createProjectRoot();
       const before = await arrangeTeamOwnedFiles(root);
@@ -283,8 +305,6 @@ target("InstallHandler", () => {
       expect(parsed.changed.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
-          ".phasegate-local/claude/settings.json",
-          ".phasegate-local/skills",
           ".claude/settings.json",
           ".claude/skills",
           ".git/info/exclude",
@@ -292,14 +312,45 @@ target("InstallHandler", () => {
       );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"name": "personal-phasegate"');
-      expect(await readFile(join(root, ".phasegate-local/claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
-      expect(await readFile(join(root, ".phasegate-local/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
-      expect((await lstat(join(root, ".claude/settings.json"))).isSymbolicLink()).toBe(true);
-      expect(await readlink(join(root, ".claude/settings.json"))).toBe("../.phasegate-local/claude/settings.json");
-      expect(await readlink(join(root, ".claude/skills"))).toBe("../.phasegate-local/skills");
+      expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
+      expect(await readFile(join(root, ".claude/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
+      expect((await lstat(join(root, ".claude/settings.json"))).isSymbolicLink()).toBe(false);
+      expect((await lstat(join(root, ".claude/skills"))).isDirectory()).toBe(true);
+      expect((await lstat(join(root, ".claude/skills"))).isSymbolicLink()).toBe(false);
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toContain("# phasegate personal install exclude (BEGIN)");
       expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(".phasegate-local/phasegate.config.json");
 
+    });
+
+    it("personal Codex install は project-local hooks と skills を real runtime artifacts として作成すること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+      const before = await arrangeTeamOwnedFiles(root);
+
+      // Act
+      const actual = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+      const parsed = JSON.parse(actual.stdout) as {
+        plan: Array<{ path: string }>;
+        changed: Array<{ path: string }>;
+      };
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(parsed.plan.map((item) => item.path)).not.toEqual(expect.arrayContaining([...TEAM_OWNED_FILES]));
+      expect(parsed.changed.map((item) => item.path)).toEqual(
+        expect.arrayContaining([
+          ".phasegate-local/phasegate.config.json",
+          ".codex/hooks.json",
+          ".codex/skills",
+          ".git/info/exclude",
+        ]),
+      );
+      expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
+      expect(await readFile(join(root, ".codex/hooks.json"), "utf8")).toContain("npx phasegate hook stop");
+      expect(await readFile(join(root, ".codex/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
+      expect((await lstat(join(root, ".codex/hooks.json"))).isSymbolicLink()).toBe(false);
+      expect((await lstat(join(root, ".codex/skills"))).isDirectory()).toBe(true);
+      expect((await lstat(join(root, ".codex/skills"))).isSymbolicLink()).toBe(false);
     });
 
     it("personal Claude doctor は team/project targets を scoped out すること", async () => {
@@ -325,6 +376,17 @@ target("InstallHandler", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.settingsPlan).toMatchObject({ changed: false, repairMode: "manual" });
       expect(actual.settingsContent).toBe("{\"custom\": true}\n");
+    });
+
+    it("personal Codex install は既存 .codex/hooks.json を上書きしないこと", async () => {
+      // Arrange
+      // Act
+      const actual = await arrangePersonalInstallWithExistingCodexHooks();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.hooksPlan).toMatchObject({ changed: false, repairMode: "manual" });
+      expect(actual.hooksContent).toBe("{\"custom\": true}\n");
     });
   });
 });

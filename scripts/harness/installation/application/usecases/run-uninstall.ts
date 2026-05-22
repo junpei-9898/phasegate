@@ -5,6 +5,7 @@
 // @work-item-id WI-199
 // @work-item-id WI-207
 // @work-item-id WI-208
+// @work-item-id WI-209
 
 import { access, copyFile, lstat, mkdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";

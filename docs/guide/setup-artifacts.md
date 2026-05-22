@@ -6,16 +6,17 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 <!-- @work-item-id WI-157 -->
 <!-- @work-item-id WI-169 -->
 <!-- @work-item-id WI-208 -->
+<!-- @work-item-id WI-209 -->
 
 ## Artifact Classes
 
 | Class | Examples | Owner | Lifecycle |
 |---|---|---|---|
-| Managed target | `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
-| Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init`; `install` may merge scripts/devDependency into `package.json` |
+| Managed target | `phasegate.config.json`, `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block, real runtime artifact, or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
+| Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init` or project install when absent; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
-| Personal install artifact | `.phasegate-local/phasegate.config.json`, `.phasegate-local/claude/settings.json`, `.phasegate-local/skills/`, ignored root `.claude/settings.json` and `.claude/skills` shims, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal --agent claude`; team `.gitignore`, team-owned files, GitHub CLI config, repo secrets, and CI settings are not modified |
+| Personal install artifact | `.phasegate-local/phasegate.config.json`, ignored real `.claude/settings.json` + `.claude/skills/`, ignored real `.codex/hooks.json` + `.codex/skills/`, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal --agent <agent>`; team `.gitignore`, team-owned files, GitHub CLI config, repo secrets, and CI settings are not modified |
 | Legacy artifact | `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, `.harness/context-priority.json`, `.harness/reports` fallback | Compatibility only | Not required for current install lifecycle unless a project intentionally keeps an archived integration |
 | User-level setting | Codex CLI `hooks` feature flag | User machine | Must be enabled manually with `codex features enable hooks`; project commands do not modify it |
 
@@ -28,6 +29,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 - Husky scripts when requested: `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`
 - CI workflow when requested: `.github/workflows/phasegate-aidlc-gate.yml`
 - Agent skill links: `.claude/skills`, `.codex/skills`
+- Project config: `phasegate.config.json` when absent, so installed agent hooks have a discoverable runtime config
 - Package metadata: PhaseGate scripts and `devDependencies.phasegate` in `package.json`
 - Manifest: `.phasegate/manifest.json`
 
@@ -37,9 +39,9 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 
 ## Personal Install Artifacts
 
-`phasegate install --personal --agent claude --apply` is a local-only bootstrap for evaluating PhaseGate in a team-owned repository. Substantive files are stored under `.phasegate-local/`, while root `.claude/settings.json` and `.claude/skills` are symlinks so Claude Code can discover the settings and skills. The root shims are hidden by `.git/info/exclude`; PhaseGate does not edit team `.gitignore`.
+`phasegate install --personal --agent claude --apply` is a local-only bootstrap for evaluating PhaseGate in a team-owned repository. PhaseGate config is stored under `.phasegate-local/`, while selected agent runtime paths are real project-local files/directories: `.claude/settings.json` and `.claude/skills/` for Claude Code, `.codex/hooks.json` and `.codex/skills/` for Codex. These paths are hidden by `.git/info/exclude`; PhaseGate does not edit team `.gitignore`.
 
-If `.claude/settings.json` or `.claude/skills` already exists and is not the PhaseGate personal shim, personal install reports manual review and preserves the existing path.
+If `.claude/*` or `.codex/*` already exists and is not a PhaseGate-managed personal artifact, personal install reports manual review and preserves the existing path. <!-- @work-item-id WI-209 -->
 
 ## Doctor Findings
 
