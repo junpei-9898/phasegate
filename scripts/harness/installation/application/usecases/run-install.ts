@@ -10,9 +10,11 @@
 // @work-item-id WI-207
 // @work-item-id WI-208
 // @work-item-id WI-209
+// @work-item-id WI-210
 
-import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { getSkillsForSet, type SkillSet } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -86,6 +88,7 @@ const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
 const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/settings.json", ".codex/hooks.json"]);
+const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -120,6 +123,16 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
       await copyFile(srcPath, destPath);
     }
   }
+}
+
+async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet): Promise<string[]> {
+  const skillsSource = join(harnessRoot, "skills");
+  const allowed = new Set(getSkillsForSet(skillSet));
+  const entries = await readdir(skillsSource, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && allowed.has(entry.name))
+    .map((entry) => entry.name)
+    .sort();
 }
 
 function normalizeJsonEntry(value: unknown): string {
@@ -431,6 +444,32 @@ export class RunInstallUseCase {
       }
     }
 
+    if (!input.personal && (includeClaude || includeCodex)) {
+      const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
+      const item = await this.planSharedSkillDirectory(input, sharedSkills, baseManifest);
+      plan.push(item);
+      if (input.apply && item.changed && item.repairMode === "mechanical") {
+        try {
+          await this.deploySharedSkills(input, sharedSkills, skillSet);
+        } catch (error) {
+          return this.withApplyError({ plan, refused, changed, backupDir }, item.path, "copyDirectory", error);
+        }
+        changed.push(item);
+        manifest = this.addManifestEntry(baseManifest, manifest, {
+          path: SHARED_SKILLS_VERSION_PATH,
+          mode: "created",
+          contentForHash: this.sharedSkillsVersionHashInput(input.phasegateVersion, skillSet, sharedSkills),
+        });
+        for (const skill of sharedSkills) {
+          manifest = this.addManifestEntry(baseManifest, manifest, {
+            path: `skills/${skill}`,
+            mode: "created",
+            contentForHash: this.sharedSkillHashInput(skill, input.phasegateVersion, skillSet),
+          });
+        }
+      }
+    }
+
     const linkSpecs = input.personal
       ? []
       : [
@@ -689,6 +728,62 @@ export class RunInstallUseCase {
 
   private personalSkillsHashInput(path: string, version: string, skillSet: "core" | "all"): string {
     return `personal-skills:${path}:${version}:${skillSet}`;
+  }
+
+  private async planSharedSkillDirectory(
+    input: RunInstallInput,
+    skills: readonly string[],
+    baseManifest: DeploymentManifest,
+  ): Promise<InstallPlanItem> {
+    const versionPath = join(input.projectRoot, SHARED_SKILLS_VERSION_PATH);
+    const current = await readTextOrNull(versionPath);
+    const skillSet = input.skillSet ?? "all";
+    const expectedVersion = `"version": "${input.phasegateVersion}"`;
+    const expectedSkillSet = `"skillSet": "${skillSet}"`;
+    let missingSkill = false;
+    for (const skill of skills) {
+      if (!(await exists(join(input.projectRoot, "skills", skill, "SKILL.md")))) {
+        missingSkill = true;
+        break;
+      }
+    }
+    const missingManifest = baseManifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
+      || skills.some((skill) => baseManifest.findEntry(`skills/${skill}`) === null);
+    const changed = current === null || !current.includes(expectedVersion) || !current.includes(expectedSkillSet) || missingSkill || missingManifest;
+    return {
+      path: "skills",
+      action: changed ? "missing" : "will-skip",
+      repairMode: "mechanical",
+      strategy: "copy-dir",
+      changed,
+      summary: changed ? "skills: deploy shared bundled skills" : "skills: already up to date",
+      diff: changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
+      skillHint: null,
+    };
+  }
+
+  private async deploySharedSkills(input: RunInstallInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
+    const targetRoot = join(input.projectRoot, "skills");
+    await mkdir(targetRoot, { recursive: true });
+    for (const skill of skills) {
+      const source = join(input.harnessRoot, "skills", skill);
+      const target = join(targetRoot, skill);
+      await rm(target, { recursive: true, force: true });
+      await copyDirectory(source, target);
+    }
+    await writeFile(
+      join(targetRoot, ".harness-version"),
+      `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
+      "utf8",
+    );
+  }
+
+  private sharedSkillsVersionHashInput(version: string, skillSet: SkillSet, skills: readonly string[]): string {
+    return `shared-skills-version:${version}:${skillSet}:${skills.join(",")}`;
+  }
+
+  private sharedSkillHashInput(skill: string, version: string, skillSet: SkillSet): string {
+    return `shared-skill:${skill}:${version}:${skillSet}`;
   }
 
   private addManifestEntry(

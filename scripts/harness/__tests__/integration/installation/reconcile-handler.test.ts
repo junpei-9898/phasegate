@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-148
+// @work-item-id WI-210
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -167,6 +168,43 @@ async function applyMissingDeployTargetTwice() {
   };
 }
 
+async function arrangeOldInstallWithEmptySharedSkillsAndRepair() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  await rm(join(root, "skills"), { recursive: true, force: true });
+  await mkdir(join(root, "skills"), { recursive: true });
+  await removeManifestEntry(root, "skills/.harness-version");
+  const manifestPath = join(root, ".phasegate", "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+    entries: Array<{ path: string }>;
+  };
+  manifest.entries = manifest.entries.filter((entry) => !entry.path.startsWith("skills/"));
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  const beforeDoctor = await createInstallationModule().doctorHandler.execute({
+    projectRoot: root,
+    strict: false,
+    json: true,
+    reportOut: null,
+    phasegateVersion: "0.146.0",
+    agent: "both",
+  });
+  const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
+  const afterDoctor = await createInstallationModule().doctorHandler.execute({
+    projectRoot: root,
+    strict: false,
+    json: true,
+    reportOut: null,
+    phasegateVersion: "0.146.0",
+    agent: "both",
+  });
+  return {
+    beforeDoctor: JSON.parse(beforeDoctor.stdout) as { findings: Array<{ checkId: string }> },
+    repaired,
+    afterDoctor: JSON.parse(afterDoctor.stdout) as { findings: Array<{ checkId: string }> },
+    hasToolkitGuide: await fileExists(join(root, "skills", "phasegate-toolkit-guide", "SKILL.md")),
+  };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -244,6 +282,23 @@ target("ReconcileHandler", () => {
       expect(actual.actual).toBe(true);
       expect(actual.second.exitCode).toBe(0);
       expect(actual.second.payload.plan.every((item) => !item.changed)).toBe(true);
+    });
+
+    it("旧 install の空 shared skills を reconcile/update-skills 経路で修復すること", async () => {
+      // Act
+      const actual = await arrangeOldInstallWithEmptySharedSkillsAndRepair();
+
+      // Assert
+      expect(actual.beforeDoctor.findings.map((finding) => finding.checkId)).toEqual(
+        expect.arrayContaining(["claude-skills-symlink", "codex-skills-symlink"]),
+      );
+      expect(actual.repaired.exitCode).toBe(0);
+      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "skills", changed: true }),
+      ]));
+      expect(actual.hasToolkitGuide).toBe(true);
+      expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("claude-skills-symlink");
+      expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("codex-skills-symlink");
     });
   });
 });

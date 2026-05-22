@@ -3,9 +3,11 @@
 // @work-item-id WI-148
 // @work-item-id WI-174
 // @work-item-id WI-198
+// @work-item-id WI-210
 
-import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, symlink, writeFile } from "node:fs/promises";
+import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
+import { getSkillsForSet, type SkillSet } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -14,7 +16,7 @@ import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
 type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "symlink" | "unknown";
+type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "copy-dir" | "symlink" | "unknown";
 
 export interface ReconcilePlanItem {
   readonly path: string;
@@ -56,6 +58,7 @@ const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
+const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -76,6 +79,29 @@ async function readTextOrNull(path: string): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+async function copyDirectory(src: string, dest: string): Promise<void> {
+  await mkdir(dest, { recursive: true });
+  const entries = await readdir(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = join(src, entry.name);
+    const destPath = join(dest, entry.name);
+    if (entry.isDirectory()) {
+      await copyDirectory(srcPath, destPath);
+    } else if (entry.isFile()) {
+      await copyFile(srcPath, destPath);
+    }
+  }
+}
+
+async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet): Promise<string[]> {
+  const allowed = new Set(getSkillsForSet(skillSet));
+  const entries = await readdir(join(harnessRoot, "skills"), { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && allowed.has(entry.name))
+    .map((entry) => entry.name)
+    .sort();
 }
 
 function normalizeJsonEntry(value: unknown): string {
@@ -259,6 +285,13 @@ export class RunReconcileUseCase {
       }
     }
 
+    if (this.manifestIntendsSharedSkills(manifest)) {
+      const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+      const outcome = await this.planSharedSkills(input, manifest, sharedSkills, "all");
+      outcomes.push(outcome);
+      plan.push(outcome.item);
+    }
+
     if (!input.apply || refused.length > 0) {
       return { plan, refused, changed, backupDir: null };
     }
@@ -272,16 +305,24 @@ export class RunReconcileUseCase {
       const hashContent = await outcome.apply();
       changed.push(outcome.item);
       if (hashContent !== null) {
-        const mode = outcome.item.strategy === "symlink" ? "symlink" : outcome.item.action === "add" ? "created" : (manifest.findEntry(outcome.item.path)?.mode ?? "merged");
-        nextManifest = nextManifest.addEntry(
-          DeploymentEntry.create({
-            path: outcome.item.path,
-            mode,
-            block: mode === "merged" ? this.managedBlockFor(outcome.item.path, outcome.item.strategy) : null,
-            hash: this.hashCalculator.compute(hashContent),
-            deployedAt: new Date().toISOString(),
-          }),
-        );
+        if (outcome.item.strategy === "copy-dir" && outcome.item.path === "skills") {
+          const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+          nextManifest = nextManifest.addEntry(this.createdEntry(SHARED_SKILLS_VERSION_PATH, this.sharedSkillsVersionHashInput(input.phasegateVersion, "all", sharedSkills)));
+          for (const skill of sharedSkills) {
+            nextManifest = nextManifest.addEntry(this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, "all")));
+          }
+        } else {
+          const mode = outcome.item.strategy === "symlink" ? "symlink" : outcome.item.action === "add" ? "created" : (manifest.findEntry(outcome.item.path)?.mode ?? "merged");
+          nextManifest = nextManifest.addEntry(
+            DeploymentEntry.create({
+              path: outcome.item.path,
+              mode,
+              block: mode === "merged" ? this.managedBlockFor(outcome.item.path, outcome.item.strategy) : null,
+              hash: this.hashCalculator.compute(hashContent),
+              deployedAt: new Date().toISOString(),
+            }),
+          );
+        }
       }
     }
 
@@ -386,6 +427,84 @@ export class RunReconcileUseCase {
         },
       };
     }
+  }
+
+  private manifestIntendsSharedSkills(manifest: DeploymentManifest): boolean {
+    return manifest.findEntry(".claude/skills") !== null
+      || manifest.findEntry(".codex/skills") !== null
+      || manifest.entries.some((entry) => entry.path.startsWith("skills/"));
+  }
+
+  private async planSharedSkills(
+    input: RunReconcileInput,
+    manifest: DeploymentManifest,
+    skills: readonly string[],
+    skillSet: SkillSet,
+  ) {
+    const versionContent = await readTextOrNull(this.resolveProjectPath(input.projectRoot, SHARED_SKILLS_VERSION_PATH));
+    const expectedVersion = `"version": "${input.phasegateVersion}"`;
+    let missingSkill = false;
+    for (const skill of skills) {
+      if (!(await exists(this.resolveProjectPath(input.projectRoot, `skills/${skill}/SKILL.md`)))) {
+        missingSkill = true;
+        break;
+      }
+    }
+    const missingManifest = manifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
+      || skills.some((skill) => manifest.findEntry(`skills/${skill}`) === null);
+    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest;
+    return {
+      item: this.item(
+        "skills",
+        changed ? "add" : "skip",
+        "mechanical",
+        "copy-dir",
+        changed,
+        changed ? "skills: deploy shared bundled skills" : "skills: already up to date",
+        changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
+        null,
+      ),
+      needsBackup: false,
+      apply: async () => {
+        if (!changed) return null;
+        await this.deploySharedSkills(input, skills, skillSet);
+        return this.sharedSkillsVersionHashInput(input.phasegateVersion, skillSet, skills);
+      },
+    };
+  }
+
+  private async deploySharedSkills(input: RunReconcileInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
+    const targetRoot = this.resolveProjectPath(input.projectRoot, "skills");
+    await mkdir(targetRoot, { recursive: true });
+    for (const skill of skills) {
+      const source = join(input.harnessRoot, "skills", skill);
+      const target = join(targetRoot, skill);
+      await rm(target, { recursive: true, force: true });
+      await copyDirectory(source, target);
+    }
+    await writeFile(
+      join(targetRoot, ".harness-version"),
+      `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
+      "utf8",
+    );
+  }
+
+  private createdEntry(path: string, hashInput: string): DeploymentEntry {
+    return DeploymentEntry.create({
+      path,
+      mode: "created",
+      block: null,
+      hash: this.hashCalculator.compute(hashInput),
+      deployedAt: new Date().toISOString(),
+    });
+  }
+
+  private sharedSkillsVersionHashInput(version: string, skillSet: SkillSet, skills: readonly string[]): string {
+    return `shared-skills-version:${version}:${skillSet}:${skills.join(",")}`;
+  }
+
+  private sharedSkillHashInput(skill: string, version: string, skillSet: SkillSet): string {
+    return `shared-skill:${skill}:${version}:${skillSet}`;
   }
 
   private reconcileContent(target: ReconcileTarget, before: string | null, template: string, version: string): string {

@@ -8,8 +8,9 @@
 // @work-item-id WI-207
 // @work-item-id WI-208
 // @work-item-id WI-209
+// @work-item-id WI-210
 
-import { lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -29,7 +30,16 @@ async function writeProjectFile(root: string, relativePath: string, content: str
   await writeFile(absolutePath, content, "utf8");
 }
 
-async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean; agent?: "claude" | "codex" | "both" } = {}) {
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean; agent?: "claude" | "codex" | "both"; skillSet?: "core" | "all" } = {}) {
   const mod = createInstallationModule();
   const agent = options.agent ?? "both";
   return mod.installHandler.execute({
@@ -42,6 +52,7 @@ async function runInstall(root: string, options: { apply?: boolean; force?: bool
     json: true,
     personal: options.personal ?? false,
     agent,
+    skillSet: options.skillSet ?? "all",
     includeClaude: agent === "claude" || agent === "both",
     includeCodex: agent === "codex" || agent === "both",
   });
@@ -202,6 +213,23 @@ async function arrangePersonalInstallWithExistingCodexHooks() {
     exitCode: installed.exitCode,
     hooksPlan: parsed.plan.find((item) => item.path === ".codex/hooks.json"),
     hooksContent: await readFile(join(root, ".codex/hooks.json"), "utf8"),
+  };
+}
+
+async function arrangeProjectInstallAndReadSkills(agent: "claude" | "codex" | "both", skillSet: "core" | "all" = "all") {
+  const root = await createProjectRoot();
+  const installed = await runInstall(root, { apply: true, agent, skillSet });
+  const manifest = JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
+    entries: Array<{ path: string; hash: string; mode: string }>;
+  };
+  return {
+    root,
+    installed,
+    manifest,
+    hasToolkitGuide: await fileExists(join(root, "skills", "phasegate-toolkit-guide", "SKILL.md")),
+    hasCoreSkill: await fileExists(join(root, "skills", "cascade-updater", "SKILL.md")),
+    claudeLink: await fileExists(join(root, ".claude", "skills")) ? await readlink(join(root, ".claude", "skills")) : null,
+    codexLink: await fileExists(join(root, ".codex", "skills")) ? await readlink(join(root, ".codex", "skills")) : null,
   };
 }
 
@@ -387,6 +415,51 @@ target("InstallHandler", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.hooksPlan).toMatchObject({ changed: false, repairMode: "manual" });
       expect(actual.hooksContent).toBe("{\"custom\": true}\n");
+    });
+
+    it("project Claude install は root shared skills を配布して Claude link から参照できること", async () => {
+      // Act
+      const actual = await arrangeProjectInstallAndReadSkills("claude");
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(await readFile(join(actual.root, ".claude", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(actual.claudeLink).toBe("../skills");
+      expect(actual.codexLink).toStrictEqual(null);
+      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "skills/.harness-version", mode: "created" }),
+        expect.objectContaining({ path: "skills/phasegate-toolkit-guide", mode: "created" }),
+        expect.objectContaining({ path: ".claude/skills", mode: "symlink" }),
+      ]));
+    });
+
+    it("project Codex install は root shared skills を配布して Codex link から参照できること", async () => {
+      // Act
+      const actual = await arrangeProjectInstallAndReadSkills("codex");
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(await readFile(join(actual.root, ".codex", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(actual.claudeLink).toStrictEqual(null);
+      expect(actual.codexLink).toBe("../skills");
+    });
+
+    it("project both install の --skills core は core だけを配布し manifest hash に selection を反映すること", async () => {
+      // Act
+      const actual = await arrangeProjectInstallAndReadSkills("both", "core");
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(await readFile(join(actual.root, "skills", "cascade-updater", "SKILL.md"), "utf8")).toContain("cascade-updater");
+      await expect(readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+      expect(actual.claudeLink).toBe("../skills");
+      expect(actual.codexLink).toBe("../skills");
+      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "skills/cascade-updater", mode: "created" }),
+      ]));
+      expect(actual.manifest.entries.find((entry) => entry.path === "skills/phasegate-toolkit-guide")).toStrictEqual(undefined);
     });
   });
 });

@@ -85,3 +85,12 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | UT-INS-WI203-001 | install target planning | standard setup | `scripts/harness/cli/complete-check.ts` is not emitted as a managed target |
 | UT-INS-WI203-002 | reconcile target planning | standard setup | missing `scripts/harness/cli/complete-check.ts` does not become a repair plan item |
 | UT-INS-WI203-003 | doctor checks | standard setup without wrapper | missing wrapper is not a diagnostic finding |
+
+<!-- @work-item-id WI-210 -->
+## 1.7 Project Shared Skills Cases
+
+| Case ID | 対象 | 前提 | 期待結果 |
+|---|---|---|---|
+| UT-INS-WI210-001 | skills doctor check | symlink points to `../skills` but target is empty | red mechanical finding |
+| UT-INS-WI210-002 | skills doctor check | symlink target contains `.harness-version` or `SKILL.md` | no finding |
+| UT-INS-WI210-003 | uninstall planning | manifest has per-skill entries and user-owned `skills/user-owned` exists | managed skill entries are deleted, user-owned skill remains |

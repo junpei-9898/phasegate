@@ -498,3 +498,11 @@ Doctor JSON exposes whether each finding is repair work for the current scope. A
 <!-- @work-item-id WI-203 -->
 
 `scripts/harness/cli/complete-check.ts` is not a PhaseGate managed setup target. The installation domain classifies hook JSON, agent context files, Husky hooks, CI workflows, skills, package metadata, and manifest entries as managed artifacts, while built-in harness commands remain package-owned runtime behavior. If a downstream project intentionally creates a wrapper under `scripts/harness/cli/`, that file is user-owned extension content.
+
+## Project Shared Skills Lifecycle
+
+<!-- @work-item-id WI-210 -->
+
+Project install treats root `skills/` as the shared bundled skill target for Claude and Codex. `.claude/skills` and `.codex/skills` are agent-facing links to that shared directory, but the link is valid only when the target contains PhaseGate skill content such as `SKILL.md` files or `skills/.harness-version`.
+
+Shared skill manifest ownership is recorded per deployed skill directory plus `skills/.harness-version`, not as a single root `skills/` directory. This lets uninstall remove PhaseGate-managed bundled skills while preserving user-owned skill directories under the same root. Personal install remains a separate local-only model with real per-agent skill directories.

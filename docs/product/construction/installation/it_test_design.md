@@ -182,3 +182,15 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `install --dry-run --json` in a fresh downstream project | plan entries do not include `scripts/harness/cli/complete-check.ts` and Stop hook remains configured through `npx phasegate hook stop`. |
 | `reconcile --dry-run --json` in the same project | plan entries do not include `scripts/harness/cli/complete-check.ts`; no repair is proposed for the absent wrapper. |
 | `doctor --json` after install | missing `scripts/harness/cli/complete-check.ts` is not reported as setup drift. |
+
+<!-- @work-item-id WI-210 -->
+## 2.12 Project Shared Skills Install Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| `install --agent claude --skills all --apply` | root `skills/phasegate-toolkit-guide/SKILL.md` exists and `.claude/skills/phasegate-toolkit-guide/SKILL.md` resolves. |
+| `install --agent codex --skills all --apply` | root `skills/phasegate-toolkit-guide/SKILL.md` exists and `.codex/skills/phasegate-toolkit-guide/SKILL.md` resolves. |
+| `install --agent both --skills core --apply` | core skill bodies exist, guidance skill bodies are absent, and both agent links point to `../skills`. |
+| old install with skill links and empty root `skills/` -> `doctor --json` | selected agent skill check is red. |
+| same old install -> `reconcile --apply` | shared bundled skills are deployed and doctor returns green. |
+| install -> add `skills/user-owned/SKILL.md` -> uninstall | managed shared skills and links are removed while `skills/user-owned/SKILL.md` remains. |

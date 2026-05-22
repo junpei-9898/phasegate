@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-01
 // @work-item-id WI-145
+// @work-item-id WI-210
 
 import { describe, expect, it, vi } from "vitest";
 import { ClaudeHookMissingCheck } from "../../../../installation/application/checks/claude-hook-missing-check.js";
@@ -24,9 +25,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("claude-hook-missing");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("mechanical");
+      expect(actual).toMatchObject({ checkId: "claude-hook-missing", severity: "red", repairMode: "mechanical" });
     });
   });
 
@@ -40,7 +39,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", inspector);
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     context("JSON として読めない場合", () => {
@@ -53,9 +52,7 @@ target("doctor heuristic checks", () => {
 
         const actual = await sut.run("/tmp/project", inspector);
 
-        expect(actual?.checkId).toBe("codex-hook-missing");
-        expect(actual?.severity).toBe("red");
-        expect(actual?.repairMode).toBe("manual");
+        expect(actual).toMatchObject({ checkId: "codex-hook-missing", severity: "red", repairMode: "manual" });
       });
     });
 
@@ -68,8 +65,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", inspector);
 
-      expect(actual?.checkId).toBe("codex-hook-missing");
-      expect(actual?.repairMode).toBe("ai-assisted");
+      expect(actual).toMatchObject({ checkId: "codex-hook-missing", repairMode: "ai-assisted" });
     });
   });
 
@@ -84,7 +80,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", content));
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("既存 custom hook に phasegate command がない場合は ai-assisted red を返すこと", async () => {
@@ -92,9 +88,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", "pnpm test\n"));
 
-      expect(actual?.checkId).toBe("husky-pre-commit-missing");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("ai-assisted");
+      expect(actual).toMatchObject({ checkId: "husky-pre-commit-missing", severity: "red", repairMode: "ai-assisted" });
     });
   });
 
@@ -104,7 +98,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/commit-msg", 'npx phasegate commit-msg "$1"\n'));
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("missing の場合は mechanical red を返すこと", async () => {
@@ -112,9 +106,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("husky-commit-msg-missing");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("mechanical");
+      expect(actual).toMatchObject({ checkId: "husky-commit-msg-missing", severity: "red", repairMode: "mechanical" });
     });
   });
 
@@ -124,7 +116,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-push", "npx phasegate bypass:audit --base origin/main\n"));
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("missing の場合は mechanical warn を返すこと", async () => {
@@ -132,9 +124,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("husky-pre-push-missing");
-      expect(actual?.severity).toBe("warn");
-      expect(actual?.repairMode).toBe("mechanical");
+      expect(actual).toMatchObject({ checkId: "husky-pre-push-missing", severity: "warn", repairMode: "mechanical" });
     });
   });
 
@@ -147,7 +137,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", inspector);
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("workflow がない場合は manual warn を返すこと", async () => {
@@ -155,9 +145,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("ci-workflow-missing");
-      expect(actual?.severity).toBe("warn");
-      expect(actual?.repairMode).toBe("manual");
+      expect(actual).toMatchObject({ checkId: "ci-workflow-missing", severity: "warn", repairMode: "manual" });
     });
   });
 
@@ -170,7 +158,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", inspector);
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("self package phasegate は finding を返さないこと", async () => {
@@ -181,7 +169,7 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", inspector);
 
-      expect(actual).toBeNull();
+      expect(actual).toStrictEqual(null);
     });
 
     it("package.json がない場合は mechanical red を返すこと", async () => {
@@ -189,18 +177,23 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("package-json-devdep-missing");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("mechanical");
+      expect(actual).toMatchObject({ checkId: "package-json-devdep-missing", severity: "red", repairMode: "mechanical" });
     });
   });
 
   describe("skills symlink checks", () => {
     it("Claude/Codex の skills symlink が ../skills を指す場合は finding を返さないこと", async () => {
-      const inspector = createInspector({ readSymlink: vi.fn().mockResolvedValue("../skills") });
+      const inspector = createInspector({
+        readSymlink: vi.fn().mockResolvedValue("../skills"),
+        listFiles: vi.fn().mockResolvedValue(["/tmp/project/skills/phasegate-toolkit-guide/SKILL.md"]),
+      });
 
-      await expect(new ClaudeSkillsSymlinkCheck().run("/tmp/project", inspector)).resolves.toBeNull();
-      await expect(new CodexSkillsSymlinkCheck().run("/tmp/project", inspector)).resolves.toBeNull();
+      const actual = [
+        await new ClaudeSkillsSymlinkCheck().run("/tmp/project", inspector),
+        await new CodexSkillsSymlinkCheck().run("/tmp/project", inspector),
+      ];
+
+      expect(actual).toStrictEqual([null, null]);
     });
 
     it("skills 以外を指す symlink は manual red を返すこと", async () => {
@@ -208,17 +201,35 @@ target("doctor heuristic checks", () => {
 
       const actual = await new ClaudeSkillsSymlinkCheck().run("/tmp/project", inspector);
 
-      expect(actual?.checkId).toBe("claude-skills-symlink");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("manual");
+      expect(actual).toMatchObject({ checkId: "claude-skills-symlink", severity: "red", repairMode: "manual" });
+    });
+
+    it("valid symlink でも link target が空の場合は mechanical red を返すこと", async () => {
+      const inspector = createInspector({
+        readSymlink: vi.fn().mockResolvedValue("../skills"),
+        listFiles: vi.fn().mockResolvedValue([]),
+      });
+
+      const actual = await new ClaudeSkillsSymlinkCheck().run("/tmp/project", inspector);
+
+      expect(actual).toMatchObject({ checkId: "claude-skills-symlink", severity: "red", repairMode: "mechanical" });
+    });
+
+    it("personal install の real skills directory は finding を返さないこと", async () => {
+      const inspector = createInspector({
+        readSymlink: vi.fn().mockResolvedValue(null),
+        listFiles: vi.fn().mockResolvedValue(["/tmp/project/.codex/skills/.harness-version"]),
+      });
+
+      const actual = await new CodexSkillsSymlinkCheck().run("/tmp/project", inspector);
+
+      expect(actual).toStrictEqual(null);
     });
 
     it("missing symlink は mechanical red を返すこと", async () => {
       const actual = await new CodexSkillsSymlinkCheck().run("/tmp/project", createInspector());
 
-      expect(actual?.checkId).toBe("codex-skills-symlink");
-      expect(actual?.severity).toBe("red");
-      expect(actual?.repairMode).toBe("mechanical");
+      expect(actual).toMatchObject({ checkId: "codex-skills-symlink", severity: "red", repairMode: "mechanical" });
     });
   });
 });

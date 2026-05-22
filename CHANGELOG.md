@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.16] - 2026-05-22
+
+### Fixed
+
+- **WI-210 — project install shared skills** — makes `phasegate install` deploy selected bundled skills to root `skills/` for project installs, validates missing skill target content in `doctor`, repairs older empty-skill installs through `reconcile` / `update-skills`, and keeps uninstall scoped to manifest-managed skill directories.
+
 ## [0.160.12] - 2026-05-20
 
 ### Added

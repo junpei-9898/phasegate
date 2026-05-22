@@ -100,7 +100,7 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, creates agent skill links, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 -->
+`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, deploys selected bundled skills to root `skills/`, creates agent skill links to that shared directory, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 --> <!-- @work-item-id WI-210 -->
 
 For personal evaluation inside a team-owned repository, use local-only install:
 
@@ -138,7 +138,7 @@ npx phasegate reconcile --dry-run
 npx phasegate reconcile --apply
 ```
 
-`reconcile` updates only PhaseGate-managed portions, keeps user content, adds newly introduced managed targets, and refreshes `.phasegate/manifest.json` with the current version and hashes. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`; PhaseGate writes a backup under `.phasegate/backups/reconcile-<timestamp>/`.
+`reconcile` updates only PhaseGate-managed portions, keeps user content, adds newly introduced managed targets, repairs missing shared skill bodies for project installs, and refreshes `.phasegate/manifest.json` with the current version and hashes. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`; PhaseGate writes a backup under `.phasegate/backups/reconcile-<timestamp>/`. <!-- @work-item-id WI-210 -->
 
 ### Codex CLI
 

@@ -6,6 +6,7 @@
 // @work-item-id WI-179
 // @work-item-id WI-180
 // @work-item-id WI-187
+// @work-item-id WI-210
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -95,6 +96,11 @@ async function createSkillLink(root: string, relativePath: string, target = "../
   await symlink(target, join(root, relativePath), process.platform === "win32" ? "junction" : "dir");
 }
 
+async function createSharedSkillContent(root: string): Promise<void> {
+  await writeProjectFile(root, "skills/phasegate-toolkit-guide/SKILL.md", "# PhaseGate Toolkit Guide\n");
+  await writeProjectFile(root, "skills/.harness-version", JSON.stringify({ version: "0.145.0", skillSet: "all" }));
+}
+
 async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   await mkdir(join(root, "skills"), { recursive: true });
   if (fixture === "no-phasegate") return;
@@ -107,6 +113,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
     await writeProjectFile(root, ".husky/commit-msg", 'npx phasegate commit-msg "$1"\n');
     await writeProjectFile(root, ".husky/pre-push", "npx phasegate bypass:audit --base origin/main --head HEAD\n");
     await writeProjectFile(root, ".github/workflows/phasegate-aidlc-gate.yml", "name: phasegate\n");
+    await createSharedSkillContent(root);
     await createSkillLink(root, ".claude/skills");
     return;
   }
@@ -120,6 +127,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
 
   await writeProjectFile(root, ".codex/hooks.json", JSON.stringify({ hooks: [{ command: "npx phasegate hook stop" }] }));
   await writeProjectFile(root, ".husky/commit-msg", 'npx phasegate commit-msg "$1"\n');
+  await createSharedSkillContent(root);
   await createSkillLink(root, ".claude/skills");
   await createSkillLink(root, ".codex/skills");
 

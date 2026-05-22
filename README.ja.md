@@ -105,7 +105,7 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install` は既存の Claude / Codex hooks や Husky script を捨てずに PhaseGate の設定を merge します。書き込み前に変更予定を表示し、package scripts と `phasegate` devDependency、agent skill symlink、未作成の CI workflow、`.phasegate/manifest.json` を整えます。強制的な managed 更新が必要な場合は `npx phasegate install --apply --force` を使います。この場合、置き換え対象は `.phasegate/backups/` に退避されます。
+`install` は既存の Claude / Codex hooks や Husky script を捨てずに PhaseGate の設定を merge します。書き込み前に変更予定を表示し、package scripts と `phasegate` devDependency、root `skills/` への selected bundled skills 配布、agent skill symlink、未作成の CI workflow、`.phasegate/manifest.json` を整えます。強制的な managed 更新が必要な場合は `npx phasegate install --apply --force` を使います。この場合、置き換え対象は `.phasegate/backups/` に退避されます。<!-- @work-item-id WI-210 -->
 
 後で PhaseGate を外す場合は、manifest ベースの uninstall を使います。
 
@@ -123,7 +123,7 @@ npx phasegate reconcile --dry-run
 npx phasegate reconcile --apply
 ```
 
-`reconcile` は PhaseGate 管理部分だけを更新し、ユーザーの hook / script / dependency は保持します。新しい deploy target が追加されていれば install と同じく追加し、`.phasegate/manifest.json` の version / hash も更新します。install 後に user 改変された managed file は `--force` 無しでは refuse し、force 時は `.phasegate/backups/reconcile-<timestamp>/` に退避してから上書きします。
+`reconcile` は PhaseGate 管理部分だけを更新し、ユーザーの hook / script / dependency は保持します。新しい deploy target が追加されていれば install と同じく追加し、project install の shared skills 実体が欠落している場合も修復し、`.phasegate/manifest.json` の version / hash も更新します。install 後に user 改変された managed file は `--force` 無しでは refuse し、force 時は `.phasegate/backups/reconcile-<timestamp>/` に退避してから上書きします。<!-- @work-item-id WI-210 -->
 
 ### Codex CLI を使う場合
 

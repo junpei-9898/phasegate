@@ -6,6 +6,7 @@
 // @work-item-id WI-207
 // @work-item-id WI-208
 // @work-item-id WI-209
+// @work-item-id WI-210
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -159,6 +160,12 @@ async function arrangePersonalInstalledProject() {
   return { root, before };
 }
 
+async function arrangeInstalledProjectWithUserOwnedSkill() {
+  const root = await arrangeInstalledProject();
+  await writeProjectFile(root, "skills/user-owned/SKILL.md", "# User Owned\n");
+  return root;
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -293,6 +300,21 @@ target("UninstallHandler", () => {
       expect(await fileExists(join(root, ".claude/skills"))).toBe(false);
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toBe("# user local excludes\n");
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
+    });
+
+    it("project uninstall は managed shared skills だけを削除し user-owned skills を保持すること", async () => {
+      // Arrange
+      const root = await arrangeInstalledProjectWithUserOwnedSkill();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true, force: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(await fileExists(join(root, "skills", "phasegate-toolkit-guide", "SKILL.md"))).toBe(false);
+      expect(await readFile(join(root, "skills", "user-owned", "SKILL.md"), "utf8")).toBe("# User Owned\n");
+      expect(await fileExists(join(root, ".claude", "skills"))).toBe(false);
+      expect(await fileExists(join(root, ".codex", "skills"))).toBe(false);
     });
   });
 });

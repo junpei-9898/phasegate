@@ -593,3 +593,13 @@ Install and reconcile do not manage `scripts/harness/cli/complete-check.ts` as a
 ## WI-202 Strict Quick Mode Install Defaults
 
 `phasegate init --workflow strict` installs a strict workflow without contradicting the bundled quick-implementor scope. The generated `phasegate.config.json` keeps `quickMode.relaxedGates: []` for stricter gates and emits `quickMode.allowedCategories: ["bugfix", "docs", "test", "config"]` so the installed project has an official Quick Mode path for small bugfix, docs, test, and config changes. @work-item-id WI-202
+
+## WI-210 Project Shared Skills Install
+
+<!-- @work-item-id WI-210 -->
+
+`RunInstallUseCase` deploys selected bundled skills into root `skills/` for non-personal installs before creating `.claude/skills` or `.codex/skills` links. The `--skills core|all` option controls which bundled directories are copied and is reflected in deterministic manifest hash inputs for the managed skill entries.
+
+`RunReconcileUseCase` repairs older project installs that contain managed agent skill links but no root skill bodies. The repair deploys the current bundled shared skills and adds granular manifest entries for `skills/.harness-version` and each bundled skill directory. `update-skills` remains an alias of this reconcile path.
+
+Doctor skill checks validate both the agent-facing path and the linked target content. A symlink to `../skills` with an empty target is a red mechanical finding. `RunUninstallUseCase` removes only manifest-managed skill entries and links, so user-owned directories under `skills/` are preserved.

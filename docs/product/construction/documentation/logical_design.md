@@ -84,3 +84,6 @@ Public docs and setup skills must describe personal install as an automatic loca
 
 @work-item-id WI-209
 Public docs and setup skills must describe personal install agent runtime paths as real files/directories instead of symlink shims. The documented Claude Code artifacts are `.claude/settings.json` and `.claude/skills/`; the documented Codex artifacts are `.codex/hooks.json` and `.codex/skills/`. `.phasegate-local/phasegate.config.json` remains the local config fallback, and `.git/info/exclude` keeps these runtime artifacts local-only.
+
+@work-item-id WI-210
+Public docs must distinguish project install and personal install skill topology. Project install deploys selected bundled skill bodies to root `skills/` and exposes them through `.claude/skills` / `.codex/skills` symlinks. Personal install keeps local-only real per-agent skill directories. Reconcile/update-skills are documented as the repair path for older project installs whose skill links exist but whose shared `skills/` target is empty.

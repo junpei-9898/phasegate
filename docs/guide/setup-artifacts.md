@@ -12,7 +12,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 
 | Class | Examples | Owner | Lifecycle |
 |---|---|---|---|
-| Managed target | `phasegate.config.json`, `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block, real runtime artifact, or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
+| Managed target | `phasegate.config.json`, `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, root `skills/` bundled skill bodies, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block, real runtime artifact, shared skill body, or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init` or project install when absent; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
@@ -29,6 +29,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 - Husky scripts when requested: `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`
 - CI workflow when requested: `.github/workflows/phasegate-aidlc-gate.yml`
 - Agent skill links: `.claude/skills`, `.codex/skills`
+- Project shared bundled skills: selected `skills/<name>/` directories plus `skills/.harness-version`
 - Project config: `phasegate.config.json` when absent, so installed agent hooks have a discoverable runtime config
 - Package metadata: PhaseGate scripts and `devDependencies.phasegate` in `package.json`
 - Manifest: `.phasegate/manifest.json`
@@ -42,6 +43,8 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 `phasegate install --personal --agent claude --apply` is a local-only bootstrap for evaluating PhaseGate in a team-owned repository. PhaseGate config is stored under `.phasegate-local/`, while selected agent runtime paths are real project-local files/directories: `.claude/settings.json` and `.claude/skills/` for Claude Code, `.codex/hooks.json` and `.codex/skills/` for Codex. These paths are hidden by `.git/info/exclude`; PhaseGate does not edit team `.gitignore`.
 
 If `.claude/*` or `.codex/*` already exists and is not a PhaseGate-managed personal artifact, personal install reports manual review and preserves the existing path. <!-- @work-item-id WI-209 -->
+
+Project install uses a different topology: selected bundled skills are deployed once to root `skills/`, and `.claude/skills` / `.codex/skills` point to that shared target. If an older project install has the links but an empty `skills/` target, `phasegate doctor` reports the selected agent skill check and `phasegate reconcile --apply` repairs the shared skill bodies. <!-- @work-item-id WI-210 -->
 
 ## Doctor Findings
 
