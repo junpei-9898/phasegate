@@ -416,6 +416,12 @@ For selection guidance and config examples see [Preset Selection Guide](docs/gui
   "protectedFiles": {
     "exclude": ["tsconfig.json", "package.json"]
   },
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception",
+    "principlesDocs": "docs/principles",
+    "folderRulesDoc": "docs/folder_management_rules.md"
+  },
   "baseline": {
     "enabled": true,
     "path": ".phasegate/baseline.json"
@@ -424,6 +430,8 @@ For selection guidance and config examples see [Preset Selection Guide](docs/gui
 ```
 
 `quickMode.fullModeRequiredWhen` declares which conditions force a Quick Mode change to escalate to the full `/story-implementor` flow. All three triggers default to `true` so retrofits stay safe; flip individual flags to `false` only when a project intentionally accepts the risk.
+
+`paths` maps PhaseGate's design and reference documentation roots. Repositories that do not use `docs/` can point `designDocs`, `inceptionDocs`, `principlesDocs`, and `folderRulesDoc` at their own documentation layout; product-wide Level 1 artifacts are overridden separately with custom `phaseDependencies.gates[]`. <!-- @work-item-id WI-214 -->
 
 `baseline` opts in to the **Phase A-2 retrofit grandfather**: pre-existing files captured in `.phasegate/baseline.json` are exempted from `phase-gate` until they are structurally modified. Generate the snapshot with `npx phasegate baseline` before introducing the harness to an existing repository. Since v0.71.0 the `baseline.enabled` flag defaults to `true`, so simply running `npx phasegate baseline` after `init` is enough — no manual config edit needed. For a step-by-step retrofit walkthrough see [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md).
 

@@ -10,6 +10,7 @@
 // @work-item-id WI-209
 // @work-item-id WI-210
 // @work-item-id WI-213
+// @work-item-id WI-214
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -347,6 +348,8 @@ target("InstallHandler", () => {
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"name": "personal-phasegate"');
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"designDocs": ".phasegate-local/product/construction"');
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"principlesDocs": ".phasegate-local/docs/principles"');
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"folderRulesDoc": ".phasegate-local/docs/folder_management_rules.md"');
       expect(await readFile(join(root, ".claude/CLAUDE.local.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".claude/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');

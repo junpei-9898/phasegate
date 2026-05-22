@@ -7,7 +7,7 @@
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
 import { promises as fs } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const HARNESS_VERSION_FILE = ".harness-version";
 const SKILLS_SOURCE_DIR = "skills";
@@ -18,6 +18,8 @@ const CODEX_SKILLS_LINK_DIR = ".codex";
 const HARNESS_CONFIG_FILE = "phasegate.config.json";
 const HOOKS_TEMPLATE_DIR = join("templates", ".claude");
 const HOOKS_TARGET_DIR = ".claude";
+const DEFAULT_PRINCIPLES_DOCS = join("docs", "principles");
+const DEFAULT_FOLDER_RULES_DOC = join("docs", "folder_management_rules.md");
 
 // ── Skill Category Map ──
 
@@ -516,33 +518,55 @@ export interface DeployDesignDocsResult {
   skippedFiles: string[];
 }
 
+interface DesignDocsPathConfig {
+  readonly principlesDocs: string;
+  readonly folderRulesDoc: string;
+}
+
+async function resolveDesignDocsPathConfig(projectRoot: string): Promise<DesignDocsPathConfig> {
+  try {
+    const raw = await fs.readFile(join(projectRoot, HARNESS_CONFIG_FILE), "utf-8");
+    const config = JSON.parse(raw) as { paths?: { principlesDocs?: unknown; folderRulesDoc?: unknown } };
+    const principlesDocs =
+      typeof config.paths?.principlesDocs === "string" && config.paths.principlesDocs.length > 0
+        ? config.paths.principlesDocs
+        : DEFAULT_PRINCIPLES_DOCS;
+    const folderRulesDoc =
+      typeof config.paths?.folderRulesDoc === "string" && config.paths.folderRulesDoc.length > 0
+        ? config.paths.folderRulesDoc
+        : DEFAULT_FOLDER_RULES_DOC;
+    return { principlesDocs, folderRulesDoc };
+  } catch {
+    return { principlesDocs: DEFAULT_PRINCIPLES_DOCS, folderRulesDoc: DEFAULT_FOLDER_RULES_DOC };
+  }
+}
+
 export async function deployDesignDocs(harnessRoot: string, projectRoot: string): Promise<DeployDesignDocsResult> {
   const copiedFiles: string[] = [];
   const skippedFiles: string[] = [];
-  const docsTargetDir = join(projectRoot, "docs");
-  const principlesTargetDir = join(docsTargetDir, "principles");
+  const pathConfig = await resolveDesignDocsPathConfig(projectRoot);
+  const principlesTargetDir = join(projectRoot, pathConfig.principlesDocs);
 
-  await fs.mkdir(docsTargetDir, { recursive: true });
+  await fs.mkdir(join(projectRoot, dirname(pathConfig.folderRulesDoc)), { recursive: true });
   await fs.mkdir(principlesTargetDir, { recursive: true });
 
-  const folderRulesRelativePath = join("docs", "folder_management_rules.md");
-  const folderRulesSource = join(harnessRoot, folderRulesRelativePath);
-  const folderRulesTarget = join(projectRoot, folderRulesRelativePath);
+  const folderRulesSource = join(harnessRoot, DEFAULT_FOLDER_RULES_DOC);
+  const folderRulesTarget = join(projectRoot, pathConfig.folderRulesDoc);
 
   try {
     await fs.access(folderRulesTarget);
-    skippedFiles.push(folderRulesRelativePath);
+    skippedFiles.push(pathConfig.folderRulesDoc);
   } catch {
     try {
       await fs.access(folderRulesSource);
       await fs.copyFile(folderRulesSource, folderRulesTarget);
-      copiedFiles.push(folderRulesRelativePath);
+      copiedFiles.push(pathConfig.folderRulesDoc);
     } catch {
       // 配置元が存在しない場合はスキップ
     }
   }
 
-  const principlesSourceDir = join(harnessRoot, "docs", "principles");
+  const principlesSourceDir = join(harnessRoot, DEFAULT_PRINCIPLES_DOCS);
 
   try {
     const principleEntries = await fs.readdir(principlesSourceDir, { withFileTypes: true });
@@ -552,7 +576,7 @@ export async function deployDesignDocs(harnessRoot: string, projectRoot: string)
       .sort();
 
     for (const principleFile of principleFiles) {
-      const relativePath = join("docs", "principles", principleFile);
+      const relativePath = join(pathConfig.principlesDocs, principleFile);
       const sourcePath = join(principlesSourceDir, principleFile);
       const targetPath = join(projectRoot, relativePath);
 

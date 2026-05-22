@@ -401,3 +401,7 @@ classDiagram
 Architecture presets may define capability and decision-placement policy next to dependency direction. Custom presets can override zone capability allowances and advisory decision responsibility without changing validator implementations.
 
 L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into validator-system config so WI-121 operational signals remain configurable by consumer projects.
+## WI-214 Configurable Reference Documentation Paths
+
+<!-- @work-item-id WI-214 -->
+`paths.principlesDocs` identifies the project-relative root for immutable principles docs, and `paths.folderRulesDoc` identifies the project-relative folder management rules file. Both values default to the historical `docs/principles` and `docs/folder_management_rules.md` paths so existing configs remain valid after resolution.

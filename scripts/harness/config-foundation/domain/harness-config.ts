@@ -109,6 +109,8 @@ export interface HarnessConfigResolvedDocument {
   paths: {
     designDocs: string;
     inceptionDocs: string;
+    principlesDocs?: string;
+    folderRulesDoc?: string;
   };
   reporting: {
     format: string;

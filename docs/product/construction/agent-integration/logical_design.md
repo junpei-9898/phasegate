@@ -1599,3 +1599,7 @@ Legacy non-namespaced extension commands may still resolve through `scripts/harn
 <!-- @work-item-id WI-213 -->
 
 Personal install deploys local-only agent context files for the selected agent. Claude receives `.claude/CLAUDE.local.md`; Codex receives `.codex/AGENTS.local.md`. These files carry the same PhaseGate rule block as project agent context without mutating team-owned `CLAUDE.md` or `AGENTS.md`.
+## Config-Derived Protected Reference Docs
+
+<!-- @work-item-id WI-214 -->
+Pre-tool-use protection adds `paths.principlesDocs/**` and `paths.folderRulesDoc` to the protected file list loaded from PhaseGate config. This keeps immutable principles protection aligned with custom documentation roots and with personal install's `.phasegate-local/docs/...` sandbox.

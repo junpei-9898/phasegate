@@ -5,6 +5,7 @@
  * @work-item-id WI-201
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-206
+ * @work-item-id WI-214
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -116,7 +117,7 @@ export class HandlePreToolUseUseCase {
       const blockedFilePath = metadata?.blockedFilePath ?? input.targetFilePaths[0];
 
       if (metadata?.reason === "PROTECTED_FILE") {
-        return HandlePreToolUseUseCase.buildProtectedFileBlockOutput(blockedFilePath);
+        return this.buildProtectedFileBlockOutput(blockedFilePath);
       }
 
       if (metadata?.reason === "PHASE_GATE") {
@@ -492,15 +493,22 @@ export class HandlePreToolUseUseCase {
       message: (fp) =>
         `保護ファイルへの書き込みがブロックされました: ${fp}\nClaude Code の設定変更は /update-config スキルを使用してください。`,
     },
-    {
-      pattern: /(?:^|\/)docs\/principles\//,
-      message: (fp) =>
-        `保護ファイルへの書き込みがブロックされました: ${fp}\n原則ドキュメントは immutable です。変更はできません。`,
-    },
   ];
 
-  private static buildProtectedFileBlockOutput(blockedFilePath: string | undefined): HandlePreToolUseOutput {
+  private async buildProtectedFileBlockOutput(blockedFilePath: string | undefined): Promise<HandlePreToolUseOutput> {
     const fp = blockedFilePath ?? "不明なファイル";
+    const dynamicPrinciplesPattern = await this.findMatchingDynamicProtectedPattern(fp, "principles");
+    if (dynamicPrinciplesPattern !== null) {
+      return {
+        shouldBlock: true,
+        blockedFilePath,
+        blockReason: "PROTECTED_FILE",
+        error: {
+          message: `保護ファイルへの書き込みがブロックされました: ${fp}\n原則ドキュメントは immutable です。変更はできません。対象パターン: ${dynamicPrinciplesPattern}`,
+        },
+      };
+    }
+
     const matched = HandlePreToolUseUseCase.PROTECTED_FILE_GUIDANCE.find(({ pattern }) => pattern.test(fp));
     const message = matched
       ? matched.message(fp)
@@ -512,6 +520,20 @@ export class HandlePreToolUseUseCase {
       blockReason: "PROTECTED_FILE",
       error: { message },
     };
+  }
+
+  private async findMatchingDynamicProtectedPattern(filePath: string, kind: "principles"): Promise<string | null> {
+    const patterns = await this.configQueryPort.getProtectedFilePatterns();
+    for (const pattern of patterns) {
+      if (kind === "principles" && !pattern.endsWith("/**")) {
+        continue;
+      }
+      const prefix = pattern.slice(0, -"/**".length);
+      if (filePath === prefix || filePath.startsWith(`${prefix}/`)) {
+        return pattern;
+      }
+    }
+    return null;
   }
 
   private static buildStoryReflectionBlockOutput(

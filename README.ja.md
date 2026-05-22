@@ -305,6 +305,12 @@ L2-STORY-REFLECTION バリデータがこのアノテーションを検出し、
   "phaseDependencies": { "preset": "standard", "storyReflection": { "enabled": true } },
   "quickMode":      { "allowedCategories": ["bugfix", "docs", "test", "config"] },
   "protectedFiles": { "exclude": ["package.json"] },
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception",
+    "principlesDocs": "docs/principles",
+    "folderRulesDoc": "docs/folder_management_rules.md"
+  },
   "baseline":       { "enabled": true, "path": ".phasegate/baseline.json" }
 }
 ```
@@ -329,6 +335,7 @@ phasegate には独立した 3 系統の preset があります。役割が違�
 |---|---|
 | `quickMode.fullModeRequiredWhen` | Quick Mode → Full Mode への強制エスカレート条件（複数カテゴリ混在 / 新規ドメインファイル / API 契約変更）。安全側の default は全 `true` |
 | `protectedFiles.exclude` | デフォルト保護対象（`package.json`, `tsconfig.json`, `biome.json` 等）から除外したいファイル |
+| `paths.designDocs` / `paths.inceptionDocs` / `paths.principlesDocs` / `paths.folderRulesDoc` | PhaseGate が参照・配置する設計/原則/配置ルール文書の場所。`docs/` 以外の既存規約にもマッピング可能 |
 | `baseline.enabled` | 既存リポジトリ導入時の retrofit grandfather。default `true`。`npx phasegate baseline` で snapshot 生成 |
 | `phaseDependencies.storyReflection` | inception 設計が product docs に反映されるまで `src/{unit}/` への書き込みをブロック |
 

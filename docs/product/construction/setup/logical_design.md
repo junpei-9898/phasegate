@@ -77,3 +77,7 @@ The setup contract keeps local readiness separate from external actions. A confi
 Setup-managed Claude context must tell the agent what to do after local readiness is configured. The managed `CLAUDE.md` section therefore bridges setup into the work lifecycle: confirm or create a WI, prepare inception planning/design artifacts, reflect accepted design into product docs with `@work-item-id`, and run readiness or layer validation before commit.
 
 This guidance remains inside the managed section so `install`, `reconcile`, and `ci:auto-refresh-agent-context` can update it without overwriting user-owned instructions outside PhaseGate markers.
+## Config-Based Reference Docs Deployment
+
+<!-- @work-item-id WI-214 -->
+Setup deploys canonical PhaseGate reference docs from the packaged `docs/` tree into the destinations configured by top-level `paths.principlesDocs` and `paths.folderRulesDoc`. Missing config or missing keys use the default `docs/principles` and `docs/folder_management_rules.md` destinations.

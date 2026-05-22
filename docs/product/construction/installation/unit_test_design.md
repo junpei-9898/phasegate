@@ -102,3 +102,9 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 |---|---|---|---|
 | UT-INS-WI213-001 | personal install planning | `--personal --agent claude` | plan includes `.claude/CLAUDE.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/*` |
 | UT-INS-WI213-002 | personal config template | default personal config | design/inception paths are under `.phasegate-local/` |
+## WI-214 Personal Config Paths
+
+<!-- @work-item-id WI-214 -->
+| Case | Expected |
+|---|---|
+| `install --personal --agent claude --apply` | `.phasegate-local/phasegate.config.json` contains `paths.principlesDocs` and `paths.folderRulesDoc`, and the corresponding local docs are created. |

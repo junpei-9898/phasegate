@@ -36,6 +36,7 @@ interface HarnessesSection {
 }
 
 interface ProtectedFilesSection {
+  patterns?: string[];
   exclude?: string[];
 }
 
@@ -57,6 +58,12 @@ interface AgentIntegrationSection {
 }
 
 interface HarnessConfigDocument {
+  paths?: {
+    designDocs?: string;
+    inceptionDocs?: string;
+    principlesDocs?: string;
+    folderRulesDoc?: string;
+  };
   harnesses?: HarnessesSection;
   project?: ProjectSection;
   protectedFiles?: ProtectedFilesSection;
@@ -102,8 +109,15 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   }
 
   async getProtectedFilePatterns(): Promise<string[]> {
-    // Wave 2 では追加カスタムパターンなし
-    return [];
+    const config = this.loadConfig();
+    const configured = config.protectedFiles?.patterns ?? [];
+    const principlesDocs = config.paths?.principlesDocs ?? 'docs/principles';
+    const folderRulesDoc = config.paths?.folderRulesDoc ?? 'docs/folder_management_rules.md';
+    return [
+      ...configured,
+      `${normalizeProjectPath(principlesDocs)}/**`,
+      normalizeProjectPath(folderRulesDoc),
+    ];
   }
 
   async getProtectedFileExclusions(): Promise<string[]> {
@@ -119,12 +133,13 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   getProjectPaths(): ProjectPaths {
     const config = this.loadConfig();
     const paths = config.project?.paths;
+    const topLevelPaths = config.paths;
 
     return ProjectPaths.create(
       paths?.source ?? ['scripts/harness'],
       {
-        construction: paths?.docs?.construction ?? 'docs/product/construction',
-        inception: paths?.docs?.inception ?? 'docs/inception',
+        construction: paths?.docs?.construction ?? topLevelPaths?.designDocs ?? 'docs/product/construction',
+        inception: paths?.docs?.inception ?? topLevelPaths?.inceptionDocs ?? 'docs/inception',
       },
     );
   }
@@ -144,4 +159,8 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     // type guard: boolean 以外（schema validator ですり抜ける null/undefined を含む）は false にフォールバック
     return enforce === true;
   }
+}
+
+function normalizeProjectPath(path: string): string {
+  return path.replace(/\\/g, '/').replace(/\/+$/g, '');
 }

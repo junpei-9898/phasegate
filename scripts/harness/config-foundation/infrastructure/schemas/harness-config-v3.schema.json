@@ -435,7 +435,9 @@
       "additionalProperties": false,
       "required": [
         "designDocs",
-        "inceptionDocs"
+        "inceptionDocs",
+        "principlesDocs",
+        "folderRulesDoc"
       ],
       "properties": {
         "designDocs": {
@@ -443,6 +445,14 @@
           "minLength": 1
         },
         "inceptionDocs": {
+          "type": "string",
+          "minLength": 1
+        },
+        "principlesDocs": {
+          "type": "string",
+          "minLength": 1
+        },
+        "folderRulesDoc": {
           "type": "string",
           "minLength": 1
         }
@@ -488,6 +498,14 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "patterns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
         "exclude": {
           "type": "array",
           "items": {

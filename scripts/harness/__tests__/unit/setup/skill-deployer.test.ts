@@ -4,6 +4,7 @@
 // @work-item-id WI-141
 // @work-item-id WI-184
 // @work-item-id WI-202
+// @work-item-id WI-214
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -167,6 +168,49 @@ target("deployCiWorkflows", () => {
             ".github/workflows/aidlc-gate.yml",
             ".github/workflows/consistency-check.yml",
             ".github/workflows/agent-context-refresh.yml",
+          ],
+          skippedFiles: [],
+        });
+      });
+    });
+
+    context("phasegate.config.json に docs 配置パスが指定されている場合", () => {
+      it("principles と folder rules を設定パスにコピーすること", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await writeFile(
+            join(projectRoot, "phasegate.config.json"),
+            JSON.stringify({
+              paths: {
+                principlesDocs: "documentation/principles",
+                folderRulesDoc: "documentation/folder_rules.md",
+              },
+            }),
+            "utf-8",
+          );
+
+          const result = await deployDesignDocs(harnessRoot, projectRoot);
+
+          await Promise.all([
+            access(join(projectRoot, "documentation/folder_rules.md")),
+            access(join(projectRoot, "documentation/principles/architecture-philosophy.md")),
+            access(join(projectRoot, "documentation/principles/model-routing.md")),
+            access(join(projectRoot, "documentation/principles/testing-rules.md")),
+          ]);
+
+          return result;
+        });
+
+        // Assert
+        expect(actual).toEqual({
+          copiedFiles: [
+            "documentation/folder_rules.md",
+            "documentation/principles/architecture-philosophy.md",
+            "documentation/principles/model-routing.md",
+            "documentation/principles/testing-rules.md",
           ],
           skippedFiles: [],
         });

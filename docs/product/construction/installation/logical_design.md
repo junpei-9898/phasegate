@@ -609,3 +609,7 @@ Doctor skill checks validate both the agent-facing path and the linked target co
 <!-- @work-item-id WI-213 -->
 
 `RunInstallUseCase` deploys local-only equivalents for personal install: `.claude/CLAUDE.local.md` or `.codex/AGENTS.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/folder_management_rules.md` plus `.phasegate-local/docs/principles/*.md`. The hook templates avoid Husky bootstrap and call the packaged `phasegate` CLI directly. The personal config template points `paths.designDocs` and `paths.inceptionDocs` into `.phasegate-local/`, preserving the no-team-file contract while making validator inputs resolvable.
+## Personal Reference Docs Path Alignment
+
+<!-- @work-item-id WI-214 -->
+Personal install config declares local-only reference documentation paths: `.phasegate-local/docs/principles` and `.phasegate-local/docs/folder_management_rules.md`. The personal install target list creates those same files so the manifest, config fallback, hook protection, and validator guidance refer to one path mapping.

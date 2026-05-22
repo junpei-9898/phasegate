@@ -655,3 +655,10 @@ scripts/harness/__tests__/config-foundation/
 | **合計** | **166** |
 
 > **注**: 境界値・異常系のケースの一部は値オブジェクト・集約テストケースと重複するが、回帰テストの観点から独立セクションとして明示する。
+## WI-214 Path Defaults
+
+<!-- @work-item-id WI-214 -->
+| Case | Expected |
+|---|---|
+| `PathsConfig` receives only `designDocs` and `inceptionDocs` | `principlesDocs` defaults to `docs/principles` and `folderRulesDoc` defaults to `docs/folder_management_rules.md`. |
+| `PathsConfig` receives custom reference documentation paths | Custom values are retained and validated by the same non-empty/non-global path rules. |

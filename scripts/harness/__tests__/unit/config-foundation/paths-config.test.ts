@@ -1,4 +1,7 @@
+// @unit config-foundation
 // @layer test
+// @story H04-01
+// @work-item-id WI-214
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { PathsConfig } from '../../../config-foundation/domain/value-objects/paths-config.js';
@@ -21,6 +24,27 @@ target('PathsConfig', () => {
         // Assert
         expect(actual.designDocs).toBe('docs/product');
         expect(actual.inceptionDocs).toBe('docs/inception');
+        expect(actual.principlesDocs).toBe('docs/principles');
+        expect(actual.folderRulesDoc).toBe('docs/folder_management_rules.md');
+      });
+    });
+
+    context('principlesDocs と folderRulesDoc を渡す場合', () => {
+      it('生成できる', () => {
+        // Arrange
+        const input = {
+          designDocs: 'docs/product',
+          inceptionDocs: 'docs/inception',
+          principlesDocs: 'documentation/principles',
+          folderRulesDoc: 'documentation/folder_rules.md',
+        };
+
+        // Act
+        const actual = new PathsConfig(input);
+
+        // Assert
+        expect(actual.principlesDocs).toBe('documentation/principles');
+        expect(actual.folderRulesDoc).toBe('documentation/folder_rules.md');
       });
     });
 
@@ -82,6 +106,24 @@ target('PathsConfig', () => {
         const input = {
           designDocs: 'docs/product',
           inceptionDocs: '$HOME/docs',
+        };
+
+        // Act
+        const actual = () => new PathsConfig(input);
+
+        // Assert
+        expect(actual).toThrowError(ConfigValidationError);
+      });
+    });
+
+    context('principlesDocsが空文字の場合', () => {
+      it('生成に失敗する', () => {
+        // Arrange
+        const input = {
+          designDocs: 'docs/product',
+          inceptionDocs: 'docs/inception',
+          principlesDocs: '',
+          folderRulesDoc: 'docs/folder_management_rules.md',
         };
 
         // Act

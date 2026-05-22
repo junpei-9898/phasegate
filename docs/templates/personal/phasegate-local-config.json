@@ -55,7 +55,9 @@
   },
   "paths": {
     "designDocs": ".phasegate-local/product/construction",
-    "inceptionDocs": ".phasegate-local/inception"
+    "inceptionDocs": ".phasegate-local/inception",
+    "principlesDocs": ".phasegate-local/docs/principles",
+    "folderRulesDoc": ".phasegate-local/docs/folder_management_rules.md"
   },
   "reporting": {
     "format": "json",

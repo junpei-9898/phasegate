@@ -67,6 +67,8 @@ npx phasegate install --personal --agent claude --apply
 
 Personal install keeps team-owned files out of both the plan and apply path: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, and CI settings are not touched. PhaseGate writes `.phasegate-local/phasegate.config.json`, creates local agent context (`.claude/CLAUDE.local.md` and/or `.codex/AGENTS.local.md`), creates real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), deploys local git hooks under `.git/hooks/`, copies reference docs under `.phasegate-local/docs/`, records `.phasegate/manifest.json`, and manages a local exclude block in `.git/info/exclude`. Codex user-level hook feature enablement is still reported as a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 -->
 
+If an existing repository keeps design or governance docs outside `docs/`, set `paths.designDocs`, `paths.inceptionDocs`, `paths.principlesDocs`, and `paths.folderRulesDoc` in `phasegate.config.json` before setup/reconcile. PhaseGate deploy and hook protection use those mappings instead of forcing the default `docs/` layout. <!-- @work-item-id WI-214 -->
+
 For agent-readable planning before writing files:
 
 ```bash

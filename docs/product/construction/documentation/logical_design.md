@@ -92,3 +92,7 @@ Public docs must distinguish project install and personal install skill topology
 <!-- @work-item-id WI-213 -->
 
 README and installation guide content describe personal install as a local-only setup that still deploys functional local alternatives for agent context, commit-time hooks, and reference docs. The docs continue to state that team-owned files are not mutated.
+## Configurable Documentation Path Guidance
+
+<!-- @work-item-id WI-214 -->
+Public README and guide content list the `paths` keys for design docs, inception docs, principles docs, and folder rules. Guidance states that repositories with non-`docs/` documentation layouts can map PhaseGate documentation requirements through config, while product-wide Level 1 artifacts remain governed by phase dependency gate configuration.

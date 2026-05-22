@@ -1421,3 +1421,7 @@ Preset L4 validator lists include `skill-catalog-drift` so resolved config can t
 <!-- @work-item-id WI-191 -->
 
 `planningMode.default` and `planningMode.perPhase` accept `manual` in addition to `interactive` and `embedded-qa`. Manual mode is intended for reviewed retrofit adoption paths where existing plan evidence is accepted through an explicit configuration patch plan.
+## Configurable Reference Documentation Paths
+
+<!-- @work-item-id WI-214 -->
+The resolved `paths` section includes `designDocs`, `inceptionDocs`, `principlesDocs`, and `folderRulesDoc`. Presets and generated config templates materialize all four keys, while the domain value object supplies default values for older in-memory or source documents that only carry the original design/inception mappings.

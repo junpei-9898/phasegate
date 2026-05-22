@@ -64,7 +64,9 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
   },
   "paths": {
     "designDocs": "docs/product/construction",
-    "inceptionDocs": "docs/inception"
+    "inceptionDocs": "docs/inception",
+    "principlesDocs": "docs/principles",
+    "folderRulesDoc": "docs/folder_management_rules.md"
   },
   "reporting": {
     "format": "json",
@@ -463,10 +465,14 @@ Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well
 
 #### `paths`
 
-| Sub-field       | Type     | Default                        | Description                                           |
-|-----------------|----------|--------------------------------|-------------------------------------------------------|
-| `designDocs`    | `string` | `"docs/product/construction"`  | Root directory for confirmed design documents (logical design, domain model). |
-| `inceptionDocs` | `string` | `"docs/inception"`             | Root directory for inception-phase documents (stories, unit designs).         |
+<!-- @work-item-id WI-214 -->
+
+| Sub-field        | Type     | Default                              | Description                                           |
+|------------------|----------|--------------------------------------|-------------------------------------------------------|
+| `designDocs`     | `string` | `"docs/product/construction"`        | Root directory for confirmed design documents (logical design, domain model). |
+| `inceptionDocs`  | `string` | `"docs/inception"`                   | Root directory for inception-phase documents (stories, unit designs).         |
+| `principlesDocs` | `string` | `"docs/principles"`                  | Root directory for immutable PhaseGate principles docs. |
+| `folderRulesDoc` | `string` | `"docs/folder_management_rules.md"`  | File path for the folder management rules document. |
 
 #### `reporting`
 
@@ -611,6 +617,8 @@ docs/
 
 If you move your design documents to a non-default location, update `paths` accordingly so that all validators and hooks resolve files correctly.
 
+`paths.principlesDocs` and `paths.folderRulesDoc` also control where setup deploys PhaseGate reference docs and what the pre-tool-use hook protects. Existing repositories can keep their own documentation layout, for example `documentation/principles` and `documentation/folder_rules.md`, without adopting the default `docs/` tree. <!-- @work-item-id WI-214 -->
+
 **How paths flow into the L2 phase-gate validator (since v0.117.0 / WI-085):**
 
 <!-- @work-item-id WI-149 -->
@@ -621,6 +629,8 @@ If you move your design documents to a non-default location, update `paths` acco
 |---|---|---|
 | `{designDocsRoot}` | `paths.designDocs` | `docs/product/construction` |
 | `{inceptionDocsRoot}` | `paths.inceptionDocs` | `docs/inception` |
+| `{principlesDocsRoot}` | `paths.principlesDocs` | `docs/principles` |
+| `{folderRulesPath}` | `paths.folderRulesDoc` | `docs/folder_management_rules.md` |
 
 Setting `paths.designDocs` to `mydocs/product/construction` makes the L2 phase-gate require `mydocs/product/construction/{unit}/domain_model.md` instead of the default. This setting points to the construction subtree, not the broader product root; product-wide artifacts under `docs/product/` stay literal unless you define a custom `phaseDependencies.gates[]` preset. Default values match the v0.115.0 layout for full backward compatibility.
 

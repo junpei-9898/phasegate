@@ -20,7 +20,9 @@
   "harnesses": {},
   "paths": {
     "designDocs": "docs/product/construction",
-    "inceptionDocs": "docs/inception"
+    "inceptionDocs": "docs/inception",
+    "principlesDocs": "docs/principles",
+    "folderRulesDoc": "docs/folder_management_rules.md"
   },
   "reporting": {
     "format": "json",

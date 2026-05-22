@@ -12,6 +12,7 @@
 // @work-item-id WI-209
 // @work-item-id WI-210
 // @work-item-id WI-213
+// @work-item-id WI-214
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -90,6 +91,8 @@ const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
 const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/settings.json", ".codex/hooks.json"]);
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
+const PERSONAL_PRINCIPLES_DOCS = ".phasegate-local/docs/principles";
+const PERSONAL_FOLDER_RULES_DOC = ".phasegate-local/docs/folder_management_rules.md";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -666,22 +669,22 @@ export class RunInstallUseCase {
         executable: true,
       },
       {
-        path: ".phasegate-local/docs/folder_management_rules.md",
+        path: PERSONAL_FOLDER_RULES_DOC,
         strategy: "copy" as const,
         templatePath: "docs/folder_management_rules.md",
       },
       {
-        path: ".phasegate-local/docs/principles/architecture-philosophy.md",
+        path: `${PERSONAL_PRINCIPLES_DOCS}/architecture-philosophy.md`,
         strategy: "copy" as const,
         templatePath: "docs/principles/architecture-philosophy.md",
       },
       {
-        path: ".phasegate-local/docs/principles/model-routing.md",
+        path: `${PERSONAL_PRINCIPLES_DOCS}/model-routing.md`,
         strategy: "copy" as const,
         templatePath: "docs/principles/model-routing.md",
       },
       {
-        path: ".phasegate-local/docs/principles/testing-rules.md",
+        path: `${PERSONAL_PRINCIPLES_DOCS}/testing-rules.md`,
         strategy: "copy" as const,
         templatePath: "docs/principles/testing-rules.md",
       },

@@ -10,18 +10,29 @@ import { ConfigValidationError } from '../errors/config-validation-error.js';
 export interface PathsConfigProps {
   readonly designDocs: string;
   readonly inceptionDocs: string;
+  readonly principlesDocs?: string;
+  readonly folderRulesDoc?: string;
 }
 
 export class PathsConfig {
   readonly designDocs: string;
   readonly inceptionDocs: string;
+  readonly principlesDocs: string;
+  readonly folderRulesDoc: string;
 
   constructor(props: PathsConfigProps) {
+    const principlesDocs = props.principlesDocs ?? 'docs/principles';
+    const folderRulesDoc = props.folderRulesDoc ?? 'docs/folder_management_rules.md';
+
     PathsConfig.validatePath(props.designDocs, 'designDocs');
     PathsConfig.validatePath(props.inceptionDocs, 'inceptionDocs');
+    PathsConfig.validatePath(principlesDocs, 'principlesDocs');
+    PathsConfig.validatePath(folderRulesDoc, 'folderRulesDoc');
 
     this.designDocs = props.designDocs;
     this.inceptionDocs = props.inceptionDocs;
+    this.principlesDocs = principlesDocs;
+    this.folderRulesDoc = folderRulesDoc;
   }
 
   private static validatePath(value: string, fieldName: string): void {
@@ -44,7 +55,9 @@ export class PathsConfig {
   equals(other: PathsConfig): boolean {
     return (
       this.designDocs === other.designDocs &&
-      this.inceptionDocs === other.inceptionDocs
+      this.inceptionDocs === other.inceptionDocs &&
+      this.principlesDocs === other.principlesDocs &&
+      this.folderRulesDoc === other.folderRulesDoc
     );
   }
 }

@@ -1,6 +1,7 @@
 // @unit agent-integration
 // @layer infrastructure
 // @story H11-02
+// @work-item-id WI-214
 
 import { describe, expect, it } from 'vitest';
 import * as path from 'node:path';
@@ -19,6 +20,7 @@ const WITH_EXCLUSIONS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-excl
 const WITH_RELAXED_GATES_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-relaxed-gates.json');
 const WITH_BASELINE_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-baseline.json');
 const WITH_STOP_HOOK_ENFORCE_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-stop-hook-enforce.json');
+const WITH_TOP_LEVEL_PATHS_CONFIG = path.join(FIXTURES_DIR, 'harness-config-with-top-level-paths.json');
 
 target('HarnessConfigConfigQueryAdapter', () => {
   describe('設定読み取り', () => {
@@ -64,9 +66,9 @@ target('HarnessConfigConfigQueryAdapter', () => {
       });
     });
 
-    context('getProtectedFilePatterns呼び出し時（Wave 2暫定実装）', () => {
+    context('getProtectedFilePatterns呼び出し時', () => {
       // IT-REPO-ConfigQueryAdapter-004
-      it('getProtectedFilePatterns()が空配列を返すこと（Wave 2では追加パターンなし）', async () => {
+      it('getProtectedFilePatterns()が設定由来のprinciples/folder rules保護パターンを返すこと', async () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
 
@@ -74,7 +76,25 @@ target('HarnessConfigConfigQueryAdapter', () => {
         const actual = await adapter.getProtectedFilePatterns();
 
         // Assert
-        expect(actual).toEqual([]);
+        expect(actual).toEqual([
+          'docs/principles/**',
+          'docs/folder_management_rules.md',
+        ]);
+      });
+
+      it('top-level paths の principles/folder rules 設定から保護パターンを生成すること', async () => {
+        // Arrange
+        const adapter = new HarnessConfigConfigQueryAdapter(WITH_TOP_LEVEL_PATHS_CONFIG);
+
+        // Act
+        const actual = await adapter.getProtectedFilePatterns();
+
+        // Assert
+        expect(actual).toEqual([
+          'custom/protected.json',
+          'documentation/principles/**',
+          'documentation/folder_rules.md',
+        ]);
       });
     });
 
@@ -98,8 +118,11 @@ target('HarnessConfigConfigQueryAdapter', () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter('/nonexistent/path/phasegate.config.json');
 
-        // Act & Assert
-        await expect(adapter.isHookEnabled('post-tool-use')).rejects.toThrow();
+        // Act
+        const actual = adapter.isHookEnabled('post-tool-use');
+
+        // Assert
+        await expect(actual).rejects.toThrow("ENOENT");
       });
     });
 
@@ -126,14 +149,14 @@ target('HarnessConfigConfigQueryAdapter', () => {
 
     context('project.pathsセクションが存在しない場合', () => {
       // IT-REPO-ConfigQueryAdapter-008
-      it('project.pathsセクションなしの場合、デフォルト値にフォールバックすること', () => {
+      it('top-level paths の design/inception 設定にフォールバックすること', () => {
         // Arrange
         const adapter = new HarnessConfigConfigQueryAdapter(ENABLED_CONFIG);
         const expected = ProjectPaths.create(
           ['scripts/harness'],
           {
             inception: 'docs/inception',
-            construction: 'docs/product/construction',
+            construction: 'docs',
           },
         );
 
