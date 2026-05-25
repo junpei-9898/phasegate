@@ -3,11 +3,14 @@
 // @story H11-01
 // @work-item-id WI-145
 // @work-item-id WI-210
+// @work-item-id WI-215
 
 import { describe, expect, it, vi } from "vitest";
+import { ClaudeContextMissingCheck } from "../../../../installation/application/checks/claude-context-missing-check.js";
 import { ClaudeHookMissingCheck } from "../../../../installation/application/checks/claude-hook-missing-check.js";
 import { ClaudeSkillsSymlinkCheck } from "../../../../installation/application/checks/claude-skills-symlink-check.js";
 import { CiWorkflowMissingCheck } from "../../../../installation/application/checks/ci-workflow-missing-check.js";
+import { CodexContextMissingCheck } from "../../../../installation/application/checks/codex-context-missing-check.js";
 import { CodexHookMissingCheck } from "../../../../installation/application/checks/codex-hook-missing-check.js";
 import { CodexSkillsSymlinkCheck } from "../../../../installation/application/checks/codex-skills-symlink-check.js";
 import { HuskyCommitMsgMissingCheck } from "../../../../installation/application/checks/husky-commit-msg-missing-check.js";
@@ -19,6 +22,48 @@ import { context, target } from "../../../helpers/test-helpers.js";
 import { createInspector, projectFile } from "./check-test-helpers.js";
 
 target("doctor heuristic checks", () => {
+  describe("agent context checks", () => {
+    it("Claude の runtime-visible .claude/CLAUDE.md がある場合は finding を返さないこと", async () => {
+      const inspector = createTextInspector(".claude/CLAUDE.md", "<!-- phasegate:managed-section:start -->\nPhaseGate\n");
+
+      const actual = await new ClaudeContextMissingCheck().run("/tmp/project", inspector);
+
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("Claude legacy .claude/CLAUDE.local.md だけの場合は red を返すこと", async () => {
+      const inspector = createTextInspector(".claude/CLAUDE.local.md", "PhaseGate\n");
+
+      const actual = await new ClaudeContextMissingCheck().run("/tmp/project", inspector);
+
+      expect(actual).toMatchObject({ checkId: "claude-context-missing", severity: "red", repairMode: "mechanical" });
+    });
+
+    it("Codex の runtime-visible AGENTS.md がある場合は finding を返さないこと", async () => {
+      const inspector = createTextInspector("AGENTS.md", "<!-- phasegate:managed-section:start -->\nPhaseGate\n");
+
+      const actual = await new CodexContextMissingCheck().run("/tmp/project", inspector);
+
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("Codex legacy .codex/AGENTS.local.md だけの場合は red を返すこと", async () => {
+      const inspector = createTextInspector(".codex/AGENTS.local.md", "PhaseGate\n");
+
+      const actual = await new CodexContextMissingCheck().run("/tmp/project", inspector);
+
+      expect(actual).toMatchObject({ checkId: "codex-context-missing", severity: "red", repairMode: "mechanical" });
+    });
+
+    it("Codex team AGENTS.md に PhaseGate managed section がない場合は manual red を返すこと", async () => {
+      const inspector = createTextInspector("AGENTS.md", "team guidance\n");
+
+      const actual = await new CodexContextMissingCheck().run("/tmp/project", inspector);
+
+      expect(actual).toMatchObject({ checkId: "codex-context-missing", severity: "red", repairMode: "manual" });
+    });
+  });
+
   describe("ClaudeHookMissingCheck", () => {
     it("missing settings は mechanical red を返すこと", async () => {
       const sut = new ClaudeHookMissingCheck();

@@ -142,7 +142,7 @@ traceability:
 
 - 役割: team repository に個人だけが PhaseGate を導入する lifecycle variant。
 - team-owned file: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`。
-- personal artifact: `.phasegate-local/phasegate.config.json`, real agent runtime artifacts under `.claude/` / `.codex/`, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
+- personal artifact: `.phasegate-local/phasegate.config.json`, real agent runtime artifacts under `.claude/` / `.codex/`, runtime-visible personal agent context, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
 - personal sandbox: PhaseGate config fallback is parked under `.phasegate-local/` so team-owned project root files remain untouched.
 - agent runtime surface: Claude Code / Codex discovery requires project-local `.claude/settings.json`, `.claude/skills/`, `.codex/hooks.json`, and `.codex/skills/`.
 - real runtime artifact: personal mode creates agent runtime surface entries as regular files/directories, not symlink shims.
@@ -154,6 +154,8 @@ traceability:
   - 既存の non-PhaseGate `.claude/*` / `.codex/*` は上書きせず manual review として扱う。
   - GitHub CLI 認証、repo secrets、hosted CI state は personal apply target に含めない。
   - uninstall は manifest-managed personal artifact のみを撤去し、team-owned file bytes を変化させない。
+
+Personal agent context is configured only when the selected agent runtime will discover it without undocumented behavior. Claude personal context uses `.claude/CLAUDE.md`. Codex personal context uses root `AGENTS.md` only when the file is absent or already PhaseGate-managed; an existing non-managed team `AGENTS.md` is left byte-identical and reported as a manual readiness gap instead of being overwritten or hidden by `AGENTS.override.md`. @work-item-id WI-215
 
 ### 2.7 CheckId
 

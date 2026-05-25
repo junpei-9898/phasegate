@@ -7,6 +7,7 @@
 // @work-item-id WI-180
 // @work-item-id WI-187
 // @work-item-id WI-210
+// @work-item-id WI-215
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -40,7 +41,9 @@ const GOLDEN: readonly FixtureExpectation[] = [
     exitCode: 1,
     findings: [
       { checkId: "claude-hook-missing", severity: "red", repairMode: "mechanical" },
+      { checkId: "claude-context-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "codex-hook-missing", severity: "red", repairMode: "mechanical" },
+      { checkId: "codex-context-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-pre-commit-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-commit-msg-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-pre-push-missing", severity: "warn", repairMode: "mechanical" },
@@ -65,6 +68,7 @@ const GOLDEN: readonly FixtureExpectation[] = [
     exitCode: 1,
     findings: [
       { checkId: "codex-hook-missing", severity: "red", repairMode: "ai-assisted" },
+      { checkId: "codex-context-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-commit-msg-missing", severity: "red", repairMode: "ai-assisted" },
       { checkId: "husky-pre-push-missing", severity: "warn", repairMode: "mechanical" },
       { checkId: "ci-workflow-missing", severity: "warn", repairMode: "manual" },
@@ -107,6 +111,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
 
   await writeProjectFile(root, "package.json", JSON.stringify({ devDependencies: { phasegate: "0.145.0" } }));
   await writeProjectFile(root, ".claude/settings.json", JSON.stringify({ hooks: { Stop: [{ command: "npx phasegate hook stop" }] } }));
+  await writeProjectFile(root, "CLAUDE.md", "<!-- phasegate:managed-section:start -->\nPhaseGate\n<!-- phasegate:managed-section:end -->\n");
   await writeProjectFile(root, ".husky/pre-commit", standardPreCommitHook());
 
   if (fixture === "claude-only-install") {
@@ -126,6 +131,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   }
 
   await writeProjectFile(root, ".codex/hooks.json", JSON.stringify({ hooks: [{ command: "npx phasegate hook stop" }] }));
+  await writeProjectFile(root, "AGENTS.md", "<!-- phasegate:managed-section:start -->\nPhaseGate\n<!-- phasegate:managed-section:end -->\n");
   await writeProjectFile(root, ".husky/commit-msg", 'npx phasegate commit-msg "$1"\n');
   await createSharedSkillContent(root);
   await createSkillLink(root, ".claude/skills");
@@ -292,6 +298,7 @@ target("DoctorHandler", () => {
       expect(actual.payload.findings).toEqual([]);
       expect(actual.payload.scopedOutFindings.map(({ checkId, applicability }) => ({ checkId, applicability }))).toEqual([
         { checkId: "codex-hook-missing", applicability: "not-applicable" },
+        { checkId: "codex-context-missing", applicability: "not-applicable" },
         { checkId: "codex-skills-symlink", applicability: "not-applicable" },
       ]);
       expect(
@@ -317,6 +324,13 @@ target("DoctorHandler", () => {
           repairHintApplicability: "only-if-agent-selected",
           repairModeApplicability: "only-if-agent-selected",
         },
+        {
+          repairHint: null,
+          suggestedSkill: null,
+          currentScopeRepairTarget: false,
+          repairHintApplicability: "only-if-agent-selected",
+          repairModeApplicability: "only-if-agent-selected",
+        },
       ]);
     });
 
@@ -327,6 +341,7 @@ target("DoctorHandler", () => {
       expect(actual.payload.scope.agent).toBe("both");
       expect(actual.payload.findings.map(({ checkId, severity }) => ({ checkId, severity }))).toEqual([
         { checkId: "codex-hook-missing", severity: "red" },
+        { checkId: "codex-context-missing", severity: "red" },
         { checkId: "codex-skills-symlink", severity: "red" },
       ]);
       expect(
@@ -340,6 +355,13 @@ target("DoctorHandler", () => {
       ).toEqual([
         {
           checkId: "codex-hook-missing",
+          currentScopeRepairTarget: true,
+          repairHint: "npx phasegate install --apply",
+          repairHintApplicability: "applicable",
+          repairModeApplicability: "applicable",
+        },
+        {
+          checkId: "codex-context-missing",
           currentScopeRepairTarget: true,
           repairHint: "npx phasegate install --apply",
           repairHintApplicability: "applicable",
@@ -360,7 +382,7 @@ target("DoctorHandler", () => {
       const actual = await runDoctorHumanFixture("claude-only-install", false, "claude");
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain("Scoped out: 2 informational findings not applicable to --agent claude; not repair targets for this scope: codex-hook-missing, codex-skills-symlink.");
+      expect(actual.stdout).toContain("Scoped out: 3 informational findings not applicable to --agent claude; not repair targets for this scope: codex-hook-missing, codex-context-missing, codex-skills-symlink.");
     });
   });
 

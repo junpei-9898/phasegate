@@ -100,7 +100,7 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 
 | Case ID | Target | Preconditions | Expected result |
 |---|---|---|---|
-| UT-INS-WI213-001 | personal install planning | `--personal --agent claude` | plan includes `.claude/CLAUDE.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/*` |
+| UT-INS-WI213-001 | personal install planning | `--personal --agent claude` | plan includes `.claude/CLAUDE.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/*` |
 | UT-INS-WI213-002 | personal config template | default personal config | design/inception paths are under `.phasegate-local/` |
 ## WI-214 Personal Config Paths
 
@@ -108,3 +108,6 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | Case | Expected |
 |---|---|
 | `install --personal --agent claude --apply` | `.phasegate-local/phasegate.config.json` contains `paths.principlesDocs` and `paths.folderRulesDoc`, and the corresponding local docs are created. |
+| UT-INS-WI215-001 | personal Codex install with no `AGENTS.md` | creates root `AGENTS.md`, records it in the manifest, and adds `AGENTS.md` to `.git/info/exclude` |
+| UT-INS-WI215-002 | personal Codex install with existing non-managed `AGENTS.md` | leaves the file byte-identical and reports manual readiness instead of writing `AGENTS.override.md` |
+| UT-INS-WI215-003 | personal doctor with only legacy `.codex/AGENTS.local.md` | reports `codex-context-missing` instead of green |

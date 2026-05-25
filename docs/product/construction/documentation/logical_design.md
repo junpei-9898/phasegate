@@ -92,6 +92,8 @@ Public docs must distinguish project install and personal install skill topology
 <!-- @work-item-id WI-213 -->
 
 README and installation guide content describe personal install as a local-only setup that still deploys functional local alternatives for agent context, commit-time hooks, and reference docs. The docs continue to state that team-owned files are not mutated.
+
+Personal install documentation must name only runtime-visible context paths. Claude personal context is `.claude/CLAUDE.md`. Codex personal context is root `AGENTS.md` when PhaseGate can create or manage that file locally; if a team `AGENTS.md` already exists, documentation must explain that PhaseGate will not overwrite or mask it and that `doctor --personal --agent codex` reports the remaining context step. @work-item-id WI-215
 ## Configurable Documentation Path Guidance
 
 <!-- @work-item-id WI-214 -->

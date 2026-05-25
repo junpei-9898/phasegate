@@ -11,6 +11,7 @@
 // @work-item-id WI-210
 // @work-item-id WI-213
 // @work-item-id WI-214
+// @work-item-id WI-215
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -218,6 +219,40 @@ async function arrangePersonalInstallWithExistingCodexHooks() {
   };
 }
 
+async function arrangePersonalCodexInstallWithoutTeamAgents() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, "CLAUDE.md", "team-owned CLAUDE.md\n");
+  await writeProjectFile(root, ".git/info/exclude", "# user local excludes\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+  const parsed = JSON.parse(installed.stdout) as {
+    changed: Array<{ path: string }>;
+  };
+  return {
+    installed,
+    changedPaths: parsed.changed.map((item) => item.path),
+    agentsContent: await readFile(join(root, "AGENTS.md"), "utf8"),
+    excludeContent: await readFile(join(root, ".git/info/exclude"), "utf8"),
+    manifestContent: await readFile(join(root, ".phasegate", "manifest.json"), "utf8"),
+  };
+}
+
+async function arrangePersonalCodexInstallWithTeamAgents() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, "AGENTS.md", "team-owned AGENTS.md\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+  const parsed = JSON.parse(installed.stdout) as {
+    plan: Array<{ path: string; changed: boolean; repairMode: string; summary: string }>;
+    changed: Array<{ path: string }>;
+  };
+  return {
+    installed,
+    agentsPlan: parsed.plan.find((item) => item.path === "AGENTS.md"),
+    changedPaths: parsed.changed.map((item) => item.path),
+    agentsContent: await readFile(join(root, "AGENTS.md"), "utf8"),
+    hasOverride: await fileExists(join(root, "AGENTS.override.md")),
+  };
+}
+
 async function arrangeProjectInstallAndReadSkills(agent: "claude" | "codex" | "both", skillSet: "core" | "all" = "all") {
   const root = await createProjectRoot();
   const installed = await runInstall(root, { apply: true, agent, skillSet });
@@ -335,7 +370,7 @@ target("InstallHandler", () => {
       expect(parsed.changed.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
-          ".claude/CLAUDE.local.md",
+          ".claude/CLAUDE.md",
           ".claude/settings.json",
           ".claude/skills",
           ".git/hooks/pre-commit",
@@ -350,7 +385,7 @@ target("InstallHandler", () => {
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"designDocs": ".phasegate-local/product/construction"');
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"principlesDocs": ".phasegate-local/docs/principles"');
       expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"folderRulesDoc": ".phasegate-local/docs/folder_management_rules.md"');
-      expect(await readFile(join(root, ".claude/CLAUDE.local.md"), "utf8")).toContain("PhaseGate");
+      expect(await readFile(join(root, ".claude/CLAUDE.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".claude/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
       expect(await readFile(join(root, ".git/hooks/pre-commit"), "utf8")).toContain("validate --layer L2");
@@ -379,11 +414,10 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(0);
-      expect(parsed.plan.map((item) => item.path)).not.toEqual(expect.arrayContaining([...TEAM_OWNED_FILES]));
+      expect(parsed.changed.map((item) => item.path)).not.toEqual(expect.arrayContaining([...TEAM_OWNED_FILES]));
       expect(parsed.changed.map((item) => item.path)).toEqual(
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
-          ".codex/AGENTS.local.md",
           ".codex/hooks.json",
           ".codex/skills",
           ".git/hooks/pre-commit",
@@ -394,12 +428,35 @@ target("InstallHandler", () => {
         ]),
       );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
-      expect(await readFile(join(root, ".codex/AGENTS.local.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".codex/hooks.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".codex/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
       expect((await lstat(join(root, ".codex/hooks.json"))).isSymbolicLink()).toBe(false);
       expect((await lstat(join(root, ".codex/skills"))).isDirectory()).toBe(true);
       expect((await lstat(join(root, ".codex/skills"))).isSymbolicLink()).toBe(false);
+    });
+
+    it("personal Codex install は AGENTS.md が無い場合だけ runtime-visible local context を作成すること", async () => {
+      // Act
+      const actual = await arrangePersonalCodexInstallWithoutTeamAgents();
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(actual.changedPaths).toEqual(expect.arrayContaining(["AGENTS.md", ".codex/hooks.json", ".git/info/exclude"]));
+      expect(actual.agentsContent).toContain("PhaseGate");
+      expect(actual.excludeContent).toContain("AGENTS.md");
+      expect(actual.manifestContent).toContain('"path": "AGENTS.md"');
+    });
+
+    it("personal Codex install は既存 team AGENTS.md を上書きせず manual readiness として残すこと", async () => {
+      // Act
+      const actual = await arrangePersonalCodexInstallWithTeamAgents();
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(actual.agentsPlan).toMatchObject({ changed: false, repairMode: "manual" });
+      expect(actual.changedPaths).not.toContain("AGENTS.md");
+      expect(actual.agentsContent).toBe("team-owned AGENTS.md\n");
+      expect(actual.hasOverride).toBe(false);
     });
 
     it("personal Claude doctor は team/project targets を scoped out すること", async () => {

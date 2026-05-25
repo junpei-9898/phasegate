@@ -200,6 +200,7 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 
 | Command / Flow | Expectation |
 |---|---|
-| `install --personal --agent claude --apply` | Creates `.claude/CLAUDE.local.md`, `.claude/settings.json`, `.claude/skills`, local hooks, and local reference docs. |
-| `install --personal --agent codex --apply` | Creates `.codex/AGENTS.local.md`, `.codex/hooks.json`, `.codex/skills`, local hooks, and local reference docs. |
+| `install --personal --agent claude --apply` | Creates `.claude/CLAUDE.md`, `.claude/settings.json`, `.claude/skills`, local hooks, and local reference docs. |
+| `install --personal --agent codex --apply` | Creates runtime-visible `AGENTS.md` when absent, `.codex/hooks.json`, `.codex/skills`, local hooks, and local reference docs. |
 | personal install with team-owned files present | `AGENTS.md`, `CLAUDE.md`, `.husky/*`, and root `docs/principles/*` remain unchanged. |
+| `install --personal --agent codex --apply` with existing non-managed `AGENTS.md` | Leaves `AGENTS.md` unchanged and reports a manual personal context readiness gap instead of creating `AGENTS.override.md`. @work-item-id WI-215 |

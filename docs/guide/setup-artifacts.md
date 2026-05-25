@@ -7,6 +7,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 <!-- @work-item-id WI-169 -->
 <!-- @work-item-id WI-208 -->
 <!-- @work-item-id WI-209 -->
+<!-- @work-item-id WI-215 -->
 
 ## Artifact Classes
 
@@ -16,7 +17,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init` or project install when absent; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
-| Personal install artifact | `.phasegate-local/phasegate.config.json`, ignored real `.claude/settings.json` + `.claude/skills/`, ignored real `.codex/hooks.json` + `.codex/skills/`, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal --agent <agent>`; team `.gitignore`, team-owned files, GitHub CLI config, repo secrets, and CI settings are not modified |
+| Personal install artifact | `.phasegate-local/phasegate.config.json`, ignored real `.claude/CLAUDE.md` + `.claude/settings.json` + `.claude/skills/`, ignored real `.codex/hooks.json` + `.codex/skills/`, optional ignored root `AGENTS.md`, `.git/info/exclude` PhaseGate block | One developer on one machine | Created by `phasegate install --personal --agent <agent>`; team `.gitignore`, team-owned files, GitHub CLI config, repo secrets, and CI settings are not modified |
 | Legacy artifact | `.harness-hooks.yml`, old Fuse hook files, `.harness/session-state.json`, `.harness/context-priority.json`, `.harness/reports` fallback | Compatibility only | Not required for current install lifecycle unless a project intentionally keeps an archived integration |
 | User-level setting | Codex CLI `hooks` feature flag | User machine | Must be enabled manually with `codex features enable hooks`; project commands do not modify it |
 
@@ -43,6 +44,8 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 `phasegate install --personal --agent claude --apply` is a local-only bootstrap for evaluating PhaseGate in a team-owned repository. PhaseGate config is stored under `.phasegate-local/`, while selected agent runtime paths are real project-local files/directories: `.claude/settings.json` and `.claude/skills/` for Claude Code, `.codex/hooks.json` and `.codex/skills/` for Codex. These paths are hidden by `.git/info/exclude`; PhaseGate does not edit team `.gitignore`.
 
 If `.claude/*` or `.codex/*` already exists and is not a PhaseGate-managed personal artifact, personal install reports manual review and preserves the existing path. <!-- @work-item-id WI-209 -->
+
+Personal agent context is also placed only where the runtime will read it. Claude Code uses `.claude/CLAUDE.md`. Codex uses root `AGENTS.md` when PhaseGate can create or manage it locally; if a team `AGENTS.md` already exists, PhaseGate leaves it unchanged and doctor reports `codex-context-missing` instead of creating `AGENTS.override.md`. <!-- @work-item-id WI-215 -->
 
 Project install uses a different topology: selected bundled skills are deployed once to root `skills/`, and `.claude/skills` / `.codex/skills` point to that shared target. If an older project install has the links but an empty `skills/` target, `phasegate doctor` reports the selected agent skill check and `phasegate reconcile --apply` repairs the shared skill bodies. <!-- @work-item-id WI-210 -->
 

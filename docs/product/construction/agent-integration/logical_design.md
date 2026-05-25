@@ -1598,7 +1598,7 @@ Legacy non-namespaced extension commands may still resolve through `scripts/harn
 
 <!-- @work-item-id WI-213 -->
 
-Personal install deploys local-only agent context files for the selected agent. Claude receives `.claude/CLAUDE.local.md`; Codex receives `.codex/AGENTS.local.md`. These files carry the same PhaseGate rule block as project agent context without mutating team-owned `CLAUDE.md` or `AGENTS.md`.
+Personal install deploys agent context only at paths the selected runtime can discover. Claude receives `.claude/CLAUDE.md`. Codex receives root `AGENTS.md` only when that path is absent or already PhaseGate-managed; otherwise the existing team `AGENTS.md` is left unchanged and readiness is reported as manual. These files carry the same PhaseGate rule block as project agent context without mutating team-owned `CLAUDE.md` or hiding team `AGENTS.md` behind `AGENTS.override.md`. @work-item-id WI-215
 ## Config-Derived Protected Reference Docs
 
 <!-- @work-item-id WI-214 -->

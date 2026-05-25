@@ -365,7 +365,9 @@ export class RunUninstallUseCase {
     if (mode === "symlink") return "symlink";
     if (mode === "created") return path.endsWith(".yml") || path.endsWith(".yaml") ? "yaml-add" : "created";
     if (path === "package.json") return "package-json";
-    if (path === "AGENTS.md" || path === "CLAUDE.md") return "markdown-managed";
+    if (path === "AGENTS.md" || path === "CLAUDE.md" || path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md" || path === ".codex/AGENTS.local.md") {
+      return "markdown-managed";
+    }
     if (path === ".git/info/exclude") return "text-managed";
     if (path.endsWith(".json")) return "json";
     if (path.startsWith(".husky/")) return "shell";
@@ -376,7 +378,9 @@ export class RunUninstallUseCase {
     if (path === ".claude/settings.json") return "templates/.claude/settings.json";
     if (path === ".codex/hooks.json") return "templates/.codex/hooks.json";
     if (path === "CLAUDE.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
+    if (path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
     if (path === "AGENTS.md") return "docs/templates/agent-context/AGENTS.md.template.md";
+    if (path === ".codex/AGENTS.local.md") return "docs/templates/agent-context/AGENTS.md.template.md";
     throw new Error(`No template for ${path}`);
   }
 

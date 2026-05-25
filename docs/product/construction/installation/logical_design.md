@@ -608,7 +608,7 @@ Doctor skill checks validate both the agent-facing path and the linked target co
 
 <!-- @work-item-id WI-213 -->
 
-`RunInstallUseCase` deploys local-only equivalents for personal install: `.claude/CLAUDE.local.md` or `.codex/AGENTS.local.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/folder_management_rules.md` plus `.phasegate-local/docs/principles/*.md`. The hook templates avoid Husky bootstrap and call the packaged `phasegate` CLI directly. The personal config template points `paths.designDocs` and `paths.inceptionDocs` into `.phasegate-local/`, preserving the no-team-file contract while making validator inputs resolvable.
+`RunInstallUseCase` deploys local-only equivalents for personal install: `.claude/CLAUDE.md` for Claude, root `AGENTS.md` for Codex when no team file already owns that path, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/folder_management_rules.md` plus `.phasegate-local/docs/principles/*.md`. If Codex personal install finds an existing non-managed `AGENTS.md`, it does not write `AGENTS.override.md` or merge into the team file; the plan/doctor surface a manual readiness gap. The hook templates avoid Husky bootstrap and call the packaged `phasegate` CLI directly. The personal config template points `paths.designDocs` and `paths.inceptionDocs` into `.phasegate-local/`, preserving the no-team-file contract while making validator inputs resolvable. @work-item-id WI-215
 ## Personal Reference Docs Path Alignment
 
 <!-- @work-item-id WI-214 -->

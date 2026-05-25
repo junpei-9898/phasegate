@@ -13,6 +13,7 @@
 // @work-item-id WI-210
 // @work-item-id WI-213
 // @work-item-id WI-214
+// @work-item-id WI-215
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -78,6 +79,7 @@ interface InstallTarget {
   readonly templatePath: string;
   readonly executable?: boolean;
   readonly block?: ManagedBlockInput;
+  readonly personalManualIfUnmanaged?: boolean;
 }
 
 const SKILL_HINT = "invoke /phasegate-config-doctor";
@@ -89,7 +91,7 @@ const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
-const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/settings.json", ".codex/hooks.json"]);
+const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/CLAUDE.md", ".claude/settings.json", "AGENTS.md", ".codex/hooks.json"]);
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const PERSONAL_PRINCIPLES_DOCS = ".phasegate-local/docs/principles";
 const PERSONAL_FOLDER_RULES_DOC = ".phasegate-local/docs/folder_management_rules.md";
@@ -350,8 +352,9 @@ export class RunInstallUseCase {
       const existingEntry = baseManifest.findEntry(target.path);
       const beforeHash = before === null ? null : this.hashCalculator.compute(before);
       const unmanagedPersonalRuntimeFile = input.personal
-        && PERSONAL_AGENT_RUNTIME_FILES.has(target.path)
+        && (PERSONAL_AGENT_RUNTIME_FILES.has(target.path) || target.personalManualIfUnmanaged === true)
         && before !== null
+        && !before.includes(MARKDOWN_BEGIN)
         && (existingEntry === null || beforeHash === null || !beforeHash.equals(existingEntry.hash));
       const repairMode = unmanagedPersonalRuntimeFile ? "manual" : this.repairMode(target, before);
       const next = unmanagedPersonalRuntimeFile ? before : this.merge(target, before, template, input.phasegateVersion);
@@ -364,7 +367,7 @@ export class RunInstallUseCase {
         strategy: target.strategy,
         changed: didChange,
         summary: unmanagedPersonalRuntimeFile
-          ? `${target.path}: existing non-phasegate path requires manual review`
+          ? `${target.path}: existing non-phasegate runtime path requires manual review`
           : didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
         diff: unmanagedPersonalRuntimeFile ? "manual review required" : this.diffSummary(before, next),
         skillHint: repairMode === "ai-assisted" ? SKILL_HINT : null,
@@ -629,10 +632,11 @@ export class RunInstallUseCase {
       ...(options.includeClaude
         ? [
             {
-              path: ".claude/CLAUDE.local.md",
+              path: ".claude/CLAUDE.md",
               strategy: "markdown-managed" as const,
               templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
-              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal CLAUDE.local.md managed section" },
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal .claude/CLAUDE.md managed section" },
+              personalManualIfUnmanaged: true,
             },
             {
               path: ".claude/settings.json",
@@ -644,10 +648,11 @@ export class RunInstallUseCase {
       ...(options.includeCodex
         ? [
             {
-              path: ".codex/AGENTS.local.md",
+              path: "AGENTS.md",
               strategy: "markdown-managed" as const,
               templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
-              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal AGENTS.local.md managed section" },
+              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal AGENTS.md managed section" },
+              personalManualIfUnmanaged: true,
             },
             {
               path: ".codex/hooks.json",

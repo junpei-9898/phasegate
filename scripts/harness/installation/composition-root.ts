@@ -2,9 +2,12 @@
 // @layer presentation
 // @work-item-id WI-145
 // @work-item-id WI-148
+// @work-item-id WI-215
 
+import { ClaudeContextMissingCheck } from "./application/checks/claude-context-missing-check.js";
 import { ClaudeHookMissingCheck } from "./application/checks/claude-hook-missing-check.js";
 import { ClaudeSkillsSymlinkCheck } from "./application/checks/claude-skills-symlink-check.js";
+import { CodexContextMissingCheck } from "./application/checks/codex-context-missing-check.js";
 import { CodexHookMissingCheck } from "./application/checks/codex-hook-missing-check.js";
 import { CodexSkillsSymlinkCheck } from "./application/checks/codex-skills-symlink-check.js";
 import { CiWorkflowMissingCheck } from "./application/checks/ci-workflow-missing-check.js";
@@ -42,7 +45,9 @@ export function createInstallationModule() {
   const hashCalculator = new NodeCryptoHashAdapter();
   const checks = [
     new ClaudeHookMissingCheck(),
+    new ClaudeContextMissingCheck(),
     new CodexHookMissingCheck(),
+    new CodexContextMissingCheck(),
     new HuskyPreCommitMissingCheck(),
     new HuskyCommitMsgMissingCheck(),
     new HuskyPrePushMissingCheck(),

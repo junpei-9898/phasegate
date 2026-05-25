@@ -3,6 +3,7 @@
 // @work-item-id WI-145
 // @work-item-id WI-178
 // @work-item-id WI-208
+// @work-item-id WI-215
 
 import { DiagnosticReport } from "../../domain/diagnostic-report.js";
 import type { CheckId } from "../../domain/check-id.js";
@@ -32,8 +33,8 @@ export interface RunDoctorDiagnosticsOutput {
   readonly exitCode: number;
 }
 
-const CLAUDE_ONLY_CHECKS = new Set<CheckId>(["claude-hook-missing", "claude-skills-symlink"]);
-const CODEX_ONLY_CHECKS = new Set<CheckId>(["codex-hook-missing", "codex-skills-symlink"]);
+const CLAUDE_ONLY_CHECKS = new Set<CheckId>(["claude-hook-missing", "claude-context-missing", "claude-skills-symlink"]);
+const CODEX_ONLY_CHECKS = new Set<CheckId>(["codex-hook-missing", "codex-context-missing", "codex-skills-symlink"]);
 const PERSONAL_SCOPED_OUT_CHECKS = new Set<CheckId>([
   "husky-pre-commit-missing",
   "husky-commit-msg-missing",
