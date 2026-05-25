@@ -4,6 +4,7 @@
 // @work-item-id WI-145
 // @work-item-id WI-210
 // @work-item-id WI-215
+// @work-item-id WI-216
 
 import { describe, expect, it, vi } from "vitest";
 import { ClaudeContextMissingCheck } from "../../../../installation/application/checks/claude-context-missing-check.js";
@@ -18,6 +19,7 @@ import { HuskyPreCommitMissingCheck } from "../../../../installation/application
 import { HuskyPrePushMissingCheck } from "../../../../installation/application/checks/husky-pre-push-missing-check.js";
 import { PackageJsonDevdepMissingCheck } from "../../../../installation/application/checks/package-json-devdep-missing-check.js";
 import type { FileInspectorPort } from "../../../../installation/application/ports/file-inspector-port.js";
+import { getSkillsForSet } from "../../../../setup/skill-deployer.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 import { createInspector, projectFile } from "./check-test-helpers.js";
 
@@ -230,7 +232,8 @@ target("doctor heuristic checks", () => {
     it("Claude/Codex の skills symlink が ../skills を指す場合は finding を返さないこと", async () => {
       const inspector = createInspector({
         readSymlink: vi.fn().mockResolvedValue("../skills"),
-        listFiles: vi.fn().mockResolvedValue(["/tmp/project/skills/phasegate-toolkit-guide/SKILL.md"]),
+        readText: vi.fn().mockResolvedValue(JSON.stringify({ version: "0.145.0", skillSet: "all" })),
+        listFiles: vi.fn().mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/skills/${skill}/SKILL.md`)),
       });
 
       const actual = [
@@ -263,7 +266,8 @@ target("doctor heuristic checks", () => {
     it("personal install の real skills directory は finding を返さないこと", async () => {
       const inspector = createInspector({
         readSymlink: vi.fn().mockResolvedValue(null),
-        listFiles: vi.fn().mockResolvedValue(["/tmp/project/.codex/skills/.harness-version"]),
+        readText: vi.fn().mockResolvedValue(JSON.stringify({ version: "0.145.0", skillSet: "all" })),
+        listFiles: vi.fn().mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/.codex/skills/${skill}/SKILL.md`)),
       });
 
       const actual = await new CodexSkillsSymlinkCheck().run("/tmp/project", inspector);

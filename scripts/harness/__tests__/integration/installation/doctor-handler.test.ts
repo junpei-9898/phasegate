@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createInstallationModule } from "../../../installation/composition-root.js";
+import { getSkillsForSet } from "../../../setup/skill-deployer.js";
 import { createTraceabilityModelModule } from "../../../traceability-model/composition-root.js";
 import { target } from "../../helpers/test-helpers.js";
 
@@ -101,7 +102,9 @@ async function createSkillLink(root: string, relativePath: string, target = "../
 }
 
 async function createSharedSkillContent(root: string): Promise<void> {
-  await writeProjectFile(root, "skills/phasegate-toolkit-guide/SKILL.md", "# PhaseGate Toolkit Guide\n");
+  for (const skill of getSkillsForSet("all")) {
+    await writeProjectFile(root, `skills/${skill}/SKILL.md`, `# ${skill}\n`);
+  }
   await writeProjectFile(root, "skills/.harness-version", JSON.stringify({ version: "0.145.0", skillSet: "all" }));
 }
 

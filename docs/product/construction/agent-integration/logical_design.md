@@ -9,6 +9,9 @@ Agent hook integration supports real-world repository layouts by consuming gener
 @work-item-id WI-208
 Hook adapters resolve PhaseGate config through the same personal fallback as config-foundation. If `.phasegate-local/phasegate.config.json` is selected, hook-local project root remains the repository root so story reflection, status context, skip-event logs, and validator execution do not accidentally treat `.phasegate-local/` as the project.
 
+@work-item-id WI-216
+Agent integration consumes installed skills as runtime-visible agent directories only. The hook layer does not own skill catalog mutation; it relies on installation lifecycle commands to keep `.claude/skills` and `.codex/skills` complete while preserving user-owned skills.
+
 @story-id H11-01
 @story-id H11-02
 @story-id H11-03

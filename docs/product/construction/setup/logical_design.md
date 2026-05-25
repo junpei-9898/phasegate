@@ -46,6 +46,9 @@ Personal install is a complete local-only bootstrap path for selected agents. Fi
 @work-item-id WI-209
 Personal install exposes selected agent runtime paths as real project-local artifacts, not symlink shims. Claude Code receives `.claude/settings.json` and `.claude/skills/`; Codex receives `.codex/hooks.json` and `.codex/skills/`. These paths remain local-only through `.git/info/exclude`, while `.phasegate-local/phasegate.config.json` remains the personal PhaseGate config fallback.
 
+@work-item-id WI-216
+Setup-facing install guidance treats existing skills catalogs as mergeable. `install`, `reconcile`, and the `update-skills` alias refresh PhaseGate bundled skills inside existing personal or project skills directories while preserving user-owned skills. Uninstall removes only manifest-managed bundled skills and keeps the parent catalog when user-owned skills remain.
+
 <!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
 ## P3 User Onboarding And Agent Setup
 

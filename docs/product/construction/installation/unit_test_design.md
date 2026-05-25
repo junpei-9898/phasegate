@@ -102,6 +102,15 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 |---|---|---|---|
 | UT-INS-WI213-001 | personal install planning | `--personal --agent claude` | plan includes `.claude/CLAUDE.md`, `.git/hooks/pre-commit`, `.git/hooks/commit-msg`, and `.phasegate-local/docs/*` |
 | UT-INS-WI213-002 | personal config template | default personal config | design/inception paths are under `.phasegate-local/` |
+
+<!-- @work-item-id WI-216 -->
+## 1.9 Managed Skills Merge Cases
+
+| Case ID | Target | Preconditions | Expected result |
+|---|---|---|---|
+| UT-INS-WI216-001 | personal skills planning | `.claude/skills/.harness-version` exists but a selected bundled skill is missing | plan is changed and mechanical |
+| UT-INS-WI216-002 | skills doctor check | skills target contains only `.harness-version` | red mechanical finding |
+| UT-INS-WI216-003 | uninstall planning | legacy `.codex/skills` parent entry and user-owned skill exist | known bundled skill directories are removed and user-owned skill remains |
 ## WI-214 Personal Config Paths
 
 <!-- @work-item-id WI-214 -->

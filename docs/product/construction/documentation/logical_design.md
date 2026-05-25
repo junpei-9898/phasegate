@@ -87,6 +87,9 @@ Public docs and setup skills must describe personal install agent runtime paths 
 
 @work-item-id WI-210
 Public docs must distinguish project install and personal install skill topology. Project install deploys selected bundled skill bodies to root `skills/` and exposes them through `.claude/skills` / `.codex/skills` symlinks. Personal install keeps local-only real per-agent skill directories. Reconcile/update-skills are documented as the repair path for older project installs whose skill links exist but whose shared `skills/` target is empty.
+
+@work-item-id WI-216
+Public install and setup artifact docs must state the existing-skills merge contract: PhaseGate refreshes only bundled skill directories selected by `--skills core|all`, preserves user-owned skills, can adopt legacy `.harness-version` personal catalogs, and uninstalls only manifest-managed bundled skills plus metadata.
 ## WI-213 Personal Install Documentation
 
 <!-- @work-item-id WI-213 -->

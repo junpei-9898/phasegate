@@ -3,11 +3,12 @@
 // @work-item-id WI-145
 // @work-item-id WI-209
 // @work-item-id WI-210
+// @work-item-id WI-216
 
 import type { FileInspectorPort } from "../ports/file-inspector-port.js";
 import type { HeuristicCheck } from "../../domain/ports/heuristic-check.js";
 import type { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
-import { createFinding, projectPath, skillDirectoryLooksValid, skillTargetLooksValid } from "./check-utils.js";
+import { createFinding, phasegateSkillDirectoryLooksComplete, projectPath, skillTargetLooksValid } from "./check-utils.js";
 
 export class CodexSkillsSymlinkCheck implements HeuristicCheck {
   readonly checkId = "codex-skills-symlink" as const;
@@ -16,8 +17,9 @@ export class CodexSkillsSymlinkCheck implements HeuristicCheck {
   async run(projectRoot: string, inspector: FileInspectorPort): Promise<DiagnosticFinding | null> {
     const link = await inspector.readSymlink(projectPath(projectRoot, this.target));
     const files = await inspector.listFiles(projectPath(projectRoot, this.target));
-    if (skillTargetLooksValid(link) && skillDirectoryLooksValid(files)) return null;
-    if (link === null && skillDirectoryLooksValid(files)) return null;
+    const metadata = await inspector.readText(projectPath(projectRoot, `${this.target}/.harness-version`));
+    if (skillTargetLooksValid(link) && phasegateSkillDirectoryLooksComplete(files, metadata)) return null;
+    if (link === null && phasegateSkillDirectoryLooksComplete(files, metadata)) return null;
     return createFinding({
       checkId: this.checkId,
       severity: "red",

@@ -6,8 +6,9 @@
 // @work-item-id WI-207
 // @work-item-id WI-208
 // @work-item-id WI-209
+// @work-item-id WI-216
 
-import { access, copyFile, lstat, mkdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
+import { access, copyFile, lstat, mkdir, readFile, readdir, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import type { DeploymentEntry } from "../../domain/deployment-entry.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
@@ -222,7 +223,7 @@ export class RunUninstallUseCase {
     const strategy = this.strategyFor(entry.path, entry.mode);
     if (entry.mode === "symlink") return this.planSymlink(input.projectRoot, entry);
     if (entry.mode === "created" && await this.isDirectory(absolutePath)) {
-      return this.planCreatedDirectory(input.projectRoot, entry);
+      return this.planCreatedDirectory(input, entry);
     }
     const currentContent = await readTextOrNull(absolutePath);
     if (currentContent === null && strategy !== "symlink") {
@@ -271,8 +272,9 @@ export class RunUninstallUseCase {
     }
   }
 
-  private async planCreatedDirectory(projectRoot: string, entry: DeploymentEntry) {
-    const absolutePath = this.resolveProjectPath(projectRoot, entry.path);
+  private async planCreatedDirectory(input: RunUninstallInput, entry: DeploymentEntry) {
+    if (entry.path === ".claude/skills" || entry.path === ".codex/skills") return this.planLegacyPersonalSkillsDirectory(input, entry);
+    const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
     return {
       item: this.item(
         entry.path,
@@ -291,10 +293,39 @@ export class RunUninstallUseCase {
     };
   }
 
+  private async planLegacyPersonalSkillsDirectory(input: RunUninstallInput, entry: DeploymentEntry) {
+    const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
+    const bundledSkills = await this.listBundledSkills(input.harnessRoot);
+    return {
+      item: this.item(
+        entry.path,
+        "delete",
+        "mechanical",
+        "created",
+        true,
+        `${entry.path}: remove managed bundled skills from legacy personal catalog`,
+        `- ${bundledSkills.length} bundled skills and .harness-version`,
+        null,
+      ),
+      needsBackup: false,
+      apply: async () => {
+        for (const skill of bundledSkills) {
+          await rm(join(absolutePath, skill), { recursive: true, force: true });
+        }
+        await rm(join(absolutePath, ".harness-version"), { force: true });
+      },
+    };
+  }
+
+  private async listBundledSkills(harnessRoot: string): Promise<string[]> {
+    const entries = await readdir(join(harnessRoot, "skills"), { withFileTypes: true });
+    return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  }
+
   private async planCreated(projectRoot: string, entry: DeploymentEntry, currentContent: string) {
     const absolutePath = this.resolveProjectPath(projectRoot, entry.path);
     const currentHash = this.hashCalculator.compute(currentContent);
-    const matchesManifest = currentHash.equals(entry.hash);
+    const matchesManifest = currentHash.equals(entry.hash) || entry.path.endsWith("/.harness-version") || entry.path === "skills/.harness-version";
     const repairMode: RepairMode = matchesManifest ? "mechanical" : "ai-assisted";
     return {
       item: this.item(

@@ -7,6 +7,7 @@
 // @work-item-id WI-208
 // @work-item-id WI-209
 // @work-item-id WI-210
+// @work-item-id WI-216
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -160,6 +161,15 @@ async function arrangePersonalInstalledProject() {
   return { root, before };
 }
 
+async function arrangePersonalInstalledProjectWithUserOwnedSkill() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".git/info/exclude", "# user local excludes\n");
+  const installed = await runInstall(root, { personal: true, agent: "codex" });
+  expect(installed.exitCode).toBe(0);
+  await writeProjectFile(root, ".codex/skills/user-owned/SKILL.md", "# User Owned\n");
+  return root;
+}
+
 async function arrangeInstalledProjectWithUserOwnedSkill() {
   const root = await arrangeInstalledProject();
   await writeProjectFile(root, "skills/user-owned/SKILL.md", "# User Owned\n");
@@ -291,7 +301,7 @@ target("UninstallHandler", () => {
         expect.arrayContaining([
           ".phasegate-local/phasegate.config.json",
           ".claude/settings.json",
-          ".claude/skills",
+          ".claude/skills/.harness-version",
           ".git/info/exclude",
         ]),
       );
@@ -300,6 +310,20 @@ target("UninstallHandler", () => {
       expect(await fileExists(join(root, ".claude/skills"))).toBe(false);
       expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toBe("# user local excludes\n");
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
+    });
+
+    it("personal install の uninstall は bundled skills だけを削除して user-owned skill を保持すること", async () => {
+      // Arrange
+      const root = await arrangePersonalInstalledProjectWithUserOwnedSkill();
+
+      // Act
+      const actual = await runUninstall(root, { apply: true });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(await fileExists(join(root, ".codex", "skills", "phasegate-toolkit-guide", "SKILL.md"))).toBe(false);
+      expect(await readFile(join(root, ".codex", "skills", "user-owned", "SKILL.md"), "utf8")).toBe("# User Owned\n");
+      expect(await fileExists(join(root, ".codex", "skills", ".harness-version"))).toBe(false);
     });
 
     it("project uninstall は managed shared skills だけを削除し user-owned skills を保持すること", async () => {

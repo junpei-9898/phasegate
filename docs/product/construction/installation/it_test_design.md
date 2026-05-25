@@ -204,3 +204,14 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | `install --personal --agent codex --apply` | Creates runtime-visible `AGENTS.md` when absent, `.codex/hooks.json`, `.codex/skills`, local hooks, and local reference docs. |
 | personal install with team-owned files present | `AGENTS.md`, `CLAUDE.md`, `.husky/*`, and root `docs/principles/*` remain unchanged. |
 | `install --personal --agent codex --apply` with existing non-managed `AGENTS.md` | Leaves `AGENTS.md` unchanged and reports a manual personal context readiness gap instead of creating `AGENTS.override.md`. @work-item-id WI-215 |
+
+<!-- @work-item-id WI-216 -->
+## 2.14 Existing Skills Merge And Uninstall Tests
+
+| Command / Flow | Expectation |
+|---|---|
+| existing `.claude/skills` with `.harness-version` and user skill -> `install --personal --agent claude --apply` | Missing bundled skills are copied, user skill remains, and manifest records per-skill targets. |
+| existing `.codex/skills` with user skill -> `install --personal --agent codex --apply` | Bundled skills are refreshed without overwriting the user skill. |
+| project install with existing `skills/user-owned/SKILL.md` | Selected bundled root skills are deployed and `skills/user-owned/SKILL.md` remains. |
+| managed install -> delete bundled skill -> `reconcile --apply` | Missing bundled skill is restored. |
+| personal install with user skill -> `uninstall --apply` | Bundled skills and `.harness-version` are removed, user skill remains. |

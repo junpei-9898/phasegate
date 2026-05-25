@@ -100,7 +100,7 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks or Husky scripts. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, deploys selected bundled skills to root `skills/`, creates agent skill links to that shared directory, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 --> <!-- @work-item-id WI-210 -->
+`install` merges PhaseGate into the current project without discarding existing Claude/Codex hooks, Husky scripts, or user-owned skills. It reports planned changes before writing, adds package scripts and the `phasegate` devDependency, deploys selected bundled skills to root `skills/`, creates agent skill links to that shared directory, writes `AGENTS.md` / `CLAUDE.md` PhaseGate managed sections for the selected agent targets, writes the CI workflow when missing, and records managed files in `.phasegate/manifest.json`. If an existing file needs a forced managed update, run `npx phasegate install --apply --force`; PhaseGate backs up replaced files under `.phasegate/backups/`. <!-- @work-item-id WI-174 --> <!-- @work-item-id WI-210 --> <!-- @work-item-id WI-216 -->
 
 For personal evaluation inside a team-owned repository, use local-only install:
 
@@ -109,7 +109,7 @@ npx phasegate install --personal --agent claude --dry-run
 npx phasegate install --personal --agent claude --apply
 ```
 
-`--personal` does not plan or write `package.json`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, or CI settings. It creates `.phasegate-local/phasegate.config.json`, runtime-visible local agent context (`.claude/CLAUDE.md` for Claude, and `AGENTS.md` for Codex only when that root file is absent or already PhaseGate-managed), real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), local git hooks under `.git/hooks/`, local reference docs under `.phasegate-local/docs/`, a managed local-only block in `.git/info/exclude`, and `.phasegate/manifest.json`. If a team `AGENTS.md` already exists, personal Codex install leaves it unchanged and `doctor --personal --agent codex` reports the remaining context step instead of hiding it behind `AGENTS.override.md`. Codex user-level hook feature enablement remains a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 --> <!-- @work-item-id WI-215 -->
+`--personal` does not plan or write `package.json`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`, GitHub CLI config, repo secrets, or CI settings. It creates `.phasegate-local/phasegate.config.json`, runtime-visible local agent context (`.claude/CLAUDE.md` for Claude, and `AGENTS.md` for Codex only when that root file is absent or already PhaseGate-managed), real local-only agent runtime artifacts for the selected agent (`.claude/settings.json` + `.claude/skills/` and/or `.codex/hooks.json` + `.codex/skills/`), local git hooks under `.git/hooks/`, local reference docs under `.phasegate-local/docs/`, a managed local-only block in `.git/info/exclude`, and `.phasegate/manifest.json`. Existing personal skills directories are merged: PhaseGate refreshes bundled skills and preserves user-owned skills. If a team `AGENTS.md` already exists, personal Codex install leaves it unchanged and `doctor --personal --agent codex` reports the remaining context step instead of hiding it behind `AGENTS.override.md`. Codex user-level hook feature enablement remains a manual action. <!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 --> <!-- @work-item-id WI-215 --> <!-- @work-item-id WI-216 -->
 
 For agent-driven setup planning, use:
 
@@ -129,7 +129,7 @@ npx phasegate uninstall --dry-run
 npx phasegate uninstall --apply
 ```
 
-`uninstall` uses the manifest to delete created files and remove only PhaseGate-managed portions from merged Claude/Codex, Husky, and `package.json` files. User content is preserved, and the manifest is archived under `.phasegate/`.
+`uninstall` uses the manifest to delete created files, remove only PhaseGate-managed portions from merged Claude/Codex, Husky, and `package.json` files, and remove only PhaseGate-managed bundled skills. User content and user-owned skills are preserved, and the manifest is archived under `.phasegate/`. <!-- @work-item-id WI-216 -->
 
 When you upgrade PhaseGate, reconcile existing managed files with the current bundled templates:
 
@@ -138,7 +138,7 @@ npx phasegate reconcile --dry-run
 npx phasegate reconcile --apply
 ```
 
-`reconcile` updates only PhaseGate-managed portions, keeps user content, adds newly introduced managed targets, repairs missing shared skill bodies for project installs, and refreshes `.phasegate/manifest.json` with the current version and hashes. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`; PhaseGate writes a backup under `.phasegate/backups/reconcile-<timestamp>/`. <!-- @work-item-id WI-210 -->
+`reconcile` updates only PhaseGate-managed portions, keeps user content, adds newly introduced managed targets, repairs missing shared or personal bundled skill bodies, and refreshes `.phasegate/manifest.json` with the current version and hashes. If a managed file was edited after install, `reconcile --apply` refuses that entry until you rerun with `--force`; PhaseGate writes a backup under `.phasegate/backups/reconcile-<timestamp>/`. <!-- @work-item-id WI-210 --> <!-- @work-item-id WI-216 -->
 
 ### Codex CLI
 

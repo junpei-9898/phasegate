@@ -14,14 +14,15 @@
 // @work-item-id WI-213
 // @work-item-id WI-214
 // @work-item-id WI-215
+// @work-item-id WI-216
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { getSkillsForSet, type SkillSet } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
+import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 
@@ -131,9 +132,19 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
   }
 }
 
+async function copySelectedSkillDirectories(harnessRoot: string, targetRoot: string, skills: readonly string[]): Promise<void> {
+  await mkdir(targetRoot, { recursive: true });
+  for (const skill of skills) {
+    const source = join(harnessRoot, "skills", skill);
+    const target = join(targetRoot, skill);
+    await rm(target, { recursive: true, force: true });
+    await copyDirectory(source, target);
+  }
+}
+
 async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet): Promise<string[]> {
   const skillsSource = join(harnessRoot, "skills");
-  const allowed = new Set(getSkillsForSet(skillSet));
+  const allowed = new Set(getBundledSkillsForSet(skillSet));
   const entries = await readdir(skillsSource, { withFileTypes: true });
   return entries
     .filter((entry) => entry.isDirectory() && allowed.has(entry.name))
@@ -428,12 +439,13 @@ export class RunInstallUseCase {
           ...(includeCodex ? [".codex/skills"] : []),
         ]
       : [];
+    const selectedPersonalSkills = input.personal ? await listSelectedBundledSkills(input.harnessRoot, skillSet) : [];
     for (const skillPath of personalSkillTargets) {
-      const item = await this.planPersonalSkillDirectory(input, skillPath, baseManifest);
+      const item = await this.planPersonalSkillDirectory(input, skillPath, selectedPersonalSkills, baseManifest);
       plan.push(item);
       if (input.apply && item.changed && item.repairMode === "mechanical") {
         try {
-          await copyDirectory(join(input.harnessRoot, "skills"), join(input.projectRoot, skillPath));
+          await copySelectedSkillDirectories(input.harnessRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
           await writeFile(
             join(input.projectRoot, skillPath, ".harness-version"),
             `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -444,10 +456,17 @@ export class RunInstallUseCase {
         }
         changed.push(item);
         manifest = this.addManifestEntry(baseManifest, manifest, {
-          path: item.path,
+          path: `${item.path}/.harness-version`,
           mode: "created",
-          contentForHash: this.personalSkillsHashInput(item.path, input.phasegateVersion, skillSet),
+          contentForHash: this.personalSkillsVersionHashInput(item.path, input.phasegateVersion, skillSet, selectedPersonalSkills),
         });
+        for (const skill of selectedPersonalSkills) {
+          manifest = this.addManifestEntry(baseManifest, manifest, {
+            path: `${item.path}/${skill}`,
+            mode: "created",
+            contentForHash: this.personalSkillHashInput(item.path, skill, input.phasegateVersion, skillSet),
+          });
+        }
       }
     }
 
@@ -755,32 +774,58 @@ export class RunInstallUseCase {
   private async planPersonalSkillDirectory(
     input: RunInstallInput,
     relativePath: string,
+    skills: readonly string[],
     baseManifest: DeploymentManifest,
   ): Promise<InstallPlanItem> {
     const absolutePath = join(input.projectRoot, relativePath);
+    try {
+      const stat = await lstat(absolutePath);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        return {
+          path: relativePath,
+          action: "will-merge",
+          repairMode: "manual",
+          strategy: "copy-dir",
+          changed: false,
+          summary: `${relativePath}: existing non-directory skills path requires manual review`,
+          diff: "manual review required",
+          skillHint: null,
+        };
+      }
+    } catch {}
     const versionPath = join(absolutePath, ".harness-version");
     const current = await readTextOrNull(versionPath);
-    const expectedNeedle = `"version": "${input.phasegateVersion}"`;
-    const manifestEntry = baseManifest.findEntry(relativePath);
-    const pathExists = await exists(absolutePath);
-    const unmanagedExisting = pathExists && (current === null || manifestEntry === null);
-    const changed = !unmanagedExisting && (current === null || !current.includes(expectedNeedle));
+    const skillSet = input.skillSet ?? "all";
+    const expectedVersion = `"version": "${input.phasegateVersion}"`;
+    const expectedSkillSet = `"skillSet": "${skillSet}"`;
+    let missingSkill = false;
+    for (const skill of skills) {
+      if (!(await exists(join(absolutePath, skill, "SKILL.md")))) {
+        missingSkill = true;
+        break;
+      }
+    }
+    const missingManifest = baseManifest.findEntry(`${relativePath}/.harness-version`) === null
+      || skills.some((skill) => baseManifest.findEntry(`${relativePath}/${skill}`) === null);
+    const changed = current === null || !current.includes(expectedVersion) || !current.includes(expectedSkillSet) || missingSkill || missingManifest;
     return {
       path: relativePath,
-      action: changed ? "missing" : unmanagedExisting ? "will-merge" : "will-skip",
-      repairMode: unmanagedExisting ? "manual" : "mechanical",
+      action: changed ? "missing" : "will-skip",
+      repairMode: "mechanical",
       strategy: "copy-dir",
       changed,
-      summary: unmanagedExisting
-        ? `${relativePath}: existing non-phasegate directory requires manual review`
-        : changed ? `${relativePath}: deploy bundled skills` : `${relativePath}: already up to date`,
-      diff: unmanagedExisting ? "manual review required" : changed ? "+ bundled skills" : "no changes",
+      summary: changed ? `${relativePath}: deploy bundled skills` : `${relativePath}: already up to date`,
+      diff: changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
       skillHint: null,
     };
   }
 
-  private personalSkillsHashInput(path: string, version: string, skillSet: "core" | "all"): string {
-    return `personal-skills:${path}:${version}:${skillSet}`;
+  private personalSkillsVersionHashInput(path: string, version: string, skillSet: "core" | "all", skills: readonly string[]): string {
+    return `personal-skills-version:${path}:${version}:${skillSet}:${skills.join(",")}`;
+  }
+
+  private personalSkillHashInput(path: string, skill: string, version: string, skillSet: "core" | "all"): string {
+    return `personal-skill:${path}:${skill}:${version}:${skillSet}`;
   }
 
   private async planSharedSkillDirectory(
@@ -817,13 +862,7 @@ export class RunInstallUseCase {
 
   private async deploySharedSkills(input: RunInstallInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = join(input.projectRoot, "skills");
-    await mkdir(targetRoot, { recursive: true });
-    for (const skill of skills) {
-      const source = join(input.harnessRoot, "skills", skill);
-      const target = join(targetRoot, skill);
-      await rm(target, { recursive: true, force: true });
-      await copyDirectory(source, target);
-    }
+    await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,

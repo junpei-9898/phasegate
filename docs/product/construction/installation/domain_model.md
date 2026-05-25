@@ -157,6 +157,21 @@ traceability:
 
 Personal agent context is configured only when the selected agent runtime will discover it without undocumented behavior. Claude personal context uses `.claude/CLAUDE.md`. Codex personal context uses root `AGENTS.md` only when the file is absent or already PhaseGate-managed; an existing non-managed team `AGENTS.md` is left byte-identical and reported as a manual readiness gap instead of being overwritten or hidden by `AGENTS.override.md`. @work-item-id WI-215
 
+### 2.6.2 Managed Skill Catalog
+
+<!-- @work-item-id WI-216 -->
+
+PhaseGate-owned skills are modeled at bundled skill directory granularity. The parent catalog directory (`skills/`, `.claude/skills/`, `.codex/skills/`) may contain user-owned skills and is not itself proof of ownership.
+
+| Concept | Ownership rule |
+|---|---|
+| Bundled skill directory | May be refreshed when its name is in `getSkillsForSet(core|all)`. |
+| `.harness-version` | Catalog metadata for version and selected skill set; useful for legacy adoption but not sufficient completeness proof. |
+| User-owned skill directory | Any non-bundled or non-manifest skill directory; install/reconcile/uninstall preserve it. |
+| Legacy personal catalog | `.claude/skills` or `.codex/skills` with `.harness-version` but missing per-skill manifest entries; install/reconcile can adopt it. |
+
+Uninstall removes manifest-managed bundled skill paths and metadata first. Parent catalog directories are removed only when they become empty after managed content removal.
+
 ### 2.7 CheckId
 
 @work-item-id WI-145

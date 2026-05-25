@@ -4,14 +4,15 @@
 // @work-item-id WI-174
 // @work-item-id WI-198
 // @work-item-id WI-210
+// @work-item-id WI-216
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
-import { getSkillsForSet, type SkillSet } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
+import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
@@ -95,8 +96,18 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
   }
 }
 
+async function copySelectedSkillDirectories(harnessRoot: string, targetRoot: string, skills: readonly string[]): Promise<void> {
+  await mkdir(targetRoot, { recursive: true });
+  for (const skill of skills) {
+    const source = join(harnessRoot, "skills", skill);
+    const target = join(targetRoot, skill);
+    await rm(target, { recursive: true, force: true });
+    await copyDirectory(source, target);
+  }
+}
+
 async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet): Promise<string[]> {
-  const allowed = new Set(getSkillsForSet(skillSet));
+  const allowed = new Set(getBundledSkillsForSet(skillSet));
   const entries = await readdir(join(harnessRoot, "skills"), { withFileTypes: true });
   return entries
     .filter((entry) => entry.isDirectory() && allowed.has(entry.name))
@@ -285,11 +296,20 @@ export class RunReconcileUseCase {
       }
     }
 
-    if (this.manifestIntendsSharedSkills(manifest)) {
+    const personalInstall = this.isPersonalManifest(manifest);
+    if (!personalInstall && this.manifestIntendsSharedSkills(manifest)) {
       const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
       const outcome = await this.planSharedSkills(input, manifest, sharedSkills, "all");
       outcomes.push(outcome);
       plan.push(outcome.item);
+    }
+    if (personalInstall) {
+      const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+      for (const skillPath of this.personalSkillPaths(manifest)) {
+        const outcome = await this.planPersonalSkills(input, manifest, skillPath, personalSkills, "all");
+        outcomes.push(outcome);
+        plan.push(outcome.item);
+      }
     }
 
     if (!input.apply || refused.length > 0) {
@@ -310,6 +330,12 @@ export class RunReconcileUseCase {
           nextManifest = nextManifest.addEntry(this.createdEntry(SHARED_SKILLS_VERSION_PATH, this.sharedSkillsVersionHashInput(input.phasegateVersion, "all", sharedSkills)));
           for (const skill of sharedSkills) {
             nextManifest = nextManifest.addEntry(this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, "all")));
+          }
+        } else if (outcome.item.strategy === "copy-dir" && (outcome.item.path === ".claude/skills" || outcome.item.path === ".codex/skills")) {
+          const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+          nextManifest = nextManifest.addEntry(this.createdEntry(`${outcome.item.path}/.harness-version`, this.personalSkillsVersionHashInput(outcome.item.path, input.phasegateVersion, "all", personalSkills)));
+          for (const skill of personalSkills) {
+            nextManifest = nextManifest.addEntry(this.createdEntry(`${outcome.item.path}/${skill}`, this.personalSkillHashInput(outcome.item.path, skill, input.phasegateVersion, "all")));
           }
         } else {
           const mode = outcome.item.strategy === "symlink" ? "symlink" : outcome.item.action === "add" ? "created" : (manifest.findEntry(outcome.item.path)?.mode ?? "merged");
@@ -435,6 +461,19 @@ export class RunReconcileUseCase {
       || manifest.entries.some((entry) => entry.path.startsWith("skills/"));
   }
 
+  private isPersonalManifest(manifest: DeploymentManifest): boolean {
+    return manifest.findEntry(".phasegate-local/phasegate.config.json") !== null
+      || manifest.entries.some((entry) => (entry.path === ".claude/skills" || entry.path === ".codex/skills") && entry.mode === "created")
+      || manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/") || entry.path.startsWith(".codex/skills/"));
+  }
+
+  private personalSkillPaths(manifest: DeploymentManifest): Array<".claude/skills" | ".codex/skills"> {
+    const paths = new Set<".claude/skills" | ".codex/skills">();
+    if (manifest.findEntry(".claude/skills") !== null || manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/"))) paths.add(".claude/skills");
+    if (manifest.findEntry(".codex/skills") !== null || manifest.entries.some((entry) => entry.path.startsWith(".codex/skills/"))) paths.add(".codex/skills");
+    return [...paths].sort();
+  }
+
   private async planSharedSkills(
     input: RunReconcileInput,
     manifest: DeploymentManifest,
@@ -475,18 +514,58 @@ export class RunReconcileUseCase {
 
   private async deploySharedSkills(input: RunReconcileInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = this.resolveProjectPath(input.projectRoot, "skills");
-    await mkdir(targetRoot, { recursive: true });
-    for (const skill of skills) {
-      const source = join(input.harnessRoot, "skills", skill);
-      const target = join(targetRoot, skill);
-      await rm(target, { recursive: true, force: true });
-      await copyDirectory(source, target);
-    }
+    await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
       "utf8",
     );
+  }
+
+  private async planPersonalSkills(
+    input: RunReconcileInput,
+    manifest: DeploymentManifest,
+    relativePath: ".claude/skills" | ".codex/skills",
+    skills: readonly string[],
+    skillSet: SkillSet,
+  ) {
+    const versionPath = this.resolveProjectPath(input.projectRoot, `${relativePath}/.harness-version`);
+    const versionContent = await readTextOrNull(versionPath);
+    const expectedVersion = `"version": "${input.phasegateVersion}"`;
+    let missingSkill = false;
+    for (const skill of skills) {
+      if (!(await exists(this.resolveProjectPath(input.projectRoot, `${relativePath}/${skill}/SKILL.md`)))) {
+        missingSkill = true;
+        break;
+      }
+    }
+    const missingManifest = manifest.findEntry(`${relativePath}/.harness-version`) === null
+      || skills.some((skill) => manifest.findEntry(`${relativePath}/${skill}`) === null);
+    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest;
+    return {
+      item: this.item(
+        relativePath,
+        changed ? "add" : "skip",
+        "mechanical",
+        "copy-dir",
+        changed,
+        changed ? `${relativePath}: deploy bundled skills` : `${relativePath}: already up to date`,
+        changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
+        null,
+      ),
+      needsBackup: false,
+      apply: async () => {
+        if (!changed) return null;
+        const targetRoot = this.resolveProjectPath(input.projectRoot, relativePath);
+        await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
+        await writeFile(
+          join(targetRoot, ".harness-version"),
+          `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
+          "utf8",
+        );
+        return this.personalSkillsVersionHashInput(relativePath, input.phasegateVersion, skillSet, skills);
+      },
+    };
   }
 
   private createdEntry(path: string, hashInput: string): DeploymentEntry {
@@ -505,6 +584,14 @@ export class RunReconcileUseCase {
 
   private sharedSkillHashInput(skill: string, version: string, skillSet: SkillSet): string {
     return `shared-skill:${skill}:${version}:${skillSet}`;
+  }
+
+  private personalSkillsVersionHashInput(path: string, version: string, skillSet: SkillSet, skills: readonly string[]): string {
+    return `personal-skills-version:${path}:${version}:${skillSet}:${skills.join(",")}`;
+  }
+
+  private personalSkillHashInput(path: string, skill: string, version: string, skillSet: SkillSet): string {
+    return `personal-skill:${path}:${skill}:${version}:${skillSet}`;
   }
 
   private reconcileContent(target: ReconcileTarget, before: string | null, template: string, version: string): string {

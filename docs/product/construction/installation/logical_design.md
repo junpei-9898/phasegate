@@ -130,6 +130,18 @@ Existing non-managed `.claude/*` / `.codex/*` paths are manual review targets an
 
 For project/team install, `RunInstallUseCase` creates `phasegate.config.json` from a standard project template when absent. Agent hook targets depend on this config at runtime, so the same install transaction that writes `.claude/settings.json` / `.codex/hooks.json` must also make the project config discoverable. Existing `phasegate.config.json` content is preserved. @work-item-id WI-209
 
+### 2.1.1 Managed Skills Merge Contract
+
+<!-- @work-item-id WI-216 -->
+
+Install and reconcile manage bundled skills by individual skill directory, not by owning the whole skills catalog. Personal mode writes selected bundled skills into `.claude/skills/<skill>` and `.codex/skills/<skill>`. Project mode writes selected bundled skills into root `skills/<skill>` and keeps agent paths as symlinks to `../skills`.
+
+Existing catalog directories are merge targets. PhaseGate overwrites only selected bundled skill names, writes `.harness-version` metadata, and preserves unknown user-owned skill directories. A legacy personal catalog with `.harness-version` but no manifest entry is adoptable: install/reconcile refresh selected bundled skills and record per-skill manifest entries for future uninstall.
+
+`RunUninstallUseCase` removes manifest-managed bundled skill entries and `.harness-version` metadata. Compatibility parent entries for `.claude/skills` or `.codex/skills` are reversed by deleting known bundled skills only, then leaving the catalog directory when user-owned entries remain.
+
+Doctor skills checks verify required bundled skill completeness and stale metadata instead of accepting any `SKILL.md` or `.harness-version` as sufficient.
+
 ### 2.1 Downstream Install Template Contract
 
 @work-item-id WI-181

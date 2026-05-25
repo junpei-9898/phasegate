@@ -3,8 +3,10 @@
 // @work-item-id WI-145
 // @work-item-id WI-209
 // @work-item-id WI-210
+// @work-item-id WI-216
 
 import { join } from "node:path";
+import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
 import type { CheckId } from "../../domain/check-id.js";
 import { DiagnosticFinding, type DiagnosticSeverity } from "../../domain/diagnostic-finding.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
@@ -68,4 +70,13 @@ export function skillTargetLooksValid(target: string | null): boolean {
 
 export function skillDirectoryLooksValid(files: readonly string[]): boolean {
   return files.some((file) => file.endsWith("/SKILL.md") || file.endsWith("\\SKILL.md") || file.endsWith(".harness-version"));
+}
+
+export function phasegateSkillDirectoryLooksComplete(files: readonly string[], metadata: string | null): boolean {
+  const skillSet: SkillSet = metadata?.includes('"skillSet": "core"') ? "core" : "all";
+  const expectedSkills = getBundledSkillsForSet(skillSet);
+  return expectedSkills.every((skill) => files.some((file) => {
+    const normalized = file.replaceAll("\\", "/");
+    return normalized.endsWith(`/${skill}/SKILL.md`);
+  }));
 }

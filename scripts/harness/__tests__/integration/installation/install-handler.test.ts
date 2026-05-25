@@ -12,6 +12,7 @@
 // @work-item-id WI-213
 // @work-item-id WI-214
 // @work-item-id WI-215
+// @work-item-id WI-216
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -216,6 +217,35 @@ async function arrangePersonalInstallWithExistingCodexHooks() {
     exitCode: installed.exitCode,
     hooksPlan: parsed.plan.find((item) => item.path === ".codex/hooks.json"),
     hooksContent: await readFile(join(root, ".codex/hooks.json"), "utf8"),
+  };
+}
+
+async function arrangePersonalClaudeInstallWithExistingSkills() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".claude/skills/.harness-version", "{\"version\":\"0.1.0\"}\n");
+  await writeProjectFile(root, ".claude/skills/user-owned/SKILL.md", "# User Owned\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "claude" });
+  const parsed = JSON.parse(installed.stdout) as { plan: Array<{ path: string; changed: boolean; repairMode: string }> };
+  const manifest = JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
+    entries: Array<{ path: string; mode: string }>;
+  };
+  return {
+    exitCode: installed.exitCode,
+    skillsPlan: parsed.plan.find((item) => item.path === ".claude/skills"),
+    toolkitGuideContent: await readFile(join(root, ".claude/skills/phasegate-toolkit-guide/SKILL.md"), "utf8"),
+    userOwnedContent: await readFile(join(root, ".claude/skills/user-owned/SKILL.md"), "utf8"),
+    manifest,
+  };
+}
+
+async function arrangePersonalCodexInstallWithExistingSkills() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".codex/skills/user-owned/SKILL.md", "# User Owned\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+  return {
+    exitCode: installed.exitCode,
+    toolkitGuideContent: await readFile(join(root, ".codex/skills/phasegate-toolkit-guide/SKILL.md"), "utf8"),
+    userOwnedContent: await readFile(join(root, ".codex/skills/user-owned/SKILL.md"), "utf8"),
   };
 }
 
@@ -493,6 +523,36 @@ target("InstallHandler", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.hooksPlan).toMatchObject({ changed: false, repairMode: "manual" });
       expect(actual.hooksContent).toBe("{\"custom\": true}\n");
+    });
+
+    it("personal Claude install は既存 skills directory に bundled skills を追加して user-owned skill を保持すること", async () => {
+      // Arrange
+
+      // Act
+      const actual = await arrangePersonalClaudeInstallWithExistingSkills();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.skillsPlan).toMatchObject({ changed: true, repairMode: "mechanical" });
+      expect(actual.toolkitGuideContent).toContain("phasegate-toolkit-guide");
+      expect(actual.userOwnedContent).toBe("# User Owned\n");
+      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: ".claude/skills/.harness-version", mode: "created" }),
+        expect.objectContaining({ path: ".claude/skills/phasegate-toolkit-guide", mode: "created" }),
+      ]));
+      expect(actual.manifest.entries.find((entry) => entry.path === ".claude/skills")).toStrictEqual(undefined);
+    });
+
+    it("personal Codex install は既存 skills directory に bundled skills を追加して user-owned skill を保持すること", async () => {
+      // Arrange
+
+      // Act
+      const actual = await arrangePersonalCodexInstallWithExistingSkills();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.toolkitGuideContent).toContain("phasegate-toolkit-guide");
+      expect(actual.userOwnedContent).toBe("# User Owned\n");
     });
 
     it("project Claude install は root shared skills を配布して Claude link から参照できること", async () => {

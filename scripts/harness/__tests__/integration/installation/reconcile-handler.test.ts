@@ -3,6 +3,7 @@
 // @story H11-01
 // @work-item-id WI-148
 // @work-item-id WI-210
+// @work-item-id WI-216
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -47,6 +48,22 @@ async function runInstall(root: string, version = "0.145.3") {
     apply: true,
     force: true,
     json: true,
+  });
+}
+
+async function runPersonalInstall(root: string, agent: "claude" | "codex", version = "0.145.3") {
+  return createInstallationModule().installHandler.execute({
+    projectRoot: root,
+    harnessRoot: resolve("."),
+    phasegateVersion: version,
+    dryRun: false,
+    apply: true,
+    force: true,
+    json: true,
+    personal: true,
+    agent,
+    includeClaude: agent === "claude",
+    includeCodex: agent === "codex",
   });
 }
 
@@ -205,6 +222,19 @@ async function arrangeOldInstallWithEmptySharedSkillsAndRepair() {
   };
 }
 
+async function arrangePersonalInstallWithDeletedBundledSkillAndRepair() {
+  const root = await createProjectRoot();
+  await runPersonalInstall(root, "codex", "0.145.3");
+  await writeProjectFile(root, ".codex/skills/user-owned/SKILL.md", "# User Owned\n");
+  await rm(join(root, ".codex/skills/phasegate-toolkit-guide"), { recursive: true, force: true });
+  const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    repaired,
+    hasToolkitGuide: await fileExists(join(root, ".codex/skills/phasegate-toolkit-guide/SKILL.md")),
+    userOwned: await readFile(join(root, ".codex/skills/user-owned/SKILL.md"), "utf8"),
+  };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -299,6 +329,19 @@ target("ReconcileHandler", () => {
       expect(actual.hasToolkitGuide).toBe(true);
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("claude-skills-symlink");
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("codex-skills-symlink");
+    });
+
+    it("personal install の missing bundled skill を reconcile/update-skills 経路で修復し user-owned skill を保持すること", async () => {
+      // Act
+      const actual = await arrangePersonalInstallWithDeletedBundledSkillAndRepair();
+
+      // Assert
+      expect(actual.repaired.exitCode).toBe(0);
+      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: ".codex/skills", changed: true }),
+      ]));
+      expect(actual.hasToolkitGuide).toBe(true);
+      expect(actual.userOwned).toBe("# User Owned\n");
     });
   });
 });
