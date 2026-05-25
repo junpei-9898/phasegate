@@ -73,7 +73,10 @@ Reference: https://developers.openai.com/codex/guides/agents-md
 - Claude personal context は `.claude/CLAUDE.md` に変更した。
 - Codex personal context は `AGENTS.md` が未存在または PhaseGate managed の場合だけ root `AGENTS.md` に配置する。既存 non-managed `AGENTS.md` は上書きせず、`doctor --personal --agent codex` が `codex-context-missing` を red/manual として報告する。
 - `codex debug prompt-input "probe"` により、空 repo personal install 後の root `AGENTS.md` が model-visible prompt に含まれることを確認した。
-- Publish 後の npm registry dogfood は `0.160.19` publish 完了後に実施する。
+- npm registry で `phasegate@latest` が `0.160.19` を指すことを確認した。
+- Published package dogfood として `npx phasegate@latest install --personal --agent both --apply --json` を空 repo で実行し、`.claude/CLAUDE.md` と root `AGENTS.md` が作られること、`doctor --personal --agent both --json` が `overallStatus: green` / `findings: []` になることを確認した。
+- Published package dogfood として既存 team `AGENTS.md` がある repo で `npx phasegate@latest install --personal --agent codex --apply --json` を実行し、`AGENTS.md` が byte-identical のまま、`doctor --personal --agent codex --json` が `codex-context-missing` を red/manual として報告することを確認した。
+- `codex debug prompt-input "probe"` により、published package で作られた root `AGENTS.md` の PhaseGate managed instructions が Codex の model-visible prompt に含まれることを確認した。
 
 ## 非スコープ
 
