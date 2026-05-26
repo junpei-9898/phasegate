@@ -24,6 +24,7 @@ export class ValidationResultContractMapper {
       }),
       durationMs: result.durationMs,
       skipped: result.skipped,
+      ...(result.skipReason ? { skipReason: result.skipReason } : {}),
     };
   }
 

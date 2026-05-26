@@ -18,6 +18,7 @@
  * @work-item-id WI-205
  * @work-item-id WI-206
  * @work-item-id WI-213
+ * @work-item-id WI-217
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -169,7 +170,7 @@ Setup:
                                 --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both>, --report-out <path>)
-  scaffold-wi <unit|_cross> <story|issue|chore>
+  scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>
                                Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
   install                      Install phasegate managed files (--dry-run|--apply, --force, --personal, --agent <claude|codex|both>)
@@ -280,14 +281,14 @@ function hasFlag(args: readonly string[], flag: string): boolean {
 }
 
 type WorkflowMode = "standard" | "strict";
-type ScaffoldWorkItemType = "story" | "issue" | "chore";
+type ScaffoldWorkItemType = "story" | "issue" | "fix" | "refactor" | "chore";
 
 function parseWorkflowMode(value: string | undefined): WorkflowMode {
   return value === "strict" ? "strict" : "standard";
 }
 
 function parseScaffoldWorkItemType(value: string | undefined): ScaffoldWorkItemType | null {
-  if (value === "story" || value === "issue" || value === "chore") return value;
+  if (value === "story" || value === "issue" || value === "fix" || value === "refactor" || value === "chore") return value;
   return null;
 }
 
@@ -319,8 +320,8 @@ async function listFilesRecursive(root: string): Promise<string[]> {
   }
 }
 
-async function nextWorkItemId(rootDir: string): Promise<string> {
-  const files = await listFilesRecursive(join(rootDir, "docs", "inception"));
+async function nextWorkItemId(rootDir: string, inceptionRoot = "docs/inception"): Promise<string> {
+  const files = await listFilesRecursive(join(rootDir, inceptionRoot));
   let max = 0;
   for (const file of files) {
     const match = file.match(/\/WI-(\d{3})\/description\.md$/);
@@ -336,19 +337,25 @@ async function countLegacyPlansWithoutWorkItems(rootDir: string): Promise<number
   return files.filter((file) => file.includes("/codding_plan/") || file.endsWith("_plan.md")).length;
 }
 
-async function scaffoldInceptionRoots(rootDir: string, unit: string | null = null): Promise<void> {
-  await fsMkdir(join(rootDir, "docs", "inception", "_shared"), { recursive: true });
-  await fsMkdir(join(rootDir, "docs", "inception", "_cross"), { recursive: true });
+async function scaffoldInceptionRoots(rootDir: string, unit: string | null = null, inceptionRoot = "docs/inception"): Promise<void> {
+  await fsMkdir(join(rootDir, inceptionRoot, "_shared"), { recursive: true });
+  await fsMkdir(join(rootDir, inceptionRoot, "_cross"), { recursive: true });
   if (unit && unit !== "_cross" && unit !== "_shared") {
-    await fsMkdir(join(rootDir, "docs", "inception", unit), { recursive: true });
-    await fsWriteFile(join(rootDir, "docs", "inception", unit, ".gitkeep"), "", "utf8").catch(() => undefined);
+    await fsMkdir(join(rootDir, inceptionRoot, unit), { recursive: true });
+    await fsWriteFile(join(rootDir, inceptionRoot, unit, ".gitkeep"), "", "utf8").catch(() => undefined);
   }
 }
 
-async function scaffoldWorkItem(rootDir: string, unit: string, type: ScaffoldWorkItemType): Promise<string> {
-  const id = await nextWorkItemId(rootDir);
-  await scaffoldInceptionRoots(rootDir, unit);
-  const targetBase = unit === "_cross" ? join(rootDir, "docs", "inception", "_cross") : join(rootDir, "docs", "inception", unit);
+async function scaffoldWorkItem(
+  rootDir: string,
+  unit: string,
+  type: ScaffoldWorkItemType,
+  options: { readonly id?: string; readonly inceptionRoot?: string } = {},
+): Promise<string> {
+  const inceptionRoot = options.inceptionRoot ?? "docs/inception";
+  const id = options.id ?? await nextWorkItemId(rootDir, inceptionRoot);
+  await scaffoldInceptionRoots(rootDir, unit, inceptionRoot);
+  const targetBase = unit === "_cross" ? join(rootDir, inceptionRoot, "_cross") : join(rootDir, inceptionRoot, unit);
   const targetDir = join(targetBase, id);
   await fsMkdir(targetDir, { recursive: true });
   const descriptionPath = join(targetDir, "description.md");
@@ -754,15 +761,18 @@ Options:
 Examples:
   phasegate check-change-category --paths src/foo.ts,src/bar.ts
   phasegate check-change-category --paths src/foo.ts --format json`,
-  "scaffold-wi": `Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>
+  "scaffold-wi": `Usage: phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore> [options]
 
 Create docs/inception/{unit}/WI-XXX/description.md.
 
 Arguments:
   <unit|_cross>              Unit id or _cross for cross-cutting work items.
-  <story|issue|chore>        Work item type.
+  <story|issue|fix|refactor|chore>
+                              Work item type.
 
 Options:
+  --id <work-item-id>        Use the supplied id instead of allocating WI-XXX.
+  --root <path>              Inception root. Defaults to docs/inception, or personal paths.inceptionDocs.
   --help, -h                 Show this help`,
   "scaffold-design": `Usage: phasegate scaffold-design --unit <id> --phase <phase> [options]
 
@@ -2035,13 +2045,25 @@ async function main(): Promise<void> {
       }
 
       case "scaffold-wi": {
+        const KNOWN_SCAFFOLD_WI_FLAGS = ["--id", "--root"];
+        const flagError = validateKnownFlags(args, KNOWN_SCAFFOLD_WI_FLAGS);
+        if (flagError) {
+          console.error(flagError);
+          process.exit(2);
+        }
         const unit = args[1];
         const type = parseScaffoldWorkItemType(args[2]);
         if (!unit || !type) {
-          console.error("Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>");
+          console.error("Usage: phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore> [--id <work-item-id>] [--root <path>]");
           process.exit(2);
         }
-        const descriptionPath = await scaffoldWorkItem(rootDir, unit, type);
+        const configuredPersonalRoot = resolvedConfig?.paths.inceptionDocs?.startsWith(".phasegate-local/")
+          ? resolvedConfig.paths.inceptionDocs
+          : undefined;
+        const descriptionPath = await scaffoldWorkItem(rootDir, unit, type, {
+          id: parseFlag(args, "--id"),
+          inceptionRoot: parseFlag(args, "--root") ?? configuredPersonalRoot,
+        });
         console.log(`Created ${descriptionPath}`);
         process.exit(0);
         break;

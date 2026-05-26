@@ -532,3 +532,10 @@ target('{クラス名またはメソッド名}', () => {
 - L4-003 reports unused exports but preserves barrel re-export references and public/test boundaries.
 - Architecture semantic policy fixtures cover capability boundaries and advisory decision-placement findings.
 - L4 use case integration tests verify semantic findings are included in `L4-002` output.
+## WI-217 Personal L4 Consistency Unit Tests
+
+<!-- @work-item-id WI-217 -->
+
+- `RunL4ValidatorsUseCase` verifies that configured personal document roots execute the L4-002 work-item reflection path.
+- L4-002 exposes `skipReason` when a configured inception root has no readable work-item descriptions.
+- `FileSystemWorkItemReflectionAdapter` extracts frontmatter `id` values and product `@work-item-id` annotations for non-`WI-XXX` identifiers.

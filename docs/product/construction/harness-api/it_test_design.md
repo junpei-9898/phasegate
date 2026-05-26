@@ -644,3 +644,9 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 |---|---|---|---|
 | IT-API-WI203-001 | package CLI entrypoint 経由で canonical command を実行する | `main.ts phasegate:complete-check` | wrapper file の有無に依存せず harness-api の CompleteCheckHandler が dispatch される |
 | IT-API-WI203-002 | Stop hook からの canonical command consumption を検証する | `hook stop` が内部で `phasegate:complete-check` を委譲 | `Unknown command` や missing wrapper ではなく canonical command の exit code が返る |
+## WI-217 Scaffold Work Item CLI Tests
+
+<!-- @work-item-id WI-217 -->
+
+- `scaffold-wi --id <id>` creates `description.md` with the supplied frontmatter id instead of allocating `WI-XXX`.
+- In a personal config project, `scaffold-wi` defaults to `paths.inceptionDocs` while preserving root `docs/inception` for ordinary project configs.

@@ -4,6 +4,7 @@
  *
  * DI 組み立て — validator-system の全依存関係を構築する
  * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156
+ * @work-item-id WI-217
  */
 import { ValidatorId } from './domain/value-objects/validator-id.js';
 import { ValidatorDefinition } from './domain/value-objects/validator-definition.js';
@@ -37,6 +38,7 @@ import { AdrFoundationReferenceAdapter } from './infrastructure/adapters/adr-fou
 import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/import-graph-source-analysis-adapter.js';
 import { FileSystemArchitectureSemanticSourceAdapter } from './infrastructure/adapters/file-system-architecture-semantic-source-adapter.js';
 import { FileSystemSkillCatalogDriftAdapter } from './infrastructure/adapters/file-system-skill-catalog-drift-adapter.js';
+import { FileSystemWorkItemReflectionAdapter } from './infrastructure/adapters/file-system-work-item-reflection-adapter.js';
 import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
 import { DeadCodeDetectionService } from './domain/services/l4/dead-code-detection-service.js';
@@ -54,6 +56,10 @@ const DEFAULT_CONFIG = {
     L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
     L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'] },
+  },
+  paths: {
+    designDocs: 'docs/product/construction',
+    inceptionDocs: 'docs/inception',
   },
   validate: { failOnWarning: false },
   architecture: {
@@ -149,8 +155,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const workItemStatusPolicyPort = new TraceabilityWorkItemStatusPolicyAdapter(process.cwd());
   const contractTraceabilityPolicyPort = new FileSystemContractTraceabilityPolicyAdapter();
 
-  const docsRoot = join(process.cwd(), 'docs/product/construction');
   const cwd = process.cwd();
+  const designDocsRoot = configData.paths?.designDocs ?? 'docs/product/construction';
+  const inceptionDocsRoot = configData.paths?.inceptionDocs ?? 'docs/inception';
+  const docsRoot = join(cwd, designDocsRoot);
   const e2eTestFileRegistryPort = new E2eTestFileRegistryAdapter({ e2eTestRoot: join(cwd, 'scripts/harness/__tests__/e2e') });
   const cliCommandRegistryPort = new CliCommandRegistryAdapter({
     commands: [
@@ -191,6 +199,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const sourceAnalysisPort = new ImportGraphSourceAnalysisAdapter();
   const architectureSemanticSourcePort = new FileSystemArchitectureSemanticSourceAdapter();
   const skillCatalogDriftPort = new FileSystemSkillCatalogDriftAdapter(cwd);
+  const workItemReflectionPort = new FileSystemWorkItemReflectionAdapter(cwd);
 
   const driftDetectionService = new DriftDetectionService({
     designDocumentPort: markdownDesignDocumentPort,
@@ -199,6 +208,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const consistencyCheckService = new ConsistencyCheckService({
     designDocumentPort: markdownDesignDocumentPort,
     adrReferencePort,
+    workItemReflectionPort,
   });
   const deadCodeDetectionService = new DeadCodeDetectionService({
     sourceAnalysisPort,
@@ -219,6 +229,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     deadCodeDetectionService,
     architectureSemanticAnalysisService,
     skillCatalogDriftPort,
+    pathRoots: {
+      inceptionRoot: inceptionDocsRoot,
+      designRoot: designDocsRoot,
+    },
     checkDocFreshnessUseCase: phase2Extensions.checkDocFreshnessUseCase,
     validateDocPointersUseCase: phase2Extensions.validateDocPointersUseCase,
   });

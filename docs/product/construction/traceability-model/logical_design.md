@@ -1102,3 +1102,9 @@ Traceability consumers compare design/code/test semantics by Unit-scoped keys. `
 <!-- @work-item-id WI-193, WI-195 -->
 
 `migrate work-items` remains distinct from `_shared` ad-hoc plan drift. Doctor counts `_shared/**/*.md` recursively for drift visibility, but does not map those files into migration candidates or expose `migrate work-items --apply` as a repair hint.
+
+## WI-217 Work Item Identity Extraction For Personal Roots
+
+<!-- @work-item-id WI-217 -->
+
+Work item identity extraction supports frontmatter `id` as the canonical identifier even when the directory name is not `WI-XXX`. This lets personal or project-specific layouts such as `ID/ID-09/ID-09-02/description.md` participate in reflection checks while preserving the existing `WI-XXX` default for project-owned inception docs.

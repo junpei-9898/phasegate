@@ -2,6 +2,7 @@
  * @layer application
  * @unit config-foundation
  * @work-item-id WI-133 / WI-156
+ * @work-item-id WI-217
  */
 import type { HarnessConfigV2 } from '../../domain/harness-config.js';
 
@@ -27,19 +28,26 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
     'pointer-validator': 'L4-005',
     'skill-catalog-drift': 'L4-006',
   }, /^L4-\d{3}$/);
+  const effectiveL4Validators = usesCustomDocumentRoots(resolvedConfig)
+    ? includeValidator(l4Validators, 'L4-002')
+    : l4Validators;
 
   return {
     project: { preset: resolvedConfig.project.preset },
+    paths: {
+      designDocs: resolvedConfig.paths.designDocs,
+      inceptionDocs: resolvedConfig.paths.inceptionDocs,
+    },
     layers: {
       L2: { enabled: resolvedConfig.layers.L2.enabled, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
       L3: {
         enabled: resolvedConfig.layers.L3.enabled,
-        ...(l3Validators.length > 0 ? { validators: l3Validators } : {}),
+        validators: l3Validators.length > 0 ? l3Validators : ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
       },
       L4: {
         enabled: resolvedConfig.layers.L4.enabled,
-        ...(l4Validators.length > 0 ? { validators: l4Validators } : {}),
+        validators: effectiveL4Validators.length > 0 ? effectiveL4Validators : ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'],
       },
     },
     harnesses: {
@@ -51,6 +59,15 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
       failOnWarning: resolvedConfig.validate.failOnWarning,
     },
   };
+}
+
+function usesCustomDocumentRoots(resolvedConfig: HarnessConfigV2): boolean {
+  return resolvedConfig.paths.designDocs !== 'docs/product/construction'
+    || resolvedConfig.paths.inceptionDocs !== 'docs/inception';
+}
+
+function includeValidator(validators: readonly string[], validatorId: string): readonly string[] {
+  return validators.includes(validatorId) ? validators : [...validators, validatorId];
 }
 
 function normalizeValidators(

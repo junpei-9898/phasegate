@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **WI-217 — personal inception/product consistency** — makes L4-002 validate configured personal documentation roots, scopes L4-004 freshness to `paths.designDocs`, adds personal hook L4 backstop behavior for `.phasegate-local` docs, and lets `scaffold-wi` use custom IDs and personal inception roots.
+
 ## [0.160.16] - 2026-05-22
 
 ### Fixed

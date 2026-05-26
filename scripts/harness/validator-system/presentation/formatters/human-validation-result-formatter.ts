@@ -25,6 +25,9 @@ export class HumanValidationResultFormatter {
             ? 'FAIL'
             : 'WARN';
       lines.push(`[${status}] ${result.validatorId} (${result.durationMs}ms)`);
+      if (result.skipped && result.skipReason) {
+        lines.push(`  → ${result.skipReason}`);
+      }
       for (const error of result.errors) {
         lines.push(`  ⚠ ${error.message}`);
         lines.push(`  → ${error.suggestion}`);

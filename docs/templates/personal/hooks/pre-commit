@@ -18,4 +18,20 @@ if [ "${HARNESS_QUICK_MODE:-0}" = "1" ]; then
 else
   $PHASEGATE_CMD validate --layer L2 --format human
 fi
+L2_EXIT=$?
+if [ $L2_EXIT -ne 0 ]; then
+  echo "PhaseGate L2 validation failed."
+  exit 1
+fi
 
+STAGED_FILES="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)"
+if printf '%s\n' "$STAGED_FILES" | grep -E '^\.phasegate-local/(inception|product)/' >/dev/null 2>&1; then
+  $PHASEGATE_CMD validate --layer L4 --format human --fail-on-warning
+  L4_EXIT=$?
+  if [ $L4_EXIT -ne 0 ]; then
+    echo "PhaseGate local inception/product consistency failed."
+    exit 1
+  fi
+fi
+
+exit 0

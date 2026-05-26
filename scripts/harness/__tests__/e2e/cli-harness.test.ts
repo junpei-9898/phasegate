@@ -18,6 +18,7 @@
  * @work-item-id WI-200
  * @work-item-id WI-201
  * @work-item-id WI-202 / WI-204
+ * @work-item-id WI-217
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -38,7 +39,7 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('lint');
       expect(actual.stdout).toContain('check-change-category');
       expect(actual.stdout).toContain('migrate work-items');
-      expect(actual.stdout).toContain('scaffold-wi <unit|_cross> <story|issue|chore>');
+      expect(actual.stdout).toContain('scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>');
     });
 
     it('引数なしでUsageが表示され exit 0 で終了する', () => {
@@ -261,7 +262,9 @@ describe('harness CLI E2E', () => {
       const actual = run('scaffold-wi', '--help');
 
       expect(actual.exitCode).toBe(0);
-      expect(actual.stdout).toContain('Usage: phasegate scaffold-wi <unit|_cross> <story|issue|chore>');
+      expect(actual.stdout).toContain('Usage: phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>');
+      expect(actual.stdout).toContain('--id <work-item-id>');
+      expect(actual.stdout).toContain('--root <path>');
     });
 
     it('scaffold-design --help は dry-run/apply contract を表示する', () => {

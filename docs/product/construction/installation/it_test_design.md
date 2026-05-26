@@ -215,3 +215,9 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 | project install with existing `skills/user-owned/SKILL.md` | Selected bundled root skills are deployed and `skills/user-owned/SKILL.md` remains. |
 | managed install -> delete bundled skill -> `reconcile --apply` | Missing bundled skill is restored. |
 | personal install with user skill -> `uninstall --apply` | Bundled skills and `.harness-version` are removed, user skill remains. |
+## WI-217 Personal Hook Integration Tests
+
+<!-- @work-item-id WI-217 -->
+
+- Fresh personal install writes `.git/hooks/pre-commit` with a staged `.phasegate-local/(inception|product)` detector.
+- When a staged local inception work item lacks product reflection, the hook runs `validate --layer L4 --fail-on-warning` and exits non-zero.

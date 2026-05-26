@@ -1937,3 +1937,9 @@ The public CLI exposes `phasegate session begin` and `phasegate session end` as 
 <!-- @work-item-id WI-213 -->
 
 The CLI accepts `doctor --personal` as a scope hint for personal-install diagnostics. Installation mode remains inferred from the manifest so project installs are not misclassified, but the flag is recognized to keep personal install guidance executable.
+
+## WI-217 Scaffold Work Item Path Options
+
+<!-- @work-item-id WI-217 -->
+
+`scaffold-wi` keeps the existing positional contract, but adds explicit options for configured roots and caller-supplied IDs. `--id <work-item-id>` bypasses sequential `WI-XXX` allocation, and `--root <path>` selects the inception root; when omitted the command may use resolved `paths.inceptionDocs` for personal repositories while retaining `docs/inception` as the compatibility default.

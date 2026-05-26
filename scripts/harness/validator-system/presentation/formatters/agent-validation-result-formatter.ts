@@ -18,6 +18,9 @@ export class AgentValidationResultFormatter {
       lines.push(`VALIDATOR: ${result.validatorId}`);
       lines.push(`STATUS: ${result.skipped ? 'SKIPPED' : result.passed ? 'PASSED' : 'FAILED'}`);
       lines.push(`DURATION: ${result.durationMs}ms`);
+      if (result.skipped && result.skipReason) {
+        lines.push(`SKIP_REASON: ${result.skipReason}`);
+      }
       if (result.errors.length > 0) {
         lines.push('ERRORS:');
         for (const error of result.errors) {

@@ -22,6 +22,7 @@ export interface ValidationResultRawProps {
   readonly errors: readonly HarnessErrorLike[];
   readonly durationMs: number;
   readonly skipped: boolean;
+  readonly skipReason?: string;
 }
 
 export class ValidationResult {
@@ -30,6 +31,7 @@ export class ValidationResult {
   readonly errors: readonly HarnessErrorLike[];
   readonly durationMs: number;
   readonly skipped: boolean;
+  readonly skipReason?: string;
 
   private constructor(props: ValidationResultRawProps) {
     this.validatorId = props.validatorId;
@@ -37,6 +39,7 @@ export class ValidationResult {
     this.errors = Object.freeze([...props.errors]);
     this.durationMs = props.durationMs;
     this.skipped = props.skipped;
+    this.skipReason = props.skipReason;
     Object.freeze(this);
   }
 
@@ -69,6 +72,10 @@ export class ValidationResult {
 
   static skip(validatorId: ValidatorId): ValidationResult {
     return new ValidationResult({ validatorId, passed: true, errors: [], durationMs: 0, skipped: true });
+  }
+
+  static skipWithReason(validatorId: ValidatorId, skipReason: string): ValidationResult {
+    return new ValidationResult({ validatorId, passed: true, errors: [], durationMs: 0, skipped: true, skipReason });
   }
 
   hasErrors(): boolean {

@@ -529,3 +529,9 @@ HF2-01 (doc-freshness-checker) に frontmatter セマンティクスチェック
 `ValidateDocPointersUseCase` classifies raw pointers into semantic pointer types before applying fail/warn/skip policy. Broken pointer output includes owner, semantic type, source document, severity, and next action. External URLs skip by default unless explicitly included by policy.
 
 `CheckDocFreshnessUseCase` remains threshold based but consumes `DocumentAgeSource` so stable old docs can be distinguished from docs stale after related source/WI/product changes.
+
+## WI-217 Freshness Scope From Configured Design Root
+
+<!-- @work-item-id WI-217 -->
+
+The L4-004 bridge supplies the default freshness target from the resolved `paths.designDocs` value. Explicit command patterns remain authoritative, but canonical `validate --layer L4` should scan `${paths.designDocs}/**/*.md` when that path is configured. Root `docs/**/*.md` is only a compatibility fallback for configurations that do not expose a design-doc root.

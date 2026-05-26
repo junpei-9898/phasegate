@@ -18,4 +18,5 @@ export interface ValidationResultContract {
   }[];
   readonly durationMs: number;
   readonly skipped?: boolean;
+  readonly skipReason?: string;
 }

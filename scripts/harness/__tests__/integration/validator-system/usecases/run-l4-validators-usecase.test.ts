@@ -3,6 +3,7 @@
  * @unit validator-system
  * @story H08-03
  * @work-item-id WI-156
+ * @work-item-id WI-217
  */
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
@@ -169,6 +170,100 @@ target('RunL4ValidatorsUseCase', () => {
   });
 
   describe('phase2-extensions由来のL4バリデータ実行', () => {
+    context('personal document rootでinceptionのWIがproduct未反映の場合', () => {
+      it('L4-002がmissing product reflectionをwarningとして返すこと', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-002'] })),
+        };
+        const consistencyCheck = vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] });
+        const checkWorkItemReflection = vi.fn().mockResolvedValue({
+          report: {
+            hasMismatches: () => true,
+            toHarnessErrors: () => [{
+              code: { value: 'L4-002', toString: () => 'L4-002' },
+              severity: { value: 'warning', toString: () => 'warning' },
+              message: 'missing product reflection',
+              suggestion: 'Add @work-item-id ID-09-02 to product docs.',
+            }],
+          },
+        });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          consistencyCheckService: { check: consistencyCheck, checkWorkItemReflection } as never,
+          pathRoots: {
+            inceptionRoot: '.phasegate-local/inception',
+            designRoot: '.phasegate-local/product/construction',
+          },
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-002'] });
+
+        // Assert
+        expect(actual[0]?.validatorId).toBe('L4-002');
+        expect(actual[0]?.passed).toBe(false);
+        expect(actual[0]?.errors).toEqual([{
+          code: 'L4-002',
+          severity: 'warning',
+          message: 'missing product reflection',
+          suggestion: 'Add @work-item-id ID-09-02 to product docs.',
+        }]);
+        expect(checkWorkItemReflection.mock.calls).toEqual([[
+          {
+            inceptionRoot: '.phasegate-local/inception',
+            designRoot: '.phasegate-local/product/construction',
+          },
+        ]]);
+      });
+    });
+
+    context('personal document rootにdescription.mdがない場合', () => {
+      it('L4-002がskip reasonを公開すること', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-002'] })),
+        };
+        const consistencyCheck = vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] });
+        const checkWorkItemReflection = vi.fn().mockResolvedValue({
+          report: { hasMismatches: () => false, toHarnessErrors: () => [] },
+          skipReason: 'no work item descriptions found under .phasegate-local/inception',
+        });
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          consistencyCheckService: { check: consistencyCheck, checkWorkItemReflection } as never,
+          pathRoots: {
+            inceptionRoot: '.phasegate-local/inception',
+            designRoot: '.phasegate-local/product/construction',
+          },
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-002'] });
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            validatorId: 'L4-002',
+            skipped: true,
+            skipReason: 'no work item descriptions found under .phasegate-local/inception',
+          }),
+        ]);
+      });
+    });
+
     context('doc freshnessで警告が返る場合', () => {
       it('L4-004がwarning付きの結果として返ること', async () => {
         // Arrange
@@ -195,13 +290,20 @@ target('RunL4ValidatorsUseCase', () => {
         const actual = await usecase.execute({ validatorIds: ['L4-004'] });
 
         // Assert
-        expect(actual).toEqual([
-          expect.objectContaining({
-            validatorId: 'L4-004',
-            passed: false,
-            errors: [expect.objectContaining({ severity: 'warning' })],
-          }),
-        ]);
+        expect(actual[0]?.validatorId).toBe('L4-004');
+        expect(actual[0]?.passed).toBe(false);
+        expect(actual[0]?.errors).toEqual([{
+          code: 'L4-004',
+          severity: 'warning',
+          message: 'docs/a.md is 40 days old',
+          suggestion: 'Review the document freshness threshold or update the design document.',
+        }]);
+        expect(checkDocFreshness.mock.calls).toEqual([[
+          {
+            format: 'json',
+            targetPattern: 'docs/product/construction/**/*.md',
+          },
+        ]]);
       });
     });
 

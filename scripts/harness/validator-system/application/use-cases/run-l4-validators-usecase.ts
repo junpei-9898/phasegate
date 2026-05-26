@@ -2,6 +2,7 @@
  * @layer application
  * @unit validator-system
  * @work-item-id WI-107 / WI-156
+ * @work-item-id WI-217
  *
  * RunL4ValidatorsUseCase — H08-03: L4バリデータ実行
  */
@@ -70,6 +71,10 @@ export interface RunL4ValidatorsUseCaseDeps {
   deadCodeDetectionService?: DeadCodeDetectionService;
   architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   skillCatalogDriftPort?: SkillCatalogDriftPort;
+  pathRoots?: {
+    readonly inceptionRoot: string;
+    readonly designRoot: string;
+  };
   checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 }
@@ -85,6 +90,7 @@ export class RunL4ValidatorsUseCase {
   private readonly architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   private readonly skillCatalogDriftPort?: SkillCatalogDriftPort;
   private readonly skillCatalogDriftService = new SkillCatalogDriftService();
+  private readonly pathRoots: { readonly inceptionRoot: string; readonly designRoot: string };
   private readonly checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   private readonly validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
 
@@ -98,6 +104,10 @@ export class RunL4ValidatorsUseCase {
     this.deadCodeDetectionService = deps.deadCodeDetectionService;
     this.architectureSemanticAnalysisService = deps.architectureSemanticAnalysisService;
     this.skillCatalogDriftPort = deps.skillCatalogDriftPort;
+    this.pathRoots = deps.pathRoots ?? {
+      inceptionRoot: 'docs/inception',
+      designRoot: 'docs/product/construction',
+    };
     this.checkDocFreshnessUseCase = deps.checkDocFreshnessUseCase;
     this.validateDocPointersUseCase = deps.validateDocPointersUseCase;
   }
@@ -158,13 +168,25 @@ export class RunL4ValidatorsUseCase {
       const l4002Result = overrideMap.get('L4-002');
       if (l4002Result && !l4002Result.skipped) {
         const report = await this.consistencyCheckService.check(input.targetUnits ? [...input.targetUnits] : undefined);
+        const reflectionResult = this.usesConfiguredDocumentRoots()
+          ? await this.consistencyCheckService.checkWorkItemReflection(this.pathRoots)
+          : undefined;
         const architectureSemanticErrors = this.architectureSemanticAnalysisService
           ? await this.architectureSemanticAnalysisService.analyze()
           : [];
-        if (report.hasMismatches() || architectureSemanticErrors.length > 0) {
+        if (report.hasMismatches() || (reflectionResult?.report.hasMismatches() ?? false) || architectureSemanticErrors.length > 0) {
           overrideMap.set(
             'L4-002',
-            ValidationResult.fail(ValidatorId.create('L4-002'), [...report.toHarnessErrors(), ...architectureSemanticErrors], 0),
+            ValidationResult.fail(
+              ValidatorId.create('L4-002'),
+              [...report.toHarnessErrors(), ...(reflectionResult?.report.toHarnessErrors() ?? []), ...architectureSemanticErrors],
+              0,
+            ),
+          );
+        } else if (reflectionResult?.skipReason && !report.hasMismatches() && architectureSemanticErrors.length === 0) {
+          overrideMap.set(
+            'L4-002',
+            ValidationResult.skipWithReason(ValidatorId.create('L4-002'), reflectionResult.skipReason),
           );
         }
       }
@@ -187,7 +209,10 @@ export class RunL4ValidatorsUseCase {
     if (this.checkDocFreshnessUseCase) {
       const l4004Result = overrideMap.get('L4-004');
       if (l4004Result && !l4004Result.skipped) {
-        const freshnessOutput = await this.checkDocFreshnessUseCase.execute({ format: 'json' });
+        const freshnessOutput = await this.checkDocFreshnessUseCase.execute({
+          format: 'json',
+          targetPattern: `${this.pathRoots.designRoot.replace(/\/+$/g, '')}/**/*.md`,
+        });
         const errors = this.toDocFreshnessHarnessErrors(freshnessOutput);
         overrideMap.set(
           'L4-004',
@@ -249,6 +274,10 @@ export class RunL4ValidatorsUseCase {
       ));
 
     return [...executionErrors, ...freshnessFindings];
+  }
+
+  private usesConfiguredDocumentRoots(): boolean {
+    return this.pathRoots.inceptionRoot !== 'docs/inception' || this.pathRoots.designRoot !== 'docs/product/construction';
   }
 
   private toPointerValidationHarnessErrors(output: ValidateDocPointersOutputContract): readonly ValidationResult['errors'][number][] {

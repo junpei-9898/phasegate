@@ -662,3 +662,9 @@ scripts/harness/__tests__/config-foundation/
 |---|---|
 | `PathsConfig` receives only `designDocs` and `inceptionDocs` | `principlesDocs` defaults to `docs/principles` and `folderRulesDoc` defaults to `docs/folder_management_rules.md`. |
 | `PathsConfig` receives custom reference documentation paths | Custom values are retained and validated by the same non-empty/non-global path rules. |
+## WI-217 Validator Config Projection Tests
+
+<!-- @work-item-id WI-217 -->
+
+- `toValidatorSystemConfig()` forwards resolved `paths.designDocs` and `paths.inceptionDocs` to validator-system.
+- Custom documentation roots add L4-002 to the effective L4 validator list so personal consistency validation is not skipped by preset projection.

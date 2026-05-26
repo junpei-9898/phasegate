@@ -435,9 +435,7 @@
       "additionalProperties": false,
       "required": [
         "designDocs",
-        "inceptionDocs",
-        "principlesDocs",
-        "folderRulesDoc"
+        "inceptionDocs"
       ],
       "properties": {
         "designDocs": {

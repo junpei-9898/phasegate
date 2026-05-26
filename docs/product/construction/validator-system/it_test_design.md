@@ -482,3 +482,9 @@
 - `RunFullValidationUseCase` with aggregate/all execution keeps disabled L4 as skipped results and does not fail solely because L4 is skipped.
 - `RunL4ValidatorsUseCase` maps `L4-004` freshness warnings and `L4-005` broken pointer warnings into standard `ValidationResultContract` errors with validator IDs preserved.
 - Quick Mode relaxation profile containing canonical L2 skipped IDs (`L2-001`, `L2-013`, `L2-015`) executes without `InvalidRelaxationProfileError`.
+## WI-217 Personal L4 Consistency Integration Tests
+
+<!-- @work-item-id WI-217 -->
+
+- A personal install fixture with `.phasegate-local/inception/**/description.md` and no product annotation reports an L4-002 missing reflection finding.
+- Adding the matching `@work-item-id` annotation under `.phasegate-local/product/construction` clears the L4-002 finding.

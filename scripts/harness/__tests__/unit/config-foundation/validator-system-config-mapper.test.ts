@@ -2,6 +2,7 @@
 // @unit config-foundation
 // @story H04-01
 // @work-item-id WI-133
+// @work-item-id WI-217
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
@@ -80,9 +81,10 @@ target('toValidatorSystemConfig', () => {
         // Assert
         expect(actual).toEqual({
           project: { preset: 'standard' },
+          paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true, coverageThreshold: 80 },
+            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80 },
             L4: { enabled: false, validators: ['L4-001'] },
           },
           harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
@@ -104,14 +106,38 @@ target('toValidatorSystemConfig', () => {
         // Assert
         expect(actual).toEqual({
           project: { preset: 'standard' },
+          paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true, coverageThreshold: 80 },
+            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80 },
             L4: { enabled: false, validators: ['L4-001'] },
           },
           harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
           architecture: undefined,
           validate: { failOnWarning: true },
+        });
+      });
+    });
+
+    context('personal document rootを使う場合', () => {
+      it('L4-002 consistency-checkをvalidator listへ追加すること', () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.paths = {
+          designDocs: '.phasegate-local/product/construction',
+          inceptionDocs: '.phasegate-local/inception',
+        };
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig);
+
+        // Assert
+        expect(actual).toMatchObject({
+          layers: {
+            L4: {
+              validators: ['L4-001', 'L4-002'],
+            },
+          },
         });
       });
     });
