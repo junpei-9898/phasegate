@@ -1,11 +1,13 @@
 /**
  * @layer domain
  * @unit skill-quality
+ * @work-item-id WI-212
  */
 import type { SectionName } from '../types/section-name.js';
 
 const REQUIRED_SECTIONS: readonly SectionName[] = [
   'frontmatter',
+  'languageMetadata',
   'purpose',
   'inputs',
   'outputs',

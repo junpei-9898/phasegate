@@ -3,6 +3,7 @@ name: unit-test-logic-designer
 description: Unitテストケース設計を元にVitest実装ロジックを設計 - 疑似コード付きの詳細設計
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Unit Test Logic Designer

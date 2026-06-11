@@ -12,12 +12,16 @@ import { ValidatorExecutionService } from '../../../../validator-system/domain/s
 import { ValidationResultContractMapper } from '../../../../validator-system/application/mappers/validation-result-contract-mapper.js';
 import { createLayerConfig, createFullRegistry } from '../helpers.js';
 
-function createL4UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; strictOnly: boolean }>) {
+function createL4UseCase(
+  layerConfigOverrides?: Partial<{ enabled: boolean; strictOnly: boolean }>,
+  projectLanguages: readonly string[] = ['typescript'],
+) {
   const registry = createFullRegistry();
   const executionService = new ValidatorExecutionService({});
   const mapper = new ValidationResultContractMapper();
   const mockValidatorConfigPort = {
     getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', layerConfigOverrides ?? {})),
+    getProjectLanguages: vi.fn().mockResolvedValue(projectLanguages),
   };
   return new RunL4ValidatorsUseCase({
     validatorRegistry: registry,
@@ -165,6 +169,24 @@ target('RunL4ValidatorsUseCase', () => {
 
         // Assert
         expect(actual.map((r) => r.validatorId)).toEqual(['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006']);
+      });
+    });
+
+    context('project.languages が TypeScript を含まない場合', () => {
+      it('L4-003 は unsupported-language skip になること', async () => {
+        // Arrange
+        const usecase = createL4UseCase({ strictOnly: true }, ['python']);
+        const input = { strictMode: true };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(actual).toContainEqual(expect.objectContaining({
+          validatorId: 'L4-003',
+          skipped: true,
+          skipReason: expect.stringContaining('unsupported-language'),
+        }));
       });
     });
   });

@@ -3,6 +3,7 @@ name: unit-test-designer
 description: ドメインモデルからユニットテスト（単体テスト）ケースを設計（AIDLC Step 8の前段）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Unit Test Designer

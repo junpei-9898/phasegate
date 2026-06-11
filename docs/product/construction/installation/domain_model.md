@@ -529,3 +529,9 @@ Shared skill manifest ownership is recorded per deployed skill directory plus `s
 <!-- @work-item-id WI-213 -->
 
 Personal install owns local-only counterparts for the PhaseGate core defenses: agent context files under selected agent directories, git hooks under `.git/hooks/`, reference docs under `.phasegate-local/docs/`, and a personal config whose design/inception paths stay under `.phasegate-local/`. These artifacts are manifest-managed but remain excluded from team commits.
+
+## WI-212 Language Bootstrap Option
+
+<!-- @work-item-id WI-212 -->
+
+Install/init treats language selection as bootstrap metadata. `init --language <lang>` materializes `project.languages` in generated config and may select language-scoped bundled skills when available. The option does not promise validator support for every language; unsupported validators remain visible through validator-system skip warnings.

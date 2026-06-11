@@ -3,6 +3,7 @@ name: environment-designer
 description: ローカル開発環境のプラットフォーム構成設計。コードと環境のブリッジ（AIDLC Step 2.2並行）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Environment Designer

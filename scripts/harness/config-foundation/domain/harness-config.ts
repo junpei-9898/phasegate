@@ -2,6 +2,7 @@
  * @layer domain
  * @unit config-foundation
  * @work-item-id WI-012
+ * @work-item-id WI-212
  */
 import { ConfigFoundationDomainError } from './errors/config-foundation-domain-error.js';
 import { ConfigValidationError } from './errors/config-validation-error.js';
@@ -43,6 +44,7 @@ export interface HarnessConfigSourceDocument {
   project: {
     name: string;
     preset: PresetId;
+    languages?: string[];
   };
   layers: DeepPartial<HarnessConfigResolvedDocument['layers']>;
   quickMode: Partial<HarnessConfigResolvedDocument['quickMode']>;
@@ -62,6 +64,7 @@ export interface HarnessConfigResolvedDocument {
   project: {
     name: string;
     preset: PresetId;
+    languages?: string[];
   };
   layers: {
     L1: {

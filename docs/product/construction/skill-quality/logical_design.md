@@ -2003,3 +2003,9 @@ Both skills route agents away from repeated setup once local readiness is comple
 <!-- @work-item-id WI-213 -->
 
 Personal install copies bundled skill reference dependencies into `.phasegate-local/docs/`, including `folder_management_rules.md` and `principles/*.md`. Skills can resolve the documented PhaseGate rules in a local-only sandbox without writing root `docs/` files.
+
+## WI-212 Language-Aware Skill Applicability
+
+<!-- @work-item-id WI-212 -->
+
+Skill-quality reads `languages` frontmatter from bundled `SKILL.md` files and exposes it as language applicability metadata for install, doctor, and documentation surfaces. Missing language metadata is a structure validation gap for bundled skills; future generic skills should explicitly declare a generic capability instead of relying on omission.

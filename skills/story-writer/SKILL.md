@@ -3,6 +3,7 @@ name: story-writer
 description: 要求文書からWho/What/Why形式のユーザーストーリーと受け入れ基準を作成（AIDLC Step 1.1）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Story Writer

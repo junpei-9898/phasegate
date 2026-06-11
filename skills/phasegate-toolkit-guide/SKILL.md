@@ -1,6 +1,7 @@
 ---
 name: phasegate-toolkit-guide
 description: phasegate ツールキット自体に関する Q&A スキル。ユーザーが phasegate の概念 (L0-L4 レイヤーモデル / 防御プリセット / アーキプリセット / Quick Mode と Full Mode / Hook 仕様 / config 全般) について質問したとき、対応する canonical doc を読み込んでから回答する。使用タイミング:「phasegate の L1 と L2 の違いは？」「Quick Mode で許可されるカテゴリを増やしたい」「architecture.preset の使い分けは？」「phasegate の hook って何が動いている？」「phasegate.config.json の relaxedGates は何のため？」など phasegate ツールキット内部の仕様・設定を尋ねる質問。
+languages: [typescript]
 ---
 
 # Phasegate Toolkit Guide

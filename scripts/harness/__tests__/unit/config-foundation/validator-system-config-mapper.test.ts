@@ -3,6 +3,7 @@
 // @story H04-01
 // @work-item-id WI-133
 // @work-item-id WI-217
+// @work-item-id WI-212
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import type { HarnessConfigV2 } from '../../../config-foundation/domain/harness-config.js';
@@ -13,6 +14,7 @@ function createResolvedConfig(): HarnessConfigV2 {
     project: {
       name: 'my-project',
       preset: 'standard',
+      languages: ['typescript'],
     },
     layers: {
       L1: {
@@ -80,7 +82,7 @@ target('toValidatorSystemConfig', () => {
 
         // Assert
         expect(actual).toEqual({
-          project: { preset: 'standard' },
+          project: { preset: 'standard', languages: ['typescript'] },
           paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
@@ -105,7 +107,7 @@ target('toValidatorSystemConfig', () => {
 
         // Assert
         expect(actual).toEqual({
-          project: { preset: 'standard' },
+          project: { preset: 'standard', languages: ['typescript'] },
           paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },

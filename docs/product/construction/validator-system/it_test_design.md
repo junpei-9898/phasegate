@@ -488,3 +488,11 @@
 
 - A personal install fixture with `.phasegate-local/inception/**/description.md` and no product annotation reports an L4-002 missing reflection finding.
 - Adding the matching `@work-item-id` annotation under `.phasegate-local/product/construction` clears the L4-002 finding.
+
+## WI-212 Language Dispatch Integration Tests
+
+<!-- @work-item-id WI-212 -->
+
+- L3 validation for a TypeScript project executes TypeScript source validators through registered adapters.
+- L3 validation for a Python-only project reports TypeScript-only validators as unsupported-language skips.
+- Generic document validators still execute for non-TypeScript project language declarations.

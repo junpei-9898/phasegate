@@ -3,6 +3,7 @@ name: doc-freshness-checker
 description: 設計文書の鮮度チェック（L4バリデータ拡張）。`phasegate check-freshness` CLIを使い、設計文書の最終更新日が閾値を超えていないか、コード変更と設計文書の乖離がないかを検出する。使用タイミング: 「設計文書が古くなっていないか確認して」「ドキュメントの鮮度チェックを実行して」「L4 freshness チェック」「設計とコードの乖離を調べて」など。
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Doc Freshness Checker

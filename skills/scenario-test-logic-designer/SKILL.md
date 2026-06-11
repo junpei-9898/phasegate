@@ -3,6 +3,7 @@ name: scenario-test-logic-designer
 description: シナリオテストケース設計を元にPlaywright実装ロジックを設計 - E2Eテストの疑似コード・セレクタ戦略・シードデータ付き詳細設計
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Scenario Test Logic Designer

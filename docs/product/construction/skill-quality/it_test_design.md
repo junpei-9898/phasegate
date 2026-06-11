@@ -568,3 +568,11 @@ const target = new AtomicCommitService(
 | IT-WI188-001 | unknown story | matrix exists but lacks requested story | `STORY_NOT_FOUND` error and coverage runner is not called |
 | IT-WI188-002 | no tests | matrix entry has `total=0` | no-tests result is returned and coverage runner is not called |
 | IT-WI188-003 | missing local Vitest | no summary and no local `node_modules/vitest` | dependency guidance error is returned without `npx` execution |
+
+## WI-212 Skill Metadata Integration Tests
+
+<!-- @work-item-id WI-212 -->
+
+- Bundled skill scanning reads required `languages` frontmatter from shipped skills without breaking install flows.
+- Applicability output keeps generic workflow skills available for non-TypeScript projects.
+- Language-scoped skills without a matching project language produce warnings rather than hard validation errors.

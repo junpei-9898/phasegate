@@ -539,3 +539,12 @@ target('{クラス名またはメソッド名}', () => {
 - `RunL4ValidatorsUseCase` verifies that configured personal document roots execute the L4-002 work-item reflection path.
 - L4-002 exposes `skipReason` when a configured inception root has no readable work-item descriptions.
 - `FileSystemWorkItemReflectionAdapter` extracts frontmatter `id` values and product `@work-item-id` annotations for non-`WI-XXX` identifiers.
+
+## WI-212 Language Dispatch Unit Tests
+
+<!-- @work-item-id WI-212 -->
+
+- Generic document validators execute for any configured project language.
+- TypeScript-only validators select their adapter when the language is `typescript`.
+- Unsupported validator/language pairs return skipped results with unsupported-language warning metadata.
+- Multi-language aggregation preserves supported execution results and unsupported skips without converting the aggregate into a hard failure.

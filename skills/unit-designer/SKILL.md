@@ -3,6 +3,7 @@ name: unit-designer
 description: ストーリーを独立構築可能なUnitにグルーピングし統合契約を定義（AIDLC Step 1.2）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Unit Designer

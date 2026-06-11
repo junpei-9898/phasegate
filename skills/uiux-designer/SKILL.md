@@ -2,6 +2,7 @@
 name: uiux-designer
 description: テストケース・論理設計・既存UIを加味して最終的なUI/UX定義を策定（AIDLC Step 7）
 model: opus
+languages: [typescript]
 ---
 
 # UIUX Designer

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.160.22] - 2026-06-11
+
+### Added
+
+- **WI-212 — language-aware validator and skill metadata** — adds `project.languages` configuration, `init --language`, unsupported-language skips for TypeScript-only validators, bundled skill `languages` frontmatter, and a supported languages matrix for adoption planning.
+
 ### Fixed
 
 - **WI-217 — personal inception/product consistency** — makes L4-002 validate configured personal documentation roots, scopes L4-004 freshness to `paths.designDocs`, adds personal hook L4 backstop behavior for `.phasegate-local` docs, and lets `scaffold-wi` use custom IDs and personal inception roots.

@@ -6,6 +6,7 @@ description: |
   使用タイミング: 「codexに委任して」「codexで並列に作成」「codexに実装させて」「agentに依頼して」など、
   codex CLIへのタスク委任・並列実行が必要な場面。
 model: codex
+languages: [typescript]
 ---
 
 # Codex Delegator

@@ -3,6 +3,7 @@ name: implementation-planner
 description: "Unit仕様とドメインモデル設計を元に実装計画を立てる。WI IDや機能名から関連Unitを特定し、API設計・レイヤー別実装方針を整理してmdファイルで出力する。使用タイミング: 実装計画を立てて、WI-XXXの実装方針を決めて、この機能の設計を整理して、など実装前の計画策定時。"
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Implementation Planner

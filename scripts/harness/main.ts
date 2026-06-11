@@ -10,6 +10,7 @@
  * @work-item-id WI-189
  * @work-item-id WI-191
  * @work-item-id WI-195
+ * @work-item-id WI-212
  * @work-item-id WI-196
  * @work-item-id WI-197
  * @work-item-id WI-200
@@ -167,7 +168,7 @@ Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
                                 --skills <core|all>, --agent <claude|codex|both>, --workflow <standard|strict>,
-                                --with-husky, --with-ci, --yes)
+                                --language <language>, --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both>, --report-out <path>)
   scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>
@@ -605,6 +606,7 @@ Options:
   --skills <core|all>             Skill set to deploy (default: "all")
   --agent <claude|codex|both>     Agent integration target (default: "claude")
   --workflow <standard|strict>    Workflow enforcement defaults (default: "standard")
+  --language <language>           Project language declaration (default: "typescript")
   --with-husky                    Install Husky pre-commit hooks
   --with-ci                       Install GitHub Actions workflows
   --yes                           Skip confirmation prompts
@@ -1740,6 +1742,7 @@ async function main(): Promise<void> {
           "--skills",
           "--agent",
           "--workflow",
+          "--language",
           "--with-husky",
           "--with-ci",
           "--yes",
@@ -1780,6 +1783,11 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         const workflow = parseWorkflowMode(workflowRaw);
+        const language = parseFlag(args, "--language") ?? "typescript";
+        if (language.trim() === "") {
+          console.error("Invalid --language value: value must not be empty.");
+          process.exit(2);
+        }
         const deployClaude = agent === "claude" || agent === "both";
         const deployCodex = agent === "codex" || agent === "both";
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
@@ -1792,6 +1800,7 @@ async function main(): Promise<void> {
         const configResult = await initHarnessConfig(rootDir, projectName, phasePreset, {
           ciEnabled: withCi,
           workflow,
+          language,
         });
         if (workflow === "strict") {
           await scaffoldInceptionRoots(rootDir);

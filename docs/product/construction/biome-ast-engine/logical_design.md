@@ -1154,3 +1154,9 @@ The TypeScript source analyzer must preserve enough structure for validator-syst
 - side-effect capability observations from layer dependency violations.
 
 The adapter does not decide fail/pass policy. It returns source facts and locations so validator-system can produce stable report payloads.
+
+## WI-212 Source Analyzer Language Boundary
+
+<!-- @work-item-id WI-212 -->
+
+`TypeScriptSourceModuleAnalyzerAdapter` registers as the TypeScript implementation of source-fact extraction. The adapter remains unchanged internally for WI-212; the new boundary is that caller-side dispatch must only invoke it for `typescript` sources. Future Python/Go/Rust analyzers can implement the same source-fact contracts without changing validator policy.

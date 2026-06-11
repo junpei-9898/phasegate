@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit validator-system
+ * @work-item-id WI-212
  *
  * RunL3ValidatorsUseCase — H08-02: L3バリデータ実行
  */
@@ -8,6 +9,7 @@ import { ValidatorId } from '../../domain/value-objects/validator-id.js';
 import { ValidationResult } from '../../domain/value-objects/validation-result.js';
 import { ValidatorRegistry } from '../../domain/services/validator-registry.js';
 import { ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
+import { ValidatorLanguageCapabilityService } from '../../domain/services/validator-language-capability-service.js';
 import { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
 import type { ValidationResultContract } from '../dto/validation-result-contract.js';
 import type { RunL3ValidatorsInput } from '../dto/run-l3-validators-input.js';
@@ -43,6 +45,7 @@ export class RunL3ValidatorsUseCase {
   private readonly coverageReportPort?: RunL3ValidatorsUseCaseDeps['coverageReportPort'];
   private readonly securityScannerPort?: SecurityPatternScannerPort;
   private readonly performanceScannerPort?: PerformanceScannerPort;
+  private readonly languageCapabilityService = new ValidatorLanguageCapabilityService();
 
   constructor(deps: RunL3ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -77,8 +80,12 @@ export class RunL3ValidatorsUseCase {
       return [];
     }
 
+    const projectLanguages = await this.getProjectLanguages();
+    const { executableDefinitions, unsupportedResults, unsupportedValidatorIds } =
+      this.languageCapabilityService.splitDefinitions(definitions, projectLanguages);
+
     // coverageReportPort が存在する場合、カバレッジを取得して判定
-    if (this.coverageReportPort) {
+    if (this.coverageReportPort && !unsupportedValidatorIds.has('L3-003')) {
       const coverageData = await this.coverageReportPort.getCoverage();
       const threshold = layerConfig.getThreshold('coverageThreshold');
 
@@ -87,9 +94,9 @@ export class RunL3ValidatorsUseCase {
         const deficit = threshold - coverageData.overallCoverage;
 
         // 他のバリデータを実行
-        const otherDefs = definitions.filter((d) => d.validatorId.value !== 'L3-003');
+        const otherDefs = executableDefinitions.filter((d) => d.validatorId.value !== 'L3-003');
         const otherResults = this.executionService.execute(otherDefs, [layerConfig]);
-        const otherContracts = this.mapper.toContracts(otherResults);
+        const otherContracts = this.mapper.toContracts([...unsupportedResults, ...otherResults]);
 
         return [
           ...otherContracts.filter((r) => r.validatorId !== 'L3-003'),
@@ -104,8 +111,10 @@ export class RunL3ValidatorsUseCase {
       }
     }
 
-    const results = this.executionService.execute(definitions, [layerConfig]);
-    const overrideMap = new Map<string, ValidationResult>(results.map((result) => [result.validatorId.value, result]));
+    const results = this.executionService.execute(executableDefinitions, [layerConfig]);
+    const overrideMap = new Map<string, ValidationResult>(
+      [...unsupportedResults, ...results].map((result) => [result.validatorId.value, result]),
+    );
 
     if (this.securityScannerPort) {
       const l3001Result = overrideMap.get('L3-001');
@@ -152,5 +161,9 @@ export class RunL3ValidatorsUseCase {
       (definition) => overrideMap.get(definition.validatorId.value) ?? ValidationResult.skip(definition.validatorId),
     );
     return this.mapper.toContracts(finalResults);
+  }
+
+  private async getProjectLanguages(): Promise<readonly string[]> {
+    return this.configPort.getProjectLanguages ? await this.configPort.getProjectLanguages() : ['typescript'];
   }
 }

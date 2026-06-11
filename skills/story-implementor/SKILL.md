@@ -2,6 +2,7 @@
 name: story-implementor
 description: 論理設計+環境設計に基づくTDD実装。環境検証と教訓フィードバック付き（AIDLC Step 2.3-2.7）
 model: codex
+languages: [typescript]
 ---
 
 # Story Implementor

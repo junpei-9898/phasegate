@@ -2,6 +2,7 @@
  * @layer infrastructure
  * @unit validator-system
  * @work-item-id WI-156
+ * @work-item-id WI-212
  *
  * HarnessConfigValidatorConfigAdapter — ValidatorConfigPort実装
  * HarnessConfigV2からLayerConfig VOを構築する
@@ -18,7 +19,7 @@ export interface HarnessConfigLayers {
 
 export interface HarnessConfigV2Like {
   preset?: 'minimal' | 'standard' | 'strict';
-  project?: { preset?: 'minimal' | 'standard' | 'strict' };
+  project?: { preset?: 'minimal' | 'standard' | 'strict'; languages?: readonly string[] };
   layers?: HarnessConfigLayers;
   harnesses?: {
     bundleSizeLimit?: number;
@@ -69,6 +70,11 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
       strictOnly: layerData.strictOnly ?? strictOnly,
       preset,
     });
+  }
+
+  async getProjectLanguages(): Promise<readonly string[]> {
+    const languages = this.config.project?.languages;
+    return languages && languages.length > 0 ? [...languages] : ['typescript'];
   }
 
   private normalizeValidatorId(idOrName: string): string {

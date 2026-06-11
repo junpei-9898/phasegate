@@ -3,6 +3,7 @@ name: story-mapper
 description: ストーリーのMVPスコープ整理・優先順位定義。発散後の収束フェーズ（AIDLC Step 1.5）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Story Mapper

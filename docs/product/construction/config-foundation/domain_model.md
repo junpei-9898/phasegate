@@ -405,3 +405,9 @@ L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into va
 
 <!-- @work-item-id WI-214 -->
 `paths.principlesDocs` identifies the project-relative root for immutable principles docs, and `paths.folderRulesDoc` identifies the project-relative folder management rules file. Both values default to the historical `docs/principles` and `docs/folder_management_rules.md` paths so existing configs remain valid after resolution.
+
+## WI-212 Project Language Set
+
+<!-- @work-item-id WI-212 -->
+
+`ProjectConfig` includes a resolved non-empty `languages` list. Source documents that omit `project` or omit `project.languages` resolve to `["typescript"]` for backward compatibility. The language set is descriptive configuration for validator dispatch and skill applicability; it does not change architecture preset semantics.

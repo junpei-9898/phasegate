@@ -35,6 +35,7 @@ function createMinimalSourceDocument(): HarnessConfigSourceDocument {
     project: {
       name: 'my-project',
       preset: 'minimal',
+      languages: ['typescript'],
     },
     layers: {},
     quickMode: {},
@@ -64,6 +65,7 @@ function createMinimalResolvedDocument(): HarnessConfigResolvedDocument {
     project: {
       name: 'my-project',
       preset: 'minimal',
+      languages: ['typescript'],
     },
     layers: {
       L1: {

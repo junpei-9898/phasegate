@@ -1,7 +1,10 @@
 {
   "project": {
     "name": "phasegate-project",
-    "preset": "standard"
+    "preset": "standard",
+    "languages": [
+      "typescript"
+    ]
   },
   "architecture": {
     "preset": "clean"

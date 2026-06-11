@@ -390,3 +390,9 @@ Skip results are first-class validation results and do not fail aggregation. War
 `L3-002 performance` findings carry smell id, file location, observed metric, threshold, optional suppression marker, and suggestion. The current operational knobs are validator-side defaults plus resolved `bundleSizeLimit`; `largeLiteralEntries`, sync I/O, loop-await, and accepted batch/migration suppression are scanner policy concepts, not new public top-level config fields unless `configuration.md` documents them.
 
 `L4-003 dead-code` consumes real import/export graph data, including direct exports, re-exports, wildcard exports, dynamic import visibility, public API boundaries, and generated/test/fixture exclusions. Candidates are reviewable warnings by default because false positives are possible at package boundaries.
+
+## WI-212 Validator Language Capability Model
+
+<!-- @work-item-id WI-212 -->
+
+Validator execution is keyed by `validatorId` and resolved project language. Document validators can declare language-independent capability, while source and test-framework validators declare concrete language support. Unsupported validator/language combinations are first-class skipped results with warning evidence, not dependency failures.

@@ -3,6 +3,7 @@ name: codebase-mapper
 description: コードベースの構造マップを生成するスキル。全ソースファイルの `@unit`/`@layer` アノテーションを解析し、Unit・レイヤー分布・Unit間依存関係・循環依存を可視化したマップ文書を出力する。L4バリデータ（drift-detection/dead-code）の入力精度向上にも使用。使用タイミング: 「コードベースの構造を把握したい」「Unitマップを作って」「どのファイルがどのUnitに属するか調べて」「依存関係を可視化して」など。
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Codebase Mapper

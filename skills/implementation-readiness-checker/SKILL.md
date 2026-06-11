@@ -3,6 +3,7 @@ name: implementation-readiness-checker
 description: 実装開始前の準備状況を自動検証 - テスト設計・カバレッジ・ロジック設計の存在チェックとギャップ分析
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Implementation Readiness Checker

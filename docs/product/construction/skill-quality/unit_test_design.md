@@ -595,3 +595,11 @@
 | ドメインサービス | CascadeUpdateService | 2 |
 | ドメインサービス | SkillStructureValidator | 3 |
 | **合計** | | **148** |
+
+## WI-212 Skill Language Metadata Tests
+
+<!-- @work-item-id WI-212 -->
+
+- Skill frontmatter with `languages: [typescript]` is parsed as TypeScript-scoped.
+- Missing bundled skill language metadata is reported as a structure validation gap.
+- Language-scoped implementation skills without a matching project language produce applicability warnings instead of parse failures.

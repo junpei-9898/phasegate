@@ -654,3 +654,10 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 | config-foundation Unitの実装遅延 | HarnessConfigProviderAdapterのテストが実行不可 | Port経由のインターフェースを使い、テスト時はスタブで既定値を返す（QA-4） |
 | L1-006/L1-007/L1-008のルール名対応がintegration_contract.mdとlogical_design.mdで異なる | テストコードと契約文書の不整合 | logical_design.md Section 2.2.10のerrorCode対応表を正とする。実装時にintegration_contract.mdを修正する |
 | ExecuteLintUseCaseの統合テストが複数のPort依存により複雑化する | テストのメンテナンスコスト増大 | 各Portのモックをファクトリ関数で共通化し、最小限のスタブで検証する |
+
+## WI-212 Source Analyzer Language Integration Tests
+
+<!-- @work-item-id WI-212 -->
+
+- TypeScript analyzer capability is exposed to validator-system dispatch.
+- Non-TypeScript language dispatch does not instantiate or call the TypeScript source analyzer.

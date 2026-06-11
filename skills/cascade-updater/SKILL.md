@@ -3,6 +3,7 @@ name: cascade-updater
 description: 下位フェーズの発見・変更を上位設計文書にフィードバックし影響範囲を整合的に更新
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Cascade Updater

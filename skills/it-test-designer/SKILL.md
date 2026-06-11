@@ -3,6 +3,7 @@ name: it-test-designer
 description: 論理設計からIT（結合テスト）ケースを設計（AIDLC Step 8の前段）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # IT Test Designer

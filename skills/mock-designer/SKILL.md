@@ -3,6 +3,7 @@ name: mock-designer
 description: ユーザーストーリーからUIモックを作成。UI/UXの検証とフィードバック（AIDLC Step 2）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Mock Designer

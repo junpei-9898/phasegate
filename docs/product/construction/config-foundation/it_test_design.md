@@ -401,3 +401,11 @@ scripts/harness/__tests__/config-foundation/
 | WI170-IT-001 | AJV schema validator v2 | `phase2Extensions.initialCreationExpirationRules` accepts ruleId, documentPattern, non-negative thresholds, `evaluationMode: "or" | "and"`, and optional enabled. |
 | WI170-IT-002 | AJV schema validator v2 | Unsupported `evaluationMode` is rejected at `/phase2Extensions/initialCreationExpirationRules/0/evaluationMode`. |
 | WI170-IT-003 | AJV schema validator v3 | The same `phase2Extensions.initialCreationExpirationRules` contract is accepted for architecture-key v3 documents. |
+
+## WI-212 Language Config Integration Tests
+
+<!-- @work-item-id WI-212 -->
+
+- AJV schema accepts non-empty `project.languages`.
+- Preset resolution supplies `["typescript"]` when `project.languages` is absent.
+- Validator-system config projection includes the resolved language list.

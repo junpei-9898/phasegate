@@ -73,6 +73,7 @@ export function createResolvedDocument(
     project: {
       name: 'my-project',
       preset,
+      languages: ['typescript'],
     },
     layers: {
       L1: {

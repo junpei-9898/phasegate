@@ -221,3 +221,11 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 
 - Fresh personal install writes `.git/hooks/pre-commit` with a staged `.phasegate-local/(inception|product)` detector.
 - When a staged local inception work item lacks product reflection, the hook runs `validate --layer L4 --fail-on-warning` and exits non-zero.
+
+## WI-212 Language Bootstrap Integration Tests
+
+<!-- @work-item-id WI-212 -->
+
+- A fresh TypeScript init followed by L3 validation executes current TypeScript validators.
+- A fresh Python init followed by L3 validation reports TypeScript-only validators as unsupported-language skips instead of dependency or parser failures.
+- Existing config without `project.languages` validates with the previous TypeScript default.

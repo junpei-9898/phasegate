@@ -1,4 +1,7 @@
 // @layer test
+// @unit skill-quality
+// @story H12-06
+// @work-item-id WI-212
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { SkillStructureValidator } from '../../../skill-quality/domain/services/skill-structure-validator.js';
@@ -9,6 +12,7 @@ function createMockSkillFileReaderPort(content = '') {
 
 const FULL_SKILL_CONTENT = `---
 name: skill-quality
+languages: [typescript]
 ---
 
 # Purpose
@@ -48,19 +52,19 @@ target('SkillStructureValidator', () => {
         const validator = new SkillStructureValidator(port);
         const actual = await validator.validate('skills/skill-quality.md');
         expect(actual.passed).toBe(false);
-        expect(actual.missingSection.length).toBeGreaterThan(0);
+        expect(actual.missingSection).toEqual(['frontmatter', 'languageMetadata', 'inputs', 'outputs', 'prerequisites', 'executionFlow']);
       });
     });
   });
 
   describe('validate: 空ファイルの場合は全セクション欠落になること', () => {
     context('空文字列の SKILL.md の場合', () => {
-      it('passed=false で missingSection が 6 件になる', async () => {
+      it('passed=false で missingSection が 7 件になる', async () => {
         const port = createMockSkillFileReaderPort('');
         const validator = new SkillStructureValidator(port);
         const actual = await validator.validate('skills/skill-quality.md');
         expect(actual.passed).toBe(false);
-        expect(actual.missingSection).toHaveLength(6);
+        expect(actual.missingSection).toEqual(['frontmatter', 'languageMetadata', 'purpose', 'inputs', 'outputs', 'prerequisites', 'executionFlow']);
       });
     });
   });
@@ -73,6 +77,29 @@ target('SkillStructureValidator', () => {
         const validator = new SkillStructureValidator(port);
         const actual = await validator.validate('skills/skill-quality.md');
         expect(actual.actualSections).toContain('frontmatter');
+      });
+    });
+  });
+
+  describe('validate: frontmatter に languages がある場合に languageMetadata が認識されること', () => {
+    context('languages が inline array で指定されている場合', () => {
+      it('actualSections に languageMetadata が含まれる', async () => {
+        const content = `---\nname: test\nlanguages: [typescript]\n---\n\n# Purpose\ntest`;
+        const port = createMockSkillFileReaderPort(content);
+        const validator = new SkillStructureValidator(port);
+        const actual = await validator.validate('skills/skill-quality.md');
+        expect(actual.actualSections).toContain('languageMetadata');
+      });
+    });
+
+    context('languages が欠落している場合', () => {
+      it('missingSection に languageMetadata が含まれる', async () => {
+        const content = `---\nname: test\n---\n\n# Purpose\nThis skill ensures quality.\n\n## Inputs\n- storyId\n\n## Outputs\n- result\n\n## Prerequisites\n- none\n\n## ExecutionFlow\n1. Run tests\n`;
+        const port = createMockSkillFileReaderPort(content);
+        const validator = new SkillStructureValidator(port);
+        const actual = await validator.validate('skills/skill-quality.md');
+        expect(actual.passed).toBe(false);
+        expect(actual.missingSection).toContain('languageMetadata');
       });
     });
   });

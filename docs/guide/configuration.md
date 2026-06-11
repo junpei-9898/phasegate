@@ -24,7 +24,8 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
 {
   "project": {
     "name": "my-project",
-    "preset": "standard"       // "minimal" | "standard" | "strict"
+    "preset": "standard",      // "minimal" | "standard" | "strict"
+    "languages": ["typescript"]
   },
   "layers": {
     "L1": { "enabled": true },
@@ -121,6 +122,24 @@ The `strict` preset also enables:
 |-----------|----------|--------------|----------------------------------------------------------------|
 | `name`    | `string` | --           | Project identifier. Used in reports and validation output.     |
 | `preset`  | `string` | `"standard"` | One of `"minimal"`, `"standard"`, `"strict"`. Controls which layers and harnesses are active by default. Individual settings override the preset. |
+| `languages` | `string[]` | `["typescript"]` | Project implementation languages used for validator dispatch and skill applicability. Unknown values are accepted as declarations; unsupported validator/language pairs are reported as skips with `unsupported-language` reasons. <!-- @work-item-id WI-212 --> |
+
+#### Supported Languages
+
+<!-- @work-item-id WI-212 -->
+
+PhaseGate currently ships TypeScript-backed source, test, and coverage validators. Non-TypeScript declarations are supported as configuration metadata so architecture, phase-gate, documentation, pointer, and WI workflow checks can still run while TypeScript-only validators skip with a clear reason.
+
+| Capability | TypeScript | Python / Go / Rust / other declared languages |
+|---|---:|---:|
+| `project.languages` config | Supported | Accepted |
+| `init --language <lang>` bootstrap | Supported | Accepted |
+| Architecture preset / phase-gate / WI workflow | Supported | Supported |
+| Markdown document validators (`L4-002`, `L4-004`, `L4-005`, `L4-006`) | Supported | Supported |
+| L3 performance AST validator (`L3-002`) | Supported | Skipped as `unsupported-language` |
+| L3 coverage validator (`L3-003`) | Supported through Vitest coverage | Skipped as `unsupported-language` |
+| L4 dead-code validator (`L4-003`) | Supported | Skipped as `unsupported-language` |
+| Bundled skills | `languages: [typescript]` metadata present | Future language-specific skills can coexist by declaring their own `languages` metadata |
 
 #### `layers`
 

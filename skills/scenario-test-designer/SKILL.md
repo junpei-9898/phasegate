@@ -3,6 +3,7 @@ name: scenario-test-designer
 description: ユーザーストーリー・論理設計・モックからシナリオテストケースを設計（AIDLC Step 6）
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Scenario Test Designer

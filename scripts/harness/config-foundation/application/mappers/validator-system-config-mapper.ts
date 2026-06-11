@@ -3,6 +3,7 @@
  * @unit config-foundation
  * @work-item-id WI-133 / WI-156
  * @work-item-id WI-217
+ * @work-item-id WI-212
  */
 import type { HarnessConfigV2 } from '../../domain/harness-config.js';
 
@@ -33,7 +34,10 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
     : l4Validators;
 
   return {
-    project: { preset: resolvedConfig.project.preset },
+    project: {
+      preset: resolvedConfig.project.preset,
+      languages: resolvedConfig.project.languages ?? ['typescript'],
+    },
     paths: {
       designDocs: resolvedConfig.paths.designDocs,
       inceptionDocs: resolvedConfig.paths.inceptionDocs,

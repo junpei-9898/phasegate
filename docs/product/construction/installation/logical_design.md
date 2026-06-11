@@ -631,3 +631,9 @@ Personal install config declares local-only reference documentation paths: `.pha
 <!-- @work-item-id WI-217 -->
 
 Personal install pre-commit hooks must include a local documentation consistency pass. When staged paths touch `.phasegate-local/inception/**` or `.phasegate-local/product/**`, the hook runs L4 validation through the packaged `phasegate` CLI so missing local inception/product reflection is caught before commit. The hook continues to avoid team-owned Husky bootstrap and remains scoped to local-only artifacts.
+
+## WI-212 Init Language Bootstrap
+
+<!-- @work-item-id WI-212 -->
+
+`phasegate init` accepts `--language <lang>` as a config bootstrap option. The generated config writes `project.languages: ["<lang>"]`; omitted language keeps the existing TypeScript-compatible default. Non-TypeScript language initialization succeeds as declaration only and relies on validator-system to report unsupported TypeScript-only validators as skips with warnings.

@@ -3,6 +3,7 @@ name: consistency-checker
 description: AIDLC設計文書群のレイヤー間整合性チェック・矛盾/漏れ検出
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Consistency Checker

@@ -1,6 +1,7 @@
 ---
 name: quick-implementor
 description: Quick Mode下でのad-hoc実装スキル。story-implementorの緩和版。バグ修正・ドキュメント修正・テスト追加・設定変更など軽微な変更に使用。L1全維持、L2はphase-gate緩和、L3はsecurityのみ、L4スキップ。使用タイミング: 「Quick Modeで修正して」「バグ修正して」「テスト追加して」「設定変更して」「ドキュメント修正して」など、フルハーネスが過剰な軽微変更時。除外: 新機能追加、API契約変更、新ドメインモデル追加にはstory-implementorを使用すること。
+languages: [typescript]
 ---
 
 # Quick Implementor

@@ -155,6 +155,7 @@ function createResolvedDocument(): HarnessConfigResolvedDocument {
     project: {
       name: 'my-project',
       preset: 'minimal',
+      languages: ['typescript'],
     },
     layers: presetDefinition.layers,
     quickMode: presetDefinition.quickMode,
@@ -188,6 +189,7 @@ target('PresetResolutionService', () => {
         expect(actual.project).toEqual({
           name: 'my-project',
           preset: 'minimal',
+          languages: ['typescript'],
         });
         expect(actual.harnesses.agentLessonCollection).toBe(true);
         expect(actual.harnesses.deadCodeGC).toBe(false);

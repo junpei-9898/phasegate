@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit skill-quality
+ * @work-item-id WI-212
  */
 import { SkillStructure } from '../value-objects/skill-structure.js';
 import { SkillValidationResult } from '../value-objects/skill-validation-result.js';
@@ -29,6 +30,9 @@ export class SkillStructureValidator {
     // Check for frontmatter (YAML between --- delimiters)
     if (lines[0]?.trim() === '---') {
       sections.push('frontmatter');
+      if (this.hasLanguageMetadata(lines)) {
+        sections.push('languageMetadata');
+      }
     }
 
     // Look for headings that correspond to section names
@@ -68,5 +72,22 @@ export class SkillStructureValidator {
     }
 
     return sections;
+  }
+
+  private hasLanguageMetadata(lines: readonly string[]): boolean {
+    const closingDelimiterIndex = lines.findIndex((line, index) => index > 0 && line.trim() === '---');
+    if (closingDelimiterIndex < 0) return false;
+
+    const frontmatterLines = lines.slice(1, closingDelimiterIndex);
+    const languageLineIndex = frontmatterLines.findIndex((line) => /^\s*languages\s*:/.test(line));
+    if (languageLineIndex < 0) return false;
+
+    const languageLine = frontmatterLines[languageLineIndex] ?? '';
+    if (/\[[^\]]*\S[^\]]*\]/.test(languageLine)) return true;
+
+    return frontmatterLines.slice(languageLineIndex + 1).some((line) => {
+      if (/^\S/.test(line)) return false;
+      return /^\s*-\s*\S+/.test(line);
+    });
   }
 }

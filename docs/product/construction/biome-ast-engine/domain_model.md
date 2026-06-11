@@ -462,3 +462,9 @@ Biome AST engine supplies source facts for G5 validators without owning validato
 | Side-effect capability evidence and decision signal evidence | `L4-002 architecture semantic analysis`. |
 
 Architecture `capabilityPolicies` and `decisionPolicies` are resolved from config-foundation presets. The AST engine reports observations; validator-system decides severity and whether a finding is advisory.
+
+## WI-212 TypeScript Analyzer Capability
+
+<!-- @work-item-id WI-212 -->
+
+The existing source module analyzer is a TypeScript language adapter. It owns TypeScript source facts only and does not attempt to parse Python, Go, Rust, or other language files. Validator-system dispatch prevents unsupported language files from reaching this adapter.

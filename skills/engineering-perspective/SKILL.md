@@ -9,6 +9,7 @@ description: |
   (4) TDD/リファクタリング/DDDのベストプラクティスを適用したい
   (5) チーム議論で共通認識を構築したい
   トリガー例: 「レビューして」「これどう思う？」「設計見て」「SOLID的にどう？」「リファクタ必要？」「ドメイン的に正しい？」
+languages: [typescript]
 ---
 
 # Engineering Perspective

@@ -3,6 +3,7 @@
  * @unit validator-system
  * @work-item-id WI-107 / WI-156
  * @work-item-id WI-217
+ * @work-item-id WI-212
  *
  * RunL4ValidatorsUseCase — H08-03: L4バリデータ実行
  */
@@ -11,6 +12,7 @@ import { ValidationResult } from '../../domain/value-objects/validation-result.j
 import { LayerConfig } from '../../domain/value-objects/layer-config.js';
 import { ValidatorRegistry } from '../../domain/services/validator-registry.js';
 import { ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
+import { ValidatorLanguageCapabilityService } from '../../domain/services/validator-language-capability-service.js';
 import { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
 import type { ValidationResultContract } from '../dto/validation-result-contract.js';
 import type { RunL4ValidatorsInput } from '../dto/run-l4-validators-input.js';
@@ -93,6 +95,7 @@ export class RunL4ValidatorsUseCase {
   private readonly pathRoots: { readonly inceptionRoot: string; readonly designRoot: string };
   private readonly checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   private readonly validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
+  private readonly languageCapabilityService = new ValidatorLanguageCapabilityService();
 
   constructor(deps: RunL4ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -141,11 +144,17 @@ export class RunL4ValidatorsUseCase {
           thresholds: { ...layerConfig.thresholds },
           strictOnly: layerConfig.strictOnly,
           preset: layerConfig.preset,
-        })
+      })
       : layerConfig;
 
-    const results = this.executionService.execute(definitions, [effectiveLayerConfig]);
-    const overrideMap = new Map<string, ValidationResult>(results.map((result) => [result.validatorId.value, result]));
+    const projectLanguages = await this.getProjectLanguages();
+    const { executableDefinitions, unsupportedResults } =
+      this.languageCapabilityService.splitDefinitions(definitions, projectLanguages);
+
+    const results = this.executionService.execute(executableDefinitions, [effectiveLayerConfig]);
+    const overrideMap = new Map<string, ValidationResult>(
+      [...unsupportedResults, ...results].map((result) => [result.validatorId.value, result]),
+    );
 
     if (this.driftDetectionService) {
       const l4001Result = overrideMap.get('L4-001');
@@ -274,6 +283,10 @@ export class RunL4ValidatorsUseCase {
       ));
 
     return [...executionErrors, ...freshnessFindings];
+  }
+
+  private async getProjectLanguages(): Promise<readonly string[]> {
+    return this.configPort.getProjectLanguages ? await this.configPort.getProjectLanguages() : ['typescript'];
   }
 
   private usesConfiguredDocumentRoots(): boolean {

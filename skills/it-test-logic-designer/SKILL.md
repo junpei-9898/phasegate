@@ -3,6 +3,7 @@ name: it-test-logic-designer
 description: ITテストケース設計を元にVitest実装ロジックを設計 - DB・Repository・UseCase・Controller統合テストの疑似コード付き詳細設計
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # IT Test Logic Designer

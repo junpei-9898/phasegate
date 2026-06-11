@@ -489,3 +489,9 @@ LessonArtifactSchemaPortを導入することで、ci-governanceスキーマへ�
 <!-- @work-item-id WI-188 -->
 
 `RequirementTestMatrixPort.read(storyId)` is strict for story-indexed matrices: a requested story must exist as an explicit entry. A zero-test entry is not treated as full coverage; it is a `no-tests` precondition that short-circuits code coverage execution. `CoverageRunnerPort` may read an existing summary or run a local Vitest binary, but it must not use `npx` auto-install paths.
+
+## WI-212 Skill Language Metadata
+
+<!-- @work-item-id WI-212 -->
+
+Bundled skills declare supported languages in frontmatter through `languages: [...]`. The current shipped catalog is TypeScript-oriented and uses `languages: [typescript]` so future Python, Go, Rust, or generic variants can coexist without changing the directory contract. Skill validation treats language metadata as part of the required structure and reports missing metadata as a structural gap.

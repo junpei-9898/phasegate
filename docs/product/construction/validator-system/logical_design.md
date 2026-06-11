@@ -1937,3 +1937,9 @@ Personal install config points validator document roots at `.phasegate-local/pro
 <!-- @work-item-id WI-217 -->
 
 L4-002 must treat resolved documentation roots as first-class inputs. When `paths.inceptionDocs` and `paths.designDocs` are available, the validator discovers `description.md` work items under the inception root, extracts each frontmatter `id`, scans product construction markdown for `@work-item-id` annotations, and reports missing product reflection as an L4-002 finding instead of skipping the validator. A skip is valid only when no supported inception root exists or no work-item descriptions can be read, and the result must expose that reason in all output formats.
+
+## WI-212 Language-Aware Validator Dispatch
+
+<!-- @work-item-id WI-212 -->
+
+Validator-system owns `ValidatorLanguageRegistry`, which maps `validatorId + language` to supported, generic, or unsupported capability. Existing TypeScript-backed validators register their current adapters for `typescript`; Markdown and product-document validators register as generic. Aggregation includes skipped unsupported-language results with a machine-readable reason so multi-language projects can distinguish unsupported coverage from failing validation.

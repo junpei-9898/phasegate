@@ -4,6 +4,7 @@
 // @work-item-id WI-127
 // @work-item-id WI-184
 // @work-item-id WI-202
+// @work-item-id WI-212
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
 import { promises as fs } from "node:fs";
@@ -456,6 +457,7 @@ export async function deployHookScripts(harnessRoot: string, projectRoot: string
 export interface InitHarnessConfigOptions {
   ciEnabled?: boolean;
   workflow?: "standard" | "strict";
+  language?: string;
 }
 
 export async function initHarnessConfig(
@@ -477,6 +479,7 @@ export async function initHarnessConfig(
     project: {
       name: projectName,
       preset: "standard",
+      languages: [options.language ?? "typescript"],
     },
     architecture: {
       preset: "clean",

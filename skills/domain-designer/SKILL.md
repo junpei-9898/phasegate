@@ -2,6 +2,7 @@
 name: domain-designer
 description: DDD戦術パターンでドメインモデル（集約・エンティティ・VO・イベント）を設計（AIDLC Step 2.1）
 model: opus
+languages: [typescript]
 ---
 
 # Domain Designer

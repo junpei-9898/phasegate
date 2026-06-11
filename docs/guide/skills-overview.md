@@ -2,6 +2,8 @@
 
 Phasegate provides 30 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` and project `npx phasegate install` deploy skill bodies to root `skills/` and expose them to enabled agents through `.claude/skills/` / `.codex/skills/` links. Personal install instead writes real local-only per-agent skill directories. <!-- @work-item-id WI-210 -->
 
+Bundled `SKILL.md` files include `languages: [typescript]` frontmatter so PhaseGate can distinguish current TypeScript-oriented guidance from future language-specific skill variants. The metadata is advisory for applicability and does not prevent non-TypeScript projects from installing the catalog. <!-- @work-item-id WI-212 -->
+
 ## AIDLC Process — Skill Execution Order
 
 The AIDLC follows a 3-level execution flow, each level producing design artifacts that gate the next.

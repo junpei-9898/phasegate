@@ -3,6 +3,7 @@ name: test-coverage-checker
 description: テストケース設計の網羅性検証 - 受け入れ基準・ドメインロジック・UseCaseのカバレッジチェック
 model: sonnet
 review: opus
+languages: [typescript]
 ---
 
 # Test Coverage Checker

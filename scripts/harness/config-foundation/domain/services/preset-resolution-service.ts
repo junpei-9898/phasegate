@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit config-foundation
+ * @work-item-id WI-212
  */
 import { ConfigFoundationDomainError } from '../errors/config-foundation-domain-error.js';
 import type {
@@ -152,6 +153,7 @@ export class PresetResolutionService {
       project: {
         name: sourceDocument.project.name,
         preset: sourceDocument.project.preset,
+        languages: sourceDocument.project.languages ?? ['typescript'],
       },
       layers: deepMerge(presetDefinition.layers, sourceDocument.layers, 'layers'),
       quickMode: deepMerge(

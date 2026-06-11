@@ -1,7 +1,10 @@
 {
   "project": {
     "name": "personal-phasegate",
-    "preset": "standard"
+    "preset": "standard",
+    "languages": [
+      "typescript"
+    ]
   },
   "layers": {
     "L1": {

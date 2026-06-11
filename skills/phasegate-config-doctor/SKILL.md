@@ -1,6 +1,7 @@
 ---
 name: phasegate-config-doctor
 description: 現在の phasegate.config.json を schema + プロジェクト検出結果と突き合わせて改善提案する診断スキル。read-only Q&A の phasegate-toolkit-guide とは異なり、設定変更を伴う相談に応える。使用タイミング:「phasegate のセットアップを最適化して」「architecture preset 入ってないけど何が適切？」「Quick Mode の relaxedGates に推奨設定教えて」「baseline 有効化しても大丈夫？」「monorepo に対して targetDirs / formatter が正しく検出されてる？」「v2 schema warning が出る、何を直せばいい？」など、現状 config の診断と改善 diff 提案を求める質問。
+languages: [typescript]
 ---
 
 # Phasegate Config Doctor

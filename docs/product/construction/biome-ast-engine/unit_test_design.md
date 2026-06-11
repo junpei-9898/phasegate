@@ -551,3 +551,10 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 | domain/lint-runner.test.ts | 36 |
 | **ドメインサービス小計** | **64** |
 | **合計** | **211** |
+
+## WI-212 Source Analyzer Capability Tests
+
+<!-- @work-item-id WI-212 -->
+
+- The TypeScript analyzer declares `typescript` as its supported language capability.
+- Non-TypeScript language requests are refused by dispatch before the TypeScript analyzer attempts to parse the file.

@@ -668,3 +668,11 @@ scripts/harness/__tests__/config-foundation/
 
 - `toValidatorSystemConfig()` forwards resolved `paths.designDocs` and `paths.inceptionDocs` to validator-system.
 - Custom documentation roots add L4-002 to the effective L4 validator list so personal consistency validation is not skipped by preset projection.
+
+## WI-212 Language Config Unit Tests
+
+<!-- @work-item-id WI-212 -->
+
+- Missing `project` and missing `project.languages` resolve to `["typescript"]`.
+- Non-empty language arrays are preserved in resolved config and validator projection.
+- Empty language arrays are rejected by schema or domain validation.

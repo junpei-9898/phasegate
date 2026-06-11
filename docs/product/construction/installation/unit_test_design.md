@@ -120,3 +120,11 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | UT-INS-WI215-001 | personal Codex install with no `AGENTS.md` | creates root `AGENTS.md`, records it in the manifest, and adds `AGENTS.md` to `.git/info/exclude` |
 | UT-INS-WI215-002 | personal Codex install with existing non-managed `AGENTS.md` | leaves the file byte-identical and reports manual readiness instead of writing `AGENTS.override.md` |
 | UT-INS-WI215-003 | personal doctor with only legacy `.codex/AGENTS.local.md` | reports `codex-context-missing` instead of green |
+
+## WI-212 Init Language Unit Tests
+
+<!-- @work-item-id WI-212 -->
+
+- `init --language typescript --yes` writes TypeScript language metadata without changing existing TypeScript defaults.
+- `init --language python --yes` writes `project.languages: ["python"]`.
+- `init --yes` without language keeps backward-compatible TypeScript resolution.

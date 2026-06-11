@@ -2,6 +2,7 @@
 name: product-architect
 description: ビジネス要求からプロダクト全体像を定義。ドメイン・アーキテクチャ・技術選定・制約（AIDLC Step 0）
 model: opus
+languages: [typescript]
 ---
 
 # Product Architect

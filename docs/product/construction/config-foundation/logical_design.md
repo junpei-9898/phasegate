@@ -1433,3 +1433,9 @@ The resolved `paths` section includes `designDocs`, `inceptionDocs`, `principles
 Resolved config paths are the default scope for validators and scaffolding that operate on design documents. Consumers should not hard-code root `docs/` when `paths.designDocs` or `paths.inceptionDocs` is present; personal install uses those fields to keep validation and generated WI files under `.phasegate-local/**`.
 
 The v3 schema keeps `paths.principlesDocs` and `paths.folderRulesDoc` optional because the `PathsConfig` value object supplies defaults for older v3 fixtures and project configs. Generated personal config may still materialize both fields to make local reference-doc targets explicit.
+
+## WI-212 Language Configuration Projection
+
+<!-- @work-item-id WI-212 -->
+
+The resolved config projection exposes `project.languages` to validator-system and installation consumers. Schema validation rejects an empty list, while unknown language strings are preserved so validator-system can classify them as unsupported combinations with clear warnings instead of treating configuration parsing as the failure point. Generated default config remains TypeScript-compatible.

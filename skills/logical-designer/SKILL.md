@@ -2,6 +2,7 @@
 name: logical-designer
 description: ドメインモデルから論理設計を作成。横断設計とストーリー固有設計の2モード（AIDLC Step 2.2）
 model: opus
+languages: [typescript]
 ---
 
 # Logical Designer
