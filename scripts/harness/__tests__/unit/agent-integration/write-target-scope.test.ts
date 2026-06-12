@@ -21,7 +21,7 @@ target("WriteTargetScope", () => {
           const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
           // Assert
-          expect(actual).toBeNull();
+          expect(actual).toEqual(null);
         });
       });
 
@@ -186,7 +186,7 @@ target("WriteTargetScope", () => {
           const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
           // Assert
-          expect(actual).toBeNull();
+          expect(actual).toEqual(null);
         });
       });
 
@@ -201,7 +201,7 @@ target("WriteTargetScope", () => {
           const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
           // Assert
-          expect(actual).toBeNull();
+          expect(actual).toEqual(null);
         });
       });
 
@@ -222,9 +222,24 @@ target("WriteTargetScope", () => {
 
       context("docs.inception/_cross 配下の WI パスの場合", () => {
         // UT-WTS-WI001
-        it("横断WIを実装レベルの作業単位として返すこと", () => {
+        it("横断WIのdescription.mdはPhase 1として返すこと", () => {
           // Arrange
           const filePath = "docs/inception/_cross/WI-026/description.md";
+          const projectPaths = createProjectPaths();
+
+          // Act
+          const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+          // Assert
+          expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
+        });
+      });
+
+      context("docs.inception/_cross 配下の WI 成果物パスの場合", () => {
+        // UT-WTS-WI001B
+        it("description.md以外は横断WIを実装レベルの作業単位として返すこと", () => {
+          // Arrange
+          const filePath = "docs/inception/_cross/WI-026/logical_design.md";
           const projectPaths = createProjectPaths();
 
           // Act
@@ -237,7 +252,7 @@ target("WriteTargetScope", () => {
 
       context("カスタムdocs.inception配下の _cross WI パスの場合", () => {
         // UT-WTS-WI002
-        it("横断WIを実装レベルの作業単位として返すこと", () => {
+        it("横断WIのdescription.mdはPhase 1として返すこと", () => {
           // Arrange
           const filePath = "custom/inception/_cross/WI-026/description.md";
           const projectPaths = createProjectPaths({
@@ -248,7 +263,37 @@ target("WriteTargetScope", () => {
           const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
           // Assert
-          expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "_cross", storyId: "WI-026" }));
+          expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
+        });
+      });
+
+      context("docs.inception 配下のUnit所有WI description.mdの場合", () => {
+        // UT-WTS-WI004
+        it("Unit所有WIのdescription.mdはPhase 1として返すこと", () => {
+          // Arrange
+          const filePath = "docs/inception/agent-integration/WI-218/description.md";
+          const projectPaths = createProjectPaths();
+
+          // Act
+          const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+          // Assert
+          expect(actual).toEqual(createWriteTargetScope({ level: 1 }));
+        });
+      });
+
+      context("docs.inception 配下のUnit所有WI成果物パスの場合", () => {
+        // UT-WTS-WI005
+        it("description.md以外はUnit所有WIを実装レベルの作業単位として返すこと", () => {
+          // Arrange
+          const filePath = "docs/inception/agent-integration/WI-218/logical_design.md";
+          const projectPaths = createProjectPaths();
+
+          // Act
+          const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+          // Assert
+          expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "agent-integration", storyId: "WI-218" }));
         });
       });
 
@@ -477,7 +522,7 @@ target("WriteTargetScope", () => {
         const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
         // Assert
-        expect(actual).toBeNull();
+        expect(actual).toEqual(null);
       });
     });
 
@@ -507,7 +552,7 @@ target("WriteTargetScope", () => {
         const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
         // Assert
-        expect(actual).toBeNull();
+        expect(actual).toEqual(null);
       });
     });
 
@@ -630,10 +675,7 @@ target("WriteTargetScope", () => {
         const actual = WriteTargetScope.fromPath(filePath, projectPaths);
 
         // Assert
-        // level=2 (unit配下のファイルとしてフォールバック) or null
-        if (actual !== null) {
-          expect(actual.storyId).toBeUndefined();
-        }
+        expect(actual).toEqual(createWriteTargetScope({ level: 2, unitId: "my-unit" }));
       });
     });
   });

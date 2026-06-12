@@ -3,6 +3,7 @@
  * @unit config-foundation
  * @work-item-id WI-012
  * @work-item-id WI-212
+ * @work-item-id WI-219
  */
 import { ConfigFoundationDomainError } from './errors/config-foundation-domain-error.js';
 import { ConfigValidationError } from './errors/config-validation-error.js';
@@ -31,6 +32,7 @@ import type {
 export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
 export type PresetId = 'minimal' | 'standard' | 'strict';
 export type PlanningModeValue = 'interactive' | 'embedded-qa' | 'manual';
+export type ModelDelegationPolicy = 'delegate-sonnet' | 'none';
 export type { PhaseDependenciesPresetId };
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>
@@ -56,6 +58,7 @@ export interface HarnessConfigSourceDocument {
   ci?: HarnessConfigResolvedDocument['ci'];
   validate?: HarnessConfigResolvedDocument['validate'];
   preCommit?: Partial<HarnessConfigResolvedDocument['preCommit']>;
+  modelRouting?: HarnessConfigResolvedDocument['modelRouting'];
   phase2Extensions?: HarnessConfigResolvedDocument['phase2Extensions'];
   architecture?: ArchitectureConfigSource;
 }
@@ -127,6 +130,9 @@ export interface HarnessConfigResolvedDocument {
   };
   preCommit?: {
     implementationExtensions: string[];
+  };
+  modelRouting?: {
+    delegation: ModelDelegationPolicy;
   };
   phase2Extensions?: {
     initialCreationExpirationRules?: Array<{

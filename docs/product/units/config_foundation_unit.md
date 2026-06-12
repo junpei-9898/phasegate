@@ -35,6 +35,7 @@ v0ではオーケストレーション設定（orchestration/sessionセクショ
 - `layers`セクションでL1-L4の有効/無効・バリデータ構成・閾値が設定可能
 - `quickMode`セクションで`allowedCategories` / `maintainedLayers` / `relaxedGates`が設定可能
 - `phase2Extensions.initialCreationExpirationRules` を public compatibility 設定として optional に受け付ける。config-foundation は構造と schema validation を所有し、実行時の意味論は phase2-extensions が解釈する。<!-- @work-item-id WI-170 -->
+- `modelRouting.delegation` を optional に受け付ける。`"delegate-sonnet"` は後方互換の既定方針、`"none"` は固定モデル委任を無効化する方針であり、schema / domain config の構造契約を config-foundation が所有する。実行時の skill 配備・CLI拒否は setup / harness-api / skill-quality 側が解釈する。<!-- @work-item-id WI-219 -->
 - JSONスキーマバリデーション（スキーマファイル定義 + バリデーション実行）
 - 有効・無効なサンプル設定ファイルによる検証
 

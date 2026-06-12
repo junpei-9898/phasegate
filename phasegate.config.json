@@ -47,6 +47,9 @@
     "default": "interactive",
     "perPhase": {}
   },
+  "modelRouting": {
+    "delegation": "delegate-sonnet"
+  },
   "harnesses": {
     "agentLessonCollection": false,
     "cascadeUpdate": false,

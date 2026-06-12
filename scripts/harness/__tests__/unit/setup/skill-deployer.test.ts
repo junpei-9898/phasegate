@@ -22,6 +22,7 @@ import {
   getSkillsForSet,
   initHarnessConfig,
   listAvailableSkillNames,
+  renderSkillForModelDelegation,
   SKILL_CATEGORIES,
 } from "../../../setup/skill-deployer.js";
 import { context, target } from "../../helpers/test-helpers.ts";
@@ -40,6 +41,7 @@ async function readGeneratedConfig(projectRoot: string): Promise<{
   phaseDependencies: { preset: string };
   quickMode?: { allowedCategories?: string[]; relaxedGates?: string[] };
   ci?: { enabled?: boolean };
+  modelRouting?: { delegation?: string };
 }> {
   const raw = await readFile(join(projectRoot, "phasegate.config.json"), "utf-8");
   return JSON.parse(raw) as { phaseDependencies: { preset: string } };
@@ -127,6 +129,22 @@ target("initHarnessConfig", () => {
       });
     });
 
+    context("modelRouting を指定しない場合", () => {
+      it("delegate-sonnet が既定値として書き込まれること", async () => {
+        // Arrange
+        const projectName = "my-project";
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await initHarnessConfig(projectRoot, projectName);
+          return readGeneratedConfig(projectRoot);
+        });
+
+        // Assert
+        expect(actual.modelRouting?.delegation).toBe("delegate-sonnet");
+      });
+    });
+
     context("strict workflow を指定する場合", () => {
       it("quick-implementor と整合する Quick Mode category を生成し relaxedGates は空にすること", async () => {
         // Arrange
@@ -141,6 +159,36 @@ target("initHarnessConfig", () => {
         // Assert
         expect(actual.quickMode?.allowedCategories).toEqual(["bugfix", "docs", "test", "config"]);
         expect(actual.quickMode?.relaxedGates).toEqual([]);
+      });
+    });
+  });
+});
+
+target("renderSkillForModelDelegation", () => {
+  describe("modelRouting.delegation=none 用に skill を描画する", () => {
+    context("Sonnet delegation を含む SKILL.md の場合", () => {
+      it("model/review frontmatter と delegate-sonnet 参照を除去すること", () => {
+        // Arrange
+        const content = `---
+name: sample
+model: sonnet
+review: opus
+---
+
+- **Phase 1（計画）**: Opus がスコープを整理する
+- **Phase 2（実行）**: Sonnet 4.6 に委任して成果物を生成する（\`npx phasegate delegate-sonnet\` 経由）
+- **Phase 3（レビュー）**: Opus が成果物を検証する
+`;
+
+        // Act
+        const actual = renderSkillForModelDelegation(content, "none");
+
+        // Assert
+        expect(actual).not.toContain("model: sonnet");
+        expect(actual).not.toContain("review: opus");
+        expect(actual).not.toContain("delegate-sonnet");
+        expect(actual).not.toContain("Sonnet 4.6");
+        expect(actual).toContain("メインセッションが成果物を生成する");
       });
     });
   });
@@ -433,6 +481,28 @@ target("deploySkills / deployAgentSkillLinks", () => {
         expect(actual.codexStats.isSymbolicLink()).toBe(true);
         expect(actual.claudeTarget).toBe("../skills");
         expect(actual.codexTarget).toBe("../skills");
+      });
+
+      it("modelRouting.delegation=none の場合は配備先 skill から固定委任を除去すること", async () => {
+        // Arrange
+        const harnessRoot = process.cwd();
+
+        // Act
+        const actual = await withTempProject(async (projectRoot) => {
+          await writeFile(
+            join(projectRoot, "phasegate.config.json"),
+            JSON.stringify({ modelRouting: { delegation: "none" } }, null, 2),
+            "utf-8",
+          );
+          await deploySkills(harnessRoot, projectRoot, "all");
+          return readFile(join(projectRoot, "skills", "implementation-planner", "SKILL.md"), "utf-8");
+        });
+
+        // Assert
+        expect(actual).not.toContain("model: sonnet");
+        expect(actual).not.toContain("review: opus");
+        expect(actual).not.toContain("delegate-sonnet");
+        expect(actual).toContain("メインセッションが成果物を生成する");
       });
     });
   });

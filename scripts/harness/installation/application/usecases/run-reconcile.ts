@@ -5,9 +5,11 @@
 // @work-item-id WI-198
 // @work-item-id WI-210
 // @work-item-id WI-216
+// @work-item-id WI-219
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
+import { readModelDelegationPolicy, renderSkillForModelDelegation } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -96,13 +98,24 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
   }
 }
 
-async function copySelectedSkillDirectories(harnessRoot: string, targetRoot: string, skills: readonly string[]): Promise<void> {
+async function copySelectedSkillDirectories(
+  harnessRoot: string,
+  projectRoot: string,
+  targetRoot: string,
+  skills: readonly string[],
+): Promise<void> {
   await mkdir(targetRoot, { recursive: true });
+  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
   for (const skill of skills) {
     const source = join(harnessRoot, "skills", skill);
     const target = join(targetRoot, skill);
     await rm(target, { recursive: true, force: true });
     await copyDirectory(source, target);
+    if (modelDelegationPolicy === "none") {
+      const skillPath = join(target, "SKILL.md");
+      const content = await readFile(skillPath, "utf8");
+      await writeFile(skillPath, renderSkillForModelDelegation(content, modelDelegationPolicy), "utf8");
+    }
   }
 }
 
@@ -113,6 +126,24 @@ async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet
     .filter((entry) => entry.isDirectory() && allowed.has(entry.name))
     .map((entry) => entry.name)
     .sort();
+}
+
+async function hasRenderedSkillDrift(
+  harnessRoot: string,
+  projectRoot: string,
+  targetRoot: string,
+  skills: readonly string[],
+): Promise<boolean> {
+  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
+  for (const skill of skills) {
+    const current = await readTextOrNull(join(targetRoot, skill, "SKILL.md"));
+    if (current === null) return true;
+    const source = await readTextOrNull(join(harnessRoot, "skills", skill, "SKILL.md"));
+    if (source === null) continue;
+    const expected = renderSkillForModelDelegation(source, modelDelegationPolicy);
+    if (current !== expected) return true;
+  }
+  return false;
 }
 
 function normalizeJsonEntry(value: unknown): string {
@@ -491,7 +522,13 @@ export class RunReconcileUseCase {
     }
     const missingManifest = manifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
       || skills.some((skill) => manifest.findEntry(`skills/${skill}`) === null);
-    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest;
+    const renderedSkillDrift = await hasRenderedSkillDrift(
+      input.harnessRoot,
+      input.projectRoot,
+      this.resolveProjectPath(input.projectRoot, "skills"),
+      skills,
+    );
+    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest || renderedSkillDrift;
     return {
       item: this.item(
         "skills",
@@ -514,7 +551,7 @@ export class RunReconcileUseCase {
 
   private async deploySharedSkills(input: RunReconcileInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = this.resolveProjectPath(input.projectRoot, "skills");
-    await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
+    await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -541,7 +578,13 @@ export class RunReconcileUseCase {
     }
     const missingManifest = manifest.findEntry(`${relativePath}/.harness-version`) === null
       || skills.some((skill) => manifest.findEntry(`${relativePath}/${skill}`) === null);
-    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest;
+    const renderedSkillDrift = await hasRenderedSkillDrift(
+      input.harnessRoot,
+      input.projectRoot,
+      this.resolveProjectPath(input.projectRoot, relativePath),
+      skills,
+    );
+    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest || renderedSkillDrift;
     return {
       item: this.item(
         relativePath,
@@ -557,7 +600,7 @@ export class RunReconcileUseCase {
       apply: async () => {
         if (!changed) return null;
         const targetRoot = this.resolveProjectPath(input.projectRoot, relativePath);
-        await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
+        await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
         await writeFile(
           join(targetRoot, ".harness-version"),
           `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,

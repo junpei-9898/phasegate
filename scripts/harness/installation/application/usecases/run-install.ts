@@ -15,9 +15,11 @@
 // @work-item-id WI-214
 // @work-item-id WI-215
 // @work-item-id WI-216
+// @work-item-id WI-219
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { readModelDelegationPolicy, renderSkillForModelDelegation } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -132,13 +134,24 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
   }
 }
 
-async function copySelectedSkillDirectories(harnessRoot: string, targetRoot: string, skills: readonly string[]): Promise<void> {
+async function copySelectedSkillDirectories(
+  harnessRoot: string,
+  projectRoot: string,
+  targetRoot: string,
+  skills: readonly string[],
+): Promise<void> {
   await mkdir(targetRoot, { recursive: true });
+  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
   for (const skill of skills) {
     const source = join(harnessRoot, "skills", skill);
     const target = join(targetRoot, skill);
     await rm(target, { recursive: true, force: true });
     await copyDirectory(source, target);
+    if (modelDelegationPolicy === "none") {
+      const skillPath = join(target, "SKILL.md");
+      const content = await readFile(skillPath, "utf8");
+      await writeFile(skillPath, renderSkillForModelDelegation(content, modelDelegationPolicy), "utf8");
+    }
   }
 }
 
@@ -445,7 +458,7 @@ export class RunInstallUseCase {
       plan.push(item);
       if (input.apply && item.changed && item.repairMode === "mechanical") {
         try {
-          await copySelectedSkillDirectories(input.harnessRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
+          await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
           await writeFile(
             join(input.projectRoot, skillPath, ".harness-version"),
             `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -862,7 +875,7 @@ export class RunInstallUseCase {
 
   private async deploySharedSkills(input: RunInstallInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = join(input.projectRoot, "skills");
-    await copySelectedSkillDirectories(input.harnessRoot, targetRoot, skills);
+    await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,

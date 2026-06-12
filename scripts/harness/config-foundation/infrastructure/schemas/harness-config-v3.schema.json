@@ -501,6 +501,22 @@
         }
       }
     },
+    "modelRouting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delegation"
+      ],
+      "properties": {
+        "delegation": {
+          "type": "string",
+          "enum": [
+            "delegate-sonnet",
+            "none"
+          ]
+        }
+      }
+    },
     "protectedFiles": {
       "type": "object",
       "additionalProperties": false,

@@ -227,6 +227,8 @@ scripts/harness/__tests__/
 
 `phasegate init` / `update-skills` は CLI の setup オーケストレーションとして harness-api の責務に含める。ここでいう setup はドメイン概念ではなく、project filesystem への初期配置規則である。
 
+`phasegate delegate-sonnet` は `phasegate.config.json` の `modelRouting.delegation` を尊重する。`none` の場合、`--help` と `--dry-run` は後方互換として許可し、通常実行は structured error `MODEL_DELEGATION_DISABLED` で拒否する。@work-item-id WI-219
+
 #### 1.5.1 skill 配置の正
 
 skill の実体は project root の `skills/` に配置し、agent ごとの公開面は symlink で表現する。

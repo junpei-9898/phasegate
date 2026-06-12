@@ -5,6 +5,7 @@
 // @work-item-id WI-184
 // @work-item-id WI-202
 // @work-item-id WI-212
+// @work-item-id WI-219
 // Note: import.meta.url を使わず、呼び出し元 (main.ts) がパスを解決して渡す設計。
 
 import { promises as fs } from "node:fs";
@@ -152,6 +153,44 @@ async function copyDirectory(src: string, dest: string): Promise<number> {
   return count;
 }
 
+type ModelDelegationPolicy = "delegate-sonnet" | "none";
+
+export async function readModelDelegationPolicy(projectRoot: string): Promise<ModelDelegationPolicy> {
+  try {
+    const raw = await fs.readFile(join(projectRoot, HARNESS_CONFIG_FILE), "utf-8");
+    const config = JSON.parse(raw) as { modelRouting?: { delegation?: unknown } };
+    return config.modelRouting?.delegation === "none" ? "none" : "delegate-sonnet";
+  } catch {
+    return "delegate-sonnet";
+  }
+}
+
+export function renderSkillForModelDelegation(content: string, policy: ModelDelegationPolicy): string {
+  if (policy !== "none") {
+    return content;
+  }
+
+  return content
+    .replace(/^model:\s+\S+\n/gm, "")
+    .replace(/^review:\s+\S+\n/gm, "")
+    .replaceAll("Sonnet 4.6 に委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）", "メインセッションが成果物を生成する")
+    .replaceAll("Opus が", "メインセッションが")
+    .replaceAll("Sonnet 4.6", "メインセッション")
+    .replaceAll("`npx phasegate delegate-sonnet`", "メインセッション");
+}
+
+async function applyModelDelegationPolicyToSkill(skillDir: string, policy: ModelDelegationPolicy): Promise<void> {
+  if (policy !== "none") {
+    return;
+  }
+
+  const skillPath = join(skillDir, "SKILL.md");
+  try {
+    const content = await fs.readFile(skillPath, "utf-8");
+    await fs.writeFile(skillPath, renderSkillForModelDelegation(content, policy), "utf-8");
+  } catch {}
+}
+
 export async function deploySkills(
   harnessRoot: string,
   projectRoot: string,
@@ -161,6 +200,7 @@ export async function deploySkills(
   const skillsTarget = join(projectRoot, SKILLS_TARGET_DIR);
   const version = await getHarnessVersion(harnessRoot);
   const deployedAt = new Date().toISOString();
+  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
 
   const skillDirs = await fs.readdir(skillsSource, { withFileTypes: true });
   const allSkills = skillDirs.filter((d) => d.isDirectory()).map((d) => d.name);
@@ -173,6 +213,7 @@ export async function deploySkills(
     const srcSkillDir = join(skillsSource, skill);
     const destSkillDir = join(skillsTarget, skill);
     await copyDirectory(srcSkillDir, destSkillDir);
+    await applyModelDelegationPolicyToSkill(destSkillDir, modelDelegationPolicy);
   }
 
   const versionInfo: VersionInfo = { version, deployedAt, skillSet };
@@ -499,6 +540,9 @@ export async function initHarnessConfig(
     planningMode: {
       default: "interactive",
       perPhase: {},
+    },
+    modelRouting: {
+      delegation: "delegate-sonnet",
     },
     harnesses: {},
     paths: {

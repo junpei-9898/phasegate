@@ -1,4 +1,7 @@
+// @unit skill-quality
 // @layer test
+// @story H12-06
+// @work-item-id WI-219
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ValidateSkillStructureUseCase } from '../../../skill-quality/application/usecases/validate-skill-structure-usecase.js';
@@ -23,15 +26,25 @@ target('ValidateSkillStructureUseCase', () => {
   // IT-UC-ValSkill-001
   describe('execute: 全必須セクションが揃っている場合に passed=true になること', () => {
     context("SkillFileReaderPort が全 6 セクションを含む Markdown を返す場合", () => {
-      it('output.result.passed=true, missingSection=[]', async () => {
+      it('検証結果は passed=true かつ missingSection 空配列になる', async () => {
         // Arrange
-        const fullMarkdown = `---\n## 目的\n## 入力\n## 出力\n## 前提条件\n## 実行フロー\n`;
+        const fullMarkdown = `---
+name: example
+languages: [typescript]
+---
+
+## 目的
+## 入力
+## 出力
+## 前提条件
+## 実行フロー
+`;
         const { usecase } = createUseCase(fullMarkdown);
         // Act
         const actual = await usecase.execute({ skillFilePath: 'skills/example.skill' });
         // Assert
         expect(actual.result.passed).toBe(true);
-        expect(actual.result.missingSection).toHaveLength(0);
+        expect(actual.result.missingSection).toEqual([]);
       });
     });
   });
@@ -39,7 +52,7 @@ target('ValidateSkillStructureUseCase', () => {
   // IT-UC-ValSkill-002
   describe("execute: 'purpose' が欠落している場合に passed=false になること", () => {
     context("SkillFileReaderPort が 'purpose' セクションなしの Markdown を返す場合", () => {
-      it('output.result.passed=false, missingSection=[purpose]', async () => {
+      it('検証結果は passed=false かつ missingSection に languageMetadata と purpose を返す', async () => {
         // Arrange
         const missingPurpose = `---\n## 入力\n## 出力\n## 前提条件\n## 実行フロー\n`;
         const { usecase } = createUseCase(missingPurpose);
@@ -47,7 +60,7 @@ target('ValidateSkillStructureUseCase', () => {
         const actual = await usecase.execute({ skillFilePath: 'skills/example.skill' });
         // Assert
         expect(actual.result.passed).toBe(false);
-        expect(actual.result.missingSection).toContain('purpose');
+        expect(actual.result.missingSection).toEqual(['languageMetadata', 'purpose']);
       });
     });
   });
@@ -65,8 +78,11 @@ target('ValidateSkillStructureUseCase', () => {
         };
         const validator = new SkillStructureValidator(mockPort);
         const usecase = new ValidateSkillStructureUseCase(validator);
-        // Act & Assert
-        await expect(usecase.execute({ skillFilePath: 'skills/nonexistent.skill' })).rejects.toThrow(
+        // Act
+        const actual = usecase.execute({ skillFilePath: 'skills/nonexistent.skill' });
+
+        // Assert
+        await expect(actual).rejects.toThrow(
           expect.objectContaining({ code: expect.stringContaining('SKILL_FILE_NOT_FOUND') }),
         );
       });

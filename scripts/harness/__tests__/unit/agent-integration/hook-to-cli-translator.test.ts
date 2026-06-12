@@ -91,8 +91,8 @@ target('HookToCliTranslator', () => {
         // Act
         const actual = sut.translate(event);
         // Assert
-        expect(actual.shouldBlock).toBe(true);
-        expect(actual.cliCommand).toBeUndefined();
+        expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+        expect(actual.cliCommand).toEqual(undefined);
         expect(actual.blockMetadata?.reason).toBe('PROTECTED_FILE');
         expect(actual.blockMetadata?.blockedFilePath).toBe('biome.json');
       });
@@ -225,8 +225,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -251,8 +250,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -277,14 +275,12 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(true);
-          expect(actual.expectedExitCode).toBe(2);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
           expect(actual.blockMetadata?.reason).toBe('PHASE_GATE');
           expect(actual.blockMetadata?.phaseGateBlockers).toEqual(['logical_design.md未作成']);
           expect(actual.blockMetadata?.phaseGateWarnings).toEqual(['推奨依存未充足']);
           expect(actual.blockMetadata?.unitId).toBe('agent-integration');
           expect(actual.blockMetadata?.scopeLevel).toBe(2);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
         });
       });
 
@@ -309,8 +305,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -318,7 +313,9 @@ target('HookToCliTranslator', () => {
         // UT-HTC-044
         it('level:1のWriteTargetScopeでcheckGateが呼ばれること', async () => {
           // Arrange
-          const ports = buildTranslatorPorts();
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['phase 1 blocker'], warnings: [] },
+          });
           const sut = new AsyncHookToCliTranslator({
             configQueryPort: ports.configQueryPort as any,
             reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
@@ -333,9 +330,44 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
-          expect(ports.phaseGateQueryPort.checkGate.mock.calls[0]?.[0]).toMatchObject({ level: 1 });
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['phase 1 blocker'],
+            scopeLevel: 1,
+          }));
+        });
+      });
+
+      context('WI description.mdが変更対象の場合', () => {
+        // UT-HTC-044B
+        it('Level 3 scopeではなくPhase 1 scopeでcheckGateが呼ばれること', async () => {
+          // Arrange
+          const ports = buildTranslatorPorts({
+            phaseGateResult: { passed: false, blockers: ['phase 1 blocker'], warnings: [] },
+          });
+          const sut = new AsyncHookToCliTranslator({
+            configQueryPort: ports.configQueryPort as any,
+            reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+            cliCommandRegistryPort: ports.cliCommandRegistryPort,
+            phaseGateQueryPort: ports.phaseGateQueryPort as any,
+          });
+          const event = createPreToolUseEvent({
+            targetFilePaths: ['docs/inception/_cross/WI-218/description.md'],
+          });
+
+          // Act
+          const actual = await sut.translate(event);
+
+          // Assert
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['phase 1 blocker'],
+            scopeLevel: 1,
+          }));
+          expect(actual.blockMetadata?.unitId).toEqual(undefined);
+          expect(actual.blockMetadata?.storyId).toEqual(undefined);
         });
       });
 
@@ -360,8 +392,13 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(true);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['domain_model.md未作成'],
+            scopeLevel: 2,
+            unitId: 'agent-integration',
+          }));
         });
       });
 
@@ -387,8 +424,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -414,8 +450,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -439,8 +474,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -466,8 +500,11 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(true);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['logical_design.md未作成'],
+          }));
         });
       });
 
@@ -493,8 +530,11 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(true);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['domain_model.md未作成'],
+          }));
         });
       });
 
@@ -517,8 +557,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
     });
@@ -547,8 +586,7 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(false);
-          expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: false, cliArgs: [], expectedExitCode: 0 }));
         });
       });
 
@@ -575,8 +613,11 @@ target('HookToCliTranslator', () => {
           const actual = await sut.translate(event);
 
           // Assert
-          expect(actual.shouldBlock).toBe(true);
-          expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledTimes(1);
+          expect(actual).toEqual(expect.objectContaining({ shouldBlock: true, cliArgs: [], expectedExitCode: 2 }));
+          expect(actual.blockMetadata).toEqual(expect.objectContaining({
+            reason: 'PHASE_GATE',
+            phaseGateBlockers: ['logical_design.md未作成'],
+          }));
         });
       });
     });

@@ -1148,8 +1148,8 @@ K12（Consistency Checker）
 
 #### 受け入れ基準
 
-- [ ] AC-1: `docs/inception/_cross/WI-XXX/...` が `WriteTargetScope { level: 3, unitId: "_cross", storyId: "WI-XXX" }` に解決される
-- [ ] AC-2: カスタム `ProjectPaths.docs.inception` でも `_cross/WI-*` が同じ規則で解決される
+- [ ] AC-1: `docs/inception/_cross/WI-XXX/...` が `WriteTargetScope { level: 3, unitId: "_cross", storyId: "WI-XXX" }` に解決される。ただしWI入口の `description.md` はPhase 1として扱い、Level 3ゲート対象にしない。@work-item-id WI-218
+- [ ] AC-2: カスタム `ProjectPaths.docs.inception` でも `_cross/WI-*` が同じ規則で解決される。ただしWI入口の `description.md` はPhase 1として扱う。@work-item-id WI-218
 - [ ] AC-3: `_cross` 配下の非WIパスは storyId 付き Level 3 として誤認されない
 - [ ] AC-4: 旧 `docs/inception/issues/ISSUE-*` は既存互換として Level 1 のまま維持される
 

@@ -20,6 +20,7 @@
  * @work-item-id WI-206
  * @work-item-id WI-213
  * @work-item-id WI-217
+ * @work-item-id WI-219
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -121,6 +122,19 @@ interface PackageDependencyResult {
 
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function isModelDelegationDisabled(rootDir: string): Promise<boolean> {
+  try {
+    const raw = await fsReadFile(join(rootDir, "phasegate.config.json"), "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isJsonRecord(parsed) || !isJsonRecord(parsed.modelRouting)) {
+      return false;
+    }
+    return parsed.modelRouting.delegation === "none";
+  } catch {
+    return false;
+  }
 }
 
 async function ensurePhasegatePackageDependency(rootDir: string, version: string): Promise<PackageDependencyResult> {
@@ -3141,6 +3155,13 @@ Examples:
         if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
           printSubcommandHelp("delegate-sonnet");
           process.exit(0);
+        }
+        if (!hasFlag(args, "--dry-run") && await isModelDelegationDisabled(rootDir)) {
+          console.error(JSON.stringify({
+            code: "MODEL_DELEGATION_DISABLED",
+            message: "phasegate delegate-sonnet is disabled by modelRouting.delegation=none",
+          }));
+          process.exit(1);
         }
         const { spawn } = await import("node:child_process");
         const scriptPath = join(harnessRoot, "scripts/delegate-sonnet.sh");

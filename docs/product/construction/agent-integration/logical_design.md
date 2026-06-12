@@ -391,6 +391,8 @@ package-lock.json
 
 #### 2.2.5 WriteTargetScope（v2.2.0追加）
 
+@work-item-id WI-218
+
 | 属性 | 型 | 説明 | 必須 |
 |------|----|------|------|
 | level | `PhaseGateLevel` | フェーズゲートレベル（1, 2, 3） | Yes |
@@ -420,6 +422,8 @@ package-lock.json
 | R1 | `{source[n]}/{unitId}/**`（`__tests__/` 除く） | 3 | ✓ | — |
 | R2 | `{source[n]}/{unitId}/__tests__/**` | null | — | — |
 | R3 | `{docs.construction}/{unitId}/**` | 2 | ✓ | — |
+| R3a | `{docs.inception}/_cross/{WI-XXX}/description.md` | 1 | — | — |
+| R3b | `{docs.inception}/{unitId}/{WI-XXX}/description.md` | 1 | — | — |
 | R4 | `{docs.inception}/{unitId}/{storyId}/**` | 3 | ✓ | ✓ |
 | R5 | `{docs.inception}/{unitId}/**`（storyIdなし） | 2 | ✓ | — |
 | R6 | `{docs.inception}/_shared/**` | 1 | — | — |
@@ -518,6 +522,7 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
   5. `configQueryPort.getProjectPaths()` で `ProjectPaths` を取得する
   6. `hookEvent.targetFilePaths` の各パスに対し `WriteTargetScope.fromPath(filePath, projectPaths)` でスコープを推定する
      - ISSUE-026 Phase C-2以降、`docs.inception/_cross/WI-*` は横断WIの仮想unitとして `level=3`, `unitId="_cross"`, `storyId="WI-XXX"` に解決する
+     - WI-218以降、WI入口の `description.md` は `level=1` に解決し、Level 3フェーズゲート対象にしない
   7. いずれのパスもスコープ外（null）の場合は `HookTranslationResult.create({ shouldBlock: false, ... })` を返す
   8. スコープが検出された場合、`phaseGateQueryPort.checkGate(detectedScope)` を呼び出す
   9. `!phaseGateResult.hasPassed()` の場合は `HookTranslationResult.block()` を返す

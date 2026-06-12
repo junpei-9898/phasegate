@@ -403,6 +403,42 @@ describe('harness CLI E2E', () => {
       expect(actual.stdout).toContain('test task');
       expect(actual.stderr).not.toContain('Unknown option');
     });
+
+    it('delegate-sonnet は modelRouting.delegation=none の通常実行を拒否する', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'delegation-disabled-test');
+        expect(init.exitCode).toBe(0);
+        const configPath = join(cwd, 'phasegate.config.json');
+        const config = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
+        config.modelRouting = { delegation: 'none' };
+        writeFileSync(
+          configPath,
+          JSON.stringify(config, null, 2),
+        );
+        return runInCwd(cwd, 'delegate-sonnet', '--prompt', 'test task');
+      });
+
+      expect(actual.exitCode).toBe(1);
+      expect(actual.stderr).toContain('MODEL_DELEGATION_DISABLED');
+    });
+
+    it('delegate-sonnet は modelRouting.delegation=none でも dry-run を許可する', () => {
+      const actual = withTempDir((cwd) => {
+        const init = runInCwd(cwd, 'init', '--name', 'delegation-disabled-dry-run-test');
+        expect(init.exitCode).toBe(0);
+        const configPath = join(cwd, 'phasegate.config.json');
+        const config = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
+        config.modelRouting = { delegation: 'none' };
+        writeFileSync(
+          configPath,
+          JSON.stringify(config, null, 2),
+        );
+        return runInCwd(cwd, 'delegate-sonnet', 'test task', '--dry-run');
+      });
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('test task');
+    });
   });
 
   describe('biome-ast-engine コマンド群', () => {

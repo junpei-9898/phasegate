@@ -1993,6 +1993,8 @@ Both skills route agents away from repeated setup once local readiness is comple
 ## WI-180 Scoped-Out Effective Repair Guidance in Skills
 
 `phasegate-toolkit-guide` and `phasegate-config-doctor` should prefer `currentScopeRepairTarget` and `repairModeApplicability` over raw `repairMode` when deciding whether to suggest repair. Scoped-out findings with `currentScopeRepairTarget: false` are explanatory context even when the original `repairMode` is mechanical.
+
+Bundled skill deployment must honor `modelRouting.delegation`. When the policy is `none`, deployed `SKILL.md` files must not retain fixed `model` / `review` frontmatter or `delegate-sonnet` body instructions; the skill may keep its three-phase workflow but Phase 2 is performed by the main session. This is a skill-quality consistency rule for generated runtime skill text. @work-item-id WI-219
 ## Cascade Update Dry-Run Contract
 
 <!-- @work-item-id WI-192 -->

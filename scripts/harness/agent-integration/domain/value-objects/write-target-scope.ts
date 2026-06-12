@@ -75,11 +75,15 @@ export class WriteTargetScope {
 
     const inceptionMatch = matchPrefix(normalizedPath, inceptionPath);
     if (inceptionMatch !== null) {
-      const [unitId, secondSegment] = inceptionMatch;
+      const [unitId, secondSegment, thirdSegment] = inceptionMatch;
 
       // 横断的 WI: docs/inception/_cross/{WI-XXX}/ → Level 3
       if (unitId === "_cross") {
         if (secondSegment !== undefined && WORK_ITEM_ID_PATTERN.test(secondSegment)) {
+          if (thirdSegment === "description.md") {
+            return WriteTargetScope.create({ level: 1 });
+          }
+
           return WriteTargetScope.create({ level: 3, unitId, storyId: secondSegment });
         }
 
@@ -88,6 +92,10 @@ export class WriteTargetScope {
 
       // Unit 所有 WI / 既存 US パス: docs/inception/{unit}/{storyId}/ → Level 3
       if (unitId !== undefined && secondSegment !== undefined && WORK_ITEM_ID_PATTERN.test(secondSegment)) {
+        if (secondSegment.startsWith("WI-") && thirdSegment === "description.md") {
+          return WriteTargetScope.create({ level: 1 });
+        }
+
         return WriteTargetScope.create({ level: 3, unitId, storyId: secondSegment });
       }
     }

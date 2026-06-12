@@ -57,6 +57,9 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
     "default": "interactive",  // "interactive" | "embedded-qa"
     "perPhase": {}
   },
+  "modelRouting": {
+    "delegation": "delegate-sonnet" // "delegate-sonnet" | "none"
+  },
   "harnesses": {
     "agentLessonCollection": false,
     "cascadeUpdate": false,
@@ -472,6 +475,14 @@ Quick Mode with `relaxedGates: ["phase-gate"]` relaxes `storyReflection` as well
 |------------|----------|-----------------|----------------------------------------------------------------------|
 | `default`  | `string` | `"interactive"` | `"interactive"` prompts the user at each decision point. `"embedded-qa"` embeds QA checks inline without prompting. |
 | `perPhase` | `object` | `{}`            | Override the planning mode for specific phases. Keys are phase names, values are `"interactive"` or `"embedded-qa"`. |
+
+#### `modelRouting`
+
+<!-- @work-item-id WI-219 -->
+
+| Sub-field    | Type     | Default              | Description |
+|--------------|----------|----------------------|-------------|
+| `delegation` | `string` | `"delegate-sonnet"`  | `"delegate-sonnet"` preserves the legacy skill routing and `phasegate delegate-sonnet` behavior. `"none"` deploys bundled skills without fixed `model` / `review` frontmatter or `delegate-sonnet` body instructions, and blocks normal `phasegate delegate-sonnet` execution. Help and `--dry-run` remain available. |
 
 #### `harnesses`
 

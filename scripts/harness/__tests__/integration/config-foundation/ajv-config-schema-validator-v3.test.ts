@@ -87,7 +87,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/architecture/preset',
+            message: expect.stringContaining('enum: /architecture/preset'),
+          }),
+        ]);
       });
     });
 
@@ -104,7 +110,18 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual(expect.arrayContaining([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/architecture/layers',
+            message: expect.stringContaining('required: /architecture/layers'),
+          }),
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/architecture/allowedDependencies',
+            message: expect.stringContaining('required: /architecture/allowedDependencies'),
+          }),
+        ]));
       });
     });
   });
@@ -177,7 +194,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/agentIntegration/stopHook/enforce',
+            message: expect.stringContaining('must be boolean'),
+          }),
+        ]);
       });
     });
 
@@ -195,7 +218,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/agentIntegration/unknownKey',
+            message: expect.stringContaining('additionalProperties'),
+          }),
+        ]);
       });
     });
   });
@@ -233,7 +262,74 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/ci/enabled',
+            message: expect.stringContaining('must be boolean'),
+          }),
+        ]);
+      });
+    });
+  });
+
+  describe('modelRouting.delegation フィールド (WI-219)', () => {
+    context('v2 document が delegation none を含む場合', () => {
+      it('v2 schema で validate され errors 0 件', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          modelRouting: { delegation: 'none' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('v3 document が delegation delegate-sonnet を含む場合', () => {
+      it('v3 schema で validate され errors 0 件', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          modelRouting: { delegation: 'delegate-sonnet' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context('modelRouting.delegation が未対応値の場合', () => {
+      it('schema validate で error が返る', () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          ...baseV2Document(),
+          architecture: { preset: 'clean' },
+          modelRouting: { delegation: 'always' },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: 'L1-001',
+            path: '/modelRouting/delegation',
+            message: expect.stringContaining('delegate-sonnet, none'),
+          }),
+        ]);
       });
     });
   });

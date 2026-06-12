@@ -5,6 +5,7 @@
 @story-id H11-03
 @story-id H11-04
 @work-item-id WI-097
+@work-item-id WI-218
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-28（ISSUE-001 issueパス認識 + PhaseGateQueryResult 追加）
@@ -27,7 +28,7 @@
 | `scripts/harness/__tests__/unit/agent-integration/fallback-capability-spec.test.ts` | FallbackCapabilitySpec（VO） | 7 |
 | `scripts/harness/__tests__/unit/agent-integration/hook-to-cli-translator.test.ts` | HookToCliTranslator（DS） | 11 |
 | `scripts/harness/__tests__/unit/agent-integration/fallback-verification-service.test.ts` | FallbackVerificationService（DS） | 10 |
-| `scripts/harness/__tests__/unit/agent-integration/write-target-scope.test.ts` | WriteTargetScope（VO）ISSUE-001追加 | 26 |
+| `scripts/harness/__tests__/unit/agent-integration/write-target-scope.test.ts` | WriteTargetScope（VO）ISSUE-001追加 + WI description Phase 1例外 | 30 |
 | `scripts/harness/__tests__/unit/agent-integration/phase-gate-query-result.test.ts` | PhaseGateQueryResult（VO）ISSUE-001追加 | 16 |
 
 ※境界値（UT-BV-*）は各ファイルに分散して記載（14件 + ISSUE-001追加5件 = 19件）
@@ -1943,6 +1944,8 @@ it('passed=true, blockers=[], warnings=[]（最小有効）で生成が成功す
 | `write-target-scope.test.ts` | WriteTargetScope 既存USパス後方互換 | UT-WTS-I020〜I021 | 2 |
 | `write-target-scope.test.ts` | WriteTargetScope カスタムProjectPaths | UT-WTS-I030〜I031 | 2 |
 | `write-target-scope.test.ts` | WriteTargetScope issueパス境界値 | UT-WTS-I040〜I043 | 4 |
+| `write-target-scope.test.ts` | WI description.md Phase 1例外 | UT-WTS-WI001, UT-WTS-WI002, UT-WTS-WI004 | 3 |
+| `write-target-scope.test.ts` | WI description.md以外のLevel 3維持 | UT-WTS-WI001B, UT-WTS-WI005 | 2 |
 | `write-target-scope.test.ts` | WORK_ITEM_ID_PATTERN マッチ（fromPath()経由間接検証） | UT-WTS-P001〜P006 | 6 |
 | `write-target-scope.test.ts` | WORK_ITEM_ID_PATTERN 不マッチ（fromPath()経由間接検証） | UT-WTS-P010〜P015 | 6 |
 | `phase-gate-query-result.test.ts` | PhaseGateQueryResult 生成 | UT-PGR-001〜004 | 4 |

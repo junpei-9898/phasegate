@@ -4,6 +4,7 @@
 // @work-item-id WI-148
 // @work-item-id WI-210
 // @work-item-id WI-216
+// @work-item-id WI-219
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -222,6 +223,35 @@ async function arrangeOldInstallWithEmptySharedSkillsAndRepair() {
   };
 }
 
+async function arrangeReconcileWithDelegationDisabledRepair() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  const configPath = join(root, "phasegate.config.json");
+  const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+  config.modelRouting = { delegation: "none" };
+  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  await rm(join(root, "skills", "implementation-planner"), { recursive: true, force: true });
+  const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    repaired,
+    skill: await readFile(join(root, "skills", "implementation-planner", "SKILL.md"), "utf8"),
+  };
+}
+
+async function arrangeReconcileWithDelegationPolicyChange() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.146.0");
+  const configPath = join(root, "phasegate.config.json");
+  const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+  config.modelRouting = { delegation: "none" };
+  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    repaired,
+    skill: await readFile(join(root, "skills", "implementation-planner", "SKILL.md"), "utf8"),
+  };
+}
+
 async function arrangePersonalInstallWithDeletedBundledSkillAndRepair() {
   const root = await createProjectRoot();
   await runPersonalInstall(root, "codex", "0.145.3");
@@ -329,6 +359,33 @@ target("ReconcileHandler", () => {
       expect(actual.hasToolkitGuide).toBe(true);
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("claude-skills-symlink");
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("codex-skills-symlink");
+    });
+
+    it("modelRouting.delegation=none の reconcile 修復は固定委任を復元しないこと", async () => {
+      // Act
+      const actual = await arrangeReconcileWithDelegationDisabledRepair();
+
+      // Assert
+      expect(actual.repaired.exitCode).toBe(0);
+      expect(actual.skill).not.toContain("model: sonnet");
+      expect(actual.skill).not.toContain("review: opus");
+      expect(actual.skill).not.toContain("delegate-sonnet");
+      expect(actual.skill).toContain("メインセッションが成果物を生成する");
+    });
+
+    it("modelRouting.delegation 変更後の reconcile は同一 version の shared skill を再描画すること", async () => {
+      // Act
+      const actual = await arrangeReconcileWithDelegationPolicyChange();
+
+      // Assert
+      expect(actual.repaired.exitCode).toBe(0);
+      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
+        expect.objectContaining({ path: "skills", changed: true }),
+      ]));
+      expect(actual.skill).not.toContain("model: sonnet");
+      expect(actual.skill).not.toContain("review: opus");
+      expect(actual.skill).not.toContain("delegate-sonnet");
+      expect(actual.skill).toContain("メインセッションが成果物を生成する");
     });
 
     it("personal install の missing bundled skill を reconcile/update-skills 経路で修復し user-owned skill を保持すること", async () => {
