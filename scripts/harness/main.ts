@@ -38,6 +38,7 @@ import {
   writeFile as fsWriteFile,
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
 import { buildCiGovernance } from "./ci-governance/composition-root.js";
@@ -335,21 +336,42 @@ async function listFilesRecursive(root: string): Promise<string[]> {
   }
 }
 
+// Normalize path separators so scanning works on Windows (`\`) as well as POSIX.
+export function toPosixPath(filePath: string): string {
+  return filePath.replace(/\\/g, "/");
+}
+
+// Derive the next WI id from an already-collected list of file paths. Exposed
+// (with the file list injected) so the numbering rules — Windows separator
+// handling and dynamic zero-pad width past WI-999 — can be unit tested without
+// touching the filesystem.
+export function computeNextWorkItemId(files: readonly string[]): string {
+  let max = 0;
+  let maxWidth = 3;
+  for (const file of files) {
+    const match = toPosixPath(file).match(/\/WI-(\d+)\/description\.md$/);
+    if (match) {
+      max = Math.max(max, Number(match[1]));
+      maxWidth = Math.max(maxWidth, match[1].length);
+    }
+  }
+  const next = max + 1;
+  return `WI-${String(next).padStart(maxWidth, "0")}`;
+}
+
 async function nextWorkItemId(rootDir: string, inceptionRoot = "docs/inception"): Promise<string> {
   const files = await listFilesRecursive(join(rootDir, inceptionRoot));
-  let max = 0;
-  for (const file of files) {
-    const match = file.match(/\/WI-(\d{3})\/description\.md$/);
-    if (match) max = Math.max(max, Number(match[1]));
-  }
-  return `WI-${String(max + 1).padStart(3, "0")}`;
+  return computeNextWorkItemId(files);
 }
 
 async function countLegacyPlansWithoutWorkItems(rootDir: string): Promise<number> {
   const files = await listFilesRecursive(join(rootDir, "docs", "inception"));
-  const hasWorkItem = files.some((file) => /\/WI-\d{3}\/description\.md$/.test(file));
+  const hasWorkItem = files.some((file) => /\/WI-\d+\/description\.md$/.test(toPosixPath(file)));
   if (hasWorkItem) return 0;
-  return files.filter((file) => file.includes("/codding_plan/") || file.endsWith("_plan.md")).length;
+  return files.filter((file) => {
+    const posix = toPosixPath(file);
+    return posix.includes("/codding_plan/") || posix.endsWith("_plan.md");
+  }).length;
 }
 
 async function scaffoldInceptionRoots(rootDir: string, unit: string | null = null, inceptionRoot = "docs/inception"): Promise<void> {
@@ -1378,11 +1400,11 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
   const configIntents: Record<ConfigChangeIntent, readonly { readonly pointer: string; readonly path: readonly string[]; readonly value: unknown }[]> = {
     "l4-strict": [
       { pointer: "/layers/L4/enabled", path: ["layers", "L4", "enabled"], value: true },
-      { pointer: "/layers/L4/failOnWarning", path: ["layers", "L4", "failOnWarning"], value: true },
+      { pointer: "/validate/failOnWarning", path: ["validate", "failOnWarning"], value: true },
     ],
     "ci-fail-on-warning": [
       { pointer: "/ci/enabled", path: ["ci", "enabled"], value: true },
-      { pointer: "/layers/L4/failOnWarning", path: ["layers", "L4", "failOnWarning"], value: true },
+      { pointer: "/validate/failOnWarning", path: ["validate", "failOnWarning"], value: true },
     ],
     "quick-mode-strict": [
       { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["bugfix"] },
@@ -1483,7 +1505,7 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
     readonly risks: readonly string[];
   }> = {
     "l4-strict": {
-      targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: layers.L4.failOnWarning"],
+      targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: validate.failOnWarning"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
       commands: ["phasegate config:plan --intent l4-strict --apply --json", "phasegate validate --layer L4 --fail-on-warning --format human"],
@@ -2766,9 +2788,28 @@ async function main(): Promise<void> {
       }
 
       case "phasegate:generate-matrix": {
+        // REAL registry: 有効 storyId 一覧を traceability-model の StoryCatalog から取得する。
+        // 空スタブだと生成マトリクスの storyId 整合性検査が事実上 no-op になるため配線する。
+        // config・catalog が読めない環境（config 不在など）では空配列にフォールバックし、
+        // マトリクス生成自体は継続する。
+        const loadCatalogStoryIds = async (): Promise<readonly string[]> => {
+          try {
+            const { createConfigFoundationModule } = await import("./config-foundation/composition-root.js");
+            const configModule = createConfigFoundationModule();
+            const resolvedConfig = await configModule.usecases.loadResolvedConfigUseCase.execute();
+            const { createTraceabilityModelModule } = await import("./traceability-model/composition-root.js");
+            const traceModule = createTraceabilityModelModule(process.cwd(), {
+              pathRoots: { designDocsRoot: resolvedConfig.config.paths.designDocs },
+            });
+            const catalogStoryIds = await traceModule.storyCatalog.getAllStoryIds();
+            return catalogStoryIds.map((s) => s.value);
+          } catch {
+            return [];
+          }
+        };
         const { createNyquistValidationModule } = await import("./nyquist-validation/composition-root.js");
         const mod = createNyquistValidationModule({
-          getStoryIds: async () => [],
+          getStoryIds: loadCatalogStoryIds,
         });
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
@@ -3250,4 +3291,19 @@ Examples:
   }
 }
 
-main();
+// Only run the CLI when this module is the process entry point. Guarding this
+// keeps `main()` from executing (and calling process.exit) when the module is
+// imported for unit testing of exported helpers such as computeNextWorkItemId.
+function isMainModule(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return resolve(entry) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
+  main();
+}

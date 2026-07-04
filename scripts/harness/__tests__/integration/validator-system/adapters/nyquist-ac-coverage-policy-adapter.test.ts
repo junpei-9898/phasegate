@@ -23,8 +23,8 @@ target('NyquistAcCoveragePolicyAdapter', () => {
       });
     });
 
-    context('存在しないmatrixFilePathを渡す場合', () => {
-      it('graceful skipとしてpassed=trueかつerrors=[]が返ること (IT-REPO-Nyquist-002)', async () => {
+    context('存在しないmatrixFilePathを渡す場合（FAIL-CLOSED）', () => {
+      it('検査失敗をpassed=falseとして扱いエラーを1件以上返すこと (IT-REPO-Nyquist-002)', async () => {
         // Arrange
         const adapter = new NyquistAcCoveragePolicyAdapter();
 
@@ -32,8 +32,9 @@ target('NyquistAcCoveragePolicyAdapter', () => {
         const actual = await adapter.checkCoverage({ matrixFilePath: '/path/to/missing-matrix.json' });
 
         // Assert
-        expect(actual.passed).toBe(true);
-        expect(actual.errors).toHaveLength(0);
+        expect(actual.passed).toBe(false);
+        expect(actual.errors.length).toBeGreaterThanOrEqual(1);
+        expect(actual.errors[0]?.code.value).toBe('L3-004');
       });
     });
   });

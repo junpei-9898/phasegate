@@ -9,7 +9,6 @@
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
-import { readModelDelegationPolicy, renderSkillForModelDelegation } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -17,6 +16,7 @@ import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
+import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 
 type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse";
 type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "copy-dir" | "symlink" | "unknown";
@@ -99,13 +99,14 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
 }
 
 async function copySelectedSkillDirectories(
+  modelDelegation: ModelDelegationPort,
   harnessRoot: string,
   projectRoot: string,
   targetRoot: string,
   skills: readonly string[],
 ): Promise<void> {
   await mkdir(targetRoot, { recursive: true });
-  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
+  const modelDelegationPolicy = await modelDelegation.readPolicy(projectRoot);
   for (const skill of skills) {
     const source = join(harnessRoot, "skills", skill);
     const target = join(targetRoot, skill);
@@ -114,7 +115,7 @@ async function copySelectedSkillDirectories(
     if (modelDelegationPolicy === "none") {
       const skillPath = join(target, "SKILL.md");
       const content = await readFile(skillPath, "utf8");
-      await writeFile(skillPath, renderSkillForModelDelegation(content, modelDelegationPolicy), "utf8");
+      await writeFile(skillPath, modelDelegation.renderSkill(content, modelDelegationPolicy), "utf8");
     }
   }
 }
@@ -129,18 +130,19 @@ async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet
 }
 
 async function hasRenderedSkillDrift(
+  modelDelegation: ModelDelegationPort,
   harnessRoot: string,
   projectRoot: string,
   targetRoot: string,
   skills: readonly string[],
 ): Promise<boolean> {
-  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
+  const modelDelegationPolicy = await modelDelegation.readPolicy(projectRoot);
   for (const skill of skills) {
     const current = await readTextOrNull(join(targetRoot, skill, "SKILL.md"));
     if (current === null) return true;
     const source = await readTextOrNull(join(harnessRoot, "skills", skill, "SKILL.md"));
     if (source === null) continue;
-    const expected = renderSkillForModelDelegation(source, modelDelegationPolicy);
+    const expected = modelDelegation.renderSkill(source, modelDelegationPolicy);
     if (current !== expected) return true;
   }
   return false;
@@ -265,6 +267,7 @@ export class RunReconcileUseCase {
   constructor(
     private readonly manifestRepository: ManifestRepositoryPort,
     private readonly hashCalculator: HashCalculatorPort,
+    private readonly modelDelegation: ModelDelegationPort,
   ) {}
 
   async execute(input: RunReconcileInput): Promise<RunReconcileResult> {
@@ -523,6 +526,7 @@ export class RunReconcileUseCase {
     const missingManifest = manifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
       || skills.some((skill) => manifest.findEntry(`skills/${skill}`) === null);
     const renderedSkillDrift = await hasRenderedSkillDrift(
+      this.modelDelegation,
       input.harnessRoot,
       input.projectRoot,
       this.resolveProjectPath(input.projectRoot, "skills"),
@@ -551,7 +555,7 @@ export class RunReconcileUseCase {
 
   private async deploySharedSkills(input: RunReconcileInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = this.resolveProjectPath(input.projectRoot, "skills");
-    await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
+    await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -579,6 +583,7 @@ export class RunReconcileUseCase {
     const missingManifest = manifest.findEntry(`${relativePath}/.harness-version`) === null
       || skills.some((skill) => manifest.findEntry(`${relativePath}/${skill}`) === null);
     const renderedSkillDrift = await hasRenderedSkillDrift(
+      this.modelDelegation,
       input.harnessRoot,
       input.projectRoot,
       this.resolveProjectPath(input.projectRoot, relativePath),
@@ -600,7 +605,7 @@ export class RunReconcileUseCase {
       apply: async () => {
         if (!changed) return null;
         const targetRoot = this.resolveProjectPath(input.projectRoot, relativePath);
-        await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
+        await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
         await writeFile(
           join(targetRoot, ".harness-version"),
           `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,

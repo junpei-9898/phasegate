@@ -137,14 +137,46 @@ function extractExports(content: string): string[] {
 function resolveImportTarget(fromFile: string, specifier: string, fileSet: ReadonlySet<string>): string | null {
   if (!specifier.startsWith('.')) return null;
   const base = resolve(dirname(fromFile), specifier);
-  const candidates = extname(base)
-    ? [base]
-    : [`${base}.ts`, `${base}.tsx`, join(base, 'index.ts'), join(base, 'index.tsx')];
+  const candidates = buildResolutionCandidates(base);
   for (const candidate of candidates) {
     const normalized = normalize(candidate);
     if (fileSet.has(normalized)) return normalized;
   }
   return null;
+}
+
+/**
+ * import 指定子から実ファイル候補を生成する。
+ *
+ * このプロジェクトは ESM 規約に従い `./foo.js` と書いて実体 `foo.ts` を参照する
+ * （TypeScript の `.js` 拡張子付き import）。素朴に extname を見ると `.js` 実体を
+ * 探しに行き解決に失敗するため、`.js`/`.jsx`/`.mjs`/`.cjs` 拡張子は対応する
+ * TypeScript 拡張子（およびディレクトリの index）へマッピングした候補も加える。
+ */
+function buildResolutionCandidates(base: string): string[] {
+  const ext = extname(base);
+  const JS_TO_TS: Record<string, readonly string[]> = {
+    '.js': ['.ts', '.tsx'],
+    '.jsx': ['.tsx', '.ts'],
+    '.mjs': ['.mts', '.ts'],
+    '.cjs': ['.cts', '.ts'],
+  };
+
+  if (ext) {
+    const mapped = JS_TO_TS[ext];
+    if (mapped) {
+      const withoutExt = base.slice(0, base.length - ext.length);
+      // 例: `./foo.js` → `foo.ts` / `foo.tsx`、`./dir.js`(ディレクトリ)→ `dir/index.ts`
+      return [
+        ...mapped.map((tsExt) => `${withoutExt}${tsExt}`),
+        base,
+        ...mapped.map((tsExt) => join(withoutExt, `index${tsExt}`)),
+      ];
+    }
+    return [base];
+  }
+
+  return [`${base}.ts`, `${base}.tsx`, join(base, 'index.ts'), join(base, 'index.tsx')];
 }
 
 function classifyDeadCodeExclusion(filePath: string): string | undefined {

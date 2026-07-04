@@ -111,6 +111,51 @@ target('ClassifyChangeCategoryUseCase', () => {
         ]);
       });
 
+      // UT-CCC-NEW-DOMAIN-01: changeKind ハードコード回帰
+      it("beforeContent=null かつ afterContent ありの domain/ ファイルが CREATE と判定され rejectionRule='NEW_DOMAIN' が返ること", async () => {
+        // Arrange: domain を allowedCategories に含めることで MIXED_CHANGES を回避し
+        // NEW_DOMAIN 判定に到達させる。以前は changeKind が MODIFY 固定だったため
+        // 新規 domain ファイルでも NEW_DOMAIN が発火しなかった。
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain'],
+        });
+        const { sut } = buildSut({
+          getConfig: vi.fn().mockResolvedValue(config),
+        });
+        const path = 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts';
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{ filePath: path, beforeContent: null, afterContent: 'export const created = 1;\n' }],
+        });
+        // Assert
+        expect(actual.fullModeRequired).toBe(true);
+        expect(actual.rejectionRule).toBe('NEW_DOMAIN');
+      });
+
+      // UT-CCC-NEW-DOMAIN-02: 既存 domain ファイルの変更は NEW_DOMAIN にならない
+      it('beforeContent ありの domain/ ファイル（既存の変更）は NEW_DOMAIN にならないこと', async () => {
+        // Arrange
+        const config = createQuickModeConfig({
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain'],
+        });
+        const { sut } = buildSut({
+          getConfig: vi.fn().mockResolvedValue(config),
+        });
+        const path = 'scripts/harness/quick-mode/domain/value-objects/existing-vo.ts';
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{
+            filePath: path,
+            beforeContent: 'export const value = 1;\n',
+            afterContent: 'export const value = 2;\n',
+          }],
+        });
+        // Assert
+        expect(actual.rejectionRule).not.toBe('NEW_DOMAIN');
+      });
+
       // UT-CCC-006
       it('fullModeRequiredWhen の全ルールが false の場合に domain/ CREATE でも fullModeRequired=false が返ること', async () => {
         // Arrange

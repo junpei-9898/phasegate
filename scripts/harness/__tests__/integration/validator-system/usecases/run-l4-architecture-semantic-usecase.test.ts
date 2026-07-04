@@ -27,7 +27,12 @@ target('RunL4ValidatorsUseCase architecture semantic advisory', () => {
             getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-002'] })),
           },
           contractMapper: new ValidationResultContractMapper(),
-          consistencyCheckService: { check: vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] }) } as never,
+          consistencyCheckService: {
+            check: vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] }),
+            checkWorkItemReflection: vi.fn().mockResolvedValue({
+              report: { hasMismatches: () => false, toHarnessErrors: () => [] },
+            }),
+          } as never,
           architectureSemanticAnalysisService: { analyze: architectureAnalyze } as never,
         });
 

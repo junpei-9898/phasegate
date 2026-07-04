@@ -19,7 +19,6 @@
 
 import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { readModelDelegationPolicy, renderSkillForModelDelegation } from "../../../setup/skill-deployer.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
@@ -27,6 +26,7 @@ import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
+import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
 type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "text-managed" | "copy" | "copy-dir" | "symlink";
@@ -40,6 +40,10 @@ export interface InstallPlanItem {
   readonly summary: string;
   readonly diff: string;
   readonly skillHint: string | null;
+  // Non-null when a target could not be applied cleanly and the user must act
+  // (e.g. a pre-existing git hook that phasegate will not overwrite). Surfaces
+  // situations that would otherwise be silently skipped.
+  readonly warning: string | null;
 }
 
 export interface RunInstallInput {
@@ -135,13 +139,14 @@ async function copyDirectory(src: string, dest: string): Promise<void> {
 }
 
 async function copySelectedSkillDirectories(
+  modelDelegation: ModelDelegationPort,
   harnessRoot: string,
   projectRoot: string,
   targetRoot: string,
   skills: readonly string[],
 ): Promise<void> {
   await mkdir(targetRoot, { recursive: true });
-  const modelDelegationPolicy = await readModelDelegationPolicy(projectRoot);
+  const modelDelegationPolicy = await modelDelegation.readPolicy(projectRoot);
   for (const skill of skills) {
     const source = join(harnessRoot, "skills", skill);
     const target = join(targetRoot, skill);
@@ -150,7 +155,7 @@ async function copySelectedSkillDirectories(
     if (modelDelegationPolicy === "none") {
       const skillPath = join(target, "SKILL.md");
       const content = await readFile(skillPath, "utf8");
-      await writeFile(skillPath, renderSkillForModelDelegation(content, modelDelegationPolicy), "utf8");
+      await writeFile(skillPath, modelDelegation.renderSkill(content, modelDelegationPolicy), "utf8");
     }
   }
 }
@@ -165,8 +170,28 @@ async function listSelectedBundledSkills(harnessRoot: string, skillSet: SkillSet
     .sort();
 }
 
+// Canonical, key-order-independent serialization used as a dedup key when
+// merging hook arrays. Plain `JSON.stringify` is sensitive to object key order,
+// so two structurally identical hook entries authored with different key orders
+// would be treated as distinct and appended on every merge, breaking merge
+// idempotency. Sorting keys recursively makes the key stable.
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalize);
+  }
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(record).sort()) {
+      sorted[key] = canonicalize(record[key]);
+    }
+    return sorted;
+  }
+  return value;
+}
+
 function normalizeJsonEntry(value: unknown): string {
-  return JSON.stringify(value);
+  return JSON.stringify(canonicalize(value));
 }
 
 function mergeHookArrays(existing: unknown, incoming: unknown): unknown[] {
@@ -344,6 +369,7 @@ export class RunInstallUseCase {
   constructor(
     private readonly manifestRepository: ManifestRepositoryPort,
     private readonly hashCalculator: HashCalculatorPort,
+    private readonly modelDelegation: ModelDelegationPort,
   ) {}
 
   async execute(input: RunInstallInput): Promise<RunInstallResult> {
@@ -384,6 +410,18 @@ export class RunInstallUseCase {
       const next = unmanagedPersonalRuntimeFile ? before : this.merge(target, before, template, input.phasegateVersion);
       const didChange = before !== next;
       const action = this.actionFor(before, didChange, input.force);
+      // A `copy` target with a pre-existing, non-matching file is left untouched
+      // (merge returns `before`). For executable git hooks this means the
+      // phasegate hook is NOT wired in — warn instead of skipping silently.
+      const preservedExistingHook =
+        target.strategy === "copy"
+        && target.executable === true
+        && before !== null
+        && before.trim() !== template.trim()
+        && !input.force;
+      const warning = preservedExistingHook
+        ? `${target.path}: an existing hook was found and left unchanged; phasegate's checks are NOT wired in. Merge the phasegate hook manually (or rerun with --force to back up and overwrite).`
+        : null;
       const item: InstallPlanItem = {
         path: target.path,
         action,
@@ -392,9 +430,12 @@ export class RunInstallUseCase {
         changed: didChange,
         summary: unmanagedPersonalRuntimeFile
           ? `${target.path}: existing non-phasegate runtime path requires manual review`
-          : didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
+          : warning !== null
+            ? warning
+            : didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
         diff: unmanagedPersonalRuntimeFile ? "manual review required" : this.diffSummary(before, next),
         skillHint: repairMode === "ai-assisted" ? SKILL_HINT : null,
+        warning,
       };
       plan.push(item);
 
@@ -458,7 +499,7 @@ export class RunInstallUseCase {
       plan.push(item);
       if (input.apply && item.changed && item.repairMode === "mechanical") {
         try {
-          await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
+          await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
           await writeFile(
             join(input.projectRoot, skillPath, ".harness-version"),
             `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -548,6 +589,7 @@ export class RunInstallUseCase {
         summary: "~/.codex/config.toml: personal mode does not write user-level Codex feature flags; enable hooks manually when needed",
         diff: "manual Codex hooks feature enablement may be required",
         skillHint: null,
+        warning: null,
       });
     }
 
@@ -803,6 +845,7 @@ export class RunInstallUseCase {
           summary: `${relativePath}: existing non-directory skills path requires manual review`,
           diff: "manual review required",
           skillHint: null,
+          warning: null,
         };
       }
     } catch {}
@@ -830,6 +873,7 @@ export class RunInstallUseCase {
       summary: changed ? `${relativePath}: deploy bundled skills` : `${relativePath}: already up to date`,
       diff: changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
       skillHint: null,
+      warning: null,
     };
   }
 
@@ -870,12 +914,13 @@ export class RunInstallUseCase {
       summary: changed ? "skills: deploy shared bundled skills" : "skills: already up to date",
       diff: changed ? `+ ${skills.length} bundled skills (${skillSet})` : "no changes",
       skillHint: null,
+      warning: null,
     };
   }
 
   private async deploySharedSkills(input: RunInstallInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
     const targetRoot = join(input.projectRoot, "skills");
-    await copySelectedSkillDirectories(input.harnessRoot, input.projectRoot, targetRoot, skills);
+    await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(
       join(targetRoot, ".harness-version"),
       `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -927,6 +972,7 @@ export class RunInstallUseCase {
           summary: `${relativePath}: already linked`,
           diff: "no changes",
           skillHint: null,
+          warning: null,
         };
       }
       return {
@@ -938,6 +984,7 @@ export class RunInstallUseCase {
         summary: `${relativePath}: existing non-phasegate path requires manual review`,
         diff: "manual review required",
         skillHint: null,
+        warning: null,
       };
     } catch {
       try {
@@ -952,6 +999,7 @@ export class RunInstallUseCase {
             summary: `${relativePath}: parent path exists and requires manual review`,
             diff: "manual review required",
             skillHint: null,
+            warning: null,
           };
         }
       } catch {}
@@ -964,6 +1012,7 @@ export class RunInstallUseCase {
         summary: `${relativePath}: create symlink`,
         diff: `+ symlink ${target}`,
         skillHint: null,
+        warning: null,
       };
     }
   }

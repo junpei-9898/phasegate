@@ -7,7 +7,9 @@ import {
   createValidSourceDocumentWithPhasePreset,
 } from './config-foundation-test-fixtures.js';
 
-function createStoryReflectionDocument(artifacts: string[]): Record<string, unknown> {
+function createStoryReflectionDocument(
+  mappings: ReadonlyArray<Record<string, unknown>>,
+): Record<string, unknown> {
   const document = createValidSourceDocument({
     phaseDependencies: {
       preset: 'full',
@@ -19,12 +21,7 @@ function createStoryReflectionDocument(artifacts: string[]): Record<string, unkn
   const phaseDependencies = document.phaseDependencies as Record<string, unknown>;
   phaseDependencies.storyReflection = {
     enabled: true,
-    mappings: [
-      {
-        unitId: 'config-foundation',
-        artifacts,
-      },
-    ],
+    mappings,
   };
 
   return document;
@@ -240,10 +237,21 @@ target('AjvConfigSchemaValidator', () => {
         expect(actual).toEqual([]);
       });
 
-      it('enabled と mappings を持つ形式を有効として扱うこと', () => {
+      it('ドキュメント記載の inception/product/required 形式の mappings を有効として扱うこと', () => {
         // Arrange
         const validator = new AjvConfigSchemaValidator();
-        const document = createStoryReflectionDocument(['logical_design.md', 'domain_model.md']);
+        const document = createStoryReflectionDocument([
+          {
+            inception: 'docs/inception/{unit}/{storyId}/logical_design.md',
+            product: 'docs/product/construction/{unit}/logical_design.md',
+            required: true,
+          },
+          {
+            inception: 'docs/inception/{unit}/{storyId}/domain_model.md',
+            product: 'docs/product/construction/{unit}/domain_model.md',
+            required: false,
+          },
+        ]);
 
         // Act
         const actual = validator.validate(document);
@@ -252,17 +260,77 @@ target('AjvConfigSchemaValidator', () => {
         expect(actual).toEqual([]);
       });
 
-      it('artifact に空文字が含まれる場合はエラーになること', () => {
+      it('mapping エントリに inception が欠けている場合はエラーになること', () => {
         // Arrange
         const validator = new AjvConfigSchemaValidator();
-        const document = createStoryReflectionDocument(['logical_design.md', '']);
+        const document = createStoryReflectionDocument([
+          {
+            product: 'docs/product/construction/{unit}/logical_design.md',
+            required: true,
+          },
+        ]);
 
         // Act
         const actual = validator.validate(document);
 
         // Assert
         expect(actual.length).toBeGreaterThanOrEqual(1);
-        expect(actual.some((error) => 'path' in error && error.path === '/phaseDependencies/storyReflection/mappings/0/artifacts/1')).toBe(true);
+        expect(
+          actual.some(
+            (error) =>
+              'path' in error &&
+              error.path === '/phaseDependencies/storyReflection/mappings/0/inception',
+          ),
+        ).toBe(true);
+      });
+
+      it('required が boolean でない場合はエラーになること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createStoryReflectionDocument([
+          {
+            inception: 'docs/inception/{unit}/{storyId}/logical_design.md',
+            product: 'docs/product/construction/{unit}/logical_design.md',
+            required: 'yes',
+          },
+        ]);
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThanOrEqual(1);
+        expect(
+          actual.some(
+            (error) =>
+              'path' in error &&
+              error.path === '/phaseDependencies/storyReflection/mappings/0/required',
+          ),
+        ).toBe(true);
+      });
+
+      it('未知キー unitId を含む旧形式の mapping を拒否すること', () => {
+        // Arrange
+        const validator = new AjvConfigSchemaValidator();
+        const document = createStoryReflectionDocument([
+          {
+            unitId: 'config-foundation',
+            artifacts: ['logical_design.md'],
+          },
+        ]);
+
+        // Act
+        const actual = validator.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThanOrEqual(1);
+        expect(
+          actual.some(
+            (error) =>
+              'path' in error &&
+              error.path === '/phaseDependencies/storyReflection/mappings/0/unitId',
+          ),
+        ).toBe(true);
       });
     });
   });

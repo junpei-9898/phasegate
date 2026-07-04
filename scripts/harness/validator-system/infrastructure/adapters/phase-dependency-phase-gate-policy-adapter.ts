@@ -51,9 +51,35 @@ export class PhaseDependencyPhaseGatePolicyAdapter implements PhaseGatePolicyPor
         };
       }
 
-      return { satisfied: true, violations: [] };
-    } catch {
-      return { satisfied: true, violations: [] };
+      // Fail-closed: an unexpected exit code means prerequisites could not be confirmed.
+      console.error(`[validator-system] phase gate check returned unexpected exit code ${result.exitCode}`);
+      return {
+        satisfied: false,
+        violations: [
+          {
+            code: { value: 'L2-002', toString: () => 'L2-002' },
+            severity: { value: 'error', toString: () => 'error' },
+            message: `phase gate check returned unexpected exit code ${result.exitCode}; prerequisites cannot be confirmed`,
+            suggestion: 'phase gate prerequisites could not be evaluated; treating as NOT satisfied (fail-closed)',
+          },
+        ],
+      };
+    } catch (err) {
+      // Fail-closed: if the phase-dependency-model could not be loaded/executed we cannot
+      // confirm prerequisites are met, so treat them as NOT satisfied rather than opening the gate.
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[validator-system] phase gate prerequisite check failed to run: ${message}`);
+      return {
+        satisfied: false,
+        violations: [
+          {
+            code: { value: 'L2-002', toString: () => 'L2-002' },
+            severity: { value: 'error', toString: () => 'error' },
+            message: `phase gate prerequisite check could not be evaluated: ${message}`,
+            suggestion: 'phase gate prerequisites could not be evaluated; treating as NOT satisfied (fail-closed)',
+          },
+        ],
+      };
     }
   }
 }

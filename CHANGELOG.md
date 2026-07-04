@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.162.0] - 2026-07-04
+
+### Fixed
+
+- **WI-221 — second-wave audit remediation: make the defenses real** — closes the remaining defects from the 2026-07-04 security audit where "advertised gates were not actually enforced". Product-default strictness is unchanged; where phasegate's own repo could not yet meet a now-real gate, it is configured honestly with a documented ratchet (see `docs/inception/_shared/l3-004-traceability-ratchet.md`).
+  - **フェーズゲート残存穴**: `BashWriteTargetExtractor` が `>|` / `dd of=` / `install` / `rsync` / `bash -c`・`sh -c`（ネスト再帰）の書き込みベクトルを検出するよう拡張。`.phasegate/baseline.json` を保護対象に追加し、grandfather 判定をパス一致のみから **sha1 整合検証**へ強化（手書き追記による素通りを封鎖）。
+  - **fail-open → fail-closed**: `phase-gate-query` / `phase-dependency-phase-gate-policy` / `phase-dependency-model-query` / skill-quality L1・L2 / nyquist-ac-coverage の各アダプタで、例外を握り潰して「合格」を返していた挙動を fail-closed 化（エラーを表面化し、防御が静かに開かないようにした）。
+  - **不発・誤発火バリデータ**: L4-003 dead-code の `.js`→`.ts/.tsx`（`.mjs/.cjs/.jsx`・index）解決で誤検出約1592件を解消。L4-002/WI 反映チェックが標準レイアウトで常時スキップされる不具合を修正。セキュリティスキャナの allowlist をファイル全体スキップから行スコープへ。`ci-check --quick` にバリデータを配線。`NEW_DOMAIN` の `changeKind` ハードコードを create/modify 判定に修正。
+  - **config スキーマ不整合（CLI 文鎮化）**: `storyReflection.mappings` のスキーマをコード/ドキュメントの `{inception, product, required}` に整合。`config:plan --intent l4-strict --apply`（および `ci-fail-on-warning`）が実消費キー `/validate/failOnWarning` を出力するよう修正。
+  - **Nyquist トレーサビリティ**: L3-003 カバレッジを実配線（`coverageReportPort`）し閾値を実効化。legacy StoryId エイリアス解決・`HF2-01` 形式・`MatrixValidationService` no-op を修正。domain→application の依存方向逆転を解消。
+  - **L3-003 カバレッジ・セマンティクス精緻化**: カバレッジ閾値未設定時はスキップ（オプトイン）、設定済み×レポート欠如/不足時は fail-closed、単一バリデータの例外が全体をクラッシュさせないよう per-validator 化。
+  - **L3-004 実バグ修正 + パス配線**: AC 網羅ゲートの story レジストリ空スタブを実レジストリ（traceability-model）へ配線し、`layers.L3.requirementMatrixPath`（既定 `.harness/requirement-test-matrix.json`）を新設して ci-check がマトリクスパスを供給するようにした（従来は全ユーザーで L3-004 が満たせなかった）。
+  - **シェル・移植性**: `deny-check.sh` のコマンド連結回避・world-readable ログ・`jq` 不在時 fail-open・glob 変換の部分適用を修正。Windows パス区切りでの WI 反映スキャン/採番不具合と 3桁固定の採番破綻を修正。import-graph substring フォールバックのレイヤー違反見逃しをセグメント境界一致で修正。`work-items --apply` の `completed`→`tested` 降格を防止。personal install の既存 pre-commit 無警告スキップと JSON マージのキー順依存を修正。
+  - **アーキ整合**: import-graph 修正で顕在化した `installation/application → setup/skill-deployer`（infrastructure）の禁止依存を、port（`ModelDelegationPort`）+ アダプタ + DI で解消。
+  - **カバレッジ計測基盤**: `@vitest/coverage-v8` を導入し、エントリポイント/サブプロセス専用ファイルを分母から原則除外した上で自リポの実カバレッジ **90.2%** を確認。`coverage` / `ci` スクリプトでレポート生成→検査の循環を解消（`coverage/` は gitignore）。
+
 ## [0.161.0] - 2026-07-04
 
 ### Fixed

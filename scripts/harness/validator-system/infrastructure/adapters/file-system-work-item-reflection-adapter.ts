@@ -18,6 +18,13 @@ function normalizePath(value: string): string {
   return value.replace(/\\/g, '/');
 }
 
+// Separator-agnostic check for whether a path points at a work-item
+// description file. Exported so the Windows (`\`) normalization is unit
+// testable without depending on the host filesystem separator.
+export function isDescriptionFilePath(value: string): boolean {
+  return normalizePath(value).endsWith(`/${DESCRIPTION_FILE}`);
+}
+
 async function listFiles(root: string): Promise<string[]> {
   try {
     const entries = await readdir(root, { withFileTypes: true });
@@ -66,7 +73,9 @@ export class FileSystemWorkItemReflectionAdapter implements WorkItemReflectionPo
     const inceptionRoot = join(this.projectRoot, input.inceptionRoot);
     const designRoot = join(this.projectRoot, input.designRoot);
     const descriptionFiles = (await listFiles(inceptionRoot))
-      .filter((path) => path.endsWith(`/${DESCRIPTION_FILE}`));
+      // Normalize separators first so Windows paths (which use `\`) still match
+      // the `/description.md` suffix.
+      .filter(isDescriptionFilePath);
 
     if (descriptionFiles.length === 0) {
       return {

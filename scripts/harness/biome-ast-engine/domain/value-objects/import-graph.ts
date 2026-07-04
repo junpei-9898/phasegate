@@ -46,6 +46,13 @@ const globToRegex = (pattern: string): RegExp => {
     const next = pattern[index + 1];
 
     if (current === '*' && next === '*') {
+      // A `**/` segment matches any number of leading path segments, INCLUDING
+      // none, so `**/shared-kernel/**` still matches `shared-kernel/a.ts`.
+      if (pattern[index + 2] === '/') {
+        output += '(?:.*/)?';
+        index += 2;
+        continue;
+      }
       output += '.*';
       index += 1;
       continue;
@@ -62,8 +69,28 @@ const globToRegex = (pattern: string): RegExp => {
   return new RegExp(`^${output}$`);
 };
 
+// Fallback for wildcard-free patterns (e.g. `generated`, `shared-kernel`). It
+// must align on a `/` segment boundary at the START and terminate on a real
+// boundary — a `/`, the extension dot, or end of string. This replaces a naive
+// `value.includes(pattern stripped of * and /)` substring test that over-matched
+// (e.g. `vendor` matched `domain/vendorized-service.ts`), which silently
+// suppressed genuine layer violations. The boundary-terminated form keeps
+// intended ignores working (`generated` → `generated.ts`) while no longer
+// swallowing unrelated segments.
+const segmentPrefixRegex = (pattern: string): RegExp => {
+  return new RegExp(`(^|/)${escapeRegex(pattern)}([./]|$)`);
+};
+
 export const matchesPattern = (value: string, pattern: string): boolean => {
-  return globToRegex(pattern).test(value) || value.includes(pattern.replace(/\*/g, '').replace(/\//g, ''));
+  if (globToRegex(pattern).test(value)) {
+    return true;
+  }
+  // Wildcard patterns are authoritative via the glob regex above; only bare
+  // (wildcard-free) patterns fall back to segment-boundary matching.
+  if (pattern.includes('*')) {
+    return false;
+  }
+  return segmentPrefixRegex(pattern).test(value);
 };
 
 const canonicalCycleKey = (path: readonly string[]): string => {

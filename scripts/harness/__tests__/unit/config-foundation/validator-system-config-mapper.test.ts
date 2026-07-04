@@ -144,6 +144,26 @@ target('toValidatorSystemConfig', () => {
       });
     });
 
+    context('L3.requirementMatrixPath が設定されている場合', () => {
+      it('L3-004 用の matrix パスを validator-system config へ伝搬すること', () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.layers.L3.requirementMatrixPath = 'config/custom-matrix.json';
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig);
+
+        // Assert
+        expect(actual).toMatchObject({
+          layers: {
+            L3: {
+              requirementMatrixPath: 'config/custom-matrix.json',
+            },
+          },
+        });
+      });
+    });
+
     context('resolved configが取得できない場合', () => {
       it('validator-systemのデフォルト設定に委ねるためundefinedを返すこと', () => {
         // Arrange

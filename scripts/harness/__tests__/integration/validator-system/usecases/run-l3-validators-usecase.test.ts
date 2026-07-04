@@ -114,17 +114,52 @@ target('RunL3ValidatorsUseCase', () => {
   });
 
   describe('異常系', () => {
-    context('カバレッジレポートが存在しない場合', () => {
-      it('CoverageReportNotFoundErrorが送出される (IT-UC-RunL3-006)', async () => {
+    context('coverageThresholdが設定済みだがカバレッジレポートが存在しない場合（FAIL-CLOSED）', () => {
+      it('L3-003がpassed=falseで返り例外は送出されず兄弟バリデータも結果を返すこと (IT-UC-RunL3-006)', async () => {
         // Arrange
         const mockCoverageReportPort = {
           getCoverage: vi.fn().mockRejectedValue(new CoverageReportNotFoundError('nonexistent/coverage.json')),
         };
-        const usecase = createL3UseCase({}, mockCoverageReportPort);
+        const usecase = createL3UseCase(
+          { thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } },
+          mockCoverageReportPort
+        );
         const input = { targetPaths: ['src/'], coverageReportPath: 'nonexistent/coverage.json' };
 
-        // Act & Assert
-        await expect(usecase.execute(input)).rejects.toThrow(CoverageReportNotFoundError);
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        expect(actual).toHaveLength(4);
+        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        expect(l3003?.passed).toBe(false);
+        expect(l3003?.skipped).toBe(false);
+        expect(l3003?.errors[0]?.message ?? '').toContain('カバレッジレポートが見つかりません');
+        // 兄弟バリデータがクラッシュせず結果を返していること（all-error にならない）
+        const siblingIds = actual.map((r) => r.validatorId).filter((id) => id !== 'L3-003');
+        expect(siblingIds).toEqual(['L3-001', 'L3-002', 'L3-004']);
+      });
+    });
+
+    context('coverageThresholdが未設定（null）の場合（オプトイン）', () => {
+      it('L3-003がskipped=trueかつスキップ理由付きで返ること (IT-UC-RunL3-008)', async () => {
+        // Arrange
+        const mockCoverageReportPort = {
+          getCoverage: vi.fn().mockResolvedValue({ overallCoverage: 100, perFileCoverage: [] }),
+        };
+        const usecase = createL3UseCase({ thresholds: {} }, mockCoverageReportPort);
+        const input = { targetPaths: ['src/'], coverageReportPath: 'coverage/summary.json' };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        expect(l3003?.skipped).toBe(true);
+        expect(l3003?.passed).toBe(true);
+        expect(l3003?.skipReason ?? '').toContain('coverageThreshold が未設定');
+        // getCoverage() は呼ばれないこと（未設定時は透過スキップ）
+        expect(mockCoverageReportPort.getCoverage).not.toHaveBeenCalled();
       });
     });
 

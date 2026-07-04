@@ -53,6 +53,34 @@ target("ApplyWorkItemStatusUseCase.execute", () => {
       });
     });
 
+    context("currentStatus=completed から derivedStatus=tested への回帰の場合", () => {
+      it("completed を tested に降格せず blocked に返す", async () => {
+        // Arrange
+        const report = createReport({
+          currentStatus: "completed",
+          derivedStatus: "tested",
+          stale: true,
+        });
+        const derive = { execute: vi.fn().mockResolvedValue([report]) };
+        const port = {
+          listWorkItemStatusInputs: vi.fn(),
+          applyDerivedStatuses: vi.fn().mockResolvedValue({ updated: [], unchanged: [], blocked: [] }),
+        };
+        const sut = new ApplyWorkItemStatusUseCase({
+          deriveWorkItemStatusUseCase: derive,
+          workItemStatusPort: port,
+        });
+
+        // Act
+        const actual = await sut.execute();
+
+        // Assert
+        expect(port.applyDerivedStatuses).toHaveBeenCalledWith([]);
+        expect(actual.blocked).toEqual([report]);
+        expect(actual.updated).toEqual([]);
+      });
+    });
+
     context("allowDowngrade=true の場合", () => {
       it("status downgrade を apply port に渡す", async () => {
         const report = createReport();

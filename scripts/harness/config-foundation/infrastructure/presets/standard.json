@@ -11,7 +11,8 @@
     "L3": {
       "enabled": true,
       "validators": ["consistency", "test-quality"],
-      "coverageThreshold": 90
+      "coverageThreshold": 90,
+      "requirementMatrixPath": ".harness/requirement-test-matrix.json"
     },
     "L4": {
       "enabled": false,

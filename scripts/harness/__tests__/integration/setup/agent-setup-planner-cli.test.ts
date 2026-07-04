@@ -162,11 +162,43 @@ target("agent setup planner CLI", () => {
       expect(actual.exitCode).toBe(0);
       expect(parsed.configPatch.applicability).toBe("applicable");
       expect(parsed.configPatch.before).toEqual(null);
-      expect(parsed.configPatch.after).toEqual({ layers: { L4: { enabled: true, failOnWarning: true } } });
+      expect(parsed.configPatch.after).toEqual({ layers: { L4: { enabled: true } }, validate: { failOnWarning: true } });
       expect(parsed.configPatch.operations).toEqual([
         { op: "add", pointer: "/layers/L4/enabled", before: null, after: true },
-        { op: "add", pointer: "/layers/L4/failOnWarning", before: null, after: true },
+        { op: "add", pointer: "/validate/failOnWarning", before: null, after: true },
       ]);
+    }, 120000);
+
+    it("config:plan --intent l4-strict --apply が生成する config がスキーマ検証を通過すること", async () => {
+      // Arrange: 既存の有効な config へ merge するケースを検証する
+      const { createValidSourceDocument } = await import(
+        "../config-foundation/config-foundation-test-fixtures.js"
+      );
+      const seedConfig = createValidSourceDocument();
+
+      // Act
+      const actual = await withTempProject(async (projectRoot) => {
+        await writeFile(
+          join(projectRoot, "phasegate.config.json"),
+          `${JSON.stringify(seedConfig, null, 2)}\n`,
+          "utf8",
+        );
+        const applyResult = await runCli(["config:plan", "--intent", "l4-strict", "--apply", "--json"], projectRoot);
+        const written = await readFile(join(projectRoot, "phasegate.config.json"), "utf8");
+        return { applyResult, written };
+      });
+
+      // Assert
+      expect(actual.applyResult.exitCode).toBe(0);
+      const writtenConfig = JSON.parse(actual.written) as Record<string, unknown>;
+      expect((writtenConfig.validate as Record<string, unknown>).failOnWarning).toBe(true);
+      expect((writtenConfig.layers as Record<string, Record<string, unknown>>).L4.enabled).toBe(true);
+      const { AjvConfigSchemaValidator } = await import(
+        "../../../config-foundation/infrastructure/validators/ajv-config-schema-validator.js"
+      );
+      const validator = new AjvConfigSchemaValidator();
+      const errors = validator.validate(writtenConfig);
+      expect(errors).toEqual([]);
     }, 120000);
 
     it("setup:agent strict apply 後の再 dry-run が completeness configured と direct install no-diff を返すこと", async () => {

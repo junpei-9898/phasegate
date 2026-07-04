@@ -3,6 +3,7 @@ node_modules/
 !templates/.claude/
 dist/
 reports/
+coverage/
 .harness/
 *-result.json
 *.log

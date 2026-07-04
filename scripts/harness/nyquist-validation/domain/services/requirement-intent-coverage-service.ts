@@ -3,12 +3,12 @@
 // @work-item-id WI-131
 
 import type {
-  IntentCoverageItemDto,
-  MatrixStoryDto,
-} from '../../application/dto/generate-matrix-output.js';
+  IntentCoverageItem,
+  IntentCoverageStory,
+} from '../value-objects/intent-coverage.js';
 
 export class RequirementIntentCoverageService {
-  evaluate(stories: readonly MatrixStoryDto[]): readonly IntentCoverageItemDto[] {
+  evaluate(stories: readonly IntentCoverageStory[]): readonly IntentCoverageItem[] {
     return stories.flatMap((story) => story.storyMappings.map((mapping) => {
       if (mapping.testReferences.length === 0) {
         return {

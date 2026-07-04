@@ -10,6 +10,19 @@ import type { DriftItem } from '../../domain/value-objects/drift-report-summary.
 import { toValidatorSystemConfig } from '../../../config-foundation/application/mappers/validator-system-config-mapper.js';
 import { ConfigNotFoundError } from '../../../config-foundation/infrastructure/repositories/file-system-config-repository.js';
 
+/**
+ * validator-system config（toValidatorSystemConfig の出力）から
+ * L3-004 用の requirement-test-matrix.json パスを取り出す。
+ * 未設定・config 不在時は undefined を返し、下流の AC coverage adapter が
+ * 既定値（.harness/requirement-test-matrix.json）へフォールバックする。
+ */
+function extractRequirementMatrixPath(config: object | undefined): string | undefined {
+  if (!config) return undefined;
+  const layers = (config as { layers?: { L3?: { requirementMatrixPath?: unknown } } }).layers;
+  const path = layers?.L3?.requirementMatrixPath;
+  return typeof path === 'string' && path.length > 0 ? path : undefined;
+}
+
 // Override interface preserved for testing
 export interface IValidatorSystemStub {
   runL3Validators(): Promise<ValidatorCheckItem[]>;
@@ -40,8 +53,12 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
     return {
       async runL3Validators(): Promise<ValidatorCheckItem[]> {
         const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
-        const mod = createValidatorSystemModule(await loadValidatorSystemConfig());
-        const results = await mod.runL3ValidatorsUseCase.execute({ targetPaths: [] });
+        const config = await loadValidatorSystemConfig();
+        const mod = createValidatorSystemModule(config);
+        const results = await mod.runL3ValidatorsUseCase.execute({
+          targetPaths: [],
+          requirementMatrixPath: extractRequirementMatrixPath(config),
+        });
         return results.map((r) => ({
           validatorId: r.validatorId,
           passed: r.passed,
@@ -52,8 +69,14 @@ export class ValidatorSystemExecutionAdapter implements ValidatorExecutionPort {
 
       async runAllValidators(): Promise<ValidatorCheckItem[]> {
         const { createValidatorSystemModule } = await import('../../../validator-system/composition-root.js');
-        const mod = createValidatorSystemModule(await loadValidatorSystemConfig());
-        const report = await mod.runFullValidationUseCase.execute({ targetPaths: [], unitName: '', currentPhase: '' });
+        const config = await loadValidatorSystemConfig();
+        const mod = createValidatorSystemModule(config);
+        const report = await mod.runFullValidationUseCase.execute({
+          targetPaths: [],
+          unitName: '',
+          currentPhase: '',
+          requirementMatrixPath: extractRequirementMatrixPath(config),
+        });
         return report.results.map((r) => ({
           validatorId: r.validatorId,
           passed: r.passed,

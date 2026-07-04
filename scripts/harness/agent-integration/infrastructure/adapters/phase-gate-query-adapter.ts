@@ -39,13 +39,28 @@ export class PhaseGateQueryAdapter implements PhaseGateQueryPort {
         return PhaseGateQueryResult.create(false, [result.text], []);
       }
 
-      return PhaseGateQueryResult.create(true, [], ['phase gate check returned error']);
+      // Fail-closed: an unexpected exit code means the gate could not be evaluated.
+      // A quality gate that cannot confirm PASS must block, not open.
+      console.error(`[agent-integration] phase gate check returned unexpected exit code ${result.exitCode}`);
+      return PhaseGateQueryResult.create(
+        false,
+        [`phase gate check returned unexpected exit code ${result.exitCode}; treating as NOT passed (fail-closed)`],
+        []
+      );
     } catch (error) {
       if (error instanceof ConfigValidationError) {
         return PhaseGateQueryResult.create(false, [error.message], []);
       }
 
-      return PhaseGateQueryResult.create(true, [], ['phase-dependency-model not available']);
+      // Fail-closed: if phase-dependency-model could not be loaded/executed we cannot
+      // confirm the gate passed, so treat it as blocked rather than silently opening it.
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[agent-integration] phase gate check failed to run: ${message}`);
+      return PhaseGateQueryResult.create(
+        false,
+        [`phase gate check could not be evaluated (phase-dependency-model unavailable): ${message}`],
+        []
+      );
     }
   }
 

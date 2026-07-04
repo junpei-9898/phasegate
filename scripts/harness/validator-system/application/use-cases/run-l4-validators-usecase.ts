@@ -177,9 +177,12 @@ export class RunL4ValidatorsUseCase {
       const l4002Result = overrideMap.get('L4-002');
       if (l4002Result && !l4002Result.skipped) {
         const report = await this.consistencyCheckService.check(input.targetUnits ? [...input.targetUnits] : undefined);
-        const reflectionResult = this.usesConfiguredDocumentRoots()
-          ? await this.consistencyCheckService.checkWorkItemReflection(this.pathRoots)
-          : undefined;
+        // WI-217: 標準レイアウト (docs/inception, docs/product/construction) でも
+        // reflection を必ず実行する。以前は usesConfiguredDocumentRoots() が false を
+        // 返すため標準構成では reflection が恒久的にスキップされ、L4-002 が常に PASS
+        // していた。description が存在しない場合はアダプタ側が skipReason を返すため、
+        // 常時実行しても未整備プロジェクトを誤って失敗させることはない。
+        const reflectionResult = await this.consistencyCheckService.checkWorkItemReflection(this.pathRoots);
         const architectureSemanticErrors = this.architectureSemanticAnalysisService
           ? await this.architectureSemanticAnalysisService.analyze()
           : [];
@@ -287,10 +290,6 @@ export class RunL4ValidatorsUseCase {
 
   private async getProjectLanguages(): Promise<readonly string[]> {
     return this.configPort.getProjectLanguages ? await this.configPort.getProjectLanguages() : ['typescript'];
-  }
-
-  private usesConfiguredDocumentRoots(): boolean {
-    return this.pathRoots.inceptionRoot !== 'docs/inception' || this.pathRoots.designRoot !== 'docs/product/construction';
   }
 
   private toPointerValidationHarnessErrors(output: ValidateDocPointersOutputContract): readonly ValidationResult['errors'][number][] {

@@ -3,6 +3,13 @@
 // @work-item-id WI-125
 // @work-item-id WI-131
 
+// Intent coverage 系の型は domain 層（value-objects/intent-coverage）を正準とし、
+// application 層はそれを参照・再エクスポートする（domain ← application の正しい依存方向）。
+import type {
+  IntentCoverageStatus as DomainIntentCoverageStatus,
+  IntentCoverageItem as DomainIntentCoverageItem,
+} from '../../domain/value-objects/intent-coverage.js';
+
 export interface RequirementSourceDto {
   readonly storyId: string;
   readonly acIds: readonly string[];
@@ -48,14 +55,9 @@ export interface OrphanTestDto {
   readonly testName?: string;
 }
 
-export type IntentCoverageStatus = 'observed' | 'weakly-observed' | 'unobserved';
+export type IntentCoverageStatus = DomainIntentCoverageStatus;
 
-export interface IntentCoverageItemDto {
-  readonly storyId: string;
-  readonly acId: string;
-  readonly status: IntentCoverageStatus;
-  readonly warnings: readonly string[];
-}
+export type IntentCoverageItemDto = DomainIntentCoverageItem;
 
 export interface MatrixGenerationReportDto {
   readonly missingTests: readonly MissingTestDto[];

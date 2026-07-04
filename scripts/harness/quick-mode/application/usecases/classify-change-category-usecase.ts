@@ -50,11 +50,16 @@ export class ClassifyChangeCategoryUseCase {
     const targetChanges = new Map((input.targetChanges ?? []).map((change) => [change.filePath, change]));
     const changedFiles = input.paths.map((p) => {
       const targetChange = targetChanges.get(p);
+      const beforeContent = targetChange?.beforeContent ?? null;
+      const afterContent = targetChange?.afterContent ?? null;
       return ChangedFile.create({
         filePath: p,
-        changeKind: 'MODIFY',
-        beforeContent: targetChange?.beforeContent ?? null,
-        afterContent: targetChange?.afterContent ?? null,
+        // 変更前の内容が無く変更後の内容がある場合は新規作成 (CREATE) とみなす。
+        // 以前は無条件で MODIFY 固定だったため、新規 domain/ ファイルが
+        // NEW_DOMAIN 判定を回避して quick mode をすり抜けていた。
+        changeKind: beforeContent === null && afterContent !== null ? 'CREATE' : 'MODIFY',
+        beforeContent,
+        afterContent,
       });
     });
 

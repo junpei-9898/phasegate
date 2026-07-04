@@ -42,12 +42,17 @@ export class ApplyWorkItemStatusUseCase {
   }
 }
 
+// `completed` is a manually promoted terminal state that the automatic
+// derivation never emits (derivation tops out at `tested`). It must rank
+// strictly above `tested` here so that deriving `tested` for an already
+// `completed` work item is detected as a downgrade and blocked, preventing a
+// `completed` -> `tested` regression on `work-items --apply`.
 const STATUS_ORDER: Record<WorkItemStatus, number> = {
   drafted: 0,
   reflected: 1,
   implemented: 2,
   tested: 3,
-  completed: 3,
+  completed: 4,
 };
 
 function statusOrder(status: WorkItemStatus): number {

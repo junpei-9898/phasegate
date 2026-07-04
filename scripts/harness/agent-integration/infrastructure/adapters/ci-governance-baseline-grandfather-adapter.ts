@@ -8,6 +8,8 @@ import type {
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
 import type { BaselineRepositoryPort } from '../../../ci-governance/domain/ports/baseline-repository-port.js';
 import { BaselineJsonRepositoryAdapter } from '../../../ci-governance/infrastructure/adapters/baseline-json-repository-adapter.js';
+import type { FileHasherPort } from '../../../ci-governance/domain/ports/file-hasher-port.js';
+import { FileSystemSha1HasherAdapter } from '../../../ci-governance/infrastructure/adapters/file-system-sha1-hasher-adapter.js';
 
 export interface CiGovernanceBaselineGrandfatherAdapterDeps {
   readonly baseDir: string;
@@ -16,6 +18,7 @@ export interface CiGovernanceBaselineGrandfatherAdapterDeps {
     baseDir: string,
     relativePath: string,
   ) => BaselineRepositoryPort;
+  readonly fileHasherFactory?: (baseDir: string) => FileHasherPort;
 }
 
 export class CiGovernanceBaselineGrandfatherAdapter
@@ -68,11 +71,31 @@ export class CiGovernanceBaselineGrandfatherAdapter
         };
       }
 
+      // 整合性検証: baseline に path が載っているだけでは grandfather しない。
+      // 記録済み sha1 と実ファイルの sha1 が一致する場合のみ grandfather 扱いとする。
+      // これにより baseline.json への手動 path 追記による bypass を防ぐ
+      //（追記側は実ファイルの正しい sha1 を予測できず、改変後の content とも一致しない）。
+      const hasherFactory =
+        this.deps.fileHasherFactory ??
+        ((baseDir) => new FileSystemSha1HasherAdapter(baseDir));
+      const hasher = hasherFactory(this.deps.baseDir);
+      const entryByPath = new Map(snapshot.entries.map((e) => [e.path, e.sha1] as const));
+
       const grandfathered: string[] = [];
       for (const p of targetFilePaths) {
-        if (snapshot.contains(p)) grandfathered.push(p);
+        const recordedSha1 = entryByPath.get(p);
+        if (recordedSha1 === undefined) continue;
+        let actualSha1: string;
+        try {
+          actualSha1 = await hasher.hashFile(p);
+        } catch {
+          // ファイル読み取り失敗 (未作成・権限等) は grandfather 不可扱い (保護側に倒す)
+          continue;
+        }
+        if (actualSha1 === recordedSha1) grandfathered.push(p);
       }
-      const allGrandfathered = grandfathered.length === targetFilePaths.length;
+      const allGrandfathered =
+        targetFilePaths.length > 0 && grandfathered.length === targetFilePaths.length;
 
       return {
         allGrandfathered,

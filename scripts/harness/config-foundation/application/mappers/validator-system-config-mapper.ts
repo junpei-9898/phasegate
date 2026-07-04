@@ -48,6 +48,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
         enabled: resolvedConfig.layers.L3.enabled,
         validators: l3Validators.length > 0 ? l3Validators : ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
+        requirementMatrixPath: resolvedConfig.layers.L3.requirementMatrixPath,
       },
       L4: {
         enabled: resolvedConfig.layers.L4.enabled,

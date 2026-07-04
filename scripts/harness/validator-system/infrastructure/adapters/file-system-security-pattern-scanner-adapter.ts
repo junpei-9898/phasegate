@@ -40,12 +40,14 @@ export class FileSystemSecurityPatternScannerAdapter implements SecurityPatternS
     for (const filePath of targetPaths) {
       try {
         const content = await readFile(filePath, 'utf-8');
-        if (content.includes(ALLOWLIST_MARKER)) {
-          continue;
-        }
         const lines = content.split('\n');
         lines.forEach((line, idx) => {
-          if (isAllowlisted(line, content)) {
+          // WI-120: allowlist は行/領域スコープ。以前はファイル内のどこかに
+          // マーカーが 1 つでもあればファイル全体をスキップしていたため、同一
+          // ファイル内の本物の秘密情報も検出漏れしていた。マーカーは当該行、
+          // または直前行（次行抑止コメント）にある場合のみ有効とする。
+          const previousLine = idx > 0 ? lines[idx - 1] : undefined;
+          if (isAllowlisted(line, previousLine)) {
             return;
           }
           for (const { pattern, description, ruleId } of SECURITY_PATTERNS) {
@@ -71,9 +73,17 @@ export class FileSystemSecurityPatternScannerAdapter implements SecurityPatternS
   }
 }
 
-function isAllowlisted(line: string, content: string): boolean {
+/**
+ * 当該行が allowlist されているか判定する（行/領域スコープ）。
+ *
+ * - 当該行にマーカーがある → 許可
+ * - 直前行にマーカーがある（次行抑止コメント） → 許可
+ *
+ * ファイル全体を対象にしないことで、同一ファイル内の本物の秘密情報を検出できる。
+ */
+function isAllowlisted(line: string, previousLine: string | undefined): boolean {
   if (line.includes(ALLOWLIST_MARKER)) return true;
-  return /@example|dummy|placeholder/i.test(line) && content.includes(ALLOWLIST_MARKER);
+  return previousLine?.includes(ALLOWLIST_MARKER) ?? false;
 }
 
 function redactSecret(secretValue: string): string {

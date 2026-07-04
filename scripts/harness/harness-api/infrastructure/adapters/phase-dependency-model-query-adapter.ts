@@ -61,8 +61,15 @@ export class PhaseDependencyModelQueryAdapter implements PhaseGateQueryPort {
             }
           }
           return results;
-        } catch {
-          return [];
+        } catch (err) {
+          // Fail-closed: returning [] here would make CheckReadyResult.fromStories treat
+          // "no stories" as an unconditional pass. Surface the error so the dispatcher
+          // reports a non-passing (error) result instead of silently opening the gate.
+          const message = err instanceof Error ? err.message : String(err);
+          console.error(`[harness-api] queryAllStories failed to evaluate phase gates: ${message}`);
+          throw err instanceof Error
+            ? err
+            : new Error(`queryAllStories failed to evaluate phase gates: ${message}`);
         }
       },
 
@@ -91,8 +98,15 @@ export class PhaseDependencyModelQueryAdapter implements PhaseGateQueryPort {
             currentPhase: `PHASE-${result.targetLevel}`,
             completedGates: result.passed ? [`level-${result.targetLevel}`] : [],
           });
-        } catch {
-          return null;
+        } catch (err) {
+          // Fail-closed: returning null here conflates a genuine execution error with
+          // "unit not found" and hides the failure. Surface the error so the dispatcher
+          // reports a non-passing (error) result instead of masking it.
+          const message = err instanceof Error ? err.message : String(err);
+          console.error(`[harness-api] queryUnit failed to evaluate phase gate for '${unitId}': ${message}`);
+          throw err instanceof Error
+            ? err
+            : new Error(`queryUnit failed to evaluate phase gate for '${unitId}': ${message}`);
         }
       },
     };

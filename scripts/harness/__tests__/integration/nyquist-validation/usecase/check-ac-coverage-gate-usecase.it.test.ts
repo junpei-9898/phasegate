@@ -151,7 +151,7 @@ target('CheckAcCoverageGateUseCase', () => {
       await expect(usecase.execute(createCheckAcCoverageGateInput({ matrixFilePath: '/not-found.json' }))).rejects.toThrow('ENOENT');
     });
 
-    it('RequirementTestMatrix.createで不変条件違反がある場合、エラーが伝播すること', async () => {
+    it('storyId重複（INV-1違反）がある場合、整合性検査で passed=false・重複エラーが返ること', async () => {
       // Arrange
       const duplicateData = {
         version: '1.0.0',
@@ -168,8 +168,13 @@ target('CheckAcCoverageGateUseCase', () => {
         acCoverageGatePolicy: new AcCoverageGatePolicy(),
       });
 
-      // Act & Assert
-      await expect(usecase.execute(createCheckAcCoverageGateInput({ matrixFilePath: '/duplicate-story.json' }))).rejects.toThrow(/storyIdが重複しています/);
+      // Act
+      const actual = await usecase.execute(createCheckAcCoverageGateInput({ matrixFilePath: '/duplicate-story.json' }));
+
+      // Assert
+      expect(actual.passed).toBe(false);
+      expect(actual.matrix).toBeNull();
+      expect(actual.errors.some((e) => /storyIdが重複しています/.test(e.message))).toBe(true);
     });
   });
 });

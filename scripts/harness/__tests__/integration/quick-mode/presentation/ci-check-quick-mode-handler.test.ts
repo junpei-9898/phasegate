@@ -2,6 +2,9 @@
 // @unit quick-mode
 // @story H10-02
 // @work-item-id WI-140
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { CiCheckQuickModeHandler } from '../../../../quick-mode/presentation/handlers/ci-check-quick-mode-handler.js';
@@ -168,6 +171,23 @@ target('CiCheckQuickModeHandler', () => {
           expect.objectContaining({ filePath: 'src/b.ts' }),
         ]),
       );
+    });
+
+    // NEW_DOMAIN 回帰: 未追跡かつ作業ツリーに存在する新規ファイルは CREATE と判定される
+    it('--files に未追跡の新規ファイルを渡すと changeKind=CREATE で usecase に渡ること', async () => {
+      // Arrange
+      mockUseCase.execute.mockResolvedValue(createApprovedDecision());
+      const handler = new CiCheckQuickModeHandler({ useCase: mockUseCase as never });
+      const tmpDir = await mkdtemp(join(tmpdir(), 'phasegate-quick-newdomain-'));
+      const newFile = join(tmpDir, 'brand-new-domain-file.ts');
+      await writeFile(newFile, 'export const created = 1;\n');
+      // Act
+      await handler.handle({ quick: true, failOnReject: false, dryRun: false, files: newFile });
+      // Assert
+      const callArgs = mockUseCase.execute.mock.calls[0][0];
+      expect(callArgs.changedFiles).toEqual([
+        expect.objectContaining({ filePath: newFile, changeKind: 'CREATE' }),
+      ]);
     });
 
     // IT-API-Handler-008

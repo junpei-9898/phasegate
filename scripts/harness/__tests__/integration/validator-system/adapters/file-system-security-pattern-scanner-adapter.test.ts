@@ -117,5 +117,33 @@ target('FileSystemSecurityPatternScannerAdapter', () => {
         expect(actual).toEqual({ passed: true, findings: [] });
       });
     });
+
+    context('allowlist marker が行/領域スコープの場合（whole-file skip 回帰）', () => {
+      it('直前行にマーカーがある dummy は除外しつつ、離れた行の本物の秘密は検出する (WI-120)', async () => {
+        // Arrange
+        const fixturePath = join(FIXTURES_DIR, 'g5/security-scoped-allowlist.fixture');
+        const dummy = 'sk-abcdefghijklmnopqrstuvwxyz123456';
+        const realGithub = 'ghp_realrealrealrealrealrealreal12';
+        const realAws = 'AKIAABCDEFGHIJKLMNOP';
+        const adapter = new FileSystemSecurityPatternScannerAdapter();
+
+        // Act
+        const actual = await adapter.scan([fixturePath]);
+
+        // Assert: 直前行にマーカーのある dummy はスキップされるが、マーカー非隣接の
+        // 本物の秘密（github/aws）は検出される。以前はファイル全体がスキップされ
+        // これらが検出漏れしていた。
+        expect(actual.passed).toBe(false);
+        const messages = actual.findings.map((finding) => finding.message).join('\n');
+        expect(messages).toContain('secret.github');
+        expect(messages).toContain('secret.aws-access-key');
+        expect(actual.findings.some((finding) => finding.message.includes('secret.openai'))).toBe(false);
+        // 実値そのものは redact され出力されない
+        const serialized = JSON.stringify(actual.findings);
+        expect(serialized).not.toContain(dummy);
+        expect(serialized).not.toContain(realGithub);
+        expect(serialized).not.toContain(realAws);
+      });
+    });
   });
 });

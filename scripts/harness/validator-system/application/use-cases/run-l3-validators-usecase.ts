@@ -84,37 +84,75 @@ export class RunL3ValidatorsUseCase {
     const { executableDefinitions, unsupportedResults, unsupportedValidatorIds } =
       this.languageCapabilityService.splitDefinitions(definitions, projectLanguages);
 
-    // coverageReportPort が存在する場合、カバレッジを取得して判定
-    if (this.coverageReportPort && !unsupportedValidatorIds.has('L3-003')) {
-      const coverageData = await this.coverageReportPort.getCoverage();
-      const threshold = layerConfig.getThreshold('coverageThreshold');
-
-      // カバレッジ不足の場合は fail 結果を生成
-      if (threshold !== null && coverageData.overallCoverage < threshold) {
-        const deficit = threshold - coverageData.overallCoverage;
-
-        // 他のバリデータを実行
-        const otherDefs = executableDefinitions.filter((d) => d.validatorId.value !== 'L3-003');
-        const otherResults = this.executionService.execute(otherDefs, [layerConfig]);
-        const otherContracts = this.mapper.toContracts([...unsupportedResults, ...otherResults]);
-
-        return [
-          ...otherContracts.filter((r) => r.validatorId !== 'L3-003'),
-          {
-            validatorId: 'L3-003',
-            passed: false,
-            errors: [{ code: 'L3-003', severity: 'error', message: `カバレッジ不足: 現在値 ${coverageData.overallCoverage}%、不足 ${deficit}%` , suggestion: `テストカバレッジを ${threshold}% 以上に引き上げてください` }],
-            durationMs: 0,
-            skipped: false,
-          },
-        ];
-      }
-    }
-
     const results = this.executionService.execute(executableDefinitions, [layerConfig]);
     const overrideMap = new Map<string, ValidationResult>(
       [...unsupportedResults, ...results].map((result) => [result.validatorId.value, result]),
     );
+
+    // L3-003: カバレッジ判定（カバレッジゲートはオプトイン）
+    // - coverageThreshold 未設定 → SKIP（透過的に判定をスキップ。getCoverage() は呼ばない）
+    // - coverageThreshold 設定あり → getCoverage() を try/catch で包み FAIL-CLOSED で判定する
+    //   - 閾値未満 → FAIL / 閾値以上 → PASS
+    //   - レポート不在などで getCoverage() が失敗 → FAIL（合格扱いにしない）
+    // このブロックは例外を送出せず、L3-003 の per-validator 結果のみを差し替える。
+    // これにより兄弟バリデータ（L3-001/002/004 および L2/L4 バッチ）は常に通常実行される。
+    const l3003InScope =
+      !unsupportedValidatorIds.has('L3-003') &&
+      definitions.some((d) => d.validatorId.value === 'L3-003');
+    if (this.coverageReportPort && l3003InScope) {
+      const l3003Id = ValidatorId.create('L3-003');
+      const threshold = layerConfig.getThreshold('coverageThreshold');
+
+      if (threshold === null) {
+        overrideMap.set(
+          'L3-003',
+          ValidationResult.skipWithReason(
+            l3003Id,
+            'coverageThreshold が未設定のためカバレッジ判定をスキップ（カバレッジゲートはオプトイン）',
+          ),
+        );
+      } else {
+        try {
+          const coverageData = await this.coverageReportPort.getCoverage();
+          if (coverageData.overallCoverage < threshold) {
+            overrideMap.set(
+              'L3-003',
+              ValidationResult.fail(
+                l3003Id,
+                [
+                  {
+                    code: 'L3-003',
+                    severity: 'error',
+                    message: `カバレッジ不足: 現在値 ${coverageData.overallCoverage}%、不足 ${threshold - coverageData.overallCoverage}%`,
+                    suggestion: `テストカバレッジを ${threshold}% 以上に引き上げてください`,
+                  },
+                ],
+                0,
+              ),
+            );
+          } else {
+            overrideMap.set('L3-003', ValidationResult.pass(l3003Id, 0));
+          }
+        } catch {
+          // レポート不在などで取得失敗 → FAIL-CLOSED（例外は握りつぶし per-validator FAIL に変換）
+          overrideMap.set(
+            'L3-003',
+            ValidationResult.fail(
+              l3003Id,
+              [
+                {
+                  code: 'L3-003',
+                  severity: 'error',
+                  message: `coverageThreshold=${threshold}% が設定されていますがカバレッジレポートが見つかりません（テストをカバレッジ付きで実行してください）`,
+                  suggestion: 'vitest --coverage 等でカバレッジレポートを生成してから再実行してください',
+                },
+              ],
+              0,
+            ),
+          );
+        }
+      }
+    }
 
     if (this.securityScannerPort) {
       const l3001Result = overrideMap.get('L3-001');

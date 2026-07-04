@@ -14,6 +14,11 @@ const FIXTURES_DIR = join(
   'scripts/harness/__tests__/fixtures/validator-system/g5/import-graph'
 );
 
+const JS_EXT_FIXTURES_DIR = join(
+  process.cwd(),
+  'scripts/harness/__tests__/fixtures/validator-system/g5/import-graph-js-ext'
+);
+
 target('ImportGraphSourceAnalysisAdapter', () => {
   describe('getImportGraph', () => {
     context('getImportGraphを呼んだ場合', () => {
@@ -69,6 +74,42 @@ target('ImportGraphSourceAnalysisAdapter', () => {
           join(FIXTURES_DIR, 'consumer.ts'),
           join(FIXTURES_DIR, 'leaf.ts'),
         ]);
+      });
+    });
+
+    context('import が .js 拡張子で実体 .ts を参照している場合 (L4-003 誤検知回帰)', () => {
+      it('./leaf.js が leaf.ts として解決され使用中の export を未使用扱いしない (WI-119)', async () => {
+        // Arrange
+        const adapter = new ImportGraphSourceAnalysisAdapter(JS_EXT_FIXTURES_DIR, { includeExcludedFiles: true });
+
+        // Act
+        const actual = await adapter.getImportGraph();
+
+        // Assert: consumer が import する usedViaJsExt / usedViaIndexJsExt は解決され
+        // 未使用にならず、trulyUnused のみが未使用として検出される。
+        expect(actual.unusedExports).toEqual([
+          `${join(JS_EXT_FIXTURES_DIR, 'leaf.ts')}::trulyUnused (reason: no import/export graph reference)`,
+        ]);
+      });
+
+      it('./leaf.js の解決エッジが from=consumer.ts to=leaf.ts で張られる (WI-119)', async () => {
+        // Arrange
+        const adapter = new ImportGraphSourceAnalysisAdapter(JS_EXT_FIXTURES_DIR, { includeExcludedFiles: true });
+
+        // Act
+        const actual = await adapter.getImportGraph();
+
+        // Assert
+        expect(actual.edges).toContainEqual(expect.objectContaining({
+          from: join(JS_EXT_FIXTURES_DIR, 'consumer.ts'),
+          to: join(JS_EXT_FIXTURES_DIR, 'leaf.ts'),
+          importedNames: ['usedViaJsExt'],
+        }));
+        expect(actual.edges).toContainEqual(expect.objectContaining({
+          from: join(JS_EXT_FIXTURES_DIR, 'consumer.ts'),
+          to: join(JS_EXT_FIXTURES_DIR, 'sub', 'index.ts'),
+          importedNames: ['usedViaIndexJsExt'],
+        }));
       });
     });
   });

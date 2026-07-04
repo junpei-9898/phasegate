@@ -112,6 +112,39 @@ async function arrangeAndReadIdempotency() {
   return installTwiceAndReadIdempotency(root);
 }
 
+// Recursively rebuild every object with its keys reversed, producing a
+// structurally identical value whose JSON.stringify output differs only by key
+// order. Used to prove the hook merge dedup is key-order independent.
+function reverseKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(reverseKeysDeep);
+  if (value !== null && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const rebuilt: Record<string, unknown> = {};
+    for (const key of Object.keys(record).reverse()) {
+      rebuilt[key] = reverseKeysDeep(record[key]);
+    }
+    return rebuilt;
+  }
+  return value;
+}
+
+async function arrangeKeyOrderIdempotency() {
+  const root = await createProjectRoot();
+  // First install seeds phasegate's own hook entries.
+  await runInstall(root, { apply: true });
+  const firstSettings = await readFile(join(root, ".claude/settings.json"), "utf8");
+  // Rewrite the file so the phasegate Stop hook entry has reversed key order but
+  // is otherwise identical. A key-order-sensitive dedup would then re-append it.
+  const reordered = reverseKeysDeep(JSON.parse(firstSettings));
+  await writeProjectFile(root, ".claude/settings.json", `${JSON.stringify(reordered, null, 2)}\n`);
+  const secondResult = await runInstall(root, { apply: true });
+  return {
+    secondResult,
+    firstSettings,
+    secondSettings: await readFile(join(root, ".claude/settings.json"), "utf8"),
+  };
+}
+
 async function refuseThenForceAndRead(root: string) {
   const refused = await runInstall(root, { apply: true });
   const forced = await runInstall(root, { apply: true, force: true });
@@ -217,6 +250,21 @@ async function arrangePersonalInstallWithExistingCodexHooks() {
     exitCode: installed.exitCode,
     hooksPlan: parsed.plan.find((item) => item.path === ".codex/hooks.json"),
     hooksContent: await readFile(join(root, ".codex/hooks.json"), "utf8"),
+  };
+}
+
+async function arrangePersonalInstallWithExistingPreCommit() {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, ".git/hooks/pre-commit", "#!/bin/sh\necho user pre-commit\n");
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "claude" });
+  const parsed = JSON.parse(installed.stdout) as {
+    plan: Array<{ path: string; changed: boolean; warning: string | null }>;
+  };
+  return {
+    exitCode: installed.exitCode,
+    stdout: installed.stdout,
+    preCommitPlan: parsed.plan.find((item) => item.path === ".git/hooks/pre-commit"),
+    preCommitContent: await readFile(join(root, ".git/hooks/pre-commit"), "utf8"),
   };
 }
 
@@ -340,6 +388,20 @@ target("InstallHandler", () => {
       expect(actual.secondManifest).toBe(actual.firstManifest);
       expect(actual.secondPackage).toBe(actual.firstPackage);
       expect(actual.secondConfig).toBe(actual.firstConfig);
+    });
+
+    it("既存 hook entry の key 順序が phasegate hook と異なっても重複追加せず冪等であること", async () => {
+      // Arrange
+      const actual = await arrangeKeyOrderIdempotency();
+
+      // Assert
+      expect(actual.secondResult.exitCode).toBe(0);
+      // key 順序違いの既存 Stop hook が重複追加されないこと (冪等)。
+      const firstStop = JSON.parse(actual.firstSettings).hooks.Stop as unknown[];
+      const secondStop = JSON.parse(actual.secondSettings).hooks.Stop as unknown[];
+      expect(secondStop.length).toBe(firstStop.length);
+      const phasegateStopCount = JSON.stringify(secondStop).split("npx phasegate hook stop").length - 1;
+      expect(phasegateStopCount).toBe(1);
     });
 
     it("custom Husky script は force 無しで refuse し force で backup を取ること", async () => {
@@ -523,6 +585,21 @@ target("InstallHandler", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.hooksPlan).toMatchObject({ changed: false, repairMode: "manual" });
       expect(actual.hooksContent).toBe("{\"custom\": true}\n");
+    });
+
+    it("既存 .git/hooks/pre-commit がある場合は上書きせず warning で通知すること", async () => {
+      // Arrange
+      // Act
+      const actual = await arrangePersonalInstallWithExistingPreCommit();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      // 既存 hook は保持される。
+      expect(actual.preCommitContent).toBe("#!/bin/sh\necho user pre-commit\n");
+      // silent skip ではなく warning が出ていること。
+      expect(actual.preCommitPlan?.warning).toBeTruthy();
+      expect(actual.preCommitPlan?.warning).toContain(".git/hooks/pre-commit");
+      expect(actual.preCommitPlan?.warning).toContain("NOT wired in");
     });
 
     it("personal Claude install は既存 skills directory に bundled skills を追加して user-owned skill を保持すること", async () => {

@@ -44,7 +44,8 @@ export class InstallHandler {
       input.apply ? `phasegate install${input.personal ? " --personal" : ""} apply` : `phasegate install${input.personal ? " --personal" : ""} dry-run`,
       ...result.plan.map((item) => {
         const hint = item.skillHint ? `; hint: ${item.skillHint}` : "";
-        return `- ${item.path}: ${item.action} (${item.repairMode}, ${item.strategy}); diff: ${item.diff}${hint}`;
+        const warn = item.warning ? `\n  WARNING: ${item.warning}` : "";
+        return `- ${item.path}: ${item.action} (${item.repairMode}, ${item.strategy}); diff: ${item.diff}${hint}${warn}`;
       }),
     ];
     if (result.backupDir !== null) lines.push(`backups: ${result.backupDir}`);

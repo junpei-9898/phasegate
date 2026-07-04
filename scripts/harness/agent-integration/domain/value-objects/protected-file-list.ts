@@ -21,6 +21,10 @@ const DEFAULT_PATTERNS = [
   'tsconfig.json',
   'package.json',
   'package-lock.json',
+  // baseline.json は grandfather 判定の信頼基盤。手動追記による protected file の
+  // grandfather bypass を防ぐため、書き込み自体を保護対象とする。
+  '.phasegate/baseline.json',
+  '**/.phasegate/baseline.json',
 ];
 
 /**

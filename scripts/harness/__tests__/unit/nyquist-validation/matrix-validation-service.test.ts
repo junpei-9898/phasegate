@@ -117,6 +117,81 @@ target('MatrixValidationService', () => {
     });
   });
 
+  describe('スキーマ準拠 stories 形式テスト（回帰: 旧実装は no-op だった）', () => {
+    // UT-MVS-009
+    it('スキーマ準拠の stories 形式で未登録 storyId="H07-99" があるとき passed=false、errors が1件返ること', async () => {
+      // Arrange
+      const port = createStoryRegistryPort(['H07-01']);
+      const sut = new MatrixValidationService({ storyRegistryPort: port });
+      const rawData = {
+        version: '1.0',
+        generatedAt: '2026-07-04T00:00:00.000Z',
+        stories: [{ storyId: 'H07-99', storyMappings: [] }],
+      };
+      // Act
+      const actual = await sut.validate(rawData);
+      // Assert
+      expect(actual.passed).toBe(false);
+      expect(actual.errors).toHaveLength(1);
+      expect(actual.errors[0].message).toContain('H07-99');
+    });
+
+    // UT-MVS-010
+    it('スキーマ準拠の stories 形式ですべて登録済みなら passed=true が返ること', async () => {
+      // Arrange
+      const port = createStoryRegistryPort(['H07-01']);
+      const sut = new MatrixValidationService({ storyRegistryPort: port });
+      const rawData = {
+        version: '1.0',
+        generatedAt: '2026-07-04T00:00:00.000Z',
+        stories: [{ storyId: 'H07-01', storyMappings: [] }],
+      };
+      // Act
+      const actual = await sut.validate(rawData);
+      // Assert
+      expect(actual.passed).toBe(true);
+      expect(actual.validatedData).not.toBeNull();
+    });
+
+    // UT-MVS-011
+    it('HF2-01 形式の storyId が有効一覧に登録済みなら passed=true が返ること', async () => {
+      // Arrange
+      const port = createStoryRegistryPort(['HF2-01']);
+      const sut = new MatrixValidationService({ storyRegistryPort: port });
+      const rawData = {
+        version: '1.0',
+        generatedAt: '2026-07-04T00:00:00.000Z',
+        stories: [{ storyId: 'HF2-01', storyMappings: [] }],
+      };
+      // Act
+      const actual = await sut.validate(rawData);
+      // Assert
+      expect(actual.passed).toBe(true);
+    });
+  });
+
+  describe('INV-1 storyId 重複検出テスト', () => {
+    // UT-MVS-012
+    it('同一 storyId="H07-01" が2件存在するとき passed=false、重複エラーが含まれること', async () => {
+      // Arrange
+      const port = createStoryRegistryPort(['H07-01']);
+      const sut = new MatrixValidationService({ storyRegistryPort: port });
+      const rawData = {
+        version: '1.0',
+        generatedAt: '2026-07-04T00:00:00.000Z',
+        stories: [
+          { storyId: 'H07-01', storyMappings: [] },
+          { storyId: 'H07-01', storyMappings: [] },
+        ],
+      };
+      // Act
+      const actual = await sut.validate(rawData);
+      // Assert
+      expect(actual.passed).toBe(false);
+      expect(actual.errors.some((e) => e.message.includes('重複'))).toBe(true);
+    });
+  });
+
   describe('StoryRegistryPort エラー伝播テスト', () => {
     // UT-MVS-008
     it('StoryRegistryPort が例外をthrow するとき validate がその例外をそのまま上位に伝播すること', async () => {

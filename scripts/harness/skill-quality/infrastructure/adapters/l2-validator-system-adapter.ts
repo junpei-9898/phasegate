@@ -23,8 +23,18 @@ export class L2ValidatorSystemAdapter implements L2ValidatorPort {
         message: error.message,
         location: '',
       }));
-    } catch {
-      return [];
+    } catch (err) {
+      // Fail-closed: a validator failure must NOT be treated as "合格".
+      // Surface the error as a blocking violation so the commit gate stays closed.
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[skill-quality] L2 validator-system failed: ${message}`);
+      return [
+        {
+          ruleId: 'L2-VALIDATOR-ERROR',
+          message: `L2 validator-system failed to run; treating as NOT compliant (fail-closed): ${message}`,
+          location: '',
+        },
+      ];
     }
   }
 }

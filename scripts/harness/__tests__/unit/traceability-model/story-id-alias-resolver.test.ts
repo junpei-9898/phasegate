@@ -100,6 +100,20 @@ target('StoryIdAliasResolver.resolve', () => {
       });
     });
 
+    // UT-TM-105b
+    context('alias mapがHF\\d+-XX形式の正規StoryIdを指す場合', () => {
+      it('HF2-01への解決が正しく返ること', async () => {
+        // Arrange
+        const { sut } = createStoryIdAliasResolverSut({ 'US-200': 'HF2-01' });
+
+        // Act
+        const actual = await sut.resolve('US-200');
+
+        // Assert
+        expect(actual?.value).toBe('HF2-01');
+      });
+    });
+
     // UT-TM-107
     context('空のalias mapの場合', () => {
       it('nullを返すこと', async () => {

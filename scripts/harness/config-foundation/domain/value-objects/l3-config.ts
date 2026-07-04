@@ -10,12 +10,14 @@ interface L3ConfigProps {
   readonly enabled: boolean;
   readonly validators: string[];
   readonly coverageThreshold: number;
+  readonly requirementMatrixPath?: string;
 }
 
 export class L3Config {
   readonly enabled: boolean;
   readonly validators: readonly string[];
   readonly coverageThreshold: number;
+  readonly requirementMatrixPath?: string;
 
   constructor(props: L3ConfigProps) {
     if (props.coverageThreshold < 0) {
@@ -37,6 +39,7 @@ export class L3Config {
     this.enabled = props.enabled;
     this.validators = Object.freeze([...props.validators]);
     this.coverageThreshold = props.coverageThreshold;
+    this.requirementMatrixPath = props.requirementMatrixPath;
     Object.freeze(this);
   }
 
@@ -44,6 +47,7 @@ export class L3Config {
     enabled: boolean;
     validators: string[];
     coverageThreshold: number;
+    requirementMatrixPath?: string;
   }): L3Config {
     return new L3Config(raw);
   }

@@ -1,0 +1,4 @@
+// phasegate-allow-secret-fixture
+const dummy = "sk-abcdefghijklmnopqrstuvwxyz123456";
+const realSecret = "ghp_realrealrealrealrealrealreal12";
+const another = "AKIAABCDEFGHIJKLMNOP";

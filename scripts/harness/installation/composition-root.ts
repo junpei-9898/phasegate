@@ -26,6 +26,7 @@ import type { UninstallReverseStrategy } from "./domain/ports/uninstall-reverse-
 import { FileSystemManifestRepositoryAdapter } from "./infrastructure/adapters/file-system-manifest-repository-adapter.js";
 import { NodeCryptoHashAdapter } from "./infrastructure/adapters/node-crypto-hash-adapter.js";
 import { NodeFsFileInspectorAdapter } from "./infrastructure/adapters/node-fs-file-inspector-adapter.js";
+import { SkillDeployerModelDelegationAdapter } from "./infrastructure/adapters/skill-deployer-model-delegation-adapter.js";
 import { DoctorHandler } from "./presentation/cli/doctor-handler.js";
 import { InstallHandler } from "./presentation/cli/install-handler.js";
 import { ReconcileHandler } from "./presentation/cli/reconcile-handler.js";
@@ -43,6 +44,7 @@ export function createInstallationModule() {
   const inspector = new NodeFsFileInspectorAdapter();
   const manifestRepository = new FileSystemManifestRepositoryAdapter();
   const hashCalculator = new NodeCryptoHashAdapter();
+  const modelDelegation = new SkillDeployerModelDelegationAdapter();
   const checks = [
     new ClaudeHookMissingCheck(),
     new ClaudeContextMissingCheck(),
@@ -58,8 +60,8 @@ export function createInstallationModule() {
     new WiWorkflowDriftCheck(),
   ];
   const runDoctorDiagnosticsUseCase = new RunDoctorDiagnosticsUseCase(checks, inspector, manifestRepository);
-  const runInstallUseCase = new RunInstallUseCase(manifestRepository, hashCalculator);
-  const runReconcileUseCase = new RunReconcileUseCase(manifestRepository, hashCalculator);
+  const runInstallUseCase = new RunInstallUseCase(manifestRepository, hashCalculator, modelDelegation);
+  const runReconcileUseCase = new RunReconcileUseCase(manifestRepository, hashCalculator, modelDelegation);
   const runUninstallUseCase = new RunUninstallUseCase(manifestRepository, hashCalculator);
   return {
     manifestRepository,

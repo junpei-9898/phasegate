@@ -530,6 +530,136 @@ PATCH`;
     });
   });
 
+  describe('clobber リダイレクト `>|` 抽出 (P-4 回帰)', () => {
+    it('`echo x >| scripts/harness/x/domain/evil.ts` から対象を抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'echo x >| scripts/harness/x/domain/evil.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['scripts/harness/x/domain/evil.ts']);
+    });
+
+    it('スペース無し `echo x >|foo.ts` でも抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'echo x >|foo.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['foo.ts']);
+    });
+  });
+
+  describe('dd of= 抽出 (P-4 回帰)', () => {
+    it('`dd if=/dev/zero of=scripts/harness/x/domain/evil.ts` から of= 対象を抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'dd if=/dev/zero of=scripts/harness/x/domain/evil.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['scripts/harness/x/domain/evil.ts']);
+    });
+
+    it('`dd of=foo.ts bs=1M` の順序が入れ替わっても抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'dd of=foo.ts bs=1M if=/dev/zero';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['foo.ts']);
+    });
+  });
+
+  describe('install 抽出 (P-4 回帰)', () => {
+    it('`install src.ts scripts/harness/x/domain/evil.ts` から宛先を抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'install src.ts scripts/harness/x/domain/evil.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['scripts/harness/x/domain/evil.ts']);
+    });
+
+    it('`install -m 644 src.ts dest.ts` からオプションを除き宛先のみ抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'install -m 644 src.ts dest.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['dest.ts']);
+    });
+  });
+
+  describe('rsync 抽出 (P-4 回帰)', () => {
+    it('`rsync -a src.ts scripts/harness/x/domain/evil.ts` から宛先を抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'rsync -a src.ts scripts/harness/x/domain/evil.ts';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['scripts/harness/x/domain/evil.ts']);
+    });
+  });
+
+  describe('bash -c ネスト抽出 (P-4 回帰)', () => {
+    it("`bash -c 'echo x > scripts/harness/x/domain/evil.ts'` からネスト内の対象を抽出する", () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = "bash -c 'echo x > scripts/harness/x/domain/evil.ts'";
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['scripts/harness/x/domain/evil.ts']);
+    });
+
+    it("`sh -c 'touch foo.ts'` からネスト内の touch 対象を抽出する", () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = "sh -c 'touch foo.ts'";
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['foo.ts']);
+    });
+
+    it("`bash -c 'dd of=evil.ts && cp a b'` からネスト内の複数 write vector を抽出する", () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = "bash -c 'dd of=evil.ts && cp a b'";
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['evil.ts', 'b']);
+    });
+  });
+
   describe('apply_patch 抽出しないパターン', () => {
     it('`*** Begin Patch` マーカー無しで `*** Update File:` を含むのみの場合は抽出しない', () => {
       // Arrange

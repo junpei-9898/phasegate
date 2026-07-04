@@ -8,12 +8,16 @@
  * Phase Gate フックが Bash 経由のファイル書き込みを検知して保護するための基盤。
  *
  * 副作用なし・純粋関数相当。対応パターンは以下:
- *   - リダイレクト `>` / `>>`
+ *   - リダイレクト `>` / `>>` / `>|` (clobber)
  *   - heredoc (`<<EOF > path`)
  *   - `tee` / `tee -a`
  *   - `sed -i` / `sed -i ''` (BSD)
  *   - `cp` / `mv` (宛先のみ)
  *   - `touch`
+ *   - `dd of=<path>`
+ *   - `install [opts] SRC... DEST` (coreutils, ファイル作成)
+ *   - `rsync [opts] SRC... DEST`
+ *   - `bash -c '...'` / `sh -c '...'` (ネストしたコマンドを再帰解析)
  *   - 複合コマンド (`&&`, `;`, `||`) とパイプ (`|`) 分割
  *   - ダブル/シングルクォート対応
  *   - `apply_patch` ヒアドキュメント (`*** Begin Patch` / `*** End Patch` ブロック内の
@@ -44,7 +48,11 @@ function tokenize(input: string): Token[] {
     // 演算子をそのままトークン化
     if (ch === '>' || ch === '<' || ch === '|' || ch === ';' || ch === '&') {
       let op = ch;
-      if (i + 1 < len && input[i + 1] === ch && (ch === '>' || ch === '<' || ch === '|' || ch === '&')) {
+      // `>|` (clobber redirect) は独立した 2 文字演算子として扱う
+      if (ch === '>' && i + 1 < len && input[i + 1] === '|') {
+        op = '>|';
+        i += 2;
+      } else if (i + 1 < len && input[i + 1] === ch && (ch === '>' || ch === '<' || ch === '|' || ch === '&')) {
         op = ch + ch;
         i += 2;
       } else {
@@ -139,10 +147,10 @@ function getCommandName(tokens: Token[]): string | undefined {
 function extractFromSingleCommand(tokens: Token[]): string[] {
   const results: string[] = [];
 
-  // 1) リダイレクト `>` / `>>` の右辺 (heredoc の `>` もこのパスで拾える)
+  // 1) リダイレクト `>` / `>>` / `>|` の右辺 (heredoc の `>` もこのパスで拾える)
   for (let i = 0; i < tokens.length; i += 1) {
     const t = tokens[i];
-    if (t.quoted === 'none' && (t.value === '>' || t.value === '>>')) {
+    if (t.quoted === 'none' && (t.value === '>' || t.value === '>>' || t.value === '>|')) {
       const next = tokens[i + 1];
       if (next !== undefined) {
         results.push(next.value);
@@ -213,12 +221,87 @@ function extractFromSingleCommand(tokens: Token[]): string[] {
     for (let i = 1; i < tokens.length; i += 1) {
       const t = tokens[i];
       if (t.quoted === 'none' && t.value.startsWith('-')) continue;
-      if (t.quoted === 'none' && (t.value === '>' || t.value === '>>' || t.value === '|' || t.value === '<')) break;
+      if (t.quoted === 'none' && (t.value === '>' || t.value === '>>' || t.value === '>|' || t.value === '|' || t.value === '<')) break;
       results.push(t.value);
+    }
+  } else if (baseName === 'dd') {
+    // `dd of=<path>` — 出力ファイルは `of=` オペランド
+    for (let i = 1; i < tokens.length; i += 1) {
+      const t = tokens[i];
+      if (t.value.startsWith('of=')) {
+        const dest = t.value.slice('of='.length);
+        if (dest.length > 0) results.push(dest);
+      }
+    }
+  } else if (baseName === 'install') {
+    // `install [opts] SRC... DEST` — 宛先は最後の非オプション引数 (coreutils はファイルを作成する)
+    const positionals = collectPositionals(tokens);
+    if (positionals.length >= 1) {
+      // `install -d DIR...` はディレクトリ作成のみだが保護側に倒し全ディレクトリを対象化
+      const isDirMode = tokens.some(
+        (t) => t.quoted === 'none' && (t.value === '-d' || t.value === '--directory'),
+      );
+      if (isDirMode) {
+        for (const p of positionals) results.push(p.value);
+      } else if (positionals.length >= 2) {
+        results.push(positionals[positionals.length - 1].value);
+      } else {
+        // SRC 省略で DEST のみ渡された不正形でも保護側に倒す
+        results.push(positionals[positionals.length - 1].value);
+      }
+    }
+  } else if (baseName === 'rsync') {
+    // `rsync [opts] SRC... DEST` — 宛先は最後の非オプション引数
+    const positionals = collectPositionals(tokens);
+    if (positionals.length >= 2) {
+      results.push(positionals[positionals.length - 1].value);
+    }
+  } else if (baseName === 'bash' || baseName === 'sh') {
+    // `bash -c '<nested command>'` — ネストしたコマンドを再帰解析
+    for (let i = 1; i < tokens.length; i += 1) {
+      const t = tokens[i];
+      if (t.quoted === 'none' && t.value === '-c') {
+        const script = tokens[i + 1];
+        if (script !== undefined) {
+          for (const nested of extractFromCommandString(script.value)) {
+            results.push(nested);
+          }
+        }
+        break;
+      }
     }
   }
 
   return results;
+}
+
+/** コマンド先頭 (cmd 名) を除いた非オプション位置引数を収集する。リダイレクト境界で停止。 */
+function collectPositionals(tokens: Token[]): Token[] {
+  const positionals: Token[] = [];
+  for (let i = 1; i < tokens.length; i += 1) {
+    const t = tokens[i];
+    if (t.quoted === 'none' && t.value.startsWith('-')) continue;
+    if (t.quoted === 'none' && (t.value === '>' || t.value === '>>' || t.value === '>|' || t.value === '|' || t.value === '<')) break;
+    positionals.push(t);
+  }
+  return positionals;
+}
+
+/** コマンド文字列を token 化 → 演算子分割 → 各コマンドから書き込み先を抽出する内部関数。 */
+function extractFromCommandString(command: string): string[] {
+  const tokens = tokenize(command);
+  const groups = splitByOperators(tokens);
+  const collected: string[] = [];
+  for (const group of groups) {
+    for (const path of extractFromSingleCommand(group)) {
+      collected.push(path);
+    }
+  }
+  // ネスト内の apply_patch heredoc も拾う
+  for (const p of extractApplyPatchTargets(command)) {
+    collected.push(p);
+  }
+  return collected;
 }
 
 /** apply_patch ブロック境界マーカー (Begin/End) */
@@ -284,24 +367,9 @@ export class BashWriteTargetExtractor {
       return Object.freeze([]);
     }
 
-    const tokens = tokenize(command);
-    const groups = splitByOperators(tokens);
-
-    const collected: string[] = [];
-    for (const group of groups) {
-      const found = extractFromSingleCommand(group);
-      for (const path of found) {
-        collected.push(path);
-      }
-    }
-
-    // apply_patch ヒアドキュメント対応 (ISSUE-013 Wave 1)
-    // 既存の token ベース抽出では heredoc body 内のマーカー行を拾えないため、
-    // raw command 文字列から独立にスキャンする。
-    const applyPatchTargets = extractApplyPatchTargets(command);
-    for (const p of applyPatchTargets) {
-      collected.push(p);
-    }
+    // token 化 → 演算子分割 → 各コマンド抽出 + apply_patch ヒアドキュメント対応
+    // (ISSUE-013 Wave 1)。bash -c '...' 等のネストコマンドは内部で再帰解析される。
+    const collected = extractFromCommandString(command);
 
     // 重複除去 (挿入順保持)
     const seen = new Set<string>();

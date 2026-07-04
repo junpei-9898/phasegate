@@ -29,6 +29,7 @@ import { FileSystemContractTraceabilityPolicyAdapter } from './infrastructure/ad
 import { PhaseDependencyPhaseGatePolicyAdapter } from './infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.js';
 import { TraceabilityMetadataPolicyAdapter } from './infrastructure/adapters/traceability-metadata-policy-adapter.js';
 import { NyquistAcCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
+import { JsonCoverageReportAdapter } from './infrastructure/adapters/json-coverage-report-adapter.js';
 import { BiomeAstTestQualityAnalyzerAdapter } from './infrastructure/adapters/biome-ast-test-quality-analyzer-adapter.js';
 import { FileSystemSecurityPatternScannerAdapter } from './infrastructure/adapters/file-system-security-pattern-scanner-adapter.js';
 import { AstPerformanceScannerAdapter } from './infrastructure/adapters/ast-performance-scanner-adapter.js';
@@ -54,7 +55,7 @@ const DEFAULT_CONFIG = {
   preset: 'standard' as const,
   layers: {
     L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-    L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000 },
+    L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 90, bundleSizeLimit: 512000, requirementMatrixPath: '.harness/requirement-test-matrix.json' },
     L4: { enabled: true, validators: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'] },
   },
   paths: {
@@ -149,6 +150,11 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const phaseGatePolicyPort = new PhaseDependencyPhaseGatePolicyAdapter();
   const metadataPolicyPort = new TraceabilityMetadataPolicyAdapter();
   const acCoveragePolicyPort = new NyquistAcCoveragePolicyAdapter();
+  // L3-003: テストカバレッジレポート（vitest --coverage の json-summary 出力）を読み取る。
+  // 未配線だと L3-003 は装飾的な pass になり 90% 閾値が形骸化するため必ず配線する。
+  const coverageReportPort = new JsonCoverageReportAdapter(
+    join(process.cwd(), 'coverage', 'coverage-summary.json'),
+  );
   const testQualityAnalyzerPort = new BiomeAstTestQualityAnalyzerAdapter();
   const securityScannerPort = new FileSystemSecurityPatternScannerAdapter();
   const performanceScannerPort = new AstPerformanceScannerAdapter();
@@ -189,6 +195,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     validatorConfigPort: configPort,
     contractMapper,
     acCoveragePolicyPort,
+    coverageReportPort,
     securityScannerPort,
     performanceScannerPort,
   });

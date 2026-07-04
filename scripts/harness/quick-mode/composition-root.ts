@@ -8,6 +8,7 @@
 import { GitDiffChangedFilesAdapter } from './infrastructure/adapters/git-diff-changed-files-adapter.js';
 import { HarnessConfigQuickModeConfigAdapter } from './infrastructure/adapters/harness-config-quick-mode-config-adapter.js';
 import { ValidatorSystemValidatorIdRegistryAdapter } from './infrastructure/adapters/validator-system-validator-id-registry-adapter.js';
+import { ValidatorSystemQuickModeExecutionAdapter } from './infrastructure/adapters/validator-system-quick-mode-execution-adapter.js';
 import { QuickModeJudgmentEngine } from './domain/services/quick-mode-judgment-engine.js';
 import { ValidatorRelaxationService } from './domain/services/validator-relaxation-service.js';
 import { QuickModeDecisionContractMapper } from './application/mappers/quick-mode-decision-contract-mapper.js';
@@ -32,6 +33,7 @@ export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
   const gitDiffAdapter = new GitDiffChangedFilesAdapter();
   const harnessConfigAdapter = new HarnessConfigQuickModeConfigAdapter();
   const validatorIdRegistryAdapter = new ValidatorSystemValidatorIdRegistryAdapter();
+  const validatorExecutionPort = new ValidatorSystemQuickModeExecutionAdapter();
 
   // Domain Services
   const judgmentEngine = new QuickModeJudgmentEngine();
@@ -64,6 +66,7 @@ export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
   const executeUseCase = new ExecuteQuickCiCheckUseCase({
     judgeUseCase,
     buildUseCase,
+    validatorExecutionPort,
   });
 
   const classifyUseCase = new ClassifyChangeCategoryUseCase({

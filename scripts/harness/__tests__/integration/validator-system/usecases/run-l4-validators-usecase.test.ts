@@ -246,6 +246,58 @@ target('RunL4ValidatorsUseCase', () => {
       });
     });
 
+    context('標準レイアウト (docs/inception, docs/product/construction) の場合 (WI-217 恒久スキップ回帰)', () => {
+      it('pathRoots未指定でも reflection が実行され missing reflection が warning として返ること', async () => {
+        // Arrange
+        const registry = createFullRegistry();
+        const executionService = new ValidatorExecutionService({});
+        const mapper = new ValidationResultContractMapper();
+        const mockValidatorConfigPort = {
+          getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L4', { validatorIds: ['L4-002'] })),
+        };
+        const consistencyCheck = vi.fn().mockResolvedValue({ hasMismatches: () => false, toHarnessErrors: () => [] });
+        const checkWorkItemReflection = vi.fn().mockResolvedValue({
+          report: {
+            hasMismatches: () => true,
+            toHarnessErrors: () => [{
+              code: { value: 'L4-002', toString: () => 'L4-002' },
+              severity: { value: 'warning', toString: () => 'warning' },
+              message: 'missing product reflection',
+              suggestion: 'Add @work-item-id WI-999 to product docs.',
+            }],
+          },
+        });
+        // pathRoots を渡さない = 標準レイアウト。以前はこの場合 reflection が
+        // 実行されず L4-002 が常に PASS していた。
+        const usecase = new RunL4ValidatorsUseCase({
+          validatorRegistry: registry,
+          validatorExecutionService: executionService,
+          validatorConfigPort: mockValidatorConfigPort,
+          contractMapper: mapper,
+          consistencyCheckService: { check: consistencyCheck, checkWorkItemReflection } as never,
+        });
+
+        // Act
+        const actual = await usecase.execute({ validatorIds: ['L4-002'] });
+
+        // Assert
+        expect(checkWorkItemReflection.mock.calls).toEqual([[
+          {
+            inceptionRoot: 'docs/inception',
+            designRoot: 'docs/product/construction',
+          },
+        ]]);
+        expect(actual[0]?.validatorId).toBe('L4-002');
+        expect(actual[0]?.passed).toBe(false);
+        expect(actual[0]?.errors).toEqual([{
+          code: 'L4-002',
+          severity: 'warning',
+          message: 'missing product reflection',
+          suggestion: 'Add @work-item-id WI-999 to product docs.',
+        }]);
+      });
+    });
+
     context('personal document rootにdescription.mdがない場合', () => {
       it('L4-002がskip reasonを公開すること', async () => {
         // Arrange

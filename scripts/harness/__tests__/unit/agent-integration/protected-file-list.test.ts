@@ -173,7 +173,15 @@ target('ProtectedFileList', () => {
     // UT-PFL-052
     it('全DEFAULT_PATTERNS除外時にフォールバックで全パターンが復元されること', () => {
       // Arrange
-      const exclusions = ['biome.json', '.biome.json', 'tsconfig.json', 'package.json', 'package-lock.json'];
+      const exclusions = [
+        'biome.json',
+        '.biome.json',
+        'tsconfig.json',
+        'package.json',
+        'package-lock.json',
+        '.phasegate/baseline.json',
+        '**/.phasegate/baseline.json',
+      ];
       // Act
       const actual = ProtectedFileList.createWithExclusions(exclusions);
       // Assert
@@ -217,6 +225,24 @@ target('ProtectedFileList', () => {
       // Assert
       expect(actual.matches('tsconfig.json')).toBe(true);
       expect(actual.matches('package.json')).toBe(true);
+    });
+  });
+
+  context('baseline.json 保護 (P-5 grandfather bypass 回帰)', () => {
+    // UT-PFL-070
+    it('デフォルトで .phasegate/baseline.json への書き込みを保護対象とすること', () => {
+      // Arrange
+      const actual = ProtectedFileList.createDefault();
+      // Act & Assert
+      expect(actual.matches('.phasegate/baseline.json')).toBe(true);
+    });
+
+    // UT-PFL-071
+    it('サブディレクトリ配下の .phasegate/baseline.json も保護対象とすること', () => {
+      // Arrange
+      const actual = ProtectedFileList.createWithAdditionalAndExclusions([], []);
+      // Act & Assert
+      expect(actual.matches('packages/app/.phasegate/baseline.json')).toBe(true);
     });
   });
 
