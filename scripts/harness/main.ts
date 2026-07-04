@@ -229,6 +229,8 @@ Commands:
   phasegate:complete-check       Complete L2-L4 check (--json)
   phasegate:impact-analysis      Impact analysis for story (<storyId>, --json)
   phasegate:generate-matrix      Generate requirement-test matrix (--requirements, --tests, --out, --json)
+  phasegate:attest               Produce a signed-attestation record of ci-check (--out <path>, --require-pass, --mode <unsigned-poc|signed>, --json)
+  phasegate:verify-attestation   Verify an attestation record's integrity (<file>, --json)
 
 Gate semantics:
   phasegate:complete-check       Gate: lint + all validators; exits 1 on failure
@@ -2821,6 +2823,50 @@ async function main(): Promise<void> {
           testRoot: parseFlag(args, "--tests") ?? "scripts/harness/__tests__",
           matrixFilePath: parseFlag(args, "--out") ?? ".harness/requirement-test-matrix.json",
         }, flags);
+        break;
+      }
+
+      case "phasegate:attest": {
+        const flagError = validateKnownFlags(args.slice(1), [
+          "--out",
+          "--require-pass",
+          "--mode",
+          "--json",
+          "--help",
+        ]);
+        if (flagError !== null) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const { createAttestationModule } = await import("./attestation/index.js");
+        const pkgVersion = await getHarnessVersion(harnessRoot);
+        const mod = createAttestationModule(rootDir, { pkgVersion });
+        const result = await mod.attestHandler.handle({
+          out: parseFlag(args, "--out") ?? ".harness/attestation.json",
+          requirePass: hasFlag(args, "--require-pass"),
+          emitJson: json,
+          mode: parseFlag(args, "--mode"),
+        });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "phasegate:verify-attestation": {
+        const flagError = validateKnownFlags(args.slice(1), ["--json", "--help"]);
+        if (flagError !== null) {
+          console.error(flagError);
+          process.exit(2);
+        }
+        const { createAttestationModule } = await import("./attestation/index.js");
+        const mod = createAttestationModule(rootDir);
+        const file = args[1] && !args[1].startsWith("--") ? args[1] : undefined;
+        const result = await mod.verifyAttestationHandler.handle({
+          file,
+          emitJson: json,
+        });
+        console.log(result.output);
+        process.exit(result.exitCode);
         break;
       }
 

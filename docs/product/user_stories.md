@@ -36,6 +36,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-13 | Scheduled Governance & CI/CDテンプレート | 3 | 3 |
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
+| H-16 | Signed Attestation | 2 | 3 |
 | H-F2 | Phase 2拡張 | 3 | Future |
 
 ---
@@ -1158,7 +1159,7 @@ K2（Phase Gate Architecture）— 新 WI layout を Hook 側のスコープ推�
 
 ---
 
-## Wave 3: 拡張・運用・保証（H-12〜H-15 / 14 US）
+## Wave 3: 拡張・運用・保証（H-12〜H-16 / 16 US）
 
 ---
 
@@ -1565,6 +1566,70 @@ K8（Cascade Updater）
 
 ---
 
+## H-16: Signed Attestation
+
+### H16-01: Attestation record generation (phasegate:attest)
+
+**Epic**: H-16 Signed Attestation
+**旧US**: 新規（手1 signed attestation PoC）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** `phasegate:attest` で ci-check の結果を content-addressed な attestation record として生成したい,
+**so that** ゲート結果・検査対象入力・検査粒度を改竄検知可能な単一ドキュメントとして残し、粗い green を細かい保証として詐称（laundering）できないようにできる。
+
+#### 背景
+
+unsigned-poc モードは鍵を持たず、ドキュメント自身の content digest（`attestationDigest`）で **INTEGRITY（改竄検知）のみ** を証明する。**AUTHENTICITY（発行者の真正性）は証明しない**。真の ed25519 署名は `signature.mode: "signed"` で後から差し込む前提で、record format に `signature.mode` discriminator（`"unsigned-poc" | "signed"`）を持たせる。attest は opt-in の独立コマンドであり、`phasegate:ci-check` の経路には決して注入しない。
+
+#### 受け入れ基準
+
+- [ ] AC-1: 生成される record は `schemaVersion: "phasegate-attestation/v1"` と `predicateType: "https://phasegate.dev/attestation/gate-run/v1"` を含む
+- [ ] AC-2: `subject.validatorSet` が `phasegate:ci-check --json` の出力から取得され、各要素が `{ validatorId, passed, skipped }` を持つ
+- [ ] AC-3: `subject.gateResult` が ci-check の `allPassed` を反映し、`"pass" | "fail"` のいずれかである
+- [ ] AC-4: `inputs.sources` が `phasegate.config.json` と `.harness/requirement-test-matrix.json` の sha256 digest を `sha256:<64hex>` 形式で含む
+- [ ] AC-5: `inputs.sources` に git commit SHA が入力の一部として反映され、`inputs.inputDigest` が sources を安定ソートした上で決定論的に算出される
+- [ ] AC-6: `granularity.traceability` が `subject.validatorSet` から機械的に導出され、`validator: "L3-004"`, `level: "file"` を記録する
+- [ ] AC-7: `granularity.traceability.knownLimitations` に「L3-004 traceability は FILE-LEVEL であり per-AC ではない（green は各 AC に参照テスト FILE が1つ以上存在することのみを意味し、各 AC が個別に assert されていることは意味しない）」旨が含まれる
+- [ ] AC-8: `signature.mode` が `"unsigned-poc"` のとき `signature.attestationDigest` が canonical payload 上の sha256 で算出され、`algorithm`/`keyId`/`value` は `null` である
+- [ ] AC-9: `attestationDigest` は `signature` ブロックと volatile な `metadata`（`producedAt`, `gitCommit`）を除去した document の canonical JSON（キー昇順ソート・空白なし）上で算出される
+- [ ] AC-10: `--require-pass` 指定時、`gateResult` が `fail` なら record を一切出力せず exit 1 で終了する
+- [ ] AC-11: `--out <path>`（既定 `.harness/attestation.json`）で指定されたパスに record が書き出される
+- [ ] AC-12: `--mode signed` 指定時は "not yet implemented" として usage error（exit 2）を返す
+- [ ] AC-13: 使い方誤り（未知フラグ等）は exit 2 を返す
+
+#### 対応非交渉要件
+K9（トレーサビリティの改竄不可能性）— attestation による gate 結果の改竄検知と粒度の明示
+
+---
+
+### H16-02: Attestation verification (phasegate:verify-attestation)
+
+**Epic**: H-16 Signed Attestation
+**旧US**: 新規（手1 signed attestation PoC）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** `phasegate:verify-attestation <file>` で既存 attestation record を機械的に再検証したい,
+**so that** record が改竄されていないこと・入力が当時から変わっていないこと・粒度主張が validator set と整合していることを鍵なしで確認できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: record の schema/shape（必須フィールド・型）が妥当であることを検証し、不正なら exit 2 を返す
+- [ ] AC-2: `signature.mode` がサポート対象（`unsigned-poc`）であることを検証し、非対応 mode（例: `signed`）は exit 2 で拒否する
+- [ ] AC-3: canonical payload 上で `attestationDigest` を再計算し、格納値と一致することを検証する（INTEGRITY 再チェック）
+- [ ] AC-4: `inputs.sources[].digest` を現在のファイルから再計算し、格納値と一致することを検証する（input-hash 再照合）
+- [ ] AC-5: `granularity` を `subject.validatorSet` から再導出し、格納値と一致することを検証する（anti-laundering）
+- [ ] AC-6: 全チェック合格時に exit 0 を返す
+- [ ] AC-7: いずれかの再計算値が不一致（digest/input-hash/granularity mismatch）の場合 exit 1 を返す
+- [ ] AC-8: ファイル不在・JSON parse 失敗・shape 不正・非対応 mode の場合 exit 2 を返す
+- [ ] AC-9: `--json` 指定時は各チェックの結果を機械可読な形式で stdout に出力する
+
+#### 対応非交渉要件
+K9（トレーサビリティの改竄不可能性）— attestation の機械的再検証と laundering 検出
+
+---
+
 ## Orchestration移管ストーリー一覧（参照）
 
 以下のストーリーはOrchestrationパッケージに移管済み。Quality Harnessのスコープ外。
@@ -1603,7 +1668,8 @@ K8（Cascade Updater）
 | 3 | H-13 Scheduled Gov | 3 | 1 | 2 |
 | 3 | H-14 K回帰 | 3 | 3 | 0 |
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
-| **Wave 3小計** | | **14** | **12** | **2** |
+| 3 | H-16 Signed Attestation | 2 | 2 | 0 |
+| **Wave 3小計** | | **16** | **14** | **2** |
 | Future | H-F2 Phase 2拡張 | 3 | — | — |
-| **v1合計** | | **54** | **49** | **5** |
-| **全体（Future含む）** | | **57** | — | — |
+| **v1合計** | | **56** | **51** | **5** |
+| **全体（Future含む）** | | **59** | — | — |

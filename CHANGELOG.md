@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.165.0] - 2026-07-05
+
+### Added
+
+- **WI-224 — 手1 signed-attestation PoC (`attestation` unit, unsigned-poc mode)** — adds a new additive `attestation` unit (Clean Architecture: domain / application / infrastructure / presentation) that produces and mechanically re-verifies a content-addressed attestation document for a `phasegate:ci-check` gate run. Purely additive: it does not modify or run inside any existing gate (ADR-020 compliant).
+  - **2 つの opt-in CLI コマンド**: `phasegate:attest`（`phasegate:ci-check` の結果から署名付き attestation ドキュメントを生成）/ `phasegate:verify-attestation <file>`（生成済みドキュメントを鍵なしで機械的に再検証）。既存ゲートの経路には注入しない独立コマンド。
+  - **記録内容**: validator-set + per-validator result（`{ validatorId, passed, skipped }`）+ 入力 digest（`phasegate.config.json` / requirement-test-matrix / git SHA）+ **granularity / known-limitations ブロック**。granularity は L3-004 のトレーサビリティが **FILE-LEVEL（per-AC ではない）** であることを機械的に記録し、粗い green を細かい保証として詐称（laundering）できないようにする。
+  - **`unsigned-poc` signature モード**: content-addressed self-digest（`attestationDigest`）で **改竄検知 / INTEGRITY のみ** を証明する（発行者の真正性 / AUTHENTICITY は証明しない）。`signature.mode` discriminator を予約し、後から本物の ed25519 署名を差し込めるようにした。`--mode signed` は現状 "not yet implemented"（exit 2）。
+  - **決定論**: `attestationDigest` は signature ブロックと volatile な metadata（`producedAt` / `gitCommit`）を除去した canonical payload 上で算出するため verify が再現可能。attestation の既定出力先は `.harness/attestation.json`（gitignore 済み）。
+  - ストーリー H16-01 / H16-02 を追加。L3-004 のトレーサビリティは引き続き green（Missing tests: 0）。
+
 ## [0.162.0] - 2026-07-04
 
 ### Fixed

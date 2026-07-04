@@ -1,0 +1,93 @@
+/**
+ * @layer infrastructure
+ * @unit attestation
+ *
+ * Composition Root — attestation Unit の依存性組み立て。
+ * createAttestationModule() は adapters + usecases + handlers を組み立て、
+ * 公開する 2 ハンドラ（attest / verify-attestation）を返す。
+ */
+
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { AttestationRecordMapper } from "./application/mappers/attestation-record-mapper.js";
+import { ProduceAttestationUseCase } from "./application/usecases/produce-attestation-usecase.js";
+import { VerifyAttestationUseCase } from "./application/usecases/verify-attestation-usecase.js";
+import { GranularityDerivationService } from "./domain/services/granularity-derivation-service.js";
+import { CiCheckGateResultAdapter } from "./infrastructure/adapters/ci-check-gate-result-adapter.js";
+import { FileSystemAttestationRepositoryAdapter } from "./infrastructure/adapters/file-system-attestation-repository-adapter.js";
+import { FileSystemSourceDigesterAdapter } from "./infrastructure/adapters/file-system-source-digester-adapter.js";
+import { NodeCryptoContentHasherAdapter } from "./infrastructure/adapters/node-crypto-content-hasher-adapter.js";
+import { AttestHandler } from "./presentation/handlers/attest-handler.js";
+import { VerifyAttestationHandler } from "./presentation/handlers/verify-attestation-handler.js";
+
+const execFileAsync = promisify(execFile);
+
+export interface AttestationModule {
+  readonly attestHandler: AttestHandler;
+  readonly verifyAttestationHandler: VerifyAttestationHandler;
+}
+
+export interface AttestationModuleOptions {
+  /** metadata.producer の pkg version。既定 "0.0.0"。 */
+  readonly pkgVersion?: string;
+  /** git commit SHA 取得器のオーバーライド（テスト用）。既定は `git rev-parse HEAD`。 */
+  readonly gitCommitProvider?: () => Promise<string | null>;
+  /** ci-check subprocess の main.ts パスオーバーライド（テスト用）。 */
+  readonly mainTsPath?: string;
+  /** metadata.producedAt 用クロックのオーバーライド（テスト用）。 */
+  readonly clock?: () => Date;
+}
+
+/**
+ * attestation Unit のモジュールを組み立てる。
+ * @param rootDir プロジェクトルート（source digest / repository の baseDir）。
+ */
+export function createAttestationModule(rootDir: string, options?: AttestationModuleOptions): AttestationModule {
+  // Infrastructure adapters
+  const hasher = new NodeCryptoContentHasherAdapter();
+  const sourceDigester = new FileSystemSourceDigesterAdapter(rootDir);
+  const gateResultSource = new CiCheckGateResultAdapter({ mainTsPath: options?.mainTsPath });
+  const repository = new FileSystemAttestationRepositoryAdapter(rootDir);
+
+  // Domain services / mappers
+  const granularityService = new GranularityDerivationService();
+  const mapper = new AttestationRecordMapper();
+
+  const gitCommitProvider = options?.gitCommitProvider ?? (() => defaultGitCommitProvider(rootDir));
+
+  // Use cases
+  const produceUseCase = new ProduceAttestationUseCase({
+    gateResultSource,
+    sourceDigester,
+    hasher,
+    repository,
+    granularityService,
+    mapper,
+    gitCommitProvider,
+    pkgVersion: options?.pkgVersion ?? "0.0.0",
+    clock: options?.clock,
+  });
+  const verifyUseCase = new VerifyAttestationUseCase({
+    repository,
+    sourceDigester,
+    hasher,
+    granularityService,
+    mapper,
+  });
+
+  // Handlers
+  const attestHandler = new AttestHandler(produceUseCase);
+  const verifyAttestationHandler = new VerifyAttestationHandler(verifyUseCase);
+
+  return { attestHandler, verifyAttestationHandler };
+}
+
+async function defaultGitCommitProvider(cwd: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd });
+    const sha = stdout.trim();
+    return sha.length > 0 ? sha : null;
+  } catch {
+    return null;
+  }
+}
