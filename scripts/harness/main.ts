@@ -2554,8 +2554,11 @@ async function main(): Promise<void> {
       }
 
       // ── adr-foundation ──
+      // ADR は docs/ADR/ 配下に集約されているため、モジュールには project root ではなく
+      // ADR ディレクトリを rootDir として渡す（project root を渡すと readdir が ADR を
+      // 一切発見できず vacuous な valid を返す phantom gate になる）。
       case "list-adrs": {
-        const mod = createAdrFoundationModule(rootDir);
+        const mod = createAdrFoundationModule(join(rootDir, "docs", "ADR"));
         const statuses = toAdrStatuses(parseFlag(args, "--status"));
         const result = await mod.listAdrsCommandHandler.execute({
           statuses,
@@ -2567,7 +2570,7 @@ async function main(): Promise<void> {
       }
 
       case "validate-adr": {
-        const mod = createAdrFoundationModule(rootDir);
+        const mod = createAdrFoundationModule(join(rootDir, "docs", "ADR"));
         const all = hasFlag(args, "--all");
         const adrRef = args.find((a) => !a.startsWith("--") && a !== command);
         const result = await mod.validateAdrCommandHandler.execute({

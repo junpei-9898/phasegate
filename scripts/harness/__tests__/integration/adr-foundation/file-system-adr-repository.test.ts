@@ -12,6 +12,7 @@ import { AdrStatus } from '../../../adr-foundation/domain/value-objects/adr-stat
 import { AdrMarkdownDocumentParser } from '../../../adr-foundation/infrastructure/parsers/adr-markdown-document-parser.js';
 import { RegexAdrFrontmatterParser } from '../../../adr-foundation/infrastructure/parsers/regex-adr-frontmatter-parser.js';
 import { FileSystemAdrRepository } from '../../../adr-foundation/infrastructure/repositories/file-system-adr-repository.js';
+import { createAdrFoundationModule } from '../../../adr-foundation/composition-root.js';
 
 const createAdr = (
   overrides?: Partial<{
@@ -120,6 +121,36 @@ target('FileSystemAdrRepository', () => {
           expect(fs.existsSync(actual.newPath)).toBe(true);
           expect(actual.newContent.endsWith('\n')).toBe(true);
           expect(actual.newContent).toContain('# Separate config files');
+        });
+      });
+    });
+  });
+
+  describe('validate-adr wiring (docs/ADR ディレクトリ解決)', () => {
+    context('ADR ディレクトリに 019/020 が存在する場合', () => {
+      it('モジュールへ渡した ADR ディレクトリを走査し 019/020 を発見して検証する', async () => {
+        await withRepository(async ({ rootDir }) => {
+          // Arrange
+          // ADR ディレクトリ相当の一時ディレクトリへ 019/020 を配置し、
+          // validate-adr の配線（createAdrFoundationModule に ADR ディレクトリを渡す）を再現する。
+          const seedRepository = new FileSystemAdrRepository(
+            rootDir,
+            new AdrMarkdownDocumentParser(new RegexAdrFrontmatterParser()),
+          );
+          await seedRepository.save(createAdr({ adrId: '019', title: 'AI independence boundary', status: 'Accepted' }));
+          await seedRepository.save(createAdr({ adrId: '020', title: 'Reverse learning forward proposal', status: 'Accepted' }));
+          // レガシー ADR- 接頭辞ファイルは正規表現で除外され混入しないことを併せて確認する。
+          fs.writeFileSync(path.join(rootDir, 'ADR-001-four-layer-defense-model.md'), '# legacy\n', 'utf8');
+          const mod = createAdrFoundationModule(rootDir);
+
+          // Act
+          const actual = await mod.validateAdrCommandHandler.execute({ all: true, json: true });
+
+          // Assert
+          expect(actual.exitCode).toBe(0);
+          expect(actual.results).toHaveLength(2);
+          expect(actual.results.map((r) => r.adrRef)).toEqual(['ADR-019', 'ADR-020']);
+          expect(actual.results.every((r) => r.valid)).toBe(true);
         });
       });
     });
