@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.166.0] - 2026-07-05
+
+### Fixed
+
+- **WI-220 — noUselessTernary dogfooding fix (`harness-api` unit, `scripts/harness/main.ts`)** — replaces two `lint/complexity/noUselessTernary` violations in the `setup` install path (`includeHusky: personal ? false : true` / `includeCi: personal ? false : true`) with the behavior-preserving `!personal`. Clears self-repo biome lint debt; `npx biome lint scripts/harness/main.ts` now reports 0 errors. No behavior change — `!personal` is semantically identical to `personal ? false : true`.
+
 ## [0.165.0] - 2026-07-05
 
 ### Added
