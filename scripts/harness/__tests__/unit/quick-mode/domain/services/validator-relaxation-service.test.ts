@@ -55,6 +55,27 @@ target('ValidatorRelaxationService', () => {
         expect(actual.l2.maintained).toContain('L2-014');
       });
 
+      // UT-VRS-009（配布config maintainedLayers:["L1","L2"] の回帰）
+      it('maintainedLayersがレイヤー名["L1","L2"]の場合にL2全IDが維持されL3全IDがskipされること', () => {
+        // Arrange
+        const config = createQuickModeConfig({
+          maintainedLayers: ['L1', 'L2'],
+          allowedCategories: ['bugfix', 'docs', 'test', 'config'],
+          relaxedGates: ['phase-gate', '2-phase-execution'],
+        });
+        // Act
+        const actual = service.build(config, ALL_VALIDATOR_IDS);
+        // Assert
+        expect([...actual.l2.maintained].sort()).toEqual(
+          ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'].sort()
+        );
+        expect(actual.l2.skipped).toEqual([]);
+        expect(actual.l3.maintained).toEqual([]);
+        expect([...actual.l3.skipped].sort()).toEqual(
+          ['L3-001', 'L3-002', 'L3-003', 'L3-004'].sort()
+        );
+      });
+
       // UT-VRS-004
       it('L1の全IDが渡された場合にl1.all=trueが設定されること（INV-P2保証）', () => {
         // Arrange

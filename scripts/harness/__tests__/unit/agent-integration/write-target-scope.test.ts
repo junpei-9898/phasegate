@@ -586,6 +586,68 @@ target("WriteTargetScope", () => {
       });
     });
 
+    // === フェーズゲート保護回避（セキュリティ境界）の回帰テスト ===
+
+    context("source配下のUnitファイルを直接指定する場合（P-2/P-3退行防止の基準）", () => {
+      // UT-WTS-SEC-BASE
+      it("従来通り level=3 として保護されること", () => {
+        // Arrange
+        const filePath = "scripts/harness/order/domain/order.ts";
+        const projectPaths = createProjectPaths();
+
+        // Act
+        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+        // Assert
+        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "order" }));
+      });
+    });
+
+    context("__tests__/../ の親参照でsource配下の本物のソースに解決される場合（P-2）", () => {
+      // UT-WTS-SEC-P2
+      it("パス正規化後に __tests__ 除外が適用され level=3 として保護されること", () => {
+        // Arrange
+        const filePath = "scripts/harness/agent-integration/__tests__/../domain/evil.ts";
+        const projectPaths = createProjectPaths();
+
+        // Act
+        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+        // Assert
+        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "agent-integration" }));
+      });
+    });
+
+    context("親参照を含まない本物のテストファイルの場合（P-2退行防止）", () => {
+      // UT-WTS-SEC-P2-REG
+      it("従来通り __tests__ 除外で null を返すこと", () => {
+        // Arrange
+        const filePath = "scripts/harness/x/__tests__/foo.test.ts";
+        const projectPaths = createProjectPaths();
+
+        // Act
+        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+        // Assert
+        expect(actual).toEqual(null);
+      });
+    });
+
+    context("source プレフィックスの大文字小文字が異なる場合（P-3）", () => {
+      // UT-WTS-SEC-P3
+      it("大小非依存で前方一致し level=3 として保護されること", () => {
+        // Arrange
+        const filePath = "Scripts/harness/order/domain/evil.ts";
+        const projectPaths = createProjectPaths();
+
+        // Act
+        const actual = WriteTargetScope.fromPath(filePath, projectPaths);
+
+        // Assert
+        expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId: "order" }));
+      });
+    });
+
     // === WI-026 G2-4: legacy issues 分岐は廃止。WI-XXX / 既存 H-/US- 互換のみ残す ===
 
     // UT-WTS-I020

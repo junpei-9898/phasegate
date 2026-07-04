@@ -77,7 +77,12 @@ export class QuickModeConfig {
   }
 
   isMaintained(validatorId: string): boolean {
-    return this.maintainedLayers.includes(validatorId);
+    // maintainedLayers の各エントリ P について、レイヤー名エントリ（例 "L2"）は
+    // そのレイヤーの全 ID（例 "L2-002"）にマッチし、ID 完全一致（例 "L2-002"）も
+    // 引き続きサポートする。
+    return this.maintainedLayers.some(
+      (entry) => validatorId === entry || validatorId.startsWith(`${entry}-`)
+    );
   }
 
   isRelaxed(validatorId: string): boolean {

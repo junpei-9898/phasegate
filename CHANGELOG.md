@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.161.0] - 2026-07-04
+
+### Fixed
+
+- **WI-220 — phase-gate bypass and quick-mode relaxation defects** — closes four defects reproduced against the published `0.160.21` package:
+  - Claude Code の PreToolUse `Bash` matcher に `phasegate hook pre-tool-use` を配線し、Bash 経由（`cat >`, heredoc, `tee`, `sed -i`, `cp`, `mv` 等）の書き込みもフェーズゲート・保護ファイル判定を通すようにした（従来は Codex のみ配線され Claude では素通りしていた）。
+  - `WriteTargetScope.fromPath` の `normalize()` で `.`/`..` セグメントを解決し、`.../__tests__/../domain/*` トラバーサルによる保護回避を塞いだ（本物のテストファイルの除外は維持）。
+  - `WriteTargetScope` のプレフィックス一致を大文字小文字非依存にし、大小非依存ファイルシステム（macOS/Windows）での `Scripts/harness/...` 経由の保護回避を塞いだ。
+  - `QuickModeConfig.isMaintained` がレイヤー名エントリ（`"L2"`）を配下バリデータ ID（`"L2-002"` 等）にマッチさせるようにし、`maintainedLayers: ["L1","L2"]` で L2 が全件 skip されていた不具合を修正（ID 完全一致も後方互換）。
+
 ## [0.160.22] - 2026-06-12
 
 ### Added

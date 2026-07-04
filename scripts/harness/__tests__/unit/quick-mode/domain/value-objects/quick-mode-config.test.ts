@@ -1,7 +1,9 @@
 // @layer test
+// @unit quick-mode
+// @story H10-01
 import { describe, expect, it } from 'vitest';
 import { target, context, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
-import { QuickModeConfig } from '../../../../../quick-mode/domain/value-objects/quick-mode-config.js';
+import { QuickModeConfig, QuickModeConfigError } from '../../../../../quick-mode/domain/value-objects/quick-mode-config.js';
 
 target('QuickModeConfig', () => {
   target('create', () => {
@@ -31,7 +33,8 @@ target('QuickModeConfig', () => {
         // Act
         const actual = () => QuickModeConfig.create(input);
         // Assert
-        expect(actual).toThrowError();
+        expect(actual).toThrowError(QuickModeConfigError);
+        expect(actual).toThrowError('allowedCategories must not be empty');
       });
     });
 
@@ -39,13 +42,14 @@ target('QuickModeConfig', () => {
       // UT-QMC-014
       it('プロパティへの再代入が無視（またはエラー）となること', () => {
         // Arrange
-        const sut = createQuickModeConfig();
+        const sut = createQuickModeConfig({ allowedCategories: ['bugfix'] });
         // Act
         const actual = () => {
           (sut as unknown as Record<string, unknown>)['allowedCategories'] = ['other'];
         };
         // Assert
-        expect(Object.isFrozen(sut)).toBe(true);
+        expect(actual).toThrowError(TypeError);
+        expect(sut.allowedCategories).toEqual(['bugfix']);
       });
     });
   });
@@ -92,6 +96,36 @@ target('QuickModeConfig', () => {
         const sut = createQuickModeConfig({ maintainedLayers: ['L1'] });
         // Act
         const actual = sut.isMaintained('L2-001');
+        // Assert
+        expect(actual).toBe(false);
+      });
+
+      // UT-QMC-021（レイヤー名エントリのプレフィックスマッチ回帰）
+      it("maintainedLayersにレイヤー名'L2'が含まれる場合にそのレイヤーの個別ID'L2-002'に対してtrueが返ること", () => {
+        // Arrange
+        const sut = createQuickModeConfig({ maintainedLayers: ['L1', 'L2'] });
+        // Act
+        const actual = sut.isMaintained('L2-002');
+        // Assert
+        expect(actual).toBe(true);
+      });
+
+      // UT-QMC-022（ID完全一致の後方互換）
+      it("maintainedLayersにID完全一致'L2-002'が含まれる場合に'L2-002'に対してtrueが返ること", () => {
+        // Arrange
+        const sut = createQuickModeConfig({ maintainedLayers: ['L2-002'] });
+        // Act
+        const actual = sut.isMaintained('L2-002');
+        // Assert
+        expect(actual).toBe(true);
+      });
+
+      // UT-QMC-023（別レイヤーには波及しない）
+      it("maintainedLayersにレイヤー名'L2'のみが含まれる場合に別レイヤーの'L3-001'に対してfalseが返ること", () => {
+        // Arrange
+        const sut = createQuickModeConfig({ maintainedLayers: ['L1', 'L2'] });
+        // Act
+        const actual = sut.isMaintained('L3-001');
         // Assert
         expect(actual).toBe(false);
       });

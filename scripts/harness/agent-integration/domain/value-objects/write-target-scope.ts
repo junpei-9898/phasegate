@@ -129,24 +129,65 @@ export class WriteTargetScope {
   }
 }
 
-const normalize = (value: string): string =>
-  value
+const normalize = (value: string): string => {
+  const cleaned = value
     .replaceAll("\\", "/")
     .replace(/^\.\/+/, "")
     .replace(/\/+/g, "/")
     .replace(/\/$/, "");
 
+  return resolveTraversal(cleaned);
+};
+
+// posix セマンティクスで `.`/`..` セグメントを解決する（プロジェクト相対パス想定）。
+// これにより `a/b/../c` → `a/c`。フェーズゲート保護回避（P-2）対策として、
+// __tests__ 除外や prefix 一致判定はこの解決後のパスに対して適用される。
+const resolveTraversal = (value: string): string => {
+  if (value === "") {
+    return "";
+  }
+
+  const segments = value.split("/");
+  const resolved: string[] = [];
+
+  for (const segment of segments) {
+    if (segment === "" || segment === ".") {
+      continue;
+    }
+
+    if (segment === "..") {
+      if (resolved.length > 0 && resolved[resolved.length - 1] !== "..") {
+        resolved.pop();
+      } else {
+        // プロジェクトルートより上への参照はそのまま残す（保護判定に影響させない）
+        resolved.push("..");
+      }
+      continue;
+    }
+
+    resolved.push(segment);
+  }
+
+  return resolved.join("/");
+};
+
 const matchPrefix = (targetPath: string, basePath: string): string[] | null => {
   const normalizedBase = normalize(basePath);
 
-  if (targetPath === normalizedBase) {
+  // フェーズゲートはセキュリティ境界のため、大小非依存 FS（macOS/Windows）での
+  // 保護回避（P-3）を防ぐべく prefix 一致は大文字小文字を無視して判定する。
+  const lowerTarget = targetPath.toLowerCase();
+  const lowerBase = normalizedBase.toLowerCase();
+
+  if (lowerTarget === lowerBase) {
     return [];
   }
 
-  if (!targetPath.startsWith(`${normalizedBase}/`)) {
+  if (!lowerTarget.startsWith(`${lowerBase}/`)) {
     return null;
   }
 
+  // remainder（unitId 等の抽出結果）は元の大小を保持する。
   const remainder = targetPath.slice(normalizedBase.length + 1);
   return remainder === "" ? [] : remainder.split("/");
 };
