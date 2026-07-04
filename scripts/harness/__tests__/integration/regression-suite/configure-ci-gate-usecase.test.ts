@@ -1,4 +1,6 @@
 // @layer test
+// @unit regression-suite
+// @story H15-02
 import { describe, it, vi, expect, beforeEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ConfigureCiGateUseCase } from '../../../regression-suite/application/usecases/configure-ci-gate-usecase.js';

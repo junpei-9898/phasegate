@@ -4,6 +4,7 @@ type: issue
 severity: normal
 status: tested
 legacy_id: ISSUE-023
+affects: [traceability-model]
 ---
 
 # ISSUE-023: `StoryId` validator pattern が `HF\d+-\d{2}` を拒否する

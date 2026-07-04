@@ -4,6 +4,7 @@ type: issue
 severity: normal
 status: tested
 legacy_id: ISSUE-002
+affects: [agent-integration]
 ---
 
 # ISSUE-002: phasegate 実世界 E2E 検証

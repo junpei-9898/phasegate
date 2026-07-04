@@ -1,6 +1,6 @@
 // @layer test
 // @unit config-foundation
-// @story H04-01
+// @story H04-03
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ConfigValidationError } from '../../../config-foundation/domain/errors/config-validation-error.js';

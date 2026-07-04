@@ -1,6 +1,6 @@
 // @layer test
 // @unit phase-dependency-model
-// @story H02-01
+// @story H02-03
 // @work-item-id WI-085
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';

@@ -4,7 +4,7 @@ Phasegate — AI非依存の品質防御ツールキット。
 
 ## プロジェクト概要
 
-設計意図とコードの構造的整合性を機械的に保証する5層防御モデル（L0-L4）と28スキルを提供するCLIツール。
+設計意図とコードの構造的整合性を機械的に保証する5層防御モデル（L0-L4）と30スキルを提供するCLIツール。
 
 ## アーキテクチャ
 
@@ -30,7 +30,7 @@ issue / PR / チャット・ログで「preset」とだけ書くと曖昧なの�
 ```
 bin/harness              # CLI エントリポイント
 scripts/harness/         # メインソースコード（CA構造）
-skills/                  # 28スキル定義
+skills/                  # 30スキル定義
 templates/               # テンプレートファイル
 docs/
 ├── ADR/                 # Architecture Decision Records

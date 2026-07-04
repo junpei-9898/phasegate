@@ -1,5 +1,8 @@
 node_modules/
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/scripts/
+!.claude/scripts/**
 !templates/.claude/
 dist/
 reports/

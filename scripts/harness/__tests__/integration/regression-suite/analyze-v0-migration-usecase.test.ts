@@ -1,4 +1,6 @@
 // @layer test
+// @unit regression-suite
+// @story H15-01
 import { describe, it, vi, expect, beforeEach } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { AnalyzeV0MigrationUseCase } from '../../../regression-suite/application/usecases/analyze-v0-migration-usecase.js';

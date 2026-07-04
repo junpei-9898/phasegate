@@ -84,14 +84,17 @@ target('NyquistValidationImpactAnalysisAdapter', () => {
   });
 
   // ─── IT-Adapter-ImpactAnalysis-005 ───
-  describe('スタブ未指定（デフォルト）の場合、nullを返すこと', () => {
-    context('コンストラクタ引数なしで生成した場合', () => {
-      it('analyze(H01-01)がnullを返す', async () => {
+  describe('スタブ未指定（デフォルト実装）で存在しないstoryIdを渡した場合、nullを返すこと', () => {
+    context('マトリクスにもStoryCatalogにも存在しないstoryId(H99-99)を渡した場合', () => {
+      it('analyze(H99-99)がnullを返す', async () => {
         // Arrange
+        // NOTE: デフォルト実装は実 .harness/requirement-test-matrix.json を CWD から読む。
+        //       実在する storyId は実データ(non-null)を返すため、
+        //       「影響なし → null」を検証するには非実在の有効フォーマット storyId を用いる。
         const adapter = new NyquistValidationImpactAnalysisAdapter();
 
         // Act
-        const actual = await adapter.analyze('H01-01');
+        const actual = await adapter.analyze('H99-99');
 
         // Assert
         expect(actual).toBeNull();

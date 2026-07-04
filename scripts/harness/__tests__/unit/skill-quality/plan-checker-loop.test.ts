@@ -1,4 +1,6 @@
 // @layer test
+// @unit skill-quality
+// @story H12-03
 import { describe, it, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { PlanCheckerLoop } from '../../../skill-quality/domain/aggregates/plan-checker-loop.js';

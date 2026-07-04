@@ -1,0 +1,5 @@
+{
+  "targetDirs": ["scripts/harness"],
+  "formatter": "biome",
+  "formatterArgs": ["check", "--write"]
+}

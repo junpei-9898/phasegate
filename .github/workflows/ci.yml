@@ -26,6 +26,15 @@ jobs:
 
       - run: pnpm test
 
+      # L3-004 (AC-coverage) reads .harness/requirement-test-matrix.json, a
+      # git-ignored GENERATED artifact. Regenerate it from the current tests
+      # BEFORE running the phasegate CI check so L3-004 validates fresh data.
+      - name: Generate requirement-test matrix
+        run: npx tsx scripts/harness/main.ts phasegate:generate-matrix
+
+      - name: Phasegate CI check (L3 incl. L3-004)
+        run: npx tsx scripts/harness/main.ts phasegate:ci-check --json
+
   pack:
     runs-on: ubuntu-latest
     steps:

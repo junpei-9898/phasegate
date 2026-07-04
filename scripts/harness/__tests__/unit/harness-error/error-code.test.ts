@@ -1,4 +1,5 @@
 // @layer test
+// @story H06-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ErrorCode } from '../../../harness-error/domain/value-objects/error-code.js';

@@ -4,6 +4,7 @@ type: issue
 severity: normal
 status: tested
 legacy_id: ISSUE-024
+affects: [biome-ast-engine, config-foundation]
 ---
 
 # ISSUE-024: `@layer` / `@unit` タグ名の差し替え対応（`metadataTags.layer` / `metadataTags.unit`）

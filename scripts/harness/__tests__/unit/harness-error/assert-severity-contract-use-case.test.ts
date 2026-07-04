@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit harness-error
+ * @story H06-03
  *
  * AssertSeverityContractUseCase のユニットテスト
  */

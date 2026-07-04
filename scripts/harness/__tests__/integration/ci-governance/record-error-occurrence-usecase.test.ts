@@ -1,4 +1,6 @@
 // @layer test
+// @unit ci-governance
+// @story H13-02
 import { describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { RecordErrorOccurrenceUseCase } from '../../../ci-governance/application/usecases/record-error-occurrence-usecase.js';

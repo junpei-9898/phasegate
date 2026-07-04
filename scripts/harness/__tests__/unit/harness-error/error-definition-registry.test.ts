@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit harness-error
+ * @story H06-01
  *
  * ErrorDefinitionRegistry ドメインサービスのユニットテスト
  */

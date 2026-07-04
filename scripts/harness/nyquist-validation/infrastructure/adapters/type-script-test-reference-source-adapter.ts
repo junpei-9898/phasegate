@@ -7,7 +7,10 @@ import path from 'node:path';
 import type { TestReferenceSourcePort } from '../../application/usecases/generate-requirement-test-matrix-usecase.js';
 import type { TestReferenceSourceDto } from '../../application/dto/generate-matrix-output.js';
 
-const STORY_TAG = /@story(?:-id)?\s+(H\d{2}-\d{2})/;
+// StoryId は HXX-XX 形式に加え Phase 2 拡張 Epic の HF\d+-XX 形式も許容する
+// （markdown-requirement-source-adapter の STORY_HEADING / traceability-model の StoryId 正規表現と整合）。
+// 旧 /H\d{2}-\d{2}/ は HF2-01 等を取りこぼし、正しく注釈されたテストが「テストなし」と誤判定されていた。
+const STORY_TAG = /@story(?:-id)?\s+(H(?:F\d+|\d{2})-\d{2})/;
 const TEST_NAME = /\b(?:it|test)(?:\.each\([^)]*\))?\s*\(\s*['"`]([^'"`]+)['"`]/g;
 
 async function collectTestFiles(root: string): Promise<readonly string[]> {
