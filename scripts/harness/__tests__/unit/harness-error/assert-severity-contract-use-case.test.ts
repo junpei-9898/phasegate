@@ -122,6 +122,9 @@ target('AssertSeverityContractUseCase.execute', () => {
 
     context('格下げ要求の場合', () => {
       // IT-HE-038
+      // @ac H06-03-3
+      // H06-03 AC-3: severity 格下げ（error→warning）を試みるケースを検出するテストが
+      // 存在することを検証する。格下げ要求時に SeverityDowngradeViolationError が throw される。
       it('SeverityDowngradeViolationErrorをthrowすること', async () => {
         // Arrange
         const sut = new AssertSeverityContractUseCase({

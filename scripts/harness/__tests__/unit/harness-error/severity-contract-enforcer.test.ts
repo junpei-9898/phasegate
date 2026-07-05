@@ -17,6 +17,10 @@ target('SeverityContractEnforcer', () => {
   target('resolveEffectiveSeverity', () => {
     context('errorからwarningへの格下げが要求された場合', () => {
       // UT-HE-096
+      // @ac H06-03-1
+      // H06-03 AC-1: severity 権限契約（severity:"error" の格下げ禁止）が仕様として
+      // 定義され、SeverityContractEnforcer.resolveEffectiveSeverity で機械的に強制される
+      // ことを検証する。契約の定義そのもの（error→warning は許されない）を固定化する。
       it('SeverityDowngradeViolationErrorをthrowすること', () => {
         // Arrange
         const sut = new SeverityContractEnforcer();
@@ -48,7 +52,7 @@ target('SeverityContractEnforcer', () => {
     });
 
     context('契約違反が発生した場合', () => {
-      // @ac AC-4
+      // @ac H06-03-4
       // H06-03 AC-4: 契約違反時のエラーメッセージに違反内容（default/requested severity）と
       // 根拠（ADR参照）が含まれることを検証する。
       it('エラーメッセージに違反内容と根拠ADR参照が含まれること', () => {
