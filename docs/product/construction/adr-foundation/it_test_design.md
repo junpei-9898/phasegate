@@ -295,7 +295,7 @@ fixtureファイルを使用する。
 | IT-AF-091 | 定義配列 | 初期ADR定義が仕様通りに提供される | 各定義を検証した場合 | 各ADR定義のtitleが空でない |
 | IT-AF-092 | 定義配列 | 初期ADR定義が仕様通りに提供される | 各定義を検証した場合 | 各ADR定義のstatusがAcceptedまたはProposedのいずれかである |
 | IT-AF-093 | 定義配列 | 初期ADR定義が仕様通りに提供される | 各定義を検証した場合 | 各ADR定義のdateがYYYY-MM-DD形式である |
-| IT-AF-094 | 定義配列 | 初期ADR定義が仕様通りに提供される | 論理設計 §5.5の仕様と照合した場合 | 11件のタイトルとステータスが仕様一致する（001: Package separation/Accepted, 002: Full migration from ESLint to Biome/Accepted, 003: Quality harness owns K1-K13/Accepted, 004: FUSE Hooks Engine is out of v1 scope/Proposed, 005: HarnessError requires fix_example/Accepted, 006: Strict quick mode eligibility/Accepted, 007: Separate config files/Accepted, 008: Nyquist integration for truths and artifacts/Proposed, 009: Artifact-driven state derivation/Accepted, 010: Validator stack detection/Accepted, 011: Temporary 4-layer definition with return path to 5-layer/Proposed） |
+| IT-AF-094 | 定義配列 | 初期ADR定義が仕様通りに提供される | 論理設計 §5.5の仕様と照合した場合 | 11件のタイトルとステータスが仕様一致する（001: Package separation/Accepted, 002: Full migration from ESLint to Biome/Accepted, 003: Quality harness owns K1-K13/Accepted, 004: FUSE Hooks Engine is out of v1 scope/Accepted, 005: HarnessError requires fix_example/Accepted, 006: Strict quick mode eligibility/Accepted, 007: Separate config files/Accepted, 008: Nyquist integration for truths and artifacts/Accepted, 009: Artifact-driven state derivation/Accepted, 010: Validator stack detection/Accepted, 011: Temporary 4-layer definition with return path to 5-layer/Accepted） |
 
 ---
 

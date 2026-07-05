@@ -948,9 +948,10 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | **設定ファイル分離（phasegate.config.json / orchestration.config.json）** | パッケージ分離に伴い、品質設定とオーケストレーション設定を別ファイルに完全分離。ownershipの曖昧さを排除 | Decided |
 | **GSD-2 Truths/Artifacts検証パターンのNyquist統合** | 概念的に同一の検証（要件→成果物トレーサビリティ）を二重実装しない | Decided |
 | **成果物駆動の状態導出をハーネス検査状態管理に応用** | GSD-2の優れたパターンを品質ハーネスの文脈で再利用 | Decided |
-| **バリデータ無限ループ防止（GSD-2スタック検出の応用）** | 同一HarnessErrorの繰り返し検出時に自動エスカレーション | Pending |
+| **バリデータ無限ループ防止（GSD-2スタック検出の応用）** | 同一HarnessErrorの繰り返し検出時に自動エスカレーション | Decided |
 | **L0（FUSE）をv1スコープ外としたためK1を一時的に4層として定義。FUSE導入時にL0を追加し5層に復帰する** | K1の4層→5層拡張パスを明示し、将来のFUSE統合を阻害しない | Decided |
 
 ---
 
 *Last updated: 2026-03-11 — パッケージ分離に伴うQuality Harness専用Product Overview初版*
+*2026-07-05 — #10 スタック検出を実装反映で Decided に更新（ci-governance H13-02 実装済み）*

@@ -11,6 +11,8 @@ date: 2026-03-24
 
 品質設定が複数のファイル（ESLint 設定、テスト設定、CI 設定）に分散すると、設定間の矛盾が発生し、プリセット（minimal/standard/strict）の切り替えが困難になる。
 
+> §12 Key Decision: config-file-separation
+
 ## Decision
 
 `phasegate.config.json` を品質設定の唯一の真実源とする。
