@@ -31,11 +31,11 @@ L3-004（story-level の AC 網羅ゲート）との違い:
 
 > 数値根拠: `phasegate:generate-matrix` で生成した `requirement-test-matrix.json` を元に測定（2026-07-05）。
 
-初期スコープ `acBoundStories: ["HF2-05"]`。
+初期スコープ `acBoundStories: ["HF2-05"]`。現在のスコープ（v0.176.0）は `["HF2-05", "H06-03", "H05-02"]` へ拡張済み（R2/R3 完了、下記 §4 参照）。
 
 - **HF2-05**: 全 6 AC（AC-1〜AC-6）が genuinely ac-bound（各 AC が ≥1 の `binding:"ac"` ref を持つ、fileFallbackOnly===0）。したがって L3-005 は HF2-05 について **PASS** する。自リポジトリ config に L3-005 を有効化しても CI は green を維持する。
-- **H05-02**（除外, legacy）: AC-1/2/3 は fileFallbackOnly のまま（§6b of l3-004-ratchet 参照）。legacy ADR コーパスが canonical 形式へ正規化されるまで L3-005 スコープに含めない。
-- **H06-03**（partial, AC-4 のみ）: AC-4 は genuine な source ギャップ（`SeverityDowngradeViolationError` に ADR 参照が欠落）。per-AC binding へ昇格できないため L3-005 スコープに含めない。
+- **H06-03**（R2 完了・スコープ内）: AC-4 の source ギャップ（`SeverityDowngradeViolationError` の ADR 参照欠落）を修正し per-AC binding へ昇格済み。全 AC が fileFallbackOnly===0。
+- **H05-02**（R3 完了・スコープ内, v0.176.0）: legacy ADR コーパスの canonical 正規化（v0.173.0）と §12 Key Decisions の ADR 起票（v0.175.0, ADR-022〜029 + 007/008/010）完了により legacy blocker が解消。AC-1（§12 marker presence テスト = `real-adr-corpus.it.test.ts` の `@ac H05-02-1`、11 canonical key の実在 + discovery + schema-validity を fail-closed 検証）+ AC-2/3/4（同ファイルの conformance/status/discovery テスト）で全 AC を per-AC binding 化。全 AC が fileFallbackOnly===0。
 
 ## 3. 決定 — 自リポジトリのみ opt-in で L3-005 を有効化
 
@@ -48,7 +48,7 @@ L3-004（story-level の AC 網羅ゲート）との違い:
   "L3": {
     "enabled": true,
     "validators": ["L3-001", "L3-002", "L3-003", "L3-004", "L3-005"],
-    "acBoundStories": ["HF2-05"],
+    "acBoundStories": ["HF2-05", "H06-03", "H05-02"],
     "requirementMatrixPath": ".harness/requirement-test-matrix.json"
   }
 }
@@ -64,8 +64,8 @@ L3-004（story-level の AC 網羅ゲート）との違い:
 |---------|-----------|---------|
 | **R0（現在, 2026-07-05）** | L3-005 を自リポジトリで有効化。初期スコープ `["HF2-05"]`。HF2-05 は全 AC ac-bound で PASS | 本ドキュメント作成 + config 有効化 + ci-check green |
 | **R1** | 新規実装 story に `@ac` binding を義務化し、緑のまま `acBoundStories` に追加していく | スコープが単調増加、逆行なし |
-| **R2** | H06-03 AC-4 の source ギャップ（ADR 参照欠落）を修正し、per-AC binding へ昇格。H06-03 をスコープに追加 | H06-03 が fileFallbackOnly===0 |
-| **R3** | legacy ADR コーパス正規化完了後、H05-02 AC-1/2/3 を per-AC binding へ昇格しスコープに追加 | H05-02 が fileFallbackOnly===0 |
+| **R2（完了）** | H06-03 AC-4 の source ギャップ（ADR 参照欠落）を修正し、per-AC binding へ昇格。H06-03 をスコープに追加 | ✅ H06-03 が fileFallbackOnly===0、`acBoundStories += H06-03` |
+| **R3（完了, v0.176.0）** | legacy ADR コーパス正規化（v0.173.0）+ §12 Key Decisions の ADR 起票（v0.175.0）完了後、H05-02 AC-1/2/3/4 を per-AC binding へ昇格しスコープに追加 | ✅ H05-02 が fileFallbackOnly===0（AC-1 = §12 marker presence テスト、AC-2/3/4 = real-adr-corpus.it.test.ts）、`acBoundStories += H05-02`。legacy blocker 解消 |
 | **R4（将来）** | 全 story が ac-bound に到達したら、attestation の `granularity.traceability.level` を binary/global に "ac" へ切替える検討（KNOWN_LIMITATIONS_REGISTRY の切替）。それまでは `level:"file"` を維持し、per-story の acBoundScope で正直な範囲を示す | 全 story ac-bound |
 
 **逆行防止**: R0 到達後は `acBoundStories` から story を削除してはならない。各段階でスコープ story 数を本表に追記し、減少していないことをレビューで確認する。

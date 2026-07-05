@@ -14,7 +14,7 @@
       "enabled": true,
       "validators": ["L3-001", "L3-002", "L3-003", "L3-004", "L3-005"],
       "requirementMatrixPath": ".harness/requirement-test-matrix.json",
-      "acBoundStories": ["HF2-05", "H06-03"]
+      "acBoundStories": ["HF2-05", "H06-03", "H05-02"]
     },
     "L4": {
       "enabled": false
