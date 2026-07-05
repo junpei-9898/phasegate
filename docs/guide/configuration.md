@@ -461,7 +461,7 @@ Override the preset defaults only when your project needs a different policy:
 2. `WriteTargetScope` resolves the `@unit` annotation (comma-separated and multi-line `@unit` are both supported; **all** listed units are checked).
 3. For each unit, every `storyId` directory under `docs/inception/{unit}/` is enumerated.
 4. For each required mapping, the pre-tool-use hook checks that the target product document contains `@story-id {storyId}`.
-5. Any missing reflection produces a `STORY_REFLECTION` block reason with a fix hint that points to the `cascade-updater` skill and [ADR-013](../ADR/ADR-013-story-reflection-gate.md).
+5. Any missing reflection produces a `STORY_REFLECTION` block reason with a fix hint that points to the `cascade-updater` skill and [ADR-013](../ADR/013-story-reflection-gate.md).
 
 ##### Passing the gate
 

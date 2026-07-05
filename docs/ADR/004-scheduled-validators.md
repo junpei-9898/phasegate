@@ -1,8 +1,11 @@
-# ADR-004: L4 — Scheduled バリデータによる設計-実装乖離の定期検出
+---
+adr_id: "004"
+title: "L4 — Scheduled バリデータによる設計-実装乖離の定期検出"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# L4 — Scheduled バリデータによる設計-実装乖離の定期検出
 
 ## Context
 
@@ -36,3 +39,7 @@ L4（Scheduled）で以下のバリデータを週次または明示実行で扱
 ## 関連要件
 
 K1（4層防御）、K11（Drift Detection）、K12（Consistency Checker）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

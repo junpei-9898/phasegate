@@ -167,7 +167,7 @@ ADR を起票し、(A) 採用 + 互換性方針（既存 `docs/...` ハードコ
 
 ### Phase 1 完了 — 2026-05-07
 
-[ADR-016: phase-gate validator のパス解決を `paths` config プレースホルダ化する](../../../ADR/ADR-016-paths-config-placeholder.md) を Accepted で起票。(A) 採用、`{designDocsRoot}` / `{inceptionDocsRoot}` を新設、`Artifact` の `docs/` 接頭辞バリデーションは撤廃。
+[ADR-016: phase-gate validator のパス解決を `paths` config プレースホルダ化する](../../../ADR/016-paths-config-placeholder.md) を Accepted で起票。(A) 採用、`{designDocsRoot}` / `{inceptionDocsRoot}` を新設、`Artifact` の `docs/` 接頭辞バリデーションは撤廃。
 
 ### Phase 2 完了 — 2026-05-07
 

@@ -1,8 +1,11 @@
-# ADR-015: アーキテクチャスタイルを preset 化し、PhaseGate を複数アーキに対応させる
+---
+adr_id: "015"
+title: "アーキテクチャスタイルを preset 化し、PhaseGate を複数アーキに対応させる"
+status: Accepted
+date: 2026-04-23
+---
 
-## Status
-
-Accepted — 2026-04-23
+# アーキテクチャスタイルを preset 化し、PhaseGate を複数アーキに対応させる
 
 ## Context
 
@@ -181,3 +184,7 @@ schema v3 移行の詳細は Wave 2 で `config-foundation` の migration script
 - **ISSUE-007 retrofit-adoption** — 既存 PJ への phasegate 導入。本 ADR により Clean 以外でも受け入れ可能になり、retrofit の適用範囲が拡大
 - **`scripts/harness/biome-ast-engine/domain/value-objects/layer-name.ts:6,15-20`** — 現状のハードコード実体、Wave 2 の改修対象
 - **`scripts/harness/config-foundation/infrastructure/schemas/harness-config-v2.schema.json`** — schema v3 の拡張対象、Wave 3 で改修
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

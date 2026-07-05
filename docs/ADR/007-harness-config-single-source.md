@@ -1,8 +1,11 @@
-# ADR-007: phasegate.config.json を品質設定の Single Source of Truth とする
+---
+adr_id: "007"
+title: "phasegate.config.json を品質設定の Single Source of Truth とする"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# phasegate.config.json を品質設定の Single Source of Truth とする
 
 ## Context
 
@@ -37,3 +40,7 @@ Ownership が完全に分離され、設定の混在を防止する。
 ## 関連要件
 
 K13（phasegate.config.json）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

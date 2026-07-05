@@ -325,5 +325,5 @@ sha1 一致で判定しているため、**フォーマット変更・インポ�
 
 - `docs/guide/cli-reference.md` — `baseline` / `scaffold-design` のフラグ一覧
 - `docs/guide/layer-model.md` — L0-L4 防御モデルと phase-gate の位置付け
-- `docs/ADR/ADR-013-story-reflection-gate.md` — phase-gate の思想的背景
+- `docs/ADR/013-story-reflection-gate.md` — phase-gate の思想的背景
 - ISSUE-007 — 本ガイドが対応する起票 issue（`docs/inception/issues/ISSUE-007/`）

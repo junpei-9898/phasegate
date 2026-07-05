@@ -1,7 +1,7 @@
 # TDD実装計画: WI-085
 
 > 親 WI: [WI-085](description.md) — phase-gate validator paths config プレースホルダ化
-> ADR: [ADR-016](../../../ADR/ADR-016-paths-config-placeholder.md)
+> ADR: [ADR-016](../../../ADR/016-paths-config-placeholder.md)
 > 対象 Unit: phase-dependency-model
 
 ## 1. スコープ

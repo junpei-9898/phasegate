@@ -1,8 +1,11 @@
-# ADR-017: warning-severity validator の集計セマンティクス
+---
+adr_id: "017"
+title: "warning-severity validator の集計セマンティクス"
+status: Accepted
+date: 2026-05-08
+---
 
-## Status
-
-Accepted — 2026-05-08
+# warning-severity validator の集計セマンティクス
 
 ## Context
 
@@ -200,3 +203,12 @@ human/agent/ci formatter で `[FAIL]` と `[WARN]` を分離:
 - **`scripts/harness/config-foundation/application/mappers/validator-system-config-mapper.ts`** — `toValidatorSystemConfig` 拡張対象
 - **ADR-007** — harness-config Single Source of Truth。本 ADR は `failOnWarning` を CLI flag のみから config まで持ち上げて ADR-007 の精神を強化
 - **ADR-001** — 4 層防御モデル。L4 validator の advisory 位置付けが本決定の根拠
+
+## Alternatives
+
+本 ADR は既存本文の「検討した代替案」に代替案を記録済みである（正規化時に canonical `## Alternatives` として再掲）:
+
+1. **(A) warning-only fail は overall PASS / exit 0 を default にする（採用）** — 集計ロジックを修正し warning-only fail を fail にカウントせず、`failOnWarning: true` で旧挙動へ opt-in。
+2. **(B) warning も exit 1 を default に保つ（CI 互換性優先）** — default を変えず移行コストはゼロだが、`defaultSeverity: warning` 宣言と「常に fail」実装の semantic 乖離が残るため不採用。
+
+採用理由の詳細は上記 Decision「採用理由」を参照。

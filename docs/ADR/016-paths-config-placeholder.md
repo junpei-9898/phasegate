@@ -1,8 +1,11 @@
-# ADR-016: phase-gate validator のパス解決を `paths` config プレースホルダ化する
+---
+adr_id: "016"
+title: "phase-gate validator のパス解決を `paths` config プレースホルダ化する"
+status: Accepted
+date: 2026-05-07
+---
 
-## Status
-
-Accepted — 2026-05-07
+# phase-gate validator のパス解決を `paths` config プレースホルダ化する
 
 ## Context
 
@@ -153,3 +156,12 @@ phase-gate validator のパスリテラルを `{designDocsRoot}` / `{inceptionDo
 - **`scripts/harness/agent-integration/infrastructure/adapters/phase-gate-query-adapter.ts:60`** — 同上
 - **`docs/guide/configuration.md:445-471`** — 利用者の期待を形成しているドキュメント記述
 - **ADR-007** — harness-config を Single Source of Truth とする決定。本 ADR は ADR-007 の精神（config から validator を駆動する）を phase-gate validator に拡張するもの
+
+## Alternatives
+
+本 ADR は既存本文の「検討した代替案」に代替案を記録済みである（正規化時に canonical `## Alternatives` として再掲）:
+
+1. **(A) `paths.designDocs` / `paths.inceptionDocs` でトップレベルパスを実際に置換する（採用）** — phase-gate validator のパスリテラルをプレースホルダ化し `paths` config で展開する。
+2. **(B) ドキュメントを修正し「`paths.*` は storyReflection 専用」と明記する** — `Artifact` の `docs/` 接頭辞バリデーションが残るため現状コードでは動作せず、(A) と実装コストの大半が重複するため不採用。
+
+採用理由の詳細は上記 Decision「採用理由」を参照。

@@ -386,7 +386,7 @@ For selection guidance and config examples see [Preset Selection Guide](docs/gui
 | `minimal` | None | Disabled -- no inception -> product enforcement | Prototyping / exploration |
 | `custom` | User-defined via `gates[]` array | User-defined via `storyReflection.mappings` | Full control (requires `override: true`) |
 
-`storyReflection` blocks writes to `src/{unit}/*` when an inception US/issue design exists but has not been cascaded into `docs/product/construction/{unit}/`. See [ADR-013](docs/ADR/ADR-013-story-reflection-gate.md) and the [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate).
+`storyReflection` blocks writes to `src/{unit}/*` when an inception US/issue design exists but has not been cascaded into `docs/product/construction/{unit}/`. See [ADR-013](docs/ADR/013-story-reflection-gate.md) and the [Configuration guide](docs/guide/configuration.md#storyreflection-inception--product-gate).
 
 ### Key Configuration Sections
 

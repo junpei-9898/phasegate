@@ -1,8 +1,11 @@
-# ADR-011: archgate パターン — L1 ルールによるアーキテクチャ強制
+---
+adr_id: "011"
+title: "archgate パターン — L1 ルールによるアーキテクチャ強制"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# archgate パターン — L1 ルールによるアーキテクチャ強制
 
 ## Context
 
@@ -60,3 +63,7 @@ export class MyService { }
 ## 関連要件
 
 K1（4層防御）、K3（Biome AST解析）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

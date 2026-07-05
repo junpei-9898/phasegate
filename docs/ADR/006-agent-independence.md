@@ -1,8 +1,11 @@
-# ADR-006: エージェント非依存設計原則
+---
+adr_id: "006"
+title: "エージェント非依存設計原則"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# エージェント非依存設計原則
 
 ## Context
 
@@ -32,3 +35,7 @@ Quality Harness の全バリデータは **ファイルシステムに書き込�
 ## 関連要件
 
 K13（phasegate.config.json）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

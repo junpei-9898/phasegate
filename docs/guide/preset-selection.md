@@ -165,6 +165,6 @@ npx phasegate migrate --schema v3
 
 - `docs/inception/issues/ISSUE-014/wave1_schema_proposal.md` — 設計提案とプリセット詳細
 - `docs/inception/issues/ISSUE-014/issue_description.md` — issue 背景
-- `docs/ADR/ADR-015-architecture-preset.md` — アーキ設計決定
+- `docs/ADR/015-architecture-preset.md` — アーキ設計決定
 - `docs/guide/retrofit-adoption.md` — 既存 PJ への後付け導入
 - `docs/guide/configuration.md` — 他の config 項目

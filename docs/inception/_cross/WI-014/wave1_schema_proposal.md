@@ -4,7 +4,7 @@
 
 ADR-015 で採択した「アーキテクチャスタイル preset 化」の**具体スキーマ提案**。本文書は Wave 2 以降（実装フェーズ）の設計入力となる。
 
-- ADR: [ADR-015-architecture-preset.md](../../../ADR/ADR-015-architecture-preset.md)
+- ADR: [ADR-015-architecture-preset.md](../../../ADR/015-architecture-preset.md)
 - 起票: ISSUE-014（2026-04-23）
 - Wave 1 状態: 🟢 **DRAFT → 本文書採択で CLOSED**
 
@@ -332,8 +332,8 @@ tag と path が矛盾した場合（例: `infrastructure/adapters/x.ts` に `@l
 
 ## 7. 参照
 
-- [ADR-015-architecture-preset.md](../../../ADR/ADR-015-architecture-preset.md) — 本提案の決定根拠
-- [ADR-014-presentation-domain-dependency.md](../../../ADR/ADR-014-presentation-domain-dependency.md) — `clean` preset の既定挙動
-- [ADR-005-hexagonal-architecture.md](../../../ADR/ADR-005-hexagonal-architecture.md) — PhaseGate 自身の構造的選択
+- [ADR-015-architecture-preset.md](../../../ADR/015-architecture-preset.md) — 本提案の決定根拠
+- [ADR-014-presentation-domain-dependency.md](../../../ADR/014-presentation-domain-dependency.md) — `clean` preset の既定挙動
+- [ADR-005-hexagonal-architecture.md](../../../ADR/005-hexagonal-architecture.md) — PhaseGate 自身の構造的選択
 - [WI-014 description.md](./description.md) — 本 Wave を含む issue 全体
 - [ISSUE-007 retrofit-adoption.md](../../../guide/retrofit-adoption.md) — preset 選定ガイドの統合先候補（Wave 6）

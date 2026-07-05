@@ -1,8 +1,11 @@
-# ADR-001: L1 — Biome AST による Editor-Time 品質強制
+---
+adr_id: "001"
+title: "L1 — Biome AST による Editor-Time 品質強制"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# L1 — Biome AST による Editor-Time 品質強制
 
 ## Context
 
@@ -32,3 +35,7 @@ Rust製 Biome の AST 解析を用いて、L1（Editor-Time）で以下の8ル�
 ## 関連要件
 
 K1（4層防御モデル）、K3（Biome AST解析）、K3.5（@unit/@layerメタデータ）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

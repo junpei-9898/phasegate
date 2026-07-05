@@ -1,8 +1,11 @@
-# ADR-005: Hexagonal Architecture（Ports & Adapters）の採用
+---
+adr_id: "005"
+title: "Hexagonal Architecture（Ports & Adapters）の採用"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# Hexagonal Architecture（Ports & Adapters）の採用
 
 ## Context
 
@@ -37,3 +40,7 @@ presentation/    — CLI コマンド、フォーマッター
 ## 関連要件
 
 K1（4層防御、L1-003）、K5（DDD設計スキル群）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

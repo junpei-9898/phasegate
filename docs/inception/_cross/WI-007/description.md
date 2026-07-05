@@ -182,4 +182,4 @@ affects: [phase_dependency_model（gate 判定ロジック）, harness_error（�
 - ISSUE-005（CLI / validator 機能不具合、CLOSED）と独立
 - ISSUE-006（Quick/Full 判定、優先度引き下げ）と独立。本 issue が優先
 - `skills/logical-designer/` — Phase B で `suggestedSkill` として参照
-- `docs/ADR/ADR-013-story-reflection-gate.md` — 関連 ADR（phase-gate の意義）
+- `docs/ADR/013-story-reflection-gate.md` — 関連 ADR（phase-gate の意義）

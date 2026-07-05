@@ -1,8 +1,11 @@
-# ADR-018: drift-detect の design pointers 仕様
+---
+adr_id: "018"
+title: "drift-detect の design pointers 仕様"
+status: Accepted
+date: 2026-05-08
+---
 
-## Status
-
-Accepted — 2026-05-08
+# drift-detect の design pointers 仕様
 
 ## Context
 
@@ -45,3 +48,10 @@ GitHub Issue #4 の follow-up として WI-095 を起票した。
 `DesignDocumentPort` は後方互換のため既存 `getElements()` を維持し、optional な `getElementPointers()` を追加する。`SourceCodeAnalyzerPort` も optional な `getElementFilePathMap()` を追加する。両 optional port が未実装の場合、`DriftDetectionService` は従来挙動のまま動作する。
 
 YAML fenced metadata は今回採用しない。Markdown本文の構造と混ざりやすく、既存のコードブロック抽出や設計例との衝突リスクが高いため、必要になった時点で別ADRで拡張する。
+
+## Alternatives
+
+本 ADR は既存本文で採用しなかった代替案を 1 件明記している（正規化時に canonical `## Alternatives` として再掲）:
+
+1. **見出し単位で対応実装ファイル path を明示する `pointers`（採用）** — HTML コメント形式と `<pointers>` タグ形式の 2 形式を受け付ける。
+2. **YAML fenced metadata で pointer を表現する（不採用）** — Markdown 本文の構造と混ざりやすく、既存のコードブロック抽出や設計例との衝突リスクが高いため今回は採用せず、必要になった時点で別 ADR で拡張するとした。

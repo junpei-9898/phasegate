@@ -1,8 +1,11 @@
-# ADR-009: DDD 戦術パターン（Entity/VO/Aggregate）の採用
+---
+adr_id: "009"
+title: "DDD 戦術パターン（Entity/VO/Aggregate）の採用"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# DDD 戦術パターン（Entity/VO/Aggregate）の採用
 
 ## Context
 
@@ -38,3 +41,7 @@ DDD 戦術パターンを全 Unit のドメイン層に適用する。
 ## 関連要件
 
 K5（DDD設計スキル群）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

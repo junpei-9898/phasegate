@@ -87,7 +87,7 @@ ADRは独立したライフサイクルを持ち、フロントマター+本文�
 | **AdrBody** | ✅ | ✅ | ADR本文。Context/Decision/Consequences構造 |
 | **ArchgateMapping** | ✅ | ✅ | `{ adr_id, enforced_by: [{ validator_id, error_code }] }`。ADRフロントマターに埋め込み |
 | **SupersededByRef** | ✅ | ✅ | 後継ADRへの参照（AdrId） |
-| **AdrFilePath** | ✅ | ✅ | `docs/ADR/ADR-{nnn}.md`形式のファイルパス |
+| **AdrFilePath** | ✅ | ✅ | `docs/ADR/{nnn}-{slug}.md`形式のファイルパス |
 
 ### ドメインサービス
 

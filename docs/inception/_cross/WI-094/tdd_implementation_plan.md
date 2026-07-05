@@ -8,7 +8,7 @@
 
 ### 対象ストーリー / 受け入れ基準
 - WI-094 description.md「受け入れ基準」§全件
-- ADR-017 Migration §1-4 (Phase 0 ADR は `docs/ADR/ADR-017-warning-severity-aggregation.md` に起票済み)
+- ADR-017 Migration §1-4 (Phase 0 ADR は `docs/ADR/017-warning-severity-aggregation.md` に起票済み)
 
 ### 影響する層 (Clean Architecture)
 

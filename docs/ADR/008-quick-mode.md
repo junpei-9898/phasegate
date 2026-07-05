@@ -1,8 +1,11 @@
-# ADR-008: Quick Mode の適用条件と範囲
+---
+adr_id: "008"
+title: "Quick Mode の適用条件と範囲"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# Quick Mode の適用条件と範囲
 
 ## Context
 
@@ -44,3 +47,7 @@ Quick Mode として明確に定義された条件下でのみ、ハーネスの
 ## 関連要件
 
 K1（4層防御）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

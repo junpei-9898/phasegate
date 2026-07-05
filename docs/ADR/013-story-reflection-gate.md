@@ -1,8 +1,11 @@
-# ADR-013: storyReflection ゲート（inception → product 反映の機械強制）
+---
+adr_id: "013"
+title: "storyReflection ゲート（inception → product 反映の機械強制）"
+status: Accepted
+date: 2026-04-05
+---
 
-## Status
-
-Accepted
+# storyReflection ゲート（inception → product 反映の機械強制）
 
 ## Context
 
@@ -98,3 +101,7 @@ inception/order/US-002/logical_design.md は存在しますが、
 - ADR-008（Quick Mode）— storyReflection も `relaxedGates` で緩和される
 - ADR-012（2-Phase Execution）— storyReflection は Phase 2 完了の事後条件に相当
 - `docs/folder_management_rules.md` — inception / product の累積更新フロー
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

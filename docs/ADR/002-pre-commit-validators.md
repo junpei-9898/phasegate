@@ -1,8 +1,11 @@
-# ADR-002: L2 — Pre-commit バリデータによる設計-実装順序の強制
+---
+adr_id: "002"
+title: "L2 — Pre-commit バリデータによる設計-実装順序の強制"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# L2 — Pre-commit バリデータによる設計-実装順序の強制
 
 ## Context
 
@@ -36,3 +39,7 @@ L2（Pre-commit）で以下のバリデータにより設計-実装の順序、�
 ## 関連要件
 
 K2（Phase Gate）、K3.5（メタデータ）、K4（テスト品質ルール）、K14（Phase Dependency Model）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

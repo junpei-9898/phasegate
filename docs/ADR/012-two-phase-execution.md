@@ -1,8 +1,11 @@
-# ADR-012: 2-Phase Execution（人間承認ゲート）
+---
+adr_id: "012"
+title: "2-Phase Execution（人間承認ゲート）"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# 2-Phase Execution（人間承認ゲート）
 
 ## Context
 
@@ -36,3 +39,7 @@ Planning Mode が interactive であれ embedded-qa であれ、全フェーズ�
 ## 関連要件
 
 K6（2-Phase Execution）、K15（Plan文書の必須生成）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

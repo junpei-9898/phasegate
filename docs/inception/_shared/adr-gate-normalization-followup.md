@@ -107,3 +107,35 @@ date: YYYY-MM-DD
 | 新規 020 | `020-reverse-learning-forward-proposal.md` | canonical YAML frontmatter | はい | はい（PASS） |
 
 **総括**: 本変更で新規 2 件は本当に検査される状態になったが、ADR コーパス全体の「ゲート看板」と「実検査範囲」の乖離（レガシー 18 件が無検査）は残存する。上記 Remediation を別タスクとして明示的に残す。
+
+## 5. 正規化の完了記録（2026-07-05, v0.173.0）
+
+上記 Remediation plan の **(ii) 全 ADR をリネーム + フォーマット移行** を実施し、レガシー 18 件を正規化した。phantom ADR 問題は解消済み。
+
+### 実施内容
+
+- **リネーム（`git mv`、履歴保持）**: `ADR-001-*.md` 〜 `ADR-018-*.md` を `001-*.md` 〜 `018-*.md` に改名（発見正規表現 `^[0-9]{3}-[a-z0-9-]+\.md$` に一致）。
+- **YAML frontmatter 付与**: 各ファイルに canonical frontmatter（`adr_id` / `title` / `status` / `date`）を追加。
+  - `title` は旧 H1 `# ADR-NNN: <Title>` から `ADR-NNN: ` プレフィックスを剥がして verbatim 採録。
+  - `status` は旧 `## Status` セクションから抽出（18 件すべて **Accepted**。Superseded は 0 件のため `superseded_by` は不要）。
+  - `date` は git の first-commit（author）日付を採用（`git log --diff-filter=A --follow`）。今日の日付でスタンプしていない。
+  - `archgate` は 18 件いずれも本文に validator_id + error_code の enforcement mapping を明示していないため **省略**（捏造しない）。
+- **`## Alternatives` セクション追加**: バリデータ要件（`adr-body.ts`）上、Alternatives は **optional** で、ヘッダを置く場合は非空本文が必要（空だと `AdrBodySectionRequiredError`）。
+  - 016 / 017（本文に「検討した代替案」を記録） / 014（本文で 3 派を比較） / 018（YAML fenced metadata を明示的に不採用）の 4 件は、**本文が実際に記録している代替案を canonical `## Alternatives` として再掲**（再構成である旨を明記）。捏造なし。
+  - 残り 14 件は代替案が原文に文書化されていないため、正直な注記（「当時、代替案は明示的に文書化されていない。本節は…遡及的正規化に伴い追加された。」）を記載。存在しない代替案は捏造していない。
+- **既存本文の保全**: Context / Decision / Consequences および `## 関連要件` 等の追加セクションはすべて温存。実体の書き換えは行わず、frontmatter と `## Alternatives` の追加のみ。
+- **クロスリファレンス更新**: `docs/ADR/ADR-NNN-*.md` を指す hard link を全て新パスに更新（README / CHANGELOG / docs/guide/* / docs/inception/_cross/WI-007,WI-014,WI-085,WI-094 / adr-foundation domain_model.md）。CHANGELOG の履歴記録（過去リリースが作成したファイル名の backtick 記録）は歴史的正確性のため保持。
+
+### 検査状態（更新後）
+
+| 対象 | 命名 | フォーマット | 発見される？ | genuinely 検査される？ |
+|------|------|-------------|-------------|----------------------|
+| 正規化済み 18 件（001..018） | `NNN-slug.md` | canonical YAML frontmatter | はい | はい（PASS） |
+| 019 / 020 / 021 | `NNN-slug.md` | canonical YAML frontmatter | はい | はい（PASS） |
+
+`validate-adr --all` は **21 件を発見し全件 PASS**（exit 0）。full test suite（547 files / 4123 tests）green。`real-adr-corpus.it.test.ts` は正規化後の現実（legacy 残存 0 / 18 件 discoverable）に合わせて更新した。
+
+### 明示的に deferred（本作業のスコープ外）
+
+- **H05-02 AC binding**: `@ac H05-02-N` タグの付与（§12 Key Decisions 全件の網羅検証）は本作業では実施しない。`real-adr-corpus.it.test.ts` は file-level `@story H05-02` のみを担持し、over-claim を回避する。別タスクとして残す。
+- CLI の `validate-adr` を L2/L3 いずれかのゲート層へ常時配線する件は本作業の範囲外（Remediation §3 の残タスク）。

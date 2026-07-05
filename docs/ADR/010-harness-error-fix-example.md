@@ -1,8 +1,11 @@
-# ADR-010: HarnessError に fix_example を必須化（エージェント自己修正設計）
+---
+adr_id: "010"
+title: "HarnessError に fix_example を必須化（エージェント自己修正設計）"
+status: Accepted
+date: 2026-03-24
+---
 
-## Status
-
-Accepted
+# HarnessError に fix_example を必須化（エージェント自己修正設計）
 
 ## Context
 
@@ -40,3 +43,7 @@ interface HarnessError {
 ## 関連要件
 
 K1（4層防御）
+
+## Alternatives
+
+当時、代替案は明示的に文書化されていない。本節は既存決定を `validate-adr` ゲートで検査可能にするための遡及的正規化（コーパス正規化）に伴い追加された。

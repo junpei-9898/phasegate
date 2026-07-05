@@ -1,8 +1,11 @@
-# ADR-014: presentation → domain 直接依存を許容する（Robert C. Martin 版 Clean Architecture 準拠）
+---
+adr_id: "014"
+title: "presentation → domain 直接依存を許容する（Robert C. Martin 版 Clean Architecture 準拠）"
+status: Accepted
+date: 2026-04-23
+---
 
-## Status
-
-Accepted — 2026-04-23
+# presentation → domain 直接依存を許容する（Robert C. Martin 版 Clean Architecture 準拠）
 
 ## Context
 
@@ -80,3 +83,13 @@ const ALLOWED_DEPENDENCIES = {
 - ADR-009 (DDD Tactical Patterns) — domain immutability 規約で mutation リスクを抑止
 - ISSUE-019 (LayerBoundary 再評価) — 本 ADR で CLOSED
 - ISSUE-014 (architecture style config) — preset 化での opt-in 厳格派提供を予定
+
+## Alternatives
+
+本 ADR は既存本文で 3 つのアーキテクチャ解釈を比較しており（正規化時に canonical `## Alternatives` として再掲）:
+
+1. **Robert C. Martin 版 Clean Architecture（採用）** — `presentation → domain` の read-only 依存を許容する。
+2. **厳格 DDD Layered** — `presentation` は `application` 経由でのみ `domain` に触れる。read-only の VO/type/policy 参照まで false positive として弾くため不採用（ただし将来 `strict-ddd` preset で opt-in 提供予定）。
+3. **phasegate 旧実装（厳格 DDD 派）** — 実装時の暗黙判断。本 ADR で置き換える。
+
+比較の詳細は上記 Context「哲学的立場の整理」および Decision を参照。

@@ -131,7 +131,7 @@ const exitCode = report.overallPassed ? 0 : 1;
 ## 解消ステータス (2026-05-08)
 
 ### v0.131.0 (1st publish) で対応した範囲
-1. ADR-017 起票・承認 (`docs/ADR/ADR-017-warning-severity-aggregation.md`)
+1. ADR-017 起票・承認 (`docs/ADR/017-warning-severity-aggregation.md`)
 2. 集計ロジック修正 (`aggregate-validation-results-usecase.ts:35-42` で severity を反映)
 3. config schema 拡張 (`validate.failOnWarning: boolean`、preset 別 default: minimal/standard=false、strict=true)
 4. CLI tri-state 化 (`--fail-on-warning` / `--no-fail-on-warning` / 未指定→config値)
