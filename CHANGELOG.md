@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.169.0] - 2026-07-05
+
+### Fixed
+
+- **WI-225 / H06-03 AC-4 — severity contract violation message now carries its ADR basis (correct ADR-021)** — `SeverityDowngradeViolationError` previously threw a message stating only the violation content (`default=…` / `requested=…`) but **omitted the ADR reference** that H06-03 AC-4 requires ("契約違反時のエラーメッセージに違反内容と根拠（ADR参照）が含まれる"). The message now appends `根拠: ADR-021`. A new **ADR-021 "severity 契約 — 格下げ禁止"** (`docs/ADR/021-severity-contract.md`, status Accepted) forward-documents the existing downgrade-prohibition rule (implemented in `SeverityContractEnforcer`, specified in `harness-error/logical_design.md` §2.3.3 / §4.6) and is the ADR that actually decides the prohibition. This corrects a prior draft that referenced **ADR-017 by mistake** — ADR-017 governs warning-severity aggregation (`failOnWarning`), **not** the downgrade prohibition; citing it was a plausible-but-wrong reference of exactly the kind phasegate exists to prevent. The domain unit test (`severity-contract-enforcer.test.ts`) asserts the message contains the violation content **and** `ADR-021`. Constructor signature is unchanged (single call site is the enforcer); no API contract change.
+
+### Changed
+
+- **Honest `@ac` backfill — 3 ACs promoted to `binding:"ac"` (no new gate, no attestation change)** — prerequisite work for a future fail-closed L3-005 gate. Global `acLevelCoverage.acBound` moves **4 → 7**:
+  - **H06-03 AC-4** — tagged (`// @ac AC-4`) on the new severity-contract-enforcer assertion above.
+  - **HF2-05 AC-1 / AC-2** — tagged on the tracer's own genuine assertions in `type-script-test-reference-source-adapter-ac.it.test.ts` using the **absolute** form (`// @ac HF2-05-1` / `// @ac HF2-05-2`). Assessed as SAFE: the file's `storyCount` is 9 (real `@story HF2-05` plus fixture `@story` string-literals), so the **relative** form (`AC-N`) would become a `relative-multi-story` orphan; the absolute form binds against the file's real storyId and was empirically confirmed to add exactly 2 correct `binding:"ac"` references with **zero** new spurious/orphan matrix entries (total refs and orphan-bearing refs unchanged). **HF2-05 is now `fileFallbackOnly === 0`** (all 6 ACs `binding:"ac"`).
+  - **H05-02 left untouched** (AC-1/2/3 remain `fileFallbackOnly`); its genuine test is planned separately.
+  - No `binding` was faked; L3-004 verdict and attestation granularity (`level:"file"`) are unchanged.
+
 ## [0.168.0] - 2026-07-05
 
 ### Fixed

@@ -20,6 +20,7 @@ async function createTempTestFile(content: string): Promise<string> {
 
 target('TypeScriptTestReferenceSourceAdapter — AC-level tracer', () => {
   context('絶対形式 @ac が付与された場合', () => {
+    // @ac HF2-05-1
     it('絶対形式@acがacIdsに格納されること', async () => {
       // Arrange
       const filePath = await createTempTestFile(
@@ -41,6 +42,7 @@ target('TypeScriptTestReferenceSourceAdapter — AC-level tracer', () => {
   });
 
   context('相対形式 @ac が付与された場合', () => {
+    // @ac HF2-05-2
     it('単一storyのファイルで相対@acが解決されること', async () => {
       // Arrange
       const filePath = await createTempTestFile(
