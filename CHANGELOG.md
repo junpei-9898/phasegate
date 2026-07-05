@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.170.0] - 2026-07-05
+
+### Added
+
+- **WI-226 / H05-02 — real-corpus ADR integration test (honest-partial)** — closes the honesty gap recorded in `l3-004-traceability-ratchet.md` §6b ("no test verifies the real `docs/ADR/` corpus exists / conforms / has valid status"). New `scripts/harness/__tests__/integration/adr-foundation/real-adr-corpus.it.test.ts` wires the **real** `createAdrFoundationModule(<repoRoot>/docs/ADR)` pipeline against the **committed** corpus (no `mkdtemp`, repoRoot resolved from the test file location) and **fail-closed verifies** four SCOPED properties: (1) canonical (`NNN-slug.md`) ADRs are discovered with 019/020/021 present (membership + floor, property-based so ADR-022 won't break it); (2) every discovered ADR conforms via `validate-all` (zero violations); (3) each discovered ADR's status ∈ {Accepted, Proposed}; (4) the **≥18 legacy `ADR-NNN-*.md` files exist on disk but are provably excluded from discovery** — pinning the known gate-invisibility limitation as a tested invariant.
+- **Honest-partial framing — H05-02 NOT over-claimed** — the new file carries **only** a file-level `// @story H05-02` tag and **deliberately no `// @ac H05-02-N` tags**. The §12 Key Decisions that H05-02 AC-1/2/3 enumerate live mostly in the legacy (gate-invisible) corpus, so the test genuinely verifies only the discoverable canonical corpus + the legacy-exclusion invariant — it does not fully assert AC-1/2/3 as written. Adding `@ac` tags would flip those ACs to `binding:"ac"` and over-claim per-AC verification of an unverified corpus. **H05-02 AC-1/2/3 remain `fileFallbackOnly`** (confirmed via `phasegate:generate-matrix`: all H05-02 references stay `binding:"file"`). Per-AC binding is deferred until the legacy corpus is normalized to canonical format (adr-gate-normalization-followup.md); H05-02 stays out of any future L3-005 "AC-bound coverage" scope until then. `l3-004-traceability-ratchet.md` §6b updated to record the now-existing real-corpus test and the retained fileFallbackOnly status. No gate behavior, matrix byte-equality, or attestation granularity (`level:"file"`) changed.
+
 ## [0.169.0] - 2026-07-05
 
 ### Fixed

@@ -86,7 +86,12 @@ R4 で「336/336 AC linked」に到達したが、これは **story-level（フ�
 
 以下は「Story 単位でリンク済み」だが「個々の AC がコードで個別に検証されていない」ことが判明している具体例である:
 
-- **H05-02 AC-1 / AC-2 / AC-3**: テストは ADR ユースケースのロジックを in-memory な ADR で exercise するが、**実 `docs/ADR/` コーパスが存在し・conform し・status が妥当であること**を検証するテストが存在しない。ADR コーパス実体の検証は未カバー。
+- **H05-02 AC-1 / AC-2 / AC-3**（**2026-07-05, WI-226 で部分前進 — honest-partial**）: 以前は「実 `docs/ADR/` コーパスが存在し・conform し・status が妥当であることを検証するテストが存在しない」状態だった。この honesty ギャップに対し、real-corpus integration test `scripts/harness/__tests__/integration/adr-foundation/real-adr-corpus.it.test.ts` を新設した。同テストは mkdtemp を使わず実 `docs/ADR/` に配線した本番パイプライン（`createAdrFoundationModule`）で以下を **fail-closed に検証**する:
+  - canonical 形式（`NNN-slug.md`）の ADR を 1 件以上 discover し、019/020/021 が membership に含まれる（floor + membership。ADR-022 追加で壊れない property-based 検証）。
+  - discoverable な canonical コーパスが validate-all で全件 conform（violations ゼロ、`valid === true`）。
+  - discovered 各 ADR の status ∈ {Accepted, Proposed}。
+  - **legacy `ADR-NNN-*.md` ファイル（disk 上 >=18 件、旧非 YAML 形式）が discovery 正規表現 `^[0-9]{3}-[a-z0-9-]+\.md$` に一致せず gate から確実に除外される** invariant を pin（既知の限界をテスト化）。
+  ただしこれは **SCOPED property の検証**であり、H05-02 AC-1/2/3 を文言どおり完全には閉じない。§12 Key Decisions の大半は上記 legacy コーパス（gate 不可視）に存在するため、real-corpus test は canonical コーパスの conformance と legacy 除外 invariant のみを正直に担保する。したがって同テストは file-level `@story H05-02` のみを担持し、**`@ac H05-02-N` タグは意図的に付与していない**（付与すると当該 AC が `binding:"ac"` へ昇格し、未検証の legacy コーパスに対し per-AC 検証を over-claim してしまうため）。**H05-02 AC-1/2/3 は fileFallbackOnly のまま維持**する。per-AC binding への昇格は legacy ADR コーパスが canonical 形式へ正規化された後に deferred する（adr-gate-normalization-followup.md）。**H05-02 は legacy 正規化が完了するまで将来の fail-closed L3-005「AC-bound coverage」スコープには含めない。**
 - **H06-03 AC-4**: `SeverityDowngradeViolationError` のメッセージに**要求されている ADR 参照が含まれていない** — これは story-level linkage の限界ではなく **genuine な source ギャップ**であり、フォローアップ候補（メッセージ生成箇所に ADR 参照を追加する修正が必要）。
 - **H07 / H09 の複数 AC**: 兄弟テストファイル（sibling test files）でカバーされているが、それらのファイルは（ファイル単位タグの制約上）当該 Story の `@story` タグを担持できないため、マトリクス上は別 Story または別ファイル経由で linked として現れる。AC 単位の厳密対応は取れていない。
 
