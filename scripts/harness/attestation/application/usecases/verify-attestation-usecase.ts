@@ -4,11 +4,14 @@
 import type { AttestationRecord } from "../../domain/entities/attestation-record.js";
 import type { ContentHasherPort } from "../../domain/ports/content-hasher-port.js";
 import type { GranularityDerivationService } from "../../domain/services/granularity-derivation-service.js";
+import type { AcBoundScopeService } from "../../domain/services/ac-bound-scope-service.js";
 import type { VerifyAttestationInput } from "../dto/verify-attestation-input.js";
 import type { VerifyAttestationChecks, VerifyAttestationOutput } from "../dto/verify-attestation-output.js";
 import type { AttestationRecordMapper } from "../mappers/attestation-record-mapper.js";
 import type { AttestationRepositoryPort } from "../ports/attestation-repository-port.js";
 import type { SourceDigesterPort } from "../ports/source-digester-port.js";
+import type { MatrixSourcePort } from "../ports/matrix-source-port.js";
+import type { AcBoundAllowlistPort } from "../ports/ac-bound-allowlist-port.js";
 
 export interface VerifyAttestationDeps {
   readonly repository: AttestationRepositoryPort;
@@ -16,6 +19,12 @@ export interface VerifyAttestationDeps {
   readonly hasher: ContentHasherPort;
   readonly granularityService: GranularityDerivationService;
   readonly mapper: AttestationRecordMapper;
+  /** H16-03: acBoundScope 再導出用（省略時は空 allowlist として扱い、格納が [] のときのみ合格）。 */
+  readonly matrixSource?: MatrixSourcePort;
+  readonly allowlist?: AcBoundAllowlistPort;
+  readonly acBoundScopeService?: AcBoundScopeService;
+  /** H16-03: matrix パスの明示指定（省略時は inputs.sources から解決）。 */
+  readonly matrixFilePath?: string;
 }
 
 export interface VerifyAttestationResult {
@@ -96,14 +105,18 @@ export class VerifyAttestationUseCase {
       mismatches.push("granularity mismatch: stored granularity does not match re-derived value");
     }
 
+    // 6b. acBoundScope を stored matrix + allowlist から再導出 == 格納値（anti-laundering, H16-03）
+    const acBoundScopeOk = await this.checkAcBoundScope(record, mismatches);
+
     const checks: VerifyAttestationChecks = {
       schema: true,
       mode: true,
       attestationDigest: attestationDigestOk,
       inputHashes: inputHashesOk,
       granularity: granularityOk,
+      acBoundScope: acBoundScopeOk,
     };
-    const ok = attestationDigestOk && inputHashesOk && granularityOk;
+    const ok = attestationDigestOk && inputHashesOk && granularityOk && acBoundScopeOk;
 
     return {
       output: { ok, checks, mismatches },
@@ -118,9 +131,55 @@ export class VerifyAttestationUseCase {
       attestationDigest: false,
       inputHashes: false,
       granularity: false,
+      acBoundScope: false,
       ...partialChecks,
     };
     return { output: { ok: false, checks, mismatches }, exitCode: 2 };
+  }
+
+  /**
+   * H16-03: acBoundScope を stored matrix + config allowlist から再導出し格納値と比較する（anti-laundering）。
+   *
+   * - ポート/サービスが未配線: 格納 acBoundScope が [] のときのみ合格（後方互換。空 allowlist 相当）。
+   * - matrix/allowlist が読めない・parse 不能: fail-closed（false, Q2）。
+   * - matrix パスは inputs.sources（ハッシュ検証済み入力）から解決する（Q3）。
+   */
+  private async checkAcBoundScope(record: AttestationRecord, mismatches: string[]): Promise<boolean> {
+    const stored = [...record.acBoundScope].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+
+    if (!this.deps.matrixSource || !this.deps.allowlist || !this.deps.acBoundScopeService) {
+      // 未配線: 格納が空のときのみ合格（空 allowlist で再導出すれば [] になるため）。
+      if (stored.length === 0) return true;
+      mismatches.push("acBoundScope check unavailable: matrix source not wired but stored acBoundScope is non-empty");
+      return false;
+    }
+
+    let rederived: string[];
+    try {
+      const allowlist = await this.deps.allowlist.getAcBoundStories();
+      const matrixPath = this.deps.matrixFilePath ?? this.resolveMatrixPath(record);
+      const matrix = await this.deps.matrixSource.load(matrixPath);
+      rederived = this.deps.acBoundScopeService.derive(matrix, allowlist);
+    } catch (e) {
+      // FAIL-CLOSED（Q2）: 再導出入力が読めない/parse 不能は不一致として扱う。
+      mismatches.push(`acBoundScope re-derivation failed (fail-closed): ${errMsg(e)}`);
+      return false;
+    }
+
+    const rederivedSorted = [...rederived].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    const equal = stored.length === rederivedSorted.length && stored.every((s, i) => s === rederivedSorted[i]);
+    if (!equal) {
+      mismatches.push(
+        `acBoundScope mismatch: stored [${stored.join(",")}], re-derived [${rederivedSorted.join(",")}]`,
+      );
+    }
+    return equal;
+  }
+
+  /** inputs.sources から matrix にあたるパスを解決する（Q3）。 */
+  private resolveMatrixPath(record: AttestationRecord): string | undefined {
+    const matrixEntry = record.inputs.sources.find((s) => s.path.includes("requirement-test-matrix"));
+    return matrixEntry?.path;
   }
 }
 

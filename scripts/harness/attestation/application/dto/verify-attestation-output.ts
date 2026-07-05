@@ -15,6 +15,8 @@ export interface VerifyAttestationChecks {
   readonly inputHashes: boolean;
   /** granularity を validatorSet から再導出 == 格納値（anti-laundering） */
   readonly granularity: boolean;
+  /** acBoundScope を stored matrix + allowlist から再導出 == 格納値（anti-laundering, H16-03） */
+  readonly acBoundScope: boolean;
 }
 
 /**

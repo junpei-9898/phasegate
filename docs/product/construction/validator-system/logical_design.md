@@ -117,6 +117,7 @@ scripts/harness/
     │       ├── performance-scanner-port.ts      # パフォーマンス問題検出（L3-002）
     │       ├── coverage-report-port.ts          # テストカバレッジレポート取得（L3-003）
     │       ├── ac-coverage-policy-port.ts       # nyquist-validation AcCoverageGatePolicy（L3-004）
+    │       ├── ac-bound-coverage-policy-port.ts # AC-bound coverage（L3-005, fail-closed, default-OFF）
     │       ├── design-document-port.ts          # 設計文書構造化データ読み取り（L4-001, L4-002）
     │       ├── source-code-analyzer-port.ts     # AST解析結果取得（L4-001, L4-003）
     │       ├── source-analysis-port.ts          # biome-ast-engine ImportGraph相当データ（L4-003）
@@ -151,6 +152,7 @@ scripts/harness/
     │       ├── ast-performance-scanner-adapter.ts           # PerformanceScannerPort実装
     │       ├── json-coverage-report-adapter.ts              # CoverageReportPort実装
     │       ├── nyquist-ac-coverage-policy-adapter.ts        # AcCoveragePolicyPort実装
+    │       ├── nyquist-ac-bound-coverage-policy-adapter.ts  # AcBoundCoveragePolicyPort実装（L3-005, fail-closed）
     │       ├── markdown-design-document-adapter.ts          # DesignDocumentPort実装
     │       ├── biome-ast-source-code-analyzer-adapter.ts    # SourceCodeAnalyzerPort実装
     │       ├── import-graph-source-analysis-adapter.ts      # SourceAnalysisPort実装
@@ -211,6 +213,7 @@ Quick Mode では従来どおり `L2-003` を maintained validator として扱�
 | `L3-002` | performance | CI |
 | `L3-003` | coverage | CI |
 | `L3-004` | nyquist | CI |
+| `L3-005` | ac-bound-coverage | CI（default-OFF, opt-in, fail-closed） |
 | `L4-001` | drift-detect | Scheduled |
 | `L4-002` | consistency-check | Scheduled |
 | `L4-003` | dead-code | Scheduled |
@@ -918,7 +921,7 @@ Any mismatch is returned as a warning `ValidationResultContract` error with code
 
 **対応ストーリー**: H08-02（L3バリデータ実行）
 
-**責務**: security（L3-001）・performance（L3-002）・coverage（L3-003）・nyquist（L3-004）の4バリデータをCI文脈で実行し、`ValidationResultContract[]` を返す。
+**責務**: security（L3-001）・performance（L3-002）・coverage（L3-003）・nyquist（L3-004）・ac-bound-coverage（L3-005）のバリデータをCI文脈で実行し、`ValidationResultContract[]` を返す。
 
 **コンストラクタ依存**
 
@@ -926,15 +929,25 @@ Any mismatch is returned as a warning `ValidationResultContract` error with code
 - `validatorExecutionService: ValidatorExecutionService`
 - `validatorConfigPort: ValidatorConfigPort`
 - `contractMapper: ValidationResultContractMapper`
+- `acBoundCoveragePolicyPort?: AcBoundCoveragePolicyPort` — L3-005専用（省略可、未配線時は L3-005 は評価されず skip）
 
 **入力DTO**: `RunL3ValidatorsInput`
 
 | 項目 | 型 | 必須 | 説明 |
 |------|----|------|------|
-| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L3（L3-001〜L3-004） |
+| validatorIds | `readonly string[] \| undefined` | No | 実行対象バリデータID。省略時は全L3（L3-001〜L3-004。L3-005 は default-OFF なので config で明示有効化した場合のみ） |
 | targetPaths | `readonly string[]` | Yes | 検証対象ファイルパス一覧 |
 | coverageReportPath | `string \| undefined` | No | カバレッジレポートJSONパス（L3-003専用） |
 | requirementMatrixPath | `string \| undefined` | No | RequirementTestMatrixパス（L3-004専用） |
+| acBoundStories | `readonly string[] \| undefined` | No | L3-005 のスコープ対象 story-id 配列（`layers.L3.acBoundStories`）。省略時 `[]` |
+
+**L3-005（ac-bound-coverage, fail-closed, default-OFF）ノート**
+
+- L3-004 と同じ override ブロック方式で実装する（`overrideMap` に unskipped な L3-005 がある場合のみ `AcBoundCoveragePolicyPort.checkAcBoundCoverage()` を呼ぶ）。
+- **fail-closed**: matrix 不在 / parse 不能 / スコープ内の in-scope story に ac-binding を欠く AC が 1 つでもあれば FAIL。
+- **scope**: `acBoundStories`（story-id 配列）のみを検査対象とし、スコープ外 story の AC は無視する。
+- **default-OFF**: `DEFAULT_CONFIG.layers.L3.validators` にも standard/strict プリセットにも含めない。config で明示的に `L3-005`（または alias `ac-bound-coverage`）を有効化した場合のみ発火する。
+- 未有効化時は L3-004 と同様、`select(['L3-005'])` は解決可能だが skip 結果を返す。
 
 **出力**: `Promise<readonly ValidationResultContract[]>`
 
@@ -1292,6 +1305,27 @@ export interface AggregatedValidationReport {
 - nyquist-validationの `AcCoverageGatePolicy` インスタンスを `getPolicy()` 経由で取得する
 - `domain_model.md §D2` のexternalPolicyRefパターンに従い、PolicyオブジェクトをDomainに渡して `check()` を呼ぶ
 - `RequirementTestMatrix` はApplication層（RunL3ValidatorsUseCase）が提供する
+
+---
+
+### 4.8b NyquistAcBoundCoveragePolicyAdapter（L3-005）
+
+**実装ポート**: `AcBoundCoveragePolicyPort`
+
+**ファイル**: `scripts/harness/validator-system/infrastructure/adapters/nyquist-ac-bound-coverage-policy-adapter.ts`
+
+**外部I/O**
+
+- nyquist-validation の generate-matrix usecase（`createNyquistValidationModule().generateMatrixUseCase.execute({ write:false })`）— L4-007 の `NyquistAcLevelTraceabilityAdapter` と同じ matrix 生成方式。
+- 有効 storyId は traceability-model の StoryCatalog から取得（L3-004 adapter と同じ REAL registry 方式）。
+
+**実装方針**
+
+- `checkAcBoundCoverage({ matrixFilePath?, acBoundStories })` を実装する。
+- **fail-closed**: matrix が生成できない / parse 不能 / 例外時は例外を握り潰さず `passed:false` を返す（L3-004 adapter と同じ fail-closed 方針。L4-007 の fail-open とは対照的）。
+- 各 `storyId ∈ acBoundStories` について、matrix 上の当該 story の linked AC を走査し、**testReferences に `binding:"ac"` を 1 件も持たない AC（fileFallbackOnly）が 1 つでもあれば FAIL**。
+- `acBoundStories` に含まれない story は完全に無視する（out-of-scope）。
+- `acBoundStories` が空配列のときは検査対象が無いため PASS（スコープ空 = 検査すべき in-scope AC が存在しない）。
 
 ---
 

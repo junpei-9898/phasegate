@@ -9,4 +9,6 @@ export interface RunL3ValidatorsInput {
   readonly targetPaths: readonly string[];
   readonly coverageReportPath?: string;
   readonly requirementMatrixPath?: string;
+  /** L3-005（AC-bound coverage）のスコープ対象 story-id 配列。省略時 []。 */
+  readonly acBoundStories?: readonly string[];
 }

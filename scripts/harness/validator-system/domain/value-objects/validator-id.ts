@@ -10,6 +10,7 @@
  * WI-132/WI-133/WI-136/WI-137/WI-138 で L2-015 を追加
  * WI-156 で L4-006 を追加
  * WI-222 (HF2-05) で L4-007（ac-level-traceability, default-OFF advisory）を追加
+ * WI-227 (H16-03) で L3-005（ac-bound-coverage, default-OFF fail-closed）を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -37,6 +38,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   'L3-002': 'performance',
   'L3-003': 'coverage',
   'L3-004': 'nyquist',
+  'L3-005': 'ac-bound-coverage',
   'L4-001': 'drift-detect',
   'L4-002': 'consistency-check',
   'L4-003': 'dead-code',

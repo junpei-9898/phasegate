@@ -86,7 +86,7 @@ target('toValidatorSystemConfig', () => {
           paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80 },
+            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80, acBoundStories: [] },
             L4: { enabled: false, validators: ['L4-001'] },
           },
           harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
@@ -111,7 +111,7 @@ target('toValidatorSystemConfig', () => {
           paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
           layers: {
             L2: { enabled: true, validators: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'] },
-            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80 },
+            L3: { enabled: true, validators: ['L3-001', 'L3-002', 'L3-003', 'L3-004'], coverageThreshold: 80, acBoundStories: [] },
             L4: { enabled: false, validators: ['L4-001'] },
           },
           harnesses: { bundleSizeLimit: 0, deadCodeGC: false },
@@ -158,6 +158,42 @@ target('toValidatorSystemConfig', () => {
           layers: {
             L3: {
               requirementMatrixPath: 'config/custom-matrix.json',
+            },
+          },
+        });
+      });
+    });
+
+    context('L3.validators に alias "ac-bound-coverage" が含まれる場合（H16-03）', () => {
+      it('L3-005 へ正規化されること', () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.layers.L3.validators = ['security', 'ac-bound-coverage'];
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig);
+
+        // Assert
+        const l3 = (actual as { layers: { L3: { validators: string[] } } }).layers.L3;
+        expect(l3.validators).toContain('L3-005');
+        expect(l3.validators).toContain('L3-001');
+      });
+    });
+
+    context('L3.acBoundStories が設定されている場合（H16-03）', () => {
+      it('acBoundStories を validator-system config へ伝搬すること', () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.layers.L3.acBoundStories = ['HF2-05'];
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig);
+
+        // Assert
+        expect(actual).toMatchObject({
+          layers: {
+            L3: {
+              acBoundStories: ['HF2-05'],
             },
           },
         });

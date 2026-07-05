@@ -181,6 +181,48 @@ target("AttestationRecord", () => {
     });
   });
 
+  describe("acBoundScope テスト（H16-03）", () => {
+    it("acBoundScope が toCanonicalPayload に含まれる（attestationDigest でカバー）", () => {
+      // Arrange
+      const record = AttestationRecord.create({ ...buildProps(), acBoundScope: ["HF2-05"] });
+      // Act
+      const payload = record.toCanonicalPayload();
+      // Assert
+      expect(payload).toHaveProperty("acBoundScope");
+      expect(payload.acBoundScope).toEqual(["HF2-05"]);
+    });
+
+    it("acBoundScope が equals の比較対象に含まれる", () => {
+      // Arrange
+      const recordA = AttestationRecord.create({ ...buildProps(), acBoundScope: ["HF2-05"] });
+      const recordB = AttestationRecord.create({ ...buildProps(), acBoundScope: [] });
+      // Act
+      const actual = recordA.equals(recordB);
+      // Assert
+      expect(actual).toBe(false);
+    });
+
+    it("granularity.traceability.level は acBoundScope があっても file のまま", () => {
+      // Arrange / Act
+      const record = AttestationRecord.create({ ...buildProps(), acBoundScope: ["HF2-05"] });
+      // Assert
+      expect(record.granularity.traceability.level).toBe("file");
+      expect(record.acBoundScope).toEqual(["HF2-05"]);
+    });
+
+    it("producedAt/gitCommit のみ差異なら acBoundScope 込みで attestationDigest がバイト一致（決定論）", () => {
+      // Arrange
+      const hasher = new FakeHasher();
+      const recordA = AttestationRecord.create({ ...buildProps({ producedAt: "2026-01-01T00:00:00Z" }), acBoundScope: ["HF2-05"] });
+      const recordB = AttestationRecord.create({ ...buildProps({ producedAt: "2099-12-31T23:59:59Z" }), acBoundScope: ["HF2-05"] });
+      // Act
+      const sealedA = recordA.seal(hasher);
+      const sealedB = recordB.seal(hasher);
+      // Assert
+      expect(sealedA.signature.attestationDigest.value).toBe(sealedB.signature.attestationDigest.value);
+    });
+  });
+
   describe("computeInputDigest テスト", () => {
     it("sources の順序が違っても inputDigest は一致する（AC-5 決定論）", () => {
       // Arrange

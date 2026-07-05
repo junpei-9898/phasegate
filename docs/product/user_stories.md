@@ -36,7 +36,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-13 | Scheduled Governance & CI/CDテンプレート | 3 | 3 |
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
-| H-16 | Signed Attestation | 2 | 3 |
+| H-16 | Signed Attestation | 3 | 3 |
 | H-F2 | Phase 2拡張 | 4 | Future |
 
 ---
@@ -1653,6 +1653,36 @@ K9（トレーサビリティの改竄不可能性）— attestation の機械�
 
 ---
 
+### H16-03: AC-bound coverage gate + attestation acBoundScope (L3-005)
+
+**Epic**: H-16 Signed Attestation
+**旧US**: 新規（手3b / WI-227）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** fail-closed な L3-005「AC-bound coverage」ゲートと、attestation への machine-readable な `acBoundScope` 記録を導入したい,
+**so that** 特定 story について「各 AC が個別の ac-binding テストで検証されている」ことを機械的に保証し、その厳密な保証範囲を attestation に改竄検知可能な形で明示できる（file-level の粗い green を per-AC 保証として詐称できないようにする）。
+
+#### 背景
+
+L3-004 は story-level（ファイル単位）の AC 網羅ゲートであり、各 AC に testReference が 1 件以上あれば pass する。しかし「各 AC が個別に assert されている」ことは保証しない（`l3-004-traceability-ratchet.md` §6 参照）。L3-005 は opt-in（default-OFF）で、スコープ内 story に限り「全 AC が ≥1 の `binding:"ac"` ref を持つ」ことを fail-closed で検査する。attestation の `acBoundScope` は、その per-AC 保証が genuinely 成立している story-id 群を machine-readable に記録する。`granularity.traceability.level` の global な "file"→"ac" 反転はしない（acBoundScope は per-story の独立次元）。
+
+#### 受け入れ基準
+
+- [ ] AC-1: fail-closed な L3-005「AC-bound coverage」バリデータが存在し、スコープ内 story の各 AC が ≥1 の `binding:"ac"` ref を持つ（fileFallbackOnly===0）ことを検査する
+- [ ] AC-2: 検査スコープは `layers.L3.acBoundStories`（story-id 配列）で指定し、スコープ外 story の AC は無視する
+- [ ] AC-3: fail-closed — matrix 不在 / parse 不能 / スコープ内のいずれかの AC が ac-binding を欠く → FAIL
+- [ ] AC-4: default-OFF opt-in — `DEFAULT_CONFIG.layers.L3` の validator 集合にも standard/strict プリセットにも含めない。config alias `ac-bound-coverage` → `L3-005`
+- [ ] AC-5: attestation record が machine-readable な `acBoundScope`（昇順 `string[]`。genuinely ac-bound かつスコープ内で pass した story のみ）を記録する
+- [ ] AC-6: `granularity.traceability.level` は "file" のまま（global な反転をしない。acBoundScope から独立）
+- [ ] AC-7: verify は `acBoundScope` を stored matrix + config allowlist から**再導出**して格納値と比較する（anti-laundering）
+- [ ] AC-8: `acBoundScope` は canonical payload / `attestationDigest` に含まれる。producedAt / gitCommit のみ異なる 2 回の実行で `attestationDigest` はバイト一致（決定論）
+
+#### 対応非交渉要件
+K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の fail-closed 検査と改竄検知可能な明示
+
+---
+
 ## Orchestration移管ストーリー一覧（参照）
 
 以下のストーリーはOrchestrationパッケージに移管済み。Quality Harnessのスコープ外。
@@ -1691,8 +1721,8 @@ K9（トレーサビリティの改竄不可能性）— attestation の機械�
 | 3 | H-13 Scheduled Gov | 3 | 1 | 2 |
 | 3 | H-14 K回帰 | 3 | 3 | 0 |
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
-| 3 | H-16 Signed Attestation | 2 | 2 | 0 |
-| **Wave 3小計** | | **16** | **14** | **2** |
+| 3 | H-16 Signed Attestation | 3 | 3 | 0 |
+| **Wave 3小計** | | **17** | **15** | **2** |
 | Future | H-F2 Phase 2拡張 | 4 | — | — |
-| **v1合計** | | **56** | **51** | **5** |
-| **全体（Future含む）** | | **60** | — | — |
+| **v1合計** | | **57** | **52** | **5** |
+| **全体（Future含む）** | | **61** | — | — |

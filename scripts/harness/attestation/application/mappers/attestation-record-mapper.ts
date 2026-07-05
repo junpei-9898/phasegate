@@ -75,6 +75,7 @@ export class AttestationRecordMapper {
           knownLimitations: [...record.granularity.traceability.knownLimitations],
         },
       },
+      acBoundScope: [...record.acBoundScope],
       metadata: {
         producedAt: record.metadata.producedAt,
         producer: record.metadata.producer,
@@ -153,6 +154,8 @@ export class AttestationRecordMapper {
     }
     const traceability = this.toGranularityClaim(granularity.traceability);
 
+    const acBoundScope = this.toAcBoundScope(doc.acBoundScope);
+
     const metadata = doc.metadata;
     if (!isObject(metadata)) {
       throw new MalformedAttestationError("metadata must be an object");
@@ -181,11 +184,21 @@ export class AttestationRecordMapper {
         gitCommit,
       },
       signature: this.toSignatureBlock(mode, attestationDigest, signature),
+      acBoundScope,
     };
 
     // verify 用の再構築: INV-1/INV-3 は verify usecase が機械的チェックとして検出するため
     // ここでは強制しない（reconstruct）。shape/型不正のみ MalformedAttestationError として弾く。
     return AttestationRecord.reconstruct(props);
+  }
+
+  private toAcBoundScope(v: unknown): string[] {
+    // H16-03: 後方互換のため未設定は [] とみなす（additive-safe）。
+    if (v === undefined || v === null) return [];
+    if (!Array.isArray(v)) {
+      throw new MalformedAttestationError("acBoundScope must be an array of strings");
+    }
+    return v.map((item, i) => requireString(item, `acBoundScope[${i}]`));
   }
 
   private toDigest(v: unknown, field: string): Digest {

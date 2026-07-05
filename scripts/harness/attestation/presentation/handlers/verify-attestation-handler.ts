@@ -55,6 +55,7 @@ function renderHuman(output: VerifyAttestationOutput, exitCode: 0 | 1 | 2): stri
   lines.push(`attestationDigest: ${mark(c.attestationDigest)}`);
   lines.push(`inputHashes      : ${mark(c.inputHashes)}`);
   lines.push(`granularity      : ${mark(c.granularity)}`);
+  lines.push(`acBoundScope     : ${mark(c.acBoundScope)}`);
   if (output.mismatches.length > 0) {
     lines.push("");
     lines.push("Mismatches:");

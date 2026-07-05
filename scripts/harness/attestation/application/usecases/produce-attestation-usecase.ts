@@ -4,6 +4,7 @@
 import { AttestationRecord, type GateResult, type SourceEntry } from "../../domain/entities/attestation-record.js";
 import type { ContentHasherPort } from "../../domain/ports/content-hasher-port.js";
 import type { GranularityDerivationService } from "../../domain/services/granularity-derivation-service.js";
+import type { AcBoundScopeService } from "../../domain/services/ac-bound-scope-service.js";
 import { SignatureBlock } from "../../domain/value-objects/signature-block.js";
 import { ValidatorOutcome } from "../../domain/value-objects/validator-outcome.js";
 import type { AttestationDocument } from "../dto/attestation-document.js";
@@ -12,6 +13,8 @@ import type { AttestationRecordMapper } from "../mappers/attestation-record-mapp
 import type { AttestationRepositoryPort } from "../ports/attestation-repository-port.js";
 import type { GateResultSourcePort } from "../ports/gate-result-source-port.js";
 import type { SourceDigesterPort } from "../ports/source-digester-port.js";
+import type { MatrixSourcePort } from "../ports/matrix-source-port.js";
+import type { AcBoundAllowlistPort } from "../ports/ac-bound-allowlist-port.js";
 
 const SCHEMA_VERSION = "phasegate-attestation/v1";
 const PREDICATE_TYPE = "https://phasegate.dev/attestation/gate-run/v1";
@@ -35,6 +38,14 @@ export interface ProduceAttestationDeps {
   readonly clock?: () => Date;
   /** 入力 source パス群（既定は config + matrix）。 */
   readonly inputSourcePaths?: readonly string[];
+  /** H16-03: acBoundScope 導出用 matrix 供給（省略時は acBoundScope=[]）。 */
+  readonly matrixSource?: MatrixSourcePort;
+  /** H16-03: acBoundScope 導出用 allowlist 供給（省略時は acBoundScope=[]）。 */
+  readonly allowlist?: AcBoundAllowlistPort;
+  /** H16-03: acBoundScope 導出サービス（省略時は acBoundScope=[]）。 */
+  readonly acBoundScopeService?: AcBoundScopeService;
+  /** H16-03: matrix 供給元パス（inputSourcePaths のうち matrix にあたるもの。既定は 2 番目の source）。 */
+  readonly matrixFilePath?: string;
 }
 
 export interface ProduceAttestationResult {
@@ -76,10 +87,15 @@ export class ProduceAttestationUseCase {
       producedAt: "1970-01-01T00:00:00Z",
       producer: `phasegate-attestation/${this.deps.pkgVersion}`,
       gitCommit: null,
+      acBoundScope: [],
     });
     const inputDigest = preInputRecord.computeInputDigest(this.deps.hasher);
 
     // 5. granularity 導出（domain service）
+    // 5b. acBoundScope 導出（H16-03）: matrixSource + allowlist + AcBoundScopeService。
+    //     いずれか未配線なら acBoundScope=[]。
+    const acBoundScope = await this.deriveAcBoundScope();
+
     // 6. metadata 構築
     const now = (this.deps.clock ?? (() => new Date()))().toISOString();
     const gitCommit = await this.deps.gitCommitProvider();
@@ -93,6 +109,7 @@ export class ProduceAttestationUseCase {
       producedAt: now,
       producer: `phasegate-attestation/${this.deps.pkgVersion}`,
       gitCommit,
+      acBoundScope,
     });
     const sealed = record.seal(this.deps.hasher);
 
@@ -112,6 +129,7 @@ export class ProduceAttestationUseCase {
     producedAt: string;
     producer: string;
     gitCommit: string | null;
+    acBoundScope: readonly string[];
   }): AttestationRecord {
     const granularity = this.deps.granularityService.derive(args.validatorSet);
     return AttestationRecord.create({
@@ -135,7 +153,28 @@ export class ProduceAttestationUseCase {
       },
       // 仮の unsigned-poc block（seal 前）。seal が正しい digest で置換する。
       signature: SignatureBlock.unsignedPoc(args.inputDigest),
+      acBoundScope: args.acBoundScope,
     });
+  }
+
+  /**
+   * H16-03: matrixSource + allowlist + AcBoundScopeService から acBoundScope を導出する。
+   * いずれかのポート/サービスが未配線なら [] を返す（additive-safe）。
+   * matrix の読み込みに失敗した場合も [] を返す（produce は attest の記録が主目的であり、
+   * 過大主張の防止は verify の再導出比較が担保する）。
+   */
+  private async deriveAcBoundScope(): Promise<string[]> {
+    if (!this.deps.matrixSource || !this.deps.allowlist || !this.deps.acBoundScopeService) {
+      return [];
+    }
+    try {
+      const allowlist = await this.deps.allowlist.getAcBoundStories();
+      if (allowlist.length === 0) return [];
+      const matrix = await this.deps.matrixSource.load(this.deps.matrixFilePath);
+      return this.deps.acBoundScopeService.derive(matrix, allowlist);
+    } catch {
+      return [];
+    }
   }
 
   private async buildSources(): Promise<SourceEntry[]> {

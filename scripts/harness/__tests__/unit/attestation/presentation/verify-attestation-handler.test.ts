@@ -24,7 +24,7 @@ const asUseCase = (fake: FakeVerifyUseCase): VerifyAttestationUseCase => fake as
 
 const okOutput = (): VerifyAttestationOutput => ({
   ok: true,
-  checks: { schema: true, mode: true, attestationDigest: true, inputHashes: true, granularity: true },
+  checks: { schema: true, mode: true, attestationDigest: true, inputHashes: true, granularity: true, acBoundScope: true },
   mismatches: [],
 });
 
@@ -66,7 +66,7 @@ target("VerifyAttestationHandler", () => {
       // Arrange
       const out: VerifyAttestationOutput = {
         ok: false,
-        checks: { schema: true, mode: true, attestationDigest: true, inputHashes: false, granularity: true },
+        checks: { schema: true, mode: true, attestationDigest: true, inputHashes: false, granularity: true, acBoundScope: true },
         mismatches: ['input hash mismatch for "x"'],
       };
       const fake = new FakeVerifyUseCase({ output: out, exitCode: 1 });

@@ -13,9 +13,12 @@ import { AttestationRecordMapper } from "./application/mappers/attestation-recor
 import { ProduceAttestationUseCase } from "./application/usecases/produce-attestation-usecase.js";
 import { VerifyAttestationUseCase } from "./application/usecases/verify-attestation-usecase.js";
 import { GranularityDerivationService } from "./domain/services/granularity-derivation-service.js";
+import { AcBoundScopeService } from "./domain/services/ac-bound-scope-service.js";
 import { CiCheckGateResultAdapter } from "./infrastructure/adapters/ci-check-gate-result-adapter.js";
 import { FileSystemAttestationRepositoryAdapter } from "./infrastructure/adapters/file-system-attestation-repository-adapter.js";
 import { FileSystemSourceDigesterAdapter } from "./infrastructure/adapters/file-system-source-digester-adapter.js";
+import { FileSystemMatrixSourceAdapter } from "./infrastructure/adapters/file-system-matrix-source-adapter.js";
+import { ConfigAcBoundAllowlistAdapter } from "./infrastructure/adapters/config-ac-bound-allowlist-adapter.js";
 import { NodeCryptoContentHasherAdapter } from "./infrastructure/adapters/node-crypto-content-hasher-adapter.js";
 import { AttestHandler } from "./presentation/handlers/attest-handler.js";
 import { VerifyAttestationHandler } from "./presentation/handlers/verify-attestation-handler.js";
@@ -51,7 +54,12 @@ export function createAttestationModule(rootDir: string, options?: AttestationMo
 
   // Domain services / mappers
   const granularityService = new GranularityDerivationService();
+  const acBoundScopeService = new AcBoundScopeService();
   const mapper = new AttestationRecordMapper();
+
+  // H16-03: acBoundScope 導出用 adapter（matrix 供給 + config allowlist）。
+  const matrixSource = new FileSystemMatrixSourceAdapter(rootDir);
+  const allowlist = new ConfigAcBoundAllowlistAdapter();
 
   const gitCommitProvider = options?.gitCommitProvider ?? (() => defaultGitCommitProvider(rootDir));
 
@@ -66,6 +74,9 @@ export function createAttestationModule(rootDir: string, options?: AttestationMo
     gitCommitProvider,
     pkgVersion: options?.pkgVersion ?? "0.0.0",
     clock: options?.clock,
+    matrixSource,
+    allowlist,
+    acBoundScopeService,
   });
   const verifyUseCase = new VerifyAttestationUseCase({
     repository,
@@ -73,6 +84,9 @@ export function createAttestationModule(rootDir: string, options?: AttestationMo
     hasher,
     granularityService,
     mapper,
+    matrixSource,
+    allowlist,
+    acBoundScopeService,
   });
 
   // Handlers

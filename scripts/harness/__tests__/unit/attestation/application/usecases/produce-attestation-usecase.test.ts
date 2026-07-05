@@ -12,6 +12,7 @@ import {
   ProduceAttestationUseCase,
 } from "../../../../../attestation/application/usecases/produce-attestation-usecase.js";
 import { GranularityDerivationService } from "../../../../../attestation/domain/services/granularity-derivation-service.js";
+import { AcBoundScopeService } from "../../../../../attestation/domain/services/ac-bound-scope-service.js";
 import { Digest } from "../../../../../attestation/domain/value-objects/digest.js";
 import { L3_004_FILE_LEVEL_KNOWN_LIMITATION } from "../../../../../attestation/domain/value-objects/granularity-claim.js";
 import { context, target } from "../../../../helpers/test-helpers.js";
@@ -158,6 +159,47 @@ target("ProduceAttestationUseCase", () => {
       // Assert: producedAt は異なるが attestationDigest は一致
       expect(resA.document?.metadata.producedAt).not.toBe(resB.document?.metadata.producedAt);
       expect(resA.document?.signature.attestationDigest).toBe(resB.document?.signature.attestationDigest);
+    });
+  });
+
+  describe("acBoundScope テスト（H16-03 / AC-5, AC-6）", () => {
+    it("matrixSource + allowlist から acBoundScope を導出し record に記録する（HF2-05）", async () => {
+      // Arrange
+      const writeSpy = vi.fn().mockResolvedValue(undefined);
+      const matrix = {
+        stories: [
+          {
+            storyId: "HF2-05",
+            storyMappings: [
+              { acId: "AC-1", testReferences: [{ binding: "ac" }] },
+              { acId: "AC-2", testReferences: [{ binding: "ac" }, { binding: "file" }] },
+            ],
+          },
+        ],
+      };
+      const deps: ProduceAttestationDeps = {
+        gateResultSource: { fetchGateResult: vi.fn().mockResolvedValue(GATE_PASS) },
+        sourceDigester: { digestFile: vi.fn().mockImplementation(async (path: string) => realHasher.sha256(`content-of-${path}`)) },
+        hasher: realHasher,
+        repository: { write: writeSpy, read: vi.fn() },
+        granularityService: new GranularityDerivationService(),
+        mapper: new AttestationRecordMapper(),
+        gitCommitProvider: vi.fn().mockResolvedValue("deadbeef"),
+        pkgVersion: "1.2.3",
+        clock: () => new Date("2026-07-05T12:00:00Z"),
+        inputSourcePaths: ["phasegate.config.json", ".harness/requirement-test-matrix.json"],
+        matrixSource: { load: vi.fn().mockResolvedValue(matrix) },
+        allowlist: { getAcBoundStories: vi.fn().mockResolvedValue(["HF2-05"]) },
+        acBoundScopeService: new AcBoundScopeService(),
+      };
+      const sut = new ProduceAttestationUseCase(deps);
+      // Act
+      const result = await sut.execute(baseInput);
+      // Assert
+      const doc = result.document as AttestationDocument;
+      expect(doc.acBoundScope).toEqual(["HF2-05"]);
+      // granularity.level は "file" のまま（AC-6）
+      expect(doc.granularity.traceability.level).toBe("file");
     });
   });
 

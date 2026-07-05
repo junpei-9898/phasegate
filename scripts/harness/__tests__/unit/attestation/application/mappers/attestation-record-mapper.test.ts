@@ -93,6 +93,14 @@ target("AttestationRecordMapper", () => {
       });
     });
 
+    context("acBoundScope が string 配列でない場合（H16-03）", () => {
+      it("MalformedAttestationError がスローされる", () => {
+        const doc = mapper.toDocument(buildRecord()) as unknown as Record<string, unknown>;
+        doc.acBoundScope = [123, "HF2-05"];
+        expect(() => mapper.fromDocument(doc)).toThrow(MalformedAttestationError);
+      });
+    });
+
     it("MalformedAttestationError は errorCode L1-053 を保持する", () => {
       let captured: MalformedAttestationError | null = null;
       try {

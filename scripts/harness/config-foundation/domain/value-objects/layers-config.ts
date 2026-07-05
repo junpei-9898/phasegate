@@ -13,7 +13,7 @@ import { L4Config } from './l4-config.js';
 interface ResolvedLayersDocument {
   L1: { enabled: boolean; rules: Record<string, string> };
   L2: { enabled: boolean; validators: string[] };
-  L3: { enabled: boolean; validators: string[]; coverageThreshold: number; requirementMatrixPath?: string };
+  L3: { enabled: boolean; validators: string[]; coverageThreshold: number; requirementMatrixPath?: string; acBoundStories?: readonly string[] };
   L4: { enabled: boolean; validators: string[]; schedule: string };
 }
 

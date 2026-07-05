@@ -15,6 +15,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
     performance: 'L3-002',
     coverage: 'L3-003',
     nyquist: 'L3-004',
+    'ac-bound-coverage': 'L3-005',
   }, /^L3-\d{3}$/);
   const l4Validators = normalizeValidators(resolvedConfig.layers.L4.validators, {
     'drift-detect': 'L4-001',
@@ -49,6 +50,8 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
         validators: l3Validators.length > 0 ? l3Validators : ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
         requirementMatrixPath: resolvedConfig.layers.L3.requirementMatrixPath,
+        // WI-227 / H16-03: L3-005 のスコープ（additive-safe。未設定は []）
+        acBoundStories: resolvedConfig.layers.L3.acBoundStories ?? [],
       },
       L4: {
         enabled: resolvedConfig.layers.L4.enabled,

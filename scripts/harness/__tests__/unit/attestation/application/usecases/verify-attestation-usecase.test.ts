@@ -15,6 +15,7 @@ import {
   type AttestationRecordProps,
 } from "../../../../../attestation/domain/entities/attestation-record.js";
 import { GranularityDerivationService } from "../../../../../attestation/domain/services/granularity-derivation-service.js";
+import { AcBoundScopeService } from "../../../../../attestation/domain/services/ac-bound-scope-service.js";
 import { Digest } from "../../../../../attestation/domain/value-objects/digest.js";
 import { SignatureBlock } from "../../../../../attestation/domain/value-objects/signature-block.js";
 import { ValidatorOutcome } from "../../../../../attestation/domain/value-objects/validator-outcome.js";
@@ -100,6 +101,7 @@ target("VerifyAttestationUseCase", () => {
           attestationDigest: true,
           inputHashes: true,
           granularity: true,
+          acBoundScope: true,
         });
         expect(result.output.mismatches).toHaveLength(0);
       });
@@ -149,6 +151,131 @@ target("VerifyAttestationUseCase", () => {
         // Assert
         expect(result.exitCode).toBe(1);
         expect(result.output.checks.granularity).toBe(false);
+      });
+    });
+  });
+
+  describe("acBoundScope 再導出テスト（H16-03 / AC-7）", () => {
+    const MATRIX_PATH = ".harness/requirement-test-matrix.json";
+    const MATRIX_CONTENT = JSON.stringify({
+      stories: [
+        {
+          storyId: "HF2-05",
+          storyMappings: [
+            { acId: "AC-1", testReferences: [{ binding: "ac" }] },
+            { acId: "AC-2", testReferences: [{ binding: "ac" }, { binding: "file" }] },
+          ],
+        },
+      ],
+    });
+    const MATRIX_DIGEST = realHasher.sha256(MATRIX_CONTENT);
+
+    /** acBoundScope=["HF2-05"] を持ち matrix を inputs.sources に含めた sealed document を組む。 */
+    const buildScopedDocument = (acBoundScope: string[]): AttestationDocument => {
+      const validatorSet = [ValidatorOutcome.create({ validatorId: "L3-004", passed: true, skipped: false })];
+      const props: AttestationRecordProps = {
+        schemaVersion: "phasegate-attestation/v1",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v1",
+        subject: { command: "phasegate:ci-check", gateResult: "pass", validatorSet },
+        inputs: {
+          digestAlgorithm: "sha256",
+          sources: [{ path: MATRIX_PATH, digest: MATRIX_DIGEST }],
+          inputDigest: MATRIX_DIGEST,
+        },
+        granularity: { traceability: derivation.derive(validatorSet) },
+        metadata: { producedAt: "2026-07-05T00:00:00Z", producer: "phasegate-attestation/1.0.0", gitCommit: "abc" },
+        signature: SignatureBlock.unsignedPoc(MATRIX_DIGEST),
+        acBoundScope,
+      };
+      const record = AttestationRecord.create(props);
+      const inputDigest = record.computeInputDigest(realHasher);
+      const withInput = AttestationRecord.create({ ...props, inputs: { ...props.inputs, inputDigest } });
+      return new AttestationRecordMapper().toDocument(withInput.seal(realHasher));
+    };
+
+    const buildScopedSut = (opts: {
+      storedDoc: unknown;
+      matrixContent?: string | null; // null = 読めない
+      allowlist?: string[];
+    }) => {
+      const deps: VerifyAttestationDeps = {
+        repository: { write: vi.fn(), read: vi.fn().mockResolvedValue(opts.storedDoc) },
+        sourceDigester: {
+          digestFile: vi.fn().mockImplementation(async () => realHasher.sha256(opts.matrixContent ?? MATRIX_CONTENT)),
+        },
+        hasher: realHasher,
+        granularityService: new GranularityDerivationService(),
+        mapper: new AttestationRecordMapper(),
+        matrixSource: {
+          load: vi.fn().mockImplementation(async () => {
+            if (opts.matrixContent === null) throw new Error("cannot read matrix");
+            return JSON.parse(opts.matrixContent ?? MATRIX_CONTENT);
+          }),
+        },
+        allowlist: { getAcBoundStories: vi.fn().mockResolvedValue(opts.allowlist ?? ["HF2-05"]) },
+        acBoundScopeService: new AcBoundScopeService(),
+      };
+      return new VerifyAttestationUseCase(deps);
+    };
+
+    context("acBoundScope が再導出値と一致する場合", () => {
+      it("acBoundScope check 合格・exitCode 0 を返す", async () => {
+        // Arrange
+        const sut = buildScopedSut({ storedDoc: buildScopedDocument(["HF2-05"]) });
+        // Act
+        const result = await sut.execute(input);
+        // Assert
+        expect(result.exitCode).toBe(0);
+        expect(result.output.checks.acBoundScope).toBe(true);
+      });
+    });
+
+    context("acBoundScope を改竄（bogus story 追加）した場合", () => {
+      it("再導出不一致で acBoundScope check fail・exitCode 1（laundering 検出）", async () => {
+        // Arrange
+        const doc = buildScopedDocument(["HF2-05"]) as unknown as { acBoundScope: string[] };
+        doc.acBoundScope = ["HF2-05", "H99-99"];
+        const sut = buildScopedSut({ storedDoc: doc });
+        // Act
+        const result = await sut.execute(input);
+        // Assert
+        expect(result.exitCode).toBe(1);
+        expect(result.output.checks.acBoundScope).toBe(false);
+      });
+    });
+
+    context("matrix が HF2-05 の AC を fileFallbackOnly に示す場合", () => {
+      it("再導出が [] になり格納 ['HF2-05'] と不一致・exitCode 1", async () => {
+        // Arrange: 格納は ["HF2-05"] だが matrix は AC-2 を file-fallback にする
+        const tamperedMatrix = JSON.stringify({
+          stories: [
+            {
+              storyId: "HF2-05",
+              storyMappings: [
+                { acId: "AC-1", testReferences: [{ binding: "ac" }] },
+                { acId: "AC-2", testReferences: [{ binding: "file" }] },
+              ],
+            },
+          ],
+        });
+        const sut = buildScopedSut({ storedDoc: buildScopedDocument(["HF2-05"]), matrixContent: tamperedMatrix });
+        // Act
+        const result = await sut.execute(input);
+        // Assert
+        expect(result.exitCode).toBe(1);
+        expect(result.output.checks.acBoundScope).toBe(false);
+      });
+    });
+
+    context("再導出入力（matrix）が読めない場合", () => {
+      it("fail-closed で acBoundScope check fail・exitCode 1（Q2）", async () => {
+        // Arrange
+        const sut = buildScopedSut({ storedDoc: buildScopedDocument(["HF2-05"]), matrixContent: null });
+        // Act
+        const result = await sut.execute(input);
+        // Assert
+        expect(result.exitCode).toBe(1);
+        expect(result.output.checks.acBoundScope).toBe(false);
       });
     });
   });

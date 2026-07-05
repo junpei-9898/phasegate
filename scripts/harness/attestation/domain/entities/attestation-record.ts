@@ -41,6 +41,12 @@ export interface AttestationRecordProps {
   readonly granularity: { readonly traceability: GranularityClaim };
   readonly metadata: MetadataSection;
   readonly signature: SignatureBlock;
+  /**
+   * H16-03 / WI-227: 実際に ac-bound かつ L3-005 スコープ内で pass した story-id（昇順）。
+   * canonical payload に含まれ attestationDigest でカバーされる。granularity.level とは独立。
+   * 省略時は [] として扱う（additive-safe）。
+   */
+  readonly acBoundScope?: readonly string[];
 }
 
 /**
@@ -87,6 +93,7 @@ export class AttestationRecord {
   readonly granularity: { readonly traceability: GranularityClaim };
   readonly metadata: MetadataSection;
   readonly signature: SignatureBlock;
+  readonly acBoundScope: readonly string[];
 
   private constructor(props: AttestationRecordProps) {
     this.schemaVersion = props.schemaVersion;
@@ -96,6 +103,7 @@ export class AttestationRecord {
     this.granularity = props.granularity;
     this.metadata = props.metadata;
     this.signature = props.signature;
+    this.acBoundScope = Object.freeze([...(props.acBoundScope ?? [])]);
     Object.freeze(this);
   }
 
@@ -185,6 +193,8 @@ export class AttestationRecord {
           knownLimitations: [...this.granularity.traceability.knownLimitations],
         },
       },
+      // H16-03: acBoundScope は canonical payload に含める（attestationDigest でカバー）。
+      acBoundScope: [...this.acBoundScope],
       metadata: {
         producer: this.metadata.producer,
       },
@@ -211,6 +221,7 @@ export class AttestationRecord {
       granularity: this.granularity,
       metadata: this.metadata,
       signature: SignatureBlock.unsignedPoc(digest),
+      acBoundScope: this.acBoundScope,
     });
   }
 
@@ -234,6 +245,8 @@ export class AttestationRecord {
       return false;
     }
     if (!this.granularity.traceability.equals(other.granularity.traceability)) return false;
+    if (this.acBoundScope.length !== other.acBoundScope.length) return false;
+    if (!this.acBoundScope.every((s, i) => s === other.acBoundScope[i])) return false;
     if (!this.signature.equals(other.signature)) return false;
     return true;
   }

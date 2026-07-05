@@ -130,6 +130,13 @@
             "requirementMatrixPath": {
               "type": "string",
               "minLength": 1
+            },
+            "acBoundStories": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
             }
           }
         },

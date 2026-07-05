@@ -29,6 +29,7 @@ import { FileSystemContractTraceabilityPolicyAdapter } from './infrastructure/ad
 import { PhaseDependencyPhaseGatePolicyAdapter } from './infrastructure/adapters/phase-dependency-phase-gate-policy-adapter.js';
 import { TraceabilityMetadataPolicyAdapter } from './infrastructure/adapters/traceability-metadata-policy-adapter.js';
 import { NyquistAcCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-coverage-policy-adapter.js';
+import { NyquistAcBoundCoveragePolicyAdapter } from './infrastructure/adapters/nyquist-ac-bound-coverage-policy-adapter.js';
 import { JsonCoverageReportAdapter } from './infrastructure/adapters/json-coverage-report-adapter.js';
 import { BiomeAstTestQualityAnalyzerAdapter } from './infrastructure/adapters/biome-ast-test-quality-analyzer-adapter.js';
 import { FileSystemSecurityPatternScannerAdapter } from './infrastructure/adapters/file-system-security-pattern-scanner-adapter.js';
@@ -112,6 +113,9 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L3-002', 'L3', 'strictOnly'),
     createDef('L3-003', 'L3', 'always'),
     createDef('L3-004', 'L3', 'always', 'AcCoveragePolicyPort'),
+    // WI-227 / H16-03: L3-005 (ac-bound-coverage) は registry には登録するが
+    // default-OFF（DEFAULT_CONFIG.layers.L3.validators に含めない）。fail-closed / opt-in。
+    createDef('L3-005', 'L3', 'always', 'AcBoundCoveragePolicyPort'),
     createDef('L4-001', 'L4', 'always'),
     createDef('L4-002', 'L4', 'always'),
     createDef('L4-003', 'L4', 'strictOnly'),
@@ -154,6 +158,8 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const phaseGatePolicyPort = new PhaseDependencyPhaseGatePolicyAdapter();
   const metadataPolicyPort = new TraceabilityMetadataPolicyAdapter();
   const acCoveragePolicyPort = new NyquistAcCoveragePolicyAdapter();
+  // WI-227 / H16-03: L3-005 (ac-bound-coverage, fail-closed, default-OFF) 用の adapter。
+  const acBoundCoveragePolicyPort = new NyquistAcBoundCoveragePolicyAdapter();
   // L3-003: テストカバレッジレポート（vitest --coverage の json-summary 出力）を読み取る。
   // 未配線だと L3-003 は装飾的な pass になり 90% 閾値が形骸化するため必ず配線する。
   const coverageReportPort = new JsonCoverageReportAdapter(
@@ -193,15 +199,21 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     contractTraceabilityPolicyPort,
   });
 
+  // WI-227 / H16-03: L3-005 のスコープ対象 story-id を config から取得（既定 []）。
+  const acBoundStories =
+    (configData.layers?.L3 as { acBoundStories?: readonly string[] } | undefined)?.acBoundStories ?? [];
+
   const runL3ValidatorsUseCase = new RunL3ValidatorsUseCase({
     validatorRegistry: registry,
     validatorExecutionService: executionService,
     validatorConfigPort: configPort,
     contractMapper,
     acCoveragePolicyPort,
+    acBoundCoveragePolicyPort,
     coverageReportPort,
     securityScannerPort,
     performanceScannerPort,
+    acBoundStories,
   });
 
   const markdownDesignDocumentPort = new MarkdownDesignDocumentAdapter(docsRoot);

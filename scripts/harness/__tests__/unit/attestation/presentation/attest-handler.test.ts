@@ -28,6 +28,7 @@ const sampleDoc = (): AttestationDocument => ({
   subject: { command: "phasegate:ci-check", gateResult: "pass", validatorSet: [] },
   inputs: { digestAlgorithm: "sha256", sources: [], inputDigest: `sha256:${"a".repeat(64)}` },
   granularity: { traceability: { validator: "L3-004", level: "file", claim: "c", knownLimitations: [] } },
+  acBoundScope: [],
   metadata: { producedAt: "t", producer: "phasegate-attestation/9.9.9", gitCommit: null },
   signature: {
     mode: "unsigned-poc",

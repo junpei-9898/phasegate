@@ -41,6 +41,7 @@ const sampleDoc = (): AttestationDocument => ({
   granularity: {
     traceability: { validator: "L3-004", level: "file", claim: "x", knownLimitations: ["y"] },
   },
+  acBoundScope: [],
   metadata: { producedAt: "2026-07-05T00:00:00.000Z", producer: "phasegate-attestation/9.9.9", gitCommit: null },
   signature: {
     mode: "unsigned-poc",

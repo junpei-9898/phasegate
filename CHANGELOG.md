@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.171.0] - 2026-07-05
+
+### Added
+
+- **WI-227 / H16-03 — L3-005 "AC-bound coverage" gate (fail-closed, default-OFF)** — new opt-in L3 validator that, for each story in `layers.L3.acBoundStories`, fail-closed verifies that **every** linked AC has ≥1 `binding:"ac"` test reference (`fileFallbackOnly===0`). Unlike L3-004 (story-level) this is per-AC binding. `ac-bound-coverage-policy-port.ts` (domain) + `nyquist-ac-bound-coverage-policy-adapter.ts` (infrastructure, reads the matrix and fail-closes on absent/parse-fail); `ValidatorId` gains `L3-005 → ac-bound-coverage`; `RunL3ValidatorsUseCase` gains an L3-005 override block mirroring L3-004 (only when config enables L3-005). **NOT** added to `DEFAULT_CONFIG` nor to standard/strict presets (default-OFF opt-in). config alias `ac-bound-coverage → L3-005`; new `layers.L3.acBoundStories?: string[]` (additive-safe; existing configs still load).
+- **WI-227 / H16-03 — attestation `acBoundScope`** — attestation records now carry a machine-readable `acBoundScope: string[]` (sorted; stories that are genuinely ac-bound AND in scope AND passing). New pure domain `AcBoundScopeService.derive(matrix, allowlist)`; new application ports `MatrixSourcePort` / `AcBoundAllowlistPort` with `FileSystemMatrixSourceAdapter` / `ConfigAcBoundAllowlistAdapter`. `acBoundScope` is included in the canonical payload (covered by `attestationDigest`) and in `equals()`/`create/reconstruct/seal`. **verify RE-DERIVES** `acBoundScope` from the stored (hash-verified) matrix + config allowlist and compares to stored (anti-laundering); unreadable/unparsable re-derivation inputs → fail-closed (exit 1). `GranularityDerivationService` is UNTOUCHED — `granularity.traceability.level` stays `"file"` (acBoundScope is an independent per-story dimension, no global flip).
+- **Attestation readiness docs (debt repayment)** — authored the three readiness docs that had been missing for the attestation unit since 手1/v0.165.0: `docs/product/construction/attestation/unit_test_design.md`, `it_test_design.md`, `coverage_report.md`. Coverage is measured (vitest v8: 83.53% statements/lines, 78.08% branches, 97.75% functions on the pre-slice baseline) with the exact reproduction command recorded; numbers are real, not fabricated.
+- **`l3-005-ac-bound-ratchet.md`** — new honesty/ratchet doc mirroring the l3-004 R-table; first scope `["HF2-05"]`, records H05-02 excluded (legacy) and H06-03 partial (only AC-4).
+
+### Changed
+
+- **Self-repo `phasegate.config.json` only** — `layers.L3.validators` gains `L3-005` and `layers.L3.acBoundStories: ["HF2-05"]`. Product presets (`standard.json`/`strict.json`) and `DEFAULT_CONFIG` are untouched — no impact on other users. HF2-05 is genuinely ac-bound (all 6 ACs have ≥1 `binding:"ac"`), so enabling L3-005 keeps self-repo CI green.
+- Design docs updated design-first: validator-system `logical_design.md` (§1.3, §2.1.1 L3-005 row, §3.4.2 note, §4.8b adapter), attestation `logical_design.md` (§1.3, §1.4.1 acBoundScope-in-canonical note, §1.4.3 record format, §4.4/§4.5/§4.6) and `domain_model.md` (INV-8), `user_stories.md` (H16-03 + summary tables), config schemas v2/v3 (`acBoundStories`).
+
 ## [0.170.0] - 2026-07-05
 
 ### Added

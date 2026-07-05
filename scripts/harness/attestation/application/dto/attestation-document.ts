@@ -39,6 +39,8 @@ export interface AttestationDocument {
   readonly granularity: {
     readonly traceability: AttestationDocumentGranularityClaim;
   };
+  /** H16-03: 実際に ac-bound かつ L3-005 スコープ内で pass した story-id（昇順）。 */
+  readonly acBoundScope: string[];
   readonly metadata: {
     readonly producedAt: string;
     readonly producer: string;

@@ -14,8 +14,11 @@ import type {
 import { ProduceAttestationUseCase } from "../../../attestation/application/usecases/produce-attestation-usecase.js";
 import { VerifyAttestationUseCase } from "../../../attestation/application/usecases/verify-attestation-usecase.js";
 import { GranularityDerivationService } from "../../../attestation/domain/services/granularity-derivation-service.js";
+import { AcBoundScopeService } from "../../../attestation/domain/services/ac-bound-scope-service.js";
 import { FileSystemAttestationRepositoryAdapter } from "../../../attestation/infrastructure/adapters/file-system-attestation-repository-adapter.js";
 import { FileSystemSourceDigesterAdapter } from "../../../attestation/infrastructure/adapters/file-system-source-digester-adapter.js";
+import { FileSystemMatrixSourceAdapter } from "../../../attestation/infrastructure/adapters/file-system-matrix-source-adapter.js";
+import type { AcBoundAllowlistPort } from "../../../attestation/application/ports/ac-bound-allowlist-port.js";
 import { NodeCryptoContentHasherAdapter } from "../../../attestation/infrastructure/adapters/node-crypto-content-hasher-adapter.js";
 import { AttestHandler } from "../../../attestation/presentation/handlers/attest-handler.js";
 import { VerifyAttestationHandler } from "../../../attestation/presentation/handlers/verify-attestation-handler.js";
@@ -58,13 +61,30 @@ const buildHarness = (gate: GateResultSourcePort, options?: { requirePass?: bool
   // source ファイル群を temp dir に用意（inputs.sources のデフォルトパス）。
   fs.writeFileSync(path.join(dir, "phasegate.config.json"), '{"project":{"preset":"standard"}}\n');
   fs.mkdirSync(path.join(dir, ".harness"), { recursive: true });
-  fs.writeFileSync(path.join(dir, ".harness/requirement-test-matrix.json"), '{"matrix":[]}\n');
+  // HF2-05 が全 AC ac-bound な matrix（acBoundScope round-trip 用）。
+  fs.writeFileSync(
+    path.join(dir, ".harness/requirement-test-matrix.json"),
+    JSON.stringify({
+      stories: [
+        {
+          storyId: "HF2-05",
+          storyMappings: [
+            { acId: "AC-1", testReferences: [{ binding: "ac" }] },
+            { acId: "AC-2", testReferences: [{ binding: "ac" }, { binding: "file" }] },
+          ],
+        },
+      ],
+    }) + "\n",
+  );
 
   const hasher = new NodeCryptoContentHasherAdapter();
   const sourceDigester = new FileSystemSourceDigesterAdapter(dir);
   const repository = new FileSystemAttestationRepositoryAdapter(dir);
   const granularityService = new GranularityDerivationService();
   const mapper = new AttestationRecordMapper();
+  const matrixSource = new FileSystemMatrixSourceAdapter(dir, ".harness/requirement-test-matrix.json");
+  const acBoundScopeService = new AcBoundScopeService();
+  const allowlist: AcBoundAllowlistPort = { getAcBoundStories: async () => ["HF2-05"] };
 
   const produceUseCase = new ProduceAttestationUseCase({
     gateResultSource: gate,
@@ -76,6 +96,9 @@ const buildHarness = (gate: GateResultSourcePort, options?: { requirePass?: bool
     gitCommitProvider: async () => "0000000000000000000000000000000000000000",
     pkgVersion: "9.9.9",
     clock: () => new Date("2026-07-05T00:00:00.000Z"),
+    matrixSource,
+    allowlist,
+    acBoundScopeService,
   });
   const verifyUseCase = new VerifyAttestationUseCase({
     repository,
@@ -83,6 +106,9 @@ const buildHarness = (gate: GateResultSourcePort, options?: { requirePass?: bool
     hasher,
     granularityService,
     mapper,
+    matrixSource,
+    allowlist,
+    acBoundScopeService,
   });
 
   return {
@@ -117,6 +143,8 @@ target("attestation E2E: attest → verify round-trip", () => {
         expect(doc.signature.attestationDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
         expect(doc.granularity.traceability.validator).toBe("L3-004");
         expect(doc.granularity.traceability.level).toBe("file");
+        // acBoundScope が記録され、level は "file" のまま（H16-03 AC-5/AC-6）
+        expect(doc.acBoundScope).toEqual(["HF2-05"]);
 
         // Act: verify（未改竄）
         const verifyResult = await h.verifyHandler.handle({ file: h.outPath, emitJson: true });
@@ -131,6 +159,7 @@ target("attestation E2E: attest → verify round-trip", () => {
           attestationDigest: true,
           inputHashes: true,
           granularity: true,
+          acBoundScope: true,
         });
       } finally {
         cleanup(h);
@@ -183,6 +212,31 @@ target("attestation E2E: attest → verify round-trip", () => {
         const out = JSON.parse(verifyResult.output);
         expect(out.ok).toBe(false);
         expect(out.checks.inputHashes).toBe(false);
+      } finally {
+        cleanup(h);
+      }
+    });
+  });
+
+  context("生成した record の acBoundScope を改竄した場合（H16-03 / AC-7）", () => {
+    it("verify が acBoundScope 再導出不一致を検出し exitCode 1 を返すこと", async () => {
+      // Arrange
+      const h = buildHarness(new FakeGateResultSource(true, PASS_VALIDATORS));
+      try {
+        await h.attestHandler.handle({ out: h.outPath, emitJson: false });
+        const doc = JSON.parse(fs.readFileSync(h.outPath, "utf8"));
+        // Tamper: bogus story を acBoundScope に追加（再計算なし・laundering）
+        doc.acBoundScope = ["HF2-05", "H99-99"];
+        fs.writeFileSync(h.outPath, JSON.stringify(doc, null, 2));
+
+        // Act
+        const verifyResult = await h.verifyHandler.handle({ file: h.outPath, emitJson: true });
+
+        // Assert
+        expect(verifyResult.exitCode).toBe(1);
+        const out = JSON.parse(verifyResult.output);
+        expect(out.ok).toBe(false);
+        expect(out.checks.acBoundScope).toBe(false);
       } finally {
         cleanup(h);
       }

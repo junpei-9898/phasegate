@@ -85,7 +85,8 @@ scripts/harness/attestation/
 │   ├── ports/
 │   │   └── content-hasher-port.ts
 │   └── services/
-│       └── granularity-derivation-service.ts
+│       ├── granularity-derivation-service.ts
+│       └── ac-bound-scope-service.ts        # WI-227: acBoundScope 導出（純粋・決定論）
 ├── application/
 │   ├── dto/
 │   │   ├── attestation-document.ts
@@ -95,7 +96,9 @@ scripts/harness/attestation/
 │   ├── ports/
 │   │   ├── gate-result-source-port.ts
 │   │   ├── attestation-repository-port.ts
-│   │   └── source-digester-port.ts
+│   │   ├── source-digester-port.ts
+│   │   ├── matrix-source-port.ts            # WI-227: acBoundScope 導出用 matrix 供給
+│   │   └── ac-bound-allowlist-port.ts       # WI-227: acBoundStories allowlist 供給
 │   ├── usecases/
 │   │   ├── produce-attestation-usecase.ts
 │   │   └── verify-attestation-usecase.ts
@@ -106,7 +109,9 @@ scripts/harness/attestation/
 │       ├── node-crypto-content-hasher-adapter.ts
 │       ├── file-system-source-digester-adapter.ts
 │       ├── ci-check-gate-result-adapter.ts
-│       └── file-system-attestation-repository-adapter.ts
+│       ├── file-system-attestation-repository-adapter.ts
+│       ├── file-system-matrix-source-adapter.ts    # WI-227: MatrixSourcePort 実装
+│       └── config-ac-bound-allowlist-adapter.ts    # WI-227: AcBoundAllowlistPort 実装
 ├── presentation/
 │   └── handlers/
 │       ├── attest-handler.ts
@@ -141,6 +146,8 @@ scripts/harness/attestation/
 
 `metadata.producedAt`（ISO-8601）と `metadata.gitCommit` は人間のために記録するが digest からは除外する（同じ入力・同じ gate 結果なら実行時刻や記録タイミングに依らず同一 digest になる）。
 
+**acBoundScope は canonical payload に INCLUDE される（WI-227）**: トップレベルの `acBoundScope`（`string[]`, 昇順ソート済み）は step1-2 の除去対象ではないため canonical payload に残り、`attestationDigest` でカバーされる。したがって acBoundScope を改竄すると attestationDigest 再計算が不一致となり verify で検出される（改竄検知）。加えて verify は acBoundScope を stored matrix + config allowlist から**再導出**して格納値と比較する（anti-laundering、§4.5）。producedAt / gitCommit のみが異なる 2 回の実行では acBoundScope も含めて digest がバイト一致する（決定論）。
+
 #### 1.4.2 inputDigest の決定論
 
 `inputs.inputDigest` は `inputs.sources` から算出する:
@@ -173,6 +180,7 @@ scripts/harness/attestation/
       "claim": "...", "knownLimitations": [ "L3-004 traceability is FILE-LEVEL, not per-AC..." ]
     }
   },
+  "acBoundScope": [ "HF2-05" ],           // WI-227: 実際に ac-bound かつ L3-005 スコープ内で pass した story-id（昇順・machine-readable）。granularity.level とは独立（level は "file" のまま）
   "metadata": { "producedAt": "<ISO8601>", "producer": "phasegate-attestation/<pkgVersion>", "gitCommit": "<sha|null>" },
   "signature": { "mode": "unsigned-poc", "attestationDigest": "sha256:<64hex>", "algorithm": null, "keyId": null, "value": null }
 }
@@ -440,6 +448,9 @@ export interface SourceDigesterPort {
 - `repository: AttestationRepositoryPort`
 - `granularityService: GranularityDerivationService`
 - `mapper: AttestationRecordMapper`
+- `matrixSource: MatrixSourcePort`（WI-227: acBoundScope 導出用 matrix）
+- `allowlist: AcBoundAllowlistPort`（WI-227: acBoundStories allowlist）
+- `acBoundScopeService: AcBoundScopeService`（WI-227）
 
 入力: `ProduceAttestationInput`
 出力: `Promise<{ document: AttestationDocument | null; exitCode: 0 | 1 | 2 }>`
@@ -449,9 +460,10 @@ export interface SourceDigesterPort {
 2. `gateResultSource.fetchGateResult()` を実行し `validatorSet` と `gateResult`（allPassed → "pass"/"fail"）を組み立てる
 3. `requirePass && gateResult != "pass"` なら record を一切生成/出力せず exitCode 1 で return
 4. `inputs.sources` を `phasegate.config.json` / `.harness/requirement-test-matrix.json` の sha256 + git commit SHA から構築し、`inputDigest` を §1.4.2 で算出
-5. `granularityService.derive(validatorSet)` で `GranularityClaim` を導出
+5. `granularityService.derive(validatorSet)` で `GranularityClaim` を導出（level は "file" のまま。acBoundScope とは独立）
+5b. **acBoundScope 導出（WI-227）**: `matrixSource` から matrix を取得、`allowlist` から acBoundStories を取得し、`acBoundScopeService.derive(matrix, allowlist)` で `string[]`（昇順）を得る。HF2-05 が genuinely ac-bound かつ allowlist 内なら `["HF2-05"]`
 6. `metadata`（`producedAt=now`, `producer=phasegate-attestation/<pkgVersion>`, `gitCommit`）を組む
-7. `AttestationRecord.create(...)` → `seal(hasher)` で `attestationDigest` 確定
+7. `AttestationRecord.create({ ..., acBoundScope })` → `seal(hasher)` で `attestationDigest` 確定（acBoundScope は canonical payload に含まれる）
 8. `mapper.toDocument()` → `repository.write(out, doc)`。`emitJson` なら document を返して handler が stdout 出力
 9. exitCode 0 で return
 
@@ -465,6 +477,9 @@ export interface SourceDigesterPort {
 - `hasher: ContentHasherPort`
 - `granularityService: GranularityDerivationService`
 - `mapper: AttestationRecordMapper`
+- `matrixSource: MatrixSourcePort`（WI-227: acBoundScope 再導出用）
+- `allowlist: AcBoundAllowlistPort`（WI-227）
+- `acBoundScopeService: AcBoundScopeService`（WI-227）
 
 入力: `VerifyAttestationInput`
 出力: `Promise<{ output: VerifyAttestationOutput; exitCode: 0 | 1 | 2 }>`
@@ -476,8 +491,28 @@ export interface SourceDigesterPort {
 4. canonical payload 上で `attestationDigest` 再計算 == 格納値（`attestationDigest` check）
 5. `inputs.sources[].digest` を現在ファイルから再計算 == 格納値（`inputHashes` check）
 6. `granularityService.derive(validatorSet)` == 格納 `granularity`（`granularity` check、anti-laundering）
-7. 4-6 のいずれか mismatch → exitCode 1、全合格 → exitCode 0
+6b. **acBoundScope 再導出（WI-227, anti-laundering）**: `inputs.sources` の（ハッシュ検証済み）matrix パスから matrix を取得（Q3）、`allowlist` から acBoundStories を取得し、`acBoundScopeService.derive(matrix, allowlist)` を再計算して格納 `acBoundScope` と比較（`acBoundScope` check）。matrix / allowlist が読めない・parse 不能なら acBoundScopeOk=false（fail-closed, Q2）
+7. 4-6b のいずれか mismatch → exitCode 1、全合格 → exitCode 0
 8. `emitJson` なら `VerifyAttestationOutput` を stdout に出力
+
+> `VerifyAttestationChecks` に `acBoundScope: boolean` を追加し、`ok` にフォールドする。
+
+### 4.6 acBoundScope 導出（WI-227 / H16-03）
+
+**AcBoundScopeService（domain, 純粋・決定論）**
+
+- `derive(matrix, allowlist: readonly string[]): string[]` — allowlist 内かつ matrix 上で全 linked AC が ≥1 の `binding:"ac"` ref を持つ story だけを昇順で返す。
+- 資格条件は domain_model INV-8 に対応（option-a determinism: stored matrix + config allowlist から再導出可能）。
+- `GranularityDerivationService` は一切変更しない。acBoundScope は `granularity.traceability.level`（"file" のまま）から独立した別次元の主張である。
+
+**MatrixSourcePort / AcBoundAllowlistPort（application 所有）**
+
+| ポート | メソッド | 責務 |
+|--------|---------|------|
+| `MatrixSourcePort` | `load(matrixFilePath?): Promise<Matrix>` | acBoundScope 導出用の requirement-test-matrix を供給（fail 時は throw、usecase 側が fail-closed 変換） |
+| `AcBoundAllowlistPort` | `getAcBoundStories(): Promise<readonly string[]>` | config の `layers.L3.acBoundStories` を供給 |
+
+実体は `FileSystemMatrixSourceAdapter`（§5.x）と `ConfigAcBoundAllowlistAdapter`（§5.x）。両 usecase（produce / verify）へ composition-root で配線する。
 
 ---
 

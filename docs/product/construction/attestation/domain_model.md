@@ -119,6 +119,7 @@ installation Unit には既に `installation/domain/hash.ts`（`Hash` VO）が�
 | INV-5 | `inputs.inputDigest` は `inputs.sources` を安定ソート（path 昇順）した上の canonical 表現の sha256 と一致する | 集約生成時 / 検証時 |
 | INV-6 | `signature.mode == "unsigned-poc"` のとき `algorithm`/`keyId`/`value` はすべて `null`（unsigned-poc は INTEGRITY のみを証明し AUTHENTICITY は証明しない） | 集約生成時 |
 | INV-7 | すべての `Digest` は `sha256:` prefix + 64桁 hex に適合する | `Digest.create()` |
+| INV-8 | `acBoundScope` は stored matrix + config allowlist から `AcBoundScopeService.derive()` で再導出可能であり、格納値は再導出値と一致する（option-a determinism / anti-laundering）。story が含まれる ⟺ allowlist 内 かつ 全 linked AC が ≥1 の `binding:"ac"` ref を持つ。acBoundScope は canonical payload に含まれ `attestationDigest` でカバーされる。`granularity.traceability.level`（"file"）とは独立 | 集約生成時 / 検証時 |
 
 ### 前提条件
 

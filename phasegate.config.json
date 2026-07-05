@@ -12,8 +12,9 @@
     },
     "L3": {
       "enabled": true,
-      "validators": ["L3-001", "L3-002", "L3-003", "L3-004"],
-      "requirementMatrixPath": ".harness/requirement-test-matrix.json"
+      "validators": ["L3-001", "L3-002", "L3-003", "L3-004", "L3-005"],
+      "requirementMatrixPath": ".harness/requirement-test-matrix.json",
+      "acBoundStories": ["HF2-05"]
     },
     "L4": {
       "enabled": false

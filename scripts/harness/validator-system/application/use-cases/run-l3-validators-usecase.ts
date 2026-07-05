@@ -15,6 +15,7 @@ import type { ValidationResultContract } from '../dto/validation-result-contract
 import type { RunL3ValidatorsInput } from '../dto/run-l3-validators-input.js';
 import type { ValidatorConfigPort } from '../../domain/ports/validator-config-port.js';
 import type { AcCoveragePolicyPort } from '../../domain/ports/ac-coverage-policy-port.js';
+import type { AcBoundCoveragePolicyPort } from '../../domain/ports/ac-bound-coverage-policy-port.js';
 import type { SecurityPatternScannerPort } from '../../domain/ports/security-pattern-scanner-port.js';
 import type { PerformanceScannerPort } from '../../domain/ports/performance-scanner-port.js';
 
@@ -31,9 +32,12 @@ export interface RunL3ValidatorsUseCaseDeps {
   validatorConfigPort: ValidatorConfigPort;
   contractMapper: ValidationResultContractMapper;
   acCoveragePolicyPort?: AcCoveragePolicyPort;
+  acBoundCoveragePolicyPort?: AcBoundCoveragePolicyPort;
   coverageReportPort?: { getCoverage(): Promise<{ overallCoverage: number; perFileCoverage: readonly { filePath: string; coverage: number }[] }> };
   securityScannerPort?: SecurityPatternScannerPort;
   performanceScannerPort?: PerformanceScannerPort;
+  /** L3-005 のスコープ対象 story-id（config layers.L3.acBoundStories 由来。既定 []）。 */
+  acBoundStories?: readonly string[];
 }
 
 export class RunL3ValidatorsUseCase {
@@ -42,9 +46,11 @@ export class RunL3ValidatorsUseCase {
   private readonly configPort: ValidatorConfigPort;
   private readonly mapper: ValidationResultContractMapper;
   private readonly acCoveragePolicyPort?: AcCoveragePolicyPort;
+  private readonly acBoundCoveragePolicyPort?: AcBoundCoveragePolicyPort;
   private readonly coverageReportPort?: RunL3ValidatorsUseCaseDeps['coverageReportPort'];
   private readonly securityScannerPort?: SecurityPatternScannerPort;
   private readonly performanceScannerPort?: PerformanceScannerPort;
+  private readonly acBoundStories: readonly string[];
   private readonly languageCapabilityService = new ValidatorLanguageCapabilityService();
 
   constructor(deps: RunL3ValidatorsUseCaseDeps) {
@@ -53,9 +59,11 @@ export class RunL3ValidatorsUseCase {
     this.configPort = deps.validatorConfigPort;
     this.mapper = deps.contractMapper;
     this.acCoveragePolicyPort = deps.acCoveragePolicyPort;
+    this.acBoundCoveragePolicyPort = deps.acBoundCoveragePolicyPort;
     this.coverageReportPort = deps.coverageReportPort;
     this.securityScannerPort = deps.securityScannerPort;
     this.performanceScannerPort = deps.performanceScannerPort;
+    this.acBoundStories = deps.acBoundStories ?? [];
   }
 
   async execute(input: RunL3ValidatorsInput): Promise<readonly ValidationResultContract[]> {
@@ -187,6 +195,28 @@ export class RunL3ValidatorsUseCase {
             'L3-004',
             ValidationResult.fail(
               ValidatorId.create('L3-004'),
+              [...policyResult.errors],
+              0,
+            ),
+          );
+        }
+      }
+    }
+
+    // L3-005: AC-bound coverage（fail-closed, default-OFF）。
+    // override map に unskipped な L3-005 がある場合のみ policy を呼ぶ（L3-004 と同じ方式）。
+    if (this.acBoundCoveragePolicyPort) {
+      const l3005Result = overrideMap.get('L3-005');
+      if (l3005Result && !l3005Result.skipped) {
+        const policyResult = await this.acBoundCoveragePolicyPort.checkAcBoundCoverage({
+          matrixFilePath: input.requirementMatrixPath,
+          acBoundStories: input.acBoundStories ?? this.acBoundStories,
+        });
+        if (!policyResult.passed) {
+          overrideMap.set(
+            'L3-005',
+            ValidationResult.fail(
+              ValidatorId.create('L3-005'),
               [...policyResult.errors],
               0,
             ),

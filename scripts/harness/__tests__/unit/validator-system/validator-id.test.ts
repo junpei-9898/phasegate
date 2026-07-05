@@ -190,6 +190,15 @@ target('ValidatorId', () => {
       expect(actual).toBe('coverage');
     });
 
+    it('L3-005のValidatorIdからac-bound-coverageを返すこと (UT-VID-016b / H16-03)', () => {
+      // Arrange
+      const sut = ValidatorId.create('L3-005');
+      // Act
+      const actual = sut.getName();
+      // Assert
+      expect(actual).toBe('ac-bound-coverage');
+    });
+
     it('L4-001のValidatorIdからdrift-detectを返すこと (UT-VID-017)', () => {
       // Arrange
       const sut = ValidatorId.create('L4-001');

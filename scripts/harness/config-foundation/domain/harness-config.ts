@@ -83,6 +83,7 @@ export interface HarnessConfigResolvedDocument {
       validators: string[];
       coverageThreshold: number;
       requirementMatrixPath?: string;
+      acBoundStories?: readonly string[];
     };
     L4: {
       enabled: boolean;
