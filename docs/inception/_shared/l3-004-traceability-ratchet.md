@@ -60,7 +60,7 @@ phasegate 自身は L3-004 が要求する完全な `requirement-test-matrix.jso
 | **R2** | テストが 0 件の 33 Story にテストを追加し `testReferences` を紐付け（146 → 徐々に削減）。カバレッジ数値を本ドキュメントに追記して逆行を検知 | 未リンク AC が段階的な閾値（例: ≤100 → ≤50 → 0）を下回る |
 | **R3** | 全 336 AC がテスト参照を持つ（190 → 336） | 未リンク AC = 0 |
 | **R4 ✅ 完了（2026-07-05）** | `phasegate.config.json` の `layers.L3.validators` に `L3-004` を追加し再有効化。併せて `layers.L3.requirementMatrixPath: ".harness/requirement-test-matrix.json"` を設定。以降は L3-004 が自リポジトリでも fail-closed で常時発火 | ci-check で L3-004 が `skipped=false, passed=true`（達成済み） |
-| **R5 ✅ 部分達成（2026-07-05, WI-222 / HF2-05）** | **AC 単位トレーサビリティの advisory** を追加。`@ac` コントラクト（絶対 `HXX-YY-N` / 相対 `AC-N` / 1 行複数 AC）で個別 AC 検証を機械的に記録し、`binding` フィールド・`acLevelCoverage` 集計・`orphanAcTags` を surface する。新 advisory バリデータ **L4-007（default-OFF, warning-only, attestation-trust-excluded）** が fileFallbackOnly な AC と orphanAcTags を正直に警告する。L3-004 の合否判定はバイト一致で不変（golden matrix 比較で証明）。§6 の既知 per-AC ギャップ（H05-02 AC-1/2/3, H06-03 AC-4）は fileFallbackOnly として正直に露出。attestation の `level:"ac"` は将来の fail-closed **L3-005「AC-bound coverage」** の導入（静的 KNOWN_LIMITATIONS_REGISTRY を binary/global に切替）に gate される。 | L4-007 が advisory として利用可能。attestation は依然 `level:"file"` |
+| **R5 ✅ 部分達成（2026-07-05, WI-222 / HF2-05）** | **AC 単位トレーサビリティの advisory** を追加。`@ac` コントラクト（絶対 `HXX-YY-N` / 相対 `AC-N` / 1 行複数 AC）で個別 AC 検証を機械的に記録し、`binding` フィールド・`acLevelCoverage` 集計・`orphanAcTags` を surface する。新 advisory バリデータ **L4-007（default-OFF, warning-only, attestation-trust-excluded）** が fileFallbackOnly な AC と orphanAcTags を正直に警告する。L3-004 の合否判定はバイト一致で不変（golden matrix 比較で証明）。§6 の既知 per-AC ギャップ（H05-02 AC-1/2/3, H06-03 AC-4）は当時 fileFallbackOnly として正直に露出していた（**後日解決: H06-03 AC-4 は WI-225 / v0.169.0 で source 修正、H05-02 AC-1/2/3/4 は WI-230/231 / v0.175.0-v0.176.0 で per-AC binding。両者とも現在は L3-005 スコープで fileFallbackOnly===0 の ac-bound**。§6 参照）。attestation の `level:"ac"` は将来の fail-closed **L3-005「AC-bound coverage」** の導入（静的 KNOWN_LIMITATIONS_REGISTRY を binary/global に切替）に gate される。 | L4-007 が advisory として利用可能。attestation は依然 `level:"file"` |
 
 **逆行防止**: R4 到達後は L3-004 の per-repo 除外を復活させてはならない。R2 の各段階で未リンク AC 数を本表に追記し、増加していないことをレビューで確認する。
 
@@ -86,20 +86,20 @@ R4 で「336/336 AC linked」に到達したが、これは **story-level（フ�
 
 以下は「Story 単位でリンク済み」だが「個々の AC がコードで個別に検証されていない」ことが判明している具体例である:
 
-- **H05-02 AC-1 / AC-2 / AC-3**（**2026-07-05, WI-226 で部分前進 — honest-partial**）: 以前は「実 `docs/ADR/` コーパスが存在し・conform し・status が妥当であることを検証するテストが存在しない」状態だった。この honesty ギャップに対し、real-corpus integration test `scripts/harness/__tests__/integration/adr-foundation/real-adr-corpus.it.test.ts` を新設した。同テストは mkdtemp を使わず実 `docs/ADR/` に配線した本番パイプライン（`createAdrFoundationModule`）で以下を **fail-closed に検証**する:
+- **H05-02 AC-1 / AC-2 / AC-3**（**✅ 解決済み — WI-230/231 / v0.175.0-v0.176.0。以下は当初 WI-226 の honest-partial から解決までの経緯記録**）: 以前は「実 `docs/ADR/` コーパスが存在し・conform し・status が妥当であることを検証するテストが存在しない」状態だった。この honesty ギャップに対し、real-corpus integration test `scripts/harness/__tests__/integration/adr-foundation/real-adr-corpus.it.test.ts` を新設した。同テストは mkdtemp を使わず実 `docs/ADR/` に配線した本番パイプライン（`createAdrFoundationModule`）で以下を **fail-closed に検証**する:
   - canonical 形式（`NNN-slug.md`）の ADR を 1 件以上 discover し、019/020/021 が membership に含まれる（floor + membership。ADR-022 追加で壊れない property-based 検証）。
   - discoverable な canonical コーパスが validate-all で全件 conform（violations ゼロ、`valid === true`）。
   - discovered 各 ADR の status ∈ {Accepted, Proposed}。
   - **legacy `ADR-NNN-*.md` ファイル（disk 上 >=18 件、旧非 YAML 形式）が discovery 正規表現 `^[0-9]{3}-[a-z0-9-]+\.md$` に一致せず gate から確実に除外される** invariant を pin（既知の限界をテスト化）。
-  ただしこれは **SCOPED property の検証**であり、H05-02 AC-1/2/3 を文言どおり完全には閉じない。§12 Key Decisions の大半は上記 legacy コーパス（gate 不可視）に存在するため、real-corpus test は canonical コーパスの conformance と legacy 除外 invariant のみを正直に担保する。したがって同テストは file-level `@story H05-02` のみを担持し、**`@ac H05-02-N` タグは意図的に付与していない**（付与すると当該 AC が `binding:"ac"` へ昇格し、未検証の legacy コーパスに対し per-AC 検証を over-claim してしまうため）。**H05-02 AC-1/2/3 は fileFallbackOnly のまま維持**する。per-AC binding への昇格は legacy ADR コーパスが canonical 形式へ正規化された後に deferred する（adr-gate-normalization-followup.md）。**H05-02 は legacy 正規化が完了するまで将来の fail-closed L3-005「AC-bound coverage」スコープには含めない。**
-- **H06-03 AC-4**: `SeverityDowngradeViolationError` のメッセージに**要求されている ADR 参照が含まれていない** — これは story-level linkage の限界ではなく **genuine な source ギャップ**であり、フォローアップ候補（メッセージ生成箇所に ADR 参照を追加する修正が必要）。
+  当時これは **SCOPED property の検証**にとどまり、H05-02 AC-1/2/3 を文言どおり完全には閉じていなかった（§12 Key Decisions の大半が gate 不可視の legacy コーパスに存在したため）。**✅ 解決済み（WI-230/231 / v0.175.0-v0.176.0）**: legacy ADR コーパスの canonical 正規化（v0.173.0）と §12 Key Decisions 全 11 件の専用 ADR 起票（WI-230）により over-claim 懸念が解消したため、real-corpus test に `@ac H05-02-1`（§12 marker presence を実コーパスに対しアサート）を新設し、既存テストへ `@ac H05-02-2/-3/-4`（conformance / status / discovery）を付与した。これにより H05-02 AC-1/2/3/4 は全て `binding:"ac"` へ昇格し、L3-005「AC-bound coverage」スコープ（`acBoundStories`）に含まれ **fileFallbackOnly===0** で fail-closed PASS する。
+- **H06-03 AC-4**（**✅ 解決済み — 手3a-1 / WI-225 / v0.169.0**）: 当時 `SeverityDowngradeViolationError` のメッセージに**要求されている ADR 参照が含まれていない** genuine な source ギャップだった（story-level linkage の限界ではない）。`severity-downgrade-violation-error.ts` のメッセージ生成箇所に `根拠: ADR-021` を追加して修正済み（ADR-021 = `docs/ADR/021-severity-contract.md`）。その後 H06-03 は L3-005「AC-bound coverage」スコープで per-AC bound（fileFallbackOnly===0）。
 - **H07 / H09 の複数 AC**: 兄弟テストファイル（sibling test files）でカバーされているが、それらのファイルは（ファイル単位タグの制約上）当該 Story の `@story` タグを担持できないため、マトリクス上は別 Story または別ファイル経由で linked として現れる。AC 単位の厳密対応は取れていない。
 
 ### (c) skill / markdown 系 AC のカバー方式
 
 - **H10-04 / HF2-03 AC-3**（skill 定義・markdown 成果物系の AC）は、artifact-conformance テスト（required directive の内容をアサートするテスト）でカバーされている。これはコードパスの実行ではなく成果物（skill / markdown）の内容適合を検証する方式であり、AC の意図（必須ディレクティブが記載されていること）は担保されるが、実行時挙動の検証ではない点に留意する。
 
-**総括**: R4 の「336/336 linked」は L3-004（AC 網羅ゲート）の pass 条件を満たす真の到達点だが、それは「各 Story に少なくとも 1 件のタグ付きテストが存在する」ことを意味し、「各 AC が個別・意味論的に検証されている」ことは意味しない。上記 (b) の per-AC ギャップ（特に H06-03 AC-4 の source ギャップ）は今後の個別対応対象として明示的に残す。
+**総括**: R4 の「336/336 linked」は L3-004（AC 網羅ゲート）の pass 条件を満たす真の到達点だが、それは「各 Story に少なくとも 1 件のタグ付きテストが存在する」ことを意味し、「各 AC が個別・意味論的に検証されている」ことは意味しない。上記 (b) で名指しした具体例のうち **H06-03 AC-4（WI-225 で source 修正）と H05-02 AC-1/2/3/4（WI-230/231 で per-AC binding）は解決済み**で、現在は L3-005「AC-bound coverage」スコープ（`acBoundStories` = HF2-05 / H06-03 / H05-02）で fileFallbackOnly===0 の ac-bound となっており、per-AC binding 経路の exemplar である。ただし **これらはあくまで先行して ac-bound 化された少数例であり、大多数の AC は依然 file-level（story-level）リンクのまま**である。L3-005 スコープ外の全 AC を per-AC 単位で個別検証することは引き続き future work として残る。
 
 ## 5. 関連する実装（このラチェットの前提となる修正）
 
