@@ -1304,3 +1304,50 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 <!-- @work-item-id WI-155 -->
 
 Nyquist keeps legacy H story identifiers inside requirement-test-matrix records because acceptance criteria still use H/AC notation. Product reflection around matrix generation and intent coverage, however, must be tracked with `@work-item-id WI-XXX`. The matrix generator may read legacy `@story` / `@story-id` annotations as source evidence, but it must not require new product docs to add only legacy annotations.
+
+### WI-222 / HF2-05 AC 単位トレーサビリティ（@ac コントラクト）
+
+<!-- @work-item-id WI-222 -->
+
+@story-id HF2-05
+
+story-level（ファイル単位）トレーサビリティに加え、**テストケース単位で個別 AC を検証する** ことを機械的に記録する `@ac` コントラクトを追加した。すべて **additive** であり、L3-004（AC 網羅ゲート）の pass/fail 判定はバイト一致で不変（golden matrix 比較で証明済み）。
+
+#### @ac コントラクトと正規表現（機械的・AST 非依存）
+
+ADR-019 の「trust 境界は機械的」に従い、`@ac` の解析は AST を用いず、テキスト行走査（positional scan）で行う。`TypeScriptTestReferenceSourceAdapter` が担う。
+
+- **絶対形式** `// @ac HXX-YY-N`（例 `// @ac H05-02-1`）— story が一致すれば `AC-N` に解決。
+- **相対形式** `// @ac AC-N`（例 `// @ac AC-2`）— **ファイルに `@story` がちょうど 1 件のときのみ** `AC-N` に解決。`@story` が複数あるファイルでは曖昧なため未解決とし `relative-multi-story` orphan として記録する。
+- **1 行に複数 AC** `// @ac H05-02-1 H05-02-2` — 空白区切りで各トークンを個別解釈。
+- 対応する正規表現: story `@story(?:-id)?\s+(H(?:F\d+|\d{2})-\d{2})`、絶対 AC `^(H(?:F\d+|\d{2})-\d{2})-([1-9][0-9]*)$`、相対 AC `^AC-([1-9][0-9]*)$`。
+
+#### 関連付けルール（最近接 @ac）
+
+`it(` / `test(` の検出時点で、**直前のテストケース以降に現れた `@ac`（最近接）** のみをそのテストケースへ紐づける。テストケースをまたいで累積しない。`@ac` を持たないテストは従来どおり `acIds` 無しの参照を生成する（file-fallback）。
+
+#### acIds / binding と file-fallback 保存不変条件
+
+- `TestReferenceSourceDto.acIds?: readonly string[]` — テストが個別検証する AC 群。
+- `MatrixTestReferenceDto.binding?: "ac" | "file"` — 参照が AC 単位で紐づいたか（`"ac"`）、`@ac` 無しで全 AC にファンアウトしたか（`"file"`）。
+- **file-fallback 保存不変条件**: `acIds` を持たない参照は **従来と完全に同一** の挙動で全 AC へ `binding:"file"` でファンアウトする。これにより L3-004 が見る「各 AC に参照が 1 件以上あるか」の判定は不変。
+- **dedup 正規化**: `referenceKey` は `binding` を含める。ただし 1.0 マトリクス（`binding` 無し）は `undefined → "file"` へ正規化するため、`binding` を持たない既存参照と file-fallback 生成参照が同一キーに畳まれ、spurious な重複（＝参照件数の変化）は起きない。
+
+#### advisory 集計
+
+`MatrixGenerationReportDto` に以下を追加（いずれも advisory、判定に影響しない）:
+
+- `acLevelCoverage: { total; acBound; fileFallbackOnly }` — linked な AC のうち、少なくとも 1 件の `binding:"ac"` 参照を持つ AC 数（`acBound`）と、file-fallback のみで linked な AC 数（`fileFallbackOnly`）。
+- `orphanAcTags` — `ac-not-in-story`（story 外 AC を指す `@ac`）/ `relative-multi-story`（複数 story ファイルの相対 `@ac`）。advisory のみ。
+
+#### スキーマ 1.0 → 1.1 後方互換
+
+`docs/contracts/requirement-test-matrix.schema.json` を 1.1 化し、`testReferences[].binding` を **optional な enum `["ac","file"]`** として追加。`additionalProperties:false` は維持。`binding` を持たない 1.0 マトリクスも引き続き検証を通過する（後方互換）。生成マトリクスの `version` は `"1.1"` を出力する。
+
+#### DESIGN-ONLY: 将来 `level:"ac"` の前提条件
+
+attestation の `granularity.traceability.level` は現時点で **`"file"` のまま**（`granularity-claim.ts` の静的 `KNOWN_LIMITATIONS_REGISTRY` は L3-004 のみを file-level で持つ）。将来 `level:"ac"` を主張するには、以下を満たす **fail-closed な新バリデータ L3-005「AC-bound coverage」** の導入が前提となる:
+
+- L3-005 が「全 AC が `binding:"ac"` で個別検証されている」ことを fail-closed で検査する。
+- attestation の `KNOWN_LIMITATIONS_REGISTRY` を **binary/global**（per-file ではない）に切り替え、L3-005 が validator set に含まれるときのみ `level:"ac"` を主張する。per-file 判定は ADR-019 の決定論（生成と検証で完全同一の再導出）を壊すため採らない。
+- L4-007（本 slice の advisory）は fail-closed ではないため、単独では `level:"ac"` を根拠づけない。

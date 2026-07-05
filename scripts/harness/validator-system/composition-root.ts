@@ -39,6 +39,7 @@ import { AdrFoundationReferenceAdapter } from './infrastructure/adapters/adr-fou
 import { ImportGraphSourceAnalysisAdapter } from './infrastructure/adapters/import-graph-source-analysis-adapter.js';
 import { FileSystemArchitectureSemanticSourceAdapter } from './infrastructure/adapters/file-system-architecture-semantic-source-adapter.js';
 import { FileSystemSkillCatalogDriftAdapter } from './infrastructure/adapters/file-system-skill-catalog-drift-adapter.js';
+import { NyquistAcLevelTraceabilityAdapter } from './infrastructure/adapters/nyquist-ac-level-traceability-adapter.js';
 import { FileSystemWorkItemReflectionAdapter } from './infrastructure/adapters/file-system-work-item-reflection-adapter.js';
 import { DriftDetectionService } from './domain/services/l4/drift-detection-service.js';
 import { ConsistencyCheckService } from './domain/services/l4/consistency-check-service.js';
@@ -117,6 +118,9 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef('L4-004', 'L4', 'always'),
     createDef('L4-005', 'L4', 'always'),
     createDef('L4-006', 'L4', 'always', 'SkillCatalogDriftPort'),
+    // WI-222 / HF2-05: L4-007 (ac-level-traceability) は registry には登録するが
+    // default-OFF（DEFAULT_CONFIG.layers.L4.validators に含めない）。advisory-only。
+    createDef('L4-007', 'L4', 'always', 'AcLevelTraceabilityPort'),
   ];
 
   return new ValidatorRegistry(definitions);
@@ -206,6 +210,11 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const sourceAnalysisPort = new ImportGraphSourceAnalysisAdapter();
   const architectureSemanticSourcePort = new FileSystemArchitectureSemanticSourceAdapter();
   const skillCatalogDriftPort = new FileSystemSkillCatalogDriftAdapter(cwd);
+  // WI-222 / HF2-05: L4-007 (advisory) 用の AC 単位トレーサビリティ port。
+  // matrix path は L3-004 と同じ config キーを参照する。
+  const acLevelTraceabilityPort = new NyquistAcLevelTraceabilityAdapter({
+    matrixFilePath: configData.layers?.L3?.requirementMatrixPath ?? '.harness/requirement-test-matrix.json',
+  });
   const workItemReflectionPort = new FileSystemWorkItemReflectionAdapter(cwd);
 
   const driftDetectionService = new DriftDetectionService({
@@ -236,6 +245,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     deadCodeDetectionService,
     architectureSemanticAnalysisService,
     skillCatalogDriftPort,
+    acLevelTraceabilityPort,
     pathRoots: {
       inceptionRoot: inceptionDocsRoot,
       designRoot: designDocsRoot,

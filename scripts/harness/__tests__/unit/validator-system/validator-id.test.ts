@@ -137,9 +137,11 @@ target('ValidatorId', () => {
       expect(actual).toThrow(InvalidValidatorIdError);
     });
 
-    it('L4-007（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
+    it('L4-008（有効範囲超過）を渡すとInvalidValidatorIdErrorをthrowすること (UT-BND-003)', () => {
       // Arrange
-      const input = 'L4-007';
+      // WI-222 (HF2-05) で L4-007 (ac-level-traceability) を有効 ID に追加したため、
+      // 範囲超過の境界値は L4-008 に更新した。
+      const input = 'L4-008';
       // Act
       const actual = () => ValidatorId.create(input);
       // Assert

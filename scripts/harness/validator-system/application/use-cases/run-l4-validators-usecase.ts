@@ -23,6 +23,8 @@ import type { DeadCodeDetectionService } from '../../domain/services/l4/dead-cod
 import type { ArchitectureSemanticAnalysisService } from '../../domain/services/l4/architecture-semantic-analysis-service.js';
 import { SkillCatalogDriftService } from '../../domain/services/l4/skill-catalog-drift-service.js';
 import type { SkillCatalogDriftPort } from '../../domain/ports/skill-catalog-drift-port.js';
+import { AcLevelTraceabilityService } from '../../domain/services/l4/ac-level-traceability-service.js';
+import type { AcLevelTraceabilityPort } from '../../domain/ports/ac-level-traceability-port.js';
 
 interface ScheduledHarnessErrorContract {
   readonly severity: string;
@@ -73,6 +75,7 @@ export interface RunL4ValidatorsUseCaseDeps {
   deadCodeDetectionService?: DeadCodeDetectionService;
   architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   skillCatalogDriftPort?: SkillCatalogDriftPort;
+  acLevelTraceabilityPort?: AcLevelTraceabilityPort;
   pathRoots?: {
     readonly inceptionRoot: string;
     readonly designRoot: string;
@@ -92,6 +95,8 @@ export class RunL4ValidatorsUseCase {
   private readonly architectureSemanticAnalysisService?: ArchitectureSemanticAnalysisService;
   private readonly skillCatalogDriftPort?: SkillCatalogDriftPort;
   private readonly skillCatalogDriftService = new SkillCatalogDriftService();
+  private readonly acLevelTraceabilityPort?: AcLevelTraceabilityPort;
+  private readonly acLevelTraceabilityService = new AcLevelTraceabilityService();
   private readonly pathRoots: { readonly inceptionRoot: string; readonly designRoot: string };
   private readonly checkDocFreshnessUseCase?: CheckDocFreshnessUseCasePort;
   private readonly validateDocPointersUseCase?: ValidateDocPointersUseCasePort;
@@ -107,6 +112,7 @@ export class RunL4ValidatorsUseCase {
     this.deadCodeDetectionService = deps.deadCodeDetectionService;
     this.architectureSemanticAnalysisService = deps.architectureSemanticAnalysisService;
     this.skillCatalogDriftPort = deps.skillCatalogDriftPort;
+    this.acLevelTraceabilityPort = deps.acLevelTraceabilityPort;
     this.pathRoots = deps.pathRoots ?? {
       inceptionRoot: 'docs/inception',
       designRoot: 'docs/product/construction',
@@ -259,6 +265,23 @@ export class RunL4ValidatorsUseCase {
           report.hasFindings()
             ? ValidationResult.fail(ValidatorId.create('L4-006'), report.toHarnessErrors(), 0)
             : ValidationResult.pass(ValidatorId.create('L4-006'), 0),
+        );
+      }
+    }
+
+    if (this.acLevelTraceabilityPort) {
+      const l4007Result = overrideMap.get('L4-007');
+      // default-OFF: L4-007 が enabled validator set に含まれず skip される場合は上書きしない。
+      if (l4007Result && !l4007Result.skipped) {
+        const snapshot = await this.acLevelTraceabilityPort.collect();
+        const report = this.acLevelTraceabilityService.check(snapshot);
+        // advisory-only: finding があっても severity は必ず warning。overall gate は
+        // failOnWarning=false（既定）で PASS のまま（ADR-019 §5）。finding が無ければ PASS。
+        overrideMap.set(
+          'L4-007',
+          report.hasFindings()
+            ? ValidationResult.fail(ValidatorId.create('L4-007'), report.toHarnessErrors(), 0)
+            : ValidationResult.pass(ValidatorId.create('L4-007'), 0),
         );
       }
     }

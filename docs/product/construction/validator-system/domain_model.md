@@ -396,3 +396,13 @@ Skip results are first-class validation results and do not fail aggregation. War
 <!-- @work-item-id WI-212 -->
 
 Validator execution is keyed by `validatorId` and resolved project language. Document validators can declare language-independent capability, while source and test-framework validators declare concrete language support. Unsupported validator/language combinations are first-class skipped results with warning evidence, not dependency failures.
+
+## WI-222 / HF2-05 L4-007 AC-level traceability model
+
+<!-- @work-item-id WI-222 -->
+
+@story-id HF2-05
+
+`AcLevelTraceabilityService`（domain）は `AcLevelTraceabilitySnapshot`（`acLevelCoverage` + `fileFallbackOnlyAcs` + `orphanAcTags`）を入力に `AcLevelTraceabilityReport` を返す純粋サービス。finding は **必ず warning severity**（error を出さない）。`AcLevelTraceabilityPort`（domain port）が snapshot 収集を抽象化し、infrastructure adapter が nyquist-validation のマトリクスレポートを橋渡しする。
+
+L4-007 は **default-OFF・advisory-only（warning-only）・attestation-trust-excluded**。L3-004（fail-closed な AC 網羅ゲート）とは独立した advisory tier であり、その二値判定・attestation granularity（`level:"file"`）には一切関与しない。詳細は logical_design.md を参照。

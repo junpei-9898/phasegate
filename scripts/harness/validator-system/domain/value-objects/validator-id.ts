@@ -9,6 +9,7 @@
  * WI-140 で L2-014 を追加
  * WI-132/WI-133/WI-136/WI-137/WI-138 で L2-015 を追加
  * WI-156 で L4-006 を追加
+ * WI-222 (HF2-05) で L4-007（ac-level-traceability, default-OFF advisory）を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -42,6 +43,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   'L4-004': 'doc-freshness',
   'L4-005': 'pointer-validation',
   'L4-006': 'skill-catalog-drift',
+  'L4-007': 'ac-level-traceability',
 };
 
 /** バリデータ名 -> バリデータID の逆引きマップ */
@@ -53,6 +55,7 @@ const NAME_TO_ID_MAP: Record<string, string> = {
   'doc-freshness-checker': 'L4-004',
   'pointer-validator': 'L4-005',
   'skill-catalog-drift': 'L4-006',
+  'ac-level-traceability': 'L4-007',
 };
 
 /** 有効なValidatorID集合 */

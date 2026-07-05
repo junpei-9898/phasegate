@@ -251,6 +251,21 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 | Model | Role |
 |---|---|
 | RequirementSource | product docs から抽出した `storyId` と `acIds` |
-| TestReferenceSource | test files から抽出した `storyId`, `filePath`, `testType`, `testName?` |
-| MatrixGenerationReport | `unknownStories`, `missingTests`, `orphanTests`, `preservedReferences` |
+| TestReferenceSource | test files から抽出した `storyId`, `filePath`, `testType`, `testName?`, `acIds?`（HF2-05）, `orphanAcTags?`（HF2-05） |
+| MatrixGenerationReport | `unknownStories`, `missingTests`, `orphanTests`, `preservedReferences`, `acLevelCoverage`（HF2-05）, `orphanAcTags`（HF2-05） |
 | IntentCoverageItem | AC 単位の `observed` / `weakly-observed` / `unobserved` |
+
+### WI-222 / HF2-05: AC 単位トレーサビリティ（@ac）
+
+<!-- @work-item-id WI-222 -->
+
+@story-id HF2-05
+
+`TestReferenceSource` に `acIds?`（テストが個別検証する `AC-N` 群）と `orphanAcTags?`（解決失敗した `@ac`）を追加。`MatrixTestReference` に `binding?: "ac" | "file"` を追加する。
+
+- **binding="ac"**: `@ac` で当該 AC を明示指定した参照。
+- **binding="file"**: `@ac` を持たず全 AC にファンアウトした従来どおりの参照。**file-fallback の挙動は不変**であり、L3-004（AC 網羅ゲート）の pass/fail 判定はバイト一致で保存される。
+- **acLevelCoverage**（advisory）: `{ total, acBound, fileFallbackOnly }`。`fileFallbackOnly` は「story-level では linked だが個別 AC 検証テストが無い AC」の数。
+- **orphanAcTags**（advisory）: story 外 AC を指す `@ac`、複数 story ファイルの相対 `@ac`。error ではなく warning 相当の助言のみ。
+
+これらは L3-004 の二値判定に一切関与しない（`AcCoverageGatePolicy` は不変）。詳細な正規表現・関連付けルール・スキーマ 1.1 後方互換・将来 `level:"ac"` の前提（fail-closed な L3-005）は logical_design.md を参照。

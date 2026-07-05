@@ -1943,3 +1943,17 @@ L4-002 must treat resolved documentation roots as first-class inputs. When `path
 <!-- @work-item-id WI-212 -->
 
 Validator-system owns `ValidatorLanguageRegistry`, which maps `validatorId + language` to supported, generic, or unsupported capability. Existing TypeScript-backed validators register their current adapters for `typescript`; Markdown and product-document validators register as generic. Aggregation includes skipped unsupported-language results with a machine-readable reason so multi-language projects can distinguish unsupported coverage from failing validation.
+
+## WI-222 / HF2-05 L4-007 AC-level traceability (advisory)
+
+<!-- @work-item-id WI-222 -->
+
+@story-id HF2-05
+
+L4-007（`ac-level-traceability`）は AC 単位トレーサビリティを advisory として surface する L4 バリデータである。以下の 3 つの不変条件を満たす:
+
+- **default-OFF**: registry には登録するが、`DEFAULT_CONFIG.layers.L4.validators`（および standard/strict の enabled validator set）には **含めない**。runtime では enabled set に無いため常に `skipped=true` になる（`ci-check --json` で確認済み）。ci-governance の scheduled-audit metadata（`ValidatorIdRegistryAdapter.listForPreset`）からも `ADVISORY_DEFAULT_OFF_IDS` で除外する。
+- **advisory-only（warning-only）**: `AcLevelTraceabilityService` は fileFallbackOnly な AC と orphanAcTags を **warning severity の finding にのみ変換し、error は一切出さない**。`fileFallbackOnly=0` かつ orphanAcTags 空なら PASS。finding があっても `failOnWarning=false`（既定）では overall gate は PASS のまま（ADR-019 §5: advisory は non-blocking）。
+- **attestation-trust-excluded**: attestation の `GranularityDerivationService.derive()` は静的 `KNOWN_LIMITATIONS_REGISTRY`（**L3-004 のみ** を keys に持つ whitelist）だけから granularity を再導出する。L4-007 を含む他の validator は導出で完全に無視されるため、L4-007 は **構造上 attestation trust に一切影響しない**（明示的な除外リストではなく、L3-004 のみを真実の源とする whitelist 方式による除外）。この不変性は default-OFF + warning-only によっても二重に担保される。
+
+データフロー: `RunL4ValidatorsUseCase` の L4-007 override ブロックが（enabled かつ非 skip のときのみ）`AcLevelTraceabilityPort.collect()` を呼ぶ。実装 `NyquistAcLevelTraceabilityAdapter` は nyquist-validation の generate-matrix usecase を write:false で実行し、matrix report から `acLevelCoverage` / `orphanAcTags` を取得、matrix から fileFallbackOnly な AC（testReferences に `binding:"ac"` が 1 件も無い linked AC）を算出して snapshot を返す。収集失敗時は empty snapshot（fail-open、advisory のため CI を落とさない）。

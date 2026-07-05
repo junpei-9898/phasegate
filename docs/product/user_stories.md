@@ -37,7 +37,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 2 | 3 |
-| H-F2 | Phase 2拡張 | 3 | Future |
+| H-F2 | Phase 2拡張 | 4 | Future |
 
 ---
 
@@ -1566,6 +1566,29 @@ K8（Cascade Updater）
 
 ---
 
+### HF2-05: AC単位トレーサビリティ（@ac コントラクト / L4-007 advisory）
+
+**Epic**: H-F2 Phase 2拡張
+
+**As a** 品質管理者,
+**I want to** テストケース単位で個別 AC を検証していることを `@ac` 注釈で機械的に記録し、story-level では linked だが個別 AC が検証されていない箇所（fileFallbackOnly）を advisory として可視化したい,
+**so that** L3-004（file-level AC 網羅ゲート）の合否を一切変えずに、AC 単位トレーサビリティの正直な現状を把握し、将来の per-AC 保証（level:"ac"）への足がかりにできる。
+
+#### 背景
+
+L3-004 は「各 AC に参照テスト FILE が 1 つ以上存在する」ことを file-level で保証するが、個々の AC が個別に検証されていることは保証しない（`docs/inception/_shared/l3-004-traceability-ratchet.md` §6）。本ストーリーはすべて additive であり、L3-004 の pass/fail 判定はバイト一致で不変。ADR-019 §5 に従い、追加する L4-007 は default-OFF・advisory（non-blocking）・attestation-trust-excluded とする。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `@ac` パーサが絶対形式（`HXX-YY-N`）・相対形式（`AC-N`）・1行複数AC（`H05-02-1 H05-02-2`）を解釈し、最近接 `@ac` を対象テストケースに紐づける（AST 非依存の positional scan）
+- [ ] AC-2: 相対 `AC-N` は `@story` がちょうど 1 件のファイルでのみ解決し、複数 `@story` のファイルでは未解決（orphan）とする
+- [ ] AC-3: story 外 AC を指す `@ac`・複数 story ファイルの相対 `@ac` を `orphanAcTags` として advisory 報告する
+- [ ] AC-4: `MatrixTestReference.binding`（`"ac" | "file"`）を付与し、`@ac` 無しの参照は従来どおり全 AC へ `binding:"file"` でファンアウトする。L3-004 の合否判定は不変（golden matrix 比較で証明）
+- [ ] AC-5: L4-007 は default-OFF・advisory（warning-only、error を出さない）・attestation-trust-excluded として実装する
+- [ ] AC-6: requirement-test-matrix スキーマ 1.1 で `binding` を optional に追加し、`binding` を持たない 1.0 マトリクスも後方互換で検証を通過する
+
+---
+
 ## H-16: Signed Attestation
 
 ### H16-01: Attestation record generation (phasegate:attest)
@@ -1670,6 +1693,6 @@ K9（トレーサビリティの改竄不可能性）— attestation の機械�
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 2 | 2 | 0 |
 | **Wave 3小計** | | **16** | **14** | **2** |
-| Future | H-F2 Phase 2拡張 | 3 | — | — |
+| Future | H-F2 Phase 2拡張 | 4 | — | — |
 | **v1合計** | | **56** | **51** | **5** |
-| **全体（Future含む）** | | **59** | — | — |
+| **全体（Future含む）** | | **60** | — | — |

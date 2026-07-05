@@ -5,10 +5,12 @@
 
 import type { RequirementIntentCoverageService } from '../../domain/services/requirement-intent-coverage-service.js';
 import type {
+  AcLevelCoverageDto,
   GenerateMatrixOutput,
   MatrixAcMappingDto,
   MatrixStoryDto,
   MatrixTestReferenceDto,
+  OrphanAcTagDto,
   RequirementSourceDto,
   RequirementTestMatrixDto,
   TestReferenceSourceDto,
@@ -42,8 +44,12 @@ export interface GenerateRequirementTestMatrixUseCaseDeps {
   readonly now?: () => Date;
 }
 
+// HF2-05: dedup キーは binding を含める。1.0 マトリクス（binding undefined）は
+// "file" に正規化するため、binding を持たない既存参照と file-fallback 生成参照が
+// 同一キーに畳まれ、意図しない重複（＝L3-004 の testReferences 件数変化）を防ぐ。
 function referenceKey(reference: MatrixTestReferenceDto): string {
-  return `${reference.filePath}\0${reference.testType}\0${reference.testName ?? ''}`;
+  const binding = reference.binding ?? 'file';
+  return `${reference.filePath}\0${reference.testType}\0${reference.testName ?? ''}\0${binding}`;
 }
 
 function mergeReferences(
@@ -112,30 +118,77 @@ export class GenerateRequirementTestMatrixUseCase {
     }
 
     let preservedReferences = 0;
+    // HF2-05: 各 AC の ac-bound 判定を集計するためのアキュムレータ。
+    let acLevelTotal = 0;
+    let acLevelBound = 0;
+    let acLevelFileFallbackOnly = 0;
+    const orphanAcTags: OrphanAcTagDto[] = [];
     const stories: MatrixStoryDto[] = requirements.map((requirement) => {
       const storyReferences = referencesByStory.get(requirement.storyId) ?? [];
       const storyMappings: MatrixAcMappingDto[] = requirement.acIds.map((acId) => {
-        const generatedReferences = storyReferences.map((reference) => ({
-          filePath: reference.filePath,
-          testType: reference.testType,
-          testName: reference.testName,
-        }));
+        // HF2-05:
+        // - acIds を持つ参照は、その acId を含むときだけ binding="ac" で紐づく（ファンアウトしない）。
+        // - acIds を持たない参照は従来どおり全 AC へ binding="file" でファンアウトする（L3-004 不変）。
+        const generatedReferences: MatrixTestReferenceDto[] = [];
+        let hasAcBound = false;
+        for (const reference of storyReferences) {
+          const acIds = reference.acIds;
+          if (acIds && acIds.length > 0) {
+            if (acIds.includes(acId)) {
+              generatedReferences.push({
+                filePath: reference.filePath,
+                testType: reference.testType,
+                testName: reference.testName,
+                binding: 'ac',
+              });
+              hasAcBound = true;
+            }
+            continue;
+          }
+          generatedReferences.push({
+            filePath: reference.filePath,
+            testType: reference.testType,
+            testName: reference.testName,
+            binding: 'file',
+          });
+        }
         const existingReferences = normalizeExistingReferences(existingMatrix, requirement.storyId, acId);
         const merged = mergeReferences(generatedReferences, existingReferences);
         preservedReferences += merged.preserved;
+        // AC 単位カバレッジ集計（advisory）: linked（参照 1 件以上）な AC のみ分母に数える。
+        if (merged.references.length > 0) {
+          acLevelTotal += 1;
+          if (hasAcBound) {
+            acLevelBound += 1;
+          } else {
+            acLevelFileFallbackOnly += 1;
+          }
+        }
         return {
           acId,
           testReferences: merged.references,
         };
       });
+      // 解決に失敗した @ac タグを advisory として集約する。
+      for (const reference of storyReferences) {
+        if (reference.orphanAcTags) orphanAcTags.push(...reference.orphanAcTags);
+      }
       return {
         storyId: requirement.storyId,
         storyMappings: Object.freeze(storyMappings),
       };
     });
+    const acLevelCoverage: AcLevelCoverageDto = {
+      total: acLevelTotal,
+      acBound: acLevelBound,
+      fileFallbackOnly: acLevelFileFallbackOnly,
+    };
 
     const matrix: RequirementTestMatrixDto = {
-      version: '1.0',
+      // HF2-05: binding フィールドを付与するため schema 1.1 として出力する。
+      // 1.1 は 1.0 に対し optional な binding のみ追加であり、L3-004 の判定（各 AC に
+      // testReference が 1 件以上あるか）には一切影響しない。
+      version: '1.1',
       generatedAt: this.now().toISOString(),
       stories: Object.freeze(stories),
     };
@@ -150,6 +203,8 @@ export class GenerateRequirementTestMatrixUseCase {
       unknownStories: [...new Set(orphanTests.map((test) => test.storyId))],
       preservedReferences,
       intentCoverage,
+      acLevelCoverage,
+      orphanAcTags: Object.freeze(orphanAcTags),
     };
 
     if (input.write) {

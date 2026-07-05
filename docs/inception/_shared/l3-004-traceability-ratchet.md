@@ -60,6 +60,7 @@ phasegate 自身は L3-004 が要求する完全な `requirement-test-matrix.jso
 | **R2** | テストが 0 件の 33 Story にテストを追加し `testReferences` を紐付け（146 → 徐々に削減）。カバレッジ数値を本ドキュメントに追記して逆行を検知 | 未リンク AC が段階的な閾値（例: ≤100 → ≤50 → 0）を下回る |
 | **R3** | 全 336 AC がテスト参照を持つ（190 → 336） | 未リンク AC = 0 |
 | **R4 ✅ 完了（2026-07-05）** | `phasegate.config.json` の `layers.L3.validators` に `L3-004` を追加し再有効化。併せて `layers.L3.requirementMatrixPath: ".harness/requirement-test-matrix.json"` を設定。以降は L3-004 が自リポジトリでも fail-closed で常時発火 | ci-check で L3-004 が `skipped=false, passed=true`（達成済み） |
+| **R5 ✅ 部分達成（2026-07-05, WI-222 / HF2-05）** | **AC 単位トレーサビリティの advisory** を追加。`@ac` コントラクト（絶対 `HXX-YY-N` / 相対 `AC-N` / 1 行複数 AC）で個別 AC 検証を機械的に記録し、`binding` フィールド・`acLevelCoverage` 集計・`orphanAcTags` を surface する。新 advisory バリデータ **L4-007（default-OFF, warning-only, attestation-trust-excluded）** が fileFallbackOnly な AC と orphanAcTags を正直に警告する。L3-004 の合否判定はバイト一致で不変（golden matrix 比較で証明）。§6 の既知 per-AC ギャップ（H05-02 AC-1/2/3, H06-03 AC-4）は fileFallbackOnly として正直に露出。attestation の `level:"ac"` は将来の fail-closed **L3-005「AC-bound coverage」** の導入（静的 KNOWN_LIMITATIONS_REGISTRY を binary/global に切替）に gate される。 | L4-007 が advisory として利用可能。attestation は依然 `level:"file"` |
 
 **逆行防止**: R4 到達後は L3-004 の per-repo 除外を復活させてはならない。R2 の各段階で未リンク AC 数を本表に追記し、増加していないことをレビューで確認する。
 

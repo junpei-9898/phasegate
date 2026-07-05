@@ -48,6 +48,11 @@
                       },
                       "testName": {
                         "type": "string"
+                      },
+                      "binding": {
+                        "type": "string",
+                        "enum": ["ac", "file"],
+                        "description": "HF2-05 (schema 1.1): AC単位で紐づいた参照は 'ac'、@ac注釈なしで全ACにファンアウトした参照は 'file'。省略可（1.0後方互換）。"
                       }
                     }
                   }

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.167.0] - 2026-07-05
+
+### Added
+
+- **WI-222 / HF2-05 — AC-level traceability (`@ac` contract, additive)** — adds a mechanical (AST-free, ADR-019-compliant) `@ac` annotation contract so individual test cases can record which acceptance criterion they assert. The `TypeScriptTestReferenceSourceAdapter` parses absolute (`// @ac H05-02-1`), story-relative (`// @ac AC-2`, resolved only when the file has exactly one `@story`), and multi-AC (`// @ac H05-02-1 H05-02-2`) forms via a positional scan that binds the nearest preceding `@ac` since the last `it(`/`test(`. New DTO fields: `TestReferenceSourceDto.acIds`, `MatrixTestReferenceDto.binding` (`"ac" | "file"`), report `acLevelCoverage` (`{ total, acBound, fileFallbackOnly }`) and `orphanAcTags`.
+- **WI-222 / HF2-05 — L4-007 `ac-level-traceability` advisory validator (`validator-system` unit)** — a new L4 validator that surfaces file-fallback-only ACs and orphan `@ac` tags as **warning-severity findings only (never errors)**. It is **default-OFF** (registered in the registry but not in the default/standard/strict enabled validator sets, so it always `skipped=true` in `ci-check`), **advisory/non-blocking**, and **attestation-trust-excluded** (the attestation `GranularityDerivationService` re-derives granularity solely from the static `KNOWN_LIMITATIONS_REGISTRY`, which whitelists only L3-004; L4-007 is ignored by construction). New domain service `AcLevelTraceabilityService`, port `AcLevelTraceabilityPort`, and infrastructure adapter `NyquistAcLevelTraceabilityAdapter`.
+- **requirement-test-matrix schema 1.1** — adds an optional `binding` enum (`["ac","file"]`) on `testReferences`, keeping `additionalProperties:false` and full backward compatibility so existing 1.0 matrices (without `binding`) still validate.
+
+### Changed
+
+- **L3-004 verdict preserved (byte-identical)** — references without `@ac` continue to fan out to all ACs with `binding:"file"` exactly as before; the reference dedup key now incorporates `binding` and normalizes `undefined → "file"` so 1.0 matrices without `binding` produce no spurious duplicates. Proven invariant by golden-matrix comparison (all 358 pre-existing ACs: identical coverage, 0 missing before/after). Generated matrix `version` bumped `1.0 → 1.1`.
+- **Attestation granularity unchanged** — `granularity.traceability.level` remains `"file"`; `level:"ac"` is design-gated on a future fail-closed **L3-005 "AC-bound coverage"** validator flipping the static registry binary/global (documented in `nyquist-validation/logical_design.md` and the L3-004 ratchet R5 row).
+
 ## [0.166.0] - 2026-07-05
 
 ### Fixed
