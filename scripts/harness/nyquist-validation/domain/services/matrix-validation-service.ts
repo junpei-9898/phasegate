@@ -35,15 +35,15 @@ function extractStoryMappings(rawData: unknown): RawStoryMappingEntry[] {
   if (rawData === null || typeof rawData !== 'object') return [];
   const obj = rawData as Record<string, unknown>;
 
-  const source = Array.isArray(obj['stories'])
-    ? (obj['stories'] as unknown[])
-    : Array.isArray(obj['storyMappings'])
-      ? (obj['storyMappings'] as unknown[])
+  const source = Array.isArray(obj.stories)
+    ? (obj.stories as unknown[])
+    : Array.isArray(obj.storyMappings)
+      ? (obj.storyMappings as unknown[])
       : [];
 
   return source.map((item) => {
     const entry = item as Record<string, unknown>;
-    return { storyId: String(entry['storyId'] ?? '') };
+    return { storyId: String(entry.storyId ?? '') };
   });
 }
 

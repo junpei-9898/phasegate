@@ -35,10 +35,10 @@ export class ConfigFoundationCoverageThresholdAdapter implements CoverageThresho
       preset = 'standard';
     }
 
-    const active = THRESHOLDS[preset] ?? THRESHOLDS['standard'];
+    const active = THRESHOLDS[preset] ?? THRESHOLDS.standard;
     return {
-      standard: THRESHOLDS['standard'] ?? 0.90,
-      strict: THRESHOLDS['strict'] ?? 0.95,
+      standard: THRESHOLDS.standard ?? 0.90,
+      strict: THRESHOLDS.strict ?? 0.95,
       active: active ?? 0.90,
     };
   }

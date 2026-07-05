@@ -10,10 +10,10 @@
 import { ValidatorId } from '../../domain/value-objects/validator-id.js';
 import { ValidationResult } from '../../domain/value-objects/validation-result.js';
 import { LayerConfig } from '../../domain/value-objects/layer-config.js';
-import { ValidatorRegistry } from '../../domain/services/validator-registry.js';
-import { ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
+import type { ValidatorRegistry } from '../../domain/services/validator-registry.js';
+import { type ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
 import { ValidatorLanguageCapabilityService } from '../../domain/services/validator-language-capability-service.js';
-import { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
+import type { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
 import type { ValidationResultContract } from '../dto/validation-result-contract.js';
 import type { RunL4ValidatorsInput } from '../dto/run-l4-validators-input.js';
 import type { ValidatorConfigPort } from '../../domain/ports/validator-config-port.js';

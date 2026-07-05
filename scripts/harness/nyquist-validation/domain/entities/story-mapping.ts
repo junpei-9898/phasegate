@@ -4,7 +4,7 @@
  *
  * ストーリー単位のAC→テスト参照マッピングエンティティ
  */
-import { AcMapping, type RawAcMapping } from '../value-objects/ac-mapping.js';
+import type { AcMapping, RawAcMapping } from '../value-objects/ac-mapping.js';
 
 export interface StoryMappingCreateProps {
   readonly storyId: string;

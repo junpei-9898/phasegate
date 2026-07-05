@@ -21,10 +21,10 @@ export function isValidationResultContract(obj: unknown): obj is ValidationResul
   if (typeof obj !== 'object' || obj === null) return false;
   const o = obj as Record<string, unknown>;
   return (
-    typeof o['validatorId'] === 'string' &&
-    typeof o['passed'] === 'boolean' &&
-    Array.isArray(o['errors']) &&
-    typeof o['durationMs'] === 'number'
+    typeof o.validatorId === 'string' &&
+    typeof o.passed === 'boolean' &&
+    Array.isArray(o.errors) &&
+    typeof o.durationMs === 'number'
   );
 }
 

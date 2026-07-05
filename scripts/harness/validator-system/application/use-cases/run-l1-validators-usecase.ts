@@ -10,7 +10,7 @@ import { ValidatorId } from '../../domain/value-objects/validator-id.js';
 import { ValidationResult } from '../../domain/value-objects/validation-result.js';
 import { ItTestMockDetectionService } from '../../domain/services/it-test-mock-detection-service.js';
 import { StubCommentDetectionService } from '../../domain/services/stub-comment-detection-service.js';
-import { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
+import type { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
 import type { ValidationResultContract } from '../dto/validation-result-contract.js';
 import type { RunL1ValidatorsInput } from '../dto/run-l1-validators-input.js';
 import type { ItTestFileAnalyzerPort } from '../../domain/ports/it-test-file-analyzer-port.js';

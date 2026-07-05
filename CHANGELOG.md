@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.168.0] - 2026-07-05
+
+### Fixed
+
+- **WI-223 — biome dogfooding cleanup (`nyquist-validation` / `validator-system` units)** — cleared pre-existing repo-wide biome lint debt in files not touched by recent work. All fixes are mechanical and behavior-preserving:
+  - `lint/complexity/useLiteralKeys` (58 diagnostics) — converted string-literal computed member access (`obj['stories']`) to dot access (`obj.stories`) where the key is a valid identifier, across the coverage/impact use-cases, `matrix-validation-service`, the AJV adapter, the coverage-threshold adapter, the JSON coverage-report adapter, and the validation-result contract handler.
+  - `lint/style/useImportType` (27 diagnostics) — marked type-only imports with `import type` (or `type` specifiers) across `nyquist-validation` domain entities/aggregates/services/value-objects and `validator-system` L1–L4 use-cases and domain services/value-objects.
+  - `lint/complexity/noStaticOnlyClass` (2 diagnostics) — converted the static-only `CoverageResultMapper` and `ImpactAnalysisResultMapper` classes into plain exported functions (`toCalculateCoverageOutput`, `toAnalyzeImpactOutput`) and updated their single call sites in `calculate-coverage-usecase` / `analyze-impact-usecase`. No public behavior change.
+
 ## [0.167.0] - 2026-07-05
 
 ### Added

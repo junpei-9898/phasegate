@@ -5,7 +5,7 @@
  * AC網羅ゲート判定ポリシー
  * validator-system の L3-004 が実行主体として呼び出す公開ポリシー
  */
-import { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
+import type { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
 
 export interface NyquistHarnessError {
   readonly code: string;

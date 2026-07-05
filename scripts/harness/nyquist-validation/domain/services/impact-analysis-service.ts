@@ -4,9 +4,9 @@
  *
  * テストケース逆引きサービス（v1: 直接マッピングのみ）
  */
-import { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
+import type { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
 import { ImpactAnalysisResult } from '../value-objects/impact-analysis-result.js';
-import { TestReference } from '../value-objects/test-reference.js';
+import type { TestReference } from '../value-objects/test-reference.js';
 
 export class ImpactAnalysisService {
   analyze(matrix: RequirementTestMatrix, storyId: string): ImpactAnalysisResult {

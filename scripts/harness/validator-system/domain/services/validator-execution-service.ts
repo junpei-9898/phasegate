@@ -5,7 +5,7 @@
  * ValidatorExecutionService ドメインサービス
  * 指定されたValidatorDefinition[]を順次実行し、ValidationResult[]を集約
  */
-import { ValidatorDefinition } from '../value-objects/validator-definition.js';
+import type { ValidatorDefinition } from '../value-objects/validator-definition.js';
 import { ValidationResult, type HarnessErrorLike } from '../value-objects/validation-result.js';
 import { LayerConfig } from '../value-objects/layer-config.js';
 import type { PhaseGatePolicyPort } from '../ports/phase-gate-policy-port.js';

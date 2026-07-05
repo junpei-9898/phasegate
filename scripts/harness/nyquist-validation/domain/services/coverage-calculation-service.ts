@@ -4,7 +4,7 @@
  *
  * AC網羅率算出サービス（純粋な算出ロジック）
  */
-import { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
+import type { RequirementTestMatrix } from '../aggregates/requirement-test-matrix.js';
 import { CoverageResult } from '../value-objects/coverage-result.js';
 
 export class CoverageCalculationService {

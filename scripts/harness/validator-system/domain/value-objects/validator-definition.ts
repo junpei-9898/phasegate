@@ -5,8 +5,8 @@
  * ValidatorDefinition 値オブジェクト
  * 個々のバリデータの不変定義を保持する
  */
-import { ValidatorId } from './validator-id.js';
-import { ValidationRule } from './validation-rule.js';
+import type { ValidatorId } from './validator-id.js';
+import type { ValidationRule } from './validation-rule.js';
 
 export interface ValidatorDefinitionProps {
   readonly validatorId: ValidatorId;

@@ -5,8 +5,8 @@
  * ValidatorRegistry ドメインサービス
  * L2-L4バリデータ定義のカタログ管理と選択実行インターフェース
  */
-import { ValidatorId } from '../value-objects/validator-id.js';
-import { ValidatorDefinition } from '../value-objects/validator-definition.js';
+import type { ValidatorId } from '../value-objects/validator-id.js';
+import type { ValidatorDefinition } from '../value-objects/validator-definition.js';
 
 export class UnknownValidatorError extends Error {
   readonly validatorId: string;

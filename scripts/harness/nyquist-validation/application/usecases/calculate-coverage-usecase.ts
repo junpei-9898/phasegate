@@ -13,7 +13,7 @@ import { RequirementTestMatrix } from '../../domain/aggregates/requirement-test-
 import { StoryMapping } from '../../domain/entities/story-mapping.js';
 import { AcMapping } from '../../domain/value-objects/ac-mapping.js';
 import { TestReference } from '../../domain/value-objects/test-reference.js';
-import { CoverageResultMapper } from '../mappers/coverage-result-mapper.js';
+import { toCalculateCoverageOutput } from '../mappers/coverage-result-mapper.js';
 import type { CalculateCoverageInput } from '../dto/calculate-coverage-input.js';
 import type { CalculateCoverageOutput } from '../dto/calculate-coverage-output.js';
 
@@ -27,29 +27,29 @@ export interface CalculateCoverageUseCaseDeps {
 
 function buildMatrix(data: unknown): RequirementTestMatrix {
   const obj = data as Record<string, unknown>;
-  const rawStories = Array.isArray(obj['stories']) ? obj['stories'] : (Array.isArray(obj['storyMappings']) ? obj['storyMappings'] : []);
+  const rawStories = Array.isArray(obj.stories) ? obj.stories : (Array.isArray(obj.storyMappings) ? obj.storyMappings : []);
 
   const storyMappings = (rawStories as unknown[]).map((s) => {
     const story = s as Record<string, unknown>;
-    const rawAcMappings = Array.isArray(story['storyMappings'])
-      ? story['storyMappings']
-      : (Array.isArray(story['acMappings']) ? story['acMappings'] : []);
+    const rawAcMappings = Array.isArray(story.storyMappings)
+      ? story.storyMappings
+      : (Array.isArray(story.acMappings) ? story.acMappings : []);
 
     const acMappings = (rawAcMappings as unknown[]).map((a) => {
       const acm = a as Record<string, unknown>;
-      const rawRefs = Array.isArray(acm['testReferences']) ? acm['testReferences'] : [];
+      const rawRefs = Array.isArray(acm.testReferences) ? acm.testReferences : [];
       const testReferences = (rawRefs as unknown[]).map((r) => {
         const ref = r as Record<string, unknown>;
         return TestReference.create({
-          filePath: String(ref['filePath'] ?? ''),
-          testType: String(ref['testType'] ?? ''),
+          filePath: String(ref.filePath ?? ''),
+          testType: String(ref.testType ?? ''),
         });
       });
-      return AcMapping.create({ acId: String(acm['acId'] ?? ''), testReferences });
+      return AcMapping.create({ acId: String(acm.acId ?? ''), testReferences });
     });
 
     return StoryMapping.create({
-      storyId: String(story['storyId'] ?? ''),
+      storyId: String(story.storyId ?? ''),
       acMappings,
     });
   });
@@ -86,6 +86,6 @@ export class CalculateCoverageUseCase {
       threshold = await this.coverageThresholdPort.getThreshold();
     }
 
-    return CoverageResultMapper.toOutput(coverageResult, threshold);
+    return toCalculateCoverageOutput(coverageResult, threshold);
   }
 }

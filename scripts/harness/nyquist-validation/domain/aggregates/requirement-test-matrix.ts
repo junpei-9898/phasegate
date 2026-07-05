@@ -5,7 +5,7 @@
  * requirement-test-matrix の集約ルート
  */
 import { DuplicateStoryMappingError } from '../errors/duplicate-story-mapping-error.js';
-import { StoryMapping } from '../entities/story-mapping.js';
+import type { StoryMapping } from '../entities/story-mapping.js';
 
 export interface RequirementTestMatrixCreateProps {
   readonly storyMappings: readonly StoryMapping[];

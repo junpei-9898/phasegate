@@ -15,13 +15,13 @@ function convertAjvError(err: ErrorObject): NyquistHarnessError {
 
   switch (err.keyword) {
     case 'required':
-      message = `${err.instancePath || '(root)'} に必須フィールド '${String(err.params['missingProperty'] ?? '')}' がありません`;
+      message = `${err.instancePath || '(root)'} に必須フィールド '${String(err.params.missingProperty ?? '')}' がありません`;
       break;
     case 'type':
-      message = `${err.instancePath} の型が不正です。期待: ${String(err.params['type'] ?? '')}`;
+      message = `${err.instancePath} の型が不正です。期待: ${String(err.params.type ?? '')}`;
       break;
     case 'pattern':
-      message = `${err.instancePath} の値が形式 '${String(err.params['pattern'] ?? '')}' に一致しません`;
+      message = `${err.instancePath} の値が形式 '${String(err.params.pattern ?? '')}' に一致しません`;
       break;
     case 'enum':
       message = `${err.instancePath} の値は許容値のいずれでもありません`;

@@ -33,7 +33,7 @@ export class JsonCoverageReportAdapter implements CoverageReportPort {
     }
 
     const data = JSON.parse(raw) as Record<string, { lines?: { pct?: number } }>;
-    const total = data['total'];
+    const total = data.total;
     const overallCoverage = total?.lines?.pct ?? 0;
 
     const perFileCoverage: { filePath: string; coverage: number }[] = [];

@@ -4,7 +4,7 @@
  *
  * テストケース逆引き結果を表す値オブジェクト
  */
-import { TestReference } from './test-reference.js';
+import type { TestReference } from './test-reference.js';
 
 export interface ImpactAnalysisResultProps {
   readonly storyId: string;

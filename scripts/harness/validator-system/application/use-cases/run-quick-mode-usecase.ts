@@ -5,9 +5,9 @@
  * RunQuickModeUseCase — H08-04: Quickモード緩和実行
  */
 import { ValidatorId } from '../../domain/value-objects/validator-id.js';
-import { ValidatorRegistry } from '../../domain/services/validator-registry.js';
-import { ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
-import { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
+import type { ValidatorRegistry } from '../../domain/services/validator-registry.js';
+import { type ValidatorExecutionService, ValidatorExecutionError } from '../../domain/services/validator-execution-service.js';
+import type { ValidationResultContractMapper } from '../mappers/validation-result-contract-mapper.js';
 import type { ValidationResultContract } from '../dto/validation-result-contract.js';
 import type { RunQuickModeInput } from '../dto/run-quick-mode-input.js';
 import type { ValidatorConfigPort } from '../../domain/ports/validator-config-port.js';

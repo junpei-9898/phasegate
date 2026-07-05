@@ -5,7 +5,7 @@
  * ValidationResult 値オブジェクト
  * バリデータ実行結果のスナップショット（不変）
  */
-import { ValidatorId } from './validator-id.js';
+import type { ValidatorId } from './validator-id.js';
 
 /** HarnessError の最小互換型（harness-error Unit の HarnessError との疎結合） */
 export interface HarnessErrorLike {

@@ -5,7 +5,7 @@
  * LayerConfig 値オブジェクト
  * HarnessConfigV2から注入されるL2/L3/L4の実行設定VO
  */
-import { ValidatorId } from './validator-id.js';
+import type { ValidatorId } from './validator-id.js';
 
 export interface LayerConfigProps {
   readonly layer: 'L2' | 'L3' | 'L4';
