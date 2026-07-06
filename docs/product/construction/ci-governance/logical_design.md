@@ -1657,3 +1657,11 @@ This keeps lesson aggregation compatible with Codex-facing setup instructions an
 - `ci:auto-refresh-agent-context` owns AGENTS.md lesson pointers only; installation owns the PhaseGate managed section. Refresh followed by reconcile must not restore the default lesson pointer placeholder or plan package metadata updates.
 - `agent-context-refresh.yml` and `consistency-check.yml` use lockfile-based dependency installation and packaged `npx phasegate` invocations. Scheduled workflows must not assume pnpm, `pnpm/action-setup`, or a repository-local `harness` script.
 - `ci:generate-template` rejects unknown `--*` options before defaulting template type. `--kind` and `--output` are rejected unless formally implemented, and non-render human output describes a plan rather than implying a file was written.
+
+## WI-222 / HF2-05 L4-007 advisory の scheduled-audit metadata 除外
+
+<!-- @work-item-id WI-222 -->
+
+@story-id HF2-05
+
+ci-governance は `ci:generate-template` の scheduled L4 audit（`consistency-check`）向けに validator id リストを `ValidatorIdRegistryAdapter` 経由で導出する。WI-222 / HF2-05 で追加された L4-007（`ac-level-traceability`）は **default-OFF の advisory-only** バリデータであり、この不変条件を保つため `ValidatorIdRegistryAdapter.listForPreset` は `ADVISORY_DEFAULT_OFF_IDS`（`L4-007`）を全 preset・全 templateType で除外する。`listAll`（registry 全件列挙）には含めるが、preset 導出リスト（scheduled-audit metadata）には含めないことで、生成される L4 audit テンプレートに L4-007 が enabled として混入しない。詳細な validator 本体の不変条件（advisory-only / attestation-trust-excluded）は validator-system 側 logical_design の同 WI 反映を正とする。

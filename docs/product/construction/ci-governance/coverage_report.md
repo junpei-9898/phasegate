@@ -13,8 +13,8 @@
 
 | 観点 | カバー項目数 | 未カバー項目数 | カバレッジ率 |
 |------|------------|--------------|------------|
-| 受け入れ基準 | 13 | 0 | 100% |
-| ドメインロジック（不変条件） | 12 | 0 | 100% |
+| 受け入れ基準 | 11（+2 ドメインロジックのみ） | 2 | 85%（§11 訂正履歴参照） |
+| ドメインロジック（不変条件） | 11（+1 モックのみ） | 1 | 92%（§11 訂正履歴参照） |
 | UseCase | 8 | 0 | 100% |
 | Infrastructure Adapter | 4 | 6 | 40% |
 | Presentation Handler | 3 | 0 | 100% |
@@ -24,8 +24,8 @@
 
 ### 判定結果
 
-- ✅ 受け入れ基準: 100%（全13基準に対応テストケースが存在する）
-- ✅ ドメインロジック（不変条件）: 100%（INV-1〜INV-12 全12条件がユニットテストでカバーされる）
+- ⚠️ 受け入れ基準: 85%（13 中 11 が実検証。H13-03-AC-2 / AC-4 は存在性がモック port のみでドメインロジックは検証されるが、実コーパス・本番配線は未検証。§11 訂正履歴参照）
+- ⚠️ ドメインロジック（不変条件）: 92%（INV-1〜INV-12 中 11 条件が検証。INV-10 は AdrExistencePort がモックのみで実 ADR コーパス未検証。§11 訂正履歴参照）
 - ✅ UseCase: 100%（全8UseCaseに正常系・異常系テストが設計されている）
 - ⚠️ Infrastructure Adapter: 40%（外部Unit依存の6アダプタはモック化の方針上テストケース未定義）
 - ✅ Presentation Handler: 100%（全3Handlerにテストが設計されている）
@@ -41,9 +41,9 @@
 
 | AC ID | 基準内容 | 対応テストケースID | カバー状態 |
 |-------|---------|-----------------|----------|
-| H13-01-AC-1 | `aidlc-gate.yml`テンプレートの作成（PR時にL1-L3バリデータ実行） | IT-UC-GenerateCiTemplate-001, IT-UC-RenderCiTemplate-001, IT-API-CiTemplateFlow-001 | ✅ カバー済み |
-| H13-01-AC-2 | `consistency-check.yml`テンプレートの作成（週次でL4バリデータ実行） | IT-UC-GenerateCiTemplate-002, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
-| H13-01-AC-3 | `.husky/pre-commit`テンプレートの作成（commit時にL2バリデータ実行） | IT-UC-GenerateCiTemplate-003, IT-UC-RenderCiTemplate-002, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
+| H13-01-AC-1 | `aidlc-gate.yml`テンプレートの作成（PR時にL1-L3バリデータ実行） | IT-UC-GenerateCiTemplate-001, IT-UC-RenderCiTemplate-WI031-001（実 `docs/templates/ci/aidlc-gate.yml` とバイト一致検証）, IT-API-CiTemplateFlow-001 | ✅ カバー済み |
+| H13-01-AC-2 | `consistency-check.yml`テンプレートの作成（週次でL4バリデータ実行） | IT-UC-GenerateCiTemplate-002, IT-UC-RenderCiTemplate-WI031-002（実 `docs/templates/ci/consistency-check.yml` と一致検証）, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
+| H13-01-AC-3 | `.husky/pre-commit`テンプレートの作成（commit時にL2バリデータ実行） | IT-UC-GenerateCiTemplate-003, IT-UC-RenderCiTemplate-WI031-003（実 `docs/templates/hooks/pre-commit` と一致検証）, IT-UC-RenderCiTemplate-WI182-001, IT-API-CiTemplateFlow-002 | ✅ カバー済み |
 | H13-01-AC-4 | 各テンプレートがphasegate.config.jsonのプリセット設定を参照 | UT-TG-001〜UT-TG-005（PresetConfigPort経由検証）, IT-UC-GenerateCiTemplate-001〜003 | ✅ カバー済み |
 
 ### H13-02: 反復エラー自動エスカレーション
@@ -60,12 +60,12 @@
 | AC ID | 基準内容 | 対応テストケースID | カバー状態 |
 |-------|---------|-----------------|----------|
 | H13-03-AC-1 | AGENTS.mdの記述的バリデータ一覧を`phasegate:status`実行へのポインタに置換 | IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
-| H13-03-AC-2 | AGENTS.mdへのADR参照リンクの追加 | UT-PV-005, UT-PV-006（AdrExistencePort検証） | ✅ カバー済み |
+| H13-03-AC-2 | AGENTS.mdへのADR参照リンクの追加 | UT-PV-005, UT-PV-006（AdrExistencePort **モック**検証のみ — §11 訂正履歴参照） | ⚠️ ドメインロジックのみ（実コーパス未検証・本番配線バグ未修正） |
 | H13-03-AC-3 | 移行前と比較して行数50%以上の削減 | IT-UC-MigrateAgentsMd-003, IT-UC-MigrateAgentsMd-004, IT-REPO-AgentsMdFile-003 | ✅ カバー済み |
-| H13-03-AC-4 | ポインタが参照する先（コマンド、ファイル）の実在性検証 | UT-PV-001〜UT-PV-008, IT-UC-ValidatePointers-001〜003, IT-UC-MigrateAgentsMd-006 | ✅ カバー済み |
+| H13-03-AC-4 | ポインタが参照する先（コマンド、ファイル）の実在性検証 | UT-PV-001〜UT-PV-008（存在性は全て **モック** port）, IT-UC-ValidatePointers-001〜003, IT-UC-MigrateAgentsMd-006 — §11 訂正履歴参照 | ⚠️ ドメインロジックのみ（実コマンド/実 ADR コーパス未検証・本番配線バグ未修正） |
 | H13-03-AC-5 | skill-qualityからのlesson artifactのAGENTS.mdへの集約・反映 | UT-LA-001〜UT-LA-007, IT-UC-AggregateLessons-001〜004, IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
 
-**受け入れ基準カバレッジ: 13/13 = 100%**
+**受け入れ基準カバレッジ: 11/13 実検証 = 85%**（H13-03-AC-2 / AC-4 はドメインロジックのみ・実コーパス/本番配線未検証。§11 訂正履歴参照）
 
 ---
 
@@ -84,11 +84,11 @@
 | INV-7 | `reset()` は `escalated=true` かつ `RepetitionResetCondition` 成立時のみ呼び出し可能 | UT-ER-012, UT-ER-013（違反時エラー検証） | ✅ カバー済み |
 | INV-8 | `PointerEntry[].key` はすべて一意であること（重複key禁止） | UT-AMP-003, UT-AMP-006, UT-AMP-011 | ✅ カバー済み |
 | INV-9 | `validate()` を通過したAgentsMdPointerはDead Pointerを含まないこと | UT-PV-002, UT-PV-004, UT-PV-006（Dead Pointer検出検証） | ✅ カバー済み |
-| INV-10 | `adrLinks` が参照するADRはadr-foundationのADR Frontmatter Schema上に存在すること | UT-PV-005, UT-PV-006 | ✅ カバー済み |
+| INV-10 | `adrLinks` が参照するADRはadr-foundationのADR Frontmatter Schema上に存在すること | UT-PV-005, UT-PV-006（**モック** AdrExistencePort のみ — §11 訂正履歴参照） | ⚠️ ドメインロジックのみ（実 ADR コーパス未検証・本番配線バグ未修正） |
 | INV-11 | `FilePointer.filePath` はプロジェクトルートからの相対パス形式であること | UT-PE-005, UT-PE-007, UT-AMP-010 | ✅ カバー済み |
 | INV-12 | `lessonId` はUUID形式の一意識別子であること | UT-LA-007 | ✅ カバー済み |
 
-**不変条件カバレッジ: 12/12 = 100%**
+**不変条件カバレッジ: 11/12 実検証 = 92%**（INV-10 は AdrExistencePort モックのみ・実 ADR コーパス未検証。§11 訂正履歴参照）
 
 ---
 
@@ -97,7 +97,7 @@
 | UseCase名 | ストーリー | 正常系テスト | 異常系テスト | カバー状態 |
 |---------|----------|------------|------------|----------|
 | GenerateCiTemplateUseCase | H13-01 | IT-UC-GenerateCiTemplate-001〜003（3件） | IT-UC-GenerateCiTemplate-004〜006（3件） | ✅ カバー済み |
-| RenderCiTemplateUseCase | H13-01 | IT-UC-RenderCiTemplate-001〜002（2件） | IT-UC-RenderCiTemplate-003（1件） | ✅ カバー済み |
+| RenderCiTemplateUseCase | H13-01 | IT-UC-RenderCiTemplate-001〜002（モック）+ WI031-001〜003 / WI182-001 / WI183-001 / WI032-001（実 `docs/templates/` とバイト一致検証） | IT-UC-RenderCiTemplate-003（1件） | ✅ カバー済み |
 | RecordErrorOccurrenceUseCase | H13-02 | IT-UC-RecordErrorOccurrence-001〜003（3件） | IT-UC-RecordErrorOccurrence-004（1件） | ✅ カバー済み |
 | CheckEscalationUseCase | H13-02 | IT-UC-CheckEscalation-001〜002（2件） | —（存在しないコード確認はIT-UC-CheckEscalation-002で対応） | ✅ カバー済み |
 | ResetRepetitionUseCase | H13-02 | IT-UC-ResetRepetition-001（1件） | IT-UC-ResetRepetition-002〜004（3件） | ✅ カバー済み |
@@ -230,6 +230,25 @@
 3. **stateful mockの実装確認**: IT-API-RepetitionFlow-001では「状態を保持するstateful mock」が必要とされており、テスト実装時にVitest `vi.fn()`の実装設計に注意が必要。
 
 4. **tmpdir管理の標準化**: 複数のInfrastructure Adapterテストで`os.tmpdir()`を使用するため、`scripts/harness/__tests__/helpers/test-helpers.ts`にtmpdir管理ユーティリティを追加することを推奨。
+
+## 11. 訂正履歴（2026-07-07, WI-237）
+
+反ロンダリング深掘り第 2 弾（skill-quality に続く ci-governance）。実アーティファクト照合で以下を確認・訂正した。
+
+### 11.1 H13-01-AC-1 / AC-2 / AC-3 の実テスト再バインド（訂正・改善）
+
+- **旧**: `IT-UC-RenderCiTemplate-001 / 002`（`vi.fn().mockResolvedValue(...)` の**モック** renderer）を引用していた。これらは outputPath 文字列のみを検証し、テンプレート内容が実ファイルと一致するかは検証しない。
+- **新**: 同一テストファイルに既存していた実ファイル検証テスト `IT-UC-RenderCiTemplate-WI031-001/002/003`, `WI182-001`, `WI183-001`, `WI032-001` を引用に追加。これらは `new YamlTemplateRendererAdapter(process.cwd())` を構築し、レンダ結果 content が実 `docs/templates/ci/aidlc-gate.yml` / `consistency-check.yml` / `docs/templates/hooks/pre-commit` とバイト一致することを検証する（`npx vitest run` で 10/10 green 確認済み）。実検証テストは既存だが未引用だったため、正直な再バインドのみで H13-01 は真正カバーとなる。
+
+### 11.2 H13-03-AC-2 / AC-4 / INV-10 のモック誤引用（CONFIRMED-FALSE）
+
+- `UT-PV-005/006`（`pointer-validator.test.ts`）は `AdrExistencePort` をモック化し、`validate-pointers-usecase.test.ts` は存在性 port を `vi.fn()` で差し替える。**実 `docs/ADR/` コーパス・実コマンドレジストリに対する存在性検証は一切行っていない**。よって従来の「✅ 100% カバー」は実検証を伴わない誤引用だった。ドメインロジック（PointerValidator の突合ロジック）自体は正しく検証されているが、AC 本文が要求する「実在性検証」は未達。該当行を ⚠️（ドメインロジックのみ）へ訂正した。
+
+### 11.3 本番配線バグ（REAL PRODUCTION BUG・確認済み・修正は BLOCKED）
+
+- `scripts/harness/ci-governance/composition-root.ts` L86-87 は `new HarnessApiCommandExistenceAdapter()` / `new AdrFoundationExistenceAdapter()` を**空リストで**生成している。両アダプタは既定引数 `[]` を取るため、本番では全 ADR ポインタ・全コマンドポインタが「存在しない（dead pointer）」と誤判定され、`validate-pointers` / `ci:migrate-agents-md` の存在性検証が実質無効化される（ポート・アダプタ・ドメインは実装済みで、注入データのみの配線欠陥）。自リポの現行 `AGENTS.md` には lesson-pointer / ADR-link セクションが無いため影響は潜在的だが、`ci:migrate-agents-md` でポインタが投入された瞬間に顕在化する。
+- **修正方針**（未適用）: composition-root で `docs/ADR/` の `NNN-*.md` から 3 桁 ADR id を導出し `AdrFoundationExistenceAdapter` に注入、harness-api の canonical `KNOWN_COMMANDS` を `HarnessApiCommandExistenceAdapter` に注入する。ドメインモデル追加・API 契約変更を伴わない純粋な配線修正。
+- **BLOCKED の理由**: `scripts/harness/ci-governance/` の非テストソース編集は `[L2-STORY-REFLECTION]` フェーズゲートにより**現在ブロックされている**。WI-222 の反映は本 WI で解消したが、ci-governance には約 23 件の未反映 WI 背景バックログ（WI-040, WI-107/108/109, WI-120/122/123/124/128, WI-140/141/142/150/174/182/183/185/189/190/194/198）が残存し、これらが解消されるまで全ソース編集がブロックされる。Bash 迂回は品質防御の無効化に当たるため実施しない（CLAUDE.md 禁止事項）。正規手順（反映バックログ返済 or cascade-updater）での解消を要する別 WI として据え置く。この訂正履歴は実検証未達を隠さず正直に露出させることを目的とする。
 
 ## WI-107: L4 Advisory Policy
 
