@@ -16,18 +16,20 @@
 
 | 観点 | カバー項目数 | 未カバー/部分/対象外 | カバレッジ率 |
 |------|------------|--------------|------------|
-| 受け入れ基準（AC） | 20 | 6（未3 / 部分2 / 対象外1） | 76.9% |
+| 受け入れ基準（AC） | 21 | 5（未2 / 部分2 / 対象外1） | 80.8% |
 | ドメインロジック（不変条件） | 11 | 1 | 91.7% |
 | UseCase | 7 | 0 | 100% |
 | Infrastructure Adapter | 5 | 6 | 45.5% |
 | Presentation Handler | 1 | 5 | 16.7% |
-| **総合** | **44** | **18** | **71.0%** |
+| **総合** | **45** | **17** | **72.6%** |
 
-> **2026-07-07 訂正**: 本表は 2026-07-07 の反ロンダリング訂正で下方修正された（旧: 総合 61/1 = 98.4%）。旧数値は §5/§6 の存在しない handler/adapter テスト ID（`IT-API-*Handler`, `IT-API-*E2E`, `IT-REPO-*`）を実在テストとして計上し、モックポート差し替えの UseCase テストを実成果物検証と誤って計上したことによる水増しであった。詳細は末尾「訂正履歴」参照。
+> **2026-07-07 訂正（Phase 1, WI-234）**: 本表は 2026-07-07 の反ロンダリング訂正で下方修正された（旧: 総合 61/1 = 98.4% → 44/62 = 71.0%）。旧数値は §5/§6 の存在しない handler/adapter テスト ID（`IT-API-*Handler`, `IT-API-*E2E`, `IT-REPO-*`）を実在テストとして計上し、モックポート差し替えの UseCase テストを実成果物検証と誤って計上したことによる水増しであった。詳細は末尾「訂正履歴」参照。
+>
+> **2026-07-07 復旧（Phase 2, WI-235）**: 実成果物テストの追加により H12-01-AC-4 を カバー に復旧し、総合 44/62 = 71.0% → **45/62 = 72.6%** に上方修正した。H12-06-AC-2/AC-3 は実コーパス適合プローブで 13/30 スキルが未適合と判明したため、反ロンダリング原則により 未カバー のまま据え置く（§2 H12-06 の適合プローブ結果を参照）。
 
 ### 判定結果
 
-- ⚠️ 71.0%: 訂正後の実カバレッジ。ドメイン層（不変条件 11/12・UseCase 7/7）は概ね実テストで担保されているが、**Infrastructure Adapter は 5/11、Presentation Handler は 1/6（間接1件のみ）** にとどまる。§6 の 6 handler・§5 の 6 adapter は対応するテストが存在せず、受け入れ基準のうち 3 件は誤ったアーティファクト参照（SKILL.md 実体でなく VO/バリデータロジック検証、またはモック固定文字列）に依拠していた。**実ソースは実装済みであり、これはテスト/引用のギャップであってフィーチャの欠落ではない。** 実テスト追加・@ac 束縛・L3-005 ゲーティングは後続フェーズ（WI-235+）で行う。
+- ⚠️ 72.6%: 訂正後の実カバレッジ（Phase 2 反映）。ドメイン層（不変条件 11/12・UseCase 7/7）は概ね実テストで担保されているが、**Infrastructure Adapter は 5/11、Presentation Handler は 1/6（間接1件のみ）** にとどまる。§6 の 5 handler・§5 の 6 adapter は対応するテストが存在しない。受け入れ基準のうち H12-01-AC-4 は Phase 2（WI-235）で実 SKILL.md 内容テストを追加し カバー に復旧した。H12-06-AC-2/AC-3 は実コーパス適合プローブで **30 スキル中 13 が必須 7 セクションに未適合**と判明したため、反ロンダリング原則により 未カバー のまま据え置く（強制 green を禁止）。**実ソースは実装済みであり、これはテスト/引用のギャップおよび実コーパス表記ゆれのギャップであってフィーチャの欠落ではない。** 残る実テスト追加・@ac 束縛・L3-005 ゲーティングは後続フェーズ（WI-236+）で行う。
 
 ---
 
@@ -42,12 +44,14 @@
 | H12-01-AC-1 | TDDサイクルのGreen到達時にAtomic commitが自動生成される | IT-UC-ExecTdd-001, IT-API-TddE2E-001 | ✅ カバー済み |
 | H12-01-AC-2 | Refactor完了時にAtomic commitが自動生成される | IT-UC-ExecTdd-001（phase='REFACTOR'）, UT-ACS-001 | ✅ カバー済み |
 | H12-01-AC-3 | コミットメッセージに`feat({unit}/{US}):`プレフィックスが付与される | UT-CM-005, UT-CM-006, IT-REPO-GitCommit-001 | ✅ カバー済み |
-| H12-01-AC-4 | TDD品質契約（Red→Green→Refactorの各ステップ品質チェック）がSKILL.mdに定義されている | （旧: UT-TC-004〜007）→ 誤アーティファクト | ❌ 未カバー |
+| H12-01-AC-4 | TDD品質契約（Red→Green→Refactorの各ステップ品質チェック）がSKILL.mdに定義されている | UT-SISkill-002, UT-SISkill-003（`__tests__/unit/skill-quality/story-implementor-skill-conformance.test.ts`, 実 SKILL.md 読込・モック無し） | ✅ カバー済み |
 | H12-01-AC-5 | Atomic commit前にL1+L2バリデータが通過していることが保証される | IT-UC-ExecTdd-002, IT-UC-ExecTdd-006, UT-ACS-004, UT-ACS-005, UT-ACS-006, UT-ACS-007 | ✅ カバー済み |
 
-> **AC-4 訂正（2026-07-07）**: 引用の `UT-TC-004〜007` は `__tests__/unit/skill-quality/commit-readiness.test.ts` にあり、`CommitReadiness` 値オブジェクト（`go()`/`noGo()`/`equals()`）のロジックを検証するものであって、`skills/story-implementor/SKILL.md` の内容を検証していない（誤アーティファクト）。SKILL.md 内容検証テストは後続フェーズで整備。
+> **AC-4 訂正（2026-07-07, Phase 1）**: 引用の `UT-TC-004〜007` は `__tests__/unit/skill-quality/commit-readiness.test.ts` にあり、`CommitReadiness` 値オブジェクト（`go()`/`noGo()`/`equals()`）のロジックを検証するものであって、`skills/story-implementor/SKILL.md` の内容を検証していない（誤アーティファクト）。SKILL.md 内容検証テストは後続フェーズで整備。
+>
+> **AC-4 復旧（2026-07-07, Phase 2, WI-235）**: 実 `skills/story-implementor/SKILL.md` をディスクから読み込み（モック無し）、TDD 実装順序セクション（`## 3. TDD実装順序（テストピラミッド準拠）`）と Unit/IT/E2E 各段の `RED → GREEN → REFACTOR` 記述、および Phase 2 ワークフローの各層 `RED→GREEN→REFACTOR` サイクル・テストピラミッド準拠を assert する実成果物テスト（`UT-SISkill-002/003`）を追加。誤アーティファクトを実成果物検証に置換したため カバー に復旧。
 
-H12-01 カバレッジ: **4/5 (80%)**
+H12-01 カバレッジ: **5/5 (100%)**
 
 ---
 
@@ -122,7 +126,24 @@ H12-05 カバレッジ: **4/4 (100%)**
 
 > **AC-1 訂正（2026-07-07）**: `requiredSections` は `skill-structure.ts` の `REQUIRED_SECTIONS` で **7 件**（frontmatter / languageMetadata / purpose / inputs / outputs / prerequisites / executionFlow）。旧「6件」表記はドリフト。VO ロジック自体は `skill-structure.test.ts` で実テストされているため本行は カバー を維持し、件数のみ 6→7 に修正。
 >
-> **AC-2/AC-3 訂正（2026-07-07）**: `IT-UC-ValSkill-001/002` は実在するが、`validate-skill-structure-usecase.test.ts` 内で **モックした `SkillFileReaderPort`（`createMockSkillFileReaderPort` + `vi.fn().mockResolvedValue`）にコード内ハードコードの Markdown 文字列を注入** して検証している。すなわちバリデータ**ロジック**は実テスト済みだが、実在する `skills/*/SKILL.md` コーパスが必須構造に適合することを assert するテストは存在しない。加えて cited した `IT-API-SkillE2E-001/002` はテストツリーに存在しない。→ 実コーパス適合テストは後続フェーズで整備するため 未カバー とする。
+> **AC-2/AC-3 訂正（2026-07-07, Phase 1）**: `IT-UC-ValSkill-001/002` は実在するが、`validate-skill-structure-usecase.test.ts` 内で **モックした `SkillFileReaderPort`（`createMockSkillFileReaderPort` + `vi.fn().mockResolvedValue`）にコード内ハードコードの Markdown 文字列を注入** して検証している。すなわちバリデータ**ロジック**は実テスト済みだが、実在する `skills/*/SKILL.md` コーパスが必須構造に適合することを assert するテストは存在しない。加えて cited した `IT-API-SkillE2E-001/002` はテストツリーに存在しない。→ 実コーパス適合テストは後続フェーズで整備するため 未カバー とする。
+>
+> **AC-2/AC-3 適合プローブ結果（2026-07-07, Phase 2, WI-235）**: 実コーパス適合テストを追加する前に、実 `FileSystemSkillFileReaderAdapter` + `SkillStructureValidator`（本番パス）で全 30 スキルを検証したところ、**13/30 が必須 7 セクションに未適合**であることが判明した（下記）。したがって「全スキルが必須構造に適合する」実コーパステストは現状 red となるため、反ロンダリング原則によりこの 2 行は **未カバー のまま据え置く**（フィルタ・セクション削減による強制 green を禁止）。実コーパスが適合した後に初めて カバー へ復旧できる。未適合スキルと欠落セクション:
+> - `codebase-mapper`: purpose, inputs, prerequisites
+> - `codex-delegator`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `doc-freshness-checker`: purpose, inputs
+> - `engineering-perspective`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `implementation-planner`: purpose, inputs, outputs, prerequisites
+> - `implementation-readiness-checker`: purpose, inputs, prerequisites, executionFlow
+> - `phasegate-config-doctor`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `phasegate-toolkit-guide`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `pointer-validator`: purpose, inputs, prerequisites, executionFlow
+> - `quick-implementor`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `scenario-test-logic-designer`: executionFlow
+> - `skill-creator`: purpose, inputs, outputs, prerequisites, executionFlow
+> - `unit-test-logic-designer`: executionFlow
+>
+> （注: この未適合はセクション見出しの表記ゆれをパーサが吸収しきれていない実成果物側のギャップであり、スキル本体の欠落ではない可能性が高い。実コーパスの適合化はスキル修正またはパーサ拡張として別タスクで扱う。）
 
 H12-06 カバレッジ: **2/4 (実カバー2, 未カバー2)**
 
@@ -132,15 +153,17 @@ H12-06 カバレッジ: **2/4 (実カバー2, 未カバー2)**
 
 | ストーリー | 総AC数 | カバー済み | 部分 | 未カバー | 対象外 | カバレッジ率 |
 |---------|--------|----------|------|--------|--------|------------|
-| H12-01 | 5 | 4 | 0 | 1 | 0 | 80.0% |
+| H12-01 | 5 | 5 | 0 | 0 | 0 | 100% |
 | H12-02 | 4 | 3 | 1 | 0 | 0 | 75.0% |
 | H12-03 | 5 | 5 | 0 | 0 | 0 | 100% |
 | H12-04 | 4 | 2 | 1 | 0 | 1 | 50.0%（本Unit担当分） |
 | H12-05 | 4 | 4 | 0 | 0 | 0 | 100% |
 | H12-06 | 4 | 2 | 0 | 2 | 0 | 50.0% |
-| **合計** | **26** | **20** | **2** | **3** | **1** | **76.9%** |
+| **合計** | **26** | **21** | **2** | **2** | **1** | **80.8%** |
 
-> **訂正（2026-07-07）**: 旧「25/26 = 96.2%」は誤アーティファクト参照（H12-01-AC-4 は CommitReadiness VO、H12-06-AC-2/3 はモック固定文字列）と捏造 handler/E2E ID（H12-02-AC-4, H12-04-AC-4）を実カバーとして計上した水増し。訂正後の実カバー（✅のみ）は 20/26 = 76.9%。
+> **訂正（2026-07-07, Phase 1）**: 旧「25/26 = 96.2%」は誤アーティファクト参照（H12-01-AC-4 は CommitReadiness VO、H12-06-AC-2/3 はモック固定文字列）と捏造 handler/E2E ID（H12-02-AC-4, H12-04-AC-4）を実カバーとして計上した水増し。Phase 1 訂正後の実カバー（✅のみ）は 20/26 = 76.9%。
+>
+> **復旧（2026-07-07, Phase 2, WI-235）**: H12-01-AC-4 に実 SKILL.md 内容テスト（`UT-SISkill-002/003`）を追加し カバー に復旧。実カバー 20/26 = 76.9% → **21/26 = 80.8%**。H12-06-AC-2/3 は実コーパス未適合（13/30）のため据え置き。
 
 ---
 
@@ -247,16 +270,15 @@ Presentation Handler カバレッジ: **1/6 (16.7%, 間接1件のみ)**（2026-0
 
 | 項目 | 状態 | 理由 |
 |-----|------|------|
-| H12-01-AC-4（TDD品質契約が SKILL.md に定義） | ❌ 未カバー | cited した UT-TC-004〜007 は CommitReadiness VO ロジック検証で、SKILL.md 内容を検証していない（誤アーティファクト） |
-| H12-06-AC-2（v0既存 SKILL.md 適合検証） | ❌ 未カバー | IT-UC-ValSkill-001 はモックポート＋固定文字列でバリデータロジックのみ検証。実 `skills/*/SKILL.md` 適合は未検証。IT-API-SkillE2E-001 は不存在 |
-| H12-06-AC-3（v1新規 SKILL.md 適合検証） | ❌ 未カバー | 同上（IT-UC-ValSkill-002 はロジックのみ、IT-API-SkillE2E-002 は不存在） |
+| H12-06-AC-2（v0既存 SKILL.md 適合検証） | ❌ 未カバー | 実コーパス適合プローブで 30 スキル中 13 が必須 7 セクション未適合と判明（§2 H12-06 参照）。全スキル適合を assert する実コーパステストは現状 red のため、反ロンダリング原則により据え置き。実コーパス適合化後に カバー へ復旧可能 |
+| H12-06-AC-3（v1新規 SKILL.md 適合検証） | ❌ 未カバー | 同上（同一コーパスに対する適合検証。13/30 未適合のため据え置き） |
 | H12-02-AC-4（coverage_report への AC網羅率出力） | 🟡 部分 | requirementCoverage 算出は実テスト済みだが handler 出力は未検証。IT-API-CovHandler-* は不存在 |
 | H12-04-AC-4（Agent-Lesson 回帰テスト） | 🟡 部分 | UseCase レベルのモックテストは実在だが cited E2E（IT-API-LessE2E-*）は不存在 |
 | INV-7（LessonArtifact lessonId 一意性） | ❌ 未カバー | cited IT-REPO-LessWriter-001 は不存在。一意性は未検証 |
 | Infrastructure Adapter 6 件 | ❌ 未カバー | FileSystemLessonSourceReader / FileSystemLessonArtifactWriter / AjvLessonArtifactSchema / ValidatorIdRegistryBridge / HarnessConfigQuery / FileSystemSkillFileReader に専用テストなし |
 | Presentation Handler 5 件 | ❌ 未カバー | ExecuteTddCycle / CheckCoverage / RunPlanCheckerLoop / CollectLessons / ValidateSkillStructure handler に専用テストなし（ApplyCascadeUpdate のみ間接検証） |
 
-> いずれも**実ソースは実装済み**であり、テスト/引用のギャップであってフィーチャの欠落ではない。実テスト追加・@ac 束縛・L3-005 ゲーティングは後続フェーズ（WI-235+）で行う。
+> いずれも**実ソースは実装済み**であり、テスト/引用のギャップであってフィーチャの欠落ではない。H12-01-AC-4 は Phase 2（WI-235）で解消済み。残る項目の実テスト追加・@ac 束縛・L3-005 ゲーティングは後続フェーズ（WI-236+）で行う。H12-06-AC-2/3 は実コーパス（13/30 未適合）の適合化が前提となる。
 
 ### 対象外項目
 
@@ -268,21 +290,36 @@ Presentation Handler カバレッジ: **1/6 (16.7%, 間接1件のみ)**（2026-0
 
 ## 9. 次のアクション
 
-### 判定: ⚠️ 71.0% — 後続フェーズで実テスト・ゲーティングを整備（WI-235+）
+### 判定: ⚠️ 72.6% — 後続フェーズで実テスト・ゲーティングを整備（WI-236+）
 
-> **訂正（2026-07-07）**: 旧「判定: ✅ 98.4% — テストロジック設計に進む」は取り消し。旧文の「全 Infrastructure Adapter（11/11）のテストケースが定義済み」「AjvLessonArtifactSchemaAdapter は実スキーマを使用しモック無し」等はいずれも事実に反する（§5 参照）。訂正後の実カバレッジ 71.0% は防御プリセットの閾値を満たさない。
+> **訂正（2026-07-07, Phase 1）**: 旧「判定: ✅ 98.4% — テストロジック設計に進む」は取り消し。旧文の「全 Infrastructure Adapter（11/11）のテストケースが定義済み」「AjvLessonArtifactSchemaAdapter は実スキーマを使用しモック無し」等はいずれも事実に反する（§5 参照）。Phase 1 訂正後の実カバレッジ 71.0% は防御プリセットの閾値を満たさない。
+>
+> **更新（2026-07-07, Phase 2, WI-235）**: H12-01-AC-4 の実 SKILL.md 内容テスト追加により 71.0% → **72.6%**。閾値未達は継続のため後続フェーズを要する。
 
-後続フェーズ（WI-235+）の作業:
+Phase 2（WI-235, 完了分）:
 
+- ✅ H12-01-AC-4 に SKILL.md 内容（TDD 品質契約 Red→Green→Refactor の定義）を検証する実成果物テスト（`UT-SISkill-002/003`）を追加し `@ac H12-01-AC-4` 束縛した。
+
+後続フェーズ（WI-236+）の作業:
+
+- H12-06-AC-2/AC-3 の前提として、実 `skills/*/SKILL.md` コーパスの必須 7 セクション未適合（13/30）を解消する（スキル修正またはセクションパーサ拡張）。適合後に実コーパス適合テストを追加し `@ac` 束縛する
 - §6 の未カバー 5 handler・§5 の未カバー 6 adapter に対する実テストを追加する
-- H12-06-AC-2/AC-3 に対し、実在する `skills/*/SKILL.md` コーパスが必須構造に適合することを assert する**実コーパス適合テスト**を追加する
-- H12-01-AC-4 に対し、SKILL.md 内容（TDD 品質契約の定義）を検証するテストを追加する
 - 各 AC を実テストへ `@ac` 束縛し、L3-005（coverage-report 整合ゲート）で回帰を防止する
 - ドメイン層 UT はモック禁止原則（testing-rules.md）を遵守した純粋単体テストとして維持すること
 
 ---
 
 ## 訂正履歴
+
+### 2026-07-07 — 実成果物テスト追加による復旧（WI-235, quick, Phase 2）
+
+Phase 1（WI-234）で下方修正した行のうち、**実オンディスク成果物を本番コードパスで検証する実テスト**を追加できた行を正直に カバー へ復旧した。フィルタ・アサーション弱体化・強制 green は一切行っていない。
+
+1. **H12-01-AC-4「TDD 品質契約が SKILL.md に定義」→ カバー復旧**。実 `skills/story-implementor/SKILL.md` をディスクから読み込み（モック無し）、`## 3. TDD実装順序（テストピラミッド準拠）` と Unit/IT/E2E 各段の `RED → GREEN → REFACTOR`、Phase 2 ワークフローの各層 `RED→GREEN→REFACTOR` サイクル・テストピラミッド準拠を assert する実成果物テストを追加（`__tests__/unit/skill-quality/story-implementor-skill-conformance.test.ts`, `UT-SISkill-002/003`, `@ac H12-01-AC-4` 束縛）。
+
+2. **H12-06-AC-2/AC-3「SKILL.md が必須構造に適合」→ 未カバー のまま据え置き（実コーパス未適合の正直な所見）**。実テストを書く前に、実 `FileSystemSkillFileReaderAdapter` + `SkillStructureValidator`（本番パス）で全 30 スキルを検証する適合プローブを実施したところ、**13/30 が必須 7 セクションに未適合**であった（欠落セクションは §2 H12-06 の適合プローブ結果に記載）。「全スキルが適合する」実コーパステストは現状 red となるため、反ロンダリング原則により カバー へ復旧せず 未カバー を維持した。実コーパスの適合化（スキル修正またはセクションパーサ拡張）を経て初めて カバー へ復旧できる。
+
+総合カバレッジ: **Phase 1 訂正後 71.0%（44/62）→ Phase 2 後 72.6%（45/62）**。§5/§6 の handler/adapter カバレッジと L3-005 ゲーティングは後続フェーズ（WI-236+）に残る。
 
 ### 2026-07-07 — 反ロンダリング訂正（WI-234, quick）
 
