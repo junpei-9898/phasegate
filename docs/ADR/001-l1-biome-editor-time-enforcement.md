@@ -32,9 +32,11 @@ Rust製 Biome の AST 解析を用いて、L1（Editor-Time）で以下の8ル�
 - Rust 製 Biome により 50-100 倍の高速 AST 解析が可能
 - import グラフ解析によりレイヤー違反を物理的に検出
 
+> 補記（2026-07-05）: 本 ADR が参照する「K1（4層防御モデル）」は v1 時点の層数である。その後 L0（FUSE は defer、hooks engine として実現）が加わり防御モデルは 5層（L0-L4）へ復帰した。経緯は ADR-025（FUSE Hooks Engine は v1 スコープ外）および ADR-029（L0 4層→5層復帰パス）を参照。本 ADR の決定（L1 の 8 ルールを Biome AST で強制）は現行で不変。
+
 ## 関連要件
 
-K1（4層防御モデル）、K3（Biome AST解析）、K3.5（@unit/@layerメタデータ）
+K1（4層防御モデル — 現在は 5層 L0-L4、ADR-029 参照）、K3（Biome AST解析）、K3.5（@unit/@layerメタデータ）
 
 ## Alternatives
 
