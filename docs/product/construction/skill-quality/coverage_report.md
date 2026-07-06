@@ -311,6 +311,13 @@ Phase 2（WI-235, 完了分）:
 
 ## 訂正履歴
 
+### 2026-07-07 — near-miss スキルの executionFlow 見出し正規化（WI-236, quick, docs）
+
+near-miss スキル 2 件（`scenario-test-logic-designer`, `unit-test-logic-designer`）の見出しを、既存バリデータが認識する正規形へ正直に正規化した。両スキルは必須 7 セクションのうち `executionFlow` のみ未認識だったが、その原因は見出しが `## 3フェーズ実行ルール`（⚠️ 無し）であり、`SkillStructureValidator` の heading-map が正規形 `⚠️ 3フェーズ実行ルール`（`startsWith` 照合）のみを認識するためであった。両見出し配下の内容は Phase 1/2/3 + ワークフローからなる**真正な実行フロー**であり（他 AIDLC スキルと同一形式）、見出しを `## ⚠️ 3フェーズ実行ルール` に揃えるのは正直な正規化であってロンダリングではない。バリデータ拡張ルート（セクションパーサ拡張）は skill-quality の L2-STORY-REFLECTION バックログでゲート中のため、`skills/` 側の docs 修正として実施した。
+
+- 本番パス（`FileSystemSkillFileReaderAdapter` + `SkillStructureValidator`）による再プローブで、実コーパス適合は **17/30 → 19/30**（未適合 13/30 → 11/30）に改善。フリップしたのは上記 2 件のみで、他 28 スキルの判定は不変。
+- **H12-06-AC-2/AC-3 は 未カバー のまま据え置く**。残る 11 スキルは `executionFlow` 以外の必須セクション（purpose / inputs / outputs / prerequisites 等）を**真に欠く**ため全スキル適合テストは依然 red であり、その適合化は別途のプロダクト判断（セクションパーサ拡張 or スキル追記）に委ねる。本エントリでは行の カバー フリップ・総合カバレッジ % の変更は一切行っていない。
+
 ### 2026-07-07 — 実成果物テスト追加による復旧（WI-235, quick, Phase 2）
 
 Phase 1（WI-234）で下方修正した行のうち、**実オンディスク成果物を本番コードパスで検証する実テスト**を追加できた行を正直に カバー へ復旧した。フィルタ・アサーション弱体化・強制 green は一切行っていない。
