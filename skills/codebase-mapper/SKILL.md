@@ -8,8 +8,20 @@ languages: [typescript]
 
 # Codebase Mapper
 
+## 目的
+
 全ソースファイルの `@unit`/`@layer` アノテーションとimportグラフを解析し、
 コードベースの構造マップを生成するスキル。
+
+## 入力
+
+- 解析対象ソース: `phasegate.config.json` の `sourceDir` 配下の `**/*.ts`（`__tests__/`・`*.test.ts` は除外）
+- 各ソースファイルの `@unit` / `@layer` アノテーションと `import` 文（Unit間依存グラフの構築に使用）
+
+## 前提条件
+
+- `phasegate.config.json` に `sourceDir` が設定されていること
+- 解析対象ソースに `@unit` / `@layer` アノテーションが付与されていること（欠落ファイルは後述「アノテーション欠落の対処」で報告される）
 
 ## 出力物
 

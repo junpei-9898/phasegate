@@ -8,6 +8,8 @@ languages: [typescript]
 
 # Doc Freshness Checker
 
+## 目的
+
 設計文書の鮮度（freshness）を検証し、古くなった文書や対応コードとの乖離を検出するスキル。
 `phasegate check-freshness` CLIをラップし、結果を解釈・対処する。
 
@@ -15,6 +17,12 @@ languages: [typescript]
 
 - `phasegate.config.json` に `docFreshnessThresholds` が設定されていること（未設定時はデフォルト値使用）
 - git リポジトリ内で実行すること（最終更新日は `git log` で判定）
+
+## 入力
+
+- 対象ディレクトリ: `--dir <path>` または `phasegate.config.json` の `constructionDir`（デフォルト `docs/`）
+- 閾値: `--threshold <days>` または `docFreshnessThresholds`（未設定時はデフォルト30日）
+- git 履歴（最終更新日の判定に使用）
 
 ---
 

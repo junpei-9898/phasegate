@@ -144,6 +144,17 @@ H12-05 カバレッジ: **4/4 (100%)**
 > - `unit-test-logic-designer`: executionFlow
 >
 > （注: この未適合はセクション見出しの表記ゆれをパーサが吸収しきれていない実成果物側のギャップであり、スキル本体の欠落ではない可能性が高い。実コーパスの適合化はスキル修正またはパーサ拡張として別タスクで扱う。）
+>
+> **AC-2/AC-3 適合プローブ更新（2026-07-07, WI-238）**: 上記の見出し表記ゆれのうち、実在コンテンツを伴うものを反ロンダリング原則に沿って正規形へ正規化した（実在するセクションにのみバリデータ認識形の見出しを付与／リネームし、欠落セクションは捏造しない）。結果、実コーパス適合は **19/30 → 23/30** に向上した。flip したのは lifecycle-producer 系の `implementation-planner` / `quick-implementor` / `codebase-mapper` / `doc-freshness-checker` の 4 スキル。以下 7 スキルは該当セクションが本質的に存在しない（advisory / read-only / thinking-framework / delegation-manager）ため、捏造を避け **未適合のまま**据え置く（taxonomy/AC 判断待ち）:
+> - `codex-delegator`: outputs（委任成果物は可変で固有の出力セクションを持たない）
+> - `pointer-validator`: prerequisites, executionFlow（単一フェーズの軽量チェック）
+> - `implementation-readiness-checker`: prerequisites, executionFlow
+> - `phasegate-config-doctor`: outputs, prerequisites, executionFlow
+> - `phasegate-toolkit-guide`: inputs, outputs, prerequisites, executionFlow（入力はユーザー質問でありアーティファクトではない）
+> - `engineering-perspective`: inputs, outputs, prerequisites, executionFlow（思考フレームワーク）
+> - `skill-creator`: inputs, outputs, prerequisites, executionFlow（リファレンスガイド）
+>
+> 全 30 スキルが適合したわけではないため、**H12-06-AC-2/AC-3 は 未カバー のまま**（強制 green 禁止）。本更新は実在見出しの正規化のみで、テスト追加・AC 状態変更・サマリ % 変更は行っていない。
 
 H12-06 カバレッジ: **2/4 (実カバー2, 未カバー2)**
 

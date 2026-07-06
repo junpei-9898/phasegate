@@ -8,7 +8,14 @@ languages: [typescript]
 
 # Implementation Readiness Checker
 
+## 目的
+
 実装開始前に呼び出し、全ての前提条件（設計文書、テスト設計、カバレッジ検証）を**自動検証**するスキル。不足があれば具体的に何が必要かを報告し、対応するスキルを提案する。
+
+## 入力
+
+- 検証対象の Unit / ストーリー (`{unit}` / `{story_id}`)
+- 存在確認する設計文書群（`{constructionDir}` / `{inceptionDir}` 配下の論理設計・テスト設計・カバレッジレポート等、後述「検証ワークフロー Step 1」の一覧参照）
 
 ## 使用タイミング
 

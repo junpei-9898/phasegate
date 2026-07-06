@@ -6,11 +6,13 @@ languages: [typescript]
 
 # Quick Implementor
 
+## 目的
+
 Quick Mode下での軽微変更実装スキル。story-implementorの緩和版として、フルハーネスが過剰な変更に対して最低限の品質を維持しつつ高速に実装を行う。
 
 ## 適用条件チェック（必須）
 
-### 適用可能な変更カテゴリ
+### 入力（適用可能な変更カテゴリ）
 
 | カテゴリ | 例 |
 |---------|---|
@@ -33,7 +35,7 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 
 `type: fix | chore` でも、API契約変更・新ドメインモデル追加・レイヤー構造変更・複数Unitにまたがる実装変更が見えた場合は、通常の除外ルールを優先して `story-implementor` に切り替える。
 
-### 適用除外（フルハーネス必須 → story-implementor を使用）
+### 前提条件（適用除外・フルハーネス必須 → story-implementor を使用）
 
 - 新機能追加
 - API契約変更（Port/Adapter インターフェース変更）
@@ -55,7 +57,7 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 
 ---
 
-## ワークフロー
+## 実行フロー
 
 ### Step 1: 適用条件の判定
 
@@ -95,7 +97,7 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 pnpm test  # 全テスト グリーンを確認
 ```
 
-### Step 5: コミット
+### 出力（Step 5: コミット）
 
 Atomic commit で変更をコミットする。コミットメッセージに `[quick]` プレフィックスを付与。作業対象WIがある場合は `Work-Item: WI-XXX` trailer を必ず含める。
 

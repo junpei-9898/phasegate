@@ -7,6 +7,8 @@ languages: [typescript]
 
 # Skill Creator
 
+## Purpose
+
 This skill provides guidance for creating effective skills.
 
 ## About Skills

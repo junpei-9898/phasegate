@@ -8,6 +8,8 @@ languages: [typescript]
 
 # Implementation Planner
 
+## 目的
+
 UnitドキュメントとConstructionのドメインモデル設計を元に、**設計フェーズの実装計画**を体系的に立案する。
 
 ## ⚠️ `story-implementor` との役割分担
@@ -36,7 +38,7 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 
 ## ワークフロー
 
-## Pre-flight check (BLOCKING)
+## 前提条件チェック（Pre-flight, BLOCKING）
 
 Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
 If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
@@ -86,6 +88,8 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 3. 実装ステップ分解
 4. 影響範囲特定
 
+## 出力ファイル
+
 ### Step 6: 出力
 
 計画をmdファイルとして出力。パスの推奨:
@@ -98,7 +102,7 @@ docs/inception/{unit}/WI-XXX/tdd_implementation_plan.md
 
 ---
 
-## 参照ドキュメント
+## 入力（参照ドキュメント）
 
 | ファイル | 用途 |
 |----------|------|

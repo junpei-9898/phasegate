@@ -6,6 +6,8 @@ languages: [typescript]
 
 # Phasegate Toolkit Guide
 
+## 目的
+
 phasegate ツールキット自体の概念・仕様・設定について、ユーザーの質問に正確に答えるための skill。
 
 ## このスキルが解決する問題

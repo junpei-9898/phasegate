@@ -6,7 +6,16 @@ languages: [typescript]
 
 # Phasegate Config Doctor
 
+## 目的
+
 現在の `phasegate.config.json` を診断し、改善案を **diff 形式** でユーザーに提示する skill。
+
+## 入力
+
+診断対象として以下を Read する（詳細は「診断プロセス Step 1」の一覧参照）:
+
+- `phasegate.config.json`（診断対象）、`package.json` / `pnpm-workspace.yaml` / `lerna.json`（workspace・formatter 検出）
+- `.claude/scripts/hook-config.json`、`.phasegate/manifest.json`、doctor report、`.claude/settings.json` / `.codex/hooks.json`、`.husky/*`、`.github/workflows/*`、`AGENTS.md` / `CLAUDE.md`
 
 ## このスキルが解決する問題
 

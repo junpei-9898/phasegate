@@ -8,8 +8,15 @@ languages: [typescript]
 
 # Pointer Validator
 
+## 目的
+
 設計文書内のファイルパス参照（ポインタ）の有効性を検証するスキル。
 `phasegate validate-pointers` CLIをラップし、broken pointer を検出・修正案を提示する。
+
+## 入力
+
+- 対象ディレクトリ: `--dir <path>`（デフォルト `docs/`）配下の設計文書
+- 検証対象ポインタ: Markdown `[text](path)` リンク / `@file:` `@ref:` / `filePath:` フィールドのパス参照（`http(s)://` URL は対象外）
 
 ## CLIの動作
 

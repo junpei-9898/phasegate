@@ -14,6 +14,8 @@ languages: [typescript]
 
 # Engineering Perspective
 
+## 目的
+
 4人の巨匠の視点を統合し、実用性・シンプルさ・説明責任の観点でレビュー・設計・議論を行う。
 
 ## 視点一覧
