@@ -16,7 +16,7 @@ languages: [typescript]
 - **論理設計** — `docs/product/construction/{unit}/logical_design.md` または ストーリー固有論理設計
 
 ### 任意インプット（あれば参照）
-- **UIモック** — `/mock/*.html`（初期デザイン意図の参考）
+- **UIモック** — プロジェクトルート相対の `mock/` ディレクトリ配下の `*.html`（mock-designer の出力先。初期デザイン意図の参考）
 - **既存UI実装** — 関連する既存画面コンポーネント
 - **既存UIUX設計** — `docs/product/construction/{unit}/uiux_design.md`（更新時に参照）
 - **デザインシステム** — 色・フォント・コンポーネント規約
@@ -34,7 +34,9 @@ languages: [typescript]
 |---------|------|------------|
 | `docs/inception/{unit}/{story_id}/scenario_test_design.md` | ✅ 必須 | シナリオテスト設計の存在を確認 |
 | `docs/product/construction/{unit}/logical_design.md` | ✅ 必須 | 論理設計の存在を確認 |
-| `/mock/*.html` | 📋 推奨 | 初期モックの存在を確認 |
+| `mock/*.html`（プロジェクトルート相対、mock-designer の出力先） | 📋 推奨 | 初期モックの存在を確認 |
+
+> **パス注記**: 上表の設計文書パス（`docs/inception/...` / `docs/product/construction/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
 
 ### 上位設計が存在しない場合のアクション
 

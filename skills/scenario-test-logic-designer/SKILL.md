@@ -36,9 +36,11 @@ TDD実装フェーズ
 
 ### 推奨インプット（あれば参照）
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
-- **既存シナリオテスト** — `e2e/tests/**/*.spec.ts`（パターン参考）
+- **既存シナリオテスト** — 対象プロジェクトの構成（package.json scripts, playwright 設定, `phasegate.config.json` の paths）からテスト配置を特定してパターン参考にする。例（モノレポ構成の場合）: `e2e/tests/**/*.spec.ts`
 - **UIUX設計** — `docs/inception/{unit}/{story_id}/uiux_design.md`
-- **テスト規約** — `docs/principles/testing-rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/testing-rules.md`、phasegate リポジトリ自体では `docs/principles/testing-rules.md` を参照）
+
+> **設計文書パスの注記:** 本スキルが扱う `docs/product/construction/{unit}/...` / `docs/inception/...` パスは既定値。consumer が `phasegate.config.json` の paths 設定を上書きしている場合はそちらに従う。
 
 ---
 
@@ -225,7 +227,7 @@ Phase 2 で設計するシナリオ / E2E テストファイル（`*.spec.ts` / 
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う
 - 疑似コードは実装の指針となる詳細レベルで記載する
 - TDDの「RED」フェーズで正しく失敗するテストを設計する
-- 既存のテストパターン（`e2e/tests/**/*.spec.ts`）を参照してスタイルを統一する
+- 既存のテストパターンを参照してスタイルを統一する（テスト配置は対象プロジェクトの構成から特定する。例（モノレポ構成の場合）: `e2e/tests/**/*.spec.ts`）
 - クリーンアップを確実に行い、テスト間の独立性を保つ
 
 ---

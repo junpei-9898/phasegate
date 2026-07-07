@@ -2,12 +2,14 @@
 
 scenario-test-logic-designer スキルで使用する MSW (Mock Service Worker) パターンのリファレンス。
 
+> **配置パスについて:** 以下のモック配置ディレクトリ（`e2e/mocks/` 等）は対象プロジェクトの構成（`package.json` scripts, playwright 設定, `phasegate.config.json` の paths）から特定すること。本ファイルの具体値は例（モノレポ構成の場合）であり、テンプレート構造自体はそのまま流用してよい。
+
 ---
 
 ## ハンドラー テンプレート
 
 ```typescript
-// e2e/mocks/{context}/handlers.ts
+// 例（モノレポ構成の場合）: e2e/mocks/{context}/handlers.ts
 import { http, HttpResponse } from 'msw';
 
 export const {context}Handlers = [

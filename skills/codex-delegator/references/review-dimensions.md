@@ -20,7 +20,7 @@ grep・diff・テスト実行で自動検証する。判断不要。
 | ID | 次元 | 検証方法 | 重大度 |
 |----|------|---------|--------|
 | C1 | スコープ遵守 | `git diff --name-only` と指示ファイルリストの差分比較 | BLOCK |
-| C2 | 既存破壊なし | `pnpm test` 実行（既存テスト全パス確認） | BLOCK |
+| C2 | 既存破壊なし | プロジェクトのテストコマンド（`npm test` 等、pnpm/yarn は例）実行（既存テスト全パス確認） | BLOCK |
 | C3 | 命名一貫性 | grep: 日本語テスト名、`actual`変数、target/context/describe/it構造 | BLOCK |
 
 ### Tier 1: タスクタイプ別追加

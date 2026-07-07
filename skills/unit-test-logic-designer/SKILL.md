@@ -36,8 +36,10 @@ TDD実装フェーズ
 
 ### 推奨インプット（あれば参照）
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
-- **既存ユニットテスト** — `backend/test/unit/**/*.test.ts`（パターン参考）
-- **テスト規約** — `docs/principles/testing-rules.md`
+- **既存ユニットテスト** — 対象プロジェクトの構成（package.json scripts, vitest 設定, `phasegate.config.json` の paths）からテスト配置を特定してパターン参考にする。例（モノレポ構成の場合）: `backend/test/unit/**/*.test.ts`
+- **テスト規約** — `docs/principles/testing-rules.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/testing-rules.md`、phasegate リポジトリ自体では `docs/principles/testing-rules.md` を参照）
+
+> **設計文書パスの注記:** 本スキルが扱う `docs/product/construction/{unit}/...` / `docs/inception/...` パスは既定値。consumer が `phasegate.config.json` の paths 設定を上書きしている場合はそちらに従う。
 
 ---
 
@@ -213,7 +215,7 @@ Phase 2 で設計するテストファイル（`*.test.ts` / `*.spec.ts`）の�
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` が行う
 - 疑似コードは実装の指針となる詳細レベルで記載する
 - TDDの「RED」フェーズで正しく失敗するテストを設計する
-- 既存のテストパターン（`backend/test/unit/**/*.test.ts`）を参照してスタイルを統一する
+- 既存のテストパターンを参照してスタイルを統一する（テスト配置は対象プロジェクトの構成から特定する。例（モノレポ構成の場合）: `backend/test/unit/**/*.test.ts`）
 
 ---
 

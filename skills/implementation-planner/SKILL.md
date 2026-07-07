@@ -32,7 +32,7 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 - **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
-**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照（consumer プロジェクトでは `node_modules/phasegate/docs/principles/model-routing.md`、phasegate 自リポジトリでは `docs/principles/model-routing.md` を参照する）。**
 
 ---
 
@@ -97,6 +97,8 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 docs/inception/{task_id}_plan.md
 docs/inception/{unit}/WI-XXX/tdd_implementation_plan.md
 ```
+
+> **パス注記**: 本スキルが扱う設計文書パス（`docs/inception/...` / `docs/product/units/...` / `docs/product/construction/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
 
 **[Question][Answer]セクション必須**: 不明点や確認事項をまとめ、ユーザーからのフィードバックを受け取れるようにする。
 

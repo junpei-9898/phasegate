@@ -77,6 +77,8 @@ DDD戦術パターンを用いてドメインモデルを設計するスキル�
 ### 出力ファイル
 `docs/inception/{unit}/domain_model_plan.md`
 
+> **パス注記**: 本スキルが扱う設計文書パス（`docs/inception/...` / `docs/product/construction/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
+
 ### 計画ファイルの構成
 
 ```markdown
@@ -145,7 +147,7 @@ DDD戦術パターンを用いてドメインモデルを設計するスキル�
 
 ## 🔗 成果物のトレーサビリティメタデータ（必須）
 
-Phase 2 で生成する設計文書には、以下 2 種類のメタデータを emit する。`MetadataValidator.validateDesignDocument` が検証対象とし、ISSUE-008 Phase B-2/B-3 完了後は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
+Phase 2 で生成する設計文書には、以下 2 種類のメタデータを emit する。これらのメタデータは `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
 
 ### 1. YAML frontmatter（新規作成時）
 

@@ -10,6 +10,8 @@ languages: [typescript]
 
 ユーザーストーリーからUIモックアップを作成するスキル。AIDLCプロセスのStep 2「mock（モック）を作る」に対応。
 
+このスキルは UI モックアップ（HTML）作成であり、テストコードのモック/スタブ設計ではない（それらは各 test-logic-designer のモック戦略節を参照）。
+
 ## 前提条件チェック
 
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
@@ -17,8 +19,10 @@ languages: [typescript]
 
 ### 任意インプット（あれば参照）
 - **プロダクト概要** — `docs/product/product_overview.md`（全体像・ユビキタス言語）
-- **既存モック** — `/mock` フォルダ内の既存HTMLファイル
+- **既存モック** — `mock/` フォルダ内の既存HTMLファイル
 - **デザインシステム** — 色・フォント・コンポーネントの規約
+
+> **設計文書パスの注記:** 上記および本スキルが扱う `docs/product/...` / `docs/inception/...` パスは既定値。consumer が `phasegate.config.json` の paths 設定を上書きしている場合はそちらに従う。
 
 ---
 
@@ -68,7 +72,7 @@ languages: [typescript]
 - **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
-**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/model-routing.md`、phasegate リポジトリ自体では `docs/principles/model-routing.md`）を参照。**
 
 ---
 
@@ -153,7 +157,7 @@ graph LR
 
 | 種別 | 配置先 |
 |------|--------|
-| 成果物 | `/mock/{画面名}.html` |
+| 成果物 | `mock/{画面名}.html`（プロジェクトルート相対） |
 
 ---
 

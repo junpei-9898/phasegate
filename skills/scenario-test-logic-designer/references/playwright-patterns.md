@@ -186,7 +186,7 @@ export const {SEED_NAME}_SEED = {
 };
 
 export async function seed{SeedName}(): Promise<void> {
-  // Supabase CLIまたはAPIでデータ投入
+  // プロジェクトが採用する DB/BaaS のツール・APIでデータ投入（例: Supabase CLI/API）
 }
 
 export async function cleanup{SeedName}(): Promise<void> {
@@ -221,6 +221,8 @@ export async function create{Entity}(page: Page, data: {Entity}Data): Promise<st
 ---
 
 ## 8. テスト実行コマンド
+
+実行コマンドは対象プロジェクトの構成（`package.json` scripts, playwright 設定, `phasegate.config.json` の paths）から特定する。以下は例（pnpm モノレポ構成の場合）。
 
 ```bash
 # 全シナリオテスト実行

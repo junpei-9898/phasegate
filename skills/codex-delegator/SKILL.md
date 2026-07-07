@@ -22,15 +22,15 @@ codex CLI（gpt-5.4）にタスクをLocal実行で並列委任し、2段階レ�
 
 ## 前提条件
 
-- codex CLI v0.111.0+（`codex exec "<prompt>" --full-auto`）
+- **codex CLI が必須** — codex CLI v0.111.0+（`codex exec "<prompt>" --full-auto`）がインストールされていること。未インストールの環境では本スキルはスキップし、Claude Code が直接実装に切り替える
 - モデル: `gpt-5.4`（ChatGPTアカウントでは派生モデル不可）
-- プロジェクト規約: `docs/principles/testing-rules.md`, `docs/principles/architecture-philosophy.md`
+- プロジェクト規約: `docs/principles/testing-rules.md`, `docs/principles/architecture-philosophy.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/...`、phasegate 自リポジトリでは `docs/principles/...` を参照する）
 - 設計文書が揃っていることが前提（ドメインモデル、論理設計、テストケース設計等）
 
 ## 核心原則
 
 1. **codexに判断させない**: 何を・どのファイルに・どのパターンで作るかはClaude Codeが決定する。codexは具体的指示の実行者
-2. **設計文書との突合がレビューの主軸**: `pnpm test` グリーンだけでは不十分。設計文書のケースID・期待値との一致を検証する
+2. **設計文書との突合がレビューの主軸**: プロジェクトのテストコマンド（`npm test` 等、pnpm/yarn は例）のグリーンだけでは不十分。設計文書のケースID・期待値との一致を検証する
 3. **早期フォールバック**: codexが2回失敗したらClaude Codeが直接実装に切り替える
 4. **Local実行のみ**: codex cloud / @codex review は使用しない。全タスクを `codex exec --full-auto` で実行する
 5. **レビューはdiffベース**: 生成物の全文Readではなく、`git diff` の差分をレビュー入力とする。コンテキストウィンドウを節約し、変更点に集中する

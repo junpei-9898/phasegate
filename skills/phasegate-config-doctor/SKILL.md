@@ -93,7 +93,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
   - DDD タクティカル (`entities/aggregates/repositories`) あり → `strict-ddd` 推奨
   - `core/`, `adapters/`, `ports/` パターン → `hexagonal` 推奨
   - 上記いずれも無し → ユーザーに確認 + `custom` 提案
-- 検出根拠を必ず提示 (例:「`scripts/harness/{domain,application,infrastructure,presentation}` を検出 → `clean` 推奨」)
+- 検出根拠を必ず提示 (例:「`src/{domain,application,infrastructure,presentation}` を検出 → `clean` 推奨」。phasegate 自リポジトリ（dogfood）では `scripts/harness/{domain,application,infrastructure,presentation}`)
 - `architecture.preset = "custom"` だが `architecture.layers` 未定義 → WARN: schema validator で reject される
 
 #### 観点 2: project.preset (防御プリセット)
@@ -180,7 +180,7 @@ product-architect で Unit を作り、いくつかの logical_design を書い�
 ### 💡 改善提案 (SUGGEST)
 
 #### S1: `architecture.preset` 未指定 → "clean" を推奨
-- 検出根拠: `scripts/harness/{domain,application,infrastructure,presentation}` の 4 ディレクトリが存在
+- 検出根拠: `src/{domain,application,infrastructure,presentation}` の 4 ディレクトリが存在（phasegate 自リポジトリ（dogfood）では `scripts/harness/{domain,application,infrastructure,presentation}`）
 - 修正案:
   ```json-diff
    {

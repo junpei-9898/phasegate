@@ -94,7 +94,7 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 ### Step 4: 検証
 
 ```bash
-pnpm test  # 全テスト グリーンを確認
+npm test  # 全テスト グリーンを確認（プロジェクトのテストコマンド。pnpm/yarn 等は適宜読み替える）
 ```
 
 ### 出力（Step 5: コミット）

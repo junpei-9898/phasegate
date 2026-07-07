@@ -11,6 +11,8 @@ languages: [typescript]
 
 This skill provides guidance for creating effective skills.
 
+> **前提・スコープ注記**: phasegate プロジェクトのスキル規約（frontmatter の `model:` / `review:` / `languages:`、正規見出し、日本語テスト規約）が優先される。本スキル内で説明する frontmatter 制限（`name` / `description` のみ）は Anthropic の汎用配布形式の記述であり、phasegate 規約と衝突する場合は phasegate 規約に従うこと。
+
 ## About Skills
 
 Skills are modular, self-contained packages that extend Codex's capabilities by providing

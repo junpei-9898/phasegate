@@ -17,8 +17,10 @@ languages: [typescript]
 
 ### 任意インプット（あれば参照）
 - **論理設計** — `docs/product/construction/{unit}/logical_design.md`
-- **テスト規約** — `docs/principles/testing-rules.md`
+- **テスト規約** — `docs/principles/testing-rules.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/testing-rules.md`、phasegate リポジトリ自体では `docs/principles/testing-rules.md` を参照）
 - **既存ユニットテスト** — 既存パターンの参考
+
+> **設計文書パスの注記:** 上記および本スキルが扱う `docs/product/construction/{unit}/...` / `docs/inception/...` パスは既定値。consumer が `phasegate.config.json` の paths 設定を上書きしている場合はそちらに従う。
 
 ---
 

@@ -111,7 +111,7 @@ Unit間依存グラフを深さ優先探索でサイクル検出する。
 
 | Unit | ファイル数 | レイヤー分布 |
 |------|----------|-----------|
-| harness-error | 12 | domain:4, app:4, infra:2, pres:2 |
+| unit-a | 12 | domain:4, app:4, infra:2, pres:2 |
 | ...
 
 ---
@@ -119,11 +119,11 @@ Unit間依存グラフを深さ優先探索でサイクル検出する。
 ## Unit 間依存グラフ
 
 ```
-harness-api
-  └── depends on: biome-ast-engine, validator-system, ...
+unit-a
+  └── depends on: unit-b, unit-c, ...
 
-validator-system
-  └── depends on: harness-error, config-foundation
+unit-c
+  └── depends on: unit-d, unit-e
 ```
 
 ---

@@ -72,7 +72,7 @@ languages: [typescript]
 - **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
-**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照（consumer プロジェクトでは `node_modules/phasegate/docs/principles/model-routing.md`、phasegate 自リポジトリでは `docs/principles/model-routing.md` を参照する）。**
 
 ---
 
@@ -83,6 +83,8 @@ languages: [typescript]
 
 ### 出力ファイル
 `docs/inception/_shared/environment_design_plan.md`
+
+> **パス注記**: 本スキルが扱う設計文書パス（`docs/inception/...` / `docs/product/environment_contract.md`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
 
 ### 計画ファイルの構成
 

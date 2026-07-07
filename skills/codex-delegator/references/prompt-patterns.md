@@ -6,11 +6,11 @@
 
 ## 共通コンテキスト層
 
-全タスクタイプで以下をプロンプト冒頭に含める:
+全タスクタイプで以下をプロンプト冒頭に含める。アーキテクチャ行は固定値ではなく、対象プロジェクトの `phasegate.config.json` の `architecture.preset` と `layers`（層と依存方向）から導出すること:
 
 ```
-プロジェクト: Phasegate
-アーキテクチャ: ヘキサゴナル + DDD（domain → port → usecase → controller）
+プロジェクト: {プロジェクト名}
+アーキテクチャ: {architecture.preset から導出（例: preset "hexagonal" なら「ヘキサゴナル + DDD（domain → port → usecase → controller）」、preset "clean" なら「クリーンアーキテクチャ（domain → application → infrastructure/presentation）」）}
 ```
 
 ---

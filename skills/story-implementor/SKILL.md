@@ -38,6 +38,8 @@ languages: [typescript]
 | `docs/inception/{unit}/{story_id}/scenario_test_design.md` | 📋 推奨 | シナリオテスト設計の存在を確認 |
 | `docs/product/construction/{unit}/uiux_design.md` | 📋 推奨 | UIUX設計の存在を確認（フロントエンドがある場合） |
 
+> **パス注記**: 上表の設計文書パス（`docs/product/construction/...` / `docs/inception/...` / `docs/product/environment_contract.md`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
+
 ### テスト設計・ロジック設計の事前チェック
 
 **TDD実装の前に、テスト設計が完了していることを確認してください。テスト設計が不足している場合、テスト漏れのリスクがあります。**

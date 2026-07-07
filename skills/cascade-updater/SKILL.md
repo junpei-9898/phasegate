@@ -12,7 +12,7 @@ languages: [typescript]
 
 ## storyReflection ゲート通過の標準手段
 
-`phaseDependencies.storyReflection`（ADR-013）は、`docs/inception/{unit}/{storyId}/` 配下の US/issue 設計が `docs/product/construction/{unit}/` の累積設計文書に反映されていない場合、`src/{unit}/*` および `scripts/harness/{unit}/*` への Write/Edit（Bash 迂回経由の書き込みも含む）を pre-tool-use hook でブロックする。
+`phaseDependencies.storyReflection`（ADR-013）は、`docs/inception/{unit}/{storyId}/` 配下の US/issue 設計が `docs/product/construction/{unit}/` の累積設計文書に反映されていない場合、`src/{unit}/*`（phasegate 自リポジトリ（dogfood）では `scripts/harness/{unit}/*`）への Write/Edit（Bash 迂回経由の書き込みも含む）を pre-tool-use hook でブロックする。
 
 **cascade-updater はこの storyReflection ゲートを通過する標準手段である。**
 
@@ -21,7 +21,7 @@ languages: [typescript]
 - `minimal` プリセットでは storyReflection が無効化されるためゲート連動しないが、cascade-updater による設計整合性の維持は推奨される
 - Quick Mode (`relaxedGates: ["phase-gate"]`) 時は storyReflection も緩和されるため、cascade-updater 実行の必須性は緩まる（ただし品質維持のため実行は推奨）
 
-詳細は ADR-013 および `docs/guide/configuration.md` の storyReflection セクションを参照。
+詳細は ADR-013 および `docs/guide/configuration.md` の storyReflection セクションを参照（consumer プロジェクトでは `node_modules/phasegate/docs/ADR/...` / `node_modules/phasegate/docs/guide/...`、phasegate 自リポジトリでは `docs/...` を参照する）。
 
 ## 前提条件チェック
 

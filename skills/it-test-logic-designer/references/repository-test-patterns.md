@@ -3,9 +3,13 @@
 本ファイルは `it-test-logic-designer` スキルで使用するRepositoryレイヤーのテストテンプレート集。
 シードデータ設計・トランザクション・クリーンアップ戦略を含む。
 
+> **配置パス・DB クライアント・実行コマンドについて:** 以下のテスト配置ディレクトリ（`backend/test/seeds/` 等）・テスト実行コマンドは対象プロジェクトの構成（`package.json` scripts, vitest 設定, `phasegate.config.json` の paths）から特定すること。`getTestClient` / `SupabaseClient` / `supabase-test-helper.js` はプロジェクトが採用する DB/BaaS のテスト用ヘルパーに読み替える（以下は Supabase プロジェクト向けの実装例）。テンプレート構造自体はそのまま流用してよい。
+
 ---
 
 ## テストヘルパーのインポート
+
+以下は例（Supabase プロジェクトの場合）。DB/BaaS ヘルパーはプロジェクトの採用技術に読み替える。
 
 ```typescript
 import { target, context } from '../../helpers/common-helper.js';
@@ -15,7 +19,8 @@ import { getTestClient, cleanupTestData } from '../../helpers/supabase-test-help
 ## シードデータ設計テンプレート
 
 ```typescript
-// backend/test/seeds/{context}/{seed-name}.ts
+// 例（モノレポ構成の場合）: backend/test/seeds/{context}/{seed-name}.ts
+// SupabaseClient 型はプロジェクトが採用する DB/BaaS のクライアント型に読み替える
 
 export const {SEED_NAME}_SEED = {
   // テストデータ定義
@@ -193,6 +198,8 @@ expect(row).not.toBeNull();
 ```
 
 ## テスト実行コマンド
+
+実行コマンドは対象プロジェクトの構成（`package.json` scripts, vitest 設定, `phasegate.config.json` の paths）から特定する。以下は例（pnpm モノレポ構成の場合）。
 
 ```bash
 # 全ITテスト実行

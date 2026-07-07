@@ -2,12 +2,14 @@
 
 unit-test-logic-designer が出力する `unit_test_logic.md` で使用するテストパターンのリファレンス。
 
+> **配置パス・実行コマンドについて:** 以下に登場するテスト配置ディレクトリ（`backend/test/helpers/` 等）・相対インポートパス・テスト実行コマンドは、対象プロジェクトの構成（`package.json` scripts, vitest 設定, `phasegate.config.json` の paths）から特定すること。本ファイルの具体値は例（モノレポ構成の場合）であり、疑似コードのテンプレート構造自体はそのまま流用してよい。
+
 ---
 
 ## 1. ファクトリ関数パターン
 
 ```typescript
-// backend/test/helpers/{context}-helper.ts
+// 例（モノレポ構成の場合）: backend/test/helpers/{context}-helper.ts
 
 /**
  * {集約名}のテスト用ファクトリ
@@ -23,6 +25,8 @@ export function create{Aggregate}(overrides?: Partial<{Aggregate}Props>): {Aggre
 ```
 
 ### 共通ヘルパーのインポート
+
+相対インポートの階層はテストファイルとヘルパーの実配置に依存する。以下は例（モノレポ構成の場合）。
 
 ```typescript
 import { target, context } from '../../../../helpers/common-helper.js';
@@ -194,6 +198,8 @@ expect(actual).toBe(expected);
 ---
 
 ## 7. テスト実行コマンド
+
+実行コマンドは対象プロジェクトの構成（`package.json` scripts, vitest 設定, `phasegate.config.json` の paths）から特定する。以下は例（pnpm モノレポ構成の場合）。
 
 ```bash
 # 全ユニットテスト実行

@@ -38,9 +38,11 @@ TDD実装フェーズ
 
 ### 推奨インプット（あれば参照）
 - **カバレッジレポート** — `docs/product/construction/{unit}/coverage_report.md`
-- **既存ITテスト** — `backend/test/integration/**/*.test.ts`（パターン参考）
-- **テスト規約** — `docs/principles/testing-rules.md`
+- **既存ITテスト** — 対象プロジェクトの構成（package.json scripts, vitest 設定, `phasegate.config.json` の paths）からテスト配置を特定してパターン参考にする。例（モノレポ構成の場合）: `backend/test/integration/**/*.test.ts`
+- **テスト規約** — `docs/principles/testing-rules.md`（consumer プロジェクトでは `node_modules/phasegate/docs/principles/testing-rules.md`、phasegate リポジトリ自体では `docs/principles/testing-rules.md` を参照）
 - **ストーリー固有論理設計** — `docs/inception/{unit}/{story_id}/logical_design.md`
+
+> **設計文書パスの注記:** 本スキルが扱う `docs/product/construction/{unit}/...` / `docs/inception/...` パスは既定値。consumer が `phasegate.config.json` の paths 設定を上書きしている場合はそちらに従う。
 
 ---
 
@@ -105,7 +107,7 @@ TDD実装フェーズ
 | `{controller}.test.ts` | {Controller名} | X |
 
 ## 3. DB/モック戦略
-- テストDB: ローカルSupabase使用
+- テストDB: プロジェクトが採用する DB/BaaS のテスト用インスタンス（例: ローカル Supabase）
 - トランザクション制御: テスト毎にクリーンアップ
 - モック対象: 外部API（例: ○○）
 
@@ -253,7 +255,7 @@ Phase 2 で設計する IT テストファイル（`*.test.ts` / `*.it.test.ts`�
 - **テストコードは生成しない**（設計文書のみ）— 実装は `story-implementor` スキル（codex-delegator経由、またはメインセッションで直接実行）が行う
 - 疑似コードは実装の指針となる詳細レベルで記載する
 - TDDの「RED」フェーズで正しく失敗するテストを設計する
-- 既存のテストパターン（`backend/test/integration/**/*.test.ts`）を参照してスタイルを統一する
+- 既存のテストパターンを参照してスタイルを統一する（テスト配置は対象プロジェクトの構成から特定する。例（モノレポ構成の場合）: `backend/test/integration/**/*.test.ts`）
 - シードデータはテスト間で独立させ、相互干渉を防ぐ
 
 ---

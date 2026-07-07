@@ -68,7 +68,7 @@ languages: [typescript]
 - **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
-**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
+**Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照（consumer プロジェクトでは `node_modules/phasegate/docs/principles/model-routing.md`、phasegate 自リポジトリでは `docs/principles/model-routing.md` を参照する）。**
 
 ---
 
@@ -79,6 +79,8 @@ Unit分割の方針・グルーピングの根拠・不明点を整理し、人�
 
 ### 出力ファイル
 `docs/inception/_shared/unit_design_plan.md`
+
+> **パス注記**: 本スキルが扱う設計文書パス（`docs/inception/...` / `docs/product/units/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
 
 ### 計画ファイルの構成
 
@@ -157,7 +159,7 @@ Unit分割の方針・グルーピングの根拠・不明点を整理し、人�
 
 ## 🔗 成果物のトレーサビリティメタデータ（必須）
 
-Phase 2 で生成する Unit 定義文書には、以下 2 種類のメタデータを emit する。`MetadataValidator.validateDesignDocument` が検証対象とし、ISSUE-008 Phase B-2/B-3 完了後は `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
+Phase 2 で生成する Unit 定義文書には、以下 2 種類のメタデータを emit する。これらのメタデータは `npx phasegate validate-metadata` / pre-commit で自動チェックされる。
 
 ### 1. YAML frontmatter（新規作成時）
 
