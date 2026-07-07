@@ -1,5 +1,6 @@
 ---
 name: codex-delegator
+kind: advisory
 description: |
   codex CLI（gpt-5.4）にタスクをLocal実行で並列委任し、Claude Codeがマネージャー/レビュワーとして品質管理する。
   対象: 設計計画、設計文書、テスト設計、コード実装など全タスクタイプ。

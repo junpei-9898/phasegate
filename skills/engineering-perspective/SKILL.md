@@ -1,5 +1,6 @@
 ---
 name: engineering-perspective
+kind: advisory
 description: |
   ケント・ベック + マーティン・ファウラー + アンクル・ボブ + エリック・エヴァンスの視点を統合したエンジニアリング思考フレームワーク。
   以下の場面で使用:

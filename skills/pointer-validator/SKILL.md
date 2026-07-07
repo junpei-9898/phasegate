@@ -1,5 +1,6 @@
 ---
 name: pointer-validator
+kind: advisory
 description: 設計文書内のファイルポインタ（相対パス参照）の有効性を検証するスキル（L4バリデータ拡張）。`phasegate validate-pointers` CLIを使い、ドキュメント内で参照されているファイルパスが実際に存在するかチェックする。使用タイミング: 「ドキュメントのリンク切れを確認して」「ポインタ検証を実行して」「broken pointer を探して」「設計文書の参照が正しいか確認して」など。
 model: sonnet
 review: opus

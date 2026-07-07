@@ -1,12 +1,13 @@
 /**
  * @layer domain
  * @unit skill-quality
- * @work-item-id WI-212
+ * @work-item-id WI-212, WI-241
  */
 import { SkillStructure } from '../value-objects/skill-structure.js';
 import { SkillValidationResult } from '../value-objects/skill-validation-result.js';
 import type { SkillFileReaderPort } from '../ports/skill-file-reader-port.js';
 import type { SectionName } from '../types/section-name.js';
+import type { SkillKind } from '../types/skill-kind.js';
 
 export class SkillStructureValidator {
   constructor(private readonly skillFileReaderPort: SkillFileReaderPort) {}
@@ -14,7 +15,8 @@ export class SkillStructureValidator {
   async validate(skillFilePath: string): Promise<SkillValidationResult> {
     const rawContent = await this.skillFileReaderPort.read(skillFilePath);
     const actualSections = this.extractSections(rawContent);
-    const structure = SkillStructure.default();
+    const kind = this.extractKind(rawContent);
+    const structure = SkillStructure.forKind(kind);
     const missingSections = structure.getMissingSections(actualSections);
 
     if (missingSections.length === 0) {
@@ -72,6 +74,15 @@ export class SkillStructureValidator {
     }
 
     return sections;
+  }
+
+  private extractKind(content: string): SkillKind {
+    const lines = content.split('\n');
+    const closingDelimiterIndex = lines.findIndex((line, index) => index > 0 && line.trim() === '---');
+    if (lines[0]?.trim() !== '---' || closingDelimiterIndex < 0) return 'lifecycle';
+
+    const frontmatterLines = lines.slice(1, closingDelimiterIndex);
+    return frontmatterLines.some((line) => /^\s*kind\s*:\s*advisory\s*$/.test(line)) ? 'advisory' : 'lifecycle';
   }
 
   private hasLanguageMetadata(lines: readonly string[]): boolean {

@@ -44,7 +44,7 @@ Skill catalog CLI entries are concrete skill directories containing `SKILL.md`. 
 | SourceContext | 値オブジェクト | 教訓発生元情報（ファイルパス or コンテキスト記述） |
 | CascadeUpdateTarget | 値オブジェクト | 累積更新対象（ファイルパス + 付与するstory-idタグ文字列） |
 | CascadeUpdateResult | 値オブジェクト | 累積更新結果（更新ファイル数・付与story-id一覧・エラー一覧） |
-| SkillStructure | 値オブジェクト | SKILL.mdの必須セクション一覧（frontmatter/purpose/inputs/outputs/prerequisites/executionFlow）。ドメイン層ハードコードのVO定数 |
+| SkillStructure | 値オブジェクト | SKILL.mdの必須セクション一覧。WI-241以降はkind別の2集合（lifecycle=7: frontmatter/languageMetadata/purpose/inputs/outputs/prerequisites/executionFlow、advisory=3: frontmatter/languageMetadata/purpose）を`forKind(kind)`で返すドメイン層ハードコードのVO定数。`default()`は`forKind('lifecycle')`のエイリアス |
 | SkillValidationResult | 値オブジェクト | SKILL.md検証結果（passed/missingSection[]/actualSections[]） |
 
 ### 他Unitから受け取るShared Kernel
@@ -145,6 +145,7 @@ Skill catalog CLI entries are concrete skill directories containing `SKILL.md`. 
 | LoopStatus | `'RUNNING' \| 'PASSED' \| 'FAILED_EXCEEDED'` |
 | TddPhase | `'RED' \| 'GREEN' \| 'REFACTOR'` |
 | SectionName | `string`（SKILL.mdセクション名。例: `'## 目的'`, `'## 入力'`） |
+| SkillKind | `'lifecycle' \| 'advisory'`（スキル種別。SKILL.md frontmatter の `kind:` で宣言。未宣言は `lifecycle`（fail-closed）。`kind: advisory` を宣言できるスキルは corpus テストの固定 allowlist（7 件）に限定される）<!-- @work-item-id WI-241 --> |
 | UnitName | `string`（ハーネスのUnit識別子。例: `'skill-quality'`） |
 | ISODateString | `string`（ISO 8601形式の日時文字列） |
 | ValidationViolation | `{ ruleId: string; message: string; location?: string }` |
@@ -157,7 +158,7 @@ Skill catalog CLI entries are concrete skill directories containing `SKILL.md`. 
 | LessonCollector | H12-04 | [Agent-Lesson]タグ付きエントリをLessonSourceReaderPortから収集しLesson[]を生成 | LessonSourceReaderPort |
 | LessonDeduplicator | H12-04 | LessonFingerprintによる重複Lesson検出・Lesson[]から重複を除去して統合 | （ポートなし: 純粋計算） |
 | CascadeUpdateService | H12-05 | @story-id HXX-XX付与対象ファイルの特定（ValidatorIdRegistryPort参照）・CascadeUpdateTarget生成・FileSystemPortでファイル更新 | FileSystemPort, ValidatorIdRegistryPort |
-| SkillStructureValidator | H12-06 | SkillFileReaderPortでSKILL.md読み取り → SkillStructure（VO定数）と比較 → SkillValidationResult生成 | SkillFileReaderPort |
+| SkillStructureValidator | H12-06, WI-241 | SkillFileReaderPortでSKILL.md読み取り → frontmatterの`kind:`を抽出（未宣言=lifecycle） → `SkillStructure.forKind(kind)`と比較 → SkillValidationResult生成 | SkillFileReaderPort |
 
 ---
 
@@ -196,6 +197,9 @@ Skill catalog CLI entries are concrete skill directories containing `SKILL.md`. 
 | INV-9 | CommitMessage | `format()`の結果は`feat({unit}/{storyId}): {description}`パターンに準拠 | 生成時に検証済みのため実行時違反なし |
 | INV-9a | CommitMessage | `workItemId`を指定する場合は`WI-\d+`に一致する | コンストラクタでHarnessError |
 | INV-10 | SkillStructure | `requiredSections`は変更不可（ドメイン層でハードコード）かつ1件以上 | VO定数のため実行時変更不可 |
+| INV-13 | SkillStructure | `forKind('lifecycle')`は7セクション、`forKind('advisory')`は3セクションを返す<!-- @work-item-id WI-241 --> | VO定数（frozen 2種） |
+| INV-14 | SkillStructure | advisory必須集合はlifecycle必須集合の真部分集合 | VO定数の定義で保証 |
+| INV-15 | SkillStructure | 同一kindへの`forKind`呼び出しは同一インスタンスを返す（キャッシュ） | ファクトリのキャッシュで保証 |
 | INV-11 | Lesson | `content`は非空文字列、`fingerprint`はcontent正規化後のSHA-256ハッシュと一致 | コンストラクタでHarnessError |
 | INV-12 | CoverageReport | `requirementCoverage`と`codeCoverage`はいずれも非null | コンストラクタでHarnessError |
 

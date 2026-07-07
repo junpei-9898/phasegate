@@ -1,5 +1,6 @@
 ---
 name: skill-creator
+kind: advisory
 description: Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.
 model: opus
 languages: [typescript]

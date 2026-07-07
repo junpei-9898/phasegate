@@ -315,22 +315,24 @@ scripts/harness/skill-quality/
 | unit | `UnitName` | ハーネス Unit 識別子 | Yes |
 | storyId | `StoryId` | 対応ストーリー ID | Yes |
 | description | `string` | コミット内容の簡潔な説明 | Yes |
+| workItemId | `string \| undefined` | `Work-Item` trailer に付与する WI ID（`WI-\d+`）<!-- @work-item-id WI-072 --> | No |
 
 **メソッド一覧**
 
-##### `static create(unit: UnitName, storyId: StoryId, description: string): CommitMessage`
+##### `static create(unit: UnitName, storyId: StoryId, description: string, workItemId?: string): CommitMessage`
 
-- 入力: `unit`, `storyId`, `description`
+- 入力: `unit`, `storyId`, `description`, `workItemId`（省略可・既存3引数呼び出しは後方互換で動作）
 - 出力: `CommitMessage`
 - 処理フロー:
   1. INV-8 チェック: `unit`, `storyId`, `description` がいずれも非空文字列であることを検証する
-  2. `Object.freeze()` で凍結して返す
-- 例外: `EMPTY_COMMIT_FIELD`（INV-8）
+  2. `workItemId` 指定時は `WI-\d+` パターンを検証する（WI-072 / H12-07）
+  3. `Object.freeze()` で凍結して返す
+- 例外: `EMPTY_COMMIT_FIELD`（INV-8）、`INVALID_WORK_ITEM_ID`（`workItemId` が `WI-\d+` に不一致）
 
 ##### `format(): string`
 
 - 入力: なし
-- 出力: `string`（`feat({unit}/{storyId}): {description}` 形式）
+- 出力: `string`（`feat({unit}/{storyId}): {description}` 形式。`workItemId` 指定時は空行を挟んで `Work-Item: WI-XXX` trailer を付与する。trailer 整形は本 VO に閉じ、AtomicCommitService / GitCommitExecutorAdapter は `format()` に依存する）
 - 処理フロー: テンプレートに属性を当てはめて文字列を生成する
 - 例外: なし
 - 不変条件: INV-9（生成時に検証済みのため実行時違反なし）
@@ -339,7 +341,7 @@ scripts/harness/skill-quality/
 
 - 入力: `other: CommitMessage`
 - 出力: `boolean`
-- 処理フロー: `unit`, `storyId`, `description` の全フィールドを値比較する
+- 処理フロー: `unit`, `storyId`, `description`, `workItemId` の全フィールドを値比較する
 - 例外: なし
 
 **バリデーションルール**
@@ -700,34 +702,43 @@ scripts/harness/skill-quality/
 
 #### 2.2.13 SkillStructure
 
-`domain_model.md §3 INV-10` の設計判断に従い、ドメイン層でハードコードされた VO 定数として定義する。
+`domain_model.md §3 INV-10` の設計判断に従い、ドメイン層でハードコードされた VO 定数として定義する。WI-241 以降は `SkillKind`（`'lifecycle' | 'advisory'`、`domain/types/skill-kind.ts`）別の 2 集合を持つ。<!-- @work-item-id WI-241 -->
 
 **属性一覧**
 
 | 属性 | 型 | 説明 | 必須 |
 |------|----|------|------|
-| requiredSections | `readonly SectionName[]` | 必須セクション名一覧（変更不可） | Yes |
+| requiredSections | `readonly SectionName[]` | 当該 kind の必須セクション名一覧（変更不可） | Yes |
 
-**定数値**
+**定数値（kind 別・INV-13/14）**
 
 ```
-requiredSections = [
+lifecycle（既定） = [
   'frontmatter',
+  'languageMetadata',
   'purpose',
   'inputs',
   'outputs',
   'prerequisites',
   'executionFlow'
 ]
+advisory = ['frontmatter', 'languageMetadata', 'purpose']   # lifecycle の真部分集合
 ```
 
 **メソッド一覧**
 
-##### `static default(): SkillStructure`（定数アクセサ）
+##### `static forKind(kind: SkillKind): SkillStructure`（kind 別ファクトリ）
+
+- 入力: `kind: SkillKind`
+- 出力: `SkillStructure`（当該 kind の requiredSections）
+- 処理フロー: kind ごとにキャッシュ済みの `Object.freeze()` されたインスタンスを返す（同一 kind は同一インスタンス・INV-15）
+- 例外: なし
+
+##### `static default(): SkillStructure`（定数アクセサ・後方互換）
 
 - 入力: なし
-- 出力: `SkillStructure`（requiredSections=定数値）
-- 処理フロー: キャッシュ済みの `Object.freeze()` されたインスタンスを返す
+- 出力: `SkillStructure`（`forKind('lifecycle')` と同一インスタンス）
+- 処理フロー: `forKind('lifecycle')` のエイリアス
 - 例外: なし
 - 不変条件: INV-10（実行時変更不可）
 
@@ -878,7 +889,7 @@ requiredSections = [
 
 #### 2.3.5 SkillStructureValidator
 
-**責務**: `SkillStructure`（VO 定数）と SKILL.md 実体を比較し、`SkillValidationResult` を生成する。
+**責務**: `SkillStructure`（VO 定数）と SKILL.md 実体を比較し、`SkillValidationResult` を生成する。WI-241 以降は frontmatter の `kind:` 宣言に応じた必須集合で検証する。<!-- @work-item-id WI-241 -->
 
 **コンストラクタ依存**
 
@@ -891,10 +902,12 @@ requiredSections = [
 - 処理フロー:
   1. `skillFileReaderPort.read(skillFilePath)` → `rawContent: string` を取得する
   2. `rawContent` からセクション名一覧（`actualSections: SectionName[]`）を抽出する
-  3. `SkillStructure.default().getMissingSections(actualSections)` で欠落セクションを算出する
-  4. `missingSection.length === 0` なら `SkillValidationResult.passed(actualSections)` を返す
-  5. `missingSection.length > 0` なら `SkillValidationResult.failed(missingSection, actualSections)` を返す
+  3. frontmatter（先頭 `---` 〜 次の `---`）から `kind:` を抽出する。`kind: advisory` のときのみ `advisory`、それ以外（未宣言・frontmatter 無し・`kind: lifecycle` 明示）は `lifecycle`（fail-closed）
+  4. `SkillStructure.forKind(kind).getMissingSections(actualSections)` で欠落セクションを算出する
+  5. `missingSection.length === 0` なら `SkillValidationResult.passed(actualSections)` を返す
+  6. `missingSection.length > 0` なら `SkillValidationResult.failed(missingSection, actualSections)` を返す
 - 例外: `SKILL_FILE_NOT_FOUND`（Port 実装でファイルが存在しない場合）
+- 運用制約: `kind: advisory` を宣言できるスキルは corpus conformance テストの固定 allowlist（codex-delegator / engineering-perspective / implementation-readiness-checker / phasegate-config-doctor / phasegate-toolkit-guide / pointer-validator / skill-creator の 7 件）に限定され、8 件目の自己宣言はテスト fail によって allowlist（=テスト）の意識的変更を強制する
 
 ---
 

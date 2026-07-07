@@ -1,11 +1,12 @@
 /**
  * @layer domain
  * @unit skill-quality
- * @work-item-id WI-212
+ * @work-item-id WI-212, WI-241
  */
 import type { SectionName } from '../types/section-name.js';
+import type { SkillKind } from '../types/skill-kind.js';
 
-const REQUIRED_SECTIONS: readonly SectionName[] = [
+const REQUIRED_SECTIONS: readonly SectionName[] = Object.freeze([
   'frontmatter',
   'languageMetadata',
   'purpose',
@@ -13,7 +14,13 @@ const REQUIRED_SECTIONS: readonly SectionName[] = [
   'outputs',
   'prerequisites',
   'executionFlow',
-];
+]);
+
+const ADVISORY_REQUIRED_SECTIONS: readonly SectionName[] = Object.freeze([
+  'frontmatter',
+  'languageMetadata',
+  'purpose',
+]);
 
 export class SkillStructure {
   readonly requiredSections: readonly SectionName[];
@@ -23,13 +30,22 @@ export class SkillStructure {
     Object.freeze(this);
   }
 
-  private static _instance: SkillStructure | null = null;
+  private static _instances: Partial<Record<SkillKind, SkillStructure>> = {};
+
+  static forKind(kind: SkillKind): SkillStructure {
+    const cached = SkillStructure._instances[kind];
+    if (cached) {
+      return cached;
+    }
+
+    const requiredSections = kind === 'advisory' ? ADVISORY_REQUIRED_SECTIONS : REQUIRED_SECTIONS;
+    const instance = new SkillStructure(requiredSections);
+    SkillStructure._instances[kind] = instance;
+    return instance;
+  }
 
   static default(): SkillStructure {
-    if (!SkillStructure._instance) {
-      SkillStructure._instance = new SkillStructure(REQUIRED_SECTIONS);
-    }
-    return SkillStructure._instance;
+    return SkillStructure.forKind('lifecycle');
   }
 
   getMissingSections(actualSections: readonly SectionName[]): readonly SectionName[] {
