@@ -49,6 +49,14 @@ export class StoryReflectionChecker {
           continue;
         }
 
+        if (
+          resolvedInception.isCrossWorkItem &&
+          productPath.endsWith("domain_model.md") &&
+          !(await this.fsPort.storyTouchesUnitLayer(storyId, unitId, "domain"))
+        ) {
+          continue;
+        }
+
         const hasAnnotation = await this.fsPort.fileContainsStoryAnnotation(productPath, storyId);
 
         if (!hasAnnotation) {

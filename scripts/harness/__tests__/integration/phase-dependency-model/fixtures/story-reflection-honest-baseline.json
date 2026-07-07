@@ -1,0 +1,337 @@
+[
+  {
+    "unit": "agent-integration",
+    "storyId": "WI-001",
+    "productPath": "docs/product/construction/agent-integration/logical_design.md"
+  },
+  {
+    "unit": "agent-integration",
+    "storyId": "WI-015",
+    "productPath": "docs/product/construction/agent-integration/domain_model.md"
+  },
+  {
+    "unit": "agent-integration",
+    "storyId": "WI-015",
+    "productPath": "docs/product/construction/agent-integration/logical_design.md"
+  },
+  {
+    "unit": "agent-integration",
+    "storyId": "WI-025",
+    "productPath": "docs/product/construction/agent-integration/logical_design.md"
+  },
+  {
+    "unit": "agent-integration",
+    "storyId": "WI-102",
+    "productPath": "docs/product/construction/agent-integration/logical_design.md"
+  },
+  {
+    "unit": "biome-ast-engine",
+    "storyId": "WI-119",
+    "productPath": "docs/product/construction/biome-ast-engine/logical_design.md"
+  },
+  {
+    "unit": "biome-ast-engine",
+    "storyId": "WI-134",
+    "productPath": "docs/product/construction/biome-ast-engine/logical_design.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-040",
+    "productPath": "docs/product/construction/ci-governance/logical_design.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-120",
+    "productPath": "docs/product/construction/ci-governance/logical_design.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-122",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-123",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-124",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-128",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-190",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "ci-governance",
+    "storyId": "WI-194",
+    "productPath": "docs/product/construction/ci-governance/domain_model.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-012",
+    "productPath": "docs/product/construction/config-foundation/logical_design.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-109",
+    "productPath": "docs/product/construction/config-foundation/logical_design.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-121",
+    "productPath": "docs/product/construction/config-foundation/logical_design.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-134",
+    "productPath": "docs/product/construction/config-foundation/logical_design.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-135",
+    "productPath": "docs/product/construction/config-foundation/logical_design.md"
+  },
+  {
+    "unit": "config-foundation",
+    "storyId": "WI-191",
+    "productPath": "docs/product/construction/config-foundation/domain_model.md"
+  },
+  {
+    "unit": "docs",
+    "storyId": "WI-025",
+    "productPath": "docs/product/construction/docs/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-132",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-133",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-134",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-135",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-136",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-137",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-138",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-170",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-171",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-172",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-173",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-174",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "documentation",
+    "storyId": "WI-175",
+    "productPath": "docs/product/construction/documentation/logical_design.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-109",
+    "productPath": "docs/product/construction/harness-api/domain_model.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-113",
+    "productPath": "docs/product/construction/harness-api/domain_model.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-123",
+    "productPath": "docs/product/construction/harness-api/logical_design.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-143",
+    "productPath": "docs/product/construction/harness-api/domain_model.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-143",
+    "productPath": "docs/product/construction/harness-api/logical_design.md"
+  },
+  {
+    "unit": "harness-api",
+    "storyId": "WI-205",
+    "productPath": "docs/product/construction/harness-api/logical_design.md"
+  },
+  {
+    "unit": "phase2-extensions",
+    "storyId": "WI-128",
+    "productPath": "docs/product/construction/phase2-extensions/domain_model.md"
+  },
+  {
+    "unit": "quick-mode",
+    "storyId": "WI-060",
+    "productPath": "docs/product/construction/quick-mode/logical_design.md"
+  },
+  {
+    "unit": "quick-mode",
+    "storyId": "WI-140",
+    "productPath": "docs/product/construction/quick-mode/domain_model.md"
+  },
+  {
+    "unit": "quick-mode",
+    "storyId": "WI-204",
+    "productPath": "docs/product/construction/quick-mode/domain_model.md"
+  },
+  {
+    "unit": "skill-quality",
+    "storyId": "WI-072",
+    "productPath": "docs/product/construction/skill-quality/logical_design.md"
+  },
+  {
+    "unit": "skill-quality",
+    "storyId": "WI-241",
+    "productPath": "docs/product/construction/skill-quality/logical_design.md"
+  },
+  {
+    "unit": "traceability-model",
+    "storyId": "WI-140",
+    "productPath": "docs/product/construction/traceability-model/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-107",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-107",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-108",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-108",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-110",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-111",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-112",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-113",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-114",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-115",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-116",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-122",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-124",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-125",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-128",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-131",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-140",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-143",
+    "productPath": "docs/product/construction/validator-system/logical_design.md"
+  },
+  {
+    "unit": "validator-system",
+    "storyId": "WI-217",
+    "productPath": "docs/product/construction/validator-system/domain_model.md"
+  }
+]

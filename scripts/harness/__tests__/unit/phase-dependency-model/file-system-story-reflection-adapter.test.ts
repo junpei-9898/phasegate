@@ -5,7 +5,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { FileSystemStoryReflectionAdapter } from "../../../phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js";
 import { context, target } from "../../helpers/test-helpers.ts";
 
@@ -77,6 +77,35 @@ target("FileSystemStoryReflectionAdapter#storyAffectsUnit", () => {
 
       // Assert
       expect(actual).toBe(false);
+    });
+  });
+
+  describe("storyAffectsUnit の affects 未定義の扱い (WI-246)", () => {
+    it("affectsキーが無いdescriptionはstoryAffectsUnitがfalseを返す", async () => {
+      // Arrange
+      await mkdir(path.join(rootDir, "docs/inception/_cross/WI-901"), { recursive: true });
+      await writeFile(
+        path.join(rootDir, "docs/inception/_cross/WI-901/description.md"),
+        "---\nid: WI-901\ntype: issue\nseverity: normal\nstatus: drafted\n---\n",
+      );
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.storyAffectsUnit("WI-901", "order");
+
+      // Assert
+      expect(actual).toBe(false);
+    });
+
+    it("descriptionが存在しない場合はtrueを維持する", async () => {
+      // Arrange
+      const adapter = new FileSystemStoryReflectionAdapter({ rootDir });
+
+      // Act
+      const actual = await adapter.storyAffectsUnit("WI-901", "order");
+
+      // Assert
+      expect(actual).toBe(true);
     });
   });
 });

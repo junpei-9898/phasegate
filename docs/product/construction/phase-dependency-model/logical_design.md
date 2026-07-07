@@ -14,8 +14,12 @@ Phase dependency validation receives resolved runtime configuration through its 
 @story-id H02-06
 @story-id H02-07
 @work-item-id WI-027
+@work-item-id WI-001
+Level 3 成果物のコンテキスト依存チェック: scope（unitId/storyId）を `Artifact.resolve(scope)` / `ArtifactExistenceCheckerPort.checkAll(artifacts, scope)` / `EvidenceBundleAssembler.assembleForLevel(level, nodes, scope)` に貫通させ、storyId 指定時は Level 3 成果物の解決済みパス存在を phase-gate 判定対象に含める。storyId が必要な成果物で未指定なら `false` を返し Application 層で blocker 化する（§5.1 設計上の注意点）。
 @work-item-id WI-115
 拡張: `FileSystemStoryReflectionAdapter#readLegacyId` を `_cross/{WI-XXX}/description.md` のみから `{unit}/{WI-XXX}/description.md` も走査するよう拡張する（H-ID 移行で unit-scoped WI が初めて出現したことに伴う対応）。これにより、product 側の既存 `@story-id H{NN}-{NN}` annotation が unit-scoped WI の reflection として継続認識される。
+@work-item-id WI-246
+反映ゲートの layer-aware 化: `StoryReflectionChecker` の mapping ループに source-touch ガードを追加。cross WI × 解決済み product パスが `domain_model.md` で終わる mapping のとき、`StoryReflectionFileSystemPort.storyTouchesUnitLayer(storyId, unitId, "domain")` が false なら要求をスキップする（`logical_design.md` mapping と unit-local WI はガード対象外・無条件維持）。adapter は `git log --grep "Work-Item:.*{storyId}"` + `--name-only`（`execFile`、storyId 単位でキャッシュ、trailer の単語境界一致を検証）で WI の変更ファイル集合を取得し、`scripts/harness/{unitId}/{layer}/` 接頭辞で判定する。git 失敗・コミット 0 件は touch なし（要求除去方向のみ）。あわせて `storyAffectsUnit` を修正し、description.md が読める cross WI で `affects:` キーなし/空リストを「影響なし（false）」にする（description.md 自体が読めない場合は従来どおり true）。preset デフォルト（full-story-reflection-defaults.ts）は不変。
 @work-item-id WI-126
 WI status derivation は既存の phase dependency ordering と整合する。`reflected` は affected unit の product reflection 完了を意味し、implementation phase に進める根拠になる。status mismatch は `work-items:status --dry-run --fail-on-stale` で phase gate 前に検出可能にする。
 

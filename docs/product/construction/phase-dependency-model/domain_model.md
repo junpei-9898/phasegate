@@ -28,7 +28,7 @@
 | PhaseNode | 値オブジェクト | フェーズノード（スキル名 + 成果物） |
 | PhaseDependency | 値オブジェクト | フェーズ間の前提条件関係 |
 | PlanEvidence | 値オブジェクト | plan文書存在・QAセクション充足の検証結果 |
-| PlanningMode | 値オブジェクト | interactive/embedded-qa（正規定義を所有） |
+| PlanningMode | 値オブジェクト | interactive/embedded-qa/manual（正規定義を所有） |
 | PhaseGateResult | 値オブジェクト | phase-gate検証結果 |
 | PhaseCustomizationPolicy | 値オブジェクト | カスタマイズルールのポリシー |
 | CustomRule | 値オブジェクト | カスタムルール定義 |
@@ -46,7 +46,7 @@
 | 契約 | 消費Unit | 内容 |
 |------|---------|------|
 | Phase Dependency 3層構造 | validator-system, regression-suite | Level 1→2→3の前提条件・成果物定義 |
-| PlanningMode正規型定義 | harness-api | interactive/embedded-qaの型・意味 |
+| PlanningMode正規型定義 | harness-api | interactive/embedded-qa/manualの型・意味 |
 | PhaseInfo | harness-api | check-phase応答用のフェーズ状態情報 |
 | PhaseGateValidator IF | validator-system | L2 phase-gateバリデータの検証ロジック |
 
@@ -89,7 +89,7 @@
 | **PhaseNode** | ✅ | ✅ | `{ skillName, artifacts[], level }` フェーズノード |
 | **PhaseDependency** | ✅ | ✅ | `{ from: PhaseNode, to: PhaseNode, type }` 前提条件関係 |
 | **PlanEvidence** | ✅ | ✅ | `{ exists, qaComplete, planningModeMatch }` plan文書の証跡。ファイルシステム状態の読み取り結果 |
-| **PlanningMode** | ✅ | ✅ | `"interactive" \| "embedded-qa"`。本Unitが正規定義を所有 |
+| **PlanningMode** | ✅ | ✅ | `"interactive" \| "embedded-qa" \| "manual"`。本Unitが正規定義を所有。`manual` は retrofit 用で plan 文書の QA 証跡を要求しない（`requiresQaSection()` / `requiresAnsweredQa()` とも false）<!-- @work-item-id WI-191 --> |
 | **PhaseGateResult** | ✅ | ✅ | `{ passed, blockers[], warnings[] }` 検証結果 |
 | **PhaseCustomizationPolicy** | ✅ | ✅ | `{ rules[], overrideEnabled }` HarnessConfigV2.phaseDependenciesから構築。デフォルトフローの緩和不可制約はPhaseStructureの不変条件としてハードコード |
 | **CustomRule** | ✅ | ✅ | `{ targetPhase, condition, action }` カスタムルール定義 |
@@ -106,7 +106,19 @@
 | **ArtifactExistenceCheckerPort** | 外部→ドメイン | 成果物ファイルの存在確認（ファイルシステムアクセス） |
 | **PlanDocumentReaderPort** | 外部→ドメイン | plan文書の存在 + QAセクション読み取り |
 | **PhaseConfigProviderPort** | 外部→ドメイン | HarnessConfigV2.phaseDependenciesの取得 |
-| **StoryReflectionFileSystemPort** | 外部→ドメイン | inception の reflection 対象ID列挙、product アノテーション検出、cross WI の `affects` 判定。H02-07以降は `_cross/WI-*` の `legacy_id` を旧 `@issue-id` 互換として扱う |
+| **StoryReflectionFileSystemPort** | 外部→ドメイン | inception の reflection 対象ID列挙、product アノテーション検出、cross WI の `affects` 判定、source-touch 判定（`storyTouchesUnitLayer(storyId, unitId, layer)`）。H02-07以降は `_cross/WI-*` の `legacy_id` を旧 `@issue-id` 互換として扱う。WI-115以降、legacy_id 照合は product パスから推定した unit context（unit WI + cross WI）にスコープし、同一 legacy_id が複数 WI に一致する場合は曖昧として不一致扱いにする（恣意的な WI への誤解決をしない） |
+
+<!-- @work-item-id WI-115 -->
+
+#### Layer-aware reflection requirement（WI-246）
+
+<!-- @work-item-id WI-246 -->
+
+- **Source-touch**: WI のコミット（`.husky/commit-msg` が強制する `Work-Item:` trailer で機械的に紐付く）が `scripts/harness/{unit}/{layer}/` 配下のソースファイルを変更した事実。git 履歴由来で自己申告に依存しない。
+- cross WI の `domain_model.md` 反映要求は、その WI に source-touch(domain) が実在する場合のみ発火する。domain 層を触れた cross WI は引き続き反映を要求される（anti-gutting）。`logical_design.md` 反映要求は unit 全レイヤーを写像するため無条件に維持。
+- `affects:` が空/未定義の cross WI は「影響 unit なし」としてどの unit にも反映要求を発火しない。
+- source-touch 判定が不能（WI に紐付くコミットが履歴に存在しない）の場合は「touch なし」として扱う。この規則は要求の除去方向にのみ作用する。
+- unit-local WI の要求判定は layer-aware 化の影響を受けない。
 
 ---
 

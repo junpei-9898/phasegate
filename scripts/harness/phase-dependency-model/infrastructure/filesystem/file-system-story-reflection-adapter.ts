@@ -4,15 +4,18 @@
  * @work-item-id WI-115
  */
 
+import { execFile } from "node:child_process";
 import type { Dirent } from "node:fs";
 import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import type { StoryReflectionFileSystemPort } from "../../domain/ports/story-reflection-file-system-port.js";
 
 const CROSS_WORK_ITEM_PATTERN = /^WI-\d+$/;
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---/;
 const AFFECTS_INLINE_PATTERN = /^affects:\s*\[([^\]]*)\]\s*$/m;
 const LEGACY_ID_PATTERN = /^legacy_id:\s*([A-Z][\w]+-\d+)\s*$/m;
+const execFileAsync = promisify(execFile);
 
 export interface FileSystemStoryReflectionAdapterDeps {
   readonly rootDir: string;
@@ -34,6 +37,7 @@ export interface FileSystemStoryReflectionAdapterDeps {
 export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSystemPort {
   private readonly rootDir: string;
   private readonly inceptionRoot: string;
+  private readonly changedPathsByStoryId = new Map<string, Promise<ReadonlySet<string>>>();
 
   constructor(deps: FileSystemStoryReflectionAdapterDeps) {
     this.rootDir = deps.rootDir;
@@ -110,7 +114,7 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
 
     const frontmatter = FRONTMATTER_PATTERN.exec(content)?.[1];
     if (frontmatter === undefined) {
-      return true;
+      return false;
     }
 
     const affects = AFFECTS_INLINE_PATTERN.exec(frontmatter)?.[1]
@@ -119,10 +123,79 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
       .filter((value) => value.length > 0);
 
     if (affects === undefined) {
-      return true;
+      return false;
     }
 
     return affects.includes(unitId);
+  }
+
+  async storyTouchesUnitLayer(storyId: string, unitId: string, layer: string): Promise<boolean> {
+    const paths = await this.readChangedPathsForStory(storyId);
+    const prefix = `scripts/harness/${unitId}/${layer}/`;
+
+    for (const changedPath of paths) {
+      if (changedPath.startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private readChangedPathsForStory(storyId: string): Promise<ReadonlySet<string>> {
+    const cached = this.changedPathsByStoryId.get(storyId);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const promise = this.fetchChangedPathsForStory(storyId);
+    this.changedPathsByStoryId.set(storyId, promise);
+    return promise;
+  }
+
+  private async fetchChangedPathsForStory(storyId: string): Promise<ReadonlySet<string>> {
+    try {
+      const { stdout } = await execFileAsync(
+        "git",
+        [
+          "log",
+          "--format=@@COMMIT@@%x00%B%x00",
+          "--name-only",
+          "--grep",
+          `Work-Item:.*\\b${storyId}\\b`,
+        ],
+        { cwd: this.rootDir, maxBuffer: 32 * 1024 * 1024 },
+      );
+
+      return this.extractChangedPathsForStory(stdout, storyId);
+    } catch {
+      return new Set<string>();
+    }
+  }
+
+  private extractChangedPathsForStory(output: string, storyId: string): ReadonlySet<string> {
+    const changedPaths = new Set<string>();
+    const trailerPattern = new RegExp(`Work-Item:[^\\n]*\\b${storyId}\\b`);
+
+    for (const commitBlock of output.split("@@COMMIT@@\u0000")) {
+      if (commitBlock.length === 0) continue;
+
+      const bodyEnd = commitBlock.indexOf("\u0000");
+      if (bodyEnd === -1) continue;
+
+      const body = commitBlock.slice(0, bodyEnd);
+      if (!trailerPattern.test(body)) continue;
+
+      const nameOnly = commitBlock.slice(bodyEnd + 1);
+      for (const changedPath of nameOnly.split(/\r?\n/)) {
+        const trimmedPath = changedPath.trim();
+        if (trimmedPath.length > 0 && trimmedPath !== "@@COMMIT@@") {
+          changedPaths.add(trimmedPath);
+        }
+      }
+    }
+
+    return changedPaths;
   }
 
   async fileContainsStoryAnnotation(productPath: string, storyId: string): Promise<boolean> {

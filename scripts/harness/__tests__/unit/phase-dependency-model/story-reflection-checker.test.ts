@@ -20,15 +20,28 @@ const optionalMapping = StoryReflectionMapping.create({
   required: false,
 });
 
+const domainModelMapping = StoryReflectionMapping.create({
+  inception: "docs/inception/{unit}/{storyId}/domain_model.md",
+  product: "docs/product/construction/{unit}/domain_model.md",
+  required: true,
+});
+
+type LayerAwareStoryReflectionFileSystemPort = StoryReflectionFileSystemPort & {
+  storyTouchesUnitLayer(storyId: string, unitId: string, layer: string): Promise<boolean>;
+};
+
 const createMockPort = (options: {
   storyDirs?: string[];
   existingFiles?: string[];
   annotatedFiles?: Map<string, string[]>;
   affectedStories?: Map<string, string[]>;
-}): StoryReflectionFileSystemPort => ({
+  touchedLayers?: Map<string, string[]>;
+}): LayerAwareStoryReflectionFileSystemPort => ({
   listStoryDirectories: async () => options.storyDirs ?? [],
   storyAffectsUnit: async (storyId, unitId) =>
     (options.affectedStories ?? new Map()).get(storyId)?.includes(unitId) ?? true,
+  storyTouchesUnitLayer: async (storyId, unitId, layer) =>
+    (options.touchedLayers ?? new Map()).get(`${storyId}:${unitId}`)?.includes(layer) ?? false,
   fileExists: async (path) => (options.existingFiles ?? []).includes(path),
   fileContainsStoryAnnotation: async (productPath, storyId) =>
     (options.annotatedFiles ?? new Map()).get(productPath)?.includes(storyId) ?? false,
@@ -249,6 +262,136 @@ target("StoryReflectionChecker", () => {
       expect(actual.passed).toBe(true);
       expect(actual.violations).toHaveLength(0);
       expect(actual.warnings).toHaveLength(0);
+    });
+
+    describe("layer-aware reflection requirement (WI-246)", () => {
+      it("domain層を触れたcross WIはdomain_model反映を引き続き要求する", async () => {
+        // Arrange
+        const config = StoryReflectionConfig.create({
+          enabled: true,
+          mappings: [domainModelMapping],
+        });
+        const port = createMockPort({
+          storyDirs: ["WI-900"],
+          existingFiles: ["docs/inception/_cross/WI-900/domain_model.md"],
+          annotatedFiles: new Map(),
+          affectedStories: new Map([["WI-900", ["order"]]]),
+          touchedLayers: new Map([["WI-900:order", ["domain"]]]),
+        });
+        const checker = new StoryReflectionChecker(port);
+
+        // Act
+        const actual = await checker.check("order", config);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              storyId: "WI-900",
+              inceptionPath: "docs/inception/_cross/WI-900/domain_model.md",
+              productPath: "docs/product/construction/order/domain_model.md",
+            }),
+          ]),
+        );
+      });
+
+      it("infra/appのみのcross WIはlogical_designのみ要求されdomain_modelは要求されない", async () => {
+        // Arrange
+        const config = StoryReflectionConfig.create({
+          enabled: true,
+          mappings: [requiredMapping, domainModelMapping],
+        });
+        const port = createMockPort({
+          storyDirs: ["WI-900"],
+          existingFiles: [
+            "docs/inception/_cross/WI-900/logical_design.md",
+            "docs/inception/_cross/WI-900/domain_model.md",
+          ],
+          annotatedFiles: new Map(),
+          affectedStories: new Map([["WI-900", ["order"]]]),
+          touchedLayers: new Map([["WI-900:order", ["application", "infrastructure"]]]),
+        });
+        const checker = new StoryReflectionChecker(port);
+
+        // Act
+        const actual = await checker.check("order", config);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.violations).toHaveLength(1);
+        expect(actual.violations[0]).toEqual(
+          expect.objectContaining({
+            storyId: "WI-900",
+            inceptionPath: "docs/inception/_cross/WI-900/logical_design.md",
+            productPath: "docs/product/construction/order/logical_design.md",
+          }),
+        );
+        expect(actual.violations).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              productPath: "docs/product/construction/order/domain_model.md",
+            }),
+          ]),
+        );
+      });
+
+      it("affectsが空/未定義のcross WIはどのunitにも反映要求を発火しない", async () => {
+        // Arrange
+        const config = StoryReflectionConfig.create({
+          enabled: true,
+          mappings: [requiredMapping, domainModelMapping],
+        });
+        const port = createMockPort({
+          storyDirs: ["WI-900"],
+          existingFiles: [
+            "docs/inception/_cross/WI-900/logical_design.md",
+            "docs/inception/_cross/WI-900/domain_model.md",
+          ],
+          annotatedFiles: new Map(),
+          affectedStories: new Map([["WI-900", []]]),
+          touchedLayers: new Map([["WI-900:order", ["domain"]]]),
+        });
+        const checker = new StoryReflectionChecker(port);
+
+        // Act
+        const actual = await checker.check("order", config);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.violations).toHaveLength(0);
+        expect(actual.warnings).toHaveLength(0);
+      });
+
+      it("unit-local WIはtouch判定に関係なくdomain_model反映を要求する", async () => {
+        // Arrange
+        const config = StoryReflectionConfig.create({
+          enabled: true,
+          mappings: [domainModelMapping],
+        });
+        const port = createMockPort({
+          storyDirs: ["US-900"],
+          existingFiles: ["docs/inception/order/US-900/domain_model.md"],
+          annotatedFiles: new Map(),
+          touchedLayers: new Map([["US-900:order", []]]),
+        });
+        const checker = new StoryReflectionChecker(port);
+
+        // Act
+        const actual = await checker.check("order", config);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.violations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              storyId: "US-900",
+              inceptionPath: "docs/inception/order/US-900/domain_model.md",
+              productPath: "docs/product/construction/order/domain_model.md",
+            }),
+          ]),
+        );
+      });
     });
   });
 
