@@ -14,7 +14,7 @@ languages: [typescript]
 
 ```
 テストケース設計フェーズ
-  scenario-test-designer → it-test-designer → unit-test-designer
+  scenario-test-designer → uiux-designer → unit-test-designer → it-test-designer
                           ↓
               ┌───────────────────────────┐
               │  test-coverage-checker    │ ← ここで実行
@@ -25,7 +25,7 @@ languages: [typescript]
   *-test-logic-designer（各レベル）
                           ↓
 TDD実装フェーズ
-  story-implementor
+  implementation-readiness-checker → story-implementor
 ```
 
 ## 前提条件チェック
@@ -357,9 +357,7 @@ UIUX設計で定義された全画面がシナリオテストでカバーされ�
 3. **`test-coverage-checker`** → カバレッジ再検証（本スキル）
 4. **`unit-test-logic-designer`** → ユニットテストロジック設計
 5. **`it-test-logic-designer`** → ITテストロジック設計
-6. **TDDエージェント** → テスト実装（RED→GREEN）
-   - `model-tdd-executor` → ユニットテスト
-   - `it-tdd-executor` → ITテスト
+6. **`story-implementor`** → テスト実装（RED→GREEN）を含むTDD実装
 
 ### 注意事項
 

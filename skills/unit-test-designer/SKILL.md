@@ -35,13 +35,17 @@ languages: [typescript]
 ```
 scenario-test-designer
         ↓
-it-test-designer
+uiux-designer
         ↓
 unit-test-designer（本スキル）← ユニットテストケース設計
+        ↓
+it-test-designer
         ↓
 test-coverage-checker ← カバレッジ検証（ここでテストケース設計の網羅性をチェック）
         ↓
 テストロジック設計
+        ↓
+implementation-readiness-checker
         ↓
 story-implementor ← TDD実装
 ```
@@ -154,7 +158,7 @@ story-implementor ← TDD実装
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 
@@ -192,33 +196,41 @@ story-implementor ← TDD実装
 
 ユニットテストケース設計完了後、以下の順序で進めてください：
 
+### テストケース設計フェーズ（続き）
+1. **ITテストケース設計** — UseCase/Repository/Controllerのテストケース
+   - `it-test-designer` スキルを実行
+
 ### カバレッジ検証フェーズ
-1. **テストカバレッジ検証** — テストケース設計の網羅性チェック
+2. **テストカバレッジ検証** — テストケース設計の網羅性チェック
    - `test-coverage-checker` スキルを実行
    - 受け入れ基準・ドメインロジック・UseCaseのカバレッジを確認
    - カバレッジ90%以上を目指す
 
 ### テストロジック設計フェーズ
-2. **テストロジック設計** — 各レベルの実装ロジックを詳細設計
+3. **テストロジック設計** — 各レベルの実装ロジックを詳細設計
    - `unit-test-logic-designer` — ユニットテストの疑似コード設計
    - `it-test-logic-designer` — ITテストの疑似コード設計
    - `scenario-test-logic-designer` — シナリオテストの疑似コード設計
 
 ### TDD実装フェーズ
-3. **TDD実装** — Unit → IT → E2E の順序で実装
+4. **実装準備検証** — 実装前提条件の自動検証
+   - `implementation-readiness-checker` スキルを実行
+5. **TDD実装** — Unit → IT → E2E の順序で実装
    - `story-implementor` スキルを実行
 
 **推奨フロー図:**
 ```
-scenario-test-designer
-        ↓
-it-test-designer
+scenario-test-designer → uiux-designer
         ↓
 unit-test-designer（本スキル）
+        ↓
+it-test-designer
         ↓
 test-coverage-checker ← テストケース設計の網羅性チェック
         ↓
 unit-test-logic-designer → it-test-logic-designer → scenario-test-logic-designer
+        ↓
+implementation-readiness-checker
         ↓
 story-implementor ← TDD実装
 ```

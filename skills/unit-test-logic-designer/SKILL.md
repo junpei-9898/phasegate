@@ -14,7 +14,7 @@ Unitテストケース設計（`unit_test_design.md`）を元に、Vitest実装�
 
 ```
 テストケース設計フェーズ
-  unit-test-designer → it-test-designer → scenario-test-designer
+  scenario-test-designer → uiux-designer → unit-test-designer → it-test-designer
                           ↓
               test-coverage-checker
                           ↓
@@ -25,7 +25,7 @@ Unitテストケース設計（`unit_test_design.md`）を元に、Vitest実装�
   it-test-logic-designer → scenario-test-logic-designer
                           ↓
 TDD実装フェーズ
-  story-implementor
+  implementation-readiness-checker → story-implementor
 ```
 
 ## 前提条件チェック
@@ -172,7 +172,7 @@ TDD実装フェーズ
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 

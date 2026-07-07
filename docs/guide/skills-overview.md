@@ -37,15 +37,16 @@ Artifacts are placed in `inception/{unit}/{US-XXX}/`.
 Skills run per User Story:
 
 1. `/logical-designer` (US-specific mode) — Story-scoped logical design refinement.
-2. `/uiux-designer` — Final UI/UX definition incorporating test cases, logical design, and existing UI.
-3. `/unit-test-designer` — Unit test case design from domain model.
-4. `/it-test-designer` — Integration test case design from logical design.
-5. `/scenario-test-designer` — E2E scenario test case design.
-6. `/unit-test-logic-designer` — Vitest implementation logic with pseudocode.
-7. `/it-test-logic-designer` — IT Vitest implementation logic with pseudocode.
-8. `/scenario-test-logic-designer` — Playwright E2E test implementation logic.
-9. `/implementation-readiness-checker` — Automated pre-implementation readiness verification.
-10. `/story-implementor` — TDD implementation with atomic commits.
+2. `/scenario-test-designer` — E2E scenario test case design. Its `scenario_test_design.md` output is a required input of `/uiux-designer`.
+3. `/uiux-designer` — Final UI/UX definition incorporating test cases, logical design, and existing UI.
+4. `/unit-test-designer` — Unit test case design from domain model.
+5. `/it-test-designer` — Integration test case design from logical design.
+6. `/test-coverage-checker` — Coverage verification of all three test case designs before test logic design.
+7. `/unit-test-logic-designer` — Vitest implementation logic with pseudocode.
+8. `/it-test-logic-designer` — IT Vitest implementation logic with pseudocode.
+9. `/scenario-test-logic-designer` — Playwright E2E test implementation logic.
+10. `/implementation-readiness-checker` — Automated pre-implementation readiness verification.
+11. `/story-implementor` — TDD implementation with atomic commits.
 
 ### Phase Dependency Rules
 

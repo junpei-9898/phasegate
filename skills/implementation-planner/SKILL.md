@@ -146,7 +146,7 @@ docs/inception/{unit}/WI-XXX/tdd_implementation_plan.md
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 

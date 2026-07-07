@@ -34,7 +34,7 @@ languages: [typescript]
 - `implementation-readiness-checker` でブロックされる
 
 ### フロー上の位置
-`scenario-test-designer` → **it-test-designer（本スキル）** → `unit-test-designer` → `test-coverage-checker` → テストロジック設計 → `story-implementor`
+`scenario-test-designer` → `uiux-designer` → `unit-test-designer` → **it-test-designer（本スキル）** → `test-coverage-checker` → テストロジック設計 → `implementation-readiness-checker` → `story-implementor`
 
 **必ず完了してから次のステップに進んでください。**
 
@@ -155,7 +155,7 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 
@@ -193,7 +193,7 @@ ITテスト設計のスコープ・テスト対象・不明点を整理し、人
 
 ITテストケース設計完了後、以下の順序で進める（フロー図は「スキップ禁止」セクション参照）:
 
-1. `unit-test-designer` — ユニットテストケース設計
-2. `test-coverage-checker` — カバレッジ検証（90%以上）
-3. `*-test-logic-designer` — 各レベルのテストロジック設計
+1. `test-coverage-checker` — カバレッジ検証（90%以上）
+2. `*-test-logic-designer` — 各レベルのテストロジック設計
+3. `implementation-readiness-checker` — 実装準備の自動検証
 4. `story-implementor` — TDD実装（Unit → IT → E2E）

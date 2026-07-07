@@ -1,6 +1,6 @@
 ---
 name: environment-designer
-description: ローカル開発環境のプラットフォーム構成設計。コードと環境のブリッジ（AIDLC Step 2.2並行）
+description: ローカル開発環境のプラットフォーム構成設計。コードと環境のブリッジ（AIDLC Step 2.3、logical-designer の後）
 model: sonnet
 review: opus
 languages: [typescript]
@@ -26,7 +26,7 @@ languages: [typescript]
 
 ## ⚠️ 上位レイヤー存在チェック
 
-**このスキルは AIDLC Step 2.2並行「環境設計」に対応します。実行前に上位設計の存在を確認してください。**
+**このスキルは AIDLC Step 2.3「環境設計」（logical-designer の後）に対応します。実行前に上位設計の存在を確認してください。**
 
 ### 依存する上位設計文書
 
@@ -165,7 +165,7 @@ languages: [typescript]
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 

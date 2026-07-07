@@ -22,7 +22,7 @@ Unit単位でアーキテクチャの各層（DB → ドメイン → ユース�
 ## Pre-flight check (BLOCKING)
 
 Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
-If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
+If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>`.
 
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
 
@@ -44,7 +44,7 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 
 ## ⚠️ 上位レイヤー存在チェック
 
-**このスキルは AIDLC Step 5「論理設計」に対応します。実行前に上位設計の存在を確認してください。**
+**このスキルは AIDLC Step 2.2「論理設計」に対応します。実行前に上位設計の存在を確認してください。**
 
 ### 依存する上位設計文書
 

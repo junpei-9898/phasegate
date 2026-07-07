@@ -301,12 +301,10 @@ When editing the (newly-generated or existing) skill, remember that the skill is
 
 #### Learn Proven Design Patterns
 
-Consult these helpful guides based on your skill's needs:
+Apply these proven design patterns based on your skill's needs:
 
-- **Multi-step processes**: See references/workflows.md for sequential workflows and conditional logic
-- **Specific output formats or quality standards**: See references/output-patterns.md for template and example patterns
-
-These files contain established best practices for effective skill design.
+- **Multi-step processes**: Describe the workflow as an explicit ordered sequence of steps, and use conditional branches (e.g. "if X, do Y; otherwise Z") so the executing instance always knows the next action.
+- **Specific output formats or quality standards**: Embed a concrete template or worked example directly in the skill body and state the acceptance criteria, so outputs are reproducible and verifiable.
 
 #### Start with Reusable Skill Contents
 

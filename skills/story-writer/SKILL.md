@@ -15,7 +15,7 @@ languages: [typescript]
 ## Pre-flight check (BLOCKING)
 
 Before generating any plan, verify `docs/inception/{unit}/WI-XXX/description.md` exists.
-If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit> <story|issue|chore>`.
+If not, halt and ask the user to create the WI first, or offer to run `phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>`.
 
 ### 必須インプット（存在しなければ`[Question]`で提供を要求）
 - **要求文書** — 何を作るかを記述した文書。形式は問わない（議事録、要件メモ、口頭要約のテキスト等）
@@ -124,7 +124,7 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 

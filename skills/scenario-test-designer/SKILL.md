@@ -36,13 +36,17 @@ languages: [typescript]
 ```
 scenario-test-designer（本スキル）← テストケース設計の最初
         ↓
-it-test-designer
+uiux-designer ← シナリオテスト設計を入力にUI/UX定義
         ↓
 unit-test-designer
+        ↓
+it-test-designer
         ↓
 test-coverage-checker ← カバレッジ検証
         ↓
 テストロジック設計
+        ↓
+implementation-readiness-checker
         ↓
 story-implementor ← TDD実装
 ```
@@ -172,7 +176,7 @@ story-implementor ← TDD実装
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む
-2. `docs/principles/model-routing.md` のレビュー観点 R1〜R7 に沿って検証する
+2. `docs/principles/model-routing.md` の「レビュー観点」節に沿って検証する
 3. **スキル固有レビュー観点**を検証する
 4. 判定結果を出力する
 
@@ -208,37 +212,44 @@ story-implementor ← TDD実装
 
 ## 次ステップへの誘導
 
-シナリオテストケース設計完了後、以下の順序で進めてください：
+シナリオテストケース設計はテストケース設計フェーズの最初に位置づけられる（成果物 `scenario_test_design.md` は `uiux-designer` の必須インプット）。完了後、以下の順序で進めてください：
+
+### UI/UX設計フェーズ
+1. **UI/UX定義** — シナリオテスト設計・論理設計・既存UIを加味した最終UI/UX策定
+   - `uiux-designer` スキルを実行
 
 ### テストケース設計フェーズ（続き）
-1. **ITテストケース設計** — UseCase/Repository/Controllerのテストケース
-   - `it-test-designer` スキルを実行
-
 2. **ユニットテストケース設計** — Entity/ValueObjectのテストケース
    - `unit-test-designer` スキルを実行
+3. **ITテストケース設計** — UseCase/Repository/Controllerのテストケース
+   - `it-test-designer` スキルを実行
 
 ### カバレッジ検証フェーズ
-3. **テストカバレッジ検証** — テストケース設計の網羅性チェック
+4. **テストカバレッジ検証** — テストケース設計の網羅性チェック
    - `test-coverage-checker` スキルを実行
    - カバレッジ90%以上を確認
 
 ### テストロジック設計フェーズ
-4. **テストロジック設計** — 各レベルの実装ロジック
+5. **テストロジック設計** — 各レベルの実装ロジック
    - `unit-test-logic-designer` → `it-test-logic-designer` → `scenario-test-logic-designer`
 
 ### TDD実装フェーズ
-5. **TDD実装** — Unit → IT → E2E の順序で実装
-   - `story-implementor` スキルを実行
+6. **実装準備検証・TDD実装** — Unit → IT → E2E の順序で実装
+   - `implementation-readiness-checker` → `story-implementor` スキルを実行
 
 **推奨フロー図:**
 ```
 scenario-test-designer（本スキル）
         ↓
-it-test-designer → unit-test-designer
+uiux-designer
+        ↓
+unit-test-designer → it-test-designer
         ↓
 test-coverage-checker
         ↓
 *-test-logic-designer（各レベル）
+        ↓
+implementation-readiness-checker
         ↓
 story-implementor
 ```
