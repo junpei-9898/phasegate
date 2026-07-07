@@ -11,22 +11,37 @@ export type CommentDensityResult = {
 
 const SINGLE_LINE_COMMENT = /^\s*\/\//;
 const MULTI_LINE_COMMENT_START = /^\s*\/\*/;
+const DOC_COMMENT_START = /^\s*\/\*\*/;
 const MULTI_LINE_COMMENT_END = /\*\//;
 const BLANK_LINE = /^\s*$/;
+// L1 ルール (require-unit-comment / require-layer-comment) が必須化する
+// 先頭メタデータヘッダのタグ行。ファイル冒頭の連続コメント領域でのみ効力を持つ。
+const METADATA_HEADER_TAG = /^\s*\/\/\s*@(unit|layer|work-item-id|story|story-id|issue-id|module|feature|epic)\b/;
 
 /**
  * ソースコードのコメント密度と繰り返しブロック数を算出する。
  *
- * - commentLineCount: コメント行数（単一行・複数行両方）
- * - logicalLineCount: 空行を除いた行数
- * - repeatedCommentBlocks: 連続する同一コメントブロックの検出回数
+ * WI-239: commentLineCount（密度分子）は「密度に寄与する narrative コメント行数」
+ * を表すよう意味を再定義した。次は分子から除外する:
+ *   - 先頭の必須メタデータヘッダ行（`// @unit` / `// @layer` / `// @work-item-id` /
+ *     `// @story` 等。ファイル冒頭の連続コメント領域に限る）
+ *   - `/** … *\/` doc-comment ブロック（ブロック全体）
+ * 分子に残すのは narrative な `//` 行コメントと非 doc の `/* … *\/` ブロックのみ。
+ *
+ * - commentLineCount: 密度分子となる narrative コメント行数
+ * - logicalLineCount: 空行を除いた行数（分母。定義不変）
+ * - repeatedCommentBlocks: 連続する同一 narrative コメントブロックの検出回数
  */
 export const parseCommentDensity = (sourceCode: string): CommentDensityResult => {
-  const lines = sourceCode.split('\n');
+  const lines = sourceCode.split("\n");
 
   let commentLineCount = 0;
   let logicalLineCount = 0;
   let insideBlockComment = false;
+  let insideDocComment = false;
+  // ファイル冒頭の連続したメタデータヘッダ領域内かどうか。
+  // 最初のコード行または非メタデータコメントが現れた時点で false になる。
+  let insideHeaderZone = true;
 
   const commentBlocks: string[] = [];
   let currentBlock: string[] = [];
@@ -41,11 +56,14 @@ export const parseCommentDensity = (sourceCode: string): CommentDensityResult =>
     logicalLineCount += 1;
 
     if (insideBlockComment) {
-      commentLineCount += 1;
-      currentBlock.push(line.trim());
+      if (!insideDocComment) {
+        commentLineCount += 1;
+        currentBlock.push(line.trim());
+      }
 
       if (MULTI_LINE_COMMENT_END.test(line)) {
         insideBlockComment = false;
+        insideDocComment = false;
         flushBlock(currentBlock, commentBlocks);
         currentBlock = [];
       }
@@ -54,25 +72,48 @@ export const parseCommentDensity = (sourceCode: string): CommentDensityResult =>
     }
 
     if (SINGLE_LINE_COMMENT.test(line)) {
+      const isMetadataHeader = insideHeaderZone && METADATA_HEADER_TAG.test(line);
+
+      if (isMetadataHeader) {
+        // メタデータヘッダは分子・反復検出のいずれにも寄与しない。
+        continue;
+      }
+
+      // narrative な行コメントに到達 → ヘッダ領域は終了。
+      insideHeaderZone = false;
       commentLineCount += 1;
       currentBlock.push(line.trim());
       continue;
     }
 
     if (MULTI_LINE_COMMENT_START.test(line)) {
+      insideHeaderZone = false;
+      const isDocComment = DOC_COMMENT_START.test(line);
+      const isClosed = MULTI_LINE_COMMENT_END.test(line);
+
+      if (isDocComment) {
+        // doc-comment ブロックは分子・反復検出のいずれにも寄与しない。
+        if (!isClosed) {
+          insideBlockComment = true;
+          insideDocComment = true;
+        }
+        continue;
+      }
+
       commentLineCount += 1;
-      insideBlockComment = true;
       currentBlock.push(line.trim());
 
-      if (MULTI_LINE_COMMENT_END.test(line)) {
-        insideBlockComment = false;
+      if (isClosed) {
         flushBlock(currentBlock, commentBlocks);
         currentBlock = [];
+      } else {
+        insideBlockComment = true;
       }
 
       continue;
     }
 
+    insideHeaderZone = false;
     flushBlock(currentBlock, commentBlocks);
     currentBlock = [];
   }
@@ -86,7 +127,7 @@ export const parseCommentDensity = (sourceCode: string): CommentDensityResult =>
 
 const flushBlock = (current: string[], blocks: string[]): void => {
   if (current.length > 0) {
-    blocks.push(current.join('\n'));
+    blocks.push(current.join("\n"));
   }
 };
 

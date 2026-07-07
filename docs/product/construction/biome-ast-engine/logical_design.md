@@ -4,6 +4,7 @@
 @story-id H01-02
 @story-id H01-03
 @work-item-id WI-024
+@work-item-id WI-239
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H01-01, H01-02, H01-03
 > **モード**: Unit横断設計（Phase 2）
@@ -373,8 +374,8 @@ scripts/harness/
 | imports | readonly ImportEdge[] | 解析で得たimport一覧 |
 | anyTypeCount | number | `any` 使用数 |
 | typedNodeCount | number | 型注釈を持つノード数 |
-| commentLineCount | number | コメント行数 |
-| logicalLineCount | number | 実コード行数 |
+| commentLineCount | number | 密度分子となる narrative コメント行数。WI-239 で意味を再定義: 先頭の必須メタデータヘッダ行（`// @unit` / `// @layer` / `// @work-item-id` / `// @story` 等）と `/** … */` doc-comment ブロックは分子から除外し、narrative な `//` 行コメントと非 doc の `/* … */` ブロックのみを数える |
+| logicalLineCount | number | 実コード行数（密度の分母。定義不変） |
 | repeatedCommentBlocks | number | 同一コメントブロックの反復回数 |
 | duplicationFingerprints | readonly string[] | 構造フィンガープリント |
 | exportedSymbols | readonly string[] | exportシンボル名一覧 |
@@ -389,7 +390,7 @@ scripts/harness/
 - `hasUnitComment(): boolean`
 - `hasLayerComment(): boolean`
 - `anyRatio(): number`
-- `commentDensity(): number`
+- `commentDensity(): number` — `commentLineCount / logicalLineCount`。分子は WI-239 で narrative コメント行数へ再定義済み（メタデータヘッダと JSDoc を除外）。分母・算式は不変
 - `belongsToLayerDirectory(): boolean`
 
 #### 2.2.10 RuleDefinition
@@ -419,6 +420,8 @@ scripts/harness/
 | no-code-duplication | `{ minOccurrences: 2, minFingerprintSpan: 20 }` |
 | no-ghost-file | `{ entryPointPatterns: ["**/index.ts", "**/cli/**/*.ts"], ignorePatterns: ["**/*.test.ts", "**/*.spec.ts"] }` |
 | no-comment-flood | `{ maxCommentRatio: 0.35, maxRepeatedBlocks: 1 }` |
+
+> **WI-239**: `maxCommentRatio` の閾値（0.35）は不変。密度分子 `commentLineCount` の定義のみを訂正し、必須メタデータヘッダ行と `/** … */` doc-comment を分子から除外する（詳細は §2.2.9 SourceModuleSnapshot / comment-density-parser 責務を参照）。
 
 **errorCode対応**:
 
@@ -595,7 +598,7 @@ AST解析済みスナップショット群から `ImportGraph` を構築する�
    - `no-any-abuse`: `anyTypeCount > maxAnyCount` または `anyRatio() > maxAnyRatio`
    - `no-code-duplication`: 同一 fingerprint が `minOccurrences` 以上の組み合わせを違反化
    - `no-ghost-file`: `ImportGraph.findGhostFiles()` 結果を違反化
-   - `no-comment-flood`: `commentDensity() > maxCommentRatio` または `repeatedCommentBlocks > maxRepeatedBlocks`
+   - `no-comment-flood`: `commentDensity() > maxCommentRatio` または `repeatedCommentBlocks > maxRepeatedBlocks`（WI-239: `commentDensity()` の分子はメタデータヘッダと JSDoc を除いた narrative コメント行数。ルール評価ロジック・閾値は不変）
 5. 各ルールについて違反ゼロなら `passedRules` に追加する
 6. `LintReport.create()` で結果を返す
 
@@ -961,7 +964,7 @@ interface ClockPort {
 | `mappers/source-module-snapshot-mapper.ts` | AST抽出結果から `SourceModuleSnapshot` を生成 |
 | `parsers/unit-comment-parser.ts` | `architecture.metadataTags.unit`（既定 `@unit`）に一致するUnit metadataの抽出 |
 | `parsers/layer-comment-parser.ts` | `architecture.metadataTags.layer`（既定 `@layer`）に一致するLayer metadataの抽出 |
-| `parsers/comment-density-parser.ts` | コメント密度、重複コメントブロック数の算出 |
+| `parsers/comment-density-parser.ts` | コメント密度、重複コメントブロック数の算出。WI-239 で密度分子（`commentLineCount`）の定義を訂正: 先頭の必須メタデータヘッダ行（ファイル冒頭の連続コメント領域に限る）と `/** … */` doc-comment ブロックを分子から除外し、narrative な `//` 行コメントと非 doc の `/* … */` ブロックのみを数える。反復ブロック検出も narrative コメント集合に対して行う |
 | `process/node-process-runner.ts` | 子プロセス実行の共通化 |
 
 #### WI-024: metadata tag名の設定反映

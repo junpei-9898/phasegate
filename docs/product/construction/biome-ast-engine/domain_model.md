@@ -3,6 +3,7 @@
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
+@work-item-id WI-239
 > **Unit ID**: biome-ast-engine
 > **作成日**: 2026-03-13
 > **最終更新**: 2026-03-17（H01-01, H01-02, H01-03 実装完了後の cascade update）
@@ -172,6 +173,7 @@ biome-ast-engineはステートレスなリンター/AST解析ドメインであ
 | ParityTestService | v0 biome-toolchain | ESLint→Biome移行完了後は不要 | テストコードでのパリティ検証 |
 | FileReaderPort | 初期domain_model設計 | SourceModuleAnalyzerPortに昇格・置換。単純ファイル読み取りからAST解析スナップショット生成に責務拡張 | SourceModuleAnalyzerPort |
 | RuleType.BiomeNative実用 | 初期domain_model設計 | Biome v2のGritQLはコメントパターン未対応のため全ルールExternalAnalyzerで実装。BiomeNative型は将来用に定義のみ残存 | ExternalAnalyzer型ルール（TS実装） |
+| commentLineCount 密度分子の意味（WI-239） | 初期実装（全コメント行を分子に加算） | 密度分子から (i) 先頭の必須メタデータヘッダ行、(ii) `/** … */` doc-comment を除外。理由: メタデータヘッダ（`// @unit` / `// @layer` 等）は PhaseGate 自身が L1 で必須化しているものであり、それを flood 分子に数えるのは自己矛盾。宣言前 JSDoc は Clean Architecture 上の正当なドキュメント（型/DTO/ポート/薄アダプタのフィールド・宣言説明）であり削れば逆に自己説明性を損なう。narrative コメントの過多のみを flood signal として残す | comment-density-parser.ts（フィールド名 `commentLineCount` は据え置き、意味のみ再定義） |
 
 ---
 
@@ -433,6 +435,8 @@ classDiagram
     ImportGraphBuilder ..> SourceModuleSnapshot : consumes
     ImportGraphBuilder ..> ImportGraph : creates
 ```
+
+> **SourceModuleSnapshot.commentLineCount の意味（WI-239）**: `commentLineCount` は「密度分子となる narrative コメント行数」を表す。先頭の必須メタデータヘッダ行（`// @unit` / `// @layer` / `// @work-item-id` / `// @story` 等。ファイル冒頭の連続コメント領域に限る）と `/** … */` doc-comment ブロックは分子から除外し、narrative な `//` 行コメントと非 doc の `/* … */` ブロックのみを数える。`commentDensity() = commentLineCount / logicalLineCount` の分母（`logicalLineCount`）と算式、`no-comment-flood` の閾値（`maxCommentRatio: 0.35`）は不変。設計判断の理由は §6 の設計判断表を参照。
 
 ---
 
