@@ -24,7 +24,7 @@
 
 ### 判定結果
 
-- ⚠️ 受け入れ基準: 85%（13 中 11 が実検証。H13-03-AC-2 / AC-4 は存在性がモック port のみでドメインロジックは検証されるが、実コーパス・本番配線は未検証。§11 訂正履歴参照）
+- ✅ 受け入れ基準: 100%（13 中 13 が実検証。H13-03-AC-2 / AC-4 は WI-247 で本番配線を修正し、実 `docs/ADR/` コーパス・実コマンドレジストリに対する実在性検証テストを追加して カバー に反転。§11 訂正履歴参照）
 - ⚠️ ドメインロジック（不変条件）: 92%（INV-1〜INV-12 中 11 条件が検証。INV-10 は AdrExistencePort がモックのみで実 ADR コーパス未検証。§11 訂正履歴参照）
 - ✅ UseCase: 100%（全8UseCaseに正常系・異常系テストが設計されている）
 - ⚠️ Infrastructure Adapter: 40%（外部Unit依存の6アダプタはモック化の方針上テストケース未定義）
@@ -60,9 +60,9 @@
 | AC ID | 基準内容 | 対応テストケースID | カバー状態 |
 |-------|---------|-----------------|----------|
 | H13-03-AC-1 | AGENTS.mdの記述的バリデータ一覧を`phasegate:status`実行へのポインタに置換 | IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
-| H13-03-AC-2 | AGENTS.mdへのADR参照リンクの追加 | UT-PV-005, UT-PV-006（AdrExistencePort **モック**検証のみ — §11 訂正履歴参照） | ⚠️ ドメインロジックのみ（実コーパス未検証・本番配線バグ未修正） |
+| H13-03-AC-2 | AGENTS.mdへのADR参照リンクの追加 | UT-PV-005, UT-PV-006（ドメインロジック）+ `validate-pointers-real-corpus.it.test.ts`（実 `docs/ADR/` コーパスで ADR-013/013 exists・ADR-999 dead・validateAdrLinks 実検証 — WI-247） | ✅ カバー済み（実コーパス検証・本番配線 WI-247 で修正済み） |
 | H13-03-AC-3 | 移行前と比較して行数50%以上の削減 | IT-UC-MigrateAgentsMd-003, IT-UC-MigrateAgentsMd-004, IT-REPO-AgentsMdFile-003 | ✅ カバー済み |
-| H13-03-AC-4 | ポインタが参照する先（コマンド、ファイル）の実在性検証 | UT-PV-001〜UT-PV-008（存在性は全て **モック** port）, IT-UC-ValidatePointers-001〜003, IT-UC-MigrateAgentsMd-006 — §11 訂正履歴参照 | ⚠️ ドメインロジックのみ（実コマンド/実 ADR コーパス未検証・本番配線バグ未修正） |
+| H13-03-AC-4 | ポインタが参照する先（コマンド、ファイル）の実在性検証 | UT-PV-001〜UT-PV-008（ドメインロジック）, IT-UC-ValidatePointers-001〜003, IT-UC-MigrateAgentsMd-006 + `validate-pointers-real-corpus.it.test.ts`（実コマンドレジストリ・実ファイル・実 ADR コーパス × 本番 adapter 3種で違反0件/dead検出を実検証 — WI-247） | ✅ カバー済み（実在性を実 artifact で検証・本番配線 WI-247 で修正済み） |
 | H13-03-AC-5 | skill-qualityからのlesson artifactのAGENTS.mdへの集約・反映 | UT-LA-001〜UT-LA-007, IT-UC-AggregateLessons-001〜004, IT-UC-MigrateAgentsMd-001, IT-API-AgentsMdFlow-001 | ✅ カバー済み |
 
 **受け入れ基準カバレッジ: 11/13 実検証 = 85%**（H13-03-AC-2 / AC-4 はドメインロジックのみ・実コーパス/本番配線未検証。§11 訂正履歴参照）
@@ -249,6 +249,7 @@
 - `scripts/harness/ci-governance/composition-root.ts` L86-87 は `new HarnessApiCommandExistenceAdapter()` / `new AdrFoundationExistenceAdapter()` を**空リストで**生成している。両アダプタは既定引数 `[]` を取るため、本番では全 ADR ポインタ・全コマンドポインタが「存在しない（dead pointer）」と誤判定され、`validate-pointers` / `ci:migrate-agents-md` の存在性検証が実質無効化される（ポート・アダプタ・ドメインは実装済みで、注入データのみの配線欠陥）。自リポの現行 `AGENTS.md` には lesson-pointer / ADR-link セクションが無いため影響は潜在的だが、`ci:migrate-agents-md` でポインタが投入された瞬間に顕在化する。
 - **修正方針**（未適用）: composition-root で `docs/ADR/` の `NNN-*.md` から 3 桁 ADR id を導出し `AdrFoundationExistenceAdapter` に注入、harness-api の canonical `KNOWN_COMMANDS` を `HarnessApiCommandExistenceAdapter` に注入する。ドメインモデル追加・API 契約変更を伴わない純粋な配線修正。
 - **BLOCKED の理由**: `scripts/harness/ci-governance/` の非テストソース編集は `[L2-STORY-REFLECTION]` フェーズゲートにより**現在ブロックされている**。WI-222 の反映は本 WI で解消したが、ci-governance には約 23 件の未反映 WI 背景バックログ（WI-040, WI-107/108/109, WI-120/122/123/124/128, WI-140/141/142/150/174/182/183/185/189/190/194/198）が残存し、これらが解消されるまで全ソース編集がブロックされる。Bash 迂回は品質防御の無効化に当たるため実施しない（CLAUDE.md 禁止事項）。正規手順（反映バックログ返済 or cascade-updater）での解消を要する別 WI として据え置く。この訂正履歴は実検証未達を隠さず正直に露出させることを目的とする。
+- **解消（2026-07-08, WI-247）**: 反映バックログは WI-246（反映ゲートの layer-aware 化）による false positive 除去 + 残る genuine 反映の返済で正規解消され、ソース編集ブロックが解除された。その上で配線を修正: `HarnessApiCommandExistenceAdapter` は infrastructure 層ローカル定数 `KNOWN_HARNESS_COMMANDS`（main.ts の公開 CLI dispatch 実サーフェス）をデフォルト注入、`AdrFoundationExistenceAdapter` は adr-foundation の実 corpus（`createAdrFoundationModule(baseDir/docs/ADR).adrRepository`、`ADR-013`⇄`013` は `AdrId.create` で正規化・例外は false）に委譲、composition-root が `baseDir` を配線。実 artifact 検証は `validate-pointers-real-corpus.it.test.ts`（T1-T8: 実在/偽 ADR・実在/偽コマンド・本番 adapter 3種での違反0件と dead 検出）で担保。harness-api への canonical コマンドリスト export は別 WI として残る。<!-- @work-item-id WI-247 -->
 
 ## WI-107: L4 Advisory Policy
 

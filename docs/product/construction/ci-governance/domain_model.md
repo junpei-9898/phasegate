@@ -27,10 +27,11 @@
 | RepetitionResetCondition | 値オブジェクト | エラー繰り返しカウントのリセット条件（resetOnResolution） |
 | PointerEntry | 値オブジェクト | 個別ポインタ定義（CommandPointer / FilePointerのUnion型） |
 | LessonArtifact | 値オブジェクト | skill-qualityが出力するlesson artifact。**本Unitがスキーマオーナー** |
-| TemplateGenerator | ドメインサービス | Preset設定 → CiTemplate生成。ValidatorIdRegistryPort + PresetConfigPortを参照 |
+| TemplateGenerator | ドメインサービス | Preset設定 → CiTemplate生成。ValidatorIdRegistryPort + PresetConfigPortを参照。WI-124以降は registry の preset-aware 選択（`listForPreset`）を優先し `listAll` はフォールバック<!-- @work-item-id WI-124 --> |
 | RepetitionDetector | ドメインサービス | ErrorRepetition集約のoccurrenceCount更新・閾値判定・escalatedフラグ制御 |
-| PointerValidator | ドメインサービス | PointerEntry[]の実在性検証（CommandExistencePort + FileExistencePort） |
+| PointerValidator | ドメインサービス | PointerEntry[]の実在性検証（CommandExistencePort + FileExistencePort）。検証結果の fail/warn/skip 分類は CI 側の semantic pointer policy（logical_design §WI-122）が担い、本サービスは実在性判定（Dead Pointer検出）のみを担う<!-- @work-item-id WI-122 --> |
 | LessonAggregator | ドメインサービス | LessonArtifact[] → AgentsMdPointerへの集約・反映（重複lessonId検出） |
+| ClaudeMdComposer | ドメインサービス | CLAUDE.md の managed-section 描画（テンプレート + 既存 user-section 保全 + ClaudeMdTemplateValues の合成）。user-section 未定義時の既定文言は言語中立（npm consumer 前提）<!-- @work-item-id WI-190, WI-194 --> |
 | LessonArtifactSchema | Cross-Unit Contract | `docs/contracts/lesson-artifact.schema.json`に配置。skill-qualityが参照するJSONスキーマ |
 
 WI-120 L3-001 security findings are CI gate inputs. Secret scanner messages must use stable rule ids and redacted values so CI logs can fail safely without leaking token contents.
@@ -132,6 +133,7 @@ WI-120 L3-001 security findings are CI gate inputs. Secret scanner messages must
 | RepetitionDetector | HarnessError発生時に対象ErrorRepetition集約を取得・increment・escalation判定・save。`detect(error: HarnessError): Promise<EscalationAction \| null>` | ErrorRepetitionRepositoryPort |
 | PointerValidator | PointerEntry参照先の実在性検証（Dead Pointer検出）。`validate(entries: PointerEntry[]): Promise<HarnessError[]>` | CommandExistencePort, FileExistencePort, AdrExistencePort |
 | LessonAggregator | LessonArtifact[] → PointerEntry[]への変換（AGENTS.md集約形式へのマッピング）。重複lessonId検出。`aggregate(artifacts: LessonArtifact[]): Result<PointerEntry[], HarnessError[]>` | LessonArtifactReaderPort |
+| ClaudeMdComposer | CLAUDE.md managed-section の合成。`compose(template, existing, values): string` — 既存ファイルの user-section（`phasegate:user-section` マーカー間）を保全しつつテンプレート値を描画する<!-- @work-item-id WI-190 --> | （ポートなし: 純粋計算） |
 
 ---
 
@@ -141,7 +143,7 @@ WI-120 L3-001 security findings are CI gate inputs. Secret scanner messages must
 
 | ポート名 | 責務 | 利用サービス/集約 |
 |---------|------|-----------------|
-| ValidatorIdRegistryPort | validator-systemのValidator ID Registryから有効なValidatorId一覧取得 | TemplateGenerator |
+| ValidatorIdRegistryPort | validator-systemのValidator ID Registryから有効なValidatorId一覧取得。`listAll()` に加え、任意実装の `listForPreset?(presetId, templateType)` で preset × テンプレート種別に応じた選択を提供（live registry 供給・WI-124）<!-- @work-item-id WI-124 --> | TemplateGenerator |
 | PresetConfigPort | config-foundationのPreset設定取得（PresetId → Preset設定） | TemplateGenerator |
 | ErrorRepetitionRepositoryPort | `.harness/error-history.json`のCRUD（ErrorRepetition集約のload/save） | RepetitionDetector |
 | CommandExistencePort | harness-apiのCLI Command Registryでコマンド実在性確認 | PointerValidator |
@@ -418,7 +420,13 @@ EscalationAction（VO）は`logLevel`（warn/error）と`messageTemplate`（stri
 
 ### D6: TemplateType × TriggerConditionのマッピングをTemplateGenerator責務とする
 
-`templateType` と `triggerCondition` の対応（aidlc-gate→pull_request、consistency-check→schedule、pre-commit→pre-commit）はTemplateGenerator内のドメインロジックとして実装する。この対応関係はCI/CDパイプライン設計の業務知識であり、Preset設定に依存しない固定ルールとして扱う。
+`templateType` と `triggerCondition` の対応（aidlc-gate→pull_request、consistency-check→schedule、pre-commit→pre-commit）はTemplateGenerator内のドメインロジックとして実装する。この対応関係はCI/CDパイプライン設計の業務知識であり、Preset設定に依存しない固定ルールとして扱う。`consistency-check`（schedule）は L4 定期監査の正規エントリポイントである（logical_design の WI-128 運用記述を参照）。<!-- @work-item-id WI-128 -->
+
+### D6a: 運用シグナルはドメイン集約の外で扱う（WI-123）
+
+<!-- @work-item-id WI-123 -->
+
+hook skip イベントや baseline grandfather の債務は運用シグナルであり、ci-governance のドメイン集約（ErrorRepetition / CiTemplate / AgentsMdPointer）の状態には含めない。`phasegate:status --json` が baseline debt / sha mismatch 件数を報告するが、grandfather 状態を gate 失敗として扱わない（logical_design の WI-123 運用記述を参照）。
 
 ### D7: PointerEntry.keyによる一意性管理
 

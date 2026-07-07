@@ -84,7 +84,7 @@ export function buildCiGovernance(
   const templateRendererPort = new YamlTemplateRendererAdapter(harnessRoot);
   const fileExistencePort = new FileSystemExistenceAdapter(baseDir);
   const commandExistencePort = new HarnessApiCommandExistenceAdapter();
-  const adrExistencePort = new AdrFoundationExistenceAdapter();
+  const adrExistencePort = new AdrFoundationExistenceAdapter(baseDir);
   const agentsMdPort = new AgentsMdFileAdapter(baseDir);
   const agentContextDocumentPort = new AgentContextFileAdapter(baseDir, harnessRoot);
   const lessonArtifactReaderPort = new LessonArtifactFileReaderAdapter(baseDir);

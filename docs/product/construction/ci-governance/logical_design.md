@@ -1480,6 +1480,8 @@ Dead Pointer は `HarnessError`（severity: `'error'`）として移行を中断
 
 ### D15: Work-Item trailer検証はpre-commit統合のオプション入力として扱う
 
+<!-- @work-item-id WI-040 -->
+
 H13-04では、WI配下document変更時に `Work-Item: WI-XXX` trailerを要求する。ただしGitのpre-commit hookはコミットメッセージ作成前に実行されるため、通常のpre-commit経路では本文を読めない。したがって `runPreCommit()` にオプションの `commitMessage` を追加し、CIの呼び出し元が `PHASEGATE_COMMIT_MESSAGE` で本文を渡した場合にtrailer検証を実行する。Git hookでは `phasegate commit-msg <message-file>` を追加し、`.husky/commit-msg` からGitのmessage fileを渡す。
 
 WI変更の判定は `docs/inception/**/WI-<number>/**` のstaged pathで行う。WI配下以外の変更ではtrailerを要求せず、`commitMessage` 未指定時は既存のL2/metadata検証のみを実行する。
@@ -1604,6 +1606,12 @@ The `consistency-check` generated workflow is the recommended L4 scheduled audit
 ## WI-122 Pointer Policy In CI
 
 CI governance treats pointer validation results according to semantic pointer policy. Broken product-doc and ADR pointers may fail, implementation/reference pointers may warn, and external URL pointers skip unless policy explicitly includes them.
+
+## WI-120 L3-001 security findings as CI gate inputs
+
+<!-- @work-item-id WI-120 -->
+
+L3 CI runs consume validator-system's L3-001 secret-scan findings as gate inputs. Findings carry stable per-family rule ids and mandatory redaction (raw secret values never appear), so CI logs can fail safely without leaking token contents. Fixture/docs suppression uses the `phasegate-allow-secret-fixture` marker; scanner implementation and detection families are owned by validator-system (see validator-system logical_design).
 # Public CLI Catalog Reflection
 
 @work-item-id WI-150
