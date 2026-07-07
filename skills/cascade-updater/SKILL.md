@@ -120,7 +120,7 @@ languages: [typescript]
 ## Phase 3: レビュー（Opus review）
 
 ### 実行主体
-メインセッション（Opus 4.6）が実行する。Sonnetへの再委任は行わない。
+メインセッション（model-routing.md の Architect ロール）が実行する。Sonnetへの再委任は行わない。
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む

@@ -176,7 +176,7 @@ review: opus
 ---
 
 - **Phase 1（計画）**: Opus がスコープを整理する
-- **Phase 2（実行）**: Sonnet 4.6 に委任して成果物を生成する（\`npx phasegate delegate-sonnet\` 経由）
+- **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（\`npx phasegate delegate-sonnet\` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証する
 `;
 
@@ -187,7 +187,7 @@ review: opus
         expect(actual).not.toContain("model: sonnet");
         expect(actual).not.toContain("review: opus");
         expect(actual).not.toContain("delegate-sonnet");
-        expect(actual).not.toContain("Sonnet 4.6");
+        expect(actual).not.toContain("委任先モデル");
         expect(actual).toContain("メインセッションが成果物を生成する");
       });
     });

@@ -29,7 +29,7 @@ UnitドキュメントとConstructionのドメインモデル設計を元に、*
 
 **このスキルは3フェーズで実行する。**
 - **Phase 1（計画）**: Opus がスコープ・方針・不明点を整理し、人間の承認を得る
-- **Phase 2（実行）**: Sonnet 4.6 に委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
+- **Phase 2（実行）**: 委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）
 - **Phase 3（レビュー）**: Opus が成果物を検証し、問題があれば直接修正する
 
 **Phase 1/2/3を同時に実行してはならない。モデルルーティングの詳細は `docs/principles/model-routing.md` を参照。**
@@ -142,7 +142,7 @@ docs/inception/{unit}/WI-XXX/tdd_implementation_plan.md
 ## Phase 3: レビュー（Opus review）
 
 ### 実行主体
-メインセッション（Opus 4.6）が実行する。Sonnetへの再委任は行わない。
+メインセッション（model-routing.md の Architect ロール）が実行する。Sonnetへの再委任は行わない。
 
 ### レビュー手順
 1. Sonnetが出力したファイルを読み込む

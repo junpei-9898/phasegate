@@ -173,9 +173,12 @@ export function renderSkillForModelDelegation(content: string, policy: ModelDele
   return content
     .replace(/^model:\s+\S+\n/gm, "")
     .replace(/^review:\s+\S+\n/gm, "")
-    .replaceAll("Sonnet 4.6 に委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）", "メインセッションが成果物を生成する")
+    .replaceAll(
+      "委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由）",
+      "メインセッションが成果物を生成する",
+    )
     .replaceAll("Opus が", "メインセッションが")
-    .replaceAll("Sonnet 4.6", "メインセッション")
+    .replaceAll("委任先モデル", "メインセッション")
     .replaceAll("`npx phasegate delegate-sonnet`", "メインセッション");
 }
 
@@ -726,10 +729,7 @@ export async function deployHuskyCommitMsgHook(
   return { created: true, path: targetPath };
 }
 
-export async function deployHuskyPrePushHook(
-  harnessRoot: string,
-  projectRoot: string,
-): Promise<DeployHuskyHookResult> {
+export async function deployHuskyPrePushHook(harnessRoot: string, projectRoot: string): Promise<DeployHuskyHookResult> {
   const targetPath = join(projectRoot, ".husky", "pre-push");
 
   try {
