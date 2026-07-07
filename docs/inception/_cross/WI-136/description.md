@@ -3,7 +3,7 @@ id: WI-136
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, traceability-model, documentation]
+affects: [validator-system, documentation]
 source: internal
 ---
 

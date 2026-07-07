@@ -3,7 +3,7 @@ id: WI-215
 type: issue
 severity: high
 status: tested
-affects: [installation, documentation, agent-integration]
+affects: [installation, documentation]
 source: dogfood
 ---
 

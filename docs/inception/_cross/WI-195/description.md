@@ -3,7 +3,7 @@ id: WI-195
 type: issue
 severity: normal
 status: tested
-affects: [harness-api, traceability-model]
+affects: []
 source: github#20
 external_ref: https://github.com/junpei-9898/phasegate/issues/20
 ---

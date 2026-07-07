@@ -3,7 +3,7 @@ id: WI-216
 type: issue
 severity: high
 status: tested
-affects: [installation, setup, agent-integration, documentation]
+affects: [installation, documentation]
 source: user-feedback
 ---
 

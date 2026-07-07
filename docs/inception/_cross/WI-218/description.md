@@ -3,7 +3,7 @@ id: WI-218
 type: issue
 severity: high
 status: drafted
-affects: [agent-integration, phase-dependency-model, traceability-model]
+affects: [agent-integration]
 source: github#31
 external_ref: https://github.com/junpei-9898/phasegate/issues/31
 ---

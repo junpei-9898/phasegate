@@ -3,7 +3,7 @@ id: WI-125
 type: story
 severity: normal
 status: tested
-affects: [nyquist-validation, traceability-model, skill-quality, validator-system]
+affects: [nyquist-validation, validator-system]
 source: internal
 ---
 

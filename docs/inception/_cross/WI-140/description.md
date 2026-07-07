@@ -3,7 +3,7 @@ id: WI-140
 type: issue
 severity: high
 status: tested
-affects: [traceability-model, validator-system, harness-api, ci-governance, quick-mode, config-foundation]
+affects: [traceability-model, validator-system, quick-mode, config-foundation]
 source: internal
 ---
 

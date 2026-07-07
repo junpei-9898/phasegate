@@ -3,7 +3,7 @@ id: WI-219
 type: issue
 severity: normal
 status: drafted
-affects: [config-foundation, installation, skill-quality, harness-api]
+affects: [config-foundation, installation]
 source: github#32
 external_ref: https://github.com/junpei-9898/phasegate/issues/32
 ---

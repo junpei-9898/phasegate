@@ -3,7 +3,7 @@ id: WI-167
 type: issue
 severity: normal
 status: tested
-affects: [documentation, validator-system, traceability-model]
+affects: [documentation]
 source: internal
 ---
 

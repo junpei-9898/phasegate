@@ -3,7 +3,7 @@ id: WI-148
 type: story
 severity: normal
 status: tested
-affects: [installation, harness-api]
+affects: [installation]
 source: internal
 ---
 

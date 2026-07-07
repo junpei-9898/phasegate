@@ -3,7 +3,7 @@ id: WI-031
 type: story
 severity: normal
 status: tested
-affects: [ci-governance, harness-api]
+affects: [ci-governance]
 ---
 
 # WI-031: CI template の二系統統一 + `phasegate init --with-ci` による自動配置

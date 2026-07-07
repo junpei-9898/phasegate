@@ -3,7 +3,7 @@ id: WI-206
 type: issue
 severity: high
 status: tested
-affects: [agent-integration, harness-api, skill-quality]
+affects: [agent-integration]
 source: phasegate-upstream-feedback
 ---
 

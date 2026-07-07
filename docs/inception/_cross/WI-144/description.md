@@ -3,7 +3,7 @@ id: WI-144
 type: story
 severity: high
 status: tested
-affects: [harness-api, agent-integration, ci-governance, config-foundation, setup]
+affects: []
 source: internal
 ---
 

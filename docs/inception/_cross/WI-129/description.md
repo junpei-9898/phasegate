@@ -3,7 +3,7 @@ id: WI-129
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, traceability-model, skill-quality, documentation]
+affects: [validator-system, documentation]
 source: internal
 ---
 

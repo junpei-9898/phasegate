@@ -3,7 +3,7 @@ id: WI-155
 type: issue
 severity: normal
 status: tested
-affects: [documentation, ci-governance, harness-api, harness-error, nyquist-validation, skill-quality, agent-integration]
+affects: [documentation]
 source: internal
 ---
 

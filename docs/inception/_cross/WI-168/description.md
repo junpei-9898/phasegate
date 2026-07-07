@@ -3,7 +3,7 @@ id: WI-168
 type: issue
 severity: high
 status: tested
-affects: [documentation, validator-system, integrations]
+affects: [documentation]
 source: internal
 ---
 

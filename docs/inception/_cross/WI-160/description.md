@@ -3,7 +3,7 @@ id: WI-160
 type: story
 severity: high
 status: tested
-affects: [documentation, validator-system, traceability-model]
+affects: [documentation]
 source: internal
 ---
 

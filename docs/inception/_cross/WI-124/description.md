@@ -3,7 +3,7 @@ id: WI-124
 type: issue
 severity: normal
 status: tested
-affects: [ci-governance, validator-system, config-foundation]
+affects: [ci-governance, validator-system]
 source: internal
 ---
 

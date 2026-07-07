@@ -3,7 +3,7 @@ id: WI-231
 type: chore
 severity: normal
 status: tested
-affects: [docs, adr-foundation]
+affects: [docs]
 ---
 
 # WI-231: H05-02 AC-1/2/3/4 の per-AC binding ＋ L3-005 を H05-02 へ拡張（fully ac-bound）

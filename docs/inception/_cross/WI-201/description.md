@@ -3,7 +3,7 @@ id: WI-201
 type: issue
 severity: normal
 status: tested
-affects: [config-foundation, installation, agent-integration, harness-api]
+affects: [agent-integration]
 source: github#26
 external_ref: https://github.com/junpei-9898/phasegate/issues/26
 ---

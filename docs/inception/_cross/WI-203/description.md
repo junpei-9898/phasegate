@@ -3,7 +3,7 @@ id: WI-203
 type: issue
 severity: high
 status: tested
-affects: [agent-integration, installation, harness-api]
+affects: [agent-integration]
 source: github#unassigned
 ---
 

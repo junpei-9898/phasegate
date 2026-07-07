@@ -3,7 +3,7 @@ id: WI-170
 type: issue
 severity: normal
 status: tested
-affects: [phase2-extensions, documentation, config-foundation]
+affects: [documentation, config-foundation]
 source: internal
 ---
 

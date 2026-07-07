@@ -3,7 +3,7 @@ id: WI-156
 type: story
 severity: high
 status: tested
-affects: [documentation, validator-system, config-foundation, setup, skill-quality]
+affects: [documentation, validator-system, config-foundation, skill-quality]
 source: internal
 ---
 

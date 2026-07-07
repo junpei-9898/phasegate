@@ -3,7 +3,7 @@ id: WI-204
 type: issue
 severity: high
 status: tested
-affects: [agent-integration, setup, quick-mode, skill-quality]
+affects: [agent-integration, setup, quick-mode]
 source: dogfood-feedback
 ---
 

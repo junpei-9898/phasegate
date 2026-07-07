@@ -3,7 +3,7 @@ id: WI-161
 type: issue
 severity: high
 status: tested
-affects: [validator-system, biome-ast-engine, config-foundation, documentation]
+affects: [documentation]
 source: internal
 ---
 

@@ -3,7 +3,7 @@ id: WI-177
 type: story
 severity: normal
 status: tested
-affects: [setup, installation, agent-integration, skill-quality, documentation, harness-api]
+affects: [installation, documentation]
 source: internal
 ---
 

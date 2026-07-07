@@ -3,7 +3,7 @@ id: WI-151
 type: issue
 severity: normal
 status: reflected
-affects: [documentation, validator-system, harness-api, quick-mode]
+affects: [documentation]
 source: internal
 ---
 

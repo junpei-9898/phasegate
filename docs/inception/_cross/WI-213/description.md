@@ -3,7 +3,7 @@ id: WI-213
 type: issue
 severity: high
 status: tested
-affects: [installation, harness-api, agent-integration, validator-system, skill-quality, documentation]
+affects: [installation, documentation]
 source: dogfood
 ---
 

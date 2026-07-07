@@ -3,7 +3,7 @@ id: WI-191
 type: issue
 severity: high
 status: tested
-affects: [phase-dependency-model, config-foundation, installation, quick-mode]
+affects: [phase-dependency-model, config-foundation, installation]
 source: github#16
 external_ref: https://github.com/junpei-9898/phasegate/issues/16
 ---

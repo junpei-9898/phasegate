@@ -3,7 +3,7 @@ id: WI-229
 type: chore
 severity: normal
 status: tested
-affects: [docs, adr-foundation]
+affects: [docs]
 ---
 
 # WI-229: coverage_report.md の誤った網羅主張（H05-02 §12 決定 8/11 の ADR 不在）を訂正する

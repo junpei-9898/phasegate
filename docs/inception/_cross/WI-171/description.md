@@ -3,7 +3,7 @@ id: WI-171
 type: story
 severity: high
 status: tested
-affects: [documentation, setup, skill-quality, agent-integration]
+affects: [documentation]
 source: internal
 ---
 

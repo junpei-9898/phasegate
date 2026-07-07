@@ -3,7 +3,7 @@ id: WI-176
 type: story
 severity: normal
 status: tested
-affects: [setup, installation, agent-integration, skill-quality, documentation]
+affects: [documentation]
 source: internal
 ---
 

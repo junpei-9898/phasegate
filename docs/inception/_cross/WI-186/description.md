@@ -3,7 +3,7 @@ id: WI-186
 type: issue
 severity: high
 status: tested
-affects: [validator-system, harness-api, installation]
+affects: [harness-api]
 source: github#11
 external_ref: https://github.com/junpei-9898/phasegate/issues/11
 ---

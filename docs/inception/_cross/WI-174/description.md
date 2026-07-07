@@ -3,7 +3,7 @@ id: WI-174
 type: story
 severity: high
 status: tested
-affects: [setup, installation, ci-governance, agent-integration, documentation]
+affects: [installation, ci-governance, documentation]
 source: internal
 ---
 

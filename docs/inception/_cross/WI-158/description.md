@@ -3,7 +3,7 @@ id: WI-158
 type: issue
 severity: normal
 status: reflected
-affects: [documentation, harness-api, regression-suite, config-foundation]
+affects: [documentation]
 source: internal
 ---
 

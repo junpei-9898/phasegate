@@ -3,7 +3,7 @@ id: WI-126
 type: story
 severity: normal
 status: tested
-affects: [traceability-model, phase-dependency-model, validator-system, harness-api]
+affects: [traceability-model]
 source: internal
 ---
 

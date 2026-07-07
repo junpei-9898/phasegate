@@ -3,7 +3,7 @@ id: WI-152
 type: story
 severity: high
 status: tested
-affects: [documentation, setup, config-foundation, agent-integration, ci-governance]
+affects: [documentation]
 source: internal
 ---
 

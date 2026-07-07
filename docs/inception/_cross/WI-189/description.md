@@ -3,7 +3,7 @@ id: WI-189
 type: issue
 severity: normal
 status: tested
-affects: [harness-api, ci-governance]
+affects: [ci-governance]
 source: github#15
 external_ref: https://github.com/junpei-9898/phasegate/issues/15
 ---

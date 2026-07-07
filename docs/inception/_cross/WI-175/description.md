@@ -3,7 +3,7 @@ id: WI-175
 type: story
 severity: high
 status: tested
-affects: [setup, installation, config-foundation, agent-integration, documentation]
+affects: [installation, documentation]
 source: internal
 ---
 

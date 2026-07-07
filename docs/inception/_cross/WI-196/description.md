@@ -3,7 +3,7 @@ id: WI-196
 type: issue
 severity: normal
 status: tested
-affects: [harness-api, agent-integration]
+affects: []
 source: github#21
 external_ref: https://github.com/junpei-9898/phasegate/issues/21
 ---

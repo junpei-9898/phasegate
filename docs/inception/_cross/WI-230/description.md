@@ -3,7 +3,7 @@ id: WI-230
 type: chore
 severity: normal
 status: tested
-affects: [docs, adr-foundation]
+affects: [docs]
 ---
 
 # WI-230: §12 Key Decisions の遡及 ADR 作成（ADR-022..029）＋ステータスドリフト整合

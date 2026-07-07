@@ -3,7 +3,7 @@ id: WI-166
 type: issue
 severity: high
 status: tested
-affects: [agent-integration, harness-api, setup, documentation]
+affects: [documentation]
 source: internal
 ---
 

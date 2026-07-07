@@ -3,7 +3,7 @@ id: WI-207
 type: story
 severity: high
 status: tested
-affects: [installation, setup, harness-api, documentation]
+affects: [installation, documentation]
 source: user-feedback
 ---
 

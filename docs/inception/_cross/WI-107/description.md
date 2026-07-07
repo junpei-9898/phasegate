@@ -3,7 +3,7 @@ id: WI-107
 type: issue
 severity: high
 status: tested
-affects: [validator-system, ci-governance]
+affects: [validator-system]
 source: internal
 ---
 

@@ -3,7 +3,7 @@ id: WI-121
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, harness-api, config-foundation]
+affects: [validator-system, config-foundation]
 source: internal
 ---
 

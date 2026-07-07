@@ -3,7 +3,7 @@ id: WI-142
 type: issue
 severity: normal
 status: tested
-affects: [ci-governance]
+affects: []
 source: dogfood
 ---
 

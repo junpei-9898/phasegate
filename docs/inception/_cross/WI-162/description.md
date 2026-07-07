@@ -3,7 +3,7 @@ id: WI-162
 type: issue
 severity: high
 status: tested
-affects: [harness-api, validator-system, documentation]
+affects: [documentation]
 source: internal
 ---
 

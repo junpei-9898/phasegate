@@ -3,7 +3,7 @@ id: WI-149
 type: issue
 severity: high
 status: reflected
-affects: [documentation, config-foundation, harness-api, harness-error, skill-quality]
+affects: [documentation]
 source: internal
 ---
 

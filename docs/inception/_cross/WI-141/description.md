@@ -3,7 +3,7 @@ id: WI-141
 type: issue
 severity: high
 status: tested
-affects: [agent-integration, ci-governance, harness-api, validator-system]
+affects: []
 source: internal
 ---
 

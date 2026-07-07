@@ -3,7 +3,7 @@ id: WI-178
 type: story
 severity: normal
 status: tested
-affects: [installation, setup, documentation, skill-quality]
+affects: [installation, documentation]
 source: internal
 ---
 

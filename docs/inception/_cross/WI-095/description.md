@@ -3,7 +3,7 @@ id: WI-095
 type: story
 severity: normal
 status: tested
-affects: [validator-system, traceability-model, docs]
+affects: [validator-system, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti
 related: [WI-091]

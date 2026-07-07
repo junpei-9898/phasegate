@@ -3,7 +3,7 @@ id: WI-165
 type: issue
 severity: normal
 status: tested
-affects: [config-foundation, biome-ast-engine, traceability-model, phase-dependency-model, installation, harness-api, nyquist-validation, documentation]
+affects: [documentation]
 source: internal
 ---
 

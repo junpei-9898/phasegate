@@ -3,7 +3,7 @@ id: WI-172
 type: story
 severity: high
 status: tested
-affects: [setup, agent-integration, config-foundation, skill-quality, documentation]
+affects: [documentation]
 source: internal
 ---
 

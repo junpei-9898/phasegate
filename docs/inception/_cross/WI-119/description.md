@@ -3,7 +3,7 @@ id: WI-119
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, biome-ast-engine, harness-api]
+affects: [validator-system, biome-ast-engine]
 source: internal
 ---
 

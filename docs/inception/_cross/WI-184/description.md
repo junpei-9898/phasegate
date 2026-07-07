@@ -3,7 +3,7 @@ id: WI-184
 type: issue
 severity: normal
 status: tested
-affects: [skill-quality]
+affects: []
 source: github#9
 external_ref: https://github.com/junpei-9898/phasegate/issues/9
 ---

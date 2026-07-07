@@ -3,7 +3,7 @@ id: WI-138
 type: issue
 severity: normal
 status: tested
-affects: [traceability-model, phase-dependency-model, validator-system, documentation]
+affects: [validator-system, documentation]
 source: internal
 ---
 

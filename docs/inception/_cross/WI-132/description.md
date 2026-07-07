@@ -3,7 +3,7 @@ id: WI-132
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, harness-api, traceability-model, documentation]
+affects: [validator-system, documentation]
 source: internal
 ---
 

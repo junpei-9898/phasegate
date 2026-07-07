@@ -3,7 +3,7 @@ id: WI-032
 type: story
 severity: normal
 status: tested
-affects: [ci-governance, harness-api, skill-quality]
+affects: [ci-governance]
 ---
 
 # WI-032: AGENTS.md / CLAUDE.md auto-refresh パイプライン

@@ -3,7 +3,7 @@ id: WI-185
 type: issue
 severity: high
 status: tested
-affects: [phase2-extensions, validator-system, ci-governance]
+affects: [phase2-extensions]
 source: github#10
 external_ref: https://github.com/junpei-9898/phasegate/issues/10
 ---

@@ -3,7 +3,7 @@ id: WI-106
 type: issue
 severity: normal
 status: tested
-affects: [traceability-model, validator-system, ci-governance]
+affects: [traceability-model]
 source: internal
 ---
 

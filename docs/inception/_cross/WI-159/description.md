@@ -3,7 +3,7 @@ id: WI-159
 type: issue
 severity: high
 status: tested
-affects: [validator-system, quick-mode, documentation]
+affects: [quick-mode, documentation]
 source: internal
 ---
 

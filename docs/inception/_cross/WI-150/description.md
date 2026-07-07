@@ -3,7 +3,7 @@ id: WI-150
 type: issue
 severity: high
 status: reflected
-affects: [documentation, harness-api, ci-governance, regression-suite, skill-quality, setup]
+affects: [documentation]
 source: internal
 ---
 

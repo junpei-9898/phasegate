@@ -3,7 +3,7 @@ id: WI-163
 type: issue
 severity: high
 status: tested
-affects: [ci-governance, setup, integrations, config-foundation]
+affects: []
 source: internal
 ---
 

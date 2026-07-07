@@ -3,7 +3,7 @@ id: WI-108
 type: issue
 severity: high
 status: tested
-affects: [ci-governance, validator-system]
+affects: [validator-system]
 source: internal
 ---
 

@@ -3,7 +3,7 @@ id: WI-217
 type: issue
 severity: high
 status: tested
-affects: [validator-system, phase2-extensions, installation, config-foundation, traceability-model, harness-api]
+affects: [validator-system, config-foundation]
 source: github#30
 external_ref: https://github.com/junpei-9898/phasegate/issues/30
 ---

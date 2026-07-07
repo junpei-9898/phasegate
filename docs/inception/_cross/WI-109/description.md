@@ -3,7 +3,7 @@ id: WI-109
 type: issue
 severity: high
 status: tested
-affects: [biome-ast-engine, config-foundation, harness-api, ci-governance]
+affects: [biome-ast-engine, config-foundation, harness-api]
 source: internal
 ---
 

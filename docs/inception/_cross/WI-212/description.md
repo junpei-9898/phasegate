@@ -3,7 +3,7 @@ id: WI-212
 type: issue
 severity: normal
 status: tested
-affects: [validator-system, config-foundation, installation, skill-quality, biome-ast-engine]
+affects: [validator-system, config-foundation, skill-quality]
 source: github#28
 external_ref: https://github.com/junpei-9898/phasegate/issues/28
 ---

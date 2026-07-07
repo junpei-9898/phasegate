@@ -3,7 +3,7 @@ id: WI-228
 type: chore
 severity: normal
 status: tested
-affects: [docs, adr-foundation]
+affects: [docs]
 ---
 
 # WI-228: レガシー ADR 18 件を canonical 形式へ正規化し validate-adr ゲートを実効化する

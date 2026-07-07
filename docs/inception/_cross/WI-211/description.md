@@ -3,7 +3,7 @@ id: WI-211
 type: issue
 severity: normal
 status: drafted
-affects: [installation, setup, harness-api, documentation]
+affects: [documentation]
 source: dogfood
 ---
 

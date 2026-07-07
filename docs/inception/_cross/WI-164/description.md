@@ -3,7 +3,7 @@ id: WI-164
 type: issue
 severity: high
 status: tested
-affects: [phase2-extensions, documentation, validator-system]
+affects: [documentation]
 source: internal
 ---
 

@@ -3,7 +3,7 @@ id: WI-202
 type: issue
 severity: normal
 status: tested
-affects: [config-foundation, installation, agent-integration]
+affects: [agent-integration]
 source: github#27
 external_ref: https://github.com/junpei-9898/phasegate/issues/27
 ---

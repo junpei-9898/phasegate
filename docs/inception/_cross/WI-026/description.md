@@ -4,7 +4,7 @@ type: issue
 severity: high
 status: tested
 legacy_id: ISSUE-026
-affects: [phase-dependency-model, agent-integration, traceability-model, validator-system, config-foundation, docs]
+affects: [phase-dependency-model, agent-integration, traceability-model, docs]
 ---
 
 # ISSUE-026: inception の work item 表現が多系統併存しており、product 反映ゲートが機能不全を起こしている
