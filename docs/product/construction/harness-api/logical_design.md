@@ -1945,3 +1945,15 @@ The CLI accepts `doctor --personal` as a scope hint for personal-install diagnos
 <!-- @work-item-id WI-217 -->
 
 `scaffold-wi` keeps the existing positional contract, but adds explicit options for configured roots and caller-supplied IDs. `--id <work-item-id>` bypasses sequential `WI-XXX` allocation, and `--root <path>` selects the inception root; when omitted the command may use resolved `paths.inceptionDocs` for personal repositories while retaining `docs/inception` as the compatibility default.
+
+## WI-123 Operational Transparency Status Contract
+
+<!-- @work-item-id WI-123 -->
+
+`phasegate:status` composes hook and baseline operational health alongside layer validation, keeping the transparency signal separate from validator pass/fail. `CommandDispatchService` reads `ConfigQueryPort.getHookHealth()` and `getBaselineHealth()` (both optional; missing providers degrade to the normal layer summary) and threads the results plus derived `operationalWarnings` into `StatusDerivationService.derive()`. `buildOperationalWarnings` emits `HOOK_SKIP_OBSERVED` when any hook skip count is non-zero, `BASELINE_SHA_MISMATCH` when snapshot entries diverge from current files, and `BASELINE_DEBT_HIGH` when grandfathered file count stays above threshold with a low removal rate. Each warning carries a copy-actionable `nextAction`. These fields are informational: hook skip records and baseline grandfather debt never change layer `lastResult` or gate exit code, and Codex native `apply_patch` pre-edit interception is reported with the L2 pre-commit backstop rather than treated as a hard failure.
+
+## WI-143 WI-First Workflow Enforcement CLI Surface
+
+<!-- @work-item-id WI-143 -->
+
+Harness API exposes the WI-first workflow enforcement surface through `main.ts`. `scaffold-wi <unit|_cross> <story|issue|chore>` allocates the next sequential `WI-XXX` id by scanning existing `docs/inception/**/WI-NNN/description.md`, ensures `_shared` / `_cross` / `{unit}` inception roots exist, and writes a frontmatter-carrying `description.md` template. `emit-agent-rules` prints the `CLAUDE.md` / `AGENTS.md` WI workflow rule block to stdout so `init` / `update-skills` can inject it. `init --workflow standard|strict` validates the flag at the CLI boundary and, in `strict` mode, scaffolds inception roots and configures `quickMode.relaxedGates: []` / `allowedCategories: ["chore"]`. On `init` completion the CLI detects legacy plan files (`*_plan.md` or `codding_plan/` entries) that exist with zero WI directories and suggests `phasegate migrate work-items --apply`. `scaffold-wi` and `emit-agent-rules` exit 0 on success and exit 2 on invalid unit/type arguments.

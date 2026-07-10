@@ -360,3 +360,45 @@ Legacy alias names are presentation-level command identities, not separate domai
 <!-- @work-item-id WI-203 -->
 
 `phasegate:complete-check` is a registry-backed command identity. It is not modeled as a downstream filesystem artifact. Consumers may run the command through `main.ts` / the `phasegate` binary, but they must not require a project to contain `scripts/harness/cli/complete-check.ts` unless that project deliberately provides a custom extension wrapper outside the built-in command contract.
+
+## WI-109 Integration Entrypoint Boundary
+
+<!-- @work-item-id WI-109 -->
+
+| Concept | Owner | Meaning |
+| --- | --- | --- |
+| Integration entrypoint | harness-api | CLI/hook boundary (`pre-commit.ts`) that may compose config-foundation composition roots and application mappers but must not import foreign infrastructure concrete classes. |
+
+**Invariants**:
+
+- Integration entrypoints depend on composition / application contracts, not on foreign infrastructure concrete error classes. The config-not-found fallback is discriminated by `Error.name === "ConfigNotFoundError"` at the boundary instead of importing `file-system-config-repository`.
+- `phasegate:lint` / `phasegate:complete-check` stay usable as clean release gates for PhaseGate's own repository, so `no-layer-violation` is detected in the same direction as production dependencies.
+
+## WI-113 Validate Format Value
+
+<!-- @work-item-id WI-113 -->
+
+| Concept | Owner | Meaning |
+| --- | --- | --- |
+| `ValidateFormat` | harness-api | CLI boundary value limited to `human`, `agent`, and `ci`. |
+
+**Invariants**:
+
+- `validate` must not silently coerce an unsupported `--format` value into human output; the CLI boundary rejects it fail-fast with a clear stderr message and non-zero exit before validator execution.
+- Supported format lists in help text and parser validation stay aligned. `json` is intentionally unsupported until a validate JSON schema is designed for every layer.
+
+## WI-143 Work Item Scaffolding Concepts
+
+<!-- @work-item-id WI-143 -->
+
+| Concept | Owner | Meaning |
+| --- | --- | --- |
+| Work Item ID allocation | harness-api | Next sequential `WI-XXX` derived by scanning existing `docs/inception/**/WI-NNN/description.md`; zero-padded to three digits. |
+| Inception root scaffolding | harness-api | Ensures `_shared` / `_cross` / `{unit}` directories exist before a work item description is written. |
+| Agent rules block | harness-api | The `CLAUDE.md` / `AGENTS.md` WI workflow rule text emitted for injection by `init` / `update-skills`. |
+| Legacy plan drift signal | harness-api | Count of `*_plan.md` / `codding_plan/` files present while zero WI directories exist, used to suggest `migrate work-items`. |
+
+**Invariants**:
+
+- A scaffolded work item always writes a frontmatter-carrying `description.md` (`id` / `type` / `severity` / `status`) under the resolved inception root.
+- Legacy plan detection reports zero once any WI directory exists; it is a migration hint, not a gate failure.
