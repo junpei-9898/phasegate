@@ -1629,3 +1629,11 @@ Personal install deploys agent context only at paths the selected runtime can di
 
 <!-- @work-item-id WI-214 -->
 Pre-tool-use protection adds `paths.principlesDocs/**` and `paths.folderRulesDoc` to the protected file list loaded from PhaseGate config. This keeps immutable principles protection aligned with custom documentation roots and with personal install's `.phasegate-local/docs/...` sandbox.
+
+## WI-254 Session-Start Integrity Warning
+
+<!-- @work-item-id WI-254 -->
+
+@story-id WI-254
+
+session-start hook が起動時に指示搭載ファイルの整合性を照合する（ADR-030 §Decision.3.① の fast-path）。hook は ci-governance の `integrityHandler.verify` を in-process で呼び、**manifest（`phasegate.integrity.json`）が存在する上での** drift（`mismatch`/`added`/`missing`）を検出したときのみ、警告ブロックを `additionalContext` の先頭へ前置する。**`manifest-absent` のみ（= integrity pin 未導入プロジェクト）の場合は沈黙し警告を出さない**（未導入 = 沈黙が製品デフォルト。manifest 欠落を drift として扱うのは明示実行の CLI `integrity:verify`（exit 2）の責務）。この照合は **warn-only** でありセッションをブロックしない。verify 自体が例外を投げた場合は「integrity 検証不能」警告に fail-open し、hook は常に exit 0 で継続する（ローカル層は信頼のルートではないため hook を止めない — ADR-030 §Decision.1）。警告ブロックの生成は `phasegate-status-context.ts` の純関数 `buildIntegrityWarning(drifts)` に委譲する。信頼のルートである CI 再計算照合は本 fast-path とは独立に判定する。

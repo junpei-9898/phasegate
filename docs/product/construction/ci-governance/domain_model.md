@@ -499,3 +499,17 @@ skill-quality は lesson artifact を出力するだけで、AGENTS.md / CLAUDE.
 <!-- @work-item-id WI-200 -->
 
 `ci:generate-template` has an explicit presentation option set: `--preset`, `--type`, `--render`, `--json`, and help flags. Unsupported options are command-input errors rather than domain defaults. `--output` is not a domain concept until a file-writer port is introduced, so the command rejects it instead of silently producing no file.
+
+## 12. Integrity Manifest（WI-254）
+
+<!-- @work-item-id WI-254 -->
+
+@story-id WI-254
+
+ADR-030 §Decision.3.① の整合性 pin に伴い、ci-governance に以下のドメイン概念を追加する。
+
+- **IntegrityTarget**（VO）: pin 対象の include / exclude glob。`defaultTargets()` が v1 固定 include（`skills/*/SKILL.md`, `.claude/settings.json`, `.claude/scripts/*.sh`, `.husky/*`, `docs/templates/agent-context/**`）を返す不変 VO。
+- **IntegrityManifest**（VO・pin 集約ルート）: `{ version:1, algorithm:'sha256', files: Map<path,digest> }`。不変条件は version===1・algorithm==='sha256'・各 digest が 64 桁小文字 hex・path 非空かつ重複なし。`sortedEntries()` は path 昇順で決定的。pin は新 manifest を生成して置換し in-place 変更しない。
+- **IntegrityDrift**（VO）: verify で検出した 1 件（`kind: 'mismatch' | 'added' | 'missing' | 'manifest-absent'`）。
+- **IntegrityChecker**（ドメインサービス・状態なし・I/O なし）: `computeDrifts(manifest | null, actual)` が manifest と再計算結果を突合し drift を決定的順序（path 昇順）で列挙する純ロジック。manifest===null は `manifest-absent` 1 件。
+- ポート: `Sha256HasherPort`（sha256 hex。既存 sha1 用 `FileHasherPort` とは別）、`IntegrityManifestRepositoryPort`（load/save/exists/getPath）。対象走査は既存 `FileScannerPort` を再利用。

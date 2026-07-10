@@ -1676,3 +1676,11 @@ This keeps lesson aggregation compatible with Codex-facing setup instructions an
 @story-id HF2-05
 
 ci-governance は `ci:generate-template` の scheduled L4 audit（`consistency-check`）向けに validator id リストを `ValidatorIdRegistryAdapter` 経由で導出する。WI-222 / HF2-05 で追加された L4-007（`ac-level-traceability`）は **default-OFF の advisory-only** バリデータであり、この不変条件を保つため `ValidatorIdRegistryAdapter.listForPreset` は `ADVISORY_DEFAULT_OFF_IDS`（`L4-007`）を全 preset・全 templateType で除外する。`listAll`（registry 全件列挙）には含めるが、preset 導出リスト（scheduled-audit metadata）には含めないことで、生成される L4 audit テンプレートに L4-007 が enabled として混入しない。詳細な validator 本体の不変条件（advisory-only / attestation-trust-excluded）は validator-system 側 logical_design の同 WI 反映を正とする。
+
+## WI-254 指示ファイルの整合性 pin（ADR-030 §Decision.3.①）
+
+<!-- @work-item-id WI-254 -->
+
+@story-id WI-254
+
+ci-governance は指示搭載ファイル群（`skills/*/SKILL.md`, `.claude/settings.json`, `.claude/scripts/*.sh`, `.husky/*`, `docs/templates/agent-context/**`）の SHA-256 を `phasegate.integrity.json`（ルート・`{version:1, algorithm:"sha256", files:{path:digest}}`・path 昇順）に pin する整合性照合機能を持つ。domain に純ロジック（`IntegrityChecker.computeDrifts`：manifest と再計算結果の突合で `mismatch`/`added`/`missing`/`manifest-absent` を決定的に列挙）と VO（`IntegrityManifest` / `IntegrityTarget` / `IntegrityDrift`）、application に `PinIntegrityUseCase`（再計算して manifest 書き出し・`--dry-run` 対応）と `VerifyIntegrityUseCase`（再計算して照合）、infrastructure に `FileSystemSha256HasherAdapter`（`node:crypto` sha256）と `IntegrityManifestJsonRepositoryAdapter`、presentation に `IntegrityHandler`（`verify` は drift ありで exit 2）を持つ。対象走査は既存 `GlobFileScannerAdapter`（`FileScannerPort`）を再利用する。CLI `integrity:pin` / `integrity:verify`（harness-api の dispatch + `KNOWN_HARNESS_COMMANDS`）と、session-start hook の warn-only 照合（agent-integration）、CI の再計算照合（`.github/workflows/ci.yml`・authoritative）から利用される。ADR-030 §Decision.1 のとおりローカル照合は fast-path、信頼のルートは CI 再計算。

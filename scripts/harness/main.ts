@@ -30,8 +30,8 @@
 
 import {
   mkdir as fsMkdir,
-  readFile as fsReadFile,
   readdir as fsReaddir,
+  readFile as fsReadFile,
   readlink as fsReadlink,
   rename as fsRename,
   rm as fsRm,
@@ -53,8 +53,11 @@ import {
 } from "./config-foundation/infrastructure/repositories/file-system-config-repository.js";
 import { createHarnessApiModule } from "./harness-api/composition-root.js";
 import { createHarnessErrorModule } from "./harness-error/composition-root.js";
+import {
+  type DeployManifestRecord,
+  SkillDeployerManifestBuilder,
+} from "./installation/application/wrappers/skill-deployer-manifest-builder.js";
 import { createInstallationModule } from "./installation/composition-root.js";
-import { SkillDeployerManifestBuilder, type DeployManifestRecord } from "./installation/application/wrappers/skill-deployer-manifest-builder.js";
 import { NodeCryptoHashAdapter } from "./installation/infrastructure/adapters/node-crypto-hash-adapter.js";
 import { CheckStoryReflectionUseCase } from "./phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
 import { createPhaseDependencyModelModule } from "./phase-dependency-model/composition-root.js";
@@ -72,8 +75,8 @@ import { buildRegressionSuite } from "./regression-suite/composition-root.js";
 import type { SkillSet } from "./setup/skill-deployer.js";
 import {
   deployAgentSkillLinks,
-  deployCodexHooks,
   deployCiWorkflows,
+  deployCodexHooks,
   deployDesignDocs,
   deployHookScripts,
   deployHuskyCommitMsgHook,
@@ -103,9 +106,7 @@ function getProjectRoot(): string {
 }
 
 function toTraceabilityModelOptions(resolvedConfig: HarnessConfigV2 | undefined) {
-  return resolvedConfig
-    ? { pathRoots: { designDocsRoot: resolvedConfig.paths.designDocs } }
-    : undefined;
+  return resolvedConfig ? { pathRoots: { designDocsRoot: resolvedConfig.paths.designDocs } } : undefined;
 }
 
 interface PackageJsonDocument {
@@ -306,7 +307,8 @@ function parseWorkflowMode(value: string | undefined): WorkflowMode {
 }
 
 function parseScaffoldWorkItemType(value: string | undefined): ScaffoldWorkItemType | null {
-  if (value === "story" || value === "issue" || value === "fix" || value === "refactor" || value === "chore") return value;
+  if (value === "story" || value === "issue" || value === "fix" || value === "refactor" || value === "chore")
+    return value;
   return null;
 }
 
@@ -376,7 +378,11 @@ async function countLegacyPlansWithoutWorkItems(rootDir: string): Promise<number
   }).length;
 }
 
-async function scaffoldInceptionRoots(rootDir: string, unit: string | null = null, inceptionRoot = "docs/inception"): Promise<void> {
+async function scaffoldInceptionRoots(
+  rootDir: string,
+  unit: string | null = null,
+  inceptionRoot = "docs/inception",
+): Promise<void> {
   await fsMkdir(join(rootDir, inceptionRoot, "_shared"), { recursive: true });
   await fsMkdir(join(rootDir, inceptionRoot, "_cross"), { recursive: true });
   if (unit && unit !== "_cross" && unit !== "_shared") {
@@ -392,7 +398,7 @@ async function scaffoldWorkItem(
   options: { readonly id?: string; readonly inceptionRoot?: string } = {},
 ): Promise<string> {
   const inceptionRoot = options.inceptionRoot ?? "docs/inception";
-  const id = options.id ?? await nextWorkItemId(rootDir, inceptionRoot);
+  const id = options.id ?? (await nextWorkItemId(rootDir, inceptionRoot));
   await scaffoldInceptionRoots(rootDir, unit, inceptionRoot);
   const targetBase = unit === "_cross" ? join(rootDir, inceptionRoot, "_cross") : join(rootDir, inceptionRoot, unit);
   const targetDir = join(targetBase, id);
@@ -435,7 +441,10 @@ async function createFileManifestRecord(
   }
 }
 
-async function createSymlinkManifestRecord(rootDir: string, relativePath: string): Promise<DeployManifestRecord | null> {
+async function createSymlinkManifestRecord(
+  rootDir: string,
+  relativePath: string,
+): Promise<DeployManifestRecord | null> {
   try {
     const target = await fsReadlink(join(rootDir, relativePath));
     return { path: relativePath, mode: "symlink", contentForHash: target };
@@ -958,7 +967,15 @@ function parseCoverageThreshold(raw: string | undefined): number {
 type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
 type AgentTarget = "claude" | "codex" | "both";
 type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
-type ConfigChangeIntent = "l4-strict" | "codex-hooks" | "ci-fail-on-warning" | "baseline-reset" | "quick-mode-strict" | "quick-mode-relax" | "retrofit-bootstrap" | "planning-mode-relax";
+type ConfigChangeIntent =
+  | "l4-strict"
+  | "codex-hooks"
+  | "ci-fail-on-warning"
+  | "baseline-reset"
+  | "quick-mode-strict"
+  | "quick-mode-relax"
+  | "retrofit-bootstrap"
+  | "planning-mode-relax";
 type SetupCompletenessStatus = "configured" | "planned" | "manual" | "not-applicable" | "unknown";
 
 interface SetupCompletenessEntry {
@@ -1117,7 +1134,8 @@ function buildSetupCompleteness(input: {
   const includeClaude = input.agent === "claude" || input.agent === "both";
   const includeCodex = input.agent === "codex" || input.agent === "both";
   const doctorCommand = doctorValidationCommand(input.agent);
-  const agentHooksConfigured = (!includeClaude || input.checks.claudeSettings) && (!includeCodex || input.checks.codexHooks);
+  const agentHooksConfigured =
+    (!includeClaude || input.checks.claudeSettings) && (!includeCodex || input.checks.codexHooks);
   const agentContextConfigured = (!includeClaude || input.checks.claudeMd) && (!includeCodex || input.checks.agentsMd);
   const entries: SetupCompletenessEntry[] = [
     setupCompletenessEntry({
@@ -1181,7 +1199,8 @@ function buildSetupCompleteness(input: {
   ];
 
   const externalActions: string[] = [];
-  if (includeCodex) externalActions.push("Run codex features enable hooks if Codex hooks are not enabled for the user.");
+  if (includeCodex)
+    externalActions.push("Run codex features enable hooks if Codex hooks are not enabled for the user.");
   if (input.withCi) externalActions.push("Trigger or inspect the first GitHub Actions PhaseGate workflow run.");
   if (input.intent === "strict") externalActions.push("Confirm team policy accepts strict local and CI enforcement.");
   entries.push({
@@ -1189,7 +1208,10 @@ function buildSetupCompleteness(input: {
     status: externalActions.length > 0 ? "manual" : "not-applicable",
     evidence: externalActions.length > 0 ? externalActions : ["No external manual checks selected for this setup run."],
     nextAction: externalActions.length > 0 ? externalActions.join(" ") : null,
-    risk: externalActions.length > 0 ? "PhaseGate cannot prove these user-level or hosted-service states from local files." : null,
+    risk:
+      externalActions.length > 0
+        ? "PhaseGate cannot prove these user-level or hosted-service states from local files."
+        : null,
   });
   return entries;
 }
@@ -1271,7 +1293,8 @@ function buildAgentReadiness(input: {
         "setup:agent will create or refresh the CLAUDE.md PhaseGate managed section.",
         "setup:agent will deploy bundled skills for Claude Code.",
       ],
-      nextAction: "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
+      nextAction:
+        "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
     }),
     setupReadinessEntry({
       agent: "codex",
@@ -1294,9 +1317,7 @@ function buildAgentReadiness(input: {
       agent: "shared",
       included: true,
       configured: sharedConfigured,
-      configuredEvidence: [
-        "package.json, phasegate.config.json, skills, and selected Husky/CI targets are present.",
-      ],
+      configuredEvidence: ["package.json, phasegate.config.json, skills, and selected Husky/CI targets are present."],
       plannedEvidence: [
         "setup:agent will create or refresh package scripts, phasegate.config.json, skills, and selected Husky/CI targets.",
       ],
@@ -1306,13 +1327,16 @@ function buildAgentReadiness(input: {
   ];
 }
 
-async function buildAgentSetupPlan(rootDir: string, input: {
-  readonly intent: SetupIntent;
-  readonly agent: AgentTarget;
-  readonly withHusky: boolean;
-  readonly withCi: boolean;
-  readonly workflow: WorkflowMode;
-}) {
+async function buildAgentSetupPlan(
+  rootDir: string,
+  input: {
+    readonly intent: SetupIntent;
+    readonly agent: AgentTarget;
+    readonly withHusky: boolean;
+    readonly withCi: boolean;
+    readonly workflow: WorkflowMode;
+  },
+) {
   const checks = {
     packageJson: await projectFileExists(rootDir, "package.json"),
     phasegateConfig: await projectFileExists(rootDir, "phasegate.config.json"),
@@ -1327,18 +1351,32 @@ async function buildAgentSetupPlan(rootDir: string, input: {
   const includeClaude = input.agent === "claude" || input.agent === "both";
   const includeCodex = input.agent === "codex" || input.agent === "both";
   const changes = [
-    !checks.packageJson ? "Add phasegate devDependency and phasegate scripts to package.json." : "Keep existing package.json and merge missing phasegate scripts only.",
-    !checks.phasegateConfig ? `Create phasegate.config.json for ${input.workflow} workflow.` : "Keep existing phasegate.config.json; review config:plan before changing policy.",
+    !checks.packageJson
+      ? "Add phasegate devDependency and phasegate scripts to package.json."
+      : "Keep existing package.json and merge missing phasegate scripts only.",
+    !checks.phasegateConfig
+      ? `Create phasegate.config.json for ${input.workflow} workflow.`
+      : "Keep existing phasegate.config.json; review config:plan before changing policy.",
     includeClaude ? "Create or refresh .claude/settings.json and CLAUDE.md managed section." : null,
     includeCodex ? "Create or refresh .codex/hooks.json and AGENTS.md managed section." : null,
-    input.withHusky ? "Create or refresh Husky pre-commit, commit-msg, and pre-push backstops." : "Leave Husky hooks unmanaged in this setup run.",
-    input.withCi ? "Create or refresh GitHub Actions PhaseGate workflow." : "Leave CI workflow unmanaged in this setup run.",
+    input.withHusky
+      ? "Create or refresh Husky pre-commit, commit-msg, and pre-push backstops."
+      : "Leave Husky hooks unmanaged in this setup run.",
+    input.withCi
+      ? "Create or refresh GitHub Actions PhaseGate workflow."
+      : "Leave CI workflow unmanaged in this setup run.",
   ].filter((item): item is string => item !== null);
   const questions = [
-    input.intent === "recommended" ? "Do you want both Claude and Codex context files, or only the agent you actively use?" : null,
-    input.intent === "retrofit" ? "Should existing hooks/workflows be preserved as user-owned content or migrated into PhaseGate managed blocks?" : null,
+    input.intent === "recommended"
+      ? "Do you want both Claude and Codex context files, or only the agent you actively use?"
+      : null,
+    input.intent === "retrofit"
+      ? "Should existing hooks/workflows be preserved as user-owned content or migrated into PhaseGate managed blocks?"
+      : null,
     input.intent === "ci-only" ? "Should local hooks remain disabled while CI enforces the same checks?" : null,
-    input.workflow !== "strict" ? "Do you want strict WI/product reflection enforcement now, or after the first green run?" : null,
+    input.workflow !== "strict"
+      ? "Do you want strict WI/product reflection enforcement now, or after the first green run?"
+      : null,
   ].filter((item): item is string => item !== null);
   return {
     intent: input.intent,
@@ -1399,7 +1437,10 @@ function getNestedValue(source: unknown, path: readonly string[]): unknown {
 }
 
 function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | null): ConfigPatchPreview {
-  const configIntents: Record<ConfigChangeIntent, readonly { readonly pointer: string; readonly path: readonly string[]; readonly value: unknown }[]> = {
+  const configIntents: Record<
+    ConfigChangeIntent,
+    readonly { readonly pointer: string; readonly path: readonly string[]; readonly value: unknown }[]
+  > = {
     "l4-strict": [
       { pointer: "/layers/L4/enabled", path: ["layers", "L4", "enabled"], value: true },
       { pointer: "/validate/failOnWarning", path: ["validate", "failOnWarning"], value: true },
@@ -1413,7 +1454,11 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
       { pointer: "/quickMode/relaxedGates", path: ["quickMode", "relaxedGates"], value: [] },
     ],
     "quick-mode-relax": [
-      { pointer: "/quickMode/allowedCategories", path: ["quickMode", "allowedCategories"], value: ["bugfix", "docs", "test", "config"] },
+      {
+        pointer: "/quickMode/allowedCategories",
+        path: ["quickMode", "allowedCategories"],
+        value: ["bugfix", "docs", "test", "config"],
+      },
     ],
     "codex-hooks": [],
     "baseline-reset": [],
@@ -1422,9 +1467,7 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
       { pointer: "/phaseDependencies/override", path: ["phaseDependencies", "override"], value: true },
       { pointer: "/quickMode/relaxedGates", path: ["quickMode", "relaxedGates"], value: ["phase-gate"] },
     ],
-    "planning-mode-relax": [
-      { pointer: "/planningMode/default", path: ["planningMode", "default"], value: "manual" },
-    ],
+    "planning-mode-relax": [{ pointer: "/planningMode/default", path: ["planningMode", "default"], value: "manual" }],
   };
   const changes = configIntents[intent];
   if (changes.length === 0) {
@@ -1464,7 +1507,10 @@ function configPlanBackupPath(rootDir: string, now: Date): string {
   return join(rootDir, ".phasegate", "backups", `phasegate.config.${stamp}.json`);
 }
 
-async function applyConfigPlan(rootDir: string, plan: Awaited<ReturnType<typeof buildConfigChangePlan>>): Promise<ConfigApplyResult> {
+async function applyConfigPlan(
+  rootDir: string,
+  plan: Awaited<ReturnType<typeof buildConfigChangePlan>>,
+): Promise<ConfigApplyResult> {
   const patch = plan.configPatch;
   if (patch.applicability !== "applicable") {
     throw new Error(`config plan is not applicable: ${patch.blockedReason ?? patch.applicability}`);
@@ -1498,26 +1544,44 @@ function hasStructuredInstallError(value: unknown): boolean {
 }
 
 async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent) {
-  const catalog: Record<ConfigChangeIntent, {
-    readonly targets: readonly string[];
-    readonly managedTargets: readonly string[];
-    readonly externalActions: readonly { readonly id: string; readonly label: string; readonly command: string | null; readonly blocking: boolean }[];
-    readonly commands: readonly string[];
-    readonly validations: readonly string[];
-    readonly risks: readonly string[];
-  }> = {
+  const catalog: Record<
+    ConfigChangeIntent,
+    {
+      readonly targets: readonly string[];
+      readonly managedTargets: readonly string[];
+      readonly externalActions: readonly {
+        readonly id: string;
+        readonly label: string;
+        readonly command: string | null;
+        readonly blocking: boolean;
+      }[];
+      readonly commands: readonly string[];
+      readonly validations: readonly string[];
+      readonly risks: readonly string[];
+    }
+  > = {
     "l4-strict": {
       targets: ["phasegate.config.json: layers.L4.enabled", "phasegate.config.json: validate.failOnWarning"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate config:plan --intent l4-strict --apply --json", "phasegate validate --layer L4 --fail-on-warning --format human"],
+      commands: [
+        "phasegate config:plan --intent l4-strict --apply --json",
+        "phasegate validate --layer L4 --fail-on-warning --format human",
+      ],
       validations: ["phasegate phasegate:detect-drift --json", "phasegate phasegate:check-ready"],
       risks: ["L4 findings may be advisory today but become blocking when fail-on-warning is enabled."],
     },
     "codex-hooks": {
       targets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
       managedTargets: [".codex/hooks.json", "AGENTS.md", ".codex/skills"],
-      externalActions: [{ id: "codex-hooks-feature", label: "Enable Codex user-level hooks feature.", command: "codex features enable hooks", blocking: true }],
+      externalActions: [
+        {
+          id: "codex-hooks-feature",
+          label: "Enable Codex user-level hooks feature.",
+          command: "codex features enable hooks",
+          blocking: true,
+        },
+      ],
       commands: ["phasegate install --agent codex --apply", "codex features enable hooks"],
       validations: ["phasegate doctor --json", "phasegate phasegate:status --json"],
       risks: ["Codex apply_patch writes still require the pre-commit backstop for full coverage."],
@@ -1525,8 +1589,19 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
     "ci-fail-on-warning": {
       targets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
       managedTargets: [".github/workflows/phasegate-aidlc-gate.yml", "phasegate.config.json"],
-      externalActions: [{ id: "github-actions-first-run", label: "Trigger or inspect the first GitHub Actions PhaseGate run.", command: null, blocking: false }],
-      commands: ["phasegate install --with-ci --apply", "phasegate config:plan --intent ci-fail-on-warning --apply --json", "phasegate validate --layer L4 --fail-on-warning"],
+      externalActions: [
+        {
+          id: "github-actions-first-run",
+          label: "Trigger or inspect the first GitHub Actions PhaseGate run.",
+          command: null,
+          blocking: false,
+        },
+      ],
+      commands: [
+        "phasegate install --with-ci --apply",
+        "phasegate config:plan --intent ci-fail-on-warning --apply --json",
+        "phasegate validate --layer L4 --fail-on-warning",
+      ],
       validations: ["phasegate doctor", "phasegate ci:generate-template --type aidlc-gate --render"],
       risks: ["Existing warning-only projects may start failing CI after rollout."],
     },
@@ -1542,7 +1617,10 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: quickMode"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate config:plan --intent quick-mode-strict --apply --json", "phasegate check-change-category --paths <changed-files> --format json"],
+      commands: [
+        "phasegate config:plan --intent quick-mode-strict --apply --json",
+        "phasegate check-change-category --paths <changed-files> --format json",
+      ],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
       risks: ["More changes will require Full Mode validation before commit."],
     },
@@ -1550,25 +1628,46 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       targets: ["phasegate.config.json: quickMode.allowedCategories"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate config:plan --intent quick-mode-relax --json", "phasegate config:plan --intent quick-mode-relax --apply --json", "phasegate check-change-category --paths <changed-files> --format json"],
+      commands: [
+        "phasegate config:plan --intent quick-mode-relax --json",
+        "phasegate config:plan --intent quick-mode-relax --apply --json",
+        "phasegate check-change-category --paths <changed-files> --format json",
+      ],
       validations: ["phasegate ci-check --quick --dry-run", "phasegate phasegate:check-ready"],
-      risks: ["Small bugfix/docs/test/config changes can proceed through Quick Mode again; protected files remain governed by hook and managed command policies."],
+      risks: [
+        "Small bugfix/docs/test/config changes can proceed through Quick Mode again; protected files remain governed by hook and managed command policies.",
+      ],
     },
     "retrofit-bootstrap": {
-      targets: ["phasegate.config.json: planningMode.default", "phasegate.config.json: phaseDependencies.override", "phasegate.config.json: quickMode.relaxedGates"],
+      targets: [
+        "phasegate.config.json: planningMode.default",
+        "phasegate.config.json: phaseDependencies.override",
+        "phasegate.config.json: quickMode.relaxedGates",
+      ],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate baseline --dry-run", "phasegate config:plan --intent retrofit-bootstrap --json", "phasegate config:plan --intent retrofit-bootstrap --apply --json"],
+      commands: [
+        "phasegate baseline --dry-run",
+        "phasegate config:plan --intent retrofit-bootstrap --json",
+        "phasegate config:plan --intent retrofit-bootstrap --apply --json",
+      ],
       validations: ["phasegate validate-metadata docs/inception/_shared/*.md", "phasegate check-phase-gate --level 2"],
-      risks: ["Manual planning mode accepts existing retrofit planning evidence; review the patch before applying it to avoid weakening greenfield projects."],
+      risks: [
+        "Manual planning mode accepts existing retrofit planning evidence; review the patch before applying it to avoid weakening greenfield projects.",
+      ],
     },
     "planning-mode-relax": {
       targets: ["phasegate.config.json: planningMode.default"],
       managedTargets: ["phasegate.config.json"],
       externalActions: [],
-      commands: ["phasegate config:plan --intent planning-mode-relax --json", "phasegate config:plan --intent planning-mode-relax --apply --json"],
+      commands: [
+        "phasegate config:plan --intent planning-mode-relax --json",
+        "phasegate config:plan --intent planning-mode-relax --apply --json",
+      ],
       validations: ["phasegate check-phase-gate --level 2", "phasegate phasegate:check-ready"],
-      risks: ["Manual planning mode reduces PhaseGate's QA enforcement for plan documents until strict planning is restored."],
+      risks: [
+        "Manual planning mode reduces PhaseGate's QA enforcement for plan documents until strict planning is restored.",
+      ],
     },
   };
   const before = await readProjectJson(rootDir, "phasegate.config.json");
@@ -1576,7 +1675,8 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
     intent,
     ...catalog[intent],
     configPatch: buildConfigPatchPreview(intent, before),
-    diffExplanation: "Review the listed targets first, apply through PhaseGate managed commands where possible, then run the validations in order.",
+    diffExplanation:
+      "Review the listed targets first, apply through PhaseGate managed commands where possible, then run the validations in order.",
     rollback: "Use git diff for config changes; use phasegate uninstall/reconcile dry-runs for managed setup targets.",
   };
 }
@@ -1866,13 +1966,19 @@ async function main(): Promise<void> {
             contentForHash: `${result.version}:${skill}`,
           })),
           await createFileManifestRecord(rootDir, join("skills", ".harness-version")),
-          packageResult.created || packageResult.updated ? await createFileManifestRecord(rootDir, "package.json") : null,
+          packageResult.created || packageResult.updated
+            ? await createFileManifestRecord(rootDir, "package.json")
+            : null,
           configResult.created ? await createFileManifestRecord(rootDir, "phasegate.config.json") : null,
-          hooksResult.settingsCreated ? await createFileManifestRecord(rootDir, join(".claude", "settings.json")) : null,
+          hooksResult.settingsCreated
+            ? await createFileManifestRecord(rootDir, join(".claude", "settings.json"))
+            : null,
           hooksResult.hookConfigGenerated
             ? await createFileManifestRecord(rootDir, join(".claude", "scripts", "hook-config.json"))
             : null,
-          skillLinkResult.claude !== null ? await createSymlinkManifestRecord(rootDir, join(".claude", "skills")) : null,
+          skillLinkResult.claude !== null
+            ? await createSymlinkManifestRecord(rootDir, join(".claude", "skills"))
+            : null,
           codexResult?.created ? await createFileManifestRecord(rootDir, join(".codex", "hooks.json")) : null,
           skillLinkResult.codex !== null ? await createSymlinkManifestRecord(rootDir, join(".codex", "skills")) : null,
           ...designDocsResult.copiedFiles.map((path) => createFileManifestRecord(rootDir, path)),
@@ -1920,7 +2026,9 @@ async function main(): Promise<void> {
         if (configResult.created) {
           console.log(`✓ phasegate.config.json created`);
           if (workflow === "strict") {
-            console.log(`✓ strict workflow configured (quickMode.relaxedGates: [], allowedCategories: ["bugfix","docs","test","config"])`);
+            console.log(
+              `✓ strict workflow configured (quickMode.relaxedGates: [], allowedCategories: ["bugfix","docs","test","config"])`,
+            );
           }
         } else {
           console.log(`  phasegate.config.json already exists, skipped`);
@@ -1931,9 +2039,7 @@ async function main(): Promise<void> {
         if (hooksResult.hookConfigGenerated) {
           const dirsLabel = hooksResult.detectedTargetDirs.join(", ");
           const formatterLabel = hooksResult.detectedFormatter ?? "none";
-          console.log(
-            `✓ hook-config.json generated (targetDirs: ${dirsLabel}; formatter: ${formatterLabel})`,
-          );
+          console.log(`✓ hook-config.json generated (targetDirs: ${dirsLabel}; formatter: ${formatterLabel})`);
         }
         if (hooksResult.settingsCreated) {
           console.log(`✓ .claude/settings.json created`);
@@ -2101,7 +2207,9 @@ async function main(): Promise<void> {
         const unit = args[1];
         const type = parseScaffoldWorkItemType(args[2]);
         if (!unit || !type) {
-          console.error("Usage: phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore> [--id <work-item-id>] [--root <path>]");
+          console.error(
+            "Usage: phasegate scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore> [--id <work-item-id>] [--root <path>]",
+          );
           process.exit(2);
         }
         const configuredPersonalRoot = resolvedConfig?.paths.inceptionDocs?.startsWith(".phasegate-local/")
@@ -2117,7 +2225,18 @@ async function main(): Promise<void> {
       }
 
       case "install": {
-        const KNOWN_INSTALL_FLAGS = ["--dry-run", "--apply", "--force", "--json", "--agent", "--skills", "--workflow", "--with-husky", "--with-ci", "--personal"];
+        const KNOWN_INSTALL_FLAGS = [
+          "--dry-run",
+          "--apply",
+          "--force",
+          "--json",
+          "--agent",
+          "--skills",
+          "--workflow",
+          "--with-husky",
+          "--with-ci",
+          "--personal",
+        ];
         const flagError = validateKnownFlags(args, KNOWN_INSTALL_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -2164,7 +2283,17 @@ async function main(): Promise<void> {
       }
 
       case "setup:agent": {
-        const KNOWN_SETUP_AGENT_FLAGS = ["--intent", "--agent", "--workflow", "--with-husky", "--with-ci", "--dry-run", "--apply", "--force", "--json"];
+        const KNOWN_SETUP_AGENT_FLAGS = [
+          "--intent",
+          "--agent",
+          "--workflow",
+          "--with-husky",
+          "--with-ci",
+          "--dry-run",
+          "--apply",
+          "--force",
+          "--json",
+        ];
         const flagError = validateKnownFlags(args, KNOWN_SETUP_AGENT_FLAGS);
         if (flagError) {
           console.error(flagError);
@@ -2172,7 +2301,9 @@ async function main(): Promise<void> {
         }
         const intent = parseSetupIntent(parseFlag(args, "--intent"));
         const agent = parseAgentTarget(parseFlag(args, "--agent"), "both");
-        const workflow = parseWorkflowMode(parseFlag(args, "--workflow") ?? (intent === "strict" ? "strict" : "standard"));
+        const workflow = parseWorkflowMode(
+          parseFlag(args, "--workflow") ?? (intent === "strict" ? "strict" : "standard"),
+        );
         const withCi = hasFlag(args, "--with-ci") || intent === "ci-only" || intent === "strict";
         const withHusky = hasFlag(args, "--with-husky") || intent === "agent-hooks" || intent === "strict";
         let plan = await buildAgentSetupPlan(rootDir, { intent, agent, withHusky, withCi, workflow });
@@ -2182,10 +2313,15 @@ async function main(): Promise<void> {
         if (apply) {
           const skillResult = await deploySkills(harnessRoot, rootDir, "all");
           const packageResult = await ensurePhasegatePackageDependency(rootDir, skillResult.version);
-          const configResult = await initHarnessConfig(rootDir, "my-project", workflow === "strict" ? "full" : "standard", {
-            ciEnabled: withCi,
-            workflow,
-          });
+          const configResult = await initHarnessConfig(
+            rootDir,
+            "my-project",
+            workflow === "strict" ? "full" : "standard",
+            {
+              ciEnabled: withCi,
+              workflow,
+            },
+          );
           bootstrapResult = {
             skillsDeployed: skillResult.deployedSkills.length,
             packageDependency: packageResult,
@@ -2253,13 +2389,20 @@ async function main(): Promise<void> {
               console.log(`changed: ${applyResult.changed}`);
               console.log(`backup: ${applyResult.backupPath}`);
               console.log("Applied operations:");
-              for (const operation of applyResult.appliedOperations) console.log(`- ${operation.op} ${operation.pointer}`);
+              for (const operation of applyResult.appliedOperations)
+                console.log(`- ${operation.op} ${operation.pointer}`);
             }
             process.exit(0);
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             if (json) {
-              console.log(JSON.stringify({ intent: plan.intent, refused: true, error: message, configPatch: plan.configPatch }, null, 2));
+              console.log(
+                JSON.stringify(
+                  { intent: plan.intent, refused: true, error: message, configPatch: plan.configPatch },
+                  null,
+                  2,
+                ),
+              );
             } else {
               console.error(`Error: ${message}`);
             }
@@ -2427,10 +2570,7 @@ async function main(): Promise<void> {
 
       case "migrate": {
         if (args[1] === "work-items") {
-          const mod = createTraceabilityModelModule(
-            rootDir,
-            toTraceabilityModelOptions(resolvedConfig),
-          );
+          const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
           const result = await mod.migrateWorkItemsCommandHandler.execute({
             dryRun: hasFlag(args, "--dry-run"),
             apply: hasFlag(args, "--apply"),
@@ -2497,10 +2637,7 @@ async function main(): Promise<void> {
 
       // ── traceability-model ──
       case "validate-metadata": {
-        const mod = createTraceabilityModelModule(
-          rootDir,
-          toTraceabilityModelOptions(resolvedConfig),
-        );
+        const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
         const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
           filePaths,
@@ -2512,10 +2649,7 @@ async function main(): Promise<void> {
       }
 
       case "work-items:status": {
-        const mod = createTraceabilityModelModule(
-          rootDir,
-          toTraceabilityModelOptions(resolvedConfig),
-        );
+        const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
         const result = await mod.workItemStatusCommandHandler.execute({
           dryRun: hasFlag(args, "--dry-run"),
           apply: hasFlag(args, "--apply"),
@@ -2818,22 +2952,19 @@ async function main(): Promise<void> {
         });
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
-        await mod.handlers.generateMatrixHandler.handle({
-          requirementsPath: parseFlag(args, "--requirements") ?? "docs/product/user_stories.md",
-          testRoot: parseFlag(args, "--tests") ?? "scripts/harness/__tests__",
-          matrixFilePath: parseFlag(args, "--out") ?? ".harness/requirement-test-matrix.json",
-        }, flags);
+        await mod.handlers.generateMatrixHandler.handle(
+          {
+            requirementsPath: parseFlag(args, "--requirements") ?? "docs/product/user_stories.md",
+            testRoot: parseFlag(args, "--tests") ?? "scripts/harness/__tests__",
+            matrixFilePath: parseFlag(args, "--out") ?? ".harness/requirement-test-matrix.json",
+          },
+          flags,
+        );
         break;
       }
 
       case "phasegate:attest": {
-        const flagError = validateKnownFlags(args.slice(1), [
-          "--out",
-          "--require-pass",
-          "--mode",
-          "--json",
-          "--help",
-        ]);
+        const flagError = validateKnownFlags(args.slice(1), ["--out", "--require-pass", "--mode", "--json", "--help"]);
         if (flagError !== null) {
           console.error(flagError);
           process.exit(2);
@@ -3002,6 +3133,25 @@ Examples:
           force,
           format,
         });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "integrity:pin": {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const dryRun = hasFlag(args, "--dry-run");
+        const format = json ? "json" : "human";
+        const result = await mod.integrityHandler.pin({ dryRun, format });
+        console.log(result.output);
+        process.exit(result.exitCode);
+        break;
+      }
+
+      case "integrity:verify": {
+        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const format = json ? "json" : "human";
+        const result = await mod.integrityHandler.verify({ format });
         console.log(result.output);
         process.exit(result.exitCode);
         break;
@@ -3246,11 +3396,13 @@ Examples:
           printSubcommandHelp("delegate-sonnet");
           process.exit(0);
         }
-        if (!hasFlag(args, "--dry-run") && await isModelDelegationDisabled(rootDir)) {
-          console.error(JSON.stringify({
-            code: "MODEL_DELEGATION_DISABLED",
-            message: "phasegate delegate-sonnet is disabled by modelRouting.delegation=none",
-          }));
+        if (!hasFlag(args, "--dry-run") && (await isModelDelegationDisabled(rootDir))) {
+          console.error(
+            JSON.stringify({
+              code: "MODEL_DELEGATION_DISABLED",
+              message: "phasegate delegate-sonnet is disabled by modelRouting.delegation=none",
+            }),
+          );
           process.exit(1);
         }
         const { spawn } = await import("node:child_process");

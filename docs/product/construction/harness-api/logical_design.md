@@ -1968,3 +1968,11 @@ Harness API exposes the WI-first workflow enforcement surface through `main.ts`.
 <!-- @work-item-id WI-250 -->
 
 harness-api owns the authoritative catalog of top-level CLI command names as a dependency-free domain constant `KNOWN_HARNESS_COMMANDS` (`harness-api/domain/value-objects/known-harness-commands.ts`). This is the complete surface dispatched by the `switch (command)` in `main.ts`, including non-`phasegate:`-prefixed commands (`lint`, `init`, `baseline`, ...) that the `phasegate:`-only `CommandRegistry` cannot represent. Consumers outside harness-api — notably ci-governance's `HarnessApiCommandExistenceAdapter` — import this constant instead of re-hardcoding the list, so command-pointer existence checks stay aligned with the real CLI. A conformance test parses `main.ts`, extracts every `case "..."` label from the dispatch `switch`, and asserts set-equality with `KNOWN_HARNESS_COMMANDS`, so adding or removing a command in `main.ts` without updating the constant fails the gate (drift detection).
+
+## WI-254 Integrity Pin CLI Commands
+
+<!-- @work-item-id WI-254 -->
+
+@story-id WI-254
+
+harness-api の `main.ts` dispatch に `integrity:pin` / `integrity:verify` の 2 コマンドを追加する（ADR-030 §Decision.3.① の CLI 面）。両コマンドは `buildCiGovernance(rootDir, harnessRoot)` の `integrityHandler` を呼び、`integrity:pin` は指示搭載ファイル群の SHA-256 を `phasegate.integrity.json` に再計算・書き出し（`--dry-run` 対応）、`integrity:verify` は再計算して照合し drift 一覧を返す（drift ありで exit 2）。両コマンドは canonical 定数 `KNOWN_HARNESS_COMMANDS` に昇順維持で追加され、conformance テスト（`main.ts` の `case` ラベル集合と canonical 定数の集合一致）を満たす。追加を怠ると乖離検出ゲートが fail する。
