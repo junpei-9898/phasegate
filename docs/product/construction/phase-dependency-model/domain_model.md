@@ -120,6 +120,16 @@
 - source-touch 判定が不能（WI に紐付くコミットが履歴に存在しない）の場合は「touch なし」として扱う。この規則は要求の除去方向にのみ作用する。
 - unit-local WI の要求判定は layer-aware 化の影響を受けない。
 
+#### File-tag-scoped attribution for batch commits（WI-251）
+
+<!-- @work-item-id WI-251 -->
+
+- **Over-attribution**: 複数 `Work-Item:` trailer を同梱するバッチコミットでは、changed paths が全 trailer WI に一律帰属し、実際にそのファイルを書いていない WI が source-touch と誤判定される。この false-positive は domain 層を触れていない WI に対する `domain_model.md` 反映要求の固着を生む（返済＝帰属捏造となり返済不能）。
+- **File-tag-scoped attribution**: single-trailer コミットは従来どおり全 changed paths を帰属する。複数 trailer コミットが触った `scripts/harness/{unit}/{layer}/` 配下ファイルは、そのファイルの現在内容（HEAD）の `@work-item-id`/`@story` タグに含まれる WI にのみ帰属する。
+- **fail-closed**: タグ無し・ファイルが HEAD で読めない・判定不能の場合は帰属を維持する（反映要求を緩めない）。
+- **monotonicity**: 帰属は狭まる方向にのみ作用し、`storyTouchesUnitLayer` の結果は true→false にしか変化しない。よって blocking violation の新規発火（added）は起きない。
+- `storyTouchesUnitLayer` の port シグネチャ・意味論は不変。精緻化は adapter 内部の changed-paths 算出に閉じる。
+
 ---
 
 ## 4. Invariants

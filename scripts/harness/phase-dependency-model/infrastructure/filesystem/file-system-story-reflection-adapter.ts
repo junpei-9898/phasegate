@@ -15,6 +15,12 @@ const CROSS_WORK_ITEM_PATTERN = /^WI-\d+$/;
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---/;
 const AFFECTS_INLINE_PATTERN = /^affects:\s*\[([^\]]*)\]\s*$/m;
 const LEGACY_ID_PATTERN = /^legacy_id:\s*([A-Z][\w]+-\d+)\s*$/m;
+/** コミット本文の `Work-Item: WI-NNN` trailer 行から WI を抽出する */
+const WORK_ITEM_TRAILER_PATTERN = /^Work-Item:\s*(WI-\d+)\s*$/gm;
+/** ソースファイル先頭の `@work-item-id` / `@story` タグ配下の WI を抽出する */
+const SOURCE_TAG_PATTERN = /@(?:work-item-id|story)\b[^\n\r]*/g;
+/** harness ソースパスから unit / layer を切り出す（帰属フィルタ適用対象の判定） */
+const HARNESS_SOURCE_PATH_PATTERN = /^scripts\/harness\/[^/]+\/[^/]+\//;
 const execFileAsync = promisify(execFile);
 
 export interface FileSystemStoryReflectionAdapterDeps {
@@ -167,13 +173,13 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
         { cwd: this.rootDir, maxBuffer: 32 * 1024 * 1024 },
       );
 
-      return this.extractChangedPathsForStory(stdout, storyId);
+      return await this.extractChangedPathsForStory(stdout, storyId);
     } catch {
       return new Set<string>();
     }
   }
 
-  private extractChangedPathsForStory(output: string, storyId: string): ReadonlySet<string> {
+  private async extractChangedPathsForStory(output: string, storyId: string): Promise<ReadonlySet<string>> {
     const changedPaths = new Set<string>();
     const trailerPattern = new RegExp(`Work-Item:[^\\n]*\\b${storyId}\\b`);
 
@@ -186,16 +192,72 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
       const body = commitBlock.slice(0, bodyEnd);
       if (!trailerPattern.test(body)) continue;
 
+      // 複数 Work-Item trailer を同梱するバッチコミットでは、changed paths が
+      // 全 trailer WI に一律帰属してしまう（over-attribution）。ソースパスに限り
+      // ファイルの帰属タグで storyId への帰属を絞り込む（WI-251）。
+      const isMultiWorkItemCommit = this.countWorkItemTrailers(body) >= 2;
       const nameOnly = commitBlock.slice(bodyEnd + 1);
       for (const changedPath of nameOnly.split(/\r?\n/)) {
         const trimmedPath = changedPath.trim();
-        if (trimmedPath.length > 0 && trimmedPath !== "@@COMMIT@@") {
+        if (trimmedPath.length === 0 || trimmedPath === "@@COMMIT@@") continue;
+
+        if (await this.pathAttributesToStory(trimmedPath, storyId, isMultiWorkItemCommit)) {
           changedPaths.add(trimmedPath);
         }
       }
     }
 
     return changedPaths;
+  }
+
+  private countWorkItemTrailers(body: string): number {
+    return body.match(WORK_ITEM_TRAILER_PATTERN)?.length ?? 0;
+  }
+
+  /**
+   * バッチコミットの changed path を storyId に帰属させてよいか判定する。
+   * - 単一 WI trailer コミット → 常に帰属（現行挙動を維持）
+   * - 複数 WI trailer × 非ソースパス → 帰属（絞り込み対象外）
+   * - 複数 WI trailer × ソースパス → ファイル内容(HEAD)のタグに storyId を含むときのみ帰属。
+   *   タグ無し / ファイルが読めない → fail-closed で帰属維持（反映要求を緩めない）。
+   */
+  private async pathAttributesToStory(
+    changedPath: string,
+    storyId: string,
+    isMultiWorkItemCommit: boolean,
+  ): Promise<boolean> {
+    if (!isMultiWorkItemCommit) {
+      return true;
+    }
+
+    if (!HARNESS_SOURCE_PATH_PATTERN.test(changedPath)) {
+      return true;
+    }
+
+    const tags = await this.readSourceWorkItemTags(changedPath);
+    if (tags === null || tags.size === 0) {
+      return true;
+    }
+
+    return tags.has(storyId);
+  }
+
+  private async readSourceWorkItemTags(relativePath: string): Promise<Set<string> | null> {
+    let content: string;
+    try {
+      content = await readFile(path.join(this.rootDir, relativePath), "utf8");
+    } catch {
+      return null;
+    }
+
+    const tags = new Set<string>();
+    for (const line of content.match(SOURCE_TAG_PATTERN) ?? []) {
+      for (const id of line.match(/WI-\d+/g) ?? []) {
+        tags.add(id);
+      }
+    }
+
+    return tags;
   }
 
   async fileContainsStoryAnnotation(productPath: string, storyId: string): Promise<boolean> {
