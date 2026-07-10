@@ -2,7 +2,7 @@
 id: WI-205
 type: issue
 severity: normal
-status: drafted
+status: tested
 affects: [setup, agent-integration, harness-api]
 source: internal
 ---

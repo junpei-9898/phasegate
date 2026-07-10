@@ -10,6 +10,11 @@ The harness-api command parser rejects unknown flags before dispatch and provide
 
 The top-level `install` command accepts `--personal` as the local-only lifecycle intent. The CLI boundary validates the flag, forces Husky and CI target inclusion off for this mode, and delegates the personal target routing to the installation unit. The default `install` command remains the team/project install path.
 
+<!-- @work-item-id WI-205 -->
+## WI-205 Codex Hooks Feature Flag in CLI Output
+
+The harness-api CLI boundary emits the non-deprecated Codex hooks feature flag name in every setup-guidance surface. `config:plan --intent codex-hooks` returns the user-level external action and command list using `codex features enable hooks`, and the `init --agent codex` next-steps output uses the same flag. The deprecated `codex_hooks` alias is never presented as the recommended command; project-local `.codex/hooks.json` remains the managed runtime artifact and is unchanged.
+
 <!-- @work-item-id WI-091, WI-092 -->
 ## WI-091 / WI-092 Validator-System Dispatch Configuration
 
