@@ -415,3 +415,7 @@ Legacy alias names are presentation-level command identities, not separate domai
 
 - The catalog is set-equal to the `case "..."` labels of the `main.ts` dispatch `switch`; a conformance test enforces this so drift fails the gate.
 - Entries are unique and sorted; the constant has no runtime dependencies so any unit (e.g., ci-governance infrastructure) may import it without violating dependency direction.
+
+<!-- @work-item-id WI-254 -->
+
+**WI-254 での拡張**: integrity pin の CLI 化に伴い `integrity:pin` / `integrity:verify` の 2 エントリをカタログへ追加（main.ts の dispatch case と同時更新。conformance ゲートが両者の同期を強制するため、片側のみの更新は fail する — これが WI-250 が意図した乖離検出の実働例）。

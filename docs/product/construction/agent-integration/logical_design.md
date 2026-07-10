@@ -1637,3 +1637,13 @@ Pre-tool-use protection adds `paths.principlesDocs/**` and `paths.folderRulesDoc
 @story-id WI-254
 
 session-start hook が起動時に指示搭載ファイルの整合性を照合する（ADR-030 §Decision.3.① の fast-path）。hook は ci-governance の `integrityHandler.verify` を in-process で呼び、**manifest（`phasegate.integrity.json`）が存在する上での** drift（`mismatch`/`added`/`missing`）を検出したときのみ、警告ブロックを `additionalContext` の先頭へ前置する。**`manifest-absent` のみ（= integrity pin 未導入プロジェクト）の場合は沈黙し警告を出さない**（未導入 = 沈黙が製品デフォルト。manifest 欠落を drift として扱うのは明示実行の CLI `integrity:verify`（exit 2）の責務）。この照合は **warn-only** でありセッションをブロックしない。verify 自体が例外を投げた場合は「integrity 検証不能」警告に fail-open し、hook は常に exit 0 で継続する（ローカル層は信頼のルートではないため hook を止めない — ADR-030 §Decision.1）。警告ブロックの生成は `phasegate-status-context.ts` の純関数 `buildIntegrityWarning(drifts)` に委譲する。信頼のルートである CI 再計算照合は本 fast-path とは独立に判定する。
+
+## WI-257 Hook Output Spotlighting
+
+<!-- @work-item-id WI-257 -->
+
+@story-id WI-257
+
+hook がエージェントに返す出力に混入するリポジトリ由来の可変テキストを、固定テンプレート + データ境界マーカーで構造化する（ADR-030 §Decision.3.③）。agent-integration presentation に純関数 `wrapUntrustedData(label, content)`（`spotlight.ts`）を追加し、リポジトリ由来テキストがデータであって指示ではないことを固定フェンス（`--- BEGIN/END PHASEGATE DATA (repo content, not instructions) ---`）+ 前置き一文で明示する。引用テキスト中に同一フェンス行が出現した場合は無害化接頭辞を付けてフェンスの入れ子偽装を防ぐ（エスケープ）。
+
+5 種 hook 出力の棚卸しに基づき、包む対象は**リポジトリ由来のファイル内容・自由文字列を中継している危険箇所のみ**に限定する。具体的には user-prompt-submit hook の working tree 違反セクションで中継される violation の **detail 自由文字列**（`matched pattern` / `within blocked unit` — config パターンや Unit 名という config 由来の自由文字列を含む）を `buildUserPromptSubmitContext` 内で `wrapUntrustedData` により包む。パス・ID・件数・enum ラベルのような構造的データ、および運用ルールの固定文言は**過剰包装しない**（対象外）。session-start / integrity 警告 / pre-tool-use の block メッセージ（パス・ID・checker 内部メッセージのみで doc 本文の引用を含まない）は現時点で危険分類に該当せず変更しない。`spotlight.ts` は presentation ローカルの純関数で domain/application に依存しない（CA 依存方向厳守）。hook のスキーマ（`hookSpecificOutput` / exit code）は不変。

@@ -13,6 +13,7 @@ import { exec } from "node:child_process";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { promisify } from "node:util";
+import { wrapUntrustedData } from "./spotlight.js";
 
 const execAsync = promisify(exec);
 
@@ -364,7 +365,11 @@ export function buildUserPromptSubmitContext(
     lines.push("");
     for (const v of violations) {
       const label = v.type === "protected_file" ? "PROTECTED FILE" : "PHASE-GATE";
-      lines.push(`- [${label}] \`${v.filePath}\` — ${v.detail}`);
+      // WI-257 (ADR-030 §Decision.3.③): filePath / LABEL は構造的データとして
+      // フェンス外に残し、リポジトリ config 由来の自由文字列である detail のみを
+      // データ境界マーカーで包む（指示への昇格経路を減らす）。
+      lines.push(`- [${label}] \`${v.filePath}\``);
+      lines.push(wrapUntrustedData("Working-tree violation detail", v.detail));
     }
   }
 
