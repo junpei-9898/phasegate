@@ -1,5 +1,10 @@
 # ドメインモデル: validator-system
 
+<!-- @work-item-id WI-258 -->
+## WI-258 Coverage Attestation Gating Domain Contract
+
+`CoverageAttestationGatingService.check(models)` は coverage_report 走査モデル群から `CoverageGatingReport` を導出する anti-laundering domain service。不変ルール: (INV-A) `hasLegacyMarker` のファイルは error を出さず `legacyCount` に計上し warning を生成、(INV-B) マーカー無しファイルの attestation 参照を持たない ✅ claim は error violation（fail-closed）、(INV-C) ✅ を持たないファイルは対象外（pass）。value-object: `CoverageClaim` / `CoverageReportGatingModel` / `CoverageGatingFinding` / `CoverageGatingReport`。
+
 <!-- @work-item-id WI-112 -->
 ## WI-112 Status Live Validation State
 

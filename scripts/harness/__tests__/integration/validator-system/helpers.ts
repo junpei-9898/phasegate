@@ -4,28 +4,31 @@
  *
  * IT テスト共通ヘルパー・ファクトリ
  */
-import { vi } from 'vitest';
-import { LayerConfig } from '../../../validator-system/domain/value-objects/layer-config.js';
-import type { ValidationResultContract } from '../../../validator-system/application/dto/validation-result-contract.js';
-import type { AggregatedValidationReport } from '../../../validator-system/application/dto/aggregated-validation-report.js';
-import { ValidatorRegistry } from '../../../validator-system/domain/services/validator-registry.js';
-import { ValidatorDefinition } from '../../../validator-system/domain/value-objects/validator-definition.js';
-import { ValidatorId } from '../../../validator-system/domain/value-objects/validator-id.js';
-import { ValidationRule } from '../../../validator-system/domain/value-objects/validation-rule.js';
-import { ValidatorExecutionService } from '../../../validator-system/domain/services/validator-execution-service.js';
-import { ValidationResultContractMapper } from '../../../validator-system/application/mappers/validation-result-contract-mapper.js';
+import { vi } from "vitest";
+import type { AggregatedValidationReport } from "../../../validator-system/application/dto/aggregated-validation-report.js";
+import type { ValidationResultContract } from "../../../validator-system/application/dto/validation-result-contract.js";
+import { ValidationResultContractMapper } from "../../../validator-system/application/mappers/validation-result-contract-mapper.js";
+import { ValidatorExecutionService } from "../../../validator-system/domain/services/validator-execution-service.js";
+import { ValidatorRegistry } from "../../../validator-system/domain/services/validator-registry.js";
+import { LayerConfig } from "../../../validator-system/domain/value-objects/layer-config.js";
+import { ValidationRule } from "../../../validator-system/domain/value-objects/validation-rule.js";
+import { ValidatorDefinition } from "../../../validator-system/domain/value-objects/validator-definition.js";
+import { ValidatorId } from "../../../validator-system/domain/value-objects/validator-id.js";
 
-export function createLayerConfig(layer: 'L2' | 'L3' | 'L4', overrides: Partial<{
-  enabled: boolean;
-  validatorIds: string[];
-  thresholds: Record<string, number>;
-  strictOnly: boolean;
-  preset: 'minimal' | 'standard' | 'strict';
-}> = {}): LayerConfig {
+export function createLayerConfig(
+  layer: "L2" | "L3" | "L4",
+  overrides: Partial<{
+    enabled: boolean;
+    validatorIds: string[];
+    thresholds: Record<string, number>;
+    strictOnly: boolean;
+    preset: "minimal" | "standard" | "strict";
+  }> = {},
+): LayerConfig {
   const defaultValidatorIds: Record<string, string[]> = {
-    L2: ['L2-001', 'L2-002', 'L2-003', 'L2-013', 'L2-014', 'L2-015'],
-    L3: ['L3-001', 'L3-002', 'L3-003', 'L3-004'],
-    L4: ['L4-001', 'L4-002', 'L4-003', 'L4-004', 'L4-005', 'L4-006'],
+    L2: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"],
+    L3: ["L3-001", "L3-002", "L3-003", "L3-004"],
+    L4: ["L4-001", "L4-002", "L4-003", "L4-004", "L4-005", "L4-006"],
   };
   const defaultThresholds: Record<string, Record<string, number>> = {
     L2: {},
@@ -39,13 +42,15 @@ export function createLayerConfig(layer: 'L2' | 'L3' | 'L4', overrides: Partial<
     validatorIds: overrides.validatorIds ?? defaultValidatorIds[layer],
     thresholds: overrides.thresholds ?? defaultThresholds[layer],
     strictOnly: overrides.strictOnly ?? false,
-    preset: overrides.preset ?? 'standard',
+    preset: overrides.preset ?? "standard",
   });
 }
 
-export function createValidationResultContract(overrides: Partial<ValidationResultContract> = {}): ValidationResultContract {
+export function createValidationResultContract(
+  overrides: Partial<ValidationResultContract> = {},
+): ValidationResultContract {
   return {
-    validatorId: 'L2-001',
+    validatorId: "L2-001",
     passed: true,
     errors: [],
     durationMs: 10,
@@ -54,7 +59,9 @@ export function createValidationResultContract(overrides: Partial<ValidationResu
   };
 }
 
-export function createAggregatedReport(overrides: Partial<AggregatedValidationReport> = {}): AggregatedValidationReport {
+export function createAggregatedReport(
+  overrides: Partial<AggregatedValidationReport> = {},
+): AggregatedValidationReport {
   return {
     overallPassed: true,
     totalValidators: 3,
@@ -74,42 +81,45 @@ export function createAggregatedReport(overrides: Partial<AggregatedValidationRe
 
 /** IT テスト用フルレジストリ生成 */
 export function createFullRegistry(): ValidatorRegistry {
-  const createDef = (id: string, layer: 'L2' | 'L3' | 'L4', enabledCondition: 'always' | 'strictOnly' = 'always') =>
+  const createDef = (id: string, layer: "L2" | "L3" | "L4", enabledCondition: "always" | "strictOnly" = "always") =>
     ValidatorDefinition.create({
       validatorId: ValidatorId.create(id),
       layer,
-      rules: [ValidationRule.create({
-        ruleName: `${id}-rule`,
-        errorTemplate: { code: id, severity: 'error', messageTemplate: '{{message}}' },
-        fixExample: null,
-      })],
+      rules: [
+        ValidationRule.create({
+          ruleName: `${id}-rule`,
+          errorTemplate: { code: id, severity: "error", messageTemplate: "{{message}}" },
+          fixExample: null,
+        }),
+      ],
       enabledCondition,
       externalPolicyRef: null,
     });
 
   return new ValidatorRegistry([
-    createDef('L2-001', 'L2'),
-    createDef('L2-002', 'L2'),
-    createDef('L2-003', 'L2'),
-    createDef('L2-013', 'L2'),
-    createDef('L2-014', 'L2'),
-    createDef('L2-015', 'L2'),
-    createDef('L3-001', 'L3'),
-    createDef('L3-002', 'L3', 'strictOnly'),
-    createDef('L3-003', 'L3'),
-    createDef('L3-004', 'L3'),
-    createDef('L4-001', 'L4'),
-    createDef('L4-002', 'L4'),
-    createDef('L4-003', 'L4', 'strictOnly'),
-    createDef('L4-004', 'L4'),
-    createDef('L4-005', 'L4'),
-    createDef('L4-006', 'L4'),
+    createDef("L2-001", "L2"),
+    createDef("L2-002", "L2"),
+    createDef("L2-003", "L2"),
+    createDef("L2-013", "L2"),
+    createDef("L2-014", "L2"),
+    createDef("L2-015", "L2"),
+    createDef("L2-016", "L2"),
+    createDef("L3-001", "L3"),
+    createDef("L3-002", "L3", "strictOnly"),
+    createDef("L3-003", "L3"),
+    createDef("L3-004", "L3"),
+    createDef("L4-001", "L4"),
+    createDef("L4-002", "L4"),
+    createDef("L4-003", "L4", "strictOnly"),
+    createDef("L4-004", "L4"),
+    createDef("L4-005", "L4"),
+    createDef("L4-006", "L4"),
   ]);
 }
 
 /** Portモックパターン */
 export const mockValidatorConfigPort = {
-  getLayerConfig: vi.fn().mockReturnValue(createLayerConfig('L2')),
+  getLayerConfig: vi.fn().mockReturnValue(createLayerConfig("L2")),
 };
 
 export const mockPhaseGatePolicyPort = {
@@ -140,6 +150,12 @@ export const mockAcCoveragePolicyPort = {
   getPolicy: vi.fn().mockResolvedValue({ check: vi.fn().mockReturnValue({ passed: true, errors: [] }) }),
 };
 
-export const mockRunL2UseCase = { execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: 'L2-001' })]) };
-export const mockRunL3UseCase = { execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: 'L3-001' })]) };
-export const mockRunL4UseCase = { execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: 'L4-001' })]) };
+export const mockRunL2UseCase = {
+  execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: "L2-001" })]),
+};
+export const mockRunL3UseCase = {
+  execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: "L3-001" })]),
+};
+export const mockRunL4UseCase = {
+  execute: vi.fn().mockResolvedValue([createValidationResultContract({ validatorId: "L4-001" })]),
+};

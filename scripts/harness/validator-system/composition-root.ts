@@ -37,6 +37,7 @@ import { CliCommandRegistryAdapter } from "./infrastructure/adapters/cli-command
 import { E2eTestFileRegistryAdapter } from "./infrastructure/adapters/e2e-test-file-registry-adapter.js";
 import { FileSystemArchitectureSemanticSourceAdapter } from "./infrastructure/adapters/file-system-architecture-semantic-source-adapter.js";
 import { FileSystemContractTraceabilityPolicyAdapter } from "./infrastructure/adapters/file-system-contract-traceability-policy-adapter.js";
+import { FileSystemCoverageAttestationGatingAdapter } from "./infrastructure/adapters/file-system-coverage-attestation-gating-adapter.js";
 import { FileSystemSecurityPatternScannerAdapter } from "./infrastructure/adapters/file-system-security-pattern-scanner-adapter.js";
 import { FileSystemSkillCatalogDriftAdapter } from "./infrastructure/adapters/file-system-skill-catalog-drift-adapter.js";
 import { FileSystemWorkItemReflectionAdapter } from "./infrastructure/adapters/file-system-work-item-reflection-adapter.js";
@@ -60,7 +61,7 @@ import { RunValidatorsHandler } from "./presentation/handlers/run-validators-han
 const DEFAULT_CONFIG = {
   preset: "standard" as const,
   layers: {
-    L2: { enabled: true, validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015"] },
+    L2: { enabled: true, validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"] },
     L3: {
       enabled: true,
       validators: ["L3-001", "L3-002", "L3-003", "L3-004"],
@@ -129,6 +130,8 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef("L2-013", "L2", "always", "CliE2eTestExistenceService"),
     createDef("L2-014", "L2", "always", "WorkItemStatusPolicyPort"),
     createDef("L2-015", "L2", "always", "ContractTraceabilityPolicyPort"),
+    // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating, fail-closed, default-ON)。
+    createDef("L2-016", "L2", "always", "CoverageAttestationGatingPolicyPort"),
     createDef("L3-001", "L3", "always"),
     createDef("L3-002", "L3", "strictOnly"),
     createDef("L3-003", "L3", "always"),
@@ -188,6 +191,9 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const performanceScannerPort = new AstPerformanceScannerAdapter();
   const workItemStatusPolicyPort = new TraceabilityWorkItemStatusPolicyAdapter(process.cwd());
   const contractTraceabilityPolicyPort = new FileSystemContractTraceabilityPolicyAdapter();
+  // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating) 用アダプタ。
+  // docs/product/construction/*​/coverage_report.md を cwd 起点で走査する（targetPaths 非依存）。
+  const coverageAttestationGatingPolicyPort = new FileSystemCoverageAttestationGatingAdapter(process.cwd());
 
   const cwd = process.cwd();
   const designDocsRoot = configData.paths?.designDocs ?? "docs/product/construction";
@@ -224,6 +230,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     cliCommandRegistryPort,
     workItemStatusPolicyPort,
     contractTraceabilityPolicyPort,
+    coverageAttestationGatingPolicyPort,
   });
 
   // WI-227 / H16-03: L3-005 のスコープ対象 story-id を config から取得（既定 []）。

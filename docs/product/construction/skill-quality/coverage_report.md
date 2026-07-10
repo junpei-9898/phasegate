@@ -1,5 +1,8 @@
 # テストカバレッジレポート: skill-quality
 
+<!-- @coverage-gating: ungated-legacy -->
+<!-- WI-258 / ADR-030 §Decision.3.②: 本レポートは attestation ゲート導入前の非ゲート ✅ を含む見える負債。各 ✅ に @attestation を付与して段階返済し、返済完了後にこのマーカーを除去すること。L2-016 は本マーカーがある間 warning で件数報告する。 -->
+
 @story-id H12-01
 @story-id H12-02
 @story-id H12-03

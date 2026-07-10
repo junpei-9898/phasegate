@@ -1,5 +1,10 @@
 # 論理設計: validator-system
 
+<!-- @work-item-id WI-258 -->
+## WI-258 Coverage Attestation Gating (L2-016)
+
+`L2-016 coverage-attestation-gating` を追加し、`docs/product/construction/*/coverage_report.md` の ✅ 主張に attestation 参照（`<!-- @attestation <id> -->`）を要求する（fail-closed）。validator-system は `CoverageAttestationGatingPolicyPort` 経由で（cwd 起点・targetPaths 非依存に）coverage_report を走査し、`CoverageAttestationGatingService`（domain）で判定する。`<!-- @coverage-gating: ungated-legacy -->` マーカー付きファイルは免除するが warning で件数（見える負債）を報告する。ADR-030 §Decision.3.② に従い L2 は参照の存在・形状のみ検証し（bare ✅ を遮断）、attestation レコードとの authoritative 突合は L3 が担う。
+
 ## WI-085 / WI-091 / WI-092 / WI-093 Runtime Configuration Threading
 
 <!-- @work-item-id WI-085, WI-091, WI-092, WI-093 -->

@@ -1,5 +1,10 @@
 # 論理設計: config-foundation
 
+<!-- @work-item-id WI-258 -->
+## WI-258 L2-016 Validator Threading
+
+`toValidatorSystemConfig` の L2 validators 解決に `L2-016`（coverage-attestation-gating）を default-ON で含める。ADR-030 §Decision.3.② の coverage_report attestation ゲートを CLI 経路（`validate --layer L2` / `ci-check`）で有効化するための配線であり、config スキーマ変更・新概念追加は伴わない。
+
 ## WI-085 / WI-086 / WI-087 / WI-091 Configuration Surface
 
 <!-- @work-item-id WI-085, WI-086, WI-087, WI-091 -->
