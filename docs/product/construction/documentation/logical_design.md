@@ -101,3 +101,28 @@ Personal install documentation must name only runtime-visible context paths. Cla
 
 <!-- @work-item-id WI-214 -->
 Public README and guide content list the `paths` keys for design docs, inception docs, principles docs, and folder rules. Guidance states that repositories with non-`docs/` documentation layouts can map PhaseGate documentation requirements through config, while product-wide Level 1 artifacts remain governed by phase dependency gate configuration.
+
+<!-- @work-item-id WI-132, WI-133, WI-136, WI-137, WI-138 -->
+## G4 Contract Traceability Documentation Surface
+
+Public documentation participates in `L2-015 contract-traceability-coverage` through opt-in `@phasegate-contract` / `@phasegate-observation` annotations rather than treating every Markdown heading as a contract; `docs/guide/contract-traceability.md` owns the public annotation wording. Documented finding vocabulary follows the shipped service: public-contract required behaviors and Port adapter-contract coverage (WI-132), contract-derived boundary-case coverage via `missing-boundary-test` (WI-133), docs/code state-set mismatch and invalid terminal-transition findings (WI-136), error-contract shape / exit-code / error-path findings (WI-137), and traceability-graph completeness including the public-docs-versus-contract synchronization smell (WI-138).
+
+<!-- @work-item-id WI-134, WI-135 -->
+## G5 Architecture Semantic Documentation Policy
+
+Public guidance presents `L4-002` architecture semantic findings as advisory/warning signals unless a project explicitly opts into warning failure. This covers preset-driven side-effect capability boundaries (WI-134) and decision-placement advisories reported with confidence and evidence (WI-135); both are documented as preset-driven architecture policy, not hard failures.
+
+<!-- @work-item-id WI-170 -->
+## WI-170 Phase2 Config Compatibility Contract
+
+`docs/guide/configuration.md` documents `phase2Extensions.initialCreationExpirationRules` as a schema-validated public compatibility config section, and `docs/guide/cli-reference.md` keeps `p2:check-initial-creation` in the Phase 2 Extensions table as a compatibility command. Documentation must not promote the `p2:*` path above `validate --layer L4` as the canonical L4 execution path.
+
+<!-- @work-item-id WI-171, WI-172, WI-173, WI-174 -->
+## P3 Onboarding And Setup Workflow Documentation
+
+README links first-run users to `docs/guide/getting-started.md`, `docs/guide/recipes.md`, and `docs/guide/troubleshooting.md` so the first success path does not require reading the whole CLI catalog (WI-171). Guides and setup skills document `phasegate setup:agent` as a planning-first orchestrator with dry-run/apply/json modes (WI-172) and `phasegate config:plan` as a read-only intent-to-plan surface consulted before editing `phasegate.config.json` (WI-173). `docs/guide/setup-artifacts.md` documents `AGENTS.md` / `CLAUDE.md` as managed setup targets whose managed section coexists with user-owned content, with ci-governance lesson pointers kept in a dedicated marker section (WI-174).
+
+<!-- @work-item-id WI-175 -->
+## WI-175 Setup Completeness Documentation
+
+README and setup guides explain how to read `setup:agent` `plan.completeness` entries (area / status / evidence / nextAction / risk), why external manual checks stay separate from local readiness, and how the read-only `config:plan` `configPatch` / `managedTargets` preview should be reviewed before `phasegate.config.json` edits. Structured install apply failures are documented as target-aware errors that exit non-zero.
