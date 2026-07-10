@@ -2014,3 +2014,17 @@ L4-007（`ac-level-traceability`）は AC 単位トレーサビリティを advi
 - **attestation-trust-excluded**: attestation の `GranularityDerivationService.derive()` は静的 `KNOWN_LIMITATIONS_REGISTRY`（**L3-004 のみ** を keys に持つ whitelist）だけから granularity を再導出する。L4-007 を含む他の validator は導出で完全に無視されるため、L4-007 は **構造上 attestation trust に一切影響しない**（明示的な除外リストではなく、L3-004 のみを真実の源とする whitelist 方式による除外）。この不変性は default-OFF + warning-only によっても二重に担保される。
 
 データフロー: `RunL4ValidatorsUseCase` の L4-007 override ブロックが（enabled かつ非 skip のときのみ）`AcLevelTraceabilityPort.collect()` を呼ぶ。実装 `NyquistAcLevelTraceabilityAdapter` は nyquist-validation の generate-matrix usecase を write:false で実行し、matrix report から `acLevelCoverage` / `orphanAcTags` を取得、matrix から fileFallbackOnly な AC（testReferences に `binding:"ac"` が 1 件も無い linked AC）を算出して snapshot を返す。収集失敗時は empty snapshot（fail-open、advisory のため CI を落とさない）。
+
+## WI-248 AdrFoundationReferenceAdapter rootDir 委譲修正（phantom gate 解消）
+
+<!-- @work-item-id WI-248 -->
+
+`AdrFoundationReferenceAdapter`（`AdrReferencePort` 実装）は、adr-foundation module 生成時に `process.cwd()` を rootDir として渡していた。しかし adr-foundation の `FileSystemAdrRepository` は rootDir 直下を `readdir` して `ADR_FILE_PATTERN`（`^[0-9]{3}-[a-z0-9-]+\.md$`）一致ファイルのみを ADR として列挙するため、rootDir は **ADR ディレクトリ（`docs/ADR`）自体**を指す必要がある。project root を渡すと列挙結果が常に空になり、`exists()` は実在 ADR に対しても常に `false`、`getMetadata()` は常に `null` を返す phantom gate であった。
+
+修正後の実挙動:
+
+- adapter は `constructor(private readonly rootDir: string = process.cwd())` で rootDir を受け取り、module 生成を `createAdrFoundationModule(path.join(this.rootDir, 'docs', 'ADR'))` で行う。main.ts の `list-adrs` / `validate-adr` 正準（`join(rootDir, "docs", "ADR")`）および WI-247 の ci-governance 側 `AdrFoundationExistenceAdapter` パターンと一致する。
+- 呼び出し元 `composition-root.ts` の `buildValidatorSystem` は `new AdrFoundationReferenceAdapter(cwd)` として生成する（`cwd` は同関数内で定義済み）。
+- 実在 ADR（`docs/ADR/013-story-reflection-gate.md`）に対し `exists('ADR-013')` は `true`、`getMetadata('ADR-013')` は `{ adrId: 'ADR-013', title, status: 'Accepted' }` を返す。実在しない `ADR-999` に対しては `exists` が `false` / `getMetadata` が `null`（回帰なし）。
+
+回帰テスト: `__tests__/integration/validator-system/adapters/adr-foundation-reference-adapter-real-corpus.it.test.ts` が mock を用いず実 ADR コーパスを readdir/readFile する経路で AC-1〜AC-3 を検証する。adr-foundation repository / composition-root、および ci-governance 側 adapter は無変更（スコープ外）。

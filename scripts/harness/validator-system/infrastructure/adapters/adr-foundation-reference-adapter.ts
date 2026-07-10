@@ -4,9 +4,12 @@
  *
  * AdrFoundationReferenceAdapter — AdrReferencePort実装
  */
-import type { AdrReferencePort, AdrMetadata } from '../../domain/ports/adr-reference-port.js';
+import * as path from "node:path";
+import type { AdrMetadata, AdrReferencePort } from "../../domain/ports/adr-reference-port.js";
 
 export class AdrFoundationReferenceAdapter implements AdrReferencePort {
+  constructor(private readonly rootDir: string = process.cwd()) {}
+
   async exists(adrRef: string): Promise<boolean> {
     try {
       const adr = await this.findAdr(adrRef);
@@ -35,19 +38,22 @@ export class AdrFoundationReferenceAdapter implements AdrReferencePort {
   }
 
   private async findAdr(adrRef: string): Promise<{
-    readonly getFrontmatter: () => { readonly title: string; readonly status: { readonly value: AdrMetadata['status'] } };
+    readonly getFrontmatter: () => {
+      readonly title: string;
+      readonly status: { readonly value: AdrMetadata["status"] };
+    };
     readonly toAdrRef: () => string;
   } | null> {
-    const { createAdrFoundationModule } = await import('../../../adr-foundation/composition-root.js');
-    const { AdrId } = await import('../../../adr-foundation/domain/value-objects/adr-id.js');
-    const mod = createAdrFoundationModule(process.cwd());
+    const { createAdrFoundationModule } = await import("../../../adr-foundation/composition-root.js");
+    const { AdrId } = await import("../../../adr-foundation/domain/value-objects/adr-id.js");
+    const mod = createAdrFoundationModule(path.join(this.rootDir, "docs", "ADR"));
     const repository = mod.adrRepository;
 
-    if ('findById' in repository && typeof repository.findById === 'function') {
+    if ("findById" in repository && typeof repository.findById === "function") {
       return repository.findById(AdrId.create(adrRef));
     }
 
-    if ('findAll' in repository && typeof repository.findAll === 'function') {
+    if ("findAll" in repository && typeof repository.findAll === "function") {
       const adrs = await repository.findAll();
       return adrs.find((adr) => adr.toAdrRef() === adrRef) ?? null;
     }
