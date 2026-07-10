@@ -1,7 +1,7 @@
 ---
 id: WI-249
-type: task
-status: done
+type: chore
+status: completed
 affects: [integrations]
 ---
 

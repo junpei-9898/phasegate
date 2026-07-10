@@ -1184,3 +1184,8 @@ Quick Mode's static validator ID registry includes `L4-006` so `relaxedGates: ["
 `quickMode.allowedCategories` defaults and setup workflow presets must stay aligned with the public Quick Mode scope: `bugfix`, `docs`, `test`, and `config` are the supported low-risk categories, while `domain`, `api`, and `feature` remain non-configurable rejection categories. Strict workflow may tighten maintained/relaxed gates, but it must not emit unsupported category names such as `chore` or remove all categories that the quick-implementor skill advertises as supported. @work-item-id WI-202
 
 When an operator intentionally narrows `allowedCategories`, a managed recovery path must exist. `config:plan --intent quick-mode-relax` restores the supported category set so agents can recover from strict or over-narrowed configs without directly editing `phasegate.config.json`. @work-item-id WI-204
+
+<!-- @work-item-id WI-060 -->
+## WI-060 Impact Note: WI-aware quick-implementor は skill 契約側で扱う
+
+WI-060（H10-06）は `type: fix | chore` を Quick Mode 対象候補、`type: story | issue | refactor` を Full Mode / story-implementor エスカレーション対象とする WI taxonomy を `quick-implementor` スキルに反映する作業である。出荷成果物は `skills/quick-implementor/SKILL.md`（および `.claude/skills/quick-implementor/SKILL.md`）への Quick Mode WI trailer 明記のみで、`scripts/harness/quick-mode/` 配下の Domain/Application/Infrastructure/Presentation いずれにも実装変更は出荷されていない（`Work-Item: WI-060` trailer コミットは inception status 整合のみ）。`QuickModeJudgmentEngine` のファイルカテゴリ判定は不変であり、WI 種別によるスコープ判定・エスカレーション規約はスキル入口契約として扱う（domain_model.md D5 と一致）。本論理設計に新規の構造・API 契約は追加しない。

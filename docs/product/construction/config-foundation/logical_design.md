@@ -12,6 +12,21 @@ The config foundation owns schema and resolution behavior for customizable docum
 @work-item-id WI-208
 Config resolution probes root `phasegate.config.json` first and then `.phasegate-local/phasegate.config.json` in the same directory before walking to the parent. The fallback preserves project root semantics: a config loaded from `.phasegate-local/phasegate.config.json` belongs to the directory that contains `.phasegate-local`, not to the sandbox directory itself.
 
+@work-item-id WI-012
+`preCommit.implementationExtensions` を resolved config surface と schema (v2/v3) に追加し、pre-commit の実装ファイル判定を `.ts` 固定から設定化した。`HarnessConfigResolvedDocument.preCommit` を `PresetResolutionService` が deep merge で解決し、全 preset (minimal/standard/strict) が既定値 `[".ts"]` を持つ。config-foundation の役割は「拡張子リストを resolved config として供給する」ことに閉じており、実際の staged ファイルフィルタ判定は harness-api の pre-commit entrypoint 側が消費する。
+
+@work-item-id WI-109
+`toValidatorSystemConfig` が resolved config から validator-system へ渡す L2 validators に `L2-013` を明示列挙するよう mapper を更新した。config-foundation 側の変更は application mapper 1 箇所の validator ID リスト調整に閉じており、self-lint 境界違反 (`pre-commit.ts` / infrastructure repository の cross-Unit import) の主たる是正は harness-api / biome-ast-engine 側で行われた。
+
+@work-item-id WI-121
+`toValidatorSystemConfig` に L3 validator ID の正規化を追加し、`performance` エイリアスを `L3-002` に解決するとともに `coverageThreshold` を resolved surface へ透過する。これにより L3-002 performance validator が config 経由で有効化・severity 制御可能になる。WI-121 の検出スコープ定義そのもの（file size / await-in-loop / 同期 I/O 等）は validator-system 側の実装であり、config-foundation の footprint は「performance を解決可能な validator として config surface に載せる」mapping のみ。
+
+@work-item-id WI-134
+architecture config に `capabilityPolicies`（zone 別の副作用能力 allow/deny）を追加した。`EffectCapability` 列挙（filesystem / network / database / process-env / time / random / subprocess / user-io）を `ArchitectureConfigSource` / `ArchitectureConfigDocument` に導入し、`ArchitectureResolutionService` が preset 既定と source override を merge して解決する（v3 schema にも `$defs/effectCapability` と `capabilityPolicies` を追加）。config-foundation は「preset が zone×capability policy を宣言し resolved config として供給する」責務に閉じ、実際の副作用境界検査（L4-002 の semantic analysis）は validator-system 側が resolved policy を消費して行う。
+
+@work-item-id WI-135
+architecture config に `decisionPolicies`（zone 別の decision placement 期待 signal と advisory フラグ）を追加した。`DecisionSignal` 列挙（business-rule-branch / validation-rule / error-construction / state-transition / policy-selection）を config source/document に導入し、`ArchitectureResolutionService` が preset 既定と override を merge して解決する（v3 schema に `$defs/decisionSignal` と `decisionPolicies` を追加）。判定は advisory 基本で、実際の decision placement 検出は L4-002 が resolved policy を照合して行うため、config-foundation の footprint は policy schema と解決ロジックに閉じる。
+
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03

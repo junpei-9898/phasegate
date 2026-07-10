@@ -1,6 +1,6 @@
 ---
 id: WI-253
-type: task
+type: fix
 severity: normal
 status: implemented
 affects: [docs]

@@ -971,6 +971,14 @@ interface ClockPort {
 
 `ArchitectureSpec` は `metadataTags.unit` / `metadataTags.layer` を保持し、未指定時は `@unit` / `@layer` を使う。`ResolveEnabledRulesUseCase` は config-foundation から受け取った `architecture.metadataTags` を spec に透過し、`TypeScriptSourceModuleAnalyzerAdapter` は parser 呼び出し時にその tag名だけを検出対象にする。`LintRunner` の L1-001 / L1-002 欠落メッセージと `HarnessErrorFormatterAdapter` の suggestion も同じ tag名を使い、設定上有効な metadata key を user に提示する。
 
+#### WI-134: 副作用能力ポリシーの ArchitectureSpec 拡張
+
+WI-134（architecture preset による side-effect capability boundary の enforcement）は biome-ast-engine の `ArchitectureSpec` value object を拡張した。zone ごとの許可/禁止 capability を表す `capabilityPolicies`（`ArchitectureCapabilityPolicy = { allowed, denied }`）と、能力の意味モデル `EffectCapability`（`filesystem | network | database | process-env | time | random | subprocess | user-io`）を `ArchitectureSpec` / `ArchitectureSpecInput` に追加し、生成時に freeze する。これにより biome-ast-engine が保持する architecture spec は import direction とは独立した capability policy を表現できるようになり、validator-system 側の architecture semantic analysis（L4-002）がこの spec を照合入力として消費する。policy の意味論と検査ロジックは validator-system が所有し、biome-ast-engine 側は spec 形状の保持と不変性保証のみを担う。@work-item-id WI-134
+
+#### WI-119: L4-003 dead-code が消費する export/import 抽出契約
+
+WI-119（L4-003 dead-code detector の実 import/export graph 化）の実装本体（正規化された import/export graph の構築、`unusedExports` / `unreachableCode` 判定、barrel re-export による false positive 抑止）は validator-system 側（`ImportGraphSourceAnalysisAdapter` / dead-code detection service）に存在し、そこで reflect 済み。biome-ast-engine 側の footprint は独立したコード変更ではなく、G3 export extraction 契約（direct declaration / named re-export / wildcard re-export / default export、および static/dynamic import の区別）が dead-code graph 分析の入力として消費されるという依存関係であり、その抽出契約は本 logical_design の「G3 Export And Behavior Extraction Contract」および「WI-161 G5 Adapter Boundary」で規定される。WI-119 は当該抽出契約を消費するのみで biome 抽出ロジックを変更しない。@work-item-id WI-119
+
 ### WI-109: PhaseGate self-lint unit ownership fallback
 
 `TypeScriptSourceModuleAnalyzerAdapter` は `@unit` metadata がない場合でも、PhaseGate 自身の標準配置 `scripts/harness/{unit}/...` と `scripts/harness/__tests__/{scope}/{unit}/...` から Unit 名を一意に導出できるときは `SourceModuleSnapshot.declaredUnit` にその Unit 名を設定する。これは pre-commit の staged-file grouping と同じ ownership 推定規則であり、repository baseline の既存ファイルを 1 件ずつ annotate しなくても self-lint の `require-unit-comment` signal を「Unit ownership が不明なファイル」に集中させるための互換措置である。`@unit` が明示されている場合はコメントを正とし、path-derived Unit は fallback に限る。`@layer` は依存方向判定に必要な architecture metadata のため、引き続き明示コメントのみを使う。@work-item-id WI-109

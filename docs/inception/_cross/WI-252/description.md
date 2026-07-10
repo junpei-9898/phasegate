@@ -1,7 +1,7 @@
 ---
 id: WI-252
-type: task
-status: done
+type: chore
+status: completed
 affects: [docs]
 ---
 

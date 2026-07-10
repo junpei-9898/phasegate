@@ -368,3 +368,15 @@ WI-133 boundary coverage uses the same observation-link semantics so boundary ca
 `TraceabilityGraphSlice` is the traceability-model projection consumed by `L2-015`. It keeps WI identity, affected Units, product reflection, implementation evidence, test evidence, and public-doc sync state in one narrow model. validator-system may report graph gaps, but traceability-model remains the owner of WI frontmatter parsing and legacy ID resolution.
 
 Severity policy for WI-133 boundary coverage is implemented as validator policy behavior. It is not a separate public config schema field unless config-foundation explicitly adds one.
+
+<!-- @work-item-id WI-140 -->
+## WI-140 WI status 導出への green evidence gate 反映
+
+`WorkItemStatusReport`（domain 値オブジェクト）と `WorkItemStatusDerivationService`（domain サービス）を、`tested` 判定が test evidence の存在だけでなく green evidence（validator/test の実行結果）を考慮できるよう構造化フィールドで拡張する。`WorkItemStatusReport` は agent / CI が構造的に扱える以下のフィールドを持つ:
+
+- `missingInceptionArtifacts: readonly string[]` — 欠落している inception 成果物
+- `missingImplementation: boolean` / `missingTests: boolean` — 実装・テスト証跡の欠落
+- `validation: { state: "passed" | "failed" | "not-run"; source: string; blockingValidation: readonly string[] }` — 該当 validator の実行状態と blocking validation 一覧
+- `blocked: readonly WorkItemStatusReport[]` — blocked 状態の派生レポート
+
+これにより stale WI status を `validate --layer L2`（`L2-014` work-item-status-staleness）経路で検出でき、「品質 validator は落ちているが WI frontmatter は `tested`」という矛盾状態を CI で fail signal 化できる。derived status は current status に依存せず（WI-126 の方針を維持）、blockingValidation が空でない場合に green evidence 不足として扱う。WI frontmatter parsing と legacy ID 解決の所有権は引き続き traceability-model が保持する（WI-160 と一致）。

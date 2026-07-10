@@ -140,6 +140,7 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | PhaseGateQueryPort | phase-dependency-modelの `checkPhaseGate()` を呼び出す契約。`checkGate(scope: WriteTargetScope): Promise<PhaseGateQueryResult>`（v2.2.0追加） | HookToCliTranslator（AsyncHookToCliTranslator） |
 | HookSkipEventRecorderPort | hook skip event を best-effort で append する。write failure は元 hook result を変更せず、必要なら debug log に限定する。@work-item-id WI-166 | HandlePostToolUseUseCase, HandleStopUseCase |
 | FullModeSessionQueryPort | `.phasegate/session.json` から full-mode session を読み取り、現在の target paths / unit / dominant category が許可範囲内かを判定する。期限切れ・unit 不一致・カテゴリ不一致・不正 JSON は fail closed。@work-item-id WI-206 | HandlePreToolUseUseCase |
+| FullModeRequirementQueryPort | 変更対象ファイル群が full-mode を要求するかを quick-mode に問い合わせる契約。hook payload から抽出した before/after content（Edit の `old_string`/`new_string`、Write の disk/new content）を渡し、コメントのみ差分を api 変更として誤って full-mode 要求しないようにする。content が無い場合は従来のパスベース判定に戻る（後方互換）。分類ルール自体は quick-mode 側の責務で、本 unit は hook 境界での content 受け渡しのみを担う。@work-item-id WI-015 | HandlePreToolUseUseCase |
 
 ---
 

@@ -1,5 +1,23 @@
 # 論理設計: agent-integration
 
+## WI-001 WriteTargetScope による work-item パス認識
+
+<!-- @work-item-id WI-001 -->
+
+inception 側フェーズゲート整備（WI-001 / legacy ISSUE-001）の一環として、`WriteTargetScope.fromPath()` の inception パス認識を US ID 専用から work-item ID 一般へ拡張した。story ID パターンを `WORK_ITEM_ID_PATTERN`（`/^[A-Z][\w]+-\d+$/`）に一般化し、`docs/inception/{unit}/{storyId}/**` を issue ID / WI ID でも `level=3`（`unitId`, `storyId` 付き）として解決する。これにより issue も US と同一の work-item として同じ依存グラフ・成果物チェックの対象になる。本 unit の変更は §2.2.5 WriteTargetScope の `fromPath()` パス推定ルールに集約されており、フェーズゲート判定ロジックそのもの（product docs ハブモデル・required の意味論）は phase-dependency-model 側で扱う。
+
+## WI-102 `_cross/WI-*` 横断 WI の write target scope 解決
+
+<!-- @work-item-id WI-102 -->
+
+ISSUE-026 Phase B で `docs/inception/issues/ISSUE-*` が `docs/inception/_cross/WI-*` へ移行したことを受け、`WriteTargetScope.fromPath()` に横断 WI レイアウト認識を追加した（WI-102 / legacy H11-06）。`docs/inception/_cross/{WI-XXX}/**` を `level=3`, `unitId="_cross"`, `storyId="WI-XXX"` として解決し、`_cross/{WI-XXX}/description.md` は WI 入口の Phase 1 work として `level=1` に落とす。`_cross` 配下の非 WI ディレクトリは作業単位として誤認せず `level=1` で止める。旧 `docs/inception/issues/ISSUE-*` は移行互換のため `level=1` のまま維持する。実 unit への解決（frontmatter `type` / `affects` 依拠）は後続 Phase の責務であり、本変更では `_cross` を仮想 unitId として保持するに留める。詳細ルールは §2.2.5 WriteTargetScope の R3a / R3b / R4 を参照。
+
+## WI-015 コメントのみ差分の full-mode 判定への content 受け渡し
+
+<!-- @work-item-id WI-015 -->
+
+quick-mode 側の「コメントのみ差分を api 変更として誤分類する」不具合修正（WI-015 / legacy ISSUE-015）に対し、本 unit は hook 境界での content 受け渡しのみを担う。PreToolUse hook adapter が Edit の `old_string` / `new_string`、Write の disk/new content を hook payload から取り出し、quick-mode の full-mode 要求判定に before/after content を渡せるようにした（`handle-pre-tool-use-dto.ts` / `full-mode-requirement-query-port.ts` / `quick-mode-full-mode-requirement-adapter.ts`）。分類ルール（コメントのみ差分を `docs` に降格し、真の API 変更は `API_CONTRACT` のまま拒否）は quick-mode 側の責務で、本 unit に設計判断の追加はない。content が payload に含まれない場合は従来のパスベース判定に戻る後方互換を保つ。
+
 ## WI-086 / WI-087 Hook Deployment Compatibility
 
 <!-- @work-item-id WI-086, WI-087 -->

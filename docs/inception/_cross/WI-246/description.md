@@ -1,6 +1,6 @@
 ---
 id: WI-246
-type: feature
+type: story
 severity: normal
 status: tested
 affects: [phase-dependency-model]

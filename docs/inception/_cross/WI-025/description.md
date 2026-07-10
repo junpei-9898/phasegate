@@ -4,7 +4,7 @@ type: issue
 severity: normal
 status: tested
 legacy_id: ISSUE-025
-affects: [harness-api / setup, agent-integration, docs]
+affects: [harness-api / setup, docs]
 ---
 
 # ISSUE-025: Codex 向け `phasegate init` が hooks 以外の必須セットアップを完了せず、README / skills 設計と不整合

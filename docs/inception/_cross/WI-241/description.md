@@ -1,6 +1,6 @@
 ---
 id: WI-241
-type: feature
+type: story
 severity: normal
 status: tested
 affects: [skill-quality]

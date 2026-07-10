@@ -250,3 +250,13 @@ H10-06はISSUE-026 Phase D-1として、同じくquick-implementorのスキル�
 Quick Mode consumes a validator ID catalog that matches validator-system for the public L2/L3/L4 surface. The L2 set is `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015`.
 
 `maintainedLayers` is an exact-ID list, not a layer expander. The only shorthand interpreted by the current model is `L1` for full L1 behavior and `L4` as an all-skipped layer marker in `relaxedGates`. Therefore `maintainedLayers: ["L2"]` does not keep every L2 validator active; users must list all L2 IDs explicitly when they need that behavior.
+
+<!-- @work-item-id WI-140 -->
+## WI-140 ValidatorRelaxationProfile の WI status gate 反映
+
+`ValidatorRelaxationProfile`（domain 値オブジェクト）の既定 L2 セットに `L2-014`（work-item-status-staleness）を維持側として組み込む。これにより WI status derivation が CI 緑証跡ゲートとして接続された後も、Quick Mode 実行時に WI status の staleness 検出が維持される。既定緩和は `l2.maintained = ["L2-002", "L2-003", "L2-014"]` / `l2.skipped = ["L2-001", "L2-013", "L2-015"]` となり、`INV-P5` の L2 ID 和集合に `L2-014` を含める（§6 の構造定義に一致）。`L2-013`（CLI E2E coverage）と `L2-015`（contract traceability）は Quick Mode の緩和対象として skipped に残す。
+
+<!-- @work-item-id WI-204 -->
+## WI-204 config カテゴリ判定の comment-only 例外除外
+
+`QuickModeJudgmentEngine`（domain サービス）は `*.config.json` / `*.config.ts` / `phasegate.config.json` を、Edit payload の差分がコメント・空白のみに見える場合でも `config` カテゴリに分類する（WI-015 の comment-only → `docs` 降格を config ファイルには適用しない）。これは strict 化された `allowedCategories` からの managed recovery（`config:plan --intent quick-mode-relax`）が、`phasegate.config.json` の変更を一貫して `config` として扱い、`MIXED_CHANGES` による Full Mode block guidance を正しく解決できることに依存するため。カテゴリ判定の分類ロジック（§3）における例外規則であり、3拒否ルール（§5）自体は変更しない。

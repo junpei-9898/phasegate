@@ -297,7 +297,7 @@ classDiagram
 
     class PlanningModeConfig {
         <<Value Object>>
-        +default_: "interactive" | "embedded-qa"
+        +default_: "interactive" | "embedded-qa" | "manual"
         +perPhase: Record~string, string~
     }
 
@@ -412,3 +412,9 @@ L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into va
 <!-- @work-item-id WI-212 -->
 
 `ProjectConfig` includes a resolved non-empty `languages` list. Source documents that omit `project` or omit `project.languages` resolve to `["typescript"]` for backward compatibility. The language set is descriptive configuration for validator dispatch and skill applicability; it does not change architecture preset semantics.
+
+## WI-191 Manual Planning Mode Value
+
+<!-- @work-item-id WI-191 -->
+
+`PlanningModeConfig` の許容モード列挙に `manual` を追加した（`interactive` / `embedded-qa` / `manual`）。`default` と `perPhase` の各値は `VALID_MODES` に照合され、`manual` を含む値が構造検証を通過する。config-foundation は列挙値の構造・schema validation（v2/v3）を所有するのみで、`manual` の意味論（strict preset retrofit project で planning evidence 要求を escape する挙動）は正規定義を持つ phase-dependency-model 側が解釈する。これにより既存 ad-hoc 設計文書を持つ retrofit project が、`planningMode` を `manual` に設定して agent 正規経路から閉ループを抜けられる。

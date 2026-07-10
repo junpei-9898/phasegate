@@ -1912,6 +1912,14 @@ The validator-system registry is the source used by CI template generation for v
 
 L4-004 `doc-freshness` and L4-005 `pointer-validation` are registered validators. `validate --layer L4` is the canonical explicit execution path; `p2:*` freshness/pointer commands remain compatibility entry points. `validate --layer all` and `phasegate:ci-check` honor disabled L4 as skipped unless project config/preset enables L4. @work-item-id WI-128
 
+### WI-108 / WI-115 / WI-143: cross-unit impact notes
+
+These work items are owned by other Units; the notes below record only their actual footprint on validator-system so traceability reflects the real change surface rather than restating the owning Unit's design.
+
+- **WI-108（`phasegate:ci-check` の L2-L4 契約整合）**: 本 WI の実機構は harness-api 側の ci-check 契約（`command-dispatch-service` / `ci-check-result` / `layer-health` / `status-derivation-service`）にあり、そこで reflect 済み。validator-system 側の footprint は `RunL4ValidatorsUseCase` が L4 disabled 時に定義群を `ValidationResult.skip` の contract 列として返すことのみで、これを ci-check が「実行 or skip された layer」の表現として消費する。validator-system は ci-check の layer coverage 判定ロジックを保持しない。@work-item-id WI-108
+- **WI-115（`legacy_id` 曖昧性の unit-scope 化）**: 実機構は phase-dependency-model の `FileSystemStoryReflectionAdapter`（product path から unit context を推定し、同一 scope 内の同一 `legacy_id` 重複を ambiguity として非解決にする）が所有する。validator-system 側にコード変更 footprint は無く、当該 WI に対しては reflection/annotation 解決結果の consumer に留まる（無変更）。@work-item-id WI-115
+- **WI-143（WI-first workflow enforcement）**: 実装本体は installation Unit の `wi-workflow-drift-check` および skill 群にあり、harness-api にも reflect 済み。validator-system 側の footprint は traceability-cleanup バッチ（本 WI が駆動）で `run-l4-validators-usecase.ts` の header に `@work-item-id` アノテーションが付与されたことのみであり、validator の挙動変更は伴わない。@work-item-id WI-143
+
 ### WI-125 / WI-131: Nyquist Generation and Intent Coverage Integration
 
 <!-- @work-item-id WI-125, WI-131 -->
