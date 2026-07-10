@@ -22,6 +22,36 @@ The L4 registry includes L4-006 `skill-catalog-drift` as the first documentation
 
 Validator-system metadata checks rely on phase-dependency-model reflection results. Ambiguous legacy annotations must not be treated as valid reflected evidence, because that would allow validator execution to proceed against the wrong WI.
 
+<!-- @work-item-id WI-110 -->
+## WI-110 CLI E2E Coverage Validator Is L2-Owned
+
+The CLI command E2E coverage validator is identified as `L2-013` (`cli-e2e-test-existence`) in `ValidatorId`, and its execution belongs to the L2 boundary rather than L1. `ValidatorId` therefore treats `L2-013` as an L2 validator so that `validate --layer L2` runs it and `validate --layer L1` does not, keeping the validator's ID prefix, owning layer, and execution routing consistent.
+
+<!-- @work-item-id WI-111 -->
+## WI-111 CLI E2E Test Existence Domain Model
+
+`CliE2eTestExistenceService` compares registered CLI command names against the content of discovered E2E test files and produces a `CliE2eTestCoverageReport`. Each `CliCommandCoverageEntry` carries a `status` of `covered`, `missing`, or `limitation`:
+
+- When no E2E test suite exists in the project, every command is classified as `limitation` (not `missing`), so consumer projects without the internal CLI E2E suite are not failed.
+- Coverage evidence is matched from test file content — `run('command')`, `runInCwd(..., 'command')`, `unknown command: <name>`, `usage: phasegate <name>`, or a bare mention — rather than from file paths alone.
+
+`CliE2eTestCoverageReport.uncoveredCommands()` excludes `limitation` entries, and `hasViolations()` is true only when a truly uncovered command exists. This separates real missing coverage from matching limitations so the report is trustworthy as a gate signal.
+
+<!-- @work-item-id WI-140 -->
+## WI-140 Work-Item Status Staleness Domain Contract
+
+`ValidatorId` registers `L2-014` (`work-item-status-staleness`). Validator-system consumes traceability-model's work-item status through the `WorkItemStatusPolicyPort` domain port (`findStaleReports`), which returns the traceability-model `WorkItemStatusReport` list. This keeps stale-status detection owned by traceability-model while validator-system only decides whether a stale report becomes an `L2-014` fail signal on the standard L2 execution path.
+
+<!-- @work-item-id WI-217 -->
+## WI-217 Work-Item Reflection Consistency Check
+
+`ConsistencyCheckService` gains a `checkWorkItemReflection` operation backed by the optional `WorkItemReflectionPort` (`collect`), which returns a `WorkItemReflectionSnapshot` of inception work items and product reflection references. The service reports two mismatch kinds against the reflection-required work items (those whose `type` is not `chore`):
+
+- a work item with no matching product reflection (`missing product reflection`), and
+- a product reflection with no matching inception description (`orphan product reflection`).
+
+When the port is not configured the check returns an empty report with a `skipReason` instead of failing. Each `MismatchPair` now carries a `nextAction` describing the concrete remediation (add `@work-item-id` to the product doc, or restore/remove the inception description).
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03

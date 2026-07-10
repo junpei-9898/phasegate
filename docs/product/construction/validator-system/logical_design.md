@@ -22,6 +22,21 @@ Layer validation results are the gate source for `validate --layer <Lx>` and for
 
 L4 drift detection remains the producer of raw drift items. Repository-scale compaction and advisory response assembly are owned by harness-api, but validator-system output preserves category data needed for downstream severity and next-action summaries.
 
+<!-- @work-item-id WI-107 -->
+## WI-107 Disabled L4 Skip Semantics
+
+`RunL4ValidatorsUseCase` no longer returns an empty result set when the L4 layer is disabled and `forceLayerEnabled` is not set. Instead it maps each selected definition to an explicit `ValidationResult.skip()` contract. As a result, `validate --layer all` and other multi-layer paths surface disabled L4 as visibly skipped validators rather than omitting them silently, giving CLI, `--fail-on-warning`, and CI paths a single, consistent L4 advisory/skip representation.
+
+<!-- @work-item-id WI-112 -->
+## WI-112 Status Live Validation Contract
+
+The `ValidationResultContract` produced by the L2/L3/L4 use-cases carries a `skipped` flag alongside `passed`, so consumers can distinguish a validator that ran and passed from one that was skipped or never run. `phasegate:status` consumes these live contracts to report current per-layer state without turning the informational summary into a gate failure, so a direct validator run is reflected in status rather than leaving it stale or `unknown`.
+
+<!-- @work-item-id WI-116 -->
+## WI-116 L4 Execution Surface Includes L4-004/L4-005
+
+`RunL4ValidatorsUseCase` executes the full registered L4 set — L4-001 through L4-006 — with `doc-freshness` (L4-004) and `pointer-validation` (L4-005) included as first-class registered validators dispatched via the L4 execution path (delegating to the phase2-extensions use cases). `p2:check-freshness` and `p2:validate-pointers` remain only as compatibility entry points; the canonical L4 execution is `validate --layer L4`, so public documentation must not describe L4-004/L4-005 as unimplemented roadmap items.
+
 @story-id H08-01
 @story-id H08-02
 @story-id H08-03
