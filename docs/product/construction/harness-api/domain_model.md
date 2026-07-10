@@ -402,3 +402,16 @@ Legacy alias names are presentation-level command identities, not separate domai
 
 - A scaffolded work item always writes a frontmatter-carrying `description.md` (`id` / `type` / `severity` / `status`) under the resolved inception root.
 - Legacy plan detection reports zero once any WI directory exists; it is a migration hint, not a gate failure.
+
+## WI-250 Canonical Known-Command Catalog
+
+<!-- @work-item-id WI-250 -->
+
+| Concept | Owner | Meaning |
+| --- | --- | --- |
+| `KNOWN_HARNESS_COMMANDS` | harness-api (domain) | Dependency-free readonly, sorted catalog of every top-level CLI command name dispatched by the `switch (command)` in `main.ts`, including non-`phasegate:`-prefixed commands that `CommandRegistry` cannot represent. |
+
+**Invariants**:
+
+- The catalog is set-equal to the `case "..."` labels of the `main.ts` dispatch `switch`; a conformance test enforces this so drift fails the gate.
+- Entries are unique and sorted; the constant has no runtime dependencies so any unit (e.g., ci-governance infrastructure) may import it without violating dependency direction.

@@ -1,0 +1,88 @@
+// @unit harness-api
+// @layer domain
+// @work-item-id WI-250
+// known-harness-commands.ts — CLI 実サーフェスの canonical 既知コマンド一覧
+//
+// main.ts の CLI dispatch（`switch (command)`）が受理する全トップレベルコマンド名の
+// 単一ソース。`phasegate:` prefix 必須の CommandRegistry では表現できない
+// 非 prefix コマンド（lint / init / baseline 等）を含む完全なサーフェスを表す。
+//
+// 不変条件（conformance テストで強制）:
+// - main.ts の `case "..."` ラベル集合と集合一致すること
+//   （__tests__/integration/harness-api/known-harness-commands-conformance.test.ts）
+// - エントリは重複なくソート済みであること
+//
+// main.ts にコマンドを追加/削除した場合は、必ずこのリストも同期更新すること。
+
+export const KNOWN_HARNESS_COMMANDS: readonly string[] = Object.freeze([
+  'baseline',
+  'bypass:audit',
+  'check-change-category',
+  'check-phase-gate',
+  'ci-check',
+  'ci:auto-refresh-agent-context',
+  'ci:check-repetition',
+  'ci:generate-template',
+  'ci:migrate-agents-md',
+  'commit-msg',
+  'complete-check',
+  'config:plan',
+  'delegate-sonnet',
+  'disable-feature',
+  'doctor',
+  'emit-agent-rules',
+  'enable-feature',
+  'hook',
+  'init',
+  'install',
+  'lint',
+  'list-adrs',
+  'list-errors',
+  'list-features',
+  'migrate',
+  'p2:check-agent-context',
+  'p2:check-freshness',
+  'p2:check-initial-creation',
+  'p2:generate-e2e-template',
+  'p2:validate-pointers',
+  'phasegate:attest',
+  'phasegate:check-phase',
+  'phasegate:check-ready',
+  'phasegate:ci-check',
+  'phasegate:complete-check',
+  'phasegate:detect-drift',
+  'phasegate:generate-matrix',
+  'phasegate:impact-analysis',
+  'phasegate:lint',
+  'phasegate:status',
+  'phasegate:verify-attestation',
+  'pre-commit',
+  'reconcile',
+  'refresh-claude-md',
+  'regression:analyze-migration',
+  'regression:configure-ci-gate',
+  'regression:migrate-v0-tests',
+  'regression:run-agent-guard',
+  'regression:run-gng-gate',
+  'regression:run-k-requirements',
+  'regression:run-k14-k15',
+  'render-errors',
+  'scaffold-design',
+  'scaffold-wi',
+  'session',
+  'setup:agent',
+  'skill:apply-cascade-update',
+  'skill:check-coverage',
+  'skill:collect-lessons',
+  'skill:execute-tdd-cycle',
+  'skill:validate-structure',
+  'skills',
+  'status',
+  'uninstall',
+  'update-skills',
+  'validate',
+  'validate-adr',
+  'validate-fix',
+  'validate-metadata',
+  'work-items:status',
+]);

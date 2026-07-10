@@ -1150,7 +1150,10 @@ export interface LessonArtifactReaderPort {
 - Wave 2未確定時はモック実装（静的コマンド名セット）でWave 3開発を進める
 - `exists()` はコマンド名の静的マップ照合で実装する
 
-**外部I/O**: harness-api CLI Command Registry参照
+<!-- @work-item-id WI-250 -->
+**WI-250 canonical コマンドリスト配線**: 既知コマンドの静的マップは infra 側で独自ハードコードせず、harness-api domain 層の canonical 定数 `KNOWN_HARNESS_COMMANDS`（`harness-api/domain/value-objects/known-harness-commands.ts`）を import してコンストラクタのデフォルト値とする。コンストラクタ注入（`constructor(knownCommands = [...KNOWN_HARNESS_COMMANDS])`）は温存し、テスト時の差し替えを可能に保つ。これにより CLI 実サーフェスの単一ソース化と、main.ts dispatch との乖離検出（harness-api 側 conformance テスト）が成立する。cross-unit 参照は既存 `validator-id-registry-adapter.ts` の infra→他 unit import と同じ方向であり依存方向を逆転しない。
+
+**外部I/O**: harness-api CLI Command Registry参照 / harness-api domain の canonical コマンド定数
 
 ---
 
