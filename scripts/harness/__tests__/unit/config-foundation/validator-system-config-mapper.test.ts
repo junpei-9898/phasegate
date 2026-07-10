@@ -88,7 +88,7 @@ target("toValidatorSystemConfig", () => {
             L2: { enabled: true, validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"] },
             L3: {
               enabled: true,
-              validators: ["L3-001", "L3-002", "L3-003", "L3-004"],
+              validators: ["L3-001", "L3-002", "L3-003", "L3-004", "L3-006"],
               coverageThreshold: 80,
               acBoundStories: [],
             },
@@ -118,7 +118,7 @@ target("toValidatorSystemConfig", () => {
             L2: { enabled: true, validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"] },
             L3: {
               enabled: true,
-              validators: ["L3-001", "L3-002", "L3-003", "L3-004"],
+              validators: ["L3-001", "L3-002", "L3-003", "L3-004", "L3-006"],
               coverageThreshold: 80,
               acBoundStories: [],
             },

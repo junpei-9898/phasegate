@@ -1,5 +1,10 @@
 # ドメインモデル: validator-system
 
+<!-- @work-item-id WI-259 -->
+## WI-259 Injection Scan Domain Contract (L3-006)
+
+`InjectionPatternScanService.scan(targets)` は指示搭載ファイルの走査モデル群から `InjectionScanReport` を導出する advisory domain service。ADR-030 §Decision.3.④。不変ルール: (INV-A) 生成 finding は **必ず severity='warning'**（error / violation を一切生成しない — §4.(b)）、(INV-B) HTML コメント内の指示上書きは `html-comment-instruction` に一本化し `instruction-override` として二重報告しない、(INV-C) どのパターンにも該当しない対象は finding なし（pass）。検出種別 `InjectionFindingKind` = `instruction-override` / `invisible-unicode` / `base64-blob` / `html-comment-instruction`。value-object: `InjectionScanTarget` / `InjectionFinding` / `InjectionScanReport`。L3-006 は default-ON・advisory-only で、L3-001（security, fail-closed）とは独立した advisory tier。二値合否には関与しない。
+
 <!-- @work-item-id WI-258 -->
 ## WI-258 Coverage Attestation Gating Domain Contract
 

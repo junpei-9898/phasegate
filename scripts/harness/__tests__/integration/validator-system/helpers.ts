@@ -108,6 +108,7 @@ export function createFullRegistry(): ValidatorRegistry {
     createDef("L3-002", "L3", "strictOnly"),
     createDef("L3-003", "L3"),
     createDef("L3-004", "L3"),
+    createDef("L3-006", "L3"),
     createDef("L4-001", "L4"),
     createDef("L4-002", "L4"),
     createDef("L4-003", "L4", "strictOnly"),

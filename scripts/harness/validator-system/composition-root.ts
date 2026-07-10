@@ -38,6 +38,7 @@ import { E2eTestFileRegistryAdapter } from "./infrastructure/adapters/e2e-test-f
 import { FileSystemArchitectureSemanticSourceAdapter } from "./infrastructure/adapters/file-system-architecture-semantic-source-adapter.js";
 import { FileSystemContractTraceabilityPolicyAdapter } from "./infrastructure/adapters/file-system-contract-traceability-policy-adapter.js";
 import { FileSystemCoverageAttestationGatingAdapter } from "./infrastructure/adapters/file-system-coverage-attestation-gating-adapter.js";
+import { FileSystemInjectionScanAdapter } from "./infrastructure/adapters/file-system-injection-scan-adapter.js";
 import { FileSystemSecurityPatternScannerAdapter } from "./infrastructure/adapters/file-system-security-pattern-scanner-adapter.js";
 import { FileSystemSkillCatalogDriftAdapter } from "./infrastructure/adapters/file-system-skill-catalog-drift-adapter.js";
 import { FileSystemWorkItemReflectionAdapter } from "./infrastructure/adapters/file-system-work-item-reflection-adapter.js";
@@ -64,7 +65,7 @@ const DEFAULT_CONFIG = {
     L2: { enabled: true, validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"] },
     L3: {
       enabled: true,
-      validators: ["L3-001", "L3-002", "L3-003", "L3-004"],
+      validators: ["L3-001", "L3-002", "L3-003", "L3-004", "L3-006"],
       coverageThreshold: 90,
       bundleSizeLimit: 512000,
       requirementMatrixPath: ".harness/requirement-test-matrix.json",
@@ -139,6 +140,8 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     // WI-227 / H16-03: L3-005 (ac-bound-coverage) は registry には登録するが
     // default-OFF（DEFAULT_CONFIG.layers.L3.validators に含めない）。fail-closed / opt-in。
     createDef("L3-005", "L3", "always", "AcBoundCoveragePolicyPort"),
+    // WI-259 / ADR-030 §Decision.3.④: L3-006 (injection-scan) は advisory (warning-only, default-ON)。
+    createDef("L3-006", "L3", "always", "InjectionScanPolicyPort"),
     createDef("L4-001", "L4", "always"),
     createDef("L4-002", "L4", "always"),
     createDef("L4-003", "L4", "strictOnly"),
@@ -194,6 +197,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating) 用アダプタ。
   // docs/product/construction/*​/coverage_report.md を cwd 起点で走査する（targetPaths 非依存）。
   const coverageAttestationGatingPolicyPort = new FileSystemCoverageAttestationGatingAdapter(process.cwd());
+  // WI-259 / ADR-030 §Decision.3.④: L3-006 (injection-scan, advisory) 用アダプタ。
+  // 指示搭載ファイル群（skills/**​/SKILL.md / CLAUDE.md / AGENTS.md / agent-context / .claude/settings.json）を
+  // cwd 起点で走査する（targetPaths 非依存）。
+  const injectionScanPolicyPort = new FileSystemInjectionScanAdapter(process.cwd());
 
   const cwd = process.cwd();
   const designDocsRoot = configData.paths?.designDocs ?? "docs/product/construction";
@@ -247,6 +254,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     coverageReportPort,
     securityScannerPort,
     performanceScannerPort,
+    injectionScanPolicyPort,
     acBoundStories,
   });
 

@@ -3,22 +3,30 @@
  * @unit validator-system
  * @story H08-02
  */
-import { describe, expect, it, vi } from 'vitest';
-import { target, context } from '../../../helpers/test-helpers.js';
-import { RunL3ValidatorsUseCase, CoverageReportNotFoundError } from '../../../../validator-system/application/use-cases/run-l3-validators-usecase.js';
-import { ValidatorExecutionService } from '../../../../validator-system/domain/services/validator-execution-service.js';
-import { ValidationResultContractMapper } from '../../../../validator-system/application/mappers/validation-result-contract-mapper.js';
-import { createLayerConfig, createFullRegistry } from '../helpers.js';
+import { describe, expect, it, vi } from "vitest";
+import { ValidationResultContractMapper } from "../../../../validator-system/application/mappers/validation-result-contract-mapper.js";
+import {
+  CoverageReportNotFoundError,
+  RunL3ValidatorsUseCase,
+} from "../../../../validator-system/application/use-cases/run-l3-validators-usecase.js";
+import { ValidatorExecutionService } from "../../../../validator-system/domain/services/validator-execution-service.js";
+import { context, target } from "../../../helpers/test-helpers.js";
+import { createFullRegistry, createLayerConfig } from "../helpers.js";
 
 function createL3UseCase(
   layerConfigOverrides?: Partial<{ enabled: boolean; strictOnly: boolean; thresholds: Record<string, number> }>,
-  coveragePort?: { getCoverage: () => Promise<{ overallCoverage: number; perFileCoverage: readonly { filePath: string; coverage: number }[] }> }
+  coveragePort?: {
+    getCoverage: () => Promise<{
+      overallCoverage: number;
+      perFileCoverage: readonly { filePath: string; coverage: number }[];
+    }>;
+  },
 ) {
   const registry = createFullRegistry();
   const executionService = new ValidatorExecutionService({});
   const mapper = new ValidationResultContractMapper();
   const mockValidatorConfigPort = {
-    getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig('L3', layerConfigOverrides ?? {})),
+    getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig("L3", layerConfigOverrides ?? {})),
   };
   return new RunL3ValidatorsUseCase({
     validatorRegistry: registry,
@@ -29,61 +37,63 @@ function createL3UseCase(
   });
 }
 
-target('RunL3ValidatorsUseCase', () => {
-  describe('全L3バリデータの実行', () => {
-    context('validatorIdsを省略した場合', () => {
-      it('全L3バリデータ（L3-001〜L3-004）が実行され4件の結果が返る (IT-UC-RunL3-001)', async () => {
+target("RunL3ValidatorsUseCase", () => {
+  describe("全L3バリデータの実行", () => {
+    context("validatorIdsを省略した場合", () => {
+      it("全L3バリデータ（L3-001〜L3-004, L3-006）が実行され5件の結果が返る (IT-UC-RunL3-001)", async () => {
         // Arrange
         const mockCoverageReportPort = {
           getCoverage: vi.fn().mockResolvedValue({ overallCoverage: 92, perFileCoverage: [] }),
         };
         const usecase = createL3UseCase({}, mockCoverageReportPort);
-        const input = { targetPaths: ['src/'] };
+        const input = { targetPaths: ["src/"] };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(4);
+        // WI-259: L3-006 (injection-scan, advisory default-ON) が加わり 5 件。
+        // injectionScanPolicyPort 未配線のため L3-006 は skip（passed=true）で返る。
+        expect(actual).toHaveLength(5);
         expect(actual.every((r) => r.passed === true)).toBe(true);
       });
     });
 
     context('preset="standard"でstrictOnly=falseの場合', () => {
-      it('L3-002（strictOnly）がskipped=trueで返る (IT-UC-RunL3-002)', async () => {
+      it("L3-002（strictOnly）がskipped=trueで返る (IT-UC-RunL3-002)", async () => {
         // Arrange
         const usecase = createL3UseCase({ strictOnly: false });
-        const input = { targetPaths: ['src/'] };
+        const input = { targetPaths: ["src/"] };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        const l3002 = actual.find((r) => r.validatorId === 'L3-002');
+        const l3002 = actual.find((r) => r.validatorId === "L3-002");
         expect(l3002?.skipped).toBe(true);
       });
     });
 
     context('preset="strict"でstrictOnly=trueの場合', () => {
-      it('L3-002も実行対象になりskipped=falseで返る (IT-UC-RunL3-003)', async () => {
+      it("L3-002も実行対象になりskipped=falseで返る (IT-UC-RunL3-003)", async () => {
         // Arrange
         const usecase = createL3UseCase({ strictOnly: true });
-        const input = { targetPaths: ['src/'] };
+        const input = { targetPaths: ["src/"] };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        const l3002 = actual.find((r) => r.validatorId === 'L3-002');
+        const l3002 = actual.find((r) => r.validatorId === "L3-002");
         expect(l3002?.skipped).toBe(false);
       });
     });
 
-    context('LayerConfig.enabled=falseの場合', () => {
-      it('空のValidationResultContract[]が返る (IT-UC-RunL3-004)', async () => {
+    context("LayerConfig.enabled=falseの場合", () => {
+      it("空のValidationResultContract[]が返る (IT-UC-RunL3-004)", async () => {
         // Arrange
         const usecase = createL3UseCase({ enabled: false });
-        const input = { targetPaths: ['src/'] };
+        const input = { targetPaths: ["src/"] };
 
         // Act
         const actual = await usecase.execute(input);
@@ -93,97 +103,102 @@ target('RunL3ValidatorsUseCase', () => {
       });
     });
 
-    context('coverageReportPathを指定した場合', () => {
-      it('L3-003がpassする (IT-UC-RunL3-005)', async () => {
+    context("coverageReportPathを指定した場合", () => {
+      it("L3-003がpassする (IT-UC-RunL3-005)", async () => {
         // Arrange
         const mockCoverageReportPort = {
           getCoverage: vi.fn().mockResolvedValue({ overallCoverage: 92, perFileCoverage: [] }),
         };
-        const usecase = createL3UseCase({ thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } }, mockCoverageReportPort);
-        const input = { targetPaths: ['src/'], coverageReportPath: 'coverage/summary.json' };
+        const usecase = createL3UseCase(
+          { thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } },
+          mockCoverageReportPort,
+        );
+        const input = { targetPaths: ["src/"], coverageReportPath: "coverage/summary.json" };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(4);
-        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        // WI-259: L3-006 (advisory default-ON) が加わり 5 件。
+        expect(actual).toHaveLength(5);
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
         expect(l3003?.passed).toBe(true);
       });
     });
   });
 
-  describe('異常系', () => {
-    context('coverageThresholdが設定済みだがカバレッジレポートが存在しない場合（FAIL-CLOSED）', () => {
-      it('L3-003がpassed=falseで返り例外は送出されず兄弟バリデータも結果を返すこと (IT-UC-RunL3-006)', async () => {
+  describe("異常系", () => {
+    context("coverageThresholdが設定済みだがカバレッジレポートが存在しない場合（FAIL-CLOSED）", () => {
+      it("L3-003がpassed=falseで返り例外は送出されず兄弟バリデータも結果を返すこと (IT-UC-RunL3-006)", async () => {
         // Arrange
         const mockCoverageReportPort = {
-          getCoverage: vi.fn().mockRejectedValue(new CoverageReportNotFoundError('nonexistent/coverage.json')),
+          getCoverage: vi.fn().mockRejectedValue(new CoverageReportNotFoundError("nonexistent/coverage.json")),
         };
         const usecase = createL3UseCase(
           { thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } },
-          mockCoverageReportPort
+          mockCoverageReportPort,
         );
-        const input = { targetPaths: ['src/'], coverageReportPath: 'nonexistent/coverage.json' };
+        const input = { targetPaths: ["src/"], coverageReportPath: "nonexistent/coverage.json" };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        expect(actual).toHaveLength(4);
-        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        // WI-259: L3-006 (advisory default-ON) が加わり 5 件。
+        expect(actual).toHaveLength(5);
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
         expect(l3003?.passed).toBe(false);
         expect(l3003?.skipped).toBe(false);
-        expect(l3003?.errors[0]?.message ?? '').toContain('カバレッジレポートが見つかりません');
+        expect(l3003?.errors[0]?.message ?? "").toContain("カバレッジレポートが見つかりません");
         // 兄弟バリデータがクラッシュせず結果を返していること（all-error にならない）
-        const siblingIds = actual.map((r) => r.validatorId).filter((id) => id !== 'L3-003');
-        expect(siblingIds).toEqual(['L3-001', 'L3-002', 'L3-004']);
+        const siblingIds = actual.map((r) => r.validatorId).filter((id) => id !== "L3-003");
+        expect(siblingIds).toEqual(["L3-001", "L3-002", "L3-004", "L3-006"]);
       });
     });
 
-    context('coverageThresholdが未設定（null）の場合（オプトイン）', () => {
-      it('L3-003がskipped=trueかつスキップ理由付きで返ること (IT-UC-RunL3-008)', async () => {
+    context("coverageThresholdが未設定（null）の場合（オプトイン）", () => {
+      it("L3-003がskipped=trueかつスキップ理由付きで返ること (IT-UC-RunL3-008)", async () => {
         // Arrange
         const mockCoverageReportPort = {
           getCoverage: vi.fn().mockResolvedValue({ overallCoverage: 100, perFileCoverage: [] }),
         };
         const usecase = createL3UseCase({ thresholds: {} }, mockCoverageReportPort);
-        const input = { targetPaths: ['src/'], coverageReportPath: 'coverage/summary.json' };
+        const input = { targetPaths: ["src/"], coverageReportPath: "coverage/summary.json" };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
         expect(l3003?.skipped).toBe(true);
         expect(l3003?.passed).toBe(true);
-        expect(l3003?.skipReason ?? '').toContain('coverageThreshold が未設定');
+        expect(l3003?.skipReason ?? "").toContain("coverageThreshold が未設定");
         // getCoverage() は呼ばれないこと（未設定時は透過スキップ）
         expect(mockCoverageReportPort.getCoverage).not.toHaveBeenCalled();
       });
     });
 
-    context('coverageThreshold=90に対してoverallCoverage=75の場合', () => {
-      it('L3-003のpassed=falseかつerrorsに現在値（75）と不足分（15）が含まれる (IT-UC-RunL3-007)', async () => {
+    context("coverageThreshold=90に対してoverallCoverage=75の場合", () => {
+      it("L3-003のpassed=falseかつerrorsに現在値（75）と不足分（15）が含まれる (IT-UC-RunL3-007)", async () => {
         // Arrange
         const mockCoverageReportPort = {
           getCoverage: vi.fn().mockResolvedValue({ overallCoverage: 75, perFileCoverage: [] }),
         };
         const usecase = createL3UseCase(
           { thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } },
-          mockCoverageReportPort
+          mockCoverageReportPort,
         );
-        const input = { targetPaths: ['src/'], coverageReportPath: 'coverage/summary.json' };
+        const input = { targetPaths: ["src/"], coverageReportPath: "coverage/summary.json" };
 
         // Act
         const actual = await usecase.execute(input);
 
         // Assert
-        const l3003 = actual.find((r) => r.validatorId === 'L3-003');
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
         expect(l3003?.passed).toBe(false);
-        const errorMsg = l3003?.errors[0]?.message ?? '';
-        expect(errorMsg).toContain('75');
-        expect(errorMsg).toContain('15');
+        const errorMsg = l3003?.errors[0]?.message ?? "";
+        expect(errorMsg).toContain("75");
+        expect(errorMsg).toContain("15");
       });
     });
   });

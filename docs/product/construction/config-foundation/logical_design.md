@@ -1,5 +1,10 @@
 # 論理設計: config-foundation
 
+<!-- @work-item-id WI-259 -->
+## WI-259 L3-006 Validator Threading
+
+`toValidatorSystemConfig` の L3 validators 解決に `L3-006`（injection-scan）を default-ON で含める（alias `"injection-scan" → "L3-006"` を追加し `includeValidator` で常時含める。L3 fallback list にも追加）。ADR-030 §Decision.3.④ の advisory インジェクションスキャナを CLI 経路（`validate --layer L3` / `ci-check`）で有効化するための配線であり、config スキーマ変更・新概念追加は伴わない。
+
 <!-- @work-item-id WI-258 -->
 ## WI-258 L2-016 Validator Threading
 

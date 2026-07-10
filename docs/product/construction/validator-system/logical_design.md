@@ -1,5 +1,10 @@
 # 論理設計: validator-system
 
+<!-- @work-item-id WI-259 -->
+## WI-259 Advisory Injection Scanner (L3-006)
+
+`L3-006 injection-scan` を追加し、指示搭載ファイル（`skills/**/SKILL.md` / `CLAUDE.md` / `AGENTS.md` / `docs/templates/agent-context/**` / `.claude/settings.json`）を cwd 起点で走査して既知のインジェクションパターン（指示上書きフレーズ・不可視 Unicode・長大 base64 塊・HTML コメント内の指示）を **warning-only** の finding として file:line + 種別で報告する（ADR-030 §Decision.3.④）。validator-system は `InjectionScanPolicyPort` 経由で（cwd 起点・targetPaths 非依存に）対象を収集し、`InjectionPatternScanService`（domain）で照合する。finding は必ず severity=warning のため ADR-017 集約規則（`failOnWarning=false` 既定）で overall gate は PASS のまま。パターン検査は原理的に回避可能ゆえ **blocking にしない**（§4.(b) 残存リスク: 「すり抜け＝安全」の誤信頼を避ける）。docs 全体は v1 対象外（ノイズ回避）。新 CLI コマンドは追加せず `validate --layer L3` / `ci-check` で実行される。
+
 <!-- @work-item-id WI-258 -->
 ## WI-258 Coverage Attestation Gating (L2-016)
 
