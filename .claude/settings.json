@@ -83,14 +83,6 @@
   "permissions": {
     "deny": [
       "Read(./node_modules/**)",
-      "Bash(git reset*)",
-      "Bash(git checkout*)",
-      "Bash(git merge*)",
-      "Bash(git rebase*)",
-      "Bash(git cherry-pick*)",
-      "Bash(git revert*)",
-      "Bash(git clean*)",
-      "Bash(git stash*)",
       "Bash(rm -rf *)",
       "Bash(sudo *)",
       "Read(**/id_rsa)",

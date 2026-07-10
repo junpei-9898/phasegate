@@ -90,11 +90,87 @@ glob_to_regex() {
     printf '%s' "$1" | sed 's/\*/.*/g'
 }
 
+# --- git subcommand allowlist (default-deny) ---------------------------------
+# Enumerated deny lists for git always leak (e.g. `git switch` slipped past the
+# `git checkout*` / `git reset*` deny rules). We therefore invert the policy for
+# git: only the subcommands below are permitted; every other git subcommand is
+# denied by default. To grant a new git subcommand, a human adds it here.
+#
+# Rationale for the set: read-only inspection, staging/commit/tag creation, and
+# worktree/fetch operations that agents legitimately use. History- and
+# working-tree-mutating subcommands (checkout, switch, reset, rebase, merge,
+# cherry-pick, revert, stash, clean, update-ref, reflog, filter-branch,
+# replace, am, ...) are intentionally absent so they fail closed.
+GIT_ALLOWED_SUBCOMMANDS=(
+    status log show diff add commit tag restore rev-parse rev-list
+    merge-base branch worktree fetch grep cat-file ls-files ls-tree
+    ls-remote config init remote describe blame shortlog
+    symbolic-ref for-each-ref name-rev check-ignore check-attr
+    stripspace var help version whatchanged push
+)
+
+# Extract the git subcommand from a segment, skipping the `git` binary and any
+# global options that may precede the subcommand:
+#   git -C <path> <sub>        git --no-pager <sub>
+#   git -c key=val <sub>       git --git-dir=<dir> <sub>
+#   git --work-tree <dir> <sub>
+# Prints the subcommand (or empty string if none / not a git command).
+extract_git_subcommand() {
+    # Tokenize on whitespace.
+    local -a tokens
+    read -ra tokens <<< "$1"
+    [[ "${tokens[0]}" != "git" ]] && return 0
+    local i=1
+    local n=${#tokens[@]}
+    while (( i < n )); do
+        local tok="${tokens[$i]}"
+        case "$tok" in
+            # Global flags that take a separate argument.
+            -C|-c|--git-dir|--work-tree|--namespace|--exec-path|--config-env)
+                i=$(( i + 2 ))
+                ;;
+            # Global flags bundled with their value (=), or standalone toggles.
+            --git-dir=*|--work-tree=*|--namespace=*|--exec-path=*|--config-env=*)
+                i=$(( i + 1 ))
+                ;;
+            --no-pager|--paginate|--no-replace-objects|--bare|--literal-pathspecs|--no-optional-locks|--html-path|--man-path|--info-path)
+                i=$(( i + 1 ))
+                ;;
+            -*)
+                # Unknown global flag; skip conservatively.
+                i=$(( i + 1 ))
+                ;;
+            *)
+                printf '%s' "$tok"
+                return 0
+                ;;
+        esac
+    done
+    return 0
+}
+
+check_git_allowlist() {
+    local segment="$1"
+    local sub
+    sub=$(extract_git_subcommand "$segment")
+    # Not a git command, or `git` with no subcommand (e.g. `git`, `git --help`).
+    [[ -z "$sub" ]] && return 0
+    local allowed
+    for allowed in "${GIT_ALLOWED_SUBCOMMANDS[@]}"; do
+        [[ "$sub" == "$allowed" ]] && return 0
+    done
+    debug_log "BLOCKED git subcommand '$sub' not in allowlist (segment '$segment')"
+    echo "Security policy violation: git subcommand '$sub' is not in the agent allowlist (default-deny for git). Segment: '$segment'. If this subcommand is genuinely needed, a human must add it to GIT_ALLOWED_SUBCOMMANDS in .claude/scripts/deny-check.sh." >&2
+    exit 2
+}
+
 check_segment() {
     local segment="$1"
     # Strip leading whitespace so "^pattern" anchors match after operators.
     segment="${segment#"${segment%%[![:space:]]*}"}"
     [[ -z "$segment" ]] && return 0
+    # git subcommands are default-deny (allowlist); check that first.
+    check_git_allowlist "$segment"
     for pattern in "${DENY_PATTERNS[@]}"; do
         local regex_pattern
         regex_pattern=$(glob_to_regex "$pattern")

@@ -111,7 +111,7 @@ Additional hooks can be placed in `.claude/scripts/`:
 
 | Script | Behavior |
 |--------|----------|
-| deny-check.sh | Block dangerous git/bash commands (git reset --hard, rm -rf, etc.) |
+| deny-check.sh | Enforce the agent command policy: git subcommands are default-deny (allowlist), plus explicit bash deny patterns (rm -rf, sudo, etc.). See [Agent git command allowlist](#agent-git-command-allowlist). |
 | format-settings-hook.sh | Auto-format settings.json on edit |
 | format-typescript-hook.sh | Auto-format TypeScript files (Biome / ESLint+Prettier) |
 | analyze-errors-hook.sh | Detect tsc/lint errors on TypeScript edit |
@@ -135,3 +135,52 @@ Additional hooks can be placed in `.claude/scripts/`:
 | formatterArgs | Arguments passed to formatter | ["check", "--write"] |
 
 Legacy `.harness-hooks.yml` and old Fuse hook files are not part of the current install lifecycle. Keep them only for archived integrations; new setup should use `install`, `doctor`, `reconcile`, `lint`, and `validate`. <!-- @work-item-id WI-157 -->
+
+## Agent git command allowlist
+
+<!-- @work-item-id WI-253 -->
+
+`deny-check.sh` runs as a `PreToolUse` hook on every `Bash` tool call and blocks disallowed commands by exiting with code 2. For git it uses a **default-deny allowlist** rather than an enumerated deny list.
+
+### Why allowlist instead of deny list
+
+An enumerated deny list always leaks. The original policy denied `git checkout*`, `git reset*`, `git merge*`, `git rebase*`, `git cherry-pick*`, `git revert*`, `git clean*`, and `git stash*`, but `git switch` was never listed — so an agent could change the working-tree/branch state through `git switch`, defeating the intent of the deny rules (no history or working-tree mutation). Overly broad globs also caused false positives: `git merge*` blocked the read-only `git merge-base`.
+
+Inverting to an allowlist makes the policy fail closed: any git subcommand not explicitly permitted is denied, including future subcommands the deny list would not have known about.
+
+### Allowed git subcommands
+
+The permitted set lives in `GIT_ALLOWED_SUBCOMMANDS` in `.claude/scripts/deny-check.sh`. It covers read-only inspection, staging/commit/tag creation, and worktree/fetch operations:
+
+```
+status log show diff add commit tag restore rev-parse rev-list
+merge-base branch worktree fetch grep cat-file ls-files ls-tree
+ls-remote config init remote describe blame shortlog
+symbolic-ref for-each-ref name-rev check-ignore check-attr
+stripspace var help version whatchanged push
+```
+
+History- and working-tree-mutating subcommands are intentionally **absent** so they fail closed, including: `checkout`, `switch`, `reset`, `rebase`, `merge`, `cherry-pick`, `revert`, `stash`, `clean`, `update-ref`, `reflog`, `filter-branch`, `replace`, and `am`.
+
+### How the subcommand is extracted
+
+The check tolerates global options placed before the subcommand, so evasion via flag stuffing does not bypass it. All of the following resolve to their real subcommand (`merge`, denied):
+
+```
+git merge x
+git -C /repo merge x
+git --no-pager merge x
+git -c core.pager=cat merge x
+```
+
+Denied commands smuggled behind chaining/substitution operators (`&&`, `|`, `;`, `$( )`, subshells) are also caught, because the hook inspects each command segment independently.
+
+### Adding a subcommand
+
+Default-deny means a genuinely needed subcommand must be added by a human. Edit `GIT_ALLOWED_SUBCOMMANDS` in `.claude/scripts/deny-check.sh` and add the subcommand name. The block message names the rejected subcommand and points here, e.g.:
+
+```
+Security policy violation: git subcommand 'switch' is not in the agent allowlist (default-deny for git). ...
+```
+
+Note: `git push` is on the allowlist so user-directed pushes are not hard-blocked by this hook; gating pushes further (e.g. an interactive confirmation) is handled by the harness permission layer, not by `deny-check.sh`.
