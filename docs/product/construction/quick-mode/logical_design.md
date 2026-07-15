@@ -231,7 +231,7 @@ scripts/harness/__tests__/
 | 値 | 説明 |
 |----|------|
 | `'bugfix'` | 既存実装ファイルの修正（domain/以外, changeKind=MODIFY） |
-| `'docs'` | `docs/` 配下のファイル変更 |
+| `'docs'` | `docs/` 配下のファイル変更、および `skills/` 配下の `.md`（指示文書。SKILL.md / references/*.md 等）の CREATE / MODIFY / DELETE <!-- @work-item-id WI-261 --> |
 | `'test'` | `__tests__/` 配下 or `*.test.ts` or `*.spec.ts` |
 | `'config'` | `*.config.json` / `*.config.ts` / `phasegate.config.json` |
 | `'feature'` | 新規実装ファイル追加（domain/ / port/ 以外, changeKind=CREATE） |
@@ -393,6 +393,7 @@ Quick Mode時のバリデータ実行構成を表す値オブジェクト。
 - 処理フロー:
   1. 空配列の場合は空の `ChangeClassification` を返す（`dominantCategory=null`）
   2. 各 `ChangedFile` に対し `filePath` と `changeKind` のパターンマッチングを実行してカテゴリを決定する
+     - `skills/` 配下の `.md` ファイル（`SKILL.md` / `references/*.md` 等の指示文書）は `docs` カテゴリに分類する。品質・完全性は専用防御（skill-quality corpus 適合テスト・advisory allowlist pin・integrity pin(WI-254)・L3-006 injection scanner(WI-259)）が担うため、ソースコードのフェーズゲート対象外とする。`skills/` 配下の非 `.md` は従来どおり `feature`（CREATE）/ `bugfix`（MODIFY・DELETE）に分類し fail-closed を維持する <!-- @work-item-id WI-261 -->
   3. カテゴリ別に `Map<string, ChangedFile[]>` を構築する
   4. リスク順（`api` > `domain` > `feature` > その他）で `dominantCategory` を決定する
   5. `ChangeClassification` を生成して返す

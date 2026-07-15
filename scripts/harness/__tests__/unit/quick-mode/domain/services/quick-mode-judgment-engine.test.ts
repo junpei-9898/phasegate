@@ -2,18 +2,18 @@
 // @layer test
 // @story H10-06
 // @work-item-id WI-204
-import { describe, expect, it } from 'vitest';
-import { target, context, createChangedFile, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
-import { QuickModeJudgmentEngine } from '../../../../../quick-mode/domain/services/quick-mode-judgment-engine.js';
-import { ChangedFile } from '../../../../../quick-mode/domain/value-objects/changed-file.js';
+import { describe, expect, it } from "vitest";
+import { QuickModeJudgmentEngine } from "../../../../../quick-mode/domain/services/quick-mode-judgment-engine.js";
+import { ChangedFile } from "../../../../../quick-mode/domain/value-objects/changed-file.js";
+import { context, createChangedFile, createQuickModeConfig, target } from "../../../../helpers/test-helpers.js";
 
 const engine = new QuickModeJudgmentEngine();
 
-target('QuickModeJudgmentEngine', () => {
-  target('classify', () => {
-    describe('変更ファイル群をカテゴリに分類する', () => {
+target("QuickModeJudgmentEngine", () => {
+  target("classify", () => {
+    describe("変更ファイル群をカテゴリに分類する", () => {
       // UT-JE-001
-      it('空配列が渡された場合にdominantCategory=nullの空のChangeClassificationが返ること', () => {
+      it("空配列が渡された場合にdominantCategory=nullの空のChangeClassificationが返ること", () => {
         // Arrange
         const files: ChangedFile[] = [];
         const config = createQuickModeConfig();
@@ -30,14 +30,12 @@ target('QuickModeJudgmentEngine', () => {
       // UT-JE-002
       it("'docs/'配下のfilePathを持つファイルが渡された場合に'docs'カテゴリに分類されること", () => {
         // Arrange
-        const files = [
-          ChangedFile.create({ filePath: 'docs/design/overview.md', changeKind: 'MODIFY' }),
-        ];
+        const files = [ChangedFile.create({ filePath: "docs/design/overview.md", changeKind: "MODIFY" })];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('docs')).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(true);
       });
 
       // UT-JE-003
@@ -45,15 +43,15 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/__tests__/unit/quick-mode/domain/some.test.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/__tests__/unit/quick-mode/domain/some.test.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('test')).toBe(true);
+        expect(actual.hasCategory("test")).toBe(true);
       });
 
       // UT-JE-004
@@ -61,35 +59,35 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/phasegate.config.json',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/phasegate.config.json",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('config')).toBe(true);
+        expect(actual.hasCategory("config")).toBe(true);
       });
 
       it("'phasegate.config.json' は content snippet が同一でも 'config' カテゴリに分類されること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'phasegate.config.json',
-            changeKind: 'MODIFY',
+            filePath: "phasegate.config.json",
+            changeKind: "MODIFY",
             beforeContent: '"allowedCategories": [',
             afterContent: '"allowedCategories": [',
           }),
         ];
-        const config = createQuickModeConfig({ allowedCategories: ['bugfix'] });
+        const config = createQuickModeConfig({ allowedCategories: ["bugfix"] });
 
         // Act
         const actual = engine.classify(files, config);
 
         // Assert
-        expect(actual.hasCategory('config')).toBe(true);
-        expect(actual.hasCategory('docs')).toBe(false);
+        expect(actual.hasCategory("config")).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(false);
       });
 
       // UT-JE-005
@@ -97,15 +95,15 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('domain')).toBe(true);
+        expect(actual.hasCategory("domain")).toBe(true);
       });
 
       // UT-JE-006
@@ -113,33 +111,33 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/application/ports/changed-files-port.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('api')).toBe(true);
+        expect(actual.hasCategory("api")).toBe(true);
       });
 
       it("'*port.ts'のコメントのみ差分が渡された場合に'docs'カテゴリに分類されること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
-            changeKind: 'MODIFY',
-            beforeContent: 'export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
-            afterContent: '// note\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+            filePath: "scripts/harness/quick-mode/application/ports/changed-files-port.ts",
+            changeKind: "MODIFY",
+            beforeContent: "export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n",
+            afterContent: "// note\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('docs')).toBe(true);
-        expect(actual.hasCategory('api')).toBe(false);
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("api")).toBe(false);
       });
 
       // UT-JE-007
@@ -147,46 +145,87 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/services/new-feature-service.ts',
-            changeKind: 'CREATE',
+            filePath: "scripts/harness/quick-mode/services/new-feature-service.ts",
+            changeKind: "CREATE",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('feature')).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(true);
       });
 
-      // UT-JE-008
-      it("domain/以外のMODIFYファイルが渡された場合に'bugfix'カテゴリに分類されること", () => {
+      // UT-JE-025（WI-261）
+      it("'skills/'配下の新規SKILL.md（CREATE）が渡された場合に'docs'カテゴリに分類されること", () => {
         // Arrange
         const files = [
-          createChangedFile(
-            'scripts/harness/quick-mode/services/quick-service.ts',
-            'MODIFY'
-          ),
+          ChangedFile.create({
+            filePath: "skills/doc-health-checker/SKILL.md",
+            changeKind: "CREATE",
+          }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.classify(files, config);
         // Assert
-        expect(actual.hasCategory('bugfix')).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(false);
+      });
+
+      // UT-JE-026（WI-261）
+      it("'skills/'配下のreferences配下.mdの新規作成（CREATE）が渡された場合に'docs'カテゴリに分類されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "skills/story-writer/references/workflow.md",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(false);
+      });
+
+      // UT-JE-027（WI-261）
+      it("'skills/'配下の非.mdファイルの新規作成（CREATE）は従来どおり'feature'カテゴリに分類されること（fail-closed維持）", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "skills/some-skill/scripts/helper.ts",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("feature")).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(false);
+      });
+
+      // UT-JE-008
+      it("domain/以外のMODIFYファイルが渡された場合に'bugfix'カテゴリに分類されること", () => {
+        // Arrange
+        const files = [createChangedFile("scripts/harness/quick-mode/services/quick-service.ts", "MODIFY")];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("bugfix")).toBe(true);
       });
     });
   });
 
-  target('judge', () => {
+  target("judge", () => {
     describe("変更ファイル群を評価してQuick Mode適用可否を返す", () => {
       // UT-JE-009
       it("全ファイルがallowedCategories内（'bugfix'/'docs'/'test'/'config'）のみの場合にeligible=trueが返ること", () => {
         // Arrange
-        const files = [
-          createChangedFile(
-            'scripts/harness/quick-mode/services/quick-service.ts',
-            'MODIFY'
-          ),
-        ];
+        const files = [createChangedFile("scripts/harness/quick-mode/services/quick-service.ts", "MODIFY")];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.judge(files, config);
@@ -195,7 +234,7 @@ target('QuickModeJudgmentEngine', () => {
       });
 
       // UT-JE-010
-      it('空の変更ファイル一覧が渡された場合にeligible=trueが返ること', () => {
+      it("空の変更ファイル一覧が渡された場合にeligible=trueが返ること", () => {
         // Arrange
         const files: ChangedFile[] = [];
         const config = createQuickModeConfig();
@@ -206,14 +245,14 @@ target('QuickModeJudgmentEngine', () => {
       });
     });
 
-    describe('3拒否ルールの判定', () => {
+    describe("3拒否ルールの判定", () => {
       // UT-JE-011
       it("allowedCategories外のファイル（domainカテゴリ）が1件含まれる場合にeligible=false、rejectionRule='MIXED_CHANGES'が返ること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
@@ -221,15 +260,15 @@ target('QuickModeJudgmentEngine', () => {
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
       });
 
       // UT-JE-012
       it("allowedCategories外のファイル（featureカテゴリ）が含まれる場合にeligible=false、rejectionRule='MIXED_CHANGES'が返り、rejectedFilesに当該ファイルが含まれること", () => {
         // Arrange
         const rejectedFile = ChangedFile.create({
-          filePath: 'scripts/harness/quick-mode/services/new-feature.ts',
-          changeKind: 'CREATE',
+          filePath: "scripts/harness/quick-mode/services/new-feature.ts",
+          changeKind: "CREATE",
         });
         const files = [rejectedFile];
         const config = createQuickModeConfig();
@@ -237,10 +276,8 @@ target('QuickModeJudgmentEngine', () => {
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
-        expect(actual.rejectedFiles).toContainEqual(
-          expect.objectContaining({ filePath: rejectedFile.filePath })
-        );
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectedFiles).toContainEqual(expect.objectContaining({ filePath: rejectedFile.filePath }));
       });
 
       // UT-JE-013
@@ -248,19 +285,19 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
-            changeKind: 'CREATE',
+            filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+            changeKind: "CREATE",
           }),
         ];
         // NEW_DOMAINルール単体を評価するには、domainがallowedに入った設定でCREATEを渡す
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain"],
         });
         // Act
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe('NEW_DOMAIN');
+        expect(actual.rejectionRule).toBe("NEW_DOMAIN");
       });
 
       // UT-JE-014
@@ -268,16 +305,16 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig();
         // Act
         const actual = engine.judge(files, config);
         // Assert
-        expect(actual.rejectionRule).not.toBe('NEW_DOMAIN');
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).not.toBe("NEW_DOMAIN");
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
       });
 
       // UT-JE-015
@@ -285,33 +322,34 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/application/ports/changed-files-port.ts",
+            changeKind: "MODIFY",
           }),
         ];
         // API_CONTRACTを単独評価するためallowedにapi含む設定
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "api"],
         });
         // Act
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe('API_CONTRACT');
+        expect(actual.rejectionRule).toBe("API_CONTRACT");
       });
 
       it("'*port.ts'ファイルのコメントのみ差分はAPI_CONTRACTで拒否されないこと", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/application/ports/changed-files-port.ts',
-            changeKind: 'MODIFY',
-            beforeContent: 'export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
-            afterContent: '/** docs */\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n',
+            filePath: "scripts/harness/quick-mode/application/ports/changed-files-port.ts",
+            changeKind: "MODIFY",
+            beforeContent: "export interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n",
+            afterContent:
+              "/** docs */\nexport interface ChangedFilesPort {\n  getChangedFiles(): Promise<unknown[]>;\n}\n",
           }),
         ];
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "api"],
         });
         // Act
         const actual = engine.judge(files, config);
@@ -328,96 +366,96 @@ target('QuickModeJudgmentEngine', () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/infrastructure/adapters/git-adapter.ts',
-            changeKind: 'MODIFY',
+            filePath: "scripts/harness/quick-mode/infrastructure/adapters/git-adapter.ts",
+            changeKind: "MODIFY",
           }),
         ];
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "api"],
         });
         // Act
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe('API_CONTRACT');
+        expect(actual.rejectionRule).toBe("API_CONTRACT");
       });
     });
 
-    describe('3拒否ルールをMIXED_CHANGES→NEW_DOMAIN→API_CONTRACTの順で評価する', () => {
+    describe("3拒否ルールをMIXED_CHANGES→NEW_DOMAIN→API_CONTRACTの順で評価する", () => {
       // UT-JE-017
-      it('MIXED_CHANGESとNEW_DOMAINの両条件に該当するファイルが含まれる場合に最初に一致するMIXED_CHANGESルールで拒否されること', () => {
+      it("MIXED_CHANGESとNEW_DOMAINの両条件に該当するファイルが含まれる場合に最初に一致するMIXED_CHANGESルールで拒否されること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
-            changeKind: 'CREATE',
+            filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+            changeKind: "CREATE",
           }),
         ];
         const config = createQuickModeConfig(); // domain非許可
         // Act
         const actual = engine.judge(files, config);
         // Assert
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
       });
 
       // UT-JE-018
-      it('NEW_DOMAINとAPI_CONTRACTの両条件に該当するファイルが含まれる場合にNEW_DOMAINルールで拒否されること', () => {
+      it("NEW_DOMAINとAPI_CONTRACTの両条件に該当するファイルが含まれる場合にNEW_DOMAINルールで拒否されること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
-            filePath: 'scripts/harness/quick-mode/domain/ports/new-domain-port.ts',
-            changeKind: 'CREATE',
+            filePath: "scripts/harness/quick-mode/domain/ports/new-domain-port.ts",
+            changeKind: "CREATE",
           }),
         ];
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain", "api"],
         });
         // Act
         const actual = engine.judge(files, config);
         // Assert
-        expect(actual.rejectionRule).toBe('NEW_DOMAIN');
+        expect(actual.rejectionRule).toBe("NEW_DOMAIN");
       });
     });
 
     // UT-JE-019: INV-1不変条件
-    it('INV-1: 任意の有効なChangedFile[]とQuickModeConfigで判定結果にLevel間依存緩和の情報が含まれないこと', () => {
+    it("INV-1: 任意の有効なChangedFile[]とQuickModeConfigで判定結果にLevel間依存緩和の情報が含まれないこと", () => {
       // Arrange
       const files = [createChangedFile()];
       const config = createQuickModeConfig();
       // Act
-        const actual = engine.judge(files, config);
-        // Assert
-        // QuickModeEligibilityはlevelDependencyRelaxedプロパティを持たない
-        expect(actual).toMatchObject({
-          eligible: true,
-          rejectionRule: undefined,
-          rejectedFiles: undefined,
-        });
-        expect(actual).not.toHaveProperty('levelDependencyRelaxed');
+      const actual = engine.judge(files, config);
+      // Assert
+      // QuickModeEligibilityはlevelDependencyRelaxedプロパティを持たない
+      expect(actual).toMatchObject({
+        eligible: true,
+        rejectionRule: undefined,
+        rejectedFiles: undefined,
+      });
+      expect(actual).not.toHaveProperty("levelDependencyRelaxed");
     });
 
     // UT-JE-020
-    it('3拒否ルールはallowedCategoriesで上書きできない: allowedCategoriesに全カテゴリを含む設定でdomainカテゴリのファイルを渡した場合にMIXED_CHANGESルールで拒否されること', () => {
+    it("3拒否ルールはallowedCategoriesで上書きできない: allowedCategoriesに全カテゴリを含む設定でdomainカテゴリのファイルを渡した場合にMIXED_CHANGESルールで拒否されること", () => {
       // Arrange
       const domainFile = ChangedFile.create({
-        filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
-        changeKind: 'MODIFY',
+        filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
+        changeKind: "MODIFY",
       });
       const config = createQuickModeConfig(); // allowedCategoriesにdomain非許可 = デフォルト
       // Act
       const actual = engine.judge([domainFile], config);
       // Assert
       expect(actual.isEligible()).toBe(false);
-      expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+      expect(actual.rejectionRule).toBe("MIXED_CHANGES");
     });
 
     // UT-JE-021（H10-05）
-    describe('fullModeRequiredWhen による rule のオプトアウト', () => {
-      it('fullModeRequiredWhen.mixedCategories=false の場合にallowedCategories外のファイルでも MIXED_CHANGES で拒否されないこと', () => {
+    describe("fullModeRequiredWhen による rule のオプトアウト", () => {
+      it("fullModeRequiredWhen.mixedCategories=false の場合にallowedCategories外のファイルでも MIXED_CHANGES で拒否されないこと", () => {
         // Arrange
         const domainFile = ChangedFile.create({
-          filePath: 'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
-          changeKind: 'MODIFY',
+          filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
+          changeKind: "MODIFY",
         });
         const config = createQuickModeConfig({
           fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
@@ -425,49 +463,49 @@ target('QuickModeJudgmentEngine', () => {
         // Act
         const actual = engine.judge([domainFile], config);
         // Assert
-        expect(actual.rejectionRule).not.toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).not.toBe("MIXED_CHANGES");
       });
 
       // UT-JE-022
-      it('fullModeRequiredWhen.newDomainFile=false の場合に domain/ 配下のCREATEでも NEW_DOMAIN で拒否されないこと', () => {
+      it("fullModeRequiredWhen.newDomainFile=false の場合に domain/ 配下のCREATEでも NEW_DOMAIN で拒否されないこと", () => {
         // Arrange
         const newDomainFile = ChangedFile.create({
-          filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
-          changeKind: 'CREATE',
+          filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+          changeKind: "CREATE",
         });
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain', 'feature', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain", "feature", "api"],
           fullModeRequiredWhen: { mixedCategories: true, newDomainFile: false, apiContractChange: true },
         });
         // Act
         const actual = engine.judge([newDomainFile], config);
         // Assert
-        expect(actual.rejectionRule).not.toBe('NEW_DOMAIN');
+        expect(actual.rejectionRule).not.toBe("NEW_DOMAIN");
       });
 
       // UT-JE-023
-      it('fullModeRequiredWhen.apiContractChange=false の場合に *port.ts の変更でも API_CONTRACT で拒否されないこと', () => {
+      it("fullModeRequiredWhen.apiContractChange=false の場合に *port.ts の変更でも API_CONTRACT で拒否されないこと", () => {
         // Arrange
         const portFile = ChangedFile.create({
-          filePath: 'scripts/harness/quick-mode/domain/ports/some-port.ts',
-          changeKind: 'MODIFY',
+          filePath: "scripts/harness/quick-mode/domain/ports/some-port.ts",
+          changeKind: "MODIFY",
         });
         const config = createQuickModeConfig({
-          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'domain', 'feature', 'api'],
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain", "feature", "api"],
           fullModeRequiredWhen: { mixedCategories: true, newDomainFile: true, apiContractChange: false },
         });
         // Act
         const actual = engine.judge([portFile], config);
         // Assert
-        expect(actual.rejectionRule).not.toBe('API_CONTRACT');
+        expect(actual.rejectionRule).not.toBe("API_CONTRACT");
       });
 
       // UT-JE-024
-      it('fullModeRequiredWhen.mixedCategories=false でも newDomainFile=true の場合に domain/ 配下の CREATE は NEW_DOMAIN で拒否されること', () => {
+      it("fullModeRequiredWhen.mixedCategories=false でも newDomainFile=true の場合に domain/ 配下の CREATE は NEW_DOMAIN で拒否されること", () => {
         // Arrange
         const newDomainFile = ChangedFile.create({
-          filePath: 'scripts/harness/quick-mode/domain/value-objects/new-vo.ts',
-          changeKind: 'CREATE',
+          filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+          changeKind: "CREATE",
         });
         const config = createQuickModeConfig({
           fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
@@ -475,7 +513,7 @@ target('QuickModeJudgmentEngine', () => {
         // Act
         const actual = engine.judge([newDomainFile], config);
         // Assert
-        expect(actual.rejectionRule).toBe('NEW_DOMAIN');
+        expect(actual.rejectionRule).toBe("NEW_DOMAIN");
       });
     });
   });

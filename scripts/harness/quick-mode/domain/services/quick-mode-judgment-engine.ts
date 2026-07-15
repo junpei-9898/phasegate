@@ -6,12 +6,12 @@
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */
 
-import { ChangeCategory } from '../value-objects/change-category.js';
-import { ChangeClassification } from '../value-objects/change-classification.js';
-import { QuickModeEligibility } from '../value-objects/quick-mode-eligibility.js';
-import { isCommentOnlyDiff } from './comment-only-diff-detector.js';
-import type { ChangedFile } from '../value-objects/changed-file.js';
-import type { QuickModeConfig } from '../value-objects/quick-mode-config.js';
+import { ChangeCategory } from "../value-objects/change-category.js";
+import { ChangeClassification } from "../value-objects/change-classification.js";
+import type { ChangedFile } from "../value-objects/changed-file.js";
+import type { QuickModeConfig } from "../value-objects/quick-mode-config.js";
+import { QuickModeEligibility } from "../value-objects/quick-mode-eligibility.js";
+import { isCommentOnlyDiff } from "./comment-only-diff-detector.js";
 
 // リスク順優先度（api > domain > feature > bugfix > test > config > docs）
 const RISK_PRIORITY: Record<string, number> = {
@@ -30,48 +30,54 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
   // Config files must stay config even when Edit payload snippets look like
   // comment/whitespace-only diffs. Config recovery guidance depends on this.
   if (
-    filePath.endsWith('.config.json') ||
-    filePath.endsWith('.config.ts') ||
-    filePath.endsWith('phasegate.config.json')
+    filePath.endsWith(".config.json") ||
+    filePath.endsWith(".config.ts") ||
+    filePath.endsWith("phasegate.config.json")
   ) {
-    return ChangeCategory.fromString('config');
+    return ChangeCategory.fromString("config");
   }
 
   if (isCommentOnlyDiff(file)) {
-    return ChangeCategory.fromString('docs');
+    return ChangeCategory.fromString("docs");
   }
 
   // api: *port.ts or *adapter.ts（最高優先度）
-  if (filePath.endsWith('port.ts') || filePath.endsWith('adapter.ts')) {
-    return ChangeCategory.fromString('api');
+  if (filePath.endsWith("port.ts") || filePath.endsWith("adapter.ts")) {
+    return ChangeCategory.fromString("api");
   }
 
   // test: __tests__/ 配下 or *.test.ts or *.spec.ts（domainより優先）
-  if (
-    filePath.includes('__tests__/') ||
-    filePath.endsWith('.test.ts') ||
-    filePath.endsWith('.spec.ts')
-  ) {
-    return ChangeCategory.fromString('test');
+  if (filePath.includes("__tests__/") || filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts")) {
+    return ChangeCategory.fromString("test");
   }
 
   // domain: domain/ 配下
-  if (filePath.includes('/domain/') || filePath.startsWith('domain/')) {
-    return ChangeCategory.fromString('domain');
+  if (filePath.includes("/domain/") || filePath.startsWith("domain/")) {
+    return ChangeCategory.fromString("domain");
   }
 
   // docs: docs/ 配下
-  if (filePath.startsWith('docs/') || filePath.includes('/docs/')) {
-    return ChangeCategory.fromString('docs');
+  if (filePath.startsWith("docs/") || filePath.includes("/docs/")) {
+    return ChangeCategory.fromString("docs");
+  }
+
+  // docs: skills/ 配下の .md（指示文書。SKILL.md / references/*.md 等）は
+  // ソースコードのフェーズゲート対象外とし docs に分類する。品質・完全性は
+  // 専用防御（skill-quality corpus 適合テスト・advisory allowlist pin・
+  // integrity pin(WI-254)・L3-006 injection scanner(WI-259)）が担う。
+  // skills/ 配下の非 .md は下の feature/bugfix フォールバックに落ちて fail-closed を維持する。
+  // @work-item-id WI-261
+  if (filePath.startsWith("skills/") && filePath.endsWith(".md")) {
+    return ChangeCategory.fromString("docs");
   }
 
   // feature: domain/ 以外の CREATE
-  if (changeKind === 'CREATE') {
-    return ChangeCategory.fromString('feature');
+  if (changeKind === "CREATE") {
+    return ChangeCategory.fromString("feature");
   }
 
   // bugfix: domain/ 以外の MODIFY/DELETE
-  return ChangeCategory.fromString('bugfix');
+  return ChangeCategory.fromString("bugfix");
 }
 
 export class QuickModeJudgmentEngine {
@@ -107,7 +113,7 @@ export class QuickModeJudgmentEngine {
     const classification = this.classify(changedFiles, config);
 
     // 1. MIXED_CHANGES評価: allowedCategories 外のカテゴリが含まれる場合
-    if (config.isFullModeRequiredFor('mixedCategories')) {
+    if (config.isFullModeRequiredFor("mixedCategories")) {
       const notAllowedFiles: ChangedFile[] = [];
       classification.categorizedFiles.forEach((files, categoryKey) => {
         if (!config.isAllowed(categoryKey)) {
@@ -117,45 +123,43 @@ export class QuickModeJudgmentEngine {
 
       if (notAllowedFiles.length > 0) {
         return QuickModeEligibility.rejected(
-          'MIXED_CHANGES',
+          "MIXED_CHANGES",
           notAllowedFiles,
-          `allowedCategories外のファイルが含まれています: ${notAllowedFiles.map((f) => f.filePath).join(', ')}`
+          `allowedCategories外のファイルが含まれています: ${notAllowedFiles.map((f) => f.filePath).join(", ")}`,
         );
       }
     }
 
     // 2. NEW_DOMAIN評価: domain/ 配下かつ changeKind=CREATE
-    if (config.isFullModeRequiredFor('newDomainFile')) {
+    if (config.isFullModeRequiredFor("newDomainFile")) {
       const newDomainFiles = changedFiles.filter(
-        (f) =>
-          (f.filePath.includes('/domain/') || f.filePath.startsWith('domain/')) &&
-          f.changeKind === 'CREATE'
+        (f) => (f.filePath.includes("/domain/") || f.filePath.startsWith("domain/")) && f.changeKind === "CREATE",
       );
 
       if (newDomainFiles.length > 0) {
         return QuickModeEligibility.rejected(
-          'NEW_DOMAIN',
+          "NEW_DOMAIN",
           newDomainFiles,
-          `domain/配下に新規ファイルが追加されています: ${newDomainFiles.map((f) => f.filePath).join(', ')}`
+          `domain/配下に新規ファイルが追加されています: ${newDomainFiles.map((f) => f.filePath).join(", ")}`,
         );
       }
     }
 
     // 3. API_CONTRACT評価: *port.ts / *adapter.ts の変更
-    if (config.isFullModeRequiredFor('apiContractChange')) {
+    if (config.isFullModeRequiredFor("apiContractChange")) {
       const apiContractFiles = changedFiles.filter(
-        (f) => (f.filePath.endsWith('port.ts') || f.filePath.endsWith('adapter.ts')) && !isCommentOnlyDiff(f)
+        (f) => (f.filePath.endsWith("port.ts") || f.filePath.endsWith("adapter.ts")) && !isCommentOnlyDiff(f),
       );
 
       if (apiContractFiles.length > 0) {
         return QuickModeEligibility.rejected(
-          'API_CONTRACT',
+          "API_CONTRACT",
           apiContractFiles,
-          `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles.map((f) => f.filePath).join(', ')}`
+          `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles.map((f) => f.filePath).join(", ")}`,
         );
       }
     }
 
-    return QuickModeEligibility.eligible('すべてのファイルが許可カテゴリ内です');
+    return QuickModeEligibility.eligible("すべてのファイルが許可カテゴリ内です");
   }
 }
