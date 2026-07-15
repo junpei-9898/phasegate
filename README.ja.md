@@ -59,6 +59,8 @@ Claude Code / Codex はこのメッセージを読んで `/story-implementor` �
 
 ## クイックスタート
 
+まず [Getting Started](docs/guide/getting-started.md) から始めると、新規リポジトリ / 既存リポジトリ / CI 専用 / agent hook / strict 導入の各パスを、次に打つコマンドと成功状態に対応づけて案内します。
+
 ### 前提
 
 Node.js >= 18, npm >= 9, TypeScript 5.x
@@ -80,7 +82,7 @@ claude
 `init` は初期 bootstrap として以下を生成します:
 
 - `phasegate.config.json` — 品質設定の Single Source of Truth
-- `skills/` — 30 の AIDLC スキル一式
+- `skills/` — 29 の AIDLC スキル一式
 - `.claude/skills/` ・ `.codex/skills/` — agent 向けの skill symlink
 - `.claude/settings.json` — PreToolUse / PostToolUse / Stop hook
 - `.codex/hooks.json` — Codex CLI hooks 設定（`--agent codex|both` 時）
@@ -129,11 +131,12 @@ npx phasegate install --personal --agent claude --apply
 | 項目 | personal install の挙動 |
 |---|---|
 | **触らないファイル** | `package.json` / `AGENTS.md` / `CLAUDE.md` / `.husky/*` / `.github/workflows/*` / `.gitignore` / GitHub CLI 設定 / repo secrets / CI 設定 |
-| **作るファイル** | `.phasegate-local/phasegate.config.json`（ローカル専用 config）／ `.claude/CLAUDE.local.md` または `.codex/AGENTS.local.md`（agent context）／ `.claude/settings.json` + `.claude/skills/` または `.codex/hooks.json` + `.codex/skills/`（選択した agent の runtime artifact）／ `.git/hooks/pre-commit` + `.git/hooks/commit-msg`（ローカル git hook）／ `.phasegate-local/docs/`（設計原則文書コピー）／ `.phasegate/manifest.json` |
+| **作るファイル** | `.phasegate-local/phasegate.config.json`（ローカル専用 config）／ runtime から見えるローカル agent context（Claude は `.claude/CLAUDE.md`、Codex は root の `AGENTS.md` が不在または既に PhaseGate 管理下のときのみ `AGENTS.md`）／ `.claude/settings.json` + `.claude/skills/` または `.codex/hooks.json` + `.codex/skills/`（選択した agent の runtime artifact）／ `.git/hooks/pre-commit` + `.git/hooks/commit-msg`（ローカル git hook）／ `.phasegate-local/docs/`（設計原則文書コピー）／ `.phasegate/manifest.json` |
+| **既存 skills の扱い** | 個人用 skills directory がある場合は merge — bundled skills を refresh し、user 所有の skill は保持する |
 | **コミット漏れ対策** | `.git/info/exclude` にローカル専用 block を管理して、個人用ファイルが誤ってチームの commit に混ざらないようにする。commit 時の L2 防御は `.git/hooks/` で発火する |
 | **Codex hook flag** | user-level feature flag の有効化は手動アクションとして残る（`codex features enable hooks`） |
 
-Codex を併用する場合は `--agent codex` または `--agent both` を指定します。アンインストールは team install と同様に `npx phasegate uninstall --apply` を使えば manifest 経由でローカル成果物のみが除去されます。<!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 -->
+チーム所有の `AGENTS.md` が既に存在する場合、Codex の personal install はそれを変更せず、`doctor --personal --agent codex` が残りの context ステップを（`AGENTS.override.md` に隠すのではなく）報告します。Codex を併用する場合は `--agent codex` または `--agent both` を指定します。アンインストールは team install と同様に `npx phasegate uninstall --apply` を使えば manifest 経由でローカル成果物のみが除去されます。<!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 --> <!-- @work-item-id WI-215 -->
 
 後で PhaseGate を外す場合は、manifest ベースの uninstall を使います。
 
@@ -157,7 +160,7 @@ npx phasegate reconcile --apply
 
 ```bash
 npx phasegate init --name my-project --agent codex --with-husky
-codex features enable codex_hooks   # Codex 本体の feature flag を手動で有効化
+codex features enable hooks   # Codex 本体の feature flag を手動で有効化
 ```
 
 両方使う場合は `--agent both`。Codex のネイティブ `apply_patch` は現時点で事前 hook を発火しないため、pre-commit (L2) で commit 時にブロックします。Bash 経由の書き込みは実行前に止まります。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。
@@ -180,7 +183,7 @@ npx phasegate reconcile --apply
 |---|---|
 | **フェーズゲート** | 設計文書がないと実装ファイルへの Write/Edit/Bash をブロック。AIDLC 準拠 / カスタム gate の両方をサポート |
 | **5 層バリデーション (L0-L4)** | エディタ保存 → pre-commit → CI → 週次まで段階的に品質チェック |
-| **30 AIDLC スキル** | 要求定義 → ドメイン設計 → テスト設計 → TDD 実装をスキルとして提供 |
+| **29 AIDLC スキル** | 要求定義 → ドメイン設計 → テスト設計 → TDD 実装をスキルとして提供 |
 | **Quick Mode** | バグ修正・docs・テスト追加など軽微変更ではゲートを緩和して高速化 |
 | **Claude Code / Codex Hooks** | Write/Edit/Bash 時に自動でゲートチェック・lint を実行 |
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
@@ -201,10 +204,12 @@ npx phasegate reconcile --apply
 |     @unit / @layer メタデータ, レイヤー違反, AI アンチパターン   |
 +------------------------------------------------------------------+
 | L2  pre-commit                                                   |
-|     phase-gate, story-reflection, テスト品質 (semantic AAA)       |
+|     phase-gate, story-reflection, テスト品質 (semantic AAA),      |
+|     coverage-attestation-gating (L2-016, fail-closed)            |
 +------------------------------------------------------------------+
 | L3  CI/CD                                                        |
-|     security, performance, coverage 90%/95%, 要件カバレッジ        |
+|     security, performance, coverage 90%/95%, 要件カバレッジ,       |
+|     injection-scan (L3-006, advisory)                            |
 +------------------------------------------------------------------+
 | L4  週次 (default off)                                           |
 |     設計-コード乖離, 文書整合性, デッドコード,                  |
@@ -222,26 +227,50 @@ npx phasegate reconcile --apply
 
 エラーは `HarnessError` 形式（理由 / ADR 参照 / 修正例）で返されるため、AI agent が自己修正できます。
 
+**L2 の追加ゲート**: `L2-STORY-REFLECTION` は git の source-touch により layer-aware になり、複数 WI を含む commit では file-tag scoped の attribution で反映元を判定します。`L2-016 coverage-attestation-gating` は fail-closed で、`✅` を主張するには attestation ID が必須です（ID なしの ✅ はブロック）。既存の非ゲート行は `ungated-legacy` マーカーで可視化したまま段階返済します。
+
+**L3 の追加ゲート**: `L3-006 injection-scan` は指示搭載ファイルに対する advisory（**warning-only、非 blocking**）なインジェクションスキャナで、人間レビューへの注意喚起に留めます。
+
 詳細: [5-Layer Defense Model](docs/guide/layer-model.md)
 
 ---
 
-## 30 AIDLC スキル
+## セキュリティ姿勢
+
+Phasegate はプロンプトインジェクションを独立した新規脅威として扱いません。[ADR-030](docs/ADR/030-injection-threat-model-and-trust-root.md) の通り、インジェクションに成功したエージェントは、phasegate が元々仮定してきた **「洗浄を試みるエージェント」と同一の脅威** — すなわち正規の権限（Bash / ファイル書き込み / commit）で品質防御を回避しようとする悪意ある内部者 — として振る舞います。したがって対策は「穴を塞ぐ」「コンテンツが指示になる経路を減らす」の 2 軸に還元され、専用の別枠防御ではなく既存の L0-L4 モデルの延長で扱います。
+
+**信頼のルート**: L0-L2 はローカルで実行される以上、Bash を持つエージェントには原理的に偽造・迂回可能です。これらは **fast-path**（正直なエージェントの事故防止 / 騙されかけたエージェントの早期停止）として正直に位置づけます。**信頼のルート（authoritative）は L3 CI の再検証**で、攻撃者が制御できない環境で evidence を独立に再計算します。「ローカルが緑なら安全」は明示的に保証しません。
+
+この姿勢を 5 コンポーネントで実装します:
+
+| コンポーネント | 役割 | 正直な位置づけ |
+|---|---|---|
+| **指示ファイル整合性 pin** | 指示搭載ファイル（SKILL.md / `CLAUDE.md`・`AGENTS.md` テンプレート / hook 定義 / `.husky/*`）の SHA-256 manifest（`phasegate.integrity.json`）。`integrity:pin` で意図的変更を記録、SessionStart hook が drift を警告、CI が再計算して authoritative に照合 | ローカル照合は warn-only の fast-path、CI が authoritative |
+| **coverage attestation ゲート (L2-016)** | fail-closed の参照形式ゲート。`✅` の主張には attestation ID が必須で、bare ✅ はブロック。既存行は `ungated-legacy` で可視化し段階返済 | L2 は参照形式をゲートする。evidence の独立再実行は L3 側の将来分 |
+| **hook 出力の spotlighting** | hook が中継するリポジトリ由来の自由文字列を固定のデータ境界フェンスで包み、「データであって指示ではない」ことを明示 | リポジトリ由来テキストが指示に昇格する経路を減らす |
+| **advisory インジェクションスキャナ (L3-006)** | 指示搭載ファイルの既知インジェクションパターンを検査。**advisory / warning-only** で非 blocking のため「すり抜け＝安全」という誤った信頼を生まない | パターン検査は回避可能。finding は警告のみ、最終判断は人間レビュー |
+| **エージェント権限 allowlist** | エージェント操作を allowlist（明示的に許されたものだけ実行）に反転。網羅漏れのある deny 列挙（`git merge`/`checkout`/`reset` は deny 済みなのに `git switch` が漏れていた等）を是正 | 未知の危険操作を既定で拒否 |
+
+**ADR-030 が明記する残存リスク**: ローカル層（L0-L2）は偽造可能なので L3 が信頼のルート／スキャナは回避可能なので advisory に留める／CI を持たない PJ には信頼のルートが不在（`phasegate doctor` が警告）／red・警告付き PR を人間が手動 merge する経路は機械防御の対象外。
+
+---
+
+## 29 スキル
 
 AIDLC (AI-Driven Development Life Cycle) は **要求定義 → 設計 → テスト設計 → TDD 実装** の順序を強制するプロセスです。各スキルは前のレベルの成果物を入力にします。
 
 **最初の一歩**: Claude Code / Codex 内で `/product-architect` を実行。
 
-### 6 グループ（30 スキル）
+### 6 グループ（29 スキル）
 
 | グループ | スキル |
 |---|---|
 | **Foundation (4)** | `/product-architect` `/story-writer` `/story-mapper` `/unit-designer` |
 | **Design (5)** | `/domain-designer` `/logical-designer` `/mock-designer` `/uiux-designer` `/environment-designer` |
 | **Test Engineering (7)** | `/unit-test-designer` `/it-test-designer` `/scenario-test-designer` `/unit-test-logic-designer` `/it-test-logic-designer` `/scenario-test-logic-designer` `/test-coverage-checker` |
-| **Implementation (4)** | `/story-implementor` `/quick-implementor` `/implementation-planner` `/implementation-readiness-checker` |
-| **Verification (8)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-freshness-checker` `/pointer-validator` `/engineering-perspective` `/skill-creator` |
-| **Operations (2)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` |
+| **Implementation (3)** | `/story-implementor` `/quick-implementor` `/implementation-readiness-checker` |
+| **Verification (7)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-health-checker` `/engineering-perspective` `/skill-creator` |
+| **Operations (3)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` `/release-publisher` |
 
 各スキルの詳細・成果物・前提条件: [Skills Overview](docs/guide/skills-overview.md)
 
@@ -357,12 +386,17 @@ npx phasegate <command> [options]
 | `uninstall --dry-run` / `--apply` | manifest に基づいて PhaseGate 管理ファイル・管理 block を削除し、ユーザー設定は保持 |
 | `reconcile --dry-run` / `--apply` | 現在の package template に PhaseGate 管理ファイルを追従し、manifest hash を更新 |
 | `update-skills` | `reconcile` の互換 alias |
+| `setup:agent --dry-run` / `--apply` | リポジトリの setup 状態を診断し、質問 / risk / rollback / validation 付きの agent-readable な setup plan を生成・適用 |
+| `config:plan --intent <intent>` | 安全な設定変更 intent を対象ファイル / コマンド / risk / rollback / validation にマップ |
+| `integrity:pin` | 指示搭載ファイルの SHA-256 manifest（`phasegate.integrity.json`）を生成 / 更新（意図的変更を記録。`--dry-run`, `--json`） |
+| `integrity:verify` | manifest と実ファイルを照合。drift 検出時は exit 2、クリーン時は exit 0（`--json`）。ローカルは advisory、CI が authoritative |
 | `lint` | L1 Biome AST チェック |
 | `validate --layer <L1\|L2\|L3\|L4\|all>` | 指定レイヤーのバリデータ実行（`--format human\|agent\|ci`） |
 | `ci-check` | CI フルチェック（L2-L4）。`--quick` で Quick Mode |
 | `check-change-category --paths <csv>` | 変更ファイルを Quick Mode カテゴリに分類、Full Mode 強制が必要かを返す |
 | `baseline` | retrofit grandfather snapshot 生成（`--dry-run`, `--force`, `--paths <glob>`, `--json`） |
 | `scaffold-design --unit <id> --phase <logical\|domain\|uiux\|unit-test\|it-test>` | 最小構成の設計文書を `templates/` から生成 |
+| `scaffold-wi <unit> <type>` | 次の空き WI 番号で `docs/inception/{unit}/WI-XXX/description.md` を生成 |
 | `phasegate:status` | 全体の健全性サマリ |
 | `work-items:status --dry-run` / `--apply` | 成果物から WI status を導出し、必要に応じて `description.md` frontmatter を更新。`--apply` は既定で downgrade を拒否し、必要時のみ `--allow-downgrade` を指定 |
 | `phasegate:check-phase --unit <id>` | 指定 Unit の現在フェーズ |
@@ -374,7 +408,7 @@ npx phasegate <command> [options]
 | `refresh-claude-md --dry-run` / `--apply` | user section を保持して CLAUDE.md だけを更新 |
 | `p2:check-agent-context` | AGENTS.md / CLAUDE.md の鮮度を検査 |
 | `list-errors --layer <L0-L4>` | エラー定義一覧 |
-| `hook <pre-tool-use\|post-tool-use\|stop>` | agent hook を起動（stdin から JSON） |
+| `hook <pre-tool-use\|post-tool-use\|stop\|session-start\|user-prompt-submit>` | agent hook を起動（stdin から JSON を読む。session-start / user-prompt-submit は JSON context を出力） |
 | `pre-commit` | L2 pre-commit バリデータをステージファイルに適用 |
 | `bypass:audit --base <ref> [--head <ref>]` | push/CI range に pre-commit validation を再適用し、gate failure に structured bypass evidence を要求 |
 
@@ -393,6 +427,8 @@ npx phasegate <command> [options]
 | **PreToolUse** | Write/Edit/Bash の実行前 | フェーズゲート違反 / 保護ファイル / Bash 経由迂回をブロック。Quick→Full 強制条件のチェックも実行 |
 | **PostToolUse** | Write/Edit の実行後 | Biome AST ルールを自動実行、違反を即時フィードバック |
 | **Stop** | セッション終了前 | L2-L4 全チェックを実行、グリーンでないと終了を保留 |
+| **SessionStart** | セッション開始時 | harness status context を注入。指示ファイル整合性 pin を in-process で照合し、drift 時のみ **warn-only / fail-open** で警告（authoritative な照合は CI） |
+| **UserPromptSubmit** | プロンプト送信時 | リポジトリ由来 context を注入。中継するリポジトリ由来テキストを固定のデータ境界フェンスで包み（spotlighting）、指示ではなくデータとして扱わせる |
 
 ### Codex CLI
 
@@ -540,9 +576,10 @@ L3 Nyquist Validation の `requirement-test-matrix.json` は `phasegate:generate
 ## ドキュメント
 
 - [Installation](docs/guide/installation.md) — 詳細インストール手順
+- [Getting Started](docs/guide/getting-started.md) — 初回 / 日常 / CI / agent 利用の各パス
 - [Configuration](docs/guide/configuration.md) — `phasegate.config.json` 完全リファレンス
 - [CLI Reference](docs/guide/cli-reference.md) — 全 CLI コマンド・オプション
-- [Skills Overview](docs/guide/skills-overview.md) — 30 スキルの実行順序と成果物
+- [Skills Overview](docs/guide/skills-overview.md) — 29 スキルの実行順序と成果物
 - [5-Layer Defense Model](docs/guide/layer-model.md) — L0-L4 詳細・HarnessError 形式
 - [Hooks Integration](docs/guide/hooks-integration.md) — Claude Code Hooks 設定
 - [Codex Integration](docs/guide/codex-integration.md) — Codex CLI セットアップ・カバレッジ
@@ -560,4 +597,4 @@ phasegate 自体の開発: [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md)
 
 ---
 
-*Last updated: 2026-04-25 — v0.110.0*
+*Last updated: 2026-07-15 — v0.211.0*

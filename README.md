@@ -83,7 +83,7 @@ claude
 `init` creates the initial project-local harness files:
 
 - `phasegate.config.json` as the quality settings source of truth
-- `skills/` with 30 AIDLC skills
+- `skills/` with 29 AIDLC skills
 - `.claude/skills` and/or `.codex/skills` links for agent use
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
@@ -167,7 +167,7 @@ npx phasegate reconcile --apply
 |---|---|
 | **Phase gates** | Blocks implementation writes until required design documents exist and have been reflected into product docs |
 | **5-layer validation** | Runs checks from agent runtime and editor time through pre-commit, CI, and scheduled audits |
-| **30 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
+| **29 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
 | **Quick Mode** | Keeps bugfixes, docs, test-only changes, and config changes lightweight while preserving traceability |
 | **Claude Code / Codex hooks** | Runs checks around Write/Edit/Bash operations and session boundaries |
 | **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
@@ -192,10 +192,12 @@ npx phasegate reconcile --apply
 +------------------------------------------------------------------+
 |  L2  PRE-COMMIT            Validators                            |
 |  phase-gate, metadata completeness, story-reflection,            |
-|  test-quality (semantic AAA + assertion strength)                |
+|  test-quality (semantic AAA + assertion strength),               |
+|  coverage-attestation-gating (L2-016, fail-closed)               |
 +------------------------------------------------------------------+
 |  L3  CI/CD                 Validators                            |
-|  security, performance, coverage threshold, nyquist traceability |
+|  security, performance, coverage threshold, nyquist              |
+|  traceability, injection-scan (L3-006, advisory)                 |
 +------------------------------------------------------------------+
 |  L4  SCHEDULED             Validators (default off)              |
 |  drift-detection, consistency-check, dead-code analysis,         |
@@ -207,9 +209,29 @@ npx phasegate reconcile --apply
 |---|---|---|
 | L0 | AI agent runtime (`.claude/settings.json` / `.codex/hooks.json`) + Husky git hooks | PreToolUse blocks Write/Edit/Bash that violate gates; PostToolUse runs lint/format; Stop enforces ReentryGuard + `complete-check`; `.husky/pre-commit` runs `phasegate pre-commit`; `.husky/commit-msg` enforces `Work-Item: WI-XXX` and bypass trailers; `.husky/pre-push` runs `phasegate bypass:audit` |
 | L1 | Editor save / `phasegate lint` | `@unit` / `@layer` metadata, layer violations, AI anti-patterns, dead code |
-| L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`), test quality |
-| L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability |
+| L2 | Pre-commit (also evaluated inside PreToolUse at L0) | Phase gate, metadata completeness, `@work-item-id` reflection (`L2-STORY-REFLECTION`, now layer-aware with git source-touch + file-tag-scoped attribution for multi-WI commits), test quality, coverage-report attestation gate (`L2-016`, fail-closed: a bare ✅ without an attestation ID is blocked; pre-existing rows stay visible via the `ungated-legacy` marker) |
+| L3 | CI/CD pipeline | Security, performance, coverage (90%/95%), requirements traceability, advisory injection scan (`L3-006`, **warning-only**) over instruction-carrying files |
 | L4 | Scheduled (weekly). Currently `layers.L4.enabled: false` by default — opt-in per project | Design-code drift, cross-document consistency, dead code, doc freshness, and pointer validation. `p2:*` standalone commands remain available as compatibility entry points. |
+
+---
+
+## Security Posture
+
+Phasegate does not treat prompt injection as a separate threat. Per [ADR-030](docs/ADR/030-injection-threat-model-and-trust-root.md), a successfully injected agent behaves exactly like the "laundering agent" the toolkit already assumes: a malicious insider that uses its legitimate permissions (Bash, file writes, commits) to evade the quality defenses. The countermeasures therefore reduce to two axes — close the holes an agent can slip through, and reduce the paths by which external content becomes agent instructions — handled along the existing L0-L4 model rather than in a separate defense layer.
+
+**Trust root.** Because L0-L2 run locally, an agent with Bash can in principle forge or bypass them. They are positioned honestly as a **fast-path** (early accident detection for honest agents, early stop for misled ones). The **authoritative trust root is the L3 CI re-check**, which runs where an attacker cannot control the environment and recomputes evidence independently. "Local is green" is explicitly not a safety guarantee.
+
+Five components implement this posture:
+
+| Component | Role | Honest framing |
+|---|---|---|
+| **Instruction-file integrity pin** | SHA-256 manifest (`phasegate.integrity.json`) over instruction-carrying files (SKILL.md, `CLAUDE.md` / `AGENTS.md` templates, hook definitions, `.husky/*`). `integrity:pin` records intentional changes; the SessionStart hook warns on drift; CI recomputes as the authority. | Local check is a warn-only fast-path; CI is authoritative. |
+| **Coverage attestation gate (L2-016)** | Fail-closed reference-style gate: a `✅` coverage claim requires an attestation ID; bare ✅ is blocked. Pre-existing rows are surfaced via `ungated-legacy` and repaid gradually. | L2 gates on reference shape; independent evidence re-execution is L3's future scope. |
+| **Hook-output spotlighting** | Repo-derived free text relayed in hook output is wrapped in fixed data-boundary fences so it reads as data, not instructions. | Reduces the path by which repo content is promoted to the harness voice. |
+| **Advisory injection scanner (L3-006)** | Scans instruction-carrying files for known injection patterns. **Advisory / warning-only** — never blocking, so no "slipped past the scanner = safe" false confidence is created. It is a signal for human review. | Pattern checks are inherently evadable; findings are warnings only. |
+| **Agent-permission allowlist** | Agent operations are an allowlist (only explicitly permitted operations run), inverted from the previous deny-list that had gaps (e.g. `git switch` was missing while `git merge`/`checkout`/`reset` were denied). | Unknown dangerous operations are denied by default. |
+
+**Residual risks ADR-030 states plainly**: local layers (L0-L2) are forgeable, so L3 is the trust root; the scanner is evadable, so it stays advisory; a project without CI has no trust root (`phasegate doctor` warns); and a human manually merging a red/warned PR is outside machine defense.
 
 ---
 
@@ -488,6 +510,8 @@ Phasegate integrates natively with Claude Code via hooks in `.claude/settings.js
 | `PreToolUse` | `Write`, `Edit`, or `Bash` (write operations detected) | Blocks writes to source files without design docs; enforces `quickMode.fullModeRequiredWhen` (escalates Quick Mode → Full when triggered); skips files captured in the `.phasegate/baseline.json` snapshot until they are modified; protects configured files; detects Bash write operations (`sed -i`, `tee`, `cp`, etc.) |
 | `PostToolUse` | `Write` or `Edit` | Auto-formats and validates metadata |
 | `Stop` | Session end | Runs full test suite to ensure all tests pass |
+| `SessionStart` | Session start | Injects harness status context; verifies the instruction-file integrity pin in-process and warns (**warn-only, fail-open**) if drift is detected — CI remains the authoritative check |
+| `UserPromptSubmit` | Prompt submitted | Injects repo-derived context, wrapping relayed repo text in fixed data-boundary fences (spotlighting) so it reads as data, not instructions |
 
 All hook errors use the `HarnessError` format with ADR references and fix examples, enabling AI agents to self-correct without human intervention.
 
@@ -544,6 +568,10 @@ README keeps only the entry points most users need. The full public/compatibilit
 | `reconcile --dry-run` / `--apply` | Update PhaseGate-managed files to the current package templates and refresh manifest hashes. |
 | `setup:agent --dry-run` / `--apply` | Diagnose repository setup and produce or apply an agent-readable setup plan with questions, risks, rollback, and validation. |
 | `config:plan --intent <intent>` | Map a safe configuration-change intent to target files, commands, risks, rollback, and validation. |
+| `integrity:pin` | Generate/update the SHA-256 manifest (`phasegate.integrity.json`) over instruction-carrying files. Records intentional edits (`--dry-run`, `--json`). |
+| `integrity:verify` | Recompute and compare against the manifest. Exit 2 on drift (mismatch/added/missing/manifest-absent), exit 0 when clean (`--json`). Locally advisory; CI is authoritative. |
+| `list-adrs` | List ADRs, optionally filtered by `--status <Proposed\|Accepted\|...>`. |
+| `validate-adr` | Validate ADR structure (`--all` or a single `<adrRef>`). |
 | `lint` / `phasegate:lint` | Run L1 Biome AST checks. The `phasegate:*` form is a binary subcommand, not an npm script unless `package.json` defines it locally. |
 | `validate --layer <L1-L4\|all>` | Run validators for the specified layer (`--layer L0` prints runtime hook guidance). `--fail-on-warning` / `--no-fail-on-warning` override config. |
 | `ci-check` | Full CI check (L2-L4; disabled L4 is reported as skipped). Supports `--quick`, `--fail-on-reject`, `--dry-run`, and `--files`. |
