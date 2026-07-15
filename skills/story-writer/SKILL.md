@@ -146,3 +146,12 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 - 受け入れ基準は「〜できる」「〜が表示される」等の検証可能な形式にする
 - 技術的な実装詳細には踏み込まない
 - **MVP/Post-MVPの分類・優先順位付けはこのスキルでは行わない** → S1.5 `story-mapper` で収束思考として実行する
+
+### ストーリーID採番規約
+
+このスキルはユーザーストーリーの**発番元**である。以下の規約に従って ID を採番する。
+
+- **形式**: ストーリーIDは `HXX-XX`（例: `H03-01`）。前半 `HXX` が Epic 番号、後半 `-XX` がその Epic 内の連番。基盤系 Epic には `HFxx-XX`（例: `HF1-02`）も許容される。
+- **一意性**: ストーリーID は `docs/product/user_stories.md` 全体で一意。同一 ID を複数ストーリーに割り当てない。
+- **正の在り処**: 全ストーリーID の正本は `docs/product/user_stories.md`（StoryCatalog）。下流の設計文書・テストが参照する `@story-id HXX-XX` / `@story HXX-XX` は、必ずこのカタログに存在する ID であること。受け入れ基準ID は `HXX-XX-N`（絶対形）または対象ストーリー内の相対形 `AC-N`。
+- **WI-XXX との区別（軸が異なる）**: `WI-XXX`（Work Item）は開発タスクの識別子であり、**ストーリーID とは別の軸**。ストーリー（何を作るか＝要求単位）と Work Item（いつ・どの作業で実装するか＝タスク単位）は 1:1 とは限らない。ストーリーID に `US-XXX` や `WI-XXX` を使わないこと（`US-XXX` は旧規約のレガシー別名で、StoryCatalog では `HXX-XX` へマップされる過去互換用途に限られる）。

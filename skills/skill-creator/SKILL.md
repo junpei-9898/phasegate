@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 kind: advisory
-description: Create or update AgentSkills. Use when designing, structuring, or packaging skills with scripts, references, and assets.
+description: phasegate バンドルのスキルを新規作成・改訂するための著者向けガイド。phasegate 固有の frontmatter 契約・正規見出し（skill-structure バリデータ）・モデル委任レンダリング・カタログ登録・日本語規約を扱う。スキルを追加/編集する際に使用する。
 model: opus
 languages: [typescript]
 ---
@@ -10,366 +10,108 @@ languages: [typescript]
 
 ## Purpose
 
-This skill provides guidance for creating effective skills.
+phasegate バンドル（`skills/` ディレクトリ）に含まれるスキルを新規作成・改訂するための著者向けガイド。
 
-> **前提・スコープ注記**: phasegate プロジェクトのスキル規約（frontmatter の `model:` / `review:` / `languages:`、正規見出し、日本語テスト規約）が優先される。本スキル内で説明する frontmatter 制限（`name` / `description` のみ）は Anthropic の汎用配布形式の記述であり、phasegate 規約と衝突する場合は phasegate 規約に従うこと。
+> **スコープ注記**: 本スキルは **phasegate 自身のスキル束を編集する** ための内部ガイドである。Anthropic 汎用の skill-creator（`.skill` zip 配布・`name`/`description` のみの frontmatter）とは配信モデルも規約も異なる。phasegate のスキルは npm パッケージ `phasegate` に同梱され、`npx phasegate init` / `install` / `reconcile` がプロジェクトの `skills/` 配下へ本文を配置し、有効なエージェント（`.claude/skills/` / `.codex/skills/`）へ公開する。zip パッケージングは行わない。
 
-## About Skills
+汎用の skill-creator から引き継ぐ普遍的な設計原則（後述の「引き継ぐ汎用原則」）は有効だが、frontmatter・見出し・配信・言語規約については本ガイドの phasegate 規約が優先される。
 
-Skills are modular, self-contained packages that extend Codex's capabilities by providing
-specialized knowledge, workflows, and tools. Think of them as "onboarding guides" for specific
-domains or tasks—they transform Codex from a general-purpose agent into a specialized agent
-equipped with procedural knowledge that no model can fully possess.
+## phasegate スキルの配信モデル
 
-### What Skills Provide
+- **配布**: スキルは `skills/{skill-name}/SKILL.md` として npm パッケージに同梱される。consumer プロジェクトの `node_modules/phasegate/skills/` から `phasegate install` / `reconcile` がコピー配置する。
+- **自ホストのパス前提を作らない**: consumer では phasegate 自リポジトリのパスは存在しない。`docs/principles/...` 等を参照する場合は必ず**二段ルックアップ**を記述する（後述）。
+- **モデル委任レンダリング**: `renderSkillForModelDelegation`（`scripts/harness/setup/skill-deployer.ts`）が、consumer の `modelRouting.delegation` 設定に応じて配置時に SKILL.md を書き換える。委任 `"none"` の consumer 向けには以下が**厳密な文字列置換**で行われる:
+  - `model:` / `review:` frontmatter 行を削除
+  - 定型委任文とロール名（下記「結合文字列」）をメインセッション実行の表現へ置換
 
-1. Specialized workflows - Multi-step procedures for specific domains
-2. Tool integrations - Instructions for working with specific file formats or APIs
-3. Domain expertise - Company-specific knowledge, schemas, business logic
-4. Bundled resources - Scripts, references, and assets for complex and repetitive tasks
+  したがって新規スキルは、Phase 2 の委任文・ロール表現を既存 29 スキルと**バイト単位で同一**の定型文で書くこと。独自の言い回しにするとレンダラーが検出できず、委任 `"none"` consumer で不整合が残る。
 
-## Core Principles
+### 結合文字列（バイト単位で保持する定型文）
 
-### Concise is Key
+3 フェーズスキルの本文では以下を一字一句そのまま使う（レンダラーが exact-match で置換する）:
 
-The context window is a public good. Skills share the context window with everything else Codex needs: system prompt, conversation history, other Skills' metadata, and the actual user request.
+- Phase 2 定義行: `委任先モデルに委任して成果物を生成する（\`npx phasegate delegate-sonnet\` 経由）`
+- ロール表現: `Opus が`（Phase 1/3 の主体）
+- `委任先モデル` / `\`npx phasegate delegate-sonnet\`` の各出現
 
-**Default assumption: Codex is already very smart.** Only add context Codex doesn't already have. Challenge each piece of information: "Does Codex really need this explanation?" and "Does this paragraph justify its token cost?"
+これらを言い換えたり、句読点・バッククォート・全角括弧を変えてはならない。
 
-Prefer concise examples over verbose explanations.
+## frontmatter 契約
 
-### Set Appropriate Degrees of Freedom
+phasegate のスキル frontmatter は `name` / `description` に加えて、他 29 スキルで使われる以下のフィールドを持つ:
 
-Match the level of specificity to the task's fragility and variability:
+| フィールド | 用途 | 例 |
+|-----------|------|-----|
+| `name` | スキル名（ディレクトリ名と一致） | `unit-designer` |
+| `description` | トリガー用の簡潔な説明（何を・いつ使うか） | 下記参照 |
+| `model` | 実行モデル（委任先） | `sonnet` / `opus` |
+| `review` | レビュー担当モデル（3 フェーズスキルで使用） | `opus` |
+| `languages` | 対象言語（1 件以上の配列） | `[typescript]` |
+| `kind` | 構造種別（advisory のみ明示。省略時は lifecycle） | `advisory` |
 
-**High freedom (text-based instructions)**: Use when multiple approaches are valid, decisions depend on context, or heuristics guide the approach.
+- `model:` / `review:` は委任 `"none"` consumer 向けレンダリングで**削除される**（前述）。委任前提のロール表現も同時に書き換わるため、両者は連動している。
+- `languages:` は skill-structure バリデータが `languageMetadata` セクションとして検出する（値が非空の配列であること）。空配列や欠落は構造 FAIL になる。
+- `description` はトリガーの主機構。何をするか＋いつ使うかを含める。「いつ使うか」を本文に書いても本文はトリガー後にしか読まれないため無意味。
 
-**Medium freedom (pseudocode or scripts with parameters)**: Use when a preferred pattern exists, some variation is acceptable, or configuration affects behavior.
+## 正規見出し（skill-structure バリデータ）への適合
 
-**Low freedom (specific scripts, few parameters)**: Use when operations are fragile and error-prone, consistency is critical, or a specific sequence must be followed.
+新規スキルは skill-structure バリデータ（`scripts/harness/skill-quality/domain/services/skill-structure-validator.ts`）に**必ず合格**する。バリデータはスキルの **kind** ごとに必須セクションを決める:
 
-Think of Codex as exploring a path: a narrow bridge with cliffs needs specific guardrails (low freedom), while an open field allows many routes (high freedom).
+- **lifecycle**（既定・23 スキル）: `frontmatter` / `languageMetadata` / `purpose` / `inputs` / `outputs` / `prerequisites` / `executionFlow` の 7 セクションを全保有すること。
+- **advisory**（allowlist の 7 スキル。本スキル含む）: `frontmatter` / `languageMetadata` / `purpose` の 3 セクションのみ必須。
 
-### Anatomy of a Skill
+### セクション名 → 見出しの対応（sectionMap）
 
-Every skill consists of a required SKILL.md file and optional bundled resources:
+バリデータは見出しテキストの **先頭一致（startsWith・小文字化後）** でセクションを認識する。使用可能な見出しプレフィックス:
 
-```
-skill-name/
-├── SKILL.md (required)
-│   ├── YAML frontmatter metadata (required)
-│   │   ├── name: (required)
-│   │   └── description: (required)
-│   └── Markdown instructions (required)
-└── Bundled Resources (optional)
-    ├── scripts/          - Executable code (Python/Bash/etc.)
-    ├── references/       - Documentation intended to be loaded into context as needed
-    └── assets/           - Files used in output (templates, icons, fonts, etc.)
-```
+| セクション | 認識される見出し（いずれか） |
+|-----------|--------------------------|
+| `purpose` | `Purpose` / `目的` |
+| `inputs` | `Inputs` / `入力` / `必須インプット` / `任意インプット` / `推奨インプット` |
+| `outputs` | `Outputs` / `出力` / `出力ファイル` |
+| `prerequisites` | `Prerequisites` / `前提条件` / `前提条件チェック` |
+| `executionFlow` | `executionFlow` / `実行フロー` / `⚠️ 2フェーズ実行ルール` / `⚠️ 3フェーズ実行ルール` |
 
-#### SKILL.md (required)
+`frontmatter` は先頭が `---` で始まること、`languageMetadata` は frontmatter 内の非空 `languages:` で検出される。見出しは接尾辞（例: `（plan）`）を付けても先頭一致するが、**上表のプレフィックスを崩さないこと**。
 
-Every SKILL.md consists of:
+### kind の登録場所（allowlist / taxonomy）
 
-- **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields that Codex reads to determine when the skill gets used, thus it is very important to be clear and comprehensive in describing what the skill is, and when it should be used.
-- **Body** (Markdown): Instructions and guidance for using the skill. Only loaded AFTER the skill triggers (if at all).
+- kind 型と必須セクションの定義: `scripts/harness/skill-quality/domain/types/skill-kind.ts` と `.../value-objects/skill-structure.ts`。
+- **advisory allowlist の pin**: `scripts/harness/__tests__/integration/skill-quality/skill-corpus-conformance.test.ts` の `ADVISORY_SKILLS` 配列。ここに列挙された 7 件だけが `kind: advisory` を宣言でき、8 件目の自己宣言はテストが fail する。**advisory を増やす場合はこのテストの allowlist を意図的に更新すること**（lifecycle 要求の回避を防ぐ pin）。lifecycle スキルを追加する場合は allowlist 変更不要だが、7 セクションを全て満たす必要がある。
 
-#### Bundled Resources (optional)
+## カタログ登録（新規スキル追加時に必須）
 
-##### Scripts (`scripts/`)
+新規スキルは SKILL.md を書くだけでは配信されない。以下のカタログ・件数 pin を必ず更新する:
 
-Executable code (Python/Bash/etc.) for tasks that require deterministic reliability or are repeatedly rewritten.
+1. `scripts/harness/setup/skill-deployer.ts` の `SKILL_CATEGORIES`（`core` / `aidlc` / `utility` / `guidance` のいずれかに追加）。ここに載らないスキルは `getSkillsForSet` の配信対象にならない。
+2. `scripts/harness/installation/application/bundled-skill-selection.ts`（インストール時の選択ロジック）。
+3. 件数 pin: `skills/README.md`（"30 skills" の記述）・`docs/guide/skills-overview.md`（"30 skills"）。スキル総数を変えたら両方を同期更新する。
+4. advisory を追加する場合は前述の `skill-corpus-conformance.test.ts` の `ADVISORY_SKILLS` と、テスト内の件数期待値（`skills.length` / lifecycle・advisory の内訳）も更新する。
 
-- **When to include**: When the same code is being rewritten repeatedly or deterministic reliability is needed
-- **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
-- **Benefits**: Token efficient, deterministic, may be executed without loading into context
-- **Note**: Scripts may still need to be read by Codex for patching or environment-specific adjustments
+> なお `scripts/harness/` 配下のソース（`skill-deployer.ts` / `bundled-skill-selection.ts` 等）の変更はフェーズゲート対象であり、`quick-implementor` / `story-implementor` スキル経由で行う（CLAUDE.md 参照）。スキル本文（`skills/**` の docs）編集はゲート緩和対象。
 
-##### References (`references/`)
+## 著者ルール（phasegate リポジトリ規約）
 
-Documentation and reference material intended to be loaded as needed into context to inform Codex's process and thinking.
+- **本文は日本語**: SKILL.md 本文の説明散文は日本語で書く（他 29 スキルに合わせる）。見出しプレフィックスは上表の許容形（英/日どちらでも先頭一致すればよい）。
+- **3 フェーズ実行パターン**（成果物を生成する AIDLC 系スキルに適用）: Phase 1（計画・Opus が承認を得る）→ Phase 2（委任先モデルに委任して成果物を生成する（`npx phasegate delegate-sonnet` 経由））→ Phase 3（Opus が成果物を検証し直接修正する）。見出しは `## ⚠️ 3フェーズ実行ルール` を使うと `executionFlow` として認識される。純粋な助言/検査系（advisory）ではこのパターンは不要。
+- **`references/` サブディレクトリ**: 詳細テンプレート・schema・ドメイン知識は `skills/{skill-name}/references/*.md` に切り出し、SKILL.md からは「いつ読むか」を明記して参照する（progressive disclosure）。
+- **`docs/principles` 参照の二段ルックアップ**: consumer では phasegate 自リポジトリのパスが無いため、原則文書を参照する際は既存スキルと同じ定型で書く: 「consumer プロジェクトでは `node_modules/phasegate/docs/principles/...`、phasegate 自リポジトリでは `docs/principles/...` を参照する」。
+- **自ホストのパス前提を作らない**: 出力先や設計文書パスは `phasegate.config.json` の `paths` で consumer が上書きできる旨を注記する（既定値であることを明示）。
+- **テスト規約への言及**: スキルが生成/検査するテストは Vitest・AAA パターン・日本語テストケース名・kebab-case ファイル名・ドメイン層モック禁止（`docs/principles/testing-rules.md`）に従う旨を、該当スキルでは案内する。
 
-- **When to include**: For documentation that Codex should reference while working
-- **Examples**: `references/finance.md` for financial schemas, `references/mnda.md` for company NDA template, `references/policies.md` for company policies, `references/api_docs.md` for API specifications
-- **Use cases**: Database schemas, API documentation, domain knowledge, company policies, detailed workflow guides
-- **Benefits**: Keeps SKILL.md lean, loaded only when Codex determines it's needed
-- **Best practice**: If files are large (>10k words), include grep search patterns in SKILL.md
-- **Avoid duplication**: Information should live in either SKILL.md or references files, not both. Prefer references files for detailed information unless it's truly core to the skill—this keeps SKILL.md lean while making information discoverable without hogging the context window. Keep only essential procedural instructions and workflow guidance in SKILL.md; move detailed reference material, schemas, and examples to references files.
+## 引き継ぐ汎用原則（phasegate でも有効）
 
-##### Assets (`assets/`)
+- **Progressive disclosure（段階的開示）**: SKILL.md 本文は必須の手順・ワークフローに絞り、詳細は `references/` へ。本文は簡潔に保つ（目安 500 行未満）。参照は SKILL.md から一段の深さに留める。
+- **簡潔な description でトリガー精度を上げる**: description に「何を・いつ」を凝縮する。冗長な本文説明よりトリガー語彙を優先。
+- **`scripts/` で決定的処理を固定**: 毎回書き直す/決定的信頼性が要るコードは `skills/{skill-name}/scripts/` に置く（トークン効率・再現性）。※本スキル同梱の `scripts/*.py`（`init_skill.py` 等）は Anthropic 汎用版由来のヘルパーであり、phasegate の frontmatter 契約・カタログ登録は補わない。phasegate スキルの雛形は既存 lifecycle/advisory スキルの SKILL.md をコピーして作るのが確実。zip パッケージング（`package_skill.py`）は phasegate の npm 配信では使用しない。
+- **適切な自由度**: 手順が壊れやすい/一貫性が重要な箇所は具体的な手順（低自由度）、判断が文脈依存な箇所はテキスト指示（高自由度）で書き分ける。
 
-Files not intended to be loaded into context, but rather used within the output Codex produces.
+## 新規スキル作成の手順（phasegate）
 
-- **When to include**: When the skill needs files that will be used in the final output
-- **Examples**: `assets/logo.png` for brand assets, `assets/slides.pptx` for PowerPoint templates, `assets/frontend-template/` for HTML/React boilerplate, `assets/font.ttf` for typography
-- **Use cases**: Templates, images, icons, boilerplate code, fonts, sample documents that get copied or modified
-- **Benefits**: Separates output resources from documentation, enables Codex to use files without loading them into context
-
-#### What to Not Include in a Skill
-
-A skill should only contain essential files that directly support its functionality. Do NOT create extraneous documentation or auxiliary files, including:
-
-- README.md
-- INSTALLATION_GUIDE.md
-- QUICK_REFERENCE.md
-- CHANGELOG.md
-- etc.
-
-The skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxiliary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion.
-
-### Progressive Disclosure Design Principle
-
-Skills use a three-level loading system to manage context efficiently:
-
-1. **Metadata (name + description)** - Always in context (~100 words)
-2. **SKILL.md body** - When skill triggers (<5k words)
-3. **Bundled resources** - As needed by Codex (Unlimited because scripts can be executed without reading into context window)
-
-#### Progressive Disclosure Patterns
-
-Keep SKILL.md body to the essentials and under 500 lines to minimize context bloat. Split content into separate files when approaching this limit. When splitting out content into other files, it is very important to reference them from SKILL.md and describe clearly when to read them, to ensure the reader of the skill knows they exist and when to use them.
-
-**Key principle:** When a skill supports multiple variations, frameworks, or options, keep only the core workflow and selection guidance in SKILL.md. Move variant-specific details (patterns, examples, configuration) into separate reference files.
-
-**Pattern 1: High-level guide with references**
-
-```markdown
-# PDF Processing
-
-## Quick start
-
-Extract text with pdfplumber:
-[code example]
-
-## Advanced features
-
-- **Form filling**: See [FORMS.md](FORMS.md) for complete guide
-- **API reference**: See [REFERENCE.md](REFERENCE.md) for all methods
-- **Examples**: See [EXAMPLES.md](EXAMPLES.md) for common patterns
-```
-
-Codex loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
-
-**Pattern 2: Domain-specific organization**
-
-For Skills with multiple domains, organize content by domain to avoid loading irrelevant context:
-
-```
-bigquery-skill/
-├── SKILL.md (overview and navigation)
-└── reference/
-    ├── finance.md (revenue, billing metrics)
-    ├── sales.md (opportunities, pipeline)
-    ├── product.md (API usage, features)
-    └── marketing.md (campaigns, attribution)
-```
-
-When a user asks about sales metrics, Codex only reads sales.md.
-
-Similarly, for skills supporting multiple frameworks or variants, organize by variant:
-
-```
-cloud-deploy/
-├── SKILL.md (workflow + provider selection)
-└── references/
-    ├── aws.md (AWS deployment patterns)
-    ├── gcp.md (GCP deployment patterns)
-    └── azure.md (Azure deployment patterns)
-```
-
-When the user chooses AWS, Codex only reads aws.md.
-
-**Pattern 3: Conditional details**
-
-Show basic content, link to advanced content:
-
-```markdown
-# DOCX Processing
-
-## Creating documents
-
-Use docx-js for new documents. See [DOCX-JS.md](DOCX-JS.md).
-
-## Editing documents
-
-For simple edits, modify the XML directly.
-
-**For tracked changes**: See [REDLINING.md](REDLINING.md)
-**For OOXML details**: See [OOXML.md](OOXML.md)
-```
-
-Codex reads REDLINING.md or OOXML.md only when the user needs those features.
-
-**Important guidelines:**
-
-- **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
-- **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Codex can see the full scope when previewing.
-
-## Skill Creation Process
-
-Skill creation involves these steps:
-
-1. Understand the skill with concrete examples
-2. Plan reusable skill contents (scripts, references, assets)
-3. Initialize the skill (run init_skill.py)
-4. Edit the skill (implement resources and write SKILL.md)
-5. Package the skill (run package_skill.py)
-6. Iterate based on real usage
-
-Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
-
-### Skill Naming
-
-- Use lowercase letters, digits, and hyphens only; normalize user-provided titles to hyphen-case (e.g., "Plan Mode" -> `plan-mode`).
-- When generating names, generate a name under 64 characters (letters, digits, hyphens).
-- Prefer short, verb-led phrases that describe the action.
-- Namespace by tool when it improves clarity or triggering (e.g., `gh-address-comments`, `linear-address-issue`).
-- Name the skill folder exactly after the skill name.
-
-### Step 1: Understanding the Skill with Concrete Examples
-
-Skip this step only when the skill's usage patterns are already clearly understood. It remains valuable even when working with an existing skill.
-
-To create an effective skill, clearly understand concrete examples of how the skill will be used. This understanding can come from either direct user examples or generated examples that are validated with user feedback.
-
-For example, when building an image-editor skill, relevant questions include:
-
-- "What functionality should the image-editor skill support? Editing, rotating, anything else?"
-- "Can you give some examples of how this skill would be used?"
-- "I can imagine users asking for things like 'Remove the red-eye from this image' or 'Rotate this image'. Are there other ways you imagine this skill being used?"
-- "What would a user say that should trigger this skill?"
-
-To avoid overwhelming users, avoid asking too many questions in a single message. Start with the most important questions and follow up as needed for better effectiveness.
-
-Conclude this step when there is a clear sense of the functionality the skill should support.
-
-### Step 2: Planning the Reusable Skill Contents
-
-To turn concrete examples into an effective skill, analyze each example by:
-
-1. Considering how to execute on the example from scratch
-2. Identifying what scripts, references, and assets would be helpful when executing these workflows repeatedly
-
-Example: When building a `pdf-editor` skill to handle queries like "Help me rotate this PDF," the analysis shows:
-
-1. Rotating a PDF requires re-writing the same code each time
-2. A `scripts/rotate_pdf.py` script would be helpful to store in the skill
-
-Example: When designing a `frontend-webapp-builder` skill for queries like "Build me a todo app" or "Build me a dashboard to track my steps," the analysis shows:
-
-1. Writing a frontend webapp requires the same boilerplate HTML/React each time
-2. An `assets/hello-world/` template containing the boilerplate HTML/React project files would be helpful to store in the skill
-
-Example: When building a `big-query` skill to handle queries like "How many users have logged in today?" the analysis shows:
-
-1. Querying BigQuery requires re-discovering the table schemas and relationships each time
-2. A `references/schema.md` file documenting the table schemas would be helpful to store in the skill
-
-To establish the skill's contents, analyze each concrete example to create a list of the reusable resources to include: scripts, references, and assets.
-
-### Step 3: Initializing the Skill
-
-At this point, it is time to actually create the skill.
-
-Skip this step only if the skill being developed already exists, and iteration or packaging is needed. In this case, continue to the next step.
-
-When creating a new skill from scratch, always run the `init_skill.py` script. The script conveniently generates a new template skill directory that automatically includes everything a skill requires, making the skill creation process much more efficient and reliable.
-
-Usage:
-
-```bash
-scripts/init_skill.py <skill-name> --path <output-directory> [--resources scripts,references,assets] [--examples]
-```
-
-Examples:
-
-```bash
-scripts/init_skill.py my-skill --path skills
-scripts/init_skill.py my-skill --path skills --resources scripts,references
-scripts/init_skill.py my-skill --path skills --resources scripts --examples
-```
-
-The script:
-
-- Creates the skill directory at the specified path
-- Generates a SKILL.md template with proper frontmatter and TODO placeholders
-- Optionally creates resource directories based on `--resources`
-- Optionally adds example files when `--examples` is set
-
-After initialization, customize the SKILL.md and add resources as needed. If you used `--examples`, replace or delete placeholder files.
-
-### Step 4: Edit the Skill
-
-When editing the (newly-generated or existing) skill, remember that the skill is being created for another instance of Codex to use. Include information that would be beneficial and non-obvious to Codex. Consider what procedural knowledge, domain-specific details, or reusable assets would help another Codex instance execute these tasks more effectively.
-
-#### Learn Proven Design Patterns
-
-Apply these proven design patterns based on your skill's needs:
-
-- **Multi-step processes**: Describe the workflow as an explicit ordered sequence of steps, and use conditional branches (e.g. "if X, do Y; otherwise Z") so the executing instance always knows the next action.
-- **Specific output formats or quality standards**: Embed a concrete template or worked example directly in the skill body and state the acceptance criteria, so outputs are reproducible and verifiable.
-
-#### Start with Reusable Skill Contents
-
-To begin implementation, start with the reusable resources identified above: `scripts/`, `references/`, and `assets/` files. Note that this step may require user input. For example, when implementing a `brand-guidelines` skill, the user may need to provide brand assets or templates to store in `assets/`, or documentation to store in `references/`.
-
-Added scripts must be tested by actually running them to ensure there are no bugs and that the output matches what is expected. If there are many similar scripts, only a representative sample needs to be tested to ensure confidence that they all work while balancing time to completion.
-
-If you used `--examples`, delete any placeholder files that are not needed for the skill. Only create resource directories that are actually required.
-
-#### Update SKILL.md
-
-**Writing Guidelines:** Always use imperative/infinitive form.
-
-##### Frontmatter
-
-Write the YAML frontmatter with `name` and `description`:
-
-- `name`: The skill name
-- `description`: This is the primary triggering mechanism for your skill, and helps Codex understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Codex.
-  - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Codex needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
-
-Do not include any other fields in YAML frontmatter.
-
-##### Body
-
-Write instructions for using the skill and its bundled resources.
-
-### Step 5: Packaging a Skill
-
-Once development of the skill is complete, it must be packaged into a distributable .skill file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
-
-```bash
-scripts/package_skill.py <path/to/skill-folder>
-```
-
-Optional output directory specification:
-
-```bash
-scripts/package_skill.py <path/to/skill-folder> ./dist
-```
-
-The packaging script will:
-
-1. **Validate** the skill automatically, checking:
-   - YAML frontmatter format and required fields
-   - Skill naming conventions and directory structure
-   - Description completeness and quality
-   - File organization and resource references
-
-2. **Package** the skill if validation passes, creating a .skill file named after the skill (e.g., `my-skill.skill`) that includes all files and maintains the proper directory structure for distribution. The .skill file is a zip file with a .skill extension.
-
-If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
-
-### Step 6: Iterate
-
-After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
-
-**Iteration workflow:**
-
-1. Use the skill on real tasks
-2. Notice struggles or inefficiencies
-3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
+1. **用途と例の確定** — どんな依頼でトリガーし、どんな成果物/助言を出すかを具体例で固める。
+2. **kind の決定** — 成果物を生成する lifecycle か、助言/検査のみの advisory か。advisory なら allowlist 更新が要る。
+3. **雛形の用意** — 同種の既存スキル（lifecycle は例えば `unit-designer`、advisory は `phasegate-config-doctor`）の SKILL.md を土台にコピーし、frontmatter・見出しを埋める。
+4. **本文作成** — 日本語散文で。3 フェーズ系なら結合文字列をバイト単位で流用。詳細は `references/` へ切り出す。
+5. **構造検証** — `npx vitest run scripts/harness/__tests__/integration/skill-quality`（corpus-conformance）で宣言 kind の必須セクションに合格することを確認。
+6. **カタログ登録** — `SKILL_CATEGORIES` / `bundled-skill-selection.ts` / 件数 pin（README・skills-overview）を更新。
+7. **反復** — 実タスクで使い、SKILL.md / references を改善する。
