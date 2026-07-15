@@ -167,7 +167,7 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 | INV | 内容 |
 |-----|------|
 | INV-5 | validatorResults[] は1件以上（空のci-check結果は不正） |
-| INV-6 | allPassed === validatorResults.every(r => r.passed) |
+| INV-6 | allPassed === validatorResults.every(r => 実質pass)。WI-260/ADR-017 で severity-aware 化。skipped / passed=true は実質pass。passed=false でも errors が warning のみなら `failOnWarning=false`（既定）で実質pass、error severity を含む場合と errors=[] の防御的ケースは fail。`fromResults(results, failOnWarning=false)` / `create({..., failOnWarning?})` で `validate` 経路（AggregateValidationResultsUseCase）と同一の集約判定を適用し、warning-only failure で ci-check が exit 0 を返す。 |
 
 ### DriftReportSummaryの不変条件
 
