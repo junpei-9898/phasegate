@@ -35,6 +35,12 @@ jobs:
       - name: Phasegate CI check (L3 incl. L3-004)
         run: npx tsx scripts/harness/main.ts phasegate:ci-check --json
 
+      # Trust root (ADR-030 §Decision.1): re-compute SHA-256 of instruction-carrying
+      # files and compare against the pinned phasegate.integrity.json. Local
+      # session-start verification is fast-path only; this CI step is authoritative.
+      - name: Phasegate integrity verify (ADR-030 trust root)
+        run: npx tsx scripts/harness/main.ts integrity:verify
+
   pack:
     runs-on: ubuntu-latest
     steps:
