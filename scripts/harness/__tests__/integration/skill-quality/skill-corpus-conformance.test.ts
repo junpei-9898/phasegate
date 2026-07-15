@@ -21,11 +21,12 @@ const SKILLS_ROOT = path.resolve(__dirname, "../../../../../skills");
 
 const ADVISORY_SKILLS = [
   "codex-delegator",
+  "doc-health-checker",
   "engineering-perspective",
   "implementation-readiness-checker",
   "phasegate-config-doctor",
   "phasegate-toolkit-guide",
-  "pointer-validator",
+  "release-publisher",
   "skill-creator",
 ];
 
@@ -53,7 +54,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
     skills = listSkills();
   });
 
-  context("AC-2/AC-3: 全 30 スキルが宣言 kind の必須構造に適合すること", () => {
+  context("AC-2/AC-3: 全 29 スキルが宣言 kind の必須構造に適合すること", () => {
     it("全スキルの SKILL.md が宣言 kind の必須構造に適合する（@ac H12-06-AC-2 / @ac H12-06-AC-3）", async () => {
       // Arrange
       const failures: string[] = [];
@@ -68,14 +69,14 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
       expect(failures, `未適合スキル:\n${failures.join("\n")}`).toEqual([]);
     });
 
-    it("スキルディレクトリが 30 件存在する", () => {
+    it("スキルディレクトリが 29 件存在する", () => {
       // Arrange / Act / Assert
-      expect(skills.length).toBe(30);
+      expect(skills.length).toBe(29);
     });
   });
 
-  context("advisory 7 件が 3 セット（frontmatter/languageMetadata/purpose）で合格すること", () => {
-    it("承認された 7 スキルが advisory として合格する", async () => {
+  context("advisory 8 件が 3 セット（frontmatter/languageMetadata/purpose）で合格すること", () => {
+    it("承認された 8 スキルが advisory として合格する", async () => {
       // Arrange
       const advisoryRequired = SkillStructure.forKind("advisory").requiredSections;
       const failures: string[] = [];
@@ -93,7 +94,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
     });
   });
 
-  context("advisory 宣言は固定 allowlist の 7 件に限定されること（allowlist pin）", () => {
+  context("advisory 宣言は固定 allowlist の 8 件に限定されること（allowlist pin）", () => {
     it("allowlist 外のスキルが kind: advisory を自己宣言していない", () => {
       // Arrange
       const advisorySet = new Set(ADVISORY_SKILLS);
@@ -108,7 +109,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
           offenders.push(skill.name);
         }
       }
-      // Assert: 8 件目の advisory 自己宣言はこのテストを fail させ、
+      // Assert: 9 件目の advisory 自己宣言はこのテストを fail させ、
       // allowlist（= ADVISORY_SKILLS）の意識的な変更を強制する
       expect(
         offenders,
@@ -116,7 +117,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
       ).toEqual([]);
     });
 
-    it("allowlist の 7 件全てが kind: advisory を宣言している", () => {
+    it("allowlist の 8 件全てが kind: advisory を宣言している", () => {
       // Arrange
       const frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---/;
       const kindAdvisoryPattern = /^kind:\s*advisory\s*$/m;
@@ -134,7 +135,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
     });
   });
 
-  context("lifecycle 23 件が 7 セクション全保有すること（anti-gutting）", () => {
+  context("lifecycle 21 件が 7 セクション全保有すること（anti-gutting）", () => {
     it("advisory 以外の全スキルが lifecycle 7 セクションを全て保有する", async () => {
       // Arrange
       const lifecycleRequired = SkillStructure.forKind("lifecycle").requiredSections;
@@ -153,7 +154,7 @@ target("H12-06 実 skills コーパス適合性（WI-241 skill-kind taxonomy）"
       }
       // Assert
       expect(failures, `lifecycle 未適合:\n${failures.join("\n")}`).toEqual([]);
-      expect(lifecycleCount).toBe(23);
+      expect(lifecycleCount).toBe(21);
     });
   });
 });

@@ -39,7 +39,7 @@ Quality Harnessは**「何を守るか（WHAT to enforce）」**に責任を持�
 | Quality Harnessの責務 | オーケストレーションの責務（本パッケージ外） |
 |---|---|
 | L1-L4バリデータ群 | Wave並列実行エンジン |
-| DDD設計スキル群（30スキル） | セッション管理（pause/resume/STATE.md） |
+| DDD設計スキル群（29スキル） | セッション管理（pause/resume/STATE.md） |
 | 2-Phase Execution / Phase Gate | コンテキスト管理（context-priority.json） |
 | @unit/@layerメタデータ | Milestone/ロードマップ管理 |
 | HarnessError定義 | Auto Mode / モデルルーティング |
@@ -766,19 +766,19 @@ drift-detect（事後検出）
 
 ---
 
-## 7. スキルシステム（30スキル）
+## 7. スキルシステム（29スキル）
 
 ### 7.1 スキルマップ
 
-Quality Harnessの設計方法論を実現する30スキル。全スキルは2-Phase Executionに従い、設計文書のみを出力する（コード生成はstory-implementor等の実行スキルが担う）。
+Quality Harnessの設計方法論を実現する29スキル。全スキルは2-Phase Executionに従い、設計文書のみを出力する（コード生成はstory-implementor等の実行スキルが担う）。
 
 | カテゴリ | スキル | 数 |
 |---------|--------|---|
 | **Foundation** | product-architect, story-writer, unit-designer, story-mapper | 4 |
 | **Design** | domain-designer, logical-designer, mock-designer, uiux-designer, environment-designer | 5 |
 | **Test Engineering** | scenario-test-designer, it-test-designer, unit-test-designer, scenario-test-logic-designer, it-test-logic-designer, unit-test-logic-designer, test-coverage-checker | 7 |
-| **Implementation** | story-implementor, implementation-planner, implementation-readiness-checker, quick-implementor | 4 |
-| **Verification** | consistency-checker, cascade-updater, codex-delegator, codebase-mapper, milestone-manager, scope-manager, doc-freshness-checker, pointer-validator | 8 |
+| **Implementation** | story-implementor, implementation-readiness-checker, quick-implementor | 3 |
+| **Verification** | consistency-checker, cascade-updater, codex-delegator, codebase-mapper, doc-health-checker | 5 |
 | **Meta** | skill-creator, engineering-perspective | 2 |
 
 ### 7.2 品質ハーネス直属のスキル群
@@ -931,7 +931,7 @@ GSD-2がオーケストレーターとして動作する場合、Quality Harness
 | HarnessError fix_exampleの品質劣化 | 中 | 中 | fix_example自体をテスト資産としてバリデーション。不正な修正例はCI検出 |
 | K要件の意図しない破壊（パッケージ分離時） | 高 | 中 | K要件チェックリスト必須。各機能変更時にK1-K13影響評価 |
 | エージェント非依存性の形骸化（特定エージェントの機能に依存する実装） | 中 | 中 | バリデータはファイルシステムのみを見る原則を徹底。エージェント固有APIへの依存を禁止 |
-| 学習曲線の増大（30スキルの理解コスト） | 中 | 高 | minimalプリセットを入口に。段階的にスキル利用を拡大 |
+| 学習曲線の増大（29スキルの理解コスト） | 中 | 高 | minimalプリセットを入口に。段階的にスキル利用を拡大 |
 
 ---
 

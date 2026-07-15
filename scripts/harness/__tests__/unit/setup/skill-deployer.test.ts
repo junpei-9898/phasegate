@@ -495,7 +495,7 @@ target("deploySkills / deployAgentSkillLinks", () => {
             "utf-8",
           );
           await deploySkills(harnessRoot, projectRoot, "all");
-          return readFile(join(projectRoot, "skills", "implementation-planner", "SKILL.md"), "utf-8");
+          return readFile(join(projectRoot, "skills", "it-test-designer", "SKILL.md"), "utf-8");
         });
 
         // Assert

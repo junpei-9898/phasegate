@@ -213,7 +213,7 @@ npx phasegate reconcile --apply
 
 ---
 
-## 30 Skills
+## 29 Skills
 
 Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**: product definition, design, test design, and TDD implementation. Each skill consumes the artifacts from the previous phase.
 
@@ -224,9 +224,9 @@ Skills cover the full **AIDLC (AI-Driven Development Life Cycle)**: product defi
 | **Foundation (4)** | `/product-architect` `/story-writer` `/story-mapper` `/unit-designer` |
 | **Design (5)** | `/domain-designer` `/logical-designer` `/mock-designer` `/uiux-designer` `/environment-designer` |
 | **Test Engineering (7)** | `/unit-test-designer` `/it-test-designer` `/scenario-test-designer` `/unit-test-logic-designer` `/it-test-logic-designer` `/scenario-test-logic-designer` `/test-coverage-checker` |
-| **Implementation (4)** | `/story-implementor` `/quick-implementor` `/implementation-planner` `/implementation-readiness-checker` |
-| **Verification (8)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-freshness-checker` `/pointer-validator` `/engineering-perspective` `/skill-creator` |
-| **Operations (2)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` |
+| **Implementation (3)** | `/story-implementor` `/quick-implementor` `/implementation-readiness-checker` |
+| **Verification (7)** | `/consistency-checker` `/cascade-updater` `/codex-delegator` `/codebase-mapper` `/doc-health-checker` `/engineering-perspective` `/skill-creator` |
+| **Operations (3)** | `/phasegate-config-doctor` `/phasegate-toolkit-guide` `/release-publisher` |
 
 Details, prerequisites, and generated artifacts: [Skills Overview](docs/guide/skills-overview.md)
 
@@ -589,7 +589,7 @@ Detailed guides are available under `docs/guide/`:
 - [Troubleshooting](docs/guide/troubleshooting.md) -- Doctor finding, repairHint, suggestedSkill, and setup recovery guide
 - [Configuration](docs/guide/configuration.md) -- `phasegate.config.json` full reference
 - [CLI Reference](docs/guide/cli-reference.md) -- All CLI commands and options
-- [Skills Overview](docs/guide/skills-overview.md) -- 30 skills with AIDLC execution order
+- [Skills Overview](docs/guide/skills-overview.md) -- 29 skills with AIDLC execution order
 - [5-Layer Defense Model](docs/guide/layer-model.md) -- L0-L4 layer details and HarnessError format
 - [Contract Traceability](docs/guide/contract-traceability.md) -- `L2-015` public contract, boundary, error, state, and observation annotations
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior

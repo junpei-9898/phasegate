@@ -161,4 +161,4 @@ unit-c
 |--------------|------|
 | `npx phasegate lint` | L1 archgateルールの全体スキャン |
 | `consistency-checker` | マップ生成後の設計文書整合性確認 |
-| `doc-freshness-checker` | マップと設計文書の鮮度を合わせて確認 |
+| `doc-health-checker` | マップと設計文書の鮮度・ポインタ有効性を合わせて確認 |

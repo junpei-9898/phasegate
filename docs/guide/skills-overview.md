@@ -1,6 +1,6 @@
 # Skills Overview
 
-Phasegate provides 30 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` and project `npx phasegate install` deploy skill bodies to root `skills/` and expose them to enabled agents through `.claude/skills/` / `.codex/skills/` links. Personal install instead writes real local-only per-agent skill directories. <!-- @work-item-id WI-210 -->
+Phasegate provides 29 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` and project `npx phasegate install` deploy skill bodies to root `skills/` and expose them to enabled agents through `.claude/skills/` / `.codex/skills/` links. Personal install instead writes real local-only per-agent skill directories. <!-- @work-item-id WI-210 -->
 
 Bundled `SKILL.md` files include `languages: [typescript]` frontmatter so PhaseGate can distinguish current TypeScript-oriented guidance from future language-specific skill variants. The metadata is advisory for applicability and does not prevent non-TypeScript projects from installing the catalog. <!-- @work-item-id WI-212 -->
 
@@ -87,16 +87,15 @@ Skills run per User Story:
 | `/scenario-test-logic-designer` | Design Playwright E2E test implementation logic with selector strategies and seed data. |
 | `/test-coverage-checker` | Test coverage verification — checks acceptance criteria, domain logic, and UseCase coverage. Includes Nyquist Validation. |
 
-### Implementation (4 skills)
+### Implementation (3 skills)
 
 | Skill | Description |
 |---|---|
-| `/story-implementor` | TDD implementation based on logical and environment design. Produces atomic commits with environment verification and lessons-learned feedback. |
+| `/story-implementor` | TDD implementation based on logical and environment design. Produces atomic commits with environment verification and lessons-learned feedback. Phase 1 planning covers Unit identification, domain-model review, API design, and layer-by-layer strategy. |
 | `/quick-implementor` | Quick Mode ad-hoc implementation for bugfixes, docs, tests, and config changes. Phase Gate relaxed; L1/L2 maintained. |
-| `/implementation-planner` | Create implementation plan from Unit specs and domain model. Identifies related Units, API design, and layer-by-layer implementation strategy. |
 | `/implementation-readiness-checker` | Automated pre-implementation readiness verification — checks test design, coverage, and logic design existence. |
 
-### Verification (8 skills)
+### Verification (7 skills)
 
 | Skill | Description |
 |---|---|
@@ -104,14 +103,14 @@ Skills run per User Story:
 | `/cascade-updater` | Feedback lower-phase discoveries to upstream design documents and reconcile impact. |
 | `/codex-delegator` | Delegate tasks to Codex CLI with Claude Code as quality manager. Supports parallel execution of design, test, and implementation tasks. |
 | `/codebase-mapper` | Analyze `@unit`/`@layer` annotations across all source files to generate a structure map. Visualizes Unit distribution, inter-Unit dependencies, and circular dependencies. |
-| `/doc-freshness-checker` | Design document freshness check (L4 validator extension). Detects stale documents and code-design drift. |
-| `/pointer-validator` | Validate file pointers (relative path references) in design documents. Detects broken links. |
+| `/doc-health-checker` | Design document health check (L4 validator extension). Wraps `p2:check-freshness` (stale documents / code-design drift) and `p2:validate-pointers` (broken file-path pointers). |
 | `/engineering-perspective` | Design review from Kent Beck, Martin Fowler, Uncle Bob, and Eric Evans perspectives. Multi-angle quality evaluation. |
 | `/skill-creator` | Create and update Agent Skills. Packaging, scripting, references, and asset management. |
 
-### Operations (2 skills)
+### Operations (3 skills)
 
 | Skill | Description |
 |---|---|
 | `/phasegate-config-doctor` | Diagnose and explain PhaseGate configuration, installation, and hook setup issues. |
 | `/phasegate-toolkit-guide` | Operator guide for PhaseGate toolkit usage, rollout choices, and command selection. |
+| `/release-publisher` | Guide the release flow: minor version bump, `vX.Y.Z` tag, and `npm publish --auth-type=web` (security key / FIDO WebAuthn). |

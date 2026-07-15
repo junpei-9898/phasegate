@@ -419,7 +419,7 @@ Phase B (v1.1 target):
 
 **Planning doc**: `docs/inception/_shared/skill_separation_plan.md`
 
-The shipped catalog currently contains 30 skills. `npx phasegate init --skills core|all` is the implemented public selector; `aidlc` is not accepted by the current CLI. When adding or retiring a skill, update `skills/*/SKILL.md`, `docs/guide/skills-overview.md`, README skill counts, and any setup guidance skill references in the same change. @work-item-id WI-154
+The shipped catalog currently contains 29 skills. `npx phasegate init --skills core|all` is the implemented public selector; `aidlc` is not accepted by the current CLI. When adding or retiring a skill, update `skills/*/SKILL.md`, `docs/guide/skills-overview.md`, README skill counts, and any setup guidance skill references in the same change. @work-item-id WI-154
 
 Before release, run `npx phasegate validate --layer L4 --format human` or the equivalent package script path to catch scheduled documentation drift, including `L4-006 skill-catalog-drift`. Command/script drift and install target drift remain manual release checklist items until dedicated validators are added. @work-item-id WI-156
 
@@ -478,7 +478,7 @@ phasegate/
 ├── .claude/
 │   ├── settings.json                # Claude Code hooks configuration
 │   └── scripts/                     # Shell script hooks
-├── skills/                          # 30 skills
+├── skills/                          # 29 skills
 ├── templates/                       # Config templates
 └── docs/
     ├── ADR/                         # 13 Architecture Decision Records

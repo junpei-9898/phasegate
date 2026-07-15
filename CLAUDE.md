@@ -4,7 +4,7 @@ Phasegate — AI非依存の品質防御ツールキット。
 
 ## プロジェクト概要
 
-設計意図とコードの構造的整合性を機械的に保証する5層防御モデル（L0-L4）と30スキルを提供するCLIツール。
+設計意図とコードの構造的整合性を機械的に保証する5層防御モデル（L0-L4）と29スキルを提供するCLIツール。
 
 ## アーキテクチャ
 
@@ -30,7 +30,7 @@ issue / PR / チャット・ログで「preset」とだけ書くと曖昧なの�
 ```
 bin/harness              # CLI エントリポイント
 scripts/harness/         # メインソースコード（CA構造）
-skills/                  # 30スキル定義
+skills/                  # 29スキル定義
 templates/               # テンプレートファイル
 docs/
 ├── ADR/                 # Architecture Decision Records
@@ -101,15 +101,13 @@ npm run test                        # テスト実行
 変更をコミットする際は、**必ず `package.json` の minor バージョンを上げること**。
 
 - `version` フィールド: `"0.X.0"` → `"0.(X+1).0"`
-- `devDependencies.phasegate` の semver 参照も同期更新
 - タグ `vX.Y.Z` を付与して push
 
 ```bash
 # 例: v0.5.0 → v0.6.0
 # 1. package.json の version を更新
-# 2. devDependencies の phasegate semver を更新
-# 3. git tag v0.6.0
-# 4. git push origin main --tags
+# 2. git tag v0.6.0
+# 3. git push origin main --tags
 ```
 
 ### npm publish ルール（必須）

@@ -128,7 +128,11 @@ async function dryRunSameVersionAfterInstall() {
 
 async function applyVersionReconcileAndReadPackage() {
   const root = await createProjectRoot();
-  await writeProjectFile(root, "package.json", JSON.stringify({ scripts: { test: "vitest" }, devDependencies: { vitest: "^3.0.0" } }));
+  await writeProjectFile(
+    root,
+    "package.json",
+    JSON.stringify({ scripts: { test: "vitest" }, devDependencies: { vitest: "^3.0.0" } }),
+  );
   await runInstall(root, "0.145.3");
   const result = await runReconcile(root, { apply: true, version: "0.146.0" });
   return {
@@ -230,11 +234,11 @@ async function arrangeReconcileWithDelegationDisabledRepair() {
   const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
   config.modelRouting = { delegation: "none" };
   await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
-  await rm(join(root, "skills", "implementation-planner"), { recursive: true, force: true });
+  await rm(join(root, "skills", "it-test-designer"), { recursive: true, force: true });
   const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
   return {
     repaired,
-    skill: await readFile(join(root, "skills", "implementation-planner", "SKILL.md"), "utf8"),
+    skill: await readFile(join(root, "skills", "it-test-designer", "SKILL.md"), "utf8"),
   };
 }
 
@@ -248,7 +252,7 @@ async function arrangeReconcileWithDelegationPolicyChange() {
   const repaired = await runReconcile(root, { apply: true, version: "0.146.0" });
   return {
     repaired,
-    skill: await readFile(join(root, "skills", "implementation-planner", "SKILL.md"), "utf8"),
+    skill: await readFile(join(root, "skills", "it-test-designer", "SKILL.md"), "utf8"),
   };
 }
 
@@ -278,7 +282,9 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.result.exitCode).toBe(0);
-      expect(actual.result.payload.plan).toEqual(expect.arrayContaining([expect.objectContaining({ path: "package.json", repairMode: "mechanical" })]));
+      expect(actual.result.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "package.json", repairMode: "mechanical" })]),
+      );
       expect(actual.after).toBe(actual.before);
     });
 
@@ -319,7 +325,9 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(1);
-      expect(actual.payload.refused).toEqual(expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]));
+      expect(actual.payload.refused).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]),
+      );
     });
 
     it("created entry の user 改変は force で backup して上書きすること", async () => {
@@ -338,7 +346,9 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.first.exitCode).toBe(0);
-      expect(actual.first.payload.plan).toEqual(expect.arrayContaining([expect.objectContaining({ path: ".codex/skills", action: "link" })]));
+      expect(actual.first.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ".codex/skills", action: "link" })]),
+      );
       expect(actual.actual).toBe(true);
       expect(actual.second.exitCode).toBe(0);
       expect(actual.second.payload.plan.every((item) => !item.changed)).toBe(true);
@@ -353,9 +363,9 @@ target("ReconcileHandler", () => {
         expect.arrayContaining(["claude-skills-symlink", "codex-skills-symlink"]),
       );
       expect(actual.repaired.exitCode).toBe(0);
-      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "skills", changed: true }),
-      ]));
+      expect(actual.repaired.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "skills", changed: true })]),
+      );
       expect(actual.hasToolkitGuide).toBe(true);
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("claude-skills-symlink");
       expect(actual.afterDoctor.findings.map((finding) => finding.checkId)).not.toContain("codex-skills-symlink");
@@ -379,9 +389,9 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.repaired.exitCode).toBe(0);
-      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "skills", changed: true }),
-      ]));
+      expect(actual.repaired.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "skills", changed: true })]),
+      );
       expect(actual.skill).not.toContain("model: sonnet");
       expect(actual.skill).not.toContain("review: opus");
       expect(actual.skill).not.toContain("delegate-sonnet");
@@ -394,9 +404,9 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.repaired.exitCode).toBe(0);
-      expect(actual.repaired.payload.plan).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: ".codex/skills", changed: true }),
-      ]));
+      expect(actual.repaired.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ".codex/skills", changed: true })]),
+      );
       expect(actual.hasToolkitGuide).toBe(true);
       expect(actual.userOwned).toBe("# User Owned\n");
     });

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **WI-256 — skill catalog 30 → 29 (BREAKING for skill consumers)** — the bundled skill catalog is reshaped. **Removed** `implementation-planner`, `doc-freshness-checker`, and `pointer-validator`. **Added** `doc-health-checker` (core / Verification, `kind: advisory`) and `release-publisher` (guidance / Operations, `kind: advisory`). Net advisory count 7 → 8, lifecycle 23 → 21, total 30 → 29. Both catalog sources (`skill-deployer.ts` `SKILL_CATEGORIES`, `bundled-skill-selection.ts`) and all count phrases / category headings were updated in the same batch.
+  - `implementation-planner` functionality (Unit identification, domain-model review, existing-implementation review, API-inclusive planning, and the Phase 2 minimum-output criteria) is now absorbed into **`story-implementor` Phase 1**.
+  - Doc-quality checks are now driven by **`doc-health-checker`**, which wraps the correct `p2:`-prefixed CLI commands: `npx phasegate p2:check-freshness` (freshness / code-design drift, L4-004) and `npx phasegate p2:validate-pointers` (broken file-path pointers, L4-005; supported flags are `--pattern` / `--include-urls` / `--format` — there is no auto-fix flag). The removed skills documented the wrong unprefixed command names (`phasegate check-freshness` / `phasegate validate-pointers`); those are corrected here.
+  - **Note**: `doc-freshness-checker` and `pointer-validator` also exist as **L4 validator IDs** (config presets, `validator-id.ts`, `ci-governance`). Those are a different concept and are **not** affected by this change — only the `skills/` directories were removed.
+
+#### Migration (manual removal required in consumer repos)
+
+`reconcile` does **not** prune skills that have left the bundle, so the three removed skill directories will remain as orphans in already-installed projects. Remove them manually:
+
+```bash
+rm -r skills/implementation-planner skills/doc-freshness-checker skills/pointer-validator
+# If personal-mode per-agent copies exist:
+rm -r .claude/skills/{implementation-planner,doc-freshness-checker,pointer-validator}
+rm -r .codex/skills/{implementation-planner,doc-freshness-checker,pointer-validator}
+```
+
+A permanent `reconcile`-based prune is deferred to a follow-up WI.
+
 ## [0.171.0] - 2026-07-05
 
 ### Added

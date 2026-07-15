@@ -36,7 +36,7 @@ npm install
 npx phasegate init --name <project-name>
 ```
 
-This deploys 30 skills to `skills/`, creates the agent-facing skill links (for example `.claude/skills/` or `.codex/skills/`), and generates `phasegate.config.json`.
+This deploys 29 skills to `skills/`, creates the agent-facing skill links (for example `.claude/skills/` or `.codex/skills/`), and generates `phasegate.config.json`.
 
 `init` is the legacy-compatible bootstrap path for new projects. It also runs the structured install path for the selected agent target so `CLAUDE.md` and/or `AGENTS.md` receive a PhaseGate managed section. Use `install` when the project may already have hooks, package scripts, or CI files that should be preserved. <!-- @work-item-id WI-174 -->
 

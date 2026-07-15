@@ -192,6 +192,44 @@ TDD実装の順序・スコープ・不明点を整理し、人間の承認を�
 
 ---
 
+### 計画観点（Unit特定・ドメイン確認・API設計）
+
+計画作成にあたり、以下の観点を体系的に整理する（旧 `implementation-planner` の計画立案手順を統合）。
+
+#### Unit 特定
+
+1. `docs/product/units/integration_contract.md` を読み込み、関連する公開APIエンドポイントを特定する
+2. 該当 Unit の `{unit}.md` を確認し、Unit 間依存関係を整理する
+3. Grep/Glob で `docs/product/units/` 配下からストーリーIDやキーワードを検索する
+
+> **パス注記**: 設計文書パス（`docs/product/units/...` / `docs/product/construction/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
+
+#### ドメインモデル確認の観点
+
+`docs/product/construction/{unit}/domain_model.md` を読み込み、以下を把握する:
+
+- 集約と不変条件
+- エンティティ・値オブジェクト
+- ドメインイベント
+- 状態遷移
+
+必要に応じて `shared_kernel/domain_model.md` を参照する。
+
+#### 既存実装確認
+
+Glob/Read でプロジェクトの実装ディレクトリ構造と既存の実装パターンを確認し、コードスタイル・ファイル配置を把握する。
+
+#### API設計を含む計画項目
+
+計画には以下を含める:
+
+1. API設計（新規/既存拡張のエンドポイント定義）
+2. レイヤー別実装内容（Domain / UseCase / Controller / Infrastructure）
+3. 実装ステップ分解（依存関係に沿った順序）
+4. 影響範囲特定（他 Unit・他コンポーネントへの波及）
+
+---
+
 ### 出力ファイル
 `docs/inception/{unit}/{story_id}/tdd_implementation_plan.md`
 
@@ -320,6 +358,20 @@ Unit → IT → E2E の順序を守ることで:
 |------|--------|
 | コード | プロジェクト内 |
 | レポート | 会話内（環境検証結果 + 教訓フィードバック） |
+
+### Phase 2 最低出力基準（品質制約）
+
+以下の基準を満たさない実装は不完全とみなし、レビューで BLOCK とする（旧 `implementation-planner` の最低出力基準を統合）。
+
+| 基準 | 最低要件 |
+|------|---------|
+| Unit特定 | 対象ストーリー/機能に関連する Unit が正しく特定されている |
+| ドメインモデル参照 | 関連する集約・エンティティ・値オブジェクトが列挙されている |
+| API設計 | 新規/既存拡張のエンドポイントが具体的に定義されている |
+| レイヤー別実装内容 | 各層（Domain/UseCase/Controller/Infrastructure）の実装内容が記載されている |
+| 実装ステップ | 実装順序が具体的なステップに分解されている |
+| 影響範囲 | 変更が他 Unit・他コンポーネントに与える影響が分析されている |
+| メタデータ | 全生成ファイルに `@unit` / `@layer`（テストは `@story` も）が付与されている |
 
 ---
 

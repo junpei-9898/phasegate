@@ -33,16 +33,14 @@ export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
     "cascade-updater",
     "codebase-mapper",
     "consistency-checker",
-    "doc-freshness-checker",
+    "doc-health-checker",
     "engineering-perspective",
     "implementation-readiness-checker",
-    "pointer-validator",
     "test-coverage-checker",
   ],
   aidlc: [
     "domain-designer",
     "environment-designer",
-    "implementation-planner",
     "it-test-designer",
     "it-test-logic-designer",
     "logical-designer",
@@ -60,7 +58,7 @@ export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
     "unit-test-logic-designer",
   ],
   utility: ["codex-delegator", "skill-creator"],
-  guidance: ["phasegate-toolkit-guide", "phasegate-config-doctor"],
+  guidance: ["phasegate-toolkit-guide", "phasegate-config-doctor", "release-publisher"],
 } as const;
 
 export function getSkillsForSet(skillSet: SkillSet): string[] {

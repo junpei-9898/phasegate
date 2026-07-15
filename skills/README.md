@@ -1,6 +1,6 @@
 # Skills ディレクトリ
 
-このディレクトリには、AIエージェントの共有スキル定義が含まれています。現在の配布対象は 30 skills です。公開一覧は `docs/guide/skills-overview.md`、setup lifecycle の管理対象は `docs/guide/setup-artifacts.md` を正とします。<!-- @work-item-id WI-154 -->
+このディレクトリには、AIエージェントの共有スキル定義が含まれています。現在の配布対象は 29 skills です。公開一覧は `docs/guide/skills-overview.md`、setup lifecycle の管理対象は `docs/guide/setup-artifacts.md` を正とします。<!-- @work-item-id WI-154 -->
 
 ## ディレクトリ構成と同期
 

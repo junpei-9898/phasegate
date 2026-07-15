@@ -174,7 +174,7 @@ No. `allowedCategories` is a fixed enum (`bugfix`, `docs`, `test`, `config`). If
 
 ## Related
 
-- [Skills Overview](skills-overview.md) — full catalogue of 30 skills
+- [Skills Overview](skills-overview.md) — full catalogue of 29 skills
 - [Layer Model](layer-model.md) — L0 through L4 defence layers
 - [Configuration](configuration.md) — `quickMode` configuration reference
 - `skills/quick-implementor/SKILL.md` — the Quick Mode skill definition
