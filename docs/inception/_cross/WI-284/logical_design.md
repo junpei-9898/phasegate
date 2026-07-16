@@ -1,0 +1,225 @@
+# WI-284 Logical Design: World constraint、baseline、waiver、CLI
+
+<!-- @work-item-id WI-284 -->
+
+## 1. 設計目的
+
+Worldの構造事実から決定的なevaluationを作り、その結果をimmutable obligationとして表示しつつ、既存違反のadoptionと期限付き例外をgate policyから分離する。constraintの意味、policy input、既存L4-004、CLI / persistenceを別責務として設計し、ADR-034〜037を次の順で確定する。
+
+```text
+ADR-034  constraint fact / pin / structural rule / evaluation
+    ↓
+ADR-035  obligation / fingerprint / adoption baseline / waiver
+    ↓
+ADR-036  L4-004 doc freshnessとのrule ownership / coexistence
+    ↓
+ADR-037  CLI / config / file / output / validator registration
+```
+
+## 2. 現行実装の調査結果
+
+| surface | 実装根拠 | 現行挙動 | World設計での扱い |
+|---|---|---|---|
+| phase dependency graph | `phase-dependency-model/domain/services/gate-graph.ts` | gateから`dependsOn`へ有向辺を作り、duplicate / unknown dependency / level order / cycleを検証 | 明示された有向依存と構造検証の先例。World graphへmodelをimportしない |
+| phase artifact path | `phase-dependency-model/domain/values/artifact.ts` | placeholderを解決しPOSIX pathへnormalize | ADR-032 PathKeyを優先し、現行Artifact VOをWorld identityへ再利用しない |
+| L4-001 drift | `validator-system/domain/services/l4/drift-detection-service.ts` | design / codeの`(unitName, element)`集合と明示pointerを比較し、`design→code` / `code→design` reportを作る | 現行drift capabilityとして維持。stable World node / pin / baselineを持つconstraint evaluatorとは分離 |
+| semantic drift | `validator-system/domain/services/l4/semantic-drift-service.ts` | design / code / testを`(unitName, behaviorId)`で比較する | 明示behavior IDによる集合検査の先例。prose similarityや因果推論の根拠にはしない |
+| validator identity | `validator-system/domain/value-objects/validator-id.ts` | registryで許可された`Lx-NNN`だけをValidatorIdとして受理 | World内部rule IDには使わない。World validatorのlayer IDはADR-037で登録契約と同時に決定 |
+| validator rule | `validator-system/domain/value-objects/validator-definition.ts`, `validation-rule.ts` | validator definitionが複数ruleとerror codeを保持する | `WCR-NNN`をWorld evaluation DTOから渡せるようにし、blocking / severityはvalidator-systemに残す |
+| existing baseline | `ci-governance/domain/value-objects/baseline-snapshot.ts`, `baseline-entry.ts` | path集合とSHA-1 entryを持つci-governance-owned baseline | World adoption baselineとして再利用しない。ADR-035でfingerprint-based external declarationを別定義する |
+
+## 3. 全体データフロー
+
+```text
+provider DTO / repository corpus
+  -> World extractors
+  -> canonical World Snapshot (corpusRoot)
+
+external constraint declarations
+  -> declaration parser / diagnostics
+  -> ConstraintRecord + explicit facts + aliases (constraintRoot)
+
+Snapshot + constraints + immutable policy inputs
+  -> endpoint resolution
+  -> structural rule evaluation
+  -> Evaluation DTO (evaluationId)
+  -> immutable obligation derivation
+  -> adoption / waiver classification
+  -> validator-system policy adapter
+  -> human / JSON CLI presentation
+```
+
+- world-modelはfacts、constraints、evaluation、obligation derivationを所有する。
+- validator-systemはlayer execution、severity、blocking、exit codeを所有する。
+- harness-api / top-level compositionはcommand dispatchとstdout / stderr接続を所有する。
+- external declarationとgenerated reportを同一artifactとして扱わない。
+
+## 4. ADR-034: Constraint semantics
+
+### 4.1 DirectedFact
+
+明示relationは意味方向を保持する。
+
+```text
+claimant --references / depends-on / refines / content-equals--> premise
+```
+
+`claimant`は宣言を行い、その整合を主張する側、`premise`は主張が参照する前提側である。`content-equals`のpredicate自体が対称でも、record orderは宣言provenanceのため維持する。reverse factは生成しない。
+
+### 4.2 ConstraintRecord
+
+```text
+ConstraintRecord
+  constraintId: pgw:v1:constraint:<DeclaredKey>
+  schemaVersion
+  factType
+  claimant: NodePin { nodeId, contentDigest }
+  premise:  NodePin { nodeId, contentDigest }
+  applicableRuleIds: sorted WCR IDs
+  declarationArtifactId
+  declarationLocator
+```
+
+- 両`NodePin`は必須で、digestは`sha256:<64 lowercase hex>`。
+- pinは作成時snapshotのendpoint ID / digestを保持し、評価時に書き換えない。
+- alias解決後のID / locatorはevaluation evidenceであり、declaration recordをmutationしない。
+- canonicalized recordとdeclaration diagnosticsはADR-033の`constraintRoot`へ入る。
+- last evaluated time、status、repayment state、blocking stateはrecordへ入れない。
+
+### 4.3 Endpoint-symmetric evaluation
+
+有向factの意味を保ったまま、claimantとpremiseのどちらが変化しても同じconstraintを再評価する。
+
+1. current snapshotで両endpointをexact ID解決する。
+2. exact IDがなければADR-032のsingle-hop explicit aliasだけを試す。
+3. duplicate解決はwinnerを選ばずuniqueness violationにする。
+4. 両endpointのcurrent digestを各pinと比較する。
+5. fact typeに対応する明示reference / dependency / equalityを評価する。
+
+changed candidateによるincremental schedulingを実装しても、全constraint再評価と同一結果にならなければならない。
+
+### 4.4 Rule namespace
+
+`WCR-NNN`はWorld constraint ruleset内のstable rule IDとする。ADR-032のlowercase extraction diagnostic、validator-systemの`Lx-NNN`、将来ADR-037で決めるvalidator IDとは別namespaceである。
+
+| rule ID | category | condition |
+|---|---|---|
+| `WCR-001` | declaration admission | required field、ID、digest、rule / fact typeがmalformedまたはunsupported |
+| `WCR-002` | existence | current snapshotにendpointがなく、baselineにも同一IDの存在証拠がない |
+| `WCR-003` | existence / deletion | baselineにはexact endpointが存在し、current snapshotではmissing、かつ有効なexplicit aliasがない |
+| `WCR-004` | existence / explicit reference | old IDからnew IDへのexplicit aliasでrename continuityを宣言したが、single-hop / target / role / uniqueness条件を満たさない |
+| `WCR-005` | ID uniqueness | canonical node IDが複数locatorへ解決し、endpointを一意に選べない |
+| `WCR-006` | explicit reference | 宣言されたreference / `refines` targetが解決しない、または明示relationと一致しない |
+| `WCR-007` | declared dependency | 明示`depends-on` endpointまたは依存relationが解決しない |
+| `WCR-008` | digest equality | claimantまたはpremiseのcurrent digestがrecorded pinと一致しない、または明示`content-equals`の両current digestが一致しない |
+
+`WCR-001`はdeclarationをevaluationへadmitするための構文・型検査である。`WCR-002`〜`WCR-004`はexistence / explicit resolution familyであり、新しい意味推論categoryを追加しない。
+
+### 4.5 Finding selection
+
+同じendpointについて結果を重複させないため、resolutionは次のprecedenceを持つ。
+
+1. malformed declaration: `WCR-001`
+2. duplicate exact / alias target: `WCR-005`
+3. exact current endpoint: resolved
+4. explicit aliasあり: `WCR-004`を評価し、validなら`resolved-via-alias` evidence
+5. baselineにexact endpointあり: `WCR-003`
+6. それ以外のmissing: `WCR-002`
+
+endpoint解決後だけ`WCR-006`〜`WCR-008`を評価する。unresolved endpointへdigest mismatchを重ねない。
+
+### 4.6 Explicit-only `refines`
+
+`refines`は宣言にclaimant / premiseのstable World node IDが明示され、両方が一意に解決した場合だけ有向factへする。
+
+- same DeclaredKey、heading text / order、path、WorkItem、content digest、prose similarityから生成しない。
+- `@world-reflects`の`reflected-as` relationを自動的に`refines`へ格上げしない。
+- target不在は`WCR-006`、構文 / node type不正は`WCR-001`。
+- 意味的に「より詳細」「置換済み」であるかは機械判定しない。
+
+### 4.7 ChangeProvenance
+
+```text
+ChangeProvenance
+  baselineSnapshotId: pgw:v1:snapshot:... | null
+  baselineCorpusRoot: sha256:... | null
+  currentSnapshotId: pgw:v1:snapshot:...
+  currentCorpusRoot: sha256:...
+  changedCandidates[]:
+    nodeId
+    changeKind: added | removed | modified | candidate-cardinality-changed
+    baselineDigest?
+    currentDigest?
+    baselineLocators[]
+    currentLocators[]
+```
+
+candidateはNode ID、change kind、locatorのcanonical tupleでsortする。これは「この差が再評価候補になった」というevidenceであり、ある編集が別endpointの変化を引き起こしたとは主張しない。
+
+- initial runはbaselineを`null`にできる。
+- path-based renameはold removed + new added。
+- explicit aliasがvalidな場合だけrename continuityを表示する。
+- digest一致、類似名、近接時刻からrename / causeを推論しない。
+
+## 5. ADR-035 boundary: Obligation、baseline、waiver
+
+ADR-034のevaluation findingはpolicy非依存である。ADR-035は次を決定する。
+
+- findingから導出するimmutable obligation shape
+- `violationFingerprint`のpreimage、ruleset migration
+- 既知fingerprintだけを分類するWorld adoption baseline
+- reason、expiry、WorkItem traceabilityを持つ別artifactのwaiver
+- explicit semantic debtとstructural obligationの表示分離
+- current evaluationから導出する`repaid`と、保存stateにしない条件
+
+ci-governanceの既存path / SHA-1 baselineはこの入力へ暗黙変換しない。
+
+## 6. ADR-036 boundary: L4-004 coexistence
+
+World rulesはstable ID、explicit relation、digest pinを評価する。L4-004は時間 / 更新鮮度と既存design-code比較を所有している。ADR-036は重複ruleのcanonical owner、compatibility period、維持 / 縮退 / 移行条件を決める。
+
+ADR-034はL4-004のvalidator ID、severity、現行reportを変更しない。また、Worldのdigest差を「古い文書」という時間的判断へ変換しない。
+
+## 7. ADR-037 boundary: CLI、config、persistence
+
+ADR-037は次を同時に固定する。
+
+- `world:*` command、pure / write mode、human / JSON output、exit code
+- constraint / baseline / waiver / debt declarationの正式file nameとschema discovery
+- obligation reportの既定出力先とGit tracking
+- World config key、resolved config、unknown schema behavior
+- validator-systemへ登録するlayer validator ID / nameと`WCR-NNN` mapping
+
+ADR-034の`WCR-NNN`は内部evaluation rule IDであり、validator registryへ直接登録する`Lx-NNN`ではない。
+
+## 8. Failure / ownership contract
+
+| failure | World result | gate ownership |
+|---|---|---|
+| malformed declaration | `WCR-001` finding / declaration diagnostic | validator-systemがblocking policyを決定 |
+| duplicate endpoint | no winner + `WCR-005` | validator-system |
+| missing / deleted endpoint | `WCR-002` / `WCR-003` | validator-system |
+| invalid explicit rename alias | `WCR-004` | validator-system |
+| broken reference / dependency | `WCR-006` / `WCR-007` | validator-system |
+| digest drift | `WCR-008` | validator-system |
+| hashing / snapshot unavailable | evaluationを生成しないfail-closed diagnostic | validator-system adapterがempty successへ変換しない |
+
+World evaluation DTOはrule ID、constraint ID、endpoint evidence、change provenanceを返す。severity、blocking、exit codeを含めない。
+
+## 9. Test designへの入力
+
+実装WIでは最低限次のmutation pairを用意する。
+
+- claimantだけのdigest変更 / premiseだけのdigest変更が同じconstraintを再評価する。
+- missing new endpointとbaselineから削除されたendpointが別rule IDになる。
+- path renameをaliasなしではremoved + added、valid aliasありでは`resolved-via-alias`とする。
+- duplicate exact ID / duplicate alias targetでwinnerを選ばない。
+- explicit `refines`は受理し、same heading / digestだけではfactを生成しない。
+- malformed declarationから部分的ConstraintRecordを生成しない。
+- incremental candidate evaluationとfull evaluationのserialized resultが一致する。
+
+## 10. 未決事項の配置
+
+`docs/inception/_cross/WI-280/delivery_plan.md` §10の「world-modelのconfig keyとvalidator ID」はADR-037へ委譲する。config discovery、CLI、validator registry、layer / default enablementを同時に決めないと、IDだけを先に固定しても実行surfaceとblocking ownerを定義できないためである。
+
+ADR-034が確定するのはWorld内部の`WCR-NNN` rule namespaceだけである。これはADR-032 extraction diagnostic codeともvalidator-system `Lx-NNN`とも互換aliasを作らない。
