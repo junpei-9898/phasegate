@@ -1,5 +1,20 @@
 # 論理設計: validator-system
 
+<!-- @work-item-id WI-275 -->
+## WI-275 coverage_report の ✅ 意味論（規約）
+
+`docs/product/construction/*/coverage_report.md` の **✅ は「実在し pass するテストによる裏付け」を意味する**。これを機械検証可能にするのが `<!-- @attestation <story-id> -->` 参照であり、二段ゲートで担保する:
+
+- **L2-016（形状ゲート・fast-path）**: ✅ 主張行に attestation 参照が存在すること（bare ✅ を fail-closed で遮断）。参照の**形状**のみを見る。
+- **L3-007（実在ゲート・authoritative）**: その `<story-id>` が、本ランのテスト corpus から再生成された requirement-test-matrix 上に実在し（`storyId` 解決 かつ `testReferences` ≥ 1）解決できること。空手形の attestation を fail-closed で遮断する。
+
+これにより **「設計網羅率（テストケースが設計済み）」と「実行裏付け（実在し pass するテストで検証済み）」を区別**する（WI-267 blocker 2 の解消）。設計フェーズの網羅率は ✅ を名乗ってはならず、✅ は実テスト evidence に解決できて初めて正当となる。
+
+- attestation `<id>` の正規フォーマットは **story-id**（例 `H13-01`）。coverage_report の ✅ は特定 story の AC/INV/UseCase 達成を主張するため、attest 対象は story スコープ。
+- `⚠️`（一部カバー）/ `❌`（未カバー・設計のみ）は ✅ を名乗らず、attestation を付与しない。実テスト追加による ✅ への昇格は後続の story-implementor フェーズが行う。
+- 未返済の legacy レポートは `<!-- @coverage-gating: ungated-legacy -->` マーカーで免除できるが、L2-016 は見える負債として warning で件数報告し、返済（全 ✅ への attestation 付与 + マーカー除去）を促す。
+- **凡例・rubric・サマリー判定・訂正履歴の散文**で用いる ✅ グリフは per-item のカバレッジ主張ではないため attestation 対象外。これらは L2-016 の naive matcher（`line.includes("✅")`）による誤検出を避けるため、返済時にグリフを語（「カバー」「カバー印」等）へ置換する（文意・歴史的事実は不変）。
+
 <!-- @work-item-id WI-268 -->
 ## WI-268 Coverage Attestation Verification (L3-007)
 

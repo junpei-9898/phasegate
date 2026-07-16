@@ -2,6 +2,7 @@
 
 <!-- @coverage-gating: ungated-legacy -->
 <!-- WI-258 / ADR-030 §Decision.3.②: 本レポートは attestation ゲート導入前の非ゲート ✅ を含む見える負債。各 ✅ に @attestation を付与して段階返済し、返済完了後にこのマーカーを除去すること。L2-016 は本マーカーがある間 warning で件数報告する。 -->
+<!-- WI-275: 本ファイルはマーカー残置（返済見送り）。理由: 残 ✅ 行の多くが引用する UT-ACS / UT-CM / UT-RCR / UT-PCL / UT-LPA / UT-LD / UT-CUS / UT-CUT / UT-CURES / UT-SS / UT-SVR / UT-LS / UT-LF / UT-LC / UT-LA-008 等のテストケース ID は実テストツリーに annotation として存在せず（WI-267 「skill-quality: traceability 検証不能」の verdict）、実在裏付けを確認できない ✅ 行に attestation を付与することは捏造にあたるため行わない。実コーパステスト（H12-06-AC-2/3 = skill-corpus-conformance.test.ts）等 実在裏付けのある ✅ もあるが、L2-016 はファイル内の全 ✅ 行に attestation を要求するため、部分的な attest ではマーカー除去できない。返済には後続フェーズでの実テスト追加・ID annotation 整備が前提。 -->
 
 @story-id H12-01
 @story-id H12-02
