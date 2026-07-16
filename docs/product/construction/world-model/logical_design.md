@@ -262,3 +262,15 @@ Snapshotはowner-aware leaf digestから`corpusRoot`、`constraintRoot`、`evalu
 <!-- @work-item-id WI-284 -->
 
 constraintはtyped directed factと両endpoint pinを保持しつつendpoint-symmetricに評価し、機械ruleをexistence、uniqueness、explicit reference、declared dependency、digest equalityの`WCR-001`〜`WCR-008`へ限定する。evaluation DTOはpolicy-free、obligationは毎回derived、adoption baseline / waiver / semantic debtはversioned external declaration、reportは非信頼generated artifactとする。CLI / config / persistenceは§7〜9の`world:*`、exit 0/1/2、`world` config、root control files、`.harness/world-obligations.json`契約に従う。
+
+## 14. WI-287 pure domain implementation
+
+<!-- @work-item-id WI-287 -->
+
+@story-id H17-02
+
+最初のworld-model sourceは`domain/{value-objects,entities,services,ports}`だけへ配置する。依存flowは`entities -> canonical projection -> SnapshotRootDeriver -> CanonicalJsonSerializer / WorldHashingPort`で、hash provider injectionはservice boundaryに限定する。
+
+WM-07はthree-rootのcanonical preimage / hashing境界を実装するが、constraint / claim / aliasはID付きplain canonical projectionとしてだけ受ける。declaration admission、WCR evaluation、policyは後続WMが追加する。filesystem、owner adapter、public facade、`index.ts`、composition-root、CLIは作らない。
+
+set-valued nodes / edges / diagnostics / declarationsはderiverがcopy-sortし、serializerはordered arrayを保持する。text normalizerはmarkerやproseを解釈せず、strict UTF-8 decodeとCRLF / CR → LFだけを行う。fragment range / owner projectionはextractorの責務として残す。

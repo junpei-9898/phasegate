@@ -208,3 +208,15 @@ constraint IDは宣言のidentity、violation fingerprintは観測されたviola
 ADR-033どおり、World domainは将来consumer-owned `WorldHashingPort`だけに依存する。provider contractはattestation public facadeの`Sha256Capability.hashBytes(Uint8Array)`であり、World-local adapterがplain digestを`Sha256Digest`へ変換する。
 
 WM-06ではprovider facadeをattestation側へ実装し、World domain source / VO / port実装はWM-07へ残す。attestation `Digest`、`ContentHasherPort`、concrete crypto adapterをWorld domainへ持ち込まない。
+
+## 12. WI-287 identity / canonical Snapshot implementation
+
+<!-- @work-item-id WI-287 -->
+
+@story-id H17-02
+
+WM-07は`WorldNodeId`、`PathKey`、`DeclaredKey`、`Sha256Digest`、`CorpusRole`、`ArtifactKind`、`EvaluationId`をWorld-local VOとして実装する。`WorldNodeId`はADR-032のArtifact / Fragment / legacy Fragment / WorkItem / SourceFile / TestReference / ExplicitClaim / Constraint / Snapshot全形式をtype別factoryとround-trip parserで検証する。Story / AC payloadの意味検証はownerへ残し、Worldはopaque percent-encoded scalarとして扱う。
+
+`WorldNode`、`Edge`、`ExtractionDiagnostic`はcanonical projectionを持ち、`Snapshot`はsorted nodes / edges / diagnostics、`corpusRoot`、Snapshot IDとoptional constraint / evaluation root boundaryをimmutableに保持する。`SnapshotRootDeriver`はplain constraint projectionも受けられるが、ConstraintRecord / WCR semanticsは実装しない。
+
+`CanonicalJsonSerializer`はJSON data model外の値をfail-closedで拒否し、`TextContentNormalizer`はfatal UTF-8 + LF transport normalizationだけを行う。domainは`WorldHashingPort`以外のruntime capabilityに依存せず、filesystem、`node:crypto`、他Unit型をimportしない。

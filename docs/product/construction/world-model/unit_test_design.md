@@ -242,3 +242,22 @@ test file名はkebab-caseとし、case IDをコメントまたはtest name metad
 | UT-WM283-HASH-006 | no-new-crypto source scan |継続ratchet |
 
 WM-06ではWorld source testを作らず、provider側のcontract / adapter testで上表の左列を満たす。
+
+## 10. WI-287 implemented test allocation
+
+<!-- @work-item-id WI-287 -->
+
+@story-id H17-02
+
+WM-07ではUT-WM283のCAN / TXT / PATH lexical subset / CR / KR / EV / DETと、World-local HASH-003をdomain unit testとして実装する。testはproduction domain objectの実体とtest-local deterministic `WorldHashingPort`を使い、mock frameworkや`node:crypto`を使わない。
+
+| Test file | Covered contract |
+|---|---|
+| `world-node-id.test.ts` | ADR-032全ID形式、round-trip、file / fragment identity分離 |
+| `path-key.test.ts` | POSIX lexical normalization、case / Unicode保持、invalid path |
+| `canonical-json-serializer.test.ts` | UT-WM283-CAN-001〜007 |
+| `text-content-normalizer.test.ts` | UT-WM283-TXT-001〜006 |
+| `world-node.test.ts` | Artifact / SourceFile / Fragment projection |
+| `snapshot-root-deriver.test.ts` | CR / KR / EV / DET、stable set sort、three-root separation |
+
+symlink traversal、fragment marker content range、matrix / attestation owner-aware projectionはdomain-only WM-07の実装済みtestとして主張せず、WM-09/10のintegration fixtureへ継続する。
