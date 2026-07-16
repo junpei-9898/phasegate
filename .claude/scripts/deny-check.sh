@@ -104,7 +104,7 @@ glob_to_regex() {
 GIT_ALLOWED_SUBCOMMANDS=(
     status log show diff add commit tag restore rev-parse rev-list
     merge-base branch worktree fetch grep cat-file ls-files ls-tree
-    ls-remote config init remote describe blame shortlog
+    ls-remote init remote describe blame shortlog
     for-each-ref name-rev check-ignore check-attr
     stripspace var help version whatchanged push
 )
@@ -184,6 +184,104 @@ check_symbolic_ref() {
     return 0
 }
 
+# `config` is deliberately NOT in the allowlist above: its write form
+# (`git config <key> <value>`, `--unset`, `--add`, `--edit`, ...) can re-point
+# the hook path itself (`git config core.hooksPath <dir>`), which would disable
+# the entire L0 defence layer. Only read forms (`--get*`, `--list`/`-l`, or a
+# single <key> positional with no value) are state-preserving and therefore
+# permitted. Ambiguous invocations fail closed; read forms combined with scope
+# flags (`--global --list`, `--local --get <key>`, ...) are legitimate and pass.
+check_git_config() {
+    local segment="$1"
+    local sub
+    sub=$(extract_git_subcommand "$segment")
+    [[ "$sub" != "config" ]] && return 0
+
+    # Re-tokenize and walk to the subcommand, then inspect its arguments.
+    local -a tokens
+    read -ra tokens <<< "$segment"
+    local i=1
+    local n=${#tokens[@]}
+    # Advance past global options to the `config` token (mirrors
+    # extract_git_subcommand's flag handling so flag-stuffing cannot evade this).
+    while (( i < n )); do
+        case "${tokens[$i]}" in
+            -C|-c|--git-dir|--work-tree|--namespace|--exec-path|--config-env)
+                i=$(( i + 2 )) ;;
+            --git-dir=*|--work-tree=*|--namespace=*|--exec-path=*|--config-env=*)
+                i=$(( i + 1 )) ;;
+            --no-pager|--paginate|--no-replace-objects|--bare|--literal-pathspecs|--no-optional-locks|--html-path|--man-path|--info-path)
+                i=$(( i + 1 )) ;;
+            config)
+                break ;;
+            -*)
+                i=$(( i + 1 )) ;;
+            *)
+                break ;;
+        esac
+    done
+    # Skip the `config` token itself.
+    i=$(( i + 1 ))
+
+    # Classify the arguments after the subcommand.
+    #   read flags  -> explicitly allowed (`--get`, `--list`, ...)
+    #   write flags -> explicitly denied (`--unset`, `--add`, `--edit`, ...)
+    #   positionals -> counted: 1 positional with no write indicator is the
+    #                  `git config <key>` read; >= 2 positionals is the
+    #                  `git config <key> <value>` write (fail closed).
+    # Scope flags (`--global`, `--system`, `--local`, `--worktree`) and other
+    # modifiers are neutral: the verdict is driven by read/write flags and the
+    # positional count, so `--global --list` passes and `--global k v` fails.
+    local read_flag=0
+    local positional=0
+    while (( i < n )); do
+        local arg="${tokens[$i]}"
+        case "$arg" in
+            --unset|--unset-all|--add|--replace-all|--edit|-e|--remove-section|--rename-section|--set*)
+                debug_log "BLOCKED git config write flag '$arg' (segment '$segment')"
+                echo "Security policy violation: 'git config' write form ('$arg') is denied; config writes can re-point hooks (core.hooksPath) and disable the L0 defence layer. Only read forms (--get/--get-all/--get-regexp/--list/-l or a bare <key>) are permitted. Segment: '$segment'." >&2
+                exit 2 ;;
+            --get|--get-all|--get-regexp|--get-urlmatch|--get-color|--get-colorbool|--list|-l)
+                read_flag=1 ;;
+            --file|-f|--blob|--default|--type)
+                # Neutral flags that consume a separate value token.
+                i=$(( i + 2 )); continue ;;
+            --file=*|--blob=*|--default=*|--type=*)
+                : ;;
+            --)
+                : ;;
+            -*)
+                # Scope flags and other modifiers: neutral, do not count.
+                : ;;
+            *)
+                # New-style verb subcommands (git >= 2.46) that mutate config.
+                if (( positional == 0 )); then
+                    case "$arg" in
+                        set|unset|edit|rename-section|remove-section)
+                            debug_log "BLOCKED git config verb '$arg' (segment '$segment')"
+                            echo "Security policy violation: 'git config $arg' is a config write form and is denied; config writes can re-point hooks (core.hooksPath) and disable the L0 defence layer. Segment: '$segment'." >&2
+                            exit 2 ;;
+                    esac
+                fi
+                positional=$(( positional + 1 )) ;;
+        esac
+        i=$(( i + 1 ))
+    done
+
+    # Explicit read flag: allowed regardless of positional count
+    # (`--get <key>`, `--get-regexp <pattern>`, `--get-urlmatch <key> <url>`).
+    (( read_flag == 1 )) && return 0
+
+    if (( positional >= 2 )); then
+        debug_log "BLOCKED git config write form (segment '$segment')"
+        echo "Security policy violation: 'git config' write form (<key> <value>) is denied; config writes can re-point hooks (core.hooksPath) and disable the L0 defence layer. Only read forms (--get/--get-all/--get-regexp/--list/-l or a bare <key>) are permitted. Segment: '$segment'." >&2
+        exit 2
+    fi
+    # <= 1 positional and no write indicator: value read (`git config <key>`)
+    # or a no-op. Allowed.
+    return 0
+}
+
 # Extract the git subcommand from a segment, skipping the `git` binary and any
 # global options that may precede the subcommand:
 #   git -C <path> <sub>        git --no-pager <sub>
@@ -233,6 +331,9 @@ check_git_allowlist() {
     # `symbolic-ref` is adjudicated by check_symbolic_ref (read form allowed,
     # write form denied); do not treat its absence from the allowlist as a deny.
     [[ "$sub" == "symbolic-ref" ]] && return 0
+    # `config` is adjudicated by check_git_config (read forms allowed, write
+    # forms denied); do not treat its absence from the allowlist as a deny.
+    [[ "$sub" == "config" ]] && return 0
     local allowed
     for allowed in "${GIT_ALLOWED_SUBCOMMANDS[@]}"; do
         [[ "$sub" == "$allowed" ]] && return 0
@@ -248,9 +349,11 @@ check_segment() {
     segment="${segment#"${segment%%[![:space:]]*}"}"
     [[ -z "$segment" ]] && return 0
     # git subcommands are default-deny (allowlist); check that first.
-    # symbolic-ref gets a dedicated read-vs-write adjudication before the plain
-    # allowlist (its write form re-points HEAD and must fail closed).
+    # symbolic-ref and config get a dedicated read-vs-write adjudication before
+    # the plain allowlist (their write forms mutate HEAD / the hook path and
+    # must fail closed).
     check_symbolic_ref "$segment"
+    check_git_config "$segment"
     check_git_allowlist "$segment"
     for pattern in "${DENY_PATTERNS[@]}"; do
         local regex_pattern

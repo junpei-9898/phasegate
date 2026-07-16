@@ -155,7 +155,7 @@ The permitted set lives in `GIT_ALLOWED_SUBCOMMANDS` in `.claude/scripts/deny-ch
 ```
 status log show diff add commit tag restore rev-parse rev-list
 merge-base branch worktree fetch grep cat-file ls-files ls-tree
-ls-remote config init remote describe blame shortlog
+ls-remote init remote describe blame shortlog
 for-each-ref name-rev check-ignore check-attr
 stripspace var help version whatchanged push
 ```
@@ -184,6 +184,34 @@ smuggled behind chaining/substitution operators are caught by per-segment
 inspection. This closes the same class of hole as the `git switch` leak that
 motivated the allowlist (WI-253): before this guard, `symbolic-ref` sat on the
 allowlist and its write form re-pointed HEAD exactly like a `checkout`.
+
+### `config`: read allowed, write denied (WI-271)
+
+<!-- @work-item-id WI-271 -->
+
+`config` is likewise **not** on the plain allowlist; it is adjudicated by a
+dedicated guard (`check_git_config`). The write form is strictly worse than the
+`symbolic-ref` hole it follows: `git config core.hooksPath <dir>` re-points the
+hook path itself, which would disable the **entire L0 defence layer** (this very
+hook included).
+
+- **Read (allowed)** — `git config --get <key>`, `--get-all`, `--get-regexp`,
+  `--get-urlmatch`, `--list` / `-l`, and the bare value read
+  `git config <key>` (one positional argument, no value). Read forms combined
+  with scope flags are legitimate and pass: `git config --global --list`,
+  `git config --local --get user.name`.
+- **Write (denied)** — `git config <key> <value>` (two positional arguments),
+  `--unset` / `--unset-all`, `--add`, `--replace-all`, `--edit` / `-e`,
+  `--remove-section`, `--rename-section`, and the new-style verb subcommands
+  (`git config set|unset|edit|rename-section|remove-section ...`, git >= 2.46).
+
+Ambiguous invocations fail closed: anything that is not a recognized read form
+and carries two or more positionals is denied, so the new-style
+`git config get <key>` spelling is (conservatively) denied — use the flag form
+`git config --get <key>` instead. The guard tolerates the same global-flag
+stuffing as the allowlist extractor (`git -C <path> config <key> <value>` is
+still denied) and chained/substituted write forms are caught by per-segment
+inspection.
 
 ### How the subcommand is extracted
 
