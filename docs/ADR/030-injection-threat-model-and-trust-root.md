@@ -69,7 +69,7 @@ L0–L2 は **fast-path** として正直に位置づける。fast-path の価�
 
 指示を搭載するファイル群の SHA-256 を `phasegate.integrity.json` に pin する。対象:
 
-- SKILL.md × 30
+- SKILL.md × 29
 - `CLAUDE.md` / `AGENTS.md` テンプレート
 - hook 定義
 - `deny-check.sh`
