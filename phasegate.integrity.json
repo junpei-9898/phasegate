@@ -3,7 +3,7 @@
   "algorithm": "sha256",
   "files": {
     ".claude/scripts/analyze-errors-hook.sh": "130542c4c1f7430915a79db2cedd4313fd6c543aba913acf3bfc7334ad5c1f82",
-    ".claude/scripts/deny-check.sh": "68be9af91d184df2b9a37628c7d3b275ac5c4cd6a4e04593c800d4d7d59b9239",
+    ".claude/scripts/deny-check.sh": "bc48c01526beb20524d2822db116bac30dc93c9bbe6585e4e8f13e92150c96aa",
     ".claude/scripts/format-settings-hook.sh": "d6c7ef7be90aa7e69b37c3c9a1fc3b92ebe5c2312f6a5c9f4aa155418e800576",
     ".claude/scripts/format-typescript-hook.sh": "027c41d00396290edb3aef3a8ae38f29c6f40e26ff0bb93ffc447bb914cb2c31",
     ".claude/settings.json": "80eab6715543b9a2bbfed8fd78fb9123cc52aa714eee76bb03999f67ff26afe7",

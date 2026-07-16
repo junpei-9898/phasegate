@@ -105,9 +105,84 @@ GIT_ALLOWED_SUBCOMMANDS=(
     status log show diff add commit tag restore rev-parse rev-list
     merge-base branch worktree fetch grep cat-file ls-files ls-tree
     ls-remote config init remote describe blame shortlog
-    symbolic-ref for-each-ref name-rev check-ignore check-attr
+    for-each-ref name-rev check-ignore check-attr
     stripspace var help version whatchanged push
 )
+
+# `symbolic-ref` is deliberately NOT in the allowlist above: its write form
+# (`git symbolic-ref HEAD refs/heads/<branch>` or `git symbolic-ref -d HEAD`)
+# re-points HEAD, i.e. it is a checkout-equivalent HEAD/history mutation that the
+# default-deny policy exists to block. Only the read form (reporting the ref HEAD
+# points at, e.g. `git symbolic-ref HEAD` / `git symbolic-ref --short HEAD`) is
+# state-preserving and therefore permitted. This guard, checked before the plain
+# allowlist, allows the read form and denies every write form.
+check_symbolic_ref() {
+    local segment="$1"
+    local sub
+    sub=$(extract_git_subcommand "$segment")
+    [[ "$sub" != "symbolic-ref" ]] && return 0
+
+    # Re-tokenize and walk to the subcommand, then inspect its arguments.
+    local -a tokens
+    read -ra tokens <<< "$segment"
+    local i=1
+    local n=${#tokens[@]}
+    # Advance past global options to the `symbolic-ref` token (mirrors
+    # extract_git_subcommand's flag handling so flag-stuffing cannot evade this).
+    while (( i < n )); do
+        case "${tokens[$i]}" in
+            -C|-c|--git-dir|--work-tree|--namespace|--exec-path|--config-env)
+                i=$(( i + 2 )) ;;
+            --git-dir=*|--work-tree=*|--namespace=*|--exec-path=*|--config-env=*)
+                i=$(( i + 1 )) ;;
+            --no-pager|--paginate|--no-replace-objects|--bare|--literal-pathspecs|--no-optional-locks|--html-path|--man-path|--info-path)
+                i=$(( i + 1 )) ;;
+            symbolic-ref)
+                break ;;
+            -*)
+                i=$(( i + 1 )) ;;
+            *)
+                break ;;
+        esac
+    done
+    # Skip the `symbolic-ref` token itself.
+    i=$(( i + 1 ))
+
+    # Count positional (non-flag) arguments after the subcommand. A read is
+    # `symbolic-ref [--short|-q] <name>` (<= 1 positional, no delete). A write is
+    # `symbolic-ref <name> <ref>` (>= 2 positionals) or `symbolic-ref -d <name>`.
+    local positional=0
+    while (( i < n )); do
+        local arg="${tokens[$i]}"
+        case "$arg" in
+            -d|--delete)
+                debug_log "BLOCKED git symbolic-ref delete form (segment '$segment')"
+                echo "Security policy violation: 'git symbolic-ref' delete form is denied (it mutates HEAD; only the read form is permitted). Segment: '$segment'." >&2
+                exit 2 ;;
+            -m|--reason)
+                # `-m <reason>` accompanies a write; the reason value consumes one token.
+                i=$(( i + 2 )); continue ;;
+            --short|-q|--quiet)
+                # Read-only modifiers; do not count as positionals.
+                : ;;
+            --)
+                : ;;
+            -*)
+                : ;;
+            *)
+                positional=$(( positional + 1 )) ;;
+        esac
+        i=$(( i + 1 ))
+    done
+
+    if (( positional >= 2 )); then
+        debug_log "BLOCKED git symbolic-ref write form (segment '$segment')"
+        echo "Security policy violation: 'git symbolic-ref' write form (re-pointing HEAD) is denied; it is checkout-equivalent HEAD mutation. Only the read form (e.g. 'git symbolic-ref HEAD') is permitted. Segment: '$segment'." >&2
+        exit 2
+    fi
+    # <= 1 positional and no delete: read form. Allowed.
+    return 0
+}
 
 # Extract the git subcommand from a segment, skipping the `git` binary and any
 # global options that may precede the subcommand:
@@ -155,6 +230,9 @@ check_git_allowlist() {
     sub=$(extract_git_subcommand "$segment")
     # Not a git command, or `git` with no subcommand (e.g. `git`, `git --help`).
     [[ -z "$sub" ]] && return 0
+    # `symbolic-ref` is adjudicated by check_symbolic_ref (read form allowed,
+    # write form denied); do not treat its absence from the allowlist as a deny.
+    [[ "$sub" == "symbolic-ref" ]] && return 0
     local allowed
     for allowed in "${GIT_ALLOWED_SUBCOMMANDS[@]}"; do
         [[ "$sub" == "$allowed" ]] && return 0
@@ -170,6 +248,9 @@ check_segment() {
     segment="${segment#"${segment%%[![:space:]]*}"}"
     [[ -z "$segment" ]] && return 0
     # git subcommands are default-deny (allowlist); check that first.
+    # symbolic-ref gets a dedicated read-vs-write adjudication before the plain
+    # allowlist (its write form re-points HEAD and must fail closed).
+    check_symbolic_ref "$segment"
     check_git_allowlist "$segment"
     for pattern in "${DENY_PATTERNS[@]}"; do
         local regex_pattern

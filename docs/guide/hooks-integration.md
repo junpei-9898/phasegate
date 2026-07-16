@@ -156,11 +156,34 @@ The permitted set lives in `GIT_ALLOWED_SUBCOMMANDS` in `.claude/scripts/deny-ch
 status log show diff add commit tag restore rev-parse rev-list
 merge-base branch worktree fetch grep cat-file ls-files ls-tree
 ls-remote config init remote describe blame shortlog
-symbolic-ref for-each-ref name-rev check-ignore check-attr
+for-each-ref name-rev check-ignore check-attr
 stripspace var help version whatchanged push
 ```
 
 History- and working-tree-mutating subcommands are intentionally **absent** so they fail closed, including: `checkout`, `switch`, `reset`, `rebase`, `merge`, `cherry-pick`, `revert`, `stash`, `clean`, `update-ref`, `reflog`, `filter-branch`, `replace`, and `am`.
+
+### `symbolic-ref`: read allowed, write denied (WI-269)
+
+<!-- @work-item-id WI-269 -->
+
+`symbolic-ref` is **not** on the plain allowlist above; it is adjudicated by a
+dedicated guard (`check_symbolic_ref`), because it has both a read form and a
+state-mutating write form:
+
+- **Read (allowed)** — reports the ref that HEAD points at without changing
+  anything: `git symbolic-ref HEAD`, `git symbolic-ref --short HEAD`,
+  `git symbolic-ref -q HEAD`.
+- **Write (denied)** — re-points HEAD, which is **checkout-equivalent HEAD
+  mutation**: `git symbolic-ref HEAD refs/heads/<branch>` (a second positional
+  argument), `git symbolic-ref -d HEAD` / `--delete` (removes the symbolic ref),
+  and `-m <reason>` write variants.
+
+The guard tolerates the same global-flag stuffing as the allowlist extractor, so
+`git -C <path> symbolic-ref HEAD refs/heads/x` is still denied, and write forms
+smuggled behind chaining/substitution operators are caught by per-segment
+inspection. This closes the same class of hole as the `git switch` leak that
+motivated the allowlist (WI-253): before this guard, `symbolic-ref` sat on the
+allowlist and its write form re-pointed HEAD exactly like a `checkout`.
 
 ### How the subcommand is extracted
 
