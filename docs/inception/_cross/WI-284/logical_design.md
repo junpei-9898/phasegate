@@ -213,17 +213,37 @@ L4-004は現役product capabilityとして維持する。WM-20のauthoritative W
 
 self-repoのL4 disabledはdogfood policyでありcapability廃止ではない。aggregate pathではskipを維持し、明示`validate --layer L4`はforce-enableできる。strict presetのenabled、minimal / standardのdisabledも変更しない。
 
-## 7. ADR-037 boundary: CLI、config、persistence
+## 7. ADR-037: CLI、config、persistence
 
-ADR-037は次を同時に固定する。
+canonical command:
 
-- `world:*` command、pure / write mode、human / JSON output、exit code
-- constraint / baseline / waiver / debt declarationの正式file nameとschema discovery
-- obligation reportの既定出力先とGit tracking
-- World config key、resolved config、unknown schema behavior
-- validator-systemへ登録するlayer validator ID / nameと`WCR-NNN` mapping
+| command | default side effect | explicit mutation | exit 1 |
+|---|---|---|---|
+| `world:inspect` | none | なし | snapshotは生成したがhard extraction diagnosticあり |
+| `world:pin` | preview-only | `--apply`でconstraintsをatomic update | missing / duplicate / ambiguous endpoint |
+| `world:derive` | pure/read-only | `--write [--out <path>]`でreportをatomic write | blocking obligation / policy cleanupあり |
 
-ADR-034の`WCR-NNN`は内部evaluation rule IDであり、validator registryへ直接登録する`Lx-NNN`ではない。
+全commandは`--format human|json`と`--json` aliasを持つ。stdoutはprimary resultだけ、JSON modeは`phasegate-world-cli/v1` envelope一件だけを出す。stderrはusage / unsupported schema / unexpected process failureへ限定する。exit 0=success / non-blocking、1=domain / gate finding、2=trustworthy resultを作れないusage / config / schema / I/O / hashing failure。
+
+control / generated file:
+
+| lifecycle | canonical path |
+|---|---|
+| Git-tracked constraints | `phasegate.world-constraints.json` |
+| Git-tracked adoption baseline | `phasegate.world-baseline.json` |
+| Git-tracked waivers | `phasegate.world-waivers.json` |
+| Git-tracked semantic debts | `phasegate.world-debts.json` |
+| ignored generated obligation report | `.harness/world-obligations.json` |
+
+declaration absentはcanonical empty input、存在するunknown schemaはexit 2でfail-closed。schema contractsは`docs/contracts/world-*.schema.json`へ実装WIで置く。reportは判定入力にせず、pure / write modeでdomain resultを変えない。
+
+top-level config keyは`world`。automatic integrationはdefault disabledだが、explicit `world:*`は実行できる。config不在時は`docs/product`, `docs/inception`, `docs/ADR`, `scripts/harness`と既存matrix / attestation / integrity default pathを使う。config存在時はconfig-foundation resolved DTOだけを使い、invalid / unknown configをdefaultsへfallbackしない。
+
+Phase C validator IDは`L2-017 world-constraint-admission`、`L3-008 world-constraint-rederivation`を予約する。`WCR-NNN`とは別identityであり、registry実装はWM-19 / WM-20まで行わない。
+
+WM-21 session-start World sectionはdefault 5 entries / 2000 Unicode scalar values、schema maximum 20 / 8000。blocking-firstでstable sortし、entry境界で省略する。free text / report全文をinjectせず、persisted reportだけを正本として読まない。current World query / in-process deriveを使い、hookはwarn-only / exit 0を維持する。
+
+attestation v2 `schemaVersion` / `predicateType` / v1 coexistenceはattestation ownerのWM-23へ委譲し、本設計で先取りしない。
 
 ## 8. Failure / ownership contract
 
@@ -266,13 +286,18 @@ World evaluation DTOはrule ID、constraint ID、endpoint evidence、change prov
 - 同じdocumentに両findingがあってもstructural obligation / fingerprintを一件だけWCR由来で数える。
 - World adoption / waiver classificationがL4-004 raw resultを抑止しない。
 - self-repo L4 disabledのaggregate実行はskip、明示L4実行はforce-enableする。
+- three `world:*` commandsがmain dispatch / known command set / helpで集合一致する。
+- JSON modeのstdoutが一つのparse可能documentだけになり、exit 1でもresultを保持する。
+- exit 0 / 1 / 2がnon-blocking / domain finding / execution failureへ安定して写像される。
+- `world:pin` previewと`world:derive` pure modeがfilesystemを書き換えない。
+- `world:pin --apply`と`world:derive --write`がatomic writeし、対象外control fileを変更しない。
+- write report bytesがpure modeのraw report bytesと一致し、保存report改竄が再deriveを変えない。
+- config不在ではcanonical roots、config存在時のunknown field / schemaではfallbackせずexit 2になる。
+- declaration file不在はempty、存在するunknown schemaはfail-closedになる。
+- session-start summaryが5件 / 2000文字を越えず、free textを含めない。
 
 ## 10. 未決事項の配置
 
-`docs/inception/_cross/WI-280/delivery_plan.md` §10の「world-modelのconfig keyとvalidator ID」はADR-037へ委譲する。config discovery、CLI、validator registry、layer / default enablementを同時に決めないと、IDだけを先に固定しても実行surfaceとblocking ownerを定義できないためである。
+ADR-037は委譲されていたfile name、report path、config key、validator ID、session-start limitを確定した。fragment / hashing / semantic debtの各項目はADR-032 / 033 / 035の決定を維持し、initial fingerprint countはWM-17実測とする。
 
-ADR-034が確定するのはWorld内部の`WCR-NNN` rule namespaceだけである。これはADR-032 extraction diagnostic codeともvalidator-system `Lx-NNN`とも互換aliasを作らない。
-
-ADR-035 scopeのexplicit semantic debt ID / coverage report annotationは`pgw:v1:semantic-debt:<DeclaredKey>`と`<!-- @world-semantic-debt <id> -->`に確定した。external declaration file name / schema pathは他のWorld control filesとともにADR-037へ委譲する。
-
-ADR-036 scopeに§10の未決事項はない。新config key、validator ID、file name、report pathは決定せず、ADR-037のscopeを維持する。
+attestation v2 `schemaVersion` / `predicateType` / v1 coexistenceだけはowner設計と不可分なためWM-23へ明示委譲し、Phase 0で値を先取りしない。
