@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **WI-280 — World Model 導入の実行計画** — phasegate を「一方向の phase gate」から「世界（Unit/ドメイン/論理設計/Story/AC/テスト/ADR）の端点対称な制約再評価環境」へ対称化する World Model 構想の delivery plan を `docs/inception/_cross/WI-280/delivery_plan.md` として策定（計画のみ、実装なし）。Phase 0 = ADR-031〜037 + world-model unit 設計、Phase A = read-only snapshot + `world:inspect`、Phase B = constraint/obligation 導出 + `world:derive`（WM-17 = 機能 MVP）、Phase C = L2/L3/attestation v2/CI 統合。obligation report は immutable derived output、新規 claim は初日から fail-closed、既存違反は adoption baseline（violationFingerprint）で可視負債化、という裁定を含む。Claude ドラフト + GPT-5.6 sol（Codex CLI）敵対的レビュー 2 ラウンドの共同成果物。
+
 - **WI-264 — `reconcile` prunes bundled skills that left the catalog** — `phasegate reconcile` (and its `update-skills` alias) now detects **manifest-managed** skills that are no longer in the current bundle catalog (`getBundledSkillsForSet("all")`) and prunes them: the on-disk skill directory is removed and the manifest entry is dropped. This closes the WI-256 orphan gap — the removed `implementation-planner` / `doc-freshness-checker` / `pointer-validator` directories are now cleaned up automatically on the next `reconcile --apply` (shared installs under `skills/`, personal installs under `.claude/skills/` and `.codex/skills/`). Pruning is **manifest-scoped**: user-owned skill directories that PhaseGate never recorded are never touched, and `.harness-version` is never pruned. `--dry-run` reports each prune (`action: "prune"`) without mutating disk or manifest, and the operation is idempotent.
 
 ### Changed
