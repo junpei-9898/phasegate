@@ -1,13 +1,18 @@
 // @unit agent-integration
 // @layer presentation
+// @work-item-id WI-304
 
 import { buildCiGovernance } from "../../ci-governance/composition-root.js";
+import { createConfigFoundationModule, toWorldModelConfig } from "../../config-foundation/index.js";
+import { GetOpenWorldObligationsContextUseCase } from "../application/usecases/get-open-world-obligations-context-usecase.js";
+import { WorldModelOpenObligationsQueryAdapter } from "../infrastructure/adapters/world-model-open-obligations-query-adapter.js";
 import {
   buildIntegrityUnverifiableWarning,
   buildIntegrityWarning,
   buildSessionStartContext,
   collectPhasegateStatus,
 } from "./phasegate-status-context.js";
+import { buildWorldObligationsSessionContext } from "./world-obligations-session-context.js";
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -36,6 +41,36 @@ async function buildIntegrityContext(cwd: string): Promise<string | null> {
   }
 }
 
+/**
+ * World の保存済み report は読まず、公開 facade の pure derive から現在の open obligation を要約する。
+ * config/derive の失敗は固定 warning へ縮退し、repository 由来のエラー文字列は中継しない。
+ */
+async function buildWorldContext(cwd: string): Promise<string | null> {
+  try {
+    const configModule = createConfigFoundationModule();
+    const resolved = await configModule.usecases.loadResolvedConfigUseCase.execute();
+    const worldConfig = toWorldModelConfig(resolved.config);
+    if (worldConfig === undefined) return null;
+
+    const contextUseCase = new GetOpenWorldObligationsContextUseCase({
+      worldObligationsQueryPort: new WorldModelOpenObligationsQueryAdapter({
+        rootDir: cwd,
+        resolvedConfig: worldConfig,
+      }),
+    });
+    const context = await contextUseCase.execute({
+      enabled: worldConfig.enabled && worldConfig.sessionStart.enabled,
+    });
+    return buildWorldObligationsSessionContext(context, {
+      maxItems: worldConfig.sessionStart.maxItems,
+      maxChars: worldConfig.sessionStart.maxChars,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConfigNotFoundError") return null;
+    return buildWorldObligationsSessionContext({ status: "unavailable" }, { maxItems: 5, maxChars: 2000 });
+  }
+}
+
 async function main(): Promise<void> {
   try {
     await readStdin();
@@ -46,7 +81,8 @@ async function main(): Promise<void> {
   const status = await collectPhasegateStatus(process.cwd());
   const baseContext = buildSessionStartContext(status);
   const integrityContext = await buildIntegrityContext(process.cwd());
-  const additionalContext = integrityContext === null ? baseContext : `${integrityContext}\n\n${baseContext}`;
+  const worldContext = await buildWorldContext(process.cwd());
+  const additionalContext = [integrityContext, worldContext, baseContext].filter((item) => item !== null).join("\n\n");
 
   const output = {
     hookSpecificOutput: {

@@ -328,6 +328,14 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 
 **評価結果**: 問題なし。設計を確定する。
 
+## WI-304 SessionStart World obligation context
+
+<!-- @work-item-id WI-304 -->
+
+`OpenWorldObligationsContextDto`はagent-integration application所有のplain DTOで、priority済みentryと`adoptedLegacyCount`だけを保持する。entryは`kind`、classification、rule ID、constraint ID、violation fingerprint、subject IDに限定し、World Entity / VO、constraint prose、waiver reason、diagnostic detailsを持たない。
+
+`WorldObligationsQueryPort`はcurrent pure derive observationを供給するconsumer-owned portである。usecaseはWorld無効時にportを呼ばず、available resultをblocking → cleanup-required → waived、同順位をrule / constraint / fingerprint / subjectのordinal順へ正規化する。adopted legacyはentryへせずcountだけに集約し、unavailableはrepo由来reasonをpresentationへ渡さない。
+
 ## 9. Stop Hook Command Execution Boundary
 
 <!-- @work-item-id WI-203 -->

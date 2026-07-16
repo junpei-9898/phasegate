@@ -575,3 +575,16 @@ afterEach(async () => {
 | Scenario | Expected |
 |---|---|
 | Config query adapter loads custom top-level `paths.principlesDocs` and `paths.folderRulesDoc` | Returned protected patterns include the custom principles glob and folder rules file in addition to configured protected patterns. |
+
+## WI-304 SessionStart World obligations integration
+
+<!-- @work-item-id WI-304 -->
+
+| ID | 日本語シナリオ | 期待結果 |
+|---|---|---|
+| IT-WI304-ADAPTER-001 | World synthetic rootをpublic facade経由でqueryする | plain stable fields、report read/writeなし |
+| IT-WI304-HOOK-001 | world disabledでsession-startを実行する | World sectionなし、exit 0 |
+| IT-WI304-HOOK-002 | derive failureでsession-startを実行する | 固定warning一行、exit 0 |
+| IT-WI304-DOGFOOD-001 | self-repoでsession-startを実行する | adopted legacy 604を一行集約、個別fingerprintなし |
+
+hook JSON schemaと既存integrity / base contextの順序を保持し、World sectionだけを追加する。

@@ -285,3 +285,9 @@ validator-system adapter fixtureからpublic World compositionをpure modeで実
 <!-- @work-item-id WI-302 -->
 
 base / new unpinned claim / duplicate ID / unsupported schema fixtureをvalidator-system L3 adapterからpublic World compositionへ流し、exact rule、fingerprint、classificationを検査する。同じrootで`.harness/world-obligations.json`を作成、改竄、削除してもpure observation bytesとblocking resultが一致し、report writer outputがauthorityへ昇格しないことを証明する。
+
+## WI-304 SessionStart consumer adapter contract
+
+<!-- @work-item-id WI-304 -->
+
+agent-integration adapterからpublic World compositionを`writeReport:false`で実行し、structural obligation、repaid baseline、policy diagnostic、adopted countをplain stable projectionへ変換する。malformed control inputはunavailable、persisted reportの存在・内容はquery resultへ影響しない。reason / details / report bytesをcontext DTOへ含めないことを検証する。

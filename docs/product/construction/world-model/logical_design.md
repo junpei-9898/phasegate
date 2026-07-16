@@ -384,3 +384,9 @@ validator-systemのL2 infrastructure adapterは`world-model/index.ts`の`createW
 <!-- @work-item-id WI-302 -->
 
 validator-systemのL3 infrastructure adapterもpublic `createWorldModelModule`だけを消費し、呼出しごとにcurrent corpusとversioned constraints / baseline / waiver / debtをpure modeで再導出する。world-modelは`structuralObligations`とdiagnosticのplain projectionを返すが、L3 severity / blocking / skipを決めない。generated obligation reportはwriter outputだけでread portを持たず、L3 adapterはreport pathにも依存しない。
+
+## WI-304 SessionStart public query consumer contract
+
+<!-- @work-item-id WI-304 -->
+
+agent-integration infrastructure adapterはpublic `createWorldModelModule`からpure derive resultだけを観測する。world-modelはsession prompt、entry cap、priority、fail-open文言を所有せず、agent-integrationがstable rule / ID / classification / countへACL投影する。保存reportは引き続きread portを持たず、waiver reason、semantic debt prose、subject / evidence detailsをSessionStart consumerへ公開しない。

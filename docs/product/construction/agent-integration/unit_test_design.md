@@ -497,3 +497,18 @@ story-implementor ← TDD実装
 |---|---|---|---|
 | UT-AI-WI203-001 | `ChildProcessCliExecutorAdapter` | `execute("phasegate:complete-check", [])` | `npx tsx <package>/scripts/harness/main.ts phasegate:complete-check` を spawn し、`scripts/harness/cli/complete-check.ts` を参照しない |
 | UT-AI-WI203-002 | `ChildProcessCliExecutorAdapter` | `execute("custom-check", ["--flag"])` | legacy extension 互換として `scripts/harness/cli/custom-check.ts --flag` を spawn する |
+
+## WI-304 SessionStart World context unit tests
+
+<!-- @work-item-id WI-304 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI304-UC-001 | World無効でcontextを取得する | query未実行、World sectionなし |
+| UT-WI304-UC-002 | mixed classificationを取得する | blocking → cleanup → waivedのordinal sort |
+| UT-WI304-UC-003 | adopted legacy 604件を取得する | entry 0、count 604 |
+| UT-WI304-PRES-001 | 6 entryをdefault limitで表示する | 5 entry + deterministic omission |
+| UT-WI304-PRES-002 | 2000 chars境界を表示する | scalar cap内、entry途中切断なし |
+| UT-WI304-PRES-003 | unavailable resultを表示する | 固定一行warning、reason非表示 |
+
+usecaseはdeterministic fake query portを使い、World domain objectをmockしない。

@@ -87,10 +87,11 @@ Backbone: AI-Driven Development Life Cycle (AIDLC)
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-302 -->
+<!-- @work-item-id WI-304 -->
 
 | Epic | 含まれる Activity | US 数 |
 |------|------------------|-------|
-| H-17 World Model | Activity 2, 6, 7, 8 | 15 |
+| H-17 World Model | Activity 2, 6, 7, 8 | 16 |
 
 H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12はPhase Bのconstraint / obligation MVP、H17-13以降はPhase Cのproduction integrationを構成する。各Storyはdelivery planのWMへ1対1でbindingする。
 
@@ -124,6 +125,7 @@ H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12は
 | H17-13 | WM-18 | World config surface / resolved mapping | Phase C configuration |
 | H17-14 | WM-19 | L2 World constraint admission fast-path | Phase C enforcement |
 | H17-15 | WM-20 | L3 authoritative World constraint re-derivation | Enforceable MVP |
+| H17-16 | WM-21 | SessionStart open obligations summary | Phase C agent context |
 
 ## 5. 詳細
 

@@ -39,7 +39,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-17 | World Model | 15 | 4 |
+| H-17 | World Model | 16 | 4 |
 | H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
@@ -1686,12 +1686,13 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
-## Wave 4: World Model（H-17 / 15 US）
+## Wave 4: World Model（H-17 / 16 US）
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-292 -->
 <!-- @work-item-id WI-301 -->
 <!-- @work-item-id WI-302 -->
+<!-- @work-item-id WI-304 -->
 
 ## H-17: World Model
 
@@ -2000,6 +2001,27 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: base fixtureはPASSし、structural mutationとunsupported schemaは期待rule / fingerprintまたはdiagnosticでfail-closedになる
 - [ ] AC-6: L2 local fast-pathとL3 authoritative re-derivationが同じclassification契約を使い、authoritative trust rootはL3だけである
 
+### H17-16: SessionStart open obligations summary（WM-21）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-21 / WI-304）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** Phasegateを利用する実装エージェント,
+**I want to** session開始時に現在の重要なWorld obligationだけを限定要約で確認したい,
+**so that** legacy debtやrepository由来proseでpromptを埋めず、新規blocking findingを最初に把握できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: agent-integrationのSessionStartがworld-model public facade由来のplain query DTOをusecase / presentation境界で表示する
+- [ ] AC-2: `world.enabled:false`またはsession summary無効時はWorld queryを実行せず何も表示しない
+- [ ] AC-3: new-structural / invalid-declaration / expired waiverを優先し、cleanup-required、waivedの順で決定的に表示する
+- [ ] AC-4: World sectionを最大5件 / 2000 Unicode scalarへ制限し、entryを途中切断せず省略件数を表示する
+- [ ] AC-5: adopted-legacyは件数サマリだけにし、reason / prose / full obligation reportをpromptへ注入しない
+- [ ] AC-6: derive不能時は固定一行warningへfail-openし、SessionStart hookをexit 0で継続する
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -2042,8 +2064,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 15 | 15 | 0 |
-| **Wave 4小計** | | **15** | **15** | **0** |
+| 4 | H-17 World Model | 16 | 16 | 0 |
+| **Wave 4小計** | | **16** | **16** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **85** | **79** | **6** |
-| **全体（Future含む）** | | **90** | — | — |
+| **v1合計** | | **86** | **80** | **6** |
+| **全体（Future含む）** | | **91** | — | — |

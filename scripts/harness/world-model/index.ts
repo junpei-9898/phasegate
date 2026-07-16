@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer public-api
 // @work-item-id WI-291, WI-296
+// @work-item-id WI-304
 
 export type {
   WorldExtractionDiagnosticDto,
@@ -9,6 +10,7 @@ export type {
   WorldJsonObject,
   WorldJsonValue,
 } from "./application/dto/world-inspection-dto.js";
+export type { WorldObligationReportDto } from "./application/dto/world-obligation-report-dto.js";
 export type {
   WorldCorpusConfig,
   WorldResolvedConfigInput,
