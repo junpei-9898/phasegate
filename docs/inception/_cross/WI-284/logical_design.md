@@ -191,11 +191,27 @@ semantic debt IDは`pgw:v1:semantic-debt:<DeclaredKey>`。coverage reportはfile
 
 ci-governanceの既存path / SHA-1 baselineはhook grandfather専用であり、この入力へimport / upgrade /暗黙変換しない。
 
-## 6. ADR-036 boundary: L4-004 coexistence
+## 6. ADR-036: L4-004 coexistence
 
-World rulesはstable ID、explicit relation、digest pinを評価する。L4-004は時間 / 更新鮮度と既存design-code比較を所有している。ADR-036は重複ruleのcanonical owner、compatibility period、維持 / 縮退 / 移行条件を決める。
+World rulesはstable ID、explicit relation、digest pinを評価する。L4-004はdocument自身のlatest Git timestamp、fallback mtimeとwarn / error day thresholdからtime-since-review riskを評価する。current production L4-004はsource hash、explicit reference / dependencyを読まず、`related-source-change`を生成するadapterも持たない。
 
-ADR-034はL4-004のvalidator ID、severity、現行reportを変更しない。また、Worldのdigest差を「古い文書」という時間的判断へ変換しない。
+canonical owner:
+
+| predicate | rule owner | gate owner |
+|---|---|---|
+| document age threshold | phase2-extensions `FreshnessCheckService` / L4-004 | validator-system |
+| explicit endpoint / reference / dependency / digest | world-model WCR | validator-system |
+
+同一documentに両findingがある場合、WCR obligationをexplicit structural remediationのprimary、L4-004をsupporting temporal signalとする。raw findingsは両方保持し、path / messageだけでdeduplicateしない。L4 findingをWorld fingerprint / baseline / waiverへ入れず、World classificationでL4を抑止しない。
+
+L4-004は現役product capabilityとして維持する。WM-20のauthoritative World re-derivation後、WM-24完了・一warn-threshold期間・2回以上のdual-runを満たすcompatibility periodを設ける。document class別のoverlap / L4-only / WCR-only inventory後にだけpattern単位の縮退を検討する。
+
+- time-only policy、unconstrained docs、actionable L4-only finding、consumer compatibilityがあれば維持。
+- World coverage complete、unique L4 valueなし、time policy不要、migration guideありの場合だけ別WIで縮退。
+- 将来L4へexplicit hash / reference sub-ruleが入った場合だけ、そのsub-ruleをWorldへ移行。
+- current git-age / mtime predicateとL4-004 ID全体は本ADRで廃止しない。
+
+self-repoのL4 disabledはdogfood policyでありcapability廃止ではない。aggregate pathではskipを維持し、明示`validate --layer L4`はforce-enableできる。strict presetのenabled、minimal / standardのdisabledも変更しない。
 
 ## 7. ADR-037 boundary: CLI、config、persistence
 
@@ -245,6 +261,11 @@ World evaluation DTOはrule ID、constraint ID、endpoint evidence、change prov
 - waiver renewalはnew ID / WI / `renewalOf`を必要とし、old scopeをtransitiveに継承しない。
 - semantic debtはstructural obligation countへ混ぜず、`declared/imported`として別表示する。
 - 既存`.phasegate/baseline.json`をWorld policy repositoryが読み込まない。
+- git-log age / mtimeだけがthreshold超過した場合、L4-004だけがfindingを返しWCR obligationを作らない。
+- fresh documentのexplicit pinだけがdriftした場合、WCRだけがfindingを返しL4-004 passで打ち消されない。
+- 同じdocumentに両findingがあってもstructural obligation / fingerprintを一件だけWCR由来で数える。
+- World adoption / waiver classificationがL4-004 raw resultを抑止しない。
+- self-repo L4 disabledのaggregate実行はskip、明示L4実行はforce-enableする。
 
 ## 10. 未決事項の配置
 
@@ -253,3 +274,5 @@ World evaluation DTOはrule ID、constraint ID、endpoint evidence、change prov
 ADR-034が確定するのはWorld内部の`WCR-NNN` rule namespaceだけである。これはADR-032 extraction diagnostic codeともvalidator-system `Lx-NNN`とも互換aliasを作らない。
 
 ADR-035 scopeのexplicit semantic debt ID / coverage report annotationは`pgw:v1:semantic-debt:<DeclaredKey>`と`<!-- @world-semantic-debt <id> -->`に確定した。external declaration file name / schema pathは他のWorld control filesとともにADR-037へ委譲する。
+
+ADR-036 scopeに§10の未決事項はない。新config key、validator ID、file name、report pathは決定せず、ADR-037のscopeを維持する。
