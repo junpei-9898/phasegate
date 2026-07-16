@@ -676,3 +676,11 @@ scripts/harness/__tests__/config-foundation/
 - Missing `project` and missing `project.languages` resolve to `["typescript"]`.
 - Non-empty language arrays are preserved in resolved config and validator projection.
 - Empty language arrays are rejected by schema or domain validation.
+
+## WI-300 World config unit tests
+
+<!-- @work-item-id WI-300 -->
+
+- WorldConfigはpath、root role overlap、case-fold collision、session limitを実体で検証する。
+- preset resolutionはnested overrideとlegacy path inheritanceを明示fieldの有無に従って解決する。
+- dedicated World mapperは完全なplain DTO、validator mapperは将来gate用projectionを返し、L2-017 / L3-008をvalidator配列へ追加しない。

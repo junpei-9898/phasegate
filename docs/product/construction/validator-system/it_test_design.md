@@ -502,3 +502,9 @@
 <!-- @work-item-id WI-292 -->
 
 generated matrix 1.2をvalidator-system L3経路で読み、H17 planned Storyを表示したままL3-004 pass、planned test reference fixtureをL3-004 failとして観測する。
+
+## WI-300 Pre-registration integration boundary
+
+<!-- @work-item-id WI-300 -->
+
+minimal / standard / strictのresolved World configをvalidator compositionへ渡しても既存L2 / L3 execution結果が変わらず、予約validatorがunknown / inactiveのままであることを確認する。本格的なenable / skip contractはWM-19 / WM-20で追加する。

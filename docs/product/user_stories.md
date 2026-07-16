@@ -1934,6 +1934,27 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: WCR-001、new claim / pin、malformed policy inputをlegacy baselineへ採用しない
 - [ ] AC-6: 本Story完了をconstraint / obligationの機能MVPとし、L2 / L3 gate統合は後続Phase Cへ残す
 
+### H17-13: World config surfaceとresolved mapping（WM-18）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-18 / WI-300）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** Phasegate導入・運用者,
+**I want to** World Modelのcorpus、control input、output、session limitを`phasegate.config.json`から決定的に解決したい,
+**so that** 明示CLIと将来のL2 / L3 integrationが同じfail-closed config contractを使える。
+
+#### 受け入れ基準
+
+- [ ] AC-1: v2 / v3 schemaがtop-level `world`の全ADR-037 fieldを受理し、unknown field、invalid path、範囲外limitを拒否する
+- [ ] AC-2: minimal / standard / strict presetがcanonical World defaultsを持ち、automatic integrationの`world.enabled`は全てfalseである
+- [ ] AC-3: source overrideをdeep mergeし、明示World fieldがない場合だけ既存design / inception / matrix pathを継承する
+- [ ] AC-4: dedicated World mapperが完全なplain resolved DTOを返し、明示`world:*` commandは`enabled:false`でも実行できる
+- [ ] AC-5: validator-system mapperが将来gate用World DTOを伝搬する一方、L2-017 / L3-008はまだ登録・有効化しない
+- [ ] AC-6: configuration guideがfield、default、preset rollout、path制約を説明する
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）

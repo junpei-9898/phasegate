@@ -1,17 +1,18 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import type {
-  PhaseDependenciesPresetId,
   HarnessConfigResolvedDocument,
   HarnessConfigSourceDocument,
-} from '../../../config-foundation/domain/harness-config.js';
-import { HarnessError } from '../../../harness-error/domain/value-objects/harness-error.js';
-import { ErrorCode } from '../../../harness-error/domain/value-objects/error-code.js';
-import { Severity } from '../../../harness-error/domain/value-objects/severity.js';
+  PhaseDependenciesPresetId,
+} from "../../../config-foundation/domain/harness-config.js";
+import { WORLD_CONFIG_DEFAULTS } from "../../../config-foundation/domain/value-objects/world-config.js";
+import { ErrorCode } from "../../../harness-error/domain/value-objects/error-code.js";
+import { HarnessError } from "../../../harness-error/domain/value-objects/harness-error.js";
+import { Severity } from "../../../harness-error/domain/value-objects/severity.js";
 
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>
@@ -22,7 +23,7 @@ type DeepPartial<T> = {
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function deepMerge<T>(baseValue: T, overrideValue?: DeepPartial<T>): T {
@@ -38,10 +39,7 @@ function deepMerge<T>(baseValue: T, overrideValue?: DeepPartial<T>): T {
     const baseRecord = baseValue as Record<string, unknown>;
     const overrideRecord = overrideValue as Record<string, unknown>;
     const merged: Record<string, unknown> = {};
-    const keys = new Set([
-      ...Object.keys(baseRecord),
-      ...Object.keys(overrideRecord),
-    ]);
+    const keys = new Set([...Object.keys(baseRecord), ...Object.keys(overrideRecord)]);
 
     for (const key of keys) {
       const baseEntry = baseRecord[key];
@@ -67,13 +65,13 @@ function deepMerge<T>(baseValue: T, overrideValue?: DeepPartial<T>): T {
 }
 
 export function createResolvedDocument(
-  preset: 'minimal' | 'standard' | 'strict' = 'minimal',
+  preset: "minimal" | "standard" | "strict" = "minimal",
 ): HarnessConfigResolvedDocument {
   const minimal: HarnessConfigResolvedDocument = {
     project: {
-      name: 'my-project',
+      name: "my-project",
       preset,
-      languages: ['typescript'],
+      languages: ["typescript"],
     },
     layers: {
       L1: {
@@ -82,31 +80,31 @@ export function createResolvedDocument(
       },
       L2: {
         enabled: true,
-        validators: ['phase-gate', 'architecture'],
+        validators: ["phase-gate", "architecture"],
       },
       L3: {
         enabled: false,
-        validators: ['consistency'],
+        validators: ["consistency"],
         coverageThreshold: 0,
       },
       L4: {
         enabled: false,
-        validators: ['drift-detector'],
-        schedule: '0 0 * * *',
+        validators: ["drift-detector"],
+        schedule: "0 0 * * *",
       },
     },
     quickMode: {
-      allowedCategories: ['bugfix'],
-      maintainedLayers: ['L1', 'L2'],
+      allowedCategories: ["bugfix"],
+      maintainedLayers: ["L1", "L2"],
       relaxedGates: [],
     },
     phaseDependencies: {
-      preset: 'default',
+      preset: "default",
       override: false,
       customRules: [],
     },
     planningMode: {
-      default: 'interactive',
+      default: "interactive",
       perPhase: {},
     },
     harnesses: {
@@ -116,38 +114,39 @@ export function createResolvedDocument(
       deadCodeGC: false,
     },
     paths: {
-      designDocs: 'docs/product/construction',
-      inceptionDocs: 'docs/inception',
+      designDocs: "docs/product/construction",
+      inceptionDocs: "docs/inception",
     },
     reporting: {
-      format: 'json',
-      outputDir: 'reports',
+      format: "json",
+      outputDir: "reports",
     },
     validate: {
       failOnWarning: false,
     },
+    world: structuredClone(WORLD_CONFIG_DEFAULTS),
   };
 
-  if (preset === 'standard') {
-    minimal.project.preset = 'standard';
+  if (preset === "standard") {
+    minimal.project.preset = "standard";
     minimal.layers.L3 = {
       enabled: true,
-      validators: ['consistency', 'test-quality'],
+      validators: ["consistency", "test-quality"],
       coverageThreshold: 90,
     };
   }
 
-  if (preset === 'strict') {
-    minimal.project.preset = 'strict';
+  if (preset === "strict") {
+    minimal.project.preset = "strict";
     minimal.layers.L3 = {
       enabled: true,
-      validators: ['consistency', 'test-quality'],
+      validators: ["consistency", "test-quality"],
       coverageThreshold: 95,
     };
     minimal.layers.L4 = {
       enabled: true,
-      validators: ['drift-detector', 'dead-code-detector'],
-      schedule: '0 1 * * *',
+      validators: ["drift-detector", "dead-code-detector"],
+      schedule: "0 1 * * *",
     };
     minimal.harnesses = {
       agentLessonCollection: true,
@@ -168,28 +167,28 @@ export function createValidSourceDocument(
 ): HarnessConfigSourceDocument {
   const baseDocument: HarnessConfigSourceDocument = {
     project: {
-      name: 'my-project',
-      preset: 'minimal',
+      name: "my-project",
+      preset: "minimal",
     },
     layers: {},
     quickMode: {},
     phaseDependencies: {
-      preset: 'default',
+      preset: "default",
       override: false,
       customRules: [],
     },
     planningMode: {
-      default: 'interactive',
+      default: "interactive",
       perPhase: {},
     },
     harnesses: {},
     paths: {
-      designDocs: 'docs/product/construction',
-      inceptionDocs: 'docs/inception',
+      designDocs: "docs/product/construction",
+      inceptionDocs: "docs/inception",
     },
     reporting: {
-      format: 'json',
-      outputDir: 'reports',
+      format: "json",
+      outputDir: "reports",
     },
   };
 
@@ -215,24 +214,24 @@ export function createHarnessError(
     path: string;
   }> = {},
 ): HarnessError & { readonly errorCode: string; readonly path: string } {
-  const errorCode = overrides.errorCode ?? 'L1-001';
+  const errorCode = overrides.errorCode ?? "L1-001";
   const harnessError = new HarnessError({
     code: ErrorCode.create(errorCode),
-    severity: Severity.create('error'),
-    message: overrides.message ?? '設定が不正です',
-    suggestion: '設定を修正してください',
+    severity: Severity.create("error"),
+    message: overrides.message ?? "設定が不正です",
+    suggestion: "設定を修正してください",
     adrRef: null,
     fixExample: null,
   }) as HarnessError & { readonly errorCode: string; readonly path: string };
 
   return Object.assign(harnessError, {
     errorCode,
-    path: overrides.path ?? '/project',
+    path: overrides.path ?? "/project",
   });
 }
 
 export async function withTempDir<T>(testFn: (tempDir: string) => Promise<T> | T): Promise<T> {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'config-foundation-it-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "config-foundation-it-"));
 
   try {
     return await testFn(tempDir);
@@ -242,9 +241,9 @@ export async function withTempDir<T>(testFn: (tempDir: string) => Promise<T> | T
 }
 
 export function writeJsonFile(targetPath: string, document: unknown): void {
-  fs.writeFileSync(targetPath, `${JSON.stringify(document, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(targetPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
 }
 
 export function writeBrokenJsonFile(targetPath: string, rawText: string): void {
-  fs.writeFileSync(targetPath, rawText, 'utf8');
+  fs.writeFileSync(targetPath, rawText, "utf8");
 }

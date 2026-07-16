@@ -1,35 +1,24 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-import { describe, expect, it } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.ts';
+// @work-item-id WI-300
+import { describe, expect, it } from "vitest";
+import { ConfigValidationError } from "../../../config-foundation/domain/errors/config-validation-error.js";
+import { InvalidHarnessesConfigError } from "../../../config-foundation/domain/errors/invalid-harnesses-config-error.js";
+import { UnsupportedFeatureError } from "../../../config-foundation/domain/errors/unsupported-feature-error.js";
 import {
-  HarnessConfig,
   type DomainEvent,
+  HarnessConfig,
   type HarnessConfigResolvedDocument,
   type HarnessConfigSourceDocument,
   type LayerId,
-  FeatureActivationRuleError,
   UnknownLayerError,
-} from '../../../config-foundation/domain/harness-config.js';
-import { ConfigValidationError } from '../../../config-foundation/domain/errors/config-validation-error.js';
-import { InvalidHarnessesConfigError } from '../../../config-foundation/domain/errors/invalid-harnesses-config-error.js';
-import { UnsupportedFeatureError } from '../../../config-foundation/domain/errors/unsupported-feature-error.js';
-import { FeatureName } from '../../../config-foundation/domain/value-objects/feature-name.js';
-import { HarnessesConfig } from '../../../config-foundation/domain/value-objects/harnesses-config.js';
-import { L1Config } from '../../../config-foundation/domain/value-objects/l1-config.js';
-import { L2Config } from '../../../config-foundation/domain/value-objects/l2-config.js';
-import { L3Config } from '../../../config-foundation/domain/value-objects/l3-config.js';
-import { L4Config } from '../../../config-foundation/domain/value-objects/l4-config.js';
-import { LayersConfig } from '../../../config-foundation/domain/value-objects/layers-config.js';
-import { ProjectConfig } from '../../../config-foundation/domain/value-objects/project-config.js';
+} from "../../../config-foundation/domain/harness-config.js";
+import { FeatureName } from "../../../config-foundation/domain/value-objects/feature-name.js";
+import { WORLD_CONFIG_DEFAULTS } from "../../../config-foundation/domain/value-objects/world-config.js";
+import { context, target } from "../../helpers/test-helpers.ts";
 
-const AVAILABLE_FEATURES = [
-  'agentLessonCollection',
-  'cascadeUpdate',
-  'bundleSizeLimit',
-  'deadCodeGC',
-] as const;
+const AVAILABLE_FEATURES = ["agentLessonCollection", "cascadeUpdate", "bundleSizeLimit", "deadCodeGC"] as const;
 
 function createFeatureName(name: string): FeatureName {
   return FeatureName.create(name, AVAILABLE_FEATURES);
@@ -42,34 +31,34 @@ function createMinimalFixture(): {
   return {
     sourceDocument: {
       project: {
-        name: 'my-project',
-        preset: 'minimal',
+        name: "my-project",
+        preset: "minimal",
       },
       layers: {},
       quickMode: {},
       phaseDependencies: {
-        preset: 'default',
+        preset: "default",
         override: false,
         customRules: [],
       },
       planningMode: {
-        default: 'interactive',
+        default: "interactive",
         perPhase: {},
       },
       harnesses: {},
       paths: {
-        designDocs: 'docs/product/construction',
-        inceptionDocs: 'docs/inception',
+        designDocs: "docs/product/construction",
+        inceptionDocs: "docs/inception",
       },
       reporting: {
-        format: 'json',
-        outputDir: 'reports',
+        format: "json",
+        outputDir: "reports",
       },
     },
     resolvedDocument: {
       project: {
-        name: 'my-project',
-        preset: 'minimal',
+        name: "my-project",
+        preset: "minimal",
       },
       layers: {
         L1: {
@@ -78,31 +67,31 @@ function createMinimalFixture(): {
         },
         L2: {
           enabled: true,
-          validators: ['phase-gate', 'architecture'],
+          validators: ["phase-gate", "architecture"],
         },
         L3: {
           enabled: false,
-          validators: ['consistency'],
+          validators: ["consistency"],
           coverageThreshold: 0,
         },
         L4: {
           enabled: false,
-          validators: ['drift-detector'],
-          schedule: '0 0 * * *',
+          validators: ["drift-detector"],
+          schedule: "0 0 * * *",
         },
       },
       quickMode: {
-        allowedCategories: ['bugfix'],
-        maintainedLayers: ['L1', 'L2'],
+        allowedCategories: ["bugfix"],
+        maintainedLayers: ["L1", "L2"],
         relaxedGates: [],
       },
       phaseDependencies: {
-        preset: 'default',
+        preset: "default",
         override: false,
         customRules: [],
       },
       planningMode: {
-        default: 'interactive',
+        default: "interactive",
         perPhase: {},
       },
       harnesses: {
@@ -112,16 +101,17 @@ function createMinimalFixture(): {
         deadCodeGC: false,
       },
       paths: {
-        designDocs: 'docs/product/construction',
-        inceptionDocs: 'docs/inception',
+        designDocs: "docs/product/construction",
+        inceptionDocs: "docs/inception",
       },
       reporting: {
-        format: 'json',
-        outputDir: 'reports',
+        format: "json",
+        outputDir: "reports",
       },
       validate: {
         failOnWarning: false,
       },
+      world: structuredClone(WORLD_CONFIG_DEFAULTS),
     },
   };
 }
@@ -132,11 +122,11 @@ function createStandardFixture(): {
 } {
   const fixture = createMinimalFixture();
 
-  fixture.sourceDocument.project.preset = 'standard';
-  fixture.resolvedDocument.project.preset = 'standard';
+  fixture.sourceDocument.project.preset = "standard";
+  fixture.resolvedDocument.project.preset = "standard";
   fixture.resolvedDocument.layers.L3 = {
     enabled: true,
-    validators: ['consistency', 'test-quality'],
+    validators: ["consistency", "test-quality"],
     coverageThreshold: 90,
   };
 
@@ -149,17 +139,17 @@ function createStrictFixture(): {
 } {
   const fixture = createMinimalFixture();
 
-  fixture.sourceDocument.project.preset = 'strict';
-  fixture.resolvedDocument.project.preset = 'strict';
+  fixture.sourceDocument.project.preset = "strict";
+  fixture.resolvedDocument.project.preset = "strict";
   fixture.resolvedDocument.layers.L3 = {
     enabled: true,
-    validators: ['consistency', 'test-quality'],
+    validators: ["consistency", "test-quality"],
     coverageThreshold: 95,
   };
   fixture.resolvedDocument.layers.L4 = {
     enabled: true,
-    validators: ['drift-detector', 'dead-code-detector'],
-    schedule: '0 1 * * *',
+    validators: ["drift-detector", "dead-code-detector"],
+    schedule: "0 1 * * *",
   };
   fixture.resolvedDocument.harnesses = {
     agentLessonCollection: true,
@@ -187,9 +177,9 @@ function reconstituteHarnessConfig(
 
 function createUnknownFeatureName(): FeatureName {
   return {
-    value: 'unknownFeature',
+    value: "unknownFeature",
     toString(): string {
-      return 'unknownFeature';
+      return "unknownFeature";
     },
     equals(): boolean {
       return false;
@@ -199,23 +189,23 @@ function createUnknownFeatureName(): FeatureName {
 
 function createPendingEvent(): DomainEvent {
   return Object.freeze({
-    type: 'FeatureToggled',
-    occurredAt: new Date('2026-03-14T00:00:00.000Z'),
-    projectName: 'my-project',
-    featureName: 'agentLessonCollection',
+    type: "FeatureToggled",
+    occurredAt: new Date("2026-03-14T00:00:00.000Z"),
+    projectName: "my-project",
+    featureName: "agentLessonCollection",
     previousState: false,
     currentState: true,
   });
 }
 
-target('HarnessConfig', () => {
-  describe('再構築する', () => {
+target("HarnessConfig", () => {
+  describe("再構築する", () => {
     // UT-CF-001
-    context('sourceDocumentとresolvedDocumentのpreset値が不一致の場合', () => {
-      it('再構築に失敗する', () => {
+    context("sourceDocumentとresolvedDocumentのpreset値が不一致の場合", () => {
+      it("再構築に失敗する", () => {
         // Arrange
         const fixture = createMinimalFixture();
-        fixture.resolvedDocument.project.preset = 'strict';
+        fixture.resolvedDocument.project.preset = "strict";
 
         // Act
         const actual = () => reconstituteHarnessConfig(fixture);
@@ -227,8 +217,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-002
-    context('resolvedDocumentのbundleSizeLimitが負値の場合', () => {
-      it('再構築に失敗する', () => {
+    context("resolvedDocumentのbundleSizeLimitが負値の場合", () => {
+      it("再構築に失敗する", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.resolvedDocument.harnesses.bundleSizeLimit = -1;
@@ -243,52 +233,46 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-003
-    context('phaseDependenciesに意味論上の不正依存が含まれる場合', () => {
-      it('構造検証だけで再構築できる', () => {
+    context("phaseDependenciesに意味論上の不正依存が含まれる場合", () => {
+      it("構造検証だけで再構築できる", () => {
         // Arrange
         const fixture = createMinimalFixture();
-        fixture.sourceDocument.phaseDependencies.customRules = [
-          { phase: 'implement', requires: ['deploy'] },
-        ];
-        fixture.resolvedDocument.phaseDependencies.customRules = [
-          { phase: 'implement', requires: ['deploy'] },
-        ];
+        fixture.sourceDocument.phaseDependencies.customRules = [{ phase: "implement", requires: ["deploy"] }];
+        fixture.resolvedDocument.phaseDependencies.customRules = [{ phase: "implement", requires: ["deploy"] }];
 
         // Act
         const actual = reconstituteHarnessConfig(fixture);
 
         // Assert
         expect(actual.toResolvedConfig().phaseDependencies.customRules).toEqual([
-          { phase: 'implement', requires: ['deploy'] },
+          { phase: "implement", requires: ["deploy"] },
         ]);
       });
     });
 
     // UT-CF-004
-    context('planningMode.perPhaseに実在しないフェーズ名がある場合', () => {
-      it('構造検証だけで再構築できる', () => {
+    context("planningMode.perPhaseに実在しないフェーズ名がある場合", () => {
+      it("構造検証だけで再構築できる", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.planningMode.perPhase = {
-          unknownPhase: 'embedded-qa',
+          unknownPhase: "embedded-qa",
         };
         fixture.resolvedDocument.planningMode.perPhase = {
-          unknownPhase: 'embedded-qa',
+          unknownPhase: "embedded-qa",
         };
 
         // Act
         const actual = reconstituteHarnessConfig(fixture);
 
         // Assert
-        expect(actual.toResolvedConfig().planningMode.perPhase.unknownPhase).toBe(
-          'embedded-qa',
-        );
+        expect(actual.toResolvedConfig().planningMode.perPhase.unknownPhase).toBe("embedded-qa");
       });
     });
 
     // UT-CF-005
-    context('再構築した集約で機能を有効化する / 存在しない機能名を指定した場合', () => {
-      it('エラーになる', () => {
+    context("再構築した集約で機能を有効化する / 存在しない機能名を指定した場合", () => {
+      it("エラーになる", () => {
         // Arrange
         const fixture = createMinimalFixture();
         const harnessConfig = reconstituteHarnessConfig(fixture);
@@ -304,8 +288,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-006
-    context('再構築した集約で機能を無効化する / 存在しない機能名を指定した場合', () => {
-      it('エラーになる', () => {
+    context("再構築した集約で機能を無効化する / 存在しない機能名を指定した場合", () => {
+      it("エラーになる", () => {
         // Arrange
         const fixture = createMinimalFixture();
         const harnessConfig = reconstituteHarnessConfig(fixture);
@@ -321,8 +305,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-008
-    context('standard fixtureを渡した場合', () => {
-      it('standardの設定を保持した集約を返す', () => {
+    context("standard fixtureを渡した場合", () => {
+      it("standardの設定を保持した集約を返す", () => {
         // Arrange
         const fixture = createStandardFixture();
 
@@ -330,33 +314,33 @@ target('HarnessConfig', () => {
         const actual = reconstituteHarnessConfig(fixture);
 
         // Assert
-        expect(actual.getLayerConfig('L3').enabled).toBe(true);
+        expect(actual.getLayerConfig("L3").enabled).toBe(true);
         expect(actual.toResolvedConfig().layers.L3.coverageThreshold).toBe(90);
       });
     });
 
     // UT-CF-009
-    context('strict fixtureを渡した場合', () => {
-      it('strictの設定を保持した集約を返す', () => {
+    context("strict fixtureを渡した場合", () => {
+      it("strictの設定を保持した集約を返す", () => {
         // Arrange
         const fixture = createStrictFixture();
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         const actual = reconstituteHarnessConfig(fixture);
 
         // Assert
-        expect(actual.getLayerConfig('L1').enabled).toBe(true);
-        expect(actual.getLayerConfig('L2').enabled).toBe(true);
-        expect(actual.getLayerConfig('L3').enabled).toBe(true);
-        expect(actual.getLayerConfig('L4').enabled).toBe(true);
+        expect(actual.getLayerConfig("L1").enabled).toBe(true);
+        expect(actual.getLayerConfig("L2").enabled).toBe(true);
+        expect(actual.getLayerConfig("L3").enabled).toBe(true);
+        expect(actual.getLayerConfig("L4").enabled).toBe(true);
         expect(actual.isFeatureEnabled(featureName)).toBe(true);
       });
     });
 
     // UT-CF-010
-    context('pendingEventsを省略した場合', () => {
-      it('空配列で初期化される', () => {
+    context("pendingEventsを省略した場合", () => {
+      it("空配列で初期化される", () => {
         // Arrange
         const fixture = createMinimalFixture();
 
@@ -369,8 +353,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-011
-    context('pendingEventsを指定した場合', () => {
-      it('指定したイベントを保持する', () => {
+    context("pendingEventsを指定した場合", () => {
+      it("指定したイベントを保持する", () => {
         // Arrange
         const fixture = createMinimalFixture();
         const pendingEvents = [createPendingEvent()];
@@ -384,13 +368,13 @@ target('HarnessConfig', () => {
     });
   });
 
-  describe('機能を切り替える', () => {
+  describe("機能を切り替える", () => {
     // UT-CF-012
-    context('agentLessonCollectionを有効化する場合', () => {
-      it('sourceとresolvedの両方が更新される', () => {
+    context("agentLessonCollectionを有効化する場合", () => {
+      it("sourceとresolvedの両方が更新される", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -406,11 +390,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-013
-    context('cascadeUpdateを有効化する場合', () => {
-      it('sourceとresolvedの両方が更新される', () => {
+    context("cascadeUpdateを有効化する場合", () => {
+      it("sourceとresolvedの両方が更新される", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('cascadeUpdate');
+        const featureName = createFeatureName("cascadeUpdate");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -426,11 +410,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-014
-    context('deadCodeGCを有効化する場合', () => {
-      it('sourceとresolvedの両方が更新される', () => {
+    context("deadCodeGCを有効化する場合", () => {
+      it("sourceとresolvedの両方が更新される", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('deadCodeGC');
+        const featureName = createFeatureName("deadCodeGC");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -446,11 +430,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-015
-    context('bundleSizeLimitが0の状態で有効化する場合', () => {
-      it('既定値500になる', () => {
+    context("bundleSizeLimitが0の状態で有効化する場合", () => {
+      it("既定値500になる", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('bundleSizeLimit');
+        const featureName = createFeatureName("bundleSizeLimit");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -466,14 +450,14 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-016
-    context('bundleSizeLimitが既に正値の場合', () => {
-      it('値を維持する', () => {
+    context("bundleSizeLimitが既に正値の場合", () => {
+      it("値を維持する", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.bundleSizeLimit = 300;
         fixture.resolvedDocument.harnesses.bundleSizeLimit = 300;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('bundleSizeLimit');
+        const featureName = createFeatureName("bundleSizeLimit");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -489,14 +473,14 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-017
-    context('boolean機能を無効化する場合', () => {
-      it('falseに更新される', () => {
+    context("boolean機能を無効化する場合", () => {
+      it("falseに更新される", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.agentLessonCollection = true;
         fixture.resolvedDocument.harnesses.agentLessonCollection = true;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         harnessConfig.disableFeature(featureName);
@@ -512,14 +496,14 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-018
-    context('bundleSizeLimitを無効化する場合', () => {
-      it('0に更新される', () => {
+    context("bundleSizeLimitを無効化する場合", () => {
+      it("0に更新される", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.bundleSizeLimit = 500;
         fixture.resolvedDocument.harnesses.bundleSizeLimit = 500;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('bundleSizeLimit');
+        const featureName = createFeatureName("bundleSizeLimit");
 
         // Act
         harnessConfig.disableFeature(featureName);
@@ -535,11 +519,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-019
-    context('enableFeature実行後', () => {
-      it('FeatureToggledイベントが追加される', () => {
+    context("enableFeature実行後", () => {
+      it("FeatureToggledイベントが追加される", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         harnessConfig.enableFeature(featureName);
@@ -548,22 +532,22 @@ target('HarnessConfig', () => {
         // Assert
         expect(actual).toHaveLength(1);
         expect(actual[0]).toMatchObject({
-          type: 'FeatureToggled',
-          featureName: 'agentLessonCollection',
+          type: "FeatureToggled",
+          featureName: "agentLessonCollection",
           currentState: true,
         });
       });
     });
 
     // UT-CF-020
-    context('disableFeature実行後', () => {
-      it('FeatureToggledイベントが追加される', () => {
+    context("disableFeature実行後", () => {
+      it("FeatureToggledイベントが追加される", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.cascadeUpdate = true;
         fixture.resolvedDocument.harnesses.cascadeUpdate = true;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('cascadeUpdate');
+        const featureName = createFeatureName("cascadeUpdate");
 
         // Act
         harnessConfig.disableFeature(featureName);
@@ -572,23 +556,23 @@ target('HarnessConfig', () => {
         // Assert
         expect(actual).toHaveLength(1);
         expect(actual[0]).toMatchObject({
-          type: 'FeatureToggled',
-          featureName: 'cascadeUpdate',
+          type: "FeatureToggled",
+          featureName: "cascadeUpdate",
           currentState: false,
         });
       });
     });
   });
 
-  describe('レイヤーと機能状態を参照する', () => {
+  describe("レイヤーと機能状態を参照する", () => {
     // UT-CF-025
-    context('不正なレイヤーIDを指定した場合', () => {
-      it('エラーになる', () => {
+    context("不正なレイヤーIDを指定した場合", () => {
+      it("エラーになる", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
 
         // Act
-        const actual = () => harnessConfig.getLayerConfig('L5' as unknown as LayerId);
+        const actual = () => harnessConfig.getLayerConfig("L5" as unknown as LayerId);
 
         // Assert
         expect(actual).toThrowError(UnknownLayerError);
@@ -597,14 +581,14 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-026
-    context('boolean機能が有効の場合', () => {
-      it('trueを返す', () => {
+    context("boolean機能が有効の場合", () => {
+      it("trueを返す", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.agentLessonCollection = true;
         fixture.resolvedDocument.harnesses.agentLessonCollection = true;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         const actual = harnessConfig.isFeatureEnabled(featureName);
@@ -615,11 +599,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-027
-    context('boolean機能が無効の場合', () => {
-      it('falseを返す', () => {
+    context("boolean機能が無効の場合", () => {
+      it("falseを返す", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('agentLessonCollection');
+        const featureName = createFeatureName("agentLessonCollection");
 
         // Act
         const actual = harnessConfig.isFeatureEnabled(featureName);
@@ -630,14 +614,14 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-028
-    context('bundleSizeLimitが正値の場合', () => {
-      it('trueを返す', () => {
+    context("bundleSizeLimitが正値の場合", () => {
+      it("trueを返す", () => {
         // Arrange
         const fixture = createMinimalFixture();
         fixture.sourceDocument.harnesses.bundleSizeLimit = 500;
         fixture.resolvedDocument.harnesses.bundleSizeLimit = 500;
         const harnessConfig = reconstituteHarnessConfig(fixture);
-        const featureName = createFeatureName('bundleSizeLimit');
+        const featureName = createFeatureName("bundleSizeLimit");
 
         // Act
         const actual = harnessConfig.isFeatureEnabled(featureName);
@@ -648,11 +632,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-029
-    context('bundleSizeLimitが0の場合', () => {
-      it('falseを返す', () => {
+    context("bundleSizeLimitが0の場合", () => {
+      it("falseを返す", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        const featureName = createFeatureName('bundleSizeLimit');
+        const featureName = createFeatureName("bundleSizeLimit");
 
         // Act
         const actual = harnessConfig.isFeatureEnabled(featureName);
@@ -663,10 +647,10 @@ target('HarnessConfig', () => {
     });
   });
 
-  describe('DTOとイベントを扱う', () => {
+  describe("DTOとイベントを扱う", () => {
     // UT-CF-030
-    context('解決済みDTOへ変換する場合', () => {
-      it('resolved DTOを返す', () => {
+    context("解決済みDTOへ変換する場合", () => {
+      it("resolved DTOを返す", () => {
         // Arrange
         const fixture = createMinimalFixture();
         const harnessConfig = reconstituteHarnessConfig(fixture);
@@ -680,8 +664,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-031
-    context('解決済みDTOへ変換した後に返却値を書き換える場合', () => {
-      it('集約内部に影響しない', () => {
+    context("解決済みDTOへ変換した後に返却値を書き換える場合", () => {
+      it("集約内部に影響しない", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
 
@@ -695,8 +679,8 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-032
-    context('永続化用プレーンオブジェクトへ変換する場合', () => {
-      it('sourceDocumentを返す', () => {
+    context("永続化用プレーンオブジェクトへ変換する場合", () => {
+      it("sourceDocumentを返す", () => {
         // Arrange
         const fixture = createMinimalFixture();
         const harnessConfig = reconstituteHarnessConfig(fixture);
@@ -710,27 +694,25 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-033
-    context('sourceDocumentを書き換える場合', () => {
-      it('defensive copyである', () => {
+    context("sourceDocumentを書き換える場合", () => {
+      it("defensive copyである", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
 
         // Act
         const actual = harnessConfig.toSourceDocument();
-        actual.project.name = 'changed';
+        actual.project.name = "changed";
         actual.harnesses.agentLessonCollection = true;
 
         // Assert
-        expect(harnessConfig.toSourceDocument().project.name).toBe('my-project');
-        expect(
-          harnessConfig.toSourceDocument().harnesses.agentLessonCollection,
-        ).toBeUndefined();
+        expect(harnessConfig.toSourceDocument().project.name).toBe("my-project");
+        expect(harnessConfig.toSourceDocument().harnesses.agentLessonCollection).toBeUndefined();
       });
     });
 
     // UT-CF-034
-    context('sourceDocumentに差分だけを持つ場合', () => {
-      it('省略形を維持する', () => {
+    context("sourceDocumentに差分だけを持つ場合", () => {
+      it("省略形を維持する", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
 
@@ -744,11 +726,11 @@ target('HarnessConfig', () => {
     });
 
     // UT-CF-035
-    context('pullDomainEventsを連続で呼ぶ場合', () => {
-      it('2回目は空配列になる', () => {
+    context("pullDomainEventsを連続で呼ぶ場合", () => {
+      it("2回目は空配列になる", () => {
         // Arrange
         const harnessConfig = reconstituteHarnessConfig(createMinimalFixture());
-        harnessConfig.enableFeature(createFeatureName('agentLessonCollection'));
+        harnessConfig.enableFeature(createFeatureName("agentLessonCollection"));
 
         // Act
         const actual = harnessConfig.pullDomainEvents();

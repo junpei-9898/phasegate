@@ -672,3 +672,9 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 @story-id H17-10
 
 main processを通じてpin preview / apply、derive pure / write、invalid invocation / schema / configを実行し、single JSON envelope、human stderr、exit 0/1/2、filesystem mutation scopeを確認する。known command conformanceは3 world commandをmain case集合と同じcommitで検証する。
+
+## WI-300 World config CLI integration
+
+<!-- @work-item-id WI-300 -->
+
+custom World pathを持つv2 / v3 configと`enabled:false`をmain processで読み、明示inspect / deriveがresolved pathを使って実行されることを確認する。unknown World fieldやinvalid pathはcanonical defaultsへfallbackせずexit 2とする。

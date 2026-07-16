@@ -76,6 +76,36 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
     "format": "json",
     "outputDir": "reports"
   },
+  "world": {
+    "enabled": false,
+    "corpus": {
+      "productRoots": ["docs/product"],
+      "inceptionRoots": ["docs/inception"],
+      "adrRoots": ["docs/ADR"],
+      "sourceRoots": ["scripts/harness"],
+      "include": ["**/*"],
+      "exclude": []
+    },
+    "inputs": {
+      "matrixPath": ".harness/requirement-test-matrix.json",
+      "attestationPath": ".harness/attestation.json",
+      "integrityManifestPath": "phasegate.integrity.json"
+    },
+    "declarations": {
+      "constraintsPath": "phasegate.world-constraints.json",
+      "baselinePath": "phasegate.world-baseline.json",
+      "waiversPath": "phasegate.world-waivers.json",
+      "debtsPath": "phasegate.world-debts.json"
+    },
+    "output": {
+      "obligationReportPath": ".harness/world-obligations.json"
+    },
+    "sessionStart": {
+      "enabled": true,
+      "maxItems": 5,
+      "maxChars": 2000
+    }
+  },
   "preCommit": {
     "implementationExtensions": [".ts"]
   },
@@ -114,6 +144,8 @@ The `strict` preset also enables:
 - `agentLessonCollection` -- captures agent mistakes for continuous improvement
 - `bundleSizeLimit` -- 500 KB default cap
 - `deadCodeGC` -- automatic dead-code garbage collection
+
+All three presets resolve the same World Model defaults with `world.enabled: false`. This switch controls future automatic L2/L3 and hook integration; it does not disable explicit `world:inspect`, `world:pin`, or `world:derive` commands. Enabling automatic World gates remains an explicit rollout decision. <!-- @work-item-id WI-300 -->
 
 ---
 
@@ -215,6 +247,30 @@ Example for Python and TypeScript:
 ```
 
 The metadata validators read `@unit` and `@layer` with language-agnostic regular expressions, so Python `# @unit api` and Go `// @unit api` style comments are both valid as long as the file extension is included here.
+
+#### `world`
+
+<!-- @work-item-id WI-300 -->
+
+`world` configures the World Model read corpus and reviewed control inputs. It is available in both v2 and v3 config schemas. Nested fields may be omitted and are resolved from the selected preset.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `enabled` | `false` | Enables future automatic validator/hook integration; explicit `world:*` commands remain available |
+| `corpus.productRoots` | `["docs/product"]` | Canonical product corpus roots |
+| `corpus.inceptionRoots` | `["docs/inception"]` | Proposal/delta corpus roots |
+| `corpus.adrRoots` | `["docs/ADR"]` | ADR corpus roots |
+| `corpus.sourceRoots` | `["scripts/harness"]` | Source/test corpus roots |
+| `corpus.include` / `exclude` | `["**/*"]` / `[]` | Versioned selection patterns |
+| `inputs.matrixPath` | `.harness/requirement-test-matrix.json` | Matrix owner projection input |
+| `inputs.attestationPath` | `.harness/attestation.json` | Attestation evidence input |
+| `inputs.integrityManifestPath` | `phasegate.integrity.json` | Integrity declaration input |
+| `declarations.*Path` | `phasegate.world-{constraints,baseline,waivers,debts}.json` | Git-reviewed external declarations |
+| `output.obligationReportPath` | `.harness/world-obligations.json` | Generated, non-authoritative report path |
+| `sessionStart.enabled` | `true` | Allows the bounded World summary when session integration is installed |
+| `sessionStart.maxItems` / `maxChars` | `5` / `2000` | Summary caps; valid ranges are 1–20 and 1–8000 |
+
+All paths are project-relative POSIX paths. Absolute paths, backslashes, `.` / `..` segments, cross-role corpus root overlap, and case-fold collisions are rejected. When the matching World field is omitted, legacy `paths.designDocs`, `paths.inceptionDocs`, and `layers.L3.requirementMatrixPath` remain compatible inputs. A present but invalid `world` section fails closed; it is never replaced with defaults silently.
 
 #### `phase2Extensions`
 

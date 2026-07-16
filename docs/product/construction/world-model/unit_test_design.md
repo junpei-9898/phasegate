@@ -363,3 +363,9 @@ pin use caseはpreview / apply、exact / alias、missing / duplicate / malformed
 | UT-WM298-INV-001 | unique sorted measured set | duplicate fingerprint 0、count不変 |
 | UT-WM298-ADM-001 | baseline/current exact set | added / missing entry 0 |
 | UT-WM298-DEBT-001 | semantic debt import | structural collectionと混在しない |
+
+## WI-300 World config boundary tests
+
+<!-- @work-item-id WI-300 -->
+
+canonical defaults、完全resolved input、custom corpus / provider / declaration / output path、invalid path rejectionを検証する。`enabled`切替でexplicit use case / handlerの構成が変わらないことも確認する。

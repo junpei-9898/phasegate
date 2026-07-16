@@ -1,13 +1,17 @@
 // @unit world-model
 // @layer presentation
 // @work-item-id WI-296
+// @work-item-id WI-300
 
 import type { DeriveWorldObligationsUseCase } from "../../application/usecases/derive-world-obligations-use-case.js";
 import { PathKey } from "../../domain/value-objects/path-key.js";
 import { envelope, parseFormat, type WorldCommandResult, type WorldOutputFormat } from "./world-command-support.js";
 
 export class WorldDeriveCommandHandler {
-  constructor(private readonly useCase: Pick<DeriveWorldObligationsUseCase, "execute">) {}
+  constructor(
+    private readonly useCase: Pick<DeriveWorldObligationsUseCase, "execute">,
+    private readonly defaultReportPath = ".harness/world-obligations.json",
+  ) {}
 
   static fromFailure(error: unknown): WorldDeriveCommandHandler {
     return new WorldDeriveCommandHandler({
@@ -57,7 +61,7 @@ export class WorldDeriveCommandHandler {
       const data = {
         report,
         persistence: result.result.persistence,
-        writtenPath: writeReport ? (reportPath ?? ".harness/world-obligations.json") : null,
+        writtenPath: writeReport ? (reportPath ?? this.defaultReportPath) : null,
       };
       if (formatted.format === "json") {
         return {

@@ -447,3 +447,9 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 | UT-WM296-API-001 | known command | catalog | inspect / pin / deriveを含みunique / sorted |
 | UT-WM296-API-002 | dispatch conformance | main case labels | catalogと集合一致 |
 | UT-WM296-API-003 | help | root / pin / derive | mutation flagとformat contractを表示 |
+
+## WI-300 Config dispatch tests
+
+<!-- @work-item-id WI-300 -->
+
+dedicated mapperの完全DTOがWorld compositionへ渡ること、config不在fallback、invalid config exit 2、`enabled:false`でもknown command / dispatch集合が不変であることを検証する。

@@ -10,7 +10,7 @@ traceability:
 > **Unit ID**: world-model  
 > **作成日**: 2026-07-16  
 > **Wave**: 4（World Model）  
-> **対応ストーリー**: H17-01〜H17-12  
+> **対応ストーリー**: H17-01〜H17-13
 > **Architecture**: Clean Architecture（domain / application / infrastructure / presentation）
 
 ---
@@ -37,6 +37,7 @@ world-modelは、Phasegate repository内のdesign document、source、generated 
 | H17-10 | WM-15 | `world:pin` / `world:derive` CLI | Must |
 | H17-11 | WM-16 | mutation / determinism E2E | Must |
 | H17-12 | WM-17 | self-repo inventoryとadoption baseline | Must |
+| H17-13 | WM-18 | config surfaceとresolved mapping | Must |
 
 ## 3. 所有する責務
 
@@ -136,7 +137,7 @@ attestation v2へ将来`worldSnapshotRoot`を渡す場合、top-level compositio
 
 ## 9. 実装境界
 
-実装予定の配置は`scripts/harness/world-model/{domain,application,infrastructure,presentation}/`。WM-06〜17がH17-01〜12を順に実装し、WM-05時点では本書とconstruction設計が実装契約を定義する。validator登録、session-start表示、attestation v2連携は後続Phase CのWIで行う。
+実装配置は`scripts/harness/world-model/{domain,application,infrastructure,presentation}/`。WM-06〜17がH17-01〜12の機能MVPを実装し、WM-18 / H17-13からPhase Cのconfig / validator / hook / attestation / CI integrationを順次追加する。validator登録、session-start表示、attestation v2連携はそれぞれ後続WIの責務とする。<!-- @work-item-id WI-300 -->
 
 ## 10. 関連文書
 

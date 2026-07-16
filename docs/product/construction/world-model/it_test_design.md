@@ -267,3 +267,9 @@ repository-shaped base fixtureと独立mutation manifestでmissing、両endpoint
 <!-- @work-item-id WI-298 -->
 
 matrix再生成後のself-repoで`world:derive --json`を二回実行し、serialized bytes、fingerprint集合、exit codeを比較する。review済みbaseline entryとcurrent obligationをexact一致させ、全件`adopted-legacy`、repaid / policy diagnostic 0を検証する。`phasegate.world-debts.json`の明示debtはreportの`declaredSemanticDebts`だけへ現れ、structural countへ混ぜない。
+
+## WI-300 Resolved config integration
+
+<!-- @work-item-id WI-300 -->
+
+config-foundationから渡したcustom matrix / declaration / report pathをrepository-shaped fixtureで観測し、raw configをWorldが再読込しないことを確認する。config不在はcanonical defaults、存在するinvalid configはexit 2、`enabled:false`の明示commandは実行可能とする。

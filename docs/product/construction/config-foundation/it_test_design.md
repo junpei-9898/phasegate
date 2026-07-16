@@ -409,3 +409,9 @@ scripts/harness/__tests__/config-foundation/
 - AJV schema accepts non-empty `project.languages`.
 - Preset resolution supplies `["typescript"]` when `project.languages` is absent.
 - Validator-system config projection includes the resolved language list.
+
+## WI-300 World config integration tests
+
+<!-- @work-item-id WI-300 -->
+
+v2 / v3 AJV schemaへ同じ完全World documentを通し、unknown field、absolute / backslash / traversal path、範囲外session limitを拒否する。preset storeはminimal / standard / strict全てでcanonical defaultsと`enabled:false`を返し、load use caseからconsumer mapperまでoverrideを保持する。

@@ -366,3 +366,9 @@ use caseはreport read portを持たない。pure modeはcanonical bytesを返�
 <!-- @work-item-id WI-298 -->
 
 final tracked corpusと再生成matrixからbaselineなしcandidateを二重deriveし、byte-identicalなunique fingerprint集合だけを`phasegate.world-baseline.json`へ採用する。適用後はcurrent structural setとbaseline entryをexact比較し、全件`adopted-legacy`、new / repaid / policy diagnostic 0を要求する。baseline生成に保存reportや推測件数を使わない。
+
+## WI-300 World config consumption
+
+<!-- @work-item-id WI-300 -->
+
+composition rootはdedicated config-foundation mapperのplain DTOを受け、extractor root / input path、4 control repository path、obligation report既定pathへ配線する。config pathはcorpus / constraint / evaluation digestの該当scopeへ含める。explicit handlersは`enabled:false`でも生成し、automatic gate enablementはvalidator-systemに残す。

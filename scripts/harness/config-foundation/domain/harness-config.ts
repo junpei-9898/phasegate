@@ -4,36 +4,36 @@
  * @work-item-id WI-012
  * @work-item-id WI-212
  * @work-item-id WI-219
+ * @work-item-id WI-300
  */
-import { ConfigFoundationDomainError } from './errors/config-foundation-domain-error.js';
-import { ConfigValidationError } from './errors/config-validation-error.js';
-import { UnsupportedFeatureError } from './errors/unsupported-feature-error.js';
-import { LayersConfig } from './value-objects/layers-config.js';
-import { PathsConfig } from './value-objects/paths-config.js';
-import { PhaseDependenciesConfig } from './value-objects/phase-dependencies-config.js';
-import type { PhaseDependenciesPresetId } from './value-objects/phase-dependencies-config.js';
-import { PlanningModeConfig } from './value-objects/planning-mode-config.js';
-import { ProjectConfig } from './value-objects/project-config.js';
-import { QuickModeConfig } from './value-objects/quick-mode-config.js';
-import { ReportingConfig } from './value-objects/reporting-config.js';
-import { ValidateConfig } from './value-objects/validate-config.js';
-import { HarnessesConfig } from './value-objects/harnesses-config.js';
-import type { FeatureNameValue } from './value-objects/feature-name.js';
-import type { FeatureName } from './value-objects/feature-name.js';
-import type { L1Config } from './value-objects/l1-config.js';
-import type { L2Config } from './value-objects/l2-config.js';
-import type { L3Config } from './value-objects/l3-config.js';
-import type { L4Config } from './value-objects/l4-config.js';
-import type {
-  ArchitectureConfigDocument,
-  ArchitectureConfigSource,
-} from './value-objects/architecture-config.js';
+import { ConfigFoundationDomainError } from "./errors/config-foundation-domain-error.js";
+import { ConfigValidationError } from "./errors/config-validation-error.js";
+import { UnsupportedFeatureError } from "./errors/unsupported-feature-error.js";
+import type { ArchitectureConfigDocument, ArchitectureConfigSource } from "./value-objects/architecture-config.js";
+import type { FeatureName, FeatureNameValue } from "./value-objects/feature-name.js";
+import { HarnessesConfig } from "./value-objects/harnesses-config.js";
+import type { L1Config } from "./value-objects/l1-config.js";
+import type { L2Config } from "./value-objects/l2-config.js";
+import type { L3Config } from "./value-objects/l3-config.js";
+import type { L4Config } from "./value-objects/l4-config.js";
+import { LayersConfig } from "./value-objects/layers-config.js";
+import { PathsConfig } from "./value-objects/paths-config.js";
+import type { PhaseDependenciesPresetId } from "./value-objects/phase-dependencies-config.js";
+import { PhaseDependenciesConfig } from "./value-objects/phase-dependencies-config.js";
+import { PlanningModeConfig } from "./value-objects/planning-mode-config.js";
+import { ProjectConfig } from "./value-objects/project-config.js";
+import { QuickModeConfig } from "./value-objects/quick-mode-config.js";
+import { ReportingConfig } from "./value-objects/reporting-config.js";
+import { ValidateConfig } from "./value-objects/validate-config.js";
+import type { WorldConfigDocument, WorldConfigSourceDocument } from "./value-objects/world-config.js";
+import { WORLD_CONFIG_DEFAULTS, WorldConfig } from "./value-objects/world-config.js";
 
-export type LayerId = 'L1' | 'L2' | 'L3' | 'L4';
-export type PresetId = 'minimal' | 'standard' | 'strict';
-export type PlanningModeValue = 'interactive' | 'embedded-qa' | 'manual';
-export type ModelDelegationPolicy = 'delegate-sonnet' | 'none';
+export type LayerId = "L1" | "L2" | "L3" | "L4";
+export type PresetId = "minimal" | "standard" | "strict";
+export type PlanningModeValue = "interactive" | "embedded-qa" | "manual";
+export type ModelDelegationPolicy = "delegate-sonnet" | "none";
 export type { PhaseDependenciesPresetId };
+
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends Array<infer TItem>
     ? Array<DeepPartial<TItem>>
@@ -48,19 +48,20 @@ export interface HarnessConfigSourceDocument {
     preset: PresetId;
     languages?: string[];
   };
-  layers: DeepPartial<HarnessConfigResolvedDocument['layers']>;
-  quickMode: Partial<HarnessConfigResolvedDocument['quickMode']>;
-  phaseDependencies: HarnessConfigResolvedDocument['phaseDependencies'];
-  planningMode: HarnessConfigResolvedDocument['planningMode'];
-  harnesses: Partial<HarnessConfigResolvedDocument['harnesses']>;
-  paths: HarnessConfigResolvedDocument['paths'];
-  reporting: HarnessConfigResolvedDocument['reporting'];
-  ci?: HarnessConfigResolvedDocument['ci'];
-  validate?: HarnessConfigResolvedDocument['validate'];
-  preCommit?: Partial<HarnessConfigResolvedDocument['preCommit']>;
-  modelRouting?: HarnessConfigResolvedDocument['modelRouting'];
-  phase2Extensions?: HarnessConfigResolvedDocument['phase2Extensions'];
+  layers: DeepPartial<HarnessConfigResolvedDocument["layers"]>;
+  quickMode: Partial<HarnessConfigResolvedDocument["quickMode"]>;
+  phaseDependencies: HarnessConfigResolvedDocument["phaseDependencies"];
+  planningMode: HarnessConfigResolvedDocument["planningMode"];
+  harnesses: Partial<HarnessConfigResolvedDocument["harnesses"]>;
+  paths: HarnessConfigResolvedDocument["paths"];
+  reporting: HarnessConfigResolvedDocument["reporting"];
+  ci?: HarnessConfigResolvedDocument["ci"];
+  validate?: HarnessConfigResolvedDocument["validate"];
+  preCommit?: Partial<HarnessConfigResolvedDocument["preCommit"]>;
+  modelRouting?: HarnessConfigResolvedDocument["modelRouting"];
+  phase2Extensions?: HarnessConfigResolvedDocument["phase2Extensions"];
   architecture?: ArchitectureConfigSource;
+  world?: WorldConfigSourceDocument;
 }
 
 export interface HarnessConfigResolvedDocument {
@@ -142,11 +143,12 @@ export interface HarnessConfigResolvedDocument {
       documentPattern: string;
       daysThreshold: number;
       commitCountThreshold: number;
-      evaluationMode: 'or' | 'and';
+      evaluationMode: "or" | "and";
       enabled?: boolean;
     }>;
   };
   architecture?: ArchitectureConfigDocument;
+  world?: WorldConfigDocument;
 }
 
 export type HarnessConfigV2 = HarnessConfigResolvedDocument;
@@ -159,7 +161,7 @@ export interface HarnessConfigReconstitutionProps {
 }
 
 export interface FeatureToggled {
-  type: 'FeatureToggled';
+  type: "FeatureToggled";
   occurredAt: Date;
   projectName: string;
   featureName: FeatureNameValue | string;
@@ -168,7 +170,7 @@ export interface FeatureToggled {
 }
 
 export interface PresetApplied {
-  type: 'PresetApplied';
+  type: "PresetApplied";
   occurredAt: Date;
   projectName: string;
   preset: PresetId;
@@ -178,23 +180,23 @@ export interface PresetApplied {
 export type DomainEvent = FeatureToggled | PresetApplied;
 
 const SUPPORTED_FEATURE_NAMES = [
-  'agentLessonCollection',
-  'cascadeUpdate',
-  'bundleSizeLimit',
-  'deadCodeGC',
+  "agentLessonCollection",
+  "cascadeUpdate",
+  "bundleSizeLimit",
+  "deadCodeGC",
 ] as const satisfies readonly FeatureNameValue[];
 
 export class UnknownLayerError extends ConfigFoundationDomainError {
   constructor(layerId: string) {
-    super(`未知のレイヤーです: ${layerId} [L1-006]`, 'L1-006');
-    this.name = 'UnknownLayerError';
+    super(`未知のレイヤーです: ${layerId} [L1-006]`, "L1-006");
+    this.name = "UnknownLayerError";
   }
 }
 
 export class FeatureActivationRuleError extends ConfigFoundationDomainError {
   constructor(message: string) {
-    super(`${message} [L1-005]`, 'L1-005');
-    this.name = 'FeatureActivationRuleError';
+    super(`${message} [L1-005]`, "L1-005");
+    this.name = "FeatureActivationRuleError";
   }
 }
 
@@ -207,11 +209,8 @@ function deepClone<T>(value: T): T {
     return value.map((item) => deepClone(item)) as T;
   }
 
-  if (value !== null && typeof value === 'object') {
-    const clonedEntries = Object.entries(value).map(([key, entryValue]) => [
-      key,
-      deepClone(entryValue),
-    ]);
+  if (value !== null && typeof value === "object") {
+    const clonedEntries = Object.entries(value).map(([key, entryValue]) => [key, deepClone(entryValue)]);
 
     return Object.fromEntries(clonedEntries) as T;
   }
@@ -226,7 +225,7 @@ function createFeatureToggledEvent(
   currentState: boolean,
 ): FeatureToggled {
   return Object.freeze({
-    type: 'FeatureToggled',
+    type: "FeatureToggled",
     occurredAt: new Date(),
     projectName,
     featureName,
@@ -240,14 +239,14 @@ function assertSupportedFeature(name: FeatureName): FeatureNameValue {
 
   if (!SUPPORTED_FEATURE_NAMES.includes(raw as FeatureNameValue)) {
     throw new UnsupportedFeatureError(
-      `機能名 "${raw}" は利用できません。利用可能: ${SUPPORTED_FEATURE_NAMES.join(', ')}`,
+      `機能名 "${raw}" は利用できません。利用可能: ${SUPPORTED_FEATURE_NAMES.join(", ")}`,
     );
   }
 
   return raw as FeatureNameValue;
 }
 
-function toHarnessesDocument(harnesses: HarnessesConfig): HarnessConfigResolvedDocument['harnesses'] {
+function toHarnessesDocument(harnesses: HarnessesConfig): HarnessConfigResolvedDocument["harnesses"] {
   return {
     agentLessonCollection: harnesses.agentLessonCollection,
     cascadeUpdate: harnesses.cascadeUpdate,
@@ -303,22 +302,17 @@ export class HarnessConfig {
     const project = ProjectConfig.create(props.resolvedDocument.project);
     const layers = LayersConfig.create(props.resolvedDocument.layers);
     const quickMode = QuickModeConfig.create(props.resolvedDocument.quickMode);
-    const phaseDependencies = PhaseDependenciesConfig.create(
-      props.resolvedDocument.phaseDependencies,
-    );
-    const planningMode = PlanningModeConfig.create(
-      props.resolvedDocument.planningMode,
-    );
+    const phaseDependencies = PhaseDependenciesConfig.create(props.resolvedDocument.phaseDependencies);
+    const planningMode = PlanningModeConfig.create(props.resolvedDocument.planningMode);
     const harnesses = HarnessesConfig.create(props.resolvedDocument.harnesses);
     const paths = PathsConfig.create(props.resolvedDocument.paths);
     const reporting = ReportingConfig.create(props.resolvedDocument.reporting);
     const validate = ValidateConfig.create(props.resolvedDocument.validate);
+    const world = WorldConfig.create(props.resolvedDocument.world ?? WORLD_CONFIG_DEFAULTS).toDocument();
 
-    if (
-      props.sourceDocument.project.preset !== props.resolvedDocument.project.preset
-    ) {
+    if (props.sourceDocument.project.preset !== props.resolvedDocument.project.preset) {
       throw new ConfigValidationError(
-        'sourceDocument.project.preset と resolvedDocument.project.preset は一致しなければなりません',
+        "sourceDocument.project.preset と resolvedDocument.project.preset は一致しなければなりません",
       );
     }
 
@@ -333,7 +327,7 @@ export class HarnessConfig {
       reporting,
       validate,
       sourceDocument: props.sourceDocument,
-      resolvedDocument: props.resolvedDocument,
+      resolvedDocument: { ...props.resolvedDocument, world },
       pendingEvents: props.pendingEvents ?? [],
     });
   }
@@ -355,14 +349,7 @@ export class HarnessConfig {
       ...this.resolvedDocument,
       harnesses: toHarnessesDocument(nextHarnesses),
     };
-    this.pendingEvents.push(
-      createFeatureToggledEvent(
-        this.project.name,
-        featureName,
-        previousState,
-        true,
-      ),
-    );
+    this.pendingEvents.push(createFeatureToggledEvent(this.project.name, featureName, previousState, true));
   }
 
   disableFeature(name: FeatureName): void {
@@ -382,18 +369,11 @@ export class HarnessConfig {
       ...this.resolvedDocument,
       harnesses: toHarnessesDocument(nextHarnesses),
     };
-    this.pendingEvents.push(
-      createFeatureToggledEvent(
-        this.project.name,
-        featureName,
-        previousState,
-        false,
-      ),
-    );
+    this.pendingEvents.push(createFeatureToggledEvent(this.project.name, featureName, previousState, false));
   }
 
   getLayerConfig(layerId: LayerId): L1Config | L2Config | L3Config | L4Config {
-    if (!['L1', 'L2', 'L3', 'L4'].includes(layerId)) {
+    if (!["L1", "L2", "L3", "L4"].includes(layerId)) {
       throw new UnknownLayerError(layerId);
     }
 

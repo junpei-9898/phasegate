@@ -61,7 +61,7 @@ World Modelは既存ownerを置き換える正本ではなく、複数corpusをp
 - world-modelは事実組立・constraint evaluation・obligation derivationを所有し、validator-systemがgate execution、severity、blocking policyを所有する。
 - obligation reportは`.harness/world-obligations.json`へ任意保存できる再生成物であり、判定入力や手編集する返済stateにはしない。
 
-H17-01〜H17-12はWM-06〜17のPhase A / B実装sliceに対応する。WM-11完了をread-only可視化、WM-17完了をconstraint / obligation機能MVPとする。
+H17-01〜H17-12はWM-06〜17のPhase A / B実装slice、H17-13以降はPhase Cのenforcement / production integrationに対応する。WM-11完了をread-only可視化、WM-17完了をconstraint / obligation機能MVPとする。<!-- @work-item-id WI-300 -->
 
 ## 6. 関連文書
 

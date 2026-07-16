@@ -418,3 +418,9 @@ L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into va
 <!-- @work-item-id WI-191 -->
 
 `PlanningModeConfig` の許容モード列挙に `manual` を追加した（`interactive` / `embedded-qa` / `manual`）。`default` と `perPhase` の各値は `VALID_MODES` に照合され、`manual` を含む値が構造検証を通過する。config-foundation は列挙値の構造・schema validation（v2/v3）を所有するのみで、`manual` の意味論（strict preset retrofit project で planning evidence 要求を escape する挙動）は正規定義を持つ phase-dependency-model 側が解釈する。これにより既存 ad-hoc 設計文書を持つ retrofit project が、`planningMode` を `manual` に設定して agent 正規経路から閉ループを抜けられる。
+
+## WI-300 WorldConfig Value Object
+
+<!-- @work-item-id WI-300 -->
+
+`WorldConfig`はADR-037の`world` sectionを所有するimmutable Value Objectである。corpus root、provider input、external declaration、generated output、session-start limitを検証し、project-relative POSIX path、role間root非重複、case-fold collision no-winner、`maxItems=1..20`、`maxChars=1..8000`を不変条件とする。consumerへはdomain型でなくresolved plain documentを返す。

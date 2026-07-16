@@ -2005,3 +2005,9 @@ invalid configはcanonical defaultsへfallbackせずworld handlerのexit 2とす
 @story-id H17-10
 
 main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / deriveを同時追加する。explicit `world:*`はconfig不在でもWorld canonical defaultsを使い、configが存在してinvalidならhandler failure adapter経由でexit 2にする。mainはhandlerのstdout / stderr / exit codeをそのままprocessへ写像し、mutation / policy判断を持たない。
+
+## WI-300 Dedicated World mapper wiring
+
+<!-- @work-item-id WI-300 -->
+
+`loadWorldResolvedConfig()`は`LoadResolvedConfigUseCase`結果を`toWorldModelConfig()`へ渡し、inlineの3-field mappingを廃止する。config不在はundefinedとしてWorld canonical defaultsを使い、存在するinvalid configは従来どおりhandler exit 2へ写像する。`enabled:false`でexplicit dispatchをskipしない。

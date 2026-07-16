@@ -7,6 +7,7 @@
  * @work-item-id WI-258
  * @work-item-id WI-259
  * @work-item-id WI-268
+ * @work-item-id WI-300
  */
 import type { HarnessConfigV2 } from "../../domain/harness-config.js";
 
@@ -69,10 +70,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
         // は fail-closed default-ON。いずれも fallback 判定の後に force-include し、normalize 結果でも
         // fallback でも常に含める（L3-007 は fail-closed だが現 corpus は実参照 0 件ゆえ緑）。
         validators: includeValidator(
-          includeValidator(
-            l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"],
-            "L3-006",
-          ),
+          includeValidator(l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"], "L3-006"),
           "L3-007",
         ),
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
@@ -96,6 +94,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
     validate: {
       failOnWarning: resolvedConfig.validate.failOnWarning,
     },
+    ...(resolvedConfig.world === undefined ? {} : { world: structuredClone(resolvedConfig.world) }),
   };
 }
 

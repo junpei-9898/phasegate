@@ -2080,3 +2080,9 @@ World evaluationのWCR finding、violation fingerprint、adoption / waiver class
 <!-- @work-item-id WI-292 -->
 
 L3-004 adapter / registry / severityは変更せず、nyquist `AcCoverageGatePolicy`のstatus-aware resultをfail-closedで返す。planned Storyもmatrix validation対象から消さず、policyがnon-blocking visible entryとtransition漏れを区別する。validator-system側にplanned allowlistを複製しない。
+
+## WI-300 Resolved World config transport
+
+<!-- @work-item-id WI-300 -->
+
+`toValidatorSystemConfig()`から`world` plain DTOを受け取る境界を予約する。`world.enabled:false`はWM-19 / WM-20でautomatic World validatorをskipする入力になるが、本WIでは`ValidatorId`、registry、RunL2 / RunL3、composition-rootを変更せず、L2-017 / L3-008は未登録のまま維持する。

@@ -22,6 +22,7 @@
  * @work-item-id WI-217
  * @work-item-id WI-219
  * @work-item-id WI-291
+ * @work-item-id WI-300
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -45,6 +46,7 @@ import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.
 import { buildCiGovernance } from "./ci-governance/composition-root.js";
 import { toPhaseConfigSection } from "./config-foundation/application/mappers/phase-config-section-mapper.js";
 import { toValidatorSystemConfig } from "./config-foundation/application/mappers/validator-system-config-mapper.js";
+import { toWorldModelConfig } from "./config-foundation/application/mappers/world-model-config-mapper.js";
 import { createConfigFoundationModule } from "./config-foundation/composition-root.js";
 import { ConfigValidationError } from "./config-foundation/domain/errors/config-validation-error.js";
 import type { HarnessConfigV2 } from "./config-foundation/domain/harness-config.js";
@@ -1881,11 +1883,7 @@ async function loadWorldResolvedConfig() {
   try {
     const configModule = createConfigFoundationModule();
     const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
-    return {
-      designDocsRoot: result.config.paths.designDocs,
-      inceptionRoot: result.config.paths.inceptionDocs,
-      requirementMatrixPath: result.config.layers.L3.requirementMatrixPath,
-    };
+    return toWorldModelConfig(result.config);
   } catch (error) {
     if (error instanceof ConfigNotFoundError) return undefined;
     throw error;

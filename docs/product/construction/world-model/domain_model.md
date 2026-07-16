@@ -310,3 +310,9 @@ CP-3 mutation fixtureはbaseline/current Snapshotを明示pairとして扱う。
 <!-- @work-item-id WI-298 -->
 
 `MeasuredViolationInventory`は承認済みrulesetで実測したunique fingerprint集合とrule / corpus kind / owner Unit集計を表す。`AdoptionBaseline`はcandidate evaluation provenanceとreview済みclosed entry setを持つexternal declarationであり、current finding、repaid state、semantic debtを保存しない。explicit semantic debtは別collectionとしてimportし、structural violationを抑止しない。
+
+## WI-300 Resolved World application config
+
+<!-- @work-item-id WI-300 -->
+
+Worldはconfig-foundationのdomain型をimportせず、plain `WorldResolvedConfigInput`をconsumer-owned application DTOとして受ける。corpus、provider input、declaration、output、sessionStartの全path / limitはproviderで検証済みだが、World境界でもPathKeyによるfail-closed validationを維持する。`enabled`はautomatic integration hintでありdomain evaluationの意味を変えない。

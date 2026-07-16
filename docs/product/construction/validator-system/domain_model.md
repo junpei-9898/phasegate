@@ -457,3 +457,9 @@ L4-007 は **default-OFF・advisory-only（warning-only）・attestation-trust-e
 <!-- @work-item-id WI-292 -->
 
 validator-systemはnyquist-validationが返すcoverage lifecycle findingを既存L3-004 resultとしてtransportする。planned未カバーだけはpassだが、planned test reference、reverse / malformed lifecycle、required未カバーはerrorであり、別baselineやallowlistを持たない。
+
+## WI-300 World gate config projection
+
+<!-- @work-item-id WI-300 -->
+
+validator-systemが将来消費するWorld configはplain `world` projectionであり、`enabled`、declaration path、provider input pathを含む。WCRやWorldConfig domain型を複製せず、このWIでは予約IDのvalidation rule / blocking policyを生成しない。

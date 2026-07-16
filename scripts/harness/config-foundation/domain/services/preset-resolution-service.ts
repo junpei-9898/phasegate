@@ -2,43 +2,43 @@
  * @layer domain
  * @unit config-foundation
  * @work-item-id WI-212
+ * @work-item-id WI-300
  */
-import { ConfigFoundationDomainError } from '../errors/config-foundation-domain-error.js';
-import type {
-  HarnessConfigResolvedDocument,
-  HarnessConfigSourceDocument,
-} from '../harness-config.js';
-import { HarnessesConfig } from '../value-objects/harnesses-config.js';
-import type { FeatureToggle } from '../value-objects/feature-toggle.js';
+import { ConfigFoundationDomainError } from "../errors/config-foundation-domain-error.js";
+import type { HarnessConfigResolvedDocument, HarnessConfigSourceDocument } from "../harness-config.js";
+import type { FeatureToggle } from "../value-objects/feature-toggle.js";
+import { HarnessesConfig } from "../value-objects/harnesses-config.js";
+import { WORLD_CONFIG_DEFAULTS, WorldConfig, type WorldConfigDocument } from "../value-objects/world-config.js";
 
 export interface PresetDefinition {
-  layers: HarnessConfigResolvedDocument['layers'];
-  quickMode: HarnessConfigResolvedDocument['quickMode'];
-  phaseDependencies: HarnessConfigResolvedDocument['phaseDependencies'];
-  planningMode: HarnessConfigResolvedDocument['planningMode'];
-  harnesses: HarnessConfigResolvedDocument['harnesses'];
-  paths: HarnessConfigResolvedDocument['paths'];
-  reporting: HarnessConfigResolvedDocument['reporting'];
-  validate: HarnessConfigResolvedDocument['validate'];
-  preCommit?: HarnessConfigResolvedDocument['preCommit'];
+  layers: HarnessConfigResolvedDocument["layers"];
+  quickMode: HarnessConfigResolvedDocument["quickMode"];
+  phaseDependencies: HarnessConfigResolvedDocument["phaseDependencies"];
+  planningMode: HarnessConfigResolvedDocument["planningMode"];
+  harnesses: HarnessConfigResolvedDocument["harnesses"];
+  paths: HarnessConfigResolvedDocument["paths"];
+  reporting: HarnessConfigResolvedDocument["reporting"];
+  validate: HarnessConfigResolvedDocument["validate"];
+  preCommit?: HarnessConfigResolvedDocument["preCommit"];
+  world?: WorldConfigDocument;
 }
 
 export class InvalidPresetDefinitionError extends ConfigFoundationDomainError {
   constructor(message: string) {
-    super(`${message} [L1-007]`, 'L1-007');
-    this.name = 'InvalidPresetDefinitionError';
+    super(`${message} [L1-007]`, "L1-007");
+    this.name = "InvalidPresetDefinitionError";
   }
 }
 
 export class ConfigMergeError extends ConfigFoundationDomainError {
   constructor(message: string) {
-    super(`${message} [L1-008]`, 'L1-008');
-    this.name = 'ConfigMergeError';
+    super(`${message} [L1-008]`, "L1-008");
+    this.name = "ConfigMergeError";
   }
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function deepClone<T>(value: T): T {
@@ -47,9 +47,7 @@ function deepClone<T>(value: T): T {
   }
 
   if (isPlainObject(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, entryValue]) => [key, deepClone(entryValue)]),
-    ) as T;
+    return Object.fromEntries(Object.entries(value).map(([key, entryValue]) => [key, deepClone(entryValue)])) as T;
   }
 
   return value;
@@ -74,10 +72,7 @@ function deepMerge<T>(baseValue: T, overrideValue: unknown, path: string): T {
     }
 
     const merged: Record<string, unknown> = {};
-    const keys = new Set([
-      ...Object.keys(baseValue),
-      ...Object.keys(overrideValue),
-    ]);
+    const keys = new Set([...Object.keys(baseValue), ...Object.keys(overrideValue)]);
 
     for (const key of keys) {
       const nestedBaseValue = (baseValue as Record<string, unknown>)[key];
@@ -88,11 +83,7 @@ function deepMerge<T>(baseValue: T, overrideValue: unknown, path: string): T {
         continue;
       }
 
-      merged[key] = deepMerge(
-        nestedBaseValue,
-        nestedOverrideValue,
-        `${path}.${key}`,
-      );
+      merged[key] = deepMerge(nestedBaseValue, nestedOverrideValue, `${path}.${key}`);
     }
 
     return merged as T;
@@ -105,35 +96,26 @@ function deepMerge<T>(baseValue: T, overrideValue: unknown, path: string): T {
   return deepClone(overrideValue as T);
 }
 
-function assertValidPresetDefinition(
-  presetDefinition: PresetDefinition,
-): void {
+function assertValidPresetDefinition(presetDefinition: PresetDefinition): void {
   const requiredKeys: Array<keyof PresetDefinition> = [
-    'layers',
-    'quickMode',
-    'phaseDependencies',
-    'planningMode',
-    'harnesses',
-    'paths',
-    'reporting',
-    'validate',
+    "layers",
+    "quickMode",
+    "phaseDependencies",
+    "planningMode",
+    "harnesses",
+    "paths",
+    "reporting",
+    "validate",
   ];
 
   for (const key of requiredKeys) {
-    if (
-      !(key in presetDefinition) ||
-      (presetDefinition as unknown as Record<string, unknown>)[key] === undefined
-    ) {
-      throw new InvalidPresetDefinitionError(
-        `presetDefinition.${key} は必須です`,
-      );
+    if (!(key in presetDefinition) || (presetDefinition as unknown as Record<string, unknown>)[key] === undefined) {
+      throw new InvalidPresetDefinitionError(`presetDefinition.${key} は必須です`);
     }
   }
 }
 
-function toHarnessesDocument(
-  harnesses: HarnessesConfig,
-): HarnessConfigResolvedDocument['harnesses'] {
+function toHarnessesDocument(harnesses: HarnessesConfig): HarnessConfigResolvedDocument["harnesses"] {
   return {
     agentLessonCollection: harnesses.agentLessonCollection,
     cascadeUpdate: harnesses.cascadeUpdate,
@@ -149,49 +131,58 @@ export class PresetResolutionService {
   ): HarnessConfigResolvedDocument {
     assertValidPresetDefinition(presetDefinition);
 
+    const layers = deepMerge(presetDefinition.layers, sourceDocument.layers, "layers");
+    const paths = deepMerge(presetDefinition.paths, sourceDocument.paths, "paths");
+    const world = deepMerge(presetDefinition.world ?? WORLD_CONFIG_DEFAULTS, sourceDocument.world, "world");
+    const explicitCorpus = sourceDocument.world?.corpus;
+    const explicitInputs = sourceDocument.world?.inputs;
+    const derivedProductRoot = paths.designDocs.endsWith("/construction")
+      ? paths.designDocs.slice(0, -"/construction".length)
+      : paths.designDocs;
+    const resolvedWorld: WorldConfigDocument = {
+      ...world,
+      corpus: {
+        ...world.corpus,
+        productRoots:
+          explicitCorpus?.productRoots === undefined && !world.corpus.productRoots.includes(derivedProductRoot)
+            ? [...world.corpus.productRoots, derivedProductRoot]
+            : world.corpus.productRoots,
+        inceptionRoots:
+          explicitCorpus?.inceptionRoots === undefined ? [paths.inceptionDocs] : world.corpus.inceptionRoots,
+      },
+      inputs: {
+        ...world.inputs,
+        matrixPath:
+          explicitInputs?.matrixPath === undefined
+            ? (layers.L3.requirementMatrixPath ?? world.inputs.matrixPath)
+            : world.inputs.matrixPath,
+      },
+    };
+
     return {
       project: {
         name: sourceDocument.project.name,
         preset: sourceDocument.project.preset,
-        languages: sourceDocument.project.languages ?? ['typescript'],
+        languages: sourceDocument.project.languages ?? ["typescript"],
       },
-      layers: deepMerge(presetDefinition.layers, sourceDocument.layers, 'layers'),
-      quickMode: deepMerge(
-        presetDefinition.quickMode,
-        sourceDocument.quickMode,
-        'quickMode',
-      ),
+      layers,
+      quickMode: deepMerge(presetDefinition.quickMode, sourceDocument.quickMode, "quickMode"),
       phaseDependencies: deepMerge(
         presetDefinition.phaseDependencies,
         sourceDocument.phaseDependencies,
-        'phaseDependencies',
+        "phaseDependencies",
       ),
-      planningMode: deepMerge(
-        presetDefinition.planningMode,
-        sourceDocument.planningMode,
-        'planningMode',
-      ),
-      harnesses: deepMerge(
-        presetDefinition.harnesses,
-        sourceDocument.harnesses,
-        'harnesses',
-      ),
-      paths: deepMerge(presetDefinition.paths, sourceDocument.paths, 'paths'),
-      reporting: deepMerge(
-        presetDefinition.reporting,
-        sourceDocument.reporting,
-        'reporting',
-      ),
-      validate: deepMerge(
-        presetDefinition.validate,
-        sourceDocument.validate,
-        'validate',
-      ),
+      planningMode: deepMerge(presetDefinition.planningMode, sourceDocument.planningMode, "planningMode"),
+      harnesses: deepMerge(presetDefinition.harnesses, sourceDocument.harnesses, "harnesses"),
+      paths,
+      reporting: deepMerge(presetDefinition.reporting, sourceDocument.reporting, "reporting"),
+      validate: deepMerge(presetDefinition.validate, sourceDocument.validate, "validate"),
       preCommit: deepMerge(
-        presetDefinition.preCommit ?? { implementationExtensions: ['.ts'] },
+        presetDefinition.preCommit ?? { implementationExtensions: [".ts"] },
         sourceDocument.preCommit,
-        'preCommit',
+        "preCommit",
       ),
+      world: WorldConfig.create(resolvedWorld).toDocument(),
     };
   }
 
@@ -200,9 +191,7 @@ export class PresetResolutionService {
     override: FeatureToggle,
   ): HarnessConfigResolvedDocument {
     const harnesses = HarnessesConfig.create(document.harnesses);
-    const nextHarnesses = override.enabled
-      ? harnesses.enable(override.name)
-      : harnesses.disable(override.name);
+    const nextHarnesses = override.enabled ? harnesses.enable(override.name) : harnesses.disable(override.name);
 
     return {
       ...deepClone(document),

@@ -1474,3 +1474,9 @@ World rootへ渡すconfig identityはraw `phasegate.config.json` のhashでは�
 <!-- @work-item-id WI-284 -->
 
 config v2 / v3のtop-level canonical keyとして将来`world`を追加し、`worldModel`等のaliasは設けない。`world.enabled`はautomatic integrationについてdefault `false`、explicit `world:*` commandの実行可否とは分離する。corpus / input / declaration / output pathはproject-relative POSIX pathとして検証し、unknown field、unsupported schema、type mismatch、role overlapをdefaultsへfallbackせずfail-closed resultにする。command側はraw JSONを再解釈せず、`LoadResolvedConfigUseCase`由来のplain World config DTOだけを消費する。
+
+## WI-300 World config implementation
+
+<!-- @work-item-id WI-300 -->
+
+v2 / v3 schemaと三presetへ同じ`world` contractを追加する。全presetの`world.enabled`はbackward-compatible rolloutのためfalseで、explicit `world:*`実行可否とは分離する。`PresetResolutionService`はnested overrideをmergeし、World field省略時だけlegacy design / inception / matrix pathを継承する。`toWorldModelConfig()`は完全なWorld plain DTO、`toValidatorSystemConfig().world`はWM-19 / WM-20用projectionを返すが、予約validatorは登録しない。

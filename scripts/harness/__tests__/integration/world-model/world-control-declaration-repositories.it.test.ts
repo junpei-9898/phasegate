@@ -1,7 +1,9 @@
 // @unit world-model
 // @layer integration
 // @work-item-id WI-294
+// @work-item-id WI-300
 // @story H17-08
+// @story H17-13
 // @ac H17-08-1
 // @ac H17-08-2
 // @ac H17-08-3
@@ -149,5 +151,24 @@ describe("World control declaration filesystem repositories", () => {
     // Assert
     expect(actual).toMatchObject({ state: "invalid" });
     expect("value" in actual).toBe(false);
+  });
+
+  it("resolved configで指定したconstraint pathだけを読み書きすること", async () => {
+    // Arrange
+    const fileName = "config.world-constraints.json";
+    const document = JSON.parse(
+      await readFile(path.join(fixtureRoot, "phasegate.world-constraints.json"), "utf8"),
+    ) as Record<string, unknown>;
+    await writeFile(path.join(rootDir, fileName), JSON.stringify(document), "utf8");
+    const repository = new FileSystemConstraintDeclarationRepositoryAdapter({ rootDir, fileName });
+
+    // Act
+    const actual = await repository.load();
+
+    // Assert
+    expect(actual).toMatchObject({ state: "loaded", value: { records: [{ factType: "references" }] } });
+    await expect(readFile(path.join(rootDir, "phasegate.world-constraints.json"), "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 });

@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer infrastructure
 // @work-item-id WI-294
+// @work-item-id WI-300
 
 import { readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -40,6 +41,7 @@ let temporarySequence = 0;
 
 interface RepositoryOptions {
   readonly rootDir: string;
+  readonly fileName?: string;
 }
 
 interface DeclarationSpec<T> {
@@ -238,7 +240,7 @@ export class FileSystemConstraintDeclarationRepositoryAdapter implements Constra
   private readonly repository: FileSystemWorldControlRepository<ConstraintDeclarationSet>;
 
   constructor(options: RepositoryOptions) {
-    const fileName = "phasegate.world-constraints.json";
+    const fileName = options.fileName ?? "phasegate.world-constraints.json";
     const artifactId = WorldNodeId.artifact(
       ArtifactKind.externalDeclaration(),
       CorpusRole.external(),
@@ -268,7 +270,7 @@ export class FileSystemAdoptionBaselineRepositoryAdapter implements AdoptionBase
 
   constructor(options: RepositoryOptions) {
     this.repository = new FileSystemWorldControlRepository(options, {
-      fileName: "phasegate.world-baseline.json",
+      fileName: options.fileName ?? "phasegate.world-baseline.json",
       schemaFileName: "world-baseline.schema.json",
       schemaVersion: "phasegate-world-adoption-baseline/v1",
       emptyValue: null,
@@ -290,7 +292,7 @@ export class FileSystemWaiverDeclarationRepositoryAdapter implements WaiverDecla
 
   constructor(options: RepositoryOptions) {
     this.repository = new FileSystemWorldControlRepository(options, {
-      fileName: "phasegate.world-waivers.json",
+      fileName: options.fileName ?? "phasegate.world-waivers.json",
       schemaFileName: "world-waivers.schema.json",
       schemaVersion: "phasegate-world-waivers/v1",
       emptyValue: Object.freeze([]),
@@ -312,7 +314,7 @@ export class FileSystemSemanticDebtRepositoryAdapter implements SemanticDebtRepo
 
   constructor(options: RepositoryOptions) {
     this.repository = new FileSystemWorldControlRepository(options, {
-      fileName: "phasegate.world-debts.json",
+      fileName: options.fileName ?? "phasegate.world-debts.json",
       schemaFileName: "world-debts.schema.json",
       schemaVersion: "phasegate-world-debts/v1",
       emptyValue: Object.freeze([]),

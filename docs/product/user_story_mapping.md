@@ -91,7 +91,7 @@ Backbone: AI-Driven Development Life Cycle (AIDLC)
 |------|------------------|-------|
 | H-17 World Model | Activity 2, 6, 7, 8 | 12 |
 
-H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12はPhase Bのconstraint / obligation MVPを構成する。各Storyはdelivery planのWM-06〜17へ1対1でbindingする。
+H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12はPhase Bのconstraint / obligation MVP、H17-13以降はPhase Cのproduction integrationを構成する。各Storyはdelivery planのWMへ1対1でbindingする。
 
 ## 3. リリース計画
 
@@ -120,6 +120,7 @@ H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12は
 | H17-10 | WM-15 | `world:pin` / `world:derive` CLI | Phase B presentation |
 | H17-11 | WM-16 | synthetic mutation E2E / determinism | Phase B verification |
 | H17-12 | WM-17 | self-repo baseline / semantic debt dogfood | Functional MVP |
+| H17-13 | WM-18 | World config surface / resolved mapping | Phase C configuration |
 
 ## 5. 詳細
 

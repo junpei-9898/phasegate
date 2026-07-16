@@ -554,3 +554,9 @@ target('{クラス名またはメソッド名}', () => {
 <!-- @work-item-id WI-292 -->
 
 nyquist adapterからplanned ref / lifecycle errorが返った場合にL3-004 failを維持し、planned refなしのpassを他validator resultへ影響させないcontractを検証する。
+
+## WI-300 Validator config contract
+
+<!-- @work-item-id WI-300 -->
+
+resolved mapper出力にWorld plain DTOが保持され、既存validator ID集合とdefault validator配列にL2-017 / L3-008が現れないことをgoldenで検証する。

@@ -4,6 +4,7 @@
 // @work-item-id WI-292
 // @work-item-id WI-295
 // @work-item-id WI-296, WI-297
+// @work-item-id WI-300
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -68,15 +69,17 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
   const hashingPort = new AttestationSha256WorldHashingAdapter(createSha256Capability());
   const serializer = new CanonicalJsonSerializer();
   const markdownExtractor = new MarkdownDesignFactExtractor({ hashingPort });
-  const traceabilityFacades = config.productScopes.map(
-    (scope) =>
-      createTraceabilityModelModule(options.rootDir, {
-        pathRoots: {
-          designDocsRoot: scope.designDocsRoot,
-          inceptionRoot: config.inceptionRoot,
-          testRoots: [`${config.sourceRoot}/__tests__`],
-        },
-      }).worldReadFacade,
+  const traceabilityFacades = config.productScopes.flatMap((scope) =>
+    config.inceptionRoots.map(
+      (inceptionRoot) =>
+        createTraceabilityModelModule(options.rootDir, {
+          pathRoots: {
+            designDocsRoot: scope.designDocsRoot,
+            inceptionRoot,
+            testRoots: config.sourceRoots.map((sourceRoot) => `${sourceRoot}/__tests__`),
+          },
+        }).worldReadFacade,
+    ),
   );
   const designCorpus = new DesignCorpusFactExtractor({
     traceabilityAdapter: new TraceabilityDesignFactAdapter({
@@ -94,16 +97,14 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
           }),
       ),
     ),
-    proposalExtractor: new ProposalFactExtractor({
-      rootDir: options.rootDir,
-      markdownExtractor,
-      inceptionRoot: config.inceptionRoot,
-    }),
-    adrExtractor: new AdrFactExtractor({
-      rootDir: options.rootDir,
-      markdownExtractor,
-      adrRoot: config.adrRoot,
-    }),
+    proposalExtractor: new CompositeDesignFactSource(
+      config.inceptionRoots.map(
+        (inceptionRoot) => new ProposalFactExtractor({ rootDir: options.rootDir, markdownExtractor, inceptionRoot }),
+      ),
+    ),
+    adrExtractor: new CompositeDesignFactSource(
+      config.adrRoots.map((adrRoot) => new AdrFactExtractor({ rootDir: options.rootDir, markdownExtractor, adrRoot })),
+    ),
     unitExtractor: new CompositeDesignFactSource(
       config.productScopes.map(
         (scope) =>
@@ -118,16 +119,10 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
   const attestationModule = createAttestationModule(options.rootDir);
   const factSource = new AssembledWorldFactSource([
     designCorpus,
-    new SourceMetadataFactExtractor({
-      rootDir: options.rootDir,
-      hashingPort,
-      sourceRoot: config.sourceRoot,
-    }),
-    new TestReferenceSourceFactExtractor({
-      rootDir: options.rootDir,
-      hashingPort,
-      sourceRoot: config.sourceRoot,
-    }),
+    ...config.sourceRoots.flatMap((sourceRoot) => [
+      new SourceMetadataFactExtractor({ rootDir: options.rootDir, hashingPort, sourceRoot }),
+      new TestReferenceSourceFactExtractor({ rootDir: options.rootDir, hashingPort, sourceRoot }),
+    ]),
     new MatrixFactExtractor({
       rootDir: options.rootDir,
       hashingPort,
@@ -148,7 +143,22 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
       serializer,
     }),
   ]);
-  const corpusConfigDigest = hashingPort.sha256(serializer.serialize(config));
+  const corpusConfigDigest = hashingPort.sha256(
+    serializer.serialize({
+      schemaVersion: "phasegate-world-corpus-config/v1",
+      productScopes: config.productScopes,
+      inceptionRoots: config.inceptionRoots,
+      adrRoots: config.adrRoots,
+      sourceRoots: config.sourceRoots,
+      include: config.include,
+      exclude: config.exclude,
+      inputs: {
+        matrixPath: config.matrixPath,
+        attestationPath: config.attestationPath,
+        integrityManifestPath: config.integrityManifestPath,
+      },
+    }),
+  );
   const buildSnapshotUseCase = new BuildSnapshotUseCase({
     factSource,
     rootDeriver: new SnapshotRootDeriver(serializer, hashingPort),
@@ -161,23 +171,30 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
   const fingerprintDeriver = new ViolationFingerprintDeriver(serializer, hashingPort);
   const constraintRepository = new FileSystemConstraintDeclarationRepositoryAdapter({
     rootDir: options.rootDir,
+    fileName: config.constraintsPath,
   });
   const rootDeriver = new SnapshotRootDeriver(serializer, hashingPort);
   const deriveObligationsUseCase = new DeriveObligationsUseCase({
     baselineRepository: new FileSystemAdoptionBaselineRepositoryAdapter({
       rootDir: options.rootDir,
+      fileName: config.baselinePath,
     }),
     waiverRepository: new FileSystemWaiverDeclarationRepositoryAdapter({
       rootDir: options.rootDir,
+      fileName: config.waiversPath,
     }),
     semanticDebtRepository: new FileSystemSemanticDebtRepositoryAdapter({
       rootDir: options.rootDir,
+      fileName: config.debtsPath,
     }),
     policyInputsDigestDeriver: new PolicyInputsDigestDeriver(serializer, hashingPort),
     evaluationIdDeriver: new SnapshotRootDeriver(serializer, hashingPort),
     obligationDerivationService: new ObligationDerivationService(fingerprintDeriver),
     serializer,
-    writer: new FileSystemObligationReportWriterAdapter({ rootDir: options.rootDir }),
+    writer: new FileSystemObligationReportWriterAdapter({
+      rootDir: options.rootDir,
+      reportPath: config.obligationReportPath,
+    }),
   });
   const deriveWorldObligationsUseCase = new DeriveWorldObligationsUseCase({
     buildSnapshot: buildSnapshotUseCase,
@@ -190,7 +207,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     constraintConfigDigest: hashingPort.sha256(
       serializer.serialize({
         schemaVersion: "phasegate-world-constraint-config/v1",
-        constraintsPath: "phasegate.world-constraints.json",
+        constraintsPath: config.constraintsPath,
       }),
     ),
     evaluationConfigDigest: hashingPort.sha256(
@@ -199,11 +216,15 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
         rulesetVersion: "phasegate-world-wcr/v1",
       }),
     ),
+    constraintPath: config.constraintsPath,
   });
   const pinConstraintEndpointUseCase = new PinConstraintEndpointUseCase(buildSnapshotUseCase, constraintRepository);
   const worldInspectCommandHandler = new WorldInspectCommandHandler({ inspectWorld: inspectWorldUseCase });
   const worldPinCommandHandler = new WorldPinCommandHandler(pinConstraintEndpointUseCase);
-  const worldDeriveCommandHandler = new WorldDeriveCommandHandler(deriveWorldObligationsUseCase);
+  const worldDeriveCommandHandler = new WorldDeriveCommandHandler(
+    deriveWorldObligationsUseCase,
+    config.obligationReportPath,
+  );
 
   return {
     buildSnapshotUseCase,

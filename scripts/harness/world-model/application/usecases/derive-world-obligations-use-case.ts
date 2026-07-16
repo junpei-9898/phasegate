@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer application
 // @work-item-id WI-296, WI-297
+// @work-item-id WI-300
 
 import { ExtractionDiagnostic } from "../../domain/entities/extraction-diagnostic.js";
 import type { Snapshot } from "../../domain/entities/snapshot.js";
@@ -38,6 +39,7 @@ interface Dependencies {
   readonly policyDate: PolicyDatePort;
   readonly constraintConfigDigest: Sha256Digest;
   readonly evaluationConfigDigest: Sha256Digest;
+  readonly constraintPath?: string;
 }
 
 const RULESET_VERSION = "phasegate-world-wcr/v1";
@@ -64,7 +66,7 @@ export class DeriveWorldObligationsUseCase {
       ...constraints.value.malformedDeclarations.map((declaration) =>
         ExtractionDiagnostic.create({
           code: "malformed-constraint-declaration",
-          path: PathKey.create("phasegate.world-constraints.json"),
+          path: PathKey.create(this.dependencies.constraintPath ?? "phasegate.world-constraints.json"),
           payload: declaration.toCanonicalValue(),
         }),
       ),

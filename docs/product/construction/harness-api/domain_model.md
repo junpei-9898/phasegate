@@ -435,3 +435,9 @@ Legacy alias names are presentation-level command identities, not separate domai
 @story-id H17-10
 
 `world:pin`と`world:derive`をcanonical top-level command identityへ追加し、`world:inspect`と合わせた3 command集合を完成する。harness-apiはcommand名とdispatch集合一致だけを所有し、pin candidate、WCR、obligation classificationを複製しない。
+
+## WI-300 World config dispatch input
+
+<!-- @work-item-id WI-300 -->
+
+mainはconfig-foundation public mapperが返すplain World DTOだけをdispatch inputとして扱う。`world.enabled`はautomatic integration用switchであり、三つのexplicit command identityやhandler availabilityを変更しない。
