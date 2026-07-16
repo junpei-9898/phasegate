@@ -275,3 +275,19 @@ symlink traversal、fragment marker content range、matrix / attestation owner-a
 | `design-corpus-fact-extractor.test.ts` | duplicate no-winner、role別WI edge、explicit reflection resolution、deterministic order |
 
 domain objectは実体を使い、hashingだけをtest-local deterministic portで制御する。test名は日本語、AAAを明示し、expected ID / diagnosticをliteralで検証する。
+
+## 12. WI-290 runtime / evidence extractor tests
+
+<!-- @work-item-id WI-290 -->
+
+@story-id H17-05
+
+| Test file | Covered contract |
+|---|---|
+| `source-metadata-fact-extractor.test.ts` | implementation / test排他分類、metadata、invalid UTF-8 / symlink |
+| `matrix-fact-extractor.test.ts` | generatedAt除外、owner sort、TestReference ID、duplicate / schema diagnostic |
+| `attestation-fact-extractor.test.ts` | public DTO / verification status、volatile / signature除外 |
+| `integrity-manifest-fact-extractor.test.ts` | v1 path / raw digest projection、invalid / not-present |
+| `world-node.test.ts`追補 | TestReference projection factory |
+
+domain実体とdeterministic hashingを使用し、provider boundaryだけをplain fake DTO / handlerで制御する。

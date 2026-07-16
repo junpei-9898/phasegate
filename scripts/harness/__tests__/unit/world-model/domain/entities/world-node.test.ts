@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer test
-// @work-item-id WI-287
+// @work-item-id WI-287, WI-290
 // @story H17-02
 import { describe, expect, it } from "vitest";
 import { Edge } from "../../../../../world-model/domain/entities/edge.js";
@@ -74,6 +74,36 @@ target("WorldNode / Edge / ExtractionDiagnostic", () => {
           artifactId: "pgw:v1:artifact:design-document:inception:docs/inception/world.md",
         },
       ]);
+    });
+
+    it("matrix owner tupleをTestReference projectionとして保持すること", () => {
+      // Arrange
+      const filePath = PathKey.create("scripts/harness/__tests__/unit/sample.test.ts");
+
+      // Act
+      const actual = WorldNode.testReference({
+        storyId: "H17-05",
+        acId: "AC-1",
+        binding: "ac",
+        testType: "unit",
+        filePath,
+        testName: "sample test",
+        digest,
+      });
+
+      // Assert
+      expect(actual.id.toString()).toBe(
+        "pgw:v1:test-reference:H17-05:AC-1:ac:unit:scripts/harness/__tests__/unit/sample.test.ts:name:value:sample%20test",
+      );
+      expect(actual.projection).toEqual({
+        type: "test-reference",
+        storyId: "H17-05",
+        acId: "AC-1",
+        binding: "ac",
+        testType: "unit",
+        filePath: "scripts/harness/__tests__/unit/sample.test.ts",
+        testName: "sample test",
+      });
     });
   });
 

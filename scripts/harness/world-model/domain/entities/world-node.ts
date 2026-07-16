@@ -1,13 +1,13 @@
 // @unit world-model
 // @layer domain
-// @work-item-id WI-287
+// @work-item-id WI-287, WI-290
 import type { CanonicalJsonObject } from "../services/canonical-json-serializer.js";
 import type { ArtifactKind } from "../value-objects/artifact-kind.js";
 import type { CorpusRole } from "../value-objects/corpus-role.js";
 import type { DeclaredKey } from "../value-objects/declared-key.js";
 import type { PathKey } from "../value-objects/path-key.js";
 import type { Sha256Digest } from "../value-objects/sha256-digest.js";
-import { WorldNodeId } from "../value-objects/world-node-id.js";
+import { type TestReferenceBinding, type TestReferenceType, WorldNodeId } from "../value-objects/world-node-id.js";
 
 export type WorldNodeProjection =
   | {
@@ -23,7 +23,16 @@ export type WorldNodeProjection =
       readonly corpusRole: string;
       readonly artifactId: string;
     }
-  | { readonly type: "work-item"; readonly providerId: string };
+  | { readonly type: "work-item"; readonly providerId: string }
+  | {
+      readonly type: "test-reference";
+      readonly storyId: string;
+      readonly acId: string;
+      readonly binding: TestReferenceBinding;
+      readonly testType: TestReferenceType;
+      readonly filePath: string;
+      readonly testName: string | null;
+    };
 
 interface CommonNodeProps {
   readonly digest: Sha256Digest;
@@ -55,6 +64,15 @@ export interface LegacyFragmentNodeProps extends CommonNodeProps {
 
 export interface WorkItemNodeProps extends CommonNodeProps {
   readonly workItemId: string;
+}
+
+export interface TestReferenceNodeProps extends CommonNodeProps {
+  readonly storyId: string;
+  readonly acId: string;
+  readonly binding?: TestReferenceBinding;
+  readonly testType: TestReferenceType;
+  readonly filePath: PathKey;
+  readonly testName?: string;
 }
 
 export class InvalidWorldNodeError extends Error {
@@ -151,6 +169,31 @@ export class WorldNode {
       WorldNodeId.workItem(props.workItemId),
       props.digest,
       { type: "work-item", providerId: props.workItemId },
+      props.attributes,
+    );
+  }
+
+  static testReference(props: TestReferenceNodeProps): WorldNode {
+    const binding = props.binding ?? "file";
+    return new WorldNode(
+      WorldNodeId.testReference({
+        storyId: props.storyId,
+        acId: props.acId,
+        binding,
+        testType: props.testType,
+        filePath: props.filePath,
+        testName: props.testName,
+      }),
+      props.digest,
+      {
+        type: "test-reference",
+        storyId: props.storyId,
+        acId: props.acId,
+        binding,
+        testType: props.testType,
+        filePath: props.filePath.toString(),
+        testName: props.testName ?? null,
+      },
       props.attributes,
     );
   }

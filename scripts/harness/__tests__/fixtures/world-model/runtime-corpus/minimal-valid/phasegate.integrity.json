@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "files": {
+    "skills/sample/SKILL.md": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    ".husky/pre-commit": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  }
+}

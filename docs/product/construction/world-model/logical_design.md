@@ -286,3 +286,15 @@ set-valued nodes / edges / diagnostics / declarationsはderiverがcopy-sortし�
 coordinatorはtraceability-model public `index.ts`のplain facadeだけをreadし、candidate集合へWorkItem / Unit / Story owner indexを供給する。same-role Fragment duplicate、case-fold path collision、unknown WorkItem、missing / invalid `@world-reflects` endpointをno-winnerで解決し、final node / edge / diagnosticをstable tuple orderで返す。
 
 WM-09ではextractor classを直接testし、`world-model/composition-root.ts`と`index.ts`は作成・変更しない。WM-11が全extractorをapplication use caseへ配線する。
+
+## 16. WI-290 runtime / evidence extractor adapters
+
+<!-- @work-item-id WI-290 -->
+
+@story-id H17-05
+
+source metadata / test source / matrix / attestation / integrity manifest extractorを`infrastructure/adapters/`へ分離する。shared TypeScript scannerは`__tests__` predicateでimplementation / testを排他的に分類し、shared JSON supportはoptional presence、strict parse、exact owner field admissionを提供する。
+
+matrixはnyquist public `RequirementTestMatrixDto`、attestationはpublic `AttestationDocument` / verify handlerだけをACL入力にする。World側はcanonical owner projectionをhashしてgenerated / external ArtifactとTestReference nodeを返し、provider内部型をimportしない。
+
+WM-10もcomposition-root / index / CLIを変更せず、WM-11がWM-09 / 10 extractorを統合する。

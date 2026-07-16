@@ -1,0 +1,31 @@
+{
+  "version": "1.1",
+  "generatedAt": "2026-07-16T00:00:00.000Z",
+  "stories": [
+    {
+      "storyId": "H17-05",
+      "storyMappings": [
+        {
+          "acId": "AC-2",
+          "testReferences": [
+            {
+              "filePath": "scripts/harness/__tests__/unit/sample/model.test.ts",
+              "testType": "unit",
+              "testName": "sample test",
+              "binding": "ac"
+            }
+          ]
+        },
+        {
+          "acId": "AC-1",
+          "testReferences": [
+            {
+              "filePath": "scripts/harness/__tests__/unit/sample/model.test.ts",
+              "testType": "unit"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

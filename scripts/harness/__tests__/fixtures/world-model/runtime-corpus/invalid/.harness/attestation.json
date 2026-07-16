@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "phasegate-attestation/v2",
+  "predicateType": "future",
+  "subject": {},
+  "inputs": {},
+  "granularity": {},
+  "acBoundScope": [],
+  "metadata": {},
+  "signature": {}
+}

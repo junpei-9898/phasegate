@@ -201,3 +201,13 @@ public facade contract testはconsumerがattestation内部pathをimportしなく
 repository-shaped fixtureをtemporary rootへcopyし、product / inception / ADR / Unit extractorとtraceability public facadeを実filesystemで統合する。minimal valid corpus、same-bytes cross-role、duplicate DeclaredKey、malformed / orphan marker、missing reflection、symlink / unsupported fileを検証する。
 
 同じfixtureを作成順・absolute temp root・LF / CRLFだけ変えて抽出し、canonical node / edge / diagnostic projectionが一致することを確認する。World sourceのprovider importはtraceability public `index.ts`だけ、SHA-256はattestation public capability経由、composition-root / indexはWM-11まで不変とする。
+
+## 12. WI-290 runtime / evidence integration
+
+<!-- @work-item-id WI-290 -->
+
+@story-id H17-05
+
+repository-shaped runtime fixtureでimplementation / test SourceFile、matrix、attestation、integrity manifestを同時抽出する。matrix reorder / generatedAt差、attestation volatile差、duplicate TestReference、unknown schema / field、optional file不在を検証する。
+
+integrationはattestation public verify handlerとpublic SHA capabilityを接続し、nyquist public DTO contract以外のprovider deep import、world-modelの`node:crypto`、composition-root / index差分がないことを確認する。WM-10承認後のCP-1でfull suiteとWM-06〜10横断determinismを実行する。

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "phasegate-attestation/v1",
+  "predicateType": "https://phasegate.dev/attestation/gate-run/v1",
+  "subject": {
+    "command": "phasegate:ci-check",
+    "gateResult": "pass",
+    "validatorSet": [
+      {
+        "validatorId": "L3-004",
+        "passed": true,
+        "skipped": false
+      }
+    ]
+  },
+  "inputs": {
+    "digestAlgorithm": "sha256",
+    "sources": [],
+    "inputDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "granularity": {
+    "traceability": {
+      "validator": "L3-004",
+      "level": "file",
+      "claim": "Fixture file-level verification",
+      "knownLimitations": []
+    }
+  },
+  "acBoundScope": [],
+  "metadata": {
+    "producedAt": "2026-07-16T00:00:00.000Z",
+    "producer": "phasegate-attestation/0.244.0",
+    "gitCommit": "deadbeef"
+  },
+  "signature": {
+    "mode": "unsigned-poc",
+    "attestationDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "algorithm": null,
+    "keyId": null,
+    "value": null
+  }
+}

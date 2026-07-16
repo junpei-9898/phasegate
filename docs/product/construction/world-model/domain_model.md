@@ -232,3 +232,15 @@ product / inception / ADR / Unit definitionは`design-document` Artifactとし�
 explicit Fragmentはrole + DeclaredKeyだけをidentityとし、artifact path、heading text / level / order、line、digestはlocator attributesへ置く。markerなしはlegacy whole-file、markerありcompletionなしはmixed、valid completionありはexplicit stateとする。duplicate ID、case-fold collision、malformed / orphan marker、unsupported inputにはwinnerを設けずExtractionDiagnosticへ変換する。
 
 traceability public DTOはWorkItem node、Unit owner、Story catalog attributeへ投影する。provider diagnosticはcode / subject / paths / messageをlossless payloadとして保持し、Story / ACの新しいWorld identityやprovider domain modelを複製しない。
+
+## 14. WI-290 runtime / generated owner projection
+
+<!-- @work-item-id WI-290 -->
+
+@story-id H17-05
+
+implementation / test TypeScriptは別`sourceKind`を持つSourceFileとして一度だけ抽出し、Unit / layer / WorkItem metadataをattributesへ保持する。test sourceのStory / AC bindingは推論せず、matrix ownerのTestReference tupleだけを`pgw:v1:test-reference` nodeへ変換する。
+
+matrix / attestationは`generated-artifact × generated`、integrity manifestは`external-declaration × external` Artifactとする。matrix `generatedAt`、attestation producedAt / producer / gitCommit / signature / self digest、git sourceを含み得るderived `inputDigest`をowner projectionで除外し、verification statusを含める。integrity path / raw digest declarationは保持するが、stable claim IDがないためExplicitClaim nodeを生成しない。
+
+optional provider file不在は`not-present`、存在するunsupported schema / field、parse / verification failureはhard ExtractionDiagnosticとし、invalid inputをempty Artifactへlaunderしない。
