@@ -1021,7 +1021,10 @@ WI-119（L4-003 dead-code detector の実 import/export graph 化）の実装本
 
 **出力方針**:
 - `--json` 指定時: `HarnessApiResponse<{ report: LintReportSummary }>`
-- テキスト出力時: 違反件数、代表違反3件、スキップルール、ESLint残存結果を表示
+- テキスト出力時: 違反総数、代表違反3件、スキップルール、ESLint残存結果を表示。代表違反が3件を超える場合の省略行は `... and N more (shown 3 of M)` の形式で真の違反総数 M を必ず明示し、`--json` 出力の `violationCount` と一致させる（列挙ブロックのみを読んだ運用者が件数を過少に誤読するのを防ぐ）。 <!-- @work-item-id WI-266 -->
+
+<!-- @work-item-id WI-266 -->
+WI-266: テキスト formatter は違反一覧を先頭3件で truncate するが、旧実装は省略行 `... and N more` に総数を明示しなかったため「3件しか出ていない」という過少誤読が発生していた（v0.184.0 dogfooding で検出・defer）。修正後は省略行に `(shown 3 of M)` を付与し、列挙ブロック・省略行のどちらを読んでも undercount が起きないようにする。truncation 自体は出力肥大防止として維持する。
 
 ### 6.2 LintCommandParser
 

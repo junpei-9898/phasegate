@@ -104,13 +104,15 @@ export class HarnessLintCommandHandler {
     if (errorPayload.errors.length === 0) {
       lines.push('No violations found');
     } else {
-      lines.push(`${errorPayload.errors.length} violation(s):`);
-      const shown = errorPayload.errors.slice(0, 3);
+      const total = errorPayload.errors.length;
+      lines.push(`${total} violation(s):`);
+      const displayLimit = 3;
+      const shown = errorPayload.errors.slice(0, displayLimit);
       for (const e of shown) {
         lines.push(`  [${e.severity}] ${e.code}: ${e.message}`);
       }
-      if (errorPayload.errors.length > 3) {
-        lines.push(`  ... and ${errorPayload.errors.length - 3} more`);
+      if (total > displayLimit) {
+        lines.push(`  ... and ${total - displayLimit} more (shown ${shown.length} of ${total})`);
       }
     }
 
