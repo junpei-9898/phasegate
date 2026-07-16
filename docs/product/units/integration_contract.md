@@ -413,9 +413,12 @@ Phasegateはローカル開発ツールキットであり、認証認可機構�
 | L1-003 | no-layer-violation | レイヤー境界を越えるimport |
 | L1-004 | enforce-folder-structure | アーキテクチャに違反するファイル配置 |
 | L1-005 | no-any-abuse | `any`型の過剰使用 |
-| L1-006 | no-ghost-file | importされないが存在するファイル |
-| L1-007 | no-comment-flood | 過剰なコメント |
-| L1-008 | no-code-duplication | 構造的に重複するコードブロック |
+| L1-006 | no-code-duplication | 構造的に重複するコードブロック |
+| L1-007 | no-ghost-file | importされないが存在するファイル |
+| L1-008 | no-comment-flood | 過剰なコメント |
+
+<!-- @work-item-id WI-265 — L1-006/L1-007/L1-008 を canonical レジストリ（rule-definition-registry.ts）に整合。旧表記（L1-006=no-ghost-file, L1-007=no-comment-flood, L1-008=no-code-duplication）はドメイン非整合だったため訂正 -->
+
 
 ### L2 — Pre-commitバリデータ（validator-system）
 

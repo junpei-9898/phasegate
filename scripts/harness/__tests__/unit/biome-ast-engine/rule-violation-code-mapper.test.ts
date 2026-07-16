@@ -7,6 +7,7 @@ import {
   mapCodeToRuleName,
   UnknownRuleCodeMappingError,
 } from '../../../biome-ast-engine/infrastructure/mappers/rule-violation-code-mapper.js';
+import { RuleDefinitionRegistry } from '../../../biome-ast-engine/domain/services/rule-definition-registry.js';
 
 target('mapRuleNameToCode', () => {
   describe('ルール名をエラーコードに変換する', () => {
@@ -60,30 +61,30 @@ target('mapRuleNameToCode', () => {
       });
     });
 
-    context('no-ghost-fileを指定した場合', () => {
+    context('no-code-duplicationを指定した場合', () => {
       it('L1-006が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-ghost-file');
+        const actual = mapRuleNameToCode('no-code-duplication');
 
         // Assert
         expect(actual).toBe('L1-006');
       });
     });
 
-    context('no-comment-floodを指定した場合', () => {
+    context('no-ghost-fileを指定した場合', () => {
       it('L1-007が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-comment-flood');
+        const actual = mapRuleNameToCode('no-ghost-file');
 
         // Assert
         expect(actual).toBe('L1-007');
       });
     });
 
-    context('no-code-duplicationを指定した場合', () => {
+    context('no-comment-floodを指定した場合', () => {
       it('L1-008が返される', () => {
         // Arrange & Act
-        const actual = mapRuleNameToCode('no-code-duplication');
+        const actual = mapRuleNameToCode('no-comment-flood');
 
         // Assert
         expect(actual).toBe('L1-008');
@@ -115,12 +116,12 @@ target('mapCodeToRuleName', () => {
     });
 
     context('L1-008を指定した場合', () => {
-      it('no-code-duplicationが返される', () => {
+      it('no-comment-floodが返される', () => {
         // Arrange & Act
         const actual = mapCodeToRuleName('L1-008');
 
         // Assert
-        expect(actual).toBe('no-code-duplication');
+        expect(actual).toBe('no-comment-flood');
       });
     });
 
@@ -131,6 +132,50 @@ target('mapCodeToRuleName', () => {
 
         // Assert
         expect(actual).toThrow(UnknownRuleCodeMappingError);
+      });
+    });
+  });
+});
+
+target('mapRuleNameToCode と RuleDefinitionRegistry の整合', () => {
+  describe('canonical レジストリと mapper のコード対応が全ルールで一致する', () => {
+    context('レジストリの全ルール定義を走査した場合', () => {
+      it('各ルールの errorCode が mapRuleNameToCode の返すコードと一致する', () => {
+        // Arrange
+        const registry = new RuleDefinitionRegistry();
+        const definitions = registry.getAll();
+
+        // Act
+        const actual = definitions.map((definition) => ({
+          ruleName: definition.name.toString(),
+          mapped: mapRuleNameToCode(definition.name.toString()),
+          canonical: definition.errorCode,
+        }));
+
+        // Assert
+        for (const entry of actual) {
+          expect(entry.mapped).toBe(entry.canonical);
+        }
+      });
+    });
+
+    context('レジストリの各 errorCode を逆引きした場合', () => {
+      it('mapCodeToRuleName がレジストリと同じルール名を返す', () => {
+        // Arrange
+        const registry = new RuleDefinitionRegistry();
+        const definitions = registry.getAll();
+
+        // Act
+        const actual = definitions.map((definition) => ({
+          canonicalCode: definition.errorCode,
+          reversed: mapCodeToRuleName(definition.errorCode),
+          ruleName: definition.name.toString(),
+        }));
+
+        // Assert
+        for (const entry of actual) {
+          expect(entry.reversed).toBe(entry.ruleName);
+        }
       });
     });
   });

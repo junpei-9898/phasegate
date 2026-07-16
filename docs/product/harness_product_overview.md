@@ -727,6 +727,8 @@ drift-detect（事後検出）
 
 ### 6.1 L1 — Biome ASTルール
 
+<!-- @work-item-id WI-265 — L1-006/L1-007/L1-008 の対応を canonical レジストリ（biome-ast-engine の rule-definition-registry.ts）に整合させた -->
+
 | ルール | 検出対象 | HarnessError Code |
 |--------|---------|------------------|
 | `require-unit-comment` | `// @unit` コメントのないソースファイル | L1-001 |
@@ -734,9 +736,9 @@ drift-detect（事後検出）
 | `no-layer-violation` | レイヤー境界を越えるimport（domain→infrastructure等） | L1-003 |
 | `enforce-folder-structure` | アーキテクチャに違反するファイル配置 | L1-004 |
 | `no-any-abuse` | `any`型の過剰使用（AI生成コードの典型的アンチパターン） | L1-005 |
-| `no-ghost-file` | importされないが存在するファイル | L1-006 |
-| `no-comment-flood` | 過剰なコメント（AIが生成しがちな冗長コメント） | L1-007 |
-| `no-code-duplication` | 構造的に重複するコードブロック | L1-008 |
+| `no-code-duplication` | 構造的に重複するコードブロック | L1-006 |
+| `no-ghost-file` | importされないが存在するファイル | L1-007 |
+| `no-comment-flood` | 過剰なコメント（AIが生成しがちな冗長コメント） | L1-008 |
 
 ### 6.2 L2 — Pre-commitバリデータ
 

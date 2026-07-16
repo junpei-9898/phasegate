@@ -50,9 +50,9 @@ target('BuildHarnessErrorPayloadUseCase.execute', () => {
           createViolation('no-layer-violation'),
           createViolation('enforce-folder-structure'),
           createViolation('no-any-abuse'),
+          createViolation('no-code-duplication'),
           createViolation('no-ghost-file'),
           createViolation('no-comment-flood'),
-          createViolation('no-code-duplication'),
         ] as const;
 
         // Act

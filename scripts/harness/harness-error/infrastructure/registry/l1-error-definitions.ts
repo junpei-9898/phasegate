@@ -67,24 +67,24 @@ export const L1_ERROR_DEFINITIONS = Object.freeze([
   }),
   createDefinition({
     code: 'L1-006',
+    title: '重複コードが検出された',
+    category: 'architecture',
+    ownerValidatorId: 'architecture',
+    defaultFixExample:
+      'function buildValue(): string { return "shared"; }\nconst actual = buildValue();',
+  }),
+  createDefinition({
+    code: 'L1-007',
     title: '参照されないファイルが残っている',
     category: 'architecture',
     ownerValidatorId: 'architecture',
     defaultFixExample: 'export const actual = "shared";',
   }),
   createDefinition({
-    code: 'L1-007',
+    code: 'L1-008',
     title: 'コメント量が過剰である',
     category: 'quality',
     ownerValidatorId: 'architecture',
     defaultFixExample: 'const actual = "keep comments concise";',
-  }),
-  createDefinition({
-    code: 'L1-008',
-    title: '重複コードが検出された',
-    category: 'architecture',
-    ownerValidatorId: 'architecture',
-    defaultFixExample:
-      'function buildValue(): string { return "shared"; }\nconst actual = buildValue();',
   }),
 ]);
