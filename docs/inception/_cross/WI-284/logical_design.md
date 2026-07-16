@@ -161,18 +161,35 @@ candidateはNode ID、change kind、locatorのcanonical tupleでsortする。こ
 - explicit aliasがvalidな場合だけrename continuityを表示する。
 - digest一致、類似名、近接時刻からrename / causeを推論しない。
 
-## 5. ADR-035 boundary: Obligation、baseline、waiver
+## 5. ADR-035: Obligation、baseline、waiver
 
-ADR-034のevaluation findingはpolicy非依存である。ADR-035は次を決定する。
+ADR-034のevaluation findingはpolicy非依存のまま保持し、ADR-035のderivation stageがexternal policy declarationsとjoinする。
 
-- findingから導出するimmutable obligation shape
-- `violationFingerprint`のpreimage、ruleset migration
-- 既知fingerprintだけを分類するWorld adoption baseline
-- reason、expiry、WorkItem traceabilityを持つ別artifactのwaiver
-- explicit semantic debtとstructural obligationの表示分離
-- current evaluationから導出する`repaid`と、保存stateにしない条件
+```text
+WCR finding
+  -> violationFingerprint
+  -> adoption baseline membership
+  -> exact active waiver lookup
+  -> structural obligation classification
 
-ci-governanceの既存path / SHA-1 baselineはこの入力へ暗黙変換しない。
+baseline fingerprints - current fingerprints
+  -> repaidBaselineEntries
+
+explicit semantic debt declarations
+  -> declaredSemanticDebts（別collection）
+```
+
+`violationFingerprint`はrulesetVersion、ruleId、constraintId、factType、両endpoint pin、rule-owned expected / observed evidenceから作る。`evaluationId`、policy、severity、message、locator、ChangeProvenanceは含めない。`constraintId`はdeclaration identity、fingerprintはobserved violation identityである。
+
+adoption baselineは採用時evaluationの既存fingerprintだけを持つclosed setとし、同一rulesetでは追加禁止・返済削除のみとする。current集合から消えたentryは`repaid`として導出し、baseline cleanup requiredにする。stale entryを保持して再発を再免除しない。
+
+waiverはexact fingerprint、reason、exclusive UTC `expiresOn`、WorkItem、stable waiver IDを必須とする。renewalはnew waiver ID / WIと`renewalOf`で明示し、自動延長しない。WCR-001とmalformed policy inputはnon-waivableである。
+
+`policyInputsDigest`はcanonical baseline、sorted waivers、sorted semantic debtsと、waiver declarationがある場合のresolved UTC policy dateを含む。policy変更は`evaluationId`を変えるが、raw WCR finding / fingerprintは変えない。
+
+semantic debt IDは`pgw:v1:semantic-debt:<DeclaredKey>`。coverage reportはfile-level `<!-- @world-semantic-debt <id> -->`でexternal declarationを参照する。これは既存`@coverage-gating: ungated-legacy`を置換せず、structural obligation、baseline、waiver、attestationとして扱わない。
+
+ci-governanceの既存path / SHA-1 baselineはhook grandfather専用であり、この入力へimport / upgrade /暗黙変換しない。
 
 ## 6. ADR-036 boundary: L4-004 coexistence
 
@@ -203,6 +220,9 @@ ADR-034の`WCR-NNN`は内部evaluation rule IDであり、validator registryへ�
 | broken reference / dependency | `WCR-006` / `WCR-007` | validator-system |
 | digest drift | `WCR-008` | validator-system |
 | hashing / snapshot unavailable | evaluationを生成しないfail-closed diagnostic | validator-system adapterがempty successへ変換しない |
+| ruleset-mismatched / malformed policy input | policy classificationを生成しないfail-closed diagnostic | validator-systemがblocking |
+| repaid baseline entry残置 | `repaidBaselineEntries` | validator-systemがcleanup requiredとしてblocking |
+| expired waiver | waiverを適用せずpolicy diagnostic | 元structural classificationで判定 |
 
 World evaluation DTOはrule ID、constraint ID、endpoint evidence、change provenanceを返す。severity、blocking、exit codeを含めない。
 
@@ -217,9 +237,19 @@ World evaluation DTOはrule ID、constraint ID、endpoint evidence、change prov
 - explicit `refines`は受理し、same heading / digestだけではfactを生成しない。
 - malformed declarationから部分的ConstraintRecordを生成しない。
 - incremental candidate evaluationとfull evaluationのserialized resultが一致する。
+- locator / messageだけの変更ではfingerprint不変、observed digest / ruleset変更ではfingerprintが変わる。
+- `B ∩ V`, `B − V`, `V − B`がadopted / repaid / newへ決定的に分類される。
+- same-ruleset baselineへのentry追加を拒否し、entry削除だけを受理する。
+- ruleset mismatchではold fingerprintを適用せずfail-closedにする。
+- waiverはexact fingerprintだけへ適用し、`policyAsOfDate == expiresOn`でexpiredになる。
+- waiver renewalはnew ID / WI / `renewalOf`を必要とし、old scopeをtransitiveに継承しない。
+- semantic debtはstructural obligation countへ混ぜず、`declared/imported`として別表示する。
+- 既存`.phasegate/baseline.json`をWorld policy repositoryが読み込まない。
 
 ## 10. 未決事項の配置
 
 `docs/inception/_cross/WI-280/delivery_plan.md` §10の「world-modelのconfig keyとvalidator ID」はADR-037へ委譲する。config discovery、CLI、validator registry、layer / default enablementを同時に決めないと、IDだけを先に固定しても実行surfaceとblocking ownerを定義できないためである。
 
 ADR-034が確定するのはWorld内部の`WCR-NNN` rule namespaceだけである。これはADR-032 extraction diagnostic codeともvalidator-system `Lx-NNN`とも互換aliasを作らない。
+
+ADR-035 scopeのexplicit semantic debt ID / coverage report annotationは`pgw:v1:semantic-debt:<DeclaredKey>`と`<!-- @world-semantic-debt <id> -->`に確定した。external declaration file name / schema pathは他のWorld control filesとともにADR-037へ委譲する。
