@@ -1481,6 +1481,12 @@ config v2 / v3のtop-level canonical keyとして将来`world`を追加し、`wo
 
 v2 / v3 schemaと三presetへ同じ`world` contractを追加する。全presetの`world.enabled`はbackward-compatible rolloutのためfalseで、explicit `world:*`実行可否とは分離する。`PresetResolutionService`はnested overrideをmergeし、World field省略時だけlegacy design / inception / matrix pathを継承する。`toWorldModelConfig()`は完全なWorld plain DTO、`toValidatorSystemConfig().world`はWM-19 / WM-20用projectionを返すが、予約validatorは登録しない。
 
+## WI-302 L3-008 resolved projection
+
+<!-- @work-item-id WI-302 -->
+
+`toValidatorSystemConfig()`とvalidator-system config adapterはresolved `world.enabled:true`でL2-017 / L3-008をそれぞれ該当layerへforce-includeし、false / absentでforce-excludeする。既存custom validator選択は保持し、重複を作らない。explicit World commandはこのautomatic validator選択を参照しない。
+
 ## WI-301 L2-017 config projection
 
 <!-- @work-item-id WI-301 -->

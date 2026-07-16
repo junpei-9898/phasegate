@@ -430,3 +430,9 @@ L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into va
 <!-- @work-item-id WI-301 -->
 
 resolved `world.enabled`はWorld evaluatorのdomain policyではなくautomatic validator integrationのrollout switchである。false / absentはL2-017をLayerConfigのenabled validator集合から外し、trueは一意に含める。explicit `world:*` commandの実行可能性には影響しない。
+
+## WI-302 L3 automatic gate selection
+
+<!-- @work-item-id WI-302 -->
+
+同じresolved `world.enabled` switchをL3-008にも適用する。false / absentはL2-017とL3-008の双方をvalidator集合から外し、trueは双方を一意に含める。config-foundationはL2 / L3のblocking policyやWorld classificationを所有しない。

@@ -9,6 +9,7 @@
  * @work-item-id WI-268
  * @work-item-id WI-300
  * @work-item-id WI-301
+ * @work-item-id WI-302
  */
 import type { HarnessConfigV2 } from "../../domain/harness-config.js";
 
@@ -25,6 +26,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
       "ac-bound-coverage": "L3-005",
       "injection-scan": "L3-006",
       "coverage-attestation-verification": "L3-007",
+      "world-constraint-rederivation": "L3-008",
     },
     /^L3-\d{3}$/,
   );
@@ -73,10 +75,28 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
         // WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 (coverage-attestation-verification)
         // は fail-closed default-ON。いずれも fallback 判定の後に force-include し、normalize 結果でも
         // fallback でも常に含める（L3-007 は fail-closed だが現 corpus は実参照 0 件ゆえ緑）。
-        validators: includeValidator(
-          includeValidator(l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"], "L3-006"),
-          "L3-007",
-        ),
+        validators:
+          resolvedConfig.world?.enabled === true
+            ? includeValidator(
+                includeValidator(
+                  includeValidator(
+                    l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"],
+                    "L3-006",
+                  ),
+                  "L3-007",
+                ),
+                "L3-008",
+              )
+            : excludeValidator(
+                includeValidator(
+                  includeValidator(
+                    l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"],
+                    "L3-006",
+                  ),
+                  "L3-007",
+                ),
+                "L3-008",
+              ),
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
         requirementMatrixPath: resolvedConfig.layers.L3.requirementMatrixPath,
         // WI-227 / H16-03: L3-005 のスコープ（additive-safe。未設定は []）
@@ -111,6 +131,10 @@ function usesCustomDocumentRoots(resolvedConfig: HarnessConfigV2): boolean {
 
 function includeValidator(validators: readonly string[], validatorId: string): readonly string[] {
   return validators.includes(validatorId) ? validators : [...validators, validatorId];
+}
+
+function excludeValidator(validators: readonly string[], validatorId: string): readonly string[] {
+  return validators.filter((candidate) => candidate !== validatorId);
 }
 
 function normalizeValidators(

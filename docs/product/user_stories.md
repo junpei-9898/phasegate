@@ -39,7 +39,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-17 | World Model | 14 | 4 |
+| H-17 | World Model | 15 | 4 |
 | H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
@@ -1686,11 +1686,12 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
-## Wave 4: World Model（H-17 / 14 US）
+## Wave 4: World Model（H-17 / 15 US）
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-292 -->
 <!-- @work-item-id WI-301 -->
+<!-- @work-item-id WI-302 -->
 
 ## H-17: World Model
 
@@ -1978,6 +1979,27 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: adopted-legacyとactive waiverをfingerprint付きwarningとして表示し、defaultではnon-blockingにする
 - [ ] AC-6: HarnessErrorがlocal fast-pathは偽造可能でauthoritative判定はL3再導出であると明記し、L3-008は未登録のままにする
 
+### H17-15: L3 authoritative World constraint re-derivation（WM-20）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-20 / WI-302）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** PhasegateをCIで運用する品質管理者,
+**I want to** current corpusとversioned control declarationからWorld obligationをL3で独立再導出したい,
+**so that** local resultや保存reportの改竄に依存しないauthoritative blocking判定を実施できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `L3-008 world-constraint-rederivation`がValidatorId、registry、RunL3、composition-rootへ一意に登録される
+- [ ] AC-2: `world.enabled:false`ではL3-008を明示skipし、trueの場合だけclean corpusから再導出する
+- [ ] AC-3: 保存済み`.harness/world-obligations.json`を読まず、欠落・改竄・削除でresultとblocking判定が変わらない
+- [ ] AC-4: new-structural / invalid-declarationをrule IDとfingerprint付きerror、adopted-legacy / active waiverをwarningとして返す
+- [ ] AC-5: base fixtureはPASSし、structural mutationとunsupported schemaは期待rule / fingerprintまたはdiagnosticでfail-closedになる
+- [ ] AC-6: L2 local fast-pathとL3 authoritative re-derivationが同じclassification契約を使い、authoritative trust rootはL3だけである
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -2020,8 +2042,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 14 | 14 | 0 |
-| **Wave 4小計** | | **14** | **14** | **0** |
+| 4 | H-17 World Model | 15 | 15 | 0 |
+| **Wave 4小計** | | **15** | **15** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **84** | **78** | **6** |
-| **全体（Future含む）** | | **89** | — | — |
+| **v1合計** | | **85** | **79** | **6** |
+| **全体（Future含む）** | | **90** | — | — |

@@ -421,3 +421,9 @@ v2 / v3 AJV schemaへ同じ完全World documentを通し、unknown field、absol
 <!-- @work-item-id WI-301 -->
 
 resolved configをvalidator-system adapterへ渡し、`world.enabled:false`でL2-017がskip、trueでselectedになることを検証する。explicit World commandはこのselectionを参照しないこと、L3-008がprojectionへ混入しないことも固定する。
+
+## WI-302 Automatic World L3 gate projection integration
+
+<!-- @work-item-id WI-302 -->
+
+resolved configをvalidator-systemへ渡し、`world.enabled:false`ではL2-017 / L3-008がskip、trueでは双方がselectedになることを検証する。L3-008 registration後もall presetのdefault falseとexplicit World commandの常時実行契約を維持する。

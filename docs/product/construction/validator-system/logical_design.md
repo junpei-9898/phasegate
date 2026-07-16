@@ -2094,3 +2094,11 @@ L3-004 adapter / registry / severityは変更せず、nyquist `AcCoverageGatePol
 `L2-017`をdefault registryへ常設し、RunL2は`WorldConstraintAdmissionPolicyPort`からpure World derive observationを受けて`WorldConstraintAdmissionService`のpolicyを適用する。infrastructure adapterはworld-model public `createWorldModelModule`だけを利用し、保存済みobligation reportやWorld内部型を読まない。`world.enabled:false` / absentではLayerConfigがL2-017を明示skipし、trueの場合だけ実行する。self-repo configはこのWIで有効化しない。
 
 L2-017がerrorにするのはconstraint document admission failure、WCR-001相当、baselineにないnew structural findingだけである。adopted legacyとactive waiverはwarningとして表示し、repaid cleanup、ruleset migration、policy input全体のauthoritative blockingはL3-008へ残す。local working treeとbaselineは偽造可能なため、全findingは`local fast-path; authoritative L3 re-derivation required`を含む。L3-008はまだregistryへ登録しない。
+
+## WI-302 L3-008 world-constraint-rederivation
+
+<!-- @work-item-id WI-302 -->
+
+`L3-008`をdefault registryへ常設し、RunL3は専用`WorldConstraintRederivationPolicyPort`からcurrent corpus / versioned control inputのpure derive observationを受ける。adapterは呼出しごとにworld-model public compositionを構築して`writeReport:false`で実行し、`.harness/world-obligations.json`のreader、cache、pathを依存に持たない。report absent / forged / deletedで同じresultになることをCI fixtureで固定する。
+
+`world.enabled:false` / absentではLayerConfigがL3-008を明示skipし、trueだけで実行する。Worldのclassificationをvalidator-system所有serviceが`new-structural` / `invalid-declaration` = error、`adopted-legacy` / `waived` = warningへ写像し、derive diagnosticはauthoritative判定不能として全てfail-closedにする。self-repo configはこのWIで変更せず、temporary resolved configによるdual-path実測をCP-4判断材料にする。

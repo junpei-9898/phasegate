@@ -469,3 +469,9 @@ validator-systemが将来消費するWorld configはplain `world` projectionで�
 <!-- @work-item-id WI-301 -->
 
 `WorldConstraintAdmissionObservation`はworld-model public facade由来のplain obligation / diagnostic projectionであり、World Entity / VOをvalidator-systemへ持ち込まない。`WorldConstraintAdmissionService`は`new-structural`と`invalid-declaration`をerror、`adopted-legacy`と`waived`をwarningへ決定的に写像する。validなnew claim / pinはfindingがない限りpassし、baseline entryを持つlegacy fingerprintをblockingへ昇格しない。message / suggestionはlocal fast-pathとauthoritative L3 re-derivationを区別する。
+
+## WI-302 L3 authoritative World re-derivation policy
+
+<!-- @work-item-id WI-302 -->
+
+`WorldConstraintRederivationObservation`はL2と同じplain obligation classificationを観測するが、独立したconsumer-owned portとしてL3 trust boundaryを表す。`WorldConstraintRederivationService`は`new-structural` / `invalid-declaration`と全derive diagnosticをerror、`adopted-legacy` / `waived`をwarningへ写像する。全findingはauthoritative clean-corpus re-derivationであること、rule ID、存在する場合はviolation fingerprintを保持する。保存reportはobservationにもpolicy inputにも含めない。

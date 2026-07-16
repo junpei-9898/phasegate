@@ -2,7 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-156 / WI-301
+ * @work-item-id WI-156 / WI-301 / WI-302
  */
 import { describe, expect, it } from "vitest";
 import { HarnessConfigValidatorConfigAdapter } from "../../../../validator-system/infrastructure/adapters/harness-config-validator-config-adapter.js";
@@ -193,6 +193,34 @@ target("HarnessConfigValidatorConfigAdapter", () => {
 
         // Assert
         expect(actual.validatorIds).toEqual(["L2-001", "L2-017"]);
+      });
+
+      it("world.enabled=falseではL3-008をvalidator集合から除外すること", async () => {
+        // Arrange
+        const adapter = new HarnessConfigValidatorConfigAdapter({
+          world: { enabled: false },
+          layers: { L3: { enabled: true, validators: ["L3-001", "L3-008"] } },
+        });
+
+        // Act
+        const actual = await adapter.getLayerConfig("L3");
+
+        // Assert
+        expect(actual.validatorIds).toEqual(["L3-001"]);
+      });
+
+      it("world.enabled=trueではL3-008をvalidator集合へ一度だけ含めること", async () => {
+        // Arrange
+        const adapter = new HarnessConfigValidatorConfigAdapter({
+          world: { enabled: true },
+          layers: { L3: { enabled: true, validators: ["L3-001", "L3-008", "L3-008"] } },
+        });
+
+        // Act
+        const actual = await adapter.getLayerConfig("L3");
+
+        // Assert
+        expect(actual.validatorIds).toEqual(["L3-001", "L3-008"]);
       });
     });
 

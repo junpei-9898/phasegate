@@ -279,3 +279,9 @@ config-foundationから渡したcustom matrix / declaration / report pathをrepo
 <!-- @work-item-id WI-301 -->
 
 validator-system adapter fixtureからpublic World compositionをpure modeで実行し、malformed constraintを`invalid-declaration`、new pin / claimを`new-structural`、baseline一致を`adopted-legacy`として観測できることを固定する。`.harness/world-obligations.json`は作成・読込せず、authoritative clean re-derivationはWM-20へ残す。
+
+## WI-302 L3 consumer trust-boundary contract
+
+<!-- @work-item-id WI-302 -->
+
+base / new unpinned claim / duplicate ID / unsupported schema fixtureをvalidator-system L3 adapterからpublic World compositionへ流し、exact rule、fingerprint、classificationを検査する。同じrootで`.harness/world-obligations.json`を作成、改竄、削除してもpure observation bytesとblocking resultが一致し、report writer outputがauthorityへ昇格しないことを証明する。

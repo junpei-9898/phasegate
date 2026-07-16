@@ -4,6 +4,7 @@
  * @work-item-id WI-156
  * @work-item-id WI-212
  * @work-item-id WI-301
+ * @work-item-id WI-302
  *
  * HarnessConfigValidatorConfigAdapter — ValidatorConfigPort実装
  * HarnessConfigV2からLayerConfig VOを構築する
@@ -76,12 +77,13 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
     }
 
     const configuredValidatorIds = layerData.validators ?? defaultValidators[layer];
+    const automaticWorldValidatorId = layer === "L2" ? "L2-017" : layer === "L3" ? "L3-008" : null;
     const selectedValidatorIds =
-      layer === "L2"
-        ? this.config.world?.enabled === true
-          ? [...configuredValidatorIds, "L2-017"]
-          : configuredValidatorIds.filter((validatorId) => validatorId !== "L2-017")
-        : configuredValidatorIds;
+      automaticWorldValidatorId === null
+        ? configuredValidatorIds
+        : this.config.world?.enabled === true
+          ? [...configuredValidatorIds, automaticWorldValidatorId]
+          : configuredValidatorIds.filter((validatorId) => validatorId !== automaticWorldValidatorId);
     return LayerConfig.create({
       layer,
       enabled: layerData.enabled !== false,

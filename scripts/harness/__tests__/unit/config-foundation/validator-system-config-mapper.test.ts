@@ -4,7 +4,7 @@
 // @work-item-id WI-133
 // @work-item-id WI-217
 // @work-item-id WI-212
-// @work-item-id WI-300 / WI-301
+// @work-item-id WI-300 / WI-301 / WI-302
 import { describe, expect, it } from "vitest";
 import { toValidatorSystemConfig } from "../../../config-foundation/application/mappers/validator-system-config-mapper.js";
 import type { HarnessConfigV2 } from "../../../config-foundation/domain/harness-config.js";
@@ -246,7 +246,7 @@ target("toValidatorSystemConfig", () => {
         expect(actual.layers.L3.validators).not.toContain("L3-008");
       });
 
-      it("world.enabled=trueではL2-017だけをautomatic validatorへ追加すること", () => {
+      it("world.enabled=trueではL2-017とL3-008をautomatic validatorへ追加すること", () => {
         // Arrange
         const resolvedConfig = createResolvedConfig();
         resolvedConfig.world = { ...structuredClone(WORLD_CONFIG_DEFAULTS), enabled: true };
@@ -261,7 +261,7 @@ target("toValidatorSystemConfig", () => {
 
         // Assert
         expect(actual.layers.L2.validators.filter((id) => id === "L2-017")).toHaveLength(1);
-        expect(actual.layers.L3.validators).not.toContain("L3-008");
+        expect(actual.layers.L3.validators.filter((id) => id === "L3-008")).toHaveLength(1);
       });
     });
   });

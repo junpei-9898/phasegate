@@ -2,7 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-116 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156 / WI-301
+ * @work-item-id WI-116 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156 / WI-301 / WI-302
  */
 import { describe, expect, it } from "vitest";
 import { InvalidValidatorIdError, ValidatorId } from "../../../validator-system/domain/value-objects/validator-id.js";
@@ -67,6 +67,15 @@ target("ValidatorId", () => {
       // Assert
       expect(actual.getName()).toBe("world-constraint-admission");
       expect(ValidatorId.fromName("world-constraint-admission").value).toBe("L2-017");
+    });
+
+    it("L3-008を渡すとworld-constraint-rederivationとして生成されること", () => {
+      // Arrange / Act
+      const actual = ValidatorId.create("L3-008");
+
+      // Assert
+      expect(actual.getName()).toBe("world-constraint-rederivation");
+      expect(ValidatorId.fromName("world-constraint-rederivation").value).toBe("L3-008");
     });
   });
 

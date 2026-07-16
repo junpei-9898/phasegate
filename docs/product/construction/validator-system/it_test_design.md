@@ -521,3 +521,18 @@ minimal / standard / strictのresolved World configをvalidator compositionへ�
 | IT-WI301-RUN-003 | malformed / new constraint fixtureを実行する | WCR-001 / new structural error |
 | IT-WI301-RUN-004 | adopted legacy fixtureを実行する | warning表示、default aggregateは非blocking |
 | IT-WI301-ACL-001 | World adapterを実行する | public facadeのみ、report writeなし、plain DTO |
+
+## WI-302 L3-008 integration tests
+
+<!-- @work-item-id WI-302 -->
+
+| ID | 日本語シナリオ | 期待結果 |
+|---|---|---|
+| IT-WI302-REG-001 | registry goldenを読む | L3は8件、L3-008一意 |
+| IT-WI302-RUN-001 | world disabledで全L3を実行する | L3-008 skipped、policy port未実行 |
+| IT-WI302-RUN-002 | world enabledでbase / mutation observationを実行する | base pass、mutation exact WCR / fingerprint fail |
+| IT-WI302-RUN-003 | adopted legacy / waiver observationを実行する | warning表示、既定集約はnon-blocking |
+| IT-WI302-ACL-001 | forged reportを作成・削除してadapterを再実行する | observationとRunL3 result不変 |
+| IT-WI302-ACL-002 | unsupported control schemaを実行する | authoritative diagnostic error |
+
+adapter testはreal filesystem fixtureとworld-model public facadeを使い、保存reportをinputにするtest doubleを設けない。

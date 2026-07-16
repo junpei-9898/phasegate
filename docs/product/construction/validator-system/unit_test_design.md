@@ -576,3 +576,18 @@ resolved mapper出力にWorld plain DTOが保持され、既存validator ID集�
 | UT-WI301-POL-006 | observation順を入れ替える | 同じ決定的順序 |
 
 domain serviceはplain observation実体で検証し、domain mockを使用しない。
+
+## WI-302 L3-008 unit tests
+
+<!-- @work-item-id WI-302 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI302-ID-001 | L3-008を名前とIDの双方から生成する | `world-constraint-rederivation` |
+| UT-WI302-POL-001 | new structural / invalid declarationを評価する | exact WCR / fingerprint付きerror |
+| UT-WI302-POL-002 | adopted legacy / active waiverを評価する | warning、non-blocking intent |
+| UT-WI302-POL-003 | derive diagnosticを評価する | authoritative判定不能のerror |
+| UT-WI302-POL-004 | observation順を入れ替える | 同じ決定的順序 |
+| UT-WI302-CFG-001 | world switchを切り替える | L3-008だけをexclude / include |
+
+domain serviceはplain observation実体で検証し、domain mockを使用しない。

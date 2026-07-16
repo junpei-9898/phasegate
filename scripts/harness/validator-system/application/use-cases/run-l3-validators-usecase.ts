@@ -2,6 +2,7 @@
  * @layer application
  * @unit validator-system
  * @work-item-id WI-212
+ * @work-item-id WI-302
  *
  * RunL3ValidatorsUseCase — H08-02: L3バリデータ実行
  */
@@ -13,6 +14,7 @@ import type { InjectionScanPolicyPort } from "../../domain/ports/injection-scan-
 import type { PerformanceScannerPort } from "../../domain/ports/performance-scanner-port.js";
 import type { SecurityPatternScannerPort } from "../../domain/ports/security-pattern-scanner-port.js";
 import type { ValidatorConfigPort } from "../../domain/ports/validator-config-port.js";
+import type { WorldConstraintRederivationPolicyPort } from "../../domain/ports/world-constraint-rederivation-policy-port.js";
 import { CoverageAttestationVerificationService } from "../../domain/services/coverage-attestation-verification-service.js";
 import { InjectionPatternScanService } from "../../domain/services/injection-pattern-scan-service.js";
 import {
@@ -20,6 +22,7 @@ import {
   type ValidatorExecutionService,
 } from "../../domain/services/validator-execution-service.js";
 import { ValidatorLanguageCapabilityService } from "../../domain/services/validator-language-capability-service.js";
+import { WorldConstraintRederivationService } from "../../domain/services/world-constraint-rederivation-service.js";
 import type { ValidatorRegistry } from "../../domain/services/validator-registry.js";
 import type { HarnessErrorLike } from "../../domain/value-objects/validation-result.js";
 import { ValidationResult } from "../../domain/value-objects/validation-result.js";
@@ -54,6 +57,8 @@ export interface RunL3ValidatorsUseCaseDeps {
   injectionScanPolicyPort?: InjectionScanPolicyPort;
   /** WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 (coverage-attestation-verification, fail-closed) 用ポート。 */
   coverageAttestationVerificationPolicyPort?: CoverageAttestationVerificationPolicyPort;
+  /** WI-302: L3-008 authoritative World clean-corpus re-derivation port. */
+  worldConstraintRederivationPolicyPort?: WorldConstraintRederivationPolicyPort;
   /** L3-005 のスコープ対象 story-id（config layers.L3.acBoundStories 由来。既定 []）。 */
   acBoundStories?: readonly string[];
 }
@@ -70,10 +75,12 @@ export class RunL3ValidatorsUseCase {
   private readonly performanceScannerPort?: PerformanceScannerPort;
   private readonly injectionScanPolicyPort?: InjectionScanPolicyPort;
   private readonly coverageAttestationVerificationPolicyPort?: CoverageAttestationVerificationPolicyPort;
+  private readonly worldConstraintRederivationPolicyPort?: WorldConstraintRederivationPolicyPort;
   private readonly acBoundStories: readonly string[];
   private readonly languageCapabilityService = new ValidatorLanguageCapabilityService();
   private readonly injectionScanService = new InjectionPatternScanService();
   private readonly coverageAttestationVerificationService = new CoverageAttestationVerificationService();
+  private readonly worldConstraintRederivationService = new WorldConstraintRederivationService();
 
   constructor(deps: RunL3ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -87,6 +94,7 @@ export class RunL3ValidatorsUseCase {
     this.performanceScannerPort = deps.performanceScannerPort;
     this.injectionScanPolicyPort = deps.injectionScanPolicyPort;
     this.coverageAttestationVerificationPolicyPort = deps.coverageAttestationVerificationPolicyPort;
+    this.worldConstraintRederivationPolicyPort = deps.worldConstraintRederivationPolicyPort;
     this.acBoundStories = deps.acBoundStories ?? [];
   }
 
@@ -301,6 +309,32 @@ export class RunL3ValidatorsUseCase {
           } else {
             overrideMap.set("L3-007", ValidationResult.pass(l3007Id, 0));
           }
+        }
+      }
+    }
+
+    // WI-302 / ADR-030 trust root: L3-008 independently re-derives World obligations from the
+    // current corpus and versioned control declarations. The adapter has no persisted-report input.
+    if (this.worldConstraintRederivationPolicyPort) {
+      const l3008Result = overrideMap.get("L3-008");
+      if (l3008Result && !l3008Result.skipped) {
+        const observation = await this.worldConstraintRederivationPolicyPort.collect();
+        const findings = this.worldConstraintRederivationService.evaluate(observation);
+        if (findings.length > 0) {
+          const errors: HarnessErrorLike[] = findings.map((finding) => ({
+            code: { value: "L3-008", toString: () => "L3-008" },
+            severity: { value: finding.severity, toString: () => finding.severity },
+            message: finding.message,
+            suggestion: finding.suggestion,
+            sourcePath: finding.sourcePath,
+            ruleId: finding.ruleId,
+            violationFingerprint: finding.violationFingerprint,
+            constraintId: finding.constraintId,
+            classification: finding.classification,
+          }));
+          overrideMap.set("L3-008", ValidationResult.fail(ValidatorId.create("L3-008"), errors, 0));
+        } else {
+          overrideMap.set("L3-008", ValidationResult.pass(ValidatorId.create("L3-008"), 0));
         }
       }
     }

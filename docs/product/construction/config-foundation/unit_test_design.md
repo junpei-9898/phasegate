@@ -685,6 +685,13 @@ scripts/harness/__tests__/config-foundation/
 - preset resolutionはnested overrideとlegacy path inheritanceを明示fieldの有無に従って解決する。
 - dedicated World mapperは完全なplain DTO、validator mapperは将来gate用projectionを返し、L2-017 / L3-008をvalidator配列へ追加しない。
 
+## WI-302 World L3 gate projection tests
+
+<!-- @work-item-id WI-302 -->
+
+- `world.enabled:false` / absentではL2-017 / L3-008をvalidator配列から除外する。
+- `world.enabled:true`ではL2-017 / L3-008を各layerへ一度だけ含め、custom validator選択を保持する。
+
 ## WI-301 L2-017 selection tests
 
 <!-- @work-item-id WI-301 -->

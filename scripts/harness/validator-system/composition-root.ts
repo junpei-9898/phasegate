@@ -6,6 +6,7 @@
  * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156
  * @work-item-id WI-217
  * @work-item-id WI-301
+ * @work-item-id WI-302
  */
 
 import { join } from "node:path";
@@ -57,6 +58,7 @@ import { SourceFileTextScannerAdapter } from "./infrastructure/adapters/source-f
 import { TraceabilityMetadataPolicyAdapter } from "./infrastructure/adapters/traceability-metadata-policy-adapter.js";
 import { TraceabilityWorkItemStatusPolicyAdapter } from "./infrastructure/adapters/traceability-work-item-status-policy-adapter.js";
 import { WorldModelConstraintAdmissionAdapter } from "./infrastructure/adapters/world-model-constraint-admission-adapter.js";
+import { WorldModelConstraintRederivationAdapter } from "./infrastructure/adapters/world-model-constraint-rederivation-adapter.js";
 import { ReportValidationResultsHandler } from "./presentation/handlers/report-validation-results-handler.js";
 import { RunQuickModeHandler } from "./presentation/handlers/run-quick-mode-handler.js";
 import { RunValidatorsHandler } from "./presentation/handlers/run-validators-handler.js";
@@ -143,6 +145,7 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     // WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 (coverage-attestation-verification)
     // は fail-closed / default-ON。L2-016 の authoritative 相棒。
     createDef("L3-007", "L3", "always", "CoverageAttestationVerificationPolicyPort"),
+    createDef("L3-008", "L3", "always", "WorldConstraintRederivationPolicyPort"),
     createDef("L4-001", "L4", "always"),
     createDef("L4-002", "L4", "always"),
     createDef("L4-003", "L4", "strictOnly"),
@@ -199,6 +202,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   // docs/product/construction/*​/coverage_report.md を cwd 起点で走査する（targetPaths 非依存）。
   const coverageAttestationGatingPolicyPort = new FileSystemCoverageAttestationGatingAdapter(process.cwd());
   const worldConstraintAdmissionPolicyPort = new WorldModelConstraintAdmissionAdapter({
+    rootDir: process.cwd(),
+    resolvedConfig: (configData as { world?: import("../world-model/index.js").WorldResolvedConfigInput }).world,
+  });
+  const worldConstraintRederivationPolicyPort = new WorldModelConstraintRederivationAdapter({
     rootDir: process.cwd(),
     resolvedConfig: (configData as { world?: import("../world-model/index.js").WorldResolvedConfigInput }).world,
   });
@@ -269,6 +276,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     performanceScannerPort,
     injectionScanPolicyPort,
     coverageAttestationVerificationPolicyPort,
+    worldConstraintRederivationPolicyPort,
     acBoundStories,
   });
 

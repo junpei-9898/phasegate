@@ -378,3 +378,9 @@ composition rootはdedicated config-foundation mapperのplain DTOを受け、ext
 <!-- @work-item-id WI-301 -->
 
 validator-systemのL2 infrastructure adapterは`world-model/index.ts`の`createWorldModelModule`からpure `deriveWorldObligationsUseCase`を呼び、`writeReport:false`のplain observationだけを消費する。World domain / repositoryへのdeep importと、保存reportをgate inputにすることを禁止する。world-modelはseverity、blocking、L2 skipを所有せず、L3-008のclean re-derivationもこのWIでは実装しない。
+
+## WI-302 Authoritative consumer contract
+
+<!-- @work-item-id WI-302 -->
+
+validator-systemのL3 infrastructure adapterもpublic `createWorldModelModule`だけを消費し、呼出しごとにcurrent corpusとversioned constraints / baseline / waiver / debtをpure modeで再導出する。world-modelは`structuralObligations`とdiagnosticのplain projectionを返すが、L3 severity / blocking / skipを決めない。generated obligation reportはwriter outputだけでread portを持たず、L3 adapterはreport pathにも依存しない。

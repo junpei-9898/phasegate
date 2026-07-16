@@ -1,7 +1,7 @@
 // @layer test
 // @unit validator-system
 // @story H08-01
-// @work-item-id WI-156 / WI-301
+// @work-item-id WI-156 / WI-301 / WI-302
 /**
  * T-042: L0 runtime hook 案内 E2E検証
  * validate --layer L0 が legacy validator ではなく runtime hook 案内を返すこと
@@ -17,12 +17,13 @@ target("L0 Runtime Hook E2E検証", () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(8) + L3(7) + L4(7) = 22
+      // Assert — L2(8) + L3(8) + L4(7) = 23
       // WI-222 (HF2-05): L4-007 (ac-level-traceability, default-OFF advisory) を registry に追加。
       // WI-227 (H16-03): L3-005 (ac-bound-coverage, default-OFF fail-closed) を registry に追加。
       // WI-258 (L2-016): coverage-report attestation gate (warning-only) を registry に追加。
       // WI-259 (L3-006): injection-scan (advisory, warning-only) を registry に追加。
       // WI-268 (L3-007): coverage-attestation-verification (fail-closed) を registry に追加。
+      // WI-302 (L3-008): authoritative World clean-corpus re-derivation を registry に追加。
       expect(actual.map((d) => d.validatorId.value)).toEqual([
         "L2-001",
         "L2-002",
@@ -39,6 +40,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L3-005",
         "L3-006",
         "L3-007",
+        "L3-008",
         "L4-001",
         "L4-002",
         "L4-003",
@@ -77,6 +79,7 @@ target("L0 Runtime Hook E2E検証", () => {
       ]);
       // WI-259 (L3-006): injection-scan (advisory, warning-only) が registry に登録されている。
       // WI-268 (L3-007): coverage-attestation-verification (fail-closed) が registry に登録されている。
+      // WI-302 (L3-008): authoritative World clean-corpus re-derivation が registry に登録されている。
       expect(actual.l3Defs.map((d) => d.validatorId.value)).toEqual([
         "L3-001",
         "L3-002",
@@ -85,6 +88,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L3-005",
         "L3-006",
         "L3-007",
+        "L3-008",
       ]);
       // WI-222 (HF2-05): L4-007 (default-OFF advisory) が registry に登録されている。
       expect(actual.l4Defs.map((d) => d.validatorId.value)).toEqual([
