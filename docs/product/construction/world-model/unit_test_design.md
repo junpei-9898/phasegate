@@ -328,3 +328,13 @@ matrix 1.2 status / lifecycle包含、1.1 required fallback、status差による
 @story-id H17-08
 
 valid constraintsをWM-12 domain型へ変換し、malformed supported recordとduplicate constraint IDをpartial recordなしのWCR-001 inputへ隔離する。baseline / waiver / semantic debtはADR-035の必須field、ID / digest / date / WI形式、set array canonical sortを検証し、duplicate fingerprint / IDではwinnerを作らない。input array順を変えてもcanonical projectionが一致することを確認する。
+
+## WI-295 fingerprint / obligation tests
+
+<!-- @work-item-id WI-295 -->
+
+@story-id H17-09
+
+ADR-035のfingerprint 10-field preimage、locator / message / evaluation ID除外、observed digest / duplicate multiset変化を検証する。policy digestはwaiver 0件のdate null、waiverありdate必須、declaration set sortを固定する。baseline intersection / difference、active / expired exact waiver、WCR-001 non-waivable、ruleset mismatch、semantic debt別collectionをdomain実体で検証する。
+
+application testはinvalid repository resultでreportを作らないこと、pure modeでwriterを呼ばないこと、write modeがpureと同じbytesだけを一度渡すことを確認する。

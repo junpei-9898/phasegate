@@ -280,3 +280,13 @@ matrix 1.2のStory projectionはcoverageStatusとordered coverageLifecycleを保
 4つのexternal declarationはversioned envelopeを通じてadmitする。`AdoptionBaseline`はruleset / source roots / adoption provenanceとclosed sorted fingerprint entry、`WorldWaiver`はexact fingerprint / reason / exclusive expiry / WI / renewal link、`SemanticDebtDeclaration`はexplicit debt ID / semantic kind / owner / introduced WI / sorted node referencesを保持する。
 
 supported constraints envelope内の各recordは`ConstraintRecord`または`MalformedConstraintDeclaration`のどちらかへ全量変換する。duplicate constraint IDは全candidate no-winnerとしてWCR-001入力へ隔離する。baseline fingerprint、waiver ID / fingerprint、debt IDのduplicateはpolicy document全体をinvalidとし、任意candidateを採用しない。ci-governanceのpath / SHA-1 baselineは別owner identityであり、World adoption baselineへ暗黙importしない。
+
+## WI-295 Fingerprint / obligation derivation
+
+<!-- @work-item-id WI-295 -->
+
+@story-id H17-09
+
+`ViolationFingerprintDeriver`はWCR findingをruleset-bound semantic preimageへ変換し、constraint identityとは別の`pgw:v1:violation-fingerprint:sha256:*`を導出する。subject、両pin、rule-owned expected / observedを含め、locator、message、evaluation / policy stateを除外する。duplicate observationはcandidate cardinalityとsorted content-digest multisetを保持する。
+
+`PolicyInputsDigestDeriver`はbaseline / waivers / semantic debts / effective dateをcanonicalizeし、`ObligationDerivationService`はsame-ruleset baselineとの集合差、exclusive waiver expiry、WCR-001 non-waivable、ruleset mismatchをclassification / diagnosticへ変換する。reportはstructural / repaid / declared semantic debt / policy diagnosticを別collectionで保持し、blocking policyを含めない。

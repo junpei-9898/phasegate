@@ -33,6 +33,7 @@ export interface EndpointResolutionDto {
   readonly resolvedNodeId: string | null;
   readonly currentDigest: string | null;
   readonly candidateCount: number;
+  readonly candidateContentDigests: readonly string[];
   readonly locators: readonly string[];
   readonly sourceDiagnosticCodes: readonly string[];
 }
@@ -110,6 +111,7 @@ const compatibleAliasRole = (from: WorldNodeId, to: WorldNodeId): boolean => {
 const freezeEndpoint = (endpoint: EndpointResolutionDto): EndpointResolutionDto =>
   Object.freeze({
     ...endpoint,
+    candidateContentDigests: Object.freeze([...endpoint.candidateContentDigests]),
     locators: Object.freeze([...endpoint.locators]),
     sourceDiagnosticCodes: Object.freeze([...endpoint.sourceDiagnosticCodes]),
   });
@@ -138,12 +140,14 @@ const endpointDto = (
     resolvedNodeId: resolvedNodeId?.toString() ?? null,
     currentDigest: resolvedNode?.contentDigest.toString() ?? null,
     candidateCount: candidates.length,
+    candidateContentDigests: candidates.map((candidate) => candidate.contentDigest.toString()).sort(compareStrings),
     locators: [...new Set(candidates.map(locatorFor))].sort(compareStrings),
     sourceDiagnosticCodes: [...sourceDiagnosticCodes].sort(compareStrings),
   });
 
 const toEndpointCanonical = (endpoint: EndpointResolutionDto): CanonicalJsonObject => ({
   candidateCount: endpoint.candidateCount,
+  candidateContentDigests: endpoint.candidateContentDigests,
   currentDigest: endpoint.currentDigest,
   declaredNodeId: endpoint.declaredNodeId,
   locators: endpoint.locators,

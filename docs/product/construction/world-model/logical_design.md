@@ -336,3 +336,13 @@ matrix extractorは1.2のcoverageStatus / lifecycleをexact owner fieldとして
 application層がconstraints / adoption baseline / waivers / semantic debtsのrepository portを所有し、infrastructure adapterがcanonical root file、strict JSON parse、published schema admission、domain mappingを実装する。read resultは`absent | loaded | invalid`を明示し、file不在だけをcanonical emptyへ変換する。存在するunknown schema、schemaVersion欠落、parse / I/O failureはvalueなしのinvalid resultとしてfail-closedに保つ。
 
 constraintsはsupported envelopeとrecord admissionを分離し、malformed / duplicate recordをWCR-001 inputとしてlosslessに保持する。policy declarationはdocument単位でschema / duplicate identityを検査する。replace portはcomplete JSONをsame-directory temp fileへwriteしてatomic renameするが、mutation use case、`--apply`判断、composition bindはWM-15へ残す。
+
+## WI-295 Derive obligations application integration
+
+<!-- @work-item-id WI-295 -->
+
+@story-id H17-09
+
+`DeriveObligationsUseCase`はpolicy repositoryをloadし、invalid resultをemptyへfallbackせずreportなしのfail-closed resultへする。valid inputではpolicyInputsDigestを先に導出し、既存`SnapshotRootDeriver`の`phasegate-world-evaluation/v1` preimageへ渡してevaluation IDを確定した後、current findingのfingerprint / classification / reportを構築する。
+
+use caseはreport read portを持たない。pure modeはcanonical bytesを返すだけ、write modeは同一bytesを`ObligationReportWriterPort`へ渡す。filesystem adapterは`.harness/world-obligations.json`をtemp + atomic renameで置換する。composition-rootはWM-13 repositoriesとwriterをbindするが、presentation handler / main dispatchはWM-15へ残す。

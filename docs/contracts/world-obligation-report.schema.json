@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phasegate.dev/contracts/world-obligation-report.schema.json",
+  "title": "PhaseGate World obligation report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evaluationId",
+    "rulesetVersion",
+    "policyInputsDigest",
+    "structuralObligations",
+    "repaidBaselineEntries",
+    "declaredSemanticDebts",
+    "policyDiagnostics",
+    "summary"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "phasegate-world-obligation-report/v1" },
+    "evaluationId": {
+      "type": "string",
+      "pattern": "^pgw:v1:evaluation:sha256:[0-9a-f]{64}$"
+    },
+    "rulesetVersion": { "type": "string", "minLength": 1 },
+    "policyInputsDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "structuralObligations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/structuralObligation" }
+    },
+    "repaidBaselineEntries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repaidBaselineEntry" }
+    },
+    "declaredSemanticDebts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/semanticDebt" }
+    },
+    "policyDiagnostics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/policyDiagnostic" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "structuralObligations",
+        "repaidBaselineEntries",
+        "declaredSemanticDebts",
+        "policyDiagnostics"
+      ],
+      "properties": {
+        "structuralObligations": { "type": "integer", "minimum": 0 },
+        "repaidBaselineEntries": { "type": "integer", "minimum": 0 },
+        "declaredSemanticDebts": { "type": "integer", "minimum": 0 },
+        "policyDiagnostics": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "jsonValue": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "pin": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["nodeId", "contentDigest"],
+          "properties": {
+            "nodeId": { "type": "string", "pattern": "^pgw:v1:.+" },
+            "contentDigest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["endpointRole", "nodeIds"],
+      "properties": {
+        "endpointRole": {
+          "enum": ["claimant", "premise", "both", "declaration", "global"]
+        },
+        "nodeIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^pgw:v1:.+" }
+        }
+      }
+    },
+    "waiver": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["waiverId", "reason", "expiresOn", "workItemId"],
+          "properties": {
+            "waiverId": { "type": "string", "pattern": "^pgw:v1:waiver:.+" },
+            "reason": { "type": "string", "minLength": 1 },
+            "expiresOn": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            },
+            "workItemId": { "type": "string", "pattern": "^WI-[0-9]+$" }
+          }
+        }
+      ]
+    },
+    "structuralObligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "violationFingerprint",
+        "ruleId",
+        "constraintId",
+        "factType",
+        "subject",
+        "claimantPin",
+        "premisePin",
+        "expected",
+        "observed",
+        "classification",
+        "waiver"
+      ],
+      "properties": {
+        "violationFingerprint": {
+          "type": "string",
+          "pattern": "^pgw:v1:violation-fingerprint:sha256:[0-9a-f]{64}$"
+        },
+        "ruleId": { "type": "string", "pattern": "^WCR-[0-9]{3}$" },
+        "constraintId": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^pgw:v1:constraint:.+" }
+          ]
+        },
+        "factType": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "enum": ["references", "depends-on", "refines", "content-equals"]
+            }
+          ]
+        },
+        "subject": { "$ref": "#/$defs/subject" },
+        "claimantPin": { "$ref": "#/$defs/pin" },
+        "premisePin": { "$ref": "#/$defs/pin" },
+        "expected": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        },
+        "observed": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        },
+        "classification": {
+          "enum": [
+            "adopted-legacy",
+            "new-structural",
+            "invalid-declaration",
+            "waived"
+          ]
+        },
+        "waiver": { "$ref": "#/$defs/waiver" }
+      }
+    },
+    "repaidBaselineEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "violationFingerprint",
+        "ruleId",
+        "constraintId",
+        "classification",
+        "disposition"
+      ],
+      "properties": {
+        "violationFingerprint": {
+          "type": "string",
+          "pattern": "^pgw:v1:violation-fingerprint:sha256:[0-9a-f]{64}$"
+        },
+        "ruleId": { "type": "string", "pattern": "^WCR-[0-9]{3}$" },
+        "constraintId": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^pgw:v1:constraint:.+" }
+          ]
+        },
+        "classification": { "const": "repaid" },
+        "disposition": { "const": "cleanup-required" }
+      }
+    },
+    "semanticDebt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "debtId",
+        "kind",
+        "title",
+        "reason",
+        "ownerUnit",
+        "introducedByWorkItemId",
+        "references"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "phasegate-world-debts/v1" },
+        "debtId": { "type": "string", "pattern": "^pgw:v1:semantic-debt:.+" },
+        "kind": { "const": "semantic" },
+        "title": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "ownerUnit": { "type": "string", "minLength": 1 },
+        "introducedByWorkItemId": {
+          "type": "string",
+          "pattern": "^WI-[0-9]+$"
+        },
+        "references": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^pgw:v1:.+" }
+        }
+      }
+    },
+    "policyDiagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "subjectId", "details"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "subjectId": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      }
+    }
+  }
+}

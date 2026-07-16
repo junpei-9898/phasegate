@@ -178,6 +178,10 @@ describe("ConstraintEvaluator", () => {
     // Assert
     expect(actual.findings.map((finding) => finding.ruleId)).toEqual(["WCR-005"]);
     expect(actual.evaluations[0].claimant.candidateCount).toBe(2);
+    expect(actual.evaluations[0].claimant.candidateContentDigests).toEqual([
+      digest("a").toString(),
+      digest("c").toString(),
+    ]);
     expect(actual.evaluations[0].claimant.currentDigest).toBeNull();
     expect(actual.evaluations[0].claimant.sourceDiagnosticCodes).toEqual(["duplicate-node-id"]);
   });

@@ -235,3 +235,13 @@ self-repo regenerated matrix 1.2をWorld compositionで読み、planned Storyを
 @story-id H17-08
 
 temp project rootへ4種類のfixtureを配置し、canonical file不在、valid load、schemaVersion欠落 / unknown、parse failure、supported constraints内malformed / duplicate、policy duplicateをreal filesystem + published JSON schemaで検証する。不在だけはcanonical empty、その他のinvalid inputはempty fallbackなしとする。atomic replaceはtemp file + same-directory rename後にcomplete JSONだけが残ることを確認し、CLI mutation flowはWM-15へ残す。
+
+## WI-295 obligation report integration
+
+<!-- @work-item-id WI-295 -->
+
+@story-id H17-09
+
+WM-13 fixture repositories、public SHA capability adapter、canonical serializer、derive use case、filesystem report writerをtemp rootへbindする。同じevaluation / policy inputの二重導出と列挙順variantをgolden bytesで比較し、既存report手編集が再導出へ入らないことを確認する。
+
+pure modeはreportを書かず、write modeは同じraw report bytesを`.harness/world-obligations.json`へatomic renameする。unknown policy schemaとwrite failureはそれぞれreportなし / persistence failureとして観測し、partial fileやempty policy launderingを許さない。

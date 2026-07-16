@@ -1857,8 +1857,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-14）
 **優先度**: Must
-**Coverage status**: planned
-**Coverage lifecycle**: planned
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
 
 **As a** 品質管理者,
 **I want to** evaluation findingからdeterministic obligationを毎回再導出したい,
