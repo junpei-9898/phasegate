@@ -173,6 +173,7 @@ npx phasegate reconcile --apply
 | **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
 | **Retrofit baseline** | Lets existing repositories adopt Phasegate gradually by grandfathering unchanged files |
 | **Configurable gates** | Supports AIDLC defaults or custom gates such as schema-first API development |
+| **World Model (CLI)** | Extracts design docs, source, tests, matrices, and attestations into a typed fact graph, pins constraints between endpoints, and deterministically re-derives obligations (`world:inspect` / `world:pin` / `world:derive`) |
 
 ---
 
@@ -232,6 +233,29 @@ Five components implement this posture:
 | **Agent-permission allowlist** | Agent operations are an allowlist (only explicitly permitted operations run), inverted from the previous deny-list that had gaps (e.g. `git switch` was missing while `git merge`/`checkout`/`reset` were denied). | Unknown dangerous operations are denied by default. |
 
 **Residual risks ADR-030 states plainly**: local layers (L0-L2) are forgeable, so L3 is the trust root; the scanner is evadable, so it stays advisory; a project without CI has no trust root (`phasegate doctor` warns); and a human manually merging a red/warned PR is outside machine defense.
+
+---
+
+## World Model
+
+Phasegate's gates historically pointed one way: code is checked against design at write time. The **World Model** (per [ADR-031](docs/ADR/031-world-model-ownership-and-corpus-lifecycle.md)–[037](docs/ADR/037-world-cli-and-output-contract.md)) makes that constraint surface **endpoint-symmetric**: design documents, source metadata, tests, the requirement-test matrix, and attestations are extracted into a typed, content-addressed fact graph, and a pinned constraint is re-evaluated whenever *either* endpoint changes — so editing a design document creates visible obligations on the code that claimed it, not just the other way around.
+
+Three commands (always runnable explicitly; `world.enabled` in `phasegate.config.json` defaults to `false` and only governs future gate integration):
+
+```bash
+npx phasegate world:inspect --json    # deterministic read-only snapshot: nodes, edges, extraction diagnostics
+npx phasegate world:pin --constraint <id> --endpoint <claimant|premise> --apply
+npx phasegate world:derive --json     # re-derive the obligation report from constraint evaluation
+```
+
+Design commitments that keep it honest:
+
+- **The obligation report is immutable derived output.** `world:derive --write` persists a report to `.harness/world-obligations.json`, but the verdict is always re-derived from the corpus — hand-editing or deleting the persisted report never changes the result.
+- **New violations fail closed from day one.** Pre-existing violations are adopted into a closed, human-reviewable baseline (`phasegate.world-baseline.json`) that can only shrink; same-ruleset additions are rejected.
+- **Known semantic gaps are declared, never "rediscovered."** Explicit debts live in `phasegate.world-debts.json` and are displayed as imports; waivers (`phasegate.world-waivers.json`) require a fingerprint, reason, expiry, and Work Item.
+- **Determinism is a contract.** Double runs over the same checkout produce byte-identical JSON output.
+
+Current scope is **CLI-only**: validator IDs L2-017 / L3-008 are reserved but not yet registered into pre-commit/CI gating, which is tracked as a future phase.
 
 ---
 
@@ -570,6 +594,9 @@ README keeps only the entry points most users need. The full public/compatibilit
 | `config:plan --intent <intent>` | Map a safe configuration-change intent to target files, commands, risks, rollback, and validation. |
 | `integrity:pin` | Generate/update the SHA-256 manifest (`phasegate.integrity.json`) over instruction-carrying files. Records intentional edits (`--dry-run`, `--json`). |
 | `integrity:verify` | Recompute and compare against the manifest. Exit 2 on drift (mismatch/added/missing/manifest-absent), exit 0 when clean (`--json`). Locally advisory; CI is authoritative. |
+| `world:inspect` | Build and inspect the deterministic read-only World snapshot (`--format human\|json`, `--json`). Exit 1 when extraction diagnostics exist. |
+| `world:pin --constraint <id> --endpoint <claimant\|premise>` | Preview a constraint endpoint digest; `--apply` atomically updates `phasegate.world-constraints.json`. |
+| `world:derive` | Re-derive the obligation report from World constraint evaluation (`--write` persists to `.harness/world-obligations.json`, `--out <path>`, `--json`). Exit 1 on blocking obligations, exit 2 on contract errors such as unknown control-file schemas. |
 | `list-adrs` | List ADRs, optionally filtered by `--status <Proposed\|Accepted\|...>`. |
 | `validate-adr` | Validate ADR structure (`--all` or a single `<adrRef>`). |
 | `lint` / `phasegate:lint` | Run L1 Biome AST checks. The `phasegate:*` form is a binary subcommand, not an npm script unless `package.json` defines it locally. |

@@ -325,6 +325,40 @@ L4 warning findings fail the process only when warning strictness is enabled (`v
 
 ---
 
+## World Model
+
+<!-- @work-item-id WI-299 -->
+
+World Model コマンド（ADR-037）。設計文書・ソース・テスト・matrix・attestation を型付き事実グラフとして抽出し、pin された制約を両端点対称に再評価して義務を導出する。明示実行は config に依存せず常に可能（`world.enabled` は既定 `false` で、将来の L2/L3 ゲート統合のみを制御。validator ID `L2-017` / `L3-008` は予約済み・未登録）。
+
+| Command | Options | Description |
+|---|---|---|
+| `world:inspect` | `--format human\|json` `--json` | Read-only World snapshot（node / edge / 抽出 diagnostics）を構築・表示。宣言も report も書かない |
+| `world:pin` | `--constraint <id>`（`pgw:v1:constraint` ID, 必須） `--endpoint <claimant\|premise>`（必須） `--apply` `--format human\|json` `--json` | 制約端点の現在 digest をプレビュー。`--apply` で `phasegate.world-constraints.json` を atomic に更新 |
+| `world:derive` | `--write` `--out <path>`（`--write` 必須） `--format human\|json` `--json` | immutable な obligation report を再導出。既定は pure・read-only。`--write` で raw report を `.harness/world-obligations.json`（untracked）へ永続化 |
+
+### Exit code
+
+| Exit | 意味 |
+|---|---|
+| 0 | クリーン（`world:derive` では adopted-legacy / waived / declared debt のみで blocking なし） |
+| 1 | blocking な finding あり（`world:inspect` は抽出 diagnostics あり、`world:derive` は新規違反・期限切れ waiver 等） |
+| 2 | 契約エラー（未知の control-file schema、不正な引数など） |
+
+### 制御ファイルと出力
+
+| File | Role |
+|---|---|
+| `phasegate.world-constraints.json` | pin された制約宣言（`world:pin --apply` が更新する唯一の mutation 経路） |
+| `phasegate.world-baseline.json` | 既存違反の adoption baseline（閉じた集合・縮小のみ。同一 ruleset での追加は拒否） |
+| `phasegate.world-waivers.json` | 単一 fingerprint 単位の waiver（理由 / 期限 / Work Item 必須） |
+| `phasegate.world-debts.json` | 宣言済み semantic debt（import として表示され、「再発見」はしない） |
+| `.harness/world-obligations.json` | `world:derive --write` の永続 report。**導出結果のキャッシュに過ぎず**、手編集・削除しても再導出の判定は変わらない |
+
+JSON 出力は envelope `phasegate-world-cli/v1` に包まれ、同一 checkout での 2 回実行は byte-identical（決定性契約）。schema は `docs/contracts/world-*.schema.json` を参照。
+
+---
+
 ## ADR Management
 
 | Command | Options | Description |

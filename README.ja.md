@@ -189,6 +189,7 @@ npx phasegate reconcile --apply
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
 | **Baseline (retrofit)** | 既存リポジトリ導入時、`baseline` snapshot に登録した既存ファイルは構造的に編集されるまで gate 対象外 |
 | **カスタム gate** | AIDLC 以外のプロジェクトでも schema-first など独自の前提条件を設定できる |
+| **World Model (CLI)** | 設計文書・ソース・テスト・matrix・attestation を型付き事実グラフに抽出し、制約の両端点を pin して義務を決定的に再導出（`world:inspect` / `world:pin` / `world:derive`） |
 
 ---
 
@@ -252,6 +253,29 @@ Phasegate はプロンプトインジェクションを独立した新規脅威�
 | **エージェント権限 allowlist** | エージェント操作を allowlist（明示的に許されたものだけ実行）に反転。網羅漏れのある deny 列挙（`git merge`/`checkout`/`reset` は deny 済みなのに `git switch` が漏れていた等）を是正 | 未知の危険操作を既定で拒否 |
 
 **ADR-030 が明記する残存リスク**: ローカル層（L0-L2）は偽造可能なので L3 が信頼のルート／スキャナは回避可能なので advisory に留める／CI を持たない PJ には信頼のルートが不在（`phasegate doctor` が警告）／red・警告付き PR を人間が手動 merge する経路は機械防御の対象外。
+
+---
+
+## World Model
+
+phasegate のゲートは従来一方向でした: 書き込み時にコードを設計と照合する。**World Model**（[ADR-031](docs/ADR/031-world-model-ownership-and-corpus-lifecycle.md)〜[037](docs/ADR/037-world-cli-and-output-contract.md)）はこの制約面を**端点対称**にします。設計文書・ソースメタデータ・テスト・requirement-test matrix・attestation を型付き・content-addressed な事実グラフとして抽出し、pin された制約は**どちらの端点が変わっても**再評価されます — 設計文書を編集すれば、それを根拠として主張していたコード側に可視の義務が生まれます（逆方向だけではなく）。
+
+3 コマンドを提供します（明示実行は常に可能。`phasegate.config.json` の `world.enabled` は既定 `false` で、将来のゲート統合のみを制御します）:
+
+```bash
+npx phasegate world:inspect --json    # 決定的な read-only snapshot: node / edge / 抽出 diagnostics
+npx phasegate world:pin --constraint <id> --endpoint <claimant|premise> --apply
+npx phasegate world:derive --json     # 制約評価から obligation report を再導出
+```
+
+正直さを保つための設計上のコミットメント:
+
+- **obligation report は immutable な導出結果。** `world:derive --write` は `.harness/world-obligations.json` に report を永続化しますが、判定は常に corpus から再導出されます — 永続 report を手編集・削除しても結果は変わりません。
+- **新規違反は初日から fail-closed。** 既存違反は閉じた・人間レビュー可能な baseline（`phasegate.world-baseline.json`）として採用され、縮小のみ許されます（同一 ruleset での追加は拒否）。
+- **既知の意味的ギャップは宣言するもので「再発見」しない。** explicit debt は `phasegate.world-debts.json` に宣言し import として表示。waiver（`phasegate.world-waivers.json`）は fingerprint / 理由 / 期限 / Work Item が必須です。
+- **決定性は契約。** 同一 checkout での 2 回実行は byte-identical な JSON を出力します。
+
+現在のスコープは **CLI のみ**です: validator ID L2-017 / L3-008 は予約済みですが pre-commit / CI ゲートへの登録は未実施で、将来フェーズとして管理しています。
 
 ---
 
@@ -390,6 +414,9 @@ npx phasegate <command> [options]
 | `config:plan --intent <intent>` | 安全な設定変更 intent を対象ファイル / コマンド / risk / rollback / validation にマップ |
 | `integrity:pin` | 指示搭載ファイルの SHA-256 manifest（`phasegate.integrity.json`）を生成 / 更新（意図的変更を記録。`--dry-run`, `--json`） |
 | `integrity:verify` | manifest と実ファイルを照合。drift 検出時は exit 2、クリーン時は exit 0（`--json`）。ローカルは advisory、CI が authoritative |
+| `world:inspect` | 決定的な read-only World snapshot を構築・表示（`--format human\|json`, `--json`）。抽出 diagnostics があれば exit 1 |
+| `world:pin --constraint <id> --endpoint <claimant\|premise>` | 制約端点の digest をプレビュー。`--apply` で `phasegate.world-constraints.json` を atomic に更新 |
+| `world:derive` | World 制約評価から obligation report を再導出（`--write` で `.harness/world-obligations.json` へ永続化、`--out <path>`, `--json`）。blocking obligation で exit 1、未知 schema 等の契約エラーで exit 2 |
 | `lint` | L1 Biome AST チェック |
 | `validate --layer <L1\|L2\|L3\|L4\|all>` | 指定レイヤーのバリデータ実行（`--format human\|agent\|ci`） |
 | `ci-check` | CI フルチェック（L2-L4）。`--quick` で Quick Mode |
@@ -597,4 +624,4 @@ phasegate 自体の開発: [DEVELOPMENT.ja.md](DEVELOPMENT.ja.md)
 
 ---
 
-*Last updated: 2026-07-15 — v0.211.0*
+*Last updated: 2026-07-17 — v0.254.0*
