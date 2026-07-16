@@ -6,6 +6,7 @@
 // @work-item-id WI-210
 // @work-item-id WI-216
 // @work-item-id WI-219
+// @work-item-id WI-264
 
 import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -18,7 +19,7 @@ import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 
-type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse";
+type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse" | "prune";
 type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "copy-dir" | "symlink" | "unknown";
 
 export interface ReconcilePlanItem {
@@ -62,6 +63,8 @@ const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
+const HARNESS_VERSION_BASENAME = ".harness-version";
+const SKILL_ROOT_PREFIXES = ["skills", ".claude/skills", ".codex/skills"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -302,6 +305,7 @@ export class RunReconcileUseCase {
     const outcomes: Array<{
       readonly item: ReconcilePlanItem;
       readonly needsBackup: boolean;
+      readonly prune?: boolean;
       readonly apply: () => Promise<string | null>;
     }> = [];
 
@@ -346,12 +350,23 @@ export class RunReconcileUseCase {
       }
     }
 
+    for (const outcome of this.planOrphanSkills(input, manifest)) {
+      outcomes.push(outcome);
+      plan.push(outcome.item);
+    }
+
     if (!input.apply || refused.length > 0) {
       return { plan, refused, changed, backupDir: null };
     }
 
     for (const outcome of outcomes) {
       if (!outcome.item.changed) continue;
+      if (outcome.prune === true) {
+        await outcome.apply();
+        nextManifest = nextManifest.removeEntry(outcome.item.path);
+        changed.push(outcome.item);
+        continue;
+      }
       if (outcome.needsBackup) {
         backupDir ??= join(input.projectRoot, ".phasegate", "backups", backupStamp);
         await this.backup(input.projectRoot, outcome.item.path, backupDir);
@@ -614,6 +629,59 @@ export class RunReconcileUseCase {
         return this.personalSkillsVersionHashInput(relativePath, input.phasegateVersion, skillSet, skills);
       },
     };
+  }
+
+  private planOrphanSkills(input: RunReconcileInput, manifest: DeploymentManifest): Array<{
+    readonly item: ReconcilePlanItem;
+    readonly needsBackup: boolean;
+    readonly prune: boolean;
+    readonly apply: () => Promise<string | null>;
+  }> {
+    const allowed = new Set(getBundledSkillsForSet("all"));
+    const outcomes: Array<{
+      readonly item: ReconcilePlanItem;
+      readonly needsBackup: boolean;
+      readonly prune: boolean;
+      readonly apply: () => Promise<string | null>;
+    }> = [];
+    for (const entry of manifest.entries) {
+      if (entry.mode !== "created") continue;
+      const skillName = this.orphanSkillName(entry.path, allowed);
+      if (skillName === null) continue;
+      const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
+      outcomes.push({
+        item: this.item(
+          entry.path,
+          "prune",
+          "mechanical",
+          "copy-dir",
+          true,
+          `${entry.path}: prune orphan skill (not in current bundle)`,
+          "- skill directory",
+          null,
+        ),
+        needsBackup: false,
+        prune: true,
+        apply: async () => {
+          await rm(absolutePath, { recursive: true, force: true });
+          return null;
+        },
+      });
+    }
+    return outcomes;
+  }
+
+  private orphanSkillName(entryPath: string, allowed: ReadonlySet<string>): string | null {
+    for (const prefix of SKILL_ROOT_PREFIXES) {
+      const marker = `${prefix}/`;
+      if (!entryPath.startsWith(marker)) continue;
+      const remainder = entryPath.slice(marker.length);
+      if (remainder.length === 0 || remainder.includes("/")) return null;
+      if (remainder === HARNESS_VERSION_BASENAME) return null;
+      if (allowed.has(remainder)) return null;
+      return remainder;
+    }
+    return null;
   }
 
   private createdEntry(path: string, hashInput: string): DeploymentEntry {

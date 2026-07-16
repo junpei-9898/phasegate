@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **WI-264 — `reconcile` prunes bundled skills that left the catalog** — `phasegate reconcile` (and its `update-skills` alias) now detects **manifest-managed** skills that are no longer in the current bundle catalog (`getBundledSkillsForSet("all")`) and prunes them: the on-disk skill directory is removed and the manifest entry is dropped. This closes the WI-256 orphan gap — the removed `implementation-planner` / `doc-freshness-checker` / `pointer-validator` directories are now cleaned up automatically on the next `reconcile --apply` (shared installs under `skills/`, personal installs under `.claude/skills/` and `.codex/skills/`). Pruning is **manifest-scoped**: user-owned skill directories that PhaseGate never recorded are never touched, and `.harness-version` is never pruned. `--dry-run` reports each prune (`action: "prune"`) without mutating disk or manifest, and the operation is idempotent.
+
 ### Changed
 
 - **WI-256 — skill catalog 30 → 29 (BREAKING for skill consumers)** — the bundled skill catalog is reshaped. **Removed** `implementation-planner`, `doc-freshness-checker`, and `pointer-validator`. **Added** `doc-health-checker` (core / Verification, `kind: advisory`) and `release-publisher` (guidance / Operations, `kind: advisory`). Net advisory count 7 → 8, lifecycle 23 → 21, total 30 → 29. Both catalog sources (`skill-deployer.ts` `SKILL_CATEGORIES`, `bundled-skill-selection.ts`) and all count phrases / category headings were updated in the same batch.
@@ -14,18 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Doc-quality checks are now driven by **`doc-health-checker`**, which wraps the correct `p2:`-prefixed CLI commands: `npx phasegate p2:check-freshness` (freshness / code-design drift, L4-004) and `npx phasegate p2:validate-pointers` (broken file-path pointers, L4-005; supported flags are `--pattern` / `--include-urls` / `--format` — there is no auto-fix flag). The removed skills documented the wrong unprefixed command names (`phasegate check-freshness` / `phasegate validate-pointers`); those are corrected here.
   - **Note**: `doc-freshness-checker` and `pointer-validator` also exist as **L4 validator IDs** (config presets, `validator-id.ts`, `ci-governance`). Those are a different concept and are **not** affected by this change — only the `skills/` directories were removed.
 
-#### Migration (manual removal required in consumer repos)
+#### Migration (consumer repos)
 
-`reconcile` does **not** prune skills that have left the bundle, so the three removed skill directories will remain as orphans in already-installed projects. Remove them manually:
-
-```bash
-rm -r skills/implementation-planner skills/doc-freshness-checker skills/pointer-validator
-# If personal-mode per-agent copies exist:
-rm -r .claude/skills/{implementation-planner,doc-freshness-checker,pointer-validator}
-rm -r .codex/skills/{implementation-planner,doc-freshness-checker,pointer-validator}
-```
-
-A permanent `reconcile`-based prune is deferred to a follow-up WI.
+As of WI-264 (see **Added** above), `reconcile` prunes the three removed skill directories automatically — run `phasegate reconcile --apply` (or the `update-skills` alias) in each already-installed project and the orphaned `implementation-planner` / `doc-freshness-checker` / `pointer-validator` directories are removed from `skills/` (and, for personal installs, `.claude/skills/` / `.codex/skills/`) along with their manifest entries. Use `--dry-run` first to preview. Manual `rm` is no longer required.
 
 ## [0.171.0] - 2026-07-05
 

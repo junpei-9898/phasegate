@@ -269,6 +269,75 @@ async function arrangePersonalInstallWithDeletedBundledSkillAndRepair() {
   };
 }
 
+async function addManifestSkillEntry(root: string, path: string): Promise<void> {
+  const manifestPath = join(root, ".phasegate", "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+    entries: Array<{ path: string; mode: string; block: null; hash: string; deployedAt: string }>;
+  };
+  manifest.entries.push({
+    path,
+    mode: "created",
+    block: null,
+    hash: hash("orphan"),
+    deployedAt: new Date().toISOString(),
+  });
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
+async function readManifestPaths(root: string): Promise<string[]> {
+  const manifestPath = join(root, ".phasegate", "manifest.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+    entries: Array<{ path: string }>;
+  };
+  return manifest.entries.map((entry) => entry.path);
+}
+
+async function arrangeSharedInstallWithOrphanSkillAndPrune() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  await writeProjectFile(root, "skills/legacy-orphan/SKILL.md", "# Legacy Orphan\n");
+  await addManifestSkillEntry(root, "skills/legacy-orphan");
+  await writeProjectFile(root, "skills/user-owned/SKILL.md", "# User Owned\n");
+  const dryRun = await runReconcile(root, { version: "0.145.3" });
+  const dryRunOrphanExists = await fileExists(join(root, "skills", "legacy-orphan"));
+  const applied = await runReconcile(root, { apply: true, version: "0.145.3" });
+  return {
+    dryRun,
+    dryRunOrphanExists,
+    applied,
+    orphanOnDisk: await fileExists(join(root, "skills", "legacy-orphan")),
+    orphanInManifest: (await readManifestPaths(root)).includes("skills/legacy-orphan"),
+    userOwnedOnDisk: await fileExists(join(root, "skills", "user-owned", "SKILL.md")),
+    harnessVersionInManifest: (await readManifestPaths(root)).includes("skills/.harness-version"),
+    keptSkillOnDisk: await fileExists(join(root, "skills", "codebase-mapper", "SKILL.md")),
+  };
+}
+
+async function arrangePersonalInstallWithOrphanSkillAndPrune() {
+  const root = await createProjectRoot();
+  await runPersonalInstall(root, "codex", "0.145.3");
+  await writeProjectFile(root, ".codex/skills/legacy-orphan/SKILL.md", "# Legacy Orphan\n");
+  await addManifestSkillEntry(root, ".codex/skills/legacy-orphan");
+  await writeProjectFile(root, ".codex/skills/user-owned/SKILL.md", "# User Owned\n");
+  const applied = await runReconcile(root, { apply: true, version: "0.145.3" });
+  return {
+    applied,
+    orphanOnDisk: await fileExists(join(root, ".codex/skills/legacy-orphan")),
+    orphanInManifest: (await readManifestPaths(root)).includes(".codex/skills/legacy-orphan"),
+    userOwnedOnDisk: await fileExists(join(root, ".codex/skills/user-owned/SKILL.md")),
+  };
+}
+
+async function arrangeOrphanPruneIdempotency() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  await writeProjectFile(root, "skills/legacy-orphan/SKILL.md", "# Legacy Orphan\n");
+  await addManifestSkillEntry(root, "skills/legacy-orphan");
+  const first = await runReconcile(root, { apply: true, version: "0.145.3" });
+  const second = await runReconcile(root, { apply: true, version: "0.145.3" });
+  return { first, second };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -409,6 +478,67 @@ target("ReconcileHandler", () => {
       );
       expect(actual.hasToolkitGuide).toBe(true);
       expect(actual.userOwned).toBe("# User Owned\n");
+    });
+  });
+
+  describe("orphan skill prune", () => {
+    it("shared install の manifest 管理 orphan skill を apply で on-disk・manifest ともに prune すること", async () => {
+      // Act
+      const actual = await arrangeSharedInstallWithOrphanSkillAndPrune();
+
+      // Assert
+      expect(actual.dryRun.exitCode).toBe(0);
+      expect(actual.dryRun.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "skills/legacy-orphan", action: "prune" })]),
+      );
+      expect(actual.dryRunOrphanExists).toBe(true);
+      expect(actual.applied.exitCode).toBe(0);
+      expect(actual.orphanOnDisk).toBe(false);
+      expect(actual.orphanInManifest).toBe(false);
+    });
+
+    it("prune は manifest 外の user-owned skill・.harness-version・現行 bundled skill を保持すること", async () => {
+      // Act
+      const actual = await arrangeSharedInstallWithOrphanSkillAndPrune();
+
+      // Assert
+      expect(actual.userOwnedOnDisk).toBe(true);
+      expect(actual.harnessVersionInManifest).toBe(true);
+      expect(actual.keptSkillOnDisk).toBe(true);
+    });
+
+    it("personal install の manifest 管理 orphan skill を prune し user-owned skill を保持すること", async () => {
+      // Act
+      const actual = await arrangePersonalInstallWithOrphanSkillAndPrune();
+
+      // Assert
+      expect(actual.applied.exitCode).toBe(0);
+      expect(actual.applied.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ".codex/skills/legacy-orphan", action: "prune" })]),
+      );
+      expect(actual.orphanOnDisk).toBe(false);
+      expect(actual.orphanInManifest).toBe(false);
+      expect(actual.userOwnedOnDisk).toBe(true);
+    });
+
+    it("orphan の無い reconcile は prune plan item を生成しないこと", async () => {
+      // Act
+      const actual = await dryRunSameVersionAfterInstall();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.plan.some((item) => item.action === "prune")).toBe(false);
+    });
+
+    it("orphan prune は idempotent で 2 回目は prune plan item を生成しないこと", async () => {
+      // Act
+      const actual = await arrangeOrphanPruneIdempotency();
+
+      // Assert
+      expect(actual.first.exitCode).toBe(0);
+      expect(actual.first.payload.plan.some((item) => item.action === "prune")).toBe(true);
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.second.payload.plan.some((item) => item.action === "prune")).toBe(false);
     });
   });
 });

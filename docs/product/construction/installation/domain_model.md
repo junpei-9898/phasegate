@@ -535,3 +535,9 @@ Personal install owns local-only counterparts for the PhaseGate core defenses: a
 <!-- @work-item-id WI-212 -->
 
 Install/init treats language selection as bootstrap metadata. `init --language <lang>` materializes `project.languages` in generated config and may select language-scoped bundled skills when available. The option does not promise validator support for every language; unsupported validators remain visible through validator-system skip warnings.
+
+## WI-264 Orphan Skill Prune Invariants
+
+<!-- @work-item-id WI-264 -->
+
+An orphan skill is a `mode="created"` manifest entry under `skills/`, `.claude/skills/`, or `.codex/skills/` whose direct-child directory name is not in the current bundle catalog (`getBundledSkillsForSet("all")`). Reconcile prune obeys: (P1 manifest-scoped) only manifest-recorded skills are eligible, so user-owned directories absent from the manifest are never removed; (P2 metadata-protected) `.harness-version` is excluded from name extraction and never pruned; (P3 catalog-diff) eligibility is decided by skill-name set difference against the current bundle, not by version; (P4 atomic) each prune removes the on-disk directory and drops the manifest entry together, and dry-run does neither. `DeploymentManifest.removeEntry` provides the immutable manifest transition. @work-item-id WI-264

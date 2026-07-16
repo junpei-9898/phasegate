@@ -637,3 +637,11 @@ Personal install pre-commit hooks must include a local documentation consistency
 <!-- @work-item-id WI-212 -->
 
 `phasegate init` accepts `--language <lang>` as a config bootstrap option. The generated config writes `project.languages: ["<lang>"]`; omitted language keeps the existing TypeScript-compatible default. Non-TypeScript language initialization succeeds as declaration only and relies on validator-system to report unsupported TypeScript-only validators as skips with warnings.
+
+## WI-264 Reconcile Orphan Skill Prune
+
+<!-- @work-item-id WI-264 -->
+
+`RunReconcileUseCase` prunes bundled skills that have left the current catalog. After planning shared/personal skill redeployment, it inspects `mode="created"` manifest entries under `skills/`, `.claude/skills/`, and `.codex/skills/` and treats any direct-child skill directory whose name is absent from `getBundledSkillsForSet("all")` as an orphan (a skill removed from the bundle, e.g. by a catalog reduction such as WI-256). Each orphan becomes a `prune` plan item; on `--apply` the on-disk skill directory is removed and the manifest entry is dropped via `DeploymentManifest.removeEntry`.
+
+Pruning is manifest-scoped: only skills phasegate itself deployed and recorded in the manifest are eligible, so user-owned skill directories that were never recorded are never deleted (mirroring the uninstall contract that scopes to manifest-managed skill directories). The `.harness-version` metadata entry is excluded from name extraction and never pruned. Dry-run reports prune plan items without touching disk or manifest, and the operation is idempotent — once an orphan's manifest entry is removed, subsequent reconciles produce no prune items. `update-skills` (the reconcile alias) inherits this prune behavior. @work-item-id WI-264
