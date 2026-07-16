@@ -52,6 +52,7 @@ target('SeverityContractEnforcer', () => {
     });
 
     context('契約違反が発生した場合', () => {
+      // UT-HE-128
       // @ac H06-03-4
       // H06-03 AC-4: 契約違反時のエラーメッセージに違反内容（default/requested severity）と
       // 根拠（ADR参照）が含まれることを検証する。

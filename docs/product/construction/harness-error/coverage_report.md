@@ -15,19 +15,21 @@
 
 | 観点 | カバー項目数 | 未カバー項目数 | カバレッジ率 |
 |------|------------|--------------|------------|
-| 受け入れ基準 | 11 | 2 | 84.6% |
-| ドメインロジック | 22 | 1 | 95.7% |
+| 受け入れ基準 | 12 | 1 | 92.3% |
+| ドメインロジック | 23 | 0 | 100% |
 | UseCase | 6 | 0 | 100% |
-| **総合** | **39** | **3** | **92.9%** |
+| **総合** | **41** | **1** | **97.6%** |
 
 > **訂正（2026-07-15, WI-270）**: 旧「総合 42/0 = 100%」は取消し。受け入れ基準の §3.2-4 / §3.3-4、ドメインロジックの Severity「生成後は不変」の 3 行は、cited ID（IT-HE-146 / IT-HE-109・140・141 / UT-HE-018）が全て実テストツリーに不在であり、実在 ID による裏付けが 0 のため ❌ へ格下げした。分子=カバー印 行数（AC 11 + domain 22 + usecase 6 = 39）、分母=42。
+
+> **昇格（2026-07-16, WI-279）**: 上記 3 行のうち §3.3-4 と Severity「生成後は不変」の 2 行に、実在し pass する実テスト（UT-HE-128 / UT-HE-129 / UT-HE-130）を追加・束縛し カバー印 へ昇格した。§3.2-4（fix_example 更新時 CI 自動実行）は CI workflow に fix_example 用 `paths` トリガーおよび `ValidateAllFixExamplesUseCase` を起動するジョブが存在せず（ソース側フィーチャ欠落、修正はスコープ外）、テストを弱めての強制 green を禁ずるため ❌ を残置した。分子=カバー印 行数（AC 12 + domain 23 + usecase 6 = 41）、分母=42。
 
 ### 判定結果
 - カバー印 90%以上: テストロジック設計に進んで問題なし
 - ⚠️ 70-90%: 未カバー項目の確認を推奨
 - ❌ 70%未満: テストケース設計の追加が必要
 
-**今回の判定**: `⚠️ 92.9%`（訂正後の実カバレッジ）。ドメインロジック・UseCase は概ね実在テストで裏付けられているが、受け入れ基準 §3.2-4（fix_example 更新時 CI 自動実行）と §3.3-4（違反時 ADR 参照出力）はそれを検証する実テストが存在しない。旧レポートが主張した「前回83%からの100%改善」は、実在しない回帰テスト ID（IT-HE-137〜146, UT-HE-112）を根拠にしたものであり、これらのテストは設計にも実装にも存在しないため、本訂正で当該改善記述を撤回した。
+**今回の判定**: `⚠️ 97.6%`（WI-279 昇格後の実カバレッジ）。ドメインロジック・UseCase は 100%、受け入れ基準は §3.3-4（違反時 ADR 参照出力）を実テスト UT-HE-128 で裏付け カバー印 へ昇格した。唯一残る ❌ は受け入れ基準 §3.2-4（fix_example 更新時 CI 自動実行）で、これは CI 設定側にフィーチャが存在しない（実テスト不在ではなくソース欠落）ためであり、テストを弱めての昇格を行わず ❌ を残置している。旧レポートが主張した「前回83%からの100%改善」は、実在しない回帰テスト ID（IT-HE-137〜146, UT-HE-112）を根拠にしたものであり、これらのテストは設計にも実装にも存在しないため、WI-270 で当該改善記述を撤回した。WI-279 で追加した実 ID（UT-HE-128〜130）は捏造範囲を再利用していない（実在 UT-HE の最大 127 の直後を採番）。
 
 > **注記**: 実在する UseCase / VO / ドメインサービステスト（実スイート `Tests 202 passed`）は全て pass しており、上記 ❌ はフィーチャの欠落ではなく「対応する実テストが未実装」であることを表す。実テスト追加・`@ac` 束縛は後続フェーズで行う。
 
@@ -47,9 +49,11 @@
 | §3.3-1 | severity権限契約（`error`の格下げ禁止）を仕様として定義 | UT-HE-096〜102, IT-HE-035〜040 | ✅ <!-- @attestation H06-03 --> |
 | §3.3-2 | Harness APIレスポンスでseverityが`readonly`であることを型レベルで保証 | IT-HE-050 | ✅ <!-- @attestation H06-03 --> |
 | §3.3-3 | severity格下げを試みるケースを検出するテスト | UT-HE-068, UT-HE-096〜102, IT-HE-038 | ✅ <!-- @attestation H06-03 --> |
-| §3.3-4 | 契約違反時のエラーメッセージに違反内容と根拠（ADR参照）を含める | 実装テスト不在（旧引用 IT-HE-109 / IT-HE-140 / IT-HE-141 は不在） | ❌ |
+| §3.3-4 | 契約違反時のエラーメッセージに違反内容と根拠（ADR参照）を含める | UT-HE-128 | ✅ <!-- @attestation H06-03 --> |
 
 > **§3.2-4 / §3.3-4 訂正（2026-07-15, WI-270）**: 旧 カバー印 の唯一の根拠だった `IT-HE-146`（§3.2-4）および `IT-HE-109 / IT-HE-140 / IT-HE-141`（§3.3-4）は実テストツリーに存在しない（`grep -rlF` 0 件）。実 IT-HE は 093 まで、UT-HE は 127 までしか存在しない。実在テストによる裏付けが 0 のため ❌ へ格下げした。
+>
+> **§3.3-4 昇格（2026-07-16, WI-279）**: `SeverityContractEnforcer.resolveEffectiveSeverity` が throw する `SeverityDowngradeViolationError` のメッセージに、違反内容（default/requested severity）と根拠 ADR（`ADR-021`）が含まれることを検証する実テスト `UT-HE-128`（`severity-contract-enforcer.test.ts`）を束縛し カバー印 へ昇格した。§3.2-4 は CI workflow 側に fix_example 用 `paths` トリガーおよび `ValidateAllFixExamplesUseCase` 起動ジョブが存在しない（`.github/workflows/ci.yml` は push/PR 全体をトリガーし fix_example 検証ステップを持たない）ソース欠落のため ❌ 残置。
 
 ## 3. ドメインロジックカバレッジ詳細
 
@@ -73,7 +77,7 @@
 | ErrorCode | 意味名コード（`L2-PHASE-GATE`等）を拒否する | UT-HE-010 | ✅ <!-- @attestation H06-01 --> |
 | Severity | `"error"` / `"warning"`のみ許容する | UT-HE-015〜017, UT-HE-020 | ✅ <!-- @attestation H06-01 --> |
 | Severity | rank比較で格上げ/同値/格下げ判定を行う | UT-HE-015, UT-HE-016, UT-HE-096〜101 | ✅ <!-- @attestation H06-01 --> |
-| Severity | 生成後は不変である | 実装テスト不在（旧引用 UT-HE-018 は不在） | ❌ |
+| Severity | 生成後は不変である | UT-HE-129, UT-HE-130 | ✅ <!-- @attestation H06-03 --> |
 | AdrRef | `ADR-{nnn}`形式に準拠する | UT-HE-021〜026, UT-HE-075 | ✅ <!-- @attestation H06-01 --> |
 | FixExample | trim後に空文字を許容しない | UT-HE-027〜031 | ✅ <!-- @attestation H06-02 --> |
 | FixExampleValidationResult | `passed=true`時は`reason=null` | UT-HE-032, UT-HE-036 | ✅ <!-- @attestation H06-02 --> |
@@ -88,7 +92,7 @@
 | HarnessError | Shared Kernel DTOへ正しく投影される | UT-HE-058, IT-HE-047〜049 | ✅ <!-- @attestation H06-01 --> |
 | HarnessError | 生成後と公開DTOが不変である | IT-HE-050 | ✅ <!-- @attestation H06-01 --> |
 
-> **Severity「生成後は不変」訂正（2026-07-15, WI-270）**: 唯一の根拠 `UT-HE-018` は不在（実 UT-HE-013〜019 は欠番）。❌ へ格下げ。なお §3.1-1 / §3.1-5 / §3.3-2 / HarnessError「Shared Kernel DTO投影」「生成後不変」等の行は、範囲引用に含まれていた不在 ID（UT-HE-059/066/111, IT-HE-004/125〜136 等）を除去したが、実在 ID による裏付けが残るため カバー印 を維持した。
+> **Severity「生成後は不変」訂正（2026-07-15, WI-270）→ 昇格（2026-07-16, WI-279）**: WI-270 時点では唯一の根拠 `UT-HE-018` が不在（実 UT-HE-013〜019 は欠番）のため ❌ へ格下げていた。WI-279 で `Severity.create()` が `Object.freeze()` した凍結インスタンスへの `value` / `rank` 再代入が反映されない（strict mode で `TypeError`、元値保持）ことを検証する実テスト `UT-HE-129 / UT-HE-130`（`severity.test.ts`）を追加し カバー印 へ昇格した。なお §3.1-1 / §3.1-5 / §3.3-2 / HarnessError「Shared Kernel DTO投影」「生成後不変」等の行は、範囲引用に含まれていた不在 ID（UT-HE-059/066/111, IT-HE-004/125〜136 等）を除去したが、実在 ID による裏付けが残るため カバー印 を維持した。
 
 ### ドメインサービス
 
@@ -120,10 +124,10 @@
 
 | 項目 | 状態 | 理由 |
 |-----|------|------|
-| §3.2-4（fix_example 更新時 CI 自動実行） | ❌ | 旧引用 IT-HE-146 が不在。CI 自動起動を検証する実テストが存在しない |
-| §3.3-4（違反時 ADR 参照出力） | ❌ | 旧引用 IT-HE-109 / 140 / 141 が不在。違反出力の ADR 参照を検証する実テストが存在しない |
-| Severity「生成後は不変」 | ❌ | 旧引用 UT-HE-018 が不在。不変性を直接検証する VO 単体テストが存在しない |
+| §3.2-4（fix_example 更新時 CI 自動実行） | ❌ | ソース側フィーチャ欠落。`.github/workflows/ci.yml` に fix_example 用 `paths` トリガーおよび `ValidateAllFixExamplesUseCase` を起動するジョブ/ステップが存在しない（`pnpm test` は vitest 実行のみで fix_example CI 検証ステップは無い）。テストを弱めての昇格を禁ずるため ❌ 残置。CI 設定側の実装（スコープ外）完成後に契約テストを追加して昇格する |
 | ListErrorDefinitionsUseCase 異常系 | 部分 | 正常系は実在（IT-HE-041〜046）、異常系（旧引用 IT-HE-137〜139）は不在 |
+
+> **§5 更新（2026-07-16, WI-279）**: §3.3-4 と Severity「生成後は不変」は実テスト（UT-HE-128 / 129 / 130）束縛により本一覧から除外し カバー印 へ昇格した。残る唯一の ❌ は §3.2-4 で、これは実テスト不在ではなく CI 設定側のフィーチャ欠落が原因である。
 
 ## 6. 前回レポートからの改善（撤回）
 
@@ -131,11 +135,12 @@
 
 ## 7. 次のアクション
 
-実カバレッジは 92.9% であり、以下の未カバー項目に実テストを追加してから カバー印 へ復旧する（強制 green を禁止）。
+実カバレッジは 97.6%（WI-279 昇格後）であり、残る未カバー項目は §3.2-4 のみである（強制 green を禁止）。
 
-1. §3.2-4 / §3.3-4 / Severity「生成後は不変」/ ListErrorDefinitionsUseCase 異常系に対応する実テストを追加し、`@ac` / `@story` 束縛する。
-2. これらのテストは `buildErrorDefinitionRegistry` で構築した実レジストリおよび GitHub Actions workflow 定義を前提とするため、対応する infrastructure / CI 定義の完成後に実装する。
-3. 実テスト追加後に L3-005（coverage-report 整合ゲート）で回帰を防止する。
+1. §3.3-4 / Severity「生成後は不変」は WI-279 で実テスト（UT-HE-128 / 129 / 130）を追加・束縛し カバー印 へ昇格済み。
+2. §3.2-4 は CI 設定側のフィーチャ（fix_example 用 `paths` トリガー + `ValidateAllFixExamplesUseCase` 起動ジョブ）が未実装のため、CI 定義の完成後に契約テストを追加して昇格する。ソース欠落状態でテストを弱めての昇格は禁止。
+3. ListErrorDefinitionsUseCase 異常系は正常系のみ実在。異常系の実テスト追加は後続で対応する。
+4. 実テスト追加後に L3-005（coverage-report 整合ゲート）で回帰を防止する。
 
 ## WI-155: Error Contract Traceability Reflection
 
@@ -144,6 +149,25 @@
 HarnessError coverage uses Work Item IDs for new product reflection and preserves legacy story IDs only as historical mapping evidence. Recovery metadata fields such as `suggested_skill`, `scaffold_command`, and validator IDs are validated as payload contract fields, not as substitutes for `@work-item-id` annotations in product docs.
 
 ## 訂正履歴
+
+### 2026-07-16 — ❌ 3 行への実テスト追加と誠実な カバー印 昇格（WI-279, quick, chore）
+
+<!-- @work-item-id WI-279 -->
+
+WI-270 が ❌ へ格下げた 3 行（§3.2-4 / §3.3-4 / Severity「生成後は不変」）を、実在し pass する実テストで裏付けられる行のみ カバー印 へ昇格した。捏造範囲（IT-HE-137〜146 / UT-HE-112）は一切再利用せず、実在 UT-HE の最大 127 の直後を採番した。
+
+昇格した 2 行:
+
+1. **§3.3-4「契約違反時のエラーメッセージに違反内容と根拠（ADR参照）を含める」→ カバー印 `UT-HE-128` `@attestation H06-03`**。`severity-contract-enforcer.test.ts` 内の既存 pass テスト（格下げ要求時に throw される `SeverityDowngradeViolationError` のメッセージが `error` / `warning`（違反内容）と `ADR-021`（根拠）を含むことを検証）を UT-HE-128 として採番・引用した。ソース `severity-downgrade-violation-error.ts` はメッセージ本文に default/requested と `ADR-021` を含んでおり、AC を満たす。
+2. **Severity「生成後は不変」→ カバー印 `UT-HE-129` / `UT-HE-130` `@attestation H06-03`**。`severity.test.ts` に、`Severity.create()` が返す `Object.freeze()` 済みインスタンスへの `value` 再代入（UT-HE-129）・`rank` 再代入（UT-HE-130）が strict mode で `TypeError` となり元値が保持されることを検証する実テストを新規追加した。ソース `severity.ts` は `create()` で `Object.freeze(instance)` を呼んでおり、不変性を満たす。
+
+❌ 残置（ソース側フィーチャ欠落・修正はスコープ外）:
+
+3. **§3.2-4「fix_example 更新時にバリデーションが自動実行」→ ❌ 残置**。`.github/workflows/ci.yml` に fix_example 関連ファイルの `paths` トリガーが無く、`ValidateAllFixExamplesUseCase`（または `phasegate:validate-fix-example`）を起動するジョブ/ステップも存在しない（`pnpm test` は vitest 全体を回すだけで fix_example 専用の CI 自動起動契約は成立していない）。フィーチャ自体が未実装であり、テストを弱めて（例: workflow ファイルの単なる存在確認等に置換して）強制 green にすることは反ロンダリング方針に反するため ❌ を維持した。CI 設定側の実装（本 WI のスコープ外）完成後に契約テストを追加して昇格する。
+
+headline: **⚠️ 92.9%（39/42）→ ⚠️ 97.6%（41/42）**。内訳 = 受け入れ基準 11/13→12/13、ドメインロジック 22/23→23/23、UseCase 6/6 不変。分子 = カバー印 行数（AC 12 + domain 23 + usecase 6 = 41）、分母 = 42。
+
+実スイート結果（verbatim・exit 0, harness-error unit+integration）: 追加前 `Test Files 20 passed (20) / Tests 202 passed (202)` → 追加後 `Test Files 20 passed (20) / Tests 204 passed (204)`。テストを弱めた昇格・強制 green は行っていない。
 
 ### 2026-07-15 — 反ロンダリング実態訂正（WI-270, quick, fix）
 
