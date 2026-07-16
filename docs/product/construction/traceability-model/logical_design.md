@@ -1118,3 +1118,15 @@ traceability-modelはUnit、canonical WorkItem / Story ID、frontmatter parsing�
 <!-- @work-item-id WI-282 -->
 
 WorkItem projectionはproviderが解決したcanonical `WI-\d+`を返し、`legacy_id`はprovider-owned single-hop aliasとして別nodeを生成せず公開する。`@work-item-id`は複数IDへ展開可能なprovenance / reflection referenceであり、annotation lineやoccurrence ordinalをstable claim IDにしない。project-relative pathは既存`ProjectRelativePath`のlexical contractを維持し、Worldの`pgw:v1` encoding、Fragment identity、alias diagnosticをtraceability-model内へ複製しない。
+
+## WI-288 Public World read facade
+
+<!-- @work-item-id WI-288 -->
+
+@story-id H17-03
+
+`TraceabilityWorldReadFacade` は application の公開 facade とし、infrastructure の `FileSystemTraceabilityWorldReadAdapter` が既存 story catalog parser、WorkItem frontmatter parser、Unit definition gateway、source metadata parserを統合する。composition root は adapter を実体で配線し、traceability-model の public `index.ts` は facade と plain DTO contract だけを公開する。
+
+処理境界は `filesystem/parser -> raw source records -> facade admission/deduplication -> TraceabilityWorldReadDto` とする。facade は canonical owner ID の検証、no-winner diagnostic、deterministic sort、Story AC への file-level TestReference 射影を行う。filesystem adapter は project-relative provenance と parser diagnostic を収集するが、World の `pgw:v1` ID や constraint rule を生成しない。
+
+world-model は WM-09 で consumer-owned adapter を置き、この facade の plain DTO を観測する。traceability-model は world-model を import しない。case-level TestReference index は nyquist-validation / matrix の facade から別途観測し、本 facade の file-level reference を case-level coverage として扱わない。

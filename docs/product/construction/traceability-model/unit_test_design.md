@@ -503,3 +503,21 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 | UT-TM-W08 | `parseWorkItemFrontmatter` | `id` / `type` が frontmatter に無い場合 | 他キーのみある | `WorkItemFrontmatterValidationError` を throw（id/type は必須） |
 | UT-TM-W09 | `parseWorkItemFrontmatter` | legacy `id` パターンを受容する場合 | `id: H02-04` / `id: ISSUE-026` / `id: HF2-01` | いずれも正常に parse される |
 | UT-TM-W10 | `parseWorkItemFrontmatter` | `affects` が string 配列の場合 | `affects: [a, b]` | `['a', 'b']` が返る |
+
+<!-- @work-item-id WI-288 -->
+## 8. WI-288 World read facade 単体テスト設計
+
+@story-id H17-03
+
+| ケース ID | テストケース名 | AAA 概要 |
+|----------|--------------|---------|
+| UT-TM-WR01 | plain DTO だけを公開する | Arrange: raw source recordを決定的stubで用意する。Act: facadeを読む。Assert: JSON化可能なplain object/array/scalarだけで、domain prototypeを含まない |
+| UT-TM-WR02 | canonical WorkItem ID と legacy alias を分離して返す | Arrange: `WI-288` と legacy ID を持つrecord。Act: facadeを読む。Assert: `workItemId` はcanonical、aliasは`legacyIds`にある |
+| UT-TM-WR03 | 入力順に依存せず決定的順序で返す | Arrange: 同一record集合を逆順でも用意する。Act: 各facadeを読む。Assert: JSON bytesが一致する |
+| UT-TM-WR04 | 重複 owner ID に勝者を選ばない | Arrange: 同じStory/WorkItem IDを持つ複数record。Act: facadeを読む。Assert: 該当projectionを除外しdiagnosticを返す |
+| UT-TM-WR05 | WorkItem directory と frontmatter の不一致を除外する | Arrange: directory `WI-288`、frontmatter `WI-999`。Act: facadeを読む。Assert: WorkItemを公開せずdiagnosticを返す |
+| UT-TM-WR06 | file-level TestReference を全ACへ射影する | Arrange: ACを2件持つStoryと`@story` annotation。Act: facadeを読む。Assert: 2件とも`binding=file`、`testName=null`である |
+| UT-TM-WR07 | 不明Storyのtest annotationを推論しない | Arrange: catalogにないStoryのannotation。Act: facadeを読む。Assert: TestReferenceを作らずdiagnosticを返す |
+| UT-TM-WR08 | structured story parser がStory/legacy ID/AC行を保持する | Arrange: Story heading、旧US、ACを含むMarkdown。Act: parserを実行。Assert: canonical ID、alias、行番号が得られる |
+
+テストは日本語名とAAAを用い、application facadeのportには呼出し検証用mockではなく固定値を返す決定的stubを使用する。

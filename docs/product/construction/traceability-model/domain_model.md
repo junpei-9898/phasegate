@@ -380,3 +380,14 @@ Severity policy for WI-133 boundary coverage is implemented as validator policy 
 - `blocked: readonly WorkItemStatusReport[]` — blocked 状態の派生レポート
 
 これにより stale WI status を `validate --layer L2`（`L2-014` work-item-status-staleness）経路で検出でき、「品質 validator は落ちているが WI frontmatter は `tested`」という矛盾状態を CI で fail signal 化できる。derived status は current status に依存せず（WI-126 の方針を維持）、blockingValidation が空でない場合に green evidence 不足として扱う。WI frontmatter parsing と legacy ID 解決の所有権は引き続き traceability-model が保持する（WI-160 と一致）。
+
+<!-- @work-item-id WI-288 -->
+## WI-288 World Model 向け plain read DTO
+
+@story-id H17-03
+
+traceability-model は、Unit、Story、Acceptance Criterion、WorkItem、file-level TestReference の provider-owned な識別子と provenance を `TraceabilityWorldReadDto` として射影する。DTO は string、number、null、plain object、readonly array だけで構成し、`StoryId`、`ProjectRelativePath`、WorkItem Entity、frontmatter parser result、`Map` / `Set` を公開境界へ漏らさない。
+
+WorkItem は directory ID と frontmatter ID が一致する一意な canonical `WI-\d+` だけを採用し、`legacy_id` は canonical node と別の `legacyIds` 配列で公開する。重複 owner ID、directory/frontmatter 不一致、参照先不在には勝者を選ばず diagnostic を返す。配列は provider-owned ID と project-relative path で安定ソートする。
+
+TestReference は source metadata の `@story` から得る file-level provenance に限定し、Story の AC へ `binding: "file"` と `testName: null` で射影する。case-level test identity、`@ac` の位置的 binding、coverage index、重複排除は引き続き nyquist-validation / matrix の責務であり、この DTO はそれらを意味推論しない。

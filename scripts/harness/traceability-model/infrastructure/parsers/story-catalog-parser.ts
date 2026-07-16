@@ -10,20 +10,29 @@ export interface ParsedStoryCatalog {
   readonly aliasMap: ReadonlyMap<string, string>;
 }
 
+export interface ParsedStoryCatalogEntry {
+  readonly storyId: string;
+  readonly legacyIds: readonly string[];
+  readonly lineNumber: number;
+  readonly acceptanceCriteria: readonly {
+    readonly acId: string;
+    readonly lineNumber: number;
+  }[];
+}
+
 const STORY_ID_LINE_PATTERN = /\bH(?:F\d+|[0-9]{2})-[0-9]{2}\b/g;
-const TABLE_ALIAS_PATTERN =
-  /\|\s*(H(?:F\d+|[0-9]{2})-[0-9]{2})\s*\|.*?\|\s*(US-[0-9]{3})\s*\|/g;
+const TABLE_ALIAS_PATTERN = /\|\s*(H(?:F\d+|[0-9]{2})-[0-9]{2})\s*\|.*?\|\s*(US-[0-9]{3})\s*\|/g;
 // 旧US ラベルは Markdown 強調（**旧US**:）で囲まれることがあるため `\**` を許容する。
-const INLINE_ALIAS_PATTERN =
-  /(H(?:F\d+|[0-9]{2})-[0-9]{2}).*?旧US\**\s*[:：]\s*(US-[0-9]{3})/g;
+const INLINE_ALIAS_PATTERN = /(H(?:F\d+|[0-9]{2})-[0-9]{2}).*?旧US\**\s*[:：]\s*(US-[0-9]{3})/g;
 
 function execAll(pattern: RegExp, text: string): RegExpExecArray[] {
   const results: RegExpExecArray[] = [];
-  let match: RegExpExecArray | null;
   // Reset lastIndex to ensure clean iteration
   pattern.lastIndex = 0;
-  while ((match = pattern.exec(text)) !== null) {
+  let match = pattern.exec(text);
+  while (match !== null) {
     results.push(match);
+    match = pattern.exec(text);
   }
   return results;
 }
@@ -37,7 +46,7 @@ export function parseStoryCatalog(content: string): ParsedStoryCatalog {
   const aliasMap = new Map<string, string>();
 
   // 正規StoryIdを収集
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   for (const line of lines) {
     const matches = execAll(STORY_ID_LINE_PATTERN, line);
     for (let j = 0; j < matches.length; j++) {
@@ -88,10 +97,79 @@ export function parseStoryCatalog(content: string): ParsedStoryCatalog {
   }
 
   const storyIds: string[] = [];
-  storyIdSet.forEach((id) => storyIds.push(id));
+  storyIdSet.forEach((id) => {
+    storyIds.push(id);
+  });
 
   return {
     storyIds: Object.freeze(storyIds),
     aliasMap,
   };
+}
+
+/**
+ * Story headingをowner locatorとして、heading scope内のlegacy IDとACを構造化する。
+ * `####`以下はStory内の補足見出しとして扱い、次のlevel 1-3見出しでscopeを閉じる。
+ */
+export function parseStoryCatalogEntries(content: string): readonly ParsedStoryCatalogEntry[] {
+  const lines = content.split(/\r?\n/);
+  const STORY_HEADING_PATTERN = /^###\s+(H(?:F\d+|[0-9]{2})-[0-9]{2})\b/;
+  const CLOSING_HEADING_PATTERN = /^#{1,3}\s+/;
+  const LEGACY_PATTERN = /旧US\**\s*[:：]\s*(US-[0-9]{3})/;
+  const AC_PATTERN = /^\s*-\s*\[[ xX]\]\s*(AC-[0-9]+)\s*[:：]/;
+  const entries: {
+    storyId: string;
+    legacyIds: string[];
+    lineNumber: number;
+    acceptanceCriteria: { acId: string; lineNumber: number }[];
+  }[] = [];
+  let current:
+    | {
+        storyId: string;
+        legacyIds: string[];
+        lineNumber: number;
+        acceptanceCriteria: { acId: string; lineNumber: number }[];
+      }
+    | undefined;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const storyHeading = STORY_HEADING_PATTERN.exec(line);
+    if (storyHeading) {
+      current = {
+        storyId: storyHeading[1],
+        legacyIds: [],
+        lineNumber: index + 1,
+        acceptanceCriteria: [],
+      };
+      entries.push(current);
+      continue;
+    }
+    if (CLOSING_HEADING_PATTERN.test(line)) {
+      current = undefined;
+      continue;
+    }
+    if (!current) continue;
+
+    const legacy = LEGACY_PATTERN.exec(line);
+    if (legacy && !current.legacyIds.includes(legacy[1])) {
+      current.legacyIds.push(legacy[1]);
+    }
+    const acceptanceCriterion = AC_PATTERN.exec(line);
+    if (acceptanceCriterion) {
+      current.acceptanceCriteria.push({
+        acId: acceptanceCriterion[1],
+        lineNumber: index + 1,
+      });
+    }
+  }
+
+  return entries.map((entry) => ({
+    storyId: entry.storyId,
+    legacyIds: [...entry.legacyIds],
+    lineNumber: entry.lineNumber,
+    acceptanceCriteria: entry.acceptanceCriteria.map((criterion) => ({
+      ...criterion,
+    })),
+  }));
 }

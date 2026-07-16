@@ -7,6 +7,7 @@
  * 全コンポーネントを生成・配線し、外部に公開するハンドラー群を返す。
  */
 
+import { TraceabilityWorldReadFacade } from "./application/facades/traceability-world-read-facade.js";
 import { ApplyWorkItemMigrationUseCase } from "./application/usecases/apply-work-item-migration-usecase.js";
 import { ApplyWorkItemStatusUseCase } from "./application/usecases/apply-work-item-status-usecase.js";
 import { DeriveWorkItemStatusUseCase } from "./application/usecases/derive-work-item-status-usecase.js";
@@ -19,11 +20,12 @@ import { StoryIdAliasResolver } from "./domain/services/story-id-alias-resolver.
 import { TraceabilityChainBuilder } from "./domain/services/traceability-chain-builder.js";
 import { WorkItemStatusDerivationService } from "./domain/services/work-item-status-derivation-service.js";
 import { ProjectRelativePath } from "./domain/value-objects/project-relative-path.js";
+import { FileSystemTraceabilityWorldReadAdapter } from "./infrastructure/adapters/file-system-traceability-world-read-adapter.js";
 import { FileSystemInceptionPlanGateway } from "./infrastructure/gateways/file-system-inception-plan-gateway.js";
 import { FileSystemMetadataReader } from "./infrastructure/gateways/file-system-metadata-reader.js";
+import { FileSystemWorkItemIdentityGateway } from "./infrastructure/gateways/file-system-work-item-identity-gateway.js";
 import { FileSystemWorkItemMigrationApplyGateway } from "./infrastructure/gateways/file-system-work-item-migration-apply-gateway.js";
 import { FileSystemWorkItemMigrationSourceGateway } from "./infrastructure/gateways/file-system-work-item-migration-source-gateway.js";
-import { FileSystemWorkItemIdentityGateway } from "./infrastructure/gateways/file-system-work-item-identity-gateway.js";
 import { FileSystemWorkItemStatusGateway } from "./infrastructure/gateways/file-system-work-item-status-gateway.js";
 import { MarkdownDesignDocumentGateway } from "./infrastructure/gateways/markdown-design-document-gateway.js";
 import { MarkdownStoryCatalogGateway } from "./infrastructure/gateways/markdown-story-catalog-gateway.js";
@@ -34,6 +36,8 @@ import { WorkItemStatusCommandHandler } from "./presentation/cli/work-item-statu
 
 export interface TraceabilityModelPathRoots {
   readonly designDocsRoot: string;
+  readonly inceptionRoot?: string;
+  readonly testRoots?: readonly string[];
 }
 
 export interface TraceabilityModelModuleOptions {
@@ -48,13 +52,12 @@ const deriveProductDocsRoot = (designDocsRoot: string): string => {
   return normalized;
 };
 
-export function createTraceabilityModelModule(
-  rootDir: string,
-  options: TraceabilityModelModuleOptions = {},
-) {
+export function createTraceabilityModelModule(rootDir: string, options: TraceabilityModelModuleOptions = {}) {
   const designDocsRoot = options.pathRoots?.designDocsRoot ?? "docs/product/construction";
   const productDocsRoot = deriveProductDocsRoot(designDocsRoot);
   const storyCatalogPath = `${productDocsRoot}/user_stories.md`;
+  const inceptionRoot = options.pathRoots?.inceptionRoot ?? "docs/inception";
+  const testRoots = options.pathRoots?.testRoots ?? ["scripts/harness/__tests__"];
 
   // Infrastructure gateways
   const storyCatalog = new MarkdownStoryCatalogGateway({ rootDir, storyCatalogPath });
@@ -70,6 +73,15 @@ export function createTraceabilityModelModule(
   const workItemMigrationApply = new FileSystemWorkItemMigrationApplyGateway({ rootDir });
   const workItemIdentity = new FileSystemWorkItemIdentityGateway({ rootDir });
   const workItemStatus = new FileSystemWorkItemStatusGateway({ rootDir });
+  const worldReadSource = new FileSystemTraceabilityWorldReadAdapter({
+    rootDir,
+    productDocsRoot,
+    designDocsRoot,
+    storyCatalogPath,
+    inceptionRoot,
+    testRoots,
+    unitDefinitionGateway: unitDefinition,
+  });
 
   // Domain services
   const metadataValidator = new MetadataValidator({
@@ -86,6 +98,9 @@ export function createTraceabilityModelModule(
   });
   const storyIdAliasResolver = new StoryIdAliasResolver(storyCatalog);
   const workItemStatusDerivationService = new WorkItemStatusDerivationService();
+  const worldReadFacade = new TraceabilityWorldReadFacade({
+    sourcePort: worldReadSource,
+  });
 
   // Usecases
   const validateImplementationMetadataUseCase = new ValidateImplementationMetadataUseCase({
@@ -141,5 +156,6 @@ export function createTraceabilityModelModule(
     storyCatalog,
     traceabilityChainBuilder,
     storyIdAliasResolver,
+    worldReadFacade,
   } as const;
 }

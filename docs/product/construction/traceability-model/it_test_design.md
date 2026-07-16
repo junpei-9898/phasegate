@@ -463,3 +463,15 @@ scripts/harness/__tests__/fixtures/harness-api/
 |----------|-------------|---------|---------|
 | IT-TM-105 | nyquist-validation連携で@storyメタデータを入力にストーリー-テスト間トレーサビリティが検証できること | `// @story H03-03` を持つテストfixtureを nyquist-validation 側入力アダプターへ渡し、story-test traceability が成立することを検証する | Arrange: `@story H03-03` 付きテストファイル、`product/user_stories.md`、対応するinception fixture、nyquist-validation連携アダプターを実体で組み立てる。Act: 連携エントリポイントを実行する。Assert: actual.valid===true かつ traceability links に story-to-test 対応の解決結果が含まれる |
 | IT-TM-106 | VerifyTraceabilityCoverageUseCaseでbrokenLinks総数が明示集計されること | `logical_design.md §4.6` の集計要件として `completeChains / incompleteChains / brokenLinks` の3指標を同時に検証する | Arrange: 完全チェーン1件、不完全チェーン2件、broken link合計3件となるfixtureを配置。Act: VerifyTraceabilityCoverageUseCase.execute(filePaths)。Assert: actual.completeChains===1、actual.incompleteChains===2、actual.brokenLinks===3 |
+
+<!-- @work-item-id WI-288 -->
+## 8. WI-288 World read facade 統合テスト設計
+
+@story-id H17-03
+
+| ケース ID | テストケース名 | AAA 概要 |
+|----------|--------------|---------|
+| IT-TM-WR01 | public facade がrepository corpusをplain DTOとして読む | Arrange: temporary repositoryにUnit、Story/AC、WorkItem、`@story` test fixtureを配置する。Act: public `createTraceabilityModelModule` からfacadeを2回読む。Assert: canonical ID、legacy alias、file-level TestReference、決定的JSONが一致する |
+| IT-TM-WR02 | 不正なWorkItemと参照切れをdiagnosticに隔離する | Arrange: directory/frontmatter不一致と未知Story annotationを配置する。Act: facadeを読む。Assert: 不正projectionを除外し、安定順序のdiagnosticを返す |
+
+integration test は実filesystem、既存parser、Unit definition gateway、composition rootを使用する。world-model adapterおよびnyquist-validationのcase-level matrixはWM-09/WM-10の責務なので、本テストへ含めない。
