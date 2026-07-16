@@ -224,3 +224,23 @@ composition-root以外でconcrete adapterを生成しない。attestation v2へ`
 ## 11. Implementation status
 
 本書は実装予定のlogical contractである。WM-05時点ではcommand登録、provider facade、schema、repository、testの実装済みを主張しない。
+
+---
+
+## 12. WI-286 public hashing provider integration
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+future world-model infrastructure adapterはattestation root barrelから`Sha256Capability`だけを受け、application/domainのconsumer-owned `WorldHashingPort`へ変換する。
+
+```text
+attestation public index
+  -> Sha256Capability / plain sha256 string
+  -> world-model infrastructure adapter
+  -> WorldHashingPort
+  -> World-local Sha256Digest
+```
+
+WM-06はprovider facadeまでを実装し、world-model source、composition-root、`node:crypto` call siteを追加しない。consumer adapterはWorld domain primitiveと同時に後続WIで実装する。

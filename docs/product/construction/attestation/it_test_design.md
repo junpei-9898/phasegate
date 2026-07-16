@@ -81,3 +81,20 @@
 | IT-E2E-105 | producedAt / gitCommit のみ異なる 2 回の attest | 双方の attestationDigest 比較 | バイト一致（acBoundScope 込みでも決定論、AC-8） |
 
 > **Q3**: verify は matrix パスを `inputs.sources`（ハッシュ検証済み入力）から取得する。これにより verify 対象の matrix と produce 時点の matrix が同一であることが inputHashes チェックで担保され、acBoundScope 再導出が producer と同じ入力で行われる。
+
+---
+
+## 5. WI-286 SHA-256 facade integration tests
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+| Case ID | 日本語テストケース名 | Expected |
+|---|---|---|
+| IT-WM286-001 | public capabilityで既知bytesをhashする | `abc`の既知SHA-256とexact一致 |
+| IT-WM286-002 | public UTF-8 helperで日本語をhashする | known digest / lowercase pattern一致 |
+| IT-WM286-003 | public helperと既存adapterを同値にする | plain result == local `Digest.value` |
+| IT-WM286-004 | public barrelから内部hashing型を隠す | internal VO / port / concrete class exportなし |
+| IT-WM286-005 | node:crypto SHA-256 call siteを増やさない | primitive移動後もsource call-site総数不変 |
+| IT-WM286-006 |既存attest→verifyを維持する | existing E2Eがgreen |

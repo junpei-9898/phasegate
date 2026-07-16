@@ -196,3 +196,15 @@ constraint IDは宣言のidentity、violation fingerprintは観測されたviola
 ## 10. Implementation status
 
 本書はWM-06〜17で実装予定のdomain contractである。WM-05時点では`scripts/harness/world-model/`実装やWCR validator登録の完了を主張しない。
+
+---
+
+## 11. WI-286 hashing provider boundary reflection
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+ADR-033どおり、World domainは将来consumer-owned `WorldHashingPort`だけに依存する。provider contractはattestation public facadeの`Sha256Capability.hashBytes(Uint8Array)`であり、World-local adapterがplain digestを`Sha256Digest`へ変換する。
+
+WM-06ではprovider facadeをattestation側へ実装し、World domain source / VO / port実装はWM-07へ残す。attestation `Digest`、`ContentHasherPort`、concrete crypto adapterをWorld domainへ持ち込まない。

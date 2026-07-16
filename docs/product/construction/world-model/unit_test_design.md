@@ -223,3 +223,22 @@ scripts/harness/__tests__/unit/world-model/
 ```
 
 test file名はkebab-caseとし、case IDをコメントまたはtest name metadataで追跡可能にする。実装順はH17 / WMのincrementに合わせ、未実装caseをpass済みとして記録しない。
+
+---
+
+## 9. WI-286 hashing test allocation
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+| ADR-033 Case | WM-06 responsibility | Later World responsibility |
+|---|---|---|
+| UT-WM283-HASH-001 | public capability known bytes | World port contract reuse |
+| UT-WM283-HASH-002 | public UTF-8 helper | World text normalization reuse |
+| UT-WM283-HASH-003 | plain digest contractまで | World-local VO conversion |
+| UT-WM283-HASH-004 | attestation-local adapter conversion | — |
+| UT-WM283-HASH-005 | public export boundary | World import graph |
+| UT-WM283-HASH-006 | no-new-crypto source scan |継続ratchet |
+
+WM-06ではWorld source testを作らず、provider側のcontract / adapter testで上表の左列を満たす。

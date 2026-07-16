@@ -1,18 +1,18 @@
 // @unit attestation
 // @layer infrastructure
 
-import { createHash } from "node:crypto";
+import { hashUtf8, type Sha256Capability } from "../../application/ports/sha256-capability.js";
 import type { ContentHasherPort } from "../../domain/ports/content-hasher-port.js";
 import { Digest } from "../../domain/value-objects/digest.js";
+import { NodeCryptoSha256Capability } from "./node-crypto-sha256-capability.js";
 
 /**
- * ContentHasherPort の node:crypto 実装。
- * canonical payload / source content の sha256 を `sha256:<64hex>` Digest として返す。
- * installation の node-crypto-hash-adapter をミラーし、アルゴリズムは sha256 に固定する。
+ * Public Sha256Capabilityをattestation-local ContentHasherPortへ変換するadapter。
  */
 export class NodeCryptoContentHasherAdapter implements ContentHasherPort {
+  constructor(private readonly capability: Sha256Capability = new NodeCryptoSha256Capability()) {}
+
   sha256(content: string): Digest {
-    const hex = createHash("sha256").update(content, "utf8").digest("hex");
-    return Digest.fromSha256Hex(hex);
+    return Digest.create(hashUtf8(this.capability, content));
   }
 }

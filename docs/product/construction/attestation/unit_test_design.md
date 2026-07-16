@@ -124,3 +124,20 @@
 | UT-VU-101 | verify が stored matrix + allowlist から acBoundScope を再導出し格納値と比較 → 一致で pass |
 | UT-VU-102 | acBoundScope 改竄（bogus story 追加）→ 再導出不一致 → fail（exit 1, laundering 検出） |
 | UT-VU-103 | 再導出入力（matrix / allowlist）が読めない → acBoundScopeOk=false → fail-closed（exit 1, Q2） |
+
+---
+
+## 6. WI-286 SHA-256 facade unit tests
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+| Case ID | 日本語テストケース名 | Test boundary |
+|---|---|---|
+| UT-WM286-001 | non-ASCII文字列をTextEncoderのUTF-8 bytesへ変換する | `hashUtf8` + fake public capability |
+| UT-WM286-002 | capabilityのplain digestを変更せず返す | `hashUtf8` |
+| UT-WM286-003 | plain digestをattestation-local Digestへ変換する | `NodeCryptoContentHasherAdapter` |
+| UT-WM286-004 | stringをUTF-8 helper経由で一度だけhashする | adapter + fake capability spy |
+
+AAAを明示し、domain objectをmockしない。doubleはapplication public portだけに限定する。

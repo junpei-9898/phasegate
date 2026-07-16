@@ -282,3 +282,30 @@ classDiagram
 | OQ-2 | known-limitations registry を静的 TS マップにするか JSON 外部ファイル化するか | Infrastructure / Domain 境界 |
 | OQ-3 | `signed` mode 実装時に KeyResolverPort を domain / application どちらに置くか | 将来拡張 |
 <!-- @work-item-id WI-224 -->
+
+---
+
+## 11. WI-286: Unit非依存SHA-256 public capability
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+attestationはSHA-256 primitiveのdeployment ownerとして、plain public contractをapplication境界に追加する。
+
+| Concept | Classification | Ownership |
+|---|---|---|
+| `Sha256Capability` | application public port | `Uint8Array`をhashしplain `sha256:<64 lowercase hex>`を返す |
+| `Sha256DigestString` | public scalar | 他UnitのVOではなくserialized boundary value |
+| `hashUtf8` | pure public helper | `TextEncoder` bytesをcapabilityへ委譲 |
+| `ContentHasherPort` | domain internal port | 既存attestation aggregateの`Digest`導出を維持 |
+| `Digest` | domain local VO | public contractへ露出しない |
+
+`Sha256Capability`と`ContentHasherPort`を継承関係にせず、infrastructure adapterがplain digestを`Digest.create`へ変換する。これによりWorldはattestation domainをimportせず、将来consumer-owned `WorldHashingPort`へadaptできる。
+
+追加invariant:
+
+1. public resultは`^sha256:[0-9a-f]{64}$`。
+2. `hashUtf8`はUnicode normalizationを行わず`TextEncoder` semanticsを使う。
+3. SHA-256 algorithm fallbackを持たない。
+4. 既存attestation `Digest` / record schema / canonical payloadは変更しない。

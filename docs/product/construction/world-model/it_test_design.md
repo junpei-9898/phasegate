@@ -179,3 +179,15 @@ exit code acceptance:
 | WM-17 | clean self-repo double-run and adoption ratchet |
 
 WM-05ではfixture / test sourceをまだ作成せず、各実装WIが本設計の該当caseを実装してからpass evidenceを記録する。
+
+---
+
+## 10. WI-286 provider contract checkpoint
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+WM-06のintegration checkpointはattestation public rootからbytes hashing / UTF-8 helperを利用でき、既存attestation adapterと同値であること。World extractor / Snapshotとのintegration testはWM-07以降に行う。
+
+public facade contract testはconsumerがattestation内部pathをimportしなくても完結し、repository source scanで新しいWorld側`node:crypto` call siteがないことを確認する。

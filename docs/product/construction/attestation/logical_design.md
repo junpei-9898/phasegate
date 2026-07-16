@@ -4,6 +4,58 @@
 
 <!-- @work-item-id WI-224 -->
 
+---
+
+## 10. WI-286: SHA-256 public facade
+
+<!-- @work-item-id WI-286 -->
+
+@story-id H17-01
+
+### 10.1 Public surface
+
+root `attestation/index.ts`は次だけを追加公開する。
+
+```text
+Sha256Capability
+Sha256DigestString
+hashUtf8(capability, text)
+createSha256Capability()
+```
+
+`Digest`、`ContentHasherPort`、`NodeCryptoSha256Capability`、`NodeCryptoContentHasherAdapter`はpublic barrelからexportしない。
+
+### 10.2 Dependency flow
+
+```text
+createSha256Capability()
+  -> NodeCryptoSha256Capability.hashBytes(Uint8Array)
+  -> plain sha256:<hex>
+
+createAttestationModule()
+  -> one Sha256Capability instance
+  -> NodeCryptoContentHasherAdapter
+  -> ContentHasherPort.sha256(string): Digest
+```
+
+既存`NodeCryptoContentHasherAdapter`の`createHash("sha256")` callを`NodeCryptoSha256Capability`へ移動し、adapterはUTF-8 helperとlocal VO変換だけを持つ。call site総数は増やさない。
+
+### 10.3 Implemented file changes
+
+| Path | Responsibility |
+|---|---|
+| `application/ports/sha256-capability.ts` | plain public contract / UTF-8 helper |
+| `infrastructure/adapters/node-crypto-sha256-capability.ts` | moved Node.js SHA-256 primitive |
+| `infrastructure/adapters/node-crypto-content-hasher-adapter.ts` | internal `Digest` adapter |
+| `composition-root.ts` | public factoryとinternal wiring |
+| `index.ts` | supported public exports |
+
+world-model sourceはWM-06では変更せず、後続WIがroot barrelだけをimportしてconsumer-owned portへadaptする。
+
+### 10.4 Implementation status
+
+WM-06でpublic contract / factory / concrete provider / internal adapter wiringを実装した。attestation public barrelはplain surfaceだけを公開し、既存record / produce / verify contractを変更していない。World consumer adapterは後続WIのままである。
+
 attestation Unit は `phasegate:ci-check` の結果を content-addressed な attestation record として生成・検証する。PoC では unsigned-poc モードのみを実装し、ドキュメント自身の content digest（`attestationDigest`）で **INTEGRITY（改竄検知）** を証明する。**AUTHENTICITY（発行者の真正性）は証明しない**。真の ed25519 署名は `signature.mode: "signed"` として後から差し込む前提で、record format に `signature.mode` discriminator を持たせる。attest は opt-in の独立コマンドであり、`phasegate:ci-check` の経路には注入しない。
 
 @story-id H16-01
