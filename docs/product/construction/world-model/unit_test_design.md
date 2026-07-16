@@ -152,6 +152,14 @@ Assert: public result、canonical bytes、port call、diagnosticを検証する
 
 各ruleはdomain実体の`ConstraintRecord` / `Snapshot`で検証し、`ConstraintEvaluator`をmockしない。
 
+### WI-293 executable WCR mutation pairs
+
+<!-- @work-item-id WI-293 -->
+
+@story-id H17-07
+
+`UT-WI293-*`はNodePin / ChangeProvenance / ConstraintRecordのinvariant、WCR-001〜008、claimant-only / premise-only digest mutation、missing / deletion排他、alias有無rename、duplicate no-winner、explicit-only refines、malformed no-partial-record、incremental / full canonical equalityをdomain実体だけで検証する。テストファイルはH17-07のAC-1〜6へ明示`@ac` bindingを持たせる。
+
 | ID | 日本語テストケース名 | Assert |
 |---|---|---|
 | UT-WM285-WCR-001 | malformed declarationをWCR-001でadmission拒否する | 他rule評価へ流さない |

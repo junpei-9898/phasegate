@@ -260,3 +260,13 @@ Snapshotは`phasegate-world-snapshot/v1`、semantic corpus config digestとversi
 <!-- @work-item-id WI-292 -->
 
 matrix 1.2のStory projectionはcoverageStatusとordered coverageLifecycleを保持する。1.0 / 1.1 field省略はrequiredへ正規化する。WorldはL3 blocking policyを複製せずowner factとして観測する。
+
+## WI-293 ConstraintRecord / WCR evaluator implementation
+
+<!-- @work-item-id WI-293 -->
+
+@story-id H17-07
+
+`ConstraintRecord`はwell-formedなtyped directed factだけを表し、claimant / premise `NodePin`、sorted applicable WCR IDs、declaration provenanceをimmutableに保持する。malformed inputは別の`MalformedConstraintDeclaration`としてWCR-001へ変換し、部分recordを生成しない。
+
+`ConstraintEvaluator`はcurrent / optional baseline Snapshot、explicit single-hop alias、constraint declaration由来relationを入力に、WCR-001〜008のpolicy-free findingをstable sortして返す。endpoint resolutionはmalformed、duplicate、exact、alias、deletion、missingのprecedenceを守り、unresolved endpointへdigest findingを重ねない。`ChangeProvenance`はsnapshot差とcandidateだけを表し、renameやcauseを推論しない。

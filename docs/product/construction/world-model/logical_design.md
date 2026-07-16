@@ -263,6 +263,16 @@ Snapshotはowner-aware leaf digestから`corpusRoot`、`constraintRoot`、`evalu
 
 constraintはtyped directed factと両endpoint pinを保持しつつendpoint-symmetricに評価し、機械ruleをexistence、uniqueness、explicit reference、declared dependency、digest equalityの`WCR-001`〜`WCR-008`へ限定する。evaluation DTOはpolicy-free、obligationは毎回derived、adoption baseline / waiver / semantic debtはversioned external declaration、reportは非信頼generated artifactとする。CLI / config / persistenceは§7〜9の`world:*`、exit 0/1/2、`world` config、root control files、`.harness/world-obligations.json`契約に従う。
 
+## WI-293 pure constraint domain
+
+<!-- @work-item-id WI-293 -->
+
+@story-id H17-07
+
+WM-12は`domain/{entities,value-objects,services}`だけへConstraintRecord、NodePin、ChangeProvenance、WCR evaluatorを追加する。Snapshot candidate resolutionと明示alias / relationはplain domain inputで受け、repository parser / schema / composition / CLIを先取りしない。
+
+incremental評価はclaimant / premiseいずれのchanged node IDでもrecordをscheduleし、affected recordの旧findingをcurrent findingで置換後canonical sortする。full評価と同じcurrent inputではserialized resultが一致する。`@world-reflects`由来edgeを`refines` relation inputへ変換しない。
+
 ## 14. WI-287 pure domain implementation
 
 <!-- @work-item-id WI-287 -->
