@@ -26,6 +26,8 @@ Rust製 Biome の AST 解析を用いて、L1（Editor-Time）で以下の8ル�
 | no-comment-flood | L1-007 | 過剰なコメント |
 | no-code-duplication | L1-008 | 構造的に重複するコードブロック |
 
+> 注記（WI-274, 2026-07-16）: 上表の L1-006〜L1-008 のルール名↔コード対応は当時の記述であり、現行の canonical と異なる。現行の正しい対応は `L1-006`=`no-code-duplication` / `L1-007`=`no-ghost-file` / `L1-008`=`no-comment-flood`（WI-265 で是正済み。真実の源は `biome-ast-engine` の `rule-definition-registry.ts`）。本文は歴史記録として保存する。
+
 ## Consequences
 
 - エージェントのプロンプト遵守度に品質が依存しない

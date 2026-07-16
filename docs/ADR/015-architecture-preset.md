@@ -133,6 +133,8 @@ v0.86.0（ADR-014 適用）以降、`ALLOWED_DEPENDENCIES.presentation` に `'do
 | L1-007 no-comment-flood | 有効維持 |
 | L1-008 no-code-duplication | 有効維持 |
 
+> 注記（WI-274, 2026-07-16）: 上表の L1-006〜L1-008 のルール名↔コード対応は当時の記述であり、現行の canonical と異なる。現行の正しい対応は `L1-006`=`no-code-duplication` / `L1-007`=`no-ghost-file` / `L1-008`=`no-comment-flood`（WI-265 で是正済み。真実の源は `biome-ast-engine` の `rule-definition-registry.ts`）。`flat` preset で「有効維持」となる 3 ルール（重複/ghost/コメント過多）という判断自体は不変で、コード表記のみが当時 drift していた。本文は歴史記録として保存する。
+
 ### メタデータタグの可変化
 
 `@layer` / `@unit` というタグ名自体も `metadataTags` で差し替え可能とする。これにより、社内規約で `@tier` / `@module` 等を使う PJ にも対応できる。
