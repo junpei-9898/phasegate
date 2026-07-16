@@ -298,3 +298,15 @@ source metadata / test source / matrix / attestation / integrity manifest extrac
 matrixはnyquist public `RequirementTestMatrixDto`、attestationはpublic `AttestationDocument` / verify handlerだけをACL入力にする。World側はcanonical owner projectionをhashしてgenerated / external ArtifactとTestReference nodeを返し、provider内部型をimportしない。
 
 WM-10もcomposition-root / index / CLIを変更せず、WM-11がWM-09 / 10 extractorを統合する。
+
+## 17. WI-291 graph assembly / inspect CLI
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+`BuildSnapshotUseCase`は`WorldFactSourcePort`から全factを読み、global no-winner admission後に`SnapshotRootDeriver`へ渡す。`InspectWorldUseCase`はSnapshotをplain deterministic DTOへ変換し、`WorldInspectCommandHandler`がhuman / JSONとexit 0 / 1 / 2を適用する。
+
+`composition-root.ts`はattestation public `createSha256Capability()`をconsumer-owned hashing adapterへ、traceability public facadeをdesign ACLへ、public attestation verify handlerをevidence extractorへbindする。`index.ts`はplain inspection contract、handler、module factoryだけを公開し、provider内部型を再exportしない。
+
+config不在はADR-037 canonical defaults、存在時はconfig-foundation `LoadResolvedConfigUseCase`のresolved plain inputを使う。WM-18前は既存`paths.designDocs` / `paths.inceptionDocs` / L3 matrix pathだけを写像し、`world` schemaを先取りしない。resolved design rootがcanonical `docs/product`外なら置換せず追加scopeとし、scope別traceability plain DTOをstable dedupしてowner indexへ統合する。invalid configはfallbackせずexit 2。main help / dispatchと`KNOWN_HARNESS_COMMANDS`を同時更新し、pin / deriveは未登録のままにする。

@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer infrastructure
-// @work-item-id WI-289
+// @work-item-id WI-289, WI-291
 
 import { ExtractionDiagnostic } from "../../domain/entities/extraction-diagnostic.js";
 import { CorpusRole } from "../../domain/value-objects/corpus-role.js";
@@ -14,13 +14,14 @@ import { FileSystemDesignFactScope, type MarkdownDesignFactExtractor } from "./m
 export interface UnitFactExtractorDeps {
   readonly rootDir: string;
   readonly markdownExtractor: MarkdownDesignFactExtractor;
+  readonly unitRoot?: string;
 }
 
 export class UnitFactExtractor extends FileSystemDesignFactScope implements DesignFactSource {
   constructor(deps: UnitFactExtractorDeps) {
     super({
       rootDir: deps.rootDir,
-      relativeRoot: "docs/product/units",
+      relativeRoot: deps.unitRoot ?? "docs/product/units",
       role: CorpusRole.product(),
       markdownExtractor: deps.markdownExtractor,
       include: (relativePath) => /\/[a-z][a-z0-9]*(?:-[a-z0-9]+)*_unit\.md$/.test(relativePath),

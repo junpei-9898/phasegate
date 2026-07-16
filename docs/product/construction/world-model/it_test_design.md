@@ -211,3 +211,13 @@ repository-shaped fixtureをtemporary rootへcopyし、product / inception / ADR
 repository-shaped runtime fixtureでimplementation / test SourceFile、matrix、attestation、integrity manifestを同時抽出する。matrix reorder / generatedAt差、attestation volatile差、duplicate TestReference、unknown schema / field、optional file不在を検証する。
 
 integrationはattestation public verify handlerとpublic SHA capabilityを接続し、nyquist public DTO contract以外のprovider deep import、world-modelの`node:crypto`、composition-root / index差分がないことを確認する。WM-10承認後のCP-1でfull suiteとWM-06〜10横断determinismを実行する。
+
+## 13. WI-291 composition / inspect CLI integration
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+WM-09 / 10 fixtureを全extractor、traceability public facade、attestation public SHA / verify capability、Snapshot assemblyへ接続する。configなしcanonical defaults、resolved existing path mapping、invalid config fail-closed、global duplicate / dangling edge diagnosticを検証する。
+
+CLI E2Eはhuman / JSON、exit 0 / 1 / 2、single envelope、help / known-command conformance、実corpus counts / root、read-only filesystemを検証する。同じcheckoutで`world:inspect --json`を2回実行しbyte-identicalと`generatedAt`不在をassertする。full suiteとmatrix / L2 / L3 / integrityは着地後CP-2で実施する。

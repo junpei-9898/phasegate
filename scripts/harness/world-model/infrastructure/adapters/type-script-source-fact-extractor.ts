@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer infrastructure
-// @work-item-id WI-290
+// @work-item-id WI-290, WI-291
 
 import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
@@ -24,6 +24,7 @@ export interface TypeScriptSourceFactExtractorDeps {
   readonly rootDir: string;
   readonly hashingPort: WorldHashingPort;
   readonly sourceKind: TypeScriptSourceKind;
+  readonly sourceRoot?: string;
   readonly include: (relativePath: string) => boolean;
 }
 
@@ -128,7 +129,7 @@ export class TypeScriptSourceFactExtractor {
         );
       }
     };
-    await visit(path.join(this.deps.rootDir, "scripts/harness"));
+    await visit(path.join(this.deps.rootDir, this.deps.sourceRoot ?? "scripts/harness"));
     const collisionPaths = new Set<string>();
     const pathsByFolded = new Map<string, string[]>();
     for (const node of nodes) {

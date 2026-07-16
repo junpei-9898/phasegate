@@ -1987,3 +1987,13 @@ harness-api は`world:inspect`、`world:pin`、`world:derive`をtop-level canoni
 - human / JSONのprimary resultはstdout、usage / unsupported schema / unexpected process failureはstderrとする。JSONは単一`phasegate-world-cli/v1` envelopeとし、exit 1でもresultを保持する。
 - exit 0はnon-blocking success、1はdomain / structural / policy finding、2はtrustworthy resultを生成できないinvocation / config / schema / I/O / hashing failureとする。
 - `world.enabled: false`でもexplicit commandはdispatchする。automatic validator enablementはvalidator-system / configが所有する。
+
+## WI-291 `world:inspect` transport wiring
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+WM-11ではADR-037で予約した三commandのうち`world:inspect`だけをmain help / subcommand help / dispatch / `KNOWN_HARNESS_COMMANDS`へ同時登録する。mainはconfig-foundationの`LoadResolvedConfigUseCase`を通ったplain resolved inputをworld-model composition rootへ渡し、handler resultのstdout / stderr / exit codeをそのままprocess境界へ写像する。
+
+invalid configはcanonical defaultsへfallbackせずworld handlerのexit 2とする。`world:pin` / `world:derive`のcase、help、known-command entryはWM-15まで作らない。harness-apiはfact抽出、Snapshot assembly、hard diagnostic分類を実装しない。

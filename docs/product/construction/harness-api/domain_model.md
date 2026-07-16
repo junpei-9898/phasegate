@@ -419,3 +419,11 @@ Legacy alias names are presentation-level command identities, not separate domai
 <!-- @work-item-id WI-254 -->
 
 **WI-254 での拡張**: integrity pin の CLI 化に伴い `integrity:pin` / `integrity:verify` の 2 エントリをカタログへ追加（main.ts の dispatch case と同時更新。conformance ゲートが両者の同期を強制するため、片側のみの更新は fail する — これが WI-250 が意図した乖離検出の実働例）。
+
+## WI-291 World inspect command identity
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+`world:inspect`をharness-api所有のtop-level command identityとして`KNOWN_HARNESS_COMMANDS`へ追加する。catalogは引き続きdependency-free、unique、sortedで、main dispatchのcase集合と完全一致する。Snapshot、diagnostic、exit classificationのdomain意味はworld-modelに属し、harness-apiは複製しない。

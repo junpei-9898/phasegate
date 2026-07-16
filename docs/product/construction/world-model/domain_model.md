@@ -244,3 +244,13 @@ implementation / test TypeScriptは別`sourceKind`を持つSourceFileとして�
 matrix / attestationは`generated-artifact × generated`、integrity manifestは`external-declaration × external` Artifactとする。matrix `generatedAt`、attestation producedAt / producer / gitCommit / signature / self digest、git sourceを含み得るderived `inputDigest`をowner projectionで除外し、verification statusを含める。integrity path / raw digest declarationは保持するが、stable claim IDがないためExplicitClaim nodeを生成しない。
 
 optional provider file不在は`not-present`、存在するunsupported schema / field、parse / verification failureはhard ExtractionDiagnosticとし、invalid inputをempty Artifactへlaunderしない。
+
+## 15. WI-291 assembled Snapshot / inspection projection
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+全extractor resultを`WorldFactBatch`としてapplication境界で統合する。global node ID duplicateはcandidate全除外、edge canonical tupleはdedup、admitted nodeに存在しないendpointを持つedgeは除外して`missing-edge-endpoint` diagnosticへ変換する。identityやcontinuityのwinnerをassemblyで推論しない。
+
+Snapshotは`phasegate-world-snapshot/v1`、`phasegate-world-extractor/v1`、semantic corpus config digestをpreimageに含める。plain `WorldInspectionDto`はroot / counts / inventory / stable node / edge / diagnostic projectionを返し、domain型、absolute checkout root、clock、`generatedAt`を公開しない。`not-present`以外のExtractionDiagnosticをhardと数えるが、exit policyはpresentationに残す。

@@ -423,3 +423,15 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 | --- | --- | --- | --- |
 | UT-WI186-001 | status live failure verdict | L1 live validation fails in standard preset | response `status=fail`, `exitCode=0`, L1 `lastResult=fail` |
 | UT-WI186-002 | status live pass verdict | all enabled live states pass | response `status=pass`, `exitCode=0` |
+
+## WI-291 World inspect command catalog tests
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+| ID | 観点 | 入力 | 期待結果 |
+|---|---|---|---|
+| UT-WM291-API-001 | known command | canonical catalog | `world:inspect`を含みunique / sorted |
+| UT-WM291-API-002 | scope boundary | canonical catalog | `world:pin` / `world:derive`をまだ含まない |
+| UT-WM291-API-003 | help transport | `world:inspect --help` | read-only、format flag、exit contractを表示 |

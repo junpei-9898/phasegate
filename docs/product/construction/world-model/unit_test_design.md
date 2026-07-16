@@ -291,3 +291,18 @@ domain objectは実体を使い、hashingだけをtest-local deterministic port�
 | `world-node.test.ts`追補 | TestReference projection factory |
 
 domain実体とdeterministic hashingを使用し、provider boundaryだけをplain fake DTO / handlerで制御する。
+
+## 13. WI-291 assembly / inspection tests
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+| Test file | Covered contract |
+|---|---|
+| `build-snapshot-use-case.test.ts` | multi-source merge、global duplicate no-winner、edge dedup / dangling endpoint、order determinism |
+| `inspect-world-use-case.test.ts` | plain DTO、inventory / count、stable projection、hard diagnostic classification |
+| `world-inspect-command-handler.test.ts` | human / JSON、flag conflict、exit 0 / 1 / 2、byte-identical format |
+| `attestation-sha256-world-hashing-adapter.test.ts` | public plain digestからWorld-local `Sha256Digest`への変換 |
+
+application portはdeterministic fakeを使用し、World domain object / serializer / root deriverは実体で検証する。

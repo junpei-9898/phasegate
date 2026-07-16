@@ -21,6 +21,7 @@
  * @work-item-id WI-213
  * @work-item-id WI-217
  * @work-item-id WI-219
+ * @work-item-id WI-291
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -92,6 +93,7 @@ import {
 import { createSkillQualityHandlers } from "./skill-quality/composition-root.js";
 import { createTraceabilityModelModule } from "./traceability-model/composition-root.js";
 import { createValidatorSystemModule } from "./validator-system/composition-root.js";
+import { createWorldModelModule, WorldInspectCommandHandler } from "./world-model/index.js";
 
 /**
  * main.ts (scripts/harness/main.ts) から2階層上がパッケージルート。
@@ -232,6 +234,7 @@ Commands:
   phasegate:generate-matrix      Generate requirement-test matrix (--requirements, --tests, --out, --json)
   phasegate:attest               Produce a signed-attestation record of ci-check (--out <path>, --require-pass, --mode <unsigned-poc|signed>, --json)
   phasegate:verify-attestation   Verify an attestation record's integrity (<file>, --json)
+  world:inspect                  Inspect the read-only World snapshot (--format human|json, --json)
 
 Gate semantics:
   phasegate:complete-check       Gate: lint + all validators; exits 1 on failure
@@ -780,6 +783,14 @@ Options:
   "phasegate:check-ready": `Usage: phasegate phasegate:check-ready
 
 Check whether the harness is ready (config valid, hooks deployed).`,
+  "world:inspect": `Usage: phasegate world:inspect [options]
+
+Inspect the read-only World snapshot without writing declarations or generated reports.
+
+Options:
+  --format <human|json>          Output format (default: human)
+  --json                         Alias for --format json
+  --help, -h                     Show this help`,
   "phasegate:complete-check": `Usage: phasegate phasegate:complete-check
 
 Run completion check (used by Stop hook). Validates phase-gate, metadata, and test-quality.`,
@@ -1838,6 +1849,21 @@ async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
   }
 }
 
+async function loadWorldResolvedConfig() {
+  try {
+    const configModule = createConfigFoundationModule();
+    const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
+    return {
+      designDocsRoot: result.config.paths.designDocs,
+      inceptionRoot: result.config.paths.inceptionDocs,
+      requirementMatrixPath: result.config.layers.L3.requirementMatrixPath,
+    };
+  } catch (error) {
+    if (error instanceof ConfigNotFoundError) return undefined;
+    throw error;
+  }
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -1865,7 +1891,7 @@ async function main(): Promise<void> {
   const json = hasFlag(args, "--json");
 
   // Cross-unit wiring: 設定を先に解決し、各Unit に注入する
-  const resolvedConfig = await loadResolvedConfig();
+  const resolvedConfig = command === "world:inspect" ? undefined : await loadResolvedConfig();
 
   try {
     switch (command) {
@@ -2662,6 +2688,24 @@ async function main(): Promise<void> {
         console.log(result.text);
         process.exit(result.exitCode);
         break;
+      }
+
+      // ── world-model ──
+      case "world:inspect": {
+        let handler: WorldInspectCommandHandler;
+        try {
+          handler = createWorldModelModule({
+            rootDir,
+            resolvedConfig: await loadWorldResolvedConfig(),
+          }).worldInspectCommandHandler;
+        } catch (error) {
+          handler = WorldInspectCommandHandler.fromFailure(error);
+        }
+        const result = await handler.execute(args.slice(1));
+        if (result.stdout.length > 0) process.stdout.write(result.stdout);
+        if (result.stderr.length > 0) process.stderr.write(result.stderr);
+        process.exitCode = result.exitCode;
+        return;
       }
 
       // ── phase-dependency-model ──

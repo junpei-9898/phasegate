@@ -650,3 +650,17 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 
 - `scaffold-wi --id <id>` creates `description.md` with the supplied frontmatter id instead of allocating `WI-XXX`.
 - In a personal config project, `scaffold-wi` defaults to `paths.inceptionDocs` while preserving root `docs/inception` for ordinary project configs.
+
+## WI-291 World inspect CLI integration
+
+<!-- @work-item-id WI-291 -->
+
+@story-id H17-06
+
+| ID | シナリオ | 入力 | 期待結果 |
+|---|---|---|---|
+| IT-WM291-API-001 | dispatch / catalog同期 | main source + `KNOWN_HARNESS_COMMANDS` | case集合が完全一致 |
+| IT-WM291-API-002 | JSON command実行 | `world:inspect --json` | 単一envelope、exit 0 / 1、stderr空 |
+| IT-WM291-API-003 | invalid config | malformed `phasegate.config.json` | fallbackせずexit 2 |
+| IT-WM291-API-004 | help | `world:inspect --help` / root help | commandとflag contractを掲載 |
+| IT-WM291-API-005 | read-only | command前後のrepository | generated / control fileを書かない |

@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer infrastructure
-// @work-item-id WI-289
+// @work-item-id WI-289, WI-291
 
 import { CorpusRole } from "../../domain/value-objects/corpus-role.js";
 import type { DesignFactSource } from "./design-fact-extraction.js";
@@ -9,13 +9,14 @@ import { FileSystemDesignFactScope, type MarkdownDesignFactExtractor } from "./m
 export interface ProductFactExtractorDeps {
   readonly rootDir: string;
   readonly markdownExtractor: MarkdownDesignFactExtractor;
+  readonly productRoot?: string;
 }
 
 export class ProductFactExtractor extends FileSystemDesignFactScope implements DesignFactSource {
   constructor(deps: ProductFactExtractorDeps) {
     super({
       rootDir: deps.rootDir,
-      relativeRoot: "docs/product",
+      relativeRoot: deps.productRoot ?? "docs/product",
       role: CorpusRole.product(),
       markdownExtractor: deps.markdownExtractor,
       include: (relativePath) => relativePath.endsWith(".md"),

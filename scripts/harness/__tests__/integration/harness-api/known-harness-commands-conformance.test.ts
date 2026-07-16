@@ -1,7 +1,7 @@
 // @unit harness-api
 // @layer test
 // @story WI-250
-// @work-item-id WI-250
+// @work-item-id WI-250, WI-291
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -64,6 +64,21 @@ target('KNOWN_HARNESS_COMMANDS canonical 定数', () => {
 
       // Assert
       expect(included).toBe(true);
+    });
+
+    it('WM-11ではworld:inspectだけを公開しpinとderiveを先取りしない', () => {
+      // Arrange
+      const entries = KNOWN_HARNESS_COMMANDS;
+
+      // Act
+      const actual = {
+        inspect: entries.includes('world:inspect'),
+        pin: entries.includes('world:pin'),
+        derive: entries.includes('world:derive'),
+      };
+
+      // Assert
+      expect(actual).toEqual({ inspect: true, pin: false, derive: false });
     });
   });
 });
