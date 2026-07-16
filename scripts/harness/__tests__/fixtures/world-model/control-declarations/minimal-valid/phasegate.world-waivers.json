@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "phasegate-world-waivers/v1",
+  "waivers": [
+    {
+      "waiverId": "pgw:v1:waiver:world.temporary-gap",
+      "violationFingerprint": "pgw:v1:violation-fingerprint:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "reason": "Temporary reviewed exception with a follow-up action.",
+      "expiresOn": "2026-08-01",
+      "workItemId": "WI-294",
+      "renewalOf": null
+    }
+  ]
+}

@@ -270,3 +270,13 @@ matrix 1.2のStory projectionはcoverageStatusとordered coverageLifecycleを保
 `ConstraintRecord`はwell-formedなtyped directed factだけを表し、claimant / premise `NodePin`、sorted applicable WCR IDs、declaration provenanceをimmutableに保持する。malformed inputは別の`MalformedConstraintDeclaration`としてWCR-001へ変換し、部分recordを生成しない。
 
 `ConstraintEvaluator`はcurrent / optional baseline Snapshot、explicit single-hop alias、constraint declaration由来relationを入力に、WCR-001〜008のpolicy-free findingをstable sortして返す。endpoint resolutionはmalformed、duplicate、exact、alias、deletion、missingのprecedenceを守り、unresolved endpointへdigest findingを重ねない。`ChangeProvenance`はsnapshot差とcandidateだけを表し、renameやcauseを推論しない。
+
+## WI-294 Versioned control declaration admission
+
+<!-- @work-item-id WI-294 -->
+
+@story-id H17-08
+
+4つのexternal declarationはversioned envelopeを通じてadmitする。`AdoptionBaseline`はruleset / source roots / adoption provenanceとclosed sorted fingerprint entry、`WorldWaiver`はexact fingerprint / reason / exclusive expiry / WI / renewal link、`SemanticDebtDeclaration`はexplicit debt ID / semantic kind / owner / introduced WI / sorted node referencesを保持する。
+
+supported constraints envelope内の各recordは`ConstraintRecord`または`MalformedConstraintDeclaration`のどちらかへ全量変換する。duplicate constraint IDは全candidate no-winnerとしてWCR-001入力へ隔離する。baseline fingerprint、waiver ID / fingerprint、debt IDのduplicateはpolicy document全体をinvalidとし、任意candidateを採用しない。ci-governanceのpath / SHA-1 baselineは別owner identityであり、World adoption baselineへ暗黙importしない。

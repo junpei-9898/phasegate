@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phasegate.dev/contracts/world-baseline.schema.json",
+  "title": "PhaseGate World adoption baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rulesetVersion", "sourceEvaluationId", "sourceCorpusRoot", "sourceConstraintRoot", "adoptedByWorkItemId", "adoptionReason", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "phasegate-world-adoption-baseline/v1" },
+    "rulesetVersion": { "type": "string", "minLength": 1 },
+    "sourceEvaluationId": { "type": "string", "pattern": "^pgw:v1:evaluation:sha256:[0-9a-f]{64}$" },
+    "sourceCorpusRoot": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "sourceConstraintRoot": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "adoptedByWorkItemId": { "type": "string", "pattern": "^WI-[0-9]+$" },
+    "adoptionReason": { "type": "string", "minLength": 1 },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["violationFingerprint", "ruleId", "constraintId"],
+        "properties": {
+          "violationFingerprint": { "type": "string", "pattern": "^pgw:v1:violation-fingerprint:sha256:[0-9a-f]{64}$" },
+          "ruleId": { "enum": ["WCR-002", "WCR-003", "WCR-004", "WCR-005", "WCR-006", "WCR-007", "WCR-008"] },
+          "constraintId": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "string", "pattern": "^pgw:v1:constraint:[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

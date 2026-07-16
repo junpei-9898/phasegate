@@ -320,3 +320,11 @@ application portはdeterministic fakeを使用し、World domain object / serial
 <!-- @work-item-id WI-292 -->
 
 matrix 1.2 status / lifecycle包含、1.1 required fallback、status差によるdigest差、unknown lifecycle field / valueのdiagnosticを検証する。
+
+## WI-294 declaration mapper tests
+
+<!-- @work-item-id WI-294 -->
+
+@story-id H17-08
+
+valid constraintsをWM-12 domain型へ変換し、malformed supported recordとduplicate constraint IDをpartial recordなしのWCR-001 inputへ隔離する。baseline / waiver / semantic debtはADR-035の必須field、ID / digest / date / WI形式、set array canonical sortを検証し、duplicate fingerprint / IDではwinnerを作らない。input array順を変えてもcanonical projectionが一致することを確認する。

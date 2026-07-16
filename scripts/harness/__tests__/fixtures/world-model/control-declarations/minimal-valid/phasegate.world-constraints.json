@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "phasegate-world-constraints/v1",
+  "constraints": [
+    {
+      "constraintId": "pgw:v1:constraint:world.fixture-reference",
+      "factType": "references",
+      "claimant": {
+        "nodeId": "pgw:v1:source-file:scripts/harness/a.ts",
+        "contentDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "premise": {
+        "nodeId": "pgw:v1:source-file:scripts/harness/b.ts",
+        "contentDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "applicableRuleIds": ["WCR-002", "WCR-006", "WCR-008"]
+    }
+  ],
+  "aliases": []
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "phasegate-world-debts/v1",
+  "debts": [
+    {
+      "debtId": "pgw:v1:semantic-debt:world.known-gap",
+      "kind": "semantic",
+      "title": "Known semantic gap",
+      "reason": "The semantic behavior needs a reviewed follow-up.",
+      "ownerUnit": "world-model",
+      "introducedByWorkItemId": "WI-294",
+      "references": ["pgw:v1:work-item:WI-294"]
+    }
+  ]
+}

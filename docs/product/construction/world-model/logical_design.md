@@ -326,3 +326,13 @@ config不在はADR-037 canonical defaults、存在時はconfig-foundation `LoadR
 <!-- @work-item-id WI-292 -->
 
 matrix extractorは1.2のcoverageStatus / lifecycleをexact owner fieldとしてadmitしsemantic projectionへ含める。旧versionはrequiredへ正規化する。projection意味変更をrootへ反映するためWorld compositionのextractorVersionを`phasegate-world-extractor/v2`へ進める。
+
+## WI-294 Control repository boundary
+
+<!-- @work-item-id WI-294 -->
+
+@story-id H17-08
+
+application層がconstraints / adoption baseline / waivers / semantic debtsのrepository portを所有し、infrastructure adapterがcanonical root file、strict JSON parse、published schema admission、domain mappingを実装する。read resultは`absent | loaded | invalid`を明示し、file不在だけをcanonical emptyへ変換する。存在するunknown schema、schemaVersion欠落、parse / I/O failureはvalueなしのinvalid resultとしてfail-closedに保つ。
+
+constraintsはsupported envelopeとrecord admissionを分離し、malformed / duplicate recordをWCR-001 inputとしてlosslessに保持する。policy declarationはdocument単位でschema / duplicate identityを検査する。replace portはcomplete JSONをsame-directory temp fileへwriteしてatomic renameするが、mutation use case、`--apply`判断、composition bindはWM-15へ残す。

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phasegate.dev/contracts/world-constraints.schema.json",
+  "title": "PhaseGate World constraint declarations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "constraints", "aliases"],
+  "properties": {
+    "schemaVersion": { "const": "phasegate-world-constraints/v1" },
+    "constraints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/constraintRecord" }
+    },
+    "aliases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/aliasRecord" }
+    }
+  },
+  "$defs": {
+    "nodePin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeId", "contentDigest"],
+      "properties": {
+        "nodeId": { "type": "string", "pattern": "^pgw:v1:.+" },
+        "contentDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "constraintRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["constraintId", "factType", "claimant", "premise", "applicableRuleIds"],
+      "properties": {
+        "constraintId": { "type": "string", "pattern": "^pgw:v1:constraint:[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$" },
+        "factType": { "enum": ["references", "depends-on", "refines", "content-equals"] },
+        "claimant": { "$ref": "#/$defs/nodePin" },
+        "premise": { "$ref": "#/$defs/nodePin" },
+        "applicableRuleIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["WCR-002", "WCR-003", "WCR-004", "WCR-005", "WCR-006", "WCR-007", "WCR-008"] }
+        }
+      }
+    },
+    "aliasRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "string", "pattern": "^pgw:v1:.+" },
+        "to": { "type": "string", "pattern": "^pgw:v1:.+" }
+      }
+    }
+  }
+}

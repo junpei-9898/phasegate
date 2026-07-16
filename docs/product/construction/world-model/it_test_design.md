@@ -227,3 +227,11 @@ CLI E2Eはhuman / JSON、exit 0 / 1 / 2、single envelope、help / known-command
 <!-- @work-item-id WI-292 -->
 
 self-repo regenerated matrix 1.2をWorld compositionで読み、planned Storyを含むowner projectionとextractor v2 rootを決定的に構築する。generatedAtだけの差は引き続きrootへ入れない。
+
+## WI-294 filesystem control repository tests
+
+<!-- @work-item-id WI-294 -->
+
+@story-id H17-08
+
+temp project rootへ4種類のfixtureを配置し、canonical file不在、valid load、schemaVersion欠落 / unknown、parse failure、supported constraints内malformed / duplicate、policy duplicateをreal filesystem + published JSON schemaで検証する。不在だけはcanonical empty、その他のinvalid inputはempty fallbackなしとする。atomic replaceはtemp file + same-directory rename後にcomplete JSONだけが残ることを確認し、CLI mutation flowはWM-15へ残す。

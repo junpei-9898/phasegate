@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phasegate.dev/contracts/world-debts.schema.json",
+  "title": "PhaseGate World semantic debt declarations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "debts"],
+  "properties": {
+    "schemaVersion": { "const": "phasegate-world-debts/v1" },
+    "debts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["debtId", "kind", "title", "reason", "ownerUnit", "introducedByWorkItemId", "references"],
+        "properties": {
+          "debtId": { "type": "string", "pattern": "^pgw:v1:semantic-debt:[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$" },
+          "kind": { "const": "semantic" },
+          "title": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 },
+          "ownerUnit": { "type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
+          "introducedByWorkItemId": { "type": "string", "pattern": "^WI-[0-9]+$" },
+          "references": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^pgw:v1:.+" }
+          }
+        }
+      }
+    }
+  }
+}

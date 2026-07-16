@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "phasegate-world-adoption-baseline/v1",
+  "rulesetVersion": "phasegate-world-wcr/v1",
+  "sourceEvaluationId": "pgw:v1:evaluation:sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "sourceCorpusRoot": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "sourceConstraintRoot": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "adoptedByWorkItemId": "WI-294",
+  "adoptionReason": "Reviewed legacy structural obligations.",
+  "entries": [
+    {
+      "violationFingerprint": "pgw:v1:violation-fingerprint:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "ruleId": "WCR-006",
+      "constraintId": "pgw:v1:constraint:world.fixture-reference"
+    }
+  ]
+}
