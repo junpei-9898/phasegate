@@ -1,5 +1,10 @@
 # ドメインモデル: validator-system
 
+<!-- @work-item-id WI-268 -->
+## WI-268 Coverage Attestation Verification Domain Contract (L3-007)
+
+`CoverageAttestationVerificationService.verify(references, evidence)` は coverage_report 由来の attestation 参照群と matrix 由来の解決可能スコープ evidence から `AttestationVerificationReport` を導出する authoritative domain service（ADR-030 §Decision.1・§Decision.3.② 第2段）。純粋関数で matrix I/O を持たない（domain 副作用禁止に適合）。不変ルール: (INV-A) 各 reference の `id` が `evidence.resolvableScopeIds` に含まれなければ error finding を生成する（fail-closed。空手形の attestation を遮断）、(INV-B) `references` が空なら report は空（検査対象なし → pass）、(INV-C) 生成 finding は **必ず severity='error'**（advisory ではなく blocking tier）。value-object: `AttestationReference` / `AttestationScopeEvidence`（`resolvableScopeIds: ReadonlySet<string>`）/ `AttestationVerificationFinding` / `AttestationVerificationReport`。免除（ungated-legacy）と matrix 不在の fail-closed 判定は infra 責務であり domain は解決可能性の突合のみに徹する。
+
 <!-- @work-item-id WI-259 -->
 ## WI-259 Injection Scan Domain Contract (L3-006)
 

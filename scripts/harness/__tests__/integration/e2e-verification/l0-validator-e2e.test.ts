@@ -17,11 +17,12 @@ target("L0 Runtime Hook E2E検証", () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(7) + L3(6) + L4(7) = 20
+      // Assert — L2(7) + L3(7) + L4(7) = 21
       // WI-222 (HF2-05): L4-007 (ac-level-traceability, default-OFF advisory) を registry に追加。
       // WI-227 (H16-03): L3-005 (ac-bound-coverage, default-OFF fail-closed) を registry に追加。
       // WI-258 (L2-016): coverage-report attestation gate (warning-only) を registry に追加。
       // WI-259 (L3-006): injection-scan (advisory, warning-only) を registry に追加。
+      // WI-268 (L3-007): coverage-attestation-verification (fail-closed) を registry に追加。
       expect(actual.map((d) => d.validatorId.value)).toEqual([
         "L2-001",
         "L2-002",
@@ -36,6 +37,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L3-004",
         "L3-005",
         "L3-006",
+        "L3-007",
         "L4-001",
         "L4-002",
         "L4-003",
@@ -72,6 +74,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L2-016",
       ]);
       // WI-259 (L3-006): injection-scan (advisory, warning-only) が registry に登録されている。
+      // WI-268 (L3-007): coverage-attestation-verification (fail-closed) が registry に登録されている。
       expect(actual.l3Defs.map((d) => d.validatorId.value)).toEqual([
         "L3-001",
         "L3-002",
@@ -79,6 +82,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L3-004",
         "L3-005",
         "L3-006",
+        "L3-007",
       ]);
       // WI-222 (HF2-05): L4-007 (default-OFF advisory) が registry に登録されている。
       expect(actual.l4Defs.map((d) => d.validatorId.value)).toEqual([

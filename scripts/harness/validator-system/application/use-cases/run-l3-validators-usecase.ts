@@ -8,10 +8,12 @@
 
 import type { AcBoundCoveragePolicyPort } from "../../domain/ports/ac-bound-coverage-policy-port.js";
 import type { AcCoveragePolicyPort } from "../../domain/ports/ac-coverage-policy-port.js";
+import type { CoverageAttestationVerificationPolicyPort } from "../../domain/ports/coverage-attestation-verification-policy-port.js";
 import type { InjectionScanPolicyPort } from "../../domain/ports/injection-scan-policy-port.js";
 import type { PerformanceScannerPort } from "../../domain/ports/performance-scanner-port.js";
 import type { SecurityPatternScannerPort } from "../../domain/ports/security-pattern-scanner-port.js";
 import type { ValidatorConfigPort } from "../../domain/ports/validator-config-port.js";
+import { CoverageAttestationVerificationService } from "../../domain/services/coverage-attestation-verification-service.js";
 import { InjectionPatternScanService } from "../../domain/services/injection-pattern-scan-service.js";
 import {
   ValidatorExecutionError,
@@ -50,6 +52,8 @@ export interface RunL3ValidatorsUseCaseDeps {
   performanceScannerPort?: PerformanceScannerPort;
   /** WI-259 / ADR-030 §Decision.3.④: L3-006 (injection-scan, advisory) 用ポート。 */
   injectionScanPolicyPort?: InjectionScanPolicyPort;
+  /** WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 (coverage-attestation-verification, fail-closed) 用ポート。 */
+  coverageAttestationVerificationPolicyPort?: CoverageAttestationVerificationPolicyPort;
   /** L3-005 のスコープ対象 story-id（config layers.L3.acBoundStories 由来。既定 []）。 */
   acBoundStories?: readonly string[];
 }
@@ -65,9 +69,11 @@ export class RunL3ValidatorsUseCase {
   private readonly securityScannerPort?: SecurityPatternScannerPort;
   private readonly performanceScannerPort?: PerformanceScannerPort;
   private readonly injectionScanPolicyPort?: InjectionScanPolicyPort;
+  private readonly coverageAttestationVerificationPolicyPort?: CoverageAttestationVerificationPolicyPort;
   private readonly acBoundStories: readonly string[];
   private readonly languageCapabilityService = new ValidatorLanguageCapabilityService();
   private readonly injectionScanService = new InjectionPatternScanService();
+  private readonly coverageAttestationVerificationService = new CoverageAttestationVerificationService();
 
   constructor(deps: RunL3ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -80,6 +86,7 @@ export class RunL3ValidatorsUseCase {
     this.securityScannerPort = deps.securityScannerPort;
     this.performanceScannerPort = deps.performanceScannerPort;
     this.injectionScanPolicyPort = deps.injectionScanPolicyPort;
+    this.coverageAttestationVerificationPolicyPort = deps.coverageAttestationVerificationPolicyPort;
     this.acBoundStories = deps.acBoundStories ?? [];
   }
 
@@ -250,6 +257,50 @@ export class RunL3ValidatorsUseCase {
           overrideMap.set("L3-006", ValidationResult.fail(ValidatorId.create("L3-006"), errors, 0));
         } else {
           overrideMap.set("L3-006", ValidationResult.pass(ValidatorId.create("L3-006"), 0));
+        }
+      }
+    }
+
+    // WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 coverage-attestation-verification。
+    // coverage_report の @attestation 参照を requirement-test-matrix に突合し、解決不能な参照
+    // （空手形の attestation）を fail-closed の error として遮断する（L2-016 の authoritative 相棒）。
+    // 参照ありで matrix を読めなければ fail-closed で FAIL。default-OFF/skip 時は override しない。
+    if (this.coverageAttestationVerificationPolicyPort) {
+      const l3007Result = overrideMap.get("L3-007");
+      if (l3007Result && !l3007Result.skipped) {
+        const l3007Id = ValidatorId.create("L3-007");
+        const collected = await this.coverageAttestationVerificationPolicyPort.collect();
+        if (collected.matrixError !== null) {
+          overrideMap.set(
+            "L3-007",
+            ValidationResult.fail(
+              l3007Id,
+              [
+                {
+                  code: { value: "L3-007", toString: () => "L3-007" },
+                  severity: { value: "error", toString: () => "error" },
+                  message: collected.matrixError,
+                  suggestion:
+                    ".harness/requirement-test-matrix.json を生成してください（phasegate:generate-matrix）。パスは config の layers.L3.requirementMatrixPath で変更できます。",
+                },
+              ],
+              0,
+            ),
+          );
+        } else {
+          const report = this.coverageAttestationVerificationService.verify(collected.references, collected.evidence);
+          if (report.hasFindings()) {
+            const errors: HarnessErrorLike[] = report.findings.map((finding) => ({
+              code: { value: "L3-007", toString: () => "L3-007" },
+              severity: { value: "error", toString: () => "error" },
+              message: finding.message,
+              suggestion: finding.suggestion,
+              sourcePath: finding.sourcePath,
+            }));
+            overrideMap.set("L3-007", ValidationResult.fail(l3007Id, errors, 0));
+          } else {
+            overrideMap.set("L3-007", ValidationResult.pass(l3007Id, 0));
+          }
         }
       }
     }

@@ -13,6 +13,7 @@
  * WI-227 (H16-03) で L3-005（ac-bound-coverage, default-OFF fail-closed）を追加
  * WI-258 (ADR-030 §Decision.3.②) で L2-016（coverage-attestation-gating, fail-closed）を追加
  * WI-259 (ADR-030 §Decision.3.④) で L3-006（injection-scan, advisory warning-only）を追加
+ * WI-268 (ADR-030 §Decision.1・§Decision.3.② 第2段) で L3-007（coverage-attestation-verification, fail-closed）を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -43,6 +44,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   "L3-004": "nyquist",
   "L3-005": "ac-bound-coverage",
   "L3-006": "injection-scan",
+  "L3-007": "coverage-attestation-verification",
   "L4-001": "drift-detect",
   "L4-002": "consistency-check",
   "L4-003": "dead-code",

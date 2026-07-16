@@ -1,5 +1,10 @@
 # 論理設計: validator-system
 
+<!-- @work-item-id WI-268 -->
+## WI-268 Coverage Attestation Verification (L3-007)
+
+`L3-007 coverage-attestation-verification` を追加し、`docs/product/construction/*/coverage_report.md` の `<!-- @attestation <id> -->` 参照を requirement-test-matrix（`.harness/requirement-test-matrix.json`、CI で本ランのテスト corpus から再生成される）に対して authoritative に突合する。ADR-030 §Decision.1（trust root = L3 CI 再検証）§Decision.3.②（第2段）の実装であり、L2-016（bare ✅ の遮断＝参照の形状のみ検証する fast-path）の authoritative 相棒。validator-system は `CoverageAttestationVerificationPolicyPort` 経由で（cwd 起点・targetPaths 非依存に）参照を収集し matrix 由来の解決可能スコープを解決し、`CoverageAttestationVerificationService`（domain）で突合する。**突合 vs 再実行**: CI は前段で `pnpm test` 全実行 + `phasegate:generate-matrix` を走らせるため attestation が指すテストの個別再実行は二重実行になる。代わりに「参照 id が matrix 上に実在し testReferences を 1 件以上持つ」ことを突合し、二重実行を避けつつ空手形の attestation を fail-closed で遮断する（L3-004/L3-005 の matrix 突合パターン踏襲）。id フォーマットは story-id。`<!-- @coverage-gating: ungated-legacy -->` マーカー付きファイルは対象外（L2-016 と同一免除セマンティクス）。参照 0 件なら matrix を読まず PASS、参照ありで matrix 不在・parse 不能は fail-closed で FAIL。default-ON・fail-closed（error tier）だが現 corpus は実参照 0 件ゆえ緑。新 CLI コマンドは追加せず `validate --layer L3` / `ci-check` で実行される。
+
 <!-- @work-item-id WI-259 -->
 ## WI-259 Advisory Injection Scanner (L3-006)
 

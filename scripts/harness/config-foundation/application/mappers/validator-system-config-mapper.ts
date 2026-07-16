@@ -6,6 +6,7 @@
  * @work-item-id WI-212
  * @work-item-id WI-258
  * @work-item-id WI-259
+ * @work-item-id WI-268
  */
 import type { HarnessConfigV2 } from "../../domain/harness-config.js";
 
@@ -21,6 +22,7 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
       nyquist: "L3-004",
       "ac-bound-coverage": "L3-005",
       "injection-scan": "L3-006",
+      "coverage-attestation-verification": "L3-007",
     },
     /^L3-\d{3}$/,
   );
@@ -63,10 +65,15 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
       L3: {
         enabled: resolvedConfig.layers.L3.enabled,
         // WI-259 / ADR-030 §Decision.3.④: L3-006 (injection-scan) は advisory default-ON。
-        // fallback 判定の後に force-include し、normalize 結果でも fallback でも常に含める（warning-only ゆえ安全）。
+        // WI-268 / ADR-030 §Decision.1・§Decision.3.② 第2段: L3-007 (coverage-attestation-verification)
+        // は fail-closed default-ON。いずれも fallback 判定の後に force-include し、normalize 結果でも
+        // fallback でも常に含める（L3-007 は fail-closed だが現 corpus は実参照 0 件ゆえ緑）。
         validators: includeValidator(
-          l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"],
-          "L3-006",
+          includeValidator(
+            l3Validators.length > 0 ? l3Validators : ["L3-001", "L3-002", "L3-003", "L3-004"],
+            "L3-006",
+          ),
+          "L3-007",
         ),
         coverageThreshold: resolvedConfig.layers.L3.coverageThreshold,
         requirementMatrixPath: resolvedConfig.layers.L3.requirementMatrixPath,
