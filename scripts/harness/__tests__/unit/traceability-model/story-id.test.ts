@@ -1,4 +1,5 @@
 // @layer test
+// @story H03-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import {
@@ -8,6 +9,35 @@ import {
 
 target('StoryId.parse', () => {
   describe('HXX-XX形式の文字列からStoryIdを生成する', () => {
+    // UT-TM-001
+    context('正規形式の文字列を渡す場合', () => {
+      it('正規形式の文字列からStoryIdが生成できること', () => {
+        // Arrange
+        const input = 'H03-01';
+
+        // Act
+        const actual = StoryId.parse(input);
+
+        // Assert
+        expect(actual.value).toBe('H03-01');
+      });
+    });
+
+    // UT-TM-002
+    context('前後に空白がある場合', () => {
+      it('trimされた値でStoryIdが生成されること', () => {
+        // Arrange
+        const input = '  H03-01  ';
+
+        // Act
+        const actual = StoryId.parse(input);
+
+        // Assert
+        expect(actual.value).toBe('H03-01');
+      });
+    });
+
+    // UT-TM-003
     context('HXX-XX形式でない文字列を渡す場合', () => {
       it('形式エラーが発生すること', () => {
         // Arrange
@@ -21,6 +51,7 @@ target('StoryId.parse', () => {
       });
     });
 
+    // UT-TM-004
     context('US-XXX形式の文字列を渡す場合', () => {
       it('形式エラーが発生すること', () => {
         // Arrange
@@ -34,6 +65,7 @@ target('StoryId.parse', () => {
       });
     });
 
+    // UT-TM-005
     context('空文字を渡す場合', () => {
       it('形式エラーが発生すること', () => {
         // Arrange
@@ -75,6 +107,7 @@ target('StoryId.parse', () => {
 
 target('StoryId.getEpicNumber', () => {
   describe('StoryIdからエピック番号を取得する', () => {
+    // UT-TM-006
     context('正規のStoryIdを保持している場合', () => {
       it('正しいエピック番号を返すこと', () => {
         // Arrange
@@ -105,6 +138,7 @@ target('StoryId.getEpicNumber', () => {
 
 target('StoryId.getStoryNumber', () => {
   describe('StoryIdからストーリー番号を取得する', () => {
+    // UT-TM-007
     context('正規のStoryIdを保持している場合', () => {
       it('正しいストーリー番号を返すこと', () => {
         // Arrange
@@ -122,6 +156,7 @@ target('StoryId.getStoryNumber', () => {
 
 target('StoryId.equals', () => {
   describe('2つのStoryIdの等価性を判定する', () => {
+    // UT-TM-008
     context('同一値のインスタンス同士を比較する場合', () => {
       it('trueを返すこと', () => {
         // Arrange

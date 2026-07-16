@@ -1,4 +1,5 @@
 // @layer test
+// @story H03-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { ProjectRelativePath } from '../../../traceability-model/domain/value-objects/project-relative-path.js';
@@ -21,6 +22,7 @@ const createUnitReferenceUnresolved = (): UnitReference =>
 
 target('UnitReference.resolved', () => {
   describe('Unit定義と照合済みの参照を生成する', () => {
+    // UT-TM-031
     context('存在するUnit名とconstructionRootを指定する場合', () => {
       it('resolved=trueかつconstructionRootが設定されたインスタンスを返すこと', () => {
         // Arrange
@@ -43,6 +45,7 @@ target('UnitReference.resolved', () => {
 
 target('UnitReference.unresolved', () => {
   describe('未照合のUnit参照を生成する', () => {
+    // UT-TM-032
     context('未知のUnit名を指定する場合', () => {
       it('resolved=falseかつconstructionRoot=nullのインスタンスを返すこと', () => {
         // Arrange
@@ -62,6 +65,7 @@ target('UnitReference.unresolved', () => {
 
 target('UnitReference.isResolved', () => {
   describe('照合状態を判定する', () => {
+    // UT-TM-033
     context('resolved=trueの場合', () => {
       it('trueを返すこと', () => {
         // Arrange
@@ -75,6 +79,7 @@ target('UnitReference.isResolved', () => {
       });
     });
 
+    // UT-TM-034
     context('resolved=falseの場合', () => {
       it('falseを返すこと', () => {
         // Arrange
@@ -92,6 +97,7 @@ target('UnitReference.isResolved', () => {
 
 target('UnitReference.equals', () => {
   describe('2つのUnitReferenceの等価性を判定する', () => {
+    // UT-TM-035
     context('同一属性のインスタンス同士を比較する場合', () => {
       it('trueを返すこと', () => {
         // Arrange

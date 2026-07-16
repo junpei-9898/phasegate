@@ -1,4 +1,5 @@
 // @layer test
+// @story H03-01
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.ts';
 import { LayerReference } from '../../../traceability-model/domain/value-objects/layer-reference.js';
@@ -7,6 +8,7 @@ const createLayerReference = (layerName = 'domain'): LayerReference => LayerRefe
 
 target('LayerReference.parse', () => {
   describe('レイヤー名からLayerReferenceを生成する', () => {
+    // UT-TM-036
     context('正規語彙domainを渡す場合', () => {
       it('valid=trueのLayerReferenceを返すこと', () => {
         // Arrange
@@ -21,6 +23,7 @@ target('LayerReference.parse', () => {
       });
     });
 
+    // UT-TM-037
     context('正規語彙applicationとinfrastructureとpresentationを渡す場合', () => {
       it('いずれもvalid=trueのLayerReferenceを返すこと', () => {
         // Arrange
@@ -34,6 +37,7 @@ target('LayerReference.parse', () => {
       });
     });
 
+    // UT-TM-038
     context('legacy語彙usecaseを渡す場合', () => {
       it('valid=falseのLayerReferenceを返すこと', () => {
         // Arrange
@@ -48,6 +52,7 @@ target('LayerReference.parse', () => {
       });
     });
 
+    // UT-TM-039
     context('legacy語彙portとcontrollerを渡す場合', () => {
       it('いずれもvalid=falseのLayerReferenceを返すこと', () => {
         // Arrange
@@ -61,6 +66,7 @@ target('LayerReference.parse', () => {
       });
     });
 
+    // UT-TM-040
     context('正規語彙にもlegacy語彙にも属さない値を渡す場合', () => {
       it('valid=falseのLayerReferenceを返すこと', () => {
         // Arrange
@@ -79,6 +85,7 @@ target('LayerReference.parse', () => {
 
 target('LayerReference.equals', () => {
   describe('2つのLayerReferenceの等価性を判定する', () => {
+    // UT-TM-041
     context('同一属性のインスタンス同士を比較する場合', () => {
       it('trueを返すこと', () => {
         // Arrange
