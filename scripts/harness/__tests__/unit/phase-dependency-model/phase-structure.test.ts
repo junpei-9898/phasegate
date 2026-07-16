@@ -1269,6 +1269,250 @@ target('PhaseStructure.getDependencies', () => {
   });
 });
 
+// === WI-276: ❌ 格下げ行の誠実な昇格用 確認テスト ===
+// AC-PD-03/04/08/12/13 の実挙動を実 API 準拠で追加検証する。
+// 捏造 ID 範囲（UT-PD-115〜133）は再利用せず 200 番台を採番する。
+target('WI-276: フェーズゲート拒否・override 境界の確認', () => {
+  // AC-PD-04: 設計文書・plan文書なしの実装コード変更拒否
+  describe('AC-PD-04 設計文書・plan文書なしでは下流フェーズがブロックされる', () => {
+    // UT-PD-200
+    context('Level 2 の前提設計成果物が欠損したまま Level 3 へ進もうとする場合', () => {
+      it('PhaseGateResult.passed=false かつ blockers に欠損成果物が含まれる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const evidence = createGateEvidence(sut, target, {
+          artifactStatuses: createPrerequisiteArtifactMap(
+            sut,
+            target,
+            createPhaseLevel(2),
+            'none',
+          ),
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence);
+
+        // Assert
+        expectFailedResult(actual, ['docs/']);
+      });
+    });
+
+    // UT-PD-201
+    context('plan文書が未整備のまま interactive モードで検証する場合', () => {
+      it('PhaseGateResult.passed=false かつ blockers に plan/QA 不足が含まれる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(2);
+        const evidence = createGateEvidence(sut, target, {
+          planningMode: PlanningMode.create('interactive'),
+          planEvidences: createPlanEvidenceMap(sut, target, {
+            exists: false,
+            qaComplete: false,
+            planningModeMatch: false,
+          }),
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  // AC-PD-03: Level内上流設計未完了時の下流設計拒否
+  describe('AC-PD-03 Level内で上流設計が未完了なら下流設計ノードがブロックされる', () => {
+    // UT-PD-202
+    context('scope.storyId 提供時に上流の logical_design 成果物のみ欠損している場合', () => {
+      it('下流の logical-designer 依存が blockers に含まれ passed=false となる', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3Selective(sut, target, scope, {
+          'docs/inception/agent-integration/H11-05/logical_design.md': false,
+          'docs/inception/agent-integration/H11-05/logical_design_plan.md': false,
+        });
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(false);
+        expect(actual.blockers.some((b) => b.includes('3:logical-designer'))).toBe(true);
+      });
+    });
+
+    // UT-PD-203
+    context('scope.storyId 提供時に Level 3 上流成果物が全て存在する場合', () => {
+      it('上流設計が充足するため passed=true を返す', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const target = createPhaseLevel(3);
+        const scope = { unitId: 'agent-integration', storyId: 'H11-05' };
+        const evidence = createGateEvidenceWithLevel3(sut, target, scope, 'all');
+
+        // Act
+        const actual = sut.checkPhaseGate(target, evidence, scope);
+
+        // Assert
+        expect(actual.passed).toBe(true);
+        expect(actual.blockers).toEqual([]);
+      });
+    });
+  });
+
+  // AC-PD-08: 両 Planning Mode で inception 配下 plan 成果物を前提に扱う
+  describe('AC-PD-08 両Planning Modeでplan成果物の充足状態を前提に扱う', () => {
+    // UT-PD-204
+    it.each([
+      {
+        title: 'interactiveモードでQAセクション未充足の場合はblockersにQA不足が含まれる',
+        mode: 'interactive' as const,
+        fragment: 'QA',
+      },
+      {
+        title: 'embedded-qaモードでQ&A未完了の場合はblockersにQ&A未完了が含まれる',
+        mode: 'embedded-qa' as const,
+        fragment: 'Q&A',
+      },
+    ])('$title', ({ mode, fragment }) => {
+      // Arrange
+      const sut = createDefaultPhaseStructure();
+      const target = createPhaseLevel(2);
+      const evidence = createGateEvidence(sut, target, {
+        planningMode: PlanningMode.create(mode),
+        planEvidences: createPlanEvidenceMap(sut, target, {
+          exists: true,
+          qaComplete: false,
+          planningModeMatch: false,
+        }),
+      });
+
+      // Act
+      const actual = sut.checkPhaseGate(target, evidence);
+
+      // Assert
+      expectFailedResult(actual, [fragment]);
+    });
+  });
+
+  // AC-PD-12: customRules による依存追加を適用できる
+  describe('AC-PD-12 customRulesで既定依存を保ちつつ依存を追加できる', () => {
+    // UT-PD-206
+    context('preset=custom で追加依存ルールを1件適用する場合', () => {
+      it('既定依存は維持されたまま新しい依存が1件追加される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const beforeEdges = sut.buildDependencyGraph().edges.length;
+        const policy = createPhaseCustomizationPolicy({
+          preset: 'custom',
+          rules: [
+            createCustomRule({
+              targetPhase: '3:story-implementor',
+              action: ['2:unit-test-logic-designer'],
+            }),
+          ],
+        });
+
+        // Act
+        const actual = sut.applyCustomization(policy);
+
+        // Assert
+        expect(actual.buildDependencyGraph().edges.length).toBe(beforeEdges + 1);
+        // 既定の Level 間依存が削除されていないこと
+        expect(
+          actual.buildDependencyGraph().edges.some(
+            (edge) =>
+              edge.from.nodeKey() === '1:unit-designer' &&
+              edge.to.nodeKey() === '2:domain-designer',
+          ),
+        ).toBe(true);
+      });
+    });
+  });
+
+  // AC-PD-13: デフォルト依存の削除には override:true を要求する
+  describe('AC-PD-13 既定依存の削除にはoverride:trueを要求する', () => {
+    // UT-PD-207
+    context('override=false で緩和可能な既定依存を削除しようとする場合', () => {
+      it('InvalidCustomRuleErrorをスローする（overrideなしでは削除不可）', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const policy = createPhaseCustomizationPolicy({
+          preset: 'custom',
+          overrideEnabled: false,
+          rules: [
+            createCustomRule({
+              targetPhase: '2:logical-designer',
+              action: ['remove:2:domain-designer'],
+            }),
+          ],
+        });
+
+        // Act
+        const actual = () => sut.applyCustomization(policy);
+
+        // Assert
+        expect(actual).toThrowError(InvalidCustomRuleError);
+      });
+    });
+
+    // UT-PD-208
+    context('override=true で緩和可能な既定依存を削除する場合', () => {
+      it('依存が1件削除され監査ペイロードが返される', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const beforeEdges = sut.buildDependencyGraph().edges.length;
+        const policy = createPhaseCustomizationPolicy({
+          preset: 'custom',
+          overrideEnabled: true,
+          rules: [
+            createCustomRule({
+              targetPhase: '2:logical-designer',
+              action: ['remove:2:domain-designer'],
+            }),
+          ],
+        });
+
+        // Act
+        const actual = sut.applyCustomization(policy);
+
+        // Assert
+        expect(actual.buildDependencyGraph().edges.length).toBe(beforeEdges - 1);
+        expectAuditPayload(actual, 1);
+      });
+    });
+
+    // UT-PD-209
+    context('override=true でも緩和不可（Level間）依存を削除しようとする場合', () => {
+      it('NonRelaxableDependencyOverrideErrorをスローする（override=trueでも不可）', () => {
+        // Arrange
+        const sut = createDefaultPhaseStructure();
+        const policy = createPhaseCustomizationPolicy({
+          preset: 'custom',
+          overrideEnabled: true,
+          rules: [
+            createCustomRule({
+              targetPhase: '2:domain-designer',
+              action: ['remove:1:unit-designer'],
+            }),
+          ],
+        });
+
+        // Act
+        const actual = () => sut.applyCustomization(policy);
+
+        // Assert
+        expect(actual).toThrowError(NonRelaxableDependencyOverrideError);
+      });
+    });
+  });
+});
+
 target('PhaseLevel.create', () => {
   describe('PhaseLevelを生成する', () => {
     // UT-PD-039, UT-PD-040, UT-PD-089, UT-PD-092, UT-PD-093, UT-PD-094

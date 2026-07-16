@@ -66,6 +66,64 @@ target('HarnessConfigPhaseConfigProvider#getCustomizationPolicy', () => {
       });
     });
   });
+
+  // AC-PD-11 / WI-276: config の phaseDependencies.customization を意味論（PhaseCustomizationPolicy）へ正規化する
+  describe('config.customization を意味論へ正規化する', () => {
+    // UT-PD-205
+    context('customization.rules と overrideEnabled が設定されている場合', () => {
+      it('各 rule を CustomRule VO へ写像し overrideEnabled を保持した PhaseCustomizationPolicy を返す', async () => {
+        // Arrange
+        const provider = buildProvider({
+          customization: {
+            preset: 'custom',
+            overrideEnabled: true,
+            rules: [
+              {
+                targetPhase: '3:story-implementor',
+                condition: 'requires-all',
+                action: ['2:unit-test-logic-designer'],
+              },
+            ],
+          },
+        });
+
+        // Act
+        const policy = await provider.getCustomizationPolicy();
+
+        // Assert
+        expect(policy.preset).toBe('custom');
+        expect(policy.overrideEnabled).toBe(true);
+        expect(policy.rules).toHaveLength(1);
+        expect(policy.rules[0].targetPhase).toBe('3:story-implementor');
+        expect(policy.rules[0].action).toEqual(['2:unit-test-logic-designer']);
+      });
+    });
+
+    // UT-PD-210
+    context('overrideEnabled が省略されている場合', () => {
+      it('overrideEnabled=false へ正規化される', async () => {
+        // Arrange
+        const provider = buildProvider({
+          customization: {
+            preset: 'custom',
+            rules: [
+              {
+                targetPhase: '3:story-implementor',
+                condition: 'requires-all',
+                action: ['2:unit-test-logic-designer'],
+              },
+            ],
+          },
+        });
+
+        // Act
+        const policy = await provider.getCustomizationPolicy();
+
+        // Assert
+        expect(policy.overrideEnabled).toBe(false);
+      });
+    });
+  });
 });
 
 target('HarnessConfigPhaseConfigProvider#getStoryReflectionConfig', () => {
