@@ -17,7 +17,7 @@
 
 | 文書 | パス | 目的 |
 |------|------|------|
-| 受け入れ基準 | `docs/product/units/validator_system_unit.md` | ストーリーH08-01〜H08-06の機能要件・AC |
+| 受け入れ基準 | `docs/product/units/validator-system_unit.md` | ストーリーH08-01〜H08-06の機能要件・AC |
 | ドメインモデル設計 | `docs/product/construction/validator-system/domain_model.md` | 集約境界・VO・ドメインサービス・ポート・不変条件 |
 | 論理設計 | `docs/product/construction/validator-system/logical_design.md` | 4層アーキテクチャ・UseCase詳細・ポートIF |
 | ユニットテスト設計 | `docs/product/construction/validator-system/unit_test_design.md` | VO・ドメインサービスのテストケース（UT-VID-001〜UT-BND-017） |

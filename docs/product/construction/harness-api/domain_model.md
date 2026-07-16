@@ -63,7 +63,7 @@ G5 semantic validator output remains validator-system owned. harness-api preserv
 
 ### 結論: 集約なし（CliCommandDefinition VOパターン）
 
-Unit定義（harness_api_unit.md §4）では `CliCommand（集約ルート）` と記載されていたが、横断契約§6の集約降格方針に従い集約を採用しない。
+Unit定義（harness-api_unit.md §4）では `CliCommand（集約ルート）` と記載されていたが、横断契約§6の集約降格方針に従い集約を採用しない。
 
 ### 集約なしの根拠
 

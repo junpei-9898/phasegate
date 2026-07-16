@@ -91,7 +91,7 @@ target('<対象クラス or 関数>', () => {
 | `fixtures/traceability-model/docs/product/user_stories.md` | 正規 `HXX-XX` と legacy `US-XXX` alias の両方を持つ story catalog |
 | `fixtures/traceability-model/docs/product/construction/traceability-model/logical_design.md` | frontmatter なしの累積更新文書 |
 | `fixtures/traceability-model/docs/product/construction/traceability-model/domain_model.md` | `traceability.initial_creation: true` 付き初回作成文書 |
-| `fixtures/traceability-model/docs/product/units/traceability_model_unit.md` | `Unit ID: traceability-model` の unit 定義 |
+| `fixtures/traceability-model/docs/product/units/traceability-model_unit.md` | `Unit ID: traceability-model` の unit 定義 |
 | `fixtures/traceability-model/docs/inception/traceability-model/H03-01/it_test_design_plan.md` | `findPlanRoot()` / `exists()` 成功用 fixture |
 | `fixtures/traceability-model/scripts/harness/sample-impl.ts` | `@unit` / `@layer` / `@story-id` または `@story` 付き TypeScript fixture |
 | `fixtures/traceability-model/legacy/user_stories_with_alias.md` | alias map 検証専用 catalog 断片 |
@@ -539,8 +539,8 @@ target('<対象クラス or 関数>', () => {
 `target('MarkdownUnitDefinitionGateway') > describe('getAllUnitNames / exists / findConstructionRoot')`
 
 #### IT-TM-064 unit定義ファイルからunit名一覧が取得できること
-- `context`: `traceability_model_unit.md` が存在する場合
-- `Arrange`: `docs/product/units/traceability_model_unit.md` を作成し gateway を生成する。
+- `context`: `traceability-model_unit.md` が存在する場合
+- `Arrange`: `docs/product/units/traceability-model_unit.md` を作成し gateway を生成する。
 - `Act`: `const actual = await gateway.getAllUnitNames()`
 - `Assert`: `actual` に `'traceability-model'` が含まれることを確認する。
 

@@ -20,6 +20,6 @@ Normalize documentation around report output without changing implementation pat
 - `docs/product/construction/config-foundation/domain_model.md`
 - `docs/product/construction/harness-api/coverage_report.md`
 - `docs/product/units/harness-api_unit.md`
-- `docs/product/units/harness_api_unit.md`
+- `docs/product/units/harness-api_unit.md`
 - `docs/product/units/integration_contract.md`
 

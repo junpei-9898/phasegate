@@ -14,7 +14,7 @@ traceability:
 
 ## 1. 概要
 
-L2 phase gate / metadata / test-quality / CLI E2E / WI status / contract traceability、L3 security/performance/coverage/nyquist、L4 drift-detect/consistency-check/dead-code/doc-freshness/pointer-validation の全バリデータを集約管理するUnit。4層防御モデル（L1-L4）のうちL2-L4を担当し、HarnessError出力パイプラインとconfig参照を共通基盤として、品質検証ルールをドメインとして統一的に扱う。
+L2 phase gate / metadata / test-quality / CLI E2E / WI status / contract traceability、L3 security/performance/coverage/nyquist、L4 drift-detect/consistency-check/dead-code/doc-freshness/pointer-validation の全バリデータを集約管理するUnit。4層防御モデル（L1-L4）のうちL2-L4を担当し、HarnessError出力パイプラインとconfig参照を共通基盤として、品質検証ルールをドメインとして統一的に扱う。@work-item-id WI-168
 
 v0には対応するUnitが存在しない新規Unitである。v0では各品質チェックが個別に散在していたが、v1ではバリデータIDレジストリによる一元管理と、l2/l3/l4サブモジュールによる内部分離を両立させ、**統一的なバリデータ実行インターフェース**を提供する。harness-apiやquick-mode等のConsumerが、バリデータID指定で任意のバリデータを選択実行できるアーキテクチャを実現する。
 

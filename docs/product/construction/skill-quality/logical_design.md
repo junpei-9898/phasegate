@@ -33,7 +33,7 @@ The public `phasegate skills list` flow consumes the skill-quality catalog sourc
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**:
 > - `docs/product/construction/skill-quality/domain_model.md`
-> - `docs/product/units/skill_quality_unit.md`
+> - `docs/product/units/skill-quality_unit.md`
 > - `docs/product/units/integration_contract.md`
 > - `docs/inception/_shared/cross_cutting_decisions.md`
 > - `docs/principles/architecture-philosophy.md`

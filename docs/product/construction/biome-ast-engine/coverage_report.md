@@ -6,7 +6,7 @@
 ## 1. サマリー
 
 集計基準:
-- 受け入れ基準: `biome_ast_engine_unit.md` の機能要件 15項目
+- 受け入れ基準: `biome-ast-engine_unit.md` の機能要件 15項目
 - ドメインロジック: `domain_model.md` / `logical_design.md` に定義された不変条件・主要ビジネスルール 26項目
 - UseCase: 6 UseCase × 正常系/異常系 = 12項目
 - `一部カバー` は未カバー項目数に含めて集計

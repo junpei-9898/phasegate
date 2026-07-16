@@ -10,7 +10,7 @@
 > **前提ドキュメント**:
 > - `docs/inception/harness-error/logical_design_plan.md`
 > - `docs/product/construction/harness-error/domain_model.md`
-> - `docs/product/units/harness_error_unit.md`
+> - `docs/product/units/harness-error_unit.md`
 > - `docs/product/units/integration_contract.md`
 > - `docs/inception/_shared/cross_cutting_decisions.md`
 > - `docs/principles/architecture-philosophy.md`

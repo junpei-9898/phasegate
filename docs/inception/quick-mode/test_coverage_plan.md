@@ -18,7 +18,7 @@ quick-mode Unitのテスト設計文書（unit_test_design.md / it_test_design.m
 
 | ドキュメント | パス |
 |------------|------|
-| 受け入れ基準 | `docs/product/units/quick_mode_unit.md` |
+| 受け入れ基準 | `docs/product/units/quick-mode_unit.md` |
 | ドメインモデル | `docs/product/construction/quick-mode/domain_model.md` |
 | 論理設計 | `docs/product/construction/quick-mode/logical_design.md` |
 | ユニットテスト設計 | `docs/product/construction/quick-mode/unit_test_design.md` |
@@ -31,7 +31,7 @@ quick-mode Unitのテスト設計文書（unit_test_design.md / it_test_design.m
 
 ### 3.1 受け入れ基準カバレッジ
 
-`quick_mode_unit.md §3` の機能要件（H10-01〜H10-03）に記載された各条件に対応するテストケースの存在確認。
+`quick-mode_unit.md §3` の機能要件（H10-01〜H10-03）に記載された各条件に対応するテストケースの存在確認。
 
 ### 3.2 ドメインロジックカバレッジ
 
@@ -83,7 +83,7 @@ quick-mode Unitのテスト設計文書（unit_test_design.md / it_test_design.m
 
 以下のいずれかが満たされない場合は coverage_report.md の作成を中断し人間に報告する:
 
-- `quick_mode_unit.md` が存在しない（受け入れ基準不在）
+- `quick-mode_unit.md` が存在しない（受け入れ基準不在）
 - `domain_model.md` が存在しない（不変条件参照不可）
 - `unit_test_design.md` / `it_test_design.md` のいずれかが存在しない（テスト設計不在）
 

@@ -11,7 +11,7 @@
 > **フェーズ**: Phase 2（カバレッジ分析） + Phase 3（自己レビュー済み）
 > **対象Wave**: Wave 2（品質検証レイヤー）
 > **インプット**:
-> - `docs/product/units/validator_system_unit.md`
+> - `docs/product/units/validator-system_unit.md`
 > - `docs/product/construction/validator-system/domain_model.md`
 > - `docs/product/construction/validator-system/logical_design.md`
 > - `docs/product/construction/validator-system/unit_test_design.md`

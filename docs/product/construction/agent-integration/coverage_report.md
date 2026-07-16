@@ -9,7 +9,7 @@
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H11-01〜H11-04
 > **参照文書**:
-> - `docs/product/units/agent_integration_unit.md`
+> - `docs/product/units/agent-integration_unit.md`
 > - `docs/product/construction/agent-integration/domain_model.md`
 > - `docs/product/construction/agent-integration/logical_design.md`
 > - `docs/product/construction/agent-integration/unit_test_design.md`

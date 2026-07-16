@@ -44,7 +44,7 @@ architecture config に `decisionPolicies`（zone 別の decision placement 期�
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H04-01, H04-02, H04-03
 > **モード**: Unit横断設計（Phase 2）
-> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/product/units/config_foundation_unit.md`, `docs/product/units/integration_contract.md`, `docs/inception/config-foundation/logical_design_plan.md`
+> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/product/units/config-foundation_unit.md`, `docs/product/units/integration_contract.md`, `docs/inception/config-foundation/logical_design_plan.md`
 
 ---
 

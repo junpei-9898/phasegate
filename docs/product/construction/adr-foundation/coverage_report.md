@@ -4,14 +4,14 @@
 @story-id H05-02
 @story-id H05-03
 > 判定対象:
-> - `docs/product/units/adr_foundation_unit.md`
+> - `docs/product/units/adr-foundation_unit.md`
 > - `docs/product/construction/adr-foundation/domain_model.md`
 > - `docs/product/construction/adr-foundation/logical_design.md`
 > - `docs/product/construction/adr-foundation/unit_test_design.md`
 > - `docs/product/construction/adr-foundation/it_test_design.md`
 >
 > 注記:
-> - `adr_foundation_unit.md` には AC 固有IDがないため、本レポートの `AC ID` 列は元文書に存在するストーリーID（`H05-01`〜`H05-03`）をそのまま使用する
+> - `adr-foundation_unit.md` には AC 固有IDがないため、本レポートの `AC ID` 列は元文書に存在するストーリーID（`H05-01`〜`H05-03`）をそのまま使用する
 > - 本UnitのpresentationはCLIであり、HTTP APIエンドポイントは論理設計に定義されていないため、APIカバレッジは評価対象外とする
 
 ## 1. サマリー

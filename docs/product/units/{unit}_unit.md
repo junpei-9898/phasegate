@@ -20,8 +20,8 @@ traceability:
 実際の Unit 定義は以下に配置されています:
 
 - Canonical Unit IDs use kebab-case, matching source `@unit` metadata and `docs/product/construction/{unit}/`.
-- Kebab-case `{unit}_unit.md` files are the preferred product unit entrypoints when present.
-- Underscore files such as `agent_integration_unit.md` and `phase_dependency_model_unit.md` are compatibility aliases or historical definitions; they must not define different ownership from the kebab-case Unit.
+- Kebab-case `{unit}_unit.md` files are the sole canonical product Unit entrypoints.
+- WI-285 removed compatibility aliases after lossless content and traceability integration; filename aliases must not be reintroduced.
 - その他すべての Unit 定義ファイル
 
 ## ステータス

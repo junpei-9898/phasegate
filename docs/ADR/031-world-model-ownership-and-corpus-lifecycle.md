@@ -85,27 +85,27 @@ attestation v2 へ `worldSnapshotRoot` を渡す将来統合は top-level compos
 
 canonical filename は `<kebab-case Unit ID>_unit.md` とする。Unit ID、source / construction directory、phase dependency の `{unit}_unit.md` 解決を同じ文字列へ揃える。
 
-inventory で確認した全13ペアと canonical は次のとおり。
+inventory で確認した全13ペアの canonical は次のとおり。
 
-| canonical | non-canonical |
+| Unit ID | canonical |
 |---|---|
-| `agent-integration_unit.md` | `agent_integration_unit.md` |
-| `biome-ast-engine_unit.md` | `biome_ast_engine_unit.md` |
-| `ci-governance_unit.md` | `ci_governance_unit.md` |
-| `config-foundation_unit.md` | `config_foundation_unit.md` |
-| `harness-api_unit.md` | `harness_api_unit.md` |
-| `harness-error_unit.md` | `harness_error_unit.md` |
-| `nyquist-validation_unit.md` | `nyquist_validation_unit.md` |
-| `phase-dependency-model_unit.md` | `phase_dependency_model_unit.md` |
-| `phase2-extensions_unit.md` | `phase2_extensions_unit.md` |
-| `quick-mode_unit.md` | `quick_mode_unit.md` |
-| `skill-quality_unit.md` | `skill_quality_unit.md` |
-| `traceability-model_unit.md` | `traceability_model_unit.md` |
-| `validator-system_unit.md` | `validator_system_unit.md` |
+| agent-integration | `agent-integration_unit.md` |
+| biome-ast-engine | `biome-ast-engine_unit.md` |
+| ci-governance | `ci-governance_unit.md` |
+| config-foundation | `config-foundation_unit.md` |
+| harness-api | `harness-api_unit.md` |
+| harness-error | `harness-error_unit.md` |
+| nyquist-validation | `nyquist-validation_unit.md` |
+| phase-dependency-model | `phase-dependency-model_unit.md` |
+| phase2-extensions | `phase2-extensions_unit.md` |
+| quick-mode | `quick-mode_unit.md` |
+| skill-quality | `skill-quality_unit.md` |
+| traceability-model | `traceability-model_unit.md` |
+| validator-system | `validator-system_unit.md` |
 
 non-canonical 側は恒久 alias にしない。WM-05 に割り当てる正式 WI が固有内容と traceability annotation を canonical 側へ lossless に統合し、repository 内参照を更新した後、同じ WI 内で削除する。WM-05 の正式 WI ID は開始時に採番し、WM-06 の snapshot 実装開始前に移行を完了する。
 
-重複相手がない `adr_foundation_unit.md` と `regression_suite_unit.md` も同じ WM-05 WI で `adr-foundation_unit.md` と `regression-suite_unit.md` へ移行する。`installation_unit.md` は規則に適合する。WI-281 では削除・移動を行わない。
+重複相手がない adr-foundation と regression-suite も同じ WM-05 WI で、それぞれ `adr-foundation_unit.md` と `regression-suite_unit.md` を canonical filename とする。`installation_unit.md` は規則に適合する。WI-281 では削除・移動を行わない。
 
 ### 8. Initial structural violation fingerprint は ruleset 固定後に実測する
 

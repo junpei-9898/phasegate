@@ -30,7 +30,7 @@ PhaseGate の実装契約、product docs、README / guide / DEVELOPMENT.md の�
 - `docs/guide/hooks-integration.md`
 - `DEVELOPMENT.md`
 - `docs/product/construction/harness-error/*`
-- `docs/product/units/harness_error_unit.md`
+- `docs/product/units/harness-error_unit.md`
 
 ## 受け入れ基準
 

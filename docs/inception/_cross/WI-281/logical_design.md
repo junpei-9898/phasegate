@@ -100,23 +100,23 @@ World evaluation DTO ──> validator-system/infrastructure adapter ──> gat
 
 canonical filename は一律 `<kebab-case Unit ID>_unit.md` とする。
 
-| Unit ID | canonical | non-canonical | 現状 | WM-05 の処置 |
-|---|---|---|---|---|
-| agent-integration | `agent-integration_unit.md` | `agent_integration_unit.md` | canonical 側は underscore full definition への alias | 内容を canonical へ統合し、参照更新後に non-canonical を削除 |
-| biome-ast-engine | `biome-ast-engine_unit.md` | `biome_ast_engine_unit.md` | canonical 側は alias | 同上 |
-| ci-governance | `ci-governance_unit.md` | `ci_governance_unit.md` | canonical 側は alias | 同上 |
-| config-foundation | `config-foundation_unit.md` | `config_foundation_unit.md` | canonical 側が自ら kebab 正本と宣言 | 差分を canonical へ統合し、参照更新後に non-canonical を削除 |
-| harness-api | `harness-api_unit.md` | `harness_api_unit.md` | canonical 側が kebab 版、underscore 側を互換と宣言 | 同上 |
-| harness-error | `harness-error_unit.md` | `harness_error_unit.md` | canonical 側は alias | 内容を canonical へ統合し、参照更新後に non-canonical を削除 |
-| nyquist-validation | `nyquist-validation_unit.md` | `nyquist_validation_unit.md` | canonical 側は alias | 同上 |
-| phase-dependency-model | `phase-dependency-model_unit.md` | `phase_dependency_model_unit.md` | canonical 側が kebab 新標準、underscore 側を互換と宣言 | 差分を canonical へ統合し、参照更新後に non-canonical を削除 |
-| phase2-extensions | `phase2-extensions_unit.md` | `phase2_extensions_unit.md` | canonical 側は alias | 内容を canonical へ統合し、参照更新後に non-canonical を削除 |
-| quick-mode | `quick-mode_unit.md` | `quick_mode_unit.md` | canonical 側は alias | 同上 |
-| skill-quality | `skill-quality_unit.md` | `skill_quality_unit.md` | canonical 側は alias | 同上 |
-| traceability-model | `traceability-model_unit.md` | `traceability_model_unit.md` | canonical 側が kebab 版、underscore 側を互換と宣言 | 差分を canonical へ統合し、参照更新後に non-canonical を削除 |
-| validator-system | `validator-system_unit.md` | `validator_system_unit.md` | 両方が full definition。underscore 側だけに WI-168 annotation がある差分を確認 | annotation を含む差分を canonical へ統合し、参照更新後に non-canonical を削除 |
+| Unit ID | canonical | WM-05 前の差分 | WM-05 の処置 |
+|---|---|---|---|
+| agent-integration | `agent-integration_unit.md` | canonical 側は詳細定義への alias | 詳細本文と path 導入履歴を canonical へ統合 |
+| biome-ast-engine | `biome-ast-engine_unit.md` | canonical 側は Story annotation 付き alias | 詳細本文、H03-08、導入履歴を統合 |
+| ci-governance | `ci-governance_unit.md` | canonical 側は Story annotation 付き alias | 詳細本文、H13-01、導入履歴を統合 |
+| config-foundation | `config-foundation_unit.md` | 両側が詳細定義で、legacy variant に WI-219 が存在 | WI-219 の config contract を canonical へ統合 |
+| harness-api | `harness-api_unit.md` | canonical 側に installation dispatch、legacy variant に H09-01 が存在 | 両方を canonical へ統合 |
+| harness-error | `harness-error_unit.md` | canonical 側は WI-156 付き alias | 詳細本文と WI-156 を canonical へ統合 |
+| nyquist-validation | `nyquist-validation_unit.md` | canonical 側は H07-01 付き alias | 詳細本文と H07-01 を canonical へ統合 |
+| phase-dependency-model | `phase-dependency-model_unit.md` | canonical 側に A-2、legacy variant に基礎制約の詳細が存在 | 両方の固有要件と履歴を統合 |
+| phase2-extensions | `phase2-extensions_unit.md` | canonical 側は HF2-04 付き alias | 詳細本文、HF2-01 / HF2-04、WI-035 履歴を統合 |
+| quick-mode | `quick-mode_unit.md` | canonical 側は WI-159 / H10-02 付き alias | 詳細本文と両 annotation を統合 |
+| skill-quality | `skill-quality_unit.md` | canonical 側は H03-08 付き alias | 詳細本文と H03-08 を統合 |
+| traceability-model | `traceability-model_unit.md` | canonical 側に frontmatter、legacy variant に H03-01 が存在 | 両方を canonical へ統合 |
+| validator-system | `validator-system_unit.md` | 両側が詳細定義で、legacy variant だけに WI-168 が存在 | WI-168 annotation を canonical へ統合 |
 
-重複のない `adr_foundation_unit.md` と `regression_suite_unit.md` も filename と Unit ID の規則を合わせるため、WM-05 でそれぞれ `adr-foundation_unit.md` と `regression-suite_unit.md` へ移行する。`installation_unit.md` は現規則に適合する。
+重複のない adr-foundation と regression-suite も filename と Unit ID の規則を合わせ、WM-05 で `adr-foundation_unit.md` と `regression-suite_unit.md` を canonical filename とする。`installation_unit.md` は現規則に適合する。
 
 ### 6.3 Lifecycle と移行ゲート
 

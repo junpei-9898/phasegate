@@ -8,7 +8,7 @@
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H01-01, H01-02, H01-03
 > **モード**: Unit横断設計（Phase 2）
-> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/inception/biome-ast-engine/logical_design_plan.md`, `docs/product/units/biome_ast_engine_unit.md`, `docs/product/units/integration_contract.md`
+> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/inception/biome-ast-engine/logical_design_plan.md`, `docs/product/units/biome-ast-engine_unit.md`, `docs/product/units/integration_contract.md`
 >
 > `@story-id H01-01`
 > `@story-id H01-02`

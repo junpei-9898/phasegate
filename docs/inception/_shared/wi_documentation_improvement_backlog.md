@@ -64,7 +64,7 @@ traceability:
   - `docs/guide/hooks-integration.md`
   - `DEVELOPMENT.md`
   - `docs/product/construction/harness-error/*`
-  - `docs/product/units/harness_error_unit.md`
+  - `docs/product/units/harness-error_unit.md`
 - 受け入れ条件:
   - 上記 4 件について、実装・product docs・guide の説明が同じ名前・同じ意味で読める。
   - `skill:run-plan-checker` / `harness:skill-quality:plan-checker` のどちらを正とするかが決まっている。
@@ -564,7 +564,7 @@ traceability:
 - 目的: product construction 本体を直しても上位 contract が旧仕様を再導入しないよう、Unit catalog / integration contract / environment contract / ADR registry を現行実装へ同期する。
 - 対象:
   - `docs/product/units/integration_contract.md`
-  - `docs/product/units/validator_system_unit.md`
+  - `docs/product/units/validator-system_unit.md`
   - `docs/product/environment_contract.md`
   - `docs/ADR/*`
   - validator ID registry / archgate /旧 CLI /旧 Unit 数の記述

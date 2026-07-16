@@ -39,7 +39,7 @@
 
 ## 2. 受け入れ基準カバレッジ詳細
 
-harness_api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された受け入れ基準（AC）と、対応するテストケースのマッピングを示す。
+harness-api_unit.md §3 の機能要件（H09-01〜H09-04）に定義された受け入れ基準（AC）と、対応するテストケースのマッピングを示す。
 
 ### H09-01: phasegate:check-ready / phasegate:check-phase
 

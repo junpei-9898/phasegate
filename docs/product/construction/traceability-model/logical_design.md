@@ -36,7 +36,7 @@ Traceability data remains the source material for repository-scale drift analysi
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H03-01, H03-02, H03-03, H03-04, H03-05, H03-06, H03-07, H03-08
 > **モード**: Unit横断設計（Phase 2）
-> **前提ドキュメント**: `logical_design_plan.md`、`domain_model.md`、`traceability_model_unit.md`、`integration_contract.md`
+> **前提ドキュメント**: `logical_design_plan.md`、`domain_model.md`、`traceability-model_unit.md`、`integration_contract.md`
 
 ---
 

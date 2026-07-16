@@ -9,7 +9,7 @@
 > **Wave**: 2（品質検証レイヤー）
 > **対応ストーリー**: H07-01〜H07-04
 > **分析インプット**:
-> - `docs/product/units/nyquist_validation_unit.md`（受け入れ基準）
+> - `docs/product/units/nyquist-validation_unit.md`（受け入れ基準）
 > - `docs/product/construction/nyquist-validation/domain_model.md`
 > - `docs/product/construction/nyquist-validation/logical_design.md`
 > - `docs/product/construction/nyquist-validation/unit_test_design.md`

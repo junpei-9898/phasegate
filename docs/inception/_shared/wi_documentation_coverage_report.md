@@ -48,7 +48,7 @@ README は導入・概念・主要 CLI の入口として整っており、`docs
 
 3. `WI-046`: HarnessError の追加フィールドが product docs に未反映。
    - `docs/guide/retrofit-adoption.md` は `suggestedSkill` を説明済み。
-   - `docs/product/construction/harness-error/*` と `docs/product/units/harness_error_unit.md` は `suggestedSkill`, `scaffoldCommand`, `templatePath` を明確に扱っていない。
+   - `docs/product/construction/harness-error/*` と `docs/product/units/harness-error_unit.md` は `suggestedSkill`, `scaffoldCommand`, `templatePath` を明確に扱っていない。
 
 4. `WI-041`: staged Markdown metadata validation が `phasegate pre-commit` に乗ることが公開面で弱い。
    - 更新候補: `docs/guide/hooks-integration.md` または `docs/guide/cli-reference.md`
@@ -146,7 +146,7 @@ README は導入・概念・主要 CLI の入口として整っており、`docs
 1. P0 の不一致を修正する。
    - `docs/guide/configuration.md` (`WI-093`)
    - `WI-068` command naming の統一
-   - `docs/product/construction/harness-error/*` / `docs/product/units/harness_error_unit.md` (`WI-046`)
+   - `docs/product/construction/harness-error/*` / `docs/product/units/harness-error_unit.md` (`WI-046`)
 2. README と CLI reference の命名・主要 CLI を揃える。
    - `phasegate:ci-check`, `phasegate:check-ready`, `phasegate:detect-drift`, `phasegate:impact-analysis`
    - `ci-check --quick`

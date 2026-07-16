@@ -5,12 +5,12 @@ traceability:
 
 # Unit定義: harness-api
 
+@story-id H09-01
+
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-12
 > **Wave**: 2（コア品質機構）
 > **対応Epic**: H-09 Harness API
->
-> **注記**: 本ファイルは kebab 命名規則版。underscore 版 (`harness_api_unit.md`) は互換のため併存する。内容は underscore 版と等価（kebab-case path resolution 用）。
 
 ---
 

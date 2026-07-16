@@ -92,7 +92,7 @@ scripts/harness/__tests__/fixtures/harness-api/
 │   │   │       ├── logical_design.md                # frontmatterなし（累積更新）
 │   │   │       └── domain_model.md                  # frontmatter initial_creation: true
 │   │   └── units/
-│   │       └── traceability_model_unit.md
+│   │       └── traceability-model_unit.md
 │   └── inception/
 │       └── traceability-model/
 │           └── H03-01/
@@ -292,7 +292,7 @@ scripts/harness/__tests__/fixtures/harness-api/
 
 | ケースID | テストケース名 | 検証内容 | AAA概要 |
 |----------|-------------|---------|---------|
-| IT-TM-064 | unit定義ファイルからunit名一覧が取得できること | 正常読み取り | Arrange: units/配下にtraceability_model_unit.md配置。Act: getAllUnitNames()。Assert: actual.includes("traceability-model") |
+| IT-TM-064 | unit定義ファイルからunit名一覧が取得できること | 正常読み取り | Arrange: units/配下にtraceability-model_unit.md配置。Act: getAllUnitNames()。Assert: actual.includes("traceability-model") |
 | IT-TM-065 | 存在するunit名に対してexists()がtrueを返すこと | exists正常 | Arrange: fixture配置。Act: exists("traceability-model")。Assert: actual===true |
 | IT-TM-066 | 存在しないunit名に対してexists()がfalseを返すこと | exists不在 | Arrange: fixture配置。Act: exists("unknown-unit")。Assert: actual===false |
 | IT-TM-067 | findConstructionRootが正しい相対パスを返すこと | constructionRoot解決 | Arrange: construction/traceability-model/配置。Act: findConstructionRoot("traceability-model")。Assert: actual.toString()==="docs/product/construction/traceability-model" |

@@ -19,6 +19,6 @@ Update public-facing documentation before changing release state. The canonical 
 - `docs/guide/hooks-integration.md`
 - `DEVELOPMENT.md`
 - `docs/product/construction/harness-error/*`
-- `docs/product/units/harness_error_unit.md`
+- `docs/product/units/harness-error_unit.md`
 - `docs/product/units/integration_contract.md`
 

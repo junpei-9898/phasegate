@@ -3,7 +3,7 @@
 > **作成日**: 2026-03-13
 > **モード**: Unit横断設計（Phase 1 計画）
 > **対応ストーリー**: H04-01, H04-02, H04-03
-> **前提ドキュメント**: `docs/product/construction/config-foundation/domain_model.md`, `docs/product/units/config_foundation_unit.md`, `docs/product/units/integration_contract.md`
+> **前提ドキュメント**: `docs/product/construction/config-foundation/domain_model.md`, `docs/product/units/config-foundation_unit.md`, `docs/product/units/integration_contract.md`
 
 ---
 

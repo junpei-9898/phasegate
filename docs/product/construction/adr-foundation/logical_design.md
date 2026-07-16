@@ -7,7 +7,7 @@
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H05-01, H05-02, H05-03
 > **モード**: Unit横断設計（Phase 2成果物）
-> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `units/adr_foundation_unit.md`, `units/integration_contract.md`, `inception/adr-foundation/logical_design_plan.md`
+> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `units/adr-foundation_unit.md`, `units/integration_contract.md`, `inception/adr-foundation/logical_design_plan.md`
 
 ---
 
@@ -1015,7 +1015,7 @@ type SearchArchgateMappingsInput = {
 | 010 | Validator stack detection | Accepted |
 | 011 | Temporary 4-layer definition with return path to 5-layer | Proposed |
 
-- ステータスは `adr_foundation_unit.md` の「§12 decided済み=Accepted / 検討中=Proposed」の方針に従う
+- ステータスは `adr-foundation_unit.md` の「§12 decided済み=Accepted / 検討中=Proposed」の方針に従う
 - archgate定義を持つADRはここで `enforcedBy` を明示する
 
 ### 5.6 `index.ts`

@@ -92,7 +92,7 @@ H12-03 カバレッジ: **5/5 (100%)**
 
 ### H12-04: Agent-Lesson System
 
-> **注意**: AC-2（AGENTS.mdへの集約・反映）は ci-governance Unit（H13-03）の責務として分離済み（skill_quality_unit.md §3.4 AC分割記載）。本 Unit の責務は lesson artifact 生成・出力に限定されるため、AC-2 は本 Unit の対象外とする。
+> **注意**: AC-2（AGENTS.mdへの集約・反映）は ci-governance Unit（H13-03）の責務として分離済み（skill-quality_unit.md §3.4 AC分割記載）。本 Unit の責務は lesson artifact 生成・出力に限定されるため、AC-2 は本 Unit の対象外とする。
 
 | AC ID | 基準内容 | 対応テストケースID | カバー状態 |
 |-------|---------|-----------------|----------|
@@ -305,7 +305,7 @@ Presentation Handler カバレッジ: **1/6 (16.7%, 間接1件のみ)**（2026-0
 
 | 項目 | 理由 |
 |-----|------|
-| H12-04 AC-2（AGENTS.md への集約・反映） | ci-governance Unit（H13-03）の責務として明示的に分離済み（skill_quality_unit.md §3.4） |
+| H12-04 AC-2（AGENTS.md への集約・反映） | ci-governance Unit（H13-03）の責務として明示的に分離済み（skill-quality_unit.md §3.4） |
 
 ---
 

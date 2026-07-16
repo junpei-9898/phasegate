@@ -11,7 +11,7 @@
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**:
 > - `docs/product/construction/regression-suite/domain_model.md`
-> - `docs/product/units/regression_suite_unit.md`
+> - `docs/product/units/regression-suite_unit.md`
 > - `docs/product/units/integration_contract.md`
 > - `docs/inception/_shared/cross_cutting_decisions.md`
 > - `docs/principles/architecture-philosophy.md`

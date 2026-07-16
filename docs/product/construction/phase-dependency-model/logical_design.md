@@ -28,7 +28,7 @@ WI status derivation は既存の phase dependency ordering と整合する。`r
 > **作成日**: 2026-03-13
 > **対応ストーリー**: H02-01, H02-02, H02-03, H02-04, H02-05, H02-06, H02-07
 > **モード**: Unit横断設計（Phase 2）
-> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/inception/phase-dependency-model/logical_design_plan.md`, `docs/product/units/phase_dependency_model_unit.md`, `docs/product/units/integration_contract.md`
+> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）, `docs/inception/phase-dependency-model/logical_design_plan.md`, `docs/product/units/phase-dependency-model_unit.md`, `docs/product/units/integration_contract.md`
 
 ---
 

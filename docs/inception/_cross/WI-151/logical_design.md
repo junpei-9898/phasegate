@@ -21,6 +21,6 @@ Document status and drift semantics where users make operational decisions: READ
 - `docs/guide/cli-reference.md`
 - `docs/guide/layer-model.md`
 - `docs/product/units/harness-api_unit.md`
-- `docs/product/units/harness_api_unit.md`
+- `docs/product/units/harness-api_unit.md`
 - `docs/product/units/integration_contract.md`
 

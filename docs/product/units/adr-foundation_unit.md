@@ -121,3 +121,9 @@ v0（adr-documentation）ではテンプレート整備・初期10件ADR・ス�
 - **ステータス遷移の整合性**: `Superseded`状態のADRには`superseded_by`フィールドが必須。後継ADRの実在性も検証対象
 - **harness-errorとの連携**: harness-errorのHarnessError `adr_ref`フィールドが本Unitが管理するADRを参照する。ADR IDの一意性と実在性を保証する必要がある
 - **ci-governanceとの連携**: ci-governanceがADRリンクを参照するため、ADR Frontmatter Schemaの安定性を維持する
+
+---
+
+## 9. Corpus 履歴
+
+- 2026-07-16: WI-285 で Unit ID と一致する canonical filename へ移行した。

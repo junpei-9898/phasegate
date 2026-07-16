@@ -19,7 +19,7 @@ CI/pre-commit が消費する標準 L2 gate では、validator-system の `L2-01
 > **モード**: Unit横断設計（Phase 2）
 > **前提ドキュメント**:
 > - `docs/product/construction/ci-governance/domain_model.md`
-> - `docs/product/units/ci_governance_unit.md`
+> - `docs/product/units/ci-governance_unit.md`
 > - `docs/product/units/integration_contract.md`
 > - `docs/inception/_shared/cross_cutting_decisions.md`
 > - `docs/principles/architecture-philosophy.md`

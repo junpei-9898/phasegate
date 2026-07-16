@@ -3,7 +3,7 @@
 > **作成日**: 2026-03-11
 > **対応ストーリー**: US-027, US-028, US-029, US-030
 > **モード**: Unit横断設計（Phase 2）
-> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）、`units/config_foundation_unit.md`、`units/integration_contract.md`
+> **前提ドキュメント**: `domain_model.md`（同ディレクトリ）、`units/config-foundation_unit.md`、`units/integration_contract.md`
 
 ---
 

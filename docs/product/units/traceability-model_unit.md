@@ -5,12 +5,12 @@ traceability:
 
 # Unit定義: traceability-model
 
+@story-id H03-01
+
 > **Unit ID**: traceability-model
 > **作成日**: 2026-03-12
 > **Wave**: 1（基盤構築）
 > **対応Epic**: H-03 Traceability Model
->
-> **注記**: 本ファイルは kebab 命名規則版。underscore 版 (`traceability_model_unit.md`) は互換のため併存する。内容は underscore 版と等価（kebab-case path resolution 用）。
 
 ---
 

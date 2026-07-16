@@ -181,3 +181,9 @@ v0のregression-suiteを継承・拡張したUnitである。v1ではH-14（K1-K
 - **カバレッジ閾値**: v1再実装テスト全体のカバレッジ閾値は90%（standard preset準拠）。ただし回帰テスト自体のカバレッジは対象外（回帰テストは外部Unitの公開インターフェースを検証するものであり、自Unit内のカバレッジ概念は適用しない）
 - **テストの独立性**: 各回帰テストは他の回帰テストに依存しない。K1の回帰テストが失敗してもK2の回帰テストは独立して実行・結果報告される。テストスイートをVitest 3.0.0のworkspace機能で分離し、並列実行を可能にする
 - **v0テスト対応表の管理**: v0テスト仕様（143件）とv1テスト実装の対応表は`docs/product/construction/regression_suite/v0_v1_test_mapping.md`に管理する。対応表にはv0テストID、v1テストファイルパス、移行状態（migrated/modified/skipped）、Biome修正内容を記載する
+
+---
+
+## 9. Corpus 履歴
+
+- 2026-07-16: WI-285 で Unit ID と一致する canonical filename へ移行した。

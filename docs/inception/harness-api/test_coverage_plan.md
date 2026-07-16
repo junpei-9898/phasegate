@@ -13,7 +13,7 @@
 
 本計画は、harness-api Unit のテスト設計文書（unit_test_design.md / it_test_design.md）に対して、以下の観点から網羅性と品質を検証することを目的とする。
 
-1. **受け入れ基準カバレッジ**: harness_api_unit.md §3 の各ACに対応するテストケースの存在確認
+1. **受け入れ基準カバレッジ**: harness-api_unit.md §3 の各ACに対応するテストケースの存在確認
 2. **ドメインロジックカバレッジ**: domain_model.md §5 の不変条件・ビジネスルールの網羅確認
 3. **UseCaseカバレッジ**: 正常系/異常系/境界値のカバー確認
 4. **APIカバレッジ**: 8CLIコマンドハンドラー・CommandRegistry・DispatchServiceのカバー確認
@@ -25,7 +25,7 @@
 
 | ドキュメント | パス | 検証観点 |
 |------------|------|---------|
-| 受け入れ基準 | `docs/product/units/harness_api_unit.md` §3 | AC to テストケースマッピング |
+| 受け入れ基準 | `docs/product/units/harness-api_unit.md` §3 | AC to テストケースマッピング |
 | ドメインモデル | `docs/product/construction/harness-api/domain_model.md` §5 | 不変条件・ビジネスルールカバレッジ |
 | 論理設計 | `docs/product/construction/harness-api/logical_design.md` | 層構成・メソッド仕様のカバレッジ |
 | ユニットテスト設計 | `docs/product/construction/harness-api/unit_test_design.md` | 93ケースの品質評価 |

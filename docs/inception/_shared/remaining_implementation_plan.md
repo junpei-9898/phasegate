@@ -19,7 +19,7 @@ A: `agent-integration_unit.md` および `integration_contract.md` で「harness
 A: ドメインロジック・インフラアダプタのスタブは実装済みでテスト通過済み。残作業は Extension Points 統合と OS レベルバインディングのみ。Wave 3C 完了後に着手可能な状態になるため、今回の計画に含めて順序を確定させる。
 
 **Q: regression-suite H14 Phase A を Wave 3A/3B 並行トラックとして分離する根拠は？**
-A: `regression_suite_unit.md` で「H14 Phase A は Wave 2 後半から先行着手可能」と明示されている。全 Unit 完了を待つ必要がなく、待機コストを無駄にしない。H15（v0 テスト資産移行）は全 Unit 完了後が前提のため Wave 3C に残す。
+A: `regression-suite_unit.md` で「H14 Phase A は Wave 2 後半から先行着手可能」と明示されている。全 Unit 完了を待つ必要がなく、待機コストを無駄にしない。H15（v0 テスト資産移行）は全 Unit 完了後が前提のため Wave 3C に残す。
 
 **Q: 実装順序の優先原則は何か？**
 A: 下位 Unit から上位 Unit へ（依存方向に沿う）。具体的には「依存される Unit が先」「スタブ補完は依存先 Unit 完了直後に同 Wave 内で実施」「regression H14 Phase A は先行開始で並列活用」「regression H15 のみ最終確認として後置」。
@@ -270,7 +270,7 @@ Future B（Future A と並行可）: L4 拡張
 
 ### regression-suite H14 Phase A（Wave 3B 並行トラック）
 
-**`regression_suite_unit.md` に「Wave 2 後半から先行着手可能」と明記されているため Wave 3B で先行開始。**
+**`regression-suite_unit.md` に「Wave 2 後半から先行着手可能」と明記されているため Wave 3B で先行開始。**
 
 | ストーリー ID | タイトル | 優先度 | 実装内容 |
 |---|---|---|---|

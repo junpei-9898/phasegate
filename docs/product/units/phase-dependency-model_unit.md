@@ -4,8 +4,6 @@
 > **作成日**: 2026-04-05
 > **Wave**: 1（基盤構築）
 > **対応Epic**: H-02 Phase Dependency Model
->
-> **注記**: 本ファイルは kebab 命名規則（新標準）版。underscore 版 (`phase_dependency_model_unit.md`) は互換のため併存する。A-2（configurable phase gate: ドメイン層実装）の成果物を反映済み。
 
 ---
 
@@ -42,6 +40,7 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
   - **Level 1**: Product全体設計（product_overview, user_stories, unit定義, integration_contract等）
   - **Level 2**: Unit横断設計（domain_model, logical_design, test_design, environment_design等）
   - **Level 3**: ストーリー実装（plan文書, 実装コード, テスト, コミット）
+    - Level 3成果物は `inception/{unit}/{storyId}/` 配下の plan 文書と、`product/construction/{unit}/` に反映された実装・テスト設計を含む。
 - phase-gateバリデータがLevel間の依存違反を検出する（Level 2の前提なしにLevel 3開始を拒否）
 - phase-gateバリデータがLevel内の上流設計なしの下流設計生成を拒否する
 - phase-gateバリデータが設計文書・plan文書なしの実装コード変更を拒否する
@@ -52,7 +51,7 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 - **interactiveモード**: AIが対話的にヒアリングし、その結果からplan文書を生成する方式を定義する
 - **embedded-qaモード**: テンプレートのQAセクションに人間が回答し、AIが計画を完成させる方式を定義する
 - 両モードとも最終成果物として3層構造に応じた`inception/`配下に`*_plan.md`を生成する
-- phase-gateバリデータがplan文書のファイル存在でPhase 1完了を検証する
+- phase-gateバリデータがplan文書のファイル存在でPhase 1完了を検証し、plan文書なしのPhase 2移行を拒否する
 - plan文書にQAセクション（設計判断の根拠）が含まれることを検証するテストを用意する
 
 ### 3.3 Phase Dependencyカスタマイズ（H02-03）
@@ -69,7 +68,7 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 - `checkPhaseGate()` に `scope` パラメータを追加し、storyId 提供時に Level 3 ノードの解決済み成果物パスの存在を検証する
 - 既存の依存グラフ（`3:logical-designer → 3:scenario-test-designer → ... → 3:story-implementor`）が実効的に機能し、inception 内の設計順序を物理的に強制する
 - storyId 未指定時の既存動作（Level 3成果物をスキップ）は維持する
-- `Artifact.required` フィールドの意味は変更しない
+- `Artifact.required` フィールドの意味は変更せず、storyId 未指定時に Level 3成果物をスキップする既存用途を維持する
 
 ### 3.5 Configurable Phase Gate — プリセット + ストーリー反映チェック（A-2）
 
@@ -180,5 +179,9 @@ v1で新規追加されたK14（Phase Dependency Model）およびK15（Plan文�
 ## 9. 関連設計文書
 
 - `docs/inception/_shared/configurable_phase_gate_plan.md` — A-2 実装計画（プリセット + ストーリー反映チェック）
-- `docs/product/units/phase_dependency_model_unit.md` — underscore 版（互換保持）
 - `scripts/harness/phase-dependency-model/` — 実装ディレクトリ
+
+### Corpus 履歴
+
+- 詳細定義は 2026-03-12 に作成され、A-2 拡張を含む canonical 定義は 2026-04-05 に成立した。
+- 2026-07-16: WI-285 で両定義の固有内容を canonical path へ統合し、単一正本化した。

@@ -22,7 +22,7 @@ nyquist-validationユニットのテスト設計文書（unit_test_design.md / i
 
 | ドキュメント | 用途 |
 |-----------|------|
-| `docs/product/units/nyquist_validation_unit.md` | 受け入れ基準（H07-01〜H07-04の機能要件） |
+| `docs/product/units/nyquist-validation_unit.md` | 受け入れ基準（H07-01〜H07-04の機能要件） |
 | `docs/product/construction/nyquist-validation/domain_model.md` | ドメインモデル・不変条件（INV-1〜INV-4） |
 | `docs/product/construction/nyquist-validation/logical_design.md` | アーキテクチャ層構成・UseCase・Adapter・Handler |
 | `docs/product/construction/nyquist-validation/unit_test_design.md` | ユニットテストケース設計（127ケース） |

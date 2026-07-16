@@ -7,8 +7,6 @@
 > **Wave**: 1（基盤構築）
 > **対応Epic**: H-04 phasegate.config.json v2
 
-> **注記**: 本ファイルは `config_foundation_unit.md`（アンダースコア版）のケバブケース版である。Phase Gate の path resolution が kebab-case ファイル名を要求するため、同一内容を両ファイル名で保持している。正規ソースは本ファイル（kebab-case）とする。
-
 ---
 
 ## 1. 概要
@@ -47,6 +45,7 @@ configurable_phase_gate_plan による拡張では、`phaseDependencies` セク�
 - `quickMode`セクションで`allowedCategories` / `maintainedLayers` / `relaxedGates`が設定可能
 - `phaseDependencies`セクションで `preset`（`default`/`full`/`standard`/`minimal`/`custom`）と `storyReflection` サブセクション（`enabled`, `mappings`）が optional で指定可能
 - `phase2Extensions.initialCreationExpirationRules` を public compatibility 設定として optional に受け付ける。config-foundation は構造と schema validation を所有し、実行時の意味論は phase2-extensions が解釈する。<!-- @work-item-id WI-170 -->
+- `modelRouting.delegation` を optional に受け付ける。`"delegate-sonnet"` は後方互換の既定方針、`"none"` は固定モデル委任を無効化する方針であり、schema / domain config の構造契約を config-foundation が所有する。実行時の skill 配備・CLI拒否は setup / harness-api / skill-quality 側が解釈する。<!-- @work-item-id WI-219 -->
 - JSONスキーマバリデーション（スキーマファイル定義 + バリデーション実行）
 - 有効・無効なサンプル設定ファイルによる検証
 

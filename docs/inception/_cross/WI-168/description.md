@@ -15,7 +15,7 @@ source: internal
 ## スコープ
 
 - `docs/product/units/integration_contract.md`
-- `docs/product/units/validator_system_unit.md`
+- `docs/product/units/validator-system_unit.md`
 - `docs/product/environment_contract.md`
 - `docs/ADR/*`
 - validator ID registry / archgate / 旧 CLI / 旧 Unit 数の記述

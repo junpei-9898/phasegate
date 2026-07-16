@@ -4,7 +4,7 @@
 > **作成日**: 2026-03-13
 > **モード**: Phase 1（論理設計計画）
 > **対応ストーリー**: H01-01, H01-02, H01-03
-> **前提ドキュメント**: `docs/product/construction/biome-ast-engine/domain_model.md`, `docs/product/units/biome_ast_engine_unit.md`, `docs/product/units/integration_contract.md`
+> **前提ドキュメント**: `docs/product/construction/biome-ast-engine/domain_model.md`, `docs/product/units/biome-ast-engine_unit.md`, `docs/product/units/integration_contract.md`
 
 ---
 

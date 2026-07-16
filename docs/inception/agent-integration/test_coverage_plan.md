@@ -24,7 +24,7 @@ unit_test_design.md および it_test_design.md に記述されたテストケ�
 
 | 文書 | 役割 |
 |------|------|
-| `docs/product/units/agent_integration_unit.md` | 受け入れ基準（H11-01〜H11-04） |
+| `docs/product/units/agent-integration_unit.md` | 受け入れ基準（H11-01〜H11-04） |
 | `docs/product/construction/agent-integration/domain_model.md` | エンティティ・VO・ドメインサービス・不変条件 |
 | `docs/product/construction/agent-integration/logical_design.md` | 4層アーキテクチャ・UseCase・Infrastructure・Presentation設計 |
 | `docs/product/construction/agent-integration/unit_test_design.md` | ユニットテストケース84件 |
