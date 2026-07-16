@@ -3,6 +3,7 @@
 // @story H12-02
 // @work-item-id WI-125
 // @work-item-id WI-131
+// @work-item-id WI-292
 
 import { describe, expect, it } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
@@ -61,11 +62,46 @@ target('GenerateRequirementTestMatrixUseCase', () => {
 
       // Assert
       expect(actual.matrix.generatedAt).toBe('2026-05-12T00:00:00.000Z');
+      expect(actual.matrix.version).toBe('1.2');
       expect(actual.matrix.stories[0].storyId).toBe('H07-01');
+      expect(actual.matrix.stories[0].coverageStatus).toBe('required');
+      expect(actual.matrix.stories[0].coverageLifecycle).toEqual(['required']);
       expect(actual.matrix.stories[0].storyMappings).toHaveLength(2);
       expect(actual.matrix.stories[0].storyMappings[0].testReferences[0].testName).toBe('matrixを生成できること');
       expect(actual.report.intentCoverage.every((item) => item.status === 'weakly-observed')).toBe(true);
       expect(getWritten()).not.toBeNull();
+    });
+
+    it('planned Story をACごとmatrixへ残しcoverage lifecycleを伝搬すること', async () => {
+      // Arrange
+      const { sut } = createSut({
+        requirements: [{
+          storyId: 'H17-07',
+          acIds: ['AC-1'],
+          coverageStatus: 'planned',
+          coverageLifecycle: ['planned'],
+        }],
+        references: [],
+      });
+
+      // Act
+      const actual = await sut.execute({
+        requirementsPath: 'docs/product/user_stories.md',
+        testRoot: 'scripts/harness/__tests__',
+        matrixFilePath: '.harness/requirement-test-matrix.json',
+        write: false,
+      });
+
+      // Assert
+      expect(actual.matrix.stories).toEqual([
+        {
+          storyId: 'H17-07',
+          coverageStatus: 'planned',
+          coverageLifecycle: ['planned'],
+          storyMappings: [{ acId: 'AC-1', testReferences: [] }],
+        },
+      ]);
+      expect(actual.report.missingTests).toEqual([{ storyId: 'H17-07', acId: 'AC-1' }]);
     });
 
     it('既存matrixの手動test referenceを失わずに保持すること', async () => {

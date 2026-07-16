@@ -20,6 +20,21 @@
             "type": "string",
             "pattern": "^H(?:F\\d+|\\d{2})-\\d{2}$"
           },
+          "coverageStatus": {
+            "type": "string",
+            "enum": ["planned", "required"],
+            "description": "WI-292 (schema 1.2): Story coverage gate lifecycle の現在値。省略時は required として扱う（1.0/1.1 後方互換）。"
+          },
+          "coverageLifecycle": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": {
+              "type": "string",
+              "enum": ["planned", "required"]
+            },
+            "description": "WI-292 (schema 1.2): Git 管理された順方向遷移履歴。有効系列と status 終端一致は L3-004 が fail-closed で検査する。"
+          },
           "storyMappings": {
             "type": "array",
             "items": {

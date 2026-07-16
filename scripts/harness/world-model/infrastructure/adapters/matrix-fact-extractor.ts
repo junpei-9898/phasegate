@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer infrastructure
 // @work-item-id WI-290
+// @work-item-id WI-292
 
 import type { RequirementTestMatrixDto } from "../../../nyquist-validation/index.js";
 import { ExtractionDiagnostic } from "../../domain/entities/extraction-diagnostic.js";
@@ -23,7 +24,8 @@ import {
 import type { RuntimeFactExtraction } from "./runtime-fact-extraction.js";
 
 const DEFAULT_MATRIX_PATH = ".harness/requirement-test-matrix.json";
-const SUPPORTED_VERSIONS = new Set(["1.0", "1.1"]);
+const SUPPORTED_VERSIONS = new Set(["1.0", "1.1", "1.2"]);
+type CoverageStatus = "planned" | "required";
 
 const compareStrings = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
 const compareAcIds = (left: string, right: string): number => {
@@ -49,6 +51,8 @@ interface MatrixProjection {
   readonly version: RequirementTestMatrixDto["version"];
   readonly stories: readonly {
     readonly storyId: string;
+    readonly coverageStatus: CoverageStatus;
+    readonly coverageLifecycle: readonly CoverageStatus[];
     readonly storyMappings: readonly {
       readonly acId: string;
       readonly testReferences: readonly MatrixReferenceProjection[];
@@ -131,8 +135,21 @@ export class MatrixFactExtractor {
     requireString(root.generatedAt, "matrix.generatedAt");
     const stories = requireArray(root.stories, "matrix.stories").map((rawStory, storyIndex) => {
       const story = requireObject(rawStory, `matrix.stories[${storyIndex}]`);
-      assertExactKeys(story, ["storyId", "storyMappings"], `matrix.stories[${storyIndex}]`);
+      assertExactKeys(
+        story,
+        ["storyId", "coverageStatus", "coverageLifecycle", "storyMappings"],
+        `matrix.stories[${storyIndex}]`,
+      );
       const storyId = requireString(story.storyId, `matrix.stories[${storyIndex}].storyId`);
+      const coverageStatus = this.projectCoverageStatus(
+        story.coverageStatus,
+        `matrix.stories[${storyIndex}].coverageStatus`,
+      );
+      const coverageLifecycle = this.projectCoverageLifecycle(
+        story.coverageLifecycle,
+        coverageStatus,
+        `matrix.stories[${storyIndex}].coverageLifecycle`,
+      );
       const storyMappings = requireArray(story.storyMappings, `matrix.stories[${storyIndex}].storyMappings`).map(
         (rawMapping, mappingIndex) => {
           const field = `matrix.stories[${storyIndex}].storyMappings[${mappingIndex}]`;
@@ -153,6 +170,8 @@ export class MatrixFactExtractor {
       );
       return {
         storyId,
+        coverageStatus,
+        coverageLifecycle,
         storyMappings: storyMappings.sort((left, right) => compareAcIds(left.acId, right.acId)),
       };
     });
@@ -160,6 +179,37 @@ export class MatrixFactExtractor {
       version,
       stories: stories.sort((left, right) => compareStrings(left.storyId, right.storyId)),
     };
+  }
+
+  private projectCoverageStatus(value: unknown, field: string): CoverageStatus {
+    if (value === undefined) return "required";
+    const status = requireString(value, field);
+    if (status !== "planned" && status !== "required") {
+      throw new OwnerProjectionError("malformed-provider-document", `${field} is invalid`, { field });
+    }
+    return status;
+  }
+
+  private projectCoverageLifecycle(
+    value: unknown,
+    status: CoverageStatus,
+    field: string,
+  ): readonly CoverageStatus[] {
+    if (value === undefined) return Object.freeze([status]);
+    const lifecycle = requireArray(value, field).map((entry, index) => {
+      const item = requireString(entry, `${field}[${index}]`);
+      if (item !== "planned" && item !== "required") {
+        throw new OwnerProjectionError("malformed-provider-document", `${field}[${index}] is invalid`, { field });
+      }
+      return item;
+    });
+    const validSequence =
+      (lifecycle.length === 1 && (lifecycle[0] === "planned" || lifecycle[0] === "required"))
+      || (lifecycle.length === 2 && lifecycle[0] === "planned" && lifecycle[1] === "required");
+    if (!validSequence || lifecycle[lifecycle.length - 1] !== status) {
+      throw new OwnerProjectionError("malformed-provider-document", `${field} is not a forward lifecycle`, { field });
+    }
+    return Object.freeze(lifecycle);
   }
 
   private projectReference(value: unknown, field: string, storyId: string, acId: string): MatrixReferenceProjection {

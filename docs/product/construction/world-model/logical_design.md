@@ -310,3 +310,9 @@ WM-10もcomposition-root / index / CLIを変更せず、WM-11がWM-09 / 10 extra
 `composition-root.ts`はattestation public `createSha256Capability()`をconsumer-owned hashing adapterへ、traceability public facadeをdesign ACLへ、public attestation verify handlerをevidence extractorへbindする。`index.ts`はplain inspection contract、handler、module factoryだけを公開し、provider内部型を再exportしない。
 
 config不在はADR-037 canonical defaults、存在時はconfig-foundation `LoadResolvedConfigUseCase`のresolved plain inputを使う。WM-18前は既存`paths.designDocs` / `paths.inceptionDocs` / L3 matrix pathだけを写像し、`world` schemaを先取りしない。resolved design rootがcanonical `docs/product`外なら置換せず追加scopeとし、scope別traceability plain DTOをstable dedupしてowner indexへ統合する。invalid configはfallbackせずexit 2。main help / dispatchと`KNOWN_HARNESS_COMMANDS`を同時更新し、pin / deriveは未登録のままにする。
+
+## WI-292 Matrix 1.2 projection
+
+<!-- @work-item-id WI-292 -->
+
+matrix extractorは1.2のcoverageStatus / lifecycleをexact owner fieldとしてadmitしsemantic projectionへ含める。旧versionはrequiredへ正規化する。projection意味変更をrootへ反映するためWorld compositionのextractorVersionを`phasegate-world-extractor/v2`へ進める。

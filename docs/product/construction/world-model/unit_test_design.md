@@ -306,3 +306,9 @@ domain実体とdeterministic hashingを使用し、provider boundaryだけをpla
 | `attestation-sha256-world-hashing-adapter.test.ts` | public plain digestからWorld-local `Sha256Digest`への変換 |
 
 application portはdeterministic fakeを使用し、World domain object / serializer / root deriverは実体で検証する。
+
+## WI-292 Matrix lifecycle projection tests
+
+<!-- @work-item-id WI-292 -->
+
+matrix 1.2 status / lifecycle包含、1.1 required fallback、status差によるdigest差、unknown lifecycle field / valueのdiagnosticを検証する。

@@ -446,3 +446,9 @@
 | UT-NQ-INTENT-001 | EvaluateRequirementIntentCoverageUseCase | test reference がある AC | `observed` |
 | UT-NQ-INTENT-002 | EvaluateRequirementIntentCoverageUseCase | testName がない reference | `weakly-observed` |
 | UT-NQ-INTENT-003 | EvaluateRequirementIntentCoverageUseCase | reference がない AC | `unobserved` |
+
+## WI-292 coverage lifecycle
+
+<!-- @work-item-id WI-292 -->
+
+parserのdefault required、planned、planned→required、duplicate / unknown / reverse rejection、matrix 1.2伝搬を検証する。L3-004はrequired未カバー、planned ref、invalid lifecycleをerror、planned refなしをpassとする。legacy 1.0 / 1.1 field省略はrequiredとして維持する。

@@ -451,3 +451,9 @@ Validator execution is keyed by `validatorId` and resolved project language. Doc
 `AcLevelTraceabilityService`（domain）は `AcLevelTraceabilitySnapshot`（`acLevelCoverage` + `fileFallbackOnlyAcs` + `orphanAcTags`）を入力に `AcLevelTraceabilityReport` を返す純粋サービス。finding は **必ず warning severity**（error を出さない）。`AcLevelTraceabilityPort`（domain port）が snapshot 収集を抽象化し、infrastructure adapter が nyquist-validation のマトリクスレポートを橋渡しする。
 
 L4-007 は **default-OFF・advisory-only（warning-only）・attestation-trust-excluded**。L3-004（fail-closed な AC 網羅ゲート）とは独立した advisory tier であり、その二値判定・attestation granularity（`level:"file"`）には一切関与しない。詳細は logical_design.md を参照。
+
+## WI-292 L3-004 lifecycle result
+
+<!-- @work-item-id WI-292 -->
+
+validator-systemはnyquist-validationが返すcoverage lifecycle findingを既存L3-004 resultとしてtransportする。planned未カバーだけはpassだが、planned test reference、reverse / malformed lifecycle、required未カバーはerrorであり、別baselineやallowlistを持たない。

@@ -2,6 +2,7 @@
 // @unit nyquist-validation
 // @work-item-id WI-125
 // @work-item-id WI-131
+// @work-item-id WI-292
 
 import type { RequirementIntentCoverageService } from '../../domain/services/requirement-intent-coverage-service.js';
 import type {
@@ -175,6 +176,10 @@ export class GenerateRequirementTestMatrixUseCase {
       }
       return {
         storyId: requirement.storyId,
+        coverageStatus: requirement.coverageStatus ?? 'required',
+        coverageLifecycle: Object.freeze([
+          ...(requirement.coverageLifecycle ?? [requirement.coverageStatus ?? 'required']),
+        ]),
         storyMappings: Object.freeze(storyMappings),
       };
     });
@@ -185,10 +190,9 @@ export class GenerateRequirementTestMatrixUseCase {
     };
 
     const matrix: RequirementTestMatrixDto = {
-      // HF2-05: binding フィールドを付与するため schema 1.1 として出力する。
-      // 1.1 は 1.0 に対し optional な binding のみ追加であり、L3-004 の判定（各 AC に
-      // testReference が 1 件以上あるか）には一切影響しない。
-      version: '1.1',
+      // WI-292: Story coverage status/lifecycle を owner-derived field として追加する。
+      // schema 1.0/1.1 の読み取りは required へ正規化して後方互換を維持する。
+      version: '1.2',
       generatedAt: this.now().toISOString(),
       stories: Object.freeze(stories),
     };

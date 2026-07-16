@@ -496,3 +496,9 @@
 - L3 validation for a TypeScript project executes TypeScript source validators through registered adapters.
 - L3 validation for a Python-only project reports TypeScript-only validators as unsupported-language skips.
 - Generic document validators still execute for non-TypeScript project language declarations.
+
+## WI-292 L3 lifecycle integration
+
+<!-- @work-item-id WI-292 -->
+
+generated matrix 1.2をvalidator-system L3経路で読み、H17 planned Storyを表示したままL3-004 pass、planned test reference fixtureをL3-004 failとして観測する。

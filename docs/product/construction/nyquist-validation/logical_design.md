@@ -1365,3 +1365,9 @@ World向けTestReference identityのprovider tupleは`storyId`, `acId`, `binding
 <!-- @work-item-id WI-283 -->
 
 Worldのmatrix projectionは`generatedAt`を除外し、schema version、Story / AC / TestReference semanticsを含め、set-valued Story / AC / referenceをowner IDで決定的にsortできるDTOとする。保存されたpretty JSON bytesや生成時刻をsemantic matrix identityにしない一方、owner-defined ordered arrayの意味がある場合は順序を明示して保持する。unsupported schema / fieldをsilent dropせずdiagnosticとしてconsumerへ伝える。
+
+## Story coverage lifecycle 1.2
+
+<!-- @work-item-id WI-292 -->
+
+Markdown requirement sourceはStory scope内の`Coverage status` / `Coverage lifecycle`を一意にparseし、省略をrequiredへ正規化する。generatorはplanned Storyを省略せずmatrix 1.2へstatus、ordered lifecycle、全AC mappingを出力する。AcCoverageGatePolicyはlifecycle admission後、requiredだけをAC coverage検査し、plannedにrefがあればtransition-requiredとしてfailする。許可されない順序とstatus/history不一致はfail-closed。

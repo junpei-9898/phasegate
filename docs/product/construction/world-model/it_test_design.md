@@ -221,3 +221,9 @@ integrationはattestation public verify handlerとpublic SHA capabilityを接続
 WM-09 / 10 fixtureを全extractor、traceability public facade、attestation public SHA / verify capability、Snapshot assemblyへ接続する。configなしcanonical defaults、resolved existing path mapping、invalid config fail-closed、global duplicate / dangling edge diagnosticを検証する。
 
 CLI E2Eはhuman / JSON、exit 0 / 1 / 2、single envelope、help / known-command conformance、実corpus counts / root、read-only filesystemを検証する。同じcheckoutで`world:inspect --json`を2回実行しbyte-identicalと`generatedAt`不在をassertする。full suiteとmatrix / L2 / L3 / integrityは着地後CP-2で実施する。
+
+## WI-292 Matrix 1.2 integration
+
+<!-- @work-item-id WI-292 -->
+
+self-repo regenerated matrix 1.2をWorld compositionで読み、planned Storyを含むowner projectionとextractor v2 rootを決定的に構築する。generatedAtだけの差は引き続きrootへ入れない。

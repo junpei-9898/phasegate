@@ -2074,3 +2074,9 @@ validator-systemはvalidator registry、layer execution、severity、exit code�
 World evaluationのWCR finding、violation fingerprint、adoption / waiver classificationをstandard validation resultへ写像する責務をPhase Cで追加する。`WCR-001`とmalformed policy input、新規claim / pin / broken constraintはfail-closed、adoption baselineに含まれる既存violationはvisible non-blocking debt、repaid baseline entry残置はcleanup-required blockingとする。L4-004 findingはWorld fingerprint / baseline / waiverへ混ぜず、重複時も別raw resultとして保持する。
 
 `L2-017 world-constraint-admission`と`L3-008 world-constraint-rederivation`は予約IDであり、WM-19 / WM-20まで`ValidatorId`、registry、preset、RunL2 / RunL3へ登録しない。登録後も一つのvalidator resultが複数`WCR-NNN`を含む構造とし、`world.enabled: false`ではautomatic integrationをskip、explicit `world:*` commandのexit contractはharness-api / world-model handlerに委ねる。
+
+## WI-292 Story coverage lifecycle transport
+
+<!-- @work-item-id WI-292 -->
+
+L3-004 adapter / registry / severityは変更せず、nyquist `AcCoverageGatePolicy`のstatus-aware resultをfail-closedで返す。planned Storyもmatrix validation対象から消さず、policyがnon-blocking visible entryとtransition漏れを区別する。validator-system側にplanned allowlistを複製しない。

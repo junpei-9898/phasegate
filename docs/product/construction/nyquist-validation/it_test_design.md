@@ -350,3 +350,9 @@ Nyquist IT design must cover the public CLI flow added after the original H07 de
 - `ajv-json-schema-validator-adapter.it.test.ts` → `// @story H07-01`
 - `traceability-model-story-registry-adapter.it.test.ts` → `// @story H07-01`
 - `config-foundation-coverage-threshold-adapter.it.test.ts` → `// @story H07-03`
+
+## WI-292 matrix / L3 lifecycle integration
+
+<!-- @work-item-id WI-292 -->
+
+real catalogからmatrix 1.2を生成し、planned Storyが表示されたまま未カバーnon-blockingになること、planned refとreverse lifecycleがL3-004でblockingになること、planned→requiredと同時にtestを追加したStoryがpassすることを検証する。

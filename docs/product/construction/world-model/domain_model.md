@@ -253,4 +253,10 @@ optional provider file不在は`not-present`、存在するunsupported schema / 
 
 全extractor resultを`WorldFactBatch`としてapplication境界で統合する。global node ID duplicateはcandidate全除外、edge canonical tupleはdedup、admitted nodeに存在しないendpointを持つedgeは除外して`missing-edge-endpoint` diagnosticへ変換する。identityやcontinuityのwinnerをassemblyで推論しない。
 
-Snapshotは`phasegate-world-snapshot/v1`、`phasegate-world-extractor/v1`、semantic corpus config digestをpreimageに含める。plain `WorldInspectionDto`はroot / counts / inventory / stable node / edge / diagnostic projectionを返し、domain型、absolute checkout root、clock、`generatedAt`を公開しない。`not-present`以外のExtractionDiagnosticをhardと数えるが、exit policyはpresentationに残す。
+Snapshotは`phasegate-world-snapshot/v1`、semantic corpus config digestとversioned extractor semanticsをpreimageに含める。plain `WorldInspectionDto`はroot / counts / inventory / stable node / edge / diagnostic projectionを返し、domain型、absolute checkout root、clock、`generatedAt`を公開しない。`not-present`以外のExtractionDiagnosticをhardと数えるが、exit policyはpresentationに残す。
+
+## Matrix coverage lifecycle fact
+
+<!-- @work-item-id WI-292 -->
+
+matrix 1.2のStory projectionはcoverageStatusとordered coverageLifecycleを保持する。1.0 / 1.1 field省略はrequiredへ正規化する。WorldはL3 blocking policyを複製せずowner factとして観測する。

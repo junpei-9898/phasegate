@@ -1688,6 +1688,7 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 ## Wave 4: World Model（H-17 / 12 US）
 
 <!-- @work-item-id WI-285 -->
+<!-- @work-item-id WI-292 -->
 
 ## H-17: World Model
 
@@ -1698,6 +1699,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-06）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** World Model実装者,
 **I want to** 既存attestationのSHA-256 primitiveをplain public capabilityとして利用したい,
@@ -1715,6 +1718,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-07）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** 品質管理者,
 **I want to** stable World node identityとcanonical snapshotを構築したい,
@@ -1733,6 +1738,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-08）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** World Model extractor実装者,
 **I want to** traceability-modelからUnit / Story / AC / WorkItem / TestReferenceをplain DTOで読みたい,
@@ -1750,6 +1757,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-09）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** 設計者,
 **I want to** product / inception / ADR / Unit定義を別corpus roleのWorld factとして抽出したい,
@@ -1767,6 +1776,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-10）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** 品質管理者,
 **I want to** source metadata、test reference、matrix、attestation evidenceをowner-aware projectionで抽出したい,
@@ -1785,6 +1796,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-11）
 **優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: required
 
 **As a** repository maintainer,
 **I want to** 全extractorを一つのsnapshotへ組み立て`world:inspect`で観測したい,
@@ -1803,6 +1816,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-12）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** 設計契約管理者,
 **I want to** 両endpointをpinしたexplicit constraintを構造評価したい,
@@ -1822,6 +1837,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-13）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** repository maintainer,
 **I want to** constraints、adoption baseline、waiver、semantic debtをversioned external declarationとして管理したい,
@@ -1840,6 +1857,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-14）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** 品質管理者,
 **I want to** evaluation findingからdeterministic obligationを毎回再導出したい,
@@ -1859,6 +1878,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-15）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** repository maintainer,
 **I want to** endpoint pinとobligation導出を明示的なCLIで実行したい,
@@ -1877,6 +1898,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-16）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** Phasegate maintainer,
 **I want to** synthetic corpus mutationでWorld contractをend-to-end検証したい,
@@ -1895,6 +1918,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-17）
 **優先度**: Must
+**Coverage status**: planned
+**Coverage lifecycle**: planned
 
 **As a** Phasegate maintainer,
 **I want to** self-repoの実測structural violationsをreview済みbaselineとして採用したい,

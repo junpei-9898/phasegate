@@ -548,3 +548,9 @@ target('{クラス名またはメソッド名}', () => {
 - TypeScript-only validators select their adapter when the language is `typescript`.
 - Unsupported validator/language pairs return skipped results with unsupported-language warning metadata.
 - Multi-language aggregation preserves supported execution results and unsupported skips without converting the aggregate into a hard failure.
+
+## WI-292 L3-004 contract
+
+<!-- @work-item-id WI-292 -->
+
+nyquist adapterからplanned ref / lifecycle errorが返った場合にL3-004 failを維持し、planned refなしのpassを他validator resultへ影響させないcontractを検証する。

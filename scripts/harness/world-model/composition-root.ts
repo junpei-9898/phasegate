@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer composition
 // @work-item-id WI-291
+// @work-item-id WI-292
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -34,7 +35,7 @@ import { UnitFactExtractor } from "./infrastructure/adapters/unit-fact-extractor
 import { WorldInspectCommandHandler } from "./presentation/cli/world-inspect-command-handler.js";
 
 const WORLD_SNAPSHOT_SCHEMA_VERSION = "phasegate-world-snapshot/v1";
-const WORLD_EXTRACTOR_VERSION = "phasegate-world-extractor/v1";
+const WORLD_EXTRACTOR_VERSION = "phasegate-world-extractor/v2";
 
 export interface WorldModelModuleOptions {
   readonly rootDir: string;

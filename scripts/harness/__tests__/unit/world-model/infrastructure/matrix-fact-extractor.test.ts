@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer test
 // @work-item-id WI-290
+// @work-item-id WI-292
 // @story H17-05
 
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -37,11 +38,13 @@ const writeMatrix = async (matrix: unknown): Promise<void> => {
 };
 
 const matrix = (generatedAt: string): RequirementTestMatrixDto => ({
-  version: "1.1",
+  version: "1.2",
   generatedAt,
   stories: [
     {
       storyId: "H17-05",
+      coverageStatus: "required",
+      coverageLifecycle: ["planned", "required"],
       storyMappings: [
         {
           acId: "AC-2",
@@ -84,7 +87,40 @@ describe("Matrix fact extraction", () => {
       "pgw:v1:test-reference:H17-05:AC-2:ac:unit:scripts/harness/__tests__/unit/sample.test.ts:name:value:sample",
     ]);
     expect(actual.nodes[0].attributes).not.toHaveProperty("generatedAt");
+    expect(actual.nodes[0].attributes).toMatchObject({
+      stories: [
+        expect.objectContaining({
+          storyId: "H17-05",
+          coverageStatus: "required",
+          coverageLifecycle: ["planned", "required"],
+        }),
+      ],
+    });
     expect(actual.diagnostics).toEqual([]);
+  });
+
+  it("legacy 1.1 matrixのcoverage lifecycleをrequiredへ正規化すること", async () => {
+    // Arrange
+    const legacy = matrix("2026-07-16T00:00:00.000Z");
+    await writeMatrix({
+      ...legacy,
+      version: "1.1",
+      stories: legacy.stories.map(({ coverageStatus: _status, coverageLifecycle: _lifecycle, ...story }) => story),
+    });
+    const sut = new MatrixFactExtractor({ rootDir, hashingPort: new ByteHashingPort() });
+
+    // Act
+    const actual = await sut.extract();
+
+    // Assert
+    expect(actual.nodes[0].attributes).toMatchObject({
+      stories: [
+        expect.objectContaining({
+          coverageStatus: "required",
+          coverageLifecycle: ["required"],
+        }),
+      ],
+    });
   });
 
   it("generatedAtとowner setの列挙順だけが違う場合は同じArtifact digestを返すこと", async () => {
@@ -107,6 +143,29 @@ describe("Matrix fact extraction", () => {
     // Assert
     expect(first.nodes[0].contentDigest.toString()).toBe(second.nodes[0].contentDigest.toString());
     expect(first.nodes.map((node) => node.id.toString())).toEqual(second.nodes.map((node) => node.id.toString()));
+  });
+
+  it("coverage statusが変わる場合はArtifact digestが変わること", async () => {
+    // Arrange
+    const required = matrix("2026-07-16T00:00:00.000Z");
+    const planned = {
+      ...required,
+      stories: required.stories.map((story) => ({
+        ...story,
+        coverageStatus: "planned" as const,
+        coverageLifecycle: ["planned"] as const,
+      })),
+    };
+    const sut = new MatrixFactExtractor({ rootDir, hashingPort: new ByteHashingPort() });
+
+    // Act
+    await writeMatrix(required);
+    const before = await sut.extract();
+    await writeMatrix(planned);
+    const after = await sut.extract();
+
+    // Assert
+    expect(before.nodes[0].contentDigest.toString()).not.toBe(after.nodes[0].contentDigest.toString());
   });
 
   it("duplicate TestReference tupleにwinnerを選ばないこと", async () => {

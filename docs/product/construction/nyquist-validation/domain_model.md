@@ -269,3 +269,9 @@ MatrixValidationServiceの責務範囲をJSONスキーマとstoryId一覧照合�
 - **orphanAcTags**（advisory）: story 外 AC を指す `@ac`、複数 story ファイルの相対 `@ac`。error ではなく warning 相当の助言のみ。
 
 これらは L3-004 の二値判定に一切関与しない（`AcCoverageGatePolicy` は不変）。詳細な正規表現・関連付けルール・スキーマ 1.1 後方互換・将来 `level:"ac"` の前提（fail-closed な L3-005）は logical_design.md を参照。
+
+## Story coverage lifecycle
+
+<!-- @work-item-id WI-292 -->
+
+`CoverageStatus`は`planned | required`、有効なlifecycleは`[planned]`、`[required]`、`[planned, required]`だけとする。status省略はrequired。StoryMappingがstatus / lifecycleを保持し、requiredは従来どおり全AC coverage、plannedはrefなしの場合だけ未カバーをnon-blockingにする。plannedへのref、reverse transition、status/history不一致はL3-004 errorである。

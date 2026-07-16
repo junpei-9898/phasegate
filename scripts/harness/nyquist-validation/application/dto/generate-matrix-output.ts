@@ -2,6 +2,7 @@
 // @unit nyquist-validation
 // @work-item-id WI-125
 // @work-item-id WI-131
+// @work-item-id WI-292
 
 // Intent coverage 系の型は domain 層（value-objects/intent-coverage）を正準とし、
 // application 層はそれを参照・再エクスポートする（domain ← application の正しい依存方向）。
@@ -13,7 +14,13 @@ import type {
 export interface RequirementSourceDto {
   readonly storyId: string;
   readonly acIds: readonly string[];
+  /** 省略された legacy Story は fail-closed の required として扱う。 */
+  readonly coverageStatus?: StoryCoverageStatus;
+  /** Git 管理された順方向遷移履歴。省略時は現在 status から導出する。 */
+  readonly coverageLifecycle?: readonly StoryCoverageStatus[];
 }
+
+export type StoryCoverageStatus = 'planned' | 'required';
 
 /**
  * HF2-05: @ac が story 外の AC を指した／複数 @story のため相対 AC が解決できなかった等の
@@ -61,6 +68,10 @@ export interface MatrixAcMappingDto {
 
 export interface MatrixStoryDto {
   readonly storyId: string;
+  /** schema 1.0/1.1 の読み取りでは省略可。省略時は required。 */
+  readonly coverageStatus?: StoryCoverageStatus;
+  /** schema 1.0/1.1 の読み取りでは省略可。省略時は [required]。 */
+  readonly coverageLifecycle?: readonly StoryCoverageStatus[];
   readonly storyMappings: readonly MatrixAcMappingDto[];
 }
 

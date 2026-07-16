@@ -4,6 +4,7 @@
  *
  * H07-02: AcCoverageGatePolicy チェック
  */
+// @work-item-id WI-292
 import type { MatrixFilePort } from '../../domain/ports/matrix-file-port.js';
 import type { AjvValidatorPort } from './validate-matrix-usecase.js';
 import type { MatrixValidationService } from '../../domain/services/matrix-validation-service.js';
@@ -45,9 +46,14 @@ function buildMatrix(data: unknown): RequirementTestMatrix {
       return AcMapping.create({ acId: String(acm.acId ?? ''), testReferences });
     });
 
+    const coverageStatus = story.coverageStatus === 'planned' ? 'planned' : 'required';
     return StoryMapping.create({
       storyId: String(story.storyId ?? ''),
       acMappings,
+      coverageStatus,
+      coverageLifecycle: Array.isArray(story.coverageLifecycle)
+        ? story.coverageLifecycle.map((value) => String(value) as 'planned' | 'required')
+        : [coverageStatus],
     });
   });
 
