@@ -1351,3 +1351,17 @@ attestation の `granularity.traceability.level` は現時点で **`"file"` の�
 - L3-005 が「全 AC が `binding:"ac"` で個別検証されている」ことを fail-closed で検査する。
 - attestation の `KNOWN_LIMITATIONS_REGISTRY` を **binary/global**（per-file ではない）に切り替え、L3-005 が validator set に含まれるときのみ `level:"ac"` を主張する。per-file 判定は ADR-019 の決定論（生成と検証で完全同一の再導出）を壊すため採らない。
 - L4-007（本 slice の advisory）は fail-closed ではないため、単独では `level:"ac"` を根拠づけない。
+
+## World Model matrix provider boundary（ADR-031〜033）
+
+<!-- @work-item-id WI-281 -->
+
+nyquist-validation はrequirement-test matrixのschema、generation、coverage semanticsとStory / AC / TestReference indexを所有する。World Modelへはversioned matrix public facadeのplain DTOだけを提供し、matrixのdomain object / repositoryを公開しない。Story identityはtraceability-modelのcanonical IDを参照し、nyquist-validationもworld-modelも別のStory modelを作らない。
+
+<!-- @work-item-id WI-282 -->
+
+World向けTestReference identityのprovider tupleは`storyId`, `acId`, `binding ?? "file"`, `testType`, `filePath`, `testName`とする。`generatedAt`、array index、line numberをidentityに含めず、missing bindingはmatrix ownerの既存規則どおり`file`へ正規化する。path / test name変更はold missing + new addedとして観測可能にし、test body類似性からaliasやcontinuityを推論しない。
+
+<!-- @work-item-id WI-283 -->
+
+Worldのmatrix projectionは`generatedAt`を除外し、schema version、Story / AC / TestReference semanticsを含め、set-valued Story / AC / referenceをowner IDで決定的にsortできるDTOとする。保存されたpretty JSON bytesや生成時刻をsemantic matrix identityにしない一方、owner-defined ordered arrayの意味がある場合は順序を明示して保持する。unsupported schema / fieldをsilent dropせずdiagnosticとしてconsumerへ伝える。

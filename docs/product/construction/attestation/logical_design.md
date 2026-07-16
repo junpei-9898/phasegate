@@ -740,3 +740,17 @@ Unit 公開境界。`createAttestationModule` と公開 handler / 主要 DTO 型
 | 非対応 mode 拒否 | `VerifyAttestationUseCase` の mode check（exit 2） |
 | exit 0/1/2 | `VerifyAttestationHandler` + usecase exitCode |
 <!-- @work-item-id WI-224 -->
+
+## World Model provider boundary（ADR-031〜033）
+
+<!-- @work-item-id WI-281 -->
+
+attestation は gate-run evidence、record schema、produce / verify と evidence lifecycle の owner であり続ける。World Model へは evidence の plain DTO / public read facade だけを公開し、`AttestationRecord`、`Digest`、`ContentHasherPort`、repository / crypto adapter を露出しない。World 側の anti-corruption adapter は world-model infrastructure に置き、attestation は world-model を import しない。将来の `worldSnapshotRoot` は top-level composition が primitive input として注入し、相互 import を作らない。
+
+<!-- @work-item-id WI-282 -->
+
+`@attestation` は Story scope evidence への明示 reference として公開 projection に残すが、annotation の line、occurrence ordinal、record 配列順を stable ExplicitClaim ID に昇格しない。attestation-owned record identity と verification semanticsを維持し、World の `pgw:v1` node ID、Fragment alias、Constraint identity を attestation domain に複製しない。file path や evidence locator が変わった場合の World identity / continuity 判定は consumer 側で行う。
+
+<!-- @work-item-id WI-283 -->
+
+World 向け evidence projection は evidence semantics と verification status を含め、`producedAt`、`gitCommit`、producer package version、signature bytes、attestation self-digest、将来の `worldSnapshotRoot` self-reference を semantic root 入力から除外できる plain DTO とする。この projection は attestation record 自体の canonical payload / verification contractを変更しない。SHA-256 は §10 の public `Sha256Capability` を唯一の公開 primitive とし、World 導入のために `node:crypto` call siteを追加しない。

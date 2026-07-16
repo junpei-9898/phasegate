@@ -1271,3 +1271,9 @@ scripts/harness/phase-dependency-model/
 <!-- @work-item-id WI-191 -->
 
 `PlanningMode("manual")` does not require a QA section or answered Q&A. Phase-gate blocker wording distinguishes missing plan/QA content from a planning evidence mode mismatch so retrofit users can see whether the missing artifact is document content or execution evidence.
+
+## Unit definition canonical filename resolution
+
+<!-- @work-item-id WI-281 -->
+
+phase-dependency-modelがUnit definitionを解決するcanonical pathは`docs/product/units/<kebab-case Unit ID>_unit.md`とする。Unit ID、construction directory、source `@unit`、`{unit}_unit.md` placeholderへ同じkebab-case値を用い、underscore filename aliasや複数candidateのwinner選択を導入しない。定義がmissingまたは重複する場合は明示的なdependency / artifact resolution failureとして扱い、filesystem列挙順で代替しない。

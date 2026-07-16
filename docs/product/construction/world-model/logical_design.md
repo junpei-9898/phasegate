@@ -244,3 +244,21 @@ attestation public index
 ```
 
 WM-06はprovider facadeまでを実装し、world-model source、composition-root、`node:crypto` call siteを追加しない。consumer adapterはWorld domain primitiveと同時に後続WIで実装する。
+
+## 13. Phase 0 ADR constraints
+
+<!-- @work-item-id WI-281 -->
+
+world-modelは他Unitの上位正本ではなくfederated read modelである。事実組立と明示constraint評価だけを所有し、traceability ID / lifecycle、matrix、attestation evidence、integrity、validator blocking policyを複製しない。providerのpublic plain DTOをconsumer-owned infrastructure adapterでWorld-local factへ変換し、product canonicalとinception proposal / delta、design / source / generated / external declarationのartifact roleをidentity上も分離する。
+
+<!-- @work-item-id WI-282 -->
+
+全node identityはversioned `pgw:v1` schemaに従い、path-based Artifact / SourceFileとDeclaredKey-based Fragmentを分離する。heading text / order / line / digestからidentityやrenameを推論せず、duplicateはno-winner、continuityはsingle-hop explicit aliasだけとする。Markdown fragmentは`@world-fragment-id`、legacy whole-fileはwhole-file → mixed → explicitのratchet、proposal / canonicalのexact mappingは`@world-reflects`でのみ表す。
+
+<!-- @work-item-id WI-283 -->
+
+Snapshotはowner-aware leaf digestから`corpusRoot`、`constraintRoot`、`evaluationId`を別preimageで導出する。canonical JSONはrecursive key sort、semantic setのstable sort、ordered array保持、UTF-8 / no whitespaceとし、textはCRLF / CRだけをLFへ正規化してUnicode normalizationを行わない。absolute / volatile / self fieldsを除外し、schema / extractor / ruleset versionとscope別resolved config digestを含める。hashingはconsumer-owned `WorldHashingPort`からattestation public `Sha256Capability`へadaptする。
+
+<!-- @work-item-id WI-284 -->
+
+constraintはtyped directed factと両endpoint pinを保持しつつendpoint-symmetricに評価し、機械ruleをexistence、uniqueness、explicit reference、declared dependency、digest equalityの`WCR-001`〜`WCR-008`へ限定する。evaluation DTOはpolicy-free、obligationは毎回derived、adoption baseline / waiver / semantic debtはversioned external declaration、reportは非信頼generated artifactとする。CLI / config / persistenceは§7〜9の`world:*`、exit 0/1/2、`world` config、root control files、`.harness/world-obligations.json`契約に従う。

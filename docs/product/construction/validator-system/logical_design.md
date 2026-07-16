@@ -2058,3 +2058,19 @@ L4-007（`ac-level-traceability`）は AC 単位トレーサビリティを advi
 - 実在 ADR（`docs/ADR/013-story-reflection-gate.md`）に対し `exists('ADR-013')` は `true`、`getMetadata('ADR-013')` は `{ adrId: 'ADR-013', title, status: 'Accepted' }` を返す。実在しない `ADR-999` に対しては `exists` が `false` / `getMetadata` が `null`（回帰なし）。
 
 回帰テスト: `__tests__/integration/validator-system/adapters/adr-foundation-reference-adapter-real-corpus.it.test.ts` が mock を用いず実 ADR コーパスを readdir/readFile する経路で AC-1〜AC-3 を検証する。adr-foundation repository / composition-root、および ci-governance 側 adapter は無変更（スコープ外）。
+
+## World Model validation boundary（ADR-031 / ADR-032 / ADR-034〜037）
+
+<!-- @work-item-id WI-281 -->
+
+validator-systemはvalidator registry、layer execution、severity、exit code、blocking policyを所有する。world-modelのplain evaluation facadeをvalidator-system infrastructure adapterが消費して`ValidationResult`へ変換し、world-model domain / application / infrastructure typeをdeep importしない。逆方向のworld-modelからvalidator-systemへのimportは禁止する。
+
+<!-- @work-item-id WI-282 -->
+
+将来のWorld validatorは`pgw:v1` node ID、duplicate no-winner diagnostic、single-hop explicit alias resolution evidenceをplain DTOとして受け取る。validator-systemはheading / digest similarityからaliasやwinnerを補完せず、missing、duplicate、invalid aliasをprovider resultどおりpolicyへ写像する。World identityを`ValidatorId`へ流用せず、extraction diagnostic code、`WCR-NNN`、`Lx-NNN`を別namespaceに保つ。
+
+<!-- @work-item-id WI-284 -->
+
+World evaluationのWCR finding、violation fingerprint、adoption / waiver classificationをstandard validation resultへ写像する責務をPhase Cで追加する。`WCR-001`とmalformed policy input、新規claim / pin / broken constraintはfail-closed、adoption baselineに含まれる既存violationはvisible non-blocking debt、repaid baseline entry残置はcleanup-required blockingとする。L4-004 findingはWorld fingerprint / baseline / waiverへ混ぜず、重複時も別raw resultとして保持する。
+
+`L2-017 world-constraint-admission`と`L3-008 world-constraint-rederivation`は予約IDであり、WM-19 / WM-20まで`ValidatorId`、registry、preset、RunL2 / RunL3へ登録しない。登録後も一つのvalidator resultが複数`WCR-NNN`を含む構造とし、`world.enabled: false`ではautomatic integrationをskip、explicit `world:*` commandのexit contractはharness-api / world-model handlerに委ねる。

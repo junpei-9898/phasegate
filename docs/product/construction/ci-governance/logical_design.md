@@ -1684,3 +1684,21 @@ ci-governance は `ci:generate-template` の scheduled L4 audit（`consistency-c
 @story-id WI-254
 
 ci-governance は指示搭載ファイル群（`skills/*/SKILL.md`, `.claude/settings.json`, `.claude/scripts/*.sh`, `.husky/*`, `docs/templates/agent-context/**`）の SHA-256 を `phasegate.integrity.json`（ルート・`{version:1, algorithm:"sha256", files:{path:digest}}`・path 昇順）に pin する整合性照合機能を持つ。domain に純ロジック（`IntegrityChecker.computeDrifts`：manifest と再計算結果の突合で `mismatch`/`added`/`missing`/`manifest-absent` を決定的に列挙）と VO（`IntegrityManifest` / `IntegrityTarget` / `IntegrityDrift`）、application に `PinIntegrityUseCase`（再計算して manifest 書き出し・`--dry-run` 対応）と `VerifyIntegrityUseCase`（再計算して照合）、infrastructure に `FileSystemSha256HasherAdapter`（`node:crypto` sha256）と `IntegrityManifestJsonRepositoryAdapter`、presentation に `IntegrityHandler`（`verify` は drift ありで exit 2）を持つ。対象走査は既存 `GlobFileScannerAdapter`（`FileScannerPort`）を再利用する。CLI `integrity:pin` / `integrity:verify`（harness-api の dispatch + `KNOWN_HARNESS_COMMANDS`）と、session-start hook の warn-only 照合（agent-integration）、CI の再計算照合（`.github/workflows/ci.yml`・authoritative）から利用される。ADR-030 §Decision.1 のとおりローカル照合は fast-path、信頼のルートは CI 再計算。
+
+## World Model integrity / policy boundary（ADR-031〜037）
+
+<!-- @work-item-id WI-281 -->
+
+ci-governance は instruction corpus、`phasegate.integrity.json`、integrity pin / verify lifecycle の owner であり続ける。World Model へは versioned public facade の plain integrity DTO だけを提供し、integrity domain model、repository、hasherを公開しない。manifest は人が採用する external declaration、verify result は owner projectionとして扱い、world-model は consumer-owned adapter から観測する。
+
+<!-- @work-item-id WI-282 -->
+
+integrity manifest の project-relative path、include / exclude glob、digest は target / claim payloadであり、World node identityそのものにはしない。ci-governance は digest一致から World alias、rename continuity、Fragment / ExplicitClaim IDを生成せず、manifest orderやlocatorをstable identityとして保証しない。World が必要とする `pgw:v1` identity と single-hop alias resolution は world-model が所有する。
+
+<!-- @work-item-id WI-283 -->
+
+integrity の SHA-256 はfile raw bytesをpinする既存契約を維持する。CRLF正規化やowner-aware JSON projectionを行うWorld leaf digestとは、同じpathでも値が異なり得る別のdigestであり、相互に置換・上書きしない。World projectionではmanifestのpath / digest semanticsを公開できるが、integrity raw-byte digest contractやGit-tracked declaration lifecycleを変更しない。
+
+<!-- @work-item-id WI-284 -->
+
+既存`.phasegate/baseline.json`（path / SHA-1によるhook grandfather）はWorld adoption baselineへimport、upgrade、暗黙変換しない。World control inputは`phasegate.world-baseline.json`等の別schema / lifecycleとし、CI templateは`L2-017` / `L3-008`がvalidator-system registryへ実登録された後にだけlive catalogから取り込む。ci-governance側に予約validator ID、WCR blocking policy、World fingerprint setを複製しない。

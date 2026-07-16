@@ -1976,3 +1976,14 @@ harness-api owns the authoritative catalog of top-level CLI command names as a d
 @story-id WI-254
 
 harness-api の `main.ts` dispatch に `integrity:pin` / `integrity:verify` の 2 コマンドを追加する（ADR-030 §Decision.3.① の CLI 面）。両コマンドは `buildCiGovernance(rootDir, harnessRoot)` の `integrityHandler` を呼び、`integrity:pin` は指示搭載ファイル群の SHA-256 を `phasegate.integrity.json` に再計算・書き出し（`--dry-run` 対応）、`integrity:verify` は再計算して照合し drift 一覧を返す（drift ありで exit 2）。両コマンドは canonical 定数 `KNOWN_HARNESS_COMMANDS` に昇順維持で追加され、conformance テスト（`main.ts` の `case` ラベル集合と canonical 定数の集合一致）を満たす。追加を怠ると乖離検出ゲートが fail する。
+
+## World command transport contract（ADR-037）
+
+<!-- @work-item-id WI-284 -->
+
+harness-api は`world:inspect`、`world:pin`、`world:derive`をtop-level canonical commandとして、main dispatch、help、`KNOWN_HARNESS_COMMANDS`へ同一集合で登録する。commandのdomain処理はworld-model handlerへ委譲し、harness-apiにWCR、snapshot、baseline / waiver policyを複製しない。
+
+- `world:inspect`はread-only、`world:pin`はdefault previewで`--apply`時だけreview対象constraintsを更新、`world:derive`はdefault pureで`--write`時だけgenerated reportを保存する。`--apply`と`--write`を同一mutation flagに統合しない。
+- human / JSONのprimary resultはstdout、usage / unsupported schema / unexpected process failureはstderrとする。JSONは単一`phasegate-world-cli/v1` envelopeとし、exit 1でもresultを保持する。
+- exit 0はnon-blocking success、1はdomain / structural / policy finding、2はtrustworthy resultを生成できないinvocation / config / schema / I/O / hashing failureとする。
+- `world.enabled: false`でもexplicit commandはdispatchする。automatic validator enablementはvalidator-system / configが所有する。

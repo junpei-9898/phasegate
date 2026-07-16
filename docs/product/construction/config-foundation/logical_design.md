@@ -1464,3 +1464,13 @@ The v3 schema keeps `paths.principlesDocs` and `paths.folderRulesDoc` optional b
 <!-- @work-item-id WI-212 -->
 
 The resolved config projection exposes `project.languages` to validator-system and installation consumers. Schema validation rejects an empty list, while unknown language strings are preserved so validator-system can classify them as unsupported combinations with clear warnings instead of treating configuration parsing as the failure point. Generated default config remains TypeScript-compatible.
+
+## World Model resolved config contract（ADR-033 / ADR-037）
+
+<!-- @work-item-id WI-283 -->
+
+World rootへ渡すconfig identityはraw `phasegate.config.json` のhashではなく、config-foundationがdefaults / preset / source mergeを完了したresolved DTOからscope別に投影する。corpus、constraint、evaluationの各projectionをcanonical JSON化して別digestとし、output path / format、session limit、validator severity / blocking、無関係なlayer設定を除外する。config不在時も暗黙値ではなくversioned default projectionを渡す。
+
+<!-- @work-item-id WI-284 -->
+
+config v2 / v3のtop-level canonical keyとして将来`world`を追加し、`worldModel`等のaliasは設けない。`world.enabled`はautomatic integrationについてdefault `false`、explicit `world:*` commandの実行可否とは分離する。corpus / input / declaration / output pathはproject-relative POSIX pathとして検証し、unknown field、unsupported schema、type mismatch、role overlapをdefaultsへfallbackせずfail-closed resultにする。command側はraw JSONを再解釈せず、`LoadResolvedConfigUseCase`由来のplain World config DTOだけを消費する。

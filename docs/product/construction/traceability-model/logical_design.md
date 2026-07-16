@@ -1108,3 +1108,13 @@ Traceability consumers compare design/code/test semantics by Unit-scoped keys. `
 <!-- @work-item-id WI-217 -->
 
 Work item identity extraction supports frontmatter `id` as the canonical identifier even when the directory name is not `WI-XXX`. This lets personal or project-specific layouts such as `ID/ID-09/ID-09-02/description.md` participate in reflection checks while preserving the existing `WI-XXX` default for project-owned inception docs.
+
+## World Model traceability provider boundary（ADR-031 / ADR-032）
+
+<!-- @work-item-id WI-281 -->
+
+traceability-modelはUnit、canonical WorkItem / Story ID、frontmatter parsing、legacy ID resolution、status lifecycleのownerである。World Modelにはplain read DTO / public facadeを提供し、`StoryId`、WorkItem Entity、frontmatter parser result等のdomain型を公開contractへ漏らさない。consumer-owned anti-corruption adapterはworld-model infrastructureに置き、traceability-modelからworld-modelをimportしない。
+
+<!-- @work-item-id WI-282 -->
+
+WorkItem projectionはproviderが解決したcanonical `WI-\d+`を返し、`legacy_id`はprovider-owned single-hop aliasとして別nodeを生成せず公開する。`@work-item-id`は複数IDへ展開可能なprovenance / reflection referenceであり、annotation lineやoccurrence ordinalをstable claim IDにしない。project-relative pathは既存`ProjectRelativePath`のlexical contractを維持し、Worldの`pgw:v1` encoding、Fragment identity、alias diagnosticをtraceability-model内へ複製しない。

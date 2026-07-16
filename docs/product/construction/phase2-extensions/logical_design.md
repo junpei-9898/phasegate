@@ -535,3 +535,13 @@ HF2-01 (doc-freshness-checker) に frontmatter セマンティクスチェック
 <!-- @work-item-id WI-217 -->
 
 The L4-004 bridge supplies the default freshness target from the resolved `paths.designDocs` value. Explicit command patterns remain authoritative, but canonical `validate --layer L4` should scan `${paths.designDocs}/**/*.md` when that path is configured. Root `docs/**/*.md` is only a compatibility fallback for configurations that do not expose a design-doc root.
+
+## L4-004 と World structural drift の共存
+
+<!-- @work-item-id WI-284 -->
+
+phase2-extensionsはL4-004のdocument age / review freshness predicateを所有し続ける。latest Git timestamp（取得不能時のmtime fallback）とwarn / error day thresholdによるtemporal heuristicは、World Modelのstable ID、explicit reference / dependency、content pinを評価するWCRへ統合しない。
+
+- 同一documentにWCR findingとL4-004 findingがあってもraw findingを両方保持し、path / messageだけでdeduplicateしない。WCRをprimary structural remediation、L4-004をsupporting temporal signalとして相関できるが、L4 findingをWorld fingerprint / adoption baseline / waiverへ入れない。
+- self-repoのL4 disabledはdogfood policyでありcapability廃止ではない。明示`validate --layer L4`のforce-enable、registry / composition、strict presetの有効性を維持する。
+- 縮退はWM-24完了、1 warn-threshold期間、2回以上のdual-runをすべて満たした後、document pattern単位のinventoryと別WIでだけ判断する。time-only value、unconstrained document、actionable L4-only findingが残るpatternは維持する。
