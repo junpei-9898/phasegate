@@ -435,3 +435,15 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 | UT-WM291-API-001 | known command | canonical catalog | `world:inspect`を含みunique / sorted |
 | UT-WM291-API-002 | scope boundary | canonical catalog | `world:pin` / `world:derive`をまだ含まない |
 | UT-WM291-API-003 | help transport | `world:inspect --help` | read-only、format flag、exit contractを表示 |
+
+## WI-296 World command catalog tests
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+| ID | 観点 | 入力 | 期待結果 |
+|---|---|---|---|
+| UT-WM296-API-001 | known command | catalog | inspect / pin / deriveを含みunique / sorted |
+| UT-WM296-API-002 | dispatch conformance | main case labels | catalogと集合一致 |
+| UT-WM296-API-003 | help | root / pin / derive | mutation flagとformat contractを表示 |

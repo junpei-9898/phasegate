@@ -1,6 +1,6 @@
 // @unit harness-api
 // @layer domain
-// @work-item-id WI-250, WI-291
+// @work-item-id WI-250, WI-291, WI-296
 // known-harness-commands.ts — CLI 実サーフェスの canonical 既知コマンド一覧
 //
 // main.ts の CLI dispatch（`switch (command)`）が受理する全トップレベルコマンド名の
@@ -87,5 +87,7 @@ export const KNOWN_HARNESS_COMMANDS: readonly string[] = Object.freeze([
   "validate-fix",
   "validate-metadata",
   "work-items:status",
+  "world:derive",
   "world:inspect",
+  "world:pin",
 ]);

@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer domain
-// @work-item-id WI-295
+// @work-item-id WI-295, WI-296
 
 import type { WorldHashingPort } from "../ports/world-hashing-port.js";
 import { ViolationFingerprint } from "../value-objects/violation-fingerprint.js";
@@ -31,13 +31,15 @@ const subjectRole = (finding: ConstraintFindingDto): "claimant" | "premise" | "b
 
 const subjectOf = (finding: ConstraintFindingDto): CanonicalJsonObject => {
   const endpointRole = subjectRole(finding);
+  const globalNodeId =
+    endpointRole === "global" && typeof finding.evidence.nodeId === "string" ? finding.evidence.nodeId : undefined;
   const ids =
     endpointRole === "claimant"
       ? [finding.claimant?.declaredNodeId]
       : endpointRole === "premise"
         ? [finding.premise?.declaredNodeId]
         : endpointRole === "both" || endpointRole === "global"
-          ? [finding.claimant?.declaredNodeId, finding.premise?.declaredNodeId]
+          ? [globalNodeId, finding.claimant?.declaredNodeId, finding.premise?.declaredNodeId]
           : [];
   return {
     endpointRole,
@@ -93,10 +95,23 @@ const expectedObserved = (
       };
     case "WCR-005":
       return {
-        expected: { candidateCount: 1, nodeId: endpoint?.declaredNodeId ?? null },
+        expected: {
+          candidateCount: 1,
+          nodeId:
+            endpoint?.declaredNodeId ?? (typeof finding.evidence.nodeId === "string" ? finding.evidence.nodeId : null),
+        },
         observed: {
-          candidateContentDigests: [...(endpoint?.candidateContentDigests ?? [])].sort(),
-          candidateCount: endpoint?.candidateCount ?? 0,
+          candidateContentDigests:
+            endpoint !== null
+              ? [...endpoint.candidateContentDigests].sort()
+              : Array.isArray(finding.evidence.candidateContentDigests)
+                ? finding.evidence.candidateContentDigests
+                    .filter((value): value is string => typeof value === "string")
+                    .sort()
+                : [],
+          candidateCount:
+            endpoint?.candidateCount ??
+            (typeof finding.evidence.candidateCount === "number" ? finding.evidence.candidateCount : 0),
           resolution: typeof finding.evidence.resolution === "string" ? finding.evidence.resolution : null,
         },
       };

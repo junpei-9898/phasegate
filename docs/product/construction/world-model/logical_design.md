@@ -346,3 +346,13 @@ constraintsはsupported envelopeとrecord admissionを分離し、malformed / du
 `DeriveObligationsUseCase`はpolicy repositoryをloadし、invalid resultをemptyへfallbackせずreportなしのfail-closed resultへする。valid inputではpolicyInputsDigestを先に導出し、既存`SnapshotRootDeriver`の`phasegate-world-evaluation/v1` preimageへ渡してevaluation IDを確定した後、current findingのfingerprint / classification / reportを構築する。
 
 use caseはreport read portを持たない。pure modeはcanonical bytesを返すだけ、write modeは同一bytesを`ObligationReportWriterPort`へ渡す。filesystem adapterは`.harness/world-obligations.json`をtemp + atomic renameで置換する。composition-rootはWM-13 repositoriesとwriterをbindするが、presentation handler / main dispatchはWM-15へ残す。
+
+## WI-296 Pin / derive command wiring
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+`PinConstraintEndpointUseCase`はSnapshotとconstraint repositoryだけを消費し、default preview、明示apply時だけcomplete admitted constraints documentをatomic replaceする。`DeriveWorldObligationsUseCase`はSnapshot、constraintRoot、WCR evaluationをWM-14 use caseへ接続し、injectable policy dateをsemantic inputとして渡す。
+
+`WorldPinCommandHandler` / `WorldDeriveCommandHandler`はADR-037のflag、human / JSON、stdout / stderr、exit 0/1/2を実装する。composition-rootがhandlerまで配線し、mainはhelp / dispatchだけを追加する。presentationはbaseline / waiver policyやfingerprintを再計算しない。

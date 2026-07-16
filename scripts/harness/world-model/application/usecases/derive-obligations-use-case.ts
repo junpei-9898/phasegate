@@ -1,6 +1,6 @@
 // @unit world-model
 // @layer application
-// @work-item-id WI-295
+// @work-item-id WI-295, WI-296
 
 import type { CanonicalJsonSerializer } from "../../domain/services/canonical-json-serializer.js";
 import type { ConstraintFindingDto } from "../../domain/services/constraint-evaluator.js";
@@ -29,6 +29,7 @@ export interface DeriveObligationsInput {
   readonly evaluationConfigDigest: Sha256Digest;
   readonly policyAsOfDate: string | null;
   readonly writeReport: boolean;
+  readonly reportPath?: string;
 }
 
 export type ReportPersistenceResult =
@@ -135,7 +136,7 @@ export class DeriveObligationsUseCase {
     });
     if (input.writeReport) {
       try {
-        await this.dependencies.writer.write(canonicalBytes);
+        await this.dependencies.writer.write(canonicalBytes, input.reportPath);
         persistence = Object.freeze({ state: "written" });
       } catch (error) {
         persistence = Object.freeze({

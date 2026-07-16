@@ -1,10 +1,11 @@
 // @unit world-model
 // @layer infrastructure
-// @work-item-id WI-295
+// @work-item-id WI-295, WI-296
 
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { ObligationReportWriterPort } from "../../application/ports/obligation-report-writer-port.js";
+import { PathKey } from "../../domain/value-objects/path-key.js";
 
 let temporarySequence = 0;
 
@@ -20,8 +21,9 @@ export class FileSystemObligationReportWriterAdapter implements ObligationReport
     this.reportPath = options.reportPath ?? ".harness/world-obligations.json";
   }
 
-  async write(bytes: Uint8Array): Promise<void> {
-    const absolutePath = path.join(this.options.rootDir, this.reportPath);
+  async write(bytes: Uint8Array, reportPath?: string): Promise<void> {
+    const resolvedPath = PathKey.create(reportPath ?? this.reportPath).toString();
+    const absolutePath = path.join(this.options.rootDir, resolvedPath);
     await mkdir(path.dirname(absolutePath), { recursive: true });
     const temporaryPath = `${absolutePath}.${process.pid}-${temporarySequence++}.tmp`;
     try {

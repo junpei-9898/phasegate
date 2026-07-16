@@ -1878,8 +1878,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-15）
 **優先度**: Must
-**Coverage status**: planned
-**Coverage lifecycle**: planned
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
 
 **As a** repository maintainer,
 **I want to** endpoint pinとobligation導出を明示的なCLIで実行したい,

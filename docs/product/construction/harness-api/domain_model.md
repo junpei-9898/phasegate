@@ -427,3 +427,11 @@ Legacy alias names are presentation-level command identities, not separate domai
 @story-id H17-06
 
 `world:inspect`をharness-api所有のtop-level command identityとして`KNOWN_HARNESS_COMMANDS`へ追加する。catalogは引き続きdependency-free、unique、sortedで、main dispatchのcase集合と完全一致する。Snapshot、diagnostic、exit classificationのdomain意味はworld-modelに属し、harness-apiは複製しない。
+
+## WI-296 World command catalog completion
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+`world:pin`と`world:derive`をcanonical top-level command identityへ追加し、`world:inspect`と合わせた3 command集合を完成する。harness-apiはcommand名とdispatch集合一致だけを所有し、pin candidate、WCR、obligation classificationを複製しない。

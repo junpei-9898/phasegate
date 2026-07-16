@@ -1997,3 +1997,11 @@ harness-api は`world:inspect`、`world:pin`、`world:derive`をtop-level canoni
 WM-11ではADR-037で予約した三commandのうち`world:inspect`だけをmain help / subcommand help / dispatch / `KNOWN_HARNESS_COMMANDS`へ同時登録する。mainはconfig-foundationの`LoadResolvedConfigUseCase`を通ったplain resolved inputをworld-model composition rootへ渡し、handler resultのstdout / stderr / exit codeをそのままprocess境界へ写像する。
 
 invalid configはcanonical defaultsへfallbackせずworld handlerのexit 2とする。`world:pin` / `world:derive`のcase、help、known-command entryはWM-15まで作らない。harness-apiはfact抽出、Snapshot assembly、hard diagnostic分類を実装しない。
+
+## WI-296 `world:pin` / `world:derive` transport wiring
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / deriveを同時追加する。explicit `world:*`はconfig不在でもWorld canonical defaultsを使い、configが存在してinvalidならhandler failure adapter経由でexit 2にする。mainはhandlerのstdout / stderr / exit codeをそのままprocessへ写像し、mutation / policy判断を持たない。

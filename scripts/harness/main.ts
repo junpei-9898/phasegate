@@ -93,7 +93,12 @@ import {
 import { createSkillQualityHandlers } from "./skill-quality/composition-root.js";
 import { createTraceabilityModelModule } from "./traceability-model/composition-root.js";
 import { createValidatorSystemModule } from "./validator-system/composition-root.js";
-import { createWorldModelModule, WorldInspectCommandHandler } from "./world-model/index.js";
+import {
+  createWorldModelModule,
+  WorldDeriveCommandHandler,
+  WorldInspectCommandHandler,
+  WorldPinCommandHandler,
+} from "./world-model/index.js";
 
 /**
  * main.ts (scripts/harness/main.ts) から2階層上がパッケージルート。
@@ -235,6 +240,8 @@ Commands:
   phasegate:attest               Produce a signed-attestation record of ci-check (--out <path>, --require-pass, --mode <unsigned-poc|signed>, --json)
   phasegate:verify-attestation   Verify an attestation record's integrity (<file>, --json)
   world:inspect                  Inspect the read-only World snapshot (--format human|json, --json)
+  world:pin                      Preview or apply an endpoint pin (--constraint, --endpoint, --apply)
+  world:derive                   Derive obligations (--write, --out, --format human|json, --json)
 
 Gate semantics:
   phasegate:complete-check       Gate: lint + all validators; exits 1 on failure
@@ -788,6 +795,27 @@ Check whether the harness is ready (config valid, hooks deployed).`,
 Inspect the read-only World snapshot without writing declarations or generated reports.
 
 Options:
+  --format <human|json>          Output format (default: human)
+  --json                         Alias for --format json
+  --help, -h                     Show this help`,
+  "world:pin": `Usage: phasegate world:pin --constraint <id> --endpoint <claimant|premise> [options]
+
+Preview a current endpoint digest. Use --apply to atomically update phasegate.world-constraints.json.
+
+Options:
+  --constraint <id>              pgw:v1:constraint ID
+  --endpoint <role>              claimant or premise
+  --apply                        Atomically apply the candidate
+  --format <human|json>          Output format (default: human)
+  --json                         Alias for --format json
+  --help, -h                     Show this help`,
+  "world:derive": `Usage: phasegate world:derive [options]
+
+Derive the immutable World obligation report. Default mode is pure and read-only.
+
+Options:
+  --write                        Persist the raw obligation report
+  --out <path>                   Override report path (requires --write)
   --format <human|json>          Output format (default: human)
   --json                         Alias for --format json
   --help, -h                     Show this help`,
@@ -1891,7 +1919,7 @@ async function main(): Promise<void> {
   const json = hasFlag(args, "--json");
 
   // Cross-unit wiring: 設定を先に解決し、各Unit に注入する
-  const resolvedConfig = command === "world:inspect" ? undefined : await loadResolvedConfig();
+  const resolvedConfig = command.startsWith("world:") ? undefined : await loadResolvedConfig();
 
   try {
     switch (command) {
@@ -2700,6 +2728,40 @@ async function main(): Promise<void> {
           }).worldInspectCommandHandler;
         } catch (error) {
           handler = WorldInspectCommandHandler.fromFailure(error);
+        }
+        const result = await handler.execute(args.slice(1));
+        if (result.stdout.length > 0) process.stdout.write(result.stdout);
+        if (result.stderr.length > 0) process.stderr.write(result.stderr);
+        process.exitCode = result.exitCode;
+        return;
+      }
+
+      case "world:pin": {
+        let handler: WorldPinCommandHandler;
+        try {
+          handler = createWorldModelModule({
+            rootDir,
+            resolvedConfig: await loadWorldResolvedConfig(),
+          }).worldPinCommandHandler;
+        } catch (error) {
+          handler = WorldPinCommandHandler.fromFailure(error);
+        }
+        const result = await handler.execute(args.slice(1));
+        if (result.stdout.length > 0) process.stdout.write(result.stdout);
+        if (result.stderr.length > 0) process.stderr.write(result.stderr);
+        process.exitCode = result.exitCode;
+        return;
+      }
+
+      case "world:derive": {
+        let handler: WorldDeriveCommandHandler;
+        try {
+          handler = createWorldModelModule({
+            rootDir,
+            resolvedConfig: await loadWorldResolvedConfig(),
+          }).worldDeriveCommandHandler;
+        } catch (error) {
+          handler = WorldDeriveCommandHandler.fromFailure(error);
         }
         const result = await handler.execute(args.slice(1));
         if (result.stdout.length > 0) process.stdout.write(result.stdout);

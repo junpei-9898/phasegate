@@ -664,3 +664,11 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 | IT-WM291-API-003 | invalid config | malformed `phasegate.config.json` | fallbackせずexit 2 |
 | IT-WM291-API-004 | help | `world:inspect --help` / root help | commandとflag contractを掲載 |
 | IT-WM291-API-005 | read-only | command前後のrepository | generated / control fileを書かない |
+
+## WI-296 Pin / derive CLI integration
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+main processを通じてpin preview / apply、derive pure / write、invalid invocation / schema / configを実行し、single JSON envelope、human stderr、exit 0/1/2、filesystem mutation scopeを確認する。known command conformanceは3 world commandをmain case集合と同じcommitで検証する。

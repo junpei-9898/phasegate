@@ -245,3 +245,13 @@ temp project rootへ4種類のfixtureを配置し、canonical file不在、valid
 WM-13 fixture repositories、public SHA capability adapter、canonical serializer、derive use case、filesystem report writerをtemp rootへbindする。同じevaluation / policy inputの二重導出と列挙順variantをgolden bytesで比較し、既存report手編集が再導出へ入らないことを確認する。
 
 pure modeはreportを書かず、write modeは同じraw report bytesを`.harness/world-obligations.json`へatomic renameする。unknown policy schemaとwrite failureはそれぞれreportなし / persistence failureとして観測し、partial fileやempty policy launderingを許さない。
+
+## WI-296 world command E2E
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+process境界でpin preview / apply、derive pure / default write / explicit out、format flags、exit 0/1/2、invalid config / declaration schemaを検証する。pin apply前後は4 control fileとreportを比較してconstraints以外が不変、derive writeではreport以外が不変であることをassertする。
+
+同一fixtureの`world:derive --json`を2回実行しstdoutをbyte比較する。persist fileはCLI envelopeでなく`phasegate-world-obligation-report/v1` raw reportであることをpublished schemaで検証する。

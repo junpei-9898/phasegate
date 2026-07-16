@@ -3,6 +3,7 @@
 // @work-item-id WI-291
 // @work-item-id WI-292
 // @work-item-id WI-295
+// @work-item-id WI-296
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -12,7 +13,9 @@ import {
 } from "./application/dto/world-resolved-config-input.js";
 import { BuildSnapshotUseCase } from "./application/usecases/build-snapshot-use-case.js";
 import { DeriveObligationsUseCase } from "./application/usecases/derive-obligations-use-case.js";
+import { DeriveWorldObligationsUseCase } from "./application/usecases/derive-world-obligations-use-case.js";
 import { InspectWorldUseCase } from "./application/usecases/inspect-world-use-case.js";
+import { PinConstraintEndpointUseCase } from "./application/usecases/pin-constraint-endpoint-use-case.js";
 import { CanonicalJsonSerializer } from "./domain/services/canonical-json-serializer.js";
 import { ObligationDerivationService } from "./domain/services/obligation-derivation-service.js";
 import { PolicyInputsDigestDeriver } from "./domain/services/policy-inputs-digest-deriver.js";
@@ -30,6 +33,7 @@ import { DesignCorpusFactExtractor } from "./infrastructure/adapters/design-corp
 import { FileSystemObligationReportWriterAdapter } from "./infrastructure/adapters/file-system-obligation-report-writer-adapter.js";
 import {
   FileSystemAdoptionBaselineRepositoryAdapter,
+  FileSystemConstraintDeclarationRepositoryAdapter,
   FileSystemSemanticDebtRepositoryAdapter,
   FileSystemWaiverDeclarationRepositoryAdapter,
 } from "./infrastructure/adapters/file-system-world-control-repository-adapters.js";
@@ -43,7 +47,9 @@ import { TestReferenceSourceFactExtractor } from "./infrastructure/adapters/test
 import { TraceabilityDesignFactAdapter } from "./infrastructure/adapters/traceability-design-fact-adapter.js";
 import { TraceabilityWorldReadFacadeMerger } from "./infrastructure/adapters/traceability-world-read-facade-merger.js";
 import { UnitFactExtractor } from "./infrastructure/adapters/unit-fact-extractor.js";
+import { WorldDeriveCommandHandler } from "./presentation/cli/world-derive-command-handler.js";
 import { WorldInspectCommandHandler } from "./presentation/cli/world-inspect-command-handler.js";
+import { WorldPinCommandHandler } from "./presentation/cli/world-pin-command-handler.js";
 
 const WORLD_SNAPSHOT_SCHEMA_VERSION = "phasegate-world-snapshot/v1";
 const WORLD_EXTRACTOR_VERSION = "phasegate-world-extractor/v2";
@@ -149,6 +155,10 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
   });
   const inspectWorldUseCase = new InspectWorldUseCase({ buildSnapshot: buildSnapshotUseCase });
   const fingerprintDeriver = new ViolationFingerprintDeriver(serializer, hashingPort);
+  const constraintRepository = new FileSystemConstraintDeclarationRepositoryAdapter({
+    rootDir: options.rootDir,
+  });
+  const rootDeriver = new SnapshotRootDeriver(serializer, hashingPort);
   const deriveObligationsUseCase = new DeriveObligationsUseCase({
     baselineRepository: new FileSystemAdoptionBaselineRepositoryAdapter({
       rootDir: options.rootDir,
@@ -165,12 +175,40 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     serializer,
     writer: new FileSystemObligationReportWriterAdapter({ rootDir: options.rootDir }),
   });
+  const deriveWorldObligationsUseCase = new DeriveWorldObligationsUseCase({
+    buildSnapshot: buildSnapshotUseCase,
+    constraintRepository,
+    rootDeriver,
+    deriveObligations: deriveObligationsUseCase,
+    policyDate: {
+      currentUtcDate: () => new Date().toISOString().slice(0, 10),
+    },
+    constraintConfigDigest: hashingPort.sha256(
+      serializer.serialize({
+        schemaVersion: "phasegate-world-constraint-config/v1",
+        constraintsPath: "phasegate.world-constraints.json",
+      }),
+    ),
+    evaluationConfigDigest: hashingPort.sha256(
+      serializer.serialize({
+        schemaVersion: "phasegate-world-evaluation-config/v1",
+        rulesetVersion: "phasegate-world-wcr/v1",
+      }),
+    ),
+  });
+  const pinConstraintEndpointUseCase = new PinConstraintEndpointUseCase(buildSnapshotUseCase, constraintRepository);
   const worldInspectCommandHandler = new WorldInspectCommandHandler({ inspectWorld: inspectWorldUseCase });
+  const worldPinCommandHandler = new WorldPinCommandHandler(pinConstraintEndpointUseCase);
+  const worldDeriveCommandHandler = new WorldDeriveCommandHandler(deriveWorldObligationsUseCase);
 
   return {
     buildSnapshotUseCase,
     deriveObligationsUseCase,
+    deriveWorldObligationsUseCase,
     inspectWorldUseCase,
+    pinConstraintEndpointUseCase,
+    worldDeriveCommandHandler,
     worldInspectCommandHandler,
+    worldPinCommandHandler,
   } as const;
 }

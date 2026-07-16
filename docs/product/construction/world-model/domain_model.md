@@ -290,3 +290,13 @@ supported constraints envelope内の各recordは`ConstraintRecord`または`Malf
 `ViolationFingerprintDeriver`はWCR findingをruleset-bound semantic preimageへ変換し、constraint identityとは別の`pgw:v1:violation-fingerprint:sha256:*`を導出する。subject、両pin、rule-owned expected / observedを含め、locator、message、evaluation / policy stateを除外する。duplicate observationはcandidate cardinalityとsorted content-digest multisetを保持する。
 
 `PolicyInputsDigestDeriver`はbaseline / waivers / semantic debts / effective dateをcanonicalizeし、`ObligationDerivationService`はsame-ruleset baselineとの集合差、exclusive waiver expiry、WCR-001 non-waivable、ruleset mismatchをclassification / diagnosticへ変換する。reportはstructural / repaid / declared semantic debt / policy diagnosticを別collectionで保持し、blocking policyを含めない。
+
+## WI-296 Pin candidate / CLI verdict
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+`PinCandidate`はconstraint ID、claimant / premise role、stable node ID、before / after digest、changed flagだけを持つ。exact一件またはvalid single-hop alias target一件だけを解決し、missing / duplicate / ambiguous inputにwinnerを作らない。
+
+derive CLI verdictはimmutable reportからsuccess / domain finding / execution failureを区別する。new / invalid structural obligation、repaid cleanup、policy diagnosticはfinding、adopted / waived / declared semantic debtだけならsuccessとする。validator severity / blocking booleanは持たない。

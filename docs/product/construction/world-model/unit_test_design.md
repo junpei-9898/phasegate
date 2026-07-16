@@ -338,3 +338,11 @@ valid constraintsをWM-12 domain型へ変換し、malformed supported recordとd
 ADR-035のfingerprint 10-field preimage、locator / message / evaluation ID除外、observed digest / duplicate multiset変化を検証する。policy digestはwaiver 0件のdate null、waiverありdate必須、declaration set sortを固定する。baseline intersection / difference、active / expired exact waiver、WCR-001 non-waivable、ruleset mismatch、semantic debt別collectionをdomain実体で検証する。
 
 application testはinvalid repository resultでreportを作らないこと、pure modeでwriterを呼ばないこと、write modeがpureと同じbytesだけを一度渡すことを確認する。
+
+## WI-296 pin / derive command tests
+
+<!-- @work-item-id WI-296 -->
+
+@story-id H17-10
+
+pin use caseはpreview / apply、exact / alias、missing / duplicate / malformed、unknown schema / write failureを検証する。derive integrationはempty declaration、constraintRoot、WCR finding、report persistenceを検証する。presentation testはformat conflict、out-without-write、domain exit 1、execution exit 2、single JSON envelopeとstable human section順を固定する。
