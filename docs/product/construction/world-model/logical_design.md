@@ -274,3 +274,15 @@ constraintはtyped directed factと両endpoint pinを保持しつつendpoint-sym
 WM-07はthree-rootのcanonical preimage / hashing境界を実装するが、constraint / claim / aliasはID付きplain canonical projectionとしてだけ受ける。declaration admission、WCR evaluation、policyは後続WMが追加する。filesystem、owner adapter、public facade、`index.ts`、composition-root、CLIは作らない。
 
 set-valued nodes / edges / diagnostics / declarationsはderiverがcopy-sortし、serializerはordered arrayを保持する。text normalizerはmarkerやproseを解釈せず、strict UTF-8 decodeとCRLF / CR → LFだけを行う。fragment range / owner projectionはextractorの責務として残す。
+
+## 15. WI-289 design corpus extractor adapters
+
+<!-- @work-item-id WI-289 -->
+
+@story-id H17-04
+
+`infrastructure/adapters/`へproduct / proposal / ADR / Unit専用extractor、共通Markdown extractor、traceability ACL、cross-corpus coordinatorを追加する。4 scope adapterはfilesystem root / corpus role / canonical Unit exclusionだけを持ち、marker parseとWorld fact生成を共通化する。
+
+coordinatorはtraceability-model public `index.ts`のplain facadeだけをreadし、candidate集合へWorkItem / Unit / Story owner indexを供給する。same-role Fragment duplicate、case-fold path collision、unknown WorkItem、missing / invalid `@world-reflects` endpointをno-winnerで解決し、final node / edge / diagnosticをstable tuple orderで返す。
+
+WM-09ではextractor classを直接testし、`world-model/composition-root.ts`と`index.ts`は作成・変更しない。WM-11が全extractorをapplication use caseへ配線する。

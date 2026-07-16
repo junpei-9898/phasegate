@@ -191,3 +191,13 @@ WM-05ではfixture / test sourceをまだ作成せず、各実装WIが本設計�
 WM-06のintegration checkpointはattestation public rootからbytes hashing / UTF-8 helperを利用でき、既存attestation adapterと同値であること。World extractor / Snapshotとのintegration testはWM-07以降に行う。
 
 public facade contract testはconsumerがattestation内部pathをimportしなくても完結し、repository source scanで新しいWorld側`node:crypto` call siteがないことを確認する。
+
+## 11. WI-289 design corpus filesystem integration
+
+<!-- @work-item-id WI-289 -->
+
+@story-id H17-04
+
+repository-shaped fixtureをtemporary rootへcopyし、product / inception / ADR / Unit extractorとtraceability public facadeを実filesystemで統合する。minimal valid corpus、same-bytes cross-role、duplicate DeclaredKey、malformed / orphan marker、missing reflection、symlink / unsupported fileを検証する。
+
+同じfixtureを作成順・absolute temp root・LF / CRLFだけ変えて抽出し、canonical node / edge / diagnostic projectionが一致することを確認する。World sourceのprovider importはtraceability public `index.ts`だけ、SHA-256はattestation public capability経由、composition-root / indexはWM-11まで不変とする。

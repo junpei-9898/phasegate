@@ -220,3 +220,15 @@ WM-07は`WorldNodeId`、`PathKey`、`DeclaredKey`、`Sha256Digest`、`CorpusRole
 `WorldNode`、`Edge`、`ExtractionDiagnostic`はcanonical projectionを持ち、`Snapshot`はsorted nodes / edges / diagnostics、`corpusRoot`、Snapshot IDとoptional constraint / evaluation root boundaryをimmutableに保持する。`SnapshotRootDeriver`はplain constraint projectionも受けられるが、ConstraintRecord / WCR semanticsは実装しない。
 
 `CanonicalJsonSerializer`はJSON data model外の値をfail-closedで拒否し、`TextContentNormalizer`はfatal UTF-8 + LF transport normalizationだけを行う。domainは`WorldHashingPort`以外のruntime capabilityに依存せず、filesystem、`node:crypto`、他Unit型をimportしない。
+
+## 13. WI-289 design corpus fact projection
+
+<!-- @work-item-id WI-289 -->
+
+@story-id H17-04
+
+product / inception / ADR / Unit definitionは`design-document` Artifactとして抽出し、corpus roleをそれぞれ`product / inception / adr`へ固定する。bytesが同じproduct canonicalとinception proposalをdigestでdeduplicateせず、path + roleの別identityとして保持する。
+
+explicit Fragmentはrole + DeclaredKeyだけをidentityとし、artifact path、heading text / level / order、line、digestはlocator attributesへ置く。markerなしはlegacy whole-file、markerありcompletionなしはmixed、valid completionありはexplicit stateとする。duplicate ID、case-fold collision、malformed / orphan marker、unsupported inputにはwinnerを設けずExtractionDiagnosticへ変換する。
+
+traceability public DTOはWorkItem node、Unit owner、Story catalog attributeへ投影する。provider diagnosticはcode / subject / paths / messageをlossless payloadとして保持し、Story / ACの新しいWorld identityやprovider domain modelを複製しない。

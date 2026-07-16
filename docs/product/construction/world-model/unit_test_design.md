@@ -261,3 +261,17 @@ WM-07ではUT-WM283のCAN / TXT / PATH lexical subset / CR / KR / EV / DETと、
 | `snapshot-root-deriver.test.ts` | CR / KR / EV / DET、stable set sort、three-root separation |
 
 symlink traversal、fragment marker content range、matrix / attestation owner-aware projectionはdomain-only WM-07の実装済みtestとして主張せず、WM-09/10のintegration fixtureへ継続する。
+
+## 11. WI-289 design corpus extractor tests
+
+<!-- @work-item-id WI-289 -->
+
+@story-id H17-04
+
+| Test file | Covered contract |
+|---|---|
+| `markdown-design-fact-extractor.test.ts` | metadata prelude、orphan / malformed、whole-file / mixed / explicit、LF normalization |
+| `traceability-design-fact-adapter.test.ts` | public plain DTOからWorkItem / Unit / Story index、provider diagnostic lossless変換 |
+| `design-corpus-fact-extractor.test.ts` | duplicate no-winner、role別WI edge、explicit reflection resolution、deterministic order |
+
+domain objectは実体を使い、hashingだけをtest-local deterministic portで制御する。test名は日本語、AAAを明示し、expected ID / diagnosticをliteralで検証する。
