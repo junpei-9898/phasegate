@@ -316,3 +316,9 @@ CP-3 mutation fixtureはbaseline/current Snapshotを明示pairとして扱う。
 <!-- @work-item-id WI-300 -->
 
 Worldはconfig-foundationのdomain型をimportせず、plain `WorldResolvedConfigInput`をconsumer-owned application DTOとして受ける。corpus、provider input、declaration、output、sessionStartの全path / limitはproviderで検証済みだが、World境界でもPathKeyによるfail-closed validationを維持する。`enabled`はautomatic integration hintでありdomain evaluationの意味を変えない。
+
+## WI-301 L2 admission observation boundary
+
+<!-- @work-item-id WI-301 -->
+
+world-modelは既存WCR evaluation、fingerprint、baseline / waiver classificationを変更せず、pure derive resultをpublic composition facadeから返す。`new-structural`、`invalid-declaration`、`adopted-legacy`、`waived`はWorldの事実 / classificationであり、severity / blockingはvalidator-systemが決める。

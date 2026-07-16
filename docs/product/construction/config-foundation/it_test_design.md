@@ -415,3 +415,9 @@ scripts/harness/__tests__/config-foundation/
 <!-- @work-item-id WI-300 -->
 
 v2 / v3 AJV schemaへ同じ完全World documentを通し、unknown field、absolute / backslash / traversal path、範囲外session limitを拒否する。preset storeはminimal / standard / strict全てでcanonical defaultsと`enabled:false`を返し、load use caseからconsumer mapperまでoverrideを保持する。
+
+## WI-301 Automatic World gate projection integration
+
+<!-- @work-item-id WI-301 -->
+
+resolved configをvalidator-system adapterへ渡し、`world.enabled:false`でL2-017がskip、trueでselectedになることを検証する。explicit World commandはこのselectionを参照しないこと、L3-008がprojectionへ混入しないことも固定する。

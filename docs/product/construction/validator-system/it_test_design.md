@@ -508,3 +508,16 @@ generated matrix 1.2をvalidator-system L3経路で読み、H17 planned Storyを
 <!-- @work-item-id WI-300 -->
 
 minimal / standard / strictのresolved World configをvalidator compositionへ渡しても既存L2 / L3 execution結果が変わらず、予約validatorがunknown / inactiveのままであることを確認する。本格的なenable / skip contractはWM-19 / WM-20で追加する。
+
+## WI-301 L2-017 integration tests
+
+<!-- @work-item-id WI-301 -->
+
+| ID | 日本語シナリオ | 期待結果 |
+|---|---|---|
+| IT-WI301-REG-001 | registry goldenを読む | L2は8件、L2-017一意、L3-008なし |
+| IT-WI301-RUN-001 | world disabledで全L2を実行する | L2-017 skipped、policy port未実行 |
+| IT-WI301-RUN-002 | world enabledでclean observationを実行する | L2-017 pass |
+| IT-WI301-RUN-003 | malformed / new constraint fixtureを実行する | WCR-001 / new structural error |
+| IT-WI301-RUN-004 | adopted legacy fixtureを実行する | warning表示、default aggregateは非blocking |
+| IT-WI301-ACL-001 | World adapterを実行する | public facadeのみ、report writeなし、plain DTO |

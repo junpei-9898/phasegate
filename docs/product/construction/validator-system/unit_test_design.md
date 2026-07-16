@@ -560,3 +560,19 @@ nyquist adapterからplanned ref / lifecycle errorが返った場合にL3-004 fa
 <!-- @work-item-id WI-300 -->
 
 resolved mapper出力にWorld plain DTOが保持され、既存validator ID集合とdefault validator配列にL2-017 / L3-008が現れないことをgoldenで検証する。
+
+## WI-301 L2-017 unit tests
+
+<!-- @work-item-id WI-301 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI301-ID-001 | L2-017を名前とIDの双方から生成する | `world-constraint-admission` |
+| UT-WI301-POL-001 | new structural pin findingを評価する | exact fingerprint / WCR rule付きerror |
+| UT-WI301-POL-002 | malformed / unpinned claimを評価する | WCR-001 error |
+| UT-WI301-POL-003 | adopted legacyを評価する | warning、non-blocking intent |
+| UT-WI301-POL-004 | active waiverを評価する | warning、可視性維持 |
+| UT-WI301-POL-005 | findingなしを評価する | 空finding |
+| UT-WI301-POL-006 | observation順を入れ替える | 同じ決定的順序 |
+
+domain serviceはplain observation実体で検証し、domain mockを使用しない。

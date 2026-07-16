@@ -14,6 +14,7 @@
  * WI-258 (ADR-030 §Decision.3.②) で L2-016（coverage-attestation-gating, fail-closed）を追加
  * WI-259 (ADR-030 §Decision.3.④) で L3-006（injection-scan, advisory warning-only）を追加
  * WI-268 (ADR-030 §Decision.1・§Decision.3.② 第2段) で L3-007（coverage-attestation-verification, fail-closed）を追加
+ * WI-301 で L2-017（world-constraint-admission, local fast-path）を追加
  */
 
 export class InvalidValidatorIdError extends Error {
@@ -38,6 +39,7 @@ const VALIDATOR_NAME_MAP: Record<string, string> = {
   "L2-014": "work-item-status-staleness",
   "L2-015": "contract-traceability-coverage",
   "L2-016": "coverage-attestation-gating",
+  "L2-017": "world-constraint-admission",
   "L3-001": "security",
   "L3-002": "performance",
   "L3-003": "coverage",

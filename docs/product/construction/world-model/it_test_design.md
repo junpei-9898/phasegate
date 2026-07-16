@@ -273,3 +273,9 @@ matrix再生成後のself-repoで`world:derive --json`を二回実行し、seria
 <!-- @work-item-id WI-300 -->
 
 config-foundationから渡したcustom matrix / declaration / report pathをrepository-shaped fixtureで観測し、raw configをWorldが再読込しないことを確認する。config不在はcanonical defaults、存在するinvalid configはexit 2、`enabled:false`の明示commandは実行可能とする。
+
+## WI-301 L2 consumer adapter contract
+
+<!-- @work-item-id WI-301 -->
+
+validator-system adapter fixtureからpublic World compositionをpure modeで実行し、malformed constraintを`invalid-declaration`、new pin / claimを`new-structural`、baseline一致を`adopted-legacy`として観測できることを固定する。`.harness/world-obligations.json`は作成・読込せず、authoritative clean re-derivationはWM-20へ残す。

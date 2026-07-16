@@ -2,21 +2,30 @@
  * @layer test
  * @unit validator-system
  * @story H08-01
- * @work-item-id WI-110 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
+ * @work-item-id WI-110 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-301
+ * @story H17-14
+ * @ac H17-14-1
+ * @ac H17-14-2
+ * @ac H17-14-3
+ * @ac H17-14-4
+ * @ac H17-14-5
+ * @ac H17-14-6
  */
 import { describe, expect, it, vi } from "vitest";
 import { ValidationResultContractMapper } from "../../../../validator-system/application/mappers/validation-result-contract-mapper.js";
+import { AggregateValidationResultsUseCase } from "../../../../validator-system/application/use-cases/aggregate-validation-results-usecase.js";
 import { RunL2ValidatorsUseCase } from "../../../../validator-system/application/use-cases/run-l2-validators-usecase.js";
 import {
   ValidatorExecutionError,
   ValidatorExecutionService,
 } from "../../../../validator-system/domain/services/validator-execution-service.js";
-import { ValidatorRegistry } from "../../../../validator-system/domain/services/validator-registry.js";
 import { InvalidValidatorIdError } from "../../../../validator-system/domain/value-objects/validator-id.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 import { createFullRegistry, createLayerConfig } from "../helpers.js";
 
-function createL2UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; strictOnly: boolean }>) {
+function createL2UseCase(
+  layerConfigOverrides?: Partial<{ enabled: boolean; strictOnly: boolean; validatorIds: string[] }>,
+) {
   const registry = createFullRegistry();
   const executionService = new ValidatorExecutionService({});
   const mapper = new ValidationResultContractMapper();
@@ -34,7 +43,7 @@ function createL2UseCase(layerConfigOverrides?: Partial<{ enabled: boolean; stri
 target("RunL2ValidatorsUseCase", () => {
   describe("全L2バリデータの実行", () => {
     context("validatorIdsを省略した場合", () => {
-      it("全L2バリデータ（L2-001〜L2-003, L2-013〜L2-016）が実行され7件の結果が返る (IT-UC-RunL2-001)", async () => {
+      it("全L2バリデータ（L2-001〜L2-003, L2-013〜L2-017）が実行され8件の結果が返る (IT-UC-RunL2-001)", async () => {
         // Arrange
         const usecase = createL2UseCase();
         const input = { targetPaths: ["src/foo.ts"], unitName: "unit-a", currentPhase: "implementation" };
@@ -51,6 +60,7 @@ target("RunL2ValidatorsUseCase", () => {
           "L2-014",
           "L2-015",
           "L2-016",
+          "L2-017",
         ]);
       });
     });
@@ -161,6 +171,7 @@ target("RunL2ValidatorsUseCase", () => {
           "L2-014",
           "L2-015",
           "L2-016",
+          "L2-017",
         ]);
         expect(actual.every((r) => r.passed === true)).toBe(true);
       });
@@ -448,6 +459,104 @@ target("RunL2ValidatorsUseCase", () => {
         const l2016 = actual.find((r) => r.validatorId === "L2-016");
         expect(l2016?.passed).toBe(true);
         expect(l2016?.errors).toHaveLength(0);
+      });
+
+      it("world無効時はL2-017をskipしWorld policy portを呼ばないこと", async () => {
+        // Arrange
+        const collect = vi.fn().mockResolvedValue({ obligations: [], diagnostics: [] });
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: createFullRegistry(),
+          validatorExecutionService: new ValidatorExecutionService({}),
+          validatorConfigPort: {
+            getLayerConfig: vi.fn().mockResolvedValue(
+              createLayerConfig("L2", {
+                validatorIds: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"],
+              }),
+            ),
+          },
+          contractMapper: new ValidationResultContractMapper(),
+          worldConstraintAdmissionPolicyPort: { collect },
+        });
+
+        // Act
+        const actual = await usecase.execute({ targetPaths: [], unitName: "world-model", currentPhase: "test" });
+        // Assert
+        expect(actual.find((item) => item.validatorId === "L2-017")).toMatchObject({ passed: true, skipped: true });
+        expect(collect).not.toHaveBeenCalled();
+      });
+
+      it("new malformed constraint fixtureをL2-017でfail-closedにすること", async () => {
+        // Arrange
+        const fixture = {
+          obligations: [
+            {
+              ruleId: "WCR-001",
+              violationFingerprint: `pgw:v1:violation-fingerprint:sha256:${"a".repeat(64)}`,
+              constraintId: "pgw:v1:constraint:world.malformed",
+              classification: "invalid-declaration" as const,
+            },
+          ],
+          diagnostics: [],
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: createFullRegistry(),
+          validatorExecutionService: new ValidatorExecutionService({}),
+          validatorConfigPort: { getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig("L2")) },
+          contractMapper: new ValidationResultContractMapper(),
+          worldConstraintAdmissionPolicyPort: { collect: async () => fixture },
+        });
+
+        // Act
+        const actual = await usecase.execute({ targetPaths: [], unitName: "world-model", currentPhase: "test" });
+
+        // Assert
+        expect(actual.find((item) => item.validatorId === "L2-017")).toMatchObject({
+          passed: false,
+          skipped: false,
+          errors: [
+            expect.objectContaining({
+              severity: "error",
+              ruleId: "WCR-001",
+              classification: "invalid-declaration",
+            }),
+          ],
+        });
+      });
+
+      it("adopted legacy fixtureをL2-017の非blocking warningとして表示すること", async () => {
+        // Arrange
+        const fixture = {
+          obligations: [
+            {
+              ruleId: "WCR-005",
+              violationFingerprint: `pgw:v1:violation-fingerprint:sha256:${"b".repeat(64)}`,
+              constraintId: null,
+              classification: "adopted-legacy" as const,
+            },
+          ],
+          diagnostics: [],
+        };
+        const usecase = new RunL2ValidatorsUseCase({
+          validatorRegistry: createFullRegistry(),
+          validatorExecutionService: new ValidatorExecutionService({}),
+          validatorConfigPort: { getLayerConfig: vi.fn().mockResolvedValue(createLayerConfig("L2")) },
+          contractMapper: new ValidationResultContractMapper(),
+          worldConstraintAdmissionPolicyPort: { collect: async () => fixture },
+        });
+
+        // Act
+        const actual = await usecase.execute({ targetPaths: [], unitName: "world-model", currentPhase: "test" });
+        const aggregated = new AggregateValidationResultsUseCase().execute({ results: actual, failOnWarning: false });
+
+        // Assert
+        expect(actual.find((item) => item.validatorId === "L2-017")).toMatchObject({
+          passed: false,
+          errors: [
+            expect.objectContaining({ severity: "warning", ruleId: "WCR-005", classification: "adopted-legacy" }),
+          ],
+        });
+        expect(aggregated.overallPassed).toBe(true);
+        expect(aggregated.summary.totalWarnings).toBe(1);
       });
     });
   });

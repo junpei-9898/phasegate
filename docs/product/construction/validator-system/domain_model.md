@@ -463,3 +463,9 @@ validator-systemはnyquist-validationが返すcoverage lifecycle findingを既�
 <!-- @work-item-id WI-300 -->
 
 validator-systemが将来消費するWorld configはplain `world` projectionであり、`enabled`、declaration path、provider input pathを含む。WCRやWorldConfig domain型を複製せず、このWIでは予約IDのvalidation rule / blocking policyを生成しない。
+
+## WI-301 L2 World constraint admission policy
+
+<!-- @work-item-id WI-301 -->
+
+`WorldConstraintAdmissionObservation`はworld-model public facade由来のplain obligation / diagnostic projectionであり、World Entity / VOをvalidator-systemへ持ち込まない。`WorldConstraintAdmissionService`は`new-structural`と`invalid-declaration`をerror、`adopted-legacy`と`waived`をwarningへ決定的に写像する。validなnew claim / pinはfindingがない限りpassし、baseline entryを持つlegacy fingerprintをblockingへ昇格しない。message / suggestionはlocal fast-pathとauthoritative L3 re-derivationを区別する。

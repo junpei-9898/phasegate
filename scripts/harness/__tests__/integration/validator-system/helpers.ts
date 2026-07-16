@@ -7,8 +7,6 @@
 import { vi } from "vitest";
 import type { AggregatedValidationReport } from "../../../validator-system/application/dto/aggregated-validation-report.js";
 import type { ValidationResultContract } from "../../../validator-system/application/dto/validation-result-contract.js";
-import { ValidationResultContractMapper } from "../../../validator-system/application/mappers/validation-result-contract-mapper.js";
-import { ValidatorExecutionService } from "../../../validator-system/domain/services/validator-execution-service.js";
 import { ValidatorRegistry } from "../../../validator-system/domain/services/validator-registry.js";
 import { LayerConfig } from "../../../validator-system/domain/value-objects/layer-config.js";
 import { ValidationRule } from "../../../validator-system/domain/value-objects/validation-rule.js";
@@ -26,7 +24,7 @@ export function createLayerConfig(
   }> = {},
 ): LayerConfig {
   const defaultValidatorIds: Record<string, string[]> = {
-    L2: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"],
+    L2: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016", "L2-017"],
     L3: ["L3-001", "L3-002", "L3-003", "L3-004"],
     L4: ["L4-001", "L4-002", "L4-003", "L4-004", "L4-005", "L4-006"],
   };
@@ -104,6 +102,7 @@ export function createFullRegistry(): ValidatorRegistry {
     createDef("L2-014", "L2"),
     createDef("L2-015", "L2"),
     createDef("L2-016", "L2"),
+    createDef("L2-017", "L2"),
     createDef("L3-001", "L3"),
     createDef("L3-002", "L3", "strictOnly"),
     createDef("L3-003", "L3"),

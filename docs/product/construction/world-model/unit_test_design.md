@@ -369,3 +369,9 @@ pin use caseはpreview / apply、exact / alias、missing / duplicate / malformed
 <!-- @work-item-id WI-300 -->
 
 canonical defaults、完全resolved input、custom corpus / provider / declaration / output path、invalid path rejectionを検証する。`enabled`切替でexplicit use case / handlerの構成が変わらないことも確認する。
+
+## WI-301 Public derive observation regression
+
+<!-- @work-item-id WI-301 -->
+
+既存obligation derivation testsをL2 consumer contractの回帰根拠とし、classification、fingerprint、WCR rule、canonical orderがplain resultで安定することを維持する。validator severity / blockingのtestはvalidator-system側で行い、World domainへ重複させない。

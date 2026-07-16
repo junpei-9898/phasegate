@@ -6,6 +6,7 @@
 @story-id H13-05
 @work-item-id WI-126
 @work-item-id WI-285
+@work-item-id WI-301
 更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（Phase A-2 / WI frontmatter parser）、H03-05（Phase A-3 / L2 validator 統合）、H13-05（OSS license 変更 Apache-2.0 → MIT, v0.111.0）を追加。
 WI-126 で WI status derivation / safe apply を追加し、`status: drafted | reflected | implemented | tested` を PhaseGate が成果物から更新する運用契約を具体化する。
 
@@ -13,7 +14,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 > **作成日**: 2026-03-12
 > **入力**: `docs/inception/_shared/story_writer_plan.md`（Phase 1計画・承認済み）
 > **プロダクト概要**: `docs/product/harness_product_overview.md`
-> **合計**: 18 Epic / 87 ストーリー（v1: 82, Future: 5）
+> **合計**: 18 Epic / 89 ストーリー（v1: 84, Future: 5）
 > **レビュー**: codex (gpt-5.4) 1stレビュー済み — 指摘事項反映済み
 
 ---
@@ -38,7 +39,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-17 | World Model | 12 | 4 |
+| H-17 | World Model | 14 | 4 |
 | H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
@@ -1685,14 +1686,15 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
-## Wave 4: World Model（H-17 / 12 US）
+## Wave 4: World Model（H-17 / 14 US）
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-292 -->
+<!-- @work-item-id WI-301 -->
 
 ## H-17: World Model
 
-World Modelは既存Unitの正本を複製せず、canonical / proposal / source / generated corpusをfederated read modelとして観測する。H17-01〜H17-06はPhase Aのread-only snapshotと可視化、H17-07〜H17-12はPhase Bのconstraint / obligation機能MVPを構成する。各Storyはdelivery planのWM-06〜17に1対1でbindingする。
+World Modelは既存Unitの正本を複製せず、canonical / proposal / source / generated corpusをfederated read modelとして観測する。H17-01〜H17-06はPhase Aのread-only snapshotと可視化、H17-07〜H17-12はPhase Bのconstraint / obligation機能MVP、H17-13以降はPhase Cのproduction integrationを構成する。各Storyはdelivery planのWMへ1対1でbindingする。
 
 ### H17-01: Unit非依存SHA-256 capability（WM-06）
 
@@ -1955,6 +1957,27 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: validator-system mapperが将来gate用World DTOを伝搬する一方、L2-017 / L3-008はまだ登録・有効化しない
 - [ ] AC-6: configuration guideがfield、default、preset rollout、path制約を説明する
 
+### H17-14: L2 World constraint admission fast-path（WM-19）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-19 / WI-301）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** Phasegateをpre-commitで利用する開発者,
+**I want to** 新規World constraint / pin / claimの壊れた構造をlocal L2で即時検出したい,
+**so that** 既存legacy debtを再blockingせず、新しい構造違反だけを導入前に修正できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `L2-017 world-constraint-admission`がValidatorId、registry、RunL2、composition-rootへ一意に登録される
+- [ ] AC-2: `world.enabled:false`ではL2-017を明示skipし、trueの場合だけWorld deriveを実行する
+- [ ] AC-3: malformed / unsupported constraintとunpinned claimをWCR-001相当のerrorとしてfail-closedにする
+- [ ] AC-4: baseline外のnew pin / claim findingをerrorとし、validな追加自体はblockしない
+- [ ] AC-5: adopted-legacyとactive waiverをfingerprint付きwarningとして表示し、defaultではnon-blockingにする
+- [ ] AC-6: HarnessErrorがlocal fast-pathは偽造可能でauthoritative判定はL3再導出であると明記し、L3-008は未登録のままにする
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -1997,8 +2020,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 12 | 12 | 0 |
-| **Wave 4小計** | | **12** | **12** | **0** |
+| 4 | H-17 World Model | 14 | 14 | 0 |
+| **Wave 4小計** | | **14** | **14** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **82** | **76** | **6** |
-| **全体（Future含む）** | | **87** | — | — |
+| **v1合計** | | **84** | **78** | **6** |
+| **全体（Future含む）** | | **89** | — | — |

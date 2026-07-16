@@ -684,3 +684,14 @@ scripts/harness/__tests__/config-foundation/
 - WorldConfigはpath、root role overlap、case-fold collision、session limitを実体で検証する。
 - preset resolutionはnested overrideとlegacy path inheritanceを明示fieldの有無に従って解決する。
 - dedicated World mapperは完全なplain DTO、validator mapperは将来gate用projectionを返し、L2-017 / L3-008をvalidator配列へ追加しない。
+
+## WI-301 L2-017 selection tests
+
+<!-- @work-item-id WI-301 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI301-CFG-001 | world enabledをvalidator configへ写像する | L2-017を一度だけ含む |
+| UT-WI301-CFG-002 | world disabledをvalidator configへ写像する | L2-017を含まない |
+| UT-WI301-CFG-003 | world設定を省略する | backward-compatible skip |
+| UT-WI301-CFG-004 | L2 validator listにL2-017が重複する | 一意化される |

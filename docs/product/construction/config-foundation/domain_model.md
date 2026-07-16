@@ -424,3 +424,9 @@ L3 performance thresholds such as `harnesses.bundleSizeLimit` are mapped into va
 <!-- @work-item-id WI-300 -->
 
 `WorldConfig`はADR-037の`world` sectionを所有するimmutable Value Objectである。corpus root、provider input、external declaration、generated output、session-start limitを検証し、project-relative POSIX path、role間root非重複、case-fold collision no-winner、`maxItems=1..20`、`maxChars=1..8000`を不変条件とする。consumerへはdomain型でなくresolved plain documentを返す。
+
+## WI-301 World automatic gate selection
+
+<!-- @work-item-id WI-301 -->
+
+resolved `world.enabled`はWorld evaluatorのdomain policyではなくautomatic validator integrationのrollout switchである。false / absentはL2-017をLayerConfigのenabled validator集合から外し、trueは一意に含める。explicit `world:*` commandの実行可能性には影響しない。

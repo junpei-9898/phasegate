@@ -8,6 +8,7 @@
  * @work-item-id WI-259
  * @work-item-id WI-268
  * @work-item-id WI-300
+ * @work-item-id WI-301
  */
 import type { HarnessConfigV2 } from "../../domain/harness-config.js";
 
@@ -61,7 +62,10 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
       // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating) を default-ON でリストに含める。
       L2: {
         enabled: resolvedConfig.layers.L2.enabled,
-        validators: ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"],
+        validators:
+          resolvedConfig.world?.enabled === true
+            ? ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016", "L2-017"]
+            : ["L2-001", "L2-002", "L2-003", "L2-013", "L2-014", "L2-015", "L2-016"],
       },
       L3: {
         enabled: resolvedConfig.layers.L3.enabled,

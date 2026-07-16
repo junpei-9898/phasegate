@@ -4,7 +4,7 @@
 // @work-item-id WI-133
 // @work-item-id WI-217
 // @work-item-id WI-212
-// @work-item-id WI-300
+// @work-item-id WI-300 / WI-301
 import { describe, expect, it } from "vitest";
 import { toValidatorSystemConfig } from "../../../config-foundation/application/mappers/validator-system-config-mapper.js";
 import type { HarnessConfigV2 } from "../../../config-foundation/domain/harness-config.js";
@@ -226,7 +226,7 @@ target("toValidatorSystemConfig", () => {
     });
 
     context("resolved World configがある場合", () => {
-      it("将来のWorld validator用DTOを伝搬し予約validatorは追加しないこと", () => {
+      it("disabled World DTOを伝搬しL2-017を追加しないこと", () => {
         // Arrange
         const resolvedConfig = createResolvedConfig();
         resolvedConfig.world = structuredClone(WORLD_CONFIG_DEFAULTS);
@@ -243,6 +243,24 @@ target("toValidatorSystemConfig", () => {
         // Assert
         expect(actual.world).toEqual(WORLD_CONFIG_DEFAULTS);
         expect(actual.layers.L2.validators).not.toContain("L2-017");
+        expect(actual.layers.L3.validators).not.toContain("L3-008");
+      });
+
+      it("world.enabled=trueではL2-017だけをautomatic validatorへ追加すること", () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.world = { ...structuredClone(WORLD_CONFIG_DEFAULTS), enabled: true };
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig) as {
+          readonly layers: {
+            readonly L2: { readonly validators: readonly string[] };
+            readonly L3: { readonly validators: readonly string[] };
+          };
+        };
+
+        // Assert
+        expect(actual.layers.L2.validators.filter((id) => id === "L2-017")).toHaveLength(1);
         expect(actual.layers.L3.validators).not.toContain("L3-008");
       });
     });

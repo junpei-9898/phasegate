@@ -2086,3 +2086,11 @@ L3-004 adapter / registry / severityは変更せず、nyquist `AcCoverageGatePol
 <!-- @work-item-id WI-300 -->
 
 `toValidatorSystemConfig()`から`world` plain DTOを受け取る境界を予約する。`world.enabled:false`はWM-19 / WM-20でautomatic World validatorをskipする入力になるが、本WIでは`ValidatorId`、registry、RunL2 / RunL3、composition-rootを変更せず、L2-017 / L3-008は未登録のまま維持する。
+
+## WI-301 L2-017 world-constraint-admission
+
+<!-- @work-item-id WI-301 -->
+
+`L2-017`をdefault registryへ常設し、RunL2は`WorldConstraintAdmissionPolicyPort`からpure World derive observationを受けて`WorldConstraintAdmissionService`のpolicyを適用する。infrastructure adapterはworld-model public `createWorldModelModule`だけを利用し、保存済みobligation reportやWorld内部型を読まない。`world.enabled:false` / absentではLayerConfigがL2-017を明示skipし、trueの場合だけ実行する。self-repo configはこのWIで有効化しない。
+
+L2-017がerrorにするのはconstraint document admission failure、WCR-001相当、baselineにないnew structural findingだけである。adopted legacyとactive waiverはwarningとして表示し、repaid cleanup、ruleset migration、policy input全体のauthoritative blockingはL3-008へ残す。local working treeとbaselineは偽造可能なため、全findingは`local fast-path; authoritative L3 re-derivation required`を含む。L3-008はまだregistryへ登録しない。

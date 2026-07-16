@@ -1,12 +1,12 @@
 // @layer test
 // @unit validator-system
 // @story H08-01
-// @work-item-id WI-156
+// @work-item-id WI-156 / WI-301
 /**
  * T-042: L0 runtime hook 案内 E2E検証
  * validate --layer L0 が legacy validator ではなく runtime hook 案内を返すこと
  */
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 import { createValidatorSystemModule } from "../../../validator-system/composition-root.js";
 import { context, target } from "../../helpers/test-helpers.js";
 
@@ -17,7 +17,7 @@ target("L0 Runtime Hook E2E検証", () => {
       const mod = createValidatorSystemModule();
       // Act
       const actual = mod.registry.getAllDefinitions();
-      // Assert — L2(7) + L3(7) + L4(7) = 21
+      // Assert — L2(8) + L3(7) + L4(7) = 22
       // WI-222 (HF2-05): L4-007 (ac-level-traceability, default-OFF advisory) を registry に追加。
       // WI-227 (H16-03): L3-005 (ac-bound-coverage, default-OFF fail-closed) を registry に追加。
       // WI-258 (L2-016): coverage-report attestation gate (warning-only) を registry に追加。
@@ -31,6 +31,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L2-014",
         "L2-015",
         "L2-016",
+        "L2-017",
         "L3-001",
         "L3-002",
         "L3-003",
@@ -72,6 +73,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L2-014",
         "L2-015",
         "L2-016",
+        "L2-017",
       ]);
       // WI-259 (L3-006): injection-scan (advisory, warning-only) が registry に登録されている。
       // WI-268 (L3-007): coverage-attestation-verification (fail-closed) が registry に登録されている。
@@ -119,6 +121,7 @@ target("L0 Runtime Hook E2E検証", () => {
         "L2-014",
         "L2-015",
         "L2-016",
+        "L2-017",
       ]);
     });
   });

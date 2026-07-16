@@ -5,6 +5,7 @@
  * DI 組み立て — validator-system の全依存関係を構築する
  * @work-item-id WI-110 / WI-111 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138 / WI-156
  * @work-item-id WI-217
+ * @work-item-id WI-301
  */
 
 import { join } from "node:path";
@@ -55,6 +56,7 @@ import { PhaseDependencyPhaseGatePolicyAdapter } from "./infrastructure/adapters
 import { SourceFileTextScannerAdapter } from "./infrastructure/adapters/source-file-text-scanner-adapter.js";
 import { TraceabilityMetadataPolicyAdapter } from "./infrastructure/adapters/traceability-metadata-policy-adapter.js";
 import { TraceabilityWorkItemStatusPolicyAdapter } from "./infrastructure/adapters/traceability-work-item-status-policy-adapter.js";
+import { WorldModelConstraintAdmissionAdapter } from "./infrastructure/adapters/world-model-constraint-admission-adapter.js";
 import { ReportValidationResultsHandler } from "./presentation/handlers/report-validation-results-handler.js";
 import { RunQuickModeHandler } from "./presentation/handlers/run-quick-mode-handler.js";
 import { RunValidatorsHandler } from "./presentation/handlers/run-validators-handler.js";
@@ -99,12 +101,6 @@ const DEFAULT_CONFIG = {
 
 /** バリデータ定義カタログ */
 export function buildDefaultRegistry(): ValidatorRegistry {
-  const defaultRule = ValidationRule.create({
-    ruleName: "default-rule",
-    errorTemplate: { code: "L2-001", severity: "error", messageTemplate: "{{message}}" },
-    fixExample: null,
-  });
-
   const createDef = (
     id: string,
     layer: "L2" | "L3" | "L4",
@@ -134,6 +130,7 @@ export function buildDefaultRegistry(): ValidatorRegistry {
     createDef("L2-015", "L2", "always", "ContractTraceabilityPolicyPort"),
     // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating, fail-closed, default-ON)。
     createDef("L2-016", "L2", "always", "CoverageAttestationGatingPolicyPort"),
+    createDef("L2-017", "L2", "always", "WorldConstraintAdmissionPolicyPort"),
     createDef("L3-001", "L3", "always"),
     createDef("L3-002", "L3", "strictOnly"),
     createDef("L3-003", "L3", "always"),
@@ -201,6 +198,10 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   // WI-258 / ADR-030 §Decision.3.②: L2-016 (coverage-attestation-gating) 用アダプタ。
   // docs/product/construction/*​/coverage_report.md を cwd 起点で走査する（targetPaths 非依存）。
   const coverageAttestationGatingPolicyPort = new FileSystemCoverageAttestationGatingAdapter(process.cwd());
+  const worldConstraintAdmissionPolicyPort = new WorldModelConstraintAdmissionAdapter({
+    rootDir: process.cwd(),
+    resolvedConfig: (configData as { world?: import("../world-model/index.js").WorldResolvedConfigInput }).world,
+  });
   // WI-259 / ADR-030 §Decision.3.④: L3-006 (injection-scan, advisory) 用アダプタ。
   // 指示搭載ファイル群（skills/**​/SKILL.md / CLAUDE.md / AGENTS.md / agent-context / .claude/settings.json）を
   // cwd 起点で走査する（targetPaths 非依存）。
@@ -249,6 +250,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     workItemStatusPolicyPort,
     contractTraceabilityPolicyPort,
     coverageAttestationGatingPolicyPort,
+    worldConstraintAdmissionPolicyPort,
   });
 
   // WI-227 / H16-03: L3-005 のスコープ対象 story-id を config から取得（既定 []）。

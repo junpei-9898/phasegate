@@ -121,6 +121,7 @@ H17-01〜H17-06はPhase Aのread-only snapshot / inspection、H17-07〜H17-12は
 | H17-11 | WM-16 | synthetic mutation E2E / determinism | Phase B verification |
 | H17-12 | WM-17 | self-repo baseline / semantic debt dogfood | Functional MVP |
 | H17-13 | WM-18 | World config surface / resolved mapping | Phase C configuration |
+| H17-14 | WM-19 | L2 World constraint admission fast-path | Phase C enforcement |
 
 ## 5. 詳細
 

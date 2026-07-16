@@ -372,3 +372,9 @@ final tracked corpusと再生成matrixからbaselineなしcandidateを二重deri
 <!-- @work-item-id WI-300 -->
 
 composition rootはdedicated config-foundation mapperのplain DTOを受け、extractor root / input path、4 control repository path、obligation report既定pathへ配線する。config pathはcorpus / constraint / evaluation digestの該当scopeへ含める。explicit handlersは`enabled:false`でも生成し、automatic gate enablementはvalidator-systemに残す。
+
+## WI-301 Validator admission consumer contract
+
+<!-- @work-item-id WI-301 -->
+
+validator-systemのL2 infrastructure adapterは`world-model/index.ts`の`createWorldModelModule`からpure `deriveWorldObligationsUseCase`を呼び、`writeReport:false`のplain observationだけを消費する。World domain / repositoryへのdeep importと、保存reportをgate inputにすることを禁止する。world-modelはseverity、blocking、L2 skipを所有せず、L3-008のclean re-derivationもこのWIでは実装しない。

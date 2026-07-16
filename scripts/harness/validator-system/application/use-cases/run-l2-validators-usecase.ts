@@ -4,6 +4,7 @@
  *
  * RunL2ValidatorsUseCase — H08-01: L2バリデータ実行
  * @work-item-id WI-110 / WI-111 / WI-140 / WI-132 / WI-133 / WI-136 / WI-137 / WI-138
+ * @work-item-id WI-301
  */
 import { readFile } from "node:fs/promises";
 import type { CliCommandRegistryPort } from "../../domain/ports/cli-command-registry-port.js";
@@ -15,6 +16,7 @@ import type { PhaseGatePolicyPort } from "../../domain/ports/phase-gate-policy-p
 import type { TestQualityAnalyzerPort } from "../../domain/ports/test-quality-analyzer-port.js";
 import type { ValidatorConfigPort } from "../../domain/ports/validator-config-port.js";
 import type { WorkItemStatusPolicyPort } from "../../domain/ports/work-item-status-policy-port.js";
+import type { WorldConstraintAdmissionPolicyPort } from "../../domain/ports/world-constraint-admission-policy-port.js";
 import { CliE2eTestExistenceService } from "../../domain/services/cli-e2e-test-existence-service.js";
 import { ContractTraceabilityCoverageService } from "../../domain/services/contract-traceability-coverage-service.js";
 import { CoverageAttestationGatingService } from "../../domain/services/coverage-attestation-gating-service.js";
@@ -23,6 +25,7 @@ import {
   type ValidatorExecutionService,
 } from "../../domain/services/validator-execution-service.js";
 import type { ValidatorRegistry } from "../../domain/services/validator-registry.js";
+import { WorldConstraintAdmissionService } from "../../domain/services/world-constraint-admission-service.js";
 import { type HarnessErrorLike, ValidationResult } from "../../domain/value-objects/validation-result.js";
 import { ValidatorId } from "../../domain/value-objects/validator-id.js";
 import type { RunL2ValidatorsInput } from "../dto/run-l2-validators-input.js";
@@ -42,6 +45,7 @@ export interface RunL2ValidatorsUseCaseDeps {
   workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
   contractTraceabilityPolicyPort?: ContractTraceabilityPolicyPort;
   coverageAttestationGatingPolicyPort?: CoverageAttestationGatingPolicyPort;
+  worldConstraintAdmissionPolicyPort?: WorldConstraintAdmissionPolicyPort;
 }
 
 export class RunL2ValidatorsUseCase {
@@ -57,9 +61,11 @@ export class RunL2ValidatorsUseCase {
   private readonly workItemStatusPolicyPort?: WorkItemStatusPolicyPort;
   private readonly contractTraceabilityPolicyPort?: ContractTraceabilityPolicyPort;
   private readonly coverageAttestationGatingPolicyPort?: CoverageAttestationGatingPolicyPort;
+  private readonly worldConstraintAdmissionPolicyPort?: WorldConstraintAdmissionPolicyPort;
   private readonly cliE2eTestExistenceService = new CliE2eTestExistenceService();
   private readonly contractTraceabilityCoverageService = new ContractTraceabilityCoverageService();
   private readonly coverageAttestationGatingService = new CoverageAttestationGatingService();
+  private readonly worldConstraintAdmissionService = new WorldConstraintAdmissionService();
 
   constructor(deps: RunL2ValidatorsUseCaseDeps) {
     this.registry = deps.validatorRegistry;
@@ -74,6 +80,7 @@ export class RunL2ValidatorsUseCase {
     this.workItemStatusPolicyPort = deps.workItemStatusPolicyPort;
     this.contractTraceabilityPolicyPort = deps.contractTraceabilityPolicyPort;
     this.coverageAttestationGatingPolicyPort = deps.coverageAttestationGatingPolicyPort;
+    this.worldConstraintAdmissionPolicyPort = deps.worldConstraintAdmissionPolicyPort;
   }
 
   async execute(input: RunL2ValidatorsInput): Promise<readonly ValidationResultContract[]> {
@@ -237,6 +244,30 @@ export class RunL2ValidatorsUseCase {
           overrideMap.set("L2-016", ValidationResult.fail(ValidatorId.create("L2-016"), errors, 0));
         } else {
           overrideMap.set("L2-016", ValidationResult.pass(ValidatorId.create("L2-016"), 0));
+        }
+      }
+    }
+
+    if (this.worldConstraintAdmissionPolicyPort) {
+      const l2017Result = overrideMap.get("L2-017");
+      if (l2017Result && !l2017Result.skipped) {
+        const observation = await this.worldConstraintAdmissionPolicyPort.collect();
+        const findings = this.worldConstraintAdmissionService.evaluate(observation);
+        if (findings.length > 0) {
+          const errors: HarnessErrorLike[] = findings.map((finding) => ({
+            code: { value: "L2-017", toString: () => "L2-017" },
+            severity: { value: finding.severity, toString: () => finding.severity },
+            message: finding.message,
+            suggestion: finding.suggestion,
+            ruleId: finding.ruleId,
+            violationFingerprint: finding.violationFingerprint,
+            constraintId: finding.constraintId,
+            classification: finding.classification,
+            sourcePath: finding.sourcePath,
+          }));
+          overrideMap.set("L2-017", ValidationResult.fail(ValidatorId.create("L2-017"), errors, 0));
+        } else {
+          overrideMap.set("L2-017", ValidationResult.pass(ValidatorId.create("L2-017"), 0));
         }
       }
     }
