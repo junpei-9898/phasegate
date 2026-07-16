@@ -5,6 +5,7 @@
 @story-id H03-05
 @story-id H13-05
 @work-item-id WI-126
+@work-item-id WI-285
 更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（Phase A-2 / WI frontmatter parser）、H03-05（Phase A-3 / L2 validator 統合）、H13-05（OSS license 変更 Apache-2.0 → MIT, v0.111.0）を追加。
 WI-126 で WI status derivation / safe apply を追加し、`status: drafted | reflected | implemented | tested` を PhaseGate が成果物から更新する運用契約を具体化する。
 
@@ -12,7 +13,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 > **作成日**: 2026-03-12
 > **入力**: `docs/inception/_shared/story_writer_plan.md`（Phase 1計画・承認済み）
 > **プロダクト概要**: `docs/product/harness_product_overview.md`
-> **合計**: 17 Epic / 62 ストーリー（v1: 54, Future: 8）
+> **合計**: 18 Epic / 87 ストーリー（v1: 82, Future: 5）
 > **レビュー**: codex (gpt-5.4) 1stレビュー済み — 指摘事項反映済み
 
 ---
@@ -22,26 +23,27 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | Epic ID | Epic名 | US数 | Wave |
 |---------|--------|------|------|
 | H-01 | Biome AST解析基盤 | 3 | 1 |
-| H-02 | Phase Dependency Model | 3 | 1 |
-| H-03 | Traceability Model | 3 | 1 |
+| H-02 | Phase Dependency Model | 7 | 1 |
+| H-03 | Traceability Model | 8 | 1 |
 | H-04 | phasegate.config.json v2 | 3 | 1 |
 | H-05 | ADR基盤 | 3 | 1 |
 | H-06 | HarnessError体系 | 3 | 1 |
 | H-07 | Nyquist検証層 | 4 | 2 |
 | H-08 | L2-L4バリデータ体系 | 6 | 2 |
 | H-09 | Harness API | 4 | 2 |
-| H-10 | Quick Mode | 4 | 2 |
-| H-11 | エージェント統合オプション | 4 | 2 |
-| H-12 | スキル品質強化 | 6 | 3 |
-| H-13 | Scheduled Governance & CI/CDテンプレート | 3 | 3 |
+| H-10 | Quick Mode | 5 | 2 |
+| H-11 | エージェント統合オプション | 5 | 2 |
+| H-12 | スキル品質強化 | 7 | 3 |
+| H-13 | Scheduled Governance & CI/CDテンプレート | 4 | 3 |
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-F2 | Phase 2拡張 | 4 | Future |
+| H-17 | World Model | 12 | 4 |
+| H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
 
-## Wave 1: 基盤構築（H-01〜H-06 / 18 US）
+## Wave 1: 基盤構築（H-01〜H-06 / 27 US）
 
 ---
 
@@ -662,7 +664,7 @@ K13（phasegate.config.json）
 
 ---
 
-## Wave 2: コア品質機構 + エージェント統合（H-07〜H-11 / 21 US）
+## Wave 2: コア品質機構 + エージェント統合（H-07〜H-11 / 24 US）
 
 ---
 
@@ -1159,7 +1161,7 @@ K2（Phase Gate Architecture）— 新 WI layout を Hook 側のスコープ推�
 
 ---
 
-## Wave 3: 拡張・運用・保証（H-12〜H-16 / 16 US）
+## Wave 3: 拡張・運用・保証（H-12〜H-16 / 19 US）
 
 ---
 
@@ -1683,6 +1685,232 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
+## Wave 4: World Model（H-17 / 12 US）
+
+<!-- @work-item-id WI-285 -->
+
+## H-17: World Model
+
+World Modelは既存Unitの正本を複製せず、canonical / proposal / source / generated corpusをfederated read modelとして観測する。H17-01〜H17-06はPhase Aのread-only snapshotと可視化、H17-07〜H17-12はPhase Bのconstraint / obligation機能MVPを構成する。各Storyはdelivery planのWM-06〜17に1対1でbindingする。
+
+### H17-01: Unit非依存SHA-256 capability（WM-06）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-06）
+**優先度**: Must
+
+**As a** World Model実装者,
+**I want to** 既存attestationのSHA-256 primitiveをplain public capabilityとして利用したい,
+**so that** world-model固有の`node:crypto`実装やattestation domainへのdeep importを増やさず決定的hashを計算できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: public contractが`Uint8Array`から`sha256:<64 lowercase hex>`を返すplain capabilityとして公開される
+- [ ] AC-2: attestationとworld-modelが各consumer-owned portとlocal Digest VOへadaptし、互いのdomain VOをimportしない
+- [ ] AC-3: World導入による新規`node:crypto` SHA-256 call siteが増えない
+- [ ] AC-4: known bytes、non-ASCII UTF-8、invalid digest boundaryを検証するcontract testが存在する
+
+### H17-02: World domain primitivesとcanonical snapshot（WM-07）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-07）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** stable World node identityとcanonical snapshotを構築したい,
+**so that** checkout locationや列挙順に依存せず同じcorpusから同じ`corpusRoot`を得られる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: Artifact / Fragment / WorkItem / SourceFile / TestReference / ExplicitClaim / Constraint / SnapshotがADR-032の`pgw:v1` ID形式で表現される
+- [ ] AC-2: file identityとfragment identityが分離され、heading text / order / line number / digestをexplicit Fragment IDに使わない
+- [ ] AC-3: canonical JSON、text、path、symlink、owner-aware generated projectionがADR-033の正規化規則に従う
+- [ ] AC-4: Snapshotがnodes / edges / diagnosticsと`corpusRoot`を保持し、duplicate IDでwinnerを選ばない
+- [ ] AC-5: 同一fixtureの2回構築、列挙順、absolute root、LF / CRLF差に対するdeterminism testが存在する
+
+### H17-03: Traceability plain DTO read facade（WM-08）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-08）
+**優先度**: Must
+
+**As a** World Model extractor実装者,
+**I want to** traceability-modelからUnit / Story / AC / WorkItem / TestReferenceをplain DTOで読みたい,
+**so that** ID parsingとlifecycleのownerを維持したままWorld factへ変換できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: traceability-modelがcanonical IDとprovenanceをplain application DTO / public facadeとして公開する
+- [ ] AC-2: facadeがtraceability-modelのdomain entity / VO / infrastructure classを公開しない
+- [ ] AC-3: world-model側のconsumer-owned adapterがDTOをWorld node / edgeへ変換する
+- [ ] AC-4: legacy ID alias、cross-WI affects、missing / duplicate owner IDのcontract testが存在する
+
+### H17-04: Design corpus extractor（WM-09）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-09）
+**優先度**: Must
+
+**As a** 設計者,
+**I want to** product / inception / ADR / Unit定義を別corpus roleのWorld factとして抽出したい,
+**so that** canonical設計とproposalのprovenanceを失わず構造を観測できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: productをcanonical、inceptionをproposal / deltaとして別Artifact IDへ抽出し、digest一致でもdeduplicateしない
+- [ ] AC-2: ADRとcanonical Unit定義をdesign-document artifactとして抽出する
+- [ ] AC-3: `@world-fragment-id`、legacy whole-file fallback、migration completion、`@world-reflects`をADR-032どおり解釈する
+- [ ] AC-4: malformed marker、duplicate ID、missing reflection target、unsupported corpusをsilent omissionせずExtractionDiagnosticにする
+
+### H17-05: Source / test / evidence extractor（WM-10）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-10）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** source metadata、test reference、matrix、attestation evidenceをowner-aware projectionで抽出したい,
+**so that** runtime事実とgenerated evidenceをstable snapshotへ接続できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: source metadataとtest referencesをSourceFile / TestReference nodeおよびtyped edgeへ変換する
+- [ ] AC-2: matrixはStory / AC / TestReference semanticsを含め、`generatedAt`を除外してowner ID順に正規化する
+- [ ] AC-3: attestationはgate outcome / verification statusを含め、signature、self digest、volatile metadataを除外する
+- [ ] AC-4: providerのpublic facade / plain DTOだけを利用し、domain / infrastructureへdeep importしない
+- [ ] AC-5: unknown owner schemaやprojection fieldをgenericに捨てずdiagnosticにする
+
+### H17-06: World graph assemblyと`world:inspect`（WM-11）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-11）
+**優先度**: Must
+
+**As a** repository maintainer,
+**I want to** 全extractorを一つのsnapshotへ組み立て`world:inspect`で観測したい,
+**so that** node / edge / diagnostic / corpus rootをconstraint導入前から確認できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: BuildSnapshotが全extractor結果をcanonical graphへ組み立て、diagnosticを保持する
+- [ ] AC-2: `world:inspect`がread-onlyでsnapshot summary、corpus role / artifact kind、diagnostics、`corpusRoot`を表示する
+- [ ] AC-3: human / JSON output、stdout / stderr、exit 0 / 1 / 2がADR-037に従う
+- [ ] AC-4: main dispatch、known command registry、help、CLI conformance testが同一command集合を持つ
+- [ ] AC-5: 本Story完了はread-only可視化であり、obligation機能MVPを主張しない
+
+### H17-07: ConstraintRecordとWCR evaluator（WM-12）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-12）
+**優先度**: Must
+
+**As a** 設計契約管理者,
+**I want to** 両endpointをpinしたexplicit constraintを構造評価したい,
+**so that** claimant / premiseのどちらが変わっても同じconstraintを決定的に再評価できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: ConstraintRecordがconstraint ID、directed fact type、claimant / premiseのstable node IDとcontent digestを保持する
+- [ ] AC-2: directed factの意味方向を保ったまま、両endpoint変更で同じconstraintを再評価する
+- [ ] AC-3: `WCR-001`〜`WCR-008`がmalformed、missing、deleted、invalid alias、duplicate、broken reference / dependency、digest mismatchを区別する
+- [ ] AC-4: 機械評価をexistence、ID uniqueness、explicit reference、declared dependency、digest equalityへ限定する
+- [ ] AC-5: rename / refines / causeをpath、digest、heading、prose similarityから推論しない
+- [ ] AC-6: evaluation DTOはpolicy / severity / blocking decisionを持たない
+
+### H17-08: Versioned World control repositories（WM-13）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-13）
+**優先度**: Must
+
+**As a** repository maintainer,
+**I want to** constraints、adoption baseline、waiver、semantic debtをversioned external declarationとして管理したい,
+**so that** review可能なcontrol inputとgenerated reportを混同せず再評価できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: root control filesが`phasegate.world-constraints.json`、`phasegate.world-baseline.json`、`phasegate.world-waivers.json`、`phasegate.world-debts.json`として定義される
+- [ ] AC-2: schemaが`docs/contracts/world-*.schema.json`に置かれ、存在するunknown schemaをemptyへfallbackせずfail-closedにする
+- [ ] AC-3: file不在はcanonical empty input、duplicate record IDはno-winnerとして扱う
+- [ ] AC-4: application-owned repository portとinfrastructure adapterを分離し、control mutationはatomicに行う
+- [ ] AC-5: ci-governanceの既存path / SHA-1 baselineをWorld adoption baselineへimportしない
+
+### H17-09: Fingerprintとimmutable obligation derivation（WM-14）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-14）
+**優先度**: Must
+
+**As a** 品質管理者,
+**I want to** evaluation findingからdeterministic obligationを毎回再導出したい,
+**so that** legacy adoption、期限付きwaiver、新規blocking finding、返済済みentryを改竄可能なstateなしで区別できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: violationFingerprintがruleset、rule、constraint / endpoint pin、expected / observed evidenceから構成される
+- [ ] AC-2: adoption baselineが同一ruleset内closed setで、追加禁止・返済削除のみのratchetになる
+- [ ] AC-3: waiverがexact fingerprint、reason、exclusive expiry、WI、stable IDを必須とし、自動renewal / wildcardを許可しない
+- [ ] AC-4: obligation reportがcurrent evaluationとpolicy inputから毎回再導出され、保存`repaid` stateや既存reportを入力にしない
+- [ ] AC-5: policy inputが`policyInputsDigest`と`evaluationId`を変える一方、raw WCR finding / fingerprintを変えない
+- [ ] AC-6: semantic debtをstructural obligationと別collectionで表示する
+
+### H17-10: `world:pin` / `world:derive` CLI（WM-15）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-15）
+**優先度**: Must
+
+**As a** repository maintainer,
+**I want to** endpoint pinとobligation導出を明示的なCLIで実行したい,
+**so that** control mutationとgenerated report writeをreview可能なflagで分離できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: `world:pin`はpreview-onlyを既定とし、`--apply`時だけconstraintsをatomic updateする
+- [ ] AC-2: `world:derive`はpure / read-onlyを既定とし、`--write`時だけreportを保存する
+- [ ] AC-3: report既定先が`.harness/world-obligations.json`で、`--out`は`--write`と同時指定する
+- [ ] AC-4: human / JSON envelope、stable sort、stdout / stderr、exit 0 / 1 / 2がADR-037に従う
+- [ ] AC-5: explicit commandは`world.enabled`がfalseでも実行でき、invalid resolved configはdefaultsへfallbackしない
+
+### H17-11: World mutation E2Eとdeterminism（WM-16）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-16）
+**優先度**: Must
+
+**As a** Phasegate maintainer,
+**I want to** synthetic corpus mutationでWorld contractをend-to-end検証したい,
+**so that** snapshot / constraint / obligationの決定性とfailure分類を回帰保証できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: fixtureがmissing、deleted、renamed、duplicate、stale reference、malformed / new constraint、new unpinned claim、waiver expiryを個別に表現する
+- [ ] AC-2: 各mutationが期待するdiagnostic、`WCR-NNN`、fingerprint、exit codeを検証する
+- [ ] AC-3: 同一fixtureの2回実行でcanonical snapshot、root、JSON resultがbyte-identicalになる
+- [ ] AC-4: clean checkoutと既存`.harness`を持つcheckoutでderive結果が一致する
+- [ ] AC-5: obligation reportの手編集・削除が再導出結果や判定を変えない
+
+### H17-12: Self-repo adoption baselineとdogfood（WM-17）
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-17）
+**優先度**: Must
+
+**As a** Phasegate maintainer,
+**I want to** self-repoの実測structural violationsをreview済みbaselineとして採用したい,
+**so that** 既存負債を可視化しながら新規増分をゼロに保つWorld Model機能MVPを確立できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: 承認済みschema / extractor / ruleset / configでclean checkoutを実測し、推測件数をbaselineに使わない
+- [ ] AC-2: 同一checkoutで2回deriveし、fingerprint集合とserialized bytesが一致する
+- [ ] AC-3: current structural violation集合がadoption baselineと厳密一致し、増分が0になる
+- [ ] AC-4: 既知の意味的負債をexplicit semantic debt IDとしてimportし、structural obligationの「再発見」と表現しない
+- [ ] AC-5: WCR-001、new claim / pin、malformed policy inputをlegacy baselineへ採用しない
+- [ ] AC-6: 本Story完了をconstraint / obligationの機能MVPとし、L2 / L3 gate統合は後続Phase Cへ残す
+
+---
+
 ## Orchestration移管ストーリー一覧（参照）
 
 以下のストーリーはOrchestrationパッケージに移管済み。Quality Harnessのスコープ外。
@@ -1705,24 +1933,26 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 | Wave | Epic | US数 | Must | Should |
 |------|------|------|------|--------|
 | 1 | H-01 Biome | 3 | 3 | 0 |
-| 1 | H-02 Phase Dependency | 3 | 2 | 1 |
-| 1 | H-03 Traceability | 3 | 3 | 0 |
+| 1 | H-02 Phase Dependency | 7 | 6 | 1 |
+| 1 | H-03 Traceability | 8 | 8 | 0 |
 | 1 | H-04 Config v2 | 3 | 3 | 0 |
 | 1 | H-05 ADR | 3 | 3 | 0 |
 | 1 | H-06 HarnessError | 3 | 3 | 0 |
-| **Wave 1小計** | | **18** | **17** | **1** |
+| **Wave 1小計** | | **27** | **26** | **1** |
 | 2 | H-07 Nyquist | 4 | 3 | 1 |
 | 2 | H-08 L2-L4 | 6 | 6 | 0 |
 | 2 | H-09 Harness API | 4 | 4 | 0 |
-| 2 | H-10 Quick Mode | 4 | 3 | 1 |
-| 2 | H-11 エージェント統合 | 4 | 4 | 0 |
-| **Wave 2小計** | | **22** | **20** | **2** |
-| 3 | H-12 スキル品質 | 6 | 6 | 0 |
-| 3 | H-13 Scheduled Gov | 3 | 1 | 2 |
+| 2 | H-10 Quick Mode | 5 | 3 | 2 |
+| 2 | H-11 エージェント統合 | 5 | 5 | 0 |
+| **Wave 2小計** | | **24** | **21** | **3** |
+| 3 | H-12 スキル品質 | 7 | 7 | 0 |
+| 3 | H-13 Scheduled Gov | 4 | 2 | 2 |
 | 3 | H-14 K回帰 | 3 | 3 | 0 |
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
-| **Wave 3小計** | | **17** | **15** | **2** |
-| Future | H-F2 Phase 2拡張 | 4 | — | — |
-| **v1合計** | | **57** | **52** | **5** |
-| **全体（Future含む）** | | **61** | — | — |
+| **Wave 3小計** | | **19** | **17** | **2** |
+| 4 | H-17 World Model | 12 | 12 | 0 |
+| **Wave 4小計** | | **12** | **12** | **0** |
+| Future | H-F2 Phase 2拡張 | 5 | — | — |
+| **v1合計** | | **82** | **76** | **6** |
+| **全体（Future含む）** | | **87** | — | — |

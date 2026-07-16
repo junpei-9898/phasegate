@@ -33,7 +33,7 @@ WM-05 は Phase 0 の単一統合点として、この物理 canonical 化を完
 - `docs/product/units/world-model_unit.md` と `docs/product/units/integration_contract.md` を作成または更新する。
 - `docs/product/construction/world-model/` に domain、logical、unit test、integration test の設計を確立する。
 
-Step B は Step A の承認後に実施し、本着地点では未着手とする。
+Step B は Step A の承認後に実施し、World Modelのcatalog、Unit境界、Construction設計をproduct正本へ反映する。
 
 ## Step A inventory と統合記録
 
@@ -85,6 +85,27 @@ scripts、skills、templates には旧 filename の実参照が存在しなか�
 - world-model の domain / logical / unit test / integration test design が作成される。
 - product / inception corpus role、ID、snapshot、constraint、baseline / waiver、CLI contract が相互矛盾なく接続される。
 - Step B の独立承認まで実装には着手しない。
+
+## Step B 設計反映記録
+
+<!-- @work-item-id WI-285 -->
+
+- product overviewへWorld Modelをfederated read modelとして追加した。
+- Epic H17とH17-01〜H17-12を追加し、delivery planのWM-06〜17へ1対1でbindingした。
+- `world-model_unit.md`とintegration contractにownership、consumer-owned adapter、provider plain DTO、public evaluation facade、CLI / persistence境界を反映した。
+- `docs/product/construction/world-model/`へdomain / logical / unit test / integration test designを作成した。
+- domain設計はADR-032〜035の`pgw:v1` identity、canonical roots、WCR-001〜008、baseline / waiver / obligationを正本とする。
+- logical設計はClean Architecture 4層、consumer-owned ports、BuildSnapshot / InspectWorld / EvaluateConstraints / DeriveObligations / PinConstraints、top-level composition方針を定義した。
+- unit test設計はWI-283の`UT-WM283-*`全caseを包含し、日本語case名、AAA、domain層mock禁止を固定した。
+- integration test設計はextractor / owner facade / declaration repository / CLI / determinism / mutation fixtureの実装予定contractを定義した。
+
+## Step B 検証結果
+
+- catalog: H17 Story 12件、全Story heading 87件、重複ID 0件。H17-01〜12とWM-06〜17の対応をproduct catalog、mapping、Unit定義で一致させた。
+- WI-283 carry-over: 元のunit test designとproduct unit test designの`UT-WM283-*`集合を比較し、欠落・追加0件。
+- L2: `node --import tsx scripts/harness/main.ts validate --layer L2`が7/7 PASS。既存のskill-quality ungated-legacy coverage warningのみで失敗0件。
+- readiness: `node --import tsx scripts/harness/main.ts phasegate:check-ready`が`status: pass`、評価対象88件すべてpass、H17の12件すべてmissing phaseなし。88件はstructured Story heading 87件に、既存のmetadata-only `@story-id H13-05` 1件を加えたharness上の集合である。
+- hygiene: `git diff --check`がPASSし、scripts/harness source、protected principles、package lockに変更なし。
 
 ## Step A 検証結果
 

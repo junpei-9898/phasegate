@@ -1,11 +1,12 @@
 # 統合契約（Integration Contract）
 
 @story-id H08-01
+@work-item-id WI-285
 設計要素: L0 legacy validator 撤去後の validator-system / agent-integration 境界。
 
 > **作成日**: 2026-03-12
-> **Unit数**: **15**（v1） + 2（Future）  ※ installation unit を WI-144 系で新規追加。現行 Unit catalog では kebab-case Unit ID を正本とし、underscore 形式の `*_unit.md` は後方互換 alias として扱う。@work-item-id WI-167
-> **ストーリー数**: 54（v1） + 8（Future）= 62
+> **Unit定義数**: **17** concrete canonical Unit definitions（world-modelを含む）。filenameは`<kebab-case Unit ID>_unit.md`の単一正本。@work-item-id WI-167, WI-285
+> **ストーリー数**: 82（v1） + 5（Future）= 87
 
 ---
 
@@ -140,6 +141,12 @@ domain層は外部に依存しない。application層はdomain層のみに依存
 | **@unit/@layerメタデータ仕様** | traceability-model | biome-ast-engine (L1), validator-system (L2 metadata), skill-quality (Cascade Updater), regression-suite | メタデータアノテーション仕様 |
 | **AcCoverageGatePolicy** | nyquist-validation | validator-system (L2 phase-gateバリデータが実行) | ACマッピング完了判定ロジック |
 | **RuleViolation Contract** | biome-ast-engine | validator-system (L1結果参照) | `{ filePath, line, column, ruleName, message, severity, fix_example? }` |
+| **Traceability World Read DTO** | traceability-model | world-model | Unit / Story / AC / WorkItem / TestReferenceのcanonical owner IDとprovenanceをplain DTOで公開する。world-modelはprovider domain modelをimportしない。<!-- @work-item-id WI-285 --> |
+| **Matrix World Read DTO** | nyquist-validation | world-model | Story / AC / TestReference indexをowner-defined plain projectionで公開する。matrix ownershipはnyquist-validationに残る。<!-- @work-item-id WI-285 --> |
+| **Attestation Evidence Read DTO** | attestation | world-model | gate-run evidenceとverification statusをplain DTOで公開する。signature bytes、self digest、volatile metadataはWorld projection対象外。<!-- @work-item-id WI-285 --> |
+| **Integrity Declaration Read DTO** | ci-governance | world-model | instruction corpusのtarget / digest declarationをplain DTOで公開する。integrity lifecycleとraw-byte digest contractはci-governanceが所有する。<!-- @work-item-id WI-285 --> |
+| **SHA-256 Capability** | attestation public facade | attestation, world-model | `Uint8Array -> sha256:<64 lowercase hex>`のplain capability。各consumerがlocal port / Digestへadaptし、attestation内部port / VOを公開しない。<!-- @work-item-id WI-285 --> |
+| **World Snapshot / Evaluation Facade** | world-model | validator-system, harness-api / top-level composition | Snapshot / diagnostic / policy-free WCR evaluation / obligation DTOを公開する。validator-systemがgate execution、severity、blocking policyを所有する。<!-- @work-item-id WI-285 --> |
 
 #### Harness API Response DTO
 
@@ -228,6 +235,18 @@ Status and drift commands emit JSON to stdout and separate configured state, cac
 | 0 | 正常 / Pass |
 | 1 | Fail / 対象未検出 |
 | 2 | 実行エラー |
+
+### 3.4 world-model所有コマンド（H-17で段階実装）
+
+<!-- @work-item-id WI-285 -->
+
+| コマンド | 既定mode | 明示副作用 | exit 1 | exit 2 |
+|---|---|---|---|---|
+| `world:inspect` | read-only snapshot | なし | snapshot生成後にhard extraction diagnosticあり | config / schema / I/O / hashing failureでsnapshot不能 |
+| `world:pin` | preview-only | `--apply`で`phasegate.world-constraints.json`をatomic update | endpoint missing / duplicate / ambiguous、malformed declaration | usage / unknown schema / invalid config / I/O / hashing failure |
+| `world:derive` | pure / read-only | `--write [--out <path>]`でobligation reportをatomic write | blocking obligationまたはpolicy cleanup required | trustworthy evaluationを作れないusage / config / schema / I/O / hashing failure |
+
+三commandは`--format human|json`と`--json` aliasを受理する。primary resultはstdout、usage / process failureはstderrへ出す。JSONは`phasegate-world-cli/v1` envelope一件だけを出力する。実装時はmain dispatch、harness-api known-command registry、help / conformance testを同じcommitで更新する。
 
 ---
 
@@ -318,16 +337,39 @@ Future
 | 仕様確定依存（型・契約） | Wave開始前にインターフェースのみ先行定義 | HarnessError型、HarnessConfigV2型 |
 | 実装時依存（モジュール呼出） | 実行時に他Unitのモジュールを呼び出す | harness-api → validator-system |
 
+### 4.3 World Model import方向
+
+<!-- @work-item-id WI-285 -->
+
+```text
+traceability-model public DTO ───────────────┐
+nyquist-validation matrix public DTO ───────┤
+attestation evidence / SHA public facade ───┼─> world-model infrastructure adapters
+ci-governance integrity public DTO ─────────┘                 │
+                                                              v
+                                                   world-model application/domain
+                                                              │
+                                                              v
+validator-system infrastructure adapter <── world-model public evaluation facade
+harness-api / top-level composition       <── world-model handlers / plain DTO
+```
+
+- anti-corruption adapterはconsumerであるworld-modelのinfrastructure層に置く。
+- world-model domain / applicationはconsumer-owned portだけに依存し、providerのdomain / infrastructure / composition-rootをimportしない。
+- validator-systemはworld-model public evaluation facadeをinfrastructure adapterから消費し、WCR findingをgate policyへ写像する。
+- attestation v2へ将来`worldSnapshotRoot`を渡す場合はtop-level compositionがprimitive DTOを注入し、attestationからworld-modelをimportしない。
+
 ---
 
 ## 5. Wave実行計画
 
 | Wave | Unit群 | US数 | 並列グループ | 順序依存 | 前提条件 |
 |------|--------|------|-------------|---------|---------|
-| **Wave 1**: 基盤構築 | biome-ast-engine, phase-dependency-model, traceability-model, config-foundation, adr-foundation, harness-error | 18 | 全6 Unitが並列開発可能 | なし | **型定義の先行確定**: HarnessError型・HarnessConfigV2型のインターフェースをWave開始前に合意 |
-| **Wave 2**: コア品質機構 | nyquist-validation, validator-system, harness-api, quick-mode, agent-integration | 22 | nyquist-validation, validator-system, quick-modeは並列可能 | harness-api → agent-integration の順序推奨 | validator-system, nyquist-validationの主要インターフェースが確定後にharness-api着手 |
-| **Wave 3**: 拡張・運用・保証 | skill-quality, ci-governance, regression-suite | 14 | skill-quality, ci-governanceは並列可能 | regression-suite Phase Bは全v1 Unit完了後 | skill-quality → ci-governance: lesson artifact契約の事前合意。regression-suite Phase AはWave 2後半から先行開始可能 |
-| **Future** | phase2-extensions | 3 | — | — | v1全Unit完了後 |
+| **Wave 1**: 基盤構築 | biome-ast-engine, phase-dependency-model, traceability-model, config-foundation, adr-foundation, harness-error | 27 | 全6 Unitが並列開発可能 | なし | **型定義の先行確定**: HarnessError型・HarnessConfigV2型のインターフェースをWave開始前に合意 |
+| **Wave 2**: コア品質機構 | nyquist-validation, validator-system, harness-api, quick-mode, agent-integration | 24 | nyquist-validation, validator-system, quick-modeは並列可能 | harness-api → agent-integration の順序推奨 | validator-system, nyquist-validationの主要インターフェースが確定後にharness-api着手 |
+| **Wave 3**: 拡張・運用・保証 | skill-quality, ci-governance, regression-suite, installation, attestation capability | 19 | Unitごとの既存contractに従う | regression-suite Phase Bは全v1 Unit完了後 | H-12〜H-16のowner contractを維持 |
+| **Wave 4**: World Model | world-model + provider public facades | 12 | WM-06 / 07 / 08、WM-09 / 10 / 12の分離範囲のみ | composition-root / CLI / application統合点はdelivery plan順に直列 | ADR-031〜037とWM-05 product設計完了 |
+| **Future** | phase2-extensions | 5 | — | — | v1全Unit完了後 |
 
 ---
 
@@ -346,6 +388,24 @@ phasegate 自身の deploy 状態管理 / 構造健全性検査 / 既存ファ�
 - **WI-146 API**: `phasegate install --dry-run|--apply [--force] [--json]` は `.claude/settings.json` / `.codex/hooks.json` / `.husky/*` / `.github/workflows/phasegate-aidlc-gate.yml` / `package.json` / agent skill symlink を structured merge し、結果を manifest に `created` / `merged` / `symlink` として記録する。
 - **WI-147 API**: `phasegate uninstall --dry-run|--apply [--force] [--json]` は manifest entries を読み、`created` / `symlink` entries を削除し、`merged` entries は JSON hooks / shell managed block / `package.json` phasegate scripts-devDependency だけを除去する。hash mismatch は force 無しで refuse し、force 時は `.phasegate/backups/uninstall-*/` に snapshot を保存する。完了後 `.phasegate/manifest.json` は `.phasegate/uninstalled-*.json` に rename される。
 - **WI-148 API**: `phasegate reconcile --dry-run|--apply [--force] [--json]` は manifest entries と現行 bundled templates を比較し、`merged` entries の PhaseGate managed portion、`created` entries の unmodified files、manifest に無い新規 deploy target を現行 version に追従する。hash mismatch は force 無しで refuse し、force 時は `.phasegate/backups/reconcile-*/` に snapshot を保存する。apply 後は `.phasegate/manifest.json` の version/hash を更新する。`phasegate update-skills` は互換 alias として同 use case に委譲する。
+
+## 5.6 world-model（WI-285 / H17）
+
+<!-- @work-item-id WI-285 -->
+
+> **Unit ID**: world-model
+> **担当 Story**: H17-01〜H17-12
+> **Wave**: 4
+> **詳細**: `docs/product/units/world-model_unit.md` 参照
+
+設計文書、source、generated artifact、external declarationをowner facade経由で観測し、typed factの組立、canonical Snapshot、WCR構造制約評価、immutable obligation report導出を担当するBounded Context。gate実行、severity、blocking policyはvalidator-systemに残す。
+
+- **受信契約**: traceability-model / nyquist-validation / attestation / ci-governanceのplain DTO public facadeと、attestation public SHA-256 capability。provider内部のdomain / infrastructure型はimportしない。
+- **公開契約**: Snapshot / extraction diagnostic / policy-free WCR finding / obligation DTO、および`world:inspect`、`world:pin`、`world:derive` handler。
+- **control inputs**: repository rootの`phasegate.world-constraints.json`、`phasegate.world-baseline.json`、`phasegate.world-waivers.json`、`phasegate.world-debts.json`。いずれもversioned external declarationであり、generated reportとは分離する。
+- **generated output**: `.harness/world-obligations.json`。毎回再導出し、手編集値を入力へ戻さない。既定ではGit追跡しない。
+- **validator接続**: 将来のL2-017 / L3-008 adapterがWorld evaluation facadeを消費する。world-modelはvalidator-systemをimportせず、登録とblockingPolicyはPhase Cでvalidator-systemが所有する。
+- **実装順序**: WM-06〜17をH17-01〜12へ1対1でbindingし、provider facade、domain、extractor、graph、constraints、policy inputs、CLI、self-repo adoptionを段階的に実装する。
 
 ---
 
@@ -427,6 +487,7 @@ Phasegateはローカル開発ツールキットであり、認証認可機構�
 | L2-001 | phase-gate | Phase Dependency 3層構造の前提条件違反 |
 | L2-002 | metadata | @unit/@layer/@story-id/@storyメタデータの完全性 |
 | L2-003 | test-quality | AAA/actual命名/single-act/no-domain-mock/E2E seed/describe-it規約 |
+| L2-017 | world-constraints（予約） | World WCR findingのL2 gate写像。WM-19まで未登録・未実装 |
 
 ### L3 — CIバリデータ（validator-system）
 
@@ -436,6 +497,7 @@ Phasegateはローカル開発ツールキットであり、認証認可機構�
 | L3-002 | performance | ループ内await、N+1、bundleSizeLimit |
 | L3-003 | coverage | カバレッジ閾値未達（standard: 90%, strict: 95%） |
 | L3-004 | nyquist | 要件→テスト双方向トレーサビリティ欠落 |
+| L3-008 | world-constraints（予約） | World WCR findingのL3 CI gate写像。WM-20まで未登録・未実装 |
 
 ### L4 — Scheduledバリデータ（validator-system）
 
