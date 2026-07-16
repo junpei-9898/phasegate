@@ -3,7 +3,7 @@
 // @work-item-id WI-291
 // @work-item-id WI-292
 // @work-item-id WI-295
-// @work-item-id WI-296
+// @work-item-id WI-296, WI-297
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -13,7 +13,10 @@ import {
 } from "./application/dto/world-resolved-config-input.js";
 import { BuildSnapshotUseCase } from "./application/usecases/build-snapshot-use-case.js";
 import { DeriveObligationsUseCase } from "./application/usecases/derive-obligations-use-case.js";
-import { DeriveWorldObligationsUseCase } from "./application/usecases/derive-world-obligations-use-case.js";
+import {
+  DeriveWorldObligationsUseCase,
+  type PolicyDatePort,
+} from "./application/usecases/derive-world-obligations-use-case.js";
 import { InspectWorldUseCase } from "./application/usecases/inspect-world-use-case.js";
 import { PinConstraintEndpointUseCase } from "./application/usecases/pin-constraint-endpoint-use-case.js";
 import { CanonicalJsonSerializer } from "./domain/services/canonical-json-serializer.js";
@@ -57,6 +60,7 @@ const WORLD_EXTRACTOR_VERSION = "phasegate-world-extractor/v2";
 export interface WorldModelModuleOptions {
   readonly rootDir: string;
   readonly resolvedConfig?: WorldResolvedConfigInput;
+  readonly policyDate?: PolicyDatePort;
 }
 
 export function createWorldModelModule(options: WorldModelModuleOptions) {
@@ -180,7 +184,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     constraintRepository,
     rootDeriver,
     deriveObligations: deriveObligationsUseCase,
-    policyDate: {
+    policyDate: options.policyDate ?? {
       currentUtcDate: () => new Date().toISOString().slice(0, 10),
     },
     constraintConfigDigest: hashingPort.sha256(

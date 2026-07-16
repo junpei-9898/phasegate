@@ -300,3 +300,8 @@ supported constraints envelope内の各recordは`ConstraintRecord`または`Malf
 `PinCandidate`はconstraint ID、claimant / premise role、stable node ID、before / after digest、changed flagだけを持つ。exact一件またはvalid single-hop alias target一件だけを解決し、missing / duplicate / ambiguous inputにwinnerを作らない。
 
 derive CLI verdictはimmutable reportからsuccess / domain finding / execution failureを区別する。new / invalid structural obligation、repaid cleanup、policy diagnosticはfinding、adopted / waived / declared semantic debtだけならsuccessとする。validator severity / blocking booleanは持たない。
+## WI-297: Synthetic mutation comparison model
+
+<!-- @work-item-id WI-297 -->
+
+CP-3 mutation fixtureはbaseline/current Snapshotを明示pairとして扱う。baseline SnapshotはWCR-003とnon-causal ChangeProvenanceだけに使い、World adoption baselineとは相互変換しない。baselineなしはinitial evaluationでWCR-002、valid explicit aliasは`resolved-via-alias`でfindingなし、invalid aliasだけをWCR-004とする。

@@ -1,8 +1,9 @@
 // @unit world-model
 // @layer application
-// @work-item-id WI-296
+// @work-item-id WI-296, WI-297
 
 import { ExtractionDiagnostic } from "../../domain/entities/extraction-diagnostic.js";
+import type { Snapshot } from "../../domain/entities/snapshot.js";
 import { ConstraintEvaluator, type ConstraintFindingDto } from "../../domain/services/constraint-evaluator.js";
 import type { SnapshotRootDeriver } from "../../domain/services/snapshot-root-deriver.js";
 import { ChangeProvenance } from "../../domain/value-objects/change-provenance.js";
@@ -23,6 +24,12 @@ export type DeriveWorldObligationsResult =
   | { readonly status: "derived"; readonly result: Extract<DeriveObligationsResult, { status: "derived" }> }
   | { readonly status: "execution-failure"; readonly diagnostics: readonly WorldControlDiagnosticDto[] };
 
+export interface DeriveWorldObligationsInput {
+  readonly writeReport: boolean;
+  readonly reportPath?: string;
+  readonly baselineSnapshot?: Snapshot;
+}
+
 interface Dependencies {
   readonly buildSnapshot: BuildSnapshotContract;
   readonly constraintRepository: ConstraintDeclarationRepositoryPort;
@@ -38,10 +45,7 @@ const RULESET_VERSION = "phasegate-world-wcr/v1";
 export class DeriveWorldObligationsUseCase {
   constructor(private readonly dependencies: Dependencies) {}
 
-  async execute(input: {
-    readonly writeReport: boolean;
-    readonly reportPath?: string;
-  }): Promise<DeriveWorldObligationsResult> {
+  async execute(input: DeriveWorldObligationsInput): Promise<DeriveWorldObligationsResult> {
     const [snapshot, constraints] = await Promise.all([
       this.dependencies.buildSnapshot.execute(),
       this.dependencies.constraintRepository.load(),
@@ -82,11 +86,12 @@ export class DeriveWorldObligationsUseCase {
     }).root;
     const evaluation = new ConstraintEvaluator().evaluateFull({
       currentSnapshot: snapshot,
+      baselineSnapshot: input.baselineSnapshot,
       records: constraints.value.records,
       malformedDeclarations: constraints.value.malformedDeclarations,
       aliases: constraints.value.aliases,
       relations: constraints.value.relations,
-      changeProvenance: ChangeProvenance.between(null, snapshot),
+      changeProvenance: ChangeProvenance.between(input.baselineSnapshot ?? null, snapshot),
     });
     const implicitFindings = snapshot.extractionDiagnostics.flatMap((diagnostic): readonly ConstraintFindingDto[] => {
       if (diagnostic.code !== "duplicate-node-id" || diagnostic.nodeId === undefined) return [];

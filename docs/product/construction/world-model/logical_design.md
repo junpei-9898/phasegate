@@ -356,3 +356,8 @@ use caseはreport read portを持たない。pure modeはcanonical bytesを返�
 `PinConstraintEndpointUseCase`はSnapshotとconstraint repositoryだけを消費し、default preview、明示apply時だけcomplete admitted constraints documentをatomic replaceする。`DeriveWorldObligationsUseCase`はSnapshot、constraintRoot、WCR evaluationをWM-14 use caseへ接続し、injectable policy dateをsemantic inputとして渡す。
 
 `WorldPinCommandHandler` / `WorldDeriveCommandHandler`はADR-037のflag、human / JSON、stdout / stderr、exit 0/1/2を実装する。composition-rootがhandlerまで配線し、mainはhelp / dispatchだけを追加する。presentationはbaseline / waiver policyやfingerprintを再計算しない。
+## WI-297: Fixture comparison and deterministic policy clock
+
+<!-- @work-item-id WI-297 -->
+
+`DeriveWorldObligationsUseCase`はoptional comparison Snapshotを受け、current evaluationへ`baselineSnapshot`と`ChangeProvenance.between(baseline,current)`を同時に渡す。CLIはcomparisonを暗黙発見せずinitial semanticsを維持する。compositionは`PolicyDatePort`の既定system UTC dateを持つが、E2Eは固定date実装を注入してwaiver exclusive boundaryを決定的に検証できる。

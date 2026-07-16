@@ -1,0 +1,25 @@
+{
+  "version": "1.2",
+  "generatedAt": "2099-01-01T00:00:00.000Z",
+  "stories": [
+    {
+      "storyId": "H17-11",
+      "coverageStatus": "required",
+      "coverageLifecycle": ["planned", "required"],
+      "storyMappings": [
+        {
+          "acId": "AC-1",
+          "testReferences": [
+            {
+              "filePath": "scripts/harness/__tests__/unit/sample/model.test.ts",
+              "testType": "unit",
+              "testName": "synthetic matrix reference",
+              "binding": "ac"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

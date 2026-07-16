@@ -1898,8 +1898,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 **Epic**: H-17 World Model
 **旧US**: 新規（WM-16）
 **優先度**: Must
-**Coverage status**: planned
-**Coverage lifecycle**: planned
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
 
 **As a** Phasegate maintainer,
 **I want to** synthetic corpus mutationでWorld contractをend-to-end検証したい,

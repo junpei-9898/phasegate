@@ -346,3 +346,11 @@ application testはinvalid repository resultでreportを作らないこと、pur
 @story-id H17-10
 
 pin use caseはpreview / apply、exact / alias、missing / duplicate / malformed、unknown schema / write failureを検証する。derive integrationはempty declaration、constraintRoot、WCR finding、report persistenceを検証する。presentation testはformat conflict、out-without-write、domain exit 1、execution exit 2、single JSON envelopeとstable human section順を固定する。
+## WI-297: Comparison seam tests
+
+<!-- @work-item-id WI-297 -->
+
+| ID | ケース | 期待 |
+|---|---|---|
+| UT-WM297-CMP-001 | comparison baseline省略 / 指定 | WCR-002 / WCR-003の既存rule境界を維持する |
+| UT-WM297-CLK-001 | fixed PolicyDatePort | waiver全件へ同じUTC dateを一度だけ供給する |

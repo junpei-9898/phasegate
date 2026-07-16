@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "phasegate-world-synthetic-scenarios/v1",
+  "scenarios": [
+    { "id": "base", "expectedExit": 0, "expectedRuleId": null, "expectedClassification": null, "expectedFingerprint": null },
+    { "id": "missing-endpoint", "expectedExit": 1, "expectedRuleId": "WCR-002", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:ee9d70ccf23d425b78a8cc30887c7b3ddc4d7d3a88159f10943be063050bb6ab" },
+    { "id": "claimant-content-drift", "expectedExit": 1, "expectedRuleId": "WCR-008", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:107545349fdbd7d0f9ca56934c8c160434aa2858a7417969c3bb685f618f3ea5" },
+    { "id": "premise-content-drift", "expectedExit": 1, "expectedRuleId": "WCR-008", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:b6c1bd1e90be77cbc772e4d38b64ee9330974fbefdc2a6e76eba8c48bdc31a64" },
+    { "id": "deleted-fragment", "expectedExit": 1, "expectedRuleId": "WCR-003", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:45b3f3699deb86c32f2e9da59a740bb3de290f4a72e6875e7024f8fcb6edc8a3" },
+    { "id": "renamed-fragment", "expectedExit": 1, "expectedRuleId": "WCR-003", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:45b3f3699deb86c32f2e9da59a740bb3de290f4a72e6875e7024f8fcb6edc8a3" },
+    { "id": "valid-fragment-alias", "expectedExit": 0, "expectedRuleId": null, "expectedClassification": null, "expectedFingerprint": null },
+    { "id": "invalid-fragment-alias", "expectedExit": 1, "expectedRuleId": "WCR-004", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:d24e8df5c807c1282341ab70a1ab72385a2e70b8df9a48e5e263e165573c7dc9" },
+    { "id": "duplicate-id", "expectedExit": 1, "expectedRuleId": "WCR-005", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:293880280c61ba81a9ce8a33482629f3760f4e6f7f284d1eb16c5d7c2d124e92" },
+    { "id": "stale-matrix-reference", "expectedExit": 1, "expectedRuleId": "WCR-003", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:b105bce5a96d704c2523ccbc13fc9a291d319054657e6e1079780ec646026c90" },
+    { "id": "malformed-constraint", "expectedExit": 1, "expectedRuleId": "WCR-001", "expectedClassification": "invalid-declaration", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:c2577676e20de4707acad3a816fec855376708f25ac5c886e476a95784c886ff" },
+    { "id": "unknown-constraint-schema", "expectedExit": 2, "expectedRuleId": null, "expectedClassification": null, "expectedFingerprint": null },
+    { "id": "new-constraint", "expectedExit": 1, "expectedRuleId": "WCR-002", "expectedClassification": "new-structural", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:6eac49872789a376b52babc272f99d99b512121f7262905eb8989f202d6cfe01" },
+    { "id": "new-unpinned-claim", "expectedExit": 1, "expectedRuleId": "WCR-001", "expectedClassification": "invalid-declaration", "expectedFingerprint": "pgw:v1:violation-fingerprint:sha256:131f312697726a7c005adfd46ed61329852fd4a2b771f3148058a1f1fb8bf688" }
+  ]
+}

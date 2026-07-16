@@ -255,3 +255,10 @@ pure modeはreportを書かず、write modeは同じraw report bytesを`.harness
 process境界でpin preview / apply、derive pure / default write / explicit out、format flags、exit 0/1/2、invalid config / declaration schemaを検証する。pin apply前後は4 control fileとreportを比較してconstraints以外が不変、derive writeではreport以外が不変であることをassertする。
 
 同一fixtureの`world:derive --json`を2回実行しstdoutをbyte比較する。persist fileはCLI envelopeでなく`phasegate-world-obligation-report/v1` raw reportであることをpublished schemaで検証する。
+## WI-297: CP-3 synthetic mutation corpus
+
+<!-- @work-item-id WI-297 -->
+
+repository-shaped base fixtureと独立mutation manifestでmissing、両endpoint drift、legacy Fragment deletion / rename、valid / invalid alias、duplicate ID、stale matrix reference、malformed / unknown / new declaration、unpinned claim、waiver expiryを検証する。各blocking caseはexact WCR ID / fingerprint / classification / exitをassertし、valid aliasだけはresolved controlとしてexit 0を期待する。
+
+同一fixture二重実行、clean / stale `.harness`、report手編集 / 削除の比較はraw JSON bytesとexit codeの両方をassertし、persisted reportをevaluation inputへ接続していないことを証明する。
