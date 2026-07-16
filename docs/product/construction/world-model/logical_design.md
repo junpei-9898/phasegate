@@ -361,3 +361,8 @@ use caseはreport read portを持たない。pure modeはcanonical bytesを返�
 <!-- @work-item-id WI-297 -->
 
 `DeriveWorldObligationsUseCase`はoptional comparison Snapshotを受け、current evaluationへ`baselineSnapshot`と`ChangeProvenance.between(baseline,current)`を同時に渡す。CLIはcomparisonを暗黙発見せずinitial semanticsを維持する。compositionは`PolicyDatePort`の既定system UTC dateを持つが、E2Eは固定date実装を注入してwaiver exclusive boundaryを決定的に検証できる。
+## WI-298: Self-repo measurement and adoption
+
+<!-- @work-item-id WI-298 -->
+
+final tracked corpusと再生成matrixからbaselineなしcandidateを二重deriveし、byte-identicalなunique fingerprint集合だけを`phasegate.world-baseline.json`へ採用する。適用後はcurrent structural setとbaseline entryをexact比較し、全件`adopted-legacy`、new / repaid / policy diagnostic 0を要求する。baseline生成に保存reportや推測件数を使わない。

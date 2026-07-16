@@ -576,3 +576,8 @@ const target = new AtomicCommitService(
 - Bundled skill scanning reads required `languages` frontmatter from shipped skills without breaking install flows.
 - Applicability output keeps generic workflow skills available for non-TypeScript projects.
 - Language-scoped skills without a matching project language produce warnings rather than hard validation errors.
+## WI-298: World debt import integration
+
+<!-- @work-item-id WI-298 -->
+
+実coverage reportのannotationと`phasegate.world-debts.json`のdebt IDを照合し、World dogfood reportが同じdebtを`declaredSemanticDebts`へ一件importすることを検証する。structural obligation / baseline / waiverへの変換は行わない。

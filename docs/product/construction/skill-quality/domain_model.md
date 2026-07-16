@@ -499,3 +499,8 @@ LessonArtifactSchemaPortを導入することで、ci-governanceスキーマへ�
 <!-- @work-item-id WI-212 -->
 
 Bundled skills declare supported languages in frontmatter through `languages: [...]`. The current shipped catalog is TypeScript-oriented and uses `languages: [typescript]` so future Python, Go, Rust, or generic variants can coexist without changing the directory contract. Skill validation treats language metadata as part of the required structure and reports missing metadata as a structural gap.
+## WI-298: Explicit coverage attestation debt reference
+
+<!-- @work-item-id WI-298 -->
+
+skill-qualityはcoverage reportの未返済attestation gapを既知の意味的負債として参照する。debt identity、reason、owner、導入WIの正本はWorld external declarationに置き、coverage reportはstable debt IDだけをmetadata annotationとして保持する。これはcoverage stateやL2-016 exemptionを新設するものではない。

@@ -354,3 +354,12 @@ pin use caseはpreview / apply、exact / alias、missing / duplicate / malformed
 |---|---|---|
 | UT-WM297-CMP-001 | comparison baseline省略 / 指定 | WCR-002 / WCR-003の既存rule境界を維持する |
 | UT-WM297-CLK-001 | fixed PolicyDatePort | waiver全件へ同じUTC dateを一度だけ供給する |
+## WI-298: Baseline set invariants
+
+<!-- @work-item-id WI-298 -->
+
+| ID | ケース | 期待 |
+|---|---|---|
+| UT-WM298-INV-001 | unique sorted measured set | duplicate fingerprint 0、count不変 |
+| UT-WM298-ADM-001 | baseline/current exact set | added / missing entry 0 |
+| UT-WM298-DEBT-001 | semantic debt import | structural collectionと混在しない |

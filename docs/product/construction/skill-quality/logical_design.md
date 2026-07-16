@@ -2024,3 +2024,8 @@ Personal install copies bundled skill reference dependencies into `.phasegate-lo
 <!-- @work-item-id WI-212 -->
 
 Skill-quality reads `languages` frontmatter from bundled `SKILL.md` files and exposes it as language applicability metadata for install, doctor, and documentation surfaces. Missing language metadata is a structure validation gap for bundled skills; future generic skills should explicitly declare a generic capability instead of relying on omission.
+## WI-298 Explicit semantic debt linkage
+
+<!-- @work-item-id WI-298 -->
+
+`coverage_report.md`のfile-level metadataへ`@world-semantic-debt pgw:v1:semantic-debt:skill-quality.coverage-attestation-legacy`を追加し、既存`@coverage-gating: ungated-legacy`と併存させる。debtの説明は`phasegate.world-debts.json`を正本とし、annotationへ複製しない。L2-016のwarning / repayment contractは変更しない。

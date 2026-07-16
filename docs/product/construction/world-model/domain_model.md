@@ -305,3 +305,8 @@ derive CLI verdictはimmutable reportからsuccess / domain finding / execution 
 <!-- @work-item-id WI-297 -->
 
 CP-3 mutation fixtureはbaseline/current Snapshotを明示pairとして扱う。baseline SnapshotはWCR-003とnon-causal ChangeProvenanceだけに使い、World adoption baselineとは相互変換しない。baselineなしはinitial evaluationでWCR-002、valid explicit aliasは`resolved-via-alias`でfindingなし、invalid aliasだけをWCR-004とする。
+## WI-298: Self-repo adoption inventory
+
+<!-- @work-item-id WI-298 -->
+
+`MeasuredViolationInventory`は承認済みrulesetで実測したunique fingerprint集合とrule / corpus kind / owner Unit集計を表す。`AdoptionBaseline`はcandidate evaluation provenanceとreview済みclosed entry setを持つexternal declarationであり、current finding、repaid state、semantic debtを保存しない。explicit semantic debtは別collectionとしてimportし、structural violationを抑止しない。

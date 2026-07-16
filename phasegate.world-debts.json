@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "phasegate-world-debts/v1",
+  "debts": [
+    {
+      "debtId": "pgw:v1:semantic-debt:skill-quality.coverage-attestation-legacy",
+      "kind": "semantic",
+      "title": "Skill-quality coverage report attestation gap",
+      "reason": "The report retains pre-attestation coverage claims whose cited test IDs are not yet uniformly bound to verifiable test artifacts. This declaration imports the reviewed semantic gap without treating it as a machine-discovered structural violation or changing L2-016.",
+      "ownerUnit": "skill-quality",
+      "introducedByWorkItemId": "WI-298",
+      "references": [
+        "pgw:v1:artifact:design-document:product:docs/product/construction/skill-quality/coverage_report.md"
+      ]
+    }
+  ]
+}

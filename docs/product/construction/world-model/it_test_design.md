@@ -262,3 +262,8 @@ process境界でpin preview / apply、derive pure / default write / explicit out
 repository-shaped base fixtureと独立mutation manifestでmissing、両endpoint drift、legacy Fragment deletion / rename、valid / invalid alias、duplicate ID、stale matrix reference、malformed / unknown / new declaration、unpinned claim、waiver expiryを検証する。各blocking caseはexact WCR ID / fingerprint / classification / exitをassertし、valid aliasだけはresolved controlとしてexit 0を期待する。
 
 同一fixture二重実行、clean / stale `.harness`、report手編集 / 削除の比較はraw JSON bytesとexit codeの両方をassertし、persisted reportをevaluation inputへ接続していないことを証明する。
+## WI-298: Self-repo dogfood smoke
+
+<!-- @work-item-id WI-298 -->
+
+matrix再生成後のself-repoで`world:derive --json`を二回実行し、serialized bytes、fingerprint集合、exit codeを比較する。review済みbaseline entryとcurrent obligationをexact一致させ、全件`adopted-legacy`、repaid / policy diagnostic 0を検証する。`phasegate.world-debts.json`の明示debtはreportの`declaredSemanticDebts`だけへ現れ、structural countへ混ぜない。

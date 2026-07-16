@@ -603,3 +603,11 @@
 - Skill frontmatter with `languages: [typescript]` is parsed as TypeScript-scoped.
 - Missing bundled skill language metadata is reported as a structure validation gap.
 - Language-scoped implementation skills without a matching project language produce applicability warnings instead of parse failures.
+## WI-298: Semantic debt reference contract
+
+<!-- @work-item-id WI-298 -->
+
+| ID | ケース | 期待 |
+|---|---|---|
+| UT-SQ298-DEBT-001 | coverage report metadata | exact debt IDを一度だけ参照 |
+| UT-SQ298-DEBT-002 | ungated marker併存 | L2-016 warning semantics不変 |
