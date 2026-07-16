@@ -3,6 +3,9 @@
     "name": "phasegate",
     "preset": "standard"
   },
+  "world": {
+    "enabled": true
+  },
   "layers": {
     "L1": {
       "enabled": true
