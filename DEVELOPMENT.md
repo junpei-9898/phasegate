@@ -374,9 +374,28 @@ Toggle via `npx phasegate enable-feature <name>` / `disable-feature <name>`.
 | Job | Environment | Content |
 |---|---|---|
 | `test` | ubuntu-latest, Node 18/20/22 matrix | `pnpm test` |
-| `pack` | ubuntu-latest, Node 22 | `pnpm pack` + package size < 5MB |
+| `pack` | ubuntu-latest, Node 22 | `pnpm pack` + package size < 5MB + tarball artifact upload |
+| `release-smoke` | ubuntu-latest, Node 22 | Real-distribution release gate (see below) |
 
 Triggers: `push` to main, `pull_request` to main
+
+### Release Gate: release-smoke (WI-329)
+
+単体テストが全 green でも、「npm pack した tarball の新規インストールで即クラッシュ (#34)」「純 Python リポで fail-closed (#37/#39)」「dead flag (#36)」といった実分布欠陥はすり抜ける。`release-smoke` job は pack job がアップロードした tarball（= 出荷される実バイト列）を fixture リポ 3 種（`scripts/harness/__tests__/fixtures/release-smoke/` の pure-python / go-monorepo / docs-only）にクリーンインストールし、`install --apply` / `doctor --json` / `validate --layer L2 --json` / `uninstall` と `--with-husky` フラグ有効性を実走して検知する。
+
+テストは `PHASEGATE_RELEASE_SMOKE=1` が無ければ全 skip（tarball install は registry へのネットワークアクセスを伴い通常 suite の hermetic 性を壊すため）。ローカル実行:
+
+```bash
+# tarball を自動生成して実行
+PHASEGATE_RELEASE_SMOKE=1 npx vitest run \
+  --config scripts/harness/__tests__/vitest.config.ts \
+  scripts/harness/__tests__/e2e/release-smoke.e2e.test.ts
+
+# 既存 tarball を指定する場合
+PHASEGATE_RELEASE_SMOKE=1 PHASEGATE_TARBALL=/path/to/phasegate-X.Y.Z.tgz npx vitest run ...
+```
+
+canary（`.github/workflows/release-canary.yml`、週次 + 手動）は同じテストを lockfile なし（最新解決）で回す別レイヤ: release gate = 凍結解決で「出荷物」を検証、canary = 最新解決で upstream ドリフトを早期検知。canary の失敗はリリースを止めず、`[canary]` prefix の issue で通知される（既存 open issue があればコメント追記）。
 
 ### CI Template Generation
 

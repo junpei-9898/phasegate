@@ -1,0 +1,5 @@
+[project]
+name = "release-smoke-pure-python"
+version = "0.1.0"
+description = "Minimal pure-Python fixture for phasegate release-smoke E2E (WI-329)"
+requires-python = ">=3.9"

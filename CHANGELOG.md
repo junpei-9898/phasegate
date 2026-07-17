@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **WI-329 — 実分布リリースゲート（tarball release-smoke）** — 単体テスト全 green でも新規インストール即クラッシュ（#34）・非 TS リポで fail-closed（#37/#39）・dead flag（#36）がすり抜けた教訓から、`npm pack` した tarball を実分布相当 fixture（純 Python / Go monorepo / docs のみ）にクリーンインストールし install → doctor → validate → uninstall を実走する E2E を追加。通常 suite では skip（`PHASEGATE_RELEASE_SMOKE=1` ガードで hermetic 性維持）し、CI の新 job `release-smoke` が pack job の実バイト列 artifact に対して実行する。`--with-husky` のフラグ有効性 assert で dead-flag 再発も検知。
+
 ### Fixed
 
 - **WI-328 — 実効言語と出所を phasegate:status に表示（GitHub #39 残課題）** — WI-319/320 の言語自動検出の結果がどこにも表示されず、どの validator が有効/SKIP になるか知る術がなかった。`phasegate:status` の JSON に `languages: { effective, source }`（source = `declared` / `detected` / `fallback`）を追加。解決ロジックは validator-system の `resolveProjectLanguages()`（WI-319 の検出テーブル）に一本化して再利用し、validator の有効/SKIP 判定と必ず同じ結果を表示する。ConfigQueryPort への追加は optional メソッドで後方互換。
