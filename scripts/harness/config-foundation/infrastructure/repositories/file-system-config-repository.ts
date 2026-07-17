@@ -2,19 +2,19 @@
  * @layer infrastructure
  * @unit config-foundation
  */
-import * as fs from 'node:fs/promises';
-import path from 'node:path';
-import type { ConfigRepositoryPort } from '../../domain/ports/config-repository-port.js';
+import * as fs from "node:fs/promises";
+import path from "node:path";
+import type { ConfigRepositoryPort } from "../../domain/ports/config-repository-port.js";
 
-const DEFAULT_CONFIG_FILE_NAME = 'phasegate.config.json';
-const PERSONAL_CONFIG_PATH = path.join('.phasegate-local', DEFAULT_CONFIG_FILE_NAME);
+const DEFAULT_CONFIG_FILE_NAME = "phasegate.config.json";
+const PERSONAL_CONFIG_PATH = path.join(".phasegate-local", DEFAULT_CONFIG_FILE_NAME);
 
 export class ConfigNotFoundError extends Error {
   readonly configPath: string;
 
   constructor(configPath: string) {
     super(`Config file not found: ${configPath}`);
-    this.name = 'ConfigNotFoundError';
+    this.name = "ConfigNotFoundError";
     this.configPath = configPath;
     Object.setPrototypeOf(this, new.target.prototype);
   }
@@ -24,11 +24,24 @@ export class ConfigPersistenceError extends Error {
   readonly configPath: string;
   readonly cause?: unknown;
 
-  constructor(configPath: string, cause?: unknown) {
-    super(`Failed to persist config: ${configPath}`);
-    this.name = 'ConfigPersistenceError';
+  constructor(configPath: string, cause?: unknown, message?: string) {
+    super(message ?? `Failed to persist config: ${configPath}`);
+    this.name = "ConfigPersistenceError";
     this.configPath = configPath;
     this.cause = cause;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
+ * WI-325: load 経路の JSON パース失敗専用エラー。
+ * ConfigPersistenceError のサブクラスなので、既存の
+ * `instanceof ConfigPersistenceError` fail-open 判定（main.ts / WI-314）は無変更で動く。
+ */
+export class ConfigParseError extends ConfigPersistenceError {
+  constructor(configPath: string, cause?: unknown) {
+    super(configPath, cause, `Failed to parse config JSON: ${configPath}`);
+    this.name = "ConfigParseError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -69,14 +82,10 @@ async function findNearestConfig(startDirectory: string): Promise<string | null>
 
 export class FileSystemConfigRepository implements ConfigRepositoryPort {
   async load(configPath?: string): Promise<{ path: string; document: unknown }> {
-    const resolvedPath = configPath
-      ? path.resolve(configPath)
-      : await findNearestConfig(process.cwd());
+    const resolvedPath = configPath ? path.resolve(configPath) : await findNearestConfig(process.cwd());
 
     if (!resolvedPath) {
-      throw new ConfigNotFoundError(
-        path.resolve(process.cwd(), DEFAULT_CONFIG_FILE_NAME),
-      );
+      throw new ConfigNotFoundError(path.resolve(process.cwd(), DEFAULT_CONFIG_FILE_NAME));
     }
 
     if (!(await exists(resolvedPath))) {
@@ -84,7 +93,7 @@ export class FileSystemConfigRepository implements ConfigRepositoryPort {
     }
 
     try {
-      const raw = await fs.readFile(resolvedPath, 'utf8');
+      const raw = await fs.readFile(resolvedPath, "utf8");
 
       return {
         path: resolvedPath,
@@ -92,7 +101,7 @@ export class FileSystemConfigRepository implements ConfigRepositoryPort {
       };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new ConfigPersistenceError(resolvedPath, error);
+        throw new ConfigParseError(resolvedPath, error);
       }
 
       throw error;
@@ -104,7 +113,7 @@ export class FileSystemConfigRepository implements ConfigRepositoryPort {
 
     try {
       const serialized = `${JSON.stringify(document, null, 2)}\n`;
-      await fs.writeFile(resolvedPath, serialized, 'utf8');
+      await fs.writeFile(resolvedPath, serialized, "utf8");
     } catch (error) {
       throw new ConfigPersistenceError(resolvedPath, error);
     }
