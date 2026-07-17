@@ -21,6 +21,7 @@
  * @work-item-id WI-217
  * @work-item-id WI-308
  * @work-item-id WI-310
+ * @work-item-id WI-311
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -557,8 +558,11 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: phasegate:ci-check');
     }, 60_000);
 
-    it('phasegate:ci-check --json は L2-L4 の実行またはskipを返す', () => {
-      const actual = run('phasegate:ci-check', '--json');
+    it('phasegate:ci-check --json はfixtureで明示有効なL2だけを実行する', () => {
+      const actual = withTempDir((cwd) => {
+        prepareHermeticCliWorkspace(cwd, { worldEnabled: false });
+        return runInCwd(cwd, 'phasegate:ci-check', '--json');
+      });
 
       expect(actual.exitCode).toBe(0);
       const parsed = JSON.parse(actual.stdout) as {
@@ -566,7 +570,7 @@ describe('harness CLI E2E', () => {
       };
       const ids = parsed.data.validatorResults.map((result) => result.validatorId);
       expect(ids.some((id) => id.startsWith('L2-'))).toBe(true);
-      expect(ids.some((id) => id.startsWith('L3-'))).toBe(true);
+      expect(ids.some((id) => id.startsWith('L3-'))).toBe(false);
       expect(ids.some((id) => id.startsWith('L4-'))).toBe(true);
       expect(parsed.data.validatorResults.some((result) => result.validatorId.startsWith('L4-') && result.skipped === true)).toBe(true);
     }, 60_000);
@@ -629,7 +633,10 @@ describe('harness CLI E2E', () => {
     }, 60_000);
 
     it('legacy complete-check alias は phasegate:complete-check handler を実行し migration warning を出す', () => {
-      const actual = run('complete-check');
+      const actual = withTempDir((cwd) => {
+        prepareHermeticCliWorkspace(cwd, { worldEnabled: false });
+        return runInCwd(cwd, 'complete-check');
+      });
 
       expect(actual.stderr).not.toContain('Unknown command: complete-check');
       expect(actual.stderr).toContain("use 'phasegate phasegate:complete-check'");

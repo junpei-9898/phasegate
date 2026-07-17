@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-311 — hermetic CI-facing harness integration tests** — GitHub Actionsのtest-before-matrix順序で、real lint integrationとCLI E2Eがself-repo cwd、coverage、untracked requirement matrixを暗黙のPASS入力としていた既存欠陥を修正。lint adapterへ明示rootを注入してtracked minimal workspaceだけを実scanし、`phasegate:ci-check --json`とlegacy `complete-check`はL3 / Worldを明示無効化したtemp configで公開command契約を検証する。productionのfail-closedとCI gate順序は変更しない。
+
 - **WI-310 — hermetic large-stdout CLI regression** — WI-308の64 KiB超assertionがuntracked requirement matrixとself-repoの604 adopted-legacy warningsへ依存していた欠陥を修正。tracked World-enabled configを使うtemp corpusに160組のduplicate fragment IDを生成し、CIのtest-before-matrix順序でも`validate --layer L2 --format json` / `--json`が決定的に64 KiBを超えて完全parseできる契約へ置換した。
 
 - **WI-309 — WI-305 validator domain reflection repair** — `DesignChangeDeclarationPolicy`を実装・配線しながらvalidator-system `domain_model.md`へのWI-305累積反映を欠落させ、story reflection corpusが検出したbaseline外違反を正規に解消。exact `corpusRole + DeclaredKey`照合、pinned change限定、Work-Item trailer intersection、unique sorted finding、local fast-path / L3 authority境界を実コードどおり記録し、baseline / allowlistには触れていない。

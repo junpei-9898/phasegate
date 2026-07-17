@@ -2048,3 +2048,9 @@ top-level CLI presentationはdirect resultをstdoutへ書いた後、共通`fini
 <!-- @work-item-id WI-310 -->
 
 large stdoutのprocess E2Eはself-repoのgenerated matrixやadoption baseline件数を入力にしない。tracked config fixtureをtemp workspaceへ展開し、unique keyごとのduplicate fragment pairからWCR-005を決定的に生成する。`validate --layer L2`の両JSON aliasは同じfixtureで64 KiB超、parse可能、L2-017 non-skipを満たす。
+
+## WI-311 Hermetic harness integration boundary
+
+<!-- @work-item-id WI-311 -->
+
+real adapter integrationはprocess cwdのself-repoをtest fixtureとして扱わず、明示root配下のminimal tracked corpusを使用する。CI-facing command E2Eはcoverage / requirement matrix未生成のCI test順序をPASS前提にせず、検査対象外layerをfixture configで明示無効化する。production commandのfail-closed defaultとself-repo dogfoodは変更しない。

@@ -1,10 +1,19 @@
 // @layer test
-import { describe, it, vi, expect } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.js';
+// @work-item-id WI-311
+
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it, vi } from 'vitest';
 import {
   BiomeAstEngineLintAdapter,
   type IBiomeAstEngineStub,
 } from '../../../harness-api/infrastructure/adapters/biome-ast-engine-lint-adapter.js';
+import { context, target } from '../../helpers/test-helpers.js';
+
+const fixtureRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../fixtures/harness-api/biome-lint-workspace',
+);
 
 target('BiomeAstEngineLintAdapter', () => {
   // ─── IT-Adapter-BiomeLint-001 ───
@@ -99,16 +108,15 @@ target('BiomeAstEngineLintAdapter', () => {
     context('コンストラクタ引数なしで生成した場合', () => {
       it('実際のLintスキャンが実行され、結果オブジェクトが返される', async () => {
         // Arrange
-        const adapter = new BiomeAstEngineLintAdapter();
+        const adapter = new BiomeAstEngineLintAdapter(undefined, fixtureRoot);
 
         // Act
         const actual = await adapter.runLint();
 
-        // Assert — スタブではなく実実装が呼ばれることを確認（passed/errors は実スキャン結果に依存）
-        expect(actual).toBeDefined();
-        expect(typeof actual.passed).toBe('boolean');
-        expect(Array.isArray(actual.errors)).toBe(true);
-        expect(Array.isArray(actual.warnings)).toBe(true);
+        // Assert — host checkoutではなくtracked minimal fixtureを実実装でscanする
+        expect(actual.passed).toBe(true);
+        expect(actual.errors).toEqual([]);
+        expect(actual.warnings).toEqual([]);
       });
     });
   });

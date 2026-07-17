@@ -1,6 +1,7 @@
 // @layer infrastructure
 // biome-ast-engine-lint-adapter.ts — BiomeAstEngineLintAdapter
 // Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
+// @work-item-id WI-311
 
 import type { BiomeLintPort } from '../../domain/ports/biome-lint-port.js';
 import type { HarnessError } from '../../domain/value-objects/harness-api-response.js';
@@ -36,12 +37,11 @@ function violationToHarnessError(v: RuleViolation): HarnessError {
 export class BiomeAstEngineLintAdapter implements BiomeLintPort {
   private readonly stub: IBiomeAstEngineStub;
 
-  constructor(stub?: IBiomeAstEngineStub) {
-    this.stub = stub ?? BiomeAstEngineLintAdapter.createRealImpl();
+  constructor(stub?: IBiomeAstEngineStub, rootDir = process.cwd()) {
+    this.stub = stub ?? BiomeAstEngineLintAdapter.createRealImpl(rootDir);
   }
 
-  private static createRealImpl(): IBiomeAstEngineStub {
-    const rootDir = process.cwd();
+  private static createRealImpl(rootDir: string): IBiomeAstEngineStub {
     return {
       async runLint(): Promise<BiomeAstEngineResult> {
         const { createBiomeAstEngineModule } = await import('../../../biome-ast-engine/composition-root.js');
