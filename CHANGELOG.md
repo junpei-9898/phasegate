@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-316 — install の `--with-husky` / `--with-ci` dead flag を修正（GitHub #36）** — install コマンドがこの 2 フラグを一度も読まず、`--personal` なしでは常に `.husky/*` と `.github/workflows/phasegate-aidlc-gate.yml` を書き込んでいた。ヘルプ記載・`init` / `setup:agent` と同じ opt-in（フラグ明示時のみ書き込み）に配線を揃え、CLI 統合テストとドキュメントで固定した。usecase のプログラマティック契約（既定 true）は不変。
+
 - **WI-315 — install / reconcile が CLAUDE.md の user-section を上書きする問題を修正（GitHub #35）** — CLAUDE.md テンプレートは user-section が managed-section の内側にあるため、`install --apply` / `reconcile` の managed block 置換がユーザー自身の記述を placeholder で消失させていた。merge 時に既存 user-section 本文を抽出して新 block に再注入する方式で保持するようにした（AGENTS.md の既存挙動は不変）。併せて、ユーザー本文が `String.replace` の置換文字列として `$` シーケンス解釈される潜在破損を replacer 関数で封じた。
 
 - **WI-314 — 不正 config の hook / doctor 自己修復デッドロック解消（GitHub #40）** — スキーマ違反の `phasegate.config.json` が dispatch 上流の fail-closed で全コマンドを exit 2 にし、pre-tool-use hook 経由で Bash / Write / Edit を全遮断して config 自身の修復も不能になる問題を修正。`hook` / `doctor` は警告 + 既定設定で続行する fail-open とし（診断・自己修復経路の常時確保）、`validate` / `ci-check` 等の検査系は復旧手順の案内付きで fail-closed を維持。hook 内部 adapter の素 `JSON.parse` throw も同様に fail-open 化し、構文破壊 JSON での再デッドロックを塞いだ。gated スコープへの書き込みは phase-gate 判定が引き続き fail-closed でブロックする。

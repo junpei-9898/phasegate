@@ -694,8 +694,8 @@ Options:
   --agent <claude|codex|both>     Agent context and hook targets (default: both)
   --skills <core|all>             Rendered agent context skill mode (default: all)
   --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
-  --with-husky                    Include Husky hook targets
-  --with-ci                       Include GitHub Actions target
+  --with-husky                    Include Husky hook targets (opt-in; omitted by default)
+  --with-ci                       Include GitHub Actions target (opt-in; omitted by default)
   --personal                      Use local-only install: no package.json, agent docs, Husky, CI, .gitignore, GitHub CLI, secrets, or CI setting writes.
                                   With --agent claude, initializes .phasegate-local config/settings/skills and ignored .claude shims.
   --json                          Output machine-readable JSON
@@ -2366,8 +2366,8 @@ async function main(): Promise<void> {
           force: hasFlag(args, "--force"),
           includeClaude,
           includeCodex,
-          includeHusky: !personal,
-          includeCi: !personal,
+          includeHusky: !personal && hasFlag(args, "--with-husky"),
+          includeCi: !personal && hasFlag(args, "--with-ci"),
           skillSet: skillSetRaw,
           workflow: parseWorkflowMode(workflowRaw),
           agent,
