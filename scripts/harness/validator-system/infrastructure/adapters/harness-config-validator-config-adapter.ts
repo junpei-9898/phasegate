@@ -5,11 +5,14 @@
  * @work-item-id WI-212
  * @work-item-id WI-301
  * @work-item-id WI-302
+ * @work-item-id WI-319
  *
  * HarnessConfigValidatorConfigAdapter — ValidatorConfigPort実装
  * HarnessConfigV2からLayerConfig VOを構築する
  */
 
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { ValidatorConfigPort } from "../../domain/ports/validator-config-port.js";
 import { LayerConfig } from "../../domain/value-objects/layer-config.js";
 import { ValidatorId } from "../../domain/value-objects/validator-id.js";
@@ -38,11 +41,27 @@ export interface HarnessConfigV2Like {
   world?: { enabled?: boolean };
 }
 
+/**
+ * WI-319 (github#39): project.languages 未宣言時にファイルシステムから言語を検出するためのマーカー定義。
+ * typescript は package.json の存在自体を根拠にできない（phasegate 導入時に phasegate 用
+ * package.json が置かれるため）ので、この表には含めず hasTypescriptMarker() で個別判定する。
+ */
+const LANGUAGE_MARKER_FILES: ReadonlyArray<{ readonly language: string; readonly markers: readonly string[] }> = [
+  { language: "python", markers: ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt"] },
+  { language: "go", markers: ["go.mod"] },
+  { language: "rust", markers: ["Cargo.toml"] },
+  { language: "java", markers: ["pom.xml", "build.gradle", "build.gradle.kts"] },
+  { language: "ruby", markers: ["Gemfile"] },
+  { language: "php", markers: ["composer.json"] },
+];
+
 export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort {
   private readonly config: HarnessConfigV2Like;
+  private readonly rootDir: string;
 
-  constructor(config: HarnessConfigV2Like) {
+  constructor(config: HarnessConfigV2Like, rootDir: string = process.cwd()) {
     this.config = config;
+    this.rootDir = rootDir;
   }
 
   async getLayerConfig(layer: "L2" | "L3" | "L4"): Promise<LayerConfig> {
@@ -95,8 +114,50 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
   }
 
   async getProjectLanguages(): Promise<readonly string[]> {
+    // 1. config の project.languages 宣言が最優先（従来どおり）
     const languages = this.config.project?.languages;
-    return languages && languages.length > 0 ? [...languages] : ["typescript"];
+    if (languages && languages.length > 0) return [...languages];
+
+    // 2. 未宣言なら project root のマーカーファイルから検出（WI-319 / github#39）
+    const detected = this.detectLanguagesFromFilesystem();
+    if (detected.length > 0) return detected;
+
+    // 3. 検出結果が空なら従来どおり typescript フォールバック
+    //    （マーカー無しの純 JS リポジトリ等、曖昧なケースの挙動は変えない）
+    return ["typescript"];
+  }
+
+  private detectLanguagesFromFilesystem(): string[] {
+    const detected: string[] = [];
+    if (this.hasTypescriptMarker()) detected.push("typescript");
+    for (const { language, markers } of LANGUAGE_MARKER_FILES) {
+      if (markers.some((marker) => existsSync(join(this.rootDir, marker)))) {
+        detected.push(language);
+      }
+    }
+    return detected;
+  }
+
+  /**
+   * typescript の根拠は tsconfig.json の存在、または package.json の
+   * dependencies / devDependencies に typescript があることのみ。
+   * package.json の存在自体は根拠にしない（phasegate 導入時に phasegate 用
+   * package.json が置かれるため、誤検出の原因になる）。
+   */
+  private hasTypescriptMarker(): boolean {
+    if (existsSync(join(this.rootDir, "tsconfig.json"))) return true;
+    const packageJsonPath = join(this.rootDir, "package.json");
+    if (!existsSync(packageJsonPath)) return false;
+    try {
+      const parsed = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      return parsed.dependencies?.typescript !== undefined || parsed.devDependencies?.typescript !== undefined;
+    } catch {
+      // parse 失敗は typescript 根拠なしとして扱う（throw しない）
+      return false;
+    }
   }
 
   private normalizeValidatorId(idOrName: string): string {

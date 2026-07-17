@@ -3,8 +3,12 @@
  * @unit validator-system
  * @story H08-01
  * @work-item-id WI-156 / WI-301 / WI-302
+ * @work-item-id WI-319
  */
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { HarnessConfigValidatorConfigAdapter } from "../../../../validator-system/infrastructure/adapters/harness-config-validator-config-adapter.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 
@@ -235,6 +239,125 @@ target("HarnessConfigValidatorConfigAdapter", () => {
         // Assert
         expect(actual.strictOnly).toBe(false);
         expect(actual.enabled).toBe(true);
+      });
+    });
+  });
+
+  describe("getProjectLanguages", () => {
+    let rootDir: string;
+
+    beforeEach(() => {
+      rootDir = mkdtempSync(join(tmpdir(), "phasegate-wi319-"));
+    });
+
+    afterEach(() => {
+      rmSync(rootDir, { recursive: true, force: true });
+    });
+
+    context("configにproject.languagesが宣言されている場合", () => {
+      it("ファイルシステムのマーカーより宣言値を優先して返す", async () => {
+        // Arrange
+        writeFileSync(join(rootDir, "tsconfig.json"), "{}");
+        const adapter = new HarnessConfigValidatorConfigAdapter({ project: { languages: ["python"] } }, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toEqual(["python"]);
+      });
+    });
+
+    context("宣言なしでpyproject.tomlのみが存在する場合", () => {
+      it("pythonのみを検出して返す", async () => {
+        // Arrange
+        writeFileSync(join(rootDir, "pyproject.toml"), "[project]\nname = 'sample'\n");
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toEqual(["python"]);
+      });
+    });
+
+    context("宣言なしでpyproject.tomlとphasegate用package.json（typescript depなし）がある場合", () => {
+      it("package.jsonの存在だけではtypescriptと判定せずpythonのみを返す", async () => {
+        // Arrange
+        writeFileSync(join(rootDir, "pyproject.toml"), "[project]\nname = 'sample'\n");
+        writeFileSync(
+          join(rootDir, "package.json"),
+          JSON.stringify({ name: "sample", devDependencies: { phasegate: "^1.0.0" } }),
+        );
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toEqual(["python"]);
+        expect(actual).not.toContain("typescript");
+      });
+    });
+
+    context("宣言なしでtsconfig.jsonが存在する場合", () => {
+      it("tsconfig.jsonの存在からtypescriptを検出結果に含める", async () => {
+        // Arrange
+        writeFileSync(join(rootDir, "tsconfig.json"), "{}");
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toContain("typescript");
+      });
+    });
+
+    context("宣言なしでpackage.jsonのdevDependenciesにtypescriptがある場合", () => {
+      it("package.jsonのtypescript依存からtypescriptを検出結果に含める", async () => {
+        // Arrange
+        writeFileSync(
+          join(rootDir, "package.json"),
+          JSON.stringify({ name: "sample", devDependencies: { typescript: "^5.0.0" } }),
+        );
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toContain("typescript");
+      });
+    });
+
+    context("宣言なしでマーカーファイルが一切存在しない場合", () => {
+      it("従来どおりtypescriptへフォールバックする", async () => {
+        // Arrange
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toEqual(["typescript"]);
+      });
+    });
+
+    context("宣言なしでtsconfig.jsonとpyproject.tomlの両方が存在する場合", () => {
+      it("typescriptとpythonの両方を検出結果に含める", async () => {
+        // Arrange
+        writeFileSync(join(rootDir, "tsconfig.json"), "{}");
+        writeFileSync(join(rootDir, "pyproject.toml"), "[project]\nname = 'sample'\n");
+        const adapter = new HarnessConfigValidatorConfigAdapter({}, rootDir);
+
+        // Act
+        const actual = await adapter.getProjectLanguages();
+
+        // Assert
+        expect(actual).toContain("typescript");
+        expect(actual).toContain("python");
       });
     });
   });
