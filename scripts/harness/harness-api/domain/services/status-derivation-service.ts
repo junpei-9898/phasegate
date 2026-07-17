@@ -1,17 +1,27 @@
 // @layer domain
 // @unit harness-api
 // @work-item-id WI-112
+// @work-item-id WI-328
 // status-derivation-service.ts — StatusDerivationService Domain Service
 
-import { LayerHealth, type LayerId } from '../value-objects/layer-health.js';
-import { HarnessStatusSummary, type PresetInfo, type ConfigSummary, type PhaseGateSummary, type HookHealth, type BaselineHealth, type OperationalWarning } from '../value-objects/harness-status-summary.js';
-import type { ArtifactScanResult, ArtifactPresence } from '../value-objects/artifact-scan-result.js';
+import type { ArtifactPresence, ArtifactScanResult } from "../value-objects/artifact-scan-result.js";
+import {
+  type BaselineHealth,
+  type ConfigSummary,
+  HarnessStatusSummary,
+  type HookHealth,
+  type LanguageInfo,
+  type OperationalWarning,
+  type PhaseGateSummary,
+  type PresetInfo,
+} from "../value-objects/harness-status-summary.js";
+import { LayerHealth, type LayerId } from "../value-objects/layer-health.js";
 
-const ALL_LAYER_IDS: readonly LayerId[] = ['L1', 'L2', 'L3', 'L4'];
+const ALL_LAYER_IDS: readonly LayerId[] = ["L1", "L2", "L3", "L4"];
 
 function getLayerId(artifact: ArtifactPresence): LayerId | null {
   const id = artifact.layer ?? artifact.layerId;
-  if (id === 'L1' || id === 'L2' || id === 'L3' || id === 'L4') return id;
+  if (id === "L1" || id === "L2" || id === "L3" || id === "L4") return id;
   return null;
 }
 
@@ -22,7 +32,7 @@ export class StatusDerivationService {
   deriveLayerHealth(scanResult: ArtifactScanResult, layerId: LayerId): LayerHealth {
     const layerArtifacts = scanResult.foundArtifacts.filter((a) => getLayerId(a) === layerId);
     const hasPresent = layerArtifacts.some((a) => a.present === true);
-    const lastResult = hasPresent ? 'pass' : 'unknown';
+    const lastResult = hasPresent ? "pass" : "unknown";
     return LayerHealth.create({ layerId, enabled: true, lastResult });
   }
 
@@ -34,7 +44,7 @@ export class StatusDerivationService {
     config: { layers?: Record<string, { enabled: boolean }> },
     presetInfo?: PresetInfo,
     configSummary?: ConfigSummary,
-    phaseGateSummary?: PhaseGateSummary
+    phaseGateSummary?: PhaseGateSummary,
   ): HarnessStatusSummary {
     const derivedLayers = scanResult.derivedLayerHealth;
 
@@ -53,19 +63,19 @@ export class StatusDerivationService {
       // Derive from scan result
       const layerArtifacts = scanResult.foundArtifacts.filter((a) => getLayerId(a) === layerId);
       const hasPresent = layerArtifacts.some((a) => a.present === true);
-      const lastResult = enabled ? (hasPresent ? 'pass' : 'unknown') : undefined;
+      const lastResult = enabled ? (hasPresent ? "pass" : "unknown") : undefined;
       return LayerHealth.create({ layerId, enabled, lastResult });
     });
 
     const effectivePresetInfo: PresetInfo = presetInfo ?? {
-      name: 'standard',
-      enabledLayers: ['L1', 'L2', 'L3'],
+      name: "standard",
+      enabledLayers: ["L1", "L2", "L3"],
     };
 
     const effectiveConfigSummary: ConfigSummary = configSummary ?? {
-      configPath: 'phasegate.config.json',
+      configPath: "phasegate.config.json",
       lastModified: new Date().toISOString(),
-      version: '2',
+      version: "2",
     };
 
     const effectivePhaseGateSummary: PhaseGateSummary = phaseGateSummary ?? {
@@ -90,7 +100,8 @@ export class StatusDerivationService {
     presetInfo: PresetInfo;
     configSummary: ConfigSummary;
     phaseGateSummary: PhaseGateSummary;
-    liveValidationByLayer?: Partial<Record<LayerId, 'pass' | 'fail' | 'skipped' | 'not-run' | 'error'>>;
+    liveValidationByLayer?: Partial<Record<LayerId, "pass" | "fail" | "skipped" | "not-run" | "error">>;
+    languages?: LanguageInfo;
     hookHealth?: HookHealth;
     baselineHealth?: BaselineHealth;
     operationalWarnings?: readonly OperationalWarning[];
@@ -99,21 +110,19 @@ export class StatusDerivationService {
 
     const layers: LayerHealth[] = ALL_LAYER_IDS.map((layerId) => {
       const enabled = presetInfo.enabledLayers.includes(layerId);
-      const configurationState = enabled ? 'enabled' : 'disabled';
+      const configurationState = enabled ? "enabled" : "disabled";
 
       // Find from derivedLayerHealth
       const existing = scanResult.derivedLayerHealth.find((l) => l.layerId === layerId);
       const layerArtifacts = scanResult.foundArtifacts.filter((a) => getLayerId(a) === layerId);
       const hasPresent = layerArtifacts.some((a) => a.present === true);
-      const cachedArtifactState = hasPresent ? 'present' : 'missing';
-      const liveValidationState = liveValidationByLayer?.[layerId] ?? 'not-run';
+      const cachedArtifactState = hasPresent ? "present" : "missing";
+      const liveValidationState = liveValidationByLayer?.[layerId] ?? "not-run";
       const liveLastResult =
-        liveValidationState === 'pass' || liveValidationState === 'fail'
-          ? liveValidationState
-          : undefined;
+        liveValidationState === "pass" || liveValidationState === "fail" ? liveValidationState : undefined;
 
       if (enabled) {
-        const lastResult = liveLastResult ?? existing?.lastResult ?? (hasPresent ? 'pass' : 'unknown');
+        const lastResult = liveLastResult ?? existing?.lastResult ?? (hasPresent ? "pass" : "unknown");
         return LayerHealth.create({
           layerId,
           enabled,
@@ -139,6 +148,7 @@ export class StatusDerivationService {
       phaseGateSummary,
       presetInfo,
       configSummary,
+      languages: input.languages,
       hookHealth: input.hookHealth,
       baselineHealth: input.baselineHealth,
       operationalWarnings: input.operationalWarnings,

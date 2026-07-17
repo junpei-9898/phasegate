@@ -6,6 +6,7 @@
  * @work-item-id WI-301
  * @work-item-id WI-302
  * @work-item-id WI-319
+ * @work-item-id WI-328
  *
  * HarnessConfigValidatorConfigAdapter — ValidatorConfigPort実装
  * HarnessConfigV2からLayerConfig VOを構築する
@@ -54,6 +55,71 @@ const LANGUAGE_MARKER_FILES: ReadonlyArray<{ readonly language: string; readonly
   { language: "ruby", markers: ["Gemfile"] },
   { language: "php", markers: ["composer.json"] },
 ];
+
+/** WI-328: 実効言語リストの出所。status 表示等で「なぜこの言語判定になったか」を示す。 */
+export type ProjectLanguageSource = "declared" | "detected" | "fallback";
+
+export interface ResolvedProjectLanguages {
+  readonly languages: readonly string[];
+  readonly source: ProjectLanguageSource;
+}
+
+/**
+ * WI-328 (github#39 残課題): 実効言語リストとその出所を解決する唯一の実装。
+ * getProjectLanguages()（WI-319 の検出ロジック）と phasegate:status の言語表示が
+ * 同じテーブル・同じ優先順位を共有するために export する。
+ *
+ * 優先順位:
+ * 1. declared — config の project.languages 宣言（従来どおり最優先）
+ * 2. detected — project root のマーカーファイルから検出（WI-319 / github#39）
+ * 3. fallback — 検出ゼロなら typescript フォールバック（純 JS リポジトリ等の挙動維持）
+ */
+export function resolveProjectLanguages(
+  declaredLanguages: readonly string[] | undefined,
+  rootDir: string,
+): ResolvedProjectLanguages {
+  if (declaredLanguages && declaredLanguages.length > 0) {
+    return { languages: [...declaredLanguages], source: "declared" };
+  }
+  const detected = detectLanguagesFromFilesystem(rootDir);
+  if (detected.length > 0) {
+    return { languages: detected, source: "detected" };
+  }
+  return { languages: ["typescript"], source: "fallback" };
+}
+
+function detectLanguagesFromFilesystem(rootDir: string): string[] {
+  const detected: string[] = [];
+  if (hasTypescriptMarker(rootDir)) detected.push("typescript");
+  for (const { language, markers } of LANGUAGE_MARKER_FILES) {
+    if (markers.some((marker) => existsSync(join(rootDir, marker)))) {
+      detected.push(language);
+    }
+  }
+  return detected;
+}
+
+/**
+ * typescript の根拠は tsconfig.json の存在、または package.json の
+ * dependencies / devDependencies に typescript があることのみ。
+ * package.json の存在自体は根拠にしない（phasegate 導入時に phasegate 用
+ * package.json が置かれるため、誤検出の原因になる）。
+ */
+function hasTypescriptMarker(rootDir: string): boolean {
+  if (existsSync(join(rootDir, "tsconfig.json"))) return true;
+  const packageJsonPath = join(rootDir, "package.json");
+  if (!existsSync(packageJsonPath)) return false;
+  try {
+    const parsed = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    return parsed.dependencies?.typescript !== undefined || parsed.devDependencies?.typescript !== undefined;
+  } catch {
+    // parse 失敗は typescript 根拠なしとして扱う（throw しない）
+    return false;
+  }
+}
 
 export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort {
   private readonly config: HarnessConfigV2Like;
@@ -114,50 +180,9 @@ export class HarnessConfigValidatorConfigAdapter implements ValidatorConfigPort 
   }
 
   async getProjectLanguages(): Promise<readonly string[]> {
-    // 1. config の project.languages 宣言が最優先（従来どおり）
-    const languages = this.config.project?.languages;
-    if (languages && languages.length > 0) return [...languages];
-
-    // 2. 未宣言なら project root のマーカーファイルから検出（WI-319 / github#39）
-    const detected = this.detectLanguagesFromFilesystem();
-    if (detected.length > 0) return detected;
-
-    // 3. 検出結果が空なら従来どおり typescript フォールバック
-    //    （マーカー無しの純 JS リポジトリ等、曖昧なケースの挙動は変えない）
-    return ["typescript"];
-  }
-
-  private detectLanguagesFromFilesystem(): string[] {
-    const detected: string[] = [];
-    if (this.hasTypescriptMarker()) detected.push("typescript");
-    for (const { language, markers } of LANGUAGE_MARKER_FILES) {
-      if (markers.some((marker) => existsSync(join(this.rootDir, marker)))) {
-        detected.push(language);
-      }
-    }
-    return detected;
-  }
-
-  /**
-   * typescript の根拠は tsconfig.json の存在、または package.json の
-   * dependencies / devDependencies に typescript があることのみ。
-   * package.json の存在自体は根拠にしない（phasegate 導入時に phasegate 用
-   * package.json が置かれるため、誤検出の原因になる）。
-   */
-  private hasTypescriptMarker(): boolean {
-    if (existsSync(join(this.rootDir, "tsconfig.json"))) return true;
-    const packageJsonPath = join(this.rootDir, "package.json");
-    if (!existsSync(packageJsonPath)) return false;
-    try {
-      const parsed = JSON.parse(readFileSync(packageJsonPath, "utf-8")) as {
-        dependencies?: Record<string, string>;
-        devDependencies?: Record<string, string>;
-      };
-      return parsed.dependencies?.typescript !== undefined || parsed.devDependencies?.typescript !== undefined;
-    } catch {
-      // parse 失敗は typescript 根拠なしとして扱う（throw しない）
-      return false;
-    }
+    // WI-319 の宣言優先 → FS 検出 → typescript フォールバックの解決は
+    // resolveProjectLanguages() に一本化（WI-328 で status 表示と共有）。
+    return [...resolveProjectLanguages(this.config.project?.languages, this.rootDir).languages];
   }
 
   private normalizeValidatorId(idOrName: string): string {

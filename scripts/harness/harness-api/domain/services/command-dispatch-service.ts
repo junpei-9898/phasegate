@@ -1,6 +1,6 @@
 // @layer domain
 // @unit harness-api
-// @work-item-id WI-108 / WI-114, WI-186, WI-318, WI-321
+// @work-item-id WI-108 / WI-114, WI-186, WI-318, WI-321, WI-328
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import type { ArtifactScannerPort } from "../ports/artifact-scanner-port.js";
@@ -13,7 +13,12 @@ import { CheckReadyResult } from "../value-objects/check-ready-result.js";
 import { CiCheckResult } from "../value-objects/ci-check-result.js";
 import { DriftReportSummary } from "../value-objects/drift-report-summary.js";
 import { type ExitCode, HarnessApiResponse, type HarnessError } from "../value-objects/harness-api-response.js";
-import type { BaselineHealth, HookHealth, OperationalWarning } from "../value-objects/harness-status-summary.js";
+import type {
+  BaselineHealth,
+  HookHealth,
+  LanguageInfo,
+  OperationalWarning,
+} from "../value-objects/harness-status-summary.js";
 import type { LayerId } from "../value-objects/layer-health.js";
 import { CommandRegistry } from "./command-registry.js";
 import { StatusDerivationService } from "./status-derivation-service.js";
@@ -28,6 +33,7 @@ export interface CommandDispatchPorts {
     getConfig?: () => Promise<unknown>;
     getPresetInfo?: () => Promise<unknown>;
     getConfigSummary?: () => Promise<unknown>;
+    getLanguageInfo?: () => Promise<LanguageInfo>;
     getHookHealth?: () => Promise<HookHealth>;
     getBaselineHealth?: () => Promise<BaselineHealth>;
   };
@@ -257,14 +263,18 @@ export class CommandDispatchService {
         } else if (configPort.getConfig) {
           await configPort.getConfig();
         }
-        const [hookHealth, baselineHealth] = await Promise.all([
+        // WI-328 (github#39 残課題): 実効言語と出所を status に載せる。
+        // ポート未実装（後方互換）の場合は languages フィールドを出さない。
+        const [hookHealth, baselineHealth, languages] = await Promise.all([
           configPort.getHookHealth?.(),
           configPort.getBaselineHealth?.(),
+          configPort.getLanguageInfo?.(),
         ]);
         const operationalWarnings: OperationalWarning[] = buildOperationalWarnings(hookHealth, baselineHealth);
         const statusSummary = this.statusDerivationService.derive({
           scanResult,
           presetInfo,
+          languages,
           configSummary: { configPath: "phasegate.config.json", lastModified: "", version: "2" },
           phaseGateSummary: { totalStories: 0, passedStories: 0, pendingStories: 0 },
           liveValidationByLayer,

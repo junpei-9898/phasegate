@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-328 — 実効言語と出所を phasegate:status に表示（GitHub #39 残課題）** — WI-319/320 の言語自動検出の結果がどこにも表示されず、どの validator が有効/SKIP になるか知る術がなかった。`phasegate:status` の JSON に `languages: { effective, source }`（source = `declared` / `detected` / `fallback`）を追加。解決ロジックは validator-system の `resolveProjectLanguages()`（WI-319 の検出テーブル）に一本化して再利用し、validator の有効/SKIP 判定と必ず同じ結果を表示する。ConfigQueryPort への追加は optional メソッドで後方互換。
+
 - **WI-327 — 最小 config（project のみ）で動作可能に** — 手書き `phasegate.config.json` のスキーマが top-level 8 項目を required とし、`{"project": {"name": ..., "preset": ...}}` の最小構成で L1-001 が連発していた。プリセット解決（`PresetResolutionService.deepMerge`）は省略セクションの補完を既に完備していたため、v3 **と v2**（architecture キーなしの最小 config は v2 検証に振られる）の top-level required を `["project"]` に緩和し、型定義を実態に一致させた。**検証は弱めていない**: セクション内の required・型・enum・additionalProperties は不変で、書かれているが不正なキーは従来どおりエラー（spawn E2E で exit 2 を固定）。最小 config の解決結果がプリセット定義と一致することも統合テストで固定。
 
 - **WI-326 — install フラグ状態を manifest に永続化（GitHub #36 残課題）** — `--with-husky` / `--with-ci` / personal の install 時オプションが `.phasegate/manifest.json` に記録されず、後の reconcile が「全 target 対象」を仮定して opt-out したはずの Husky / CI workflow を追加し直す食い違いがあった。manifest に optional `installationFlags` を追加して install（apply）時に実効フラグを記録し、reconcile は明示指定 > manifest 記録 > 従来挙動の優先順で target を構成する。フィールドを持たない旧 manifest は推測せず従来挙動のまま（load / save round-trip のバイト互換もテストで固定）。

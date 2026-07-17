@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114, WI-186, WI-307, WI-318, WI-321
+// @work-item-id WI-114, WI-186, WI-307, WI-318, WI-321, WI-328
 import { describe, expect, it, vi } from "vitest";
 import type { ArtifactScannerPort } from "../../../harness-api/domain/ports/artifact-scanner-port.js";
 import type { BiomeLintPort } from "../../../harness-api/domain/ports/biome-lint-port.js";
@@ -31,6 +31,7 @@ interface MockPortOptions {
   readonly lintResult?: { passed: boolean; errors: readonly unknown[]; warnings: readonly unknown[] };
   readonly artifactScanResult?: ArtifactScanResult;
   readonly presetInfo?: { name: string; enabledLayers: readonly string[] };
+  readonly languageInfo?: { effective: readonly string[]; source: "declared" | "detected" | "fallback" };
   readonly impactResult?: { storyId: string; affectedTestCases: readonly unknown[]; affectedFiles: readonly unknown[] };
 }
 
@@ -57,6 +58,10 @@ function createMockPorts(options: MockPortOptions = {}) {
     configQueryPort: {
       getPresetInfo: vi.fn(),
       getConfigSummary: vi.fn(),
+    } as {
+      getPresetInfo: ReturnType<typeof vi.fn>;
+      getConfigSummary: ReturnType<typeof vi.fn>;
+      getLanguageInfo?: ReturnType<typeof vi.fn>;
     },
   };
 
@@ -82,6 +87,9 @@ function createMockPorts(options: MockPortOptions = {}) {
   }
   if (options.presetInfo !== undefined) {
     ports.configQueryPort.getPresetInfo.mockResolvedValue(options.presetInfo);
+  }
+  if (options.languageInfo !== undefined) {
+    ports.configQueryPort.getLanguageInfo = vi.fn().mockResolvedValue(options.languageInfo);
   }
   if (options.impactResult !== undefined) {
     ports.impactAnalysisPort.analyze.mockResolvedValue(options.impactResult);
@@ -351,6 +359,88 @@ target("CommandDispatchService", () => {
       expect(actual.status).toBe("pass");
       expect(actual.exitCode).toBe(0);
       expect(actual.errors).toEqual([]);
+    });
+
+    // WI-328 (github#39 残課題): 実効言語と出所を status data に載せる
+    it("phasegate:statusがsource=declaredの言語情報をdataに含めること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [],
+        languageInfo: { effective: ["python", "go"], source: "declared" },
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.data).toMatchObject({
+        languages: { effective: ["python", "go"], source: "declared" },
+      });
+    });
+
+    it("phasegate:statusがsource=detectedの言語情報をdataに含めること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [],
+        languageInfo: { effective: ["typescript", "rust"], source: "detected" },
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.data).toMatchObject({
+        languages: { effective: ["typescript", "rust"], source: "detected" },
+      });
+    });
+
+    it("phasegate:statusがsource=fallbackの言語情報をdataに含めること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [],
+        languageInfo: { effective: ["typescript"], source: "fallback" },
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.data).toMatchObject({
+        languages: { effective: ["typescript"], source: "fallback" },
+      });
+    });
+
+    it("phasegate:statusがgetLanguageInfo未実装ポートではlanguagesをdataに含めないこと", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [],
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect((actual.data as { languages?: unknown }).languages).toBeUndefined();
     });
   });
 
