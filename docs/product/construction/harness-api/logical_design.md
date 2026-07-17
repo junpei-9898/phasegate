@@ -2036,3 +2036,9 @@ CI / regression consumerは`KNOWN_HARNESS_COMMANDS`とmain dispatchで公開済�
 ### ci-check warning policy projection
 
 `CiCheckResult`はaggregateとper-validator public `passed`へ同じ`failOnWarning` policyを適用する。既定falseではwarning-only raw failureをpublic `passed:true`へ射影する一方、`errors[]`のwarningを保持する。trueでは`passed:false` / `allPassed:false`を維持する。公開不変条件`allPassed === every(passed || skipped)`を満たし、attestationなどのconsumerはseverity policyを再実装しない。validator-systemのraw findingとstatus用projectionは変更しない。
+
+## WI-308 CLI large stdout drain
+
+<!-- @work-item-id WI-308 -->
+
+top-level CLI presentationはdirect resultをstdoutへ書いた後、共通`finishCliExit`でstdout / stderrのpending write callbackを待ち、`process.exitCode`を設定してmainからreturnする。`process.exit()`によるpipe queue破棄を禁止し、JSON / humanを問わず64 KiB超の出力を省略せず保持する。handler-owned streaming、World commandの既存natural drain、validator result semanticsは変更しない。

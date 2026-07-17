@@ -24,6 +24,7 @@
  * @work-item-id WI-291
  * @work-item-id WI-300
  * @work-item-id WI-306
+ * @work-item-id WI-308
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -1891,13 +1892,34 @@ async function loadWorldResolvedConfig() {
   }
 }
 
+/**
+ * WI-308: pipe接続されたstdout / stderrのpending writeを完了してから終了状態へ移る。
+ * `process.exit()`はNodeのstream queueを待たないため、64 KiB超のJSONを切断し得る。
+ */
+async function finishCliExit(exitCode: number): Promise<void> {
+  const drain = (stream: NodeJS.WriteStream): Promise<void> =>
+    new Promise((resolvePromise, reject) => {
+      stream.write("", (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolvePromise();
+      });
+    });
+
+  await Promise.all([drain(process.stdout), drain(process.stderr)]);
+  process.exitCode = exitCode;
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0];
 
   if (!command || command === "--help" || command === "help") {
     printUsage();
-    process.exit(0);
+    await finishCliExit(0);
+    return;
   }
 
   const rootDir = getProjectRoot();
@@ -1906,13 +1928,15 @@ async function main(): Promise<void> {
   if (command === "--version" || command === "version") {
     const version = await getHarnessVersion(harnessRoot);
     console.log(`phasegate v${version}`);
-    process.exit(0);
+    await finishCliExit(0);
+    return;
   }
 
   // Pre-dispatch: 全 subcommand で --help / -h を最優先で解釈し usage 出力 (副作用走行を防ぐ — WI-091 finding #3)
   if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
     printSubcommandHelp(command);
-    process.exit(0);
+    await finishCliExit(0);
+    return;
   }
 
   const json = hasFlag(args, "--json");
@@ -2187,8 +2211,8 @@ async function main(): Promise<void> {
           console.log("  • Q&A about phasegate concepts: invoke /phasegate-toolkit-guide");
           console.log("  • Diagnose & tune phasegate.config.json: invoke /phasegate-config-doctor");
         }
-        process.exit(hasStructuredInstallError(installResult) ? 1 : 0);
-        break;
+        await finishCliExit(hasStructuredInstallError(installResult) ? 1 : 0);
+        return;
       }
 
       case "update-skills": {
@@ -2213,8 +2237,8 @@ async function main(): Promise<void> {
         });
         if (!json) console.log("phasegate update-skills is deprecated; running phasegate reconcile.");
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "doctor": {
@@ -2240,14 +2264,14 @@ async function main(): Promise<void> {
           agent,
         });
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "emit-agent-rules": {
         console.log(emitAgentRulesBlock());
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       case "scaffold-wi": {
@@ -2273,8 +2297,8 @@ async function main(): Promise<void> {
           inceptionRoot: parseFlag(args, "--root") ?? configuredPersonalRoot,
         });
         console.log(`Created ${descriptionPath}`);
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       case "install": {
@@ -2331,8 +2355,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "setup:agent": {
@@ -2414,8 +2438,8 @@ async function main(): Promise<void> {
           console.log("Validation:");
           for (const command of plan.validation) console.log(`- ${command}`);
         }
-        process.exit(hasStructuredInstallError(installResult) ? 1 : 0);
-        break;
+        await finishCliExit(hasStructuredInstallError(installResult) ? 1 : 0);
+        return;
       }
 
       case "config:plan": {
@@ -2445,7 +2469,8 @@ async function main(): Promise<void> {
               for (const operation of applyResult.appliedOperations)
                 console.log(`- ${operation.op} ${operation.pointer}`);
             }
-            process.exit(0);
+            await finishCliExit(0);
+            return;
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             if (json) {
@@ -2459,7 +2484,8 @@ async function main(): Promise<void> {
             } else {
               console.error(`Error: ${message}`);
             }
-            process.exit(1);
+            await finishCliExit(1);
+            return;
           }
         }
         if (json) {
@@ -2473,8 +2499,8 @@ async function main(): Promise<void> {
           console.log("Validation:");
           for (const validation of plan.validations) console.log(`- ${validation}`);
         }
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       case "session": {
@@ -2495,7 +2521,8 @@ async function main(): Promise<void> {
                 `Full Mode session started: ${session.workItemId} unit=${session.unit} expiresAt=${session.expiresAt}`,
               );
             }
-            process.exit(0);
+            await finishCliExit(0);
+            return;
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             if (json) {
@@ -2503,7 +2530,8 @@ async function main(): Promise<void> {
             } else {
               console.error(`Error: ${message}`);
             }
-            process.exit(2);
+            await finishCliExit(2);
+            return;
           }
         }
         if (subcommand === "end") {
@@ -2516,7 +2544,8 @@ async function main(): Promise<void> {
             } else {
               console.log("No Full Mode session was active.");
             }
-            process.exit(0);
+            await finishCliExit(0);
+            return;
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             if (json) {
@@ -2524,7 +2553,8 @@ async function main(): Promise<void> {
             } else {
               console.error(`Error: ${message}`);
             }
-            process.exit(2);
+            await finishCliExit(2);
+            return;
           }
         }
         console.error("Error: session subcommand must be begin or end.");
@@ -2551,8 +2581,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "reconcile": {
@@ -2576,8 +2606,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── config-foundation ──
@@ -2592,8 +2622,8 @@ async function main(): Promise<void> {
           configPath,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "disable-feature": {
@@ -2607,8 +2637,8 @@ async function main(): Promise<void> {
           configPath,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "list-features": {
@@ -2617,8 +2647,8 @@ async function main(): Promise<void> {
           list: true,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "migrate": {
@@ -2630,8 +2660,8 @@ async function main(): Promise<void> {
             json,
           });
           console.log(result.text);
-          process.exit(result.exitCode);
-          break;
+          await finishCliExit(result.exitCode);
+          return;
         }
         const mod = createConfigFoundationModule();
         const targetVersion = parseFlag(args, "--schema") ?? "v3";
@@ -2641,8 +2671,8 @@ async function main(): Promise<void> {
           configPath,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── harness-error ──
@@ -2656,8 +2686,8 @@ async function main(): Promise<void> {
           failOnError,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "validate-fix": {
@@ -2671,8 +2701,8 @@ async function main(): Promise<void> {
           format,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "list-errors": {
@@ -2684,8 +2714,8 @@ async function main(): Promise<void> {
           layer,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── traceability-model ──
@@ -2697,8 +2727,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "work-items:status": {
@@ -2713,8 +2743,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── world-model ──
@@ -2790,8 +2820,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── adr-foundation ──
@@ -2806,8 +2836,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "validate-adr": {
@@ -2820,8 +2850,8 @@ async function main(): Promise<void> {
           json,
         });
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── biome-ast-engine ──
@@ -2831,8 +2861,8 @@ async function main(): Promise<void> {
         const mod = createBiomeAstEngineModule(rootDir, { l1Config, architecture });
         const result = await mod.harnessLintCommandHandler.execute(args.slice(1));
         console.log(result.text);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── validator-system ──
@@ -2859,8 +2889,8 @@ async function main(): Promise<void> {
         if ((layer === "L2" || layer === "all") && format !== "ci") {
           await printStoryReflectionValidationSummary(rootDir, unit);
         }
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── quick-mode / ci-check ──
@@ -2915,8 +2945,8 @@ async function main(): Promise<void> {
           format,
           failOnFullRequired,
         });
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── harness-api ──
@@ -3093,8 +3123,8 @@ async function main(): Promise<void> {
           mode: parseFlag(args, "--mode"),
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "phasegate:verify-attestation": {
@@ -3111,8 +3141,8 @@ async function main(): Promise<void> {
           emitJson: json,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── ci-governance ──
@@ -3135,7 +3165,8 @@ Options:
 Examples:
   phasegate ci:generate-template --type aidlc-gate
   phasegate ci:generate-template --preset strict --type pre-commit --render`);
-          process.exit(0);
+          await finishCliExit(0);
+          return;
         }
         const flagError = validateKnownFlags(args.slice(1), ["--preset", "--type", "--render", "--json", "--help"]);
         if (flagError !== null) {
@@ -3149,8 +3180,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.generateCiTemplateHandler.handle({ presetId, templateType, render, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "ci:migrate-agents-md": {
@@ -3160,8 +3191,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.migrateAgentsMdHandler.handle({ dryRun, validateOnly, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "ci:auto-refresh-agent-context": {
@@ -3171,8 +3202,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.refreshAgentContextHandler.handle({ dryRun, apply, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "refresh-claude-md": {
@@ -3182,8 +3213,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.refreshClaudeMdHandler.handle({ dryRun, apply, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "p2:check-agent-context": {
@@ -3193,8 +3224,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.checkAgentContextHandler.handle({ thresholdDays, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "ci:check-repetition": {
@@ -3204,8 +3235,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.checkRepetitionHandler.handle({ errorCode, reset, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "baseline": {
@@ -3227,8 +3258,8 @@ Examples:
           format,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "scaffold-design": {
@@ -3248,8 +3279,8 @@ Examples:
           format,
         });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "integrity:pin": {
@@ -3258,8 +3289,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.pin({ dryRun, format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "integrity:verify": {
@@ -3267,8 +3298,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.verify({ format });
         console.log(result.output);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── skill-quality ──
@@ -3283,8 +3314,8 @@ Examples:
         const passed = hasFlag(args, "--passed");
         const result = await mod.executeTddCycleHandler.handle({ unit, storyId, description, phase, passed });
         console.log(result.message);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "skill:check-coverage": {
@@ -3293,8 +3324,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.checkCoverageHandler.handle({ storyId, format });
         console.log(result.message);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "skill:collect-lessons": {
@@ -3305,8 +3336,8 @@ Examples:
         const writeArtifact = hasFlag(args, "--write-artifact");
         const result = await mod.collectLessonsHandler.handle({ storyId, sources, writeArtifact });
         console.log(result.message);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "skill:apply-cascade-update": {
@@ -3315,8 +3346,8 @@ Examples:
         const dryRun = hasFlag(args, "--dry-run");
         const result = await mod.applyCascadeUpdateHandler.handle({ storyId, dryRun, format: json ? "json" : "human" });
         console.log(result.message);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "skill:validate-structure": {
@@ -3325,8 +3356,8 @@ Examples:
         const format = json ? "json" : "human";
         const result = await mod.validateSkillStructureHandler.handle({ skillFile, format });
         console.log(result.message);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── regression-suite ──
@@ -3337,8 +3368,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `K-Requirements: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
-        process.exit(result.failedCount > 0 ? 1 : 0);
-        break;
+        await finishCliExit(result.failedCount > 0 ? 1 : 0);
+        return;
       }
 
       case "regression:run-gng-gate": {
@@ -3348,8 +3379,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `GnG Gate: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
-        process.exit(result.failedCount > 0 ? 1 : 0);
-        break;
+        await finishCliExit(result.failedCount > 0 ? 1 : 0);
+        return;
       }
 
       case "regression:run-agent-guard": {
@@ -3359,8 +3390,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `Agent Independence: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
-        process.exit(result.failedCount > 0 ? 1 : 0);
-        break;
+        await finishCliExit(result.failedCount > 0 ? 1 : 0);
+        return;
       }
 
       case "regression:run-k14-k15": {
@@ -3370,8 +3401,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `K14/K15: ${result.passedCount}/${result.totalCount} passed`;
         console.log(output);
-        process.exit(result.failedCount > 0 ? 1 : 0);
-        break;
+        await finishCliExit(result.failedCount > 0 ? 1 : 0);
+        return;
       }
 
       case "regression:configure-ci-gate": {
@@ -3387,8 +3418,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `CI gate configured: suites=${result.requiredSuiteIds.join(",")}, threshold=${result.coverageThreshold}%`;
         console.log(output);
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       case "regression:analyze-migration": {
@@ -3399,8 +3430,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `Migration analysis: total=${result.totalCount}, migrated=${result.migratedCount}, modified=${result.modifiedCount}, skipped=${result.skippedCount}`;
         console.log(output);
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       case "regression:migrate-v0-tests": {
@@ -3411,8 +3442,8 @@ Examples:
           ? JSON.stringify(result, null, 2)
           : `Migration: total=${result.totalCount}, migrated=${result.migratedCount}, modified=${result.modifiedCount}, skipped=${result.skippedCount}`;
         console.log(output);
-        process.exit(0);
-        break;
+        await finishCliExit(0);
+        return;
       }
 
       // ── phase2-extensions ──
@@ -3421,8 +3452,8 @@ Examples:
         const p2args = args.slice(1);
         const result = await mod.checkFreshnessHandler.handle(p2args);
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "p2:validate-pointers": {
@@ -3430,8 +3461,8 @@ Examples:
         const p2args = args.slice(1);
         const result = await mod.validatePointersHandler.handle(p2args);
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "p2:generate-e2e-template": {
@@ -3439,8 +3470,8 @@ Examples:
         const p2args = args.slice(1);
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       case "p2:check-initial-creation": {
@@ -3448,8 +3479,8 @@ Examples:
         const p2args = args.slice(1);
         const result = await mod.checkInitialCreationExpirationHandler.handle(p2args);
         console.log(result.stdout);
-        process.exit(result.exitCode);
-        break;
+        await finishCliExit(result.exitCode);
+        return;
       }
 
       // ── agent integration / hooks ──
@@ -3508,7 +3539,8 @@ Examples:
       case "delegate-sonnet": {
         if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
           printSubcommandHelp("delegate-sonnet");
-          process.exit(0);
+          await finishCliExit(0);
+          return;
         }
         if (!hasFlag(args, "--dry-run") && (await isModelDelegationDisabled(rootDir))) {
           console.error(
@@ -3517,7 +3549,8 @@ Examples:
               message: "phasegate delegate-sonnet is disabled by modelRouting.delegation=none",
             }),
           );
-          process.exit(1);
+          await finishCliExit(1);
+          return;
         }
         const { spawn } = await import("node:child_process");
         const scriptPath = join(harnessRoot, "scripts/delegate-sonnet.sh");
@@ -3567,7 +3600,8 @@ Examples:
             }
             console.log("");
           }
-          process.exit(0);
+          await finishCliExit(0);
+          return;
         }
 
         if (subCommand === "info") {
@@ -3581,7 +3615,8 @@ Examples:
           try {
             const content = await fs.readFile(skillMdPath, "utf-8");
             console.log(content);
-            process.exit(0);
+            await finishCliExit(0);
+            return;
           } catch {
             console.error(`Skill not found: ${skillName}`);
             console.error(`Expected: ${skillMdPath}`);
@@ -3597,12 +3632,13 @@ Examples:
       default:
         console.error(`Unknown command: ${command}`);
         printUsage();
-        process.exit(2);
+        await finishCliExit(2);
+        return;
     }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error occurred";
     console.error(`Fatal: ${message}`);
-    process.exit(2);
+    await finishCliExit(2);
   }
 }
 

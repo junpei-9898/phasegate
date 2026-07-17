@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **WI-308 — CLI large stdout drain** — self-repoのWorld enforcement有効化により`validate --layer L2 --json`が604件のadopted-legacy warningを含む64 KiB超のJSONとなり、`console.log`直後の`process.exit`がpipe bufferをdrainせず末尾を切断する回帰を修正。direct stdout resultを返す全top-level CLI経路を共通graceful exitへ統合し、warningを省略せず任意サイズの完全な出力と既存exit codeを維持する。64 KiB超を必須条件とするprocess E2Eで`--format json` / `--json`双方を固定し、同E2E fileの全subprocess caseへ明示60秒timeoutを適用した。
+
 ### Added
 
 - **WI-307 / H17-19 — World production-ready CI / template regression（WM-24）** — self-repo CIをtest → requirement-test matrix生成 → pure `world:derive --json`二重byte一致 → authoritative L3 → attestation v2 produce / verify → integrity verifyのtrust chainへ整列。保存obligation reportをCI入力にせず、runner tempの二出力とv2 evidenceだけを比較・検証する。bundled `aidlc-gate`はconfig JSONをfail-closedで読み、`world.enabled:true`の場合だけmatrix後のderive二重一致を実行するため、false / absentの採用projectは既存L3契約を維持する。regression-suiteにactual processの3 `world:*` command、`phasegate-world-cli/v1` envelope、exit 0 / 1 / 2、CI source order、package surfaceのcontract testを追加。README / README.ja / CLI guideを登録済み`L2-017` / `L3-008`、bounded SessionStart、attestation v2 root pin、self-repo dogfood有効のproduction仕様へ更新し、H17-19を同一着地でrequiredとして登録した。Phase CのCI統合により、warning-only validatorの`passed:false`とaggregate `allPassed:true`が同時に公開される潜在矛盾を顕在化。harness-apiのpublic ci-check projectionで同一`failOnWarning` policyをper-validator結果にも適用し、warning diagnosticsを保持したまま既定時は`passed:true`、strict時は`passed:false`へ一貫させ、attestation INV-1を緩和せずv2 smokeを成立させた。

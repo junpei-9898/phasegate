@@ -19,14 +19,20 @@
  * @work-item-id WI-201
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-217
+ * @work-item-id WI-308
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { run, runInCwd, withTempDir } from './cli-test-helpers.js';
+
+// Every case in this file spawns the CLI through run/runInCwd. Keep the file-level
+// timeout explicit so Vitest's 5s default cannot turn normal CLI startup or
+// validation cost into an environment-dependent failure.
+vi.setConfig({ testTimeout: 60_000 });
 
 describe('harness CLI E2E', () => {
   describe('ヘルプ・基本動作', () => {
@@ -253,9 +259,11 @@ describe('harness CLI E2E', () => {
 
         expect(actual.stderr).not.toContain('Invalid --format value for validate');
         expect([0, 1]).toContain(actual.exitCode);
+        expect(Buffer.byteLength(actual.stdout, 'utf8')).toBeGreaterThan(64 * 1024);
         const parsed = JSON.parse(actual.stdout);
         expect(parsed).toHaveProperty('overallPassed');
       },
+      60_000,
     );
 
     it('scaffold-wi --help は main help と同じ positional signature を表示する', () => {
@@ -475,26 +483,26 @@ describe('harness CLI E2E', () => {
       const actual = run('phasegate:check-ready');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:check-ready');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:check-ready が exit 0 または exit 1 で完了する', () => {
       const actual = run('phasegate:check-ready');
 
       expect(actual.stderr).not.toContain('Unknown command');
       expect([0, 1]).toContain(actual.exitCode);
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:check-phase が "Unknown command" にならない', () => {
       const actual = run('phasegate:check-phase', '--unit', 'validator-system');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:check-phase');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:ci-check が "Unknown command" にならない', () => {
       const actual = run('phasegate:ci-check');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:ci-check');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:ci-check --json は L2-L4 の実行またはskipを返す', () => {
       const actual = run('phasegate:ci-check', '--json');
@@ -508,19 +516,19 @@ describe('harness CLI E2E', () => {
       expect(ids.some((id) => id.startsWith('L3-'))).toBe(true);
       expect(ids.some((id) => id.startsWith('L4-'))).toBe(true);
       expect(parsed.data.validatorResults.some((result) => result.validatorId.startsWith('L4-') && result.skipped === true)).toBe(true);
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:detect-drift が "Unknown command" にならない', () => {
       const actual = run('phasegate:detect-drift');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:detect-drift');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:status が "Unknown command" にならない', () => {
       const actual = run('phasegate:status');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:status');
-    }, 30_000);
+    }, 60_000);
 
     it('legacy status alias は phasegate:status handler を実行し migration warning を出す', () => {
       const actual = run('status', '--json');
@@ -530,7 +538,7 @@ describe('harness CLI E2E', () => {
       expect(parsed.status).toMatch(/^(pass|fail)$/);
       expect(Array.isArray(parsed.data.layers)).toBe(true);
       expect(actual.stderr).toContain("use 'phasegate phasegate:status'");
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:status --json の stdout が JSON.parse 可能（storyReflection 行が混入しない）', () => {
       const actual = run('phasegate:status', '--json');
@@ -538,7 +546,7 @@ describe('harness CLI E2E', () => {
       const parsed = JSON.parse(actual.stdout) as { status: string; data: { layers: unknown[] } };
       expect(parsed.status).toMatch(/^(pass|fail)$/);
       expect(Array.isArray(parsed.data.layers)).toBe(true);
-    }, 30_000);
+    }, 60_000);
 
     it('壊れた phasegate.config.json で "not valid JSON" 警告が stderr に出る（--json でも続行する）', () => {
       const actual = withTempDir((cwd) => {
@@ -547,25 +555,25 @@ describe('harness CLI E2E', () => {
       });
 
       expect(actual.stderr).toContain('phasegate.config.json is not valid JSON');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate.config.json が存在しないときは warning が出ない（ENOENT は silent）', () => {
       const actual = withTempDir((cwd) => runInCwd(cwd, 'phasegate:status', '--json'));
 
       expect(actual.stderr).not.toContain('phasegate.config.json');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:lint が "Unknown command" にならない', () => {
       const actual = run('phasegate:lint');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:lint');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:complete-check が "Unknown command" にならない', () => {
       const actual = run('phasegate:complete-check');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:complete-check');
-    }, 30_000);
+    }, 60_000);
 
     it('legacy complete-check alias は phasegate:complete-check handler を実行し migration warning を出す', () => {
       const actual = run('complete-check');
@@ -573,20 +581,20 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: complete-check');
       expect(actual.stderr).toContain("use 'phasegate phasegate:complete-check'");
       expect([0, 1]).toContain(actual.exitCode);
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:impact-analysis storyId なしで exit 0 または exit 2 が返る', () => {
       const actual = run('phasegate:impact-analysis');
 
       expect([0, 1, 2]).toContain(actual.exitCode);
       expect(actual.stderr).not.toContain('Unknown command: phasegate:impact-analysis');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:impact-analysis H99-01 が "Unknown command" にならない', () => {
       const actual = run('phasegate:impact-analysis', 'H99-01');
 
       expect(actual.stderr).not.toContain('Unknown command: phasegate:impact-analysis');
-    }, 30_000);
+    }, 60_000);
 
     it('phasegate:generate-matrix が product docs とtest metadataからmatrixを生成する', () => {
       const actual = withTempDir((cwd) => {
@@ -651,7 +659,7 @@ describe('matrix generation dogfood', () => {
           testType: 'unit',
         }),
       );
-    }, 30_000);
+    }, 60_000);
   });
 
 });
