@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-309 — WI-305 validator domain reflection repair** — `DesignChangeDeclarationPolicy`を実装・配線しながらvalidator-system `domain_model.md`へのWI-305累積反映を欠落させ、story reflection corpusが検出したbaseline外違反を正規に解消。exact `corpusRole + DeclaredKey`照合、pinned change限定、Work-Item trailer intersection、unique sorted finding、local fast-path / L3 authority境界を実コードどおり記録し、baseline / allowlistには触れていない。
+
 - **WI-308 — CLI large stdout drain** — self-repoのWorld enforcement有効化により`validate --layer L2 --json`が604件のadopted-legacy warningを含む64 KiB超のJSONとなり、`console.log`直後の`process.exit`がpipe bufferをdrainせず末尾を切断する回帰を修正。direct stdout resultを返す全top-level CLI経路を共通graceful exitへ統合し、warningを省略せず任意サイズの完全な出力と既存exit codeを維持する。64 KiB超を必須条件とするprocess E2Eで`--format json` / `--json`双方を固定し、同E2E fileの全subprocess caseへ明示60秒timeoutを適用した。
 
 ### Added

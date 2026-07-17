@@ -475,3 +475,20 @@ validator-systemが将来消費するWorld configはplain `world` projectionで�
 <!-- @work-item-id WI-302 -->
 
 `WorldConstraintRederivationObservation`はL2と同じplain obligation classificationを観測するが、独立したconsumer-owned portとしてL3 trust boundaryを表す。`WorldConstraintRederivationService`は`new-structural` / `invalid-declaration`と全derive diagnosticをerror、`adopted-legacy` / `waived`をwarningへ写像する。全findingはauthoritative clean-corpus re-derivationであること、rule ID、存在する場合はviolation fingerprintを保持する。保存reportはobservationにもpolicy inputにも含めない。
+
+## WI-305 Design change declaration policy
+
+<!-- @work-item-id WI-305 -->
+<!-- @work-item-id WI-309 -->
+
+`DesignChangeDeclarationPolicy`は、変更された明示design fragment、constraintにpinされたendpoint、commitの`Work-Item` trailer IDをplain immutable inputとして受ける純粋domain serviceである。Git index観測、World constraint読込、commit message parse、blocking presentationは外側のadapter / application責務とする。
+
+不変条件:
+
+- fragmentとendpointは`corpusRole + DeclaredKey`のexact keyでのみ対応づけ、path、heading、意味類似からpinを推論しない。
+- pinされた変更fragmentだけを`checkedFragmentCount`へ計上し、unpinned changeはfindingを生成しない。
+- fragmentの`workItemIds`とtrailer IDに1件以上の共通IDがあれば宣言済みとし、無ければ固定code`design-change-declaration-missing`を1 fragmentにつき1件返す。
+- findingはcorpus role / DeclaredKey / path、unique sorted expected Work Item IDs、unique sorted constraint IDsを保持する。
+- 対象fragmentはexact key、次にpathでsortし、同じinputから同じfinding順序を返す。入力配列順やduplicate endpointに依存しない。
+
+このpolicyはlocal commit-msg declaration consistencyだけを判定し、変更原因、semantic refinement、`@world-reflects`の意味を推論しない。local stateは偽造可能であり、constraintのauthoritative structural判定はL3-008に残す。
