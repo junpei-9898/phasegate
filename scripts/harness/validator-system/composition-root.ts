@@ -8,6 +8,7 @@
  * @work-item-id WI-301
  * @work-item-id WI-302
  * @work-item-id WI-305
+ * @work-item-id WI-322
  */
 
 import { join } from "node:path";
@@ -73,7 +74,9 @@ const DEFAULT_CONFIG = {
     L3: {
       enabled: true,
       validators: ["L3-001", "L3-002", "L3-003", "L3-004", "L3-006", "L3-007"],
-      coverageThreshold: 90,
+      // WI-322 (github#37 残課題): カバレッジゲートはオプトイン（WI-317）。config なし環境の
+      // fallback で 90% を強制しない。0 = 正規の opt-out（L3-003 は透過 SKIP になる）。
+      coverageThreshold: 0,
       bundleSizeLimit: 512000,
       requirementMatrixPath: ".harness/requirement-test-matrix.json",
     },
