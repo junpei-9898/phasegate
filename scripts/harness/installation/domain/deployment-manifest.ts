@@ -1,19 +1,32 @@
 // @unit installation
 // @layer domain
 // @work-item-id WI-145
+// @work-item-id WI-326
 
 import { DeploymentEntry, type DeploymentEntryJson } from "./deployment-entry.js";
+
+// Records which install-time options produced this manifest so a later
+// reconcile can honor the original opt-in state instead of assuming defaults.
+// Optional for backward compatibility: manifests written before WI-326 carry
+// no flags, and consumers must fall back to legacy behavior in that case.
+export interface InstallationFlags {
+  readonly includeHusky: boolean;
+  readonly includeCi: boolean;
+  readonly personal: boolean;
+}
 
 export interface DeploymentManifestInput {
   readonly version: string;
   readonly installedAt: string;
   readonly entries: readonly DeploymentEntry[];
+  readonly installationFlags?: InstallationFlags;
 }
 
 export interface DeploymentManifestJson {
   readonly version: string;
   readonly installedAt: string;
   readonly entries: readonly DeploymentEntryJson[];
+  readonly installationFlags?: InstallationFlags;
 }
 
 export class DeploymentManifest {
@@ -22,6 +35,7 @@ export class DeploymentManifest {
   readonly version: string;
   readonly installedAt: string;
   readonly entries: readonly DeploymentEntry[];
+  readonly installationFlags?: InstallationFlags;
 
   private constructor(input: DeploymentManifestInput) {
     if (!DeploymentManifest.SEMVER_PATTERN.test(input.version)) {
@@ -29,6 +43,12 @@ export class DeploymentManifest {
     }
     if (!Number.isFinite(Date.parse(input.installedAt))) {
       throw new Error("DeploymentManifest installedAt must be ISO8601-compatible");
+    }
+    if (input.installationFlags !== undefined) {
+      const { includeHusky, includeCi, personal } = input.installationFlags;
+      if (typeof includeHusky !== "boolean" || typeof includeCi !== "boolean" || typeof personal !== "boolean") {
+        throw new Error("DeploymentManifest installationFlags must contain boolean includeHusky/includeCi/personal");
+      }
     }
     const paths = new Set<string>();
     for (const entry of input.entries) {
@@ -40,6 +60,14 @@ export class DeploymentManifest {
     this.version = input.version;
     this.installedAt = input.installedAt;
     this.entries = Object.freeze([...input.entries]);
+    this.installationFlags =
+      input.installationFlags === undefined
+        ? undefined
+        : Object.freeze({
+            includeHusky: input.installationFlags.includeHusky,
+            includeCi: input.installationFlags.includeCi,
+            personal: input.installationFlags.personal,
+          });
     Object.freeze(this);
   }
 
@@ -56,6 +84,7 @@ export class DeploymentManifest {
       version: input.version,
       installedAt: input.installedAt,
       entries: input.entries.map((entry) => DeploymentEntry.fromJSON(entry)),
+      installationFlags: input.installationFlags,
     });
   }
 
@@ -65,6 +94,7 @@ export class DeploymentManifest {
       version: this.version,
       installedAt: this.installedAt,
       entries: [...entries, entry],
+      installationFlags: this.installationFlags,
     });
   }
 
@@ -73,6 +103,16 @@ export class DeploymentManifest {
       version: this.version,
       installedAt: this.installedAt,
       entries: this.entries.filter((entry) => entry.path !== path),
+      installationFlags: this.installationFlags,
+    });
+  }
+
+  withInstallationFlags(installationFlags: InstallationFlags): DeploymentManifest {
+    return DeploymentManifest.reconstitute({
+      version: this.version,
+      installedAt: this.installedAt,
+      entries: this.entries,
+      installationFlags,
     });
   }
 
@@ -85,6 +125,9 @@ export class DeploymentManifest {
       version: this.version,
       installedAt: this.installedAt,
       entries: this.entries.map((entry) => entry.toJSON()),
+      // Omit the key entirely for legacy manifests so serialized output stays
+      // byte-compatible with pre-WI-326 manifest.json files.
+      ...(this.installationFlags === undefined ? {} : { installationFlags: this.installationFlags }),
     };
   }
 }

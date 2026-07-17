@@ -14,6 +14,7 @@
 // @work-item-id WI-215
 // @work-item-id WI-216
 // @work-item-id WI-315
+// @work-item-id WI-326
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -52,6 +53,8 @@ async function runInstall(
     personal?: boolean;
     agent?: "claude" | "codex" | "both";
     skillSet?: "core" | "all";
+    includeHusky?: boolean;
+    includeCi?: boolean;
   } = {},
 ) {
   const mod = createInstallationModule();
@@ -69,7 +72,51 @@ async function runInstall(
     skillSet: options.skillSet ?? "all",
     includeClaude: agent === "claude" || agent === "both",
     includeCodex: agent === "codex" || agent === "both",
+    includeHusky: options.includeHusky,
+    includeCi: options.includeCi,
   });
+}
+
+async function readManifestInstallationFlags(root: string) {
+  const manifest = JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
+    installationFlags?: { includeHusky: boolean; includeCi: boolean; personal: boolean };
+  };
+  return manifest.installationFlags;
+}
+
+async function arrangeOptOutInstallAndReadFlags() {
+  const root = await createProjectRoot();
+  const installed = await runInstall(root, { apply: true, includeHusky: false, includeCi: false });
+  return {
+    installed,
+    flags: await readManifestInstallationFlags(root),
+    huskyExists: await fileExists(join(root, ".husky")),
+    ciExists: await fileExists(join(root, ".github", "workflows", "phasegate-aidlc-gate.yml")),
+  };
+}
+
+async function arrangePersonalInstallAndReadFlags() {
+  const root = await createProjectRoot();
+  const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
+  return {
+    installed,
+    flags: await readManifestInstallationFlags(root),
+  };
+}
+
+async function arrangeReinstallWithDriftedFlags() {
+  const root = await createProjectRoot();
+  await runInstall(root, { apply: true, includeHusky: true, includeCi: true });
+  const firstFlags = await readManifestInstallationFlags(root);
+  // 2 回目は Husky/CI opt-out。managed file は既に最新なので content 変更は発生しないが、
+  // installationFlags のドリフトだけで manifest が再保存されることを確認する。
+  const second = await runInstall(root, { apply: true, includeHusky: false, includeCi: false });
+  return {
+    firstFlags,
+    second,
+    secondFlags: await readManifestInstallationFlags(root),
+    huskyStillExists: await fileExists(join(root, ".husky", "pre-commit")),
+  };
 }
 
 async function installAndReadJsonMerge(root: string) {
@@ -765,6 +812,37 @@ target("InstallHandler", () => {
       ).toContain("phasegate-toolkit-guide");
       expect(actual.claudeLink).toStrictEqual(null);
       expect(actual.codexLink).toBe("../skills");
+    });
+
+    it("install --apply は Husky/CI opt-out 状態を installationFlags として manifest に記録すること", async () => {
+      // Act
+      const actual = await arrangeOptOutInstallAndReadFlags();
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(actual.flags).toEqual({ includeHusky: false, includeCi: false, personal: false });
+      expect(actual.huskyExists).toBe(false);
+      expect(actual.ciExists).toBe(false);
+    });
+
+    it("personal install --apply は installationFlags に personal=true と Husky/CI 無効を記録すること", async () => {
+      // Act
+      const actual = await arrangePersonalInstallAndReadFlags();
+
+      // Assert
+      expect(actual.installed.exitCode).toBe(0);
+      expect(actual.flags).toEqual({ includeHusky: false, includeCi: false, personal: true });
+    });
+
+    it("フラグ違いの再 install --apply は managed file 変更が無くても installationFlags を更新すること", async () => {
+      // Act
+      const actual = await arrangeReinstallWithDriftedFlags();
+
+      // Assert
+      expect(actual.firstFlags).toEqual({ includeHusky: true, includeCi: true, personal: false });
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.secondFlags).toEqual({ includeHusky: false, includeCi: false, personal: false });
+      expect(actual.huskyStillExists).toBe(true);
     });
 
     it("project both install の --skills core は core だけを配布し manifest hash に selection を反映すること", async () => {

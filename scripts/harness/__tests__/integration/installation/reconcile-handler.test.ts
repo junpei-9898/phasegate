@@ -6,6 +6,7 @@
 // @work-item-id WI-216
 // @work-item-id WI-219
 // @work-item-id WI-315
+// @work-item-id WI-326
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -66,6 +67,20 @@ async function runPersonalInstall(root: string, agent: "claude" | "codex", versi
     agent,
     includeClaude: agent === "claude",
     includeCodex: agent === "codex",
+  });
+}
+
+async function runInstallWithoutHuskyCi(root: string, version = "0.145.3") {
+  return createInstallationModule().installHandler.execute({
+    projectRoot: root,
+    harnessRoot: resolve("."),
+    phasegateVersion: version,
+    dryRun: false,
+    apply: true,
+    force: true,
+    json: true,
+    includeHusky: false,
+    includeCi: false,
   });
 }
 
@@ -354,6 +369,40 @@ async function arrangeOrphanPruneIdempotency() {
   return { first, second };
 }
 
+async function readManifestJson(root: string) {
+  return JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
+    installationFlags?: { includeHusky: boolean; includeCi: boolean; personal: boolean };
+    entries: Array<{ path: string }>;
+  };
+}
+
+async function stripInstallationFlags(root: string): Promise<void> {
+  const manifestPath = join(root, ".phasegate", "manifest.json");
+  const manifest = (await readManifestJson(root)) as Record<string, unknown>;
+  delete manifest.installationFlags;
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+}
+
+async function arrangeOptOutInstallReconcileApply() {
+  const root = await createProjectRoot();
+  await runInstallWithoutHuskyCi(root, "0.145.3");
+  const result = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    result,
+    huskyOnDisk: await fileExists(join(root, ".husky")),
+    ciOnDisk: await fileExists(join(root, ".github", "workflows", "phasegate-aidlc-gate.yml")),
+    manifestAfter: await readManifestJson(root),
+  };
+}
+
+async function arrangeLegacyManifestWithoutFlagsReconcile() {
+  const root = await createProjectRoot();
+  await runInstallWithoutHuskyCi(root, "0.145.3");
+  await stripInstallationFlags(root);
+  const result = await runReconcile(root, { version: "0.145.3" });
+  return { result };
+}
+
 afterEach(async () => {
   if (projectRoot !== null) await rm(projectRoot, { recursive: true, force: true });
   projectRoot = null;
@@ -567,6 +616,41 @@ target("ReconcileHandler", () => {
       expect(actual.first.payload.plan.some((item) => item.action === "prune")).toBe(true);
       expect(actual.second.exitCode).toBe(0);
       expect(actual.second.payload.plan.some((item) => item.action === "prune")).toBe(false);
+    });
+  });
+
+  describe("installationFlags 準拠 (WI-326)", () => {
+    it("Husky/CI opt-out install 後の reconcile apply は Husky/CI targets を追加せず installationFlags を保持すること", async () => {
+      // Act
+      const actual = await arrangeOptOutInstallReconcileApply();
+
+      // Assert
+      expect(actual.result.exitCode).toBe(0);
+      expect(actual.result.payload.plan.some((item) => item.path.startsWith(".husky/"))).toBe(false);
+      expect(
+        actual.result.payload.plan.some((item) => item.path === ".github/workflows/phasegate-aidlc-gate.yml"),
+      ).toBe(false);
+      expect(actual.huskyOnDisk).toBe(false);
+      expect(actual.ciOnDisk).toBe(false);
+      expect(actual.manifestAfter.installationFlags).toEqual({
+        includeHusky: false,
+        includeCi: false,
+        personal: false,
+      });
+    });
+
+    it("installationFlags の無い旧 manifest の reconcile は従来どおり Husky/CI targets を対象に含めること", async () => {
+      // Act
+      const actual = await arrangeLegacyManifestWithoutFlagsReconcile();
+
+      // Assert
+      expect(actual.result.exitCode).toBe(0);
+      expect(actual.result.payload.plan).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: ".husky/pre-commit", action: "add", changed: true }),
+          expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml", action: "add", changed: true }),
+        ]),
+      );
     });
   });
 });

@@ -17,6 +17,7 @@
 // @work-item-id WI-216
 // @work-item-id WI-219
 // @work-item-id WI-315
+// @work-item-id WI-326
 
 import {
   access,
@@ -33,7 +34,7 @@ import {
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
-import { DeploymentManifest } from "../../domain/deployment-manifest.js";
+import { DeploymentManifest, type InstallationFlags } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
@@ -444,12 +445,22 @@ export class RunInstallUseCase {
     const skillSet = input.skillSet ?? "all";
     const workflow = input.workflow ?? "standard";
     const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
-    const targets = input.personal
+    const personal = input.personal ?? false;
+    const targets = personal
       ? this.createPersonalTargets({ includeClaude, includeCodex })
       : this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
+    // Persist the effective opt-in state so a later reconcile can honor the
+    // original install options. Personal installs never deploy Husky/CI
+    // targets, so their effective state is recorded as false regardless of
+    // input.
+    const installationFlags: InstallationFlags = {
+      includeHusky: personal ? false : includeHusky,
+      includeCi: personal ? false : includeCi,
+      personal,
+    };
     const existingManifest = await this.manifestRepository.load(input.projectRoot);
     const baseManifest = existingManifest ?? DeploymentManifest.create(input.phasegateVersion);
-    let manifest = baseManifest;
+    let manifest = baseManifest.withInstallationFlags(installationFlags);
     const plan: InstallPlanItem[] = [];
     const refused: InstallPlanItem[] = [];
     const changed: InstallPlanItem[] = [];
@@ -674,7 +685,13 @@ export class RunInstallUseCase {
       });
     }
 
-    if (input.apply && changed.length > 0) {
+    // Re-save on apply when the recorded install flags drift from a previous
+    // manifest (e.g. re-install with different --with-husky/--with-ci), even
+    // if no managed file content changed. A missing manifest with zero changes
+    // keeps the legacy behavior of not creating one.
+    const flagsDrifted =
+      existingManifest !== null && !this.installationFlagsEqual(existingManifest.installationFlags, installationFlags);
+    if (input.apply && (changed.length > 0 || flagsDrifted)) {
       try {
         await this.manifestRepository.save(input.projectRoot, manifest);
       } catch (error) {
@@ -688,6 +705,15 @@ export class RunInstallUseCase {
     }
 
     return { plan, refused, changed, backupDir };
+  }
+
+  private installationFlagsEqual(existing: InstallationFlags | undefined, next: InstallationFlags): boolean {
+    return (
+      existing !== undefined &&
+      existing.includeHusky === next.includeHusky &&
+      existing.includeCi === next.includeCi &&
+      existing.personal === next.personal
+    );
   }
 
   private withApplyError(

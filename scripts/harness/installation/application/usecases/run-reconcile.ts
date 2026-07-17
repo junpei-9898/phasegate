@@ -8,6 +8,7 @@
 // @work-item-id WI-219
 // @work-item-id WI-264
 // @work-item-id WI-315
+// @work-item-id WI-326
 
 import {
   access,
@@ -61,6 +62,12 @@ export interface RunReconcileInput {
   readonly dryRun: boolean;
   readonly apply: boolean;
   readonly force: boolean;
+  // Explicit per-run overrides. When omitted, the flags recorded in the
+  // manifest at install time (installationFlags) are used; manifests written
+  // before WI-326 carry no flags and fall back to the legacy behavior of
+  // reconciling every bundled target.
+  readonly includeHusky?: boolean;
+  readonly includeCi?: boolean;
 }
 
 export interface RunReconcileResult {
@@ -345,12 +352,15 @@ export class RunReconcileUseCase {
       return { plan: [item], refused: [], changed: [], backupDir: null };
     }
 
-    const targets = this.createTargets();
+    const includeHusky = input.includeHusky ?? manifest.installationFlags?.includeHusky ?? true;
+    const includeCi = input.includeCi ?? manifest.installationFlags?.includeCi ?? true;
+    const targets = this.createTargets({ includeHusky, includeCi });
     const targetsByPath = new Map(targets.map((target) => [target.path, target]));
     let nextManifest = DeploymentManifest.reconstitute({
       version: input.phasegateVersion,
       installedAt: manifest.installedAt,
       entries: manifest.entries,
+      installationFlags: manifest.installationFlags,
     });
     const plan: ReconcilePlanItem[] = [];
     const refused: ReconcilePlanItem[] = [];
@@ -643,6 +653,9 @@ export class RunReconcileUseCase {
   }
 
   private isPersonalManifest(manifest: DeploymentManifest): boolean {
+    // Manifests written since WI-326 record the install mode explicitly;
+    // older manifests fall back to the legacy entry-shape heuristic.
+    if (manifest.installationFlags !== undefined) return manifest.installationFlags.personal;
     return (
       manifest.findEntry(".phasegate-local/phasegate.config.json") !== null ||
       manifest.entries.some(
@@ -899,7 +912,10 @@ export class RunReconcileUseCase {
     return `${JSON.stringify(reconcileJsonObject(isRecord(existing) ? existing : {}, isRecord(incoming) ? incoming : {}), null, 2)}\n`;
   }
 
-  private createTargets(): readonly ReconcileTarget[] {
+  private createTargets(options: {
+    readonly includeHusky: boolean;
+    readonly includeCi: boolean;
+  }): readonly ReconcileTarget[] {
     return [
       { path: ".claude/settings.json", strategy: "json", templatePath: "templates/.claude/settings.json" },
       {
@@ -915,32 +931,40 @@ export class RunReconcileUseCase {
         templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
         block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate AGENTS.md managed section" },
       },
-      {
-        path: ".husky/pre-commit",
-        strategy: "shell",
-        templatePath: "docs/templates/hooks/pre-commit",
-        executable: true,
-        block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate pre-commit managed block" },
-      },
-      {
-        path: ".husky/commit-msg",
-        strategy: "shell",
-        templatePath: "docs/templates/hooks/commit-msg",
-        executable: true,
-        block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate commit-msg managed block" },
-      },
-      {
-        path: ".husky/pre-push",
-        strategy: "shell",
-        templatePath: "docs/templates/hooks/pre-push",
-        executable: true,
-        block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate pre-push managed block" },
-      },
-      {
-        path: ".github/workflows/phasegate-aidlc-gate.yml",
-        strategy: "yaml-add",
-        templatePath: "docs/templates/ci/aidlc-gate.yml",
-      },
+      ...(options.includeHusky
+        ? ([
+            {
+              path: ".husky/pre-commit",
+              strategy: "shell",
+              templatePath: "docs/templates/hooks/pre-commit",
+              executable: true,
+              block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate pre-commit managed block" },
+            },
+            {
+              path: ".husky/commit-msg",
+              strategy: "shell",
+              templatePath: "docs/templates/hooks/commit-msg",
+              executable: true,
+              block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate commit-msg managed block" },
+            },
+            {
+              path: ".husky/pre-push",
+              strategy: "shell",
+              templatePath: "docs/templates/hooks/pre-push",
+              executable: true,
+              block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate pre-push managed block" },
+            },
+          ] as const satisfies readonly ReconcileTarget[])
+        : []),
+      ...(options.includeCi
+        ? ([
+            {
+              path: ".github/workflows/phasegate-aidlc-gate.yml",
+              strategy: "yaml-add",
+              templatePath: "docs/templates/ci/aidlc-gate.yml",
+            },
+          ] as const satisfies readonly ReconcileTarget[])
+        : []),
       { path: "package.json", strategy: "package-json", templatePath: "package.json" },
       { path: ".claude/skills", strategy: "symlink" },
       { path: ".codex/skills", strategy: "symlink" },
