@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114, WI-186, WI-307
+// @work-item-id WI-114, WI-186, WI-307, WI-318
 import { describe, expect, it, vi } from "vitest";
 import type { ArtifactScannerPort } from "../../../harness-api/domain/ports/artifact-scanner-port.js";
 import type { BiomeLintPort } from "../../../harness-api/domain/ports/biome-lint-port.js";
@@ -414,6 +414,92 @@ target("CommandDispatchService", () => {
       const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe("pass");
+    });
+
+    // UT-DS-013 (WI-318 / github#38): warning-only failure は ci-check と同じく exit 0 / pass
+    it("phasegate:complete-checkがwarning-only validator failure + lint通過で exit 0 のpass responseを返すこと", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        allValidatorResults: [
+          { validatorId: "L2-001", passed: true, errors: [] },
+          {
+            validatorId: "L2-016",
+            passed: false,
+            errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+          },
+        ],
+        lintResult: { passed: true, errors: [], warnings: [] },
+      });
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.exitCode).toBe(0);
+      expect(actual.errors).toEqual([]);
+      expect(actual.summary).toMatchObject({ warnings: 1 });
+    });
+
+    // UT-DS-014 (WI-318): error severity を含む validator failure は従来どおり exit 1 / fail
+    it("phasegate:complete-checkがerror severityを含むvalidator failureで exit 1 のfail responseを返すこと", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        allValidatorResults: [
+          { validatorId: "L2-001", passed: true, errors: [] },
+          {
+            validatorId: "L2-002",
+            passed: false,
+            errors: [{ code: "L2-002", severity: "error", message: "metadata violation" }],
+          },
+        ],
+        lintResult: { passed: true, errors: [], warnings: [] },
+      });
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe("fail");
+      expect(actual.exitCode).toBe(1);
+      expect(actual.errors).toEqual([{ code: "L2-002", severity: "error", message: "metadata violation" }]);
+    });
+
+    // UT-DS-015 (WI-318): validator 全通過でも lint fail なら exit 1 / fail（現状維持）
+    it("phasegate:complete-checkがvalidator全通過 + lint failで exit 1 のfail responseを返すこと", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        allValidatorResults: [{ validatorId: "L3-001", passed: true, errors: [] }],
+        lintResult: {
+          passed: false,
+          errors: [{ code: "L1-001", severity: "error", message: "lint violation" }],
+          warnings: [],
+        },
+      });
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe("fail");
+      expect(actual.exitCode).toBe(1);
+      expect(actual.errors).toEqual([{ code: "L1-001", severity: "error", message: "lint violation" }]);
+    });
+
+    // UT-DS-016 (WI-318): skipped validator は ci-check と同じく green state として扱う
+    it("phasegate:complete-checkがskipped validatorをci-checkと同じくpass扱いすること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        allValidatorResults: [
+          { validatorId: "L2-001", passed: true, errors: [] },
+          { validatorId: "L4-001", passed: false, skipped: true, errors: [] },
+        ],
+        lintResult: { passed: true, errors: [], warnings: [] },
+      });
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.exitCode).toBe(0);
+      expect(actual.errors).toEqual([]);
     });
   });
 });

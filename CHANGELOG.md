@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-318 — complete-check に severity-aware 集約を適用（GitHub #38）** — `phasegate:complete-check` が validator の生の `passed` だけを見ており、warning-only failure でも exit 1 になって `validate` / `ci-check` と乖離していた。Stop hook が叩くのは complete-check のため、L2-016 の `ungated-legacy` マーカー（error→可視 warning 降格）が実質無効化されていた。ci-check と同一の `CiCheckResult.fromResults()`（ADR-017 / WI-260 の `isEffectivelyPassed`）を通す集約に修正し、warning 件数を summary に反映。skipped validator が fail 扱いされる潜在バグも同時に解消。lint fail → exit 1 の合流は不変。
+
 - **WI-317 — coverageThreshold の opt-out を到達可能に（GitHub #37）** — L3-003 実装は「カバレッジゲートはオプトイン」と明記しつつ、opt-out 手段（`null`）がスキーマで拒否され、`0` を設定してもレポート不在で fail-closed FAIL になる矛盾があった。ドメイン VO `L3Config.hasCoverageGate()` の「threshold > 0 でのみ有効」の意図に run-l3 を揃え、`coverageThreshold: 0`（および null）を正規の opt-out として SKIP にした（minimal preset の 0 も本来の opt-out として機能）。レポート不在 FAIL の suggestion に (a) カバレッジ付き実行 (b) `coverageThreshold: 0` での opt-out (c) 非 JS/TS プロジェクトの `project.languages` 宣言、の 3 択を案内する。
 
 - **WI-316 — install の `--with-husky` / `--with-ci` dead flag を修正（GitHub #36）** — install コマンドがこの 2 フラグを一度も読まず、`--personal` なしでは常に `.husky/*` と `.github/workflows/phasegate-aidlc-gate.yml` を書き込んでいた。ヘルプ記載・`init` / `setup:agent` と同じ opt-in（フラグ明示時のみ書き込み）に配線を揃え、CLI 統合テストとドキュメントで固定した。usecase のプログラマティック契約（既定 true）は不変。

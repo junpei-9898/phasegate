@@ -1,22 +1,22 @@
 // @layer domain
 // @unit harness-api
-// @work-item-id WI-108 / WI-114, WI-186
+// @work-item-id WI-108 / WI-114, WI-186, WI-318
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
-import { CommandRegistry } from './command-registry.js';
-import { StatusDerivationService } from './status-derivation-service.js';
-import { HarnessApiResponse, type ExitCode, type HarnessError } from '../value-objects/harness-api-response.js';
-import { CheckReadyResult } from '../value-objects/check-ready-result.js';
-import { CiCheckResult } from '../value-objects/ci-check-result.js';
-import { DriftReportSummary } from '../value-objects/drift-report-summary.js';
-import type { ValidatorExecutionPort } from '../ports/validator-execution-port.js';
-import type { PhaseGateQueryPort } from '../ports/phase-gate-query-port.js';
-import type { BiomeLintPort } from '../ports/biome-lint-port.js';
-import type { ImpactAnalysisPort } from '../ports/impact-analysis-port.js';
-import type { ArtifactScannerPort } from '../ports/artifact-scanner-port.js';
-import type { ConfigQueryPort } from '../ports/config-query-port.js';
-import type { LayerId } from '../value-objects/layer-health.js';
-import type { BaselineHealth, HookHealth, OperationalWarning } from '../value-objects/harness-status-summary.js';
+import type { ArtifactScannerPort } from "../ports/artifact-scanner-port.js";
+import type { BiomeLintPort } from "../ports/biome-lint-port.js";
+import type { ConfigQueryPort } from "../ports/config-query-port.js";
+import type { ImpactAnalysisPort } from "../ports/impact-analysis-port.js";
+import type { PhaseGateQueryPort } from "../ports/phase-gate-query-port.js";
+import type { ValidatorExecutionPort } from "../ports/validator-execution-port.js";
+import { CheckReadyResult } from "../value-objects/check-ready-result.js";
+import { CiCheckResult } from "../value-objects/ci-check-result.js";
+import { DriftReportSummary } from "../value-objects/drift-report-summary.js";
+import { type ExitCode, HarnessApiResponse, type HarnessError } from "../value-objects/harness-api-response.js";
+import type { BaselineHealth, HookHealth, OperationalWarning } from "../value-objects/harness-status-summary.js";
+import type { LayerId } from "../value-objects/layer-health.js";
+import { CommandRegistry } from "./command-registry.js";
+import { StatusDerivationService } from "./status-derivation-service.js";
 
 export interface CommandDispatchPorts {
   validatorExecutionPort: ValidatorExecutionPort;
@@ -42,27 +42,29 @@ export interface DispatchResult<T = unknown> {
 }
 
 function makeError(message: string): HarnessError {
-  return { code: 'HARNESS_ERROR', severity: 'error', message };
+  return { code: "HARNESS_ERROR", severity: "error", message };
 }
 
-type LiveValidationState = 'pass' | 'fail' | 'skipped' | 'not-run' | 'error';
+type LiveValidationState = "pass" | "fail" | "skipped" | "not-run" | "error";
 
 function layerIdFromValidatorId(validatorId: string): LayerId | null {
   const prefix = validatorId.slice(0, 2);
-  return prefix === 'L1' || prefix === 'L2' || prefix === 'L3' || prefix === 'L4' ? prefix : null;
+  return prefix === "L1" || prefix === "L2" || prefix === "L3" || prefix === "L4" ? prefix : null;
 }
 
-function summarizeLayerResults(items: readonly { validatorId: string; passed: boolean; skipped?: boolean }[]): Partial<Record<LayerId, LiveValidationState>> {
+function summarizeLayerResults(
+  items: readonly { validatorId: string; passed: boolean; skipped?: boolean }[],
+): Partial<Record<LayerId, LiveValidationState>> {
   const result: Partial<Record<LayerId, LiveValidationState>> = {};
-  for (const layerId of ['L2', 'L3', 'L4'] as const) {
+  for (const layerId of ["L2", "L3", "L4"] as const) {
     const layerItems = items.filter((item) => layerIdFromValidatorId(item.validatorId) === layerId);
     if (layerItems.length === 0) continue;
     if (layerItems.every((item) => item.skipped === true)) {
-      result[layerId] = 'skipped';
+      result[layerId] = "skipped";
     } else if (layerItems.some((item) => !item.passed && item.skipped !== true)) {
-      result[layerId] = 'fail';
+      result[layerId] = "fail";
     } else {
-      result[layerId] = 'pass';
+      result[layerId] = "pass";
     }
   }
   return result;
@@ -74,7 +76,7 @@ function hasEnabledLiveFailure(
 ): boolean {
   return enabledLayers.some((layerId) => {
     const liveState = liveValidationByLayer[layerId];
-    return liveState === 'fail' || liveState === 'error';
+    return liveState === "fail" || liveState === "error";
   });
 }
 
@@ -83,42 +85,41 @@ function buildOperationalWarnings(
   baselineHealth: BaselineHealth | undefined,
 ): OperationalWarning[] {
   const warnings: OperationalWarning[] = [];
-  const skipCount = hookHealth === undefined
-    ? 0
-    : Object.values(hookHealth.skipCountsByReason).reduce((sum, count) => sum + count, 0);
+  const skipCount =
+    hookHealth === undefined ? 0 : Object.values(hookHealth.skipCountsByReason).reduce((sum, count) => sum + count, 0);
   if (hookHealth !== undefined && skipCount > 0) {
     warnings.push({
-      code: 'HOOK_SKIP_OBSERVED',
+      code: "HOOK_SKIP_OBSERVED",
       message: `Hook skip events observed: ${skipCount}`,
-      nextAction: 'Inspect hookHealth.latestSkip and re-enable hooks or resolve reentry/timeout causes.',
+      nextAction: "Inspect hookHealth.latestSkip and re-enable hooks or resolve reentry/timeout causes.",
     });
   }
   if (baselineHealth !== undefined && baselineHealth.shaMismatchCount > 0) {
     warnings.push({
-      code: 'BASELINE_SHA_MISMATCH',
+      code: "BASELINE_SHA_MISMATCH",
       message: `${baselineHealth.shaMismatchCount} baseline files changed since the snapshot.`,
-      nextAction: 'Add or update design coverage for changed files and remove resolved entries from the baseline.',
+      nextAction: "Add or update design coverage for changed files and remove resolved entries from the baseline.",
     });
   }
   if (baselineHealth !== undefined && baselineHealth.grandfatheredFileCount > 50 && baselineHealth.removalRate < 0.5) {
     warnings.push({
-      code: 'BASELINE_DEBT_HIGH',
+      code: "BASELINE_DEBT_HIGH",
       message: `Baseline grandfather debt remains high: ${baselineHealth.grandfatheredFileCount} files.`,
-      nextAction: 'Plan a retrofit cleanup batch and reduce the baseline snapshot.',
+      nextAction: "Plan a retrofit cleanup batch and reduce the baseline snapshot.",
     });
   }
   return warnings;
 }
 
 const KNOWN_COMMANDS = new Set([
-  'phasegate:check-ready',
-  'phasegate:check-phase',
-  'phasegate:ci-check',
-  'phasegate:detect-drift',
-  'phasegate:status',
-  'phasegate:lint',
-  'phasegate:complete-check',
-  'phasegate:impact-analysis',
+  "phasegate:check-ready",
+  "phasegate:check-phase",
+  "phasegate:ci-check",
+  "phasegate:detect-drift",
+  "phasegate:status",
+  "phasegate:lint",
+  "phasegate:complete-check",
+  "phasegate:impact-analysis",
 ]);
 
 export class CommandDispatchService {
@@ -129,7 +130,7 @@ export class CommandDispatchService {
   constructor(
     registryOrPorts: CommandRegistry | CommandDispatchPorts,
     ports?: CommandDispatchPorts,
-    statusDerivationService?: StatusDerivationService
+    statusDerivationService?: StatusDerivationService,
   ) {
     if (registryOrPorts instanceof CommandRegistry) {
       this.registry = registryOrPorts;
@@ -164,7 +165,7 @@ export class CommandDispatchService {
       const message = err instanceof Error ? err.message : String(err);
       const response = HarnessApiResponse.error<T>([makeError(message)], { ...summary, failed: 1 });
       return {
-        status: 'error',
+        status: "error",
         errors: response.errors,
         summary: response.summary,
         data: undefined,
@@ -177,61 +178,62 @@ export class CommandDispatchService {
     commandName: string,
     args: Record<string, string>,
     _flags: Record<string, boolean | string>,
-    summary: { totalChecks: number; passed: number; failed: number; warnings: number }
+    summary: { totalChecks: number; passed: number; failed: number; warnings: number },
   ): Promise<DispatchResult<T>> {
     switch (commandName) {
-      case 'phasegate:check-ready': {
+      case "phasegate:check-ready": {
         const stories = await this.ports.phaseGateQueryPort.queryAllStories();
         const result = CheckReadyResult.fromStories(stories);
         if (result.allPassed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
-          return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
+          return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
         }
         const failed = result.getFailedStories();
         const errors = failed.map((s) => makeError(`Story ${s.storyId} failed Phase Gate`));
         const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 }, result);
-        return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
+        return { status: "fail", errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
-      case 'phasegate:check-phase': {
-        const unitId = args.unit ?? '';
+      case "phasegate:check-phase": {
+        const unitId = args.unit ?? "";
         const phaseInfo = await this.ports.phaseGateQueryPort.queryUnit(unitId);
         if (phaseInfo === null) {
           const errors = [makeError(`Unit '${unitId}' not found`)];
           const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 });
-          return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
+          return { status: "fail", errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
         }
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, phaseInfo);
-        return { status: 'pass', errors: [], summary: r.summary, data: phaseInfo as unknown as T, exitCode: 0 };
+        return { status: "pass", errors: [], summary: r.summary, data: phaseInfo as unknown as T, exitCode: 0 };
       }
 
-      case 'phasegate:ci-check': {
+      case "phasegate:ci-check": {
         const validatorResults = await this.ports.validatorExecutionPort.runAllValidators();
         const result = CiCheckResult.fromResults(validatorResults);
         if (result.allPassed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
-          return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
+          return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
         }
         const collected = result.collectAllErrors();
-        const errors = collected.length > 0
-          ? collected
-          : result.getFailedValidators().map((v) => makeError(`Validator ${v.validatorId} failed`));
+        const errors =
+          collected.length > 0
+            ? collected
+            : result.getFailedValidators().map((v) => makeError(`Validator ${v.validatorId} failed`));
         const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 }, result);
-        return { status: 'fail', errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
+        return { status: "fail", errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
-      case 'phasegate:detect-drift': {
+      case "phasegate:detect-drift": {
         const drifts = await this.ports.validatorExecutionPort.runDriftDetection();
         const result = DriftReportSummary.fromDrifts(drifts);
         if (!result.hasDrift()) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
-          return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
+          return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
         }
         const r = HarnessApiResponse.pass({ ...summary, passed: 1, warnings: drifts.length }, result);
-        return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
+        return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
       }
 
-      case 'phasegate:status': {
+      case "phasegate:status": {
         const scanResult = await this.ports.artifactScannerPort.scan();
         const liveValidationByLayer: Partial<Record<LayerId, LiveValidationState>> = {};
         try {
@@ -239,12 +241,15 @@ export class CommandDispatchService {
             this.ports.biomeLintPort.runLint(),
             this.ports.validatorExecutionPort.runAllValidators(),
           ]);
-          liveValidationByLayer.L1 = lintResult.passed ? 'pass' : 'fail';
+          liveValidationByLayer.L1 = lintResult.passed ? "pass" : "fail";
           Object.assign(liveValidationByLayer, summarizeLayerResults(validatorResults));
         } catch {
-          liveValidationByLayer.L1 = liveValidationByLayer.L1 ?? 'error';
+          liveValidationByLayer.L1 = liveValidationByLayer.L1 ?? "error";
         }
-        let presetInfo = { name: 'standard' as const, enabledLayers: ['L1', 'L2', 'L3'] as ('L1' | 'L2' | 'L3' | 'L4')[] };
+        let presetInfo = {
+          name: "standard" as const,
+          enabledLayers: ["L1", "L2", "L3"] as ("L1" | "L2" | "L3" | "L4")[],
+        };
         const configPort = this.ports.configQueryPort;
         if (configPort.getPresetInfo) {
           const pi = await configPort.getPresetInfo();
@@ -260,7 +265,7 @@ export class CommandDispatchService {
         const statusSummary = this.statusDerivationService.derive({
           scanResult,
           presetInfo,
-          configSummary: { configPath: 'phasegate.config.json', lastModified: '', version: '2' },
+          configSummary: { configPath: "phasegate.config.json", lastModified: "", version: "2" },
           phaseGateSummary: { totalStories: 0, passedStories: 0, pendingStories: 0 },
           liveValidationByLayer,
           hookHealth,
@@ -269,60 +274,80 @@ export class CommandDispatchService {
         });
         if (hasEnabledLiveFailure(presetInfo.enabledLayers, liveValidationByLayer)) {
           const errors = statusSummary.layers
-            .filter((layer) => layer.enabled && (layer.liveValidationState === 'fail' || layer.liveValidationState === 'error'))
+            .filter(
+              (layer) =>
+                layer.enabled && (layer.liveValidationState === "fail" || layer.liveValidationState === "error"),
+            )
             .map((layer) => makeError(`Layer ${layer.layerId} live validation ${layer.liveValidationState}`));
           const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 }, statusSummary);
-          return { status: 'fail', errors: r.errors, summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
+          return {
+            status: "fail",
+            errors: r.errors,
+            summary: r.summary,
+            data: statusSummary as unknown as T,
+            exitCode: 0,
+          };
         }
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, statusSummary);
-        return { status: 'pass', errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
+        return { status: "pass", errors: [], summary: r.summary, data: statusSummary as unknown as T, exitCode: 0 };
       }
 
-      case 'phasegate:lint': {
+      case "phasegate:lint": {
         const lintResult = await this.ports.biomeLintPort.runLint();
         if (lintResult.passed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 });
-          return { status: 'pass', errors: [], summary: r.summary, data: undefined, exitCode: 0 };
+          return { status: "pass", errors: [], summary: r.summary, data: undefined, exitCode: 0 };
         }
-        const errors = lintResult.errors.length > 0 ? lintResult.errors : [makeError('Lint failed')];
+        const errors = lintResult.errors.length > 0 ? lintResult.errors : [makeError("Lint failed")];
         const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 });
-        return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
+        return { status: "fail", errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
       }
 
-      case 'phasegate:complete-check': {
+      case "phasegate:complete-check": {
         const [validatorResults, lintResult] = await Promise.all([
           this.ports.validatorExecutionPort.runAllValidators(),
           this.ports.biomeLintPort.runLint(),
         ]);
         const allErrors: HarnessError[] = [];
-        for (const v of validatorResults) {
-          if (!v.passed) {
-            const errs = v.errors && v.errors.length > 0 ? v.errors : [makeError(`Validator ${v.validatorId} failed`)];
+        let warningCount = 0;
+        // WI-318 (github#38): ci-check case と同一の CiCheckResult.fromResults() を通して
+        // ADR-017 / WI-260 の severity-aware 集約（isEffectivelyPassed）を適用する。
+        // これにより warning-only failure（例: L2-016 の ungated-legacy marker）が
+        // Stop hook の complete-check 経路でも validate --layer L2 / ci-check と同じく
+        // 実質 pass となる。lint 結果の合流（lint fail → exit 1）は従来どおり維持。
+        if (validatorResults.length > 0) {
+          const result = CiCheckResult.fromResults(validatorResults);
+          warningCount = result.collectAllErrors().filter((e) => e.severity === "warning").length;
+          for (const v of result.getFailedValidators()) {
+            const errs =
+              v.errors !== undefined && v.errors.length > 0
+                ? v.errors
+                : [makeError(`Validator ${v.validatorId} failed`)];
             allErrors.push(...errs);
           }
         }
         if (!lintResult.passed) {
-          const errs = lintResult.errors.length > 0 ? lintResult.errors : [makeError('Lint failed')];
+          const errs = lintResult.errors.length > 0 ? lintResult.errors : [makeError("Lint failed")];
           allErrors.push(...errs);
         }
         if (allErrors.length === 0) {
-          const r = HarnessApiResponse.pass({ ...summary, passed: 1 });
-          return { status: 'pass', errors: [], summary: r.summary, data: undefined, exitCode: 0 };
+          const r = HarnessApiResponse.pass({ ...summary, passed: 1, warnings: warningCount });
+          return { status: "pass", errors: [], summary: r.summary, data: undefined, exitCode: 0 };
         }
-        const r = HarnessApiResponse.fail(allErrors, { ...summary, failed: 1 });
-        return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
+        const r = HarnessApiResponse.fail(allErrors, { ...summary, failed: 1, warnings: warningCount });
+        return { status: "fail", errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
       }
 
-      case 'phasegate:impact-analysis': {
-        const storyId = args.storyId ?? '';
+      case "phasegate:impact-analysis": {
+        const storyId = args.storyId ?? "";
         const result = await this.ports.impactAnalysisPort.analyze(storyId);
         if (result === null) {
           const errors = [makeError(`Story '${storyId}' not found`)];
           const r = HarnessApiResponse.fail(errors, { ...summary, failed: 1 });
-          return { status: 'fail', errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
+          return { status: "fail", errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
         }
         const r = HarnessApiResponse.pass({ ...summary, passed: 1 }, result);
-        return { status: 'pass', errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
+        return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
       }
 
       default:
