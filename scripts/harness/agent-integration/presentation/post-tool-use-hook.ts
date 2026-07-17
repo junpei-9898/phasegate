@@ -2,18 +2,19 @@
  * @layer presentation
  * @unit agent-integration
  * @work-item-id WI-208
+ * @work-item-id WI-323
  *
  * PostToolUse Hook Adapter
  * Claude Code の PostToolUse Hook エントリポイント
  */
 
-import { HandlePostToolUseUseCase } from '../application/usecases/handle-post-tool-use-usecase.js';
-import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
-import { HarnessApiCliCommandRegistryAdapter } from '../infrastructure/adapters/harness-api-cli-command-registry-adapter.js';
-import { ChildProcessCliExecutorAdapter } from '../infrastructure/adapters/child-process-cli-executor-adapter.js';
-import { recordHookSkipEvent } from './hook-skip-event-recorder.js';
-import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { HandlePostToolUseUseCase } from "../application/usecases/handle-post-tool-use-usecase.js";
+import { ChildProcessCliExecutorAdapter } from "../infrastructure/adapters/child-process-cli-executor-adapter.js";
+import { HarnessApiCliCommandRegistryAdapter } from "../infrastructure/adapters/harness-api-cli-command-registry-adapter.js";
+import { HarnessConfigConfigQueryAdapter } from "../infrastructure/adapters/harness-config-config-query-adapter.js";
+import { recordHookSkipEvent } from "./hook-skip-event-recorder.js";
 
 interface PostToolUseHookInput {
   tool_name?: string;
@@ -25,15 +26,15 @@ async function readStdin(): Promise<string> {
   for await (const chunk of process.stdin) {
     chunks.push(chunk as Buffer);
   }
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 async function findConfigPath(): Promise<string> {
   let dir = process.cwd();
   while (true) {
     const candidates = [
-      path.join(dir, 'phasegate.config.json'),
-      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+      path.join(dir, "phasegate.config.json"),
+      path.join(dir, ".phasegate-local", "phasegate.config.json"),
     ];
     for (const candidate of candidates) {
       try {
@@ -45,12 +46,12 @@ async function findConfigPath(): Promise<string> {
     if (parent === dir) break;
     dir = parent;
   }
-  return path.join(process.cwd(), 'phasegate.config.json');
+  return path.join(process.cwd(), "phasegate.config.json");
 }
 
 function projectRootForConfig(configPath: string): string {
   const configDir = path.dirname(configPath);
-  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
+  return path.basename(configDir) === ".phasegate-local" ? path.dirname(configDir) : configDir;
 }
 
 async function main(): Promise<void> {
@@ -58,7 +59,7 @@ async function main(): Promise<void> {
   try {
     raw = await readStdin();
   } catch {
-    process.stderr.write('stdin読み取りエラー\n');
+    process.stderr.write("stdin読み取りエラー\n");
     process.exit(2);
   }
 
@@ -72,8 +73,20 @@ async function main(): Promise<void> {
 
   const toolName = input.tool_name;
   if (!toolName) {
-    process.stderr.write('tool_nameフィールドが必要です\n');
-    process.exit(2);
+    // WI-323: PostToolUse はツール実行後の lint フィードバックでありゲートではないため、
+    // tool_name 欠落は fail-open でスキップする（WI-314 / github#40 方針）。
+    // ※ pre-tool-use-hook の同ガードは書き込みゲートなので fail-closed (exit 2) を維持する。
+    const configPath = await findConfigPath();
+    await recordHookSkipEvent({
+      projectRoot: projectRootForConfig(configPath),
+      hookType: "post-tool-use",
+      reason: "TOOL_NAME_MISSING",
+      targetPaths: [],
+    });
+    process.stderr.write(
+      "警告: stdin payload に tool_name が無いため post-tool-use hook の処理をスキップしました (fail-open)\n",
+    );
+    process.exit(0);
   }
 
   try {
@@ -93,7 +106,7 @@ async function main(): Promise<void> {
     if (output.skipReason) {
       await recordHookSkipEvent({
         projectRoot: projectRootForConfig(configPath),
-        hookType: 'post-tool-use',
+        hookType: "post-tool-use",
         reason: output.skipReason,
         targetPaths: [],
       });

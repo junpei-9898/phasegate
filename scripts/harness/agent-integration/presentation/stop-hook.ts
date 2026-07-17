@@ -3,19 +3,20 @@
  * @unit agent-integration
  * @work-item-id WI-203
  * @work-item-id WI-208
+ * @work-item-id WI-323
  *
  * Stop Hook Adapter
  * Claude Code の Stop Hook エントリポイント
  */
 
-import { HandleStopUseCase } from '../application/usecases/handle-stop-usecase.js';
-import { EnvFileReentryGuardStateAdapter } from '../infrastructure/adapters/env-file-reentry-guard-state-adapter.js';
-import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
-import { HarnessApiCliCommandRegistryAdapter } from '../infrastructure/adapters/harness-api-cli-command-registry-adapter.js';
-import { ChildProcessCliExecutorAdapter } from '../infrastructure/adapters/child-process-cli-executor-adapter.js';
-import { recordHookSkipEvent } from './hook-skip-event-recorder.js';
-import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { HandleStopUseCase } from "../application/usecases/handle-stop-usecase.js";
+import { ChildProcessCliExecutorAdapter } from "../infrastructure/adapters/child-process-cli-executor-adapter.js";
+import { EnvFileReentryGuardStateAdapter } from "../infrastructure/adapters/env-file-reentry-guard-state-adapter.js";
+import { HarnessApiCliCommandRegistryAdapter } from "../infrastructure/adapters/harness-api-cli-command-registry-adapter.js";
+import { HarnessConfigConfigQueryAdapter } from "../infrastructure/adapters/harness-config-config-query-adapter.js";
+import { recordHookSkipEvent } from "./hook-skip-event-recorder.js";
 
 interface StopHookInput {
   session_id?: string;
@@ -23,8 +24,7 @@ interface StopHookInput {
 
 function isCompleteCheckExecutionWiringFailure(stderr: string): boolean {
   return (
-    /scripts\/harness\/cli\/complete-check\.ts/.test(stderr) ||
-    /ERR_MODULE_NOT_FOUND|Cannot find module/i.test(stderr)
+    /scripts\/harness\/cli\/complete-check\.ts/.test(stderr) || /ERR_MODULE_NOT_FOUND|Cannot find module/i.test(stderr)
   );
 }
 
@@ -40,15 +40,15 @@ async function readStdin(): Promise<string> {
   for await (const chunk of process.stdin) {
     chunks.push(chunk as Buffer);
   }
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 async function findConfigPath(): Promise<string> {
   let dir = process.cwd();
   while (true) {
     const candidates = [
-      path.join(dir, 'phasegate.config.json'),
-      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+      path.join(dir, "phasegate.config.json"),
+      path.join(dir, ".phasegate-local", "phasegate.config.json"),
     ];
     for (const candidate of candidates) {
       try {
@@ -60,12 +60,12 @@ async function findConfigPath(): Promise<string> {
     if (parent === dir) break;
     dir = parent;
   }
-  return path.join(process.cwd(), 'phasegate.config.json');
+  return path.join(process.cwd(), "phasegate.config.json");
 }
 
 function projectRootForConfig(configPath: string): string {
   const configDir = path.dirname(configPath);
-  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
+  return path.basename(configDir) === ".phasegate-local" ? path.dirname(configDir) : configDir;
 }
 
 async function main(): Promise<void> {
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
   try {
     raw = await readStdin();
   } catch {
-    process.stderr.write('stdin読み取りエラー\n');
+    process.stderr.write("stdin読み取りエラー\n");
     process.exit(2);
   }
 
@@ -87,13 +87,24 @@ async function main(): Promise<void> {
 
   const sessionId = input.session_id;
   if (!sessionId) {
-    process.stderr.write('session_idフィールドが必要です\n');
-    process.exit(2);
+    // WI-323: session_id 欠落は呼び出し側環境の不備であり、stop hook はゲートではないため
+    // fail-open でスキップする（WI-314 / github#40 の「hook は開発フローを止めない」方針）。
+    const configPath = await findConfigPath();
+    await recordHookSkipEvent({
+      projectRoot: projectRootForConfig(configPath),
+      hookType: "stop",
+      reason: "SESSION_ID_MISSING",
+      targetPaths: [],
+    });
+    process.stderr.write(
+      "警告: stdin payload に session_id が無いため stop hook の処理をスキップしました (fail-open)\n",
+    );
+    process.exit(0);
   }
 
   try {
     const configPath = await findConfigPath();
-    const reentryGuardStatePort = new EnvFileReentryGuardStateAdapter({ strategy: 'env' });
+    const reentryGuardStatePort = new EnvFileReentryGuardStateAdapter({ strategy: "env" });
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const cliCommandRegistryPort = new HarnessApiCliCommandRegistryAdapter();
     const cliExecutorPort = new ChildProcessCliExecutorAdapter();
@@ -107,14 +118,14 @@ async function main(): Promise<void> {
 
     const output = await useCase.execute({ sessionId });
 
-    if (output.skipReason === 'REENTRY_DETECTED') {
+    if (output.skipReason === "REENTRY_DETECTED") {
       await recordHookSkipEvent({
         projectRoot: projectRootForConfig(configPath),
-        hookType: 'stop',
+        hookType: "stop",
         reason: output.skipReason,
         targetPaths: [],
       });
-      process.stderr.write('ReentryGuard: 再入検出によりスキップ\n');
+      process.stderr.write("ReentryGuard: 再入検出によりスキップ\n");
       process.exit(0);
     }
 
@@ -123,10 +134,8 @@ async function main(): Promise<void> {
         // WI-087 finding #4: enforce=true なら exit 2 + decision JSON で turn block
         if (output.shouldEnforceFailure === true) {
           const reason = formatCompleteCheckFailureReason(output.cliResult.exitCode, output.cliResult.stderr);
-          process.stdout.write(`${JSON.stringify({ decision: 'block', reason })}\n`);
-          process.stderr.write(
-            `${reason} — strict mode により turn を block します\n`,
-          );
+          process.stdout.write(`${JSON.stringify({ decision: "block", reason })}\n`);
+          process.stderr.write(`${reason} — strict mode により turn を block します\n`);
           process.exit(2);
         }
         process.stderr.write(`Complete Check失敗 (exitCode=${output.cliResult.exitCode})\n`);

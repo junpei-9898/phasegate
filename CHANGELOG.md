@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-323 — 非ゲート hook の payload フィールド欠落を fail-open 化（GitHub #40 残課題）** — stop hook が stdin payload の `session_id` 欠落で exit 2 になり、WI-314 の「hook は開発フローを止めない」方針と不整合だった。stop（`SESSION_ID_MISSING`）と post-tool-use（`TOOL_NAME_MISSING`）を警告 + hook-skip-event 記録 + exit 0 の fail-open に変更。**pre-tool-use の `tool_name` 欠落 exit 2 は書き込みゲートのため意図的に fail-closed を維持**し、回帰ガードテストで固定。usecase 契約（空 sessionId エラー）は presentation 入口ガード方式で不変。
+
 - **WI-322 — config なし fallback の coverageThreshold 90 を opt-out の 0 に修正（GitHub #37 残課題）** — WI-317 で「カバレッジゲートはオプトイン、0 = 正規の opt-out」と定義したのに、config なし環境で使われる validator-system の `DEFAULT_CONFIG` fallback が `coverageThreshold: 90` のままで、config を持たない環境だけ勝手に 90% が強制される矛盾を解消。fallback のみの変更でプリセット定義（minimal / standard / strict）は不変。fallback 経由で L3-003 が透過 SKIP になることを回帰テストで固定。
 
 - **WI-321 — complete-check の JSON 出力に warning 詳細を含める（GitHub #38 残課題）** — `phasegate:complete-check` が warning を `summary.warnings` の件数のみで返し、どの validator のどんな warning かが出力に含まれなかった非対称を修正。ci-check case と同じく `CiCheckResult` を data ペイロードとして pass / fail 双方で返す（`data.validatorResults[].validatorId / errors[]`）。validator 結果 0 件時は従来どおり data なし。判定ロジック・exit code・lint 合流は不変。
