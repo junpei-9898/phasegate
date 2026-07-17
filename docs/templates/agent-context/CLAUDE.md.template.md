@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-<!-- @work-item-id WI-174, WI-176, WI-177 -->
+<!-- @work-item-id WI-174, WI-176, WI-177, WI-331 -->
 
 <!-- phasegate:managed-section:start -->
 ## 必読ドキュメント
@@ -38,13 +38,13 @@ If `setup:agent --apply --json` or `install --apply --json` fails with a structu
 
 {{PHASEGATE_SKILLS}}
 
+## Agent Context Refresh
+
+Run `phasegate ci:auto-refresh-agent-context --dry-run` to preview updates and `phasegate ci:auto-refresh-agent-context --apply` to write AGENTS.md / CLAUDE.md.
+<!-- phasegate:managed-section:end -->
+
 ## User Section
 
 <!-- phasegate:user-section:start -->
 {{PHASEGATE_USER_SECTION}}
 <!-- phasegate:user-section:end -->
-
-## Agent Context Refresh
-
-Run `phasegate ci:auto-refresh-agent-context --dry-run` to preview updates and `phasegate ci:auto-refresh-agent-context --apply` to write AGENTS.md / CLAUDE.md.
-<!-- phasegate:managed-section:end -->

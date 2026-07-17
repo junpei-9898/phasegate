@@ -15,6 +15,7 @@
 // @work-item-id WI-216
 // @work-item-id WI-315
 // @work-item-id WI-326
+// @work-item-id WI-331
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -219,17 +220,81 @@ async function arrangeCustomHuskyAndForce() {
 }
 
 const USER_SECTION_PLACEHOLDER = "Project-specific agent instructions go here.";
+const MANAGED_SECTION_START = "<!-- phasegate:managed-section:start -->";
+const MANAGED_SECTION_END = "<!-- phasegate:managed-section:end -->";
+const USER_SECTION_START = "<!-- phasegate:user-section:start -->";
+const USER_SECTION_END = "<!-- phasegate:user-section:end -->";
+
+function userSectionSegment(body: string): string {
+  return `${USER_SECTION_START}\n${body}\n${USER_SECTION_END}`;
+}
+
+// user-section が managed block の外側(managed-section:end より後ろ)に置かれているか。
+function isUserSectionOutsideManagedBlock(content: string): boolean {
+  const managedEnd = content.indexOf(MANAGED_SECTION_END);
+  const userStart = content.indexOf(USER_SECTION_START);
+  return managedEnd !== -1 && userStart !== -1 && userStart > managedEnd;
+}
+
+function managedBlockOf(content: string): string {
+  const start = content.indexOf(MANAGED_SECTION_START);
+  const end = content.indexOf(MANAGED_SECTION_END);
+  return content.slice(start, end + MANAGED_SECTION_END.length);
+}
 
 async function arrangeCustomizedUserSectionReinstall(path: "CLAUDE.md" | "AGENTS.md", customText: string) {
   const root = await createProjectRoot();
   await runInstall(root, { apply: true });
   const installed = await readFile(join(root, path), "utf8");
   // user-section の placeholder をユーザー記述に置き換えてから再 install する。
-  await writeProjectFile(root, path, installed.replace(USER_SECTION_PLACEHOLDER, customText));
+  // replacer 関数で customText 中の `$` シーケンスの substitution 解釈を防ぐ。
+  await writeProjectFile(
+    root,
+    path,
+    installed.replace(USER_SECTION_PLACEHOLDER, () => customText),
+  );
   const second = await runInstall(root, { apply: true });
   return {
     second,
     content: await readFile(join(root, path), "utf8"),
+  };
+}
+
+// 旧構造(pre-WI-331): user-section が managed block の内側に nest された CLAUDE.md。
+function legacyStructureClaudeMd(userBody: string): string {
+  return [
+    "# CLAUDE.md",
+    "",
+    MANAGED_SECTION_START,
+    "## PhaseGate Commands",
+    "",
+    "- `phasegate doctor`",
+    "",
+    "## User Section",
+    "",
+    USER_SECTION_START,
+    userBody,
+    USER_SECTION_END,
+    "",
+    "## Agent Context Refresh",
+    "",
+    "Run `phasegate ci:auto-refresh-agent-context --apply`.",
+    MANAGED_SECTION_END,
+    "",
+  ].join("\n");
+}
+
+async function arrangeLegacyStructureClaudeMdInstallTwice(userBody: string) {
+  const root = await createProjectRoot();
+  await writeProjectFile(root, "CLAUDE.md", legacyStructureClaudeMd(userBody));
+  const first = await runInstall(root, { apply: true });
+  const afterFirst = await readFile(join(root, "CLAUDE.md"), "utf8");
+  const second = await runInstall(root, { apply: true });
+  return {
+    first,
+    second,
+    afterFirst,
+    afterSecond: await readFile(join(root, "CLAUDE.md"), "utf8"),
   };
 }
 
@@ -512,10 +577,23 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.second.exitCode).toBe(0);
-      expect(actual.content).toContain(customText);
+      // user-section 本文は再 install 前後で byte 同値で保持される。
+      expect(actual.content).toContain(userSectionSegment(customText));
       expect(actual.content).not.toContain(USER_SECTION_PLACEHOLDER);
-      expect(actual.content).toContain("<!-- phasegate:user-section:start -->");
-      expect(actual.content).toContain("<!-- phasegate:user-section:end -->");
+      // 新構造: user-section は managed block の外側に位置する。
+      expect(isUserSectionOutsideManagedBlock(actual.content)).toBe(true);
+    });
+
+    it("再 install --apply が $ シーケンスを含む CLAUDE.md user-section 本文を byte 同値で保持すること", async () => {
+      // Arrange
+      const customText = "置換記号 `$&` と `$'` と $100 を含む指示。";
+
+      // Act
+      const actual = await arrangeCustomizedUserSectionReinstall("CLAUDE.md", customText);
+
+      // Assert
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.content).toContain(userSectionSegment(customText));
     });
 
     it("CLAUDE.md 新規作成時は user-section に placeholder を注入すること", async () => {
@@ -523,8 +601,27 @@ target("InstallHandler", () => {
       const actual = await arrangeFreshInstallAndReadClaudeMd();
 
       // Assert
-      expect(actual).toContain("<!-- phasegate:user-section:start -->");
-      expect(actual).toContain(USER_SECTION_PLACEHOLDER);
+      expect(actual).toContain(userSectionSegment(USER_SECTION_PLACEHOLDER));
+      // 新規作成時から user-section は managed block の外側(AGENTS.md と対称)に置かれる。
+      expect(isUserSectionOutsideManagedBlock(actual)).toBe(true);
+      expect(managedBlockOf(actual)).not.toContain(USER_SECTION_START);
+    });
+
+    it("旧構造 CLAUDE.md の install --apply は user-section を managed 外へ移設し本文を byte 同値で保持すること", async () => {
+      // Arrange
+      const userBody = "旧構造からの移行対象テキスト。`$&` も保持する。";
+
+      // Act
+      const actual = await arrangeLegacyStructureClaudeMdInstallTwice(userBody);
+
+      // Assert
+      expect(actual.first.exitCode).toBe(0);
+      expect(actual.afterFirst).toContain(userSectionSegment(userBody));
+      expect(isUserSectionOutsideManagedBlock(actual.afterFirst)).toBe(true);
+      expect(managedBlockOf(actual.afterFirst)).not.toContain(USER_SECTION_START);
+      // 冪等性: 同じ入力で 2 回目を実行してもファイルは byte 同値。
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.afterSecond).toBe(actual.afterFirst);
     });
 
     it("再 install --apply が既存 AGENTS.md の user-section 記述を保持すること", async () => {

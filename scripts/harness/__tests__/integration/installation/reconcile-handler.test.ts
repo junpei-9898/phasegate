@@ -7,6 +7,7 @@
 // @work-item-id WI-219
 // @work-item-id WI-315
 // @work-item-id WI-326
+// @work-item-id WI-331
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -285,6 +286,22 @@ async function arrangePersonalInstallWithDeletedBundledSkillAndRepair() {
   };
 }
 
+const RECONCILE_MANAGED_SECTION_START = "<!-- phasegate:managed-section:start -->";
+const RECONCILE_MANAGED_SECTION_END = "<!-- phasegate:managed-section:end -->";
+const RECONCILE_USER_SECTION_START = "<!-- phasegate:user-section:start -->";
+const RECONCILE_USER_SECTION_END = "<!-- phasegate:user-section:end -->";
+
+function reconcileUserSectionSegment(body: string): string {
+  return `${RECONCILE_USER_SECTION_START}\n${body}\n${RECONCILE_USER_SECTION_END}`;
+}
+
+// user-section が managed block の外側(managed-section:end より後ろ)に置かれているか。
+function reconcileUserSectionIsOutsideManagedBlock(content: string): boolean {
+  const managedEnd = content.indexOf(RECONCILE_MANAGED_SECTION_END);
+  const userStart = content.indexOf(RECONCILE_USER_SECTION_START);
+  return managedEnd !== -1 && userStart !== -1 && userStart > managedEnd;
+}
+
 async function arrangeCustomizedClaudeMdUserSectionReconcile() {
   const root = await createProjectRoot();
   await runInstall(root, "0.145.3");
@@ -297,6 +314,48 @@ async function arrangeCustomizedClaudeMdUserSectionReconcile() {
   return {
     result,
     content: await readFile(join(root, "CLAUDE.md"), "utf8"),
+  };
+}
+
+// 旧構造(pre-WI-331): user-section が managed block の内側に nest された CLAUDE.md。
+function reconcileLegacyStructureClaudeMd(userBody: string): string {
+  return [
+    "# CLAUDE.md",
+    "",
+    RECONCILE_MANAGED_SECTION_START,
+    "## PhaseGate Commands",
+    "",
+    "- `phasegate doctor`",
+    "",
+    "## User Section",
+    "",
+    RECONCILE_USER_SECTION_START,
+    userBody,
+    RECONCILE_USER_SECTION_END,
+    "",
+    "## Agent Context Refresh",
+    "",
+    "Run `phasegate ci:auto-refresh-agent-context --apply`.",
+    RECONCILE_MANAGED_SECTION_END,
+    "",
+  ].join("\n");
+}
+
+async function arrangeLegacyStructureClaudeMdReconcileTwice(userBody: string) {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  // 旧構造ファイルへ差し替え、manifest hash を同期して mechanical 扱いにする。
+  const legacy = reconcileLegacyStructureClaudeMd(userBody);
+  await writeProjectFile(root, "CLAUDE.md", legacy);
+  await updateManifestEntryHash(root, "CLAUDE.md", legacy);
+  const first = await runReconcile(root, { apply: true, version: "0.146.0" });
+  const afterFirst = await readFile(join(root, "CLAUDE.md"), "utf8");
+  const second = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    first,
+    second,
+    afterFirst,
+    afterSecond: await readFile(join(root, "CLAUDE.md"), "utf8"),
   };
 }
 
@@ -480,10 +539,27 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.result.exitCode).toBe(0);
-      expect(actual.content).toContain("常に日本語で回答すること。");
+      // user-section 本文は reconcile 前後で byte 同値で保持される。
+      expect(actual.content).toContain(reconcileUserSectionSegment("常に日本語で回答すること。"));
       expect(actual.content).not.toContain("Project-specific agent instructions go here.");
-      expect(actual.content).toContain("<!-- phasegate:user-section:start -->");
-      expect(actual.content).toContain("<!-- phasegate:user-section:end -->");
+      // 新構造: user-section は managed block の外側に位置する。
+      expect(reconcileUserSectionIsOutsideManagedBlock(actual.content)).toBe(true);
+    });
+
+    it("旧構造 CLAUDE.md の reconcile --apply は user-section を managed 外へ移設し 2 回目適用でも byte 同値であること", async () => {
+      // Arrange
+      const userBody = "reconcile 移行対象のユーザー指示。`$&` も保持する。";
+
+      // Act
+      const actual = await arrangeLegacyStructureClaudeMdReconcileTwice(userBody);
+
+      // Assert
+      expect(actual.first.exitCode).toBe(0);
+      expect(actual.afterFirst).toContain(reconcileUserSectionSegment(userBody));
+      expect(reconcileUserSectionIsOutsideManagedBlock(actual.afterFirst)).toBe(true);
+      // 冪等性: 同じ入力で 2 回目を実行してもファイルは byte 同値。
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.afterSecond).toBe(actual.afterFirst);
     });
 
     it("manifest に無い deploy target を追加し 2 回目は no-op になること", async () => {

@@ -9,6 +9,7 @@
 // @work-item-id WI-264
 // @work-item-id WI-315
 // @work-item-id WI-326
+// @work-item-id WI-331
 
 import {
   access,
@@ -92,6 +93,7 @@ const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
 const USER_SECTION_BEGIN = "<!-- phasegate:user-section:start -->";
 const USER_SECTION_END = "<!-- phasegate:user-section:end -->";
+const USER_SECTION_PLACEHOLDER = "Project-specific agent instructions go here.";
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const HARNESS_VERSION_BASENAME = ".harness-version";
 const SKILL_ROOT_PREFIXES = ["skills", ".claude/skills", ".codex/skills"] as const;
@@ -265,11 +267,18 @@ function extractUserSectionBody(content: string | null): string | null {
   return body.length === 0 ? null : body;
 }
 
-// The CLAUDE.md template nests the user-section inside the managed section, so
-// replacing the managed block wholesale would wipe user-authored instructions
-// with the template placeholder. Re-inject the existing user-section body into
-// the incoming block. Templates whose managed block carries no user-section
-// markers (e.g. AGENTS.md) are returned unchanged.
+function hasUserSectionMarkers(content: string): boolean {
+  const start = content.indexOf(USER_SECTION_BEGIN);
+  const end = content.indexOf(USER_SECTION_END);
+  return start !== -1 && end !== -1 && start < end;
+}
+
+// Legacy (pre-WI-331) templates nested the user-section inside the managed
+// section, so replacing the managed block wholesale would wipe user-authored
+// instructions with the template placeholder. Re-inject the existing
+// user-section body into the incoming block. Blocks without user-section
+// markers (all current templates) are returned unchanged; the outside-of-block
+// migration for those is handled in reconcileManagedMarkdown.
 function restoreUserSection(block: string, existing: string | null): string {
   const start = block.indexOf(USER_SECTION_BEGIN);
   const end = block.indexOf(USER_SECTION_END);
@@ -281,12 +290,36 @@ function restoreUserSection(block: string, existing: string | null): string {
 
 function reconcileManagedMarkdown(existing: string | null, incoming: string): string {
   if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
-  const block = restoreUserSection(managedMarkdownBlock(incoming), existing);
+  const incomingBlock = managedMarkdownBlock(incoming);
   const pattern = new RegExp(`${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}`);
-  // Replacer function keeps user-authored text (now part of the block) from
-  // being interpreted as `$`-substitution patterns by String.replace.
-  if (pattern.test(existing)) return existing.replace(pattern, () => block).replace(/\s*$/, "\n");
-  return `${block}\n\n${existing.replace(/\s*$/, "\n")}`;
+  if (!pattern.test(existing)) return `${incomingBlock}\n\n${existing.replace(/\s*$/, "\n")}`;
+
+  const blockStart = existing.indexOf(MARKDOWN_BEGIN);
+  const blockEnd = existing.indexOf(MARKDOWN_END) + MARKDOWN_END.length;
+  const existingBlock = existing.slice(blockStart, blockEnd);
+  const outsideBlock = existing.slice(0, blockStart) + existing.slice(blockEnd);
+  const block = restoreUserSection(incomingBlock, existing);
+  // Replacer function keeps user-authored text (possibly part of the block)
+  // from being interpreted as `$`-substitution patterns by String.replace.
+  let next = existing.replace(pattern, () => block);
+
+  // Structure migration (WI-331): the existing file nests the user-section
+  // inside the managed block (old template shape) while the incoming block
+  // keeps it outside. Replacing the block would drop the user-authored body,
+  // so relocate it to just after the managed block — the position the current
+  // template uses. When a user-section already exists outside the block, keep
+  // that one and do not duplicate.
+  if (
+    hasUserSectionMarkers(existingBlock) &&
+    !hasUserSectionMarkers(incomingBlock) &&
+    !hasUserSectionMarkers(outsideBlock)
+  ) {
+    const body = extractUserSectionBody(existingBlock) ?? USER_SECTION_PLACEHOLDER;
+    const insertAt = next.indexOf(MARKDOWN_END) + MARKDOWN_END.length;
+    const relocated = `\n\n## User Section\n\n${USER_SECTION_BEGIN}\n${body}\n${USER_SECTION_END}`;
+    next = `${next.slice(0, insertAt)}${relocated}${next.slice(insertAt)}`;
+  }
+  return next.replace(/\s*$/, "\n");
 }
 
 function renderAgentContextTemplate(template: string): string {
@@ -308,7 +341,7 @@ function renderAgentContextTemplate(template: string): string {
     .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
     .replaceAll("{{PHASEGATE_SKILLS}}", "- `all bundled skills`")
     .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
-    .replaceAll("{{PHASEGATE_USER_SECTION}}", "Project-specific agent instructions go here.");
+    .replaceAll("{{PHASEGATE_USER_SECTION}}", USER_SECTION_PLACEHOLDER);
 }
 
 function reconcilePackageJson(existing: Record<string, unknown>, version: string): Record<string, unknown> {
