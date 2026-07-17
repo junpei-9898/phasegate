@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-327 — 最小 config（project のみ）で動作可能に** — 手書き `phasegate.config.json` のスキーマが top-level 8 項目を required とし、`{"project": {"name": ..., "preset": ...}}` の最小構成で L1-001 が連発していた。プリセット解決（`PresetResolutionService.deepMerge`）は省略セクションの補完を既に完備していたため、v3 **と v2**（architecture キーなしの最小 config は v2 検証に振られる）の top-level required を `["project"]` に緩和し、型定義を実態に一致させた。**検証は弱めていない**: セクション内の required・型・enum・additionalProperties は不変で、書かれているが不正なキーは従来どおりエラー（spawn E2E で exit 2 を固定）。最小 config の解決結果がプリセット定義と一致することも統合テストで固定。
+
 - **WI-326 — install フラグ状態を manifest に永続化（GitHub #36 残課題）** — `--with-husky` / `--with-ci` / personal の install 時オプションが `.phasegate/manifest.json` に記録されず、後の reconcile が「全 target 対象」を仮定して opt-out したはずの Husky / CI workflow を追加し直す食い違いがあった。manifest に optional `installationFlags` を追加して install（apply）時に実効フラグを記録し、reconcile は明示指定 > manifest 記録 > 従来挙動の優先順で target を構成する。フィールドを持たない旧 manifest は推測せず従来挙動のまま（load / save round-trip のバイト互換もテストで固定）。
 
 - **WI-324 — フレッシュプロジェクトで L3-004 を SKIP に（オンボーディング阻害の解消）** — phasegate 導入直後（story 未作成・requirement-test-matrix 未生成）でも L3-004 が「マトリクス不在」で fail-closed FAIL になり導入体験を阻害していた。「matrix 不在 かつ StoryCatalog（user_stories.md）の story ゼロ」の場合のみ skipWithReason（WI-317 の L3-003 と同表現）で透過 SKIP に変更。**story が 1 件でも存在するのに matrix 不在なら従来どおり fail-closed**（あるべき matrix の消失事故は見逃さない）。story 数の取得に失敗した場合も判定不能として fail-closed 側に倒す。

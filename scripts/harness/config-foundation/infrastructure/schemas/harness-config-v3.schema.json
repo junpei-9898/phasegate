@@ -3,14 +3,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "project",
-    "layers",
-    "quickMode",
-    "phaseDependencies",
-    "planningMode",
-    "harnesses",
-    "paths",
-    "reporting"
+    "project"
   ],
   "$defs": {
     "effectCapability": {

@@ -5,6 +5,7 @@
  * @work-item-id WI-212
  * @work-item-id WI-219
  * @work-item-id WI-300
+ * @work-item-id WI-327
  */
 import { ConfigFoundationDomainError } from "./errors/config-foundation-domain-error.js";
 import { ConfigValidationError } from "./errors/config-validation-error.js";
@@ -48,13 +49,15 @@ export interface HarnessConfigSourceDocument {
     preset: PresetId;
     languages?: string[];
   };
-  layers: DeepPartial<HarnessConfigResolvedDocument["layers"]>;
-  quickMode: Partial<HarnessConfigResolvedDocument["quickMode"]>;
-  phaseDependencies: HarnessConfigResolvedDocument["phaseDependencies"];
-  planningMode: HarnessConfigResolvedDocument["planningMode"];
-  harnesses: Partial<HarnessConfigResolvedDocument["harnesses"]>;
-  paths: HarnessConfigResolvedDocument["paths"];
-  reporting: HarnessConfigResolvedDocument["reporting"];
+  // WI-327: project 以外の top-level セクションは手書き config で省略可。
+  // 省略時は PresetResolutionService が防御プリセット（project.preset）のデフォルト値で補完する。
+  layers?: DeepPartial<HarnessConfigResolvedDocument["layers"]>;
+  quickMode?: Partial<HarnessConfigResolvedDocument["quickMode"]>;
+  phaseDependencies?: HarnessConfigResolvedDocument["phaseDependencies"];
+  planningMode?: HarnessConfigResolvedDocument["planningMode"];
+  harnesses?: Partial<HarnessConfigResolvedDocument["harnesses"]>;
+  paths?: HarnessConfigResolvedDocument["paths"];
+  reporting?: HarnessConfigResolvedDocument["reporting"];
   ci?: HarnessConfigResolvedDocument["ci"];
   validate?: HarnessConfigResolvedDocument["validate"];
   preCommit?: Partial<HarnessConfigResolvedDocument["preCommit"]>;

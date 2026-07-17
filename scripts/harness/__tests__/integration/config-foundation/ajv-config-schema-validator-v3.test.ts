@@ -1,16 +1,16 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-import { describe, expect, it } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.ts';
-import { AjvConfigSchemaValidator } from '../../../config-foundation/infrastructure/validators/ajv-config-schema-validator.js';
+import { describe, expect, it } from "vitest";
+import { AjvConfigSchemaValidator } from "../../../config-foundation/infrastructure/validators/ajv-config-schema-validator.js";
+import { context, target } from "../../helpers/test-helpers.ts";
 
 const baseV2Document = () => ({
-  project: { name: 'dogfood', preset: 'standard' },
+  project: { name: "dogfood", preset: "standard" },
   layers: { L1: { enabled: true }, L2: { enabled: true }, L3: { enabled: true }, L4: { enabled: false } },
   quickMode: {
-    allowedCategories: ['bugfix'],
-    maintainedLayers: ['L1'],
+    allowedCategories: ["bugfix"],
+    maintainedLayers: ["L1"],
     relaxedGates: [],
     fullModeRequiredWhen: {
       mixedCategories: true,
@@ -18,22 +18,22 @@ const baseV2Document = () => ({
       apiContractChange: true,
     },
   },
-  phaseDependencies: { preset: 'default', override: false, customRules: [] },
-  planningMode: { default: 'interactive', perPhase: {} },
+  phaseDependencies: { preset: "default", override: false, customRules: [] },
+  planningMode: { default: "interactive", perPhase: {} },
   harnesses: {
     agentLessonCollection: false,
     cascadeUpdate: false,
     bundleSizeLimit: 0,
     deadCodeGC: false,
   },
-  paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
-  reporting: { format: 'json', outputDir: 'reports' },
+  paths: { designDocs: "docs/product/construction", inceptionDocs: "docs/inception" },
+  reporting: { format: "json", outputDir: "reports" },
 });
 
-target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
-  describe('architecture キーの有無で schema を切り替える', () => {
-    context('architecture キーが無い v2 形式の document', () => {
-      it('v2 schema で validate され errors 0 件', () => {
+target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
+  describe("architecture キーの有無で schema を切り替える", () => {
+    context("architecture キーが無い v2 形式の document", () => {
+      it("v2 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = baseV2Document();
@@ -46,11 +46,11 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('architecture キーを持つ v3 形式の document', () => {
-      it('v3 schema で validate され errors 0 件', () => {
+    context("architecture キーを持つ v3 形式の document", () => {
+      it("v3 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
-        const document = { ...baseV2Document(), architecture: { preset: 'clean' } };
+        const document = { ...baseV2Document(), architecture: { preset: "clean" } };
 
         // Act
         const actual = sut.validate(document);
@@ -60,11 +60,11 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('v2 document に architecture キーを足すと v2 schema は拒否する', () => {
-      it('注: structure detection により実際は v3 として扱われるため OK', () => {
+    context("v2 document に architecture キーを足すと v2 schema は拒否する", () => {
+      it("注: structure detection により実際は v3 として扱われるため OK", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
-        const document = { ...baseV2Document(), architecture: { preset: 'hexagonal' } };
+        const document = { ...baseV2Document(), architecture: { preset: "hexagonal" } };
 
         // Act
         const actual = sut.validate(document);
@@ -74,13 +74,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('architecture.preset が enum に無い値の場合', () => {
-      it('v3 schema validate で error が返る', () => {
+    context("architecture.preset が enum に無い値の場合", () => {
+      it("v3 schema validate で error が返る", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'ioc-tower' },
+          architecture: { preset: "ioc-tower" },
         };
 
         // Act
@@ -89,51 +89,175 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         // Assert
         expect(actual).toEqual([
           expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/architecture/preset',
-            message: expect.stringContaining('enum: /architecture/preset'),
+            errorCode: "L1-001",
+            path: "/architecture/preset",
+            message: expect.stringContaining("enum: /architecture/preset"),
           }),
         ]);
       });
     });
 
-    context('architecture.preset = custom だが layers 未指定の場合', () => {
-      it('v3 schema validate で error が返る (allOf/if/then)', () => {
+    context("architecture.preset = custom だが layers 未指定の場合", () => {
+      it("v3 schema validate で error が返る (allOf/if/then)", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'custom' },
+          architecture: { preset: "custom" },
         };
 
         // Act
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/architecture/layers',
-            message: expect.stringContaining('required: /architecture/layers'),
-          }),
-          expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/architecture/allowedDependencies',
-            message: expect.stringContaining('required: /architecture/allowedDependencies'),
-          }),
-        ]));
+        expect(actual).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: "/architecture/layers",
+              message: expect.stringContaining("required: /architecture/layers"),
+            }),
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: "/architecture/allowedDependencies",
+              message: expect.stringContaining("required: /architecture/allowedDependencies"),
+            }),
+          ]),
+        );
       });
     });
   });
 
-  describe('agentIntegration.stopHook.enforce フィールド (WI-087 Phase C-2)', () => {
-    context('agentIntegration.stopHook.enforce: true を含む v3 document', () => {
-      it('v3 schema で validate され errors 0 件', () => {
+  describe("top-level required の最小化 (WI-327)", () => {
+    context("project のみの最小 v2 形式 document", () => {
+      it("WI-327: project のみの最小 v2 config が schema validate で errors 0 件になること", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = { project: { name: "myapp", preset: "standard" } };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context("project と architecture のみの最小 v3 形式 document", () => {
+      it("WI-327: project と architecture のみの最小 v3 config が schema validate で errors 0 件になること", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          project: { name: "myapp", preset: "standard" },
+          architecture: { preset: "onion" },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([]);
+      });
+    });
+
+    context("project セクション自体が無い document", () => {
+      it("WI-327: project セクション自体を省略すると required エラーが返ること", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {};
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: "L1-001",
+            path: "/project",
+            message: expect.stringContaining("required: /project"),
+          }),
+        ]);
+      });
+    });
+
+    context("project.preset が無い document", () => {
+      it("WI-327: project.preset を省略すると required エラーが返ること", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = { project: { name: "myapp" } };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: "L1-001",
+            path: "/project/preset",
+            message: expect.stringContaining("required: /project/preset"),
+          }),
+        ]);
+      });
+    });
+
+    context(
+      "存在する reporting セクションが outputDir を欠く document（省略の許容は書かれたキーの検証を弱めない）",
+      () => {
+        it("WI-327: 存在する reporting セクションの outputDir 欠落は従来どおり required エラーが返ること", () => {
+          // Arrange
+          const sut = new AjvConfigSchemaValidator();
+          const document = {
+            project: { name: "myapp", preset: "standard" },
+            reporting: { format: "json" },
+          };
+
+          // Act
+          const actual = sut.validate(document);
+
+          // Assert
+          expect(actual).toEqual([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: "/reporting/outputDir",
+              message: expect.stringContaining("required: /reporting/outputDir"),
+            }),
+          ]);
+        });
+      },
+    );
+
+    context("存在する layers セクションの enabled が boolean でない document", () => {
+      it("WI-327: 存在する layers セクションの enabled 型不正は従来どおり type エラーが返ること", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const document = {
+          project: { name: "myapp", preset: "standard" },
+          layers: { L1: { enabled: "yes" } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual).toEqual([
+          expect.objectContaining({
+            errorCode: "L1-001",
+            path: "/layers/L1/enabled",
+            message: expect.stringContaining("must be boolean"),
+          }),
+        ]);
+      });
+    });
+  });
+
+  describe("agentIntegration.stopHook.enforce フィールド (WI-087 Phase C-2)", () => {
+    context("agentIntegration.stopHook.enforce: true を含む v3 document", () => {
+      it("v3 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
+          architecture: { preset: "clean" },
           agentIntegration: { stopHook: { enforce: true } },
         };
 
@@ -145,13 +269,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('agentIntegration.stopHook.enforce: false を含む v3 document', () => {
-      it('v3 schema で validate され errors 0 件', () => {
+    context("agentIntegration.stopHook.enforce: false を含む v3 document", () => {
+      it("v3 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
+          architecture: { preset: "clean" },
           agentIntegration: { stopHook: { enforce: false } },
         };
 
@@ -163,13 +287,13 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('agentIntegration セクションがそもそも無い v3 document', () => {
-      it('v3 schema で validate され errors 0 件 (任意フィールド)', () => {
+    context("agentIntegration セクションがそもそも無い v3 document", () => {
+      it("v3 schema で validate され errors 0 件 (任意フィールド)", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
+          architecture: { preset: "clean" },
         };
 
         // Act
@@ -180,14 +304,14 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('agentIntegration.stopHook.enforce が boolean 以外 (string) の場合', () => {
-      it('v3 schema validate で error が返る', () => {
+    context("agentIntegration.stopHook.enforce が boolean 以外 (string) の場合", () => {
+      it("v3 schema validate で error が返る", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
-          agentIntegration: { stopHook: { enforce: 'yes' } },
+          architecture: { preset: "clean" },
+          agentIntegration: { stopHook: { enforce: "yes" } },
         };
 
         // Act
@@ -196,21 +320,21 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         // Assert
         expect(actual).toEqual([
           expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/agentIntegration/stopHook/enforce',
-            message: expect.stringContaining('must be boolean'),
+            errorCode: "L1-001",
+            path: "/agentIntegration/stopHook/enforce",
+            message: expect.stringContaining("must be boolean"),
           }),
         ]);
       });
     });
 
-    context('agentIntegration セクションに未定義の key が含まれる場合', () => {
-      it('v3 schema validate で error が返る (additionalProperties: false)', () => {
+    context("agentIntegration セクションに未定義の key が含まれる場合", () => {
+      it("v3 schema validate で error が返る (additionalProperties: false)", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
+          architecture: { preset: "clean" },
           agentIntegration: { unknownKey: true },
         };
 
@@ -220,23 +344,23 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         // Assert
         expect(actual).toEqual([
           expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/agentIntegration/unknownKey',
-            message: expect.stringContaining('additionalProperties'),
+            errorCode: "L1-001",
+            path: "/agentIntegration/unknownKey",
+            message: expect.stringContaining("additionalProperties"),
           }),
         ]);
       });
     });
   });
 
-  describe('ci.enabled フィールド (WI-032 post-publish dogfood)', () => {
-    context('ci.enabled: true を含む v3 document', () => {
-      it('v3 schema で validate され errors 0 件', () => {
+  describe("ci.enabled フィールド (WI-032 post-publish dogfood)", () => {
+    context("ci.enabled: true を含む v3 document", () => {
+      it("v3 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
+          architecture: { preset: "clean" },
           ci: { enabled: true },
         };
 
@@ -248,14 +372,14 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('ci.enabled が boolean 以外の場合', () => {
-      it('v3 schema validate で error が返る', () => {
+    context("ci.enabled が boolean 以外の場合", () => {
+      it("v3 schema validate で error が返る", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
-          ci: { enabled: 'yes' },
+          architecture: { preset: "clean" },
+          ci: { enabled: "yes" },
         };
 
         // Act
@@ -264,23 +388,23 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         // Assert
         expect(actual).toEqual([
           expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/ci/enabled',
-            message: expect.stringContaining('must be boolean'),
+            errorCode: "L1-001",
+            path: "/ci/enabled",
+            message: expect.stringContaining("must be boolean"),
           }),
         ]);
       });
     });
   });
 
-  describe('modelRouting.delegation フィールド (WI-219)', () => {
-    context('v2 document が delegation none を含む場合', () => {
-      it('v2 schema で validate され errors 0 件', () => {
+  describe("modelRouting.delegation フィールド (WI-219)", () => {
+    context("v2 document が delegation none を含む場合", () => {
+      it("v2 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          modelRouting: { delegation: 'none' },
+          modelRouting: { delegation: "none" },
         };
 
         // Act
@@ -291,14 +415,14 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('v3 document が delegation delegate-sonnet を含む場合', () => {
-      it('v3 schema で validate され errors 0 件', () => {
+    context("v3 document が delegation delegate-sonnet を含む場合", () => {
+      it("v3 schema で validate され errors 0 件", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
-          modelRouting: { delegation: 'delegate-sonnet' },
+          architecture: { preset: "clean" },
+          modelRouting: { delegation: "delegate-sonnet" },
         };
 
         // Act
@@ -309,14 +433,14 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
       });
     });
 
-    context('modelRouting.delegation が未対応値の場合', () => {
-      it('schema validate で error が返る', () => {
+    context("modelRouting.delegation が未対応値の場合", () => {
+      it("schema validate で error が返る", () => {
         // Arrange
         const sut = new AjvConfigSchemaValidator();
         const document = {
           ...baseV2Document(),
-          architecture: { preset: 'clean' },
-          modelRouting: { delegation: 'always' },
+          architecture: { preset: "clean" },
+          modelRouting: { delegation: "always" },
         };
 
         // Act
@@ -325,9 +449,9 @@ target('AjvConfigSchemaValidator (v2/v3 structure detection)', () => {
         // Assert
         expect(actual).toEqual([
           expect.objectContaining({
-            errorCode: 'L1-001',
-            path: '/modelRouting/delegation',
-            message: expect.stringContaining('delegate-sonnet, none'),
+            errorCode: "L1-001",
+            path: "/modelRouting/delegation",
+            message: expect.stringContaining("delegate-sonnet, none"),
           }),
         ]);
       });

@@ -19,6 +19,16 @@ import { context, target } from "../../helpers/test-helpers.ts";
 
 const AVAILABLE_FEATURES = ["agentLessonCollection", "cascadeUpdate", "bundleSizeLimit", "deadCodeGC"] as const;
 
+// WI-327: source document の top-level セクションは省略可になったが、
+// この fixture は全セクションを明示して構築するため required に戻した型で扱う。
+type FullySpecifiedSourceDocument = HarnessConfigSourceDocument &
+  Required<
+    Pick<
+      HarnessConfigSourceDocument,
+      "layers" | "quickMode" | "phaseDependencies" | "planningMode" | "harnesses" | "paths" | "reporting"
+    >
+  >;
+
 function createFeatureName(name: string): FeatureName {
   return FeatureName.create(name, AVAILABLE_FEATURES);
 }
@@ -113,7 +123,7 @@ function createStrictPresetDefinition(): PresetDefinition {
   return definition;
 }
 
-function createSourceDocument(preset: "minimal" | "standard" | "strict" = "minimal"): HarnessConfigSourceDocument {
+function createSourceDocument(preset: "minimal" | "standard" | "strict" = "minimal"): FullySpecifiedSourceDocument {
   return {
     project: {
       name: "my-project",

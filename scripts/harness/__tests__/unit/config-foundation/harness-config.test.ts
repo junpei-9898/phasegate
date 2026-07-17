@@ -20,12 +20,22 @@ import { context, target } from "../../helpers/test-helpers.ts";
 
 const AVAILABLE_FEATURES = ["agentLessonCollection", "cascadeUpdate", "bundleSizeLimit", "deadCodeGC"] as const;
 
+// WI-327: source document の top-level セクションは省略可になったが、
+// この fixture は全セクションを明示して構築するため required に戻した型で扱う。
+type FullySpecifiedSourceDocument = HarnessConfigSourceDocument &
+  Required<
+    Pick<
+      HarnessConfigSourceDocument,
+      "layers" | "quickMode" | "phaseDependencies" | "planningMode" | "harnesses" | "paths" | "reporting"
+    >
+  >;
+
 function createFeatureName(name: string): FeatureName {
   return FeatureName.create(name, AVAILABLE_FEATURES);
 }
 
 function createMinimalFixture(): {
-  sourceDocument: HarnessConfigSourceDocument;
+  sourceDocument: FullySpecifiedSourceDocument;
   resolvedDocument: HarnessConfigResolvedDocument;
 } {
   return {
@@ -384,7 +394,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.agentLessonCollection).toBe(true);
+        expect(actual.source.harnesses?.agentLessonCollection).toBe(true);
         expect(actual.resolved.harnesses.agentLessonCollection).toBe(true);
       });
     });
@@ -404,7 +414,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.cascadeUpdate).toBe(true);
+        expect(actual.source.harnesses?.cascadeUpdate).toBe(true);
         expect(actual.resolved.harnesses.cascadeUpdate).toBe(true);
       });
     });
@@ -424,7 +434,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.deadCodeGC).toBe(true);
+        expect(actual.source.harnesses?.deadCodeGC).toBe(true);
         expect(actual.resolved.harnesses.deadCodeGC).toBe(true);
       });
     });
@@ -444,7 +454,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.bundleSizeLimit).toBe(500);
+        expect(actual.source.harnesses?.bundleSizeLimit).toBe(500);
         expect(actual.resolved.harnesses.bundleSizeLimit).toBe(500);
       });
     });
@@ -467,7 +477,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.bundleSizeLimit).toBe(300);
+        expect(actual.source.harnesses?.bundleSizeLimit).toBe(300);
         expect(actual.resolved.harnesses.bundleSizeLimit).toBe(300);
       });
     });
@@ -490,7 +500,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.agentLessonCollection).toBe(false);
+        expect(actual.source.harnesses?.agentLessonCollection).toBe(false);
         expect(actual.resolved.harnesses.agentLessonCollection).toBe(false);
       });
     });
@@ -513,7 +523,7 @@ target("HarnessConfig", () => {
         };
 
         // Assert
-        expect(actual.source.harnesses.bundleSizeLimit).toBe(0);
+        expect(actual.source.harnesses?.bundleSizeLimit).toBe(0);
         expect(actual.resolved.harnesses.bundleSizeLimit).toBe(0);
       });
     });
@@ -702,11 +712,11 @@ target("HarnessConfig", () => {
         // Act
         const actual = harnessConfig.toSourceDocument();
         actual.project.name = "changed";
-        actual.harnesses.agentLessonCollection = true;
+        actual.harnesses = { ...actual.harnesses, agentLessonCollection: true };
 
         // Assert
         expect(harnessConfig.toSourceDocument().project.name).toBe("my-project");
-        expect(harnessConfig.toSourceDocument().harnesses.agentLessonCollection).toBeUndefined();
+        expect(harnessConfig.toSourceDocument().harnesses?.agentLessonCollection).toBeUndefined();
       });
     });
 
