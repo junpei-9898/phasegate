@@ -2011,3 +2011,8 @@ main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / derive
 <!-- @work-item-id WI-300 -->
 
 `loadWorldResolvedConfig()`は`LoadResolvedConfigUseCase`結果を`toWorldModelConfig()`へ渡し、inlineの3-field mappingを廃止する。config不在はundefinedとしてWorld canonical defaultsを使い、存在するinvalid configは従来どおりhandler exit 2へ写像する。`enabled:false`でexplicit dispatchをskipしない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305: commit-msg composition
+
+`runCommitMsgCli`だけがresolved World config、traceability staged observer、World pinned endpoint facade、validator declaration policyをcompositionする。native pre-commitとbypass auditには新しいGit observationを暗黙追加しない。declaration mismatchはnon-bypassable blocker、observation warningはexit codeを変えない。message / indexを信頼するlocal navigation aidでありL3 authorityではない旨を出力する。

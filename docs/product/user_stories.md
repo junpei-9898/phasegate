@@ -2022,6 +2022,29 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: adopted-legacyは件数サマリだけにし、reason / prose / full obligation reportをpromptへ注入しない
 - [ ] AC-6: derive不能時は固定一行warningへfail-openし、SessionStart hookをexit 0で継続する
 
+### H17-17: Design change declarationとreflection hook（WM-22）
+
+<!-- @work-item-id WI-305 -->
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-22 / WI-305）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** 設計変更をcommitする開発者,
+**I want to** pin済み設計fragmentの変更とWork Item宣言をcommit-msgで照合したい,
+**so that** local fast-pathでreflection漏れを早期に検出しつつ、authoritative World判定をL3へ保持できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: staged hunkに交差するexplicit product / inception fragmentをrole、DeclaredKey、Work Item、reflection target付きplain DTOとして観測する
+- [ ] AC-2: constraint claimant / premiseにpinされたexplicit fragment endpointをworld-model public facadeからplain DTOで観測する
+- [ ] AC-3: pin済みchanged fragmentのWork Itemとcommitの`Work-Item` trailerが一致しない場合だけcommit-msgをnon-bypassableでblockする
+- [ ] AC-4: unpinned / legacy whole-file fragmentへblocking面を広げず、`world.enabled:false`では従来のcommit-msg挙動を維持する
+- [ ] AC-5: observation不能は固定code warningへfail-openし、new / malformed structural findingのfail-closed責務をL2-017 / L3-008に残す
+- [ ] AC-6: `@world-reflects`を明示reflection factとして公開し、heading / proseから意味的関係や変更原因を推論しない
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -2064,8 +2087,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 16 | 16 | 0 |
-| **Wave 4小計** | | **16** | **16** | **0** |
+| 4 | H-17 World Model | 17 | 17 | 0 |
+| **Wave 4小計** | | **17** | **17** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **86** | **80** | **6** |
-| **全体（Future含む）** | | **91** | — | — |
+| **v1合計** | | **87** | **81** | **6** |
+| **全体（Future含む）** | | **92** | — | — |

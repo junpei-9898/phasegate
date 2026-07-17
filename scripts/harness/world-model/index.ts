@@ -2,7 +2,12 @@
 // @layer public-api
 // @work-item-id WI-291, WI-296
 // @work-item-id WI-304
+// @work-item-id WI-305
 
+export type {
+  PinnedDesignEndpointDto,
+  PinnedDesignEndpointReadResultDto,
+} from "./application/dto/pinned-design-endpoint-dto.js";
 export type {
   WorldExtractionDiagnosticDto,
   WorldInspectionDto,
@@ -15,6 +20,7 @@ export type {
   WorldCorpusConfig,
   WorldResolvedConfigInput,
 } from "./application/dto/world-resolved-config-input.js";
+export { PinnedDesignEndpointFacade } from "./application/facades/pinned-design-endpoint-facade.js";
 export type { WorldModelModuleOptions } from "./composition-root.js";
 export { createWorldModelModule } from "./composition-root.js";
 export type { WorldCommandResult } from "./presentation/cli/world-command-support.js";

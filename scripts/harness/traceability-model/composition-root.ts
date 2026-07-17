@@ -2,11 +2,13 @@
  * @layer application
  * @unit traceability-model
  * @work-item-id WI-093
+ * @work-item-id WI-305
  *
  * traceability-model ユニットの Composition Root。
  * 全コンポーネントを生成・配線し、外部に公開するハンドラー群を返す。
  */
 
+import { DesignChangeReadFacade } from "./application/facades/design-change-read-facade.js";
 import { TraceabilityWorldReadFacade } from "./application/facades/traceability-world-read-facade.js";
 import { ApplyWorkItemMigrationUseCase } from "./application/usecases/apply-work-item-migration-usecase.js";
 import { ApplyWorkItemStatusUseCase } from "./application/usecases/apply-work-item-status-usecase.js";
@@ -21,6 +23,7 @@ import { TraceabilityChainBuilder } from "./domain/services/traceability-chain-b
 import { WorkItemStatusDerivationService } from "./domain/services/work-item-status-derivation-service.js";
 import { ProjectRelativePath } from "./domain/value-objects/project-relative-path.js";
 import { FileSystemTraceabilityWorldReadAdapter } from "./infrastructure/adapters/file-system-traceability-world-read-adapter.js";
+import { GitStagedDesignChangeAdapter } from "./infrastructure/adapters/git-staged-design-change-adapter.js";
 import { FileSystemInceptionPlanGateway } from "./infrastructure/gateways/file-system-inception-plan-gateway.js";
 import { FileSystemMetadataReader } from "./infrastructure/gateways/file-system-metadata-reader.js";
 import { FileSystemWorkItemIdentityGateway } from "./infrastructure/gateways/file-system-work-item-identity-gateway.js";
@@ -101,6 +104,7 @@ export function createTraceabilityModelModule(rootDir: string, options: Traceabi
   const worldReadFacade = new TraceabilityWorldReadFacade({
     sourcePort: worldReadSource,
   });
+  const designChangeReadFacade = new DesignChangeReadFacade(new GitStagedDesignChangeAdapter(rootDir));
 
   // Usecases
   const validateImplementationMetadataUseCase = new ValidateImplementationMetadataUseCase({
@@ -157,5 +161,6 @@ export function createTraceabilityModelModule(rootDir: string, options: Traceabi
     traceabilityChainBuilder,
     storyIdAliasResolver,
     worldReadFacade,
+    designChangeReadFacade,
   } as const;
 }

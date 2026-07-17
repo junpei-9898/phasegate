@@ -390,3 +390,8 @@ validator-systemのL3 infrastructure adapterもpublic `createWorldModelModule`�
 <!-- @work-item-id WI-304 -->
 
 agent-integration infrastructure adapterはpublic `createWorldModelModule`からpure derive resultだけを観測する。world-modelはsession prompt、entry cap、priority、fail-open文言を所有せず、agent-integrationがstable rule / ID / classification / countへACL投影する。保存reportは引き続きread portを持たず、waiver reason、semantic debt prose、subject / evidence detailsをSessionStart consumerへ公開しない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305: pinned endpoint public projection
+
+application facadeはconstraint repositoryのread resultからclaimant / premiseのexplicit fragment pinだけをplain DTOへ投影する。不在はavailable empty、invalid control inputはfixed diagnostic code付きunavailableとし、repository port、`ConstraintRecord`、`NodePin`、digest VOをpublic APIへ露出しない。blocking policyとcommit message解釈はworld-model外に置く。

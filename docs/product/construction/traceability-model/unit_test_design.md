@@ -521,3 +521,10 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 | UT-TM-WR08 | structured story parser がStory/legacy ID/AC行を保持する | Arrange: Story heading、旧US、ACを含むMarkdown。Act: parserを実行。Assert: canonical ID、alias、行番号が得られる |
 
 テストは日本語名とAAAを用い、application facadeのportには呼出し検証用mockではなく固定値を返す決定的stubを使用する。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 staged fragment tests
+
+- 明示marker preludeからWork Item / reflectionをplain DTOへ投影する。
+- 同一fileで変更されたfragmentだけを選び、heading text変更をidentityに使わない。
+- duplicate marker / unsupported Git observationをsilent omissionせずdiagnosticにする。

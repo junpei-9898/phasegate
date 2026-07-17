@@ -7,6 +7,7 @@
  * @work-item-id WI-217
  * @work-item-id WI-301
  * @work-item-id WI-302
+ * @work-item-id WI-305
  */
 
 import { join } from "node:path";
@@ -19,6 +20,7 @@ import { RunL2ValidatorsUseCase } from "./application/use-cases/run-l2-validator
 import { RunL3ValidatorsUseCase } from "./application/use-cases/run-l3-validators-usecase.js";
 import { RunL4ValidatorsUseCase } from "./application/use-cases/run-l4-validators-usecase.js";
 import { RunQuickModeUseCase } from "./application/use-cases/run-quick-mode-usecase.js";
+import { DesignChangeDeclarationPolicy } from "./domain/services/design-change-declaration-policy.js";
 import {
   ArchitectureSemanticAnalysisService,
   type ArchitectureSemanticPolicy,
@@ -170,6 +172,7 @@ export interface ValidatorSystemModule {
   aggregateValidationResultsUseCase: AggregateValidationResultsUseCase;
   runFullValidationUseCase: RunFullValidationUseCase;
   driftDetectionService: DriftDetectionService;
+  designChangeDeclarationPolicy: DesignChangeDeclarationPolicy;
   handlers: {
     runValidators: RunValidatorsHandler;
     runQuickMode: RunQuickModeHandler;
@@ -184,6 +187,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
   const defaultFailOnWarning = configData.validate?.failOnWarning ?? false;
   const registry = buildDefaultRegistry();
   const executionService = new ValidatorExecutionService({ configPort });
+  const designChangeDeclarationPolicy = new DesignChangeDeclarationPolicy();
   const contractMapper = new ValidationResultContractMapper();
   const phaseGatePolicyPort = new PhaseDependencyPhaseGatePolicyAdapter();
   const metadataPolicyPort = new TraceabilityMetadataPolicyAdapter();
@@ -377,6 +381,7 @@ export function createValidatorSystemModule(config?: object): ValidatorSystemMod
     aggregateValidationResultsUseCase,
     runFullValidationUseCase,
     driftDetectionService,
+    designChangeDeclarationPolicy,
     handlers,
   };
 }

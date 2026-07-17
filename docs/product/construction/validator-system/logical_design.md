@@ -2102,3 +2102,8 @@ L2-017がerrorにするのはconstraint document admission failure、WCR-001相�
 `L3-008`をdefault registryへ常設し、RunL3は専用`WorldConstraintRederivationPolicyPort`からcurrent corpus / versioned control inputのpure derive observationを受ける。adapterは呼出しごとにworld-model public compositionを構築して`writeReport:false`で実行し、`.harness/world-obligations.json`のreader、cache、pathを依存に持たない。report absent / forged / deletedで同じresultになることをCI fixtureで固定する。
 
 `world.enabled:false` / absentではLayerConfigがL3-008を明示skipし、trueだけで実行する。Worldのclassificationをvalidator-system所有serviceが`new-structural` / `invalid-declaration` = error、`adopted-legacy` / `waived` = warningへ写像し、derive diagnosticはauthoritative判定不能として全てfail-closedにする。self-repo configはこのWIで変更せず、temporary resolved configによるdual-path実測をCP-4判断材料にする。
+<!-- @work-item-id WI-305 -->
+
+## WI-305: design change declaration policy
+
+domain serviceはchanged explicit fragmentとpinned endpointを`corpusRole + declaredKey`で突合し、fragmentのWork Item集合とcommit trailer集合のexact intersectionを評価する。pin済み変更の不一致だけをnon-bypassable failureとし、disabledはskip、provider unavailableは固定code warningへfail-openする。WCR / obligation blockingはL2-017 / L3-008の既存責務とし、本policyへ移さない。

@@ -475,3 +475,8 @@ scripts/harness/__tests__/fixtures/harness-api/
 | IT-TM-WR02 | 不正なWorkItemと参照切れをdiagnosticに隔離する | Arrange: directory/frontmatter不一致と未知Story annotationを配置する。Act: facadeを読む。Assert: 不正projectionを除外し、安定順序のdiagnosticを返す |
 
 integration test は実filesystem、既存parser、Unit definition gateway、composition rootを使用する。world-model adapterおよびnyquist-validationのcase-level matrixはWM-09/WM-10の責務なので、本テストへ含めない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 Git index integration
+
+temporary repositoryでbaseline / indexのexplicit fragmentを変更・追加・削除し、changed candidates、stable sort、plain DTOを検証する。Git indexへwriteするのはfixture repositoryだけとする。

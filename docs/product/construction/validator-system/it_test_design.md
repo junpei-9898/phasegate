@@ -536,3 +536,8 @@ minimal / standard / strictのresolved World configをvalidator compositionへ�
 | IT-WI302-ACL-002 | unsupported control schemaを実行する | authoritative diagnostic error |
 
 adapter testはreal filesystem fixtureとworld-model public facadeを使い、保存reportをinputにするtest doubleを設けない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 commit-msg contract
+
+pin済みchanged fragmentとmatching trailerでPASS、不一致でnon-bypassable FAIL、World disabledで従来結果、control observation不能でwarning / non-blockingを検証する。

@@ -453,3 +453,8 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 <!-- @work-item-id WI-300 -->
 
 dedicated mapperの完全DTOがWorld compositionへ渡ること、config不在fallback、invalid config exit 2、`enabled:false`でもknown command / dispatch集合が不変であることを検証する。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 pre-commit orchestration tests
+
+commitMessage指定時だけdesign declaration validatorを呼び、finding section、exit code、non-bypassable blockerを既存metadata / L2 resultと合成することを検証する。

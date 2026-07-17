@@ -375,3 +375,8 @@ canonical defaults、完全resolved input、custom corpus / provider / declarati
 <!-- @work-item-id WI-301 -->
 
 既存obligation derivation testsをL2 consumer contractの回帰根拠とし、classification、fingerprint、WCR rule、canonical orderがplain resultで安定することを維持する。validator severity / blockingのtestはvalidator-system側で行い、World domainへ重複させない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 pinned endpoint facade tests
+
+absent、supported claimant / premise、legacy endpoint除外、invalid control inputをplain DTO contractとして検証する。

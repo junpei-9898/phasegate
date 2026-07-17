@@ -5,6 +5,7 @@
 // @work-item-id WI-295
 // @work-item-id WI-296, WI-297
 // @work-item-id WI-300
+// @work-item-id WI-305
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -12,6 +13,7 @@ import {
   resolveWorldCorpusConfig,
   type WorldResolvedConfigInput,
 } from "./application/dto/world-resolved-config-input.js";
+import { PinnedDesignEndpointFacade } from "./application/facades/pinned-design-endpoint-facade.js";
 import { BuildSnapshotUseCase } from "./application/usecases/build-snapshot-use-case.js";
 import { DeriveObligationsUseCase } from "./application/usecases/derive-obligations-use-case.js";
 import {
@@ -219,6 +221,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     constraintPath: config.constraintsPath,
   });
   const pinConstraintEndpointUseCase = new PinConstraintEndpointUseCase(buildSnapshotUseCase, constraintRepository);
+  const pinnedDesignEndpointFacade = new PinnedDesignEndpointFacade(constraintRepository);
   const worldInspectCommandHandler = new WorldInspectCommandHandler({ inspectWorld: inspectWorldUseCase });
   const worldPinCommandHandler = new WorldPinCommandHandler(pinConstraintEndpointUseCase);
   const worldDeriveCommandHandler = new WorldDeriveCommandHandler(
@@ -232,6 +235,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     deriveWorldObligationsUseCase,
     inspectWorldUseCase,
     pinConstraintEndpointUseCase,
+    pinnedDesignEndpointFacade,
     worldDeriveCommandHandler,
     worldInspectCommandHandler,
     worldPinCommandHandler,

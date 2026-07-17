@@ -1655,3 +1655,9 @@ hook がエージェントに返す出力に混入するリポジトリ由来の
 session-start hookはresolved `world.enabled`と`world.sessionStart.enabled`を読み、どちらかがfalseならWorld usecaseをdisabled inputで実行してquery portを呼ばず、World sectionを追加しない。trueの場合は`WorldModelOpenObligationsQueryAdapter`がworld-model public `createWorldModelModule`だけを通じて`writeReport:false`のcurrent deriveを行う。保存report、World内部port / repository / DTOへのdeep importは禁止する。
 
 applicationはblocking (`new-structural` / `invalid-declaration` / `expired-waiver`) → cleanup-required → waivedを決定的に並べ、adopted legacyはcountへ集約する。presentationはWorld section全体をUnicode scalarで測り、config値にかかわらずhard cap 5 entries / 2000 charsを緩和せず、entry単位省略と`... N more; run phasegate world:derive`を保証する。reason / details / proseをDTOへ入れないためspotlighting対象free textを中継しない。query失敗は固定一行warningに変換し、integrity warningと同様にhook exit 0を維持する。
+<!-- @world-fragment-id agent-integration.design-change-declaration -->
+<!-- @world-reflects inception:agent-integration.design-change-declaration -->
+<!-- @work-item-id WI-305 -->
+## WI-305: commit-msg design change declaration
+
+SessionStartとは独立したcommit-msg経路で、harness-apiのpre-commit orchestrationがtraceability-modelのchanged fragment DTOとworld-modelのpinned endpoint DTOをvalidator-system policyへ渡す。agent-integrationはhook境界と宣言契約を記録するが、World repositoryやdomain型を直接importしない。local結果はfast-pathで、authoritative判定はL3-008に残す。

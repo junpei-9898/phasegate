@@ -1130,3 +1130,8 @@ WorkItem projectionはproviderが解決したcanonical `WI-\d+`を返し、`lega
 処理境界は `filesystem/parser -> raw source records -> facade admission/deduplication -> TraceabilityWorldReadDto` とする。facade は canonical owner ID の検証、no-winner diagnostic、deterministic sort、Story AC への file-level TestReference 射影を行う。filesystem adapter は project-relative provenance と parser diagnostic を収集するが、World の `pgw:v1` ID や constraint rule を生成しない。
 
 world-model は WM-09 で consumer-owned adapter を置き、この facade の plain DTO を観測する。traceability-model は world-model を import しない。case-level TestReference index は nyquist-validation / matrix の facade から別途観測し、本 facade の file-level reference を case-level coverage として扱わない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305: staged design fragment read facade
+
+applicationにplain `ChangedDesignFragmentDto`とread facade、infrastructureにGit index / HEADをread-only観測するadapterを置く。product / inceptionの明示fragmentだけを対象に、staged差分で内容が変わったfragmentのrole、DeclaredKey、path、change kind、Work Item、reflection targetを決定的順序で返す。parser result、domain ID、Git command resultはpublic surfaceへ露出しない。

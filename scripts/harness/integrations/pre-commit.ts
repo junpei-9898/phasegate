@@ -4,6 +4,7 @@
  * @work-item-id WI-141
  * @work-item-id WI-109
  * @work-item-id WI-189
+ * @work-item-id WI-305
  *
  * Pre-commit CLI entry.
  * Runs L2 validators against staged TypeScript files AND design-document
@@ -18,14 +19,16 @@
 
 import { execFileSync, execSync } from "node:child_process";
 import { access, readFile } from "node:fs/promises";
-import { createConfigFoundationModule } from "../config-foundation/composition-root.js";
 import { toValidatorSystemConfig } from "../config-foundation/application/mappers/validator-system-config-mapper.js";
+import { createConfigFoundationModule } from "../config-foundation/composition-root.js";
+import { toWorldModelConfig, type WorldConfigDocument } from "../config-foundation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/composition-root.js";
 import type { ValidateMetadataCommandOutput } from "../traceability-model/presentation/cli/validate-metadata-command-handler.js";
 import type { AggregatedValidationReport } from "../validator-system/application/dto/aggregated-validation-report.js";
 import type { ValidationResultContract } from "../validator-system/application/dto/validation-result-contract.js";
 import { createValidatorSystemModule } from "../validator-system/composition-root.js";
 import { HumanValidationResultFormatter } from "../validator-system/presentation/formatters/human-validation-result-formatter.js";
+import { createWorldModelModule } from "../world-model/index.js";
 
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";
@@ -75,6 +78,17 @@ async function loadPreCommitImplementationExtensions(): Promise<readonly string[
   try {
     const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
     return resolvedConfig.config.preCommit?.implementationExtensions;
+  } catch (err) {
+    if (isConfigNotFoundError(err)) return undefined;
+    throw err;
+  }
+}
+
+async function loadWorldConfig(): Promise<WorldConfigDocument | undefined> {
+  const configMod = createConfigFoundationModule();
+  try {
+    const resolvedConfig = await configMod.usecases.loadResolvedConfigUseCase.execute();
+    return toWorldModelConfig(resolvedConfig.config);
   } catch (err) {
     if (isConfigNotFoundError(err)) return undefined;
     throw err;
@@ -184,6 +198,29 @@ interface ValidateMetadataHandlerLike {
 export interface PreCommitDeps {
   readonly runL2ValidatorsUseCase: RunL2UseCaseLike;
   readonly validateMetadataCommandHandler: ValidateMetadataHandlerLike;
+  readonly validateDesignChangeDeclaration?: (
+    input: DesignChangeDeclarationCheckInput,
+  ) => Promise<DesignChangeDeclarationCheckResult>;
+}
+
+export interface DesignChangeDeclarationCheckInput {
+  readonly stagedFiles: readonly string[];
+  readonly commitMessage: string;
+}
+
+export interface DesignChangeDeclarationCheckFinding {
+  readonly code: string;
+  readonly path: string;
+  readonly declaredKey: string;
+  readonly expectedWorkItemIds: readonly string[];
+  readonly constraintIds: readonly string[];
+}
+
+export interface DesignChangeDeclarationCheckResult {
+  readonly status: "skipped" | "passed" | "warning" | "failed";
+  readonly checkedFragmentCount: number;
+  readonly findings: readonly DesignChangeDeclarationCheckFinding[];
+  readonly warningCodes: readonly string[];
 }
 
 export interface PreCommitResult {
@@ -202,6 +239,8 @@ export interface PreCommitOptions {
   readonly implementationExtensions?: readonly string[];
   readonly allowConditionalBypass?: boolean;
   readonly evidenceRoot?: string;
+  /** Files observed by the commit-msg design declaration path, including deletions. */
+  readonly designChangeFiles?: readonly string[];
 }
 
 export interface BypassBlockerClass {
@@ -234,6 +273,21 @@ function getStagedFiles(): string[] {
       .split("\n")
       .map((f) => f.trim())
       .filter((f) => f.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function getStagedDesignChangeFiles(): string[] {
+  try {
+    const output = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACDMR"], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return output
+      .split("\n")
+      .map((filePath) => filePath.trim())
+      .filter((filePath) => filePath.length > 0);
   } catch {
     return [];
   }
@@ -274,6 +328,56 @@ function requiresWorkItemTrailer(stagedFiles: readonly string[]): boolean {
 
 function hasWorkItemTrailer(commitMessage: string): boolean {
   return WORK_ITEM_TRAILER_PATTERN.test(commitMessage);
+}
+
+function getWorkItemTrailerIds(commitMessage: string): readonly string[] {
+  return Object.freeze(
+    [...new Set([...commitMessage.matchAll(/^Work-Item:\s*(WI-\d+)\s*$/gm)].map((match) => match[1]))].sort(),
+  );
+}
+
+function createDesignChangeDeclarationValidator(
+  worldConfig: WorldConfigDocument | undefined,
+  traceabilityMod: ReturnType<typeof createTraceabilityModelModule>,
+  policy: ReturnType<typeof createValidatorSystemModule>["designChangeDeclarationPolicy"],
+): NonNullable<PreCommitDeps["validateDesignChangeDeclaration"]> {
+  return async ({ stagedFiles, commitMessage }) => {
+    if (worldConfig?.enabled !== true) {
+      return { status: "skipped", checkedFragmentCount: 0, findings: [], warningCodes: [] };
+    }
+    const changed = await traceabilityMod.designChangeReadFacade.observe(stagedFiles);
+    if (changed.state === "unavailable") {
+      return {
+        status: "warning",
+        checkedFragmentCount: 0,
+        findings: [],
+        warningCodes: changed.diagnostics.map((item) => item.code).sort(),
+      };
+    }
+    const pinned = await createWorldModelModule({
+      rootDir: process.cwd(),
+      resolvedConfig: worldConfig,
+    }).pinnedDesignEndpointFacade.read();
+    if (pinned.state === "unavailable") {
+      return {
+        status: "warning",
+        checkedFragmentCount: 0,
+        findings: [],
+        warningCodes: pinned.diagnosticCodes.map((code) => `constraint-${code}`).sort(),
+      };
+    }
+    const evaluation = policy.evaluate({
+      changedFragments: changed.fragments,
+      pinnedEndpoints: pinned.endpoints,
+      trailerWorkItemIds: getWorkItemTrailerIds(commitMessage),
+    });
+    return {
+      status: evaluation.findings.length > 0 ? "failed" : "passed",
+      checkedFragmentCount: evaluation.checkedFragmentCount,
+      findings: evaluation.findings,
+      warningCodes: [],
+    };
+  };
 }
 
 function extractTrailer(commitMessage: string, trailerName: string): string | undefined {
@@ -366,10 +470,9 @@ function hasNonBypassableBlocker(blockers: readonly BypassBlockerClass[]): boole
 }
 
 function normalizeImplementationExtensions(extensions: readonly string[] | undefined): readonly string[] {
-  const rawExtensions = extensions === undefined || extensions.length === 0
-    ? DEFAULT_IMPLEMENTATION_EXTENSIONS
-    : extensions;
-  return rawExtensions.map((extension) => extension.startsWith(".") ? extension : `.${extension}`);
+  const rawExtensions =
+    extensions === undefined || extensions.length === 0 ? DEFAULT_IMPLEMENTATION_EXTENSIONS : extensions;
+  return rawExtensions.map((extension) => (extension.startsWith(".") ? extension : `.${extension}`));
 }
 
 function hasAnyExtension(filePath: string, extensions: readonly string[]): boolean {
@@ -430,10 +533,12 @@ export async function runPreCommit(
     }
 
     const merged = mergePerUnitResults(runs);
-    blockerClasses.push(...merged.flatMap((result) => {
-      const blocker = classifyValidatorFailure(result);
-      return blocker === undefined ? [] : [blocker];
-    }));
+    blockerClasses.push(
+      ...merged.flatMap((result) => {
+        const blocker = classifyValidatorFailure(result);
+        return blocker === undefined ? [] : [blocker];
+      }),
+    );
     const report = buildReport(merged);
     sections.push("");
     sections.push(`${BOLD}== 実装ファイル (${implementationFiles.length} file(s)) ==${RESET}`);
@@ -466,6 +571,42 @@ export async function runPreCommit(
         `${RED}FAIL${RESET} Commit message must include \`Work-Item: WI-XXX\` when WI documents are staged.`,
       );
       exitCode = maxExitCode(exitCode, 1);
+    }
+  }
+
+  if (options.commitMessage !== undefined && deps.validateDesignChangeDeclaration !== undefined) {
+    const designResult = await deps.validateDesignChangeDeclaration({
+      stagedFiles: options.designChangeFiles ?? stagedFiles,
+      commitMessage: options.commitMessage,
+    });
+    if (designResult.status !== "skipped") {
+      sections.push("");
+      sections.push(`${BOLD}== Design change declaration ==${RESET}`);
+      if (designResult.status === "failed") {
+        for (const finding of designResult.findings) {
+          sections.push(
+            `${RED}FAIL${RESET} ${finding.code}: ${finding.path}#${finding.declaredKey} ` +
+              `(expected ${finding.expectedWorkItemIds.join(", ") || "an explicit Work Item"}; ` +
+              `constraints ${finding.constraintIds.join(", ")})`,
+          );
+        }
+        sections.push(`${DIM}Local commit-msg is forgeable; L3-008 remains authoritative.${RESET}`);
+        blockerClasses.push({
+          code: "design-change-declaration",
+          label: "design change declaration",
+          bypassable: false,
+        });
+        exitCode = maxExitCode(exitCode, 1);
+      } else if (designResult.status === "warning") {
+        sections.push(
+          `${DIM}WARN ${designResult.warningCodes.join(", ")}; local fast-path continues fail-open. ` +
+            `L3-008 remains authoritative.${RESET}`,
+        );
+      } else {
+        sections.push(
+          `${GREEN}PASS${RESET} ${designResult.checkedFragmentCount} pinned fragment(s) have matching Work-Item declarations.`,
+        );
+      }
     }
   }
 
@@ -512,7 +653,10 @@ function getChangedFilesInRange(baseRef: string, headRef: string): string[] {
       encoding: "utf-8",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    return output.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
+    return output
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
   } catch {
     return [];
   }
@@ -524,7 +668,10 @@ function getCommitMessagesInRange(baseRef: string, headRef: string): string[] {
       encoding: "utf-8",
       stdio: ["ignore", "pipe", "ignore"],
     });
-    return output.split("\x1e").map((message) => message.trim()).filter((message) => message.length > 0);
+    return output
+      .split("\x1e")
+      .map((message) => message.trim())
+      .filter((message) => message.length > 0);
   } catch {
     return [];
   }
@@ -539,10 +686,7 @@ function toBypassAuditStdout(stdout: string, changedFiles: readonly string[]): s
   return stdout.replace("No staged files to check. Skipping.", "No changed files in range to check. Skipping.");
 }
 
-export async function runBypassAudit(
-  deps: PreCommitDeps,
-  options: BypassAuditOptions = {},
-): Promise<PreCommitResult> {
+export async function runBypassAudit(deps: PreCommitDeps, options: BypassAuditOptions = {}): Promise<PreCommitResult> {
   const baseRef = options.baseRef ?? "origin/main";
   const headRef = options.headRef ?? "HEAD";
   const changedFiles = options.changedFiles ?? getChangedFilesInRange(baseRef, headRef);
@@ -580,10 +724,7 @@ export async function runPreCommitCli(): Promise<void> {
   try {
     const stagedFiles = getStagedFiles();
     const validatorMod = createValidatorSystemModule(await loadValidatorSystemConfig());
-    const traceabilityMod = createTraceabilityModelModule(
-      process.cwd(),
-      await loadTraceabilityModelOptions(),
-    );
+    const traceabilityMod = createTraceabilityModelModule(process.cwd(), await loadTraceabilityModelOptions());
 
     const result = await runPreCommit(
       stagedFiles,
@@ -616,19 +757,23 @@ export async function runCommitMsgCli(commitMessagePath: string | undefined): Pr
     const stagedFiles = getStagedFiles();
     const commitMessage = await readFile(commitMessagePath, "utf-8");
     const validatorMod = createValidatorSystemModule(await loadValidatorSystemConfig());
-    const traceabilityMod = createTraceabilityModelModule(
-      process.cwd(),
-      await loadTraceabilityModelOptions(),
-    );
+    const traceabilityMod = createTraceabilityModelModule(process.cwd(), await loadTraceabilityModelOptions());
+    const worldConfig = await loadWorldConfig();
 
     const result = await runPreCommit(
       stagedFiles,
       {
         runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,
         validateMetadataCommandHandler: traceabilityMod.validateMetadataCommandHandler,
+        validateDesignChangeDeclaration: createDesignChangeDeclarationValidator(
+          worldConfig,
+          traceabilityMod,
+          validatorMod.designChangeDeclarationPolicy,
+        ),
       },
       {
         commitMessage,
+        designChangeFiles: getStagedDesignChangeFiles(),
         implementationExtensions: await loadPreCommitImplementationExtensions(),
         evidenceRoot: process.cwd(),
       },
@@ -652,10 +797,7 @@ function parseCliFlag(args: readonly string[], flag: string): string | undefined
 export async function runBypassAuditCli(args: readonly string[] = []): Promise<void> {
   try {
     const validatorMod = createValidatorSystemModule(await loadValidatorSystemConfig());
-    const traceabilityMod = createTraceabilityModelModule(
-      process.cwd(),
-      await loadTraceabilityModelOptions(),
-    );
+    const traceabilityMod = createTraceabilityModelModule(process.cwd(), await loadTraceabilityModelOptions());
     const result = await runBypassAudit(
       {
         runL2ValidatorsUseCase: validatorMod.runL2ValidatorsUseCase,

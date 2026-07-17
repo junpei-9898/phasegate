@@ -591,3 +591,8 @@ domain serviceはplain observation実体で検証し、domain mockを使用し�
 | UT-WI302-CFG-001 | world switchを切り替える | L3-008だけをexclude / include |
 
 domain serviceはplain observation実体で検証し、domain mockを使用しない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 declaration policy tests
+
+disabled、matching trailer、missing / mismatch trailer、unpinned fragment、claimant / premise、provider unavailableをAAAで検証する。domain serviceへplain immutable inputを渡し、domain mockを使わない。

@@ -678,3 +678,8 @@ main processを通じてpin preview / apply、derive pure / write、invalid invo
 <!-- @work-item-id WI-300 -->
 
 custom World pathを持つv2 / v3 configと`enabled:false`をmain processで読み、明示inspect / deriveがresolved pathを使って実行されることを確認する。unknown World fieldやinvalid pathはcanonical defaultsへfallbackせずexit 2とする。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 commit-msg E2E
+
+temporary Git index、constraint fixture、commit message fileを用い、matching / missing / mismatch / disabled / unavailableのCLI exitとstdoutを検証する。

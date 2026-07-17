@@ -2,6 +2,7 @@
 // @layer test
 // @story H03-02
 // @work-item-id WI-141
+// @work-item-id WI-305
 
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -66,18 +67,26 @@ function buildDeps(
   overrides: Partial<{
     l2Result: readonly ValidationResultContract[];
     metadataResult: ValidateMetadataCommandOutput;
+    designResult: Awaited<ReturnType<NonNullable<PreCommitDeps["validateDesignChangeDeclaration"]>>>;
   }> = {},
 ): PreCommitDeps & {
   l2Spy: ReturnType<typeof vi.fn>;
   metadataSpy: ReturnType<typeof vi.fn>;
+  designSpy: ReturnType<typeof vi.fn>;
 } {
   const l2Spy = vi.fn(async () => overrides.l2Result ?? [passingContract("L2-002")]);
   const metadataSpy = vi.fn(async () => overrides.metadataResult ?? passingMetadataOutput());
+  const designSpy = vi.fn(
+    async () =>
+      overrides.designResult ?? { status: "passed" as const, checkedFragmentCount: 0, findings: [], warningCodes: [] },
+  );
   return {
     runL2ValidatorsUseCase: { execute: l2Spy },
     validateMetadataCommandHandler: { execute: metadataSpy },
+    validateDesignChangeDeclaration: designSpy,
     l2Spy,
     metadataSpy,
+    designSpy,
   };
 }
 
@@ -148,11 +157,9 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
       // Arrange
       const deps = buildDeps();
       // Act
-      const actual = await runPreCommit(
-        ["scripts/harness/sample/application/service.py"],
-        deps,
-        { implementationExtensions: [".ts", ".py"] },
-      );
+      const actual = await runPreCommit(["scripts/harness/sample/application/service.py"], deps, {
+        implementationExtensions: [".ts", ".py"],
+      });
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(deps.l2Spy).toHaveBeenCalledTimes(1);
@@ -438,6 +445,95 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).not.toContain("Work-Item trailer");
+    });
+  });
+
+  context("design change declaration (WI-305)", () => {
+    it("World disabledのskipでは従来出力を維持すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        designResult: { status: "skipped", checkedFragmentCount: 0, findings: [], warningCodes: [] },
+      });
+
+      // Act
+      const actual = await runPreCommit(["docs/product/construction/agent-integration/logical_design.md"], deps, {
+        commitMessage: "docs: change design",
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).not.toContain("Design change declaration");
+    });
+
+    it("pin済みfragmentの宣言不一致をnon-bypassableでblockすること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        designResult: {
+          status: "failed",
+          checkedFragmentCount: 1,
+          findings: [
+            {
+              code: "design-change-declaration-missing",
+              path: "docs/product/construction/agent-integration/logical_design.md",
+              declaredKey: "agent-integration.design-change-declaration",
+              expectedWorkItemIds: ["WI-305"],
+              constraintIds: ["pgw:v1:constraint:design-change"],
+            },
+          ],
+          warningCodes: [],
+        },
+      });
+
+      // Act
+      const actual = await runPreCommit(["docs/product/construction/agent-integration/logical_design.md"], deps, {
+        commitMessage: "docs: change design\n\nWork-Item: WI-999",
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(1);
+      expect(actual.stdout).toContain("design-change-declaration-missing");
+      expect(actual.blockerClasses).toContainEqual(
+        expect.objectContaining({ code: "design-change-declaration", bypassable: false }),
+      );
+    });
+
+    it("matching declarationをpassとして表示すること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        designResult: { status: "passed", checkedFragmentCount: 1, findings: [], warningCodes: [] },
+      });
+
+      // Act
+      const actual = await runPreCommit(["docs/product/construction/agent-integration/logical_design.md"], deps, {
+        commitMessage: "docs: change design\n\nWork-Item: WI-305",
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("Design change declaration");
+      expect(actual.stdout).toContain("1 pinned fragment");
+    });
+
+    it("observation不能をwarningとしてfail-openすること", async () => {
+      // Arrange
+      const deps = buildDeps({
+        designResult: {
+          status: "warning",
+          checkedFragmentCount: 0,
+          findings: [],
+          warningCodes: ["constraint-observation-unavailable"],
+        },
+      });
+
+      // Act
+      const actual = await runPreCommit(["docs/product/construction/agent-integration/logical_design.md"], deps, {
+        commitMessage: "docs: change design",
+      });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("constraint-observation-unavailable");
+      expect(actual.stdout).toContain("local fast-path");
     });
   });
 

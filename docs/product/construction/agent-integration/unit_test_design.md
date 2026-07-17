@@ -512,3 +512,8 @@ story-implementor ← TDD実装
 | UT-WI304-PRES-003 | unavailable resultを表示する | 固定一行warning、reason非表示 |
 
 usecaseはdeterministic fake query portを使い、World domain objectをmockしない。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 hook declaration tests
+
+設計変更eventがmatching Work Item declarationで通過し、不一致時だけblockされること、World無効時に従来hook contractを維持することを検証する。

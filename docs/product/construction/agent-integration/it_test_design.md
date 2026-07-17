@@ -588,3 +588,8 @@ afterEach(async () => {
 | IT-WI304-DOGFOOD-001 | self-repoでsession-startを実行する | adopted legacy 604を一行集約、個別fingerprintなし |
 
 hook JSON schemaと既存integrity / base contextの順序を保持し、World sectionだけを追加する。
+<!-- @work-item-id WI-305 -->
+
+## WI-305 hook integration
+
+commit-msg subprocessでchanged fragment declaration結果を確認し、local fast-path文言とL3 authorityの分離を固定する。
