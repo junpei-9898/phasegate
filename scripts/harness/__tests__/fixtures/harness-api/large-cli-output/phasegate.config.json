@@ -1,0 +1,74 @@
+{
+  "project": {
+    "name": "large-cli-output-fixture",
+    "preset": "standard"
+  },
+  "world": {
+    "enabled": true
+  },
+  "layers": {
+    "L1": {
+      "enabled": false
+    },
+    "L2": {
+      "enabled": true
+    },
+    "L3": {
+      "enabled": false,
+      "validators": ["L3-001", "L3-002", "L3-003", "L3-004", "L3-005"],
+      "requirementMatrixPath": ".harness/requirement-test-matrix.json",
+      "acBoundStories": []
+    },
+    "L4": {
+      "enabled": false
+    }
+  },
+  "quickMode": {
+    "allowedCategories": ["bugfix", "docs", "test", "config"],
+    "maintainedLayers": ["L1", "L2"],
+    "relaxedGates": ["phase-gate", "2-phase-execution"],
+    "fullModeRequiredWhen": {
+      "mixedCategories": true,
+      "newDomainFile": true,
+      "apiContractChange": true
+    }
+  },
+  "phaseDependencies": {
+    "preset": "default",
+    "override": false,
+    "customRules": []
+  },
+  "planningMode": {
+    "default": "interactive",
+    "perPhase": {}
+  },
+  "modelRouting": {
+    "delegation": "none"
+  },
+  "harnesses": {
+    "agentLessonCollection": false,
+    "cascadeUpdate": false,
+    "bundleSizeLimit": 0,
+    "deadCodeGC": false
+  },
+  "paths": {
+    "designDocs": "docs/product/construction",
+    "inceptionDocs": "docs/inception",
+    "principlesDocs": "docs/principles",
+    "folderRulesDoc": "docs/folder_management_rules.md"
+  },
+  "reporting": {
+    "format": "json",
+    "outputDir": "reports"
+  },
+  "protectedFiles": {
+    "exclude": []
+  },
+  "baseline": {
+    "enabled": false,
+    "path": ".phasegate/baseline.json"
+  },
+  "architecture": {
+    "preset": "clean"
+  }
+}

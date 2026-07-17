@@ -20,14 +20,57 @@
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-217
  * @work-item-id WI-308
+ * @work-item-id WI-310
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
  */
-import { describe, it, expect, vi } from 'vitest';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
 import { run, runInCwd, withTempDir } from './cli-test-helpers.js';
+
+const LARGE_OUTPUT_FIXTURE_CONFIG = join(
+  process.cwd(),
+  'scripts/harness/__tests__/fixtures/harness-api/large-cli-output/phasegate.config.json',
+);
+
+const prepareHermeticCliWorkspace = (cwd: string, options: { worldEnabled: boolean }): void => {
+  for (const directory of [
+    'docs/product/units',
+    'docs/product/construction',
+    'docs/inception',
+    'docs/ADR',
+    'scripts/harness/__tests__',
+  ]) {
+    mkdirSync(join(cwd, directory), { recursive: true });
+  }
+  writeFileSync(join(cwd, 'docs/product/user_stories.md'), '# Fixture stories\n', 'utf8');
+  const repositoryNodeModules = join(process.cwd(), 'node_modules');
+  if (existsSync(repositoryNodeModules)) {
+    symlinkSync(repositoryNodeModules, join(cwd, 'node_modules'), 'dir');
+  }
+  const config = JSON.parse(readFileSync(LARGE_OUTPUT_FIXTURE_CONFIG, 'utf8')) as {
+    world: { enabled: boolean };
+  };
+  config.world.enabled = options.worldEnabled;
+  writeFileSync(join(cwd, 'phasegate.config.json'), `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+};
+
+const prepareLargeValidateWorkspace = (cwd: string): void => {
+  prepareHermeticCliWorkspace(cwd, { worldEnabled: true });
+  for (let index = 0; index < 160; index += 1) {
+    const declaredKey = `harness-api.large-output-${index.toString().padStart(3, '0')}`;
+    for (const candidate of ['a', 'b']) {
+      writeFileSync(
+        join(cwd, `docs/product/large-output-${index}-${candidate}.md`),
+        `<!-- @world-fragment-id ${declaredKey} -->\n# Duplicate ${index} ${candidate}\n`,
+        'utf8',
+      );
+    }
+  }
+};
 
 // Every case in this file spawns the CLI through run/runInCwd. Keep the file-level
 // timeout explicit so Vitest's 5s default cannot turn normal CLI startup or
@@ -255,13 +298,23 @@ describe('harness CLI E2E', () => {
     ] as const)(
       'validate --layer L2 %s はJSONを返す',
       (_label, formatArgs) => {
-        const actual = run('validate', '--layer', 'L2', ...formatArgs);
+        const actual = withTempDir((cwd) => {
+          prepareLargeValidateWorkspace(cwd);
+          expect(existsSync(join(cwd, '.harness/requirement-test-matrix.json'))).toBe(false);
+          return runInCwd(cwd, 'validate', '--layer', 'L2', ...formatArgs);
+        });
 
         expect(actual.stderr).not.toContain('Invalid --format value for validate');
-        expect([0, 1]).toContain(actual.exitCode);
+        expect(actual.exitCode).toBe(1);
         expect(Buffer.byteLength(actual.stdout, 'utf8')).toBeGreaterThan(64 * 1024);
-        const parsed = JSON.parse(actual.stdout);
-        expect(parsed).toHaveProperty('overallPassed');
+        const parsed = JSON.parse(actual.stdout) as {
+          overallPassed: boolean;
+          results: Array<{ validatorId: string; skipped?: boolean; errors: unknown[] }>;
+        };
+        const worldAdmission = parsed.results.find((result) => result.validatorId === 'L2-017');
+        expect(parsed.overallPassed).toBe(false);
+        expect(worldAdmission?.skipped).toBe(false);
+        expect(worldAdmission?.errors).toHaveLength(160);
       },
       60_000,
     );

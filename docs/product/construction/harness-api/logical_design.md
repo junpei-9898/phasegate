@@ -2042,3 +2042,9 @@ CI / regression consumerは`KNOWN_HARNESS_COMMANDS`とmain dispatchで公開済�
 <!-- @work-item-id WI-308 -->
 
 top-level CLI presentationはdirect resultをstdoutへ書いた後、共通`finishCliExit`でstdout / stderrのpending write callbackを待ち、`process.exitCode`を設定してmainからreturnする。`process.exit()`によるpipe queue破棄を禁止し、JSON / humanを問わず64 KiB超の出力を省略せず保持する。handler-owned streaming、World commandの既存natural drain、validator result semanticsは変更しない。
+
+## WI-310 Hermetic large-output CLI contract
+
+<!-- @work-item-id WI-310 -->
+
+large stdoutのprocess E2Eはself-repoのgenerated matrixやadoption baseline件数を入力にしない。tracked config fixtureをtemp workspaceへ展開し、unique keyごとのduplicate fragment pairからWCR-005を決定的に生成する。`validate --layer L2`の両JSON aliasは同じfixtureで64 KiB超、parse可能、L2-017 non-skipを満たす。
