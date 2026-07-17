@@ -7,10 +7,11 @@
 # 実行内容:
 #   1. bypass:audit — bypass trailer / evidence 監査
 #   2. phasegate lint  — L1 Biome AST ルール検証
-#   3. requirement-test matrix をcurrent testsから再生成
-#   4. world.enabled=true の場合、world:derive を2回実行してbyte一致を検証
-#   5. phasegate:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist / World）
-#   6. 失敗時: PR にエラーサマリーをコメント
+#   3. package の coverage script を実行し、L3-003 の入力を生成
+#   4. requirement-test matrix をcurrent testsから再生成
+#   5. world.enabled=true の場合、world:derive を2回実行してbyte一致を検証
+#   6. phasegate:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist / World）
+#   7. 失敗時: PR にエラーサマリーをコメント
 
 name: AIDLC Quality Gate
 
@@ -78,6 +79,23 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           exit $EXIT_CODE
+
+      # L3-003 is fail-closed when coverageThreshold is configured but the
+      # report is absent. The adopting project owns this script and must emit
+      # coverage/coverage-summary.json; package-manager selection follows the
+      # lockfile used during dependency installation above.
+      - name: Test and generate coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const scripts=require('./package.json').scripts ?? {}; if (!scripts.coverage) { throw new Error('phasegate aidlc-gate requires package.json scripts.coverage to generate coverage/coverage-summary.json'); }"
+          if [ -f pnpm-lock.yaml ]; then
+            pnpm run coverage
+          elif [ -f yarn.lock ]; then
+            yarn coverage
+          else
+            npm run coverage
+          fi
 
       # L3-004 consumes the generated requirement-test matrix. Always rebuild it
       # from this checkout instead of trusting a stale or persisted artifact.

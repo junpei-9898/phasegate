@@ -24,7 +24,14 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm test
+      # Coverage configs execute the forks and threads unit/integration suites
+      # once and emit coverage/coverage-summary.json for L3-003. E2E is excluded
+      # from coverage to avoid ci-check/report circularity, so run only that
+      # excluded suite afterward instead of repeating the full plain test suite.
+      - name: Test and generate coverage
+        run: |
+          pnpm coverage
+          pnpm exec vitest run --config scripts/harness/__tests__/vitest.config.ts --dir scripts/harness/__tests__/e2e
 
       # L3-004 (AC-coverage) reads .harness/requirement-test-matrix.json, a
       # git-ignored GENERATED artifact. Regenerate it from the current tests

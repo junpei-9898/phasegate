@@ -1218,3 +1218,9 @@ Regression-suite public commands are developer/regression binary subcommands. Su
 @story-id H17-19
 
 regression-suiteの外部E2E suiteはharness-apiのcanonical `KNOWN_HARNESS_COMMANDS`とactual `main.ts` processを使い、`world:inspect` / `world:pin` / `world:derive`のpublic transport contractを固定する。対象はcommand presence、`phasegate-world-cli/v1` discriminator、command field、exit 0 / 1 / 2であり、World domain entity、WCR evaluator、baseline policyを複製しない。temp corpusとversioned declarationを実filesystemで組み立て、control mutation failure時の非書込みも境界contractとして確認する。
+
+## WI-312 Production CI coverage input contract
+
+<!-- @work-item-id WI-312 -->
+
+production CI contractはgenerated coverageが存在しないcheckoutを前提とし、coverage-producing test stepをmatrixより前に要求する。self-repoではcoverage configがunit / integrationを一度だけ計測し、package script冒頭のclean後はthreads開始時にforks blobを保持して両poolをmergeする。循環回避で除外したE2Eだけを別実行し、plain full testの再実行は要求しない。matrix、World derive二重一致、L3、attestation、integrityの既存順序を保持する。

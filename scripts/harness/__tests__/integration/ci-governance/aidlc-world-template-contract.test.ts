@@ -1,6 +1,7 @@
 // @unit ci-governance
 // @layer integration
 // @work-item-id WI-307
+// @work-item-id WI-312
 // @story H17-19
 // @ac H17-19-3
 
@@ -9,7 +10,7 @@ import { RenderCiTemplateUseCase } from "../../../ci-governance/application/usec
 import { TemplateGenerator } from "../../../ci-governance/domain/services/template-generator.js";
 import { YamlTemplateRendererAdapter } from "../../../ci-governance/infrastructure/adapters/yaml-template-renderer-adapter.js";
 
-it("aidlc-gateがmatrix・conditional derive二重一致・L3を順序どおり生成する", async () => {
+it("aidlc-gateがcoverage・matrix・conditional derive二重一致・L3を順序どおり生成する", async () => {
   // Arrange
   const validatorPort = { listAll: vi.fn().mockResolvedValue(["v1", "v2"]) };
   const presetPort = { getPreset: vi.fn().mockResolvedValue({ failOnWarning: false }) };
@@ -19,6 +20,7 @@ it("aidlc-gateがmatrix・conditional derive二重一致・L3を順序どおり�
 
   // Act
   const actual = await useCase.execute({ presetId: "standard", templateType: "aidlc-gate" });
+  const coverageIndex = actual.content.indexOf("Test and generate coverage");
   const matrixIndex = actual.content.indexOf("phasegate:generate-matrix");
   const detectIndex = actual.content.indexOf("Detect World Model enablement");
   const deriveIndex = actual.content.indexOf("World derive determinism");
@@ -28,7 +30,12 @@ it("aidlc-gateがmatrix・conditional derive二重一致・L3を順序どおり�
   expect(actual.content).toContain("config.world?.enabled === true");
   expect(actual.content).toContain("if: steps.world_config.outputs.enabled == 'true'");
   expect(actual.content).toContain('cmp --silent "$FIRST" "$SECOND"');
+  expect(actual.content).toContain("pnpm run coverage");
+  expect(actual.content).toContain("yarn coverage");
+  expect(actual.content).toContain("npm run coverage");
+  expect(coverageIndex).toBeGreaterThan(-1);
   expect(matrixIndex).toBeGreaterThan(-1);
+  expect(matrixIndex).toBeGreaterThan(coverageIndex);
   expect(detectIndex).toBeGreaterThan(matrixIndex);
   expect(deriveIndex).toBeGreaterThan(detectIndex);
   expect(l3Index).toBeGreaterThan(deriveIndex);

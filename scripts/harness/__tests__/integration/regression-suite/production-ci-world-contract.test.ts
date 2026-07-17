@@ -1,6 +1,7 @@
 // @unit regression-suite
 // @layer integration
 // @work-item-id WI-307
+// @work-item-id WI-312
 // @story H17-19
 // @ac H17-19-1
 // @ac H17-19-2
@@ -14,13 +15,14 @@ import { describe, expect, it } from "vitest";
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
 describe("production CI World trust chain", () => {
-  it("test・matrix・derive・L3・attestation・integrityの順序を固定すること", () => {
+  it("coverage付きtest・E2E・matrix・derive・L3・attestation・integrityの順序を固定すること", () => {
     // Arrange
     const workflow = readFileSync(resolve(REPOSITORY_ROOT, ".github/workflows/ci.yml"), "utf-8");
 
     // Act
     const indexes = [
-      workflow.indexOf("pnpm test"),
+      workflow.indexOf("pnpm coverage"),
+      workflow.indexOf("--dir scripts/harness/__tests__/e2e"),
       workflow.indexOf("phasegate:generate-matrix"),
       workflow.indexOf("World derive determinism"),
       workflow.indexOf("phasegate:ci-check --json"),
@@ -32,6 +34,8 @@ describe("production CI World trust chain", () => {
     // Assert
     expect(indexes.every((index) => index >= 0)).toBe(true);
     expect(indexes).toEqual([...indexes].sort((left, right) => left - right));
+    expect(workflow.match(/pnpm coverage/g)).toHaveLength(1);
+    expect(workflow).not.toContain("pnpm test");
   });
 
   it("deriveをpure modeで二回実行してraw bytesを比較すること", () => {
@@ -43,6 +47,21 @@ describe("production CI World trust chain", () => {
     expect(deriveInvocations).toHaveLength(2);
     expect(workflow).toContain('cmp --silent "$FIRST" "$SECOND"');
     expect(workflow).not.toContain("world:derive --write");
+  });
+
+  it("threads coverage開始時にforks blobを削除せずmerge入力を保持すること", () => {
+    // Arrange
+    const manifest = readFileSync(resolve(REPOSITORY_ROOT, "package.json"), "utf-8");
+    const threadsConfig = readFileSync(
+      resolve(REPOSITORY_ROOT, "scripts/harness/__tests__/vitest.config.coverage.ts"),
+      "utf-8",
+    );
+
+    // Act / Assert
+    expect(manifest).toContain("coverage/.blob/forks.json");
+    expect(manifest).toContain("coverage/.blob/threads.json");
+    expect(manifest).toContain("--merge-reports=coverage/.blob");
+    expect(threadsConfig).toContain("clean: false");
   });
 
   it("package manifestがCI template・schemas・guideを配布対象に含めること", () => {

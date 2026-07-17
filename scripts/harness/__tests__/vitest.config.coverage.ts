@@ -1,4 +1,5 @@
 // @layer test
+// @work-item-id WI-312
 /**
  * カバレッジ計測専用 config（threads pool / 大半のテスト）
  * root をリポジトリルートに置き、SOURCE ファイル（scripts/harness/**）を
@@ -7,8 +8,8 @@
  * blob レポートを --merge-reports でマージして json-summary を生成する。
  *
  * 実行フロー（package.json の coverage スクリプト参照）:
- *   1. 本 config を --reporter=blob で実行 → coverage/.blob/threads.json
- *   2. forks config を --reporter=blob で実行 → coverage/.blob/forks.json
+ *   1. forks config を --reporter=blob で実行 → coverage/.blob/forks.json
+ *   2. 本 config を --reporter=blob で実行 → coverage/.blob/threads.json
  *   3. 本 config を --merge-reports=coverage/.blob で実行
  *      → coverage/coverage-summary.json（L3-003 が読む json-summary）
  *
@@ -48,6 +49,9 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
+      // package scriptが開始時に一度だけcoverage/を削除する。threads開始時に
+      // forks blobを消さず、両poolをmerge inputとして保持する。
+      clean: false,
       all: true,
       include: ['scripts/harness/**/*.ts'],
       exclude: [...L3_003_COVERAGE_EXCLUDE],

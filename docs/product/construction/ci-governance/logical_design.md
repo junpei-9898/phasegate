@@ -1710,3 +1710,9 @@ integrity の SHA-256 はfile raw bytesをpinする既存契約を維持する�
 @story-id H17-19
 
 `aidlc-gate` bundled templateはmatrixをL3前に再生成し、top-level `world.enabled === true`の場合だけpure `world:derive --json`を二回実行してraw stdoutを比較する。false / absentはWorld段階だけをskipし、既存lint / L3を維持する。invalid configはdisabledへfallbackしない。World成功後のL3がauthoritative re-derivationを所有し、templateはfingerprint / baseline policyを複製しない。scheduled L4 `consistency-check`とagent context workflowにはWorld L3段階を追加しない。
+
+## WI-312 Coverage-producing bundled gate
+
+<!-- @work-item-id WI-312 -->
+
+`aidlc-gate` bundled templateはL3-003を有効にする採用projectに`coverage` package scriptを要求し、lockfileから選択したpackage managerでmatrix生成前に実行する。coverage script不在、実行失敗、`coverage/coverage-summary.json`未生成をdisabledやPASSへfallbackしない。これによりtest / coverage artifact、matrix、conditional World derive、L3の入力順序をclean checkoutで自己完結させる。
