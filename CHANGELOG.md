@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-333 — config 不在時の hook 全遮断デッドロックを解消（ADR-038 G1 / GitHub #40 完全解消）** — config **不在**（ENOENT）で pre-tool-use hook が未捕捉例外→exit 2 となり、config を作成する Write すら遮断される自己修復デッドロックが missing 状態に残っていた（WI-314 は invalid のみ対応）。hook 用 config adapter で ENOENT を警告+既定値の fail-open に変更（EACCES 等の真の異常は従来どおり throw）。gated パスへの書き込みは phase-gate 側が config-foundation 経由の独立 load で fail-closed を維持することをテストで固定。ADR-038 の許可表と G1 を解消済みに更新。
+
 - **WI-330 — doctor の config 状態可視化と許可ポリシーの仕様化（GitHub #40 恒久化）** — doctor が config 不在・不正でも他項目が揃っていれば GREEN を報告していた盲点を解消。新 check `config-status` を追加し、missing → warn（「既定 fail-open で動作中、`phasegate init` で生成可」）、invalid-json / invalid-schema → red（修復の一手つき）、JSON・human 出力に `configStatus` を明示。「config 状態 × 操作クラス」の許可表を ADR-038 として仕様化し、既知ギャップも正直に記録（**G1: config 不在時に pre-tool-use hook が ENOENT 未捕捉で全ツール遮断＝自己修復デッドロックが missing 状態では現存**、G2: invalid-json の検査系が fail-open で原則より緩い）。G1 は WI-333 で修正。
 
 - **WI-331 — CLAUDE.md の user-section を managed block の外へ移す構造修正（GitHub #35 根本修正）** — #35 の根本原因は CLAUDE.md テンプレートだけ user-section が managed block の内側にあり（AGENTS.md は外側）、block 置換のたびに WI-315 の「抽出→再注入」に頼っていたこと。テンプレートを AGENTS.md と対称の外側配置に変更し、install / reconcile は旧構造（内側）を検出すると本文を保持したまま外側へ移設する冪等 migration を実行（2 回目適用で byte 同値をテスト固定）。refresh 経路（claude-md-composer）は新テンプレート採用で自動移行、`$` シーケンス保護と空行保持も強化。新構造では uninstall 後も user-section が生存する副次改善あり。

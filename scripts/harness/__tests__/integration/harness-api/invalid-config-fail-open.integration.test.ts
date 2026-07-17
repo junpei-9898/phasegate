@@ -3,6 +3,7 @@
 // @story H08-01
 // @work-item-id WI-314
 // @work-item-id WI-330
+// @work-item-id WI-333
 
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -148,17 +149,14 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
     }, 60000);
   });
 
-  // WI-330: config **不在** 状態の実測固定。
-  // 設計意図（ADR-038）は「hook は復旧経路として fail-open」だが、config 不在では
-  // HarnessConfigConfigQueryAdapter.loadConfig() の readFileSync ENOENT が
-  // hook-to-cli-translator.ts の getProtectedFilePatterns() 呼び出しから
-  // pre-tool-use-hook.ts の outer catch まで素通りして exit 2 になる（既知ギャップ）。
-  // invalid-json / invalid-schema では fail-open が機能するのに、missing だけ全ツール遮断
-  // かつ config 自身への Write も遮断される（自己修復経路が閉じる）。
-  // このテストは「あるべき姿」ではなく現状を固定するもの。挙動を修正する際は
-  // agent-integration 側の修正とともに期待値を exit 0 へ反転させること。
+  // WI-333: config **不在**（missing）状態の fail-open（ADR-038 §4 G1 解消）。
+  // 設計意図（ADR-038）どおり「hook は復旧経路として fail-open」を missing にも適用。
+  // HarnessConfigConfigQueryAdapter.loadConfig() が ENOENT を警告 + 既定値で吸収するため、
+  // 無関係 Bash / config 自身への Write は遮断されず自己修復経路が常に残る。
+  // gated パス（scripts/harness/ 等）への書き込みは既定設定の phase-gate 判定が
+  // fail-closed で効き続ける（fail-open は「遮断の解除」ではなく「既定設定への縮退」）。
   context("phasegate.config.json が存在しない project で hook pre-tool-use を実行した場合", () => {
-    it("【現状固定・既知ギャップ】config 不在では書き込みを伴わない Bash も fail-closed の exit 2 で遮断されること", async () => {
+    it("config 不在でも書き込みを伴わない Bash は警告付き fail-open の exit 0 で通過すること (WI-333)", async () => {
       // Arrange
       const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-missing-config-"));
       try {
@@ -172,14 +170,14 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
         const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
 
         // Assert
-        expect(actual.exitCode).toBe(2);
-        expect(actual.stderr).toContain("ENOENT");
+        expect(actual.exitCode).toBe(0);
+        expect(actual.stderr).toContain("not found");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }
     }, 60000);
 
-    it("【現状固定・既知ギャップ】config 不在では config 自身への Write も exit 2 で遮断され自己修復経路が閉じていること", async () => {
+    it("config 不在でも config 自身への Write は exit 0 で許可され自己修復経路が開いていること (WI-333)", async () => {
       // Arrange
       const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-missing-config-"));
       try {
@@ -196,8 +194,33 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
         const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
 
         // Assert
+        expect(actual.exitCode).toBe(0);
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
+    }, 60000);
+
+    it("config 不在でも gated パスへの Write は既定設定の phase-gate 判定で fail-closed に遮断されること (WI-333)", async () => {
+      // Arrange
+      const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-missing-config-"));
+      try {
+        const stdin = JSON.stringify({
+          cwd: workDir,
+          tool_name: "Write",
+          tool_input: {
+            file_path: path.join(workDir, "scripts/harness/some-unit/new-feature.ts"),
+            content: "// @unit some-unit\n// @layer domain\nexport const x = 1;\n",
+          },
+        });
+
+        // Act
+        const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
+
+        // Assert: 意図したゲート判定での遮断（exit 2）であり、ENOENT クラッシュではないこと
         expect(actual.exitCode).toBe(2);
-        expect(actual.stderr).toContain("ENOENT");
+        expect(actual.stderr).toContain("フェーズゲート違反");
+        expect(actual.stderr).not.toContain("実行エラー");
+        expect(actual.stderr).not.toContain("ENOENT");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

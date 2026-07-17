@@ -83,9 +83,24 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     // GitHub #40: config が JSON として壊れている場合に hook プロセス全体を throw で
     // 落とすと、エージェントの全ツール呼び出しが遮断され config の修復自体が不能になる。
     // main.ts の ConfigPersistenceError と同じ意味論（警告 + 既定値で続行）に揃える。
-    // ファイル不在等の fs エラーは既存契約どおり throw する（上流の catch が defaults を
-    // 適用する）。gated スコープへの書き込みは phase-gate 側が fail-closed でブロックする。
-    const raw = fs.readFileSync(this.configPath, "utf8");
+    // ADR-038 §4 G1 / WI-333: config **不在**（ENOENT）も同じデッドロックを起こすため、
+    // invalid-json と同じ「警告 + 既定値で続行」の fail-open とする。config を作成する
+    // Write 自体が遮断されない（自己修復経路が残る）ことがこの adapter の契約。
+    // それ以外の fs エラー（EACCES 等の真の異常）は従来どおり throw する。
+    // gated スコープへの書き込みは phase-gate 側が既定設定で fail-closed を維持する。
+    let raw: string;
+    try {
+      raw = fs.readFileSync(this.configPath, "utf8");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        process.stderr.write(
+          `Warning: phasegate.config.json not found at ${this.configPath}; continuing with default hook settings so self-repair stays possible (run \`phasegate init\` to generate one).\n`,
+        );
+        this.cachedConfig = {};
+        return this.cachedConfig;
+      }
+      throw error;
+    }
     let doc: HarnessConfigDocument;
     try {
       doc = JSON.parse(raw) as HarnessConfigDocument;
