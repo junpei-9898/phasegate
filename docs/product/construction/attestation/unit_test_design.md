@@ -141,3 +141,11 @@
 | UT-WM286-004 | stringをUTF-8 helper経由で一度だけhashする | adapter + fake capability spy |
 
 AAAを明示し、domain objectをmockしない。doubleはapplication public portだけに限定する。
+
+## 7. WI-306 v1 / v2 version contract tests
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+v1 root absent、v2 root required、schema / predicate / presence mismatch、v2 root canonical digest coverage、mapper round-trip、provider absent / present / failureを検証する。v1 canonical payloadのgoldenは変更せず、v2 rootだけの差でdigestが変わることをexact assertする。domain testはreal VO、application testはdeterministic provider fakeを用いる。

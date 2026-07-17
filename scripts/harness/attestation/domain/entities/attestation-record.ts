@@ -1,5 +1,6 @@
 // @unit attestation
 // @layer domain
+// @work-item-id WI-306
 
 import type { ContentHasherPort } from "../ports/content-hasher-port.js";
 import { GranularityDerivationService } from "../services/granularity-derivation-service.js";
@@ -47,6 +48,8 @@ export interface AttestationRecordProps {
    * 省略時は [] として扱う（additive-safe）。
    */
   readonly acBoundScope?: readonly string[];
+  /** v2だけが持つ実行時World corpus root。 */
+  readonly worldSnapshotRoot?: Digest;
 }
 
 /**
@@ -94,6 +97,7 @@ export class AttestationRecord {
   readonly metadata: MetadataSection;
   readonly signature: SignatureBlock;
   readonly acBoundScope: readonly string[];
+  readonly worldSnapshotRoot: Digest | null;
 
   private constructor(props: AttestationRecordProps) {
     this.schemaVersion = props.schemaVersion;
@@ -104,10 +108,12 @@ export class AttestationRecord {
     this.metadata = props.metadata;
     this.signature = props.signature;
     this.acBoundScope = Object.freeze([...(props.acBoundScope ?? [])]);
+    this.worldSnapshotRoot = props.worldSnapshotRoot ?? null;
     Object.freeze(this);
   }
 
   static create(props: AttestationRecordProps): AttestationRecord {
+    AttestationRecord.assertVersionContract(props);
     // INV-1: gateResult == "pass" iff validatorSet.every(passed || skipped)
     const allGreen = props.subject.validatorSet.every((o) => o.isGreen());
     const expectedGateResult: GateResult = allGreen ? "pass" : "fail";
@@ -149,6 +155,22 @@ export class AttestationRecord {
     return new AttestationRecord(props);
   }
 
+  private static assertVersionContract(props: AttestationRecordProps): void {
+    const v1 =
+      props.schemaVersion === "phasegate-attestation/v1" &&
+      props.predicateType === "https://phasegate.dev/attestation/gate-run/v1" &&
+      props.worldSnapshotRoot === undefined;
+    const v2 =
+      props.schemaVersion === "phasegate-attestation/v2" &&
+      props.predicateType === "https://phasegate.dev/attestation/gate-run/v2" &&
+      props.worldSnapshotRoot !== undefined;
+    if (!v1 && !v2) {
+      throw new AttestationInvariantError(
+        "version contract violated: schema, predicate, and worldSnapshotRoot disagree",
+      );
+    }
+  }
+
   gateResult(): GateResult {
     return this.subject.gateResult;
   }
@@ -165,10 +187,9 @@ export class AttestationRecord {
 
   /**
    * §1.4.1 step1-3: signature ブロック全体と volatile metadata（producedAt/gitCommit）を
-   * 除去した plain object を返す（producer は決定論的なので残す）。
    */
   toCanonicalPayload(): Record<string, unknown> {
-    return {
+    const payload: Record<string, unknown> = {
       schemaVersion: this.schemaVersion,
       predicateType: this.predicateType,
       subject: {
@@ -199,6 +220,10 @@ export class AttestationRecord {
         producer: this.metadata.producer,
       },
     };
+    if (this.worldSnapshotRoot !== null) {
+      payload.worldSnapshotRoot = this.worldSnapshotRoot.value;
+    }
+    return payload;
   }
 
   /**
@@ -222,6 +247,7 @@ export class AttestationRecord {
       metadata: this.metadata,
       signature: SignatureBlock.unsignedPoc(digest),
       acBoundScope: this.acBoundScope,
+      ...(this.worldSnapshotRoot === null ? {} : { worldSnapshotRoot: this.worldSnapshotRoot }),
     });
   }
 
@@ -247,6 +273,15 @@ export class AttestationRecord {
     if (!this.granularity.traceability.equals(other.granularity.traceability)) return false;
     if (this.acBoundScope.length !== other.acBoundScope.length) return false;
     if (!this.acBoundScope.every((s, i) => s === other.acBoundScope[i])) return false;
+    if (this.worldSnapshotRoot === null && other.worldSnapshotRoot !== null) return false;
+    if (this.worldSnapshotRoot !== null && other.worldSnapshotRoot === null) return false;
+    if (
+      this.worldSnapshotRoot !== null &&
+      other.worldSnapshotRoot !== null &&
+      !this.worldSnapshotRoot.equals(other.worldSnapshotRoot)
+    ) {
+      return false;
+    }
     if (!this.signature.equals(other.signature)) return false;
     return true;
   }

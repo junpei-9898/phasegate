@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer infrastructure
 // @work-item-id WI-290
+// @work-item-id WI-306
 
 import type {
   AttestationDocument,
@@ -114,13 +115,24 @@ export class AttestationFactExtractor {
 
   private parseDocument(value: unknown): AttestationDocument {
     const root = requireObject(value, "attestation");
+    const schemaVersion = requireString(root.schemaVersion, "attestation.schemaVersion");
+    const isV2 = schemaVersion === "phasegate-attestation/v2";
     assertExactKeys(
       root,
-      ["schemaVersion", "predicateType", "subject", "inputs", "granularity", "acBoundScope", "metadata", "signature"],
+      [
+        "schemaVersion",
+        "predicateType",
+        "subject",
+        "inputs",
+        "granularity",
+        "acBoundScope",
+        "metadata",
+        "signature",
+        ...(isV2 ? ["worldSnapshotRoot"] : []),
+      ],
       "attestation",
     );
-    const schemaVersion = requireString(root.schemaVersion, "attestation.schemaVersion");
-    if (schemaVersion !== "phasegate-attestation/v1") {
+    if (schemaVersion !== "phasegate-attestation/v1" && !isV2) {
       throw new OwnerProjectionError(
         "unsupported-provider-schema",
         `unsupported attestation schema: ${schemaVersion}`,
@@ -128,14 +140,21 @@ export class AttestationFactExtractor {
       );
     }
     const predicateType = requireString(root.predicateType, "attestation.predicateType");
+    const expectedPredicate = `https://phasegate.dev/attestation/gate-run/${isV2 ? "v2" : "v1"}`;
+    if (predicateType !== expectedPredicate) {
+      throw new OwnerProjectionError("malformed-provider-document", "attestation predicateType is inconsistent");
+    }
+    const worldSnapshotRoot = isV2 ? requireString(root.worldSnapshotRoot, "attestation.worldSnapshotRoot") : undefined;
+    if (worldSnapshotRoot !== undefined) this.assertDigest(worldSnapshotRoot, "attestation.worldSnapshotRoot");
 
     const subject = requireObject(root.subject, "attestation.subject");
     assertExactKeys(subject, ["command", "gateResult", "validatorSet"], "attestation.subject");
     const command = requireString(subject.command, "attestation.subject.command");
-    const gateResult = requireString(subject.gateResult, "attestation.subject.gateResult");
-    if (gateResult !== "pass" && gateResult !== "fail") {
+    const gateResultRaw = requireString(subject.gateResult, "attestation.subject.gateResult");
+    if (gateResultRaw !== "pass" && gateResultRaw !== "fail") {
       throw new OwnerProjectionError("malformed-provider-document", "attestation gateResult is invalid");
     }
+    const gateResult: "pass" | "fail" = gateResultRaw;
     const validatorSet = requireArray(subject.validatorSet, "attestation.subject.validatorSet").map((raw, index) => {
       const field = `attestation.subject.validatorSet[${index}]`;
       const outcome = requireObject(raw, field);
@@ -174,10 +193,11 @@ export class AttestationFactExtractor {
       ["validator", "level", "claim", "knownLimitations"],
       "attestation.granularity.traceability",
     );
-    const level = requireString(traceability.level, "attestation.granularity.traceability.level");
-    if (level !== "file" && level !== "ac") {
+    const levelRaw = requireString(traceability.level, "attestation.granularity.traceability.level");
+    if (levelRaw !== "file" && levelRaw !== "ac") {
       throw new OwnerProjectionError("malformed-provider-document", "attestation granularity level is invalid");
     }
+    const level: "file" | "ac" = levelRaw;
     const knownLimitations = requireArray(
       traceability.knownLimitations,
       "attestation.granularity.traceability.knownLimitations",
@@ -193,21 +213,20 @@ export class AttestationFactExtractor {
 
     const signature = requireObject(root.signature, "attestation.signature");
     assertExactKeys(signature, ["mode", "attestationDigest", "algorithm", "keyId", "value"], "attestation.signature");
-    const mode = requireString(signature.mode, "attestation.signature.mode");
-    if (mode !== "unsigned-poc" && mode !== "signed") {
+    const modeRaw = requireString(signature.mode, "attestation.signature.mode");
+    if (modeRaw !== "unsigned-poc" && modeRaw !== "signed") {
       throw new OwnerProjectionError("malformed-provider-document", "attestation signature mode is invalid");
     }
+    const mode: "unsigned-poc" | "signed" = modeRaw;
     const attestationDigest = requireString(signature.attestationDigest, "attestation.signature.attestationDigest");
     this.assertDigest(attestationDigest, "attestation.signature.attestationDigest");
     const nullableString = (candidate: unknown, field: string): string | null =>
       candidate === null ? null : requireString(candidate, field);
 
-    return {
-      schemaVersion,
-      predicateType,
+    const common = {
       subject: { command, gateResult, validatorSet },
       inputs: {
-        digestAlgorithm: "sha256",
+        digestAlgorithm: "sha256" as const,
         sources,
         inputDigest,
       },
@@ -232,6 +251,22 @@ export class AttestationFactExtractor {
         keyId: nullableString(signature.keyId, "attestation.signature.keyId"),
         value: nullableString(signature.value, "attestation.signature.value"),
       },
+    };
+    if (isV2) {
+      if (worldSnapshotRoot === undefined) {
+        throw new OwnerProjectionError("malformed-provider-document", "attestation v2 root is missing");
+      }
+      return {
+        ...common,
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot,
+      };
+    }
+    return {
+      ...common,
+      schemaVersion: "phasegate-attestation/v1",
+      predicateType: "https://phasegate.dev/attestation/gate-run/v1",
     };
   }
 

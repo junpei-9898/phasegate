@@ -1,5 +1,6 @@
 // @unit attestation
 // @layer presentation
+// @work-item-id WI-306
 
 import type { ProduceAttestationInput } from "../../application/dto/produce-attestation-input.js";
 import type { ProduceAttestationUseCase } from "../../application/usecases/produce-attestation-usecase.js";
@@ -46,8 +47,10 @@ export class AttestHandler {
     const result = await this.useCase.execute(input);
 
     if (result.exitCode === 2) {
-      // 唯一の usecase 由来 2 は mode === "signed"。
-      return { output: 'Error: --mode "signed" is not yet implemented (only unsigned-poc is supported)', exitCode: 2 };
+      const output = result.error
+        ? `Error: ${result.error}`
+        : 'Error: --mode "signed" is not yet implemented (only unsigned-poc is supported)';
+      return { output, exitCode: 2 };
     }
 
     if (result.exitCode === 1) {

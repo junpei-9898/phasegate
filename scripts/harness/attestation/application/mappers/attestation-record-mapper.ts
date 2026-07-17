@@ -1,5 +1,6 @@
 // @unit attestation
 // @layer application
+// @work-item-id WI-306
 
 import {
   AttestationRecord,
@@ -44,15 +45,20 @@ function requireBoolean(v: unknown, field: string): boolean {
   return v;
 }
 
+function rejectUnknownFields(value: Record<string, unknown>, allowed: readonly string[], field: string): void {
+  const unsupported = Object.keys(value).filter((key) => !allowed.includes(key));
+  if (unsupported.length > 0) {
+    throw new MalformedAttestationError(`${field} contains unsupported fields: ${unsupported.sort().join(", ")}`);
+  }
+}
+
 /**
  * AttestationRecord（domain）↔ AttestationDocument（application DTO）の双方向変換。
  */
 export class AttestationRecordMapper {
   /** 集約を plain object へ射影（VO をプリミティブ展開）。 */
   toDocument(record: AttestationRecord): AttestationDocument {
-    return {
-      schemaVersion: record.schemaVersion as "phasegate-attestation/v1",
-      predicateType: record.predicateType,
+    const common = {
       subject: {
         command: record.subject.command,
         gateResult: record.subject.gateResult,
@@ -63,7 +69,7 @@ export class AttestationRecordMapper {
         })),
       },
       inputs: {
-        digestAlgorithm: "sha256",
+        digestAlgorithm: "sha256" as const,
         sources: record.inputs.sources.map((s) => ({ path: s.path, digest: s.digest.value })),
         inputDigest: record.inputs.inputDigest.value,
       },
@@ -89,6 +95,19 @@ export class AttestationRecordMapper {
         value: record.signature.value,
       },
     };
+    if (record.worldSnapshotRoot !== null) {
+      return {
+        ...common,
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot: record.worldSnapshotRoot.value,
+      };
+    }
+    return {
+      ...common,
+      schemaVersion: "phasegate-attestation/v1",
+      predicateType: "https://phasegate.dev/attestation/gate-run/v1",
+    };
   }
 
   /**
@@ -102,6 +121,37 @@ export class AttestationRecordMapper {
 
     const schemaVersion = requireString(doc.schemaVersion, "schemaVersion");
     const predicateType = requireString(doc.predicateType, "predicateType");
+    let worldSnapshotRoot: Digest | undefined;
+    if (schemaVersion === "phasegate-attestation/v1") {
+      if (predicateType !== "https://phasegate.dev/attestation/gate-run/v1") {
+        throw new MalformedAttestationError("v1 predicateType does not match schemaVersion");
+      }
+      if (doc.worldSnapshotRoot !== undefined) {
+        throw new MalformedAttestationError("v1 must not contain worldSnapshotRoot");
+      }
+    } else if (schemaVersion === "phasegate-attestation/v2") {
+      if (predicateType !== "https://phasegate.dev/attestation/gate-run/v2") {
+        throw new MalformedAttestationError("v2 predicateType does not match schemaVersion");
+      }
+      worldSnapshotRoot = this.toDigest(doc.worldSnapshotRoot, "worldSnapshotRoot");
+      rejectUnknownFields(
+        doc,
+        [
+          "schemaVersion",
+          "predicateType",
+          "subject",
+          "inputs",
+          "granularity",
+          "acBoundScope",
+          "worldSnapshotRoot",
+          "metadata",
+          "signature",
+        ],
+        "v2 attestation",
+      );
+    } else {
+      throw new MalformedAttestationError(`unsupported schemaVersion: ${schemaVersion}`);
+    }
 
     const subject = doc.subject;
     if (!isObject(subject)) {
@@ -185,6 +235,7 @@ export class AttestationRecordMapper {
       },
       signature: this.toSignatureBlock(mode, attestationDigest, signature),
       acBoundScope,
+      ...(worldSnapshotRoot === undefined ? {} : { worldSnapshotRoot }),
     };
 
     // verify 用の再構築: INV-1/INV-3 は verify usecase が機械的チェックとして検出するため

@@ -380,3 +380,11 @@ canonical defaults、完全resolved input、custom corpus / provider / declarati
 ## WI-305 pinned endpoint facade tests
 
 absent、supported claimant / premise、legacy endpoint除外、invalid control inputをplain DTO contractとして検証する。
+
+## WI-306 snapshot root facade / v2 projection tests
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+facadeがbuild resultのcorpusRootをplain stringへ射影すること、v2 attestationのroot値だけを変えてもWorld projection digestが変わらないこと、v1 / v2 evidence schemaを明示admitすることを検証する。

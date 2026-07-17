@@ -683,3 +683,11 @@ custom World pathを持つv2 / v3 configと`enabled:false`をmain processで読�
 ## WI-305 commit-msg E2E
 
 temporary Git index、constraint fixture、commit message fileを用い、matching / missing / mismatch / disabled / unavailableのCLI exitとstdoutを検証する。
+
+## WI-306 attestation v2 CLI E2E
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+temp corpusでtop-level `phasegate:attest`を実行し、World public facade由来rootを持つv2 documentとverify exit 0を確認する。programmatic provider未配線fixtureではv1を生成し、旧CLI / repository contractの後方互換を固定する。

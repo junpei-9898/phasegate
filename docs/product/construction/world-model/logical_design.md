@@ -395,3 +395,11 @@ agent-integration infrastructure adapterはpublic `createWorldModelModule`から
 ## WI-305: pinned endpoint public projection
 
 application facadeはconstraint repositoryのread resultからclaimant / premiseのexplicit fragment pinだけをplain DTOへ投影する。不在はavailable empty、invalid control inputはfixed diagnostic code付きunavailableとし、repository port、`ConstraintRecord`、`NodePin`、digest VOをpublic APIへ露出しない。blocking policyとcommit message解釈はworld-model外に置く。
+
+## WI-306: snapshot root public facade
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+`WorldSnapshotRootFacade`はcurrent `BuildSnapshotUseCase`を実行し、versioned plain DTO `{ schemaVersion, worldSnapshotRoot }`だけを返す。consumerへSnapshot / Sha256Digest VOを露出しない。attestation v2 compositionはtop-levelでこのfacadeをproviderへadaptする。attestation owner projectionはv1 / v2を受理するがv2の`worldSnapshotRoot`をsemantic projectionから除外し、self-referenceを作らない。

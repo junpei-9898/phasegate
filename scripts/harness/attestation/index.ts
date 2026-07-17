@@ -1,15 +1,21 @@
 // @layer infrastructure
 // @unit attestation
+// @work-item-id WI-306
 // index.ts — attestation Unit の公開バレルエクスポート
 
 // Public DTO types
-export type { AttestationDocument } from "./application/dto/attestation-document.js";
+export type {
+  AttestationDocument,
+  AttestationDocumentV1,
+  AttestationDocumentV2,
+} from "./application/dto/attestation-document.js";
 export type { VerifyAttestationOutput } from "./application/dto/verify-attestation-output.js";
 export {
   hashUtf8,
   type Sha256Capability,
   type Sha256DigestString,
 } from "./application/ports/sha256-capability.js";
+export type { WorldSnapshotRootProvider } from "./application/ports/world-snapshot-root-provider.js";
 export type { AttestationModule, AttestationModuleOptions } from "./composition-root.js";
 // Composition Root
 export { createAttestationModule, createSha256Capability } from "./composition-root.js";

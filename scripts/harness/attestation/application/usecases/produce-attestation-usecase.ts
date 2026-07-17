@@ -1,23 +1,28 @@
 // @unit attestation
 // @layer application
+// @work-item-id WI-306
 
 import { AttestationRecord, type GateResult, type SourceEntry } from "../../domain/entities/attestation-record.js";
 import type { ContentHasherPort } from "../../domain/ports/content-hasher-port.js";
-import type { GranularityDerivationService } from "../../domain/services/granularity-derivation-service.js";
 import type { AcBoundScopeService } from "../../domain/services/ac-bound-scope-service.js";
+import type { GranularityDerivationService } from "../../domain/services/granularity-derivation-service.js";
+import { Digest } from "../../domain/value-objects/digest.js";
 import { SignatureBlock } from "../../domain/value-objects/signature-block.js";
 import { ValidatorOutcome } from "../../domain/value-objects/validator-outcome.js";
 import type { AttestationDocument } from "../dto/attestation-document.js";
 import type { ProduceAttestationInput } from "../dto/produce-attestation-input.js";
 import type { AttestationRecordMapper } from "../mappers/attestation-record-mapper.js";
+import type { AcBoundAllowlistPort } from "../ports/ac-bound-allowlist-port.js";
 import type { AttestationRepositoryPort } from "../ports/attestation-repository-port.js";
 import type { GateResultSourcePort } from "../ports/gate-result-source-port.js";
-import type { SourceDigesterPort } from "../ports/source-digester-port.js";
 import type { MatrixSourcePort } from "../ports/matrix-source-port.js";
-import type { AcBoundAllowlistPort } from "../ports/ac-bound-allowlist-port.js";
+import type { SourceDigesterPort } from "../ports/source-digester-port.js";
+import type { WorldSnapshotRootProvider } from "../ports/world-snapshot-root-provider.js";
 
-const SCHEMA_VERSION = "phasegate-attestation/v1";
-const PREDICATE_TYPE = "https://phasegate.dev/attestation/gate-run/v1";
+const V1_SCHEMA_VERSION = "phasegate-attestation/v1";
+const V1_PREDICATE_TYPE = "https://phasegate.dev/attestation/gate-run/v1";
+const V2_SCHEMA_VERSION = "phasegate-attestation/v2";
+const V2_PREDICATE_TYPE = "https://phasegate.dev/attestation/gate-run/v2";
 const DEFAULT_INPUT_SOURCES: readonly string[] = Object.freeze([
   "phasegate.config.json",
   ".harness/requirement-test-matrix.json",
@@ -46,11 +51,14 @@ export interface ProduceAttestationDeps {
   readonly acBoundScopeService?: AcBoundScopeService;
   /** H16-03: matrix 供給元パス（inputSourcePaths のうち matrix にあたるもの。既定は 2 番目の source）。 */
   readonly matrixFilePath?: string;
+  /** WI-306: 配線時はv2、未配線時は既存v1を生成する。 */
+  readonly worldSnapshotRootProvider?: WorldSnapshotRootProvider;
 }
 
 export interface ProduceAttestationResult {
   readonly document: AttestationDocument | null;
   readonly exitCode: 0 | 1 | 2;
+  readonly error?: string;
 }
 
 /**
@@ -77,6 +85,20 @@ export class ProduceAttestationUseCase {
       return { document: null, exitCode: 1 };
     }
 
+    // 3b. World root providerはv2 opt-in。失敗や不正digestをv1へdowngradeしない。
+    let worldSnapshotRoot: Digest | undefined;
+    if (this.deps.worldSnapshotRootProvider) {
+      try {
+        worldSnapshotRoot = Digest.create(await this.deps.worldSnapshotRootProvider.getWorldSnapshotRoot());
+      } catch (error) {
+        return {
+          document: null,
+          exitCode: 2,
+          error: `cannot obtain worldSnapshotRoot: ${error instanceof Error ? error.message : String(error)}`,
+        };
+      }
+    }
+
     // 4. inputs.sources 構築（config / matrix の sha256 + git commit SHA）と inputDigest 算出
     const sources = await this.buildSources();
     const preInputRecord = this.assembleRecord({
@@ -88,6 +110,7 @@ export class ProduceAttestationUseCase {
       producer: `phasegate-attestation/${this.deps.pkgVersion}`,
       gitCommit: null,
       acBoundScope: [],
+      worldSnapshotRoot,
     });
     const inputDigest = preInputRecord.computeInputDigest(this.deps.hasher);
 
@@ -110,6 +133,7 @@ export class ProduceAttestationUseCase {
       producer: `phasegate-attestation/${this.deps.pkgVersion}`,
       gitCommit,
       acBoundScope,
+      worldSnapshotRoot,
     });
     const sealed = record.seal(this.deps.hasher);
 
@@ -130,11 +154,12 @@ export class ProduceAttestationUseCase {
     producer: string;
     gitCommit: string | null;
     acBoundScope: readonly string[];
+    worldSnapshotRoot?: Digest;
   }): AttestationRecord {
     const granularity = this.deps.granularityService.derive(args.validatorSet);
     return AttestationRecord.create({
-      schemaVersion: SCHEMA_VERSION,
-      predicateType: PREDICATE_TYPE,
+      schemaVersion: args.worldSnapshotRoot ? V2_SCHEMA_VERSION : V1_SCHEMA_VERSION,
+      predicateType: args.worldSnapshotRoot ? V2_PREDICATE_TYPE : V1_PREDICATE_TYPE,
       subject: {
         command: "phasegate:ci-check",
         gateResult: args.gateResult,
@@ -154,6 +179,7 @@ export class ProduceAttestationUseCase {
       // 仮の unsigned-poc block（seal 前）。seal が正しい digest で置換する。
       signature: SignatureBlock.unsignedPoc(args.inputDigest),
       acBoundScope: args.acBoundScope,
+      ...(args.worldSnapshotRoot ? { worldSnapshotRoot: args.worldSnapshotRoot } : {}),
     });
   }
 

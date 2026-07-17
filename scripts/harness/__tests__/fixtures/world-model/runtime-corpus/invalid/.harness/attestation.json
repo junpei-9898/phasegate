@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "phasegate-attestation/v2",
+  "schemaVersion": "phasegate-attestation/v3",
   "predicateType": "future",
   "subject": {},
   "inputs": {},

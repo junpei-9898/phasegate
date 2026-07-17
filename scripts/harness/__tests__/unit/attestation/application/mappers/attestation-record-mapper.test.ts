@@ -1,6 +1,7 @@
 // @unit attestation
 // @layer test
 // @story H16-01
+// @story H17-18
 
 import { describe, expect, it } from "vitest";
 import {
@@ -21,9 +22,9 @@ const derivation = new GranularityDerivationService();
 const DIGEST = Digest.create(`sha256:${"a".repeat(64)}`);
 const mapper = new AttestationRecordMapper();
 
-const buildRecord = (): AttestationRecord => {
+const buildRecordProps = (): AttestationRecordProps => {
   const validatorSet = [ValidatorOutcome.create({ validatorId: "L3-004", passed: true, skipped: false })];
-  const props: AttestationRecordProps = {
+  return {
     schemaVersion: "phasegate-attestation/v1",
     predicateType: "https://phasegate.dev/attestation/gate-run/v1",
     subject: { command: "phasegate:ci-check", gateResult: "pass", validatorSet },
@@ -36,8 +37,9 @@ const buildRecord = (): AttestationRecord => {
     metadata: { producedAt: "2026-07-05T00:00:00Z", producer: "phasegate-attestation/1.0.0", gitCommit: "abc" },
     signature: SignatureBlock.unsignedPoc(DIGEST),
   };
-  return AttestationRecord.create(props);
 };
+
+const buildRecord = (): AttestationRecord => AttestationRecord.create(buildRecordProps());
 
 target("AttestationRecordMapper", () => {
   describe("toDocument テスト", () => {
@@ -66,6 +68,25 @@ target("AttestationRecordMapper", () => {
       // Act
       const restored = mapper.fromDocument(mapper.toDocument(record));
       // Assert
+      expect(restored.equals(record)).toBe(true);
+    });
+
+    it("v2 worldSnapshotRootをplain documentでround-tripする", () => {
+      // Arrange
+      const root = Digest.create(`sha256:${"b".repeat(64)}`);
+      const record = AttestationRecord.create({
+        ...buildRecordProps(),
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot: root,
+      });
+
+      // Act
+      const document = mapper.toDocument(record);
+      const restored = mapper.fromDocument(document);
+
+      // Assert
+      expect(document).toHaveProperty("worldSnapshotRoot", root.value);
       expect(restored.equals(record)).toBe(true);
     });
   });
@@ -109,6 +130,38 @@ target("AttestationRecordMapper", () => {
         captured = e as MalformedAttestationError;
       }
       expect(captured?.errorCode).toBe("L1-053");
+    });
+
+    it("schema・predicate・root presenceが一致しないdocumentを拒否する", () => {
+      // Arrange
+      const v1 = mapper.toDocument(buildRecord()) as unknown as Record<string, unknown>;
+      const wrongPredicate = { ...v1, predicateType: "https://phasegate.dev/attestation/gate-run/v2" };
+      const rootInV1 = { ...v1, worldSnapshotRoot: `sha256:${"b".repeat(64)}` };
+      const missingRootV2 = {
+        ...v1,
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+      };
+
+      // Act / Assert
+      expect(() => mapper.fromDocument(wrongPredicate)).toThrow(MalformedAttestationError);
+      expect(() => mapper.fromDocument(rootInV1)).toThrow(MalformedAttestationError);
+      expect(() => mapper.fromDocument(missingRootV2)).toThrow(MalformedAttestationError);
+    });
+
+    it("v2へfragment digest fieldを追加したdocumentを拒否する", () => {
+      // Arrange
+      const root = Digest.create(`sha256:${"b".repeat(64)}`);
+      const record = AttestationRecord.create({
+        ...buildRecordProps(),
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot: root,
+      });
+      const document = { ...mapper.toDocument(record), fragmentDigests: [] };
+
+      // Act / Assert
+      expect(() => mapper.fromDocument(document)).toThrow(MalformedAttestationError);
     });
   });
 });

@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit attestation
+ * @work-item-id WI-306
  *
  * Composition Root — attestation Unit の依存性組み立て。
  * createAttestationModule() は adapters + usecases + handlers を組み立て、
@@ -11,6 +12,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { AttestationRecordMapper } from "./application/mappers/attestation-record-mapper.js";
 import type { Sha256Capability } from "./application/ports/sha256-capability.js";
+import type { WorldSnapshotRootProvider } from "./application/ports/world-snapshot-root-provider.js";
 import { ProduceAttestationUseCase } from "./application/usecases/produce-attestation-usecase.js";
 import { VerifyAttestationUseCase } from "./application/usecases/verify-attestation-usecase.js";
 import { AcBoundScopeService } from "./domain/services/ac-bound-scope-service.js";
@@ -41,6 +43,8 @@ export interface AttestationModuleOptions {
   readonly mainTsPath?: string;
   /** metadata.producedAt 用クロックのオーバーライド（テスト用）。 */
   readonly clock?: () => Date;
+  /** WI-306: 配線時はv2 recordへplain World corpus rootを注入する。 */
+  readonly worldSnapshotRootProvider?: WorldSnapshotRootProvider;
 }
 
 /**
@@ -87,6 +91,7 @@ export function createAttestationModule(rootDir: string, options?: AttestationMo
     matrixSource,
     allowlist,
     acBoundScopeService,
+    worldSnapshotRootProvider: options?.worldSnapshotRootProvider,
   });
   const verifyUseCase = new VerifyAttestationUseCase({
     repository,

@@ -291,3 +291,11 @@ base / new unpinned claim / duplicate ID / unsupported schema fixtureをvalidato
 <!-- @work-item-id WI-304 -->
 
 agent-integration adapterからpublic World compositionを`writeReport:false`で実行し、structural obligation、repaid baseline、policy diagnostic、adopted countをplain stable projectionへ変換する。malformed control inputはunavailable、persisted reportの存在・内容はquery resultへ影響しない。reason / details / report bytesをcontext DTOへ含めないことを検証する。
+
+## WI-306 attestation v2 provider integration
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+repository-shaped corpusからpublic snapshot root facadeを実行し、そのplain rootをattestation v2 producerへ注入する。生成後のv2 recordをWorld extractorが再読込しても`worldSnapshotRoot`自体をroot preimageへ含めないことをfixtureで固定する。

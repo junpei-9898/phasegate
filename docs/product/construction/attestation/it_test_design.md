@@ -98,3 +98,11 @@
 | IT-WM286-004 | public barrelから内部hashing型を隠す | internal VO / port / concrete class exportなし |
 | IT-WM286-005 | node:crypto SHA-256 call siteを増やさない | primitive移動後もsource call-site総数不変 |
 | IT-WM286-006 |既存attest→verifyを維持する | existing E2Eがgreen |
+
+## 6. WI-306 v1 / v2 round-trip
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+実filesystem repository / SHA adapterでprovider未配線v1とfixed World root provider v2のproduce→verifyを実行する。v2 root改竄はexit 1、欠落 / unknown schemaはexit 2、fragment digest fieldは不存在とする。top-level composition testはWorld public facadeから得たplain rootがv2 documentへ入ることを検証し、attestation全既存suiteをv1 regressionとして再実行する。

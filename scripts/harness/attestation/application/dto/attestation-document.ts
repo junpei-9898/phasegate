@@ -1,8 +1,9 @@
 // @unit attestation
 // @layer application
+// @work-item-id WI-306
 
 /**
- * record format `phasegate-attestation/v1` の plain object 表現（logical_design §1.4.3）。
+ * versioned record formatのplain object表現（logical_design §1.4.3 / WI-306）。
  * ファイル入出力・stdout エコー・mapper の境界で用いる契約型。VO はプリミティブ展開する。
  */
 export interface AttestationDocumentValidatorOutcome {
@@ -23,9 +24,7 @@ export interface AttestationDocumentGranularityClaim {
   readonly knownLimitations: string[];
 }
 
-export interface AttestationDocument {
-  readonly schemaVersion: "phasegate-attestation/v1";
-  readonly predicateType: string;
+interface AttestationDocumentBase {
   readonly subject: {
     readonly command: string;
     readonly gateResult: "pass" | "fail";
@@ -54,3 +53,17 @@ export interface AttestationDocument {
     readonly value: string | null;
   };
 }
+
+export interface AttestationDocumentV1 extends AttestationDocumentBase {
+  readonly schemaVersion: "phasegate-attestation/v1";
+  readonly predicateType: "https://phasegate.dev/attestation/gate-run/v1";
+}
+
+export interface AttestationDocumentV2 extends AttestationDocumentBase {
+  readonly schemaVersion: "phasegate-attestation/v2";
+  readonly predicateType: "https://phasegate.dev/attestation/gate-run/v2";
+  /** 実行時のWorld canonical corpusRoot。個別fragment digestは保持しない。 */
+  readonly worldSnapshotRoot: string;
+}
+
+export type AttestationDocument = AttestationDocumentV1 | AttestationDocumentV2;

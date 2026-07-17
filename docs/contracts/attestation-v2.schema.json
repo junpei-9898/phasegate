@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://phasegate.dev/contracts/attestation-v2.schema.json",
+  "title": "PhaseGate attestation v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "predicateType",
+    "subject",
+    "inputs",
+    "granularity",
+    "acBoundScope",
+    "worldSnapshotRoot",
+    "metadata",
+    "signature"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "phasegate-attestation/v2" },
+    "predicateType": { "const": "https://phasegate.dev/attestation/gate-run/v2" },
+    "worldSnapshotRoot": { "$ref": "#/$defs/digest" },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "gateResult", "validatorSet"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "gateResult": { "enum": ["pass", "fail"] },
+        "validatorSet": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["validatorId", "passed", "skipped"],
+            "properties": {
+              "validatorId": { "type": "string", "minLength": 1 },
+              "passed": { "type": "boolean" },
+              "skipped": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digestAlgorithm", "sources", "inputDigest"],
+      "properties": {
+        "digestAlgorithm": { "const": "sha256" },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "digest"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "digest": { "$ref": "#/$defs/digest" }
+            }
+          }
+        },
+        "inputDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "granularity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["traceability"],
+      "properties": {
+        "traceability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["validator", "level", "claim", "knownLimitations"],
+          "properties": {
+            "validator": { "type": "string", "minLength": 1 },
+            "level": { "enum": ["file", "ac"] },
+            "claim": { "type": "string" },
+            "knownLimitations": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "acBoundScope": { "type": "array", "items": { "type": "string" } },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producedAt", "producer", "gitCommit"],
+      "properties": {
+        "producedAt": { "type": "string", "minLength": 1 },
+        "producer": { "type": "string", "minLength": 1 },
+        "gitCommit": { "type": ["string", "null"] }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "attestationDigest", "algorithm", "keyId", "value"],
+      "properties": {
+        "mode": { "enum": ["unsigned-poc", "signed"] },
+        "attestationDigest": { "$ref": "#/$defs/digest" },
+        "algorithm": { "type": ["string", "null"] },
+        "keyId": { "type": ["string", "null"] },
+        "value": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

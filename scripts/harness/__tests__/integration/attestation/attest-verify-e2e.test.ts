@@ -1,24 +1,26 @@
 // @unit attestation
 // @layer test
 // @story H16-01
+// @story H17-18
 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import Ajv2020Module from "ajv/dist/2020.js";
 import { expect, it } from "vitest";
 import { AttestationRecordMapper } from "../../../attestation/application/mappers/attestation-record-mapper.js";
+import type { AcBoundAllowlistPort } from "../../../attestation/application/ports/ac-bound-allowlist-port.js";
 import type {
   GateResultSourcePort,
   GateValidatorResult,
 } from "../../../attestation/application/ports/gate-result-source-port.js";
 import { ProduceAttestationUseCase } from "../../../attestation/application/usecases/produce-attestation-usecase.js";
 import { VerifyAttestationUseCase } from "../../../attestation/application/usecases/verify-attestation-usecase.js";
-import { GranularityDerivationService } from "../../../attestation/domain/services/granularity-derivation-service.js";
 import { AcBoundScopeService } from "../../../attestation/domain/services/ac-bound-scope-service.js";
+import { GranularityDerivationService } from "../../../attestation/domain/services/granularity-derivation-service.js";
 import { FileSystemAttestationRepositoryAdapter } from "../../../attestation/infrastructure/adapters/file-system-attestation-repository-adapter.js";
-import { FileSystemSourceDigesterAdapter } from "../../../attestation/infrastructure/adapters/file-system-source-digester-adapter.js";
 import { FileSystemMatrixSourceAdapter } from "../../../attestation/infrastructure/adapters/file-system-matrix-source-adapter.js";
-import type { AcBoundAllowlistPort } from "../../../attestation/application/ports/ac-bound-allowlist-port.js";
+import { FileSystemSourceDigesterAdapter } from "../../../attestation/infrastructure/adapters/file-system-source-digester-adapter.js";
 import { NodeCryptoContentHasherAdapter } from "../../../attestation/infrastructure/adapters/node-crypto-content-hasher-adapter.js";
 import { AttestHandler } from "../../../attestation/presentation/handlers/attest-handler.js";
 import { VerifyAttestationHandler } from "../../../attestation/presentation/handlers/verify-attestation-handler.js";
@@ -55,8 +57,15 @@ const PASS_VALIDATORS: readonly GateValidatorResult[] = [
   { validatorId: "L3-004", passed: true, skipped: false },
 ];
 
-const buildHarness = (gate: GateResultSourcePort, options?: { requirePass?: boolean }): Harness => {
-  void options;
+const Ajv2020 = Ajv2020Module.default ?? Ajv2020Module;
+
+const buildHarness = (
+  gate: GateResultSourcePort,
+  options?: {
+    requirePass?: boolean;
+    worldSnapshotRootProvider?: { getWorldSnapshotRoot(): Promise<string> };
+  },
+): Harness => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "attest-e2e-"));
   // source ファイル群を temp dir に用意（inputs.sources のデフォルトパス）。
   fs.writeFileSync(path.join(dir, "phasegate.config.json"), '{"project":{"preset":"standard"}}\n');
@@ -99,6 +108,7 @@ const buildHarness = (gate: GateResultSourcePort, options?: { requirePass?: bool
     matrixSource,
     allowlist,
     acBoundScopeService,
+    worldSnapshotRootProvider: options?.worldSnapshotRootProvider,
   });
   const verifyUseCase = new VerifyAttestationUseCase({
     repository,
@@ -161,6 +171,45 @@ target("attestation E2E: attest → verify round-trip", () => {
           granularity: true,
           acBoundScope: true,
         });
+      } finally {
+        cleanup(h);
+      }
+    });
+  });
+
+  context("World root providerを配線してv2を生成する場合", () => {
+    it("v2 produce→verifyが成功しroot改竄を検出すること", async () => {
+      // Arrange
+      const root = `sha256:${"b".repeat(64)}`;
+      const h = buildHarness(new FakeGateResultSource(true, PASS_VALIDATORS), {
+        worldSnapshotRootProvider: { getWorldSnapshotRoot: async () => root },
+      });
+      try {
+        // Act: v2 produce / verify
+        const attestResult = await h.attestHandler.handle({ out: h.outPath, emitJson: true });
+        const document = JSON.parse(fs.readFileSync(h.outPath, "utf8"));
+        const verifyResult = await h.verifyHandler.handle({ file: h.outPath, emitJson: true });
+
+        // Assert: v2 round-trip
+        expect(attestResult.exitCode).toBe(0);
+        expect(document.schemaVersion).toBe("phasegate-attestation/v2");
+        expect(document.worldSnapshotRoot).toBe(root);
+        expect(verifyResult.exitCode).toBe(0);
+        const schema = JSON.parse(
+          fs.readFileSync(path.join(process.cwd(), "docs/contracts/attestation-v2.schema.json"), "utf8"),
+        );
+        const validate = new Ajv2020({ strict: false }).compile(schema);
+        expect(validate(document)).toBe(true);
+        expect(validate({ ...document, fragmentDigests: [] })).toBe(false);
+
+        // Act: rootだけを改竄
+        document.worldSnapshotRoot = `sha256:${"c".repeat(64)}`;
+        fs.writeFileSync(h.outPath, JSON.stringify(document, null, 2));
+        const tampered = await h.verifyHandler.handle({ file: h.outPath, emitJson: true });
+
+        // Assert
+        expect(tampered.exitCode).toBe(1);
+        expect(JSON.parse(tampered.output).checks.attestationDigest).toBe(false);
       } finally {
         cleanup(h);
       }

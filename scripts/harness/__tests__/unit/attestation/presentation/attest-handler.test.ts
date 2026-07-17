@@ -24,7 +24,7 @@ const asUseCase = (fake: FakeProduceUseCase): ProduceAttestationUseCase => fake 
 
 const sampleDoc = (): AttestationDocument => ({
   schemaVersion: "phasegate-attestation/v1",
-  predicateType: "p",
+  predicateType: "https://phasegate.dev/attestation/gate-run/v1",
   subject: { command: "phasegate:ci-check", gateResult: "pass", validatorSet: [] },
   inputs: { digestAlgorithm: "sha256", sources: [], inputDigest: `sha256:${"a".repeat(64)}` },
   granularity: { traceability: { validator: "L3-004", level: "file", claim: "c", knownLimitations: [] } },

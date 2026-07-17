@@ -3,6 +3,7 @@
 // @work-item-id WI-291, WI-296
 // @work-item-id WI-304
 // @work-item-id WI-305
+// @work-item-id WI-306
 
 export type {
   PinnedDesignEndpointDto,
@@ -20,7 +21,9 @@ export type {
   WorldCorpusConfig,
   WorldResolvedConfigInput,
 } from "./application/dto/world-resolved-config-input.js";
+export type { WorldSnapshotRootDto } from "./application/dto/world-snapshot-root-dto.js";
 export { PinnedDesignEndpointFacade } from "./application/facades/pinned-design-endpoint-facade.js";
+export { WorldSnapshotRootFacade } from "./application/facades/world-snapshot-root-facade.js";
 export type { WorldModelModuleOptions } from "./composition-root.js";
 export { createWorldModelModule } from "./composition-root.js";
 export type { WorldCommandResult } from "./presentation/cli/world-command-support.js";

@@ -309,3 +309,13 @@ attestationはSHA-256 primitiveのdeployment ownerとして、plain public contr
 2. `hashUtf8`はUnicode normalizationを行わず`TextEncoder` semanticsを使う。
 3. SHA-256 algorithm fallbackを持たない。
 4. 既存attestation `Digest` / record schema / canonical payloadは変更しない。
+
+## 12. WI-306: versioned World snapshot root evidence
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+`AttestationRecord`はv2でoptional domain property `worldSnapshotRoot: Digest | null`を所有する。v1はroot absent、v2はroot requiredとし、schema / predicate / presenceを一体のversion invariantとして扱う。rootはWorldのcanonical `corpusRoot`一件であり、Fragment、Node、PathKey、個別content digestをaggregateへ複製しない。
+
+`WorldSnapshotRootProvider`はapplication consumer portでplain SHA-256 stringだけを返す。provider未配線はv1互換produce、配線済みはv2 produceとし、provider失敗 / invalid digestは未封印recordを保存しない。v2 rootはcanonical payload、seal、equalsへ含まれ、改竄はattestationDigest不一致になる。

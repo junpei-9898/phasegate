@@ -1,6 +1,7 @@
 // @unit attestation
 // @layer test
 // @story H16-01
+// @story H17-18
 
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
@@ -11,8 +12,8 @@ import {
   type ProduceAttestationDeps,
   ProduceAttestationUseCase,
 } from "../../../../../attestation/application/usecases/produce-attestation-usecase.js";
-import { GranularityDerivationService } from "../../../../../attestation/domain/services/granularity-derivation-service.js";
 import { AcBoundScopeService } from "../../../../../attestation/domain/services/ac-bound-scope-service.js";
+import { GranularityDerivationService } from "../../../../../attestation/domain/services/granularity-derivation-service.js";
 import { Digest } from "../../../../../attestation/domain/value-objects/digest.js";
 import { L3_004_FILE_LEVEL_KNOWN_LIMITATION } from "../../../../../attestation/domain/value-objects/granularity-claim.js";
 import { context, target } from "../../../../helpers/test-helpers.js";
@@ -35,7 +36,11 @@ const GATE_FAIL = {
   validatorResults: [{ validatorId: "L3-001", passed: false, skipped: false }],
 };
 
-const buildSut = (overrides?: { gate?: typeof GATE_PASS; writeSpy?: ReturnType<typeof vi.fn> }) => {
+const buildSut = (overrides?: {
+  gate?: typeof GATE_PASS;
+  writeSpy?: ReturnType<typeof vi.fn>;
+  worldSnapshotRootProvider?: ProduceAttestationDeps["worldSnapshotRootProvider"];
+}) => {
   const writeSpy = overrides?.writeSpy ?? vi.fn().mockResolvedValue(undefined);
   const deps: ProduceAttestationDeps = {
     gateResultSource: {
@@ -55,6 +60,7 @@ const buildSut = (overrides?: { gate?: typeof GATE_PASS; writeSpy?: ReturnType<t
     pkgVersion: "1.2.3",
     clock: () => new Date("2026-07-05T12:00:00Z"),
     inputSourcePaths: ["phasegate.config.json", ".harness/requirement-test-matrix.json"],
+    worldSnapshotRootProvider: overrides?.worldSnapshotRootProvider,
   };
   return { sut: new ProduceAttestationUseCase(deps), writeSpy };
 };
@@ -127,6 +133,62 @@ target("ProduceAttestationUseCase", () => {
     });
   });
 
+  describe("v2 World snapshot root テスト（WI-306）", () => {
+    it("providerが返すrootを持つv2を生成しfragment digestを保存しない", async () => {
+      // Arrange
+      const root = `sha256:${"b".repeat(64)}`;
+      const { sut } = buildSut({ worldSnapshotRootProvider: { getWorldSnapshotRoot: async () => root } });
+
+      // Act
+      const result = await sut.execute(baseInput);
+
+      // Assert
+      expect(result.exitCode).toBe(0);
+      expect(result.document).toMatchObject({
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot: root,
+      });
+      expect(JSON.stringify(result.document)).not.toContain("fragmentDigest");
+    });
+
+    it("provider未配線では従来v1 shapeを維持する", async () => {
+      // Arrange
+      const { sut } = buildSut();
+
+      // Act
+      const result = await sut.execute(baseInput);
+
+      // Assert
+      expect(result.document?.schemaVersion).toBe("phasegate-attestation/v1");
+      expect(result.document).not.toHaveProperty("worldSnapshotRoot");
+    });
+
+    it("provider失敗または不正digestではrecordを書かずexit 2", async () => {
+      // Arrange
+      const failed = buildSut({
+        worldSnapshotRootProvider: {
+          getWorldSnapshotRoot: async () => {
+            throw new Error("unavailable");
+          },
+        },
+      });
+      const invalid = buildSut({
+        worldSnapshotRootProvider: { getWorldSnapshotRoot: async () => "not-a-digest" },
+      });
+
+      // Act
+      const failedResult = await failed.sut.execute(baseInput);
+      const invalidResult = await invalid.sut.execute(baseInput);
+
+      // Assert
+      expect(failedResult.exitCode).toBe(2);
+      expect(invalidResult.exitCode).toBe(2);
+      expect(failed.writeSpy).not.toHaveBeenCalled();
+      expect(invalid.writeSpy).not.toHaveBeenCalled();
+    });
+  });
+
   describe("決定論テスト（AC-9）", () => {
     it("producedAt が違っても attestationDigest は一致する", async () => {
       // Arrange: 同一 gate 結果・同一 source・producedAt のみ差
@@ -179,7 +241,9 @@ target("ProduceAttestationUseCase", () => {
       };
       const deps: ProduceAttestationDeps = {
         gateResultSource: { fetchGateResult: vi.fn().mockResolvedValue(GATE_PASS) },
-        sourceDigester: { digestFile: vi.fn().mockImplementation(async (path: string) => realHasher.sha256(`content-of-${path}`)) },
+        sourceDigester: {
+          digestFile: vi.fn().mockImplementation(async (path: string) => realHasher.sha256(`content-of-${path}`)),
+        },
         hasher: realHasher,
         repository: { write: writeSpy, read: vi.fn() },
         granularityService: new GranularityDerivationService(),

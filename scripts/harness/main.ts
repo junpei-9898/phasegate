@@ -23,6 +23,7 @@
  * @work-item-id WI-219
  * @work-item-id WI-291
  * @work-item-id WI-300
+ * @work-item-id WI-306
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -3075,7 +3076,16 @@ async function main(): Promise<void> {
         }
         const { createAttestationModule } = await import("./attestation/index.js");
         const pkgVersion = await getHarnessVersion(harnessRoot);
-        const mod = createAttestationModule(rootDir, { pkgVersion });
+        const worldModule = createWorldModelModule({
+          rootDir,
+          resolvedConfig: await loadWorldResolvedConfig(),
+        });
+        const mod = createAttestationModule(rootDir, {
+          pkgVersion,
+          worldSnapshotRootProvider: {
+            getWorldSnapshotRoot: async () => (await worldModule.worldSnapshotRootFacade.read()).worldSnapshotRoot,
+          },
+        });
         const result = await mod.attestHandler.handle({
           out: parseFlag(args, "--out") ?? ".harness/attestation.json",
           requirePass: hasFlag(args, "--require-pass"),

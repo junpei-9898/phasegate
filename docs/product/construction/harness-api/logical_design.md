@@ -2016,3 +2016,11 @@ main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / derive
 ## WI-305: commit-msg composition
 
 `runCommitMsgCli`だけがresolved World config、traceability staged observer、World pinned endpoint facade、validator declaration policyをcompositionする。native pre-commitとbypass auditには新しいGit observationを暗黙追加しない。declaration mismatchはnon-bypassable blocker、observation warningはexit codeを変えない。message / indexを信頼するlocal navigation aidでありL3 authorityではない旨を出力する。
+
+## WI-306: attestation v2 top-level composition
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+`phasegate:attest` dispatchはresolved World configでworld-modelを構築し、public `WorldSnapshotRootFacade`のplain root providerをattestation moduleへ注入する。Unit間のcompositionはmain境界だけに置き、attestationからworld-modelへのimportを禁止する。verify dispatchは保存document自身のversion admissionを使い、current World rootを再導出して過去evidenceを否定しない。

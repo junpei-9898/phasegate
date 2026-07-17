@@ -39,7 +39,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-17 | World Model | 16 | 4 |
+| H-17 | World Model | 18 | 4 |
 | H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
@@ -1686,13 +1686,14 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
-## Wave 4: World Model（H-17 / 16 US）
+## Wave 4: World Model（H-17 / 18 US）
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-292 -->
 <!-- @work-item-id WI-301 -->
 <!-- @work-item-id WI-302 -->
 <!-- @work-item-id WI-304 -->
+<!-- @work-item-id WI-306 -->
 
 ## H-17: World Model
 
@@ -2045,6 +2046,30 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-5: observation不能は固定code warningへfail-openし、new / malformed structural findingのfail-closed責務をL2-017 / L3-008に残す
 - [ ] AC-6: `@world-reflects`を明示reflection factとして公開し、heading / proseから意味的関係や変更原因を推論しない
 
+### H17-18: Attestation v2 World snapshot root pin（WM-23）
+
+<!-- @work-item-id WI-306 -->
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-23 / WI-306）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** CI evidenceを検証する開発者,
+**I want to** attestation v2が実行時のcanonical World snapshot rootをpinしてほしい,
+**so that** fragment digestを証拠へ複製せず、後から同じWorld corpus identityを参照できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: v2 documentは`phasegate-attestation/v2`、`.../gate-run/v2`、必須`worldSnapshotRoot`を持ち、rootをcanonical attestation digestで封印する
+- [ ] AC-2: attestationはfragment digest collectionを保存せず、Worldの`corpusRoot`一件だけをpinする
+- [ ] AC-3: top-level compositionはworld-model public facadeのplain DTOからrootを注入し、attestationからworld-modelへimportしない
+- [ ] AC-4: provider未配線のv1 produceと既存v1 verifyを維持し、v1 / v2双方のproduce→verify E2Eが成功する
+- [ ] AC-5: v1 / v2のschema、predicate、root presence不整合とunknown schemaをfail-closedで拒否する
+- [ ] AC-6: World attestation projectionはv2 evidence semanticsとverification statusを観測する一方、`worldSnapshotRoot` self-referenceをcorpusRoot入力から除外する
+- [ ] AC-7: v2 root改竄はattestationDigest mismatchとして検出され、L2-016の既存coverage attestation挙動を変更しない
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -2087,8 +2112,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 17 | 17 | 0 |
-| **Wave 4小計** | | **17** | **17** | **0** |
+| 4 | H-17 World Model | 18 | 18 | 0 |
+| **Wave 4小計** | | **18** | **18** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **87** | **81** | **6** |
-| **全体（Future含む）** | | **92** | — | — |
+| **v1合計** | | **88** | **82** | **6** |
+| **全体（Future含む）** | | **93** | — | — |

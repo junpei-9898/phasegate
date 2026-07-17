@@ -1,6 +1,7 @@
 // @unit attestation
 // @layer test
 // @story H16-01
+// @story H17-18
 
 import { describe, expect, it } from "vitest";
 import {
@@ -213,13 +214,77 @@ target("AttestationRecord", () => {
     it("producedAt/gitCommit のみ差異なら acBoundScope 込みで attestationDigest がバイト一致（決定論）", () => {
       // Arrange
       const hasher = new FakeHasher();
-      const recordA = AttestationRecord.create({ ...buildProps({ producedAt: "2026-01-01T00:00:00Z" }), acBoundScope: ["HF2-05"] });
-      const recordB = AttestationRecord.create({ ...buildProps({ producedAt: "2099-12-31T23:59:59Z" }), acBoundScope: ["HF2-05"] });
+      const recordA = AttestationRecord.create({
+        ...buildProps({ producedAt: "2026-01-01T00:00:00Z" }),
+        acBoundScope: ["HF2-05"],
+      });
+      const recordB = AttestationRecord.create({
+        ...buildProps({ producedAt: "2099-12-31T23:59:59Z" }),
+        acBoundScope: ["HF2-05"],
+      });
       // Act
       const sealedA = recordA.seal(hasher);
       const sealedB = recordB.seal(hasher);
       // Assert
       expect(sealedA.signature.attestationDigest.value).toBe(sealedB.signature.attestationDigest.value);
+    });
+  });
+
+  describe("attestation v2 World root テスト（WI-306）", () => {
+    it("v2 rootをcanonical payloadへ含めてsealすること", () => {
+      // Arrange
+      const hasher = new FakeHasher();
+      const root = Digest.create(`sha256:${"b".repeat(64)}`);
+      const record = AttestationRecord.create({
+        ...buildProps(),
+        schemaVersion: "phasegate-attestation/v2",
+        predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        worldSnapshotRoot: root,
+      });
+
+      // Act
+      const sealed = record.seal(hasher);
+
+      // Assert
+      expect(sealed.toCanonicalPayload()).toHaveProperty("worldSnapshotRoot", root.value);
+      expect(sealed.worldSnapshotRoot?.value).toBe(root.value);
+      expect(sealed.signature.attestationDigest.equals(sealed.computeAttestationDigest(hasher))).toBe(true);
+    });
+
+    it("v2 rootだけが違う場合にattestationDigestが変わること", () => {
+      // Arrange
+      const hasher = new FakeHasher();
+      const v2 = (hex: string) =>
+        AttestationRecord.create({
+          ...buildProps(),
+          schemaVersion: "phasegate-attestation/v2",
+          predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+          worldSnapshotRoot: Digest.create(`sha256:${hex.repeat(64)}`),
+        }).seal(hasher);
+
+      // Act
+      const first = v2("b");
+      const second = v2("c");
+
+      // Assert
+      expect(first.signature.attestationDigest.value).not.toBe(second.signature.attestationDigest.value);
+    });
+
+    it("v1へrootを混入したrecordとrootなしv2を拒否すること", () => {
+      // Arrange
+      const root = Digest.create(`sha256:${"b".repeat(64)}`);
+
+      // Act / Assert
+      expect(() => AttestationRecord.create({ ...buildProps(), worldSnapshotRoot: root })).toThrow(
+        AttestationInvariantError,
+      );
+      expect(() =>
+        AttestationRecord.create({
+          ...buildProps(),
+          schemaVersion: "phasegate-attestation/v2",
+          predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+        }),
+      ).toThrow(AttestationInvariantError);
     });
   });
 

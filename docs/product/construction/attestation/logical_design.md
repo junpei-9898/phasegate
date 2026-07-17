@@ -754,3 +754,13 @@ attestation は gate-run evidence、record schema、produce / verify と evidenc
 <!-- @work-item-id WI-283 -->
 
 World 向け evidence projection は evidence semantics と verification status を含め、`producedAt`、`gitCommit`、producer package version、signature bytes、attestation self-digest、将来の `worldSnapshotRoot` self-reference を semantic root 入力から除外できる plain DTO とする。この projection は attestation record 自体の canonical payload / verification contractを変更しない。SHA-256 は §10 の public `Sha256Capability` を唯一の公開 primitive とし、World 導入のために `node:crypto` call siteを追加しない。
+
+## WI-306: attestation v2 / World root injection
+
+<!-- @work-item-id WI-306 -->
+
+@story-id H17-18
+
+v2は`schemaVersion: phasegate-attestation/v2`、`predicateType: https://phasegate.dev/attestation/gate-run/v2`、top-level必須`worldSnapshotRoot`を持つ。rootはcanonical payloadへ含めるが、fragment digest配列は追加しない。mapperはv1 / v2だけをadmitし、version / predicate / root presence mismatchを`L1-053`としてfail-closedにする。
+
+compositionはoptional `WorldSnapshotRootProvider`をProduce usecaseへ渡す。未配線なら既存v1、配線時はproviderを一度readしてv2を生成する。attestationはworld-modelをimportせず、top-level harness compositionがWorld public facadeからplain rootを注入する。v1 verify / programmatic produceは無期限に維持し、CLI compositionはv2 providerを配線する。

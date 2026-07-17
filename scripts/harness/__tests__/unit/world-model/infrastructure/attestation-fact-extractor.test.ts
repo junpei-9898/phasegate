@@ -2,6 +2,7 @@
 // @layer test
 // @work-item-id WI-290
 // @story H17-05
+// @story H17-18
 
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -187,6 +188,33 @@ describe("Attestation fact extraction", () => {
 
     // Assert
     expect(first.nodes[0].contentDigest.toString()).not.toBe(second.nodes[0].contentDigest.toString());
+  });
+
+  it("v2 worldSnapshotRootだけの差をWorld projectionから除外すること", async () => {
+    // Arrange
+    const sut = new AttestationFactExtractor({
+      rootDir,
+      hashingPort: new ByteHashingPort(),
+      verificationFacade: new FixedVerificationFacade(passed),
+    });
+    const v2 = (root: string) => ({
+      ...document("2026-07-16T00:00:00Z", `sha256:${"4".repeat(64)}`),
+      schemaVersion: "phasegate-attestation/v2",
+      predicateType: "https://phasegate.dev/attestation/gate-run/v2",
+      worldSnapshotRoot: root,
+    });
+
+    // Act
+    await writeDocument(v2(`sha256:${"b".repeat(64)}`));
+    const first = await sut.extract();
+    await writeDocument(v2(`sha256:${"c".repeat(64)}`));
+    const second = await sut.extract();
+
+    // Assert
+    expect(first.diagnostics).toEqual([]);
+    expect(second.diagnostics).toEqual([]);
+    expect(first.nodes[0].contentDigest.toString()).toBe(second.nodes[0].contentDigest.toString());
+    expect(first.nodes[0].attributes).not.toHaveProperty("worldSnapshotRoot");
   });
 
   it("unknown schemaとfile不在をartifactなしのdiagnosticにすること", async () => {

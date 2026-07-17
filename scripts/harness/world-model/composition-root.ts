@@ -6,6 +6,7 @@
 // @work-item-id WI-296, WI-297
 // @work-item-id WI-300
 // @work-item-id WI-305
+// @work-item-id WI-306
 
 import { createAttestationModule, createSha256Capability } from "../attestation/index.js";
 import { createTraceabilityModelModule } from "../traceability-model/index.js";
@@ -14,6 +15,7 @@ import {
   type WorldResolvedConfigInput,
 } from "./application/dto/world-resolved-config-input.js";
 import { PinnedDesignEndpointFacade } from "./application/facades/pinned-design-endpoint-facade.js";
+import { WorldSnapshotRootFacade } from "./application/facades/world-snapshot-root-facade.js";
 import { BuildSnapshotUseCase } from "./application/usecases/build-snapshot-use-case.js";
 import { DeriveObligationsUseCase } from "./application/usecases/derive-obligations-use-case.js";
 import {
@@ -170,6 +172,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     corpusConfigDigest,
   });
   const inspectWorldUseCase = new InspectWorldUseCase({ buildSnapshot: buildSnapshotUseCase });
+  const worldSnapshotRootFacade = new WorldSnapshotRootFacade(buildSnapshotUseCase);
   const fingerprintDeriver = new ViolationFingerprintDeriver(serializer, hashingPort);
   const constraintRepository = new FileSystemConstraintDeclarationRepositoryAdapter({
     rootDir: options.rootDir,
@@ -238,6 +241,7 @@ export function createWorldModelModule(options: WorldModelModuleOptions) {
     pinnedDesignEndpointFacade,
     worldDeriveCommandHandler,
     worldInspectCommandHandler,
+    worldSnapshotRootFacade,
     worldPinCommandHandler,
   } as const;
 }
