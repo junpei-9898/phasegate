@@ -1,6 +1,7 @@
 // @unit validator-system
 // @layer integration
 // @story H08-02
+// @work-item-id WI-324
 
 /**
  * L3-004（AC網羅ゲート）の REAL registry + matrix-path 配線に対する回帰テスト。
@@ -14,18 +15,18 @@
  * 本テストは phasegate:ci-check --json を temp cwd で実行し、config・user_stories.md・
  * requirement-test-matrix.json を配置したうえで L3-004 の per-validator 結果を検証する。
  */
-import { spawn } from 'node:child_process';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { expect, it } from 'vitest';
-import { context, target } from '../../../helpers/test-helpers.js';
+import { spawn } from "node:child_process";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, it } from "vitest";
+import { context, target } from "../../../helpers/test-helpers.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const HARNESS_ROOT = path.resolve(__dirname, '../../../../../..');
-const MAIN_TS = path.join(HARNESS_ROOT, 'scripts/harness/main.ts');
-const SCHEMA_SRC = path.join(HARNESS_ROOT, 'docs/contracts/requirement-test-matrix.schema.json');
+const HARNESS_ROOT = path.resolve(__dirname, "../../../../../..");
+const MAIN_TS = path.join(HARNESS_ROOT, "scripts/harness/main.ts");
+const SCHEMA_SRC = path.join(HARNESS_ROOT, "docs/contracts/requirement-test-matrix.schema.json");
 
 interface CliResult {
   exitCode: number;
@@ -35,17 +36,17 @@ interface CliResult {
 
 function runCli(args: readonly string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['tsx', MAIN_TS, ...args], { cwd, env: process.env });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk: Buffer) => {
+    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env: process.env });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();
     });
-    child.stderr.on('data', (chunk: Buffer) => {
+    child.stderr.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
     });
-    child.on('error', reject);
-    child.on('exit', (code) => {
+    child.on("error", reject);
+    child.on("exit", (code) => {
       resolve({ exitCode: code ?? -1, stdout, stderr });
     });
     child.stdin.end();
@@ -65,8 +66,8 @@ function parseValidatorResults(stdout: string): ValidatorResult[] {
 }
 
 function findL3004(stdout: string): ValidatorResult {
-  const result = parseValidatorResults(stdout).find((r) => r.validatorId === 'L3-004');
-  if (!result) throw new Error('L3-004 result not found');
+  const result = parseValidatorResults(stdout).find((r) => r.validatorId === "L3-004");
+  if (!result) throw new Error("L3-004 result not found");
   return result;
 }
 
@@ -75,21 +76,23 @@ interface FixtureOptions {
   readonly matrix: object | null;
   readonly requirementMatrixPath?: string;
   readonly l3Validators?: readonly string[];
+  /** WI-324: true のとき user_stories.md 自体を配置しない（phasegate 導入直後のフレッシュプロジェクトを模擬）。 */
+  readonly omitStoryCatalog?: boolean;
 }
 
 const BASE_CONFIG = {
-  project: { name: 'l3-004-fixture', preset: 'standard' },
-  architecture: { preset: 'clean' },
+  project: { name: "l3-004-fixture", preset: "standard" },
+  architecture: { preset: "clean" },
   quickMode: {},
-  phaseDependencies: { preset: 'standard', override: false, customRules: [] },
-  planningMode: { default: 'interactive', perPhase: {} },
+  phaseDependencies: { preset: "standard", override: false, customRules: [] },
+  planningMode: { default: "interactive", perPhase: {} },
   harnesses: {},
-  paths: { designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' },
-  reporting: { format: 'json', outputDir: 'reports' },
+  paths: { designDocs: "docs/product/construction", inceptionDocs: "docs/inception" },
+  reporting: { format: "json", outputDir: "reports" },
 } as const;
 
 async function setupFixture(options: FixtureOptions): Promise<string> {
-  const workDir = await mkdtemp(path.join(tmpdir(), 'phasegate-l3-004-'));
+  const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-l3-004-"));
 
   const l3Config: Record<string, unknown> = {};
   if (options.l3Validators) l3Config.validators = [...options.l3Validators];
@@ -106,25 +109,28 @@ async function setupFixture(options: FixtureOptions): Promise<string> {
       L4: { enabled: false },
     },
   };
-  await writeFile(path.join(workDir, 'phasegate.config.json'), JSON.stringify(config, null, 2), 'utf-8');
+  await writeFile(path.join(workDir, "phasegate.config.json"), JSON.stringify(config, null, 2), "utf-8");
 
   // user_stories.md（story catalog）を配置。designDocs=docs/product/construction のため
   // productDocsRoot は docs/product、catalog は docs/product/user_stories.md。
-  await mkdir(path.join(workDir, 'docs/product'), { recursive: true });
-  const storyLines = options.storyIds.map((id) => `- ${id}: サンプルストーリー`).join('\n');
-  await writeFile(path.join(workDir, 'docs/product/user_stories.md'), `# User Stories\n\n${storyLines}\n`, 'utf-8');
+  // omitStoryCatalog=true（WI-324 フレッシュプロジェクト模擬）の場合は配置しない。
+  await mkdir(path.join(workDir, "docs/product"), { recursive: true });
+  if (!options.omitStoryCatalog) {
+    const storyLines = options.storyIds.map((id) => `- ${id}: サンプルストーリー`).join("\n");
+    await writeFile(path.join(workDir, "docs/product/user_stories.md"), `# User Stories\n\n${storyLines}\n`, "utf-8");
+  }
 
   // matrix schema はプロジェクトルート基準（docs/contracts/...）で読まれるため temp にコピーする。
-  await mkdir(path.join(workDir, 'docs/contracts'), { recursive: true });
-  const { readFile } = await import('node:fs/promises');
-  const schemaRaw = await readFile(SCHEMA_SRC, 'utf-8');
-  await writeFile(path.join(workDir, 'docs/contracts/requirement-test-matrix.schema.json'), schemaRaw, 'utf-8');
+  await mkdir(path.join(workDir, "docs/contracts"), { recursive: true });
+  const { readFile } = await import("node:fs/promises");
+  const schemaRaw = await readFile(SCHEMA_SRC, "utf-8");
+  await writeFile(path.join(workDir, "docs/contracts/requirement-test-matrix.schema.json"), schemaRaw, "utf-8");
 
   if (options.matrix !== null) {
-    const matrixPath = options.requirementMatrixPath ?? '.harness/requirement-test-matrix.json';
+    const matrixPath = options.requirementMatrixPath ?? ".harness/requirement-test-matrix.json";
     const abs = path.join(workDir, matrixPath);
     await mkdir(path.dirname(abs), { recursive: true });
-    await writeFile(abs, JSON.stringify(options.matrix, null, 2), 'utf-8');
+    await writeFile(abs, JSON.stringify(options.matrix, null, 2), "utf-8");
   }
 
   return workDir;
@@ -132,15 +138,15 @@ async function setupFixture(options: FixtureOptions): Promise<string> {
 
 function coveredMatrix(storyId: string): object {
   return {
-    version: '1.0.0',
-    generatedAt: '2026-07-04T00:00:00.000Z',
+    version: "1.0.0",
+    generatedAt: "2026-07-04T00:00:00.000Z",
     stories: [
       {
         storyId,
         storyMappings: [
           {
-            acId: 'AC-1',
-            testReferences: [{ filePath: 'scripts/harness/__tests__/unit/sample.test.ts', testType: 'unit' }],
+            acId: "AC-1",
+            testReferences: [{ filePath: "scripts/harness/__tests__/unit/sample.test.ts", testType: "unit" }],
           },
         ],
       },
@@ -148,18 +154,18 @@ function coveredMatrix(storyId: string): object {
   };
 }
 
-target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => {
-  context('storyIdがカタログに登録され全ACがテスト網羅されている場合', () => {
-    it('L3-004 が PASS すること（空スタブ回帰防止）', async () => {
+target("L3-004 AC網羅ゲート — REAL registry + matrix-path 配線", () => {
+  context("storyIdがカタログに登録され全ACがテスト網羅されている場合", () => {
+    it("L3-004 が PASS すること（空スタブ回帰防止）", async () => {
       // Arrange
       const workDir = await setupFixture({
-        storyIds: ['H07-01'],
-        matrix: coveredMatrix('H07-01'),
+        storyIds: ["H07-01"],
+        matrix: coveredMatrix("H07-01"),
       });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const actual = findL3004(cli.stdout);
 
         // Assert
@@ -172,17 +178,17 @@ target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => 
     }, 90000);
   });
 
-  context('storyIdがカタログに未登録の場合', () => {
-    it('L3-004 が FAIL し「未登録のstoryId」エラーを返すこと', async () => {
+  context("storyIdがカタログに未登録の場合", () => {
+    it("L3-004 が FAIL し「未登録のstoryId」エラーを返すこと", async () => {
       // Arrange
       const workDir = await setupFixture({
-        storyIds: ['H07-01'],
-        matrix: coveredMatrix('H99-99'),
+        storyIds: ["H07-01"],
+        matrix: coveredMatrix("H99-99"),
       });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const actual = findL3004(cli.stdout);
 
         // Assert
@@ -195,19 +201,19 @@ target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => 
     }, 90000);
   });
 
-  context('登録済みstoryIdだがACがテスト未網羅の場合', () => {
-    it('L3-004 が FAIL し「AC not covered」エラーを返すこと', async () => {
+  context("登録済みstoryIdだがACがテスト未網羅の場合", () => {
+    it("L3-004 が FAIL し「AC not covered」エラーを返すこと", async () => {
       // Arrange
       const uncovered = {
-        version: '1.0.0',
-        generatedAt: '2026-07-04T00:00:00.000Z',
-        stories: [{ storyId: 'H07-01', storyMappings: [{ acId: 'AC-1', testReferences: [] }] }],
+        version: "1.0.0",
+        generatedAt: "2026-07-04T00:00:00.000Z",
+        stories: [{ storyId: "H07-01", storyMappings: [{ acId: "AC-1", testReferences: [] }] }],
       };
-      const workDir = await setupFixture({ storyIds: ['H07-01'], matrix: uncovered });
+      const workDir = await setupFixture({ storyIds: ["H07-01"], matrix: uncovered });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const actual = findL3004(cli.stdout);
 
         // Assert
@@ -219,19 +225,21 @@ target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => 
     }, 90000);
   });
 
-  context('matrixファイルが不在の場合', () => {
-    it('L3-004 が fail-closed になり、兄弟バリデータ(L3-001)は実行され続けること', async () => {
+  context("matrixファイルが不在の場合", () => {
+    it("L3-004 が fail-closed になり、兄弟バリデータ(L3-001)は実行され続けること", async () => {
       // Arrange
-      const workDir = await setupFixture({ storyIds: ['H07-01'], matrix: null });
+      const workDir = await setupFixture({ storyIds: ["H07-01"], matrix: null });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const results = parseValidatorResults(cli.stdout);
-        const l3004 = results.find((r) => r.validatorId === 'L3-004');
-        const l3001 = results.find((r) => r.validatorId === 'L3-001');
+        const l3004 = results.find((r) => r.validatorId === "L3-004");
+        const l3001 = results.find((r) => r.validatorId === "L3-001");
 
         // Assert
+        // WI-324: story が存在する限り matrix 不在は SKIP されず fail-closed のまま
+        expect(l3004?.skipped).toBe(false);
         expect(l3004?.passed).toBe(false);
         expect(l3004?.errors.some((e) => /見つかりません/.test(e.message))).toBe(true);
         // 兄弟バリデータ（L3-001）はバッチが落ちずに実行される
@@ -243,19 +251,19 @@ target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => 
     }, 90000);
   });
 
-  context('config の requirementMatrixPath でカスタムパスを指定する場合', () => {
-    it('指定パスの matrix が読まれ L3-004 が PASS すること', async () => {
+  context("config の requirementMatrixPath でカスタムパスを指定する場合", () => {
+    it("指定パスの matrix が読まれ L3-004 が PASS すること", async () => {
       // Arrange
-      const customPath = 'config/custom-matrix.json';
+      const customPath = "config/custom-matrix.json";
       const workDir = await setupFixture({
-        storyIds: ['H07-01'],
-        matrix: coveredMatrix('H07-01'),
+        storyIds: ["H07-01"],
+        matrix: coveredMatrix("H07-01"),
         requirementMatrixPath: customPath,
       });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const actual = findL3004(cli.stdout);
 
         // Assert
@@ -267,18 +275,57 @@ target('L3-004 AC網羅ゲート — REAL registry + matrix-path 配線', () => 
     }, 90000);
   });
 
-  context('config の layers.L3.validators で L3-004 を除外する場合（per-repo scoping）', () => {
-    it('L3-004 は実行されず skip されること', async () => {
+  context("フレッシュプロジェクトの場合（story catalog 不在・matrix 不在。WI-324）", () => {
+    it("L3-004 が fail-closed にならず skipped=true で返ること", async () => {
+      // Arrange
+      const workDir = await setupFixture({ storyIds: [], matrix: null, omitStoryCatalog: true });
+
+      // Act
+      try {
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
+        const actual = findL3004(cli.stdout);
+
+        // Assert
+        expect(actual.skipped).toBe(true);
+        expect(actual.passed).toBe(true);
+        expect(actual.errors ?? []).toEqual([]);
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
+    }, 90000);
+  });
+
+  context("story catalog は存在するが story がゼロ件で matrix も不在の場合（WI-324）", () => {
+    it("L3-004 が story ゼロ判定により skipped=true で返ること", async () => {
+      // Arrange
+      const workDir = await setupFixture({ storyIds: [], matrix: null });
+
+      // Act
+      try {
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
+        const actual = findL3004(cli.stdout);
+
+        // Assert
+        expect(actual.skipped).toBe(true);
+        expect(actual.passed).toBe(true);
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
+    }, 90000);
+  });
+
+  context("config の layers.L3.validators で L3-004 を除外する場合（per-repo scoping）", () => {
+    it("L3-004 は実行されず skip されること", async () => {
       // Arrange
       const workDir = await setupFixture({
-        storyIds: ['H07-01'],
+        storyIds: ["H07-01"],
         matrix: null,
-        l3Validators: ['L3-001', 'L3-002', 'L3-003'],
+        l3Validators: ["L3-001", "L3-002", "L3-003"],
       });
 
       // Act
       try {
-        const cli = await runCli(['phasegate:ci-check', '--json'], workDir);
+        const cli = await runCli(["phasegate:ci-check", "--json"], workDir);
         const actual = findL3004(cli.stdout);
 
         // Assert

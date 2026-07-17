@@ -3,6 +3,7 @@
  * @unit validator-system
  * @story H08-02
  * @work-item-id WI-317
+ * @work-item-id WI-324
  */
 import { describe, expect, it, vi } from "vitest";
 import { ValidationResultContractMapper } from "../../../../validator-system/application/mappers/validation-result-contract-mapper.js";
@@ -10,6 +11,7 @@ import {
   CoverageReportNotFoundError,
   RunL3ValidatorsUseCase,
 } from "../../../../validator-system/application/use-cases/run-l3-validators-usecase.js";
+import type { AcCoveragePolicyPort } from "../../../../validator-system/domain/ports/ac-coverage-policy-port.js";
 import { ValidatorExecutionService } from "../../../../validator-system/domain/services/validator-execution-service.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 import { createFullRegistry, createLayerConfig } from "../helpers.js";
@@ -22,6 +24,7 @@ function createL3UseCase(
       perFileCoverage: readonly { filePath: string; coverage: number }[];
     }>;
   },
+  acCoveragePolicyPort?: AcCoveragePolicyPort,
 ) {
   const registry = createFullRegistry();
   const executionService = new ValidatorExecutionService({});
@@ -35,6 +38,7 @@ function createL3UseCase(
     validatorConfigPort: mockValidatorConfigPort,
     contractMapper: mapper,
     coverageReportPort: coveragePort,
+    acCoveragePolicyPort,
   });
 }
 
@@ -247,6 +251,66 @@ target("RunL3ValidatorsUseCase", () => {
         const errorMsg = l3003?.errors[0]?.message ?? "";
         expect(errorMsg).toContain("75");
         expect(errorMsg).toContain("15");
+      });
+    });
+  });
+
+  describe("L3-004 フレッシュプロジェクト SKIP（WI-324）", () => {
+    context("acCoveragePolicyPortがskipped=trueを返す場合（story 未作成・matrix 未生成）", () => {
+      it("L3-004がskipped=trueかつskipReason付きで返りFAILしないこと (IT-UC-RunL3-011)", async () => {
+        // Arrange
+        const mockAcCoveragePolicyPort: AcCoveragePolicyPort = {
+          checkCoverage: vi.fn().mockResolvedValue({
+            passed: true,
+            errors: [],
+            skipped: true,
+            skipReason:
+              "story 未作成のため L3-004 をスキップ（story 作成後に requirement-test-matrix を生成すると有効化されます）",
+          }),
+        };
+        const usecase = createL3UseCase({}, undefined, mockAcCoveragePolicyPort);
+        const input = { targetPaths: ["src/"] };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l3004 = actual.find((r) => r.validatorId === "L3-004");
+        expect(l3004?.skipped).toBe(true);
+        expect(l3004?.passed).toBe(true);
+        expect(l3004?.errors).toEqual([]);
+        expect(l3004?.skipReason ?? "").toContain("story 未作成");
+      });
+    });
+
+    context("acCoveragePolicyPortがskippedなしでpassed=falseを返す場合（story あり・matrix 不在）", () => {
+      it("L3-004が従来どおりpassed=falseのfail-closedで返ること (IT-UC-RunL3-012)", async () => {
+        // Arrange
+        const mockAcCoveragePolicyPort: AcCoveragePolicyPort = {
+          checkCoverage: vi.fn().mockResolvedValue({
+            passed: false,
+            errors: [
+              {
+                code: { value: "L3-004", toString: () => "L3-004" },
+                severity: { value: "error", toString: () => "error" },
+                message:
+                  "AC網羅マトリクスが見つかりません: .harness/requirement-test-matrix.json（L3-004 は fail-closed）",
+                suggestion: ".harness/requirement-test-matrix.json を生成してください（phasegate:generate-matrix）",
+              },
+            ],
+          }),
+        };
+        const usecase = createL3UseCase({}, undefined, mockAcCoveragePolicyPort);
+        const input = { targetPaths: ["src/"] };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l3004 = actual.find((r) => r.validatorId === "L3-004");
+        expect(l3004?.passed).toBe(false);
+        expect(l3004?.skipped).toBe(false);
+        expect(l3004?.errors[0]?.message ?? "").toContain("見つかりません");
       });
     });
   });

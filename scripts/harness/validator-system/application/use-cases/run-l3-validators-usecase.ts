@@ -4,6 +4,7 @@
  * @work-item-id WI-212
  * @work-item-id WI-302
  * @work-item-id WI-317
+ * @work-item-id WI-324
  *
  * RunL3ValidatorsUseCase — H08-02: L3バリデータ実行
  */
@@ -228,7 +229,19 @@ export class RunL3ValidatorsUseCase {
         const policyResult = await this.acCoveragePolicyPort.checkCoverage({
           matrixFilePath: input.requirementMatrixPath,
         });
-        if (!policyResult.passed) {
+        // WI-324: フレッシュプロジェクト（story 未作成・matrix 未生成）は policy adapter が
+        // skipped=true を返すので、L3-003 の opt-out と同じ表現で skipWithReason に変換する。
+        // story が存在するのに matrix が不在の場合は従来どおり fail-closed（下の分岐）。
+        if (policyResult.skipped) {
+          overrideMap.set(
+            "L3-004",
+            ValidationResult.skipWithReason(
+              ValidatorId.create("L3-004"),
+              policyResult.skipReason ??
+                "story 未作成のため L3-004 をスキップ（story 作成後に requirement-test-matrix を生成すると有効化されます）",
+            ),
+          );
+        } else if (!policyResult.passed) {
           overrideMap.set("L3-004", ValidationResult.fail(ValidatorId.create("L3-004"), [...policyResult.errors], 0));
         }
       }

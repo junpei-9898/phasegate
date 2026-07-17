@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-324 — フレッシュプロジェクトで L3-004 を SKIP に（オンボーディング阻害の解消）** — phasegate 導入直後（story 未作成・requirement-test-matrix 未生成）でも L3-004 が「マトリクス不在」で fail-closed FAIL になり導入体験を阻害していた。「matrix 不在 かつ StoryCatalog（user_stories.md）の story ゼロ」の場合のみ skipWithReason（WI-317 の L3-003 と同表現）で透過 SKIP に変更。**story が 1 件でも存在するのに matrix 不在なら従来どおり fail-closed**（あるべき matrix の消失事故は見逃さない）。story 数の取得に失敗した場合も判定不能として fail-closed 側に倒す。
+
 - **WI-323 — 非ゲート hook の payload フィールド欠落を fail-open 化（GitHub #40 残課題）** — stop hook が stdin payload の `session_id` 欠落で exit 2 になり、WI-314 の「hook は開発フローを止めない」方針と不整合だった。stop（`SESSION_ID_MISSING`）と post-tool-use（`TOOL_NAME_MISSING`）を警告 + hook-skip-event 記録 + exit 0 の fail-open に変更。**pre-tool-use の `tool_name` 欠落 exit 2 は書き込みゲートのため意図的に fail-closed を維持**し、回帰ガードテストで固定。usecase 契約（空 sessionId エラー）は presentation 入口ガード方式で不変。
 
 - **WI-322 — config なし fallback の coverageThreshold 90 を opt-out の 0 に修正（GitHub #37 残課題）** — WI-317 で「カバレッジゲートはオプトイン、0 = 正規の opt-out」と定義したのに、config なし環境で使われる validator-system の `DEFAULT_CONFIG` fallback が `coverageThreshold: 90` のままで、config を持たない環境だけ勝手に 90% が強制される矛盾を解消。fallback のみの変更でプリセット定義（minimal / standard / strict）は不変。fallback 経由で L3-003 が透過 SKIP になることを回帰テストで固定。
