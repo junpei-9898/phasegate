@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-313 — typescript peer range を `<7.0.0` に制限（GitHub #34）** — peer 自動インストールで typescript@7 が解決されると classic compiler API（`ts.ScriptTarget` 等）が存在せず全コマンドが `Cannot read properties of undefined (reading 'ESNext')` でクラッシュする問題を修正。TypeScript 7 系を peer range で弾き、packaging contract テストで range を固定した。
+
 - **WI-312 — coverage-producing CI gate** — production workflowとbundled `aidlc-gate`がL3-003実行前に`coverage/coverage-summary.json`を生成せず、clean checkoutでcoverageThresholdに対してfail-closedとなる既存欠陥を修正。self-repoはcoverage付きunit / integrationとcoverage対象外E2Eを各1回だけ実行してplain full suiteの二重実行を避け、threads開始時にもforks blobを保持して両poolをmergeする。templateは採用projectの`coverage` scriptをpackage manager別に必須実行し、test / coverage → matrix → World derive二重一致 → L3 → attestation → integrityの順序を維持する。
 
 - **WI-311 — hermetic CI-facing harness integration tests** — GitHub Actionsのtest-before-matrix順序で、real lint integrationとCLI E2Eがself-repo cwd、coverage、untracked requirement matrixを暗黙のPASS入力としていた既存欠陥を修正。lint adapterへ明示rootを注入してtracked minimal workspaceだけを実scanし、`phasegate:ci-check --json`とlegacy `complete-check`はL3 / Worldを明示無効化したtemp configで公開command契約を検証する。productionのfail-closedとCI gate順序は変更しない。
