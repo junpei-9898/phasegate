@@ -1,6 +1,6 @@
 // @layer domain
 // @unit harness-api
-// @work-item-id WI-108 / WI-114, WI-186, WI-318
+// @work-item-id WI-108 / WI-114, WI-186, WI-318, WI-321
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import type { ArtifactScannerPort } from "../ports/artifact-scanner-port.js";
@@ -315,8 +315,12 @@ export class CommandDispatchService {
         // これにより warning-only failure（例: L2-016 の ungated-legacy marker）が
         // Stop hook の complete-check 経路でも validate --layer L2 / ci-check と同じく
         // 実質 pass となる。lint 結果の合流（lint fail → exit 1）は従来どおり維持。
+        // WI-321 (github#38 残課題): warning が summary の件数のみで内容不明だったため、
+        // ci-check case と同じく CiCheckResult を data ペイロードとして pass/fail 双方で返す。
+        // validatorResults が空の場合のみ従来どおり data なし。
+        let result: CiCheckResult | undefined;
         if (validatorResults.length > 0) {
-          const result = CiCheckResult.fromResults(validatorResults);
+          result = CiCheckResult.fromResults(validatorResults);
           warningCount = result.collectAllErrors().filter((e) => e.severity === "warning").length;
           for (const v of result.getFailedValidators()) {
             const errs =
@@ -331,11 +335,11 @@ export class CommandDispatchService {
           allErrors.push(...errs);
         }
         if (allErrors.length === 0) {
-          const r = HarnessApiResponse.pass({ ...summary, passed: 1, warnings: warningCount });
-          return { status: "pass", errors: [], summary: r.summary, data: undefined, exitCode: 0 };
+          const r = HarnessApiResponse.pass({ ...summary, passed: 1, warnings: warningCount }, result);
+          return { status: "pass", errors: [], summary: r.summary, data: result as unknown as T, exitCode: 0 };
         }
-        const r = HarnessApiResponse.fail(allErrors, { ...summary, failed: 1, warnings: warningCount });
-        return { status: "fail", errors: r.errors, summary: r.summary, data: undefined, exitCode: 1 };
+        const r = HarnessApiResponse.fail(allErrors, { ...summary, failed: 1, warnings: warningCount }, result);
+        return { status: "fail", errors: r.errors, summary: r.summary, data: result as unknown as T, exitCode: 1 };
       }
 
       case "phasegate:impact-analysis": {

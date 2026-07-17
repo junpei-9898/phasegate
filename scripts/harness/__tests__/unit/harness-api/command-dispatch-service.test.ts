@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114, WI-186, WI-307, WI-318
+// @work-item-id WI-114, WI-186, WI-307, WI-318, WI-321
 import { describe, expect, it, vi } from "vitest";
 import type { ArtifactScannerPort } from "../../../harness-api/domain/ports/artifact-scanner-port.js";
 import type { BiomeLintPort } from "../../../harness-api/domain/ports/biome-lint-port.js";
@@ -414,6 +414,11 @@ target("CommandDispatchService", () => {
       const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
       // Assert
       expect(actual.status).toBe("pass");
+      // WI-321: pass 時も ci-check と同形の data ペイロードを含める
+      expect(actual.data).toMatchObject({
+        allPassed: true,
+        validatorResults: [{ validatorId: "L3-001", passed: true }],
+      });
     });
 
     // UT-DS-013 (WI-318 / github#38): warning-only failure は ci-check と同じく exit 0 / pass
@@ -438,6 +443,19 @@ target("CommandDispatchService", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.errors).toEqual([]);
       expect(actual.summary).toMatchObject({ warnings: 1 });
+      // WI-321 (github#38 残課題): 件数だけでなく、どの validator がどんな warning を
+      // 出したかが data ペイロードから読めること（ci-check の UT-DS-005b と同形）
+      expect(actual.data).toMatchObject({
+        allPassed: true,
+        validatorResults: [
+          { validatorId: "L2-001", passed: true },
+          {
+            validatorId: "L2-016",
+            passed: true,
+            errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+          },
+        ],
+      });
     });
 
     // UT-DS-014 (WI-318): error severity を含む validator failure は従来どおり exit 1 / fail
@@ -461,6 +479,18 @@ target("CommandDispatchService", () => {
       expect(actual.status).toBe("fail");
       expect(actual.exitCode).toBe(1);
       expect(actual.errors).toEqual([{ code: "L2-002", severity: "error", message: "metadata violation" }]);
+      // WI-321: fail 時も data ペイロードを含める（ci-check と対称）
+      expect(actual.data).toMatchObject({
+        allPassed: false,
+        validatorResults: [
+          { validatorId: "L2-001", passed: true },
+          {
+            validatorId: "L2-002",
+            passed: false,
+            errors: [{ code: "L2-002", severity: "error", message: "metadata violation" }],
+          },
+        ],
+      });
     });
 
     // UT-DS-015 (WI-318): validator 全通過でも lint fail なら exit 1 / fail（現状維持）
@@ -500,6 +530,22 @@ target("CommandDispatchService", () => {
       expect(actual.status).toBe("pass");
       expect(actual.exitCode).toBe(0);
       expect(actual.errors).toEqual([]);
+    });
+
+    // UT-DS-017 (WI-321): validatorResults が空の場合は従来どおり data なし
+    it("phasegate:complete-checkがvalidator結果0件のときdataなしのpass responseを返すこと", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        allValidatorResults: [],
+        lintResult: { passed: true, errors: [], warnings: [] },
+      });
+      const svc = new CommandDispatchService(ports);
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:complete-check", args: {}, flags: {} });
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.exitCode).toBe(0);
+      expect(actual.data).toBeUndefined();
     });
   });
 });

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-321 — complete-check の JSON 出力に warning 詳細を含める（GitHub #38 残課題）** — `phasegate:complete-check` が warning を `summary.warnings` の件数のみで返し、どの validator のどんな warning かが出力に含まれなかった非対称を修正。ci-check case と同じく `CiCheckResult` を data ペイロードとして pass / fail 双方で返す（`data.validatorResults[].validatorId / errors[]`）。validator 結果 0 件時は従来どおり data なし。判定ロジック・exit code・lint 合流は不変。
+
 - **WI-325 — load 経路の JSON パース失敗が "Failed to persist" と誤表示される問題を修正** — `FileSystemConfigRepository.load()` の JSON 構文エラーが書き込み用の `ConfigPersistenceError`（"Failed to persist config"）で送出され、読み込み失敗なのに永続化失敗と誤解させるメッセージになっていた。`ConfigParseError extends ConfigPersistenceError` を新設して load 経路を "Failed to parse config JSON" に分離。サブクラス化により main.ts の `instanceof ConfigPersistenceError` fail-open 判定（WI-314）は無変更で互換維持。save 経路は従来どおり。
 
 - **WI-320 — 言語自動検出を実 CLI 経路で有効化（GitHub #39 フォローアップ）** — WI-319 の検出は adapter に実装されたが、実 CLI では preset 解決（`preset-resolution-service`）・mapper・`ProjectConfig` VO の 3 箇所が未宣言時に `["typescript"]` を注入するため dead code だった（シナリオ検証で発見）。「未宣言」シグナルを resolved config から adapter まで生存させ、純 Python リポジトリで L3-003 が unsupported-language SKIP になることを実 CLI spawn の E2E で固定。宣言時の挙動・検証は不変。
