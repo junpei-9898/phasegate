@@ -43,6 +43,8 @@ npx phasegate hook post-tool-use < payload.json
 npx phasegate hook stop < payload.json
 ```
 
+> **Config 状態と許可ポリシー**: `phasegate.config.json` が不在・破損している状態で各 hook / コマンドがどう振る舞うか（fail-open / fail-closed の別、自己修復経路、doctor の `configStatus` 報告）は [ADR-038](../ADR/038-config-state-operation-permission-policy.md) の許可表で仕様化されている。
+
 ### L0-B: Husky git hooks
 
 Deployed by `phasegate init --with-husky` into `.husky/`.

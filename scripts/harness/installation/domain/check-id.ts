@@ -2,6 +2,7 @@
 // @layer domain
 // @work-item-id WI-145
 // @work-item-id WI-215
+// @work-item-id WI-330
 
 export const CHECK_IDS = [
   "claude-hook-missing",
@@ -16,6 +17,7 @@ export const CHECK_IDS = [
   "claude-skills-symlink",
   "codex-skills-symlink",
   "wi-workflow-drift",
+  "config-status",
 ] as const;
 
 export type CheckId = (typeof CHECK_IDS)[number];

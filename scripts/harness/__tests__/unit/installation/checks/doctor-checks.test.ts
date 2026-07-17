@@ -7,18 +7,21 @@
 // @work-item-id WI-216
 
 import { describe, expect, it, vi } from "vitest";
+import { CiWorkflowMissingCheck } from "../../../../installation/application/checks/ci-workflow-missing-check.js";
 import { ClaudeContextMissingCheck } from "../../../../installation/application/checks/claude-context-missing-check.js";
 import { ClaudeHookMissingCheck } from "../../../../installation/application/checks/claude-hook-missing-check.js";
 import { ClaudeSkillsSymlinkCheck } from "../../../../installation/application/checks/claude-skills-symlink-check.js";
-import { CiWorkflowMissingCheck } from "../../../../installation/application/checks/ci-workflow-missing-check.js";
 import { CodexContextMissingCheck } from "../../../../installation/application/checks/codex-context-missing-check.js";
 import { CodexHookMissingCheck } from "../../../../installation/application/checks/codex-hook-missing-check.js";
 import { CodexSkillsSymlinkCheck } from "../../../../installation/application/checks/codex-skills-symlink-check.js";
+import { ConfigStatusCheck } from "../../../../installation/application/checks/config-status-check.js";
 import { HuskyCommitMsgMissingCheck } from "../../../../installation/application/checks/husky-commit-msg-missing-check.js";
 import { HuskyPreCommitMissingCheck } from "../../../../installation/application/checks/husky-pre-commit-missing-check.js";
 import { HuskyPrePushMissingCheck } from "../../../../installation/application/checks/husky-pre-push-missing-check.js";
 import { PackageJsonDevdepMissingCheck } from "../../../../installation/application/checks/package-json-devdep-missing-check.js";
+import type { ConfigStatusProbePort } from "../../../../installation/application/ports/config-status-probe-port.js";
 import type { FileInspectorPort } from "../../../../installation/application/ports/file-inspector-port.js";
+import type { ConfigStatusProbeResult } from "../../../../installation/domain/config-status.js";
 import { getSkillsForSet } from "../../../../setup/skill-deployer.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 import { createInspector, projectFile } from "./check-test-helpers.js";
@@ -26,7 +29,10 @@ import { createInspector, projectFile } from "./check-test-helpers.js";
 target("doctor heuristic checks", () => {
   describe("agent context checks", () => {
     it("Claude の runtime-visible .claude/CLAUDE.md がある場合は finding を返さないこと", async () => {
-      const inspector = createTextInspector(".claude/CLAUDE.md", "<!-- phasegate:managed-section:start -->\nPhaseGate\n");
+      const inspector = createTextInspector(
+        ".claude/CLAUDE.md",
+        "<!-- phasegate:managed-section:start -->\nPhaseGate\n",
+      );
 
       const actual = await new ClaudeContextMissingCheck().run("/tmp/project", inspector);
 
@@ -143,7 +149,10 @@ target("doctor heuristic checks", () => {
     it("phasegate commit-msg command がある場合は finding を返さないこと", async () => {
       const sut = new HuskyCommitMsgMissingCheck();
 
-      const actual = await sut.run("/tmp/project", createTextInspector(".husky/commit-msg", 'npx phasegate commit-msg "$1"\n'));
+      const actual = await sut.run(
+        "/tmp/project",
+        createTextInspector(".husky/commit-msg", 'npx phasegate commit-msg "$1"\n'),
+      );
 
       expect(actual).toStrictEqual(null);
     });
@@ -161,7 +170,10 @@ target("doctor heuristic checks", () => {
     it("phasegate bypass:audit command がある場合は finding を返さないこと", async () => {
       const sut = new HuskyPrePushMissingCheck();
 
-      const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-push", "npx phasegate bypass:audit --base origin/main\n"));
+      const actual = await sut.run(
+        "/tmp/project",
+        createTextInspector(".husky/pre-push", "npx phasegate bypass:audit --base origin/main\n"),
+      );
 
       expect(actual).toStrictEqual(null);
     });
@@ -224,7 +236,11 @@ target("doctor heuristic checks", () => {
 
       const actual = await sut.run("/tmp/project", createInspector());
 
-      expect(actual).toMatchObject({ checkId: "package-json-devdep-missing", severity: "red", repairMode: "mechanical" });
+      expect(actual).toMatchObject({
+        checkId: "package-json-devdep-missing",
+        severity: "red",
+        repairMode: "mechanical",
+      });
     });
   });
 
@@ -233,7 +249,9 @@ target("doctor heuristic checks", () => {
       const inspector = createInspector({
         readSymlink: vi.fn().mockResolvedValue("../skills"),
         readText: vi.fn().mockResolvedValue(JSON.stringify({ version: "0.145.0", skillSet: "all" })),
-        listFiles: vi.fn().mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/skills/${skill}/SKILL.md`)),
+        listFiles: vi
+          .fn()
+          .mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/skills/${skill}/SKILL.md`)),
       });
 
       const actual = [
@@ -267,7 +285,9 @@ target("doctor heuristic checks", () => {
       const inspector = createInspector({
         readSymlink: vi.fn().mockResolvedValue(null),
         readText: vi.fn().mockResolvedValue(JSON.stringify({ version: "0.145.0", skillSet: "all" })),
-        listFiles: vi.fn().mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/.codex/skills/${skill}/SKILL.md`)),
+        listFiles: vi
+          .fn()
+          .mockResolvedValue(getSkillsForSet("all").map((skill) => `/tmp/project/.codex/skills/${skill}/SKILL.md`)),
       });
 
       const actual = await new CodexSkillsSymlinkCheck().run("/tmp/project", inspector);
@@ -281,7 +301,80 @@ target("doctor heuristic checks", () => {
       expect(actual).toMatchObject({ checkId: "codex-skills-symlink", severity: "red", repairMode: "mechanical" });
     });
   });
+
+  describe("config-status check (WI-330)", () => {
+    it("config-status probe が valid の場合は finding を返さないこと", async () => {
+      // Arrange
+      const sut = new ConfigStatusCheck(createConfigStatusProbe({ status: "valid" }));
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector());
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("config-status probe が missing の場合は phasegate init を案内する mechanical warn を返すこと", async () => {
+      // Arrange
+      const sut = new ConfigStatusCheck(createConfigStatusProbe({ status: "missing" }));
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector());
+
+      // Assert
+      expect(actual).toMatchObject({
+        checkId: "config-status",
+        severity: "warn",
+        repairMode: "mechanical",
+        repairHint: "npx phasegate init",
+      });
+      expect(actual?.message).toContain("fail-open");
+    });
+
+    it("config-status probe が invalid-json の場合は詳細付き manual red を返すこと", async () => {
+      // Arrange
+      const sut = new ConfigStatusCheck(
+        createConfigStatusProbe({ status: "invalid-json", detail: "Unexpected token b in JSON" }),
+      );
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector());
+
+      // Assert
+      expect(actual).toMatchObject({ checkId: "config-status", severity: "red", repairMode: "manual" });
+      expect(actual?.message).toContain("JSON 構文エラー");
+      expect(actual?.message).toContain("Unexpected token b in JSON");
+    });
+
+    it("config-status probe が invalid-schema の場合はスキーマ違反詳細付き manual red を返すこと", async () => {
+      // Arrange
+      const sut = new ConfigStatusCheck(
+        createConfigStatusProbe({
+          status: "invalid-schema",
+          detail: "設定が不正です: [L1-001] /layers/L3/coverageThreshold",
+        }),
+      );
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector());
+
+      // Assert
+      expect(actual).toMatchObject({ checkId: "config-status", severity: "red", repairMode: "manual" });
+      expect(actual?.message).toContain("スキーマ違反");
+      expect(actual?.message).toContain("/layers/L3/coverageThreshold");
+    });
+  });
 });
+
+function createConfigStatusProbe(overrides: Partial<ConfigStatusProbeResult>): ConfigStatusProbePort {
+  const result: ConfigStatusProbeResult = {
+    status: "valid",
+    configPath: "phasegate.config.json",
+    detail: null,
+    ...overrides,
+  };
+  return { probe: vi.fn().mockResolvedValue(result) };
+}
 
 function createTextInspector(relativePath: string, content: string): FileInspectorPort {
   return createInspector({

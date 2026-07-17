@@ -4,11 +4,14 @@
 // @work-item-id WI-178
 // @work-item-id WI-208
 // @work-item-id WI-215
+// @work-item-id WI-330
 
-import { DiagnosticReport } from "../../domain/diagnostic-report.js";
 import type { CheckId } from "../../domain/check-id.js";
+import type { ConfigStatus } from "../../domain/config-status.js";
 import type { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
+import { DiagnosticReport } from "../../domain/diagnostic-report.js";
 import type { HeuristicCheck } from "../../domain/ports/heuristic-check.js";
+import type { ConfigStatusProbePort } from "../ports/config-status-probe-port.js";
 import type { FileInspectorPort } from "../ports/file-inspector-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
@@ -29,6 +32,7 @@ export interface RunDoctorDiagnosticsOutput {
   readonly report: DiagnosticReport;
   readonly agent: DoctorAgentScope;
   readonly installationMode: "project" | "personal";
+  readonly configStatus: ConfigStatus;
   readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
   readonly exitCode: number;
 }
@@ -48,15 +52,20 @@ export class RunDoctorDiagnosticsUseCase {
     private readonly checks: readonly HeuristicCheck[],
     private readonly inspector: FileInspectorPort,
     private readonly manifestRepository: ManifestRepositoryPort,
+    private readonly configStatusProbe: ConfigStatusProbePort,
   ) {}
 
   async execute(input: RunDoctorDiagnosticsInput): Promise<RunDoctorDiagnosticsOutput> {
     const agent = input.agent ?? "both";
     const manifest = await this.manifestRepository.load(input.projectRoot).catch(() => null);
-    const installationMode = manifest?.findEntry(".phasegate-local/phasegate.config.json") !== null && manifest !== null ? "personal" : "project";
-    const rawFindings = (await Promise.all(
-      this.checks.map((check) => check.run(input.projectRoot, this.inspector)),
-    )).filter((finding) => finding !== null);
+    const installationMode =
+      manifest?.findEntry(".phasegate-local/phasegate.config.json") !== null && manifest !== null
+        ? "personal"
+        : "project";
+    const configStatus = (await this.configStatusProbe.probe(input.projectRoot)).status;
+    const rawFindings = (
+      await Promise.all(this.checks.map((check) => check.run(input.projectRoot, this.inspector)))
+    ).filter((finding) => finding !== null);
     const { findings, scopedOutFindings } = this.applyPersonalScope(
       this.applyAgentScope(rawFindings, agent),
       installationMode,
@@ -66,6 +75,7 @@ export class RunDoctorDiagnosticsUseCase {
       report,
       agent,
       installationMode,
+      configStatus,
       scopedOutFindings,
       exitCode: this.decideExitCode(report, input.strict),
     };
@@ -74,7 +84,10 @@ export class RunDoctorDiagnosticsUseCase {
   private applyAgentScope(
     findings: readonly DiagnosticFinding[],
     agent: DoctorAgentScope,
-  ): { readonly findings: readonly DiagnosticFinding[]; readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[] } {
+  ): {
+    readonly findings: readonly DiagnosticFinding[];
+    readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
+  } {
     if (agent === "both") return { findings, scopedOutFindings: [] };
     const scopedOutChecks = agent === "claude" ? CODEX_ONLY_CHECKS : CLAUDE_ONLY_CHECKS;
     const applicable: DiagnosticFinding[] = [];
@@ -93,9 +106,15 @@ export class RunDoctorDiagnosticsUseCase {
   }
 
   private applyPersonalScope(
-    scoped: { readonly findings: readonly DiagnosticFinding[]; readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[] },
+    scoped: {
+      readonly findings: readonly DiagnosticFinding[];
+      readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
+    },
     installationMode: "project" | "personal",
-  ): { readonly findings: readonly DiagnosticFinding[]; readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[] } {
+  ): {
+    readonly findings: readonly DiagnosticFinding[];
+    readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
+  } {
     if (installationMode !== "personal") return scoped;
     const applicable: DiagnosticFinding[] = [];
     const scopedOut: ScopedOutDiagnosticFinding[] = [...scoped.scopedOutFindings];
