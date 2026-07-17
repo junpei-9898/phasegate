@@ -189,7 +189,7 @@ npx phasegate reconcile --apply
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
 | **Baseline (retrofit)** | 既存リポジトリ導入時、`baseline` snapshot に登録した既存ファイルは構造的に編集されるまで gate 対象外 |
 | **カスタム gate** | AIDLC 以外のプロジェクトでも schema-first など独自の前提条件を設定できる |
-| **World Model (CLI)** | 設計文書・ソース・テスト・matrix・attestation を型付き事実グラフに抽出し、制約の両端点を pin して義務を決定的に再導出（`world:inspect` / `world:pin` / `world:derive`） |
+| **World Model** | 設計文書・ソース・テスト・matrix・attestationを型付き事実グラフへ抽出。決定的`world:*` CLI、L2 fast-path、L3 authoritative再導出、bounded SessionStart、attestation v2 root pinを提供 |
 
 ---
 
@@ -260,7 +260,7 @@ Phasegate はプロンプトインジェクションを独立した新規脅威�
 
 phasegate のゲートは従来一方向でした: 書き込み時にコードを設計と照合する。**World Model**（[ADR-031](docs/ADR/031-world-model-ownership-and-corpus-lifecycle.md)〜[037](docs/ADR/037-world-cli-and-output-contract.md)）はこの制約面を**端点対称**にします。設計文書・ソースメタデータ・テスト・requirement-test matrix・attestation を型付き・content-addressed な事実グラフとして抽出し、pin された制約は**どちらの端点が変わっても**再評価されます — 設計文書を編集すれば、それを根拠として主張していたコード側に可視の義務が生まれます（逆方向だけではなく）。
 
-3 コマンドを提供します（明示実行は常に可能。`phasegate.config.json` の `world.enabled` は既定 `false` で、将来のゲート統合のみを制御します）:
+3 コマンドは常に明示実行できます。`world.enabled` の product 既定値は `false` で、有効化すると登録済み L2/L3 統合が動きます。このリポジトリでは dogfood のため有効です。
 
 ```bash
 npx phasegate world:inspect --json    # 決定的な read-only snapshot: node / edge / 抽出 diagnostics
@@ -274,8 +274,11 @@ npx phasegate world:derive --json     # 制約評価から obligation report を
 - **新規違反は初日から fail-closed。** 既存違反は閉じた・人間レビュー可能な baseline（`phasegate.world-baseline.json`）として採用され、縮小のみ許されます（同一 ruleset での追加は拒否）。
 - **既知の意味的ギャップは宣言するもので「再発見」しない。** explicit debt は `phasegate.world-debts.json` に宣言し import として表示。waiver（`phasegate.world-waivers.json`）は fingerprint / 理由 / 期限 / Work Item が必須です。
 - **決定性は契約。** 同一 checkout での 2 回実行は byte-identical な JSON を出力します。
+- **enforcement は二つの信頼レベルを持つ。** `L2-017` は偽造可能な local fast-path、`L3-008` は current corpus から authoritative に再導出し、`.harness/world-obligations.json`を信頼しません。adopted legacy は可視・非blocking、新規構造違反や不正宣言はfail-closedです。
+- **agent context はbounded。** SessionStartは最大5件 / 2000文字でopen itemを表示し、adopted legacyは件数だけに集約。導出不能時は固定warningへfail-openします。
+- **evidenceはroot一件だけをpinする。** attestation v2はfragment digestを複製せず`worldSnapshotRoot`をgate-run evidenceへ封印し、v1 produce / verify互換も維持します。
 
-現在のスコープは **CLI のみ**です: validator ID L2-017 / L3-008 は予約済みですが pre-commit / CI ゲートへの登録は未実施で、将来フェーズとして管理しています。
+World enforcementはproduction統合済みです。`L2-017` / `L3-008`は登録済み、bundled CI gateはWorld有効projectで決定的deriveを条件付き実行し、このリポジトリはfull dogfood pathを実行します。
 
 ---
 

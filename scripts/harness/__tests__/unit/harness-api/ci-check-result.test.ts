@@ -1,7 +1,9 @@
 // @layer test
+// @unit harness-api
+// @work-item-id WI-307
 import { describe, expect, it } from "vitest";
 import { CiCheckResult } from "../../../harness-api/domain/value-objects/ci-check-result.js";
-import { context, target } from "../../helpers/test-helpers.js";
+import { target } from "../../helpers/test-helpers.js";
 
 target("CiCheckResult", () => {
   describe("正常系: 有効な引数でCiCheckResultを生成する", () => {
@@ -99,7 +101,7 @@ target("CiCheckResult", () => {
   // WI-260 / ADR-017: warning-only failure の severity-aware 集約
   describe("ADR-017 severity-aware 集約 (WI-260)", () => {
     // UT-CCR-007
-    it("warning-only failure のみのとき failOnWarning 既定(false)で allPassed=true になること", () => {
+    it("warning-only failure のみのとき failOnWarning 既定(false)で公開 passed=true かつ warning が残ること", () => {
       // Arrange
       const validatorResults = [
         { validatorId: "L2-001", passed: true },
@@ -113,6 +115,12 @@ target("CiCheckResult", () => {
       const actual = CiCheckResult.fromResults(validatorResults);
       // Assert
       expect(actual.allPassed).toBe(true);
+      expect(actual.validatorResults[1]).toMatchObject({
+        validatorId: "L2-016",
+        passed: true,
+        errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+      });
+      expect(actual.getFailedValidators()).toEqual([]);
     });
 
     // UT-CCR-008
@@ -130,6 +138,11 @@ target("CiCheckResult", () => {
       const actual = CiCheckResult.fromResults(validatorResults, true);
       // Assert
       expect(actual.allPassed).toBe(false);
+      expect(actual.validatorResults[1]).toMatchObject({
+        validatorId: "L2-016",
+        passed: false,
+        errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+      });
     });
 
     // UT-CCR-009
@@ -177,9 +190,11 @@ target("CiCheckResult", () => {
         allPassed: true,
       };
       // Act
-      const actual = () => CiCheckResult.create(input);
+      const actual = CiCheckResult.create(input);
       // Assert
-      expect(actual).not.toThrow();
+      expect(actual.allPassed).toBe(true);
+      expect(actual.validatorResults[1]?.passed).toBe(true);
+      expect(actual.collectAllErrors()).toEqual([{ code: "L2-016", severity: "warning", message: "ungated-legacy" }]);
     });
   });
 });

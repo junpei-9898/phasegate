@@ -375,3 +375,16 @@ import { target, context } from '../../helpers/test-helpers';
 | v0移行フロー統合 | 3件（IT-API-V0MigInteg-001〜003） |
 | CIゲート化統合フロー | 2件（IT-API-CiGateInteg-001〜002） |
 | **合計** | **68件** |
+
+## WI-307 World CLI public contract E2E
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+| ID | Scenario | Expected |
+|---|---|---|
+| IT-RS-WI307-001 | command catalog / main dispatch | 3つの`world:*` commandが存在 |
+| IT-RS-WI307-002 | empty canonical corpus | inspect / pin preview / deriveがv1 envelopeとexit 0を返す |
+| IT-RS-WI307-003 | missing pinned endpoint | pin applyがexit 1、v1 envelope、file非変更 |
+| IT-RS-WI307-004 | invalid config / unsupported schema | trustworthy resultなしとしてexit 2 |

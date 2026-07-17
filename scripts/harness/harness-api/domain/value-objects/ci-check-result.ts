@@ -1,5 +1,6 @@
 // @layer domain
 // @unit harness-api
+// @work-item-id WI-307
 // ci-check-result.ts — CiCheckResult Value Object
 
 import type { HarnessError } from "./harness-api-response.js";
@@ -40,12 +41,25 @@ function isEffectivelyPassed(item: ValidatorCheckItem, failOnWarning: boolean): 
   return !hasFail;
 }
 
+/**
+ * WI-307: public ci-check projection の `passed` を aggregate policy と一致させる。
+ * skipped は独立した green state のため raw passed を維持し、warning-only failure だけを
+ * failOnWarning=false のとき passed=true に射影する。diagnostic は lossless に保持する。
+ */
+function toPublicValidatorResult(item: ValidatorCheckItem, failOnWarning: boolean): ValidatorCheckItem {
+  return Object.freeze({
+    ...item,
+    passed: item.skipped ? item.passed : isEffectivelyPassed(item, failOnWarning),
+    errors: item.errors === undefined ? undefined : Object.freeze([...item.errors]),
+  });
+}
+
 export class CiCheckResult {
   readonly validatorResults: readonly ValidatorCheckItem[];
   readonly allPassed: boolean;
 
-  private constructor(validatorResults: readonly ValidatorCheckItem[], allPassed: boolean) {
-    this.validatorResults = Object.freeze([...validatorResults]);
+  private constructor(validatorResults: readonly ValidatorCheckItem[], allPassed: boolean, failOnWarning: boolean) {
+    this.validatorResults = Object.freeze(validatorResults.map((item) => toPublicValidatorResult(item, failOnWarning)));
     this.allPassed = allPassed;
     Object.freeze(this);
   }
@@ -63,7 +77,7 @@ export class CiCheckResult {
         `HarnessApiDomainError: allPassed=${props.allPassed} does not match validatorResults state (computed: ${computedAllPassed})`,
       );
     }
-    return new CiCheckResult(props.validatorResults, props.allPassed);
+    return new CiCheckResult(props.validatorResults, props.allPassed, failOnWarning);
   }
 
   static fromResults(validatorResults: readonly ValidatorCheckItem[], failOnWarning = false): CiCheckResult {
@@ -71,7 +85,7 @@ export class CiCheckResult {
       throw new Error("EmptyValidatorResultsError: validatorResults must have at least one item (INV-5)");
     }
     const allPassed = validatorResults.every((r) => isEffectivelyPassed(r, failOnWarning));
-    return new CiCheckResult(validatorResults, allPassed);
+    return new CiCheckResult(validatorResults, allPassed, failOnWarning);
   }
 
   getFailedValidators(): readonly ValidatorCheckItem[] {

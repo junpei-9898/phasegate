@@ -458,3 +458,9 @@ dedicated mapperの完全DTOがWorld compositionへ渡ること、config不在fa
 ## WI-305 pre-commit orchestration tests
 
 commitMessage指定時だけdesign declaration validatorを呼び、finding section、exit code、non-bypassable blockerを既存metadata / L2 resultと合成することを検証する。
+
+## WI-307 ci-check policy-consistent projection tests
+
+<!-- @work-item-id WI-307 -->
+
+warning-only raw failureについて、`failOnWarning:false`ではpublic `passed:true` / aggregate passかつwarning保持、`failOnWarning:true`ではpublic `passed:false` / aggregate failかつwarning保持を検証する。error severityまたはdiagnosticなしfailureは既定でもfail-closedとする。command dispatch responseでも同じshapeを固定する。

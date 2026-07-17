@@ -32,8 +32,30 @@ jobs:
       - name: Generate requirement-test matrix
         run: npx tsx scripts/harness/main.ts phasegate:generate-matrix
 
+      # World reports are derived outputs, never CI inputs. Run the pure command
+      # twice against the same checkout and matrix to pin byte determinism before
+      # the authoritative L3 re-derivation.
+      - name: World derive determinism (dogfood)
+        run: |
+          set -euo pipefail
+          FIRST="$RUNNER_TEMP/world-derive-${{ matrix.node-version }}-first.json"
+          SECOND="$RUNNER_TEMP/world-derive-${{ matrix.node-version }}-second.json"
+          npx tsx scripts/harness/main.ts world:derive --json > "$FIRST"
+          npx tsx scripts/harness/main.ts world:derive --json > "$SECOND"
+          cmp --silent "$FIRST" "$SECOND"
+
       - name: Phasegate CI check (L3 incl. L3-004)
         run: npx tsx scripts/harness/main.ts phasegate:ci-check --json
+
+      # Produce v2 evidence only after tests, matrix, World derivation, and L3
+      # have passed. Keep the generated record in runner temp, then verify the
+      # exact bytes that would be handed to a downstream evidence consumer.
+      - name: Produce and verify Phasegate attestation v2
+        run: |
+          set -euo pipefail
+          ATTESTATION="$RUNNER_TEMP/phasegate-attestation-${{ matrix.node-version }}.json"
+          npx tsx scripts/harness/main.ts phasegate:attest --require-pass --out "$ATTESTATION" --json
+          npx tsx scripts/harness/main.ts phasegate:verify-attestation "$ATTESTATION" --json
 
       # Trust root (ADR-030 §Decision.1): re-compute SHA-256 of instruction-carrying
       # files and compare against the pinned phasegate.integrity.json. Local

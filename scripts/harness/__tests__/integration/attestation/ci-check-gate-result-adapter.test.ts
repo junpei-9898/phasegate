@@ -1,6 +1,7 @@
 // @unit attestation
 // @layer test
 // @story H16-01
+// @work-item-id WI-307
 
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -127,6 +128,7 @@ target("CiCheckGateResultAdapter", () => {
       // Assert
       expect(typeof result.allPassed).toBe("boolean");
       expect(result.validatorResults.length).toBeGreaterThan(0);
+      expect(result.validatorResults.every((item) => item.passed || item.skipped)).toBe(result.allPassed);
       for (const v of result.validatorResults) {
         expect(typeof v.validatorId).toBe("string");
         expect(v.validatorId.length).toBeGreaterThan(0);

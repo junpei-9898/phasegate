@@ -2024,3 +2024,15 @@ main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / derive
 @story-id H17-18
 
 `phasegate:attest` dispatchはresolved World configでworld-modelを構築し、public `WorldSnapshotRootFacade`のplain root providerをattestation moduleへ注入する。Unit間のcompositionはmain境界だけに置き、attestationからworld-modelへのimportを禁止する。verify dispatchは保存document自身のversion admissionを使い、current World rootを再導出して過去evidenceを否定しない。
+
+## WI-307 World production CLI stability
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+CI / regression consumerは`KNOWN_HARNESS_COMMANDS`とmain dispatchで公開済みの`world:inspect` / `world:pin` / `world:derive`をcanonical command setとして扱う。全JSON modeは`phasegate-world-cli/v1` envelopeとexit 0 / 1 / 2を維持する。WM-24はcommandやflagを追加せず、existing transport contractをproduction regressionへ昇格する。
+
+### ci-check warning policy projection
+
+`CiCheckResult`はaggregateとper-validator public `passed`へ同じ`failOnWarning` policyを適用する。既定falseではwarning-only raw failureをpublic `passed:true`へ射影する一方、`errors[]`のwarningを保持する。trueでは`passed:false` / `allPassed:false`を維持する。公開不変条件`allPassed === every(passed || skipped)`を満たし、attestationなどのconsumerはseverity policyを再実装しない。validator-systemのraw findingとstatus用projectionは変更しない。

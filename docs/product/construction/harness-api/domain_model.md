@@ -8,6 +8,7 @@
 @work-item-id WI-114
 @work-item-id WI-119
 @work-item-id WI-121
+@work-item-id WI-307
 > **Unit ID**: harness-api
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-19（Wave 2 初版）
@@ -167,7 +168,7 @@ biome-ast-engine の RuleDefinition VO / validator-system の ValidatorDefinitio
 | INV | 内容 |
 |-----|------|
 | INV-5 | validatorResults[] は1件以上（空のci-check結果は不正） |
-| INV-6 | allPassed === validatorResults.every(r => 実質pass)。WI-260/ADR-017 で severity-aware 化。skipped / passed=true は実質pass。passed=false でも errors が warning のみなら `failOnWarning=false`（既定）で実質pass、error severity を含む場合と errors=[] の防御的ケースは fail。`fromResults(results, failOnWarning=false)` / `create({..., failOnWarning?})` で `validate` 経路（AggregateValidationResultsUseCase）と同一の集約判定を適用し、warning-only failure で ci-check が exit 0 を返す。 |
+| INV-6 | `allPassed === validatorResults.every(r => r.passed || r.skipped)`をpublic contractで保証する。WI-260/ADR-017のseverity-aware判定をWI-307で各public itemにも射影し、raw `passed=false`かつwarningのみなら`failOnWarning=false`（既定）でpublic `passed=true`、trueでfalseとする。warning diagnosticsは保持し、error severityまたはerrors=[]の防御的failureはfalseを維持する。`fromResults(results, failOnWarning=false)` / `create({..., failOnWarning?})`は`validate`経路と同じpolicyを使う。 |
 
 ### DriftReportSummaryの不変条件
 

@@ -7,8 +7,10 @@
 # 実行内容:
 #   1. bypass:audit — bypass trailer / evidence 監査
 #   2. phasegate lint  — L1 Biome AST ルール検証
-#   3. phasegate:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist）
-#   4. 失敗時: PR にエラーサマリーをコメント
+#   3. requirement-test matrix をcurrent testsから再生成
+#   4. world.enabled=true の場合、world:derive を2回実行してbyte一致を検証
+#   5. phasegate:ci-check — L3 CI バリデータ（security / performance / coverage / nyquist / World）
+#   6. 失敗時: PR にエラーサマリーをコメント
 
 name: AIDLC Quality Gate
 
@@ -76,6 +78,44 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           exit $EXIT_CODE
+
+      # L3-004 consumes the generated requirement-test matrix. Always rebuild it
+      # from this checkout instead of trusting a stale or persisted artifact.
+      - name: Generate requirement-test matrix
+        if: always()
+        run: npx phasegate phasegate:generate-matrix
+
+      # Automatic World integration is selected only by an explicit true value.
+      # Missing/false keeps existing projects compatible; invalid JSON is a hard
+      # configuration error and must not be laundered into a disabled result.
+      - name: Detect World Model enablement
+        id: world_config
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENABLED=$(node --input-type=module <<'NODE'
+          import { existsSync, readFileSync } from 'node:fs';
+          if (!existsSync('phasegate.config.json')) {
+            process.stdout.write('false');
+          } else {
+            const config = JSON.parse(readFileSync('phasegate.config.json', 'utf8'));
+            process.stdout.write(config.world?.enabled === true ? 'true' : 'false');
+          }
+          NODE
+          )
+          echo "enabled=$ENABLED" >> "$GITHUB_OUTPUT"
+
+      - name: World derive determinism
+        if: steps.world_config.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          FIRST="$RUNNER_TEMP/phasegate-world-first.json"
+          SECOND="$RUNNER_TEMP/phasegate-world-second.json"
+          npx phasegate world:derive --json > "$FIRST"
+          npx phasegate world:derive --json > "$SECOND"
+          cmp --silent "$FIRST" "$SECOND"
 
       # L3: CI バリデータ（security / performance / coverage / nyquist）
       - name: L3 CI Check

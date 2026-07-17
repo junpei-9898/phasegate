@@ -764,3 +764,13 @@ World 向け evidence projection は evidence semantics と verification status 
 v2は`schemaVersion: phasegate-attestation/v2`、`predicateType: https://phasegate.dev/attestation/gate-run/v2`、top-level必須`worldSnapshotRoot`を持つ。rootはcanonical payloadへ含めるが、fragment digest配列は追加しない。mapperはv1 / v2だけをadmitし、version / predicate / root presence mismatchを`L1-053`としてfail-closedにする。
 
 compositionはoptional `WorldSnapshotRootProvider`をProduce usecaseへ渡す。未配線なら既存v1、配線時はproviderを一度readしてv2を生成する。attestationはworld-modelをimportせず、top-level harness compositionがWorld public facadeからplain rootを注入する。v1 verify / programmatic produceは無期限に維持し、CLI compositionはv2 providerを配線する。
+
+## WI-307 CI evidence ordering
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+CIはtest / matrix / World derive / L3成功後にtop-level `phasegate:attest --require-pass`を実行し、runner tempのv2 evidenceを直後に`phasegate:verify-attestation`で検証する。attestationは前段を再順序化せず、fragment digestを追加せず、World public facadeから得たroot一件だけをpinする。v1 compatibilityは変更しない。
+
+gate result adapterはharness-apiがpolicy-consistentに公開した`allPassed`と`validatorResults[].passed/skipped`をそのままplain DTOへ写像する。warning severityをattestation側で再解釈せず、INV-1を緩和しない。これによりwarning-only gateはpass evidenceを生成できる一方、`failOnWarning:true`またはerror findingはfail evidenceのままとなる。

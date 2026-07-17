@@ -1210,3 +1210,11 @@ regression-suite の場合:
 @work-item-id WI-158
 
 Regression-suite public commands are developer/regression binary subcommands. Suite result JSON is written under fixed `reports/regression/`; this output is not controlled by `reporting.outputDir`.
+
+## WI-307 World public CLI regression contract
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+regression-suiteの外部E2E suiteはharness-apiのcanonical `KNOWN_HARNESS_COMMANDS`とactual `main.ts` processを使い、`world:inspect` / `world:pin` / `world:derive`のpublic transport contractを固定する。対象はcommand presence、`phasegate-world-cli/v1` discriminator、command field、exit 0 / 1 / 2であり、World domain entity、WCR evaluator、baseline policyを複製しない。temp corpusとversioned declarationを実filesystemで組み立て、control mutation failure時の非書込みも境界contractとして確認する。

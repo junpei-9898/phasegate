@@ -173,7 +173,7 @@ npx phasegate reconcile --apply
 | **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
 | **Retrofit baseline** | Lets existing repositories adopt Phasegate gradually by grandfathering unchanged files |
 | **Configurable gates** | Supports AIDLC defaults or custom gates such as schema-first API development |
-| **World Model (CLI)** | Extracts design docs, source, tests, matrices, and attestations into a typed fact graph, pins constraints between endpoints, and deterministically re-derives obligations (`world:inspect` / `world:pin` / `world:derive`) |
+| **World Model** | Extracts design docs, source, tests, matrices, and attestations into a typed fact graph; deterministic `world:*` commands, L2 fast-path, L3 authoritative re-derivation, bounded SessionStart context, and attestation v2 root pinning |
 
 ---
 
@@ -240,7 +240,7 @@ Five components implement this posture:
 
 Phasegate's gates historically pointed one way: code is checked against design at write time. The **World Model** (per [ADR-031](docs/ADR/031-world-model-ownership-and-corpus-lifecycle.md)–[037](docs/ADR/037-world-cli-and-output-contract.md)) makes that constraint surface **endpoint-symmetric**: design documents, source metadata, tests, the requirement-test matrix, and attestations are extracted into a typed, content-addressed fact graph, and a pinned constraint is re-evaluated whenever *either* endpoint changes — so editing a design document creates visible obligations on the code that claimed it, not just the other way around.
 
-Three commands (always runnable explicitly; `world.enabled` in `phasegate.config.json` defaults to `false` and only governs future gate integration):
+Three commands are always runnable explicitly. The product default for `world.enabled` is `false`; enabling it activates the registered L2/L3 integrations. This repository enables it for dogfooding.
 
 ```bash
 npx phasegate world:inspect --json    # deterministic read-only snapshot: nodes, edges, extraction diagnostics
@@ -254,8 +254,11 @@ Design commitments that keep it honest:
 - **New violations fail closed from day one.** Pre-existing violations are adopted into a closed, human-reviewable baseline (`phasegate.world-baseline.json`) that can only shrink; same-ruleset additions are rejected.
 - **Known semantic gaps are declared, never "rediscovered."** Explicit debts live in `phasegate.world-debts.json` and are displayed as imports; waivers (`phasegate.world-waivers.json`) require a fingerprint, reason, expiry, and Work Item.
 - **Determinism is a contract.** Double runs over the same checkout produce byte-identical JSON output.
+- **Enforcement has two trust levels.** `L2-017` is a forgeable local fast-path; `L3-008` authoritatively re-derives from the current corpus and never trusts `.harness/world-obligations.json`. Adopted legacy remains visible and non-blocking; new structural or malformed declarations fail closed.
+- **Agent context is bounded.** SessionStart shows at most five open items within 2,000 characters, summarizes adopted legacy as a count, and fails open with a fixed warning if derivation is unavailable.
+- **Evidence pins one root.** Attestation v2 seals `worldSnapshotRoot` in gate-run evidence without copying fragment digests; v1 produce/verify compatibility remains available.
 
-Current scope is **CLI-only**: validator IDs L2-017 / L3-008 are reserved but not yet registered into pre-commit/CI gating, which is tracked as a future phase.
+World enforcement is production-integrated: `L2-017` and `L3-008` are registered, the bundled CI gate conditionally runs deterministic derivation for World-enabled projects, and this repository runs the full dogfood path.
 
 ---
 

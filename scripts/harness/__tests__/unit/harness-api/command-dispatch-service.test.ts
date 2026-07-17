@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114, WI-186
+// @work-item-id WI-114, WI-186, WI-307
 import { describe, expect, it, vi } from "vitest";
 import type { ArtifactScannerPort } from "../../../harness-api/domain/ports/artifact-scanner-port.js";
 import type { BiomeLintPort } from "../../../harness-api/domain/ports/biome-lint-port.js";
@@ -10,7 +10,7 @@ import type { PhaseGateQueryPort } from "../../../harness-api/domain/ports/phase
 import type { ValidatorExecutionPort } from "../../../harness-api/domain/ports/validator-execution-port.js";
 import { CommandDispatchService } from "../../../harness-api/domain/services/command-dispatch-service.js";
 import { ArtifactScanResult } from "../../../harness-api/domain/value-objects/artifact-scan-result.js";
-import { context, target } from "../../helpers/test-helpers.js";
+import { target } from "../../helpers/test-helpers.js";
 
 interface MockPortOptions {
   readonly allStories?: readonly { storyId: string; passed: boolean }[];
@@ -195,7 +195,17 @@ target("CommandDispatchService", () => {
       // Assert
       expect(actual.status).toBe("pass");
       expect(actual.exitCode).toBe(0);
-      expect(actual.data).toMatchObject({ allPassed: true });
+      expect(actual.data).toMatchObject({
+        allPassed: true,
+        validatorResults: [
+          { validatorId: "L2-001", passed: true },
+          {
+            validatorId: "L2-016",
+            passed: true,
+            errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+          },
+        ],
+      });
     });
 
     // UT-DS-005c (WI-260 / ADR-017): error severity を含む failure は従来どおり exit 1 / fail

@@ -106,3 +106,13 @@
 @story-id H17-18
 
 実filesystem repository / SHA adapterでprovider未配線v1とfixed World root provider v2のproduce→verifyを実行する。v2 root改竄はexit 1、欠落 / unknown schemaはexit 2、fragment digest fieldは不存在とする。top-level composition testはWorld public facadeから得たplain rootがv2 documentへ入ることを検証し、attestation全既存suiteをv1 regressionとして再実行する。
+
+## WI-307 CI v2 evidence smoke
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+fresh matrixとgreen L3の後にrunner temp pathへ`phasegate:attest --require-pass`を実行し、生成documentを`phasegate:verify-attestation`でexit 0確認する。package / CI integrationはv2 rootだけを要求し、fragment digest fieldの追加やv1 verify挙動の変更を許さない。
+
+ci-checkにwarning-only validatorが存在してもpublic validator setがaggregate passと整合し、produceがINV-1で失敗しないことを固定する。warning diagnosticsの可視性、v2 `worldSnapshotRoot`、v1 corpus verifyの非破壊を同時に確認する。

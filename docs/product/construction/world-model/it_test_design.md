@@ -299,3 +299,11 @@ agent-integration adapterからpublic World compositionを`writeReport:false`で
 @story-id H17-18
 
 repository-shaped corpusからpublic snapshot root facadeを実行し、そのplain rootをattestation v2 producerへ注入する。生成後のv2 recordをWorld extractorが再読込しても`worldSnapshotRoot`自体をroot preimageへ含めないことをfixtureで固定する。
+
+## WI-307 Production dogfood integration
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+self-repoのfresh matrixで`world:derive --json`を二回実行し、raw bytesとexit 0を比較する。CIではpersisted reportを書かず、続くL3-008が同じcurrent corpusをauthoritativeに再導出する。regression-suite fixtureではpublic envelopeとexit contractだけを横断固定する。

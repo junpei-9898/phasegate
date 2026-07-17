@@ -691,3 +691,11 @@ temporary Git index、constraint fixture、commit message fileを用い、matchi
 @story-id H17-18
 
 temp corpusでtop-level `phasegate:attest`を実行し、World public facade由来rootを持つv2 documentとverify exit 0を確認する。programmatic provider未配線fixtureではv1を生成し、旧CLI / repository contractの後方互換を固定する。
+
+## WI-307 World command regression consumption
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+regression-suite E2Eからactual main processを起動し、canonical command catalog、v1 envelope discriminator、command echo、exit 0 / 1 / 2を検証する。main sourceを文字列だけで検査する既存conformanceに加え、process output contractを固定する。

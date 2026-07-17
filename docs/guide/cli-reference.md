@@ -328,14 +328,25 @@ L4 warning findings fail the process only when warning strictness is enabled (`v
 ## World Model
 
 <!-- @work-item-id WI-299 -->
+<!-- @work-item-id WI-307 -->
 
-World Model コマンド（ADR-037）。設計文書・ソース・テスト・matrix・attestation を型付き事実グラフとして抽出し、pin された制約を両端点対称に再評価して義務を導出する。明示実行は config に依存せず常に可能（`world.enabled` は既定 `false` で、将来の L2/L3 ゲート統合のみを制御。validator ID `L2-017` / `L3-008` は予約済み・未登録）。
+World Model コマンド（ADR-037）。設計文書・ソース・テスト・matrix・attestation を型付き事実グラフとして抽出し、pin された制約を両端点対称に再評価して義務を導出する。明示実行は config に依存せず常に可能。`world.enabled` のproduct既定値は`false`で、trueの場合に登録済み`L2-017` / `L3-008`とSessionStart integrationを有効化する。phasegate self-repoはdogfoodのためtrueである。
 
 | Command | Options | Description |
 |---|---|---|
 | `world:inspect` | `--format human\|json` `--json` | Read-only World snapshot（node / edge / 抽出 diagnostics）を構築・表示。宣言も report も書かない |
 | `world:pin` | `--constraint <id>`（`pgw:v1:constraint` ID, 必須） `--endpoint <claimant\|premise>`（必須） `--apply` `--format human\|json` `--json` | 制約端点の現在 digest をプレビュー。`--apply` で `phasegate.world-constraints.json` を atomic に更新 |
 | `world:derive` | `--write` `--out <path>`（`--write` 必須） `--format human\|json` `--json` | immutable な obligation report を再導出。既定は pure・read-only。`--write` で raw report を `.harness/world-obligations.json`（untracked）へ永続化 |
+
+### Automatic integration
+
+| Surface | Contract |
+|---|---|
+| `L2-017 world-constraint-admission` | local fast-path。new / changed constraintのmalformed、新規pin / unpinned claimをfail-closed。adopted-legacyはwarningのみ。local resultは偽造可能でauthorityではない |
+| `L3-008 world-constraint-rederivation` | current corpusとversioned control inputからauthoritativeにpure再導出。保存`.harness/world-obligations.json`は読まず、改竄・削除で結果が変わらない |
+| SessionStart | blocking相当を優先して最大5件 / 2000 Unicode scalar。adopted-legacyは件数一行、全文やreasonをpromptへ注入しない。derive不能は固定warningへfail-open |
+| Attestation v2 | `phasegate-attestation/v2`がcanonical`worldSnapshotRoot`一件をpin。fragment digest collectionは保存しない。既存v1のproduce / verify互換を維持 |
+| Bundled `aidlc-gate` | `world.enabled:true`のprojectでmatrix生成後にpure deriveを二回実行してbyte一致を確認し、その後L3を実行。false / absentではWorld段階だけをskip |
 
 ### Exit code
 

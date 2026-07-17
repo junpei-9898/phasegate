@@ -513,3 +513,16 @@
 | IT-CG-WI200-001 | `--kind` を unknown option として拒否すること | `ci:generate-template --kind consistency-check` | exit 2、stderr に unknown flag |
 | IT-CG-WI200-002 | `--output` を unknown option として拒否すること | `ci:generate-template --type aidlc-gate --output /tmp/x.yml` | exit 2、file write 成功を示さない |
 | IT-CG-WI200-003 | valid render は維持すること | `ci:generate-template --type consistency-check --render` | workflow YAML が stdout に出る |
+
+## WI-307 World-enabled bundled gate
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+| ID | Scenario | Expected |
+|---|---|---|
+| IT-CG-WI307-001 | aidlc-gate bundled sourceをrender | matrix生成、World enablement検出、derive二回、byte compare、L3を順序どおり含む |
+| IT-CG-WI307-002 | `world.enabled:true` | World derive step conditionが成立する |
+| IT-CG-WI307-003 | false / absent | World deriveだけskipでき、L3 stepは無条件で残る |
+| IT-CG-WI307-004 | invalid config JSON | detector step failureとなりfalseへlaunderしない |

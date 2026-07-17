@@ -403,3 +403,11 @@ application facadeはconstraint repositoryのread resultからclaimant / premise
 @story-id H17-18
 
 `WorldSnapshotRootFacade`はcurrent `BuildSnapshotUseCase`を実行し、versioned plain DTO `{ schemaVersion, worldSnapshotRoot }`だけを返す。consumerへSnapshot / Sha256Digest VOを露出しない。attestation v2 compositionはtop-levelでこのfacadeをproviderへadaptする。attestation owner projectionはv1 / v2を受理するがv2の`worldSnapshotRoot`をsemantic projectionから除外し、self-referenceを作らない。
+
+## WI-307 CI pure derivation contract
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+CIはpublic `world:derive --json`をwrite flagなしで二回呼び、同一matrix / corpus / control inputのstdout bytesを比較する。WorldはgeneratedAtや保存reportを出力preimageへ加えず、exit 0 / 1 / 2と`phasegate-world-cli/v1` envelopeを維持する。L3-008が後続でclean re-derivationとblocking policyを所有し、CI shellへWCR分類を複製しない。

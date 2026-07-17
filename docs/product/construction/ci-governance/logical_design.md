@@ -1702,3 +1702,11 @@ integrity の SHA-256 はfile raw bytesをpinする既存契約を維持する�
 <!-- @work-item-id WI-284 -->
 
 既存`.phasegate/baseline.json`（path / SHA-1によるhook grandfather）はWorld adoption baselineへimport、upgrade、暗黙変換しない。World control inputは`phasegate.world-baseline.json`等の別schema / lifecycleとし、CI templateは`L2-017` / `L3-008`がvalidator-system registryへ実登録された後にだけlive catalogから取り込む。ci-governance側に予約validator ID、WCR blocking policy、World fingerprint setを複製しない。
+
+## WI-307 Production-ready World CI template
+
+<!-- @work-item-id WI-307 -->
+
+@story-id H17-19
+
+`aidlc-gate` bundled templateはmatrixをL3前に再生成し、top-level `world.enabled === true`の場合だけpure `world:derive --json`を二回実行してraw stdoutを比較する。false / absentはWorld段階だけをskipし、既存lint / L3を維持する。invalid configはdisabledへfallbackしない。World成功後のL3がauthoritative re-derivationを所有し、templateはfingerprint / baseline policyを複製しない。scheduled L4 `consistency-check`とagent context workflowにはWorld L3段階を追加しない。

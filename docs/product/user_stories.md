@@ -7,6 +7,7 @@
 @work-item-id WI-126
 @work-item-id WI-285
 @work-item-id WI-301
+@work-item-id WI-307
 更新: H02-04（ISSUE-026 Phase A-1 / `@work-item-id` アノテーション併存対応）、H03-04（Phase A-2 / WI frontmatter parser）、H03-05（Phase A-3 / L2 validator 統合）、H13-05（OSS license 変更 Apache-2.0 → MIT, v0.111.0）を追加。
 WI-126 で WI status derivation / safe apply を追加し、`status: drafted | reflected | implemented | tested` を PhaseGate が成果物から更新する運用契約を具体化する。
 
@@ -14,7 +15,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 > **作成日**: 2026-03-12
 > **入力**: `docs/inception/_shared/story_writer_plan.md`（Phase 1計画・承認済み）
 > **プロダクト概要**: `docs/product/harness_product_overview.md`
-> **合計**: 18 Epic / 89 ストーリー（v1: 84, Future: 5）
+> **合計**: 18 Epic / 94 ストーリー（v1: 89, Future: 5）
 > **レビュー**: codex (gpt-5.4) 1stレビュー済み — 指摘事項反映済み
 
 ---
@@ -39,7 +40,7 @@ WI-126 で WI status derivation / safe apply を追加し、`status: drafted | r
 | H-14 | K1-K15回帰保証 | 3 | 3 |
 | H-15 | v0テスト資産移行 | 2 | 3 |
 | H-16 | Signed Attestation | 3 | 3 |
-| H-17 | World Model | 18 | 4 |
+| H-17 | World Model | 19 | 4 |
 | H-F2 | Phase 2拡張 | 5 | Future |
 
 ---
@@ -1686,7 +1687,7 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 
 ---
 
-## Wave 4: World Model（H-17 / 18 US）
+## Wave 4: World Model（H-17 / 19 US）
 
 <!-- @work-item-id WI-285 -->
 <!-- @work-item-id WI-292 -->
@@ -1694,6 +1695,7 @@ K9（トレーサビリティの改竄不可能性）— per-AC 保証範囲の 
 <!-- @work-item-id WI-302 -->
 <!-- @work-item-id WI-304 -->
 <!-- @work-item-id WI-306 -->
+<!-- @work-item-id WI-307 -->
 
 ## H-17: World Model
 
@@ -2070,6 +2072,29 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 - [ ] AC-6: World attestation projectionはv2 evidence semanticsとverification statusを観測する一方、`worldSnapshotRoot` self-referenceをcorpusRoot入力から除外する
 - [ ] AC-7: v2 root改竄はattestationDigest mismatchとして検出され、L2-016の既存coverage attestation挙動を変更しない
 
+### H17-19: World production-ready CI / template regression（WM-24）
+
+<!-- @work-item-id WI-307 -->
+
+**Epic**: H-17 World Model
+**旧US**: 新規（WM-24 / WI-307）
+**優先度**: Must
+**Coverage status**: required
+**Coverage lifecycle**: planned -> required
+
+**As a** PhasegateをCIで採用する開発者,
+**I want to** World derive、authoritative L3、attestation、integrityを順序付きで再検証したい,
+**so that** 保存reportや環境依存の出力を信頼せずproduction-readyなgate chainを再現できる。
+
+#### 受け入れ基準
+
+- [ ] AC-1: self-repo CIはtest、matrix生成、World derive / L3、attestation / integrity verifyの順で実行する
+- [ ] AC-2: self-repo CIはpure `world:derive --json`を同一checkoutで二回実行し、stdoutがbyte-identicalでなければ失敗する
+- [ ] AC-3: bundled `aidlc-gate`は`world.enabled:true`のprojectだけWorld deriveを実行し、false / absentでは既存L3を維持したままskipする
+- [ ] AC-4: regression-suiteは3つの`world:*` command、`phasegate-world-cli/v1` envelope、exit 0 / 1 / 2をactual processで固定する
+- [ ] AC-5: public docsはL2-017 / L3-008登録済み、SessionStart bounded summary、attestation v2 root pin、self-repo dogfood有効を説明する
+- [ ] AC-6: package dry-runはbundled World CI template、World / attestation schemas、CLI guideの同梱を示す
+
 ---
 
 ## Orchestration移管ストーリー一覧（参照）
@@ -2112,8 +2137,8 @@ World Modelは既存Unitの正本を複製せず、canonical / proposal / source
 | 3 | H-15 v0移行 | 2 | 2 | 0 |
 | 3 | H-16 Signed Attestation | 3 | 3 | 0 |
 | **Wave 3小計** | | **19** | **17** | **2** |
-| 4 | H-17 World Model | 18 | 18 | 0 |
-| **Wave 4小計** | | **18** | **18** | **0** |
+| 4 | H-17 World Model | 19 | 19 | 0 |
+| **Wave 4小計** | | **19** | **19** | **0** |
 | Future | H-F2 Phase 2拡張 | 5 | — | — |
-| **v1合計** | | **88** | **82** | **6** |
-| **全体（Future含む）** | | **93** | — | — |
+| **v1合計** | | **89** | **83** | **6** |
+| **全体（Future含む）** | | **94** | — | — |
