@@ -3,6 +3,7 @@
  * @unit validator-system
  * @work-item-id WI-212
  * @work-item-id WI-302
+ * @work-item-id WI-317
  *
  * RunL3ValidatorsUseCase — H08-02: L3バリデータ実行
  */
@@ -22,8 +23,8 @@ import {
   type ValidatorExecutionService,
 } from "../../domain/services/validator-execution-service.js";
 import { ValidatorLanguageCapabilityService } from "../../domain/services/validator-language-capability-service.js";
-import { WorldConstraintRederivationService } from "../../domain/services/world-constraint-rederivation-service.js";
 import type { ValidatorRegistry } from "../../domain/services/validator-registry.js";
+import { WorldConstraintRederivationService } from "../../domain/services/world-constraint-rederivation-service.js";
 import type { HarnessErrorLike } from "../../domain/value-objects/validation-result.js";
 import { ValidationResult } from "../../domain/value-objects/validation-result.js";
 import { ValidatorId } from "../../domain/value-objects/validator-id.js";
@@ -133,8 +134,10 @@ export class RunL3ValidatorsUseCase {
     );
 
     // L3-003: カバレッジ判定（カバレッジゲートはオプトイン）
-    // - coverageThreshold 未設定 → SKIP（透過的に判定をスキップ。getCoverage() は呼ばない）
-    // - coverageThreshold 設定あり → getCoverage() を try/catch で包み FAIL-CLOSED で判定する
+    // - coverageThreshold 未設定 or 0 → SKIP（透過的に判定をスキップ。getCoverage() は呼ばない）
+    //   0 は正規の opt-out（ドメイン VO L3Config.hasCoverageGate() の「threshold > 0 でのみ有効」と整合。
+    //   minimal preset の coverageThreshold: 0 もこの opt-out 意図。WI-317 / github#37）
+    // - coverageThreshold > 0 → getCoverage() を try/catch で包み FAIL-CLOSED で判定する
     //   - 閾値未満 → FAIL / 閾値以上 → PASS
     //   - レポート不在などで getCoverage() が失敗 → FAIL（合格扱いにしない）
     // このブロックは例外を送出せず、L3-003 の per-validator 結果のみを差し替える。
@@ -145,12 +148,12 @@ export class RunL3ValidatorsUseCase {
       const l3003Id = ValidatorId.create("L3-003");
       const threshold = layerConfig.getThreshold("coverageThreshold");
 
-      if (threshold === null) {
+      if (threshold === null || threshold === 0) {
         overrideMap.set(
           "L3-003",
           ValidationResult.skipWithReason(
             l3003Id,
-            "coverageThreshold が未設定のためカバレッジ判定をスキップ（カバレッジゲートはオプトイン）",
+            "coverageThreshold が未設定/0 のためカバレッジ判定をスキップ（カバレッジゲートはオプトイン。0 で opt-out）",
           ),
         );
       } else {
@@ -186,7 +189,8 @@ export class RunL3ValidatorsUseCase {
                   code: "L3-003",
                   severity: "error",
                   message: `coverageThreshold=${threshold}% が設定されていますがカバレッジレポートが見つかりません（テストをカバレッジ付きで実行してください）`,
-                  suggestion: "vitest --coverage 等でカバレッジレポートを生成してから再実行してください",
+                  suggestion:
+                    '次のいずれかで解消してください: (a) テストをカバレッジ付きで実行してレポートを生成する（例: vitest --coverage）、(b) カバレッジゲートを opt-out するなら config の layers.L3.coverageThreshold を 0 に設定する、(c) 非 JS/TS プロジェクトなら project.languages を宣言する（例: ["python"]。L3-003 自体が unsupported-language SKIP になる）',
                 },
               ],
               0,

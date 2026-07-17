@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-317 — coverageThreshold の opt-out を到達可能に（GitHub #37）** — L3-003 実装は「カバレッジゲートはオプトイン」と明記しつつ、opt-out 手段（`null`）がスキーマで拒否され、`0` を設定してもレポート不在で fail-closed FAIL になる矛盾があった。ドメイン VO `L3Config.hasCoverageGate()` の「threshold > 0 でのみ有効」の意図に run-l3 を揃え、`coverageThreshold: 0`（および null）を正規の opt-out として SKIP にした（minimal preset の 0 も本来の opt-out として機能）。レポート不在 FAIL の suggestion に (a) カバレッジ付き実行 (b) `coverageThreshold: 0` での opt-out (c) 非 JS/TS プロジェクトの `project.languages` 宣言、の 3 択を案内する。
+
 - **WI-316 — install の `--with-husky` / `--with-ci` dead flag を修正（GitHub #36）** — install コマンドがこの 2 フラグを一度も読まず、`--personal` なしでは常に `.husky/*` と `.github/workflows/phasegate-aidlc-gate.yml` を書き込んでいた。ヘルプ記載・`init` / `setup:agent` と同じ opt-in（フラグ明示時のみ書き込み）に配線を揃え、CLI 統合テストとドキュメントで固定した。usecase のプログラマティック契約（既定 true）は不変。
 
 - **WI-315 — install / reconcile が CLAUDE.md の user-section を上書きする問題を修正（GitHub #35）** — CLAUDE.md テンプレートは user-section が managed-section の内側にあるため、`install --apply` / `reconcile` の managed block 置換がユーザー自身の記述を placeholder で消失させていた。merge 時に既存 user-section 本文を抽出して新 block に再注入する方式で保持するようにした（AGENTS.md の既存挙動は不変）。併せて、ユーザー本文が `String.replace` の置換文字列として `$` シーケンス解釈される潜在破損を replacer 関数で封じた。

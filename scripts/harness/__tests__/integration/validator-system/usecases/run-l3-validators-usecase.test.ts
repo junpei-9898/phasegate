@@ -2,6 +2,7 @@
  * @layer test
  * @unit validator-system
  * @story H08-02
+ * @work-item-id WI-317
  */
 import { describe, expect, it, vi } from "vitest";
 import { ValidationResultContractMapper } from "../../../../validator-system/application/mappers/validation-result-contract-mapper.js";
@@ -175,6 +176,53 @@ target("RunL3ValidatorsUseCase", () => {
         expect(l3003?.skipReason ?? "").toContain("coverageThreshold が未設定");
         // getCoverage() は呼ばれないこと（未設定時は透過スキップ）
         expect(mockCoverageReportPort.getCoverage).not.toHaveBeenCalled();
+      });
+    });
+
+    context("coverageThreshold=0の場合（opt-out。WI-317 / github#37）", () => {
+      it("L3-003がskipped=trueで返りgetCoverage()は呼ばれないこと (IT-UC-RunL3-009)", async () => {
+        // Arrange
+        const mockCoverageReportPort = {
+          getCoverage: vi.fn().mockRejectedValue(new CoverageReportNotFoundError("nonexistent/coverage.json")),
+        };
+        const usecase = createL3UseCase({ thresholds: { coverageThreshold: 0 } }, mockCoverageReportPort);
+        const input = { targetPaths: ["src/"] };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
+        expect(l3003?.skipped).toBe(true);
+        expect(l3003?.passed).toBe(true);
+        expect(l3003?.skipReason ?? "").toContain("0 で opt-out");
+        // threshold=0 のときは透過スキップ（レポート不在でも FAIL しない）
+        expect(mockCoverageReportPort.getCoverage).not.toHaveBeenCalled();
+      });
+    });
+
+    context("coverageThreshold=90でレポート不在FAILになった場合のsuggestion", () => {
+      it("opt-out（coverageThreshold: 0）とproject.languagesの案内が含まれること (IT-UC-RunL3-010)", async () => {
+        // Arrange
+        const mockCoverageReportPort = {
+          getCoverage: vi.fn().mockRejectedValue(new CoverageReportNotFoundError("nonexistent/coverage.json")),
+        };
+        const usecase = createL3UseCase(
+          { thresholds: { coverageThreshold: 90, bundleSizeLimit: 512000 } },
+          mockCoverageReportPort,
+        );
+        const input = { targetPaths: ["src/"], coverageReportPath: "nonexistent/coverage.json" };
+
+        // Act
+        const actual = await usecase.execute(input);
+
+        // Assert
+        const l3003 = actual.find((r) => r.validatorId === "L3-003");
+        expect(l3003?.passed).toBe(false);
+        expect(l3003?.errors[0]?.message ?? "").toContain("カバレッジレポートが見つかりません");
+        const suggestion = l3003?.errors[0]?.suggestion ?? "";
+        expect(suggestion).toContain("layers.L3.coverageThreshold を 0");
+        expect(suggestion).toContain("project.languages");
       });
     });
 
