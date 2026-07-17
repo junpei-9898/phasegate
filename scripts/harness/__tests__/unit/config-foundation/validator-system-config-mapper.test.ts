@@ -5,6 +5,7 @@
 // @work-item-id WI-217
 // @work-item-id WI-212
 // @work-item-id WI-300 / WI-301 / WI-302
+// @work-item-id WI-320
 import { describe, expect, it } from "vitest";
 import { toValidatorSystemConfig } from "../../../config-foundation/application/mappers/validator-system-config-mapper.js";
 import type { HarnessConfigV2 } from "../../../config-foundation/domain/harness-config.js";
@@ -209,6 +210,38 @@ target("toValidatorSystemConfig", () => {
             },
           },
         });
+      });
+    });
+
+    // WI-320 (github#39): 「未宣言」シグナルを adapter の言語検出（WI-319）まで生存させる
+    context("project.languages の宣言有無をマッピングする場合", () => {
+      it("languages 未宣言では default を注入せず undefined のまま validator-system へ渡すこと", () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.project.languages = undefined;
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig) as {
+          readonly project: { readonly preset: string; readonly languages?: readonly string[] };
+        };
+
+        // Assert
+        expect(actual.project.languages).toBeUndefined();
+        expect("languages" in actual.project).toBe(false);
+      });
+
+      it("languages 宣言ありでは宣言値をそのまま validator-system へ渡すこと", () => {
+        // Arrange
+        const resolvedConfig = createResolvedConfig();
+        resolvedConfig.project.languages = ["python"];
+
+        // Act
+        const actual = toValidatorSystemConfig(resolvedConfig) as {
+          readonly project: { readonly preset: string; readonly languages?: readonly string[] };
+        };
+
+        // Assert
+        expect(actual.project.languages).toEqual(["python"]);
       });
     });
 

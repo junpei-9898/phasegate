@@ -1,27 +1,23 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
-import { describe, expect, it } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.ts';
-import {
-  PresetResolutionService,
-  type PresetDefinition,
-  InvalidPresetDefinitionError,
-  ConfigMergeError,
-} from '../../../config-foundation/domain/services/preset-resolution-service.js';
+// @work-item-id WI-320
+import { describe, expect, it } from "vitest";
 import type {
   HarnessConfigResolvedDocument,
   HarnessConfigSourceDocument,
-} from '../../../config-foundation/domain/harness-config.js';
-import { FeatureName } from '../../../config-foundation/domain/value-objects/feature-name.js';
-import { FeatureToggle } from '../../../config-foundation/domain/value-objects/feature-toggle.js';
+} from "../../../config-foundation/domain/harness-config.js";
+import {
+  ConfigMergeError,
+  InvalidPresetDefinitionError,
+  type PresetDefinition,
+  PresetResolutionService,
+} from "../../../config-foundation/domain/services/preset-resolution-service.js";
+import { FeatureName } from "../../../config-foundation/domain/value-objects/feature-name.js";
+import { FeatureToggle } from "../../../config-foundation/domain/value-objects/feature-toggle.js";
+import { context, target } from "../../helpers/test-helpers.ts";
 
-const AVAILABLE_FEATURES = [
-  'agentLessonCollection',
-  'cascadeUpdate',
-  'bundleSizeLimit',
-  'deadCodeGC',
-] as const;
+const AVAILABLE_FEATURES = ["agentLessonCollection", "cascadeUpdate", "bundleSizeLimit", "deadCodeGC"] as const;
 
 function createFeatureName(name: string): FeatureName {
   return FeatureName.create(name, AVAILABLE_FEATURES);
@@ -40,31 +36,31 @@ function createMinimalPresetDefinition(): PresetDefinition {
       },
       L2: {
         enabled: true,
-        validators: ['phase-gate', 'architecture'],
+        validators: ["phase-gate", "architecture"],
       },
       L3: {
         enabled: false,
-        validators: ['consistency'],
+        validators: ["consistency"],
         coverageThreshold: 0,
       },
       L4: {
         enabled: false,
-        validators: ['drift-detector'],
-        schedule: '0 0 * * *',
+        validators: ["drift-detector"],
+        schedule: "0 0 * * *",
       },
     },
     quickMode: {
-      allowedCategories: ['bugfix'],
-      maintainedLayers: ['L1', 'L2'],
+      allowedCategories: ["bugfix"],
+      maintainedLayers: ["L1", "L2"],
       relaxedGates: [],
     },
     phaseDependencies: {
-      preset: 'default',
+      preset: "default",
       override: false,
       customRules: [],
     },
     planningMode: {
-      default: 'interactive',
+      default: "interactive",
       perPhase: {},
     },
     harnesses: {
@@ -74,12 +70,12 @@ function createMinimalPresetDefinition(): PresetDefinition {
       deadCodeGC: false,
     },
     paths: {
-      designDocs: 'docs/product/construction',
-      inceptionDocs: 'docs/inception',
+      designDocs: "docs/product/construction",
+      inceptionDocs: "docs/inception",
     },
     reporting: {
-      format: 'json',
-      outputDir: 'reports',
+      format: "json",
+      outputDir: "reports",
     },
     validate: {
       failOnWarning: false,
@@ -92,7 +88,7 @@ function createStandardPresetDefinition(): PresetDefinition {
 
   definition.layers.L3 = {
     enabled: true,
-    validators: ['consistency', 'test-quality'],
+    validators: ["consistency", "test-quality"],
     coverageThreshold: 90,
   };
 
@@ -104,8 +100,8 @@ function createStrictPresetDefinition(): PresetDefinition {
 
   definition.layers.L4 = {
     enabled: true,
-    validators: ['drift-detector', 'dead-code-detector'],
-    schedule: '0 1 * * *',
+    validators: ["drift-detector", "dead-code-detector"],
+    schedule: "0 1 * * *",
   };
   definition.harnesses = {
     agentLessonCollection: true,
@@ -117,33 +113,31 @@ function createStrictPresetDefinition(): PresetDefinition {
   return definition;
 }
 
-function createSourceDocument(
-  preset: 'minimal' | 'standard' | 'strict' = 'minimal',
-): HarnessConfigSourceDocument {
+function createSourceDocument(preset: "minimal" | "standard" | "strict" = "minimal"): HarnessConfigSourceDocument {
   return {
     project: {
-      name: 'my-project',
+      name: "my-project",
       preset,
     },
     layers: {},
     quickMode: {},
     phaseDependencies: {
-      preset: 'default',
+      preset: "default",
       override: false,
       customRules: [],
     },
     planningMode: {
-      default: 'interactive',
+      default: "interactive",
       perPhase: {},
     },
     harnesses: {},
     paths: {
-      designDocs: 'docs/product/construction',
-      inceptionDocs: 'docs/inception',
+      designDocs: "docs/product/construction",
+      inceptionDocs: "docs/inception",
     },
     reporting: {
-      format: 'json',
-      outputDir: 'reports',
+      format: "json",
+      outputDir: "reports",
     },
   };
 }
@@ -153,9 +147,9 @@ function createResolvedDocument(): HarnessConfigResolvedDocument {
 
   return {
     project: {
-      name: 'my-project',
-      preset: 'minimal',
-      languages: ['typescript'],
+      name: "my-project",
+      preset: "minimal",
+      languages: ["typescript"],
     },
     layers: presetDefinition.layers,
     quickMode: presetDefinition.quickMode,
@@ -168,47 +162,72 @@ function createResolvedDocument(): HarnessConfigResolvedDocument {
   };
 }
 
-target('PresetResolutionService', () => {
-  describe('resolve', () => {
+target("PresetResolutionService", () => {
+  describe("resolve", () => {
     // UT-CF-166
-    context('minimal presetを解決する場合', () => {
-      it('preset定義にsource差分を上書きしたresolvedを返す', () => {
+    context("minimal presetを解決する場合", () => {
+      it("preset定義にsource差分を上書きしたresolvedを返す", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createMinimalPresetDefinition();
-        const sourceDocument = createSourceDocument('minimal');
+        const sourceDocument = createSourceDocument("minimal");
         sourceDocument.harnesses.agentLessonCollection = true;
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
+        // WI-320 (github#39): languages 未宣言時は default を注入せず「未宣言」を維持する
         expect(actual.project).toEqual({
-          name: 'my-project',
-          preset: 'minimal',
-          languages: ['typescript'],
+          name: "my-project",
+          preset: "minimal",
         });
         expect(actual.harnesses.agentLessonCollection).toBe(true);
         expect(actual.harnesses.deadCodeGC).toBe(false);
       });
     });
 
+    // WI-320 (github#39)
+    context("project.languages の宣言有無で解決する場合", () => {
+      it("languages 未宣言の source では resolved の project.languages が undefined のままになる", () => {
+        // Arrange
+        const presetResolutionService = createPresetResolutionService();
+        const presetDefinition = createMinimalPresetDefinition();
+        const sourceDocument = createSourceDocument("minimal");
+
+        // Act
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
+
+        // Assert
+        expect(actual.project.languages).toBeUndefined();
+        expect("languages" in actual.project).toBe(false);
+      });
+
+      it("languages 宣言ありの source では宣言値がそのまま resolved に伝搬される", () => {
+        // Arrange
+        const presetResolutionService = createPresetResolutionService();
+        const presetDefinition = createMinimalPresetDefinition();
+        const sourceDocument = createSourceDocument("minimal");
+        sourceDocument.project.languages = ["python", "go"];
+
+        // Act
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
+
+        // Assert
+        expect(actual.project.languages).toEqual(["python", "go"]);
+      });
+    });
+
     // UT-CF-167
-    context('standard presetを解決する場合', () => {
-      it('L3有効かつcoverageThreshold=90になる', () => {
+    context("standard presetを解決する場合", () => {
+      it("L3有効かつcoverageThreshold=90になる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStandardPresetDefinition();
-        const sourceDocument = createSourceDocument('standard');
+        const sourceDocument = createSourceDocument("standard");
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers.L3.enabled).toBe(true);
@@ -217,18 +236,15 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-168
-    context('strict presetを解決する場合', () => {
-      it('全レイヤーが有効になる', () => {
+    context("strict presetを解決する場合", () => {
+      it("全レイヤーが有効になる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStrictPresetDefinition();
-        const sourceDocument = createSourceDocument('strict');
+        const sourceDocument = createSourceDocument("strict");
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers.L1.enabled).toBe(true);
@@ -239,70 +255,58 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-169
-    context('objectフィールドを上書きする場合', () => {
-      it('deep mergeされる', () => {
+    context("objectフィールドを上書きする場合", () => {
+      it("deep mergeされる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStandardPresetDefinition();
-        const sourceDocument = createSourceDocument('standard');
+        const sourceDocument = createSourceDocument("standard");
         sourceDocument.layers.L3 = {
           coverageThreshold: 95,
         };
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers.L3.enabled).toBe(true);
-        expect(actual.layers.L3.validators).toEqual([
-          'consistency',
-          'test-quality',
-        ]);
+        expect(actual.layers.L3.validators).toEqual(["consistency", "test-quality"]);
         expect(actual.layers.L3.coverageThreshold).toBe(95);
       });
     });
 
     // UT-CF-170
-    context('arrayフィールドを上書きする場合', () => {
-      it('結合ではなく置換される', () => {
+    context("arrayフィールドを上書きする場合", () => {
+      it("結合ではなく置換される", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createMinimalPresetDefinition();
-        const sourceDocument = createSourceDocument('minimal');
+        const sourceDocument = createSourceDocument("minimal");
         sourceDocument.layers.L2 = {
-          validators: ['custom-validator'],
+          validators: ["custom-validator"],
         };
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
-        expect(actual.layers.L2.validators).toEqual(['custom-validator']);
+        expect(actual.layers.L2.validators).toEqual(["custom-validator"]);
       });
     });
 
     // UT-CF-171
-    context('primitiveフィールドを上書きする場合', () => {
-      it('source側の値が優先される', () => {
+    context("primitiveフィールドを上書きする場合", () => {
+      it("source側の値が優先される", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStandardPresetDefinition();
-        const sourceDocument = createSourceDocument('standard');
+        const sourceDocument = createSourceDocument("standard");
         sourceDocument.layers.L3 = {
           coverageThreshold: 95,
         };
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers.L3.coverageThreshold).toBe(95);
@@ -310,39 +314,35 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-172
-    context('project.nameとproject.presetを解決する場合', () => {
-      it('resolvedDocumentへ反映される', () => {
+    context("project.nameとproject.presetを解決する場合", () => {
+      it("resolvedDocumentへ反映される", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStandardPresetDefinition();
-        const sourceDocument = createSourceDocument('standard');
-        sourceDocument.project.name = 'next-project';
+        const sourceDocument = createSourceDocument("standard");
+        sourceDocument.project.name = "next-project";
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
-        expect(actual.project.name).toBe('next-project');
-        expect(actual.project.preset).toBe('standard');
+        expect(actual.project.name).toBe("next-project");
+        expect(actual.project.preset).toBe("standard");
       });
     });
 
     // UT-CF-173
-    context('presetDefinitionが欠落している場合', () => {
-      it('エラーになる', () => {
+    context("presetDefinitionが欠落している場合", () => {
+      it("エラーになる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
-        const sourceDocument = createSourceDocument('minimal');
+        const sourceDocument = createSourceDocument("minimal");
         const invalidDefinition = {
           quickMode: {},
         } as unknown as PresetDefinition;
 
         // Act
-        const actual = () =>
-          presetResolutionService.resolve(sourceDocument, invalidDefinition);
+        const actual = () => presetResolutionService.resolve(sourceDocument, invalidDefinition);
 
         // Assert
         expect(actual).toThrowError(InvalidPresetDefinitionError);
@@ -351,20 +351,19 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-174
-    context('deep merge対象の型が衝突する場合', () => {
-      it('エラーになる', () => {
+    context("deep merge対象の型が衝突する場合", () => {
+      it("エラーになる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createMinimalPresetDefinition();
-        const sourceDocument = createSourceDocument('minimal');
+        const sourceDocument = createSourceDocument("minimal");
         const invalidSourceDocument = {
           ...sourceDocument,
           layers: 1,
         } as unknown as HarnessConfigSourceDocument;
 
         // Act
-        const actual = () =>
-          presetResolutionService.resolve(invalidSourceDocument, presetDefinition);
+        const actual = () => presetResolutionService.resolve(invalidSourceDocument, presetDefinition);
 
         // Assert
         expect(actual).toThrowError(ConfigMergeError);
@@ -373,21 +372,18 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-175
-    context('standard preset上でcoverageThresholdを95へ上書きする場合', () => {
-      it('個別上書きできる', () => {
+    context("standard preset上でcoverageThresholdを95へ上書きする場合", () => {
+      it("個別上書きできる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createStandardPresetDefinition();
-        const sourceDocument = createSourceDocument('standard');
+        const sourceDocument = createSourceDocument("standard");
         sourceDocument.layers.L3 = {
           coverageThreshold: 95,
         };
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers.L3.coverageThreshold).toBe(95);
@@ -395,18 +391,15 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-176
-    context('sourceDocumentが差分を持たない場合', () => {
-      it('preset定義がそのまま使われる', () => {
+    context("sourceDocumentが差分を持たない場合", () => {
+      it("preset定義がそのまま使われる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const presetDefinition = createMinimalPresetDefinition();
-        const sourceDocument = createSourceDocument('minimal');
+        const sourceDocument = createSourceDocument("minimal");
 
         // Act
-        const actual = presetResolutionService.resolve(
-          sourceDocument,
-          presetDefinition,
-        );
+        const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
 
         // Assert
         expect(actual.layers).toEqual(presetDefinition.layers);
@@ -416,23 +409,17 @@ target('PresetResolutionService', () => {
     });
   });
 
-  describe('applyFeatureOverride', () => {
+  describe("applyFeatureOverride", () => {
     // UT-CF-177
-    context('boolean機能をtrueにする場合', () => {
-      it('対象フィールドだけtrueになる', () => {
+    context("boolean機能をtrueにする場合", () => {
+      it("対象フィールドだけtrueになる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const resolvedDocument = createResolvedDocument();
-        const featureToggle = FeatureToggle.create(
-          createFeatureName('agentLessonCollection'),
-          true,
-        );
+        const featureToggle = FeatureToggle.create(createFeatureName("agentLessonCollection"), true);
 
         // Act
-        const actual = presetResolutionService.applyFeatureOverride(
-          resolvedDocument,
-          featureToggle,
-        );
+        const actual = presetResolutionService.applyFeatureOverride(resolvedDocument, featureToggle);
 
         // Assert
         expect(actual.harnesses.agentLessonCollection).toBe(true);
@@ -440,22 +427,16 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-178
-    context('boolean機能をfalseにする場合', () => {
-      it('対象フィールドだけfalseになる', () => {
+    context("boolean機能をfalseにする場合", () => {
+      it("対象フィールドだけfalseになる", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const resolvedDocument = createResolvedDocument();
         resolvedDocument.harnesses.cascadeUpdate = true;
-        const featureToggle = FeatureToggle.create(
-          createFeatureName('cascadeUpdate'),
-          false,
-        );
+        const featureToggle = FeatureToggle.create(createFeatureName("cascadeUpdate"), false);
 
         // Act
-        const actual = presetResolutionService.applyFeatureOverride(
-          resolvedDocument,
-          featureToggle,
-        );
+        const actual = presetResolutionService.applyFeatureOverride(resolvedDocument, featureToggle);
 
         // Assert
         expect(actual.harnesses.cascadeUpdate).toBe(false);
@@ -463,21 +444,15 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-179
-    context('bundleSizeLimitを有効化する場合', () => {
-      it('既定値500を設定する', () => {
+    context("bundleSizeLimitを有効化する場合", () => {
+      it("既定値500を設定する", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const resolvedDocument = createResolvedDocument();
-        const featureToggle = FeatureToggle.create(
-          createFeatureName('bundleSizeLimit'),
-          true,
-        );
+        const featureToggle = FeatureToggle.create(createFeatureName("bundleSizeLimit"), true);
 
         // Act
-        const actual = presetResolutionService.applyFeatureOverride(
-          resolvedDocument,
-          featureToggle,
-        );
+        const actual = presetResolutionService.applyFeatureOverride(resolvedDocument, featureToggle);
 
         // Assert
         expect(actual.harnesses.bundleSizeLimit).toBe(500);
@@ -485,22 +460,16 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-180
-    context('bundleSizeLimitを無効化する場合', () => {
-      it('0を設定する', () => {
+    context("bundleSizeLimitを無効化する場合", () => {
+      it("0を設定する", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const resolvedDocument = createResolvedDocument();
         resolvedDocument.harnesses.bundleSizeLimit = 500;
-        const featureToggle = FeatureToggle.create(
-          createFeatureName('bundleSizeLimit'),
-          false,
-        );
+        const featureToggle = FeatureToggle.create(createFeatureName("bundleSizeLimit"), false);
 
         // Act
-        const actual = presetResolutionService.applyFeatureOverride(
-          resolvedDocument,
-          featureToggle,
-        );
+        const actual = presetResolutionService.applyFeatureOverride(resolvedDocument, featureToggle);
 
         // Assert
         expect(actual.harnesses.bundleSizeLimit).toBe(0);
@@ -508,8 +477,8 @@ target('PresetResolutionService', () => {
     });
 
     // UT-CF-181
-    context('1機能だけ切り替える場合', () => {
-      it('他のharnesses属性は変更しない', () => {
+    context("1機能だけ切り替える場合", () => {
+      it("他のharnesses属性は変更しない", () => {
         // Arrange
         const presetResolutionService = createPresetResolutionService();
         const resolvedDocument = createResolvedDocument();
@@ -519,16 +488,10 @@ target('PresetResolutionService', () => {
           bundleSizeLimit: 300,
           deadCodeGC: true,
         };
-        const featureToggle = FeatureToggle.create(
-          createFeatureName('agentLessonCollection'),
-          true,
-        );
+        const featureToggle = FeatureToggle.create(createFeatureName("agentLessonCollection"), true);
 
         // Act
-        const actual = presetResolutionService.applyFeatureOverride(
-          resolvedDocument,
-          featureToggle,
-        );
+        const actual = presetResolutionService.applyFeatureOverride(resolvedDocument, featureToggle);
 
         // Assert
         expect(actual.harnesses.agentLessonCollection).toBe(true);

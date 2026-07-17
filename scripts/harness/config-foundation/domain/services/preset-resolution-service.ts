@@ -3,6 +3,7 @@
  * @unit config-foundation
  * @work-item-id WI-212
  * @work-item-id WI-300
+ * @work-item-id WI-320
  */
 import { ConfigFoundationDomainError } from "../errors/config-foundation-domain-error.js";
 import type { HarnessConfigResolvedDocument, HarnessConfigSourceDocument } from "../harness-config.js";
@@ -163,7 +164,9 @@ export class PresetResolutionService {
       project: {
         name: sourceDocument.project.name,
         preset: sourceDocument.project.preset,
-        languages: sourceDocument.project.languages ?? ["typescript"],
+        // WI-320 (github#39): 未宣言時に ["typescript"] を注入しない。「未宣言」を resolved config まで
+        // 生存させ、validator-system adapter のファイルシステム言語検出（WI-319）を実 CLI 経路で有効にする。
+        ...(sourceDocument.project.languages === undefined ? {} : { languages: sourceDocument.project.languages }),
       },
       layers,
       quickMode: deepMerge(presetDefinition.quickMode, sourceDocument.quickMode, "quickMode"),

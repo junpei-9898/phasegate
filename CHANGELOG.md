@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-320 — 言語自動検出を実 CLI 経路で有効化（GitHub #39 フォローアップ）** — WI-319 の検出は adapter に実装されたが、実 CLI では preset 解決（`preset-resolution-service`）・mapper・`ProjectConfig` VO の 3 箇所が未宣言時に `["typescript"]` を注入するため dead code だった（シナリオ検証で発見）。「未宣言」シグナルを resolved config から adapter まで生存させ、純 Python リポジトリで L3-003 が unsupported-language SKIP になることを実 CLI spawn の E2E で固定。宣言時の挙動・検証は不変。
+
 - **WI-319 — project.languages のファイルシステム自動検出（GitHub #39）** — `project.languages` 未宣言時に無条件で `["typescript"]` へフォールバックし、純 Python プロジェクトでも TS 専用 validator（L3-002 / L3-003 / L4-003）が既定で走っていた問題を修正。マーカーファイル（python: pyproject.toml 等 / go.mod / Cargo.toml / pom.xml / Gemfile / composer.json、typescript: tsconfig.json または package.json の typescript 依存のみ — phasegate 導入時の package.json を誤検出しないため存在自体は根拠にしない）から検出し、config 宣言は引き続き最優先、検出ゼロ時は従来どおり typescript フォールバック。
 
 - **WI-318 — complete-check に severity-aware 集約を適用（GitHub #38）** — `phasegate:complete-check` が validator の生の `passed` だけを見ており、warning-only failure でも exit 1 になって `validate` / `ci-check` と乖離していた。Stop hook が叩くのは complete-check のため、L2-016 の `ungated-legacy` マーカー（error→可視 warning 降格）が実質無効化されていた。ci-check と同一の `CiCheckResult.fromResults()`（ADR-017 / WI-260 の `isEffectivelyPassed`）を通す集約に修正し、warning 件数を summary に反映。skipped validator が fail 扱いされる潜在バグも同時に解消。lint fail → exit 1 の合流は不変。

@@ -10,6 +10,7 @@
  * @work-item-id WI-300
  * @work-item-id WI-301
  * @work-item-id WI-302
+ * @work-item-id WI-320
  */
 import type { HarnessConfigV2 } from "../../domain/harness-config.js";
 
@@ -54,7 +55,10 @@ export function toValidatorSystemConfig(resolvedConfig: HarnessConfigV2 | undefi
   return {
     project: {
       preset: resolvedConfig.project.preset,
-      languages: resolvedConfig.project.languages ?? ["typescript"],
+      // WI-320 (github#39): 未宣言時に ["typescript"] を注入せず undefined のまま渡す。
+      // HarnessConfigValidatorConfigAdapter.getProjectLanguages() が未宣言時のみ
+      // ファイルシステム検出（WI-319）にフォールバックできるようにするため。
+      ...(resolvedConfig.project.languages === undefined ? {} : { languages: resolvedConfig.project.languages }),
     },
     paths: {
       designDocs: resolvedConfig.paths.designDocs,
