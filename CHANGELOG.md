@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-314 — 不正 config の hook / doctor 自己修復デッドロック解消（GitHub #40）** — スキーマ違反の `phasegate.config.json` が dispatch 上流の fail-closed で全コマンドを exit 2 にし、pre-tool-use hook 経由で Bash / Write / Edit を全遮断して config 自身の修復も不能になる問題を修正。`hook` / `doctor` は警告 + 既定設定で続行する fail-open とし（診断・自己修復経路の常時確保）、`validate` / `ci-check` 等の検査系は復旧手順の案内付きで fail-closed を維持。hook 内部 adapter の素 `JSON.parse` throw も同様に fail-open 化し、構文破壊 JSON での再デッドロックを塞いだ。gated スコープへの書き込みは phase-gate 判定が引き続き fail-closed でブロックする。
+
 - **WI-313 — typescript peer range を `<7.0.0` に制限（GitHub #34）** — peer 自動インストールで typescript@7 が解決されると classic compiler API（`ts.ScriptTarget` 等）が存在せず全コマンドが `Cannot read properties of undefined (reading 'ESNext')` でクラッシュする問題を修正。TypeScript 7 系を peer range で弾き、packaging contract テストで range を固定した。
 
 - **WI-312 — coverage-producing CI gate** — production workflowとbundled `aidlc-gate`がL3-003実行前に`coverage/coverage-summary.json`を生成せず、clean checkoutでcoverageThresholdに対してfail-closedとなる既存欠陥を修正。self-repoはcoverage付きunit / integrationとcoverage対象外E2Eを各1回だけ実行してplain full suiteの二重実行を避け、threads開始時にもforks blobを保持して両poolをmergeする。templateは採用projectの`coverage` scriptをpackage manager別に必須実行し、test / coverage → matrix → World derive二重一致 → L3 → attestation → integrityの順序を維持する。

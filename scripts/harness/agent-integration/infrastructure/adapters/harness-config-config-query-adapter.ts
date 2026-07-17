@@ -6,13 +6,9 @@
  * HarnessConfigV2 の harnesses セクションから Hook 設定を読み取る
  */
 
-import * as fs from 'node:fs';
-import type {
-  BaselineConfig,
-  ConfigQueryPort,
-  HookType,
-} from '../../domain/ports/config-query-port.js';
-import { ProjectPaths } from '../../domain/value-objects/project-paths.js';
+import * as fs from "node:fs";
+import type { BaselineConfig, ConfigQueryPort, HookType } from "../../domain/ports/config-query-port.js";
+import { ProjectPaths } from "../../domain/value-objects/project-paths.js";
 
 interface ProjectDocsSection {
   inception?: string;
@@ -84,8 +80,22 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     if (this.cachedConfig !== null) {
       return this.cachedConfig;
     }
-    const raw = fs.readFileSync(this.configPath, 'utf8');
-    const doc = JSON.parse(raw) as HarnessConfigDocument;
+    // GitHub #40: config が JSON として壊れている場合に hook プロセス全体を throw で
+    // 落とすと、エージェントの全ツール呼び出しが遮断され config の修復自体が不能になる。
+    // main.ts の ConfigPersistenceError と同じ意味論（警告 + 既定値で続行）に揃える。
+    // ファイル不在等の fs エラーは既存契約どおり throw する（上流の catch が defaults を
+    // 適用する）。gated スコープへの書き込みは phase-gate 側が fail-closed でブロックする。
+    const raw = fs.readFileSync(this.configPath, "utf8");
+    let doc: HarnessConfigDocument;
+    try {
+      doc = JSON.parse(raw) as HarnessConfigDocument;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(
+        `Warning: phasegate.config.json could not be parsed as JSON (${message}); continuing with default hook settings so self-repair stays possible.\n`,
+      );
+      doc = {};
+    }
     this.cachedConfig = doc;
     return doc;
   }
@@ -98,10 +108,10 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     // pre-tool-use → agentLessonCollection
     // post-tool-use → cascadeUpdate
     // stop → デフォルト有効
-    if (hookType === 'pre-tool-use') {
+    if (hookType === "pre-tool-use") {
       return harnesses.agentLessonCollection ?? true;
     }
-    if (hookType === 'post-tool-use') {
+    if (hookType === "post-tool-use") {
       return harnesses.cascadeUpdate ?? true;
     }
     // stop はデフォルト有効
@@ -111,13 +121,9 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
   async getProtectedFilePatterns(): Promise<string[]> {
     const config = this.loadConfig();
     const configured = config.protectedFiles?.patterns ?? [];
-    const principlesDocs = config.paths?.principlesDocs ?? 'docs/principles';
-    const folderRulesDoc = config.paths?.folderRulesDoc ?? 'docs/folder_management_rules.md';
-    return [
-      ...configured,
-      `${normalizeProjectPath(principlesDocs)}/**`,
-      normalizeProjectPath(folderRulesDoc),
-    ];
+    const principlesDocs = config.paths?.principlesDocs ?? "docs/principles";
+    const folderRulesDoc = config.paths?.folderRulesDoc ?? "docs/folder_management_rules.md";
+    return [...configured, `${normalizeProjectPath(principlesDocs)}/**`, normalizeProjectPath(folderRulesDoc)];
   }
 
   async getProtectedFileExclusions(): Promise<string[]> {
@@ -135,13 +141,10 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     const paths = config.project?.paths;
     const topLevelPaths = config.paths;
 
-    return ProjectPaths.create(
-      paths?.source ?? ['scripts/harness'],
-      {
-        construction: paths?.docs?.construction ?? topLevelPaths?.designDocs ?? 'docs/product/construction',
-        inception: paths?.docs?.inception ?? topLevelPaths?.inceptionDocs ?? 'docs/inception',
-      },
-    );
+    return ProjectPaths.create(paths?.source ?? ["scripts/harness"], {
+      construction: paths?.docs?.construction ?? topLevelPaths?.designDocs ?? "docs/product/construction",
+      inception: paths?.docs?.inception ?? topLevelPaths?.inceptionDocs ?? "docs/inception",
+    });
   }
 
   async getBaselineConfig(): Promise<BaselineConfig> {
@@ -149,7 +152,7 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     const baseline = config.baseline ?? {};
     return {
       enabled: baseline.enabled ?? true,
-      path: baseline.path ?? '.phasegate/baseline.json',
+      path: baseline.path ?? ".phasegate/baseline.json",
     };
   }
 
@@ -162,5 +165,5 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
 }
 
 function normalizeProjectPath(path: string): string {
-  return path.replace(/\\/g, '/').replace(/\/+$/g, '');
+  return path.replace(/\\/g, "/").replace(/\/+$/g, "");
 }

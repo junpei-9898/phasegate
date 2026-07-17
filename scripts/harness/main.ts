@@ -1855,7 +1855,18 @@ function emitV2SchemaWarningOnce(sourcePath: string): void {
   );
 }
 
-async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
+/**
+ * 不正 config でも fail-open（警告 + 既定設定で続行）にするコマンド。
+ * GitHub #40: config 検証の fail-closed が dispatch より上流にあると、pre-tool-use hook
+ * 経由で Write/Edit/Bash が全遮断され、config 自身を修復する経路が消える（自己修復
+ * デッドロック）。hook（エージェントのツール遮断点）と doctor（自己診断）は復旧経路
+ * として常に起動可能でなければならない。validate / ci-check 等の検査系コマンドは
+ * fail-closed を維持する（gated スコープへの書き込みは hook 内の phase-gate 判定が
+ * 引き続き fail-closed でブロックする）。
+ */
+const CONFIG_FAIL_OPEN_COMMANDS: ReadonlySet<string> = new Set(["hook", "doctor"]);
+
+async function loadResolvedConfig(command?: string): Promise<HarnessConfigV2 | undefined> {
   try {
     const configModule = createConfigFoundationModule();
     const result = await configModule.usecases.loadResolvedConfigUseCase.execute();
@@ -1866,6 +1877,15 @@ async function loadResolvedConfig(): Promise<HarnessConfigV2 | undefined> {
   } catch (error) {
     if (error instanceof ConfigValidationError) {
       process.stderr.write(`Invalid phasegate.config.json: ${error.message}\n`);
+      if (command !== undefined && CONFIG_FAIL_OPEN_COMMANDS.has(command)) {
+        process.stderr.write(
+          "Warning: continuing with default settings so diagnosis and self-repair stay possible. Fix the reported path in phasegate.config.json to restore full gating.\n",
+        );
+        return undefined;
+      }
+      process.stderr.write(
+        "Recovery: fix the reported path/type in phasegate.config.json (or restore it from version control). `phasegate doctor` and agent hooks remain available while the config is invalid.\n",
+      );
       process.exit(2);
     }
     if (error instanceof ConfigNotFoundError) {
@@ -1942,7 +1962,7 @@ async function main(): Promise<void> {
   const json = hasFlag(args, "--json");
 
   // Cross-unit wiring: 設定を先に解決し、各Unit に注入する
-  const resolvedConfig = command.startsWith("world:") ? undefined : await loadResolvedConfig();
+  const resolvedConfig = command.startsWith("world:") ? undefined : await loadResolvedConfig(command);
 
   try {
     switch (command) {
