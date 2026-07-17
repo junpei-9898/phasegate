@@ -16,20 +16,42 @@
 // @work-item-id WI-215
 // @work-item-id WI-216
 // @work-item-id WI-219
+// @work-item-id WI-315
 
-import { mkdir, readFile, writeFile, copyFile, chmod, access, lstat, readlink, symlink, readdir, rm } from "node:fs/promises";
+import {
+  access,
+  chmod,
+  copyFile,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  readlink,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
-import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
+import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "text-managed" | "copy" | "copy-dir" | "symlink";
+type StrategyType =
+  | "json"
+  | "shell"
+  | "yaml-add"
+  | "package-json"
+  | "markdown-managed"
+  | "text-managed"
+  | "copy"
+  | "copy-dir"
+  | "symlink";
 
 export interface InstallPlanItem {
   readonly path: string;
@@ -96,9 +118,16 @@ const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
+const USER_SECTION_BEGIN = "<!-- phasegate:user-section:start -->";
+const USER_SECTION_END = "<!-- phasegate:user-section:end -->";
 const TEXT_BEGIN = "# phasegate personal install exclude (BEGIN)";
 const TEXT_END = "# phasegate personal install exclude (END)";
-const PERSONAL_AGENT_RUNTIME_FILES = new Set([".claude/CLAUDE.md", ".claude/settings.json", "AGENTS.md", ".codex/hooks.json"]);
+const PERSONAL_AGENT_RUNTIME_FILES = new Set([
+  ".claude/CLAUDE.md",
+  ".claude/settings.json",
+  "AGENTS.md",
+  ".codex/hooks.json",
+]);
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const PERSONAL_PRINCIPLES_DOCS = ".phasegate-local/docs/principles";
 const PERSONAL_FOLDER_RULES_DOC = ".phasegate-local/docs/folder_management_rules.md";
@@ -207,7 +236,10 @@ function mergeHookArrays(existing: unknown, incoming: unknown): unknown[] {
   return result;
 }
 
-function mergeJsonObject(existing: Record<string, unknown>, incoming: Record<string, unknown>): Record<string, unknown> {
+function mergeJsonObject(
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = { ...existing };
   const existingHooks = isRecord(existing.hooks) ? existing.hooks : {};
   const incomingHooks = isRecord(incoming.hooks) ? incoming.hooks : {};
@@ -256,11 +288,39 @@ function managedMarkdownBlock(content: string): string {
   return content.slice(start, end + MARKDOWN_END.length).trim();
 }
 
+// Extracts the user-authored body between the user-section markers. Returns
+// null when the markers are absent or the body is blank, so callers fall back
+// to the template placeholder.
+function extractUserSectionBody(content: string | null): string | null {
+  if (content === null) return null;
+  const start = content.indexOf(USER_SECTION_BEGIN);
+  const end = content.indexOf(USER_SECTION_END);
+  if (start === -1 || end === -1 || end < start) return null;
+  const body = content.slice(start + USER_SECTION_BEGIN.length, end).trim();
+  return body.length === 0 ? null : body;
+}
+
+// The CLAUDE.md template nests the user-section inside the managed section, so
+// replacing the managed block wholesale would wipe user-authored instructions
+// with the template placeholder. Re-inject the existing user-section body into
+// the incoming block. Templates whose managed block carries no user-section
+// markers (e.g. AGENTS.md) are returned unchanged.
+function restoreUserSection(block: string, existing: string | null): string {
+  const start = block.indexOf(USER_SECTION_BEGIN);
+  const end = block.indexOf(USER_SECTION_END);
+  if (start === -1 || end === -1 || end < start) return block;
+  const preserved = extractUserSectionBody(existing);
+  if (preserved === null) return block;
+  return `${block.slice(0, start + USER_SECTION_BEGIN.length)}\n${preserved}\n${block.slice(end)}`;
+}
+
 function mergeManagedMarkdown(existing: string | null, incoming: string): string {
-  const block = managedMarkdownBlock(incoming);
   if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
+  const block = restoreUserSection(managedMarkdownBlock(incoming), existing);
   const pattern = new RegExp(`${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}`);
-  if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
+  // Replacer function keeps user-authored text (now part of the block) from
+  // being interpreted as `$`-substitution patterns by String.replace.
+  if (pattern.test(existing)) return existing.replace(pattern, () => block).replace(/\s*$/, "\n");
   return `${block}\n\n${existing.replace(/\s*$/, "\n")}`;
 }
 
@@ -321,7 +381,8 @@ function hasCustomJson(content: string | null): boolean {
     const parsed = JSON.parse(content) as unknown;
     if (!isRecord(parsed)) return true;
     const withoutEmptyHooks = { ...parsed };
-    if (isRecord(withoutEmptyHooks.hooks) && Object.keys(withoutEmptyHooks.hooks).length === 0) delete withoutEmptyHooks.hooks;
+    if (isRecord(withoutEmptyHooks.hooks) && Object.keys(withoutEmptyHooks.hooks).length === 0)
+      delete withoutEmptyHooks.hooks;
     return Object.keys(withoutEmptyHooks).length > 0;
   } catch {
     return true;
@@ -343,10 +404,13 @@ function likelyCauseFor(code: string): string {
 }
 
 function recoveryFor(code: string, target: string): string {
-  if (code === "EPERM") return `Review sandbox or filesystem permissions for ${target}, ask the user for write access when needed, then rerun phasegate setup:agent --apply or phasegate install --apply.`;
+  if (code === "EPERM")
+    return `Review sandbox or filesystem permissions for ${target}, ask the user for write access when needed, then rerun phasegate setup:agent --apply or phasegate install --apply.`;
   if (code === "EACCES") return `Fix ownership or permissions for ${target}, then rerun phasegate install --apply.`;
-  if (code === "EROFS") return `Move the project to a writable filesystem or rerun in a writable workspace before applying ${target}.`;
-  if (code === "EEXIST" || code === "ENOTDIR") return `Inspect the parent path for ${target}; if it is user-owned, rename or move it before rerunning phasegate install --dry-run --json and then --apply.`;
+  if (code === "EROFS")
+    return `Move the project to a writable filesystem or rerun in a writable workspace before applying ${target}.`;
+  if (code === "EEXIST" || code === "ENOTDIR")
+    return `Inspect the parent path for ${target}; if it is user-owned, rename or move it before rerunning phasegate install --dry-run --json and then --apply.`;
   return `Inspect ${target}, run phasegate install --dry-run --json, then rerun with --apply after resolving the filesystem issue.`;
 }
 
@@ -396,16 +460,18 @@ export class RunInstallUseCase {
       const absolutePath = join(input.projectRoot, target.path);
       const before = await readTextOrNull(absolutePath);
       const rawTemplate = await readFile(join(input.harnessRoot, target.templatePath), "utf8");
-      const template = target.strategy === "markdown-managed"
-        ? renderAgentContextTemplate(rawTemplate, { agent, skillSet, workflow, includeHusky, includeCi })
-        : rawTemplate;
+      const template =
+        target.strategy === "markdown-managed"
+          ? renderAgentContextTemplate(rawTemplate, { agent, skillSet, workflow, includeHusky, includeCi })
+          : rawTemplate;
       const existingEntry = baseManifest.findEntry(target.path);
       const beforeHash = before === null ? null : this.hashCalculator.compute(before);
-      const unmanagedPersonalRuntimeFile = input.personal
-        && (PERSONAL_AGENT_RUNTIME_FILES.has(target.path) || target.personalManualIfUnmanaged === true)
-        && before !== null
-        && !before.includes(MARKDOWN_BEGIN)
-        && (existingEntry === null || beforeHash === null || !beforeHash.equals(existingEntry.hash));
+      const unmanagedPersonalRuntimeFile =
+        input.personal &&
+        (PERSONAL_AGENT_RUNTIME_FILES.has(target.path) || target.personalManualIfUnmanaged === true) &&
+        before !== null &&
+        !before.includes(MARKDOWN_BEGIN) &&
+        (existingEntry === null || beforeHash === null || !beforeHash.equals(existingEntry.hash));
       const repairMode = unmanagedPersonalRuntimeFile ? "manual" : this.repairMode(target, before);
       const next = unmanagedPersonalRuntimeFile ? before : this.merge(target, before, template, input.phasegateVersion);
       const didChange = before !== next;
@@ -414,11 +480,11 @@ export class RunInstallUseCase {
       // (merge returns `before`). For executable git hooks this means the
       // phasegate hook is NOT wired in — warn instead of skipping silently.
       const preservedExistingHook =
-        target.strategy === "copy"
-        && target.executable === true
-        && before !== null
-        && before.trim() !== template.trim()
-        && !input.force;
+        target.strategy === "copy" &&
+        target.executable === true &&
+        before !== null &&
+        before.trim() !== template.trim() &&
+        !input.force;
       const warning = preservedExistingHook
         ? `${target.path}: an existing hook was found and left unchanged; phasegate's checks are NOT wired in. Merge the phasegate hook manually (or rerun with --force to back up and overwrite).`
         : null;
@@ -432,7 +498,9 @@ export class RunInstallUseCase {
           ? `${target.path}: existing non-phasegate runtime path requires manual review`
           : warning !== null
             ? warning
-            : didChange ? `${target.path}: ${action}` : `${target.path}: already up to date`,
+            : didChange
+              ? `${target.path}: ${action}`
+              : `${target.path}: already up to date`,
         diff: unmanagedPersonalRuntimeFile ? "manual review required" : this.diffSummary(before, next),
         skillHint: repairMode === "ai-assisted" ? SKILL_HINT : null,
         warning,
@@ -488,10 +556,7 @@ export class RunInstallUseCase {
     }
 
     const personalSkillTargets = input.personal
-      ? [
-          ...(includeClaude ? [".claude/skills"] : []),
-          ...(includeCodex ? [".codex/skills"] : []),
-        ]
+      ? [...(includeClaude ? [".claude/skills"] : []), ...(includeCodex ? [".codex/skills"] : [])]
       : [];
     const selectedPersonalSkills = input.personal ? await listSelectedBundledSkills(input.harnessRoot, skillSet) : [];
     for (const skillPath of personalSkillTargets) {
@@ -499,7 +564,13 @@ export class RunInstallUseCase {
       plan.push(item);
       if (input.apply && item.changed && item.repairMode === "mechanical") {
         try {
-          await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, join(input.projectRoot, skillPath), selectedPersonalSkills);
+          await copySelectedSkillDirectories(
+            this.modelDelegation,
+            input.harnessRoot,
+            input.projectRoot,
+            join(input.projectRoot, skillPath),
+            selectedPersonalSkills,
+          );
           await writeFile(
             join(input.projectRoot, skillPath, ".harness-version"),
             `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -512,7 +583,12 @@ export class RunInstallUseCase {
         manifest = this.addManifestEntry(baseManifest, manifest, {
           path: `${item.path}/.harness-version`,
           mode: "created",
-          contentForHash: this.personalSkillsVersionHashInput(item.path, input.phasegateVersion, skillSet, selectedPersonalSkills),
+          contentForHash: this.personalSkillsVersionHashInput(
+            item.path,
+            input.phasegateVersion,
+            skillSet,
+            selectedPersonalSkills,
+          ),
         });
         for (const skill of selectedPersonalSkills) {
           manifest = this.addManifestEntry(baseManifest, manifest, {
@@ -567,7 +643,11 @@ export class RunInstallUseCase {
         return this.withApplyError({ plan, refused, changed, backupDir }, linkSpec.path, "mkdir", error);
       }
       try {
-        await symlink(linkSpec.target, join(input.projectRoot, linkSpec.path), process.platform === "win32" ? "junction" : "dir");
+        await symlink(
+          linkSpec.target,
+          join(input.projectRoot, linkSpec.path),
+          process.platform === "win32" ? "junction" : "dir",
+        );
       } catch (error) {
         return this.withApplyError({ plan, refused, changed, backupDir }, linkSpec.path, "symlink", error);
       }
@@ -586,7 +666,8 @@ export class RunInstallUseCase {
         repairMode: "manual",
         strategy: "json",
         changed: false,
-        summary: "~/.codex/config.toml: personal mode does not write user-level Codex feature flags; enable hooks manually when needed",
+        summary:
+          "~/.codex/config.toml: personal mode does not write user-level Codex feature flags; enable hooks manually when needed",
         diff: "manual Codex hooks feature enablement may be required",
         skillHint: null,
         warning: null,
@@ -597,7 +678,12 @@ export class RunInstallUseCase {
       try {
         await this.manifestRepository.save(input.projectRoot, manifest);
       } catch (error) {
-        return this.withApplyError({ plan, refused, changed, backupDir }, ".phasegate/manifest.json", "manifest-save", error);
+        return this.withApplyError(
+          { plan, refused, changed, backupDir },
+          ".phasegate/manifest.json",
+          "manifest-save",
+          error,
+        );
       }
     }
 
@@ -638,7 +724,11 @@ export class RunInstallUseCase {
       },
       ...(options.includeClaude
         ? [
-            { path: ".claude/settings.json", strategy: "json" as const, templatePath: "templates/.claude/settings.json" },
+            {
+              path: ".claude/settings.json",
+              strategy: "json" as const,
+              templatePath: "templates/.claude/settings.json",
+            },
             {
               path: "CLAUDE.md",
               strategy: "markdown-managed" as const,
@@ -696,7 +786,10 @@ export class RunInstallUseCase {
     ];
   }
 
-  private createPersonalTargets(options: { readonly includeClaude: boolean; readonly includeCodex: boolean }): readonly InstallTarget[] {
+  private createPersonalTargets(options: {
+    readonly includeClaude: boolean;
+    readonly includeCodex: boolean;
+  }): readonly InstallTarget[] {
     return [
       {
         path: ".phasegate-local/phasegate.config.json",
@@ -709,7 +802,11 @@ export class RunInstallUseCase {
               path: ".claude/CLAUDE.md",
               strategy: "markdown-managed" as const,
               templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
-              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal .claude/CLAUDE.md managed section" },
+              block: {
+                start: MARKDOWN_BEGIN,
+                end: MARKDOWN_END,
+                content: "phasegate personal .claude/CLAUDE.md managed section",
+              },
               personalManualIfUnmanaged: true,
             },
             {
@@ -725,7 +822,11 @@ export class RunInstallUseCase {
               path: "AGENTS.md",
               strategy: "markdown-managed" as const,
               templatePath: "docs/templates/agent-context/AGENTS.md.template.md",
-              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate personal AGENTS.md managed section" },
+              block: {
+                start: MARKDOWN_BEGIN,
+                end: MARKDOWN_END,
+                content: "phasegate personal AGENTS.md managed section",
+              },
               personalManualIfUnmanaged: true,
             },
             {
@@ -861,9 +962,15 @@ export class RunInstallUseCase {
         break;
       }
     }
-    const missingManifest = baseManifest.findEntry(`${relativePath}/.harness-version`) === null
-      || skills.some((skill) => baseManifest.findEntry(`${relativePath}/${skill}`) === null);
-    const changed = current === null || !current.includes(expectedVersion) || !current.includes(expectedSkillSet) || missingSkill || missingManifest;
+    const missingManifest =
+      baseManifest.findEntry(`${relativePath}/.harness-version`) === null ||
+      skills.some((skill) => baseManifest.findEntry(`${relativePath}/${skill}`) === null);
+    const changed =
+      current === null ||
+      !current.includes(expectedVersion) ||
+      !current.includes(expectedSkillSet) ||
+      missingSkill ||
+      missingManifest;
     return {
       path: relativePath,
       action: changed ? "missing" : "will-skip",
@@ -877,7 +984,12 @@ export class RunInstallUseCase {
     };
   }
 
-  private personalSkillsVersionHashInput(path: string, version: string, skillSet: "core" | "all", skills: readonly string[]): string {
+  private personalSkillsVersionHashInput(
+    path: string,
+    version: string,
+    skillSet: "core" | "all",
+    skills: readonly string[],
+  ): string {
     return `personal-skills-version:${path}:${version}:${skillSet}:${skills.join(",")}`;
   }
 
@@ -902,9 +1014,15 @@ export class RunInstallUseCase {
         break;
       }
     }
-    const missingManifest = baseManifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
-      || skills.some((skill) => baseManifest.findEntry(`skills/${skill}`) === null);
-    const changed = current === null || !current.includes(expectedVersion) || !current.includes(expectedSkillSet) || missingSkill || missingManifest;
+    const missingManifest =
+      baseManifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null ||
+      skills.some((skill) => baseManifest.findEntry(`skills/${skill}`) === null);
+    const changed =
+      current === null ||
+      !current.includes(expectedVersion) ||
+      !current.includes(expectedSkillSet) ||
+      missingSkill ||
+      missingManifest;
     return {
       path: "skills",
       action: changed ? "missing" : "will-skip",
@@ -918,7 +1036,11 @@ export class RunInstallUseCase {
     };
   }
 
-  private async deploySharedSkills(input: RunInstallInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
+  private async deploySharedSkills(
+    input: RunInstallInput,
+    skills: readonly string[],
+    skillSet: SkillSet,
+  ): Promise<void> {
     const targetRoot = join(input.projectRoot, "skills");
     await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(

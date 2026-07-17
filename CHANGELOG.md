@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-315 — install / reconcile が CLAUDE.md の user-section を上書きする問題を修正（GitHub #35）** — CLAUDE.md テンプレートは user-section が managed-section の内側にあるため、`install --apply` / `reconcile` の managed block 置換がユーザー自身の記述を placeholder で消失させていた。merge 時に既存 user-section 本文を抽出して新 block に再注入する方式で保持するようにした（AGENTS.md の既存挙動は不変）。併せて、ユーザー本文が `String.replace` の置換文字列として `$` シーケンス解釈される潜在破損を replacer 関数で封じた。
+
 - **WI-314 — 不正 config の hook / doctor 自己修復デッドロック解消（GitHub #40）** — スキーマ違反の `phasegate.config.json` が dispatch 上流の fail-closed で全コマンドを exit 2 にし、pre-tool-use hook 経由で Bash / Write / Edit を全遮断して config 自身の修復も不能になる問題を修正。`hook` / `doctor` は警告 + 既定設定で続行する fail-open とし（診断・自己修復経路の常時確保）、`validate` / `ci-check` 等の検査系は復旧手順の案内付きで fail-closed を維持。hook 内部 adapter の素 `JSON.parse` throw も同様に fail-open 化し、構文破壊 JSON での再デッドロックを塞いだ。gated スコープへの書き込みは phase-gate 判定が引き続き fail-closed でブロックする。
 
 - **WI-313 — typescript peer range を `<7.0.0` に制限（GitHub #34）** — peer 自動インストールで typescript@7 が解決されると classic compiler API（`ts.ScriptTarget` 等）が存在せず全コマンドが `Cannot read properties of undefined (reading 'ESNext')` でクラッシュする問題を修正。TypeScript 7 系を peer range で弾き、packaging contract テストで range を固定した。

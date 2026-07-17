@@ -7,8 +7,21 @@
 // @work-item-id WI-216
 // @work-item-id WI-219
 // @work-item-id WI-264
+// @work-item-id WI-315
 
-import { access, chmod, copyFile, lstat, mkdir, readFile, readlink, readdir, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  access,
+  chmod,
+  copyFile,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  readlink,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
@@ -20,7 +33,15 @@ import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.j
 import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 
 type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse" | "prune";
-type StrategyType = "json" | "shell" | "yaml-add" | "package-json" | "markdown-managed" | "copy-dir" | "symlink" | "unknown";
+type StrategyType =
+  | "json"
+  | "shell"
+  | "yaml-add"
+  | "package-json"
+  | "markdown-managed"
+  | "copy-dir"
+  | "symlink"
+  | "unknown";
 
 export interface ReconcilePlanItem {
   readonly path: string;
@@ -62,6 +83,8 @@ const SHELL_BEGIN = "# === phasegate managed (BEGIN) ===";
 const SHELL_END = "# === phasegate managed (END) ===";
 const MARKDOWN_BEGIN = "<!-- phasegate:managed-section:start -->";
 const MARKDOWN_END = "<!-- phasegate:managed-section:end -->";
+const USER_SECTION_BEGIN = "<!-- phasegate:user-section:start -->";
+const USER_SECTION_END = "<!-- phasegate:user-section:end -->";
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const HARNESS_VERSION_BASENAME = ".harness-version";
 const SKILL_ROOT_PREFIXES = ["skills", ".claude/skills", ".codex/skills"] as const;
@@ -177,7 +200,10 @@ function replaceHookArrays(existing: unknown, incoming: unknown): unknown[] {
   return result;
 }
 
-function reconcileJsonObject(existing: Record<string, unknown>, incoming: Record<string, unknown>): Record<string, unknown> {
+function reconcileJsonObject(
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = { ...existing };
   const existingHooks = isRecord(existing.hooks) ? existing.hooks : {};
   const incomingHooks = isRecord(incoming.hooks) ? incoming.hooks : {};
@@ -220,11 +246,39 @@ function managedMarkdownBlock(content: string): string {
   return content.slice(start, end + MARKDOWN_END.length).trim();
 }
 
+// Extracts the user-authored body between the user-section markers. Returns
+// null when the markers are absent or the body is blank, so callers fall back
+// to the template placeholder.
+function extractUserSectionBody(content: string | null): string | null {
+  if (content === null) return null;
+  const start = content.indexOf(USER_SECTION_BEGIN);
+  const end = content.indexOf(USER_SECTION_END);
+  if (start === -1 || end === -1 || end < start) return null;
+  const body = content.slice(start + USER_SECTION_BEGIN.length, end).trim();
+  return body.length === 0 ? null : body;
+}
+
+// The CLAUDE.md template nests the user-section inside the managed section, so
+// replacing the managed block wholesale would wipe user-authored instructions
+// with the template placeholder. Re-inject the existing user-section body into
+// the incoming block. Templates whose managed block carries no user-section
+// markers (e.g. AGENTS.md) are returned unchanged.
+function restoreUserSection(block: string, existing: string | null): string {
+  const start = block.indexOf(USER_SECTION_BEGIN);
+  const end = block.indexOf(USER_SECTION_END);
+  if (start === -1 || end === -1 || end < start) return block;
+  const preserved = extractUserSectionBody(existing);
+  if (preserved === null) return block;
+  return `${block.slice(0, start + USER_SECTION_BEGIN.length)}\n${preserved}\n${block.slice(end)}`;
+}
+
 function reconcileManagedMarkdown(existing: string | null, incoming: string): string {
-  const block = managedMarkdownBlock(incoming);
   if (existing === null || existing.trim().length === 0) return `${incoming.trim()}\n`;
+  const block = restoreUserSection(managedMarkdownBlock(incoming), existing);
   const pattern = new RegExp(`${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}`);
-  if (pattern.test(existing)) return existing.replace(pattern, block).replace(/\s*$/, "\n");
+  // Replacer function keeps user-authored text (now part of the block) from
+  // being interpreted as `$`-substitution patterns by String.replace.
+  if (pattern.test(existing)) return existing.replace(pattern, () => block).replace(/\s*$/, "\n");
   return `${block}\n\n${existing.replace(/\s*$/, "\n")}`;
 }
 
@@ -235,7 +289,9 @@ function renderAgentContextTemplate(template: string): string {
     "phasegate validate --layer L2 --format human",
     "phasegate setup:agent --dry-run",
     "phasegate config:plan --intent l4-strict --dry-run",
-  ].map((command) => `- \`${command}\``).join("\n");
+  ]
+    .map((command) => `- \`${command}\``)
+    .join("\n");
   return template
     .replaceAll("{{PHASEGATE_AGENT}}", "both")
     .replaceAll("{{PHASEGATE_SKILLS_MODE}}", "all")
@@ -312,14 +368,28 @@ export class RunReconcileUseCase {
     for (const entry of manifest.entries) {
       const target = targetsByPath.get(entry.path);
       if (target === undefined) {
-        const item = this.item(entry.path, "skip", "manual", "unknown", false, `${entry.path}: no bundled template`, "manual review required", SKILL_HINT);
+        const item = this.item(
+          entry.path,
+          "skip",
+          "manual",
+          "unknown",
+          false,
+          `${entry.path}: no bundled template`,
+          "manual review required",
+          SKILL_HINT,
+        );
         plan.push(item);
         continue;
       }
       const outcome = await this.planManagedEntry(input, entry, target);
       outcomes.push(outcome);
       plan.push(outcome.item);
-      if (input.apply && outcome.item.changed && (outcome.item.repairMode === "ai-assisted" || outcome.item.repairMode === "manual") && !input.force) {
+      if (
+        input.apply &&
+        outcome.item.changed &&
+        (outcome.item.repairMode === "ai-assisted" || outcome.item.repairMode === "manual") &&
+        !input.force
+      ) {
         refused.push({ ...outcome.item, action: "refuse" });
       }
     }
@@ -329,7 +399,12 @@ export class RunReconcileUseCase {
       const outcome = await this.planMissingTarget(input, target);
       outcomes.push(outcome);
       plan.push(outcome.item);
-      if (input.apply && outcome.item.changed && (outcome.item.repairMode === "ai-assisted" || outcome.item.repairMode === "manual") && !input.force) {
+      if (
+        input.apply &&
+        outcome.item.changed &&
+        (outcome.item.repairMode === "ai-assisted" || outcome.item.repairMode === "manual") &&
+        !input.force
+      ) {
         refused.push({ ...outcome.item, action: "refuse" });
       }
     }
@@ -376,18 +451,43 @@ export class RunReconcileUseCase {
       if (hashContent !== null) {
         if (outcome.item.strategy === "copy-dir" && outcome.item.path === "skills") {
           const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
-          nextManifest = nextManifest.addEntry(this.createdEntry(SHARED_SKILLS_VERSION_PATH, this.sharedSkillsVersionHashInput(input.phasegateVersion, "all", sharedSkills)));
+          nextManifest = nextManifest.addEntry(
+            this.createdEntry(
+              SHARED_SKILLS_VERSION_PATH,
+              this.sharedSkillsVersionHashInput(input.phasegateVersion, "all", sharedSkills),
+            ),
+          );
           for (const skill of sharedSkills) {
-            nextManifest = nextManifest.addEntry(this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, "all")));
+            nextManifest = nextManifest.addEntry(
+              this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, "all")),
+            );
           }
-        } else if (outcome.item.strategy === "copy-dir" && (outcome.item.path === ".claude/skills" || outcome.item.path === ".codex/skills")) {
+        } else if (
+          outcome.item.strategy === "copy-dir" &&
+          (outcome.item.path === ".claude/skills" || outcome.item.path === ".codex/skills")
+        ) {
           const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
-          nextManifest = nextManifest.addEntry(this.createdEntry(`${outcome.item.path}/.harness-version`, this.personalSkillsVersionHashInput(outcome.item.path, input.phasegateVersion, "all", personalSkills)));
+          nextManifest = nextManifest.addEntry(
+            this.createdEntry(
+              `${outcome.item.path}/.harness-version`,
+              this.personalSkillsVersionHashInput(outcome.item.path, input.phasegateVersion, "all", personalSkills),
+            ),
+          );
           for (const skill of personalSkills) {
-            nextManifest = nextManifest.addEntry(this.createdEntry(`${outcome.item.path}/${skill}`, this.personalSkillHashInput(outcome.item.path, skill, input.phasegateVersion, "all")));
+            nextManifest = nextManifest.addEntry(
+              this.createdEntry(
+                `${outcome.item.path}/${skill}`,
+                this.personalSkillHashInput(outcome.item.path, skill, input.phasegateVersion, "all"),
+              ),
+            );
           }
         } else {
-          const mode = outcome.item.strategy === "symlink" ? "symlink" : outcome.item.action === "add" ? "created" : (manifest.findEntry(outcome.item.path)?.mode ?? "merged");
+          const mode =
+            outcome.item.strategy === "symlink"
+              ? "symlink"
+              : outcome.item.action === "add"
+                ? "created"
+                : (manifest.findEntry(outcome.item.path)?.mode ?? "merged");
           nextManifest = nextManifest.addEntry(
             DeploymentEntry.create({
               path: outcome.item.path,
@@ -416,9 +516,10 @@ export class RunReconcileUseCase {
     const matchesManifest = currentHash.equals(entry.hash);
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
     const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
-    const next = entry.mode === "created" && target.strategy !== "package-json" && target.strategy !== "markdown-managed"
-      ? template
-      : this.reconcileContent(target, before, template, input.phasegateVersion);
+    const next =
+      entry.mode === "created" && target.strategy !== "package-json" && target.strategy !== "markdown-managed"
+        ? template
+        : this.reconcileContent(target, before, template, input.phasegateVersion);
     const changed = before !== next;
     const repairMode: RepairMode = matchesManifest ? "mechanical" : "ai-assisted";
     return {
@@ -448,11 +549,13 @@ export class RunReconcileUseCase {
     const before = await readTextOrNull(absolutePath);
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
     const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
-    const next = before === null && target.strategy !== "package-json"
-      ? template
-      : this.reconcileContent(target, before, template, input.phasegateVersion);
+    const next =
+      before === null && target.strategy !== "package-json"
+        ? template
+        : this.reconcileContent(target, before, template, input.phasegateVersion);
     const changed = before !== next;
-    const repairMode: RepairMode = target.strategy === "shell" && before !== null && !before.includes(SHELL_BEGIN) ? "ai-assisted" : "mechanical";
+    const repairMode: RepairMode =
+      target.strategy === "shell" && before !== null && !before.includes(SHELL_BEGIN) ? "ai-assisted" : "mechanical";
     return {
       item: this.item(
         target.path,
@@ -480,19 +583,46 @@ export class RunReconcileUseCase {
       const stat = await lstat(absolutePath);
       if (stat.isSymbolicLink() && (await readlink(absolutePath)) === "../skills") {
         return {
-          item: this.item(relativePath, "skip", "mechanical", "symlink", false, `${relativePath}: already linked`, "no changes", null),
+          item: this.item(
+            relativePath,
+            "skip",
+            "mechanical",
+            "symlink",
+            false,
+            `${relativePath}: already linked`,
+            "no changes",
+            null,
+          ),
           needsBackup: false,
           apply: async () => "../skills",
         };
       }
       return {
-        item: this.item(relativePath, "skip", "manual", "symlink", false, `${relativePath}: existing non-phasegate path requires manual review`, "manual review required", SKILL_HINT),
+        item: this.item(
+          relativePath,
+          "skip",
+          "manual",
+          "symlink",
+          false,
+          `${relativePath}: existing non-phasegate path requires manual review`,
+          "manual review required",
+          SKILL_HINT,
+        ),
         needsBackup: false,
         apply: async () => null,
       };
     } catch {
       return {
-        item: this.item(relativePath, "link", "mechanical", "symlink", true, `${relativePath}: create symlink`, "+ symlink ../skills", null),
+        item: this.item(
+          relativePath,
+          "link",
+          "mechanical",
+          "symlink",
+          true,
+          `${relativePath}: create symlink`,
+          "+ symlink ../skills",
+          null,
+        ),
         needsBackup: false,
         apply: async () => {
           await mkdir(join(projectRoot, "skills"), { recursive: true });
@@ -505,21 +635,37 @@ export class RunReconcileUseCase {
   }
 
   private manifestIntendsSharedSkills(manifest: DeploymentManifest): boolean {
-    return manifest.findEntry(".claude/skills") !== null
-      || manifest.findEntry(".codex/skills") !== null
-      || manifest.entries.some((entry) => entry.path.startsWith("skills/"));
+    return (
+      manifest.findEntry(".claude/skills") !== null ||
+      manifest.findEntry(".codex/skills") !== null ||
+      manifest.entries.some((entry) => entry.path.startsWith("skills/"))
+    );
   }
 
   private isPersonalManifest(manifest: DeploymentManifest): boolean {
-    return manifest.findEntry(".phasegate-local/phasegate.config.json") !== null
-      || manifest.entries.some((entry) => (entry.path === ".claude/skills" || entry.path === ".codex/skills") && entry.mode === "created")
-      || manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/") || entry.path.startsWith(".codex/skills/"));
+    return (
+      manifest.findEntry(".phasegate-local/phasegate.config.json") !== null ||
+      manifest.entries.some(
+        (entry) => (entry.path === ".claude/skills" || entry.path === ".codex/skills") && entry.mode === "created",
+      ) ||
+      manifest.entries.some(
+        (entry) => entry.path.startsWith(".claude/skills/") || entry.path.startsWith(".codex/skills/"),
+      )
+    );
   }
 
   private personalSkillPaths(manifest: DeploymentManifest): Array<".claude/skills" | ".codex/skills"> {
     const paths = new Set<".claude/skills" | ".codex/skills">();
-    if (manifest.findEntry(".claude/skills") !== null || manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/"))) paths.add(".claude/skills");
-    if (manifest.findEntry(".codex/skills") !== null || manifest.entries.some((entry) => entry.path.startsWith(".codex/skills/"))) paths.add(".codex/skills");
+    if (
+      manifest.findEntry(".claude/skills") !== null ||
+      manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/"))
+    )
+      paths.add(".claude/skills");
+    if (
+      manifest.findEntry(".codex/skills") !== null ||
+      manifest.entries.some((entry) => entry.path.startsWith(".codex/skills/"))
+    )
+      paths.add(".codex/skills");
     return [...paths].sort();
   }
 
@@ -538,8 +684,9 @@ export class RunReconcileUseCase {
         break;
       }
     }
-    const missingManifest = manifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null
-      || skills.some((skill) => manifest.findEntry(`skills/${skill}`) === null);
+    const missingManifest =
+      manifest.findEntry(SHARED_SKILLS_VERSION_PATH) === null ||
+      skills.some((skill) => manifest.findEntry(`skills/${skill}`) === null);
     const renderedSkillDrift = await hasRenderedSkillDrift(
       this.modelDelegation,
       input.harnessRoot,
@@ -547,7 +694,12 @@ export class RunReconcileUseCase {
       this.resolveProjectPath(input.projectRoot, "skills"),
       skills,
     );
-    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest || renderedSkillDrift;
+    const changed =
+      versionContent === null ||
+      !versionContent.includes(expectedVersion) ||
+      missingSkill ||
+      missingManifest ||
+      renderedSkillDrift;
     return {
       item: this.item(
         "skills",
@@ -568,7 +720,11 @@ export class RunReconcileUseCase {
     };
   }
 
-  private async deploySharedSkills(input: RunReconcileInput, skills: readonly string[], skillSet: SkillSet): Promise<void> {
+  private async deploySharedSkills(
+    input: RunReconcileInput,
+    skills: readonly string[],
+    skillSet: SkillSet,
+  ): Promise<void> {
     const targetRoot = this.resolveProjectPath(input.projectRoot, "skills");
     await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
     await writeFile(
@@ -595,8 +751,9 @@ export class RunReconcileUseCase {
         break;
       }
     }
-    const missingManifest = manifest.findEntry(`${relativePath}/.harness-version`) === null
-      || skills.some((skill) => manifest.findEntry(`${relativePath}/${skill}`) === null);
+    const missingManifest =
+      manifest.findEntry(`${relativePath}/.harness-version`) === null ||
+      skills.some((skill) => manifest.findEntry(`${relativePath}/${skill}`) === null);
     const renderedSkillDrift = await hasRenderedSkillDrift(
       this.modelDelegation,
       input.harnessRoot,
@@ -604,7 +761,12 @@ export class RunReconcileUseCase {
       this.resolveProjectPath(input.projectRoot, relativePath),
       skills,
     );
-    const changed = versionContent === null || !versionContent.includes(expectedVersion) || missingSkill || missingManifest || renderedSkillDrift;
+    const changed =
+      versionContent === null ||
+      !versionContent.includes(expectedVersion) ||
+      missingSkill ||
+      missingManifest ||
+      renderedSkillDrift;
     return {
       item: this.item(
         relativePath,
@@ -620,7 +782,13 @@ export class RunReconcileUseCase {
       apply: async () => {
         if (!changed) return null;
         const targetRoot = this.resolveProjectPath(input.projectRoot, relativePath);
-        await copySelectedSkillDirectories(this.modelDelegation, input.harnessRoot, input.projectRoot, targetRoot, skills);
+        await copySelectedSkillDirectories(
+          this.modelDelegation,
+          input.harnessRoot,
+          input.projectRoot,
+          targetRoot,
+          skills,
+        );
         await writeFile(
           join(targetRoot, ".harness-version"),
           `${JSON.stringify({ version: input.phasegateVersion, deployedAt: new Date().toISOString(), skillSet }, null, 2)}\n`,
@@ -631,7 +799,10 @@ export class RunReconcileUseCase {
     };
   }
 
-  private planOrphanSkills(input: RunReconcileInput, manifest: DeploymentManifest): Array<{
+  private planOrphanSkills(
+    input: RunReconcileInput,
+    manifest: DeploymentManifest,
+  ): Array<{
     readonly item: ReconcilePlanItem;
     readonly needsBackup: boolean;
     readonly prune: boolean;
@@ -702,7 +873,12 @@ export class RunReconcileUseCase {
     return `shared-skill:${skill}:${version}:${skillSet}`;
   }
 
-  private personalSkillsVersionHashInput(path: string, version: string, skillSet: SkillSet, skills: readonly string[]): string {
+  private personalSkillsVersionHashInput(
+    path: string,
+    version: string,
+    skillSet: SkillSet,
+    skills: readonly string[],
+  ): string {
     return `personal-skills-version:${path}:${version}:${skillSet}:${skills.join(",")}`;
   }
 
@@ -760,7 +936,11 @@ export class RunReconcileUseCase {
         executable: true,
         block: { start: SHELL_BEGIN, end: SHELL_END, content: "phasegate pre-push managed block" },
       },
-      { path: ".github/workflows/phasegate-aidlc-gate.yml", strategy: "yaml-add", templatePath: "docs/templates/ci/aidlc-gate.yml" },
+      {
+        path: ".github/workflows/phasegate-aidlc-gate.yml",
+        strategy: "yaml-add",
+        templatePath: "docs/templates/ci/aidlc-gate.yml",
+      },
       { path: "package.json", strategy: "package-json", templatePath: "package.json" },
       { path: ".claude/skills", strategy: "symlink" },
       { path: ".codex/skills", strategy: "symlink" },
@@ -786,7 +966,11 @@ export class RunReconcileUseCase {
   private resolveProjectPath(projectRoot: string, relativePath: string): string {
     const absolutePath = resolve(projectRoot, relativePath);
     const root = resolve(projectRoot);
-    if (absolutePath !== root && !absolutePath.startsWith(`${root}/`) && relative(root, absolutePath).startsWith("..")) {
+    if (
+      absolutePath !== root &&
+      !absolutePath.startsWith(`${root}/`) &&
+      relative(root, absolutePath).startsWith("..")
+    ) {
       throw new Error(`Manifest entry escapes project root: ${relativePath}`);
     }
     return absolutePath;

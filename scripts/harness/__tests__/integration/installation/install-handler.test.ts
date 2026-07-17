@@ -13,6 +13,7 @@
 // @work-item-id WI-214
 // @work-item-id WI-215
 // @work-item-id WI-216
+// @work-item-id WI-315
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -43,7 +44,16 @@ async function fileExists(path: string): Promise<boolean> {
   }
 }
 
-async function runInstall(root: string, options: { apply?: boolean; force?: boolean; personal?: boolean; agent?: "claude" | "codex" | "both"; skillSet?: "core" | "all" } = {}) {
+async function runInstall(
+  root: string,
+  options: {
+    apply?: boolean;
+    force?: boolean;
+    personal?: boolean;
+    agent?: "claude" | "codex" | "both";
+    skillSet?: "core" | "all";
+  } = {},
+) {
   const mod = createInstallationModule();
   const agent = options.agent ?? "both";
   return mod.installHandler.execute({
@@ -161,6 +171,27 @@ async function arrangeCustomHuskyAndForce() {
   return refuseThenForceAndRead(root);
 }
 
+const USER_SECTION_PLACEHOLDER = "Project-specific agent instructions go here.";
+
+async function arrangeCustomizedUserSectionReinstall(path: "CLAUDE.md" | "AGENTS.md", customText: string) {
+  const root = await createProjectRoot();
+  await runInstall(root, { apply: true });
+  const installed = await readFile(join(root, path), "utf8");
+  // user-section の placeholder をユーザー記述に置き換えてから再 install する。
+  await writeProjectFile(root, path, installed.replace(USER_SECTION_PLACEHOLDER, customText));
+  const second = await runInstall(root, { apply: true });
+  return {
+    second,
+    content: await readFile(join(root, path), "utf8"),
+  };
+}
+
+async function arrangeFreshInstallAndReadClaudeMd(): Promise<string> {
+  const root = await createProjectRoot();
+  await runInstall(root, { apply: true });
+  return await readFile(join(root, "CLAUDE.md"), "utf8");
+}
+
 async function arrangeExistingAgentsMdInstallAndRead(): Promise<string> {
   const root = await createProjectRoot();
   await writeProjectFile(root, "AGENTS.md", "# Existing Agent Notes\n\nkeep user text\n");
@@ -227,7 +258,7 @@ async function arrangePersonalClaudeDoctorResult() {
 
 async function arrangePersonalInstallWithExistingClaudeSettings() {
   const root = await createProjectRoot();
-  await writeProjectFile(root, ".claude/settings.json", "{\"custom\": true}\n");
+  await writeProjectFile(root, ".claude/settings.json", '{"custom": true}\n');
   const installed = await runInstall(root, { apply: true, personal: true, agent: "claude" });
   const parsed = JSON.parse(installed.stdout) as {
     plan: Array<{ path: string; changed: boolean; repairMode: string; summary: string }>;
@@ -241,7 +272,7 @@ async function arrangePersonalInstallWithExistingClaudeSettings() {
 
 async function arrangePersonalInstallWithExistingCodexHooks() {
   const root = await createProjectRoot();
-  await writeProjectFile(root, ".codex/hooks.json", "{\"custom\": true}\n");
+  await writeProjectFile(root, ".codex/hooks.json", '{"custom": true}\n');
   const installed = await runInstall(root, { apply: true, personal: true, agent: "codex" });
   const parsed = JSON.parse(installed.stdout) as {
     plan: Array<{ path: string; changed: boolean; repairMode: string; summary: string }>;
@@ -270,10 +301,12 @@ async function arrangePersonalInstallWithExistingPreCommit() {
 
 async function arrangePersonalClaudeInstallWithExistingSkills() {
   const root = await createProjectRoot();
-  await writeProjectFile(root, ".claude/skills/.harness-version", "{\"version\":\"0.1.0\"}\n");
+  await writeProjectFile(root, ".claude/skills/.harness-version", '{"version":"0.1.0"}\n');
   await writeProjectFile(root, ".claude/skills/user-owned/SKILL.md", "# User Owned\n");
   const installed = await runInstall(root, { apply: true, personal: true, agent: "claude" });
-  const parsed = JSON.parse(installed.stdout) as { plan: Array<{ path: string; changed: boolean; repairMode: string }> };
+  const parsed = JSON.parse(installed.stdout) as {
+    plan: Array<{ path: string; changed: boolean; repairMode: string }>;
+  };
   const manifest = JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
     entries: Array<{ path: string; mode: string }>;
   };
@@ -331,7 +364,10 @@ async function arrangePersonalCodexInstallWithTeamAgents() {
   };
 }
 
-async function arrangeProjectInstallAndReadSkills(agent: "claude" | "codex" | "both", skillSet: "core" | "all" = "all") {
+async function arrangeProjectInstallAndReadSkills(
+  agent: "claude" | "codex" | "both",
+  skillSet: "core" | "all" = "all",
+) {
   const root = await createProjectRoot();
   const installed = await runInstall(root, { apply: true, agent, skillSet });
   const manifest = JSON.parse(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")) as {
@@ -343,8 +379,12 @@ async function arrangeProjectInstallAndReadSkills(agent: "claude" | "codex" | "b
     manifest,
     hasToolkitGuide: await fileExists(join(root, "skills", "phasegate-toolkit-guide", "SKILL.md")),
     hasCoreSkill: await fileExists(join(root, "skills", "cascade-updater", "SKILL.md")),
-    claudeLink: await fileExists(join(root, ".claude", "skills")) ? await readlink(join(root, ".claude", "skills")) : null,
-    codexLink: await fileExists(join(root, ".codex", "skills")) ? await readlink(join(root, ".codex", "skills")) : null,
+    claudeLink: (await fileExists(join(root, ".claude", "skills")))
+      ? await readlink(join(root, ".claude", "skills"))
+      : null,
+    codexLink: (await fileExists(join(root, ".codex", "skills")))
+      ? await readlink(join(root, ".codex", "skills"))
+      : null,
   };
 }
 
@@ -416,6 +456,43 @@ target("InstallHandler", () => {
       expect(actual.content).toContain("# === phasegate managed (BEGIN) ===");
     });
 
+    it("再 install --apply が既存 CLAUDE.md の user-section 記述を保持すること", async () => {
+      // Arrange
+      const customText = "常に日本語で回答すること。";
+
+      // Act
+      const actual = await arrangeCustomizedUserSectionReinstall("CLAUDE.md", customText);
+
+      // Assert
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.content).toContain(customText);
+      expect(actual.content).not.toContain(USER_SECTION_PLACEHOLDER);
+      expect(actual.content).toContain("<!-- phasegate:user-section:start -->");
+      expect(actual.content).toContain("<!-- phasegate:user-section:end -->");
+    });
+
+    it("CLAUDE.md 新規作成時は user-section に placeholder を注入すること", async () => {
+      // Act
+      const actual = await arrangeFreshInstallAndReadClaudeMd();
+
+      // Assert
+      expect(actual).toContain("<!-- phasegate:user-section:start -->");
+      expect(actual).toContain(USER_SECTION_PLACEHOLDER);
+    });
+
+    it("再 install --apply が既存 AGENTS.md の user-section 記述を保持すること", async () => {
+      // Arrange
+      const customText = "Codex 向けのローカル運用メモを保持する。";
+
+      // Act
+      const actual = await arrangeCustomizedUserSectionReinstall("AGENTS.md", customText);
+
+      // Assert
+      expect(actual.second.exitCode).toBe(0);
+      expect(actual.content).toContain(customText);
+      expect(actual.content).not.toContain(USER_SECTION_PLACEHOLDER);
+    });
+
     it("既存 AGENTS.md の user content を保持して managed section を追加すること", async () => {
       // Act
       const actual = await arrangeExistingAgentsMdInstallAndRead();
@@ -473,23 +550,38 @@ target("InstallHandler", () => {
         ]),
       );
       expect(await snapshotFiles(root, TEAM_OWNED_FILES)).toEqual(before);
-      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"name": "personal-phasegate"');
-      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"designDocs": ".phasegate-local/product/construction"');
-      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"principlesDocs": ".phasegate-local/docs/principles"');
-      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain('"folderRulesDoc": ".phasegate-local/docs/folder_management_rules.md"');
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain(
+        '"name": "personal-phasegate"',
+      );
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain(
+        '"designDocs": ".phasegate-local/product/construction"',
+      );
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain(
+        '"principlesDocs": ".phasegate-local/docs/principles"',
+      );
+      expect(await readFile(join(root, ".phasegate-local/phasegate.config.json"), "utf8")).toContain(
+        '"folderRulesDoc": ".phasegate-local/docs/folder_management_rules.md"',
+      );
       expect(await readFile(join(root, ".claude/CLAUDE.md"), "utf8")).toContain("PhaseGate");
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".claude/skills/.harness-version"), "utf8")).toContain('"version": "0.145.1"');
       expect(await readFile(join(root, ".git/hooks/pre-commit"), "utf8")).toContain("validate --layer L2");
       expect(await readFile(join(root, ".git/hooks/commit-msg"), "utf8")).toContain('commit-msg "$1"');
-      expect(await readFile(join(root, ".phasegate-local/docs/folder_management_rules.md"), "utf8")).toContain("docs ディレクトリ管理ガイド");
-      expect(await readFile(join(root, ".phasegate-local/docs/principles/testing-rules.md"), "utf8")).toContain("テスト");
+      expect(await readFile(join(root, ".phasegate-local/docs/folder_management_rules.md"), "utf8")).toContain(
+        "docs ディレクトリ管理ガイド",
+      );
+      expect(await readFile(join(root, ".phasegate-local/docs/principles/testing-rules.md"), "utf8")).toContain(
+        "テスト",
+      );
       expect((await lstat(join(root, ".claude/settings.json"))).isSymbolicLink()).toBe(false);
       expect((await lstat(join(root, ".claude/skills"))).isDirectory()).toBe(true);
       expect((await lstat(join(root, ".claude/skills"))).isSymbolicLink()).toBe(false);
-      expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toContain("# phasegate personal install exclude (BEGIN)");
-      expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(".phasegate-local/phasegate.config.json");
-
+      expect(await readFile(join(root, ".git/info/exclude"), "utf8")).toContain(
+        "# phasegate personal install exclude (BEGIN)",
+      );
+      expect(await readFile(join(root, ".phasegate", "manifest.json"), "utf8")).toContain(
+        ".phasegate-local/phasegate.config.json",
+      );
     });
 
     it("personal Codex install は project-local hooks と skills を real runtime artifacts として作成すること", async () => {
@@ -533,7 +625,9 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.installed.exitCode).toBe(0);
-      expect(actual.changedPaths).toEqual(expect.arrayContaining(["AGENTS.md", ".codex/hooks.json", ".git/info/exclude"]));
+      expect(actual.changedPaths).toEqual(
+        expect.arrayContaining(["AGENTS.md", ".codex/hooks.json", ".git/info/exclude"]),
+      );
       expect(actual.agentsContent).toContain("PhaseGate");
       expect(actual.excludeContent).toContain("AGENTS.md");
       expect(actual.manifestContent).toContain('"path": "AGENTS.md"');
@@ -573,7 +667,7 @@ target("InstallHandler", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(actual.settingsPlan).toMatchObject({ changed: false, repairMode: "manual" });
-      expect(actual.settingsContent).toBe("{\"custom\": true}\n");
+      expect(actual.settingsContent).toBe('{"custom": true}\n');
     });
 
     it("personal Codex install は既存 .codex/hooks.json を上書きしないこと", async () => {
@@ -584,7 +678,7 @@ target("InstallHandler", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(actual.hooksPlan).toMatchObject({ changed: false, repairMode: "manual" });
-      expect(actual.hooksContent).toBe("{\"custom\": true}\n");
+      expect(actual.hooksContent).toBe('{"custom": true}\n');
     });
 
     it("既存 .git/hooks/pre-commit がある場合は上書きせず warning で通知すること", async () => {
@@ -613,10 +707,12 @@ target("InstallHandler", () => {
       expect(actual.skillsPlan).toMatchObject({ changed: true, repairMode: "mechanical" });
       expect(actual.toolkitGuideContent).toContain("phasegate-toolkit-guide");
       expect(actual.userOwnedContent).toBe("# User Owned\n");
-      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: ".claude/skills/.harness-version", mode: "created" }),
-        expect.objectContaining({ path: ".claude/skills/phasegate-toolkit-guide", mode: "created" }),
-      ]));
+      expect(actual.manifest.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: ".claude/skills/.harness-version", mode: "created" }),
+          expect.objectContaining({ path: ".claude/skills/phasegate-toolkit-guide", mode: "created" }),
+        ]),
+      );
       expect(actual.manifest.entries.find((entry) => entry.path === ".claude/skills")).toStrictEqual(undefined);
     });
 
@@ -638,15 +734,21 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.installed.exitCode).toBe(0);
-      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
-      expect(await readFile(join(actual.root, ".claude", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain(
+        "phasegate-toolkit-guide",
+      );
+      expect(
+        await readFile(join(actual.root, ".claude", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8"),
+      ).toContain("phasegate-toolkit-guide");
       expect(actual.claudeLink).toBe("../skills");
       expect(actual.codexLink).toStrictEqual(null);
-      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "skills/.harness-version", mode: "created" }),
-        expect.objectContaining({ path: "skills/phasegate-toolkit-guide", mode: "created" }),
-        expect.objectContaining({ path: ".claude/skills", mode: "symlink" }),
-      ]));
+      expect(actual.manifest.entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: "skills/.harness-version", mode: "created" }),
+          expect.objectContaining({ path: "skills/phasegate-toolkit-guide", mode: "created" }),
+          expect.objectContaining({ path: ".claude/skills", mode: "symlink" }),
+        ]),
+      );
     });
 
     it("project Codex install は root shared skills を配布して Codex link から参照できること", async () => {
@@ -655,8 +757,12 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.installed.exitCode).toBe(0);
-      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
-      expect(await readFile(join(actual.root, ".codex", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain("phasegate-toolkit-guide");
+      expect(await readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).toContain(
+        "phasegate-toolkit-guide",
+      );
+      expect(
+        await readFile(join(actual.root, ".codex", "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8"),
+      ).toContain("phasegate-toolkit-guide");
       expect(actual.claudeLink).toStrictEqual(null);
       expect(actual.codexLink).toBe("../skills");
     });
@@ -667,14 +773,20 @@ target("InstallHandler", () => {
 
       // Assert
       expect(actual.installed.exitCode).toBe(0);
-      expect(await readFile(join(actual.root, "skills", "cascade-updater", "SKILL.md"), "utf8")).toContain("cascade-updater");
-      await expect(readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+      expect(await readFile(join(actual.root, "skills", "cascade-updater", "SKILL.md"), "utf8")).toContain(
+        "cascade-updater",
+      );
+      await expect(
+        readFile(join(actual.root, "skills", "phasegate-toolkit-guide", "SKILL.md"), "utf8"),
+      ).rejects.toMatchObject({ code: "ENOENT" });
       expect(actual.claudeLink).toBe("../skills");
       expect(actual.codexLink).toBe("../skills");
-      expect(actual.manifest.entries).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "skills/cascade-updater", mode: "created" }),
-      ]));
-      expect(actual.manifest.entries.find((entry) => entry.path === "skills/phasegate-toolkit-guide")).toStrictEqual(undefined);
+      expect(actual.manifest.entries).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "skills/cascade-updater", mode: "created" })]),
+      );
+      expect(actual.manifest.entries.find((entry) => entry.path === "skills/phasegate-toolkit-guide")).toStrictEqual(
+        undefined,
+      );
     });
   });
 });

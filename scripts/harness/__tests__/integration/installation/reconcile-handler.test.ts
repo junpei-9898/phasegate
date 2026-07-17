@@ -5,6 +5,7 @@
 // @work-item-id WI-210
 // @work-item-id WI-216
 // @work-item-id WI-219
+// @work-item-id WI-315
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -269,6 +270,21 @@ async function arrangePersonalInstallWithDeletedBundledSkillAndRepair() {
   };
 }
 
+async function arrangeCustomizedClaudeMdUserSectionReconcile() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  const installed = await readFile(join(root, "CLAUDE.md"), "utf8");
+  // user-section の placeholder をユーザー記述に置き換えてから version bump reconcile する。
+  const customized = installed.replace("Project-specific agent instructions go here.", "常に日本語で回答すること。");
+  await writeProjectFile(root, "CLAUDE.md", customized);
+  await updateManifestEntryHash(root, "CLAUDE.md", customized);
+  const result = await runReconcile(root, { apply: true, version: "0.146.0" });
+  return {
+    result,
+    content: await readFile(join(root, "CLAUDE.md"), "utf8"),
+  };
+}
+
 async function addManifestSkillEntry(root: string, path: string): Promise<void> {
   const manifestPath = join(root, ".phasegate", "manifest.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
@@ -407,6 +423,18 @@ target("ReconcileHandler", () => {
       expect(actual.result.exitCode).toBe(0);
       expect(actual.result.payload.backupDir).toContain(".phasegate/backups/reconcile-");
       expect(actual.backup).toContain("user modified");
+    });
+
+    it("apply は CLAUDE.md の managed section を更新しつつ user-section 記述を保持すること", async () => {
+      // Act
+      const actual = await arrangeCustomizedClaudeMdUserSectionReconcile();
+
+      // Assert
+      expect(actual.result.exitCode).toBe(0);
+      expect(actual.content).toContain("常に日本語で回答すること。");
+      expect(actual.content).not.toContain("Project-specific agent instructions go here.");
+      expect(actual.content).toContain("<!-- phasegate:user-section:start -->");
+      expect(actual.content).toContain("<!-- phasegate:user-section:end -->");
     });
 
     it("manifest に無い deploy target を追加し 2 回目は no-op になること", async () => {
