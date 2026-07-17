@@ -4,9 +4,9 @@
  *
  * AggregateValidationResultsUseCase — H08-05: バリデータ結果統合集約
  */
-import type { ValidationResultContract } from '../dto/validation-result-contract.js';
-import type { AggregateResultsInput } from '../dto/aggregate-results-input.js';
-import type { AggregatedValidationReport } from '../dto/aggregated-validation-report.js';
+import { isEffectivelyPassed } from "../../domain/services/effective-severity-policy.js";
+import type { AggregateResultsInput } from "../dto/aggregate-results-input.js";
+import type { AggregatedValidationReport } from "../dto/aggregated-validation-report.js";
 
 export class AggregateValidationResultsUseCase {
   execute(input: AggregateResultsInput): AggregatedValidationReport {
@@ -24,7 +24,7 @@ export class AggregateValidationResultsUseCase {
     }[] = [];
     let totalErrors = 0;
     let totalWarnings = 0;
-    const errorsByLayer: Record<'L2' | 'L3' | 'L4', number> = { L2: 0, L3: 0, L4: 0 };
+    const errorsByLayer: Record<"L2" | "L3" | "L4", number> = { L2: 0, L3: 0, L4: 0 };
 
     for (const result of results) {
       if (result.skipped) {
@@ -32,12 +32,9 @@ export class AggregateValidationResultsUseCase {
         continue;
       }
 
-      // ADR-017: warning-only validator fail は failOnWarning=false で overall PASS、true で従来挙動 (FAIL)
-      const hasNonWarningError = result.errors.some((e) => e.severity !== 'warning');
-      const hasWarnings = result.errors.some((e) => e.severity === 'warning');
-      const isEmptyFail = !result.passed && result.errors.length === 0;
-      const hasFail =
-        !result.passed && (isEmptyFail || hasNonWarningError || (failOnWarning && hasWarnings));
+      // ADR-017 / WI-332: warning-only validator fail は failOnWarning=false で overall PASS、
+      // true で従来挙動 (FAIL)。実効判定は domain の共有実装 isEffectivelyPassed に一本化。
+      const hasFail = !isEffectivelyPassed(result, failOnWarning);
 
       if (hasFail) {
         failedValidators++;
@@ -54,7 +51,7 @@ export class AggregateValidationResultsUseCase {
         };
         allErrors.push(errorEntry);
 
-        if (error.severity === 'warning') {
+        if (error.severity === "warning") {
           totalWarnings++;
         } else {
           totalErrors++;
@@ -62,9 +59,9 @@ export class AggregateValidationResultsUseCase {
 
         // レイヤー別集計
         const code = error.code;
-        if (code.startsWith('L2-')) errorsByLayer.L2++;
-        else if (code.startsWith('L3-')) errorsByLayer.L3++;
-        else if (code.startsWith('L4-')) errorsByLayer.L4++;
+        if (code.startsWith("L2-")) errorsByLayer.L2++;
+        else if (code.startsWith("L3-")) errorsByLayer.L3++;
+        else if (code.startsWith("L4-")) errorsByLayer.L4++;
       }
     }
 

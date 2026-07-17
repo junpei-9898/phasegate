@@ -212,3 +212,20 @@ human/agent/ci formatter で `[FAIL]` と `[WARN]` を分離:
 2. **(B) warning も exit 1 を default に保つ（CI 互換性優先）** — default を変えず移行コストはゼロだが、`defaultSeverity: warning` 宣言と「常に fail」実装の semantic 乖離が残るため不採用。
 
 採用理由の詳細は上記 Decision「採用理由」を参照。
+
+## 追記 (WI-332, 2026-07-18): 実効判定の共有実装と全経路の経由
+
+本 ADR の Decision（集計セマンティクス）自体は変更しない。実装配置に関する追記のみ。
+
+github#38（`complete-check` だけが独自集約を持ち warning-only failure で exit 1 になった回帰。
+WI-318 で修正）の恒久化として、WI-332 で「実効 severity 判定」を単一の共有実装に集約した:
+
+- **共有実装（単一ソース）**: `scripts/harness/validator-system/domain/services/effective-severity-policy.ts` の `isEffectivelyPassed()`。本 ADR Decision の集計セマンティクス（skipped / passed=true は実質 pass、error 含みは fail、errors=[] は防御的に fail、warning-only は `failOnWarning=false` 既定で実質 pass）をそのまま実装する
+- **全経路がこれを経由する**:
+  - `validate` 集約 — `validator-system/application/use-cases/aggregate-validation-results-usecase.ts`（WI-332 で複製実装を削除し共有実装を参照）
+  - `ci-check` / `complete-check` — `harness-api/domain/value-objects/ci-check-result.ts` の `CiCheckResult.fromResults()`（WI-318 で 2 コマンド共有化、WI-332 で複製実装を削除し共有実装を参照）
+  - `pre-commit` / `commit-msg` / `bypass-audit` — `integrations/pre-commit.ts` の `buildReport()` / `classifyValidatorFailure()`（WI-332 で手動集約 `failed === 0` を共有実装経由に変更。pre-commit 経路には `validate.failOnWarning` の config 配線が無いため、既定値 `false` に固定）
+- **例外**: `status` コマンドは「failure を表示しつつ常に exit 0」という独立契約のため、本判定の対象外
+- **回帰防御**: `scripts/harness/__tests__/integration/validator-system/severity-aggregation-consistency.test.ts` が同一の validator 結果セット（全 pass / warning-only / error / mixed / errors=[] / skipped）を 3 経路（validate 集約・CiCheckResult・pre-commit 集約）に通し、実効判定の一致を assert する。どれかの経路が独自判定に戻るとこのテストが落ちる
+
+新しい集約経路を追加する場合は、必ず `isEffectivelyPassed()` を経由し、上記横断テストに経路を追加すること（ADR-021 の格下げ禁止契約も併せて参照）。

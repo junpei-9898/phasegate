@@ -279,6 +279,34 @@ target("runPreCommit（pre-commit エントリ ISSUE-008 Phase B-3）", () => {
       // Assert
       expect(actual.exitCode).toBe(2);
     });
+
+    // UT-PC-20 (WI-332 / ADR-017: pre-commit 集約も共有の実効 severity 判定を通す)
+    it("L2 validator が warning-only failure の場合、pre-commit は exitCode 0 で blocker も残さない", async () => {
+      // Arrange
+      const deps = buildDeps({
+        l2Result: [
+          {
+            validatorId: "L2-016",
+            passed: false,
+            errors: [
+              {
+                code: "L2-016",
+                severity: "warning",
+                message: "ungated-legacy coverage_report",
+                suggestion: "attest",
+              },
+            ],
+            durationMs: 1,
+          },
+        ],
+      });
+      // Act
+      const actual = await runPreCommit(["scripts/harness/foo.ts"], deps);
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.blockerClasses).toEqual([]);
+      expect(actual.stdout).toContain("All checks passed");
+    });
   });
 
   context("unitName 導出 (ISSUE-026 派生バグ修正)", () => {

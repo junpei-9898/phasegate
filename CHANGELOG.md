@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-331 — CLAUDE.md の user-section を managed block の外へ移す構造修正（GitHub #35 根本修正）** — #35 の根本原因は CLAUDE.md テンプレートだけ user-section が managed block の内側にあり（AGENTS.md は外側）、block 置換のたびに WI-315 の「抽出→再注入」に頼っていたこと。テンプレートを AGENTS.md と対称の外側配置に変更し、install / reconcile は旧構造（内側）を検出すると本文を保持したまま外側へ移設する冪等 migration を実行（2 回目適用で byte 同値をテスト固定）。refresh 経路（claude-md-composer）は新テンプレート採用で自動移行、`$` シーケンス保護と空行保持も強化。新構造では uninstall 後も user-section が生存する副次改善あり。
+
+- **WI-332 — severity 実効判定の単一ソース化と横断 regression（GitHub #38 恒久化）** — 実効 severity 判定（ADR-017 の isEffectivelyPassed）が harness-api と validator-system に複製され、pre-commit は独自集約で severity を見ておらず warning-only failure が exit 1 になっていた。判定を `validator-system/domain/services/effective-severity-policy.ts` に一本化し、validate 集約・CiCheckResult（ci-check / complete-check）・pre-commit の全経路が同一実装を通る形に統一（pre-commit の warning-only は ADR-017 どおり exit 0 へ）。同一結果セットを 3 経路に通して実効判定の一致を assert する横断 regression を追加し、将来の乖離を機械検知する。
+
 - **WI-328 — 実効言語と出所を phasegate:status に表示（GitHub #39 残課題）** — WI-319/320 の言語自動検出の結果がどこにも表示されず、どの validator が有効/SKIP になるか知る術がなかった。`phasegate:status` の JSON に `languages: { effective, source }`（source = `declared` / `detected` / `fallback`）を追加。解決ロジックは validator-system の `resolveProjectLanguages()`（WI-319 の検出テーブル）に一本化して再利用し、validator の有効/SKIP 判定と必ず同じ結果を表示する。ConfigQueryPort への追加は optional メソッドで後方互換。
 
 - **WI-327 — 最小 config（project のみ）で動作可能に** — 手書き `phasegate.config.json` のスキーマが top-level 8 項目を required とし、`{"project": {"name": ..., "preset": ...}}` の最小構成で L1-001 が連発していた。プリセット解決（`PresetResolutionService.deepMerge`）は省略セクションの補完を既に完備していたため、v3 **と v2**（architecture キーなしの最小 config は v2 検証に振られる）の top-level required を `["project"]` に緩和し、型定義を実態に一致させた。**検証は弱めていない**: セクション内の required・型・enum・additionalProperties は不変で、書かれているが不正なキーは従来どおりエラー（spawn E2E で exit 2 を固定）。最小 config の解決結果がプリセット定義と一致することも統合テストで固定。

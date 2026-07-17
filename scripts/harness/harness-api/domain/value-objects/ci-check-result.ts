@@ -1,8 +1,10 @@
 // @layer domain
 // @unit harness-api
 // @work-item-id WI-307
+// @work-item-id WI-332
 // ci-check-result.ts — CiCheckResult Value Object
 
+import { isEffectivelyPassed } from "../../../validator-system/domain/services/effective-severity-policy.js";
 import type { HarnessError } from "./harness-api-response.js";
 
 export interface ValidatorCheckItem {
@@ -17,28 +19,6 @@ export interface CiCheckResultProps {
   allPassed: boolean;
   /** WI-260 / ADR-017: warning-only failure を fail 扱いにする opt-in（既定 false）。 */
   failOnWarning?: boolean;
-}
-
-/**
- * WI-260 / ADR-017: validator 1件が「実質 pass」か判定する severity-aware ルール。
- * `validate` 経路の AggregateValidationResultsUseCase と同一の判定式を harness-api の
- * domain VO 側に持たせ、ci-check と validate の集約挙動を一致させる（レイヤー越境回避のため
- * usecase を直接 import せず判定ロジックを共有）。
- *
- * - skipped: 実質 pass
- * - passed=true: 実質 pass
- * - passed=false かつ error severity（!= warning）を含む: fail
- * - passed=false かつ errors=[]（severity 判定不能）: 安全側に倒して fail
- * - passed=false かつ warning のみ: failOnWarning=false（既定）で実質 pass、true で fail
- */
-function isEffectivelyPassed(item: ValidatorCheckItem, failOnWarning: boolean): boolean {
-  if (item.skipped || item.passed) return true;
-  const errors = item.errors ?? [];
-  const hasNonWarningError = errors.some((e) => e.severity !== "warning");
-  const hasWarnings = errors.some((e) => e.severity === "warning");
-  const isEmptyFail = errors.length === 0;
-  const hasFail = isEmptyFail || hasNonWarningError || (failOnWarning && hasWarnings);
-  return !hasFail;
 }
 
 /**

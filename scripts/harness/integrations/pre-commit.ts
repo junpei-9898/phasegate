@@ -5,6 +5,7 @@
  * @work-item-id WI-109
  * @work-item-id WI-189
  * @work-item-id WI-305
+ * @work-item-id WI-332
  *
  * Pre-commit CLI entry.
  * Runs L2 validators against staged TypeScript files AND design-document
@@ -27,6 +28,7 @@ import type { ValidateMetadataCommandOutput } from "../traceability-model/presen
 import type { AggregatedValidationReport } from "../validator-system/application/dto/aggregated-validation-report.js";
 import type { ValidationResultContract } from "../validator-system/application/dto/validation-result-contract.js";
 import { createValidatorSystemModule } from "../validator-system/composition-root.js";
+import { isEffectivelyPassed } from "../validator-system/domain/services/effective-severity-policy.js";
 import { HumanValidationResultFormatter } from "../validator-system/presentation/formatters/human-validation-result-formatter.js";
 import { createWorldModelModule } from "../world-model/index.js";
 
@@ -293,9 +295,19 @@ function getStagedDesignChangeFiles(): string[] {
   }
 }
 
+/**
+ * WI-332 / ADR-017: pre-commit 経路には config の failOnWarning 配線が存在しないため、
+ * ADR-017 の既定値 (false) に固定する。validate.failOnWarning を pre-commit にも効かせる
+ * 判断をする場合は、この定数を options 経由の配線に置き換えること。
+ */
+const PRE_COMMIT_FAIL_ON_WARNING = false;
+
 function buildReport(results: readonly ValidationResultContract[]): AggregatedValidationReport {
-  const passed = results.filter((r) => r.passed && !r.skipped).length;
-  const failed = results.filter((r) => !r.passed && !r.skipped).length;
+  // WI-332 / ADR-017: 手動集約 (`failed === 0` の raw passed 判定) をやめ、
+  // validate / ci-check / complete-check と同じ共有実効判定 isEffectivelyPassed を通す。
+  // warning-only の validator failure は既定で effectively passed = exit 0。
+  const passed = results.filter((r) => !r.skipped && isEffectivelyPassed(r, PRE_COMMIT_FAIL_ON_WARNING)).length;
+  const failed = results.filter((r) => !r.skipped && !isEffectivelyPassed(r, PRE_COMMIT_FAIL_ON_WARNING)).length;
   const skipped = results.filter((r) => r.skipped).length;
   const allErrors = results.flatMap((r) => r.errors);
   const errorCount = allErrors.filter((e) => e.severity === "error").length;
@@ -452,7 +464,9 @@ export async function validateBypassTrailers(
 }
 
 function classifyValidatorFailure(result: ValidationResultContract): BypassBlockerClass | undefined {
-  if (result.passed || result.skipped) return undefined;
+  // WI-332: blocker 分類も buildReport と同じ実効判定を通す。warning-only failure は
+  // exit 0 (effectively passed) なので、bypass audit の blocker としても数えない。
+  if (isEffectivelyPassed(result, PRE_COMMIT_FAIL_ON_WARNING)) return undefined;
   const nonBypassable = NON_BYPASSABLE_VALIDATOR_IDS.includes(result.validatorId);
   return {
     code: result.validatorId,
