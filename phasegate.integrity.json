@@ -11,7 +11,7 @@
     ".husky/pre-commit": "e01307c5f90a83e76bd97c7f44fdb23889ec3660b9e0082f6d09af514409a296",
     ".husky/pre-push": "c9ddacba26ab54aaf93f7b138ea24ce05c7e0e200ef50ea22ae38c914a896ae5",
     "docs/templates/agent-context/AGENTS.md.template.md": "d99eaf535953e2e0ac304abba44215af947cd4d6c8f0947a8cf764dfff56259c",
-    "docs/templates/agent-context/CLAUDE.md.template.md": "62fac4b84c7e8b3b8f6bcf6900a83b9477c8927c328621f2299ec4f64d971476",
+    "docs/templates/agent-context/CLAUDE.md.template.md": "f7ac9a2548c22a8a927445ebdd164116b2693eda645e50789dd2af690ee21230",
     "skills/cascade-updater/SKILL.md": "55772e92988e6ecb6735e6f5eb15e536c1525415b78a59f83c255d61cb71a109",
     "skills/codebase-mapper/SKILL.md": "b5022a4eddb7ea39b1c5b86e9fb9be3e08d47132c86391461b97dd3d0e45e034",
     "skills/codex-delegator/SKILL.md": "45cbc774528d22928e92222c302951f39891bd1dcabe108492bd9c27bcd453e3",
