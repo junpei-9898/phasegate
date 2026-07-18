@@ -5,21 +5,22 @@
  * エラー定義値オブジェクト
  * エラーコードごとの正規定義（タイトル、カテゴリ、severity、ADR/fix_example要否）を不変で保持する
  */
-import { InvalidErrorDefinitionError } from '../errors/invalid-error-definition-error.js';
-import type { AdrRef } from './adr-ref.js';
-import type { ErrorCode } from './error-code.js';
-import type { FixExample } from './fix-example.js';
-import type { Severity } from './severity.js';
+import { InvalidErrorDefinitionError } from "../errors/invalid-error-definition-error.js";
+import type { AdrRef } from "./adr-ref.js";
+import type { ErrorCode } from "./error-code.js";
+import type { FixExample } from "./fix-example.js";
+import type { RemediationType } from "./remediation-type.js";
+import type { Severity } from "./severity.js";
 
 export type ErrorDefinitionCategory =
-  | 'phase_gate'
-  | 'architecture'
-  | 'dependency'
-  | 'quality'
-  | 'security'
-  | 'performance'
-  | 'consistency'
-  | 'metadata';
+  | "phase_gate"
+  | "architecture"
+  | "dependency"
+  | "quality"
+  | "security"
+  | "performance"
+  | "consistency"
+  | "metadata";
 
 export interface ErrorDefinitionProps {
   readonly code: ErrorCode;
@@ -34,6 +35,8 @@ export interface ErrorDefinitionProps {
   readonly defaultSuggestedSkill?: string | null;
   readonly defaultScaffoldCommand?: string | null;
   readonly defaultTemplatePath?: string | null;
+  /** WI-335: このエラーコードの既定修復方式。未設定（null）は 'manual' 扱い（後方互換）。 */
+  readonly defaultRemediationType?: RemediationType | null;
 }
 
 export class ErrorDefinition {
@@ -49,6 +52,7 @@ export class ErrorDefinition {
   readonly defaultSuggestedSkill: string | null;
   readonly defaultScaffoldCommand: string | null;
   readonly defaultTemplatePath: string | null;
+  readonly defaultRemediationType: RemediationType | null;
 
   private constructor(props: ErrorDefinitionProps) {
     this.code = props.code;
@@ -63,19 +67,18 @@ export class ErrorDefinition {
     this.defaultSuggestedSkill = props.defaultSuggestedSkill ?? null;
     this.defaultScaffoldCommand = props.defaultScaffoldCommand ?? null;
     this.defaultTemplatePath = props.defaultTemplatePath ?? null;
+    this.defaultRemediationType = props.defaultRemediationType ?? null;
     Object.freeze(this);
   }
 
   static create(props: ErrorDefinitionProps): ErrorDefinition {
     if (!props.ownerValidatorId || props.ownerValidatorId.trim().length === 0) {
-      throw new InvalidErrorDefinitionError(
-        'ownerValidatorId は空文字であってはなりません。'
-      );
+      throw new InvalidErrorDefinitionError("ownerValidatorId は空文字であってはなりません。");
     }
 
     if (props.defaultAdrRef !== null && !props.adrRefRequired) {
       throw new InvalidErrorDefinitionError(
-        'defaultAdrRef を持つ場合は adrRefRequired を true にしなければなりません。'
+        "defaultAdrRef を持つ場合は adrRefRequired を true にしなければなりません。",
       );
     }
 
@@ -126,6 +129,14 @@ export class ErrorDefinition {
       return explicit;
     }
     return this.defaultTemplatePath;
+  }
+
+  /** WI-335: 明示指定を優先し、なければ定義既定の修復方式を返す（未定義は null = 'manual' 扱い）。 */
+  resolveRemediationType(explicit?: RemediationType | null): RemediationType | null {
+    if (explicit) {
+      return explicit;
+    }
+    return this.defaultRemediationType;
   }
 
   equals(other: ErrorDefinition): boolean {

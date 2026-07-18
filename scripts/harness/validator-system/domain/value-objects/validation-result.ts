@@ -5,7 +5,7 @@
  * ValidationResult 値オブジェクト
  * バリデータ実行結果のスナップショット（不変）
  */
-import type { ValidatorId } from './validator-id.js';
+import type { ValidatorId } from "./validator-id.js";
 
 /** HarnessError の最小互換型（harness-error Unit の HarnessError との疎結合） */
 export interface HarnessErrorLike {
@@ -13,6 +13,12 @@ export interface HarnessErrorLike {
   readonly severity: { readonly value?: string; toString(): string };
   readonly message: string;
   readonly suggestion: string;
+  /**
+   * WI-335: suggestion の修復方式分類。未設定は 'manual' 扱い（機械適用可能と過剰宣言しない）。
+   * 'mechanical' を宣言したエラーは remediation-round-trip テストで
+   * 「エラー → suggestion を機械適用 → 再実行 → pass」が CI 保証される。
+   */
+  readonly remediationType?: "mechanical" | "ai-assisted" | "manual";
   [key: string]: unknown;
 }
 
@@ -49,10 +55,12 @@ export class ValidationResult {
       throw new Error(`ValidationResult durationMs must be >= 0 (got: ${props.durationMs})`);
     }
     if (props.passed && props.errors.length > 0) {
-      throw new Error('ValidationResult invariant violation: passed=true but errors is not empty (INV-5)');
+      throw new Error("ValidationResult invariant violation: passed=true but errors is not empty (INV-5)");
     }
     if (props.skipped && (!props.passed || props.errors.length > 0)) {
-      throw new Error('ValidationResult invariant violation: skipped=true requires passed=true and empty errors (INV-8)');
+      throw new Error(
+        "ValidationResult invariant violation: skipped=true requires passed=true and empty errors (INV-8)",
+      );
     }
     return new ValidationResult(props);
   }

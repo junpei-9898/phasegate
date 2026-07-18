@@ -171,6 +171,9 @@ export class RunL3ValidatorsUseCase {
                     severity: "error",
                     message: `カバレッジ不足: 現在値 ${coverageData.overallCoverage}%、不足 ${threshold - coverageData.overallCoverage}%`,
                     suggestion: `テストカバレッジを ${threshold}% 以上に引き上げてください`,
+                    // WI-335: 閾値未達の解消はテスト追加（AI/人間の判断）が必要。
+                    // L3-003 の registry 既定は mechanical だが、この finding は機械適用不能なので明示的に上書きする。
+                    remediationType: "ai-assisted",
                   },
                 ],
                 0,
@@ -190,8 +193,13 @@ export class RunL3ValidatorsUseCase {
                   code: "L3-003",
                   severity: "error",
                   message: `coverageThreshold=${threshold}% が設定されていますがカバレッジレポートが見つかりません（テストをカバレッジ付きで実行してください）`,
+                  // WI-335: 選択肢 (b)「layers.L3.coverageThreshold を 0 に設定する」は config 編集のみで
+                  // 完結する機械適用可能な opt-out（WI-317 / github#37）なので mechanical と宣言する。
+                  // この文言（layers.L3.coverageThreshold を 0）を変える場合は remediation-round-trip
+                  // テスト（機械適用器が同じ文言を解析する）が fail する。
                   suggestion:
                     '次のいずれかで解消してください: (a) テストをカバレッジ付きで実行してレポートを生成する（例: vitest --coverage）、(b) カバレッジゲートを opt-out するなら config の layers.L3.coverageThreshold を 0 に設定する、(c) 非 JS/TS プロジェクトなら project.languages を宣言する（例: ["python"]。L3-003 自体が unsupported-language SKIP になる）',
+                  remediationType: "mechanical",
                 },
               ],
               0,

@@ -5,113 +5,113 @@
  *
  * ErrorDefinition 値オブジェクトのユニットテスト
  */
-import { describe, expect, it } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.js';
-import { ErrorCode } from '../../../harness-error/domain/value-objects/error-code.js';
-import { Severity } from '../../../harness-error/domain/value-objects/severity.js';
-import { AdrRef } from '../../../harness-error/domain/value-objects/adr-ref.js';
-import { FixExample } from '../../../harness-error/domain/value-objects/fix-example.js';
-import { ErrorDefinition } from '../../../harness-error/domain/value-objects/error-definition.js';
-import type { ErrorDefinitionProps } from '../../../harness-error/domain/value-objects/error-definition.js';
+import { describe, expect, it } from "vitest";
+import { AdrRef } from "../../../harness-error/domain/value-objects/adr-ref.js";
+import { ErrorCode } from "../../../harness-error/domain/value-objects/error-code.js";
+import type { ErrorDefinitionProps } from "../../../harness-error/domain/value-objects/error-definition.js";
+import { ErrorDefinition } from "../../../harness-error/domain/value-objects/error-definition.js";
+import { FixExample } from "../../../harness-error/domain/value-objects/fix-example.js";
+import { Severity } from "../../../harness-error/domain/value-objects/severity.js";
+import { context, target } from "../../helpers/test-helpers.js";
 
-const createErrorCode = (value = 'L1-001') => ErrorCode.create(value);
-const createSeverity = (value: 'error' | 'warning' = 'warning') => Severity.create(value);
-const createAdrRef = (value = 'ADR-001') => AdrRef.create(value);
-const createFixExample = (value = 'const repaired = true;') => FixExample.create(value);
+const createErrorCode = (value = "L1-001") => ErrorCode.create(value);
+const createSeverity = (value: "error" | "warning" = "warning") => Severity.create(value);
+const createAdrRef = (value = "ADR-001") => AdrRef.create(value);
+const createFixExample = (value = "const repaired = true;") => FixExample.create(value);
 
 const createErrorDefinition = (overrides: Partial<ErrorDefinitionProps> = {}) =>
   ErrorDefinition.create({
     code: createErrorCode(),
-    title: 'フェーズゲート違反',
-    category: 'phase_gate',
-    defaultSeverity: createSeverity('warning'),
+    title: "フェーズゲート違反",
+    category: "phase_gate",
+    defaultSeverity: createSeverity("warning"),
     adrRefRequired: false,
     defaultAdrRef: null,
     fixExampleRequired: false,
     defaultFixExample: null,
-    ownerValidatorId: 'phase-gate',
+    ownerValidatorId: "phase-gate",
     ...overrides,
   });
 
 const createAdrRequiredDefinition = (overrides: Partial<ErrorDefinitionProps> = {}) =>
   createErrorDefinition({
     adrRefRequired: true,
-    defaultAdrRef: createAdrRef('ADR-010'),
+    defaultAdrRef: createAdrRef("ADR-010"),
     ...overrides,
   });
 
 const createFixExampleRequiredDefinition = (overrides: Partial<ErrorDefinitionProps> = {}) =>
   createErrorDefinition({
     fixExampleRequired: true,
-    defaultFixExample: createFixExample('const fixedValue = 1;'),
+    defaultFixExample: createFixExample("const fixedValue = 1;"),
     ...overrides,
   });
 
-target('ErrorDefinition', () => {
-  target('create', () => {
-    describe('全属性を指定してErrorDefinitionを生成する', () => {
+target("ErrorDefinition", () => {
+  target("create", () => {
+    describe("全属性を指定してErrorDefinitionを生成する", () => {
       // UT-HE-039
-      it('全属性が正しく設定されたErrorDefinitionが生成されること', () => {
+      it("全属性が正しく設定されたErrorDefinitionが生成されること", () => {
         // Arrange
         const params: ErrorDefinitionProps = {
-          code: createErrorCode('L2-010'),
-          title: '設計順序違反',
-          category: 'architecture',
-          defaultSeverity: createSeverity('warning'),
+          code: createErrorCode("L2-010"),
+          title: "設計順序違反",
+          category: "architecture",
+          defaultSeverity: createSeverity("warning"),
           adrRefRequired: true,
-          defaultAdrRef: createAdrRef('ADR-010'),
+          defaultAdrRef: createAdrRef("ADR-010"),
           fixExampleRequired: true,
-          defaultFixExample: createFixExample('const fixedValue = 1;'),
-          ownerValidatorId: 'architecture',
+          defaultFixExample: createFixExample("const fixedValue = 1;"),
+          ownerValidatorId: "architecture",
         };
 
         // Act
         const actual = ErrorDefinition.create(params);
 
         // Assert
-        expect(actual.code.toString()).toBe('L2-010');
-        expect(actual.defaultSeverity.value).toBe('warning');
+        expect(actual.code.toString()).toBe("L2-010");
+        expect(actual.defaultSeverity.value).toBe("warning");
         expect(actual.requiresAdrRef()).toBe(true);
         expect(actual.requiresFixExample()).toBe(true);
       });
 
       // UT-HE-050
-      it('defaultSeverityがwarningの定義を正常生成できること', () => {
+      it("defaultSeverityがwarningの定義を正常生成できること", () => {
         // Arrange
         const params: ErrorDefinitionProps = {
-          code: createErrorCode('L2-011'),
-          title: 'warning既定の定義',
-          category: 'architecture',
-          defaultSeverity: createSeverity('warning'),
+          code: createErrorCode("L2-011"),
+          title: "warning既定の定義",
+          category: "architecture",
+          defaultSeverity: createSeverity("warning"),
           adrRefRequired: false,
           defaultAdrRef: null,
           fixExampleRequired: false,
           defaultFixExample: null,
-          ownerValidatorId: 'architecture',
+          ownerValidatorId: "architecture",
         };
 
         // Act
         const actual = ErrorDefinition.create(params);
 
         // Assert
-        expect(actual.defaultSeverity.value).toBe('warning');
+        expect(actual.defaultSeverity.value).toBe("warning");
       });
     });
 
-    context('defaultAdrRefを持つがadrRefRequiredがfalseの場合', () => {
+    context("defaultAdrRefを持つがadrRefRequiredがfalseの場合", () => {
       // UT-HE-049
-      it('DDD不変条件違反としてエラーをthrowすること', () => {
+      it("DDD不変条件違反としてエラーをthrowすること", () => {
         // Arrange
         const params: ErrorDefinitionProps = {
           code: createErrorCode(),
-          title: '設計順序違反',
-          category: 'architecture',
-          defaultSeverity: createSeverity('warning'),
+          title: "設計順序違反",
+          category: "architecture",
+          defaultSeverity: createSeverity("warning"),
           adrRefRequired: false,
-          defaultAdrRef: createAdrRef('ADR-010'),
+          defaultAdrRef: createAdrRef("ADR-010"),
           fixExampleRequired: false,
           defaultFixExample: null,
-          ownerValidatorId: 'architecture',
+          ownerValidatorId: "architecture",
         };
 
         // Act
@@ -122,20 +122,20 @@ target('ErrorDefinition', () => {
       });
     });
 
-    context('fixExampleRequiredがtrueでdefaultFixExampleがnullの場合', () => {
+    context("fixExampleRequiredがtrueでdefaultFixExampleがnullの場合", () => {
       // UT-HE-051
-      it('呼び出し側がfixExampleを提供する前提として許容されること', () => {
+      it("呼び出し側がfixExampleを提供する前提として許容されること", () => {
         // Arrange
         const params: ErrorDefinitionProps = {
           code: createErrorCode(),
-          title: '設計順序違反',
-          category: 'architecture',
-          defaultSeverity: createSeverity('warning'),
+          title: "設計順序違反",
+          category: "architecture",
+          defaultSeverity: createSeverity("warning"),
           adrRefRequired: false,
           defaultAdrRef: null,
           fixExampleRequired: true,
           defaultFixExample: null,
-          ownerValidatorId: 'architecture',
+          ownerValidatorId: "architecture",
         };
 
         // Act
@@ -147,20 +147,20 @@ target('ErrorDefinition', () => {
       });
     });
 
-    context('ownerValidatorIdが空文字の場合', () => {
+    context("ownerValidatorIdが空文字の場合", () => {
       // UT-HE-052
-      it('入力不正として拒否されること', () => {
+      it("入力不正として拒否されること", () => {
         // Arrange
         const params: ErrorDefinitionProps = {
           code: createErrorCode(),
-          title: '設計順序違反',
-          category: 'architecture',
-          defaultSeverity: createSeverity('warning'),
+          title: "設計順序違反",
+          category: "architecture",
+          defaultSeverity: createSeverity("warning"),
           adrRefRequired: false,
           defaultAdrRef: null,
           fixExampleRequired: false,
           defaultFixExample: null,
-          ownerValidatorId: '',
+          ownerValidatorId: "",
         };
 
         // Act
@@ -172,10 +172,10 @@ target('ErrorDefinition', () => {
     });
   });
 
-  target('requiresAdrRef', () => {
-    describe('ADR必須フラグを返す', () => {
+  target("requiresAdrRef", () => {
+    describe("ADR必須フラグを返す", () => {
       // UT-HE-040
-      it('adrRefRequiredがtrueの場合にtrueを返すこと', () => {
+      it("adrRefRequiredがtrueの場合にtrueを返すこと", () => {
         // Arrange
         const sut = createAdrRequiredDefinition();
 
@@ -188,10 +188,10 @@ target('ErrorDefinition', () => {
     });
   });
 
-  target('requiresFixExample', () => {
-    describe('fix_example必須フラグを返す', () => {
+  target("requiresFixExample", () => {
+    describe("fix_example必須フラグを返す", () => {
       // UT-HE-041
-      it('fixExampleRequiredがtrueの場合にtrueを返すこと', () => {
+      it("fixExampleRequiredがtrueの場合にtrueを返すこと", () => {
         // Arrange
         const sut = createFixExampleRequiredDefinition();
 
@@ -204,35 +204,35 @@ target('ErrorDefinition', () => {
     });
   });
 
-  target('resolveAdrRef', () => {
-    describe('ADRを解決する', () => {
+  target("resolveAdrRef", () => {
+    describe("ADRを解決する", () => {
       // UT-HE-042
-      it('明示的に渡されたAdrRefを返すこと', () => {
+      it("明示的に渡されたAdrRefを返すこと", () => {
         // Arrange
-        const sut = createAdrRequiredDefinition({ defaultAdrRef: createAdrRef('ADR-010') });
-        const explicitAdrRef = createAdrRef('ADR-011');
+        const sut = createAdrRequiredDefinition({ defaultAdrRef: createAdrRef("ADR-010") });
+        const explicitAdrRef = createAdrRef("ADR-011");
 
         // Act
         const actual = sut.resolveAdrRef(explicitAdrRef);
 
         // Assert
-        expect(actual?.toString()).toBe('ADR-011');
+        expect(actual?.toString()).toBe("ADR-011");
       });
 
       // UT-HE-043
-      it('defaultAdrRefを返すこと', () => {
+      it("defaultAdrRefを返すこと", () => {
         // Arrange
-        const sut = createAdrRequiredDefinition({ defaultAdrRef: createAdrRef('ADR-010') });
+        const sut = createAdrRequiredDefinition({ defaultAdrRef: createAdrRef("ADR-010") });
 
         // Act
         const actual = sut.resolveAdrRef(null);
 
         // Assert
-        expect(actual?.toString()).toBe('ADR-010');
+        expect(actual?.toString()).toBe("ADR-010");
       });
 
       // UT-HE-044
-      it('nullを返すこと', () => {
+      it("nullを返すこと", () => {
         // Arrange
         const sut = createErrorDefinition({ adrRefRequired: false, defaultAdrRef: null });
 
@@ -245,37 +245,37 @@ target('ErrorDefinition', () => {
     });
   });
 
-  target('resolveFixExample', () => {
-    describe('fix_exampleを解決する', () => {
+  target("resolveFixExample", () => {
+    describe("fix_exampleを解決する", () => {
       // UT-HE-045
-      it('明示的に渡されたFixExampleを返すこと', () => {
+      it("明示的に渡されたFixExampleを返すこと", () => {
         // Arrange
         const sut = createFixExampleRequiredDefinition();
-        const explicitFixExample = createFixExample('const explicit = 1;');
+        const explicitFixExample = createFixExample("const explicit = 1;");
 
         // Act
         const actual = sut.resolveFixExample(explicitFixExample);
 
         // Assert
-        expect(actual?.toString()).toBe('const explicit = 1;');
+        expect(actual?.toString()).toBe("const explicit = 1;");
       });
 
       // UT-HE-046
-      it('defaultFixExampleを返すこと', () => {
+      it("defaultFixExampleを返すこと", () => {
         // Arrange
         const sut = createFixExampleRequiredDefinition({
-          defaultFixExample: createFixExample('const defaultValue = 1;'),
+          defaultFixExample: createFixExample("const defaultValue = 1;"),
         });
 
         // Act
         const actual = sut.resolveFixExample(null);
 
         // Assert
-        expect(actual?.toString()).toBe('const defaultValue = 1;');
+        expect(actual?.toString()).toBe("const defaultValue = 1;");
       });
 
       // UT-HE-047
-      it('nullを返すこと', () => {
+      it("nullを返すこと", () => {
         // Arrange
         const sut = createErrorDefinition({ fixExampleRequired: false, defaultFixExample: null });
 
@@ -288,19 +288,19 @@ target('ErrorDefinition', () => {
     });
   });
 
-  target('equals', () => {
-    describe('同一属性のErrorDefinition同士を比較する', () => {
+  target("equals", () => {
+    describe("同一属性のErrorDefinition同士を比較する", () => {
       // UT-HE-048
-      it('trueを返すこと', () => {
+      it("trueを返すこと", () => {
         // Arrange
         const sut = createAdrRequiredDefinition({
-          code: createErrorCode('L2-010'),
-          defaultFixExample: createFixExample('const fixedValue = 1;'),
+          code: createErrorCode("L2-010"),
+          defaultFixExample: createFixExample("const fixedValue = 1;"),
           fixExampleRequired: true,
         });
         const other = createAdrRequiredDefinition({
-          code: createErrorCode('L2-010'),
-          defaultFixExample: createFixExample('const fixedValue = 1;'),
+          code: createErrorCode("L2-010"),
+          defaultFixExample: createFixExample("const fixedValue = 1;"),
           fixExampleRequired: true,
         });
 
@@ -314,50 +314,50 @@ target('ErrorDefinition', () => {
   });
 
   // ISSUE-007 Wave 3 / H12-03: actionable defaults
-  target('actionable defaults (defaultSuggestedSkill / defaultScaffoldCommand / defaultTemplatePath)', () => {
-    describe('3 optional フィールドの保持と解決', () => {
+  target("actionable defaults (defaultSuggestedSkill / defaultScaffoldCommand / defaultTemplatePath)", () => {
+    describe("3 optional フィールドの保持と解決", () => {
       // UT-HE-120
-      it('defaultSuggestedSkill を保持すること', () => {
+      it("defaultSuggestedSkill を保持すること", () => {
         // Arrange
-        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+        const sut = createErrorDefinition({ defaultSuggestedSkill: "/story-implementor" });
 
         // Act
         const actual = sut.defaultSuggestedSkill;
 
         // Assert
-        expect(actual).toBe('/story-implementor');
+        expect(actual).toBe("/story-implementor");
       });
 
       // UT-HE-121
-      it('defaultScaffoldCommand を保持すること', () => {
+      it("defaultScaffoldCommand を保持すること", () => {
         // Arrange
         const sut = createErrorDefinition({
-          defaultScaffoldCommand: 'npx phasegate scaffold-design --unit x --phase logical',
+          defaultScaffoldCommand: "npx phasegate scaffold-design --unit x --phase logical",
         });
 
         // Act
         const actual = sut.defaultScaffoldCommand;
 
         // Assert
-        expect(actual).toBe('npx phasegate scaffold-design --unit x --phase logical');
+        expect(actual).toBe("npx phasegate scaffold-design --unit x --phase logical");
       });
 
       // UT-HE-122
-      it('defaultTemplatePath を保持すること', () => {
+      it("defaultTemplatePath を保持すること", () => {
         // Arrange
         const sut = createErrorDefinition({
-          defaultTemplatePath: 'templates/logical_design.template.md',
+          defaultTemplatePath: "templates/logical_design.template.md",
         });
 
         // Act
         const actual = sut.defaultTemplatePath;
 
         // Assert
-        expect(actual).toBe('templates/logical_design.template.md');
+        expect(actual).toBe("templates/logical_design.template.md");
       });
 
       // UT-HE-123
-      it('未指定のとき 3 フィールドは null であること', () => {
+      it("未指定のとき 3 フィールドは null であること", () => {
         // Arrange
         const sut = createErrorDefinition();
 
@@ -368,45 +368,45 @@ target('ErrorDefinition', () => {
       });
     });
 
-    describe('resolve* メソッド', () => {
+    describe("resolve* メソッド", () => {
       // UT-HE-124
-      it('resolveSuggestedSkill: 明示引数が優先される', () => {
+      it("resolveSuggestedSkill: 明示引数が優先される", () => {
         // Arrange
-        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+        const sut = createErrorDefinition({ defaultSuggestedSkill: "/story-implementor" });
 
         // Act
-        const actual = sut.resolveSuggestedSkill('/logical-designer');
+        const actual = sut.resolveSuggestedSkill("/logical-designer");
 
         // Assert
-        expect(actual).toBe('/logical-designer');
+        expect(actual).toBe("/logical-designer");
       });
 
       // UT-HE-125
-      it('resolveSuggestedSkill: 明示引数が null の場合 default が返る', () => {
+      it("resolveSuggestedSkill: 明示引数が null の場合 default が返る", () => {
         // Arrange
-        const sut = createErrorDefinition({ defaultSuggestedSkill: '/story-implementor' });
+        const sut = createErrorDefinition({ defaultSuggestedSkill: "/story-implementor" });
 
         // Act
         const actual = sut.resolveSuggestedSkill(null);
 
         // Assert
-        expect(actual).toBe('/story-implementor');
+        expect(actual).toBe("/story-implementor");
       });
 
       // UT-HE-126
-      it('resolveScaffoldCommand: 明示引数が優先される', () => {
+      it("resolveScaffoldCommand: 明示引数が優先される", () => {
         // Arrange
-        const sut = createErrorDefinition({ defaultScaffoldCommand: 'npx phasegate scaffold-design --unit a' });
+        const sut = createErrorDefinition({ defaultScaffoldCommand: "npx phasegate scaffold-design --unit a" });
 
         // Act
-        const actual = sut.resolveScaffoldCommand('npx phasegate scaffold-design --unit b');
+        const actual = sut.resolveScaffoldCommand("npx phasegate scaffold-design --unit b");
 
         // Assert
-        expect(actual).toBe('npx phasegate scaffold-design --unit b');
+        expect(actual).toBe("npx phasegate scaffold-design --unit b");
       });
 
       // UT-HE-127
-      it('resolveTemplatePath: 明示引数が null で default も null なら null を返す', () => {
+      it("resolveTemplatePath: 明示引数が null で default も null なら null を返す", () => {
         // Arrange
         const sut = createErrorDefinition();
 
@@ -415,6 +415,21 @@ target('ErrorDefinition', () => {
 
         // Assert
         expect(actual).toBeNull();
+      });
+
+      // WI-335 / UT-HE-128
+      it("resolveRemediationType: 明示引数があればそれを優先し、なければ defaultRemediationType、両方なければ null を返す", () => {
+        // Arrange
+        const sut = createErrorDefinition({ defaultRemediationType: "mechanical" });
+        const sutWithoutDefault = createErrorDefinition();
+
+        // Act
+        const actual = sut.resolveRemediationType("ai-assisted");
+
+        // Assert
+        expect(actual).toBe("ai-assisted");
+        expect(sut.resolveRemediationType()).toBe("mechanical");
+        expect(sutWithoutDefault.resolveRemediationType()).toBeNull();
       });
     });
   });

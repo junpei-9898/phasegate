@@ -5,9 +5,9 @@
  * DriftReport 値オブジェクト
  * 設計文書とコード実装の双方向乖離検出結果VO（L4-001専用）
  */
-import type { HarnessErrorLike } from './validation-result.js';
+import type { HarnessErrorLike } from "./validation-result.js";
 
-export type DriftDirection = 'design→code' | 'code→design';
+export type DriftDirection = "design→code" | "code→design";
 
 export interface DriftReportProps {
   readonly direction: DriftDirection;
@@ -29,14 +29,16 @@ export class DriftReport {
     this.direction = props.direction;
     this.unitName = props.unitName;
     this.element = props.element;
-    this.recommendation = props.recommendation ?? (props.description ?? '');
+    this.recommendation = props.recommendation ?? props.description ?? "";
     this.location = Object.freeze(props.location ?? {});
     Object.freeze(this);
   }
 
   static create(props: DriftReportProps): DriftReport {
-    if (props.direction !== 'design→code' && props.direction !== 'code→design') {
-      throw new Error(`Invalid DriftReport direction: "${props.direction}". Must be "design→code" or "code→design" (INV-10)`);
+    if (props.direction !== "design→code" && props.direction !== "code→design") {
+      throw new Error(
+        `Invalid DriftReport direction: "${props.direction}". Must be "design→code" or "code→design" (INV-10)`,
+      );
     }
     return new DriftReport(props);
   }
@@ -44,10 +46,13 @@ export class DriftReport {
   toHarnessError(): HarnessErrorLike {
     // ADR-017 / WI-094: error catalog の defaultSeverity: warning と整合
     return {
-      code: { value: 'L4-001', toString: () => 'L4-001' },
-      severity: { value: 'warning', toString: () => 'warning' },
+      code: { value: "L4-001", toString: () => "L4-001" },
+      severity: { value: "warning", toString: () => "warning" },
       message: `乖離検出 [${this.direction}] Unit: ${this.unitName}, Element: ${this.element}`,
       suggestion: this.recommendation,
+      // WI-335: design drift の解消は設計意図の理解が必要で機械適用不能。AI が設計文書を
+      // 読んで自己修正できる分類（ai-assisted）。
+      remediationType: "ai-assisted",
     };
   }
 

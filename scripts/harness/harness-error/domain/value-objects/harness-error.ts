@@ -5,14 +5,15 @@
  * HarnessError 中心モデル（不変値オブジェクト）
  * 集約を持たず、全属性を不変で保持する値オブジェクトとして設計
  */
-import type { AdrRef } from './adr-ref.js';
-import type { ErrorCode } from './error-code.js';
-import type { FixExample } from './fix-example.js';
-import type { Severity } from './severity.js';
+import type { AdrRef } from "./adr-ref.js";
+import type { ErrorCode } from "./error-code.js";
+import type { FixExample } from "./fix-example.js";
+import { DEFAULT_REMEDIATION_TYPE, type RemediationType } from "./remediation-type.js";
+import type { Severity } from "./severity.js";
 
 export interface HarnessErrorContract {
   readonly code: string;
-  readonly severity: 'error' | 'warning';
+  readonly severity: "error" | "warning";
   readonly message: string;
   readonly suggestion: string;
   readonly adr_ref?: string;
@@ -20,6 +21,7 @@ export interface HarnessErrorContract {
   readonly suggested_skill?: string;
   readonly scaffold_command?: string;
   readonly template_path?: string;
+  readonly remediation_type?: RemediationType;
 }
 
 export interface HarnessErrorProps {
@@ -32,6 +34,8 @@ export interface HarnessErrorProps {
   readonly suggestedSkill?: string | null;
   readonly scaffoldCommand?: string | null;
   readonly templatePath?: string | null;
+  /** WI-335: suggestion の修復方式分類。未設定（null）は 'manual' 扱い（後方互換）。 */
+  readonly remediationType?: RemediationType | null;
 }
 
 export class HarnessError {
@@ -44,6 +48,7 @@ export class HarnessError {
   readonly suggestedSkill: string | null;
   readonly scaffoldCommand: string | null;
   readonly templatePath: string | null;
+  readonly remediationType: RemediationType | null;
 
   constructor(props: HarnessErrorProps) {
     this.code = props.code;
@@ -55,6 +60,7 @@ export class HarnessError {
     this.suggestedSkill = props.suggestedSkill ?? null;
     this.scaffoldCommand = props.scaffoldCommand ?? null;
     this.templatePath = props.templatePath ?? null;
+    this.remediationType = props.remediationType ?? null;
   }
 
   equals(other: HarnessError): boolean {
@@ -81,7 +87,8 @@ export class HarnessError {
       fixExampleEqual &&
       this.suggestedSkill === other.suggestedSkill &&
       this.scaffoldCommand === other.scaffoldCommand &&
-      this.templatePath === other.templatePath
+      this.templatePath === other.templatePath &&
+      this.remediationType === other.remediationType
     );
   }
 
@@ -105,6 +112,21 @@ export class HarnessError {
     return this.templatePath !== null;
   }
 
+  /**
+   * WI-335: 実効修復方式。未分類は安全側の 'manual' 扱い（機械適用可能と過剰宣言しない）。
+   */
+  effectiveRemediationType(): RemediationType {
+    return this.remediationType ?? DEFAULT_REMEDIATION_TYPE;
+  }
+
+  /**
+   * WI-335: suggestion を機械適用すれば必ず解消すると宣言されたエラーか。
+   * true のエラーは remediation-round-trip テストで「案内 → 機械適用 → 再実行 → pass」が保証される。
+   */
+  isMechanicallyRemediable(): boolean {
+    return this.effectiveRemediationType() === "mechanical";
+  }
+
   toContract(): Readonly<HarnessErrorContract> {
     const contract: HarnessErrorContract = {
       code: this.code.toString(),
@@ -112,12 +134,11 @@ export class HarnessError {
       message: this.message,
       suggestion: this.suggestion,
       ...(this.adrRef !== null ? { adr_ref: this.adrRef.toString() } : {}),
-      ...(this.fixExample !== null
-        ? { fix_example: this.fixExample.toString() }
-        : {}),
+      ...(this.fixExample !== null ? { fix_example: this.fixExample.toString() } : {}),
       ...(this.suggestedSkill !== null ? { suggested_skill: this.suggestedSkill } : {}),
       ...(this.scaffoldCommand !== null ? { scaffold_command: this.scaffoldCommand } : {}),
       ...(this.templatePath !== null ? { template_path: this.templatePath } : {}),
+      ...(this.remediationType !== null ? { remediation_type: this.remediationType } : {}),
     };
     return Object.freeze(contract);
   }

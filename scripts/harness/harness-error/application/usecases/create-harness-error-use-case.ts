@@ -4,10 +4,11 @@
  *
  * 単一draftを HarnessErrorContract へ変換するUseCase
  */
-import type { CreateHarnessErrorInput } from '../dto/create-harness-error-input.js';
-import type { HarnessErrorContract } from '../dto/harness-error-contract.js';
-import type { HarnessErrorContractMapper } from '../mappers/harness-error-contract-mapper.js';
-import type { HarnessErrorFactory } from '../../domain/services/harness-error-factory.js';
+
+import type { HarnessErrorFactory } from "../../domain/services/harness-error-factory.js";
+import type { CreateHarnessErrorInput } from "../dto/create-harness-error-input.js";
+import type { HarnessErrorContract } from "../dto/harness-error-contract.js";
+import type { HarnessErrorContractMapper } from "../mappers/harness-error-contract-mapper.js";
 
 export interface CreateHarnessErrorUseCaseDeps {
   readonly harnessErrorFactory: HarnessErrorFactory;
@@ -23,9 +24,7 @@ export class CreateHarnessErrorUseCase {
     this.contractMapper = deps.contractMapper;
   }
 
-  async execute(
-    input: CreateHarnessErrorInput
-  ): Promise<Readonly<HarnessErrorContract>> {
+  async execute(input: CreateHarnessErrorInput): Promise<Readonly<HarnessErrorContract>> {
     const harnessError = await this.harnessErrorFactory.create({
       code: input.code,
       message: input.message,
@@ -37,6 +36,7 @@ export class CreateHarnessErrorUseCase {
       suggestedSkill: input.suggestedSkill,
       scaffoldCommand: input.scaffoldCommand,
       templatePath: input.templatePath,
+      remediationType: input.remediationType,
     });
 
     return this.contractMapper.toReadonlyContract(harnessError);

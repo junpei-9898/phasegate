@@ -5,11 +5,12 @@
  *
  * FileSystemSecurityPatternScannerAdapter — SecurityPatternScannerPort実装
  */
-import type { SecurityPatternScannerPort } from '../../domain/ports/security-pattern-scanner-port.js';
-import type { HarnessErrorLike } from '../../domain/value-objects/validation-result.js';
-import { readFile } from 'node:fs/promises';
 
-const ALLOWLIST_MARKER = 'phasegate-allow-secret-fixture';
+import { readFile } from "node:fs/promises";
+import type { SecurityPatternScannerPort } from "../../domain/ports/security-pattern-scanner-port.js";
+import type { HarnessErrorLike } from "../../domain/value-objects/validation-result.js";
+
+const ALLOWLIST_MARKER = "phasegate-allow-secret-fixture";
 
 interface SecurityPattern {
   readonly ruleId: string;
@@ -18,15 +19,15 @@ interface SecurityPattern {
 }
 
 const SECURITY_PATTERNS: readonly SecurityPattern[] = Object.freeze([
-  { ruleId: 'secret.openai', pattern: /\b(?:sk|rk|sess)-[a-zA-Z0-9_-]{20,}\b/g, description: 'OpenAI token family' },
-  { ruleId: 'secret.github', pattern: /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, description: 'GitHub token family' },
-  { ruleId: 'secret.aws-access-key', pattern: /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g, description: 'AWS access key id' },
-  { ruleId: 'secret.npm', pattern: /\bnpm_[A-Za-z0-9]{24,}\b/g, description: 'npm token family' },
-  { ruleId: 'secret.slack', pattern: /\bxox[abprs]-[A-Za-z0-9-]{20,}\b/g, description: 'Slack token family' },
+  { ruleId: "secret.openai", pattern: /\b(?:sk|rk|sess)-[a-zA-Z0-9_-]{20,}\b/g, description: "OpenAI token family" },
+  { ruleId: "secret.github", pattern: /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, description: "GitHub token family" },
+  { ruleId: "secret.aws-access-key", pattern: /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g, description: "AWS access key id" },
+  { ruleId: "secret.npm", pattern: /\bnpm_[A-Za-z0-9]{24,}\b/g, description: "npm token family" },
+  { ruleId: "secret.slack", pattern: /\bxox[abprs]-[A-Za-z0-9-]{20,}\b/g, description: "Slack token family" },
   {
-    ruleId: 'secret.keyword-context',
+    ruleId: "secret.keyword-context",
     pattern: /\b(?:API_KEY|api_key|apikey|password|PASSWORD|passwd|secret|token)\b\s*[:=]\s*["'][^"']{8,}["']/g,
-    description: 'keyword-context secret',
+    description: "keyword-context secret",
   },
 ]);
 
@@ -39,8 +40,8 @@ export class FileSystemSecurityPatternScannerAdapter implements SecurityPatternS
 
     for (const filePath of targetPaths) {
       try {
-        const content = await readFile(filePath, 'utf-8');
-        const lines = content.split('\n');
+        const content = await readFile(filePath, "utf-8");
+        const lines = content.split("\n");
         lines.forEach((line, idx) => {
           // WI-120: allowlist は行/領域スコープ。以前はファイル内のどこかに
           // マーカーが 1 つでもあればファイル全体をスキップしていたため、同一
@@ -54,12 +55,14 @@ export class FileSystemSecurityPatternScannerAdapter implements SecurityPatternS
             pattern.lastIndex = 0;
             const matches = [...line.matchAll(pattern)];
             for (const match of matches) {
-              const secretValue = match[0] ?? '';
+              const secretValue = match[0] ?? "";
               findings.push({
-                code: { value: 'L3-001', toString: () => 'L3-001' },
-                severity: { value: 'error', toString: () => 'error' },
+                code: { value: "L3-001", toString: () => "L3-001" },
+                severity: { value: "error", toString: () => "error" },
                 message: `セキュリティ問題: ${description} (${ruleId}) at ${filePath}:${idx + 1} value=${redactSecret(secretValue)}`,
                 suggestion: `${ruleId}: 秘密情報は環境変数または秘密管理サービスを使用してください。fixture/docs のダミー値は ${ALLOWLIST_MARKER} を明示してください。`,
+                // WI-335: 秘密情報の無効化・ローテーション・保管方式の選定は人間の判断が必須（manual）。
+                remediationType: "manual",
               });
             }
           }
@@ -88,6 +91,6 @@ function isAllowlisted(line: string, previousLine: string | undefined): boolean 
 
 function redactSecret(secretValue: string): string {
   const value = secretValue.trim();
-  if (value.length <= 8) return '<redacted>';
+  if (value.length <= 8) return "<redacted>";
   return `${value.slice(0, 3)}...<redacted:${value.length}>`;
 }

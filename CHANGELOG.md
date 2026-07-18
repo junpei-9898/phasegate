@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **WI-335 — エラー案内の機械往復保証（remediationType 分類 + round-trip テスト）** — suggested action が本当に「従えば直る」かを人間レビュー頼みにせず CI で保証する仕組み。HarnessError に optional `remediationType`（mechanical / ai-assisted / manual、未設定は manual 扱い）を導入し、代表 validator を分類（L2-002 metadata=mechanical、L3-003 レポート不在=mechanical・閾値未達=ai-assisted、L3-001=manual、L4-001/002=ai-assisted）。mechanical 宣言されたエラーは「エラー → suggestion 文言を機械適用 → 再実行 → pass」の往復テストで固定し、案内文言と実挙動が乖離すると（#37/#39 型の破れ）テストが落ちる構造にした。
+
 - **WI-329 — 実分布リリースゲート（tarball release-smoke）** — 単体テスト全 green でも新規インストール即クラッシュ（#34）・非 TS リポで fail-closed（#37/#39）・dead flag（#36）がすり抜けた教訓から、`npm pack` した tarball を実分布相当 fixture（純 Python / Go monorepo / docs のみ）にクリーンインストールし install → doctor → validate → uninstall を実走する E2E を追加。通常 suite では skip（`PHASEGATE_RELEASE_SMOKE=1` ガードで hermetic 性維持）し、CI の新 job `release-smoke` が pack job の実バイト列 artifact に対して実行する。`--with-husky` のフラグ有効性 assert で dead-flag 再発も検知。
 
 ### Fixed
