@@ -1,0 +1,98 @@
+# Release canary (WI-329): weekly re-run of the release-smoke E2E suite with
+# fresh dependency resolution instead of the frozen lockfile.
+#
+# Two-layer separation:
+#   - ci.yml release-smoke  = release gate, frozen resolution (lockfile) —
+#     validates the exact artifact we ship, blocks the release.
+#   - this workflow         = canary, latest resolution — detects upstream
+#     drift (new transitive/peer versions breaking a fresh install) early.
+#
+# This workflow never blocks a release: it is not in any required check, and
+# failures are surfaced as a "[canary]" issue instead.
+name: Release Canary
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Canary intentionally ignores the lockfile: resolve the freshest
+      # versions the manifests allow, so upstream breakage shows up here
+      # before it hits a user's clean install.
+      - name: Install with latest resolution (no lockfile)
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Pack tarball
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tarball"
+          npm pack --pack-destination "$RUNNER_TEMP/tarball"
+
+      - name: Run release-smoke E2E against tarball
+        run: |
+          set -euo pipefail
+          TARBALL=$(ls "$RUNNER_TEMP"/tarball/phasegate-*.tgz)
+          echo "Tarball under test: $TARBALL"
+          PHASEGATE_RELEASE_SMOKE=1 PHASEGATE_TARBALL="$TARBALL" \
+            pnpm exec vitest run \
+            --config scripts/harness/__tests__/vitest.config.ts \
+            scripts/harness/__tests__/e2e/release-smoke.e2e.test.ts
+
+      - name: Report failure as issue (append to existing open canary issue)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "[canary] release-smoke failed with latest dependency resolution";
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              "Weekly release canary (release-smoke with `pnpm install --no-frozen-lockfile`) failed.",
+              "",
+              `- Run: ${runUrl}`,
+              `- Commit: ${context.sha}`,
+              "",
+              "This usually means an upstream dependency released a version that breaks a fresh install of the packed tarball. The release gate (ci.yml `release-smoke`, frozen lockfile) may still be green — investigate before the next publish.",
+            ].join("\n");
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = openIssues.find(
+              (issue) => !issue.pull_request && issue.title.startsWith("[canary]"),
+            );
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+              core.info(`Commented on existing canary issue #${existing.number}`);
+            } else {
+              const { data: created } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+              core.info(`Created canary issue #${created.number}`);
+            }
