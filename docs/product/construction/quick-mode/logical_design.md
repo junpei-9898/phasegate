@@ -233,7 +233,7 @@ scripts/harness/__tests__/
 | `'bugfix'` | 既存実装ファイルの修正（domain/以外, changeKind=MODIFY） |
 | `'docs'` | `docs/` 配下のファイル変更、および `skills/` 配下の `.md`（指示文書。SKILL.md / references/*.md 等）の CREATE / MODIFY / DELETE <!-- @work-item-id WI-261 --> |
 | `'test'` | `__tests__/` 配下 or `*.test.ts` or `*.spec.ts` |
-| `'config'` | `*.config.json` / `*.config.ts` / `phasegate.config.json` |
+| `'config'` | `*.config.json` / `*.config.ts` / `phasegate.config.json`、および `.github/workflows/` 配下の CI workflow（`.yml` / `.yaml`）の CREATE / MODIFY / DELETE <!-- @work-item-id WI-334 --> |
 | `'feature'` | 新規実装ファイル追加（domain/ / port/ 以外, changeKind=CREATE） |
 | `'domain'` | `domain/` 配下のファイル（CREATE / MODIFY / DELETE） |
 | `'api'` | Port/Adapterインターフェースファイル（`*port.ts`, `*adapter.ts`） |
@@ -394,6 +394,8 @@ Quick Mode時のバリデータ実行構成を表す値オブジェクト。
   1. 空配列の場合は空の `ChangeClassification` を返す（`dominantCategory=null`）
   2. 各 `ChangedFile` に対し `filePath` と `changeKind` のパターンマッチングを実行してカテゴリを決定する
      - `skills/` 配下の `.md` ファイル（`SKILL.md` / `references/*.md` 等の指示文書）は `docs` カテゴリに分類する。品質・完全性は専用防御（skill-quality corpus 適合テスト・advisory allowlist pin・integrity pin(WI-254)・L3-006 injection scanner(WI-259)）が担うため、ソースコードのフェーズゲート対象外とする。`skills/` 配下の非 `.md` は従来どおり `feature`（CREATE）/ `bugfix`（MODIFY・DELETE）に分類し fail-closed を維持する <!-- @work-item-id WI-261 -->
+     - `.github/workflows/` 配下の CI workflow（`.yml` / `.yaml`）は `config` カテゴリに分類する（CREATE でも `config`）。CI workflow は unit を持たない構成ファイルであり、内容レベルの防御は専用防御（L3-006 injection scanner(WI-259)・integrity pin(WI-254)）が担うため、ソースコードのフェーズゲート対象外とする（WI-261 の `skills/**/*.md` → `docs` 分類と同型の判断。MODIFY がフォールバックで `bugfix` になる現状との CREATE/MODIFY 整合も取る）。`.github/` 配下のその他ファイル（`workflows/` 外、または非 yml/yaml）は従来どおり `feature`（CREATE）/ `bugfix`（MODIFY・DELETE）フォールバックに分類し fail-closed を維持する <!-- @work-item-id WI-334 -->
+     - `changeKind` の決定は呼び出し元の `targetChanges`（beforeContent=null かつ afterContent あり → `CREATE`）を第一情報源とし、`targetChanges` 引数自体が渡されない経路（CLI `check-change-category --paths`）では `FileExistencePort`（fs 実装: `FsFileExistenceAdapter`）によるファイル存在チェックで推定する（存在しない → `CREATE`、存在する → `MODIFY`）。これにより同一パスに対する CLI と pre-tool-use hook の分類結果が一致する。hook は `targetChanges` を常に配列（空を含む）で渡すため推定対象外であり、Bash 抽出ターゲット等（配列にエントリが無いパス）の従来挙動（`MODIFY` 既定）は変えない。port 未注入・存在チェック失敗時も従来どおり `MODIFY` 既定（安全側） <!-- @work-item-id WI-334 -->
   3. カテゴリ別に `Map<string, ChangedFile[]>` を構築する
   4. リスク順（`api` > `domain` > `feature` > その他）で `dominantCategory` を決定する
   5. `ChangeClassification` を生成して返す

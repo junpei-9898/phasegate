@@ -5,19 +5,20 @@
  * quick-mode ユニットの Composition Root
  */
 
-import { GitDiffChangedFilesAdapter } from './infrastructure/adapters/git-diff-changed-files-adapter.js';
-import { HarnessConfigQuickModeConfigAdapter } from './infrastructure/adapters/harness-config-quick-mode-config-adapter.js';
-import { ValidatorSystemValidatorIdRegistryAdapter } from './infrastructure/adapters/validator-system-validator-id-registry-adapter.js';
-import { ValidatorSystemQuickModeExecutionAdapter } from './infrastructure/adapters/validator-system-quick-mode-execution-adapter.js';
-import { QuickModeJudgmentEngine } from './domain/services/quick-mode-judgment-engine.js';
-import { ValidatorRelaxationService } from './domain/services/validator-relaxation-service.js';
-import { QuickModeDecisionContractMapper } from './application/mappers/quick-mode-decision-contract-mapper.js';
-import { JudgeQuickModeEligibilityUseCase } from './application/usecases/judge-quick-mode-eligibility-usecase.js';
-import { BuildRelaxationProfileUseCase } from './application/usecases/build-relaxation-profile-usecase.js';
-import { ExecuteQuickCiCheckUseCase } from './application/usecases/execute-quick-ci-check-usecase.js';
-import { ClassifyChangeCategoryUseCase } from './application/usecases/classify-change-category-usecase.js';
-import { CiCheckQuickModeHandler } from './presentation/handlers/ci-check-quick-mode-handler.js';
-import { CheckChangeCategoryHandler } from './presentation/handlers/check-change-category-handler.js';
+import { QuickModeDecisionContractMapper } from "./application/mappers/quick-mode-decision-contract-mapper.js";
+import { BuildRelaxationProfileUseCase } from "./application/usecases/build-relaxation-profile-usecase.js";
+import { ClassifyChangeCategoryUseCase } from "./application/usecases/classify-change-category-usecase.js";
+import { ExecuteQuickCiCheckUseCase } from "./application/usecases/execute-quick-ci-check-usecase.js";
+import { JudgeQuickModeEligibilityUseCase } from "./application/usecases/judge-quick-mode-eligibility-usecase.js";
+import { QuickModeJudgmentEngine } from "./domain/services/quick-mode-judgment-engine.js";
+import { ValidatorRelaxationService } from "./domain/services/validator-relaxation-service.js";
+import { FsFileExistenceAdapter } from "./infrastructure/adapters/fs-file-existence-adapter.js";
+import { GitDiffChangedFilesAdapter } from "./infrastructure/adapters/git-diff-changed-files-adapter.js";
+import { HarnessConfigQuickModeConfigAdapter } from "./infrastructure/adapters/harness-config-quick-mode-config-adapter.js";
+import { ValidatorSystemQuickModeExecutionAdapter } from "./infrastructure/adapters/validator-system-quick-mode-execution-adapter.js";
+import { ValidatorSystemValidatorIdRegistryAdapter } from "./infrastructure/adapters/validator-system-validator-id-registry-adapter.js";
+import { CheckChangeCategoryHandler } from "./presentation/handlers/check-change-category-handler.js";
+import { CiCheckQuickModeHandler } from "./presentation/handlers/ci-check-quick-mode-handler.js";
 
 export interface QuickModeCompositionRoot {
   handler: CiCheckQuickModeHandler;
@@ -34,6 +35,7 @@ export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
   const harnessConfigAdapter = new HarnessConfigQuickModeConfigAdapter();
   const validatorIdRegistryAdapter = new ValidatorSystemValidatorIdRegistryAdapter();
   const validatorExecutionPort = new ValidatorSystemQuickModeExecutionAdapter();
+  const fileExistencePort = new FsFileExistenceAdapter();
 
   // Domain Services
   const judgmentEngine = new QuickModeJudgmentEngine();
@@ -72,6 +74,7 @@ export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
   const classifyUseCase = new ClassifyChangeCategoryUseCase({
     quickModeConfigPort,
     judgmentEngine,
+    fileExistencePort,
   });
 
   // Presentation

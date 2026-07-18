@@ -37,6 +37,18 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
     return ChangeCategory.fromString("config");
   }
 
+  // config: .github/workflows/ 配下の CI workflow（.yml / .yaml）。
+  // CI workflow は unit を持たない構成ファイルであり、CREATE でも config に分類する。
+  // 内容レベルの防御は L3-006 injection scanner と integrity pin が担う
+  // （WI-261 の skills/**/*.md → docs 分類と同型の判断）。
+  // MODIFY がフォールバックで bugfix として quick を通過する現状との整合も取る。
+  // .github/ 全体には広げず workflows/ 配下の yml/yaml に限定し、
+  // それ以外の .github/ 配下は従来どおりフォールバック（fail-closed）を維持する。
+  // @work-item-id WI-334
+  if (filePath.startsWith(".github/workflows/") && (filePath.endsWith(".yml") || filePath.endsWith(".yaml"))) {
+    return ChangeCategory.fromString("config");
+  }
+
   if (isCommentOnlyDiff(file)) {
     return ChangeCategory.fromString("docs");
   }

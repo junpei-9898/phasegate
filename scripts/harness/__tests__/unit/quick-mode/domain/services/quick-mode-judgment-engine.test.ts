@@ -207,6 +207,74 @@ target("QuickModeJudgmentEngine", () => {
         expect(actual.hasCategory("docs")).toBe(false);
       });
 
+      // UT-JE-028（WI-334）
+      it("'.github/workflows/'配下の新規CI workflow（.yml, CREATE）が渡された場合に'config'カテゴリに分類されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: ".github/workflows/ci.yml",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("config")).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(false);
+      });
+
+      // UT-JE-029（WI-334）
+      it("'.github/workflows/'配下のCI workflow（.yaml, MODIFY）が渡された場合に'config'カテゴリに分類されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: ".github/workflows/release.yaml",
+            changeKind: "MODIFY",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("config")).toBe(true);
+        expect(actual.hasCategory("bugfix")).toBe(false);
+      });
+
+      // UT-JE-030（WI-334）
+      it("'.github/'配下だがworkflows/外の'.github/dependabot.yml'の新規作成（CREATE）は従来どおり'feature'カテゴリに分類されること（fail-closed維持）", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: ".github/dependabot.yml",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("feature")).toBe(true);
+        expect(actual.hasCategory("config")).toBe(false);
+      });
+
+      // UT-JE-031（WI-334）
+      it("'.github/workflows/'配下の非yml/yamlファイルの新規作成（CREATE）は従来どおり'feature'カテゴリに分類されること（fail-closed維持）", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: ".github/workflows/helper-script.sh",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("feature")).toBe(true);
+        expect(actual.hasCategory("config")).toBe(false);
+      });
+
       // UT-JE-008
       it("domain/以外のMODIFYファイルが渡された場合に'bugfix'カテゴリに分類されること", () => {
         // Arrange
