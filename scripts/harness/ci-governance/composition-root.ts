@@ -126,11 +126,11 @@ export function buildCiGovernance(baseDir: string, harnessRoot: string = baseDir
 
   // Handlers
   const generateCiTemplateHandler = new GenerateCiTemplateHandler(generateCiTemplateUseCase, renderCiTemplateUseCase);
-  const migrateAgentsMdHandler = new MigrateAgentsMdHandler(migrateAgentsMdUseCase);
+  const migrateAgentsMdHandler = new MigrateAgentsMdHandler(migrateAgentsMdUseCase, validatePointersUseCase);
   const refreshAgentContextHandler = new RefreshAgentContextHandler(refreshAgentContextUseCase);
   const refreshClaudeMdHandler = new RefreshClaudeMdHandler(refreshClaudeMdUseCase);
   const checkAgentContextHandler = new CheckAgentContextHandler(checkAgentContextUseCase);
-  const checkRepetitionHandler = new CheckRepetitionHandler(checkEscalationUseCase);
+  const checkRepetitionHandler = new CheckRepetitionHandler(checkEscalationUseCase, resetRepetitionUseCase);
   const createBaselineHandler = new CreateBaselineHandler(createBaselineUseCase);
   const scaffoldDesignHandler = new ScaffoldDesignHandler(scaffoldDesignUseCase);
 

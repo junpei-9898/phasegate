@@ -1,10 +1,40 @@
 // @layer test
-import { describe, it, vi, expect } from 'vitest';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, it, vi, expect } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
+import { buildCiGovernance } from '../../../ci-governance/composition-root.js';
 import { MigrateAgentsMdHandler } from '../../../ci-governance/presentation/handlers/migrate-agents-md-handler.js';
+
+const temporaryDirectories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+});
 
 target('MigrateAgentsMdHandler', () => {
   describe('正常系', () => {
+    describe('composition root経由でvalidate-onlyを実行する場合', () => {
+      it('composition root経由のvalidate-onlyは一時AGENTS.mdを書き換えない', async () => {
+        // Arrange
+        const baseDir = await mkdtemp(join(tmpdir(), 'phasegate-migrate-handler-'));
+        temporaryDirectories.push(baseDir);
+        const agentsMdPath = join(baseDir, 'AGENTS.md');
+        const expected = '# Temporary AGENTS.md\n\nValidation must not modify this file.\n';
+        await writeFile(agentsMdPath, expected, 'utf-8');
+        const compositionRoot = buildCiGovernance(baseDir);
+
+        // Act
+        const actual = await compositionRoot.migrateAgentsMdHandler.handle({ validateOnly: true });
+
+        // Assert
+        const actualAgentsMd = await readFile(agentsMdPath, 'utf-8');
+        expect(actual.exitCode).toBe(0);
+        expect(actualAgentsMd).toBe(expected);
+      });
+    });
+
     // IT-API-MigrateAgentsMdHandler-001
     describe('dryRun=trueでMigrateAgentsMdUseCaseがdryRun=trueで呼ばれること', () => {
       context('args.dryRun=trueを渡した場合', () => {

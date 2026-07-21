@@ -29,6 +29,13 @@ export class CheckRepetitionHandler {
   async handle(args: CheckRepetitionHandlerArgs): Promise<CheckRepetitionHandlerResult> {
     const { errorCode, reset = false, format = 'human' } = args;
 
+    if (errorCode.trim().length === 0) {
+      return {
+        exitCode: 1,
+        output: 'Error: --code <errorCode> is required. Usage: phasegate ci:check-repetition --code <errorCode> [--reset] [--json]',
+      };
+    }
+
     if (reset && this.resetUseCase) {
       const result = await this.resetUseCase.execute({ errorCode, confirmedResolution: true });
 
@@ -49,9 +56,10 @@ export class CheckRepetitionHandler {
     }
 
     const result = await this.checkUseCase.execute({ errorCode });
+    const exitCode = result.escalated === true ? 1 : 0;
 
     if (format === 'json') {
-      return { exitCode: result.exists ? 0 : 1, output: JSON.stringify(result, null, 2) };
+      return { exitCode, output: JSON.stringify(result, null, 2) };
     }
 
     const lines: string[] = [];
@@ -63,6 +71,6 @@ export class CheckRepetitionHandler {
       lines.push(`  Escalated: ${result.escalated}`);
     }
 
-    return { exitCode: result.exists ? 0 : 1, output: lines.join('\n') };
+    return { exitCode, output: lines.join('\n') };
   }
 }
