@@ -5,6 +5,7 @@
 // @work-item-id WI-208
 // @work-item-id WI-215
 // @work-item-id WI-330
+// @work-item-id WI-343
 
 import type { CheckId } from "../../domain/check-id.js";
 import type { ConfigStatus } from "../../domain/config-status.js";
@@ -64,7 +65,9 @@ export class RunDoctorDiagnosticsUseCase {
         : "project";
     const configStatus = (await this.configStatusProbe.probe(input.projectRoot)).status;
     const rawFindings = (
-      await Promise.all(this.checks.map((check) => check.run(input.projectRoot, this.inspector)))
+      await Promise.all(
+        this.checks.map((check) => check.run(input.projectRoot, this.inspector, { installationMode })),
+      )
     ).filter((finding) => finding !== null);
     const { findings, scopedOutFindings } = this.applyPersonalScope(
       this.applyAgentScope(rawFindings, agent),

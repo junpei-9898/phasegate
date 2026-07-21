@@ -5,7 +5,10 @@
 // @work-item-id WI-210
 // @work-item-id WI-215
 // @work-item-id WI-216
+// @work-item-id WI-340
+// @work-item-id WI-343
 
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import { CiWorkflowMissingCheck } from "../../../../installation/application/checks/ci-workflow-missing-check.js";
 import { ClaudeContextMissingCheck } from "../../../../installation/application/checks/claude-context-missing-check.js";
@@ -37,6 +40,43 @@ target("doctor heuristic checks", () => {
       const actual = await new ClaudeContextMissingCheck().run("/tmp/project", inspector);
 
       expect(actual).toStrictEqual(null);
+    });
+
+    it("ルート CLAUDE.md の managed block に Phasegate 表記がある場合は finding を返さないこと", async () => {
+      // Arrange
+      const inspector = createTextInspector(
+        "CLAUDE.md",
+        "<!-- phasegate:managed-section:start -->\nPhasegate\n",
+      );
+      const sut = new ClaudeContextMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", inspector, { installationMode: "project" });
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("project mode で Claude context がない場合は finding の target にルート CLAUDE.md を返すこと", async () => {
+      // Arrange
+      const sut = new ClaudeContextMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector(), { installationMode: "project" });
+
+      // Assert
+      expect(actual?.target).toBe("CLAUDE.md");
+    });
+
+    it("personal mode で Claude context がない場合は finding の target に .claude/CLAUDE.md を返すこと", async () => {
+      // Arrange
+      const sut = new ClaudeContextMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", createInspector(), { installationMode: "personal" });
+
+      // Assert
+      expect(actual?.target).toBe(".claude/CLAUDE.md");
     });
 
     it("Claude legacy .claude/CLAUDE.local.md だけの場合は red を返すこと", async () => {
@@ -122,26 +162,80 @@ target("doctor heuristic checks", () => {
     });
   });
 
-  describe("HuskyPreCommitMissingCheck", () => {
-    it("標準 template の HARNESS_CMD lint/check-phase-gate を検出すること", async () => {
-      const content = [
-        'HARNESS_CMD="npx tsx scripts/harness/main.ts"',
-        "$HARNESS_CMD lint",
-        "$HARNESS_CMD check-phase-gate",
-      ].join("\n");
+  describe("Husky の pre-commit hook を検査する", () => {
+    it("実テンプレートから lint の案内行を除いても finding を返さないこと", async () => {
+      // Arrange
+      const templateUrl = new URL("../../../../../../docs/templates/hooks/pre-commit", import.meta.url);
+      const template = await readFile(templateUrl, "utf8");
+      const content = template
+        .split("\n")
+        .filter((line) => !line.includes("詳細: npx phasegate lint"))
+        .join("\n");
       const sut = new HuskyPreCommitMissingCheck();
 
+      // Act
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", content));
 
+      // Assert
       expect(actual).toStrictEqual(null);
     });
 
-    it("既存 custom hook に phasegate command がない場合は ai-assisted red を返すこと", async () => {
+    it("phasegate pre-commit を含む場合は finding を返さないこと", async () => {
+      // Arrange
+      const content = "npx phasegate pre-commit\n";
       const sut = new HuskyPreCommitMissingCheck();
 
+      // Act
+      const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", content));
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("PHASEGATE_CMD lint を含む場合は finding を返さないこと", async () => {
+      // Arrange
+      const content = 'PHASEGATE_CMD="npx phasegate"\n$PHASEGATE_CMD lint\n';
+      const sut = new HuskyPreCommitMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", content));
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("HARNESS_CMD lint を含む場合は finding を返さないこと", async () => {
+      // Arrange
+      const content = 'HARNESS_CMD="npx tsx scripts/harness/main.ts"\n$HARNESS_CMD lint\n';
+      const sut = new HuskyPreCommitMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", content));
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
+    it("phasegate 系コマンドを含まない場合は ai-assisted red を返すこと", async () => {
+      // Arrange
+      const sut = new HuskyPreCommitMissingCheck();
+
+      // Act
       const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", "pnpm test\n"));
 
+      // Assert
       expect(actual).toMatchObject({ checkId: "husky-pre-commit-missing", severity: "red", repairMode: "ai-assisted" });
+    });
+
+    it("空ファイルの場合は mechanical red を返すこと", async () => {
+      // Arrange
+      const sut = new HuskyPreCommitMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", createTextInspector(".husky/pre-commit", ""));
+
+      // Assert
+      expect(actual).toMatchObject({ checkId: "husky-pre-commit-missing", severity: "red", repairMode: "mechanical" });
     });
   });
 

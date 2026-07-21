@@ -1,6 +1,7 @@
 // @unit installation
 // @layer application
 // @work-item-id WI-145
+// @work-item-id WI-340
 
 import type { FileInspectorPort } from "../ports/file-inspector-port.js";
 import type { HeuristicCheck } from "../../domain/ports/heuristic-check.js";
@@ -22,6 +23,11 @@ export class HuskyPreCommitMissingCheck implements HeuristicCheck {
         "main.ts check-phase-gate",
         "$HARNESS_CMD lint",
         "$HARNESS_CMD check-phase-gate",
+        "phasegate pre-commit",
+        "main.ts pre-commit",
+        "$PHASEGATE_CMD lint",
+        "$PHASEGATE_CMD check-phase-gate",
+        "$PHASEGATE_CMD pre-commit",
       ])
     ) {
       return null;
