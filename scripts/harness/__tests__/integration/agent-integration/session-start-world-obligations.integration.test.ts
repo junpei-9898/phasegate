@@ -80,14 +80,20 @@ afterEach(async () => {
 });
 
 describe("SessionStart World obligations", () => {
-  it("self-repoのadopted legacy 604件を一行だけに集約すること", async () => {
-    // Arrange / Act
+  it("self-repoのadopted legacyをベースライン件数で一行だけに集約すること", async () => {
+    // Arrange
+    const baseline = JSON.parse(
+      await readFile(path.join(harnessRoot, "phasegate.world-baseline.json"), "utf8"),
+    ) as { entries: unknown[] };
+    const adoptedLegacyCount = baseline.entries.length;
+
+    // Act
     const actual = await runSessionStart(harnessRoot);
 
     // Assert
     expect(actual.exitCode, actual.stderr).toBe(0);
     const context = JSON.parse(actual.stdout).hookSpecificOutput.additionalContext as string;
-    expect(context).toContain("Adopted legacy: 604 (summary only)");
+    expect(context).toContain(`Adopted legacy: ${adoptedLegacyCount} (summary only)`);
     expect(context).not.toContain("pgw:v1:violation-fingerprint");
   }, 60_000);
 

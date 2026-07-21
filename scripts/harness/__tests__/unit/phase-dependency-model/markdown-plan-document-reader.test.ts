@@ -61,7 +61,7 @@ afterEach(() => {
 target('MarkdownPlanDocumentReader.readEvidence', () => {
   describe('Plan文書からエビデンスを読み取る', () => {
     context('plan文書が存在しQAセクションにQ:/A:ペアが揃っている場合(embedded-qa)', () => {
-      it('exists=true, qaComplete=true, planningModeMatch=trueのPlanEvidenceが返される', async () => {
+      it('旧形式の質問と回答が対応するとQA完了として返されること', async () => {
         // Arrange
         const rootDir = createTmpDir();
         const content = [
@@ -85,6 +85,145 @@ target('MarkdownPlanDocumentReader.readEvidence', () => {
         expect(actual.exists).toBe(true);
         expect(actual.qaComplete).toBe(true);
         expect(actual.planningModeMatch).toBe(true);
+      });
+    });
+
+    context('番号付きQA見出しの全質問に本文付きの回答がある場合', () => {
+      it('番号付きQA見出しで構造化された全質問に本文回答があるとQA完了として返されること', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const content = [
+          '# Unit Plan',
+          '',
+          '## 4. QA（不明点・確認事項）',
+          '### [Question] Q1: 対象範囲',
+          '[Answer]',
+          '対象は全Unitです。',
+          '',
+          '### [Question] Q2: 移行方法',
+          '[Answer]',
+          '段階的に移行します。',
+        ].join('\n');
+        writeFile(rootDir, 'docs/units/my-unit/unit_plan.md', content);
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const node = createNodeWithPlan();
+        const mode = PlanningMode.create('embedded-qa');
+
+        // Act
+        const actual = await sut.readEvidence(node, { unitId: 'my-unit' }, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(true);
+        expect(actual.planningModeMatch).toBe(true);
+      });
+    });
+
+    context('番号付きQA見出しに本文が空の回答マーカーを含む場合', () => {
+      it('番号付きQA見出しで回答本文が空の質問を含むとQA未完了として返されること', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const content = [
+          '# Unit Plan',
+          '',
+          '## 4. QA（不明点・確認事項）',
+          '### [Question] Q1: 対象範囲',
+          '[Answer]',
+          '対象は全Unitです。',
+          '',
+          '### [Question] Q2: 移行方法',
+          '[Answer]',
+          '',
+        ].join('\n');
+        writeFile(rootDir, 'docs/units/my-unit/unit_plan.md', content);
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const node = createNodeWithPlan();
+        const mode = PlanningMode.create('embedded-qa');
+
+        // Act
+        const actual = await sut.readEvidence(node, { unitId: 'my-unit' }, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(false);
+        expect(actual.planningModeMatch).toBe(false);
+      });
+    });
+
+    context('構造化された質問に回答マーカーがない場合', () => {
+      it('構造化された質問に回答マーカーがないとQA未完了として返されること', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const content = [
+          '# Unit Plan',
+          '',
+          '## 4. QA（不明点・確認事項）',
+          '### [Question] Q1: 対象範囲',
+        ].join('\n');
+        writeFile(rootDir, 'docs/units/my-unit/unit_plan.md', content);
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const node = createNodeWithPlan();
+        const mode = PlanningMode.create('embedded-qa');
+
+        // Act
+        const actual = await sut.readEvidence(node, { unitId: 'my-unit' }, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(false);
+        expect(actual.planningModeMatch).toBe(false);
+      });
+    });
+
+    context('番号付きQAセクションの後に同レベルのセクションが続く場合', () => {
+      it('QAの次の同レベルセクションにある回答を数えずQA未完了として返されること', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const content = [
+          '# Unit Plan',
+          '',
+          '## 4. QA（不明点・確認事項）',
+          '### [Question] Q1: 対象範囲',
+          '[Answer]',
+          '対象は全Unitです。',
+          '### [Question] Q2: 移行方法',
+          '',
+          '## 5. 次セクション',
+          '[Answer]',
+          '段階的に移行します。',
+        ].join('\n');
+        writeFile(rootDir, 'docs/units/my-unit/unit_plan.md', content);
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const node = createNodeWithPlan();
+        const mode = PlanningMode.create('embedded-qa');
+
+        // Act
+        const actual = await sut.readEvidence(node, { unitId: 'my-unit' }, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(false);
+        expect(actual.planningModeMatch).toBe(false);
+      });
+    });
+
+    context('QA見出しがあるが質問がない場合', () => {
+      it('QA見出しだけで質問がないと回答必須モードではQA未完了として返されること', async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const content = '# Unit Plan\n\n## 4. QA（不明点・確認事項）\n';
+        writeFile(rootDir, 'docs/units/my-unit/unit_plan.md', content);
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const node = createNodeWithPlan();
+        const mode = PlanningMode.create('embedded-qa');
+
+        // Act
+        const actual = await sut.readEvidence(node, { unitId: 'my-unit' }, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(false);
+        expect(actual.planningModeMatch).toBe(false);
       });
     });
 

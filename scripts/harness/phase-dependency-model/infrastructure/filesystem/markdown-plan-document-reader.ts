@@ -14,9 +14,11 @@ export interface MarkdownPlanDocumentReaderDeps {
   readonly rootDir: string;
 }
 
-const QA_SECTION_PATTERN = /^## QA\b/m;
-const QUESTION_PATTERN = /^Q:/gm;
-const ANSWER_PATTERN = /^A:/gm;
+const QA_SECTION_PATTERN = /^##+\s*(?:\d+[.．]\s*)?QA\b/m;
+const QUESTION_PATTERN = /^(?:Q:|###\s*\[Question\])/gm;
+const LEGACY_ANSWER_PATTERN = /^A:/gm;
+const STRUCTURED_ANSWER_PATTERN = /^\[Answer\][ \t]*$/gm;
+const ANSWER_BODY_BOUNDARY_PATTERN = /^(?:###\s*\[Question\]|#{1,6}\s+)/m;
 
 export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
   private readonly rootDir: string;
@@ -88,7 +90,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
       if (!hasQaSection) return false;
       const qaSection = this.extractQaSection(content);
       const questionCount = (qaSection.match(QUESTION_PATTERN) ?? []).length;
-      const answerCount = (qaSection.match(ANSWER_PATTERN) ?? []).length;
+      const answerCount = this.countAnswers(qaSection);
       return questionCount > 0 && questionCount === answerCount;
     }
 
@@ -108,7 +110,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
       if (!hasQaSection) return false;
       const qaSection = this.extractQaSection(content);
       const questionCount = (qaSection.match(QUESTION_PATTERN) ?? []).length;
-      const answerCount = (qaSection.match(ANSWER_PATTERN) ?? []).length;
+      const answerCount = this.countAnswers(qaSection);
       return questionCount > 0 && answerCount === questionCount;
     }
 
@@ -124,11 +126,44 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     if (!match || match.index === undefined) return '';
 
     const start = match.index;
-    const nextSectionMatch = content.slice(start + match[0].length).match(/^## /m);
-    const end = nextSectionMatch?.index
-      ? start + match[0].length + nextSectionMatch.index
-      : content.length;
+    const sectionContentStart = start + match[0].length;
+    const sectionContent = content.slice(sectionContentStart);
+    const headingMarker = match[0].match(/^##+/)?.[0];
+    if (!headingMarker) return '';
+
+    const sameLevelHeadingPattern = new RegExp(
+      `^${headingMarker}(?!#)[ \\t]+(.+)$`,
+      'gm',
+    );
+    let end = content.length;
+    for (const headingMatch of sectionContent.matchAll(sameLevelHeadingPattern)) {
+      if (/^\[Question\](?:\s|$)/.test(headingMatch[1].trimStart())) continue;
+      if (headingMatch.index !== undefined) {
+        end = sectionContentStart + headingMatch.index;
+        break;
+      }
+    }
 
     return content.slice(start, end);
+  }
+
+  private countAnswers(qaSection: string): number {
+    const legacyAnswerCount = (qaSection.match(LEGACY_ANSWER_PATTERN) ?? []).length;
+    let structuredAnswerCount = 0;
+
+    for (const answerMatch of qaSection.matchAll(STRUCTURED_ANSWER_PATTERN)) {
+      if (answerMatch.index === undefined) continue;
+      const bodyStart = answerMatch.index + answerMatch[0].length;
+      const followingContent = qaSection.slice(bodyStart);
+      const boundaryMatch = followingContent.match(ANSWER_BODY_BOUNDARY_PATTERN);
+      const answerBody =
+        boundaryMatch?.index === undefined
+          ? followingContent
+          : followingContent.slice(0, boundaryMatch.index);
+      const hasBody = answerBody.split(/\r?\n/).some((line) => line.trim().length > 0);
+      if (hasBody) structuredAnswerCount += 1;
+    }
+
+    return legacyAnswerCount + structuredAnswerCount;
   }
 }
