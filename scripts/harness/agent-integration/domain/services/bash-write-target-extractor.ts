@@ -140,6 +140,28 @@ function getCommandName(tokens: Token[]): string | undefined {
   return undefined;
 }
 
+/** リダイレクト演算子の右辺を解釈し、fd 複製の場合は書き込み先なしとして扱う。 */
+function getRedirectTarget(tokens: Token[], redirectIndex: number): string | undefined {
+  const next = tokens[redirectIndex + 1];
+  if (next === undefined) return undefined;
+
+  if (next.quoted === 'none' && /^&\d+$/.test(next.value)) {
+    return undefined;
+  }
+
+  if (next.quoted === 'none' && next.value === '&') {
+    const afterAmpersand = tokens[redirectIndex + 2];
+    if (afterAmpersand === undefined) return undefined;
+    if (afterAmpersand.quoted === 'none' && /^\d+$/.test(afterAmpersand.value)) {
+      return undefined;
+    }
+    // `>& file` は csh 形式の実ファイル書き込みとして安全側で抽出する。
+    return afterAmpersand.value;
+  }
+
+  return next.value;
+}
+
 /**
  * 1 コマンド分のトークン列から書き込み先を抽出する。
  * リダイレクト先はコマンド種別によらず検出する (全コマンド共通)。
@@ -151,9 +173,9 @@ function extractFromSingleCommand(tokens: Token[]): string[] {
   for (let i = 0; i < tokens.length; i += 1) {
     const t = tokens[i];
     if (t.quoted === 'none' && (t.value === '>' || t.value === '>>' || t.value === '>|')) {
-      const next = tokens[i + 1];
-      if (next !== undefined) {
-        results.push(next.value);
+      const target = getRedirectTarget(tokens, i);
+      if (target !== undefined) {
+        results.push(target);
       }
     }
   }

@@ -45,6 +45,78 @@ describe('BashWriteTargetExtractor', () => {
       // Assert
       expect(result).toEqual(['foo.ts']);
     });
+
+    it('標準エラーから標準出力への fd 複製は書き込み先を抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'cat x.log 2>&1';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('パイプの前にある fd 複製は書き込み先を抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'npm test 2>&1 | tail -5';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('標準出力から標準エラーへの fd 複製は書き込み先を抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'echo hi >&2';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('fd 指定の標準エラー実ファイルは書き込み先として抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'cmd 2> err.log';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['err.log']);
+    });
+
+    it('実ファイル出力と fd 複製が併用された場合は実ファイルだけを抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'cmd > out.log 2>&1';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['out.log']);
+    });
+
+    it('csh 形式の標準出力と標準エラーの実ファイル出力は書き込み先を抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = 'cmd >& combined.log';
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['combined.log']);
+    });
   });
 
   describe('heredoc 抽出', () => {
