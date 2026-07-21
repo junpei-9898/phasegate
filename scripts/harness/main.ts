@@ -228,7 +228,7 @@ Commands:
 
   lint                         Run lint checks (--json, --target <path>)
 
-  validate                     Run validators (--layer L2|L3|L4|all; L0 prints runtime hook info, --unit, --format human|agent|ci|json, --json)
+  validate                     Run validators (--layer L0|L2|L3|L4|all; L0 prints runtime hook info, --unit, --format human|agent|ci|json, --json)
   ci-check                     CI check (--quick for quick mode, --fail-on-reject, --dry-run, --files)
   check-change-category        Classify changed paths for quick mode (--paths <csv>, --format human|json)
 
@@ -499,6 +499,15 @@ function parseValidateFormat(args: readonly string[]): "human" | "agent" | "ci" 
   if (raw === "human" || raw === "agent" || raw === "ci") return raw;
   if (raw === "json") return "ci";
   throw new Error(`Invalid --format value for validate: '${raw}'. Supported values: human, agent, ci, json.`);
+}
+
+function parseValidateLayer(args: readonly string[]): "L0" | "L2" | "L3" | "L4" | "all" | undefined {
+  const raw = parseFlag(args, "--layer");
+  if (raw === undefined) return undefined;
+  if (raw === "L0" || raw === "L2" || raw === "L3" || raw === "L4" || raw === "all") return raw;
+
+  const lintGuidance = raw === "L1" ? "\nL1 は `npx phasegate lint` で実行してください。" : "";
+  throw new Error(`不正な --layer 値: ${raw}\n有効値: L0, L2, L3, L4, all${lintGuidance}`);
 }
 
 function levenshtein(a: string, b: string): number {
@@ -2888,7 +2897,7 @@ async function main(): Promise<void> {
       // ── validator-system ──
       case "validate": {
         const mod = createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig));
-        const layer = parseFlag(args, "--layer") as "L0" | "L2" | "L3" | "L4" | "all" | undefined;
+        const layer = parseValidateLayer(args);
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
         const format = parseValidateFormat(args) ?? (json ? "ci" : undefined);

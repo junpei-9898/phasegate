@@ -22,6 +22,7 @@
  * @work-item-id WI-308
  * @work-item-id WI-310
  * @work-item-id WI-311
+ * @work-item-id WI-342
  *
  * CLI エントリポイント (main.ts) の E2E テスト。
  * 実際にプロセスを起動して標準出力/終了コードを検証する。
@@ -279,11 +280,11 @@ describe('harness CLI E2E', () => {
       expect(actual.stderr).not.toContain('Unknown command: validate');
     });
 
-    it('validate --layer L1 が exit 0 または exit 1 で完了する', () => {
+    it('validate --layer L1 は lint への案内とともに exit 2 になる', () => {
       const actual = run('validate', '--layer', 'L1');
 
-      expect(actual.stderr).not.toContain('Unknown command');
-      expect([0, 1]).toContain(actual.exitCode);
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain('L1 は `npx phasegate lint` で実行してください');
     });
 
     it('validate --format agent で agentフォーマットの出力が返る', () => {
