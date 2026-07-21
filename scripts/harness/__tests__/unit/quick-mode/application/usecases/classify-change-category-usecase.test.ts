@@ -1,6 +1,7 @@
 // @layer test
 // @unit quick-mode
 // @story H10-06
+// @work-item-id WI-345
 import { describe, expect, it, vi } from "vitest";
 import type { FileExistencePort } from "../../../../../quick-mode/application/ports/file-existence-port.js";
 import type { QuickModeConfigPort } from "../../../../../quick-mode/application/ports/quick-mode-config-port.js";
@@ -287,20 +288,40 @@ target("ClassifyChangeCategoryUseCase", () => {
         expect(actual.fullModeRequired).toBe(true);
         expect(actual.rejectionRule).toBe("NEW_DOMAIN");
       });
+    });
 
-      // UT-CCC-334-07
-      it("targetChanges が空配列で渡された場合（hook Bash 抽出経路）は存在チェックせず従来どおり MODIFY 既定（'bugfix'）になること", async () => {
-        // Arrange: hook は targetChanges を常に配列（空を含む）で渡す。
-        // Bash 抽出ターゲットにエントリが無くても推定は行わず、従来挙動を維持する。
+    describe("Bash 抽出ターゲットの changeKind を変更情報から判定する（WI-345）", () => {
+      // UT-CCC-345-01
+      it("存在しない Bash 抽出ターゲットの変更情報が渡された場合に CREATE と判定され 'feature' カテゴリになること", async () => {
+        // Arrange
         const fileExistencePort: FileExistencePort = {
-          exists: vi.fn().mockResolvedValue(false),
+          exists: vi.fn().mockResolvedValue(true),
         };
         const { sut } = buildSut({ fileExistencePort });
-        const path = "scripts/harness/quick-mode/services/bash-extracted-target.ts";
+        const path = "scripts/harness/quick-mode/application/bash-created-target.ts";
         // Act
-        const actual = await sut.execute({ paths: [path], targetChanges: [] });
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{ filePath: path, beforeContent: null, afterContent: "" }],
+        });
         // Assert
         expect(fileExistencePort.exists).not.toHaveBeenCalled();
+        expect(actual.perFile).toEqual([{ path, category: "feature" }]);
+        expect(actual.fullModeRequired).toBe(true);
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+      });
+
+      // UT-CCC-345-02
+      it("存在する Bash 抽出ターゲットの変更情報が渡された場合に MODIFY と判定され従来どおり 'bugfix' カテゴリになること", async () => {
+        // Arrange
+        const { sut } = buildSut();
+        const path = "scripts/harness/quick-mode/application/bash-appended-target.ts";
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{ filePath: path }],
+        });
+        // Assert
         expect(actual.perFile).toEqual([{ path, category: "bugfix" }]);
         expect(actual.fullModeRequired).toBe(false);
       });

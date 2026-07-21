@@ -1,10 +1,14 @@
 // @layer test
 // @unit quick-mode
 // @work-item-id WI-140
+// @work-item-id WI-346
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import * as path from 'node:path';
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.js';
 import { createQuickModeCompositionRoot } from '../../../quick-mode/composition-root.js';
 import { ValidatorSystemQuickModeExecutionAdapter } from '../../../quick-mode/infrastructure/adapters/validator-system-quick-mode-execution-adapter.js';
+import { context, target } from '../../helpers/test-helpers.js';
 
 target('createQuickModeCompositionRoot', () => {
   afterEach(() => {
@@ -54,6 +58,64 @@ target('createQuickModeCompositionRoot', () => {
         expect(decision.relaxationProfile).toBeDefined();
         expect(executeSpy).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('config とファイル存在確認の解決基準', () => {
+    it('指定した設定ファイルで bugfix が許可されていない場合は full mode 必須と判定すること', async () => {
+      // Arrange
+      const rootDir = mkdtempSync(path.join(tmpdir(), 'phasegate-wi346-config-'));
+      const configPath = path.join(rootDir, 'custom.config.json');
+      writeFileSync(
+        configPath,
+        JSON.stringify({
+          quickMode: {
+            allowedCategories: ['docs'],
+            maintainedLayers: ['L1'],
+            relaxedGates: [],
+          },
+        }),
+        'utf8',
+      );
+      const mod = createQuickModeCompositionRoot({ configPath, rootDir });
+
+      // Act
+      const actual = await mod.classifyUseCase.execute({
+        paths: ['src/existing.ts'],
+        targetChanges: [{ filePath: 'src/existing.ts' }],
+      });
+
+      // Assert
+      expect(actual.dominantCategory).toBe('bugfix');
+      expect(actual.fullModeRequired).toBe(true);
+      expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+    });
+
+    it('指定した rootDir に対象ファイルが存在する場合は MODIFY として分類すること', async () => {
+      // Arrange
+      const rootDir = mkdtempSync(path.join(tmpdir(), 'phasegate-wi346-root-'));
+      const configPath = path.join(rootDir, 'custom.config.json');
+      const targetPath = 'custom-existing-source.ts';
+      writeFileSync(
+        configPath,
+        JSON.stringify({
+          quickMode: {
+            allowedCategories: ['bugfix'],
+            maintainedLayers: ['L1'],
+            relaxedGates: [],
+          },
+        }),
+        'utf8',
+      );
+      writeFileSync(path.join(rootDir, targetPath), 'export const existing = true;\n', 'utf8');
+      const mod = createQuickModeCompositionRoot({ configPath, rootDir });
+
+      // Act
+      const actual = await mod.classifyUseCase.execute({ paths: [targetPath] });
+
+      // Assert
+      expect(actual.dominantCategory).toBe('bugfix');
+      expect(actual.fullModeRequired).toBe(false);
     });
   });
 });

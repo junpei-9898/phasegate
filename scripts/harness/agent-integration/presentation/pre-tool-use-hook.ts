@@ -4,6 +4,8 @@
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-206
  * @work-item-id WI-208
+ * @work-item-id WI-345
+ * @work-item-id WI-347
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -80,8 +82,10 @@ function projectRootForConfig(configPath: string): string {
   return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
 }
 
-function isProjectExternalAbsolutePath(filePath: string): boolean {
-  return path.isAbsolute(filePath);
+function isProjectExternalPath(filePath: string, cwd: string, projectRoot: string): boolean {
+  const resolvedPath = path.resolve(cwd, filePath);
+  const relativePath = path.relative(projectRoot, resolvedPath);
+  return relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath);
 }
 
 async function main(): Promise<void> {
@@ -141,15 +145,29 @@ async function main(): Promise<void> {
     const bashTargets = extractor.extract(input.tool_input.command);
     if (bashTargets.length > 0) {
       targetFilePaths.push(...bashTargets.map(toRelative));
+      const recordedTargetPaths = new Set(targetChanges.map((change) => change.filePath));
+      const bashTargetChanges = await Promise.all(
+        bashTargets.map((bashTarget) => buildBashTargetChange(cwd, bashTarget, toRelative)),
+      );
+      for (const change of bashTargetChanges) {
+        if (!recordedTargetPaths.has(change.filePath)) {
+          targetChanges.push(change);
+          recordedTargetPaths.add(change.filePath);
+        }
+      }
       effectiveToolName = 'Write';
     }
   }
 
   try {
     const configPath = await findConfigPath(cwd);
-    const projectTargetFilePaths = targetFilePaths.filter((filePath) => !isProjectExternalAbsolutePath(filePath));
-    const projectTargetChanges = targetChanges.filter((change) => !isProjectExternalAbsolutePath(change.filePath));
     const projectRoot = projectRootForConfig(configPath);
+    const projectTargetFilePaths = targetFilePaths.filter(
+      (filePath) => !isProjectExternalPath(filePath, cwd, projectRoot),
+    );
+    const projectTargetChanges = targetChanges.filter(
+      (change) => !isProjectExternalPath(change.filePath, cwd, projectRoot),
+    );
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const phaseGateQueryPort = new PhaseGateQueryAdapter();
     const storyReflectionQueryPort = new FileSystemStoryReflectionQueryAdapter({
@@ -157,7 +175,8 @@ async function main(): Promise<void> {
       configPath,
     });
     const fullModeRequirementQueryPort = new QuickModeFullModeRequirementAdapter({
-      classifyUseCaseFactory: () => createQuickModeCompositionRoot().classifyUseCase,
+      classifyUseCaseFactory: () =>
+        createQuickModeCompositionRoot({ configPath, rootDir: projectRoot }).classifyUseCase,
     });
     const baselineGrandfatherQueryPort = new CiGovernanceBaselineGrandfatherAdapter({
       baseDir: projectRoot,
@@ -222,7 +241,7 @@ async function buildTargetChanges(
   toRelative: (p: string) => string,
 ): Promise<TargetChange[]> {
   const toolInput = input.tool_input;
-  if (toolInput === undefined) {
+  if (toolInput == null || typeof toolInput !== 'object') {
     return [];
   }
 
@@ -255,6 +274,32 @@ async function readExistingContent(cwd: string, filePath: string): Promise<strin
     return await fs.readFile(absolutePath, 'utf8');
   } catch {
     return null;
+  }
+}
+
+async function buildBashTargetChange(
+  cwd: string,
+  rawPath: string,
+  toRelative: (p: string) => string,
+): Promise<TargetChange> {
+  const filePath = toRelative(rawPath);
+  if (rawPath.includes('$') || rawPath.includes('`') || rawPath.startsWith('~')) {
+    // hook ではシェル展開後の実パスを解決できないため、存在チェックを避けて MODIFY 既定にする。
+    return { filePath };
+  }
+  const absolutePath = path.isAbsolute(rawPath) ? rawPath : path.join(cwd, rawPath);
+  try {
+    await fs.stat(absolutePath);
+    return { filePath };
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT' || code === 'ENOTDIR') {
+      // Bash では afterContent を取得できないため、空文字を CREATE 判定用の
+      // 「変更後内容あり」sentinel として渡す。実ファイルへの書き込みは行わない。
+      return { filePath, beforeContent: null, afterContent: '' };
+    }
+    // 権限エラー等で存在を確認できない場合は従来どおり MODIFY 既定（安全側）。
+    return { filePath };
   }
 }
 

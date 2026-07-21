@@ -29,13 +29,20 @@ export interface QuickModeCompositionRoot {
   classifyUseCase: ClassifyChangeCategoryUseCase;
 }
 
-export function createQuickModeCompositionRoot(): QuickModeCompositionRoot {
+export interface QuickModeCompositionRootOptions {
+  configPath?: string;
+  rootDir?: string;
+}
+
+export function createQuickModeCompositionRoot(
+  options: QuickModeCompositionRootOptions = {},
+): QuickModeCompositionRoot {
   // Infrastructure
   const gitDiffAdapter = new GitDiffChangedFilesAdapter();
-  const harnessConfigAdapter = new HarnessConfigQuickModeConfigAdapter();
+  const harnessConfigAdapter = new HarnessConfigQuickModeConfigAdapter(options.configPath);
   const validatorIdRegistryAdapter = new ValidatorSystemValidatorIdRegistryAdapter();
   const validatorExecutionPort = new ValidatorSystemQuickModeExecutionAdapter();
-  const fileExistencePort = new FsFileExistenceAdapter();
+  const fileExistencePort = new FsFileExistenceAdapter(options.rootDir);
 
   // Domain Services
   const judgmentEngine = new QuickModeJudgmentEngine();
