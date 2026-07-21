@@ -1,7 +1,7 @@
 // @layer test
 // @unit harness-api
 // @story H09-02
-// @work-item-id WI-114, WI-186, WI-307, WI-318, WI-321, WI-328
+// @work-item-id WI-114, WI-186, WI-307, WI-318, WI-321, WI-328, WI-339
 import { describe, expect, it, vi } from "vitest";
 import type { ArtifactScannerPort } from "../../../harness-api/domain/ports/artifact-scanner-port.js";
 import type { BiomeLintPort } from "../../../harness-api/domain/ports/biome-lint-port.js";
@@ -359,6 +359,68 @@ target("CommandDispatchService", () => {
       expect(actual.status).toBe("pass");
       expect(actual.exitCode).toBe(0);
       expect(actual.errors).toEqual([]);
+    });
+
+    it("phasegate:statusがwarning-onlyのraw failを実効passとしてlayer集計すること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [
+          {
+            validatorId: "L2-016",
+            passed: false,
+            errors: [{ code: "L2-016", severity: "warning", message: "ungated-legacy coverage_report" }],
+          },
+          { validatorId: "L3-001", passed: true, errors: [] },
+        ],
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("pass");
+      expect(actual.data).toMatchObject({
+        layers: expect.arrayContaining([
+          expect.objectContaining({ layerId: "L1", liveValidationState: "pass" }),
+          expect.objectContaining({ layerId: "L2", liveValidationState: "pass" }),
+          expect.objectContaining({ layerId: "L3", liveValidationState: "pass" }),
+        ]),
+      });
+    });
+
+    it("phasegate:statusがerror severityを含む実効failをlayer集計でfailのまま維持すること", async () => {
+      // Arrange
+      const ports = createMockPorts({
+        artifactScanResult: ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+        presetInfo: { name: "standard", enabledLayers: ["L1", "L2", "L3"] },
+        lintResult: { passed: true, errors: [], warnings: [] },
+        allValidatorResults: [
+          {
+            validatorId: "L2-002",
+            passed: false,
+            errors: [{ code: "L2-002", severity: "error", message: "metadata violation" }],
+          },
+          { validatorId: "L3-001", passed: true, errors: [] },
+        ],
+      });
+      const svc = new CommandDispatchService(ports);
+
+      // Act
+      const actual = await svc.dispatch({ commandName: "phasegate:status", args: {}, flags: {} });
+
+      // Assert
+      expect(actual.status).toBe("fail");
+      expect(actual.data).toMatchObject({
+        layers: expect.arrayContaining([
+          expect.objectContaining({ layerId: "L1", liveValidationState: "pass" }),
+          expect.objectContaining({ layerId: "L2", liveValidationState: "fail" }),
+          expect.objectContaining({ layerId: "L3", liveValidationState: "pass" }),
+        ]),
+      });
     });
 
     // WI-328 (github#39 残課題): 実効言語と出所を status data に載せる

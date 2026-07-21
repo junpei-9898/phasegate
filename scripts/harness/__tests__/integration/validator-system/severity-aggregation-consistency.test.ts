@@ -1,18 +1,24 @@
 // @layer test
 // @unit validator-system
-// @work-item-id WI-332
+// @work-item-id WI-332, WI-339
 
 /**
- * WI-332 横断 regression: 実効 severity 判定が「validate 集約」「ci-check / complete-check
- * (CiCheckResult)」「pre-commit 集約」の 3 経路で常に一致することを保証する。
+ * WI-332 / WI-339 横断 regression: 実効 severity 判定が「validate 集約」
+ * 「ci-check / complete-check (CiCheckResult)」「pre-commit 集約」「status layer 集約」の
+ * 4 経路で常に一致することを保証する。
  *
  * 背景: github#38 では complete-check だけが独自集約を持ち warning-only failure で exit 1
- * になった。本テストは同一の validator 結果セットを 3 経路すべてに通し、実効判定
+ * になった。本テストは同一の validator 結果セットを 4 経路すべてに通し、実効判定
  * （effectively passed / exit 0 相当か）の一致を assert する。将来どれかの経路が
  * 共有実装 (validator-system/domain/services/effective-severity-policy.ts) を外れて
  * 独自判定に戻った場合、このテストが落ちる。
  */
 import { expect, it } from "vitest";
+import {
+  type CommandDispatchPorts,
+  CommandDispatchService,
+} from "../../../harness-api/domain/services/command-dispatch-service.js";
+import { ArtifactScanResult } from "../../../harness-api/domain/value-objects/artifact-scan-result.js";
 import { CiCheckResult, type ValidatorCheckItem } from "../../../harness-api/domain/value-objects/ci-check-result.js";
 import { runPreCommit } from "../../../integrations/pre-commit.js";
 import type { ValidationResultContract } from "../../../validator-system/application/dto/validation-result-contract.js";
@@ -59,6 +65,44 @@ async function effectiveByPreCommit(results: readonly ValidationResultContract[]
   return actual.exitCode === 0;
 }
 
+/** 経路4: phasegate:status の layer 集約。 */
+async function effectiveByStatus(results: readonly ValidationResultContract[]): Promise<boolean> {
+  const ports = {
+    validatorExecutionPort: {
+      runL3Validators: async () => [],
+      runAllValidators: async () => [...toCheckItems(results)],
+      runDriftDetection: async () => [],
+    },
+    phaseGateQueryPort: {
+      queryAllStories: async () => [],
+      queryUnit: async () => null,
+    },
+    biomeLintPort: {
+      runLint: async () => ({ passed: true, errors: [], warnings: [] }),
+    },
+    impactAnalysisPort: {
+      analyze: async () => null,
+    },
+    artifactScannerPort: {
+      scan: async () => ArtifactScanResult.create({ scannedPaths: [], foundArtifacts: [], derivedLayerHealth: [] }),
+    },
+    configQueryPort: {
+      getPresetInfo: async () => ({ name: "standard" as const, enabledLayers: ["L1", "L2", "L3"] as const }),
+    },
+  } satisfies CommandDispatchPorts;
+  const service = new CommandDispatchService(ports);
+  const actual = await service.dispatch<{
+    readonly layers: readonly { readonly layerId: string; readonly liveValidationState: string }[];
+  }>({ commandName: "phasegate:status", args: {}, flags: {} });
+  const exercisedLayerIds = new Set(results.map((result) => result.validatorId.slice(0, 2)));
+  const exercisedLayers = actual.data?.layers.filter((layer) => exercisedLayerIds.has(layer.layerId)) ?? [];
+  return (
+    actual.status === "pass" &&
+    exercisedLayers.length === exercisedLayerIds.size &&
+    exercisedLayers.every((layer) => layer.liveValidationState === "pass" || layer.liveValidationState === "skipped")
+  );
+}
+
 interface Scenario {
   readonly name: string;
   readonly results: readonly ValidationResultContract[];
@@ -77,6 +121,11 @@ const scenarios: readonly Scenario[] = [
       contract("L2-001", true),
       contract("L2-016", false, [{ code: "L2-016", severity: "warning", message: "w", suggestion: "s" }]),
     ],
+    expectedEffectivelyPassed: true,
+  },
+  {
+    name: "L3 warning-only failure",
+    results: [contract("L3-008", false, [{ code: "L3-008", severity: "warning", message: "w", suggestion: "s" }])],
     expectedEffectivelyPassed: true,
   },
   {
@@ -109,9 +158,9 @@ const scenarios: readonly Scenario[] = [
   },
 ];
 
-target("severity 集約の 3 経路一致 (WI-332)", () => {
+target("severity 集約の 4 経路一致 (WI-332 / WI-339)", () => {
   for (const scenario of scenarios) {
-    it(`同一 validator 結果セット「${scenario.name}」で validate 集約・CiCheckResult・pre-commit 集約の実効判定が一致すること`, async () => {
+    it(`同一 validator 結果セット「${scenario.name}」で validate 集約・CiCheckResult・pre-commit 集約・status layer 集約の実効判定が一致すること`, async () => {
       // Arrange
       const { results, expectedEffectivelyPassed } = scenario;
       // Act
@@ -119,12 +168,14 @@ target("severity 集約の 3 経路一致 (WI-332)", () => {
         validate: effectiveByValidate(results),
         ciCheck: effectiveByCiCheck(results),
         preCommit: await effectiveByPreCommit(results),
+        status: await effectiveByStatus(results),
       };
-      // Assert — 3 経路すべてが ADR-017 の期待実効判定に一致する（= 経路間も常に一致）
+      // Assert — 4 経路すべてが ADR-017 の期待実効判定に一致する（= 経路間も常に一致）
       expect(actual).toEqual({
         validate: expectedEffectivelyPassed,
         ciCheck: expectedEffectivelyPassed,
         preCommit: expectedEffectivelyPassed,
+        status: expectedEffectivelyPassed,
       });
     });
   }

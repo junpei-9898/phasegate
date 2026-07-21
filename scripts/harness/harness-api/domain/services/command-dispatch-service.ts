@@ -1,6 +1,6 @@
 // @layer domain
 // @unit harness-api
-// @work-item-id WI-108 / WI-114, WI-186, WI-318, WI-321, WI-328
+// @work-item-id WI-108 / WI-114, WI-186, WI-318, WI-321, WI-328, WI-339
 // command-dispatch-service.ts — CommandDispatchService Domain Service
 
 import type { ArtifactScannerPort } from "../ports/artifact-scanner-port.js";
@@ -10,7 +10,7 @@ import type { ImpactAnalysisPort } from "../ports/impact-analysis-port.js";
 import type { PhaseGateQueryPort } from "../ports/phase-gate-query-port.js";
 import type { ValidatorExecutionPort } from "../ports/validator-execution-port.js";
 import { CheckReadyResult } from "../value-objects/check-ready-result.js";
-import { CiCheckResult } from "../value-objects/ci-check-result.js";
+import { CiCheckResult, type ValidatorCheckItem } from "../value-objects/ci-check-result.js";
 import { DriftReportSummary } from "../value-objects/drift-report-summary.js";
 import { type ExitCode, HarnessApiResponse, type HarnessError } from "../value-objects/harness-api-response.js";
 import type {
@@ -74,6 +74,15 @@ function summarizeLayerResults(
     }
   }
   return result;
+}
+
+/**
+ * WI-339: status の layer 集計へ渡す前に、ci-check / complete-check と同じ
+ * CiCheckResult 投影で raw passed を実効 passed に正規化する。
+ * failOnWarning は既存 harness-api 経路と同じ既定値 false を使用する。
+ */
+function toEffectiveValidatorResults(items: readonly ValidatorCheckItem[]): readonly ValidatorCheckItem[] {
+  return items.length === 0 ? items : CiCheckResult.fromResults(items).validatorResults;
 }
 
 function hasEnabledLiveFailure(
@@ -248,7 +257,7 @@ export class CommandDispatchService {
             this.ports.validatorExecutionPort.runAllValidators(),
           ]);
           liveValidationByLayer.L1 = lintResult.passed ? "pass" : "fail";
-          Object.assign(liveValidationByLayer, summarizeLayerResults(validatorResults));
+          Object.assign(liveValidationByLayer, summarizeLayerResults(toEffectiveValidatorResults(validatorResults)));
         } catch {
           liveValidationByLayer.L1 = liveValidationByLayer.L1 ?? "error";
         }
