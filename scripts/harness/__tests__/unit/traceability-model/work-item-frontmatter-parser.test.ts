@@ -1,6 +1,7 @@
 // @unit traceability-model
 // @layer infrastructure
 // @story H03-04
+// @work-item-id WI-337
 
 import { expect, it } from "vitest";
 import { WorkItemFrontmatterValidationError } from "../../../traceability-model/domain/value-objects/work-item-frontmatter.ts";
@@ -10,7 +11,7 @@ import { context, target } from "../../helpers/test-helpers.ts";
 target("parseWorkItemFrontmatter（H03-04 / ISSUE-026 Phase A-2）", () => {
   // UT-TM-W01
   context("frontmatter が存在しない場合", () => {
-    it("null を返す", () => {
+    it("frontmatter が存在しない場合は null を返す", () => {
       // Arrange
       const content = "# Title\n本文のみ";
 
@@ -42,7 +43,7 @@ type: story
 
   // UT-TM-W02a
   context("WI frontmatterではない通常frontmatterの場合", () => {
-    it("null を返す", () => {
+    it("WI識別子を含まない通常frontmatterの場合は null を返す", () => {
       // Arrange
       const content = `---
 traceability:
@@ -111,7 +112,7 @@ type: ${type}
 
   // UT-TM-W04
   context("id 形式が pattern に合致しない場合", () => {
-    it("WorkItemFrontmatterValidationError を throw", () => {
+    it("id 形式が不正な場合は WorkItemFrontmatterValidationError を throw", () => {
       // Arrange
       const content = `---
 id: BROKEN
@@ -125,7 +126,7 @@ type: story
 
   // UT-TM-W05
   context("type が enum 外の場合", () => {
-    it("WorkItemFrontmatterValidationError を throw", () => {
+    it("type が enum 外の場合は WorkItemFrontmatterValidationError を throw", () => {
       // Arrange
       const content = `---
 id: WI-001
@@ -139,22 +140,45 @@ type: unknown
 
   // UT-TM-W06
   context("severity が enum 外の場合", () => {
-    it("WorkItemFrontmatterValidationError を throw", () => {
+    it("未知のseverity値とともに検証エラーを返す", () => {
       // Arrange
       const content = `---
 id: WI-001
 type: story
-severity: critical
+severity: urgent
 ---`;
 
-      // Act & Assert
-      expect(() => parseWorkItemFrontmatter(content)).toThrow(WorkItemFrontmatterValidationError);
+      // Act
+      const actual = () => parseWorkItemFrontmatter(content);
+
+      // Assert
+      expect(actual).toThrow(WorkItemFrontmatterValidationError);
+      expect(actual).toThrow("severity 値が enum 外: urgent");
+    });
+  });
+
+  context("定義済みの severity を指定した場合", () => {
+    it("6種類のseverityをすべて受理する", () => {
+      // Arrange
+      const severities = ["trivial", "normal", "medium", "high", "critical", "major"] as const;
+
+      // Act
+      const actual = severities.map((severity, index) =>
+        parseWorkItemFrontmatter(`---
+id: WI-${String(index + 1).padStart(3, "0")}
+type: fix
+severity: ${severity}
+---`),
+      );
+
+      // Assert
+      expect(actual.map((frontmatter) => frontmatter?.severity)).toEqual(severities);
     });
   });
 
   // UT-TM-W07
   context("status が enum 外の場合", () => {
-    it("WorkItemFrontmatterValidationError を throw", () => {
+    it("status が enum 外の場合は WorkItemFrontmatterValidationError を throw", () => {
       // Arrange
       const content = `---
 id: WI-001

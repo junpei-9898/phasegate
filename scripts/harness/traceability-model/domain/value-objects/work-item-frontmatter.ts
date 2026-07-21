@@ -1,5 +1,6 @@
 // @unit traceability-model
 // @layer domain
+// @work-item-id WI-337
 /**
  * WorkItemFrontmatter — 設計文書 frontmatter から抽出した WI メタデータ（H03-04 / ISSUE-026 Phase A-2）。
  *
@@ -8,7 +9,7 @@
  */
 
 export type WorkItemType = 'story' | 'issue' | 'fix' | 'refactor' | 'chore';
-export type WorkItemSeverity = 'trivial' | 'normal' | 'high';
+export type WorkItemSeverity = 'trivial' | 'normal' | 'medium' | 'high' | 'critical' | 'major';
 export type WorkItemStatus =
   | 'drafted'
   | 'reflected'
@@ -47,7 +48,10 @@ export const WORK_ITEM_TYPES: ReadonlySet<WorkItemType> = new Set([
 export const WORK_ITEM_SEVERITIES: ReadonlySet<WorkItemSeverity> = new Set([
   'trivial',
   'normal',
+  'medium',
   'high',
+  'critical',
+  'major',
 ]);
 
 export const WORK_ITEM_STATUSES: ReadonlySet<WorkItemStatus> = new Set([

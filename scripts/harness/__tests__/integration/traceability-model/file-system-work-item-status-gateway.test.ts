@@ -2,11 +2,12 @@
 // @layer integration
 // @story H03-05
 // @work-item-id WI-126
+// @work-item-id WI-337
 
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FileSystemWorkItemStatusGateway } from "../../../traceability-model/infrastructure/gateways/file-system-work-item-status-gateway.ts";
 import { context, target } from "../../helpers/test-helpers.ts";
 
@@ -24,6 +25,7 @@ const writeFileInRoot = async (rootDir: string, relativePath: string, content: s
 };
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   if (tempRoot) {
     await rm(tempRoot, { recursive: true, force: true });
     tempRoot = undefined;
@@ -110,6 +112,41 @@ target("FileSystemWorkItemStatusGateway", () => {
         );
         expect(description).toContain("status: tested");
         expect(description).toContain("# WI-126");
+      });
+    });
+
+    context("severity が不正な description を含む場合", () => {
+      it("不正なseverityを持つファイルだけを警告して正常なWIの走査を継続する", async () => {
+        // Arrange
+        const rootDir = await createTempRoot();
+        const validWorkItems = ["WI-337", "WI-338"] as const;
+        for (const workItemId of validWorkItems) {
+          await writeFileInRoot(
+            rootDir,
+            `docs/inception/traceability-model/${workItemId}/description.md`,
+            ["---", `id: ${workItemId}`, "type: fix", "severity: normal", "status: drafted", "---"].join("\n"),
+          );
+        }
+        const invalidPath = "docs/inception/traceability-model/WI-339/description.md";
+        await writeFileInRoot(
+          rootDir,
+          invalidPath,
+          ["---", "id: WI-339", "type: fix", "severity: urgent", "status: drafted", "---"].join("\n"),
+        );
+        const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        const sut = new FileSystemWorkItemStatusGateway({ rootDir });
+
+        // Act
+        const inputs = await sut.listWorkItemStatusInputs();
+        const actual = {
+          ids: inputs.map((input) => input.frontmatter.id),
+          warning: warning.mock.calls.flat().join(" "),
+        };
+
+        // Assert
+        expect(actual.ids).toEqual(validWorkItems);
+        expect(actual.warning).toContain(invalidPath);
+        expect(actual.warning).toContain("severity 値が enum 外: urgent");
       });
     });
   });

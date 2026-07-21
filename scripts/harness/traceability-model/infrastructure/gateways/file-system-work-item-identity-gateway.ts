@@ -1,6 +1,7 @@
 // @unit traceability-model
 // @layer infrastructure
 // @work-item-id WI-106
+// @work-item-id WI-337
 
 import { readdir, readFile } from "node:fs/promises";
 import * as path from "node:path";
@@ -8,6 +9,7 @@ import type {
   WorkItemIdentityEntry,
   WorkItemIdentityPort,
 } from "../../domain/ports/work-item-identity-port.js";
+import { WorkItemFrontmatterValidationError } from "../../domain/value-objects/work-item-frontmatter.js";
 import { parseWorkItemFrontmatter } from "../parsers/work-item-frontmatter-parser.js";
 
 const WI_DIR_PATTERN = /^WI-\d+$/;
@@ -67,7 +69,10 @@ export class FileSystemWorkItemIdentityGateway implements WorkItemIdentityPort {
     try {
       const content = await readFile(path.join(this.rootDir, descriptionPath), "utf8");
       return parseWorkItemFrontmatter(content)?.id ?? null;
-    } catch {
+    } catch (error) {
+      if (error instanceof WorkItemFrontmatterValidationError) {
+        console.warn(`[phasegate] warning: ${descriptionPath} をスキップしました: ${error.message}`);
+      }
       return null;
     }
   }

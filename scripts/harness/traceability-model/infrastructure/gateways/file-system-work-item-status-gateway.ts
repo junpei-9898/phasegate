@@ -1,11 +1,15 @@
 // @unit traceability-model
 // @layer infrastructure
 // @work-item-id WI-126 / WI-140
+// @work-item-id WI-337
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 import type { WorkItemStatusPort } from "../../domain/ports/work-item-status-port.js";
-import type { WorkItemFrontmatter } from "../../domain/value-objects/work-item-frontmatter.js";
+import {
+  type WorkItemFrontmatter,
+  WorkItemFrontmatterValidationError,
+} from "../../domain/value-objects/work-item-frontmatter.js";
 import type {
   WorkItemStatusApplyResult,
   WorkItemStatusInput,
@@ -52,7 +56,16 @@ export class FileSystemWorkItemStatusGateway implements WorkItemStatusPort {
     const inputs: WorkItemStatusInput[] = [];
     for (const entry of entries) {
       const content = await readFile(path.join(this.rootDir, entry.descriptionPath), "utf8");
-      const frontmatter = parseWorkItemFrontmatter(content);
+      let frontmatter: WorkItemFrontmatter | null;
+      try {
+        frontmatter = parseWorkItemFrontmatter(content);
+      } catch (error) {
+        if (error instanceof WorkItemFrontmatterValidationError) {
+          console.warn(`[phasegate] warning: ${entry.descriptionPath} をスキップしました: ${error.message}`);
+          continue;
+        }
+        throw error;
+      }
       if (frontmatter === null) continue;
 
       const aliases = this.aliasesFor(frontmatter);
