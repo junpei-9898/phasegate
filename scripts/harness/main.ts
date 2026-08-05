@@ -41,7 +41,7 @@ import {
   rm as fsRm,
   writeFile as fsWriteFile,
 } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
@@ -75,7 +75,7 @@ import {
 import { FileSystemStoryReflectionAdapter } from "./phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js";
 import { StoryReflectionStatusPresenter } from "./phase-dependency-model/presentation/cli/story-reflection-status-presenter.js";
 import { buildPhase2Extensions } from "./phase2-extensions/composition-root.js";
-import { createQuickModeCompositionRoot } from "./quick-mode/composition-root.js";
+import { createQuickModeCompositionRoot, type QuickModeCompositionRootOptions } from "./quick-mode/composition-root.js";
 import { buildRegressionSuite } from "./regression-suite/composition-root.js";
 import type { SkillSet } from "./setup/skill-deployer.js";
 import {
@@ -1923,6 +1923,32 @@ async function loadResolvedConfig(command?: string): Promise<HarnessConfigV2 | u
   }
 }
 
+/**
+ * WI-351: quick-mode composition root へ解決済み configPath / rootDir を注入する。
+ *
+ * 無指定だと `HarnessConfigQuickModeConfigAdapter` は `process.cwd()/phasegate.config.json`、
+ * `FsFileExistenceAdapter` は `process.cwd()` を基準にする。サブディレクトリから CLI を
+ * 実行すると config を見失い、相対パスの存在判定（= CREATE/MODIFY 推定）も
+ * プロジェクトルート基準の hook とずれて分類結果が食い違う。
+ * config-foundation が上方探索で解決した sourcePath を基準に揃える
+ * （hook 側で WI-346 が行ったのと同じ整合）。
+ * config 未検出・不正時は従来どおり cwd 基準へフォールバックする（fail-open）。
+ */
+async function resolveQuickModeCompositionOptions(): Promise<QuickModeCompositionRootOptions> {
+  try {
+    const configModule = createConfigFoundationModule();
+    const { sourcePath } = await configModule.usecases.loadResolvedConfigUseCase.execute();
+    if (typeof sourcePath === "string" && sourcePath !== "") {
+      const configDir = dirname(sourcePath);
+      const rootDir = basename(configDir) === ".phasegate-local" ? dirname(configDir) : configDir;
+      return { configPath: sourcePath, rootDir };
+    }
+  } catch {
+    // 解決できない場合はフォールバック（下の return）
+  }
+  return { rootDir: getProjectRoot() };
+}
+
 async function loadWorldResolvedConfig() {
   try {
     const configModule = createConfigFoundationModule();
@@ -2978,7 +3004,7 @@ async function main(): Promise<void> {
           );
           return;
         }
-        const mod = createQuickModeCompositionRoot();
+        const mod = createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
         const paths = parseFlag(args, "--paths");
         const format = parseFlag(args, "--format") as "human" | "json" | undefined;
         const failOnFullRequired = hasFlag(args, "--fail-on-full-required");
