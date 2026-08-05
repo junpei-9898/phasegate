@@ -3,6 +3,7 @@
  * @unit quick-mode
  * @work-item-id WI-204
  * @work-item-id WI-349
+ * @work-item-id WI-352
  *
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */
@@ -24,6 +25,37 @@ const RISK_PRIORITY: Record<string, number> = {
   config: 1,
   docs: 0,
 };
+
+// config: リポジトリ直下の bootstrap 設定ファイル（列挙型 allowlist）。
+// これらは unit を持たず、CREATE だと feature に落ちて allowedCategories に
+// 入れる手段がないため greenfield な初期セットアップが恒久的にブロックされていた。
+// ワイルドカード（.github/** 等）には広げず、実在する bootstrap ファイル名のみを
+// 列挙して fail-closed を維持する（WI-334 の .github/workflows、
+// WI-261 の skills/**/*.md と同型の判断）。
+// package.json は protected-file 経路で別途保護されるためここには含めない。
+// @work-item-id WI-352
+const ROOT_BOOTSTRAP_CONFIG_FILES: ReadonlySet<string> = new Set([
+  ".gitignore",
+  ".gitattributes",
+  ".editorconfig",
+  ".npmrc",
+  ".nvmrc",
+  "tsconfig.json",
+]);
+
+const HUSKY_DIRECTORY_PREFIX = ".husky/";
+
+function isRootBootstrapConfigFile(filePath: string): boolean {
+  if (ROOT_BOOTSTRAP_CONFIG_FILES.has(filePath)) {
+    return true;
+  }
+  // tsconfig.*.json（tsconfig.build.json / tsconfig.test.json 等）もルート直下のみ許可
+  if (/^tsconfig\.[^/]+\.json$/.test(filePath)) {
+    return true;
+  }
+  // .husky/ 配下の hook スクリプト（L0 の runtime 定義）
+  return filePath.startsWith(HUSKY_DIRECTORY_PREFIX) && filePath.slice(HUSKY_DIRECTORY_PREFIX.length).length > 0;
+}
 
 function categorizeFile(file: ChangedFile): ChangeCategory {
   const { filePath, changeKind } = file;
@@ -47,6 +79,11 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
   // それ以外の .github/ 配下は従来どおりフォールバック（fail-closed）を維持する。
   // @work-item-id WI-334
   if (filePath.startsWith(".github/workflows/") && (filePath.endsWith(".yml") || filePath.endsWith(".yaml"))) {
+    return ChangeCategory.fromString("config");
+  }
+
+  // config: リポジトリ直下の bootstrap 設定ファイル（WI-352）
+  if (isRootBootstrapConfigFile(filePath)) {
     return ChangeCategory.fromString("config");
   }
 

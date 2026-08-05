@@ -275,6 +275,76 @@ target("QuickModeJudgmentEngine", () => {
         expect(actual.hasCategory("config")).toBe(false);
       });
 
+      // UT-JE-032（WI-352）
+      it.each([
+        [".gitignore"],
+        [".gitattributes"],
+        [".editorconfig"],
+        [".npmrc"],
+        [".nvmrc"],
+        ["tsconfig.json"],
+        ["tsconfig.build.json"],
+        [".husky/pre-commit"],
+      ])("ルート直下のbootstrap設定ファイル'%s'の新規作成（CREATE）が'config'カテゴリに分類されること", (filePath) => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath, changeKind: "CREATE" })];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("config")).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(false);
+      });
+
+      // UT-JE-033（WI-352）
+      it.each([
+        [".gitignore"],
+        [".gitattributes"],
+        [".editorconfig"],
+        [".npmrc"],
+        [".nvmrc"],
+        ["tsconfig.json"],
+        ["tsconfig.build.json"],
+        [".husky/pre-commit"],
+      ])("ルート直下のbootstrap設定ファイル'%s'の変更（MODIFY）が'config'カテゴリに分類されること", (filePath) => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath, changeKind: "MODIFY" })];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("config")).toBe(true);
+        expect(actual.hasCategory("bugfix")).toBe(false);
+      });
+
+      // UT-JE-034（WI-352）
+      it.each([
+        [".github/dependabot.yml"],
+        ["packages/app/.gitignore"],
+        ["config/tsconfig.json"],
+        [".huskyrc"],
+      ])("allowlist外のbootstrap類似パス'%s'の新規作成（CREATE）は従来どおり'feature'カテゴリに分類されること（fail-closed維持）", (filePath) => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath, changeKind: "CREATE" })];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("feature")).toBe(true);
+        expect(actual.hasCategory("config")).toBe(false);
+      });
+
+      // UT-JE-035（WI-352）
+      it("ルート直下の'.gitignore'の新規作成（CREATE）がQuick Modeで許可されること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: ".gitignore", changeKind: "CREATE" })];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.isEligible()).toBe(true);
+      });
+
       // UT-JE-008
       it("domain/以外のMODIFYファイルが渡された場合に'bugfix'カテゴリに分類されること", () => {
         // Arrange
