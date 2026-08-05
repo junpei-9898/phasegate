@@ -3,18 +3,28 @@
  * @unit phase-dependency-model
  */
 
-import { readFile } from 'node:fs/promises';
-import * as path from 'node:path';
-import type { PlanDocumentReaderPort } from '../../domain/ports/plan-document-reader-port.js';
-import type { PhaseNode } from '../../domain/values/phase-node.js';
-import type { PlanningMode } from '../../domain/values/planning-mode.js';
-import { PlanEvidence } from '../../domain/values/plan-evidence.js';
+import { readFile } from "node:fs/promises";
+import * as path from "node:path";
+import type { PlanDocumentReaderPort } from "../../domain/ports/plan-document-reader-port.js";
+import type { PhaseNode } from "../../domain/values/phase-node.js";
+import { PlanEvidence } from "../../domain/values/plan-evidence.js";
+import type { PlanningMode } from "../../domain/values/planning-mode.js";
 
 export interface MarkdownPlanDocumentReaderDeps {
   readonly rootDir: string;
 }
 
-const QA_SECTION_PATTERN = /^##+\s*(?:\d+[.．]\s*)?QA\b/m;
+/**
+ * WI-358 (issue #29): 見出しの表記ゆれで Planning Mode の evidence 判定が落ちる罠を潰す。
+ *
+ * 旧パターンは "QA" 綴りしか受け付けず、エージェントが自然に書く `## Q&A` /
+ * 全角の `## Q＆A` を弾いていた。中身は同一なのに phase gate だけが落ち、
+ * 原因が見出しの綴りだと気付けないまま止まる。
+ *
+ * 緩和方向のみの変更であり、既存の `## QA` / `## 4. QA（不明点・確認事項）` は
+ * すべて従来どおりマッチする。
+ */
+const QA_SECTION_PATTERN = /^##+\s*(?:\d+[.．]\s*)?Q[&＆]?A\b/m;
 const QUESTION_PATTERN = /^(?:Q:|###\s*\[Question\])/gm;
 const LEGACY_ANSWER_PATTERN = /^A:/gm;
 const STRUCTURED_ANSWER_PATTERN = /^\[Answer\][ \t]*$/gm;
@@ -57,7 +67,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
 
     let content: string;
     try {
-      content = await readFile(absolutePath, 'utf8');
+      content = await readFile(absolutePath, "utf8");
     } catch {
       return PlanEvidence.create({
         exists: false,
@@ -68,11 +78,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
 
     const hasQaSection = QA_SECTION_PATTERN.test(content);
     const qaComplete = this.isQaComplete(content, hasQaSection, expectedMode);
-    const planningModeMatch = this.detectPlanningModeMatch(
-      content,
-      hasQaSection,
-      expectedMode,
-    );
+    const planningModeMatch = this.detectPlanningModeMatch(content, hasQaSection, expectedMode);
 
     return PlanEvidence.create({
       exists: true,
@@ -81,11 +87,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     });
   }
 
-  private isQaComplete(
-    content: string,
-    hasQaSection: boolean,
-    expectedMode: PlanningMode,
-  ): boolean {
+  private isQaComplete(content: string, hasQaSection: boolean, expectedMode: PlanningMode): boolean {
     if (expectedMode.requiresAnsweredQa()) {
       if (!hasQaSection) return false;
       const qaSection = this.extractQaSection(content);
@@ -101,11 +103,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     return true;
   }
 
-  private detectPlanningModeMatch(
-    content: string,
-    hasQaSection: boolean,
-    expectedMode: PlanningMode,
-  ): boolean {
+  private detectPlanningModeMatch(content: string, hasQaSection: boolean, expectedMode: PlanningMode): boolean {
     if (expectedMode.requiresAnsweredQa()) {
       if (!hasQaSection) return false;
       const qaSection = this.extractQaSection(content);
@@ -123,18 +121,15 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
 
   private extractQaSection(content: string): string {
     const match = content.match(QA_SECTION_PATTERN);
-    if (!match || match.index === undefined) return '';
+    if (!match || match.index === undefined) return "";
 
     const start = match.index;
     const sectionContentStart = start + match[0].length;
     const sectionContent = content.slice(sectionContentStart);
     const headingMarker = match[0].match(/^##+/)?.[0];
-    if (!headingMarker) return '';
+    if (!headingMarker) return "";
 
-    const sameLevelHeadingPattern = new RegExp(
-      `^${headingMarker}(?!#)[ \\t]+(.+)$`,
-      'gm',
-    );
+    const sameLevelHeadingPattern = new RegExp(`^${headingMarker}(?!#)[ \\t]+(.+)$`, "gm");
     let end = content.length;
     for (const headingMatch of sectionContent.matchAll(sameLevelHeadingPattern)) {
       if (/^\[Question\](?:\s|$)/.test(headingMatch[1].trimStart())) continue;
@@ -157,9 +152,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
       const followingContent = qaSection.slice(bodyStart);
       const boundaryMatch = followingContent.match(ANSWER_BODY_BOUNDARY_PATTERN);
       const answerBody =
-        boundaryMatch?.index === undefined
-          ? followingContent
-          : followingContent.slice(0, boundaryMatch.index);
+        boundaryMatch?.index === undefined ? followingContent : followingContent.slice(0, boundaryMatch.index);
       const hasBody = answerBody.split(/\r?\n/).some((line) => line.trim().length > 0);
       if (hasBody) structuredAnswerCount += 1;
     }
