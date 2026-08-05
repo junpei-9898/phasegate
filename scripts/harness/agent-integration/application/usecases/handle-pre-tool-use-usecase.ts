@@ -437,8 +437,23 @@ export class HandlePreToolUseUseCase {
       lines.push(`  scaffold: ${command}`);
     }
     if (guidance.templatePath !== null) {
-      lines.push(`  テンプレ: ${guidance.templatePath}`);
+      lines.push(`  構成リファレンス: ${HandlePreToolUseUseCase.describeStructureReference(guidance.templatePath)}`);
     }
+  }
+
+  /**
+   * WI-356 (issue #29): 参照先が skill 定義（skills/<name>/SKILL.md）の場合、
+   * skills/ をユーザー repo に配置しない personal install 経路でも読めるよう
+   * stdout 経路（phasegate skills info）を併記する。
+   */
+  private static readonly SKILL_REFERENCE_PATTERN = /^skills\/([^/]+)\/SKILL\.md$/;
+
+  private static describeStructureReference(templatePath: string): string {
+    const skillMatch = HandlePreToolUseUseCase.SKILL_REFERENCE_PATTERN.exec(templatePath);
+    if (skillMatch === null) {
+      return templatePath;
+    }
+    return `${templatePath}（未配置なら: npx phasegate skills info ${skillMatch[1]}）`;
   }
 
   private deriveUnitIdFromPaths(targetFilePaths: readonly string[]): string | undefined {

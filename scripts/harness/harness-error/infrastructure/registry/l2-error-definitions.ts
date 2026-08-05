@@ -53,7 +53,12 @@ export const L2_ERROR_DEFINITIONS = Object.freeze([
     defaultFixExample: "const requiredPlanPath = 'docs/inception/harness-error/it_test_logic_plan.md';",
     defaultSuggestedSkill: "/story-implementor",
     defaultScaffoldCommand: "npx phasegate scaffold-design --unit <unit-id> --phase logical",
-    defaultTemplatePath: "templates/logical_design.template.md",
+    // WI-356 (issue #29): 旧値 "templates/logical_design.template.md" は phasegate 本体の
+    // パッケージ内にしか存在せず、導入先 repo からは到達できない到達不能パスだった。
+    // hook の block メッセージでこのパスを案内された agent は必ず空振りする。
+    // 導入先 repo で実際に読める参照（skill 定義）を指す。skills/ が未配置の
+    // personal install 経路でも `npx phasegate skills info <name>` で stdout から読める。
+    defaultTemplatePath: "skills/logical-designer/SKILL.md",
   }),
   createDefinition({
     code: "L2-002",

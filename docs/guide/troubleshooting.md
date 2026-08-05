@@ -27,6 +27,43 @@ Each finding has a severity, a repair mode, and optional next-step fields.
 | `ci-workflow-missing` | `npx phasegate setup:agent --intent ci-only --with-ci --dry-run --json` |
 | agent context drift | `npx phasegate reconcile --dry-run` |
 
+## Phase Gate Blocked a Write and I Do Not Know What the Document Should Contain
+
+<!-- @work-item-id WI-356 -->
+
+Phase Gate blocks (`L2-001`, `FULL_MODE_REQUIRED`) mean a required inception or product design document is missing. Two things are needed: the file skeleton, and the section structure to fill in.
+
+**1. Generate the skeleton.** `scaffold-design` writes a placeholder document for the missing phase:
+
+```bash
+npx phasegate scaffold-design --unit <unit-id> --phase logical --dry-run
+npx phasegate scaffold-design --unit <unit-id> --phase logical --apply
+```
+
+Accepted `--phase` values: `logical`, `domain`, `uiux`, `unit-test`, `it-test`.
+
+**2. Read the section structure from the skill definition.** PhaseGate does not ship fill-in templates into your repo; the authoritative structure of every plan and inception artifact lives in the skill markdown that produces it. `install` / `init` copy these into `skills/` in your repository:
+
+| Document | Skill definition |
+|---|---|
+| product architecture / unit decomposition | `skills/product-architect/SKILL.md` |
+| story map | `skills/story-mapper/SKILL.md` |
+| story descriptions / acceptance criteria | `skills/story-writer/SKILL.md` |
+| unit plan | `skills/unit-designer/SKILL.md` |
+| `logical_design.md` | `skills/logical-designer/SKILL.md` |
+| `domain_model.md` | `skills/domain-designer/SKILL.md` |
+| UI/UX design | `skills/uiux-designer/SKILL.md` |
+| unit / IT / scenario test plans | `skills/unit-test-designer/SKILL.md`, `skills/it-test-designer/SKILL.md`, `skills/scenario-test-designer/SKILL.md` |
+
+If `skills/` is not present in your repository — the personal install path does not copy it — read the same content from PhaseGate's own package instead:
+
+```bash
+npx phasegate skills list
+npx phasegate skills info logical-designer
+```
+
+`skills info` prints the full SKILL.md to stdout, so it works from a sandboxed agent that cannot read `node_modules/`.
+
 ## Refused Managed Target
 
 If `install`, `reconcile`, or `uninstall` refuses a target, do not immediately force it. Inspect the diff and ask the agent to explain:
