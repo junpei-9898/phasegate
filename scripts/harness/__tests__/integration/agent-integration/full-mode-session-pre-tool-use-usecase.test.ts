@@ -3,6 +3,7 @@
 // @story H11-02
 // @work-item-id WI-206
 // @work-item-id WI-348
+// @work-item-id WI-349
 
 import { describe, expect, it, vi } from "vitest";
 import { HandlePreToolUseUseCase } from "../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js";
@@ -108,6 +109,60 @@ describe("Full Mode session PreToolUse integration", () => {
     expect(actual.error?.message).toEqual(
       expect.stringContaining("phasegate session begin --mode full --unit some-unit"),
     );
+  });
+
+  it("sessionがactiveなのに不許可の場合はブロックメッセージにsession情報と不許可理由が含まれること", async () => {
+    // Arrange
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(),
+      phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: {
+        check: vi.fn().mockResolvedValue({
+          active: true,
+          allowed: false,
+          reason: "target unit other-unit does not match session unit some-unit",
+          workItemId: "WI-349",
+          unit: "other-unit",
+          expiresAt: "2026-08-05T13:00:00.000Z",
+        }),
+      },
+    });
+
+    // Act
+    const actual = await useCase.execute({
+      toolName: "Write",
+      targetFilePaths: ["scripts/harness/some-unit/domain/new-entity.ts"],
+    });
+
+    // Assert
+    const message = actual.error?.message ?? "";
+    expect(message).toContain("アクティブな Full Mode session: WI-349 (unit=other-unit");
+    expect(message).toContain("target unit other-unit does not match session unit some-unit");
+    expect(message).toContain("phasegate session end --work-item WI-349");
+  });
+
+  it("full-mode-requiredブロックメッセージに判定対象が今回の書き込み対象パスのみである旨が含まれること", async () => {
+    // Arrange
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(),
+      phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: {
+        check: vi.fn().mockResolvedValue({ active: false, allowed: false }),
+      },
+    });
+
+    // Act
+    const actual = await useCase.execute({
+      toolName: "Write",
+      targetFilePaths: ["scripts/harness/some-unit/domain/new-entity.ts"],
+    });
+
+    // Assert
+    const message = actual.error?.message ?? "";
+    expect(message).toContain("判定対象: 今回の書き込み対象パスのみです");
+    expect(message).not.toContain("アクティブな Full Mode session");
   });
 
   it("dominantCategory=featureのfull-mode-required変更もsessionが許可すれば通過すること", async () => {

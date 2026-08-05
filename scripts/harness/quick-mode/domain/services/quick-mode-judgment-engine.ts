@@ -2,6 +2,7 @@
  * @layer domain
  * @unit quick-mode
  * @work-item-id WI-204
+ * @work-item-id WI-349
  *
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */
@@ -92,6 +93,17 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
   return ChangeCategory.fromString("bugfix");
 }
 
+/**
+ * WI-349: 遮断理由に判定根拠（分類カテゴリと変更種別）を含める。
+ *
+ * 従来はパス列挙のみだったため「なぜそのパスが不許可なのか」が読み取れず、
+ * 利用者が「ワークツリーの無関係な変更のせいでブロックされている」と
+ * 誤認する原因になっていた（issue #41 症状②）。
+ */
+function describeChangedFile(file: ChangedFile, category: string): string {
+  return `${file.filePath} (category=${category}, changeKind=${file.changeKind})`;
+}
+
 export class QuickModeJudgmentEngine {
   classify(changedFiles: readonly ChangedFile[], _config?: QuickModeConfig): ChangeClassification {
     if (changedFiles.length === 0) {
@@ -127,9 +139,13 @@ export class QuickModeJudgmentEngine {
     // 1. MIXED_CHANGES評価: allowedCategories 外のカテゴリが含まれる場合
     if (config.isFullModeRequiredFor("mixedCategories")) {
       const notAllowedFiles: ChangedFile[] = [];
+      const notAllowedDescriptions: string[] = [];
       classification.categorizedFiles.forEach((files, categoryKey) => {
         if (!config.isAllowed(categoryKey)) {
           notAllowedFiles.push(...files);
+          for (const file of files) {
+            notAllowedDescriptions.push(describeChangedFile(file, categoryKey));
+          }
         }
       });
 
@@ -137,7 +153,7 @@ export class QuickModeJudgmentEngine {
         return QuickModeEligibility.rejected(
           "MIXED_CHANGES",
           notAllowedFiles,
-          `allowedCategories外のファイルが含まれています: ${notAllowedFiles.map((f) => f.filePath).join(", ")}`,
+          `allowedCategories外のファイルが含まれています: ${notAllowedDescriptions.join(", ")}`,
         );
       }
     }
@@ -152,7 +168,9 @@ export class QuickModeJudgmentEngine {
         return QuickModeEligibility.rejected(
           "NEW_DOMAIN",
           newDomainFiles,
-          `domain/配下に新規ファイルが追加されています: ${newDomainFiles.map((f) => f.filePath).join(", ")}`,
+          `domain/配下に新規ファイルが追加されています: ${newDomainFiles
+            .map((f) => describeChangedFile(f, categorizeFile(f).toString()))
+            .join(", ")}`,
         );
       }
     }
@@ -167,7 +185,9 @@ export class QuickModeJudgmentEngine {
         return QuickModeEligibility.rejected(
           "API_CONTRACT",
           apiContractFiles,
-          `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles.map((f) => f.filePath).join(", ")}`,
+          `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles
+            .map((f) => describeChangedFile(f, categorizeFile(f).toString()))
+            .join(", ")}`,
         );
       }
     }

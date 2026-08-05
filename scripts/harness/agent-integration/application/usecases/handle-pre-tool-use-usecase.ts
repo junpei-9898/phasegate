@@ -6,6 +6,7 @@
  * @work-item-id WI-202 / WI-204
  * @work-item-id WI-206
  * @work-item-id WI-214
+ * @work-item-id WI-349
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -17,11 +18,11 @@ import type {
 } from "../../domain/ports/baseline-grandfather-query-port.js";
 import type { ConfigQueryPort } from "../../domain/ports/config-query-port.js";
 import type { ErrorGuidance, ErrorGuidanceQueryPort } from "../../domain/ports/error-guidance-query-port.js";
+import type { FullModeRequirementQueryPort } from "../../domain/ports/full-mode-requirement-query-port.js";
 import type {
   FullModeSessionQueryPort,
   FullModeSessionQueryResult,
 } from "../../domain/ports/full-mode-session-query-port.js";
-import type { FullModeRequirementQueryPort } from "../../domain/ports/full-mode-requirement-query-port.js";
 import type { PhaseGateQueryPort } from "../../domain/ports/phase-gate-query-port.js";
 import type { StoryReflectionQueryPort } from "../../domain/ports/story-reflection-query-port.js";
 import { AsyncHookToCliTranslator } from "../../domain/services/hook-to-cli-translator.js";
@@ -186,6 +187,7 @@ export class HandlePreToolUseUseCase {
               guidance,
               unitIdForGuidance,
               input.callerSkill,
+              sessionResult,
             );
           }
         } else {
@@ -282,21 +284,20 @@ export class HandlePreToolUseUseCase {
     guidance: ErrorGuidance | null,
     unitId: string | undefined,
     callerSkill?: string,
+    sessionResult?: FullModeSessionQueryResult,
   ): HandlePreToolUseOutput {
     const fp = blockedFilePath ?? "不明なファイル";
     if (result.dominantCategory === "config" && /(?:^|\/)phasegate\.config\.json$/.test(fp)) {
       const dryRunCommand = "phasegate config:plan --intent quick-mode-relax --dry-run --json";
       const applyCommand = "phasegate config:plan --intent quick-mode-relax --apply --json";
-      const lines = [
-        `Full mode 必須変更が検出されました: ${fp}`,
-        "カテゴリ: config",
-      ];
+      const lines = [`Full mode 必須変更が検出されました: ${fp}`, "カテゴリ: config"];
       if (result.rejectionRule) {
         lines.push(`判定ルール: ${result.rejectionRule}`);
       }
       if (result.rejectionReason) {
         lines.push(`理由: ${result.rejectionReason}`);
       }
+      HandlePreToolUseUseCase.appendJudgmentContextLines(lines, sessionResult);
       lines.push(`次のアクション: ${dryRunCommand} で差分を確認し、承認後に ${applyCommand} を実行してください。`);
 
       return {
@@ -324,7 +325,10 @@ export class HandlePreToolUseUseCase {
       if (result.rejectionReason) {
         lines.push(`理由: ${result.rejectionReason}`);
       }
-      lines.push(`次のアクション: Quick Mode の許可カテゴリを確認してください。緩和する場合は ${dryRunCommand} で差分を確認し、承認後に ${applyCommand} を実行してください。`);
+      HandlePreToolUseUseCase.appendJudgmentContextLines(lines, sessionResult);
+      lines.push(
+        `次のアクション: Quick Mode の許可カテゴリを確認してください。緩和する場合は ${dryRunCommand} で差分を確認し、承認後に ${applyCommand} を実行してください。`,
+      );
 
       return {
         shouldBlock: true,
@@ -346,9 +350,15 @@ export class HandlePreToolUseUseCase {
     if (result.rejectionReason) {
       lines.push(`理由: ${result.rejectionReason}`);
     }
+    HandlePreToolUseUseCase.appendJudgmentContextLines(lines, sessionResult);
     const suggestedSkill = guidance?.suggestedSkill ?? "/story-implementor";
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
     if (unitId !== undefined && unitId !== "") {
+      if (HandlePreToolUseUseCase.isSessionActiveButRejected(sessionResult)) {
+        lines.push(
+          `  既存 session は上記理由で今回の書き込みに使えません。張り直す場合: phasegate session end --work-item ${sessionResult?.workItemId ?? "<WI-XXX>"} を実行してから下記を実行してください。`,
+        );
+      }
       lines.push(
         `  実装フェーズ開始時: phasegate session begin --mode full --unit ${unitId} --work-item <WI-XXX> --reason "<reason>" --duration 1h`,
       );
@@ -365,6 +375,35 @@ export class HandlePreToolUseUseCase {
       fullModeDominantCategory: result.dominantCategory,
       nextAction: suggestedSkill,
     };
+  }
+
+  /**
+   * WI-349: ブロック理由に判定根拠を明示する。
+   *
+   * - 判定対象は「今回の書き込み対象パス」だけであり、ワークツリー上の未コミット変更は
+   *   一切含まれない。この誤解が「無関係な変更のせいでブロックされている」という
+   *   誤った原因究明を招いていた（issue #41 症状②）。
+   * - アクティブな Full Mode session がありながら不許可だった場合は、その理由
+   *   （unit 不一致 / category 不一致 / 期限切れ 等）を提示する。これがないと
+   *   「session begin せよ」と案内されながら session は既に有効、という最悪の混乱になる。
+   */
+  private static appendJudgmentContextLines(
+    lines: string[],
+    sessionResult: FullModeSessionQueryResult | undefined,
+  ): void {
+    lines.push("判定対象: 今回の書き込み対象パスのみです（ワークツリー上の他の未コミット変更は判定に含まれません）。");
+    if (!HandlePreToolUseUseCase.isSessionActiveButRejected(sessionResult)) {
+      return;
+    }
+    const workItemId = sessionResult?.workItemId ?? "<unknown>";
+    const unit = sessionResult?.unit ?? "<unknown>";
+    const expiresAt = sessionResult?.expiresAt ?? "<unknown>";
+    lines.push(`アクティブな Full Mode session: ${workItemId} (unit=${unit}, expiresAt=${expiresAt})`);
+    lines.push(`session が書き込みを許可しなかった理由: ${sessionResult?.reason ?? "<unknown>"}`);
+  }
+
+  private static isSessionActiveButRejected(sessionResult: FullModeSessionQueryResult | undefined): boolean {
+    return sessionResult !== undefined && sessionResult.active && !sessionResult.allowed;
   }
 
   private static appendGuidanceLines(lines: string[], guidance: ErrorGuidance | null, unitId?: string): void {
@@ -419,8 +458,15 @@ export class HandlePreToolUseUseCase {
   }
 
   private static isUnderInception(targetFilePath: string, inceptionPath: string): boolean {
-    const normalizedTarget = targetFilePath.replaceAll("\\", "/").replace(/^\.\/+/, "").replace(/\/+/g, "/");
-    const normalizedBase = inceptionPath.replaceAll("\\", "/").replace(/^\.\/+/, "").replace(/\/+/g, "/").replace(/\/$/, "");
+    const normalizedTarget = targetFilePath
+      .replaceAll("\\", "/")
+      .replace(/^\.\/+/, "")
+      .replace(/\/+/g, "/");
+    const normalizedBase = inceptionPath
+      .replaceAll("\\", "/")
+      .replace(/^\.\/+/, "")
+      .replace(/\/+/g, "/")
+      .replace(/\/$/, "");
     return normalizedTarget === normalizedBase || normalizedTarget.startsWith(`${normalizedBase}/`);
   }
 
@@ -577,9 +623,7 @@ export class HandlePreToolUseUseCase {
     lines.push("");
     lines.push("修正方法:");
     lines.push("  1. cascade-updater を実行して product 文書を更新");
-    lines.push(
-      `  2. または手動で該当 product 文書に @${annotationKey} ${details?.storyId ?? "<WORK-ITEM-ID>"} を追加`,
-    );
+    lines.push(`  2. または手動で該当 product 文書に @${annotationKey} ${details?.storyId ?? "<WORK-ITEM-ID>"} を追加`);
     lines.push("");
     lines.push("参照: ADR-XXX");
 

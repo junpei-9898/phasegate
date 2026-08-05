@@ -584,5 +584,56 @@ target("QuickModeJudgmentEngine", () => {
         expect(actual.rejectionRule).toBe("NEW_DOMAIN");
       });
     });
+
+    describe("遮断理由に判定根拠（カテゴリと変更種別）を含める", () => {
+      // UT-JE-025 (WI-349)
+      it("MIXED_CHANGESの理由にファイルごとのcategoryとchangeKindが含まれること", () => {
+        // Arrange
+        const featureFile = ChangedFile.create({ filePath: "results/summary.md.ts", changeKind: "CREATE" });
+        const config = createQuickModeConfig({ allowedCategories: ["bugfix", "docs", "test", "config"] });
+        // Act
+        const actual = engine.judge([featureFile], config);
+        // Assert
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.reason).toContain("results/summary.md.ts (category=feature, changeKind=CREATE)");
+      });
+
+      // UT-JE-026 (WI-349)
+      it("NEW_DOMAINの理由にファイルごとのcategoryとchangeKindが含まれること", () => {
+        // Arrange
+        const newDomainFile = ChangedFile.create({
+          filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+          changeKind: "CREATE",
+        });
+        const config = createQuickModeConfig({
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge([newDomainFile], config);
+        // Assert
+        expect(actual.reason).toContain(
+          "scripts/harness/quick-mode/domain/value-objects/new-vo.ts (category=domain, changeKind=CREATE)",
+        );
+      });
+
+      // UT-JE-027 (WI-349)
+      it("API_CONTRACTの理由にファイルごとのcategoryとchangeKindが含まれること", () => {
+        // Arrange
+        const adapterFile = ChangedFile.create({
+          filePath: "scripts/harness/quick-mode/infrastructure/adapters/some-adapter.ts",
+          changeKind: "MODIFY",
+        });
+        const config = createQuickModeConfig({
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain", "feature", "api"],
+        });
+        // Act
+        const actual = engine.judge([adapterFile], config);
+        // Assert
+        expect(actual.rejectionRule).toBe("API_CONTRACT");
+        expect(actual.reason).toContain(
+          "scripts/harness/quick-mode/infrastructure/adapters/some-adapter.ts (category=api, changeKind=MODIFY)",
+        );
+      });
+    });
   });
 });
