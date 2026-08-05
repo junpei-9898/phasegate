@@ -2,6 +2,7 @@
 // @layer test
 // @story H11-02
 // @work-item-id WI-348
+// @work-item-id WI-350
 
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -198,6 +199,44 @@ target("FileSystemFullModeSessionQueryAdapter.check", () => {
       // Assert
       expect(actual.allowed).toBe(false);
       expect(actual.reason).toBe("session allowedCategories is invalid");
+    });
+  });
+
+  context("unit を持たないパスのみが対象の場合", () => {
+    it("unitId が undefined でも per-path チェックで許可されること", async () => {
+      // Arrange
+      const sut = await createAdapterWithSession(activeSession());
+
+      // Act
+      const actual = await sut.check(
+        queryInput({
+          targetFilePaths: ["results/summary.md"],
+          unitId: undefined,
+          dominantCategory: "feature",
+        }),
+      );
+
+      // Assert
+      expect(actual.allowed).toBe(true);
+      expect(actual.unit).toBe("agent-integration");
+    });
+
+    it("unit を持たないパスに session unit 外のパスが混在する場合は拒否されること", async () => {
+      // Arrange
+      const sut = await createAdapterWithSession(activeSession());
+
+      // Act
+      const actual = await sut.check(
+        queryInput({
+          targetFilePaths: ["results/summary.md", "scripts/harness/quick-mode/domain/other-entity.ts"],
+          unitId: undefined,
+          dominantCategory: "feature",
+        }),
+      );
+
+      // Assert
+      expect(actual.allowed).toBe(false);
+      expect(actual.reason).toBe("one or more target paths are outside session unit agent-integration");
     });
   });
 

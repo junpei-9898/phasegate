@@ -2,6 +2,7 @@
 // @layer infrastructure
 // @work-item-id WI-206
 // @work-item-id WI-348
+// @work-item-id WI-350
 
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -17,7 +18,9 @@ import { WriteTargetScope } from "../../domain/value-objects/write-target-scope.
  * quick-mode の `ChangeCategoryValue` と同一の語彙。
  * 照合相手は quick-mode 分類結果（`dominantCategory`）なので、この語彙以外は
  * session.json 側の書式誤りとして扱う。
- * 同期は `session-allowed-categories-vocabulary.test.ts` が検証する（WI-348）。
+ * `session begin` 側との同期は
+ * `__tests__/integration/harness-api/session-begin-allowed-categories.integration.test.ts`
+ * が検証する（WI-348）。
  */
 const KNOWN_CHANGE_CATEGORIES: ReadonlySet<string> = new Set([
   "bugfix",
@@ -119,11 +122,17 @@ export class FileSystemFullModeSessionQueryAdapter implements FullModeSessionQue
         expiresAt: document.expiresAt,
       };
     }
-    if (input.unitId === undefined || input.unitId !== document.unit) {
+    // WI-350: unit を持たないパス（プロジェクト直下のファイル・__tests__ 配下など）は
+    // 集約 unitId が undefined になる。旧実装はこれを即拒否していたが、
+    // 直下の allTargetPathsBelongToUnit は unitless パスを許容しており内部矛盾していた。
+    // 集約チェックは「unitId が定義済みかつ session unit と不一致」の場合のみ拒否し、
+    // unitless は per-path チェックへ委ねる。unit 付きパスが 1 つでも混ざれば
+    // per-path 側が従来どおり拒否するため、unit 境界は緩まない。
+    if (input.unitId !== undefined && input.unitId !== document.unit) {
       return {
         active: true,
         allowed: false,
-        reason: `target unit ${input.unitId ?? "<unknown>"} does not match session unit ${document.unit}`,
+        reason: `target unit ${input.unitId} does not match session unit ${document.unit}`,
         workItemId: document.workItemId,
         unit: document.unit,
         expiresAt: document.expiresAt,
