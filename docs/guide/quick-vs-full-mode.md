@@ -71,6 +71,31 @@ npx phasegate session end --work-item <WI-XXX>
 
 The PreToolUse hook validates `.phasegate/session.json` by TTL, unit, and dominant category. The `/story-implementor` skill is still the design/TDD guide; the session marker is the authorization the hook can actually observe. <!-- @work-item-id WI-206 -->
 
+### How a path becomes a category
+
+The classifier is **path-based, not intent-based**. It never reads your commit message or your stated purpose; it looks at the write target's path and its change kind (`CREATE` / `MODIFY` / `DELETE`). Rules are evaluated in this order, first match wins:
+
+| Order | Match | Category |
+|---|---|---|
+| 1 | `*.config.json`, `*.config.ts`, `phasegate.config.json` | `config` |
+| 2 | `.github/workflows/*.yml`, `.github/workflows/*.yaml` | `config` |
+| 3 | Repo-root bootstrap files: `.gitignore`, `.gitattributes`, `.editorconfig`, `.npmrc`, `.nvmrc`, `tsconfig.json`, `tsconfig.*.json`, anything under `.husky/` | `config` |
+| 4 | Comment/whitespace-only diff | `docs` |
+| 5 | `*port.ts`, `*adapter.ts` | `api` |
+| 6 | `__tests__/`, `*.test.ts`, `*.spec.ts` | `test` |
+| 7 | Anything under a `domain/` directory | `domain` |
+| 8 | Anything under `docs/` | `docs` |
+| 9 | `skills/**/*.md` | `docs` |
+| 10 | Any other `CREATE` | `feature` |
+| 11 | Any other `MODIFY` / `DELETE` | `bugfix` |
+
+Two consequences worth internalising:
+
+- The `config` rules are an **explicit allow-list**, not a wildcard. `.github/dependabot.yml`, `packages/app/.gitignore`, or a `Dockerfile` are *not* `config` — created fresh they fall through to `feature` and are blocked. This is deliberate fail-closed behaviour: widening the list is a config decision, not an inference the hook makes for you.
+- `feature` is the fallback for **every new non-test source file**. "It's only a tiny helper" does not change the classification.
+
+When the hook blocks a write, the message now names the deciding category and change kind per path (`foo.ts (category=feature, changeKind=CREATE)`), and — for `bugfix` / `docs` / `test` / `config` blocks — points at `allowedCategories` and `config:plan --intent quick-mode-relax` rather than at `/story-implementor`. <!-- @work-item-id WI-352 --> <!-- @work-item-id WI-354 -->
+
 ### Dry-running the classifier
 
 Use `check-change-category` to evaluate an arbitrary file list without actually starting an implementation:
@@ -159,16 +184,16 @@ Codify the split in your head (or in a project CLAUDE.md note) — "`domain/**` 
 ## FAQ
 
 **Q. I have a one-line bugfix in `domain/`. Does "any file under `domain/`" auto-trigger Full?**
-Not mechanically — Quick Mode does not inspect paths. A one-line bugfix inside an existing domain method (fixing an off-by-one, null check, wrong comparator) is still Quick-eligible. What triggers Full is *adding or reshaping* a domain concept, not editing an existing one.
+Yes — mechanically. The classifier is path-based (see [How a path becomes a category](#how-a-path-becomes-a-category)), so *any* write under a `domain/` directory lands in the `domain` category, which is outside the default `allowedCategories`, and the hook blocks it with `MIXED_CHANGES`. Judgement about "it's only an off-by-one" does not enter into it. If the fix is genuinely trivial, the sanctioned routes are a Full Mode session (`phasegate session begin --mode full --unit <unit> ...`) or, when the project has decided domain edits are routinely Quick-eligible, widening `allowedCategories` via `config:plan`. Do not expect the hook to infer intent.
 
 **Q. What if Quick discovers the change is bigger than expected mid-flight?**
 Stop, commit nothing, and re-launch `/story-implementor`. Don't try to "finish in Quick" — you'll skip the design gate that would otherwise catch the scope creep.
 
 **Q. Can I disable Quick Mode entirely?**
-Yes — remove all entries from `quickMode.allowedCategories` in `phasegate.config.json`. All changes will route through Full Mode. This is reasonable for high-compliance projects. Alternatively, leave the categories as-is and set every `quickMode.fullModeRequiredWhen.*` flag to `true` (the default) so any non-trivial scope automatically escalates.
+Not by emptying the list — `allowedCategories: []` is rejected as invalid config (`allowedCategories must not be empty`), so it breaks the hook rather than tightening it. Narrow it instead: `allowedCategories: ["docs"]` routes effectively everything through Full Mode while staying valid. Alternatively, leave the categories as-is and set every `quickMode.fullModeRequiredWhen.*` flag to `true` (the default) so any non-trivial scope automatically escalates.
 
 **Q. Can I add custom categories?**
-No. `allowedCategories` is a fixed enum (`bugfix`, `docs`, `test`, `config`). If your workflow needs a fifth category, that is evidence the change is probably Full Mode material.
+No. `allowedCategories` accepts only values from a fixed enum — the seven `ChangeCategory` values `bugfix`, `docs`, `test`, `config`, `feature`, `domain`, `api`. The default allow-list is the first four; the remaining three exist so that a project can *deliberately* widen the gate (rarely a good idea), not so you can invent a new label. If your workflow needs a category outside this enum, that is evidence the change is probably Full Mode material.
 
 ---
 

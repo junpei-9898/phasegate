@@ -21,6 +21,25 @@ Quick Mode下での軽微変更実装スキル。story-implementorの緩和版�
 | `test` | テスト追加・修正（新機能のテストではない） |
 | `config` | 設定変更、依存バージョン更新 |
 
+> **カテゴリ判定はファイルパスベース（意図ベースではない）**
+> pre-tool-use hook は変更の「意図」ではなく **書き込み対象パス** からカテゴリを機械判定する。
+> 特に `config` は allowlist で、以下だけが `config` に落ちる:
+> `*.config.json` / `*.config.ts` / `phasegate.config.json` / `.github/workflows/*.y(a)ml` /
+> リポジトリ直下の `.gitignore` `.gitattributes` `.editorconfig` `.npmrc` `.nvmrc` `tsconfig.json` `tsconfig.*.json` / `.husky/` 配下。
+> allowlist 外のパスは新規作成（CREATE）なら `feature` に落ちて **必ずブロックされる**（fail-closed）。
+>
+> ブロックされたら、まず分類を確認する:
+> ```bash
+> npx phasegate check-change-category --paths <file1>,<file2>
+> ```
+> 判定が妥当で、かつ許可カテゴリの一時拡張が必要なら CLI 経由で計画・適用する
+> （`phasegate.config.json` の手編集は保護ファイルとしてブロックされる）:
+> ```bash
+> npx phasegate config:plan --intent quick-mode-relax --dry-run --json   # 差分確認
+> npx phasegate config:plan --intent quick-mode-relax --apply --json     # 承認後に適用
+> ```
+> 判定が `feature` / `domain` / `api` なら、それは Quick Mode のスコープ外。`story-implementor` に切り替える。
+
 ### WI-aware trivial path（ISSUE-026 Phase D）
 
 作業対象に `WI-XXX` が明示されている場合、最初に `docs/inception/{unit}/WI-XXX/description.md` または `docs/inception/_cross/WI-XXX/description.md` のfrontmatterを確認する。
