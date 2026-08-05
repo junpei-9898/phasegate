@@ -7,6 +7,7 @@
  * @work-item-id WI-206
  * @work-item-id WI-214
  * @work-item-id WI-349
+ * @work-item-id WI-354
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -310,15 +311,13 @@ export class HandlePreToolUseUseCase {
         nextAction: `${dryRunCommand} && ${applyCommand}`,
       };
     }
-    if (
-      callerSkill === "quick-implementor" &&
-      result.dominantCategory !== undefined &&
-      ["bugfix", "docs", "test", "config"].includes(result.dominantCategory)
-    ) {
+    if (HandlePreToolUseUseCase.shouldGuideQuickModeRelax(result.dominantCategory, callerSkill)) {
       const dryRunCommand = "phasegate config:plan --intent quick-mode-relax --dry-run --json";
       const applyCommand = "phasegate config:plan --intent quick-mode-relax --apply --json";
       const lines: string[] = [`Full mode 必須変更が検出されました: ${fp}`];
-      lines.push(`カテゴリ: ${result.dominantCategory}`);
+      if (result.dominantCategory) {
+        lines.push(`カテゴリ: ${result.dominantCategory}`);
+      }
       if (result.rejectionRule) {
         lines.push(`判定ルール: ${result.rejectionRule}`);
       }
@@ -329,6 +328,7 @@ export class HandlePreToolUseUseCase {
       lines.push(
         `次のアクション: Quick Mode の許可カテゴリを確認してください。緩和する場合は ${dryRunCommand} で差分を確認し、承認後に ${applyCommand} を実行してください。`,
       );
+      lines.push(`  分類の確認: npx phasegate check-change-category --paths ${fp}`);
 
       return {
         shouldBlock: true,
@@ -375,6 +375,27 @@ export class HandlePreToolUseUseCase {
       fullModeDominantCategory: result.dominantCategory,
       nextAction: suggestedSkill,
     };
+  }
+
+  /**
+   * Quick Mode スコープのカテゴリ（bugfix / docs / test / config）は quick-implementor で
+   * 完遂できる変更であり、遮断の実体は「allowedCategories が絞られている」ことである。
+   * ここで /story-implementor を案内すると、設計フェーズからやり直せという誤った指示になる。
+   *
+   * WI-354: 従来は callerSkill === "quick-implementor" を条件にしていたが、
+   * callerSkill を供給する producer（hook input の caller_skill / PHASEGATE_CALLER_SKILL）は
+   * 実運用で設定されず、この分岐は到達不能だった。カテゴリを一次条件にして
+   * skill context なしでも実用的な復旧手順を出す。
+   * feature / domain / api は従来どおり /story-implementor 誘導を維持する。
+   */
+  private static readonly QUICK_MODE_SCOPE_CATEGORIES: readonly string[] = ["bugfix", "docs", "test", "config"];
+
+  private static shouldGuideQuickModeRelax(dominantCategory: string | undefined, callerSkill?: string): boolean {
+    if (dominantCategory !== undefined) {
+      return HandlePreToolUseUseCase.QUICK_MODE_SCOPE_CATEGORIES.includes(dominantCategory);
+    }
+    // カテゴリ不明時は skill context だけが手掛かり
+    return callerSkill === "quick-implementor";
   }
 
   /**
