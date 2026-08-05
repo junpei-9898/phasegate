@@ -9,7 +9,7 @@ This WI should make the `/story-implementor` guidance actionable for changes tha
 ## Current Flow
 
 1. PreToolUse receives an Edit / Write event.
-2. Quick Mode classification marks the target as `domain`, `application`, `infrastructure`, or another category outside `allowedCategories`.
+2. Quick Mode classification marks the target as `domain`, `feature`, `api`, or another category outside `allowedCategories`. (Quick Mode categories are `bugfix | docs | test | config | feature | domain | api` — they are change categories, not layer names.)
 3. `HandlePreToolUseUseCase` returns `FULL_MODE_REQUIRED`.
 4. The error message suggests `/story-implementor`.
 5. `/story-implementor` can create or require design docs, but it does not create hook-visible full-mode state.
@@ -20,7 +20,7 @@ This WI should make the `/story-implementor` guidance actionable for changes tha
 1. `/story-implementor` Phase 1 prepares and reflects required design evidence.
 2. `/story-implementor` Phase 2 starts a hook-visible full-mode session for a specific Unit and WI.
 3. PreToolUse validates the session before applying full-mode-required blocking.
-4. Allowed edits are constrained to the declared Unit, layer categories, duration, and reason.
+4. Allowed edits are constrained to the declared Unit, change categories, duration, and reason.
 5. Stop hook or explicit command closes the session and records audit evidence.
 
 ## Candidate Mechanism
@@ -39,7 +39,7 @@ Session state can be stored under `.phasegate/session.json`:
   "mode": "full",
   "unit": "integrations",
   "workItemId": "WI-206",
-  "allowedCategories": ["domain", "application", "infrastructure", "presentation", "config"],
+  "allowedCategories": ["bugfix", "docs", "test", "config", "feature", "domain", "api"],
   "reason": "story-implementor Phase 2 implementation",
   "startedAt": "2026-05-20T00:00:00.000Z",
   "expiresAt": "2026-05-20T01:00:00.000Z"

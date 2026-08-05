@@ -562,12 +562,25 @@ function validateKnownFlags(args: readonly string[], known: readonly string[]): 
   return null;
 }
 
+/**
+ * Full Mode session が許可する変更カテゴリ。
+ *
+ * WI-348: 照合相手は quick-mode の `ChangeCategoryValue`
+ * (`bugfix | docs | test | config | feature | domain | api`) であり、
+ * レイヤー名（application / infrastructure / presentation）ではない。
+ * 旧実装はレイヤー名語彙を書き出していたため、交差が domain / config のみとなり
+ * session を張っても feature / api の書き込みがブロックされ続けていた。
+ * ChangeCategory の全語彙を許可し、session のスコープ制御は
+ * unit / 期限 / target path 側の判定に委ねる。
+ */
 const FULL_MODE_SESSION_ALLOWED_CATEGORIES = Object.freeze([
-  "domain",
-  "application",
-  "infrastructure",
-  "presentation",
+  "bugfix",
+  "docs",
+  "test",
   "config",
+  "feature",
+  "domain",
+  "api",
 ]);
 
 interface FullModeSessionFile {

@@ -29,17 +29,16 @@
  */
 export const L3_003_COVERAGE_EXCLUDE: readonly string[] = [
   // 計測対象外（テスト・fixture）
-  'scripts/harness/__tests__/**',
-  '**/*.test.ts',
+  "scripts/harness/__tests__/**",
+  "**/*.test.ts",
 
   // --- エントリポイント / サブプロセス専用（分母補正） ---
-  'scripts/harness/main.ts',
-  'scripts/harness/agent-integration/presentation/**',
-  'scripts/harness/agent-integration/infrastructure/adapters/file-system-full-mode-session-query-adapter.ts',
-  'scripts/harness/agent-integration/infrastructure/adapters/harness-error-guidance-adapter.ts',
-  'scripts/harness/agent-integration/infrastructure/adapters/harness-api-cli-command-registry-adapter.ts',
-  'scripts/harness/integrations/pre-commit.ts',
-  'scripts/harness/**/index.ts',
-  'scripts/harness/**/presentation/cli/**',
-  'scripts/harness/**/presentation/handlers/**',
+  "scripts/harness/main.ts",
+  "scripts/harness/agent-integration/presentation/**",
+  "scripts/harness/agent-integration/infrastructure/adapters/harness-error-guidance-adapter.ts",
+  "scripts/harness/agent-integration/infrastructure/adapters/harness-api-cli-command-registry-adapter.ts",
+  "scripts/harness/integrations/pre-commit.ts",
+  "scripts/harness/**/index.ts",
+  "scripts/harness/**/presentation/cli/**",
+  "scripts/harness/**/presentation/handlers/**",
 ];
