@@ -21,7 +21,7 @@
     }
   },
   "quickMode": {
-    "allowedCategories": ["bugfix"],
+    "allowedCategories": ["bugfix", "docs", "test", "config"],
     "maintainedLayers": ["L1", "L2"],
     "relaxedGates": []
   },
