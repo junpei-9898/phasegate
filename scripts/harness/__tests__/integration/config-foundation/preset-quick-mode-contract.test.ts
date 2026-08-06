@@ -2,6 +2,7 @@
 // @unit config-foundation
 // @story H04-01
 // @work-item-id WI-353
+// @work-item-id WI-378
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -11,56 +12,85 @@ import { HarnessConfigQuickModeConfigAdapter } from "../../../quick-mode/infrast
 import { target } from "../../helpers/test-helpers.js";
 
 /**
- * WI-353: 防御プリセット定義の quickMode.allowedCategories と、
- * Quick Mode 実効経路（HarnessConfigQuickModeConfigAdapter の既定値）の整合を固定する契約テスト。
+ * WI-353 は「presets/*.json の quickMode 宣言」と「adapter のハードコード既定値」という
+ * 二重管理の整合を検査していた（宣言はどこからも読まれないデッド宣言だった）。
  *
- * presets/*.json の quickMode は preset 解決経由でしか読まれないが、
- * Quick Mode 判定は raw JSON を読む adapter の既定値で動くため、
- * 両者が乖離すると「宣言と実効値が違う」状態が静かに発生する。
+ * WI-377 / ADR-040 で adapter が防御プリセット解決を経由するようになったため、
+ * 本テストは「preset 宣言が実際に読まれ、Quick Mode の実効値になっている」ことの検証に昇格する。
+ * quickMode セクションを持たない config に対する adapter の実効値が、
+ * 当該防御プリセットの quickMode 宣言そのものと 3 キーとも一致することを固定する。
  */
-target("防御プリセット定義と Quick Mode 実効既定値の整合", () => {
+
+const PRESET_IDS = ["minimal", "standard", "strict"] as const;
+
+/** docs/guide/configuration.md が既定として記載している Quick Mode 実効値 */
+const DOCUMENTED_DEFAULTS = {
+  allowedCategories: ["bugfix", "docs", "test", "config"],
+  maintainedLayers: ["L1", "L2-002", "L2-003", "L2-014", "L3-001"],
+  relaxedGates: ["L2-001", "L3-002", "L3-003", "L3-004", "L4"],
+} as const;
+
+target("防御プリセットの quickMode 宣言が Quick Mode 実効値になること", () => {
   let workDirectory: string;
-  let effectiveDefaultCategories: readonly string[];
+  const effectiveByPreset = new Map<
+    string,
+    { allowedCategories: readonly string[]; maintainedLayers: readonly string[]; relaxedGates: readonly string[] }
+  >();
 
   beforeAll(async () => {
     workDirectory = mkdtempSync(path.join(tmpdir(), "phasegate-preset-quickmode-"));
-    const configPath = path.join(workDirectory, "phasegate.config.json");
-    // quickMode セクションを持たない config = 実効既定値が使われる経路
-    writeFileSync(
-      configPath,
-      JSON.stringify({ project: { name: "contract", preset: "standard" }, layers: {}, phaseDependencies: {} }),
-      "utf8",
-    );
-    const adapter = new HarnessConfigQuickModeConfigAdapter(configPath);
-    const quickModeConfig = await adapter.getQuickModeConfig();
-    effectiveDefaultCategories = quickModeConfig.allowedCategories;
+    for (const presetId of PRESET_IDS) {
+      const configPath = path.join(workDirectory, `phasegate.config.${presetId}.json`);
+      // quickMode セクションを持たない config = preset 宣言がそのまま実効値になる経路
+      writeFileSync(
+        configPath,
+        JSON.stringify({ project: { name: "contract", preset: presetId }, layers: {}, phaseDependencies: {} }),
+        "utf8",
+      );
+      const quickModeConfig = await new HarnessConfigQuickModeConfigAdapter(configPath).getQuickModeConfig();
+      effectiveByPreset.set(presetId, {
+        allowedCategories: quickModeConfig.allowedCategories,
+        maintainedLayers: quickModeConfig.maintainedLayers,
+        relaxedGates: quickModeConfig.relaxedGates,
+      });
+    }
   });
 
   afterAll(() => {
     rmSync(workDirectory, { recursive: true, force: true });
   });
 
-  describe("3つの防御プリセットの allowedCategories が実効既定値と一致する", () => {
-    it("実効既定値が bugfix/docs/test/config の4カテゴリであること", () => {
+  describe("preset 宣言と実効値の一致（デッド宣言の解消）", () => {
+    it.each(PRESET_IDS)("宣言された 3 キーが防御プリセット '%s' の実効値と一致すること", (presetId) => {
       // Arrange
-      const expected = ["bugfix", "docs", "test", "config"];
+      const declared = new PresetDefinitionStore().load()[presetId].quickMode;
+
       // Act
-      const actual = effectiveDefaultCategories;
+      const actual = effectiveByPreset.get(presetId);
+
+      // Assert
+      expect(actual).toEqual({
+        allowedCategories: declared.allowedCategories,
+        maintainedLayers: declared.maintainedLayers,
+        relaxedGates: declared.relaxedGates,
+      });
+    });
+  });
+
+  describe("実効値とドキュメント記載の既定値の一致", () => {
+    it.each(PRESET_IDS)("docs/guide 記載の既定値が防御プリセット '%s' の実効値と一致すること", (presetId) => {
+      // Arrange
+      const expected = {
+        allowedCategories: [...DOCUMENTED_DEFAULTS.allowedCategories],
+        maintainedLayers: [...DOCUMENTED_DEFAULTS.maintainedLayers],
+        relaxedGates: [...DOCUMENTED_DEFAULTS.relaxedGates],
+      };
+
+      // Act
+      const actual = effectiveByPreset.get(presetId);
+
       // Assert
       expect(actual).toEqual(expected);
-    });
-
-    it.each([
-      ["minimal"],
-      ["standard"],
-      ["strict"],
-    ])("防御プリセット '%s' の quickMode.allowedCategories が実効既定値と一致すること", (presetId) => {
-      // Arrange
-      const presets = new PresetDefinitionStore().load();
-      // Act
-      const actual = presets[presetId as "minimal" | "standard" | "strict"].quickMode.allowedCategories;
-      // Assert
-      expect(actual).toEqual([...effectiveDefaultCategories]);
     });
   });
 });
