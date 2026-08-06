@@ -492,10 +492,51 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         const actual = sut.validate(document);
 
         // Assert
+        expect(actual[0]).toEqual(
+          expect.objectContaining({
+            errorCode: "L1-001",
+            path: expect.stringContaining("/quickMode/categoryOverrides"),
+          }),
+        );
+      });
+    });
+
+    // @work-item-id WI-373
+    context("quickMode.allowedCategories に ChangeCategory 語彙外の値が含まれる場合", () => {
+      // IT-SCH-001
+      it("allowedCategories の未知値で schema validate error が返る", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const base = baseV2Document();
+        const document = {
+          ...base,
+          architecture: { preset: "clean" },
+          quickMode: { ...base.quickMode, allowedCategories: ["bugfix", "typoo"] },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual[0]).toEqual(
+          expect.objectContaining({
+            errorCode: "L1-001",
+            path: expect.stringContaining("/quickMode/allowedCategories"),
+          }),
+        );
+      });
+
+      it("v2 schema でも allowedCategories の未知値で error が返る", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const base = baseV2Document();
+        const document = { ...base, quickMode: { ...base.quickMode, allowedCategories: ["typoo"] } };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
         expect(actual.length).toBeGreaterThan(0);
-        // ConfigSchemaValidatorPort の宣言型は HarnessError なので、adapter が付与する
-        // instancePath（HarnessErrorWithPath）は明示 cast で受ける。
-        expect((actual[0] as { path?: string } | undefined)?.path).toContain("/quickMode/categoryOverrides");
       });
     });
 

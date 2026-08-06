@@ -279,4 +279,93 @@ target('QuickModeConfig', () => {
       });
     });
   });
+
+  // @work-item-id WI-372
+  target('categoryOverrides', () => {
+    context('categoryOverrides が未指定の場合', () => {
+      // UT-QMC-018 (WI-372)
+      it('空の CategoryOverrideRules が設定されること', () => {
+        // Arrange
+        const input = { allowedCategories: ['bugfix'], maintainedLayers: ['L1'], relaxedGates: [] };
+        // Act
+        const actual = QuickModeConfig.create(input);
+        // Assert
+        expect(actual.categoryOverrides.isEmpty()).toBe(true);
+      });
+    });
+
+    context('categoryOverrides が指定された場合', () => {
+      // UT-QMC-019 (WI-372)
+      it('指定された glob ルールが保持されること', () => {
+        // Arrange
+        const input = {
+          allowedCategories: ['bugfix'],
+          maintainedLayers: ['L1'],
+          relaxedGates: [],
+          categoryOverrides: { docs: ['results/**'] },
+        };
+        // Act
+        const actual = QuickModeConfig.create(input);
+        // Assert
+        expect(actual.categoryOverrides.resolve('results/a.md')?.toString()).toBe('docs');
+      });
+    });
+
+    describe('equals は categoryOverrides の差分を検出する', () => {
+      // UT-QMC-023 (WI-372)
+      it('categoryOverrides だけが異なる場合に false が返ること', () => {
+        // Arrange
+        const sut = createQuickModeConfig({ categoryOverrides: { docs: ['results/**'] } });
+        const other = createQuickModeConfig({ categoryOverrides: { docs: ['notes/**'] } });
+        // Act
+        const actual = sut.equals(other);
+        // Assert
+        expect(actual).toBe(false);
+      });
+    });
+  });
+
+  // @work-item-id WI-373
+  target('allowedCategories の enum 検証', () => {
+    context('allowedCategories に未知のカテゴリが含まれる場合', () => {
+      // UT-QMC-020
+      it('QuickModeConfigError が発生すること', () => {
+        // Arrange
+        const input = { allowedCategories: ['bugfix', 'typoo'], maintainedLayers: ['L1'], relaxedGates: [] };
+        // Act
+        const actual = () => QuickModeConfig.create(input);
+        // Assert
+        expect(actual).toThrowError(QuickModeConfigError);
+        expect(actual).toThrowError('allowedCategories contains unknown category "typoo"');
+      });
+    });
+
+    context('allowedCategories に大文字混じりの値が含まれる場合', () => {
+      // UT-QMC-021
+      it('正規化されず QuickModeConfigError が発生すること', () => {
+        // Arrange
+        const input = { allowedCategories: ['Docs'], maintainedLayers: ['L1'], relaxedGates: [] };
+        // Act
+        const actual = () => QuickModeConfig.create(input);
+        // Assert
+        expect(actual).toThrowError(QuickModeConfigError);
+      });
+    });
+
+    describe('ChangeCategory 7 値はすべて受理される', () => {
+      // UT-QMC-022
+      it('bugfix/docs/test/config/feature/domain/api を指定しても例外が発生しないこと', () => {
+        // Arrange
+        const input = {
+          allowedCategories: ['bugfix', 'docs', 'test', 'config', 'feature', 'domain', 'api'],
+          maintainedLayers: ['L1'],
+          relaxedGates: [],
+        };
+        // Act
+        const actual = QuickModeConfig.create(input);
+        // Assert
+        expect(actual.allowedCategories).toHaveLength(7);
+      });
+    });
+  });
 });

@@ -10,6 +10,7 @@ import {
   CategoryOverrideRules,
   type CategoryOverrideRulesInput,
 } from './category-override-rules.js';
+import { CHANGE_CATEGORY_VALUES, isChangeCategoryValue } from './change-category.js';
 
 export { QuickModeConfigError };
 
@@ -62,6 +63,18 @@ export class QuickModeConfig {
 
     if (allowedCategories.length === 0) {
       throw new QuickModeConfigError('allowedCategories must not be empty');
+    }
+
+    // WI-373: allowedCategories は ChangeCategory 7 値の enum。
+    // 従来は非空チェックのみだったため "typoo" のような未知値が黙って通り、
+    // 「設定したのに効かない」状態になっていた。分類結果のキーは常に小文字なので
+    // 大文字小文字の正規化はせず厳密一致で拒否する（正規化は効かない設定の黙認になる）。
+    for (const category of allowedCategories) {
+      if (!isChangeCategoryValue(category)) {
+        throw new QuickModeConfigError(
+          `allowedCategories contains unknown category "${category}". Valid values: ${CHANGE_CATEGORY_VALUES.join(', ')}`
+        );
+      }
     }
 
     const mergedRules: FullModeRequiredRules = Object.freeze({

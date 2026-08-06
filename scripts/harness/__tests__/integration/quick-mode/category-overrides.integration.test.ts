@@ -51,10 +51,13 @@ function runProcess(args: readonly string[], cwd: string, stdin?: string): Promi
   });
 }
 
-function createProjectRoot(categoryOverrides?: Record<string, string[]>): string {
+function createProjectRoot(
+  categoryOverrides?: Record<string, string[]>,
+  allowedCategories: string[] = ["bugfix", "docs", "test", "config"],
+): string {
   const projectRoot = mkdtempSync(path.join(tmpdir(), "phasegate-wi372-"));
   const quickMode: Record<string, unknown> = {
-    allowedCategories: ["bugfix", "docs", "test", "config"],
+    allowedCategories,
     maintainedLayers: ["L1"],
     relaxedGates: [],
   };
@@ -188,6 +191,30 @@ target("quickMode.categoryOverrides の経路一貫性 (WI-372)", () => {
         expect(actual.stderr).not.toContain("Full mode 必須変更が検出されました");
         expect(actual.exitCode).toBe(0);
         expect(actual.stderr).toContain("category=docs");
+      }, 60_000);
+    });
+
+    // @work-item-id WI-373
+    describe("quickMode 設定が不正な場合は fail-closed になる", () => {
+      // IT-OV-003
+      it("allowedCategories に未知値がある config では docs の Write でもブロックされること", async () => {
+        // Arrange: docs は本来許可カテゴリだが、config 自体が不正なので判定できない
+        const projectRoot = createProjectRoot(undefined, ["bugfix", "typoo"]);
+        const stdin = JSON.stringify({
+          cwd: projectRoot,
+          tool_name: "Write",
+          tool_input: {
+            file_path: path.join(projectRoot, "docs/guide/new.md"),
+            content: "# new\n",
+          },
+        });
+
+        // Act
+        const actual = await runProcess(["hook", "pre-tool-use"], projectRoot, stdin);
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("quickMode 設定が不正なため");
       }, 60_000);
     });
   });

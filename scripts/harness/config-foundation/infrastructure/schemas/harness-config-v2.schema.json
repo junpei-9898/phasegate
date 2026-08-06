@@ -174,9 +174,10 @@
       "additionalProperties": false,
       "properties": {
         "allowedCategories": {
+          "description": "Quick Mode を通過させる ChangeCategory。7 値の enum で、未知値は設定エラーとして拒否される。",
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/changeCategory"
           },
           "uniqueItems": true
         },
