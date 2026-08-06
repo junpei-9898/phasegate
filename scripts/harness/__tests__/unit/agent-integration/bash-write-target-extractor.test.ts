@@ -145,6 +145,147 @@ describe('BashWriteTargetExtractor', () => {
     });
   });
 
+  describe('heredoc 本文の構文解析除外 (WI-362)', () => {
+    it('ヒアドキュメント本文中のメールアドレス表記を書き込み先として抽出しない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `cat <<'EOF'
+[quick] fix: something (WI-xxx)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://example.com/s
+EOF`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('trailer 付きコミットメッセージをヒアドキュメントで渡す git commit を書き込みとみなさない', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `git commit -F - <<'EOF'
+[quick] fix: something (WI-xxx)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://example.com/s
+EOF`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('コマンド置換内のヒアドキュメント本文も構文解析の対象外とする', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `git commit -m "$(cat <<'EOF'
+[quick] fix: "something" (WI-xxx)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://example.com/s
+EOF
+)"`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual([]);
+    });
+
+    it('本文に `<...>` を含んでいても `cat <<EOF > target.ts` の書き込み先は抽出する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `cat <<'EOF' > target.ts
+Co-Authored-By: Claude <noreply@anthropic.com>
+Claude-Session: https://example.com/s
+EOF`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['target.ts']);
+    });
+
+    it('ヒアドキュメント終端より後ろのコマンドは通常どおり解析する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `cat <<'EOF' > first.txt
+Co-Authored-By: Claude <noreply@anthropic.com>
+EOF
+echo x > second.ts`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['first.txt', 'second.ts']);
+    });
+
+    it('`<<-` 形式ではタブインデントされた終端行を認識し後続コマンドを解析する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `cat <<-EOF > first.txt
+\tCo-Authored-By: Claude <noreply@anthropic.com>
+\tEOF
+echo x > second.ts`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['first.txt', 'second.ts']);
+    });
+
+    it('ヒアストリング `<<<` は本文を持たないため後続行を解析する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `grep foo <<< "bar"
+echo x > after.ts`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['after.ts']);
+    });
+
+    it('クォート内の `<<` はヒアドキュメント開始とみなさず後続行を解析する', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `echo "shift << 2" > note.txt
+echo x > after.ts`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['note.txt', 'after.ts']);
+    });
+
+    it('複数のヒアドキュメントを 1 行で宣言しても宣言順に本文を読み飛ばす', () => {
+      // Arrange
+      const extractor = new BashWriteTargetExtractor();
+      const command = `diff <(cat <<'A') <(cat <<'B') > diff.txt
+<a@example.com> x
+A
+<b@example.com> y
+B`;
+
+      // Act
+      const actual = extractor.extract(command);
+
+      // Assert
+      expect(actual).toEqual(['diff.txt']);
+    });
+  });
+
   describe('tee 抽出', () => {
     it('`echo x | tee foo.ts` から foo.ts を抽出する', () => {
       // Arrange

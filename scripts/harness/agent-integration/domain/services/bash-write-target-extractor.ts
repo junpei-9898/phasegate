@@ -9,7 +9,8 @@
  *
  * 副作用なし・純粋関数相当。対応パターンは以下:
  *   - リダイレクト `>` / `>>` / `>|` (clobber)
- *   - heredoc (`<<EOF > path`)
+ *   - heredoc (`<<EOF > path`) — ヒアドキュメント**本文**はシェル構文解析の対象外
+ *     (本文中の `<...>` をリダイレクトと誤認しないため。WI-362)
  *   - `tee` / `tee -a`
  *   - `sed -i` / `sed -i ''` (BSD)
  *   - `cp` / `mv` (宛先のみ)
@@ -109,6 +110,191 @@ function tokenize(input: string): Token[] {
   }
 
   return tokens;
+}
+
+/** ヒアドキュメント開始演算子で宣言された終端デリミタ */
+type HeredocDelimiter = {
+  /** クォート・エスケープを解除した終端語 */
+  readonly word: string;
+  /** `<<-` 形式か (終端行の先頭タブを無視する) */
+  readonly allowIndent: boolean;
+};
+
+/** デリミタ語の終端となる文字 (空白およびシェル演算子) */
+const DELIMITER_TERMINATORS = new Set([' ', '\t', ';', '&', '|', '<', '>', '(', ')']);
+
+/**
+ * 1 行から ヒアドキュメント開始演算子 (`<<WORD` / `<<-WORD` / `<<'WORD'`) を検出し、
+ * 宣言順に終端デリミタを返す。
+ *
+ * クォート状態を追跡し、クォート内の `<<` は演算子として扱わない
+ * (例: `echo "a << b" > out.txt` の `<<` はヒアドキュメントではない)。
+ * `$( ... )` コマンド置換の内側ではクォート文脈がリセットされるため、
+ * `git commit -m "$(cat <<'EOF'` のような入れ子も検出できる。
+ * ヒアストリング `<<<` は本文を持たないため対象外。
+ */
+function findHeredocDelimiters(line: string): HeredocDelimiter[] {
+  const found: HeredocDelimiter[] = [];
+  const substitutionStack: ('none' | 'single' | 'double')[] = [];
+  let quote: 'none' | 'single' | 'double' = 'none';
+  let i = 0;
+
+  while (i < line.length) {
+    const ch = line[i];
+
+    if (quote === 'single') {
+      if (ch === "'") quote = 'none';
+      i += 1;
+      continue;
+    }
+
+    if (ch === '\\') {
+      i += 2;
+      continue;
+    }
+
+    if (ch === '$' && line[i + 1] === '(') {
+      substitutionStack.push(quote);
+      quote = 'none';
+      i += 2;
+      continue;
+    }
+
+    if (quote === 'double') {
+      if (ch === '"') quote = 'none';
+      i += 1;
+      continue;
+    }
+
+    if (ch === "'") {
+      quote = 'single';
+      i += 1;
+      continue;
+    }
+
+    if (ch === '"') {
+      quote = 'double';
+      i += 1;
+      continue;
+    }
+
+    if (ch === ')' && substitutionStack.length > 0) {
+      quote = substitutionStack.pop() ?? 'none';
+      i += 1;
+      continue;
+    }
+
+    if (ch === '<' && line[i + 1] === '<') {
+      if (line[i + 2] === '<') {
+        // ヒアストリング `<<<` は本文行を持たない
+        i += 3;
+        continue;
+      }
+      i += 2;
+      let allowIndent = false;
+      if (line[i] === '-') {
+        allowIndent = true;
+        i += 1;
+      }
+      while (i < line.length && (line[i] === ' ' || line[i] === '\t')) i += 1;
+      const word = readHeredocDelimiterWord(line, i);
+      i = word.nextIndex;
+      if (word.value.length > 0) {
+        found.push({ word: word.value, allowIndent });
+      }
+      continue;
+    }
+
+    i += 1;
+  }
+
+  return found;
+}
+
+/** `<<` 直後のデリミタ語を読む。クォート/バックスラッシュを解除した値を返す。 */
+function readHeredocDelimiterWord(line: string, start: number): { value: string; nextIndex: number } {
+  let value = '';
+  let i = start;
+
+  while (i < line.length) {
+    const ch = line[i];
+
+    if (ch === "'") {
+      i += 1;
+      while (i < line.length && line[i] !== "'") {
+        value += line[i];
+        i += 1;
+      }
+      i += 1;
+      continue;
+    }
+
+    if (ch === '"') {
+      i += 1;
+      while (i < line.length && line[i] !== '"') {
+        if (line[i] === '\\' && i + 1 < line.length) {
+          value += line[i + 1];
+          i += 2;
+          continue;
+        }
+        value += line[i];
+        i += 1;
+      }
+      i += 1;
+      continue;
+    }
+
+    if (ch === '\\' && i + 1 < line.length) {
+      value += line[i + 1];
+      i += 2;
+      continue;
+    }
+
+    if (DELIMITER_TERMINATORS.has(ch)) break;
+
+    value += ch;
+    i += 1;
+  }
+
+  return { value, nextIndex: i };
+}
+
+/** 終端行判定 (`<<-` は先頭タブを無視し、行末の空白・CR は許容する) */
+function isHeredocTerminator(line: string, delimiter: HeredocDelimiter): boolean {
+  const candidate = delimiter.allowIndent ? line.replace(/^\t+/, '') : line;
+  return candidate.trimEnd() === delimiter.word;
+}
+
+/**
+ * ヒアドキュメント本文行を除去する。
+ *
+ * 本文はシェル構文ではなくデータであり、`Co-Authored-By: Claude <noreply@example.com>`
+ * のような `<...>` をリダイレクトと誤解釈すると無関係なコマンドが誤ブロックされる (WI-362)。
+ * 除去対象は**本文行と終端行のみ**で、開始演算子のある行はそのまま残すため
+ * `cat <<EOF > path` の `> path` は従来どおり検出される (fail-closed 維持)。
+ */
+function stripHeredocBodies(command: string): string {
+  if (!command.includes('<<')) return command;
+
+  const lines = command.split('\n');
+  const kept: string[] = [];
+  const pending: HeredocDelimiter[] = [];
+
+  for (const line of lines) {
+    if (pending.length > 0) {
+      // 本文行 / 終端行はいずれも構文解析対象から外す
+      if (isHeredocTerminator(line, pending[0])) {
+        pending.shift();
+      }
+      continue;
+    }
+    kept.push(line);
+    for (const delimiter of findHeredocDelimiters(line)) {
+      pending.push(delimiter);
+    }
+  }
+
+  return kept.join('\n');
 }
 
 const OPERATOR_SEPARATORS = new Set(['&&', '||', ';', '|']);
@@ -311,7 +497,9 @@ function collectPositionals(tokens: Token[]): Token[] {
 
 /** コマンド文字列を token 化 → 演算子分割 → 各コマンドから書き込み先を抽出する内部関数。 */
 function extractFromCommandString(command: string): string[] {
-  const tokens = tokenize(command);
+  // ヒアドキュメント本文はデータなのでシェル構文解析の対象外にする (WI-362)。
+  // apply_patch 抽出は元の command 文字列を直接走査するため影響を受けない。
+  const tokens = tokenize(stripHeredocBodies(command));
   const groups = splitByOperators(tokens);
   const collected: string[] = [];
   for (const group of groups) {
