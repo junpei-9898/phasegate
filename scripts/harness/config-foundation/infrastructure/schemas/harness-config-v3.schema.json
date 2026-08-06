@@ -13,6 +13,18 @@
     "decisionSignal": {
       "type": "string",
       "enum": ["business-rule-branch", "validation-rule", "error-construction", "state-transition", "policy-selection"]
+    },
+    "changeCategory": {
+      "type": "string",
+      "enum": ["bugfix", "docs", "test", "config", "feature", "domain", "api"]
+    },
+    "categoryOverrideGlobs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
     }
   },
   "properties": {
@@ -202,6 +214,34 @@
             },
             "apiContractChange": {
               "type": "boolean"
+            }
+          }
+        },
+        "categoryOverrides": {
+          "description": "プロジェクト固有パスを任意の ChangeCategory へ割り当てる glob ルール。組み込み分類より先に評価されるが、組み込みが domain / api のファイルは降格できない。",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bugfix": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "docs": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "test": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "config": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "feature": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "domain": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "api": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
             }
           }
         }

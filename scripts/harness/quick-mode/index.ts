@@ -1,7 +1,13 @@
 // @unit quick-mode
 // @layer application
 
-export { ChangeCategory, UnknownChangeCategoryError } from './domain/value-objects/change-category.js';
+export {
+  CHANGE_CATEGORY_VALUES,
+  ChangeCategory,
+  isChangeCategoryValue,
+  UnknownChangeCategoryError,
+} from './domain/value-objects/change-category.js';
+export { CategoryOverrideRules } from './domain/value-objects/category-override-rules.js';
 export { ChangedFile } from './domain/value-objects/changed-file.js';
 export { ChangeClassification } from './domain/value-objects/change-classification.js';
 export { QuickModeConfig, QuickModeConfigError } from './domain/value-objects/quick-mode-config.js';

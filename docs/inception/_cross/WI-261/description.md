@@ -2,7 +2,7 @@
 id: WI-261
 type: fix
 severity: medium
-status: drafted
+status: implemented
 affects: [quick-mode]
 ---
 

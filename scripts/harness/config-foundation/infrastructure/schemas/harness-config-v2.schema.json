@@ -5,6 +5,20 @@
   "required": [
     "project"
   ],
+  "$defs": {
+    "changeCategory": {
+      "type": "string",
+      "enum": ["bugfix", "docs", "test", "config", "feature", "domain", "api"]
+    },
+    "categoryOverrideGlobs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
   "properties": {
     "project": {
       "type": "object",
@@ -192,6 +206,34 @@
             },
             "apiContractChange": {
               "type": "boolean"
+            }
+          }
+        },
+        "categoryOverrides": {
+          "description": "プロジェクト固有パスを任意の ChangeCategory へ割り当てる glob ルール。",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bugfix": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "docs": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "test": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "config": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "feature": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "domain": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
+            },
+            "api": {
+              "$ref": "#/$defs/categoryOverrideGlobs"
             }
           }
         }

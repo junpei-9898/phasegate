@@ -4,27 +4,18 @@
  * @work-item-id WI-204
  * @work-item-id WI-349
  * @work-item-id WI-352
+ * @work-item-id WI-372
  *
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */
 
+import { CategoryOverrideRules } from "../value-objects/category-override-rules.js";
 import { ChangeCategory } from "../value-objects/change-category.js";
 import { ChangeClassification } from "../value-objects/change-classification.js";
 import type { ChangedFile } from "../value-objects/changed-file.js";
 import type { QuickModeConfig } from "../value-objects/quick-mode-config.js";
 import { QuickModeEligibility } from "../value-objects/quick-mode-eligibility.js";
 import { isCommentOnlyDiff } from "./comment-only-diff-detector.js";
-
-// リスク順優先度（api > domain > feature > bugfix > test > config > docs）
-const RISK_PRIORITY: Record<string, number> = {
-  api: 6,
-  domain: 5,
-  feature: 4,
-  bugfix: 3,
-  test: 2,
-  config: 1,
-  docs: 0,
-};
 
 // config: リポジトリ直下の bootstrap 設定ファイル（列挙型 allowlist）。
 // これらは unit を持たず、CREATE だと feature に落ちて allowedCategories に
@@ -57,7 +48,7 @@ function isRootBootstrapConfigFile(filePath: string): boolean {
   return filePath.startsWith(HUSKY_DIRECTORY_PREFIX) && filePath.slice(HUSKY_DIRECTORY_PREFIX.length).length > 0;
 }
 
-function categorizeFile(file: ChangedFile): ChangeCategory {
+function categorizeFileByBuiltInRules(file: ChangedFile): ChangeCategory {
   const { filePath, changeKind } = file;
 
   // Config files must stay config even when Edit payload snippets look like
@@ -130,6 +121,43 @@ function categorizeFile(file: ChangedFile): ChangeCategory {
   return ChangeCategory.fromString("bugfix");
 }
 
+// 組み込み判定が構造的に高リスク（domain / api）のカテゴリは override で降格できない。
+// @work-item-id WI-372
+const NON_DOWNGRADABLE_BUILT_IN_CATEGORIES: ReadonlySet<string> = new Set(["domain", "api"]);
+
+/**
+ * WI-372: `quickMode.categoryOverrides` を反映したカテゴリ判定。
+ *
+ * override は「このパスはこの種類の変更である」という利用者の明示宣言なので、
+ * 組み込みルールより **先** に評価する（DD-1）。組み込みの後段に置くと
+ * `notes/x.config.json` のような偶発的な組み込みマッチに常に負け、
+ * 「設定したのに効かない」不可解な挙動になるため。
+ *
+ * ただし組み込み判定が `domain` / `api` のファイルは override で降格できない（DD-2）。
+ * `judge()` の NEW_DOMAIN は CREATE のみ、API_CONTRACT は port/adapter のみを見るため、
+ * ガードが無いと domain ファイルの MODIFY が `docs` として素通りしてしまう。
+ * 降格は禁じるが昇格（domain → api 等）は許す。
+ *
+ * override 未設定時は組み込み分類と完全に一致する（後方互換）。
+ */
+function categorizeFile(file: ChangedFile, overrides: CategoryOverrideRules): ChangeCategory {
+  const builtIn = categorizeFileByBuiltInRules(file);
+  if (overrides.isEmpty()) {
+    return builtIn;
+  }
+
+  const override = overrides.resolve(file.filePath);
+  if (override === null) {
+    return builtIn;
+  }
+
+  if (NON_DOWNGRADABLE_BUILT_IN_CATEGORIES.has(builtIn.toString())) {
+    return override.riskPriority() > builtIn.riskPriority() ? override : builtIn;
+  }
+
+  return override;
+}
+
 /**
  * WI-349: 遮断理由に判定根拠（分類カテゴリと変更種別）を含める。
  *
@@ -142,17 +170,18 @@ function describeChangedFile(file: ChangedFile, category: string): string {
 }
 
 export class QuickModeJudgmentEngine {
-  classify(changedFiles: readonly ChangedFile[], _config?: QuickModeConfig): ChangeClassification {
+  classify(changedFiles: readonly ChangedFile[], config?: QuickModeConfig): ChangeClassification {
     if (changedFiles.length === 0) {
       return new ChangeClassification(null, new Map(), 0);
     }
 
+    const overrides = config?.categoryOverrides ?? CategoryOverrideRules.empty();
     const categorizedMap = new Map<string, ChangedFile[]>();
     let dominantCategory: ChangeCategory | null = null;
     let dominantPriority = -1;
 
     for (const file of changedFiles) {
-      const category = categorizeFile(file);
+      const category = categorizeFile(file, overrides);
       const key = category.toString();
 
       if (!categorizedMap.has(key)) {
@@ -160,7 +189,7 @@ export class QuickModeJudgmentEngine {
       }
       categorizedMap.get(key)!.push(file);
 
-      const priority = RISK_PRIORITY[key] ?? 0;
+      const priority = category.riskPriority();
       if (priority > dominantPriority) {
         dominantPriority = priority;
         dominantCategory = category;
@@ -206,7 +235,7 @@ export class QuickModeJudgmentEngine {
           "NEW_DOMAIN",
           newDomainFiles,
           `domain/配下に新規ファイルが追加されています: ${newDomainFiles
-            .map((f) => describeChangedFile(f, categorizeFile(f).toString()))
+            .map((f) => describeChangedFile(f, categorizeFile(f, config.categoryOverrides).toString()))
             .join(", ")}`,
         );
       }
@@ -223,7 +252,7 @@ export class QuickModeJudgmentEngine {
           "API_CONTRACT",
           apiContractFiles,
           `Port/Adapterインターフェースファイルの変更が含まれています: ${apiContractFiles
-            .map((f) => describeChangedFile(f, categorizeFile(f).toString()))
+            .map((f) => describeChangedFile(f, categorizeFile(f, config.categoryOverrides).toString()))
             .join(", ")}`,
         );
       }

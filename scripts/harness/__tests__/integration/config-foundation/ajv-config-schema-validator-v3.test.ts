@@ -456,5 +456,66 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         ]);
       });
     });
+
+    // @work-item-id WI-372
+    context("quickMode.categoryOverrides が既知カテゴリのみを持つ場合", () => {
+      // IT-SCH-002
+      it("v2 / v3 いずれの schema でも errors 0 件", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const base = baseV2Document();
+        const quickMode = { ...base.quickMode, categoryOverrides: { docs: ["results/**", "notes/**"] } };
+
+        // Act
+        const actualV2 = sut.validate({ ...base, quickMode });
+        const actualV3 = sut.validate({ ...base, quickMode, architecture: { preset: "clean" } });
+
+        // Assert
+        expect(actualV2).toEqual([]);
+        expect(actualV3).toEqual([]);
+      });
+    });
+
+    context("quickMode.categoryOverrides に未知のカテゴリキーが含まれる場合", () => {
+      // IT-SCH-003
+      it("categoryOverrides の未知カテゴリキーで schema validate error が返る", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const base = baseV2Document();
+        const document = {
+          ...base,
+          architecture: { preset: "clean" },
+          quickMode: { ...base.quickMode, categoryOverrides: { chore: ["results/**"] } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThan(0);
+        // ConfigSchemaValidatorPort の宣言型は HarnessError なので、adapter が付与する
+        // instancePath（HarnessErrorWithPath）は明示 cast で受ける。
+        expect((actual[0] as { path?: string } | undefined)?.path).toContain("/quickMode/categoryOverrides");
+      });
+    });
+
+    context("quickMode.categoryOverrides に空文字列パターンが含まれる場合", () => {
+      it("categoryOverrides の空文字列パターンで schema validate error が返る", () => {
+        // Arrange
+        const sut = new AjvConfigSchemaValidator();
+        const base = baseV2Document();
+        const document = {
+          ...base,
+          architecture: { preset: "clean" },
+          quickMode: { ...base.quickMode, categoryOverrides: { docs: [""] } },
+        };
+
+        // Act
+        const actual = sut.validate(document);
+
+        // Assert
+        expect(actual.length).toBeGreaterThan(0);
+      });
+    });
   });
 });

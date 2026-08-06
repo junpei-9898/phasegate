@@ -5,12 +5,13 @@
  * Quick Mode設定を表す値オブジェクト
  */
 
-export class QuickModeConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'QuickModeConfigError';
-  }
-}
+import { QuickModeConfigError } from '../errors/quick-mode-config-error.js';
+import {
+  CategoryOverrideRules,
+  type CategoryOverrideRulesInput,
+} from './category-override-rules.js';
+
+export { QuickModeConfigError };
 
 export type FullModeRequiredRuleId = 'mixedCategories' | 'newDomainFile' | 'apiContractChange';
 
@@ -32,17 +33,21 @@ export class QuickModeConfig {
   readonly maintainedLayers: readonly string[];
   readonly relaxedGates: readonly string[];
   readonly fullModeRequiredWhen: FullModeRequiredRules;
+  /** @work-item-id WI-372 プロジェクト固有パスのカテゴリ割当ルール（未設定時は空） */
+  readonly categoryOverrides: CategoryOverrideRules;
 
   private constructor(
     allowedCategories: readonly string[],
     maintainedLayers: readonly string[],
     relaxedGates: readonly string[],
-    fullModeRequiredWhen: FullModeRequiredRules
+    fullModeRequiredWhen: FullModeRequiredRules,
+    categoryOverrides: CategoryOverrideRules
   ) {
     this.allowedCategories = allowedCategories;
     this.maintainedLayers = maintainedLayers;
     this.relaxedGates = relaxedGates;
     this.fullModeRequiredWhen = fullModeRequiredWhen;
+    this.categoryOverrides = categoryOverrides;
     Object.freeze(this);
   }
 
@@ -51,8 +56,9 @@ export class QuickModeConfig {
     maintainedLayers: string[];
     relaxedGates: string[];
     fullModeRequiredWhen?: Partial<FullModeRequiredRules>;
+    categoryOverrides?: CategoryOverrideRulesInput;
   }): QuickModeConfig {
-    const { allowedCategories, maintainedLayers, relaxedGates, fullModeRequiredWhen } = raw;
+    const { allowedCategories, maintainedLayers, relaxedGates, fullModeRequiredWhen, categoryOverrides } = raw;
 
     if (allowedCategories.length === 0) {
       throw new QuickModeConfigError('allowedCategories must not be empty');
@@ -68,7 +74,8 @@ export class QuickModeConfig {
       Object.freeze([...allowedCategories]),
       Object.freeze([...maintainedLayers]),
       Object.freeze([...relaxedGates]),
-      mergedRules
+      mergedRules,
+      CategoryOverrideRules.create(categoryOverrides)
     );
   }
 
@@ -100,7 +107,8 @@ export class QuickModeConfig {
       JSON.stringify(this.relaxedGates) === JSON.stringify(other.relaxedGates) &&
       this.fullModeRequiredWhen.mixedCategories === other.fullModeRequiredWhen.mixedCategories &&
       this.fullModeRequiredWhen.newDomainFile === other.fullModeRequiredWhen.newDomainFile &&
-      this.fullModeRequiredWhen.apiContractChange === other.fullModeRequiredWhen.apiContractChange
+      this.fullModeRequiredWhen.apiContractChange === other.fullModeRequiredWhen.apiContractChange &&
+      this.categoryOverrides.equals(other.categoryOverrides)
     );
   }
 }

@@ -2,7 +2,7 @@
 id: WI-352
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [quick-mode]
 source: GitHub issue #27 Defect A の実質的残り（greenfield な初期セットアップが恒久的にブロックされる）
 ---

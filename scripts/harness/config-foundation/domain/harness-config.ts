@@ -106,6 +106,11 @@ export interface HarnessConfigResolvedDocument {
       newDomainFile?: boolean;
       apiContractChange?: boolean;
     };
+    // WI-372: プロジェクト固有パスのカテゴリ割当（quick-mode unit が消費する）。
+    // preset には既定を持たせず、source config 側でのみ指定する任意項目。
+    // preset 解決の deepMerge は preset 側に無いキーを source からそのまま引き継ぐため、
+    // 明示宣言は WI-377 の preset 解決経路を通しても保持される。
+    categoryOverrides?: Record<string, string[]>;
   };
   phaseDependencies: {
     preset: PhaseDependenciesPresetId;

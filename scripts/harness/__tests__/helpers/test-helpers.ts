@@ -124,6 +124,7 @@ export const createQuickModeConfig = (overrides: Partial<{
     newDomainFile: boolean;
     apiContractChange: boolean;
   };
+  categoryOverrides: Record<string, string[]>;
 }> = {}): QuickModeConfig =>
   QuickModeConfig.create({
     allowedCategories: ['bugfix', 'docs', 'test', 'config'],

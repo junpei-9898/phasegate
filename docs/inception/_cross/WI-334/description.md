@@ -2,7 +2,7 @@
 id: WI-334
 type: fix
 severity: major
-status: drafted
+status: implemented
 affects: [quick-mode]
 source: dogfood WI-329 (gate classification gap)
 ---

@@ -706,4 +706,199 @@ target("QuickModeJudgmentEngine", () => {
       });
     });
   });
+
+  // @work-item-id WI-372
+  target("categoryOverrides", () => {
+    const overrideConfig = (categoryOverrides: Record<string, string[]>) =>
+      createQuickModeConfig({ categoryOverrides });
+
+    describe("categoryOverrides 未設定時の分類は現行と完全に一致する（回帰固定）", () => {
+      // UT-JE-OV-001
+      it.each([
+        ["phasegate.config.json", "MODIFY" as const, "config"],
+        [".github/workflows/ci.yml", "CREATE" as const, "config"],
+        ["tsconfig.json", "CREATE" as const, "config"],
+        ["scripts/harness/quick-mode/domain/ports/changed-files-port.ts", "MODIFY" as const, "api"],
+        ["scripts/harness/__tests__/unit/quick-mode/x.test.ts", "MODIFY" as const, "test"],
+        ["scripts/harness/quick-mode/domain/services/engine.ts", "MODIFY" as const, "domain"],
+        ["docs/guide/quick-vs-full-mode.md", "MODIFY" as const, "docs"],
+        ["skills/quick-implementor/SKILL.md", "MODIFY" as const, "docs"],
+        ["results/2026-08-06/summary.md", "CREATE" as const, "feature"],
+        ["results/2026-08-06/summary.md", "MODIFY" as const, "bugfix"],
+      ])("'%s'(%s) が '%s' に分類されること", (filePath, changeKind, expected) => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath, changeKind })];
+        const config = createQuickModeConfig();
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory(expected)).toBe(true);
+      });
+
+      it("config を渡さない場合も同じ分類結果になること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "results/a.md", changeKind: "CREATE" })];
+        // Act
+        const actual = engine.classify(files);
+        // Assert
+        expect(actual.hasCategory("feature")).toBe(true);
+      });
+    });
+
+    describe("override は組み込みルールより先に評価される（DD-1）", () => {
+      // UT-JE-OV-002
+      it("'results/**' を docs に指定した場合に CREATE でも docs に分類されること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "results/2026-08-06/summary.md", changeKind: "CREATE" })];
+        const config = overrideConfig({ docs: ["results/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("feature")).toBe(false);
+      });
+
+      // UT-JE-OV-003
+      it("組み込みで config に一致するパスでも override の docs が優先されること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "notes/sample.config.json", changeKind: "MODIFY" })];
+        const config = overrideConfig({ docs: ["notes/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("config")).toBe(false);
+      });
+    });
+
+    describe("組み込みで domain / api と判定されるファイルは override で降格できない（DD-2）", () => {
+      // UT-JE-OV-004
+      it("domain 配下のファイルを docs に override しても domain のままであること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "scripts/harness/quick-mode/domain/services/engine.ts",
+            changeKind: "MODIFY",
+          }),
+        ];
+        const config = overrideConfig({ docs: ["scripts/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("domain")).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(false);
+      });
+
+      // UT-JE-OV-005
+      it("port ファイルを docs に override しても api のままであること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "scripts/harness/quick-mode/domain/ports/changed-files-port.ts",
+            changeKind: "MODIFY",
+          }),
+        ];
+        const config = overrideConfig({ docs: ["scripts/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("api")).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(false);
+      });
+
+      // UT-JE-OV-006
+      it("domain 配下のファイルを api に override する昇格は許可されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "scripts/harness/quick-mode/domain/services/engine.ts",
+            changeKind: "MODIFY",
+          }),
+        ];
+        const config = overrideConfig({ api: ["scripts/**/domain/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("api")).toBe(true);
+      });
+    });
+
+    describe("domain / feature を override のキーに指定できる（DD-3）", () => {
+      // UT-JE-OV-007
+      it("'vendor/**' を domain に指定した場合に domain へ昇格すること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "vendor/x.md", changeKind: "MODIFY" })];
+        const config = overrideConfig({ domain: ["vendor/**"] });
+        // Act
+        const actual = engine.classify(files, config);
+        // Assert
+        expect(actual.hasCategory("domain")).toBe(true);
+      });
+    });
+
+    describe("override は 3 拒否ルールを無効化しない（DD-6）", () => {
+      // UT-JE-OV-008
+      it("domain 配下の CREATE を docs に override しても NEW_DOMAIN で拒否されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "scripts/harness/quick-mode/domain/value-objects/new-vo.ts",
+            changeKind: "CREATE",
+          }),
+        ];
+        const config = createQuickModeConfig({
+          categoryOverrides: { docs: ["scripts/**"] },
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: true, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.rejectionRule).toBe("NEW_DOMAIN");
+      });
+
+      // UT-JE-OV-009
+      it("adapter ファイルを docs に override しても API_CONTRACT で拒否されること", () => {
+        // Arrange
+        const files = [
+          ChangedFile.create({
+            filePath: "scripts/harness/quick-mode/infrastructure/adapters/some-adapter.ts",
+            changeKind: "MODIFY",
+          }),
+        ];
+        const config = createQuickModeConfig({
+          categoryOverrides: { docs: ["scripts/**"] },
+          fullModeRequiredWhen: { mixedCategories: false, newDomainFile: false, apiContractChange: true },
+        });
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.rejectionRule).toBe("API_CONTRACT");
+      });
+    });
+
+    describe("override 適用後の judge 判定", () => {
+      // UT-JE-OV-010
+      it("'results/**' を docs に override した CREATE が Quick Mode 適用可能になること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "results/2026-08-06/summary.md", changeKind: "CREATE" })];
+        const config = overrideConfig({ docs: ["results/**"] });
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.isEligible()).toBe(true);
+      });
+
+      // UT-JE-OV-011
+      it("MIXED_CHANGES の遮断理由に override 後のカテゴリが表示されること", () => {
+        // Arrange
+        const files = [ChangedFile.create({ filePath: "vendor/x.md", changeKind: "MODIFY" })];
+        const config = overrideConfig({ domain: ["vendor/**"] });
+        // Act
+        const actual = engine.judge(files, config);
+        // Assert
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.reason).toContain("vendor/x.md (category=domain, changeKind=MODIFY)");
+      });
+    });
+  });
 });

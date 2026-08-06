@@ -2,6 +2,7 @@
  * @layer infrastructure
  * @unit quick-mode
  * @work-item-id WI-140
+ * @work-item-id WI-372
  * @work-item-id WI-377
  *
  * phasegate.config.json から QuickModeConfig を取得する Adapter
@@ -11,28 +12,28 @@
  * 下の DEFAULT_QUICK_MODE_CONFIG は preset 解決不能時の fail-open 用フォールバックである。
  */
 
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 import type {
   HarnessConfigResolvedDocument,
   HarnessConfigSourceDocument,
   PresetId,
-} from '../../../config-foundation/domain/harness-config.js';
-import { PresetResolutionService } from '../../../config-foundation/domain/services/preset-resolution-service.js';
-import { PresetDefinitionStore } from '../../../config-foundation/infrastructure/preset-definition-store.js';
-import { QuickModeConfig } from '../../domain/value-objects/quick-mode-config.js';
+} from "../../../config-foundation/domain/harness-config.js";
+import { PresetResolutionService } from "../../../config-foundation/domain/services/preset-resolution-service.js";
+import { PresetDefinitionStore } from "../../../config-foundation/infrastructure/preset-definition-store.js";
+import { QuickModeConfig } from "../../domain/value-objects/quick-mode-config.js";
 
 export class HarnessConfigNotFoundError extends Error {
   constructor(filePath: string) {
     super(`phasegate.config.json not found: ${filePath}`);
-    this.name = 'HarnessConfigNotFoundError';
+    this.name = "HarnessConfigNotFoundError";
   }
 }
 
 export class HarnessConfigParseError extends Error {
   constructor(message: string) {
     super(`Failed to parse phasegate.config.json: ${message}`);
-    this.name = 'HarnessConfigParseError';
+    this.name = "HarnessConfigParseError";
   }
 }
 
@@ -42,17 +43,17 @@ export class HarnessConfigParseError extends Error {
  * preset 解決の導入によって新たな遮断経路を作らない。
  */
 const DEFAULT_QUICK_MODE_CONFIG = {
-  allowedCategories: ['bugfix', 'docs', 'test', 'config'],
-  maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001'],
-  relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4'],
+  allowedCategories: ["bugfix", "docs", "test", "config"],
+  maintainedLayers: ["L1", "L2-002", "L2-003", "L2-014", "L3-001"],
+  relaxedGates: ["L2-001", "L3-002", "L3-003", "L3-004", "L4"],
 };
 
-const PRESET_IDS: readonly PresetId[] = ['minimal', 'standard', 'strict'];
+const PRESET_IDS: readonly PresetId[] = ["minimal", "standard", "strict"];
 
-type RawQuickMode = HarnessConfigResolvedDocument['quickMode'];
+type RawQuickMode = HarnessConfigResolvedDocument["quickMode"];
 
 function isPresetId(value: unknown): value is PresetId {
-  return typeof value === 'string' && PRESET_IDS.includes(value as PresetId);
+  return typeof value === "string" && PRESET_IDS.includes(value as PresetId);
 }
 
 export class HarnessConfigQuickModeConfigAdapter {
@@ -61,7 +62,7 @@ export class HarnessConfigQuickModeConfigAdapter {
   private readonly presetResolutionService: PresetResolutionService;
 
   constructor(configPath?: string) {
-    this.configPath = configPath ?? path.resolve(process.cwd(), 'phasegate.config.json');
+    this.configPath = configPath ?? path.resolve(process.cwd(), "phasegate.config.json");
     this.presetDefinitionStore = new PresetDefinitionStore();
     this.presetResolutionService = new PresetResolutionService();
   }
@@ -75,6 +76,13 @@ export class HarnessConfigQuickModeConfigAdapter {
       maintainedLayers: quickMode?.maintainedLayers ?? DEFAULT_QUICK_MODE_CONFIG.maintainedLayers,
       relaxedGates: quickMode?.relaxedGates ?? DEFAULT_QUICK_MODE_CONFIG.relaxedGates,
       fullModeRequiredWhen: quickMode?.fullModeRequiredWhen,
+      // WI-372 × WI-377 合流点: categoryOverrides は preset 解決経路と raw 縮退経路の
+      // 双方が返す `quickMode` から一様に読む。preset 定義は当該キーを宣言しないため
+      // deepMerge は source の宣言をそのまま引き継ぎ（base 側 undefined → override を clone）、
+      // preset 解決が例外で縮退した場合も raw の宣言がそのまま渡る。未設定時は空ルール
+      // = 現行分類のまま。enum 違反は QuickModeConfig.create が QuickModeConfigError を
+      // 投げ、この try/catch の外側なので fail-closed 経路へ表面化する。
+      categoryOverrides: quickMode?.categoryOverrides,
     });
   }
 
@@ -82,10 +90,10 @@ export class HarnessConfigQuickModeConfigAdapter {
     let content: string;
 
     try {
-      content = await fs.readFile(this.configPath, 'utf8') as string;
+      content = (await fs.readFile(this.configPath, "utf8")) as string;
     } catch (err) {
       const error = err as NodeJS.ErrnoException;
-      if (error.code === 'ENOENT') {
+      if (error.code === "ENOENT") {
         throw new HarnessConfigNotFoundError(this.configPath);
       }
       throw err;
@@ -104,8 +112,8 @@ export class HarnessConfigQuickModeConfigAdapter {
    * 未宣言キーは呼び出し側で DEFAULT_QUICK_MODE_CONFIG に補完される。
    */
   private resolveQuickMode(parsed: Record<string, unknown>): Partial<RawQuickMode> | undefined {
-    const rawQuickMode = parsed['quickMode'] as Partial<RawQuickMode> | undefined;
-    const preset = (parsed['project'] as { preset?: unknown } | undefined)?.preset;
+    const rawQuickMode = parsed["quickMode"] as Partial<RawQuickMode> | undefined;
+    const preset = (parsed["project"] as { preset?: unknown } | undefined)?.preset;
 
     if (!isPresetId(preset)) {
       return rawQuickMode;
