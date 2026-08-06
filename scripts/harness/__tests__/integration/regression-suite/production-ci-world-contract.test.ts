@@ -2,6 +2,7 @@
 // @layer integration
 // @work-item-id WI-307
 // @work-item-id WI-312
+// @work-item-id WI-383
 // @story H17-19
 // @ac H17-19-1
 // @ac H17-19-2
@@ -62,6 +63,21 @@ describe("production CI World trust chain", () => {
     expect(manifest).toContain("coverage/.blob/threads.json");
     expect(manifest).toContain("--merge-reports=coverage/.blob");
     expect(threadsConfig).toContain("clean: false");
+  });
+
+  it("blob出力する両poolのcoverage実行に失敗詳細を出すreporterを併用すること", () => {
+    // Arrange
+    const manifest = readFileSync(resolve(REPOSITORY_ROOT, "package.json"), "utf-8");
+
+    // Act
+    const blobRuns = manifest.match(/--reporter=blob[^&]*/g) ?? [];
+
+    // Assert
+    expect(blobRuns.map((run) => run.includes("--reporter=default"))).toEqual([true, true]);
+    expect(blobRuns.map((run) => run.match(/--outputFile\.blob=(\S+)/)?.[1])).toEqual([
+      "coverage/.blob/forks.json",
+      "coverage/.blob/threads.json",
+    ]);
   });
 
   it("package manifestがCI template・schemas・guideを配布対象に含めること", () => {

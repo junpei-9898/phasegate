@@ -1,6 +1,6 @@
 {
   "name": "phasegate",
-  "version": "0.334.0",
+  "version": "0.335.0",
   "packageManager": "pnpm@10.30.1",
   "description": "Phasegate — AI-agnostic quality defense toolkit. Enforces structural integrity between design intent and code.",
   "license": "MIT",
@@ -60,7 +60,7 @@
     "harness:check-phase": "pnpm phasegate:check-phase",
     "harness:check-ready": "pnpm phasegate:check-ready",
     "test": "vitest run --config scripts/harness/__tests__/vitest.config.forks.ts && vitest run --config scripts/harness/__tests__/vitest.config.ts",
-    "coverage": "node -e \"require('node:fs').rmSync('coverage',{recursive:true,force:true})\" && vitest run --config scripts/harness/__tests__/vitest.config.coverage.forks.ts --reporter=blob --outputFile=coverage/.blob/forks.json && vitest run --config scripts/harness/__tests__/vitest.config.coverage.ts --reporter=blob --outputFile=coverage/.blob/threads.json && vitest run --config scripts/harness/__tests__/vitest.config.coverage.ts --merge-reports=coverage/.blob",
+    "coverage": "node -e \"require('node:fs').rmSync('coverage',{recursive:true,force:true})\" && vitest run --config scripts/harness/__tests__/vitest.config.coverage.forks.ts --reporter=blob --reporter=default --outputFile.blob=coverage/.blob/forks.json && vitest run --config scripts/harness/__tests__/vitest.config.coverage.ts --reporter=blob --reporter=default --outputFile.blob=coverage/.blob/threads.json && vitest run --config scripts/harness/__tests__/vitest.config.coverage.ts --merge-reports=coverage/.blob",
     "ci": "npm run coverage && npm run test"
   },
   "dependencies": {

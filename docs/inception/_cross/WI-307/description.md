@@ -2,7 +2,7 @@
 id: WI-307
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [ci-governance, regression-suite, harness-api, world-model, attestation]
 source: internal
 ---
