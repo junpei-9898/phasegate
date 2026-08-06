@@ -2,7 +2,7 @@
 id: WI-345
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [quick-mode, agent-integration]
 source: bug sweep v0.292.0 (2026-07-21) 既知残課題② / WI-334 の穴埋め
 ---

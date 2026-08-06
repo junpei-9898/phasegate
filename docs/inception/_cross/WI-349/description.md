@@ -2,7 +2,7 @@
 id: WI-349
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [quick-mode, agent-integration]
 source: GitHub issue #41 症状②（遮断理由から原因が読み取れない / session 有効なのに session begin を案内される）
 ---

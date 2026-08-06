@@ -3,6 +3,8 @@
 // @story H11-02
 // @work-item-id WI-201
 // @work-item-id WI-202 / WI-204
+// @work-item-id WI-354
+// @work-item-id WI-376
 
 import { describe, expect, it, vi } from "vitest";
 import { HandlePreToolUseUseCase } from "../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js";
@@ -123,44 +125,13 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     expect(actual.error?.message).not.toContain("/story-implementor");
   });
 
-  it("quick-implementor caller context は supported category block に quick-mode-relax guidance を返すこと", async () => {
-    const mockFullModeRequirementQueryPort = {
-      check: vi.fn().mockResolvedValue({
-        requiresFullMode: true,
-        rejectionRule: "MIXED_CHANGES" as const,
-        rejectionReason: "allowedCategories外のファイルが含まれています: docs/README.md",
-        dominantCategory: "docs",
-      }),
-    };
-    const useCase = new HandlePreToolUseUseCase({
-      configQueryPort: createDefaultMockConfigQueryPort(),
-      phaseGateQueryPort: createDefaultMockPhaseGateQueryPort(),
-      fullModeRequirementQueryPort: mockFullModeRequirementQueryPort,
-    });
-
-    const actual = await useCase.execute({
-      toolName: "Edit",
-      targetFilePaths: ["docs/README.md"],
-      callerSkill: "quick-implementor",
-    });
-
-    expect(actual).toMatchObject({
-      shouldBlock: true,
-      blockReason: "FULL_MODE_REQUIRED",
-      fullModeDominantCategory: "docs",
-    });
-    expect(actual.error?.message).toContain("Quick Mode の許可カテゴリを確認してください");
-    expect(actual.error?.message).toContain("config:plan --intent quick-mode-relax --dry-run --json");
-    expect(actual.error?.message).not.toContain("/story-implementor");
-  });
-
-  // WI-354
+  // WI-354 / WI-376（ADR-039: guidance の入力は dominantCategory のみ）
   it.each([
     ["bugfix"],
     ["docs"],
     ["test"],
     ["config"],
-  ])("callerSkill 未指定でも quick スコープの category '%s' のブロックは quick-mode-relax guidance を返すこと", async (dominantCategory) => {
+  ])("quick スコープの category '%s' のブロックは quick-mode-relax guidance を返すこと", async (dominantCategory) => {
     // Arrange
     const mockFullModeRequirementQueryPort = {
       check: vi.fn().mockResolvedValue({
@@ -194,12 +165,12 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     expect(actual.error?.message).not.toContain("/story-implementor");
   });
 
-  // WI-354
+  // WI-354 / WI-376（ADR-039: guidance の入力は dominantCategory のみ）
   it.each([
     ["feature"],
     ["domain"],
     ["api"],
-  ])("callerSkill 未指定で quick スコープ外の category '%s' のブロックは従来どおり story-implementor を案内すること", async (dominantCategory) => {
+  ])("quick スコープ外の category '%s' のブロックは従来どおり story-implementor を案内すること", async (dominantCategory) => {
     // Arrange
     const mockFullModeRequirementQueryPort = {
       check: vi.fn().mockResolvedValue({
@@ -231,8 +202,8 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     expect(actual.error?.message).not.toContain("Quick Mode の許可カテゴリを確認してください");
   });
 
-  // WI-354
-  it("dominantCategory 不明かつ callerSkill 未指定の場合は従来どおり story-implementor を案内すること", async () => {
+  // WI-354 / WI-376（ADR-039: カテゴリ未確定時に skill 名で分岐が変わる余地を無くす）
+  it("dominantCategory 不明の場合は常に story-implementor を案内すること", async () => {
     // Arrange
     const mockFullModeRequirementQueryPort = {
       check: vi.fn().mockResolvedValue({

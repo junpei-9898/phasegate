@@ -6,6 +6,7 @@
  * @work-item-id WI-208
  * @work-item-id WI-345
  * @work-item-id WI-347
+ * @work-item-id WI-376
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -25,10 +26,14 @@ import { createQuickModeCompositionRoot } from '../../quick-mode/composition-roo
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
+/**
+ * WI-376 (ADR-039): 呼び出し元 skill 名を受け取るフィールド（caller_skill）は持たない。
+ * Claude Code の PreToolUse payload に skill 情報は無く、エージェントの自己申告値は
+ * authorization / guidance の入力にしない。未知キーが来ても単に無視される。
+ */
 interface PreToolUseHookInput {
   cwd?: string;
   tool_name?: string;
-  caller_skill?: string;
   tool_input?: {
     path?: string;
     file_path?: string;
@@ -199,11 +204,9 @@ async function main(): Promise<void> {
       fullModeSessionQueryPort,
     });
 
-    const callerSkill = input.caller_skill ?? process.env.PHASEGATE_CALLER_SKILL;
     const output = await useCase.execute({
       toolName: effectiveToolName,
       targetFilePaths: projectTargetFilePaths,
-      callerSkill,
       targetChanges: projectTargetChanges,
     });
 

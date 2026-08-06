@@ -8,6 +8,7 @@
  * @work-item-id WI-214
  * @work-item-id WI-349
  * @work-item-id WI-354
+ * @work-item-id WI-376
  *
  * HandlePreToolUseUseCase
  * PreToolUse Hook処理のオーケストレーション
@@ -187,7 +188,6 @@ export class HandlePreToolUseUseCase {
               fullModeResult,
               guidance,
               unitIdForGuidance,
-              input.callerSkill,
               sessionResult,
             );
           }
@@ -284,7 +284,6 @@ export class HandlePreToolUseUseCase {
     },
     guidance: ErrorGuidance | null,
     unitId: string | undefined,
-    callerSkill?: string,
     sessionResult?: FullModeSessionQueryResult,
   ): HandlePreToolUseOutput {
     const fp = blockedFilePath ?? "不明なファイル";
@@ -311,7 +310,7 @@ export class HandlePreToolUseUseCase {
         nextAction: `${dryRunCommand} && ${applyCommand}`,
       };
     }
-    if (HandlePreToolUseUseCase.shouldGuideQuickModeRelax(result.dominantCategory, callerSkill)) {
+    if (HandlePreToolUseUseCase.shouldGuideQuickModeRelax(result.dominantCategory)) {
       const dryRunCommand = "phasegate config:plan --intent quick-mode-relax --dry-run --json";
       const applyCommand = "phasegate config:plan --intent quick-mode-relax --apply --json";
       const lines: string[] = [`Full mode 必須変更が検出されました: ${fp}`];
@@ -387,15 +386,18 @@ export class HandlePreToolUseUseCase {
    * 実運用で設定されず、この分岐は到達不能だった。カテゴリを一次条件にして
    * skill context なしでも実用的な復旧手順を出す。
    * feature / domain / api は従来どおり /story-implementor 誘導を維持する。
+   *
+   * WI-376 (ADR-039): 判定入力は hook が自ら観測できる state のみとする方針に従い、
+   * カテゴリ未確定時の callerSkill フォールバックを削除した。カテゴリが取れない場合は
+   * 一律 /story-implementor 誘導（従来のフォールバックも実運用では常にこの経路だった）。
    */
   private static readonly QUICK_MODE_SCOPE_CATEGORIES: readonly string[] = ["bugfix", "docs", "test", "config"];
 
-  private static shouldGuideQuickModeRelax(dominantCategory: string | undefined, callerSkill?: string): boolean {
-    if (dominantCategory !== undefined) {
-      return HandlePreToolUseUseCase.QUICK_MODE_SCOPE_CATEGORIES.includes(dominantCategory);
+  private static shouldGuideQuickModeRelax(dominantCategory: string | undefined): boolean {
+    if (dominantCategory === undefined) {
+      return false;
     }
-    // カテゴリ不明時は skill context だけが手掛かり
-    return callerSkill === "quick-implementor";
+    return HandlePreToolUseUseCase.QUICK_MODE_SCOPE_CATEGORIES.includes(dominantCategory);
   }
 
   /**

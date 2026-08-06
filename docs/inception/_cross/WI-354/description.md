@@ -2,7 +2,7 @@
 id: WI-354
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [agent-integration]
 source: GitHub issue #27 Defect B（quick スコープの遮断でも常に /story-implementor が案内される）
 ---

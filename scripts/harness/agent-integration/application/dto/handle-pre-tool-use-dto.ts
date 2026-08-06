@@ -3,10 +3,14 @@
  * @unit agent-integration
  */
 
+/**
+ * WI-376 (ADR-039): 呼び出し元 skill 名を受け取るフィールドは持たない。
+ * 判定・案内の入力は hook が自ら観測・検証できる state（対象パス、変更カテゴリ、
+ * session marker、設計文書の存在、解決済み config 等）に限る。
+ */
 export interface HandlePreToolUseInput {
   toolName: string;
   targetFilePaths: string[];
-  callerSkill?: string;
   targetChanges?: {
     filePath: string;
     beforeContent?: string | null;
