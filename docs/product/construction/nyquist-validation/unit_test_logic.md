@@ -21,10 +21,10 @@
 | `scripts/harness/__tests__/unit/nyquist-validation/test-reference.test.ts` | TestReference（VO） | 12 |
 | `scripts/harness/__tests__/unit/nyquist-validation/coverage-result.test.ts` | CoverageResult（VO） | 14 |
 | `scripts/harness/__tests__/unit/nyquist-validation/impact-analysis-result.test.ts` | ImpactAnalysisResult（VO） | 9 |
-| `scripts/harness/__tests__/unit/nyquist-validation/ac-coverage-gate-policy.test.ts` | AcCoverageGatePolicy（DS） | 10 |
+| `scripts/harness/__tests__/unit/nyquist-validation/ac-coverage-gate-policy.test.ts` | AcCoverageGatePolicy（DS） | 14 |
 | `scripts/harness/__tests__/unit/nyquist-validation/coverage-calculation-service.test.ts` | CoverageCalculationService（DS） | 9 |
 | `scripts/harness/__tests__/unit/nyquist-validation/impact-analysis-service.test.ts` | ImpactAnalysisService（DS） | 7 |
-| `scripts/harness/__tests__/unit/nyquist-validation/matrix-validation-service.test.ts` | MatrixValidationService（DS） | 8 |
+| `scripts/harness/__tests__/unit/nyquist-validation/matrix-validation-service.test.ts` | MatrixValidationService（DS） | 12 |
 
 ※横断境界値（UT-BND-*）は各ファイルに分散して記載（15件）
 
@@ -1792,3 +1792,53 @@ npx vitest run scripts/harness/__tests__/unit/nyquist-validation/matrix-validati
 ```bash
 npx vitest scripts/harness/__tests__/unit/nyquist-validation/
 ```
+
+## WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。以下は実測結果。
+
+### 検証済み（記述と実装が一致）
+
+- §1 の 10 パスはすべて実在。
+- §2 のファクトリ `createTestReference` / `createAcMapping` / `createStoryMapping` /
+  `createRequirementTestMatrix` / `createCoverageResult` は
+  `scripts/harness/__tests__/helpers/test-helpers.ts` に文書どおりのシグネチャ・既定値で存在。
+- §3.1 / 3.2 / 3.3 / 3.4 / 3.5 / 3.6 / 3.8 / 3.9 の全 `it()` タイトルが実テストと逐語一致。
+- 振る舞いの実装確認: `RequirementTestMatrix` の INV-1 と `getAllStoryMappings` の localeCompare ソート、
+  `TestReference` の trim と `['unit','it','scenario']` enum、`CoverageResult.create` の範囲・件数ガードと
+  `meetsThreshold = rate >= threshold`、`toPercentage()` の切り捨て（0.9999 → 99.99）、
+  `CoverageCalculationService` の `totalAcCount===0 → rate 1.0` と小数第 4 位丸め（1/3 → 0.3333）、
+  `ImpactAnalysisResult` の重複排除キー `filePath::testType`、`directMappingOnly` が固定 `true`。
+- §4 モック方針 / §5 境界値表 / §6 実行コマンドは現行コードと矛盾なし。
+
+### 是正した記述
+
+| 箇所 | 旧記述 | 実装 | 対応 |
+|---|---|---|---|
+| §1 `ac-coverage-gate-policy.test.ts` | 10 ケース | 14 ケース | 表を 14 に更新 |
+| §1 `matrix-validation-service.test.ts` | 8 ケース | 12 ケース | 表を 12 に更新 |
+
+### 未反映の実装差分（後続 WI 候補）
+
+以下は事実として記録するに留め、本 WI では §3 本文の全面改稿を行わない
+（改稿量が quick スコープを超えるため）。
+
+1. **§3.7 AcCoverageGatePolicy**: WI-292 で追加された `Story coverage lifecycle` describe
+   （planned story を非ブロッキング扱い / planned なのに testRefs がある場合 fail-closed /
+   required→planned の後退を fail-closed / status と lifecycle 終端の不一致を fail-closed）
+   の 4 ケースが未記載。`check()` が先に `hasValidCoverageLifecycle(sm)` を評価し、
+   `coverageStatus === 'planned'` の story では未カバー AC を報告しない点も未記載。
+2. **§3.10 MatrixValidationService**: `extractStoryMappings()` がスキーマ準拠の
+   トップレベル `stories` 形式と旧 `storyMappings` 形式の双方を受け付ける点、
+   および INV-1 storyId 重複をサービス内で検出する点（計 4 ケース）が未記載。
+3. **§3.2 StoryMapping**: `StoryMappingCreateProps` は `coverageStatus?: 'planned' | 'required'`
+   （既定 `'required'`）と `coverageLifecycle?: readonly StoryCoverageStatus[]`
+   （既定 `[coverageStatus]`）も受け取り、エンティティは `coverageStatus` /
+   `coverageLifecycle` / `testReferenceCount()` を公開する。文書の 2 引数形は
+   既定値により今も有効だが、WI-292 の契約が見えない。
+4. **§3.10 / §4 のポート名**: 正規のポート契約は `StoryRegistryPort { getValidStoryIds() }`。
+   文書が使う `findAllStoryIds` は `StoryRegistryPortForValidation.findAllStoryIds?` という
+   任意の後方互換エイリアス（存在すれば優先される）であり、正規名ではない。

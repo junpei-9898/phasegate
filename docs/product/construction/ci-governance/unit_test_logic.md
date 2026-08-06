@@ -26,6 +26,13 @@
 | `scripts/harness/__tests__/unit/ci-governance/services/lesson-aggregator.test.ts` | LessonAggregatorドメインサービス | 7 |
 | **合計** | | **105** |
 
+> 上表 11 ファイルのケース数はすべて実測と一致（WI-365 で計測）。ただし
+> `__tests__/unit/ci-governance/` にはこのほかに 5 ファイル（計 29 ケース）が実在する:
+> `services/integrity-checker.test.ts`(6) / `value-objects/baseline-entry.test.ts`(6) /
+> `value-objects/baseline-snapshot.test.ts`(6) / `value-objects/design-phase.test.ts`(6) /
+> `value-objects/integrity-manifest.test.ts`(5)。
+> 上表の 105 は H13-01..03 スコープの合計で、ディレクトリ全体は 134 ケース。
+
 ---
 
 ## 2. 共通ヘルパー・ファクトリ
@@ -1720,3 +1727,39 @@ target('LessonAggregator', () => {
   });
 });
 ```
+
+## 4. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。
+
+### 4.1 検証済み（記述と実装が一致）
+
+- §1 の 11 パスはすべて実在し、**11 件のケース数もすべて実測と一致**（10/10/4/11/14/16/12/8/5/8/7、合計 105）。
+- §2.1〜2.3 のファクトリ・モック 16 種は `scripts/harness/__tests__/helpers/test-helpers.ts` に実在。
+- §3.1〜3.7 / 3.9 / 3.10 のクラス・静的ファクトリ・メソッド・ゲッター・エラーコードはすべて一致:
+  `TemplateConfig.create/equals`（順序非依存ソートと `Object.freeze`）、
+  `EscalationAction.create/formatMessage/equals`、`RepetitionResetCondition.create/equals/isMet`、
+  `PointerEntry.createCommand/createFile/isCommand/isFile/type/key`、
+  `CiTemplate.create/withConfig/validate/isConfigured/config`、
+  `ErrorRepetition.create(code, threshold=3)/createWithCondition/createWithCount/increment/isEscalated/reset/getEscalationAction/resetCondition`、
+  `AgentsMdPointer.create/createForTest/addPointer/replacePointer/validate`、
+  `PointerValidator(cmd,file,adr).validate/validateAdrLinks`、`RepetitionDetector(repo).detect`。
+- エラー ID `CI_TEMPLATE_INVALID_TYPE` / `CI_TEMPLATE_EMPTY_VALIDATORS` / `CI_TEMPLATE_NOT_CONFIGURED` /
+  `AGENTS_MD_DUPLICATE_KEY` / `AGENTS_MD_INVALID_PATH` / `AGENTS_MD_DEAD_POINTER` /
+  `REPETITION_RESET_FORBIDDEN` / `ERROR_REPETITION_INVALID_COUNT` / `DUPLICATE_LESSON_ID` も一致。
+  既定閾値 3 も確認。
+
+### 4.2 是正した記述
+
+§1 に、スコープ外だが同一ディレクトリに実在する 5 ファイル（29 ケース）を注記。
+
+### 4.3 実装差分（本 WI では事実記録に留める）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §3.11 UT-LA-007 | 非 UUID の `lessonId` で `isOk() === false`（INV-12） | `LessonAggregator` は重複 ID 検出のみで書式検証を行わない。当該入力は `ok([...])` を返すため、記載のアサーションは失敗する。実テストの同スロットは `source="domain-designer"` → `type="file"` という別ケース |
+| 2 | §3.8 / §2.2 | `TemplateType` は 3 値 | `'aidlc-gate' \| 'consistency-check' \| 'pre-commit' \| 'agent-context-refresh'` の 4 値。`template-generator.ts` は `'agent-context-refresh' → 'schedule'` を写像する。「D6ルール」表と §2.2 のファクトリ型が 4 値目を欠く（実ヘルパーも同様） |
+| 3 | §2.3 | `ValidatorIdRegistryPort` モックは `listAll` のみ | ポートは任意メソッド `listForPreset(presetId, templateType)` も宣言し、`TemplateGenerator` は `listForPreset ?? listAll` で**前者を優先**する（実アダプタは実装済み）。結果として文書化された `TemplateGenerator` テストはすべて `listAll` フォールバック経路しか通っていない |

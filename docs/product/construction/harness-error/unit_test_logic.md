@@ -4,19 +4,23 @@
 @story-id H06-02
 @story-id H06-03
 ## 1. テストファイル構成
-| ファイルパス | 対象モデル | ケース数 |
-|---|---|---:|
-| `scripts/harness/__tests__/harness-error/value-objects/error-code.test.ts` | ErrorCode | 12 |
-| `scripts/harness/__tests__/harness-error/value-objects/severity.test.ts` | Severity | 8 |
-| `scripts/harness/__tests__/harness-error/value-objects/adr-ref.test.ts` | AdrRef | 6 |
-| `scripts/harness/__tests__/harness-error/value-objects/fix-example.test.ts` | FixExample | 5 |
-| `scripts/harness/__tests__/harness-error/value-objects/fix-example-validation-result.test.ts` | FixExampleValidationResult | 7 |
-| `scripts/harness/__tests__/harness-error/value-objects/error-definition.test.ts` | ErrorDefinition | 14 |
-| `scripts/harness/__tests__/harness-error/harness-error.test.ts` | HarnessError | 8 |
-| `scripts/harness/__tests__/harness-error/services/harness-error-factory.test.ts` | HarnessErrorFactory | 18 |
-| `scripts/harness/__tests__/harness-error/services/error-definition-registry.test.ts` | ErrorDefinitionRegistry | 14 |
-| `scripts/harness/__tests__/harness-error/services/severity-contract-enforcer.test.ts` | SeverityContractEnforcer | 10 |
-| `scripts/harness/__tests__/harness-error/shared-kernel/harness-error-contract.test.ts` | isHarnessError / HarnessErrorContract | 9 |
+> **パス欄について**: 実装は `scripts/harness/__tests__/unit/harness-error/` 直下のフラット配置であり、
+> `value-objects/` / `services/` / `shared-kernel/` のサブディレクトリは存在しない（WI-365 で実測して更新）。
+> 「設計ケース数」は当初計画値、「実装ケース数」は `it(` の実測値。差分の内訳は §6 を参照。
+
+| ファイルパス | 対象モデル | 設計ケース数 | 実装ケース数 |
+|---|---|---:|---:|
+| `scripts/harness/__tests__/unit/harness-error/error-code.test.ts` | ErrorCode | 12 | 7 |
+| `scripts/harness/__tests__/unit/harness-error/severity.test.ts` | Severity | 8 | 5 |
+| `scripts/harness/__tests__/unit/harness-error/adr-ref.test.ts` | AdrRef | 6 | 6 |
+| `scripts/harness/__tests__/unit/harness-error/fix-example.test.ts` | FixExample | 5 | 5 |
+| `scripts/harness/__tests__/unit/harness-error/fix-example-validation-result.test.ts` | FixExampleValidationResult | 7 | 7 |
+| `scripts/harness/__tests__/unit/harness-error/error-definition.test.ts` | ErrorDefinition | 14 | 23 |
+| `scripts/harness/__tests__/unit/harness-error/harness-error.test.ts` | HarnessError | 8 | 21 |
+| `scripts/harness/__tests__/unit/harness-error/harness-error-factory.test.ts` | HarnessErrorFactory | 18 | 20 |
+| `scripts/harness/__tests__/unit/harness-error/error-definition-registry.test.ts` | ErrorDefinitionRegistry | 14 | 13 |
+| `scripts/harness/__tests__/unit/harness-error/severity-contract-enforcer.test.ts` | SeverityContractEnforcer | 10 | 6 |
+| ~~`.../shared-kernel/harness-error-contract.test.ts`~~ | ~~isHarnessError~~ | ~~9~~ | **未実装（§6 参照）** |
 
 ## 2. 共通ヘルパー・ファクトリ
 ```ts
@@ -2094,3 +2098,54 @@ target('HarnessErrorContract', () => {
 | UT-HE-100 | SeverityContractEnforcer | error同値比較 | `default=error, requested=error` | `error` を返す |
 | UT-HE-101 | SeverityContractEnforcer | warning同値比較 | `default=warning, requested=warning` | `warning` を返す |
 | UT-HE-102 | SeverityContractEnforcer | 格下げ境界 | `default=error, requested=warning` | `SeverityDowngradeViolationError` |
+
+## 6. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。
+
+### 6.1 検証済み（記述と実装が一致）
+
+- §3.1 ErrorCode: パターン `^L([0-4])-([0-9]{3,})$`、`layer` / `toString` / `equals` の形。
+  UT-HE-008〜012 の期待値自体もコード仕様と整合している（未実装なだけ）。
+- §3.3 AdrRef（`^ADR-[0-9]{3}$`）、§3.4 FixExample（trim + `InvalidFixExampleError`）、
+  §3.5 FixExampleValidationResult（`success()` / `failure()` の各不変条件と `equals` の 4 フィールド比較）。
+- §3.8 HarnessErrorFactory のエラー契約: `UnknownErrorDefinitionError` /
+  `SeverityDowngradeViolationError` / `MissingAdrRefError` / `AdrReferenceNotFoundError` /
+  `MissingFixExampleError` / `InvalidFixExampleError` / `EmptyMessageError` /
+  `EmptySuggestionError` / `InvalidErrorCodeError` はすべて記述どおりの契機で送出される。
+- §3.9 ErrorDefinitionRegistry: メソッド名、`DuplicateErrorCodeError`、`localeCompare` 昇順、
+  `getAllDefinitions()` の `Object.freeze`、空配列構築。
+- §3.10 SeverityContractEnforcer: `resolveEffectiveSeverity(requested, default)` /
+  `assertNoDowngrade(...)` の意味論。
+- §4 モック戦略: スタブ対象は `AdrExistenceCheckerPort` と `FixExampleValidatorPort` のみで、
+  VO とドメインサービスは実体を使う（現行テストと一致）。
+
+### 6.2 是正した記述
+
+- §1 の 11 パスすべてを実配置（`__tests__/unit/harness-error/` 直下フラット）へ更新。
+- §1 に実装ケース数の列を追加（実測値）。
+- `shared-kernel/harness-error-contract.test.ts` の行を未実装として明示。
+
+### 6.3 実装差分（本 WI では事実記録に留める）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §3.6 UT-HE-051 | `fixExampleRequired: true` + `defaultFixExample: null` はエラー | `error-definition.ts` はこれを**明示的に許容**する（呼び出し側が fixExample を渡す前提）。送出するのは `ownerValidatorId` 空と `defaultAdrRef !== null && !adrRefRequired` の 2 条件のみ。fixExample 欠落の強制は `HarnessErrorFactory`（UT-HE-071 の `MissingFixExampleError`）側 |
+| 2 | §3.11 全体 | `isHarnessError` 型ガードと `shared-kernel/` | `isHarnessError` はソース中に存在しない。`scripts/harness/shared-kernel/` ディレクトリも無い。`HarnessErrorContract` は純 interface（`domain/value-objects/harness-error.ts` と `application/dto/harness-error-contract.ts`）。実在する近縁テストは `harness-error-contract-mapper.test.ts`（5 件）と `harness-error-contract-severity-readonly.test.ts`（1 件） |
+| 3 | §2 line 24 | `import { target, context } from '../../helper/common-helper'` | 実パスは `'../../helpers/test-helpers.js'` |
+| 4 | §2 | `category: 'phase-gate'` | `ErrorDefinitionCategory` はアンダースコア `'phase_gate'`（`category` の型は string なので型エラーにはならない） |
+| 5 | §2 `createFactory` | `definitions` 既定が 2 件 | 実ヘルパーの既定は `[]` |
+| 6 | §3.6 / §3.7 / §2 | 記載なし | WI-335 で `ErrorDefinition` に `defaultSuggestedSkill` / `defaultScaffoldCommand` / `defaultTemplatePath` / `defaultRemediationType` と `resolve*()` が、`HarnessError` に `suggestedSkill` / `scaffoldCommand` / `templatePath` / `remediationType` と `has*()` / `effectiveRemediationType()` / `isMechanicallyRemediable()` が追加済み。`HarnessErrorContract` にも `suggested_skill` / `scaffold_command` / `template_path` / `remediation_type` の 4 任意キーが増えている |
+| 7 | ID 体系 | — | 新規テストが退役 ID を再利用している。UT-HE-079/080/081 は `harness-error-factory.test.ts` の actionable フィールド伝播、UT-HE-100/101 は `harness-error.test.ts` の snake_case 投影、UT-HE-103〜111 は `harness-error.test.ts` の actionable/equals/remediationType。ID 再割当ポリシーの整備は別 WI |
+
+### 6.4 §1 未掲載のテストファイル（同一ディレクトリに実在）
+
+`assert-severity-contract-use-case` / `create-harness-error-use-case` /
+`harness-error-contract-mapper` / `harness-error-contract-severity-readonly` /
+`list-error-definitions-use-case` / `normalize-validator-errors-use-case` /
+`render-harness-errors-handler` / `validate-all-fix-examples-use-case` /
+`validate-fix-example-use-case` の 9 件。本文書は domain 層の設計のみを対象とするため
+掲載外であること自体は妥当だが、`__tests__/unit/harness-error/` の全体像は 19 ファイルである。

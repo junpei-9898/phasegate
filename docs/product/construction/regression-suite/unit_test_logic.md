@@ -32,15 +32,20 @@ scripts/harness/__tests__/unit/regression-suite/
 │   └── import-violation.test.ts            # UT-RS-142〜144
 └── services/
     ├── regression-runner.test.ts           # UT-RS-150〜156
-    ├── migration-analyzer.test.ts          # UT-RS-160〜167
-    └── import-guard-service.test.ts        # UT-RS-172〜177
+    ├── migration-analyzer.test.ts          # UT-RS-160〜167 ※未実装（2026-08-06 実測）
+    └── import-guard-service.test.ts        # UT-RS-172〜177 ※未実装（2026-08-06 実測）
 ```
 
 ---
 
 ## 2. 共通ヘルパー・ファクトリ
 
-`scripts/harness/__tests__/helpers/test-helpers.ts` に追記する regression-suite ファクトリ関数群の疑似コード。
+regression-suite ファクトリ関数群の疑似コード。
+
+> **実装状況（WI-365 実測）**: 下記ファクトリはいずれも
+> `scripts/harness/__tests__/helpers/test-helpers.ts` に**追加されていない**。
+> 各テストファイルがそれぞれローカルにヘルパーを定義している。
+> 本節は「各テストファイル先頭に定義するファクトリ」の設計として読むこと。
 
 ```typescript
 // ---- regression-suite ファクトリ関数 ----
@@ -1999,3 +2004,36 @@ target('ImportGuardService', () => {
   });
 });
 ```
+
+---
+
+## 4. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。
+
+### 4.1 検証済み（記述と実装が一致）
+
+§3.1〜§3.11（V0TestMigration / SuiteId / RegressionSuiteDefinition / KRequirementTest /
+GngConditionTest / AgentIndependenceTest / MigrationMapping / CiGateConfig /
+TestExecutionSummary（UT-RS-108 を除く）/ BiomeModificationSpec / CoverageRate / ImportViolation）
+のファクトリ形、`static create(props)` シグネチャ、エラー名、閾値はいずれも現行ソースと一致。
+§2 の `V1TestPath` / `TestFailureDetail` の import 先も実在する。
+
+### 4.2 是正した記述
+
+- §1 のファイルツリーで `migration-analyzer.test.ts` / `import-guard-service.test.ts` を未実装と明記。
+- §2 の「`test-helpers.ts` に追記する」という前提を実態（各テストファイルにローカル定義）へ訂正。
+
+### 4.3 実装差分（本 WI では事実記録に留める）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §3.12 | `new RegressionRunner(suiteRegistryPort, testRunnerPort, configQueryPort, ciGateResultWriterPort, importGuardService)` | 引数順は `(suiteRegistryPort, testRunnerPort, importGuardService, configQueryPort, ciGateResultWriterPort)` — `importGuardService` が 3 番目 |
+| 2 | §3.12 | `runner.execute(suiteId, ciGateConfig)` | `async execute(suiteId: SuiteId, coverageThreshold?: number)` — 第 2 引数は任意の数値。未指定時は `configQueryPort.getCoverageThreshold()` にフォールバック |
+| 3 | §3.12 | `importGuardService = { verify: vi.fn() }` としてドメインサービスをモック | 実テストは実 `new ImportGuardService(importAnalyzerPort)` を使い、モックはポートのみ。文書の擬似コードは `docs/principles/testing-rules.md` の「ドメイン層のモックは禁止」に反する |
+| 4 | §3.13 | `analyzer.analyzeAll({ orchestrationPattern: [...] })` | `MigrationAnalyzerOptions` のフィールド名は `orchestrationMigratedPattern`（他の `outOfScopePattern` / `biomeModificationRequired` / `dryRun` は正しい）。誤名は黙って無視されるため、記載どおりに書くとテストが落ちる |
+| 5 | §3.14 UT-RS-177 | `ImportGuardService.verify()` が `ImportAnalysisPortError` を送出 | `import-guard-service.ts` は try/catch を持たずポートの例外をそのまま伝播する。`ImportAnalysisPortError:` でラップするのは `RegressionRunner.execute()` 側 |
+| 6 | §1 ツリー | `migration-analyzer.test.ts` / `import-guard-service.test.ts` が存在 | いずれも未実装（`unit_test_design.md` の同記録も参照） |

@@ -13,8 +13,8 @@
 
 | ファイルパス | 対象 | ケース数 |
 |-------------|------|---------|
-| `scripts/harness/__tests__/integration/ci-governance/generate-ci-template-usecase.test.ts` | GenerateCiTemplateUseCase | 6 |
-| `scripts/harness/__tests__/integration/ci-governance/render-ci-template-usecase.test.ts` | RenderCiTemplateUseCase | 3 |
+| `scripts/harness/__tests__/integration/ci-governance/generate-ci-template-usecase.test.ts` | GenerateCiTemplateUseCase | 8 |
+| `scripts/harness/__tests__/integration/ci-governance/render-ci-template-usecase.test.ts` | RenderCiTemplateUseCase | 10 |
 | `scripts/harness/__tests__/integration/ci-governance/record-error-occurrence-usecase.test.ts` | RecordErrorOccurrenceUseCase | 4 |
 | `scripts/harness/__tests__/integration/ci-governance/check-escalation-usecase.test.ts` | CheckEscalationUseCase | 2 |
 | `scripts/harness/__tests__/integration/ci-governance/reset-repetition-usecase.test.ts` | ResetRepetitionUseCase | 4 |
@@ -25,13 +25,19 @@
 | `scripts/harness/__tests__/integration/ci-governance/agents-md-file-adapter.test.ts` | AgentsMdFileAdapter | 3 |
 | `scripts/harness/__tests__/integration/ci-governance/file-system-existence-adapter.test.ts` | FileSystemExistenceAdapter | 2 |
 | `scripts/harness/__tests__/integration/ci-governance/lesson-artifact-file-reader-adapter.test.ts` | LessonArtifactFileReaderAdapter | 4 |
-| `scripts/harness/__tests__/integration/ci-governance/generate-ci-template-handler.test.ts` | GenerateCiTemplateHandler | 5 |
-| `scripts/harness/__tests__/integration/ci-governance/migrate-agents-md-handler.test.ts` | MigrateAgentsMdHandler | 5 |
-| `scripts/harness/__tests__/integration/ci-governance/check-repetition-handler.test.ts` | CheckRepetitionHandler | 4 |
+| `scripts/harness/__tests__/integration/ci-governance/generate-ci-template-handler.test.ts` | GenerateCiTemplateHandler | 7 |
+| `scripts/harness/__tests__/integration/ci-governance/migrate-agents-md-handler.test.ts` | MigrateAgentsMdHandler | 6 |
+| `scripts/harness/__tests__/integration/ci-governance/check-repetition-handler.test.ts` | CheckRepetitionHandler | 7 |
 | `scripts/harness/__tests__/integration/ci-governance/ci-template-generation-flow.test.ts` | CI/CDテンプレート生成統合フロー | 2 |
 | `scripts/harness/__tests__/integration/ci-governance/error-repetition-flow.test.ts` | 反復エラー検出統合フロー | 3 |
 | `scripts/harness/__tests__/integration/ci-governance/agents-md-migration-flow.test.ts` | AGENTS.md移行統合フロー | 3 |
-| **合計** | | **68** |
+| **合計** | | **83** |
+
+> 上表の 18 ファイル以外にも `__tests__/integration/ci-governance/` には 18 ファイル（計 82 ケース）が
+> 存在する（create-baseline / integrity-handler / integrity-pin-verify.it / scaffold-design-* /
+> refresh-agent-context / glob-file-scanner / baseline-json-repository /
+> validate-pointers-real-corpus.it / aidlc-world-template-contract 等）。
+> 本文書は H13-01..03 スコープのみを対象とする。詳細は末尾の WI-365 レビュー記録を参照。
 
 ---
 
@@ -1903,3 +1909,58 @@ npx vitest watch scripts/harness/__tests__/unit/ci-governance
 npx vitest run --coverage scripts/harness/__tests__/unit/ci-governance
 npx vitest run --coverage scripts/harness/__tests__/integration/ci-governance
 ```
+
+## WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。以下は実測結果。
+
+### 検証済み（記述と実装が一致）
+
+- §1 の 18 パスはすべて実在（13 件のケース数は実測と一致。残り 5 件は §「是正した記述」参照）。
+- §2.2 / §2.3 のモック方針。
+- §3.1 `GenerateCiTemplateUseCase` の出力フィールド
+  （`templateType` / `presetRef` / `triggerCondition` / `targetValidatorIds` / `failOnWarning` /
+  `validationErrors`）と `CI_TEMPLATE_EMPTY_VALIDATORS`。
+- §3.2 `RenderCiTemplateUseCase(generator, rendererPort)`（検証失敗時に render を呼ばない点を含む）。
+- §3.3 `RecordErrorOccurrenceUseCase(detector, executorPort)`。
+- §3.4 `CheckEscalationUseCase(repo)`（`exists` / `currentCount` / `escalated` の null 挙動を含む）。
+- §3.5 `ResetRepetitionUseCase(repo)`（`REPETITION_NOT_FOUND` / `REPETITION_RESET_FORBIDDEN` 分岐）。
+- §3.6 `MigrateAgentsMdUseCase(reader, agentsMdPort, aggregator, validator)` と
+  `kpiMet = after <= before * 0.5` の判定。
+- §3.7 `AggregateLessonsUseCase`、§3.8 `ValidatePointersUseCase(agentsMdPort, validator)`
+  （`passed` / `totalPointers` / `deadPointers`）。
+- §4.1 `ErrorRepetitionJsonRepository(baseDir)` → `.harness/error-history.json`、
+  `deleteByCode`、壊れた JSON で throw する挙動。§4.3 `FileSystemExistenceAdapter(baseDir)`。
+- §6.2 反復エラーフロー（`EscalationExecutorPort.execute(action, …)` の引数形）。
+
+### 是正した記述
+
+| 箇所 | 旧記述 | 実装 | 対応 |
+|---|---|---|---|
+| §1 `generate-ci-template-usecase.test.ts` | 6 | 8 | 更新 |
+| §1 `render-ci-template-usecase.test.ts` | 3 | 10 | 更新 |
+| §1 `generate-ci-template-handler.test.ts` | 5 | 7 | 更新 |
+| §1 `migrate-agents-md-handler.test.ts` | 5 | 6 | 更新 |
+| §1 `check-repetition-handler.test.ts` | 4 | 7 | 更新 |
+| §1 合計 | 68 | 83 | 更新 + スコープ外ファイルの存在を注記 |
+
+### 実装差分（本 WI では事実記録に留める）
+
+handler 層が「argv 文字列配列のパース」から「型付き args オブジェクト」へリファクタされ、
+戻り値も `stdout` から `output` へ、exit code もエスカレーション駆動へ変わったが、
+本文書の §5 / §6 が追随していない。これが下表 3〜7 の共通根因である。
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §2.4 | `new GenerateCiTemplateUseCase(templateGenerator, rendererPort)` | `constructor(templateGenerator)` の 1 引数（§3.1 の記述が正しい） |
+| 2 | §4.4 | lessons ディレクトリ `tmpDir/lessons`、拡張子 `*.lesson.json` | `path.join(baseDir, '.harness', 'lessons')`、`.json` 全般 |
+| 3 | §5 全体 | `handler.handle([...文字列フラグ])`、`actual.stdout` | `handle({ presetId, templateType, render?, format? })` 等の型付きオブジェクト、戻り値は `{ exitCode, output, errors? }` |
+| 4 | §5.1 | `--dry-run` = 生成のみ render しない | `--dry-run` は存在しない。`render` が既定 `false` で、既定経路が生成のみ・`render: true` で描画 |
+| 5 | §5.1 IT-API-GenerateCiTemplateHandler-004 | 引数無しで `exitCode=2` | 必須引数検証が無く、`hasErrors ? 1 : 0` しか返さない |
+| 6 | §5.3 IT-API-CheckRepetitionHandler-003 | `exists=false` → `exitCode=1` | `escalated === true ? 1 : 0` のため `exitCode=0`（実テストも 0 を期待） |
+| 7 | §6.1 IT-API-CiTemplateFlow-001/002 | `render()` が 1 回呼ばれる | `render: true` を渡さないため 0 回。実テストは `exitCode === 0` のみ検証。「全3種マッピング」も現在は 4 種 |
+| 8 | §4.4 IT-REPO-LessonArtifactReader-003 | `{ "broken": true }` を「スキーマ不正」として扱う | スキーマ検証は無く `JSON.parse` の try/catch のみ。実テストは `'{ invalid json }'` を使う |
+| 9 | §4.2 | AGENTS.md フィクスチャが `<!-- pointer: ... -->` 形式 | パーサは `- [cmd:<key>](phasegate:<cmd>) <desc>` / `- [file:<key>](<path>) <desc>` / `- ADR: <id>` を認識。現行アサーション `toBeGreaterThanOrEqual(0)` は空振りで成立している |

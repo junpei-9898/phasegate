@@ -39,6 +39,12 @@ scripts/harness/__tests__/unit/skill-quality/
 └── skill-structure-validator.test.ts  # SkillStructureValidator ドメインサービス
 ```
 
+> **実装状況（WI-365 実測、2026-08-06）**: 上記 21 ファイルはすべて記載パスに実在する。
+> ただし同ディレクトリには未掲載のファイルが 5 件ある:
+> `check-coverage-handler.test.ts`(1) / `file-system-requirement-test-matrix-adapter.test.ts`(4) /
+> `git-commit-executor-adapter.test.ts`(7) / `quick-implementor-skill-conformance.test.ts`(9) /
+> `story-implementor-skill-conformance.test.ts`(3)。ディレクトリ全体は 26 ファイル。
+
 **共通インポートパターン**:
 
 ```typescript
@@ -1978,3 +1984,47 @@ target('SkillStructureValidator', () => {
 
 });
 ```
+
+---
+
+## 4. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。本文書は今回レビューした 11 文書のうち精度が高い部類で、
+§1 の 21 パスはすべて実在する。
+
+### 4.1 検証済み（記述と実装が一致）
+
+- §2.1 / §2.2 のファクトリはすべて記載どおりのシグネチャで実在:
+  `PlanCheckerLoop.create()` / `LoopAttempt.create(props)` / `LessonArtifact.create(storyId)` /
+  `CommitMessage.create(unit, storyId, description)` / `TddCycle.create(phase, passed)` /
+  `CommitReadiness.go()` / `noGo(violations)` /
+  `RequirementCoverageResult.create(total, covered, uncoveredIds)` /
+  `CodeCoverageResult.create(line, branch, fn)` / `CoverageReport.create(req, code)` /
+  `SourceContext.create(description)` / `Lesson.create({content, sourceContext, tags})` /
+  `CascadeUpdateTarget.create(filePath, storyId)` / `CascadeUpdateResult.create(props)` /
+  `SkillValidationResult.passed(...)` / `failed(...)` / `LessonFingerprint.fromContent(...)`。
+  （`CommitMessage.create` には未記載の任意第 4 引数 `workItemId?` がある）
+- §2.3 のモックポートファクトリはポート interface と一致
+  （`commit` / `validate` / `read` / `list` / `getCoverageThreshold` /
+  `isAgentLessonCollectionEnabled` / `getCascadeUpdateTargetPatterns`）。
+- §3.20 `CascadeUpdateService(validatorIdRegistryPort, configQueryPort)` と `resolve(storyId)`。
+- §3.21 `SkillStructureValidator(skillFileReaderPort)` と `validate(skillFilePath)`。
+- ケース数一致: §3.1(11) / §3.2(10) / §3.5(5) / §3.6(8) / §3.7(9) / §3.9(7) / §3.10(7) /
+  §3.14(5) / §3.16(5) / §3.18(4) / §3.19(5)。
+
+### 4.2 是正した記述
+
+§1 に、未掲載だが同ディレクトリに実在する 5 ファイルを注記。
+
+### 4.3 実装差分（本 WI では事実記録に留める）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §2.2 / §3.15 | `ALL_REQUIRED_SECTIONS` は 6 要素、UT-SS-001/006 は `toHaveLength(6)` | `REQUIRED_SECTIONS` は **7 要素**。WI-212 / WI-241 で `frontmatter` と `purpose` の間に `languageMetadata` が入った。実テストは 7 を期待する。さらに `SkillStructure.forKind(kind)` と、必須 3 セクション（`frontmatter` / `languageMetadata` / `purpose`）だけの `advisory` kind、および kind 別インスタンスキャッシュが未記載。実ケース数は 10（文書は 7） |
+| 2 | §3.17 | `await service.evaluate(tddCycle, commitMsg)` | メソッド名は `execute(tddCycle, commitMessage)`。`evaluate` は存在しない。コンストラクタ `(commitExecutorPort, l1ValidatorPort, l2ValidatorPort)` は正しい。実ケース数は 5（文書は 7） |
+| 3 | §3.21 | 3 ケース | 実装は 11 ケース。`forKind` 起点の advisory / lifecycle 検証を文書が扱っていない（今回最大の差） |
+| 4 | §3.3 / §3.4 / §3.8 / §3.11 / §3.12 / §3.13 / §3.20 | 9 / 9 / 8 / 7 / 5 / 6 / 2 ケース | 実測 12 / 13 / 7 / 6 / 4 / 5 / 3。`（省略）` プレースホルダによる差分も含むため、単純な欠陥とは限らない |
+| 5 | 総計 | 21 節の合計 139 | 実測 152（未掲載 5 ファイルを含めると 176） |

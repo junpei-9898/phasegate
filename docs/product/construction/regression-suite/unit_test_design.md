@@ -399,6 +399,10 @@
 ### MigrationAnalyzer
 
 **テスト配置**: `scripts/harness/__tests__/unit/regression-suite/services/migration-analyzer.test.ts`
+（**未実装**。2026-08-06 時点で当該ファイルは存在せず、`MigrationAnalyzer` は
+`scripts/harness/__tests__/integration/regression-suite/v0-migration-flow.integration.test.ts`
+から `AnalyzeV0MigrationUseCase` / `MigrateV0TestsUseCase` 経由で間接的に触れられるのみ。
+下表 UT-RS-161〜164 の skip / migrate 分岐選択には直接カバレッジが無い。）
 
 #### 正常系
 
@@ -423,6 +427,11 @@
 ### ImportGuardService
 
 **テスト配置**: `scripts/harness/__tests__/unit/regression-suite/services/import-guard-service.test.ts`
+（**未実装**。2026-08-06 時点で当該ファイルは存在しない。`ImportGuardService` は
+`__tests__/unit/regression-suite/services/regression-runner.test.ts` で実コラボレータとして生成され、
+`__tests__/integration/regression-suite/agent-independence-flow.integration.test.ts` から
+composition root 経由で通るのみ。`verify()` の `allowedPaths` バイパス（UT-RS-174/175）と
+複数パターン検出（UT-RS-176）には直接カバレッジが無い。）
 
 #### 正常系
 
@@ -456,8 +465,50 @@
 | CiGateConfig | 12件（UT-RS-088〜099） |
 | TestExecutionSummary | 10件（UT-RS-104〜113） |
 | BiomeModificationSpec | 7件（UT-RS-118〜124） |
-| 補助型（V0TestId/CoverageRate/ImportViolation） | 10件（UT-RS-130〜144） |
+| 補助型（V0TestId/CoverageRate/ImportViolation） | 11件（UT-RS-130〜132 / 135〜139 / 142〜144） |
 | RegressionRunner（ドメインサービス） | 7件（UT-RS-150〜156） |
-| MigrationAnalyzer（ドメインサービス） | 8件（UT-RS-160〜167） |
-| ImportGuardService（ドメインサービス） | 6件（UT-RS-172〜177） |
-| **合計** | **127件** |
+| MigrationAnalyzer（ドメインサービス） | 8件（UT-RS-160〜167）— **未実装** |
+| ImportGuardService（ドメインサービス） | 6件（UT-RS-172〜177）— **未実装** |
+| **設計合計** | **128件** |
+| **実装合計** | **114件**（既存 14 ファイルの `it(` 実測。WI-365 で計測） |
+
+> 補助型の旧記載「10件」は ID 列挙（3 + 5 + 3 = 11）と整合しない算術誤りだったため 11 に是正した
+> （旧合計 127 はこの誤りに由来する）。
+
+---
+
+## WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。
+
+### 検証済み（記述と実装が一致）
+
+- V0TestMigration UT-RS-001〜017: 17 ケースすべて実在。`migrate` / `migrateWithModification` /
+  `skip` / `toMigrationMapping` の `!== 'pending'` ガードと
+  `MigrationAlreadyCompletedError` / `InvalidMigrationStateError` の送出も記述どおり。
+- SuiteId（4 種の有効 ID・`InvalidSuiteIdError`・`Object.freeze`）、
+  RegressionSuiteDefinition（`EmptyTestCasesError`・ReadonlyArray）、
+  KRequirementTest（有効集合は `K1..K15` + `K3.5`。K16 / K0 / '' / `k1` は拒否）、
+  GngConditionTest（有効集合は `GNG-4, GNG-5, GNG-8` のみ）、
+  AgentIndependenceTest（`EmptyForbiddenPatternsError`）、MigrationMapping、
+  CiGateConfig（`>0 && <=100`・`isRequired`）、
+  BiomeModificationSpec（`targetApi !== replacementApi` を含む）、
+  CoverageRate（0–100）、ImportViolation — **すべてソースと一致し、ファイル単位のケース数も一致**
+  （17/10/7/11/9/9/4/12/10/7/3/5/3）。
+- RegressionRunner: 設計 7 件・実装 7 件で一致。
+
+### 是正した記述
+
+- MigrationAnalyzer / ImportGuardService の「テスト配置」に未実装である旨を明記。
+- 補助型のケース数 10 → 11（算術誤り）、合計 127 → 設計 128 / 実装 114。
+
+### 実装差分（本 WI では事実記録に留める）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | UT-RS-108 | `failedCount=2` に対し `failures` 1 件で `TestCountIntegrityError` | `test-execution-summary.ts` の `create()` は `passed+failed+skipped === totalCount` のみを検証し、`failures.length` と `failedCount` を比較しない。実テストには当該ケースが無く、代わりに `failures` の不変性と `failedCount > 0 → isPassedGate=false` を検証している |
+| 2 | UT-RS-132 | `path='invalid-path'`（`scripts/__tests__/` 接頭辞なし）で throw | `v0-test-id.ts` の `create()` は空文字・空白のみを拒否する。`V0TestId.create('invalid-path')` は成功する。実テストの同スロットは `equals` のケース |
+| 3 | MigrationAnalyzer / ImportGuardService | 単体テストあり | 未実装（上記）。両サービスの分岐ロジック（skip 理由選択、`allowedPaths` バイパス、複数パターン検出）は単体では未検証で、これは実質的なカバレッジ穴 |

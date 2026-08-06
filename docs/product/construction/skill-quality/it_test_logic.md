@@ -14,36 +14,39 @@
 
 ## 1. テストファイル構成
 
+> **実装状況（WI-365 実測、2026-08-06）**: 当初設計の 24 エントリのうち **15 は実在しない**。
+> 下記は**現行の実配置**（13 ファイル）で、未実装分は別掲する。詳細は §7 を参照。
+
 ```text
 scripts/harness/__tests__/integration/skill-quality/
-├── execute-tdd-cycle-usecase.test.ts              # ExecuteTddCycleUseCase
-├── check-coverage-usecase.test.ts                 # CheckCoverageUseCase
-├── run-plan-checker-loop-usecase.test.ts          # RunPlanCheckerLoopUseCase
-├── collect-lessons-usecase.test.ts                # CollectLessonsUseCase
-├── write-lesson-artifact-usecase.test.ts          # WriteLessonArtifactUseCase
-├── apply-cascade-update-usecase.test.ts           # ApplyCascadeUpdateUseCase
-├── validate-skill-structure-usecase.test.ts       # ValidateSkillStructureUseCase
-├── git-commit-executor-adapter.test.ts            # GitCommitExecutorAdapter
-├── file-system-lesson-source-reader-adapter.test.ts
-├── file-system-lesson-artifact-writer-adapter.test.ts
-├── ajv-lesson-artifact-schema-adapter.test.ts
-├── file-system-requirement-test-matrix-adapter.test.ts
-├── harness-config-query-adapter.test.ts           # HarnessConfigQueryAdapter
-├── file-system-skill-file-reader-adapter.test.ts
-├── execute-tdd-cycle-handler.test.ts              # ExecuteTddCycleHandler
-├── check-coverage-handler.test.ts                 # CheckCoverageHandler
-├── run-plan-checker-loop-handler.test.ts          # RunPlanCheckerLoopHandler
-├── collect-lessons-handler.test.ts                # CollectLessonsHandler
-├── apply-cascade-update-handler.test.ts           # ApplyCascadeUpdateHandler
-├── validate-skill-structure-handler.test.ts       # ValidateSkillStructureHandler
-├── tdd-cycle-e2e-integration.test.ts              # TDD サイクル実行統合
-├── lesson-artifact-e2e-integration.test.ts        # Lesson Artifact システム統合
-├── skill-validation-e2e-integration.test.ts       # SKILL.md 検証統合
-└── fixtures/
-    ├── valid-skill.md
-    ├── incomplete-skill.md
-    └── requirement-test-matrix.json
+├── execute-tdd-cycle-usecase.test.ts              # ExecuteTddCycleUseCase (6)
+├── check-coverage-usecase.test.ts                 # CheckCoverageUseCase (4)
+├── run-plan-checker-loop-usecase.test.ts          # RunPlanCheckerLoopUseCase (4)
+├── collect-lessons-usecase.test.ts                # CollectLessonsUseCase (3)
+├── write-lesson-artifact-usecase.test.ts          # WriteLessonArtifactUseCase (4)
+├── apply-cascade-update-usecase.test.ts           # ApplyCascadeUpdateUseCase (6)
+├── validate-skill-structure-usecase.test.ts       # ValidateSkillStructureUseCase (3)
+├── file-system-requirement-test-matrix-adapter.test.ts  # (2)
+├── l1-biome-validator-adapter.test.ts             # (2) ※旧ツリー未掲載
+├── l2-validator-system-adapter.test.ts            # (2) ※旧ツリー未掲載
+├── vitest-coverage-runner-adapter.test.ts         # (2) ※旧ツリー未掲載
+├── skill-corpus-conformance.test.ts               # (6) ※本文書に記載なし
+└── wi-188-check-coverage-guard.test.ts            # (2) ※本文書に記載なし
 ```
+
+**別ディレクトリへ移動したもの**:
+
+- `git-commit-executor-adapter.test.ts` → `scripts/harness/__tests__/unit/skill-quality/`（7 ケース）
+- `check-coverage-handler.test.ts` → `scripts/harness/__tests__/unit/skill-quality/`（1 ケース）
+
+**未実装（設計のみ）**:
+
+`file-system-lesson-source-reader-adapter` / `file-system-lesson-artifact-writer-adapter` /
+`ajv-lesson-artifact-schema-adapter` / `harness-config-query-adapter`（skill-quality 用） /
+`file-system-skill-file-reader-adapter` / `execute-tdd-cycle-handler` /
+`run-plan-checker-loop-handler` / `collect-lessons-handler` / `apply-cascade-update-handler` /
+`validate-skill-structure-handler` / `tdd-cycle-e2e-integration` /
+`lesson-artifact-e2e-integration` / `skill-validation-e2e-integration`、および `fixtures/` ディレクトリ。
 
 **共通インポートパターン**:
 
@@ -2005,3 +2008,59 @@ npx vitest --reporter=verbose scripts/harness/__tests__/unit/skill-quality/
 # カバレッジ付き実行
 npx vitest run --coverage scripts/harness/__tests__/unit/skill-quality/
 ```
+
+## 7. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。**本文書は今回レビューした 11 文書の中で乖離が最も大きい。**
+
+### 7.1 検証済み（記述と実装が一致）
+
+- §3.3 `RunPlanCheckerLoopUseCase(planCheckExecutorPort)` — 1 引数コンストラクタ、4 ケースで一致。
+- §3.5 `WriteLessonArtifactUseCase(lessonArtifactSchemaPort, lessonArtifactWriterPort)` — 4 ケースで一致。
+- §2.1 モック戦略表に挙がるポートはすべて `scripts/harness/skill-quality/domain/ports/` に実在
+  （CommitExecutorPort / L1ValidatorPort / L2ValidatorPort / PlanCheckExecutorPort /
+  LessonSourceReaderPort / LessonArtifactWriterPort / LessonArtifactSchemaPort /
+  RequirementTestMatrixPort / CoverageRunnerPort / ValidatorIdRegistryPort /
+  ConfigQueryPort / SkillFileReaderPort / FileSystemPort）。
+- §2.3「SkillStructureValidator / LessonDeduplicator は実体を使う」は現行テストと一致。
+- §4.5 `FileSystemRequirementTestMatrixAdapter` — integration 側 2 ケースで一致。
+- ケース数一致: §3.1(6) / §3.2(4) / §3.4(3) / §3.5(4) / §3.7(3)。
+
+### 7.2 是正した記述
+
+§1 のファイルツリーを実配置（13 ファイル）へ書き換え、移動 2 件・未実装 13 件を別掲した。
+
+### 7.3 実装差分（本 WI では事実記録に留める）
+
+**A. UseCase コンストラクタ（記載どおりに書くとコンパイルが通らない）**
+
+| 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|
+| §3.1 | `new ExecuteTddCycleUseCase(mockCommit, mockL1, mockL2)` | `constructor(atomicCommitService: AtomicCommitService)` の 1 引数。3 ポートは `AtomicCommitService` へ注入する |
+| §3.2 | `new CheckCoverageUseCase(mockConfig, mockMatrix, mockCoverage)` | 引数順は `(requirementTestMatrixPort, coverageRunnerPort, configQueryPort)` |
+| §3.4 | `new CollectLessonsUseCase(mockPort, mockConfig)` | `(lessonCollector: LessonCollector, lessonDeduplicator: LessonDeduplicator, configQueryPort)` — reader ポートではなくドメインサービス 2 つを取る |
+| §3.6 | `new ApplyCascadeUpdateUseCase(mockFs, mockConfig, mockRegistry)` | `(cascadeUpdateService: CascadeUpdateService, fileSystemPort)` の 2 引数。config と registry は `new CascadeUpdateService(validatorIdRegistryPort, configQueryPort)` へ |
+| §3.7 / §6.3 | `new ValidateSkillStructureUseCase(mockSkillFilePort)` | `constructor(skillStructureValidator: SkillStructureValidator)` |
+
+**B. アダプタ節（§4.6 / §4.8 / §4.9 / §4.10 / §4.11）— 5 節すべてが実装と乖離**
+
+| 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|
+| §4.6 `HarnessConfigQueryAdapter` | `new HarnessConfigQueryAdapter(configObject)` で `layers.L3.coverageThreshold` / `harnesses.requirementCoverageThreshold` を読む | **引数なしコンストラクタ**。`getCoverageThreshold()` は `{ requirement: 100, code: 80 }` を、`isAgentLessonCollectionEnabled()` は `true` を、`getCascadeUpdateTargetPatterns()` は `['scripts/**/*.ts', 'docs/**/*.md']` をハードコードで返す。config キーは一切読まない（**本文書で最もリスクが高い箇所**: 設定駆動の閾値が存在するかのように読める） |
+| §4.8 `L1BiomeValidatorAdapter` | `new L1BiomeValidatorAdapter(mockBiomeEngine)`、`validate()` が `{ passed, violations }` を返し、エンジン例外は伝播（3 ケース） | 引数なしコンストラクタ。`validate(commitMessage)` は `readonly ValidationViolation[]` を返す（`passed` は無い）。`biome-ast-engine/composition-root.js` を動的 import し、失敗時は fail-closed で `{ ruleId: 'L1-VALIDATOR-ERROR', ... }` を返す（throw しない）。実ケース数は 2 |
+| §4.9 `L2ValidatorSystemAdapter` | 同上の形（3 ケース） | 同上（引数なし・配列返却・動的 import・fail-closed）。実ケース数は 2 |
+| §4.10 `VitestCoverageRunnerAdapter` | `new VitestCoverageRunnerAdapter(mockProcessRunner)`、`run(path)` が `{ lineCoverage, passed }` を返し 90% 閾値を内包（3 ケース） | `constructor(projectRoot = process.cwd(), execFile = execFileSync)`。`run(storyId)` は `CodeCoverageResult`（`line` / `branch` / `fn`）を返す。`lineCoverage` も `passed` も閾値も無い（閾値は `CoverageReport.meetsThreshold` 側）。`.harness/coverage-summary.json` を読み `SkillQualityError('INVALID_COVERAGE_REPORT')` を投げる。実ケース数は 2 |
+| §4.11 `ValidatorIdRegistryBridgeAdapter` | `new ValidatorIdRegistryBridgeAdapter(mockValidatorSystem)`、メソッド `listIds()`、例外伝播 | 引数なしコンストラクタ、メソッドは `list()`。21 件の `FALLBACK_VALIDATOR_IDS`（L1-001..008 / L2-001..003 / L3-001..004 / L4-001..006）を返し throw しない。テストファイル自体が存在しない。なお §2.4 の `createMockValidatorIdRegistryPort` は正しく `list` を使っており、§4.11 と内部矛盾している |
+
+**C. DTO / モック形の差分**
+
+| 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|
+| §2.4 / §3.4 / §6.2 | `RawLessonEntry = { content, source: string }` | `{ content: string; sourceContext: SourceContext; tags: readonly LessonCategory[] }` — `source` は存在せず `sourceContext` は VO |
+| §3.2 | 記載なし | WI-188 で `matrix.total === 0` の短絡が追加され、`meetsThreshold: true` / `skipped: true` / `skipReason: 'no-tests'` を返す（`wi-188-check-coverage-guard.test.ts` が守っている） |
+| §2.4 | `createMockPlanCheckExecutorPort` が `{ coverageRate, gaps }` を返す | `PlanCheckResult` は `revision: string` も要求する |
+| §2.4 | `createMockFileSystemPort` が `{ read, write }` | `FileSystemPort` は `glob(pattern)` も宣言（`SkillFileReaderPort` にも `exists()` がある） |
+| §3.6 | 3 ケース | 実装は 6 ケース |

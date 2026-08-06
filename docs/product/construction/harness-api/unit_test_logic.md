@@ -13,22 +13,25 @@
 
 ## 1. テストファイル構成
 
-| テストファイル | 対象クラス | ケース数 |
-|---|---|---:|
-| `scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts` | CliCommandDefinition（VO） | 9 |
-| `scripts/harness/__tests__/unit/harness-api/harness-api-response.test.ts` | HarnessApiResponse\<T\>（VO） | 8 |
-| `scripts/harness/__tests__/unit/harness-api/check-ready-result.test.ts` | CheckReadyResult（VO） | 5 |
-| `scripts/harness/__tests__/unit/harness-api/phase-info.test.ts` | PhaseInfo（VO） | 4 |
-| `scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts` | CiCheckResult（VO） | 6 |
-| `scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts` | DriftReportSummary（VO） | 4 |
-| `scripts/harness/__tests__/unit/harness-api/harness-status-summary.test.ts` | HarnessStatusSummary（VO） | 4 |
-| `scripts/harness/__tests__/unit/harness-api/artifact-scan-result.test.ts` | ArtifactScanResult（VO） | 4 |
-| `scripts/harness/__tests__/unit/harness-api/layer-health.test.ts` | LayerHealth（VO） | 5 |
-| `scripts/harness/__tests__/unit/harness-api/command-input-spec.test.ts` | CommandInputSpec（VO） | 3 |
-| `scripts/harness/__tests__/unit/harness-api/exit-code-spec.test.ts` | ExitCodeSpec（VO） | 3 |
-| `scripts/harness/__tests__/unit/harness-api/command-registry.test.ts` | CommandRegistry（DS） | 8 |
-| `scripts/harness/__tests__/unit/harness-api/command-dispatch-service.test.ts` | CommandDispatchService（DS） | 12 |
-| `scripts/harness/__tests__/unit/harness-api/status-derivation-service.test.ts` | StatusDerivationService（DS） | 8 |
+> **ケース数欄について**: 「設計」は当初計画値、「実装」は `it(` の実測値（WI-365 で計測）。
+> 差分は境界値ケースの追加および WI-307 / WI-318 / WI-328 / WI-332 / WI-339 での追加による。詳細は §7 を参照。
+
+| テストファイル | 対象クラス | 設計 | 実装 |
+|---|---|---:|---:|
+| `scripts/harness/__tests__/unit/harness-api/cli-command-definition.test.ts` | CliCommandDefinition（VO） | 9 | 11 |
+| `scripts/harness/__tests__/unit/harness-api/harness-api-response.test.ts` | HarnessApiResponse\<T\>（VO） | 8 | 9 |
+| `scripts/harness/__tests__/unit/harness-api/check-ready-result.test.ts` | CheckReadyResult（VO） | 5 | 5 |
+| `scripts/harness/__tests__/unit/harness-api/phase-info.test.ts` | PhaseInfo（VO） | 4 | 5 |
+| `scripts/harness/__tests__/unit/harness-api/ci-check-result.test.ts` | CiCheckResult（VO） | 6 | 11 |
+| `scripts/harness/__tests__/unit/harness-api/drift-report-summary.test.ts` | DriftReportSummary（VO） | 4 | 7 |
+| `scripts/harness/__tests__/unit/harness-api/harness-status-summary.test.ts` | HarnessStatusSummary（VO） | 4 | 4 |
+| `scripts/harness/__tests__/unit/harness-api/artifact-scan-result.test.ts` | ArtifactScanResult（VO） | 4 | 4 |
+| `scripts/harness/__tests__/unit/harness-api/layer-health.test.ts` | LayerHealth（VO） | 5 | 7 |
+| `scripts/harness/__tests__/unit/harness-api/command-input-spec.test.ts` | CommandInputSpec（VO） | 3 | 3 |
+| `scripts/harness/__tests__/unit/harness-api/exit-code-spec.test.ts` | ExitCodeSpec（VO） | 3 | 3 |
+| `scripts/harness/__tests__/unit/harness-api/command-registry.test.ts` | CommandRegistry（DS） | 8 | 8 |
+| `scripts/harness/__tests__/unit/harness-api/command-dispatch-service.test.ts` | CommandDispatchService（DS） | 12 | 27 |
+| `scripts/harness/__tests__/unit/harness-api/status-derivation-service.test.ts` | StatusDerivationService（DS） | 8 | 9 |
 
 ※境界値テスト（UT-BND-*）は各ファイルに分散して記載する（§5 参照）。
 
@@ -1556,3 +1559,49 @@ npx vitest --watch scripts/harness/__tests__/unit/harness-api
 # カバレッジ付きで実行
 npx vitest run --coverage scripts/harness/__tests__/unit/harness-api
 ```
+
+## 7. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。
+
+### 7.1 検証済み（記述と実装が一致）
+
+- §1 の 14 パスはすべて実在（`harness-error` と異なりパス移動なし）。
+- §3.2 HarnessApiResponse（INV-3: pass ⇒ errors 空 / INV-4: fail・error ⇒ errors 1 件以上）。
+- §3.3 CheckReadyResult（`allPassed === stories.every(s => s.passed)`）— 実テストと 1:1 一致。
+- §3.4 PhaseInfo（`unitId` 空と `currentLevel <= 0` の送出）。
+- §3.7 HarnessStatusSummary（4 レイヤー必須・ID 重複拒否・欠落拒否）。
+- §3.8 ArtifactScanResult、§3.9 LayerHealth（`layerId` は L1〜L4、`lastResult` は pass/fail/unknown）。
+- §3.10 CommandInputSpec（`ArgDef.type: 'string'|'number'` / `FlagDef.type: 'boolean'|'string'`）。
+- §3.11 ExitCodeSpec（`pass === 0` と一意性）。exit code 契約 0/1/2 は `toExitCode()` と整合。
+- §4.1 モック戦略テーブル、§6 実行コマンド。
+
+### 7.2 是正した記述
+
+§1 に実装ケース数の列を追加（14 ファイル中 6 ファイルが一致、8 ファイルで実装が上回る）。
+
+### 7.3 実装差分（本 WI では事実記録に留める。優先度順）
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §3.13 / §4.2 / UT-BND-010 | `ValidatorExecutionPort.runCompleteCheck` | 存在しない。ポートは `runL3Validators()` / `runDriftDetection()` / `runAllValidators()` の 3 つ。`phasegate:complete-check` は `runAllValidators()` + `biomeLintPort.runLint()` を呼ぶ |
+| 2 | §3.13 UT-CDS-004 / UT-CDS-011 | `phasegate:ci-check` が `runL3Validators` を呼ぶ | `runAllValidators()` を呼ぶ |
+| 3 | §3.13 UT-CDS-006 | 乖離ありで `status='fail'` | 乖離ありでも advisory pass（`status='pass'` / `exitCode=0`、件数は `summary.warnings`） |
+| 4 | §3.13 UT-CDS-012 | 未知コマンドで reject | `dispatch()` が try/catch で包み、`{ status: 'error', exitCode: 2 }` を返す |
+| 5 | §3.13 UT-CDS-009/010 | `phasegate:status` は `artifactScannerPort.scan()` と `configQueryPort.getConfig()` のみ | 実際は `biomeLintPort.runLint()` と `validatorExecutionPort.runAllValidators()` を並列実行し、`getPresetInfo()`（または `getConfig()`）に加え任意で `getHookHealth()` / `getBaselineHealth()` / `getLanguageInfo()` を呼ぶ。また有効レイヤーの live validation 失敗時は `status='fail'` でも `exitCode=0` を返すため「status=fail ⇒ exitCode=1」は普遍ではない |
+| 6 | §3.14 UT-SDS-008 | `derivedLayerHealth` 空で throw | `ALL_LAYER_IDS = ["L1".."L4"]` を無条件に写像するため常に 4 レイヤーが揃い、throw も空 layers も起きない |
+| 7 | §3.14 UT-SDS-003 | 「全て揃わない場合は unknown」 | `hasPresent = layerArtifacts.some(a => a.present === true)` — 1 件でも present なら `'pass'`。「対象 layer の成果物が 1 件も present でない場合に unknown」が正しい |
+| 8 | §3.14 | 記載なし | 本番経路は `derive(input)`（`command-dispatch-service.ts` から呼ばれる）。`isAllLayersHealthy()` も未記載。実テストの UT-SDS-001〜008 は文書とは別の割当になっている |
+| 9 | §3.1 / §3.12 / §3.13 | `harness:` プレフィックス | `CliCommandDefinition` は `^phasegate:[a-z][a-z0-9-]*$`、`CommandRegistry.registerCommand` は `startsWith('phasegate:')` を強制。該当箇所: L169 / L183 / L224 / L231 / L1017 / L1057 / L1296 相当 |
+| 10 | §3.5 INV-6 | 「allPassed = 全件 passed の論理積」 | WI-260 / WI-332（ADR-017）以降 `isEffectivelyPassed(r, failOnWarning)` で算出。warning のみの失敗と `skipped: true` は effectively passed、`passed:false` かつ `errors: []` は防御的に fail。`CiCheckResultProps` に任意 `failOnWarning` が増え、`validatorResults` は読み出し時に再投影される。UT-CCR-001〜006 は新規則下でも成立するが、規則の記述自体が古い |
+| 11 | §2 | ファクトリを `test-helpers.ts` に追加すると記載 | `createCliCommandDefinition` 等はいずれも `test-helpers.ts` に存在しない。実テストは `target` / `context` のみ import し、VO はインラインまたはファイルローカルのファクトリで組む |
+| 12 | §5 UT-BND-* | 12 件すべて実装済みの前提 | UT-BND-009 / 010 / 011 は未実装。UT-BND-003 は ID が再利用され、実体は `toExitCode()` のケース |
+| 13 | 各所 | 記載なし | 未記載の API: `CliCommandDefinition` の `description` / `outputType` / `exitCodes` と `requiresArg()` / `hasFlag()`（`equals()` は commandName **と** outputType を比較）、`HarnessApiResponse.pass()/fail()/error()/toExitCode()`、`LayerHealth` の `configurationState` / `cachedArtifactState` / `liveValidationState` と `isActionable()`（WI-112）、`HarnessStatusSummary` の `languages` / `hookHealth` / `baselineHealth` / `operationalWarnings`、`DriftReportSummary.fromDrifts()` 系、`CommandRegistry.hasCommand()/getCount()`（実テストの ID は UT-CR-* で文書の UT-CRG-* ではない）、`CheckReadyResult.fromStories()`、`CiCheckResult.fromResults()` ほか |
+
+### 7.4 §1 未掲載のテストファイル（同一ディレクトリに実在）
+
+`bypass-audit-message` / `compute-next-work-item-id` / `harness-config-query-adapter` /
+`pre-commit` の 4 件。

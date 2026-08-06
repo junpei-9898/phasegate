@@ -2461,3 +2461,52 @@ npx vitest run --coverage scripts/harness/__tests__/integration/nyquist-validati
 # ウォッチモード（開発中）
 npx vitest watch scripts/harness/__tests__/integration/nyquist-validation/
 ```
+
+## WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+`p2:check-freshness` で error 判定（104 日経過）となったため、タイムスタンプ更新ではなく
+**現行実装との突合レビュー**を実施した。以下は実測結果。
+
+### 検証済み（記述と実装が一致）
+
+- §1 のファイル表: 12 パスすべて実在し、**12 件のケース数もすべて実測と一致**
+  （usecase 10/8/8/7、adapter 9/4/5/8、handler 6/5/6/6）。
+- §2.3 のフィクスチャ 11 件は `.../integration/nyquist-validation/fixtures/` に実在。
+- §3.1 ValidateMatrixUseCase の 10 ケースはタイトル・アサーションとも実装と一致
+  （failFast 短絡、`schemaErrors` / `integrityErrors` / `validatedData` の意味論）。
+- §3.3 CalculateCoverageUseCase の 8 ケース、`CalculateCoverageOutput` の各フィールド、
+  `threshold?.active ?? null`、`toPercentage()` = `Math.floor(rate*10000)/100`（0.6667 → 66.67）。
+- §4.4 AjvJsonSchemaValidatorAdapter の 8 ケース、引数なしコンストラクタ、
+  `new Ajv({ allErrors: true })`、変換エラーの `code: 'L3-004'`。
+- §6 の実行コマンドのパス。
+
+### 実装差分（記述が現行コードと乖離。本 WI では事実記録に留める）
+
+改稿量が quick スコープを超えるため、本文の全面書き換えは行わず差分を明示する。
+
+| # | 箇所 | 文書の記述 | 現行実装 |
+|---|---|---|---|
+| 1 | §3 全体（約 30 箇所） | `new MatrixValidationService(mockStoryRegistryPort)` | `constructor(deps: { storyRegistryPort })` — オブジェクト注入（`unit_test_logic.md` §3.10 は正しい） |
+| 2 | §5.1〜5.4（handler 23 箇所） | `handler.handle({...})` + `vi.spyOn(process, 'exit')` / stdout spy | 4 handler とも `async execute(args): Promise<{ output, exitCode }>`。`process.exit` も stdout 書き込みもしない |
+| 3 | §5 各所 | `format: 'human' \| 'json'` | `'human' \| 'agent' \| 'json'`。`CheckAcCoverageGateHandler` の既定は `'json'`、他 3 つは `'human'` |
+| 4 | §5 JSON 出力 | `parsed.status === 'pass' \| 'fail'` の envelope | `JsonMatrixFormatter.formatGate()` は生 DTO を `JSON.stringify`。キーは `passed: boolean` で `status` は存在しない |
+| 5 | IT-UC-CheckACGate-008 | 重複 storyId で集約不変条件が throw | `MatrixValidationService.validate()` が重複を検出し `L3-004` で `passed: false` を返す。`buildMatrix()` に到達せず throw しない |
+| 6 | IT-UC-AnalyzeImpact-005 | 不正書式 storyId で throw | 書式検証は無く、存在しない storyId として空結果を返す |
+| 7 | IT-UC-AnalyzeImpact-007 | スキーマ違反が伝播 | `ajvValidator.validate()` の戻り値を破棄しており throw しない（実テストは `TestReference.create` 由来の throw を見ている） |
+| 8 | §4.1 FileSystemMatrixFileAdapter | `vi.mock('node:fs/promises')` | 実テストは `os.tmpdir()` 上の実ファイル I/O。モジュールモックなし |
+| 9 | IT-REPO-FileAdapter-006 | EACCES を期待 | 実テストは親ディレクトリ不在の ENOENT |
+| 10 | §4.2 TraceabilityModelStoryRegistryAdapter | `traceability-model` モジュールをモック、`user_stories.md` フォールバックあり | `constructor(deps: { getStoryIds })` の純 DI。フォールバックも `parseUserStoriesMd` も存在しない |
+| 11 | §4.3 ConfigFoundationCoverageThresholdAdapter | `configFoundation.loadConfig` をモック | `constructor(deps: { getPreset?: () => Promise<string> } = {})` の DI コールバック。`loadConfig` は無い。閾値定数（minimal 0.80 / standard 0.90 / strict 0.95、未知 preset とコールバック失敗は 0.90 へフォールバック）と 5 ケースのタイトルは一致 |
+| 12 | §2.1〜2.2 | ヘルパーは各テストファイル内の関数宣言 | 共有モジュール `scripts/harness/__tests__/integration/nyquist-validation/nyquist-validation-test-fixtures.ts` に集約。内容（名前・既定値）は一致。未記載のエクスポート 2 件: `createValidNoCoverageMatrixData` / `createImpactAnalysisMatrixData` |
+| 13 | §2.2 | `errors: HarnessError[]` | 型名は `NyquistHarnessError`（`domain/services/ac-coverage-gate-policy.ts` からエクスポート） |
+
+### 参考（文書の誤りではない）
+
+`nyquist-validation` 配下には §1 未掲載のテストが 6 ファイルある
+（`markdown-requirement-source-adapter.it` / `type-script-test-reference-source-adapter.it` /
+`type-script-test-reference-source-adapter-ac.it` / `ajv-json-schema-validator-adapter-binding.it` /
+`generate-requirement-test-matrix-usecase` / `generate-requirement-test-matrix-usecase-ac`）。
+いずれも本文書が宣言する `@story-id H07-01..04` の範囲外（H12-02 / HF2-05）であり、
+掲載外であること自体は正しい。

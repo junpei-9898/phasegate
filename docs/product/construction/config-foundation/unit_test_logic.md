@@ -12,7 +12,12 @@
 
 | ファイルパス | 対象モデル | ケース数 |
 |---|---|---:|
-| `scripts/harness/__tests__/config-foundation/domain/harness-config.test.ts` | HarnessConfig | 38 |
+> **パス欄について**: 設計時点の配置から実装が移動したファイルがある（WI-365 で実測して更新）。
+> 下表は **現行の実配置**を示す。設計ケース数は当初計画値のままで、実装数との差分は §6 に記録する。
+
+| ファイルパス | 対象モデル | 設計ケース数 |
+|---|---|---:|
+| `scripts/harness/__tests__/unit/config-foundation/harness-config.test.ts` | HarnessConfig | 38 |
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/project-config.test.ts` | ProjectConfig | 8 |
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/preset.test.ts` | Preset | 11 |
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/layers-config.test.ts` | LayersConfig | 9 |
@@ -20,17 +25,17 @@
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/l2-config.test.ts` | L2Config | 7 |
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/l3-config.test.ts` | L3Config | 14 |
 | `scripts/harness/__tests__/config-foundation/domain/value-objects/l4-config.test.ts` | L4Config | 5 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/quick-mode-config.test.ts` | QuickModeConfig | 11 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/phase-dependencies-config.test.ts` | PhaseDependenciesConfig | 7 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/custom-phase-rule.test.ts` | CustomPhaseRule | 6 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/planning-mode-config.test.ts` | PlanningModeConfig | 9 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/harnesses-config.test.ts` | HarnessesConfig | 19 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/paths-config.test.ts` | PathsConfig | 7 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/reporting-config.test.ts` | ReportingConfig | 5 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/feature-name.test.ts` | FeatureName | 6 |
-| `scripts/harness/__tests__/config-foundation/domain/value-objects/feature-toggle.test.ts` | FeatureToggle | 7 |
-| `scripts/harness/__tests__/config-foundation/domain/services/preset-resolution-service.test.ts` | PresetResolutionService | 16 |
-| `scripts/harness/__tests__/config-foundation/domain/services/feature-registry.test.ts` | FeatureRegistry | 8 |
+| `scripts/harness/__tests__/unit/config-foundation/quick-mode-config.test.ts` | QuickModeConfig | 11 |
+| `scripts/harness/__tests__/unit/config-foundation/phase-dependencies-config.test.ts` | PhaseDependenciesConfig | 7 |
+| `scripts/harness/__tests__/unit/config-foundation/custom-phase-rule.test.ts` | CustomPhaseRule | 6 |
+| `scripts/harness/__tests__/unit/config-foundation/planning-mode-config.test.ts` | PlanningModeConfig | 9 |
+| `scripts/harness/__tests__/unit/config-foundation/harnesses-config.test.ts` | HarnessesConfig | 19 |
+| `scripts/harness/__tests__/unit/config-foundation/paths-config.test.ts` | PathsConfig | 7 |
+| `scripts/harness/__tests__/unit/config-foundation/reporting-config.test.ts` | ReportingConfig | 5 |
+| `scripts/harness/__tests__/unit/config-foundation/feature-name.test.ts` | FeatureName | 6 |
+| `scripts/harness/__tests__/unit/config-foundation/feature-toggle.test.ts` | FeatureToggle | 7 |
+| `scripts/harness/__tests__/unit/config-foundation/preset-resolution-service.test.ts` | PresetResolutionService | 16 |
+| `scripts/harness/__tests__/unit/config-foundation/feature-registry.test.ts` | FeatureRegistry | 8 |
 | **合計** |  | **201** |
 
 ## 2. 共通ヘルパー・ファクトリ
@@ -500,4 +505,54 @@ target('HarnessConfig.reconstitute', () => {
 | UT-CF-199 | `harness-config.test.ts` | `レイヤーと機能状態を参照する / レイヤーIDがL5の場合 / エラーになる` | valid fixture から集約を生成する。 | `const actual = () => harnessConfig.getLayerConfig('L5')` | `UnknownLayerError` と `L1-006` を確認する。 |
 | UT-CF-200 | `harness-config.test.ts` | `レイヤーと機能状態を参照する / レイヤーIDが空文字の場合 / エラーになる` | valid fixture から集約を生成する。 | `const actual = () => harnessConfig.getLayerConfig('')` | `UnknownLayerError` と `L1-006` を確認する。 |
 | UT-CF-201 | `l3-config.test.ts` | `生成する / coverageThresholdが小数値の場合 / 仕様確定に従って判定する` | `coverageThreshold=90.5` を用意し、coverage report の未確定事項としてコメントを付ける。 | `const actual = () => new L3Config({ enabled: true, validators: [], coverageThreshold: 90.5 })` または `const actual = new L3Config(...)` | 仕様が「整数のみ許容」なら例外確認、仕様が「小数許容」なら生成成功と `hasCoverageGate() === true` を確認する。実装前に期待値を確定する。 |
+
+## 6. WI-365 実装突合レビュー記録（2026-08-06）
+
+<!-- @work-item-id WI-365 -->
+
+本文書は `p2:check-freshness` で error 判定（104 日経過）となっていたため、
+タイムスタンプ更新ではなく**現行実装との突合レビュー**を実施した。以下は実測結果。
+
+### 6.1 検証方法
+
+- §1 の各パスについて実ファイルの存在を検査
+- 各テストファイルの `it(` 出現数を実測し、§1 の設計ケース数と突合
+- テストファイル内の `UT-CF-XXX` コメントを抽出し、§3 / §5 の設計ケース ID と突合
+
+### 6.2 パスの是正
+
+12 ファイルが `scripts/harness/__tests__/config-foundation/domain/**` から
+`scripts/harness/__tests__/unit/config-foundation/**`（フラット配置）へ移動していた。
+§1 の表を実配置に更新済み。未移動で当初パスに残っているのは
+`project-config` / `preset` / `layers-config` / `l1-config` / `l2-config` / `l3-config` / `l4-config`
+の 7 ファイル。
+
+### 6.3 設計ケース数と実装数の差分
+
+合計: 設計 **201** に対し実装 **194**（`it(` 実測、`it.each` は 1 件として計上）。
+
+| ファイル | 設計 | 実装 | 差分の内訳 |
+|---|---:|---:|---|
+| `harness-config.test.ts` | 38 | 30 | UT-CF-007 / 021 / 022 / 023 / 024 と境界値 UT-CF-198 / 199 / 200 が未実装 |
+| `l3-config.test.ts` | 14 | 9 | 境界値 UT-CF-190 / 191 / 192 / 193 / 201 が未実装 |
+| `phase-dependencies-config.test.ts` | 7 | 12 | 設計外の追加ケースあり（ID コメントは 7 件） |
+| `planning-mode-config.test.ts` | 9 | 10 | 設計外の追加ケース 1 件 |
+| `paths-config.test.ts` | 7 | 9 | 設計外の追加ケース 2 件 |
+| `preset-resolution-service.test.ts` | 16 | 18 | 設計外の追加ケース 2 件 |
+| `harnesses-config.test.ts` | 19 | 17 | 境界値 UT-CF-196 が未実装（194 / 195 / 197 は実装済み） |
+| `feature-name.test.ts` | 6 | 5 | 1 件未実装 |
+| `feature-registry.test.ts` | 8 | 7 | 1 件未実装 |
+| 上記以外の 10 ファイル | 一致 | 一致 | — |
+
+### 6.4 未確認事項（本レビューのスコープ外）
+
+- §3 / §5 の各ケースの Arrange / Act / Assert 記述と実テストコードの
+  逐条一致は検証していない（ID とケース数のみ）。
+- `project-config` / `preset` / `layers-config` / `l1-config` / `l2-config` /
+  `l3-config` / `l4-config` の 7 ファイルには `UT-CF-XXX` の ID コメントが無く、
+  ID 単位のトレーサビリティが取れない。
+- `UT-CF-` の ID 名前空間が quick-mode の
+  `scripts/harness/__tests__/unit/quick-mode/domain/value-objects/changed-file.test.ts`
+  （ChangedFile）と衝突している（双方に UT-CF-007〜009 が存在）。
+  ID 体系の是正は本 WI のスコープ外。
 
