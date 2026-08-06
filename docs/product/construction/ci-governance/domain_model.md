@@ -513,3 +513,29 @@ ADR-030 §Decision.3.① の整合性 pin に伴い、ci-governance に以下の
 - **IntegrityDrift**（VO）: verify で検出した 1 件（`kind: 'mismatch' | 'added' | 'missing' | 'manifest-absent'`）。
 - **IntegrityChecker**（ドメインサービス・状態なし・I/O なし）: `computeDrifts(manifest | null, actual)` が manifest と再計算結果を突合し drift を決定的順序（path 昇順）で列挙する純ロジック。manifest===null は `manifest-absent` 1 件。
 - ポート: `Sha256HasherPort`（sha256 hex。既存 sha1 用 `FileHasherPort` とは別）、`IntegrityManifestRepositoryPort`（load/save/exists/getPath）。対象走査は既存 `FileScannerPort` を再利用。
+
+## 13. Template Catalog / Inception Doc Kind（WI-367 / WI-368）
+
+<!-- @work-item-id WI-367, WI-368 -->
+
+GitHub issue #42 に伴い、ci-governance に以下のドメイン概念を追加する。
+
+- **TemplateName**（VO・WI-367）: テンプレート識別子。**パスではない**。不変条件は
+  `/^[a-z0-9][a-z0-9_-]*$/`。空文字・`/`・`\`・`.`・`..`・大文字・先頭記号を拒否する。
+  path traversal の第一防壁であり最終防壁ではない（最終防壁は catalog 完全一致照合）。
+- **TemplateCatalogEntry**（VO・WI-367）: `templates/` に実在する 1 テンプレートの記述子。
+  `name`（`TemplateName`）と `fileName`（readdir が返した実ファイル名）を保持する。
+  `show` は catalog を name で完全一致検索し、見つかった `fileName` のみを
+  `templatesDir` に join する。ユーザー入力文字列がパス構成要素になる経路を持たない。
+- **InceptionDocKind**（VO・WI-368）: scaffold 可能な inception / product 文書の種別。
+  `product-overview-plan` / `story-writer-plan` / `story-mapping-plan` /
+  `unit-design-plan` / `product-overview` の 5 値。`DesignPhase` と同型だが
+  **unit 軸を持たない**点が異なる。`templateFileName` と、paths を受け取る
+  `relativeTargetPath(roots)` を提供する。`_shared/*_plan.md` は
+  `{inceptionDocs}/_shared/` 直下、`product_overview.md` は `dirname({designDocs})` 直下。
+- ポート: `TemplateCatalogPort`（list / read）、`InceptionTemplateRepositoryPort`（resolvePath / read）、
+  `InceptionDocWriterPort`（resolvePath / exists / write）。
+
+`DesignPhase` に inception 文書を混ぜない理由: `DesignPhase` は `--unit` 必須を前提とする
+書き込み先解決を持ち、unit 軸を持たない `_shared` / product 直下の文書を表現すると
+「unit 必須なのに unit を使わない phase」という不整合な不変条件になる。VO を分離する。

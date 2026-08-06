@@ -1674,7 +1674,6 @@ This keeps lesson aggregation compatible with Codex-facing setup instructions an
 <!-- @work-item-id WI-222 -->
 
 @story-id HF2-05
-
 ci-governance は `ci:generate-template` の scheduled L4 audit（`consistency-check`）向けに validator id リストを `ValidatorIdRegistryAdapter` 経由で導出する。WI-222 / HF2-05 で追加された L4-007（`ac-level-traceability`）は **default-OFF の advisory-only** バリデータであり、この不変条件を保つため `ValidatorIdRegistryAdapter.listForPreset` は `ADVISORY_DEFAULT_OFF_IDS`（`L4-007`）を全 preset・全 templateType で除外する。`listAll`（registry 全件列挙）には含めるが、preset 導出リスト（scheduled-audit metadata）には含めないことで、生成される L4 audit テンプレートに L4-007 が enabled として混入しない。詳細な validator 本体の不変条件（advisory-only / attestation-trust-excluded）は validator-system 側 logical_design の同 WI 反映を正とする。
 
 ## WI-254 指示ファイルの整合性 pin（ADR-030 §Decision.3.①）
@@ -1708,7 +1707,6 @@ integrity の SHA-256 はfile raw bytesをpinする既存契約を維持する�
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 `aidlc-gate` bundled templateはmatrixをL3前に再生成し、top-level `world.enabled === true`の場合だけpure `world:derive --json`を二回実行してraw stdoutを比較する。false / absentはWorld段階だけをskipし、既存lint / L3を維持する。invalid configはdisabledへfallbackしない。World成功後のL3がauthoritative re-derivationを所有し、templateはfingerprint / baseline policyを複製しない。scheduled L4 `consistency-check`とagent context workflowにはWorld L3段階を追加しない。
 
 ## WI-312 Coverage-producing bundled gate
@@ -1716,3 +1714,50 @@ integrity の SHA-256 はfile raw bytesをpinする既存契約を維持する�
 <!-- @work-item-id WI-312 -->
 
 `aidlc-gate` bundled templateはL3-003を有効にする採用projectに`coverage` package scriptを要求し、lockfileから選択したpackage managerでmatrix生成前に実行する。coverage script不在、実行失敗、`coverage/coverage-summary.json`未生成をdisabledやPASSへfallbackしない。これによりtest / coverage artifact、matrix、conditional World derive、L3の入力順序をclean checkoutで自己完結させる。
+
+## WI-367 / WI-368 / WI-369 テンプレート取得・inception scaffold・paths 追従
+
+<!-- @work-item-id WI-367, WI-368, WI-369 -->
+
+GitHub issue #42。テンプレート実体を node_modules の Read 無しで取得する正規手段と、
+L2 Level-1 ゲートを塞ぐ plan 文書の scaffold 経路を ci-governance が所有する。
+
+### Presentation
+
+- `TemplatesHandler`（WI-367）— `list()` / `show(name)`。`show` は本文をそのまま stdout へ返し、
+  装飾ヘッダを混ぜない（consumer がリダイレクトでそのまま文書として保存できる）。
+  未知 name / name 未指定 / 不正 name はいずれも exit 2。
+- `ScaffoldInceptionHandler`（WI-368）— `--dry-run`（既定）/ `--apply` / `--force` / `--json` の
+  exit code 契約は `ScaffoldDesignHandler` と同一。既存ファイルは `--force` 無しで exit 2。
+
+### Application
+
+- `ListTemplatesUseCase` / `ShowTemplateUseCase`（WI-367）
+- `ScaffoldInceptionUseCase`（WI-368）— `ScaffoldDesignUseCase` と同じ
+  dry-run / exists / force の分岐を kind 軸で持つ。
+
+### Infrastructure
+
+- `FileSystemTemplateCatalogAdapter`（WI-367）— `harnessRoot/templates` を readdir し
+  `<name>.template.<ext>` を catalog 化する。`show` の解決は **catalog エントリの
+  `fileName` を join する**形のみで、ユーザー入力文字列はパス構成要素にならない
+  （path traversal を構造的に不能にする）。
+- `FileSystemInceptionTemplateRepositoryAdapter` / `FileSystemInceptionDocWriterAdapter`（WI-368）
+  — 書き込み先は `paths.inceptionDocs` / `paths.designDocs` に追従する。
+  `product_overview.md` の解決規則は phase node 定義の `{designDocsRoot}/../product_overview.md`
+  と同一（`dirname(designDocs)`）。
+
+### Composition root（WI-369）
+
+`buildCiGovernance(baseDir, harnessRoot, paths?)` の第 3 引数に解決済み
+`paths.designDocs` / `paths.inceptionDocs` を受け取る。従来 `FileSystemDesignDocWriterAdapter`
+が `docs/product/construction` をハードコードしていたため、`paths.designDocs` を
+移設した PJ で **scaffold 先とゲート検査先がズレていた**。第 3 引数省略時は従来既定を維持する。
+
+### テンプレート = ゲート合格保証（WI-368 の不変条件）
+
+`templates/*_plan.template.md` は `MarkdownPlanDocumentReader` の QA セクション検出
+パターンに一致する見出しを必ず含む。scaffold 直後の生成物が無編集で
+`check-phase-gate --level 2`（Level-1 ゲート）を通ることをラウンドトリップテストで機械検証し、
+planning mode `embedded-qa` では逆に**通らない**（人間の `[Answer]` を要する）ことも
+併せて固定する。テンプレートが承認証跡を偽造しないための境界である。
