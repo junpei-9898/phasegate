@@ -65,7 +65,7 @@ afterAll(() => {
 target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () => {
   describe("防御プリセット × quickMode キー有無 × 明示 override 有無のマトリクス", () => {
     context("quickMode セクションが無い場合", () => {
-      it.each(PRESET_IDS)("防御プリセット '%s' で実効既定値になること", async (presetId) => {
+      it.each(PRESET_IDS)("quickMode 未宣言かつ防御プリセット '%s' で実効既定値になること", async (presetId) => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(writeConfig(baseDocument(presetId)));
 
@@ -86,7 +86,9 @@ target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () 
     });
 
     context("quickMode セクションが空オブジェクトの場合", () => {
-      it.each(PRESET_IDS)("防御プリセット '%s' で実効既定値になること", async (presetId) => {
+      it.each(
+        PRESET_IDS,
+      )("quickMode 空オブジェクトかつ防御プリセット '%s' で実効既定値になること", async (presetId) => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(writeConfig(baseDocument(presetId, {})));
 
@@ -109,7 +111,7 @@ target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () 
     context("quickMode の一部キーだけを明示している場合", () => {
       it.each(
         PRESET_IDS,
-      )("防御プリセット '%s' で明示キーは override 値・未宣言キーは実効既定値になること", async (presetId) => {
+      )("quickMode 部分宣言かつ防御プリセット '%s' で明示キーは override 値・未宣言キーは実効既定値になること", async (presetId) => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(
           writeConfig(baseDocument(presetId, { allowedCategories: ["bugfix"] })),
@@ -132,7 +134,9 @@ target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () 
     });
 
     context("quickMode の全キーを明示している場合", () => {
-      it.each(PRESET_IDS)("防御プリセット '%s' で明示値がそのまま使われること", async (presetId) => {
+      it.each(
+        PRESET_IDS,
+      )("quickMode 全キー宣言かつ防御プリセット '%s' で明示値がそのまま使われること", async (presetId) => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(
           writeConfig(
@@ -208,7 +212,7 @@ target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () 
 
   describe("preset 解決不能時の fail-open", () => {
     context("未知の防御プリセットが宣言されている場合", () => {
-      it("実効既定値で動作すること", async () => {
+      it("未知の防御プリセットでも実効既定値で動作すること", async () => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(writeConfig(baseDocument("unknown-preset")));
 
@@ -223,7 +227,7 @@ target("Quick Mode 設定の防御プリセット解決 (WI-377 / ADR-040)", () 
     });
 
     context("project セクションが欠落している場合", () => {
-      it("実効既定値で動作すること", async () => {
+      it("project セクション欠落でも実効既定値で動作すること", async () => {
         // Arrange
         const adapter = new HarnessConfigQuickModeConfigAdapter(writeConfig({ layers: {} }));
 
