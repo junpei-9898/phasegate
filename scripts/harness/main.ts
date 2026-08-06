@@ -2965,7 +2965,10 @@ async function main(): Promise<void> {
       case "ci-check": {
         const quick = hasFlag(args, "--quick");
         if (quick) {
-          const mod = createQuickModeCompositionRoot();
+          // WI-364: check-change-category (WI-351) と同様に解決済み configPath / rootDir を注入する。
+          // 無指定だと quickMode 設定を cwd 基準でしか探せず、サブディレクトリ実行で
+          // HarnessConfigNotFoundError → exit 2 になっていた。
+          const mod = createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
           const failOnReject = hasFlag(args, "--fail-on-reject");
           const dryRun = hasFlag(args, "--dry-run");
           const files = parseFlag(args, "--files");
