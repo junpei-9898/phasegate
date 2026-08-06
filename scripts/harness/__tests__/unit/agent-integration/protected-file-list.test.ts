@@ -181,6 +181,8 @@ target('ProtectedFileList', () => {
         'package-lock.json',
         '.phasegate/baseline.json',
         '**/.phasegate/baseline.json',
+        '.husky/**',
+        '**/.husky/**',
       ];
       // Act
       const actual = ProtectedFileList.createWithExclusions(exclusions);
@@ -243,6 +245,59 @@ target('ProtectedFileList', () => {
       const actual = ProtectedFileList.createWithAdditionalAndExclusions([], []);
       // Act & Assert
       expect(actual.matches('packages/app/.phasegate/baseline.json')).toBe(true);
+    });
+  });
+
+  context('.husky 保護 (WI-363 L0 runtime 実施点)', () => {
+    // UT-PFL-072
+    it('デフォルトで .husky/pre-commit への書き込みを保護対象とすること', () => {
+      // Arrange
+      const sut = ProtectedFileList.createDefault();
+      // Act
+      const actual = sut.matches('.husky/pre-commit');
+      // Assert
+      expect(actual).toBe(true);
+    });
+
+    // UT-PFL-073
+    it('デフォルトで .husky/commit-msg への書き込みを保護対象とすること', () => {
+      // Arrange
+      const sut = ProtectedFileList.createDefault();
+      // Act
+      const actual = sut.matches('.husky/commit-msg');
+      // Assert
+      expect(actual).toBe(true);
+    });
+
+    // UT-PFL-074
+    it('サブディレクトリ配下の .husky/pre-commit も保護対象とすること', () => {
+      // Arrange
+      const sut = ProtectedFileList.createWithAdditionalAndExclusions([], []);
+      // Act
+      const actual = sut.matches('packages/app/.husky/pre-commit');
+      // Assert
+      expect(actual).toBe(true);
+    });
+
+    // UT-PFL-075
+    it('.husky に前方一致するだけの別ディレクトリは保護対象外とすること', () => {
+      // Arrange
+      const sut = ProtectedFileList.createDefault();
+      // Act
+      const actual = sut.matches('.husky-backup/pre-commit');
+      // Assert
+      expect(actual).toBe(false);
+    });
+
+    // UT-PFL-076
+    it('exclude 指定で .husky 保護を解除できること', () => {
+      // Arrange
+      const exclusions = ['.husky/**', '**/.husky/**'];
+      // Act
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+      // Assert
+      expect(actual.matches('.husky/pre-commit')).toBe(false);
+      expect(actual.matches('package.json')).toBe(true);
     });
   });
 

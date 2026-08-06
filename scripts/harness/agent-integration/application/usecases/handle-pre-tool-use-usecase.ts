@@ -575,6 +575,12 @@ export class HandlePreToolUseUseCase {
       message: (fp) =>
         `保護ファイルへの書き込みがブロックされました: ${fp}\nClaude Code の設定変更は /update-config スキルを使用してください。`,
     },
+    {
+      // WI-363: .husky/ 配下は L0 runtime の実施点。Quick Mode でも書き換えさせない。
+      pattern: /(?:^|\/)\.husky\//,
+      message: (fp) =>
+        `保護ファイルへの書き込みがブロックされました: ${fp}\n.husky/ 配下は L0 runtime（pre-commit / commit-msg / pre-push）の実施点であり、Quick Mode でも変更できません。\n未導入 hook の配置は npx phasegate setup:agent --apply --with-husky を使用してください。\n意図的に手編集する場合は phasegate.config.json の protectedFiles.exclude に対象パターンを明示してください。`,
+    },
   ];
 
   private async buildProtectedFileBlockOutput(blockedFilePath: string | undefined): Promise<HandlePreToolUseOutput> {

@@ -25,6 +25,11 @@ const DEFAULT_PATTERNS = [
   // grandfather bypass を防ぐため、書き込み自体を保護対象とする。
   '.phasegate/baseline.json',
   '**/.phasegate/baseline.json',
+  // WI-363: .husky/ 配下は L0 runtime の実施点（pre-commit / commit-msg / pre-push）。
+  // WI-352 で config カテゴリに分類されるようになり Quick Mode の書き込み許可対象に
+  // 入ったため、防御機構そのものの書き換えを protected file として明示的に止める。
+  '.husky/**',
+  '**/.husky/**',
 ];
 
 /**

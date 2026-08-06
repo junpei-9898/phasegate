@@ -64,6 +64,31 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     expect(actual.error?.message).toContain("config:plan --intent quick-mode-relax --apply --json");
   });
 
+  // WI-363
+  it(".husky 配下の保護ファイルブロックは L0 runtime 実施点であることと setup:agent 手順を案内すること", async () => {
+    // Arrange
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createDefaultMockConfigQueryPort(),
+      phaseGateQueryPort: createDefaultMockPhaseGateQueryPort(),
+    });
+
+    // Act
+    const actual = await useCase.execute({
+      toolName: "Edit",
+      targetFilePaths: [".husky/pre-commit"],
+    });
+
+    // Assert
+    expect(actual).toMatchObject({
+      shouldBlock: true,
+      blockedFilePath: ".husky/pre-commit",
+      blockReason: "PROTECTED_FILE",
+    });
+    expect(actual.error?.message).toContain("L0 runtime");
+    expect(actual.error?.message).toContain("setup:agent --apply --with-husky");
+    expect(actual.error?.message).toContain("protectedFiles.exclude");
+  });
+
   it("phasegate.config.json の full-mode config ブロックは story 実装ではなく config plan 復旧を案内すること", async () => {
     const mockFullModeRequirementQueryPort = {
       check: vi.fn().mockResolvedValue({
