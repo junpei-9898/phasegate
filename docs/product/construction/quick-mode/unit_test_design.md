@@ -502,3 +502,19 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-EDGE-013 | ValidatorRelaxationService.build | allValidatorIdsに未知のIDが含まれる | 無視してエラーが発生しないこと |
 | UT-EDGE-014 | QuickModeDecision.approved | eligible=falseのeligibilityを渡す | エラーが発生すること |
 | UT-EDGE-015 | QuickModeJudgmentEngine.judge | domain/配下のCREATEとMODIFYが混在する場合 | CREATEがあればNEW_DOMAIN（MIXED_CHANGESが先に評価されるため実際はMIXED_CHANGES）で拒否されること |
+
+<!-- @work-item-id WI-371 -->
+## WI-371 categoryOverrides / allowedCategories enum のテストケース
+
+ストーリー固有テスト設計: `docs/inception/quick-mode/WI-371/unit_test_design.md`（UT-COR-001〜013 / UT-QMC-018〜023 / UT-JE-OV-001〜011 / IT-QMA-001〜003 / IT-OV-001〜003 / IT-SCH-001〜003）
+
+| テストID | 対象 | 観点 | 期待結果 |
+|---------|------|------|---------|
+| UT-COR-001..013 | CategoryOverrideRules | 空生成 / glob 記法（`**` `*` `?` リテラル）/ 複数マッチのリスク優先度解決 / 不正入力 / 凍結 | 解決結果が決定的であること、不正入力は QuickModeConfigError |
+| UT-QMC-018..023 | QuickModeConfig | categoryOverrides の既定と保持 / allowedCategories の enum 検証（未知値・大文字）/ equals | 未知値は QuickModeConfigError、7 値は受理 |
+| UT-JE-OV-001 | QuickModeJudgmentEngine.classify | **回帰固定**: categoryOverrides 未設定時の分類 | 現行の分類結果と完全一致すること |
+| UT-JE-OV-002..007 | QuickModeJudgmentEngine.classify | override 先行評価 / domain・api の降格禁止 / 昇格許可 | DD-1〜DD-4 のとおり分類されること |
+| UT-JE-OV-008..011 | QuickModeJudgmentEngine.judge | override 適用後も NEW_DOMAIN / API_CONTRACT が発火すること | 3 拒否ルールが override 非依存であること |
+| IT-QMA-001..003 | HarnessConfigQuickModeConfigAdapter | config からの categoryOverrides 読み込みと不正 allowedCategories の拒否 | 設定が VO に反映される / 不正時は例外 |
+| IT-OV-001..003 | hook / CLI 経路 | 3 経路での override 一貫性と設定不正時の fail-closed | 全経路で同一分類、設定不正時はブロック |
+| IT-SCH-001..003 | harness-config schema | allowedCategories の enum / categoryOverrides の additionalProperties | 未知値・未知キーは schema 検証エラー |

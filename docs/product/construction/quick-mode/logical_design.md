@@ -1193,3 +1193,33 @@ When an operator intentionally narrows `allowedCategories`, a managed recovery p
 ## WI-060 Impact Note: WI-aware quick-implementor は skill 契約側で扱う
 
 WI-060（H10-06）は `type: fix | chore` を Quick Mode 対象候補、`type: story | issue | refactor` を Full Mode / story-implementor エスカレーション対象とする WI taxonomy を `quick-implementor` スキルに反映する作業である。出荷成果物は `skills/quick-implementor/SKILL.md`（および `.claude/skills/quick-implementor/SKILL.md`）への Quick Mode WI trailer 明記のみで、`scripts/harness/quick-mode/` 配下の Domain/Application/Infrastructure/Presentation いずれにも実装変更は出荷されていない（`Work-Item: WI-060` trailer コミットは inception status 整合のみ）。`QuickModeJudgmentEngine` のファイルカテゴリ判定は不変であり、WI 種別によるスコープ判定・エスカレーション規約はスキル入口契約として扱う（domain_model.md D5 と一致）。本論理設計に新規の構造・API 契約は追加しない。
+
+<!-- @work-item-id WI-371 -->
+## WI-371 分類ルールの config 化（categoryOverrides）と allowedCategories の enum 検証
+
+ストーリー固有論理設計: `docs/inception/quick-mode/WI-371/logical_design.md`
+
+### 追加される構造
+
+| 層 | ファイル | 役割 |
+|----|---------|------|
+| domain | `quick-mode/domain/value-objects/category-override-rules.ts` | glob → ChangeCategory 解決の値オブジェクト（新規） |
+| domain | `quick-mode/domain/value-objects/quick-mode-config.ts` | `categoryOverrides` 保持 / `allowedCategories` enum 検証 |
+| domain | `quick-mode/domain/services/quick-mode-judgment-engine.ts` | `classify(files, config)` の config を実消費し `categorizeFile` へ伝播 |
+| infrastructure | `quick-mode/infrastructure/adapters/harness-config-quick-mode-config-adapter.ts` | `quickMode.categoryOverrides` の読み込み |
+| infrastructure | `config-foundation/infrastructure/schemas/harness-config-v{2,3}.schema.json` | `categoryOverrides` 定義 / `allowedCategories` の enum |
+| infrastructure | `agent-integration/infrastructure/adapters/quick-mode-full-mode-requirement-adapter.ts` | 設定不正時のみ fail-closed |
+
+`classify` / `judge` の公開シグネチャ、Application / Presentation 層、Port 定義、CompositionRoot 配線は変更しない。hook / `check-change-category` CLI / `ci-check --quick` の 3 経路はいずれも `QuickModeConfigPort.getConfig()` の結果を `classify` / `judge` に渡す既存構造を共有しているため、`_config` を消費するだけで override が全経路へ一貫して効く（新規経路を足さないこと自体が一貫性の保証になる）。
+
+### LD-9: `_config` を消費する形での実装
+
+新しい Port / UseCase / 配線を追加せず、既存の `classify(files, config)` をそのまま使う。3 経路の一貫性を壊すリスクを避けるため。
+
+### LD-10: glob 実装を domain 層内に閉じる
+
+repo の `scripts/harness/*/domain/**` は外部 npm パッケージを一切 import していない（node: 組込みと相対 import のみ）。`picomatch` は infrastructure adapter でのみ使用されている。分類判定は domain 層の純粋計算であるため、`agent-integration/domain/value-objects/protected-file-list.ts` と同型の純正規表現実装を採る。brace expansion / negation は非サポートで、必要になった時点で `GlobMatcherPort` を infrastructure に切って注入する。
+
+### LD-11: 設定不正時の hook fail-closed
+
+`QuickModeFullModeRequirementAdapter.check()` は例外を握り潰して `requiresFullMode: false` を返す（WI-333: config 不在時の fail-open）。enum 検証の導入で config の typo が例外になるため、この経路をそのままにすると typo が全書き込み許可に化ける。`QuickModeConfigError`（設定不正）に限り `requiresFullMode: true` へ倒し、それ以外の例外は WI-333 の fail-open を維持する。

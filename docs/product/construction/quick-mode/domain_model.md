@@ -260,3 +260,14 @@ Quick Mode consumes a validator ID catalog that matches validator-system for the
 ## WI-204 config カテゴリ判定の comment-only 例外除外
 
 `QuickModeJudgmentEngine`（domain サービス）は `*.config.json` / `*.config.ts` / `phasegate.config.json` を、Edit payload の差分がコメント・空白のみに見える場合でも `config` カテゴリに分類する（WI-015 の comment-only → `docs` 降格を config ファイルには適用しない）。これは strict 化された `allowedCategories` からの managed recovery（`config:plan --intent quick-mode-relax`）が、`phasegate.config.json` の変更を一貫して `config` として扱い、`MIXED_CHANGES` による Full Mode block guidance を正しく解決できることに依存するため。カテゴリ判定の分類ロジック（§3）における例外規則であり、3拒否ルール（§5）自体は変更しない。
+
+<!-- @work-item-id WI-371 -->
+## WI-371 categoryOverrides とカテゴリ語彙の不変条件
+
+`QuickModeConfig` は `categoryOverrides`（`CategoryOverrideRules` 値オブジェクト）を保持する。`CategoryOverrideRules` は ChangeCategory 7 値をキー、glob パターン列を値とする写像で、`resolve(filePath)` によりパスから override カテゴリを解決する（マッチ 0 件なら `null`、複数マッチならリスク優先度が最大のカテゴリ。JSON のキー列挙順に依存しない）。glob は `**`（`/` を跨ぐ）/ `*`（`/` を跨がない）/ `?`（`/` 以外の 1 文字）のみをサポートし、domain 層の依存規律（外部 npm 依存ゼロ）を守るため純正規表現で実装する。
+
+`categorizeFile` の分類は次の順序に改訂される。override はユーザーの明示宣言として組み込みルールより先に評価するが、組み込み判定が `domain` / `api` のファイルは override で降格できず、リスク優先度の高い方を採る（override は昇格のみ可能）。override 未設定時は組み込み分類と完全に一致する。
+
+`judge()` の 3 拒否ルールのうち NEW_DOMAIN / API_CONTRACT はパスベースのまま維持し、override の影響を受けない。MIXED_CHANGES のみが override 反映後の分類結果を消費する。これにより override の誤設定があっても構造的な高リスク変更は必ず Full Mode に落ちる二重防御が保たれる。
+
+`allowedCategories` には enum 不変条件を追加する（INV-AC-2）。全要素が ChangeCategory 7 値のいずれかでなければ `QuickModeConfigError` で拒否し、大文字小文字の正規化は行わない（分類結果のキーは常に小文字であり、正規化は「効かない設定」を黙認することになるため）。`.phasegate/session.json` の `normalizeAllowedCategories`（WI-348）は config ではなく実行時セッション成果物の旧形式救済であり、本規則の対象外。
