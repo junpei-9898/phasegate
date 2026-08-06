@@ -2,7 +2,7 @@
 id: WI-300
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [config-foundation, world-model, validator-system, harness-api]
 source: internal
 ---

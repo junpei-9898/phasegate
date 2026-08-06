@@ -203,6 +203,8 @@ The five layers are:
 | `relaxedGates`         | `string[]` | `["L2-001", "L3-002", "L3-003", "L3-004", "L4"]` | Validators/layers relaxed by Quick Mode. `L4` means all L4 validators are skipped. |
 | `fullModeRequiredWhen` | `object`   | all flags `true`                        | Conditions that force a Quick Mode change to escalate to the full `/story-implementor` flow. See below. |
 
+The defaults above come from the defense preset declared in `project.preset`; Quick Mode resolves its effective settings through the same preset resolution as the rest of the config (ADR-040). Sub-fields you declare in `phasegate.config.json` replace the preset value for that sub-field only (arrays are replaced wholesale, not merged); sub-fields you omit keep the preset value. All three shipped presets (`minimal` / `standard` / `strict`) currently declare the same Quick Mode values, so switching the defense preset does not change Quick Mode strength today. <!-- @work-item-id WI-377 -->
+
 ##### `fullModeRequiredWhen`
 
 Introduced in ISSUE-006 Story A (v0.63.0) and wired into the pre-tool-use hook by Story B (v0.64.0). Each flag is a hard escalation rule -- when triggered, the change cannot proceed under Quick Mode regardless of the file's category.

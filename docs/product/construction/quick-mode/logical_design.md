@@ -724,12 +724,13 @@ interface QuickModeDecisionContract {
 
 - `node:fs/promises`
 - `node:path`
+- config-foundation の `PresetDefinitionStore` / `PresetResolutionService`
 
 **実装方針**
 
-- `phasegate.config.json` を読み取り、`HarnessConfigV2` 型として JSON パースする
-- `HarnessConfigV2.quickMode` セクションを取得する
-- `quickMode` セクションが存在しない場合はデフォルト値（`allowedCategories: ['bugfix', 'docs', 'test', 'config']`, `maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L3-001']`, `relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4']`）を使用する
+- `phasegate.config.json` を読み取り、source document として JSON パースする
+- `project.preset` に対応する防御プリセット定義と source の `quickMode` を、config-foundation と同一の merge 規則（配列はサブフィールド単位で全置換、未宣言サブフィールドは preset 値を継承）で解決する。preset の `quickMode` 宣言が実効値の所在である。@work-item-id WI-377（ADR-040）
+- `project.preset` が未知・未宣言、または preset 解決が例外を投げる config では raw の `quickMode` に縮退し、未宣言サブフィールドは adapter 内のフォールバック既定値（`allowedCategories: ['bugfix', 'docs', 'test', 'config']`, `maintainedLayers: ['L1', 'L2-002', 'L2-003', 'L2-014', 'L3-001']`, `relaxedGates: ['L2-001', 'L3-002', 'L3-003', 'L3-004', 'L4']`）で補完する。preset 解決の導入によって新たな遮断経路を作らない（ADR-038 §3-1 の fail-open 原則）
 - `QuickModeConfig.create()` に変換して返す
 
 **外部I/O詳細**

@@ -99,6 +99,13 @@ export interface HarnessConfigResolvedDocument {
     allowedCategories: string[];
     maintainedLayers: string[];
     relaxedGates: string[];
+    // WI-377: JSON Schema (v2/v3) は当該キーを許容し preset 解決の deepMerge も
+    // 実行時には保持していたが、型宣言だけが欠けていた。preset 定義側は宣言しないため optional。
+    fullModeRequiredWhen?: {
+      mixedCategories?: boolean;
+      newDomainFile?: boolean;
+      apiContractChange?: boolean;
+    };
   };
   phaseDependencies: {
     preset: PhaseDependenciesPresetId;
