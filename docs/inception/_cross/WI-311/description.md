@@ -2,7 +2,7 @@
 id: WI-311
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [harness-api]
 source: internal
 ---

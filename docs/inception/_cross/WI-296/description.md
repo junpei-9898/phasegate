@@ -2,7 +2,7 @@
 id: WI-296
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model, harness-api]
 source: internal
 ---

@@ -2,7 +2,7 @@
 id: WI-367
 type: story
 severity: medium
-status: drafted
+status: tested
 affects: [ci-governance, harness-api]
 source: GitHub issue #42（テンプレート実体を node_modules 外から取得する正規手段が無い）
 ---

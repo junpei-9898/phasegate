@@ -84,6 +84,17 @@ Unit分割の方針・グルーピングの根拠・不明点を整理し、人�
 
 > **パス注記**: 本スキルが扱う設計文書パス（`docs/inception/...` / `docs/product/units/...`）は既定値であり、consumer が `phasegate.config.json` の `paths` 設定で上書きしている場合はそちらが優先される。
 
+> **テンプレート実体の取得（正本）**: 下の構成ブロックは読み取り用の要約であり、
+> 実体は `templates/unit_design_plan.template.md` にある。
+> node_modules を Read せずに取得・生成するには次を使う:
+>
+> ```bash
+> phasegate templates show unit_design_plan
+> phasegate scaffold-inception --kind unit-design-plan --apply
+> ```
+>
+> `[Answer]` は **人間が記入する**。AI が埋めると承認証跡の偽造になる。
+
 ### 計画ファイルの構成
 
 ```markdown

@@ -2,7 +2,7 @@
 id: WI-291
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model, harness-api]
 source: internal
 ---
@@ -12,6 +12,7 @@ source: internal
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
+WM-11: 全 extractor を統合する `BuildSnapshotUseCase` と read-only `world:inspect` public surface。
 
 ## 背景
 

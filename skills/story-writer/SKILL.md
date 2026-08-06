@@ -45,6 +45,17 @@ If not, halt and ask the user to create the WI first, or offer to run `phasegate
 ### 出力ファイル
 `docs/inception/_shared/story_writer_plan.md`
 
+> **テンプレート実体の取得（正本）**: 下の構成ブロックは読み取り用の要約であり、
+> 実体は `templates/story_writer_plan.template.md` にある。
+> node_modules を Read せずに取得・生成するには次を使う:
+>
+> ```bash
+> phasegate templates show story_writer_plan
+> phasegate scaffold-inception --kind story-writer-plan --apply
+> ```
+>
+> `[Answer]` は **人間が記入する**。AI が埋めると承認証跡の偽造になる。
+
 ### 計画ファイルの構成
 
 ```markdown

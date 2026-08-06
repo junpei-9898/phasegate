@@ -35,6 +35,18 @@ languages: [typescript]
 ### 出力ファイル
 `docs/inception/_shared/product_overview_plan.md`
 
+> **テンプレート実体の取得（正本）**: 下の構成ブロックは読み取り用の要約であり、
+> 実体は `templates/product_overview_plan.template.md` にある。
+> node_modules を Read せずに取得・生成するには次を使う:
+>
+> ```bash
+> phasegate templates show product_overview_plan          # 本文を stdout に出力
+> phasegate scaffold-inception --kind product-overview-plan --apply  # 実ファイルを生成
+> ```
+>
+> scaffold した文書は無編集で Level-1 フェーズゲート（`interactive` モード）を通る。
+> `[Answer]` は **人間が記入する**。AI が埋めると承認証跡の偽造になる。
+
 ### 計画ファイルの構成
 
 ```markdown
@@ -92,6 +104,13 @@ languages: [typescript]
 | 種別 | 配置先 |
 |------|--------|
 | 成果物 | `docs/product/product_overview.md` |
+
+> **テンプレート実体の取得（正本）**: 実体は `templates/product_overview.template.md` にある。
+>
+> ```bash
+> phasegate templates show product_overview
+> phasegate scaffold-inception --kind product-overview --apply
+> ```
 
 ### product_overview.md の構成
 

@@ -1,21 +1,23 @@
 // @layer test
-import { describe, it, vi, expect, beforeEach } from 'vitest';
-import { target, context } from '../../helpers/test-helpers.js';
+// @unit harness-api
+// @story H09-02
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  ValidatorSystemExecutionAdapter,
   type IValidatorSystemStub,
-} from '../../../harness-api/infrastructure/adapters/validator-system-execution-adapter.js';
+  ValidatorSystemExecutionAdapter,
+} from "../../../harness-api/infrastructure/adapters/validator-system-execution-adapter.js";
+import { context, target } from "../../helpers/test-helpers.js";
 
-target('ValidatorSystemExecutionAdapter', () => {
+target("ValidatorSystemExecutionAdapter", () => {
   // ─── IT-Adapter-Validator-001 ───
-  describe('runL3Validators: スタブが通過チェック項目を返す場合', () => {
-    context('stubがValidatorCheckItem[]を返す場合', () => {
-      it('そのまま転送されてValidatorCheckItem[]が返される', async () => {
+  describe("runL3Validators: スタブが通過チェック項目を返す場合", () => {
+    context("stubがValidatorCheckItem[]を返す場合", () => {
+      it("そのまま転送されてValidatorCheckItem[]が返される", async () => {
         // Arrange
         const stub: IValidatorSystemStub = {
           runL3Validators: vi.fn().mockResolvedValue([
-            { validatorId: 'L3-001', passed: true, errors: [] },
-            { validatorId: 'L3-002', passed: true, errors: [] },
+            { validatorId: "L3-001", passed: true, errors: [] },
+            { validatorId: "L3-002", passed: true, errors: [] },
           ]),
           runAllValidators: vi.fn(),
           runDriftDetection: vi.fn(),
@@ -27,16 +29,16 @@ target('ValidatorSystemExecutionAdapter', () => {
 
         // Assert
         expect(actual).toHaveLength(2);
-        expect(actual[0].validatorId).toBe('L3-001');
+        expect(actual[0].validatorId).toBe("L3-001");
         expect(actual[0].passed).toBe(true);
       });
     });
   });
 
   // ─── IT-Adapter-Validator-002 ───
-  describe('runL3Validators: スタブが空配列を返す場合', () => {
-    context('stubが[]を返す場合', () => {
-      it('空配列が返される', async () => {
+  describe("runL3Validators: スタブが空配列を返す場合", () => {
+    context("stubが[]を返す場合", () => {
+      it("空配列が返される", async () => {
         // Arrange
         const stub: IValidatorSystemStub = {
           runL3Validators: vi.fn().mockResolvedValue([]),
@@ -55,15 +57,19 @@ target('ValidatorSystemExecutionAdapter', () => {
   });
 
   // ─── IT-Adapter-Validator-003 ───
-  describe('runAllValidators: スタブが複数バリデータ結果を返す場合', () => {
-    context('stubがValidatorCheckItem[]を返す場合', () => {
-      it('全バリデータ結果が返される', async () => {
+  describe("runAllValidators: スタブが複数バリデータ結果を返す場合", () => {
+    context("stubがValidatorCheckItem[]を返す場合", () => {
+      it("全バリデータ結果が返される", async () => {
         // Arrange
         const stub: IValidatorSystemStub = {
           runL3Validators: vi.fn(),
           runAllValidators: vi.fn().mockResolvedValue([
-            { validatorId: 'L1-001', passed: true, errors: [] },
-            { validatorId: 'L3-001', passed: false, errors: [{ code: 'E001', severity: 'error', message: 'test error' }] },
+            { validatorId: "L1-001", passed: true, errors: [] },
+            {
+              validatorId: "L3-001",
+              passed: false,
+              errors: [{ code: "E001", severity: "error", message: "test error" }],
+            },
           ]),
           runDriftDetection: vi.fn(),
         };
@@ -81,19 +87,19 @@ target('ValidatorSystemExecutionAdapter', () => {
   });
 
   // ─── IT-Adapter-Validator-004 ───
-  describe('runDriftDetection: スタブがDriftItemを返す場合', () => {
-    context('stubが1件のDriftItemを返す場合', () => {
-      it('DriftItem[]が返される', async () => {
+  describe("runDriftDetection: スタブがDriftItemを返す場合", () => {
+    context("stubが1件のDriftItemを返す場合", () => {
+      it("DriftItem[]が返される", async () => {
         // Arrange
         const stub: IValidatorSystemStub = {
           runL3Validators: vi.fn(),
           runAllValidators: vi.fn(),
           runDriftDetection: vi.fn().mockResolvedValue([
             {
-              direction: 'design-to-code',
-              unit: 'harness-api',
-              element: 'CliCommand',
-              recommendation: 'CommandRegistryへの登録を確認',
+              direction: "design-to-code",
+              unit: "harness-api",
+              element: "CliCommand",
+              recommendation: "CommandRegistryへの登録を確認",
             },
           ]),
         };
@@ -104,18 +110,18 @@ target('ValidatorSystemExecutionAdapter', () => {
 
         // Assert
         expect(actual).toHaveLength(1);
-        expect(actual[0].unit).toBe('harness-api');
+        expect(actual[0].unit).toBe("harness-api");
       });
     });
   });
 
   // ─── IT-Adapter-Validator-005 ───
-  describe('runL3Validators: スタブがエラーをスローした場合、エラーを含むチェック項目を返すこと', () => {
-    context('stubがErrorをスローする場合', () => {
-      it('validatorId=L3-error・passed=falseのValidatorCheckItemが返される（例外は伝播しない）', async () => {
+  describe("runL3Validators: スタブがエラーをスローした場合、エラーを含むチェック項目を返すこと", () => {
+    context("stubがErrorをスローする場合", () => {
+      it("validatorId=L3-error・passed=falseのValidatorCheckItemが返される（例外は伝播しない）", async () => {
         // Arrange
         const stub: IValidatorSystemStub = {
-          runL3Validators: vi.fn().mockRejectedValue(new Error('network failure')),
+          runL3Validators: vi.fn().mockRejectedValue(new Error("network failure")),
           runAllValidators: vi.fn(),
           runDriftDetection: vi.fn(),
         };
@@ -127,15 +133,15 @@ target('ValidatorSystemExecutionAdapter', () => {
         // Assert
         expect(actual).toHaveLength(1);
         expect(actual[0]?.passed).toBe(false);
-        expect(actual[0]?.errors?.[0]?.message).toContain('network failure');
+        expect(actual[0]?.errors?.[0]?.message).toContain("network failure");
       });
     });
   });
 
   // ─── IT-Adapter-Validator-006 ───
-  describe('スタブ未指定（デフォルト）の場合、実際のvalidator-systemを呼び出すこと', () => {
-    context('コンストラクタ引数なしで生成した場合', () => {
-      it('runL3Validators・runAllValidatorsが実バリデーター結果を返し、runDriftDetectionが配列を返す', async () => {
+  describe("スタブ未指定（デフォルト）の場合、実際のvalidator-systemを呼び出すこと", () => {
+    context("コンストラクタ引数なしで生成した場合", () => {
+      it("runL3Validators・runAllValidatorsが実バリデーター結果を返し、runDriftDetectionが配列を返す", async () => {
         // Arrange
         const adapter = new ValidatorSystemExecutionAdapter();
 
@@ -150,19 +156,19 @@ target('ValidatorSystemExecutionAdapter', () => {
         expect(Array.isArray(driftResult)).toBe(true);
         // 実validator-systemはL3-001〜L3-004の結果を返す
         expect(l3Result.length).toBeGreaterThan(0);
-      });
+        // WI-367: 実バリデータをリポジトリ全体に 3 回走らせるため、既定 5s では
+        // ソースファイルが増えるたびに境界を割る。IT-Adapter-Validator-007 と同じく明示 timeout を置く。
+      }, 60000);
     });
   });
 
   // ─── IT-Adapter-Validator-007 (ISSUE-005 P1-5) ───
-  describe('runDriftDetectionがL4-001と同じ検出結果を返すこと', () => {
-    context('phasegate:detect-drift 経路 と L4-001 DriftDetectionService を直接呼ぶ経路を比較', () => {
-      it('両者の件数が一致する', async () => {
+  describe("runDriftDetectionがL4-001と同じ検出結果を返すこと", () => {
+    context("phasegate:detect-drift 経路 と L4-001 DriftDetectionService を直接呼ぶ経路を比較", () => {
+      it("両者の件数が一致する", async () => {
         // Arrange
         const adapter = new ValidatorSystemExecutionAdapter();
-        const { createValidatorSystemModule } = await import(
-          '../../../validator-system/composition-root.js'
-        );
+        const { createValidatorSystemModule } = await import("../../../validator-system/composition-root.js");
         const mod = createValidatorSystemModule();
 
         // Act

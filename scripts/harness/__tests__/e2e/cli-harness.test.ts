@@ -241,6 +241,81 @@ describe('harness CLI E2E', () => {
 
       expect(actual.stderr).not.toContain('Unknown command: ci:check-repetition');
     });
+
+    // WI-367: node_modules を Read せずにテンプレート実体へ到達する正規経路
+    it('templates list は同梱テンプレート名を exit 0 で列挙する', () => {
+      const actual = run('templates', 'list');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('logical_design');
+      expect(actual.stdout).toContain('product_overview_plan');
+      expect(actual.stdout).toContain('phasegate templates show <name>');
+    });
+
+    it('templates show <name> はテンプレート本文を stdout に出力する', () => {
+      const actual = run('templates', 'show', 'product_overview_plan');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('# プロダクト設計計画');
+      expect(actual.stdout).toContain('QA（不明点・確認事項）');
+    });
+
+    it('templates show にパスを渡すと exit 2 で内容を出力しない', () => {
+      const actual = run('templates', 'show', '../../package.json');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stdout).not.toContain('"name"');
+      expect(actual.stderr).toContain('Invalid template name');
+    });
+
+    it('templates show の未知名は exit 2 で利用可能な name を案内する', () => {
+      const actual = run('templates', 'show', 'nonexistent');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain('Template not found: nonexistent');
+      expect(actual.stderr).toContain('logical_design');
+    });
+
+    it('templates の未知サブコマンドは exit 2 で usage を表示する', () => {
+      const actual = run('templates', 'bogus');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain('Usage: phasegate templates <list|show <name>>');
+    });
+
+    it('templates --help は list/show の契約を表示する', () => {
+      const actual = run('templates', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('templates <list|show <name>>');
+      expect(actual.stdout).toContain('Paths are rejected');
+    });
+
+    // WI-368: Level-1 ゲートを塞ぐ plan 文書の scaffold 経路
+    it('scaffold-inception --help は dry-run/apply contract と doc-kind を表示する', () => {
+      const actual = run('scaffold-inception', '--help');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('--dry-run');
+      expect(actual.stdout).toContain('--apply');
+      expect(actual.stdout).toContain('product-overview-plan');
+    });
+
+    it('scaffold-inception は既定で dry-run preview を返す', () => {
+      const actual = run('scaffold-inception', '--kind', 'product-overview-plan');
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain('dry-run');
+      expect(actual.stdout).toContain('product_overview_plan.md');
+    });
+
+    it('scaffold-inception の未知 kind は exit 2 で許容値を案内する', () => {
+      const actual = run('scaffold-inception', '--kind', 'logical');
+
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stdout).toContain('未知の doc-kind');
+      expect(actual.stdout).toContain('unit-design-plan');
+    });
   });
 
   describe('skill-quality コマンド群', () => {

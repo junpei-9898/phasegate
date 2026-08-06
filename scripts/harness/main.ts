@@ -45,7 +45,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
-import { buildCiGovernance } from "./ci-governance/composition-root.js";
+import { buildCiGovernance, type CiGovernanceDocPaths } from "./ci-governance/composition-root.js";
 import { toPhaseConfigSection } from "./config-foundation/application/mappers/phase-config-section-mapper.js";
 import { toValidatorSystemConfig } from "./config-foundation/application/mappers/validator-system-config-mapper.js";
 import { toWorldModelConfig } from "./config-foundation/application/mappers/world-model-config-mapper.js";
@@ -118,6 +118,19 @@ function getProjectRoot(): string {
 
 function toTraceabilityModelOptions(resolvedConfig: HarnessConfigV2 | undefined) {
   return resolvedConfig ? { pathRoots: { designDocsRoot: resolvedConfig.paths.designDocs } } : undefined;
+}
+
+/**
+ * WI-369: ci-governance の scaffold 系アダプタに解決済み paths を渡す。
+ * これが無いと `scaffold-design` の書き込み先が `docs/product/construction` に
+ * 固定され、`paths.designDocs` を移設した PJ で scaffold 先とゲート検査先がズレる。
+ */
+function toCiGovernanceDocPaths(resolvedConfig: HarnessConfigV2 | undefined): CiGovernanceDocPaths {
+  if (!resolvedConfig) return {};
+  return {
+    designDocs: resolvedConfig.paths.designDocs,
+    inceptionDocs: resolvedConfig.paths.inceptionDocs,
+  };
 }
 
 interface PackageJsonDocument {
@@ -263,6 +276,7 @@ Gate semantics:
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
   scaffold-design              Scaffold a design doc (--unit <id>, --phase <logical|domain|uiux|unit-test|it-test>, --dry-run|--apply, --force, --json)
+  scaffold-inception           Scaffold an inception/product doc (--kind <product-overview-plan|product-overview|story-writer-plan|story-mapping-plan|unit-design-plan>, --dry-run|--apply, --force, --json)
   session begin                Start a Full Mode session (--mode full, --unit, --work-item, --reason, --duration)
   session end                  End a Full Mode session (--work-item)
 
@@ -293,6 +307,10 @@ Gate semantics:
 Skills:
   skills list                  List all available skills
   skills info <name>           Show skill details (SKILL.md)
+
+Templates:
+  templates list               List bundled document templates
+  templates show <name>        Print a bundled template to stdout
 
 Options:
   --help                       Show this help message
@@ -900,6 +918,33 @@ Options:
   --force                    Overwrite an existing target when applying.
   --json                     Output machine-readable JSON.
   --help, -h                 Show this help`,
+  "scaffold-inception": `Usage: phasegate scaffold-inception --kind <doc-kind> [options]
+
+Scaffold an inception plan document or the product overview.
+Targets follow paths.inceptionDocs / paths.designDocs from phasegate.config.json.
+
+Options:
+  --kind <doc-kind>          product-overview-plan, product-overview, story-writer-plan,
+                             story-mapping-plan, or unit-design-plan.
+  --dry-run                  Preview target and template without writing (default).
+  --apply                    Write the scaffold.
+  --force                    Overwrite an existing target when applying.
+  --json                     Output machine-readable JSON.
+  --help, -h                 Show this help`,
+  templates: `Usage: phasegate templates <list|show <name>>
+
+Print bundled document templates to stdout, without reading node_modules.
+
+Subcommands:
+  list                       List available template names.
+  show <name>                Print the template body to stdout.
+
+Options:
+  --json                     Output machine-readable JSON (list only).
+  --help, -h                 Show this help
+
+Notes:
+  <name> is matched against the bundled template catalog. Paths are rejected.`,
   session: `Usage: phasegate session <begin|end> [options]
 
 Manage hook-visible Full Mode sessions.
@@ -3244,7 +3289,7 @@ Examples:
           console.error(flagError);
           process.exit(2);
         }
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const presetId = parseFlag(args, "--preset") ?? "standard";
         const templateType = parseFlag(args, "--type") ?? "aidlc-gate";
         const render = hasFlag(args, "--render");
@@ -3256,7 +3301,7 @@ Examples:
       }
 
       case "ci:migrate-agents-md": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const validateOnly = hasFlag(args, "--validate-only");
         const format = json ? "json" : "human";
@@ -3267,7 +3312,7 @@ Examples:
       }
 
       case "ci:auto-refresh-agent-context": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const apply = hasFlag(args, "--apply");
         const format = json ? "json" : "human";
@@ -3278,7 +3323,7 @@ Examples:
       }
 
       case "refresh-claude-md": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const apply = hasFlag(args, "--apply");
         const format = json ? "json" : "human";
@@ -3289,7 +3334,7 @@ Examples:
       }
 
       case "p2:check-agent-context": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const thresholdRaw = parseFlag(args, "--threshold-days");
         const thresholdDays = thresholdRaw === undefined ? undefined : Number(thresholdRaw);
         const format = json ? "json" : "human";
@@ -3300,7 +3345,7 @@ Examples:
       }
 
       case "ci:check-repetition": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const errorCode = parseFlag(args, "--code") ?? "";
         const reset = hasFlag(args, "--reset");
         const format = json ? "json" : "human";
@@ -3311,7 +3356,7 @@ Examples:
       }
 
       case "baseline": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const force = hasFlag(args, "--force");
         const pathsFlag = parseFlag(args, "--paths");
@@ -3334,7 +3379,7 @@ Examples:
       }
 
       case "scaffold-design": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const unit = parseFlag(args, "--unit") ?? "";
         const phase = parseFlag(args, "--phase") ?? "";
         const dryRun = hasFlag(args, "--dry-run");
@@ -3354,8 +3399,50 @@ Examples:
         return;
       }
 
+      case "scaffold-inception": {
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const kind = parseFlag(args, "--kind") ?? "";
+        const dryRun = hasFlag(args, "--dry-run");
+        const apply = hasFlag(args, "--apply");
+        const force = hasFlag(args, "--force");
+        const format = json ? "json" : "human";
+        const result = await mod.scaffoldInceptionHandler.handle({
+          kind,
+          dryRun,
+          apply,
+          force,
+          format,
+        });
+        console.log(result.output);
+        await finishCliExit(result.exitCode);
+        return;
+      }
+
+      case "templates": {
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const subCommand = args[1];
+        const emit = async (result: { exitCode: number; output: string; errorOutput: string }): Promise<void> => {
+          if (result.output.length > 0) console.log(result.output);
+          if (result.errorOutput.length > 0) console.error(result.errorOutput);
+          await finishCliExit(result.exitCode);
+        };
+
+        if (subCommand === "list") {
+          await emit(await mod.templatesHandler.list({ format: json ? "json" : "human" }));
+          return;
+        }
+
+        if (subCommand === "show") {
+          await emit(await mod.templatesHandler.show({ name: args[2] }));
+          return;
+        }
+
+        await emit(mod.templatesHandler.usage());
+        return;
+      }
+
       case "integrity:pin": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.pin({ dryRun, format });
@@ -3365,7 +3452,7 @@ Examples:
       }
 
       case "integrity:verify": {
-        const mod = buildCiGovernance(rootDir, harnessRoot);
+        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.verify({ format });
         console.log(result.output);

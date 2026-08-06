@@ -2,7 +2,7 @@
 id: WI-368
 type: story
 severity: medium
-status: drafted
+status: tested
 affects: [ci-governance, harness-api]
 source: GitHub issue #42（inception 系ドキュメントにテンプレート実体が無い）
 ---

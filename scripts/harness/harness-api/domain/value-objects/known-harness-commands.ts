@@ -1,6 +1,6 @@
 // @unit harness-api
 // @layer domain
-// @work-item-id WI-250, WI-291, WI-296
+// @work-item-id WI-250, WI-291, WI-296, WI-367, WI-368
 // known-harness-commands.ts — CLI 実サーフェスの canonical 既知コマンド一覧
 //
 // main.ts の CLI dispatch（`switch (command)`）が受理する全トップレベルコマンド名の
@@ -70,6 +70,7 @@ export const KNOWN_HARNESS_COMMANDS: readonly string[] = Object.freeze([
   "regression:run-k14-k15",
   "render-errors",
   "scaffold-design",
+  "scaffold-inception",
   "scaffold-wi",
   "session",
   "setup:agent",
@@ -80,6 +81,7 @@ export const KNOWN_HARNESS_COMMANDS: readonly string[] = Object.freeze([
   "skill:validate-structure",
   "skills",
   "status",
+  "templates",
   "uninstall",
   "update-skills",
   "validate",

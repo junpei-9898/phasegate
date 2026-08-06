@@ -1993,7 +1993,6 @@ harness-api は`world:inspect`、`world:pin`、`world:derive`をtop-level canoni
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 WM-11ではADR-037で予約した三commandのうち`world:inspect`だけをmain help / subcommand help / dispatch / `KNOWN_HARNESS_COMMANDS`へ同時登録する。mainはconfig-foundationの`LoadResolvedConfigUseCase`を通ったplain resolved inputをworld-model composition rootへ渡し、handler resultのstdout / stderr / exit codeをそのままprocess境界へ写像する。
 
 invalid configはcanonical defaultsへfallbackせずworld handlerのexit 2とする。`world:pin` / `world:derive`のcase、help、known-command entryはWM-15まで作らない。harness-apiはfact抽出、Snapshot assembly、hard diagnostic分類を実装しない。
@@ -2003,7 +2002,6 @@ invalid configはcanonical defaultsへfallbackせずworld handlerのexit 2とす
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / deriveを同時追加する。explicit `world:*`はconfig不在でもWorld canonical defaultsを使い、configが存在してinvalidならhandler failure adapter経由でexit 2にする。mainはhandlerのstdout / stderr / exit codeをそのままprocessへ写像し、mutation / policy判断を持たない。
 
 ## WI-300 Dedicated World mapper wiring
@@ -2022,7 +2020,6 @@ main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / derive
 <!-- @work-item-id WI-306 -->
 
 @story-id H17-18
-
 `phasegate:attest` dispatchはresolved World configでworld-modelを構築し、public `WorldSnapshotRootFacade`のplain root providerをattestation moduleへ注入する。Unit間のcompositionはmain境界だけに置き、attestationからworld-modelへのimportを禁止する。verify dispatchは保存document自身のversion admissionを使い、current World rootを再導出して過去evidenceを否定しない。
 
 ## WI-307 World production CLI stability
@@ -2030,7 +2027,6 @@ main help / subcommand help / dispatchと`KNOWN_HARNESS_COMMANDS`へpin / derive
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 CI / regression consumerは`KNOWN_HARNESS_COMMANDS`とmain dispatchで公開済みの`world:inspect` / `world:pin` / `world:derive`をcanonical command setとして扱う。全JSON modeは`phasegate-world-cli/v1` envelopeとexit 0 / 1 / 2を維持する。WM-24はcommandやflagを追加せず、existing transport contractをproduction regressionへ昇格する。
 
 ### ci-check warning policy projection
@@ -2054,3 +2050,24 @@ large stdoutのprocess E2Eはself-repoのgenerated matrixやadoption baseline件
 <!-- @work-item-id WI-311 -->
 
 real adapter integrationはprocess cwdのself-repoをtest fixtureとして扱わず、明示root配下のminimal tracked corpusを使用する。CI-facing command E2Eはcoverage / requirement matrix未生成のCI test順序をPASS前提にせず、検査対象外layerをfixture configで明示無効化する。production commandのfail-closed defaultとself-repo dogfoodは変更しない。
+
+## WI-367 / WI-368 CLI surface: templates と scaffold-inception
+
+<!-- @work-item-id WI-367, WI-368 -->
+
+公開 CLI サーフェスに 2 コマンドを追加する。実装は ci-governance が所有し、
+harness-api は dispatch と canonical コマンド一覧のみを持つ。
+
+- `templates <list|show <name>>`（WI-367）— 同梱テンプレートを stdout に出す。
+  `skills <list|info>` と同型で、consumer が `node_modules` を Read できない
+  sandbox でもテンプレート実体に到達できる正規経路。`show` の `<name>` は
+  catalog（`templates/` の readdir 結果）との完全一致照合のみで解決し、
+  ユーザー入力文字列は path 構成要素にならない。
+- `scaffold-inception --kind <doc-kind>`（WI-368）— Level-1 フェーズゲートが
+  要求する inception plan 文書と `product_overview.md` を生成する。
+  `--dry-run`（既定）/ `--apply` / `--force` / `--json` の exit code 契約は
+  `scaffold-design` と同一。
+
+`KNOWN_HARNESS_COMMANDS` へは `scaffold-inception` / `templates` を
+アルファベット順を保って追加する。main.ts の `case` ラベル集合との集合一致は
+conformance テストが強制するため、片方だけの更新は fail する。

@@ -127,7 +127,7 @@ npx phasegate baseline --paths "scripts/harness/**/*.ts,src/**/*.ts"
 
 | Command | Options | Description |
 |---|---|---|
-| `scaffold-design` | `--unit <id>` `--phase <logical\|domain\|uiux\|unit-test\|it-test>` `--force` `--json` | `templates/*.template.md` を読み取り `{{unit}}` を `--unit` 値で置換して `docs/product/construction/{unit}/*.md` を生成する。既存ファイルは `--force` なしでは保護（exit 2）。|
+| `scaffold-design` | `--unit <id>` `--phase <logical\|domain\|uiux\|unit-test\|it-test>` `--force` `--json` | `templates/*.template.md` を読み取り `{{unit}}` を `--unit` 値で置換して `{paths.designDocs}/{unit}/*.md` を生成する。既存ファイルは `--force` なしでは保護（exit 2）。|
 
 ### `scaffold-design` の使い方
 
@@ -146,18 +146,100 @@ npx phasegate scaffold-design --unit harness-api --phase logical --force
 npx phasegate scaffold-design --unit harness-api --phase logical --json
 ```
 
-生成先と対応テンプレ:
+生成先と対応テンプレ（生成先の `docs/product/construction` 部分は
+`phasegate.config.json` の `paths.designDocs` に追従する。WI-369 以前は
+ハードコードされており、`paths.designDocs` を移設した PJ では scaffold 先と
+フェーズゲートの検査先がズレていた）:
 
 | `--phase` | 生成先 | テンプレ |
 |---|---|---|
-| `logical` | `docs/product/construction/{unit}/logical_design.md` | `templates/logical_design.template.md` |
-| `domain` | `docs/product/construction/{unit}/domain_model.md` | `templates/domain_model.template.md` |
-| `uiux` | `docs/product/construction/{unit}/uiux_design.md` | `templates/uiux_design.template.md` |
-| `unit-test` | `docs/product/construction/{unit}/unit_test_design.md` | `templates/unit_test_design.template.md` |
-| `it-test` | `docs/product/construction/{unit}/it_test_design.md` | `templates/it_test_design.template.md` |
+| `logical` | `{paths.designDocs}/{unit}/logical_design.md` | `templates/logical_design.template.md` |
+| `domain` | `{paths.designDocs}/{unit}/domain_model.md` | `templates/domain_model.template.md` |
+| `uiux` | `{paths.designDocs}/{unit}/uiux_design.md` | `templates/uiux_design.template.md` |
+| `unit-test` | `{paths.designDocs}/{unit}/unit_test_design.md` | `templates/unit_test_design.template.md` |
+| `it-test` | `{paths.designDocs}/{unit}/it_test_design.md` | `templates/it_test_design.template.md` |
 
 exit code は `0` = 生成成功 / 上書き成功、`2` = 既存ファイルあり（`--force` 無）
 または引数不正。
+
+---
+
+## Scaffold Inception (Phase Gate Level-1 Templates)
+
+| Command | Options | Description |
+|---|---|---|
+| `scaffold-inception` | `--kind <doc-kind>` `--dry-run`（既定）/ `--apply` `--force` `--json` | L2 の Level-1 フェーズゲートが要求する inception plan 文書と `product_overview.md` の雛形を生成する。既存ファイルは `--force` なしでは保護（exit 2）。|
+
+WI-368（GitHub issue #42）で導入。`scaffold-design` は `--unit` を必須とする
+construction 文書専用で、unit 軸を持たない `_shared/*_plan.md` や product 直下の
+文書を表現できないため、別コマンドとして分離している。
+
+```bash
+# 何がどこに生成されるかを確認（既定は dry-run）
+npx phasegate scaffold-inception --kind product-overview-plan
+
+# 実際に書き込む
+npx phasegate scaffold-inception --kind product-overview-plan --apply
+npx phasegate scaffold-inception --kind product-overview --apply
+
+# 既存ファイルを意図的に上書き
+npx phasegate scaffold-inception --kind product-overview-plan --apply --force
+```
+
+生成先と対応テンプレ:
+
+| `--kind` | 生成先 | テンプレ |
+|---|---|---|
+| `product-overview-plan` | `{paths.inceptionDocs}/_shared/product_overview_plan.md` | `templates/product_overview_plan.template.md` |
+| `product-overview` | `{paths.designDocs}/../product_overview.md` | `templates/product_overview.template.md` |
+| `story-writer-plan` | `{paths.inceptionDocs}/_shared/story_writer_plan.md` | `templates/story_writer_plan.template.md` |
+| `story-mapping-plan` | `{paths.inceptionDocs}/_shared/story_mapping_plan.md` | `templates/story_mapping_plan.template.md` |
+| `unit-design-plan` | `{paths.inceptionDocs}/_shared/unit_design_plan.md` | `templates/unit_design_plan.template.md` |
+
+### テンプレート = ゲート合格保証
+
+plan テンプレートは QA セクション見出しを必ず含むため、`--apply` の生成物は
+**無編集のまま** `planningMode: "interactive"`（既定）の Level-1 ゲートを通る。
+この性質はラウンドトリップテストで機械的に検証されている。
+
+`planningMode: "embedded-qa"` では `[Question]` と `[Answer]` の個数一致に加え
+`[Answer]` に本文があることが要求されるため、生成直後の雛形は**通らない**。
+これは意図した挙動であり、テンプレートが人間の承認証跡を偽造しないための境界。
+
+### スコープ外の doc-kind
+
+`user_stories.md` / `user_story_mapping.md` / `units/{unit}_unit.md` /
+`units/integration_contract.md` と、unit スコープの plan 文書
+（`{unit}/domain_model_plan.md` 等、Level-2 ゲート）は未収録。段階投入とする。
+
+---
+
+## Templates (Bundled Template Access)
+
+| Command | Options | Description |
+|---|---|---|
+| `templates list` | `--json` | 同梱テンプレート名を一覧表示する。|
+| `templates show <name>` | — | テンプレート本文を stdout に出力する。|
+
+WI-367（GitHub issue #42）で導入。consumer プロジェクトでは phasegate は
+`node_modules/phasegate/templates/` に入り、エージェントの sandbox が
+`node_modules` の Read を deny していると **テンプレート実体に到達できない**。
+`skills list` / `skills info` と同型の stdout 経路でこれを解消する。
+
+```bash
+npx phasegate templates list
+npx phasegate templates show product_overview_plan
+
+# 生成物としてそのまま保存できる（本文以外を混ぜない）
+npx phasegate templates show logical_design > docs/product/construction/foo/logical_design.md
+```
+
+`<name>` は同梱テンプレートの catalog（`templates/` の readdir 結果）と
+**完全一致照合**する。ユーザー入力文字列がパス構成要素になる経路を持たないため、
+`../../package.json` のようなパスは exit 2 で拒否され内容も出力されない。
+
+exit code は `0` = 成功、`2` = name 未指定 / 不正な name / 未知の name /
+未知のサブコマンド。
 
 ---
 

@@ -2,7 +2,7 @@
 id: WI-310
 type: fix
 severity: high
-status: drafted
+status: reflected
 affects: [harness-api]
 source: internal
 ---
