@@ -11,7 +11,7 @@ target("CategoryOverrideRules", () => {
   target("create", () => {
     context("undefined が渡された場合", () => {
       // UT-COR-001
-      it("空のルールが生成されること", () => {
+      it("undefined から空のルールが生成されること", () => {
         // Arrange
         const raw = undefined;
         // Act
@@ -23,7 +23,7 @@ target("CategoryOverrideRules", () => {
 
     context("空オブジェクトが渡された場合", () => {
       // UT-COR-002
-      it("空のルールが生成されること", () => {
+      it("空オブジェクトから空のルールが生成されること", () => {
         // Arrange
         const raw = {};
         // Act
@@ -35,7 +35,7 @@ target("CategoryOverrideRules", () => {
 
     context("未知のカテゴリキーが含まれる場合", () => {
       // UT-COR-010
-      it("QuickModeConfigError が発生すること", () => {
+      it("未知のカテゴリキーで QuickModeConfigError が発生すること", () => {
         // Arrange
         const raw = { chore: ["results/**"] };
         // Act
@@ -48,7 +48,7 @@ target("CategoryOverrideRules", () => {
 
     context("値が配列でない場合", () => {
       // UT-COR-011
-      it("QuickModeConfigError が発生すること", () => {
+      it("値が配列でない場合に QuickModeConfigError が発生すること", () => {
         // Arrange
         const raw = { docs: "results/**" } as unknown as Record<string, string[]>;
         // Act
@@ -60,7 +60,7 @@ target("CategoryOverrideRules", () => {
 
     context("空文字列パターンが含まれる場合", () => {
       // UT-COR-012
-      it("QuickModeConfigError が発生すること", () => {
+      it("空文字列パターンで QuickModeConfigError が発生すること", () => {
         // Arrange
         const raw = { docs: ["results/**", ""] };
         // Act

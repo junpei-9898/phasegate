@@ -492,11 +492,13 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual[0]).toEqual(
-          expect.objectContaining({
-            errorCode: "L1-001",
-            path: expect.stringContaining("/quickMode/categoryOverrides"),
-          }),
+        expect(actual).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: expect.stringContaining("/quickMode/categoryOverrides"),
+            }),
+          ]),
         );
       });
     });
@@ -518,11 +520,13 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual[0]).toEqual(
-          expect.objectContaining({
-            errorCode: "L1-001",
-            path: expect.stringContaining("/quickMode/allowedCategories"),
-          }),
+        expect(actual).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: expect.stringContaining("/quickMode/allowedCategories"),
+            }),
+          ]),
         );
       });
 
@@ -536,7 +540,14 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: expect.stringContaining("/quickMode/allowedCategories"),
+            }),
+          ]),
+        );
       });
     });
 
@@ -555,7 +566,14 @@ target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
         const actual = sut.validate(document);
 
         // Assert
-        expect(actual.length).toBeGreaterThan(0);
+        expect(actual).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              errorCode: "L1-001",
+              path: expect.stringContaining("/quickMode/categoryOverrides/docs"),
+            }),
+          ]),
+        );
       });
     });
   });

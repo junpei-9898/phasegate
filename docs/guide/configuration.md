@@ -255,6 +255,9 @@ Keys are the seven `ChangeCategory` values; values are lists of globs matched ag
 
 Overrides apply identically to the pre-tool-use hook, `check-change-category`, and `ci-check --quick`. Leaving `categoryOverrides` unset reproduces the pre-existing classification exactly. See [Quick vs Full Mode](quick-vs-full-mode.md#overriding-the-table-for-project-specific-paths) for worked reasoning.
 
+<!-- @work-item-id WI-380 -->
+`categoryOverrides` goes through the same preset resolution as the other Quick Mode sub-fields (ADR-040), and merges one level deeper than they do: the merge unit is the **category key**, not the whole object. None of the three shipped presets declares `categoryOverrides`, so today whatever you write in `phasegate.config.json` is the effective value verbatim. If a preset does declare it, a category you also declare replaces that category's glob list wholesale, while categories you leave out keep the preset's globs.
+
 <!-- @work-item-id WI-159 -->
 Quick Mode uses exact validator IDs for `maintainedLayers`. To keep all L2 validators active, list `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015` explicitly. The default keeps metadata, test-quality, work-item status, and security checks active while skipping phase-gate, CLI E2E coverage, contract traceability coverage, performance, coverage, nyquist, and L4 scheduled validators.
 

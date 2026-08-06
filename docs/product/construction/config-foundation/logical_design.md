@@ -1492,3 +1492,9 @@ v2 / v3 schemaと三presetへ同じ`world` contractを追加する。全preset�
 <!-- @work-item-id WI-301 -->
 
 `toValidatorSystemConfig()`と`HarnessConfigValidatorConfigAdapter`はresolved `world.enabled`をautomatic L2 selectionへ反映する。trueの場合だけ`L2-017`をforce-includeし、false / absentではforce-excludeしてdefinitionを明示skipさせる。schema / preset defaultは変更せず、self-repo configもfalseのままとする。L3-008はWM-20まで追加しない。
+
+## WI-380 quickMode.categoryOverrides の merge 単位
+
+<!-- @work-item-id WI-380 -->
+
+WI-372 が導入した `quickMode.categoryOverrides` は、WI-377（ADR-040）で adapter が preset 解決経由になった結果 `PresetResolutionService.resolve()` の `deepMerge` を通過する。`deepMerge` は preset 側に存在しないキーを source からそのまま引き継ぎ（base 側 `undefined` → override を deepClone）、双方が持つ object はキー単位で再帰マージするため、`categoryOverrides` の merge 単位は他の quickMode サブフィールドより 1 段深い **ChangeCategory キー単位** になる。preset 未宣言 / source 宣言なら source がそのまま実効値、preset 宣言 / source 未宣言なら preset が継承され、双方が同じカテゴリキーを宣言した場合はそのカテゴリの glob 配列のみ source が全置換する（INV-3 の「配列は結合せず置換」がカテゴリ単位で適用される）。現行の 3 preset はいずれも `categoryOverrides` を宣言しないため、実効値は source の宣言と一致する。

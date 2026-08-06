@@ -2,7 +2,7 @@
 id: WI-320
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [config-foundation, validator-system]
 source: github#39
 ---

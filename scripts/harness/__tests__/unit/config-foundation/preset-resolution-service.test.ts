@@ -417,6 +417,66 @@ target("PresetResolutionService", () => {
         expect(actual.quickMode).toEqual(presetDefinition.quickMode);
       });
     });
+
+    // WI-380: WI-372 の categoryOverrides と WI-377 の preset 解決経由化の合流点。
+    // adapter は preset 解決の戻り値からしか categoryOverrides を読まないため、
+    // deepMerge が当該キーをどう扱うかが「設定したのに効かない」の分岐点になる。
+    describe("quickMode.categoryOverrides の preset 解決（WI-380）", () => {
+      // UT-CF-178
+      context("preset が categoryOverrides を宣言せず source のみが宣言する場合", () => {
+        it("source の宣言がそのまま resolved に残ること", () => {
+          // Arrange
+          const presetResolutionService = createPresetResolutionService();
+          const presetDefinition = createMinimalPresetDefinition();
+          const sourceDocument = createSourceDocument("minimal");
+          sourceDocument.quickMode = { categoryOverrides: { docs: ["results/**"] } };
+
+          // Act
+          const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
+
+          // Assert
+          expect(actual.quickMode.categoryOverrides).toEqual({ docs: ["results/**"] });
+        });
+      });
+
+      // UT-CF-179
+      context("preset が categoryOverrides を宣言し source が宣言しない場合", () => {
+        it("preset の宣言が実効値として継承されること", () => {
+          // Arrange
+          const presetResolutionService = createPresetResolutionService();
+          const presetDefinition = createMinimalPresetDefinition();
+          presetDefinition.quickMode.categoryOverrides = { docs: ["notes/**"] };
+          const sourceDocument = createSourceDocument("minimal");
+
+          // Act
+          const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
+
+          // Assert
+          expect(actual.quickMode.categoryOverrides).toEqual({ docs: ["notes/**"] });
+        });
+      });
+
+      // UT-CF-180
+      context("preset と source が同じカテゴリキーを宣言する場合", () => {
+        it("カテゴリ単位で source の glob 配列が preset を全置換し、未宣言カテゴリは preset を残すこと", () => {
+          // Arrange
+          const presetResolutionService = createPresetResolutionService();
+          const presetDefinition = createMinimalPresetDefinition();
+          presetDefinition.quickMode.categoryOverrides = { docs: ["notes/**"], test: ["fixtures/**"] };
+          const sourceDocument = createSourceDocument("minimal");
+          sourceDocument.quickMode = { categoryOverrides: { docs: ["results/**"] } };
+
+          // Act
+          const actual = presetResolutionService.resolve(sourceDocument, presetDefinition);
+
+          // Assert
+          expect(actual.quickMode.categoryOverrides).toEqual({
+            docs: ["results/**"],
+            test: ["fixtures/**"],
+          });
+        });
+      });
+    });
   });
 
   describe("applyFeatureOverride", () => {
