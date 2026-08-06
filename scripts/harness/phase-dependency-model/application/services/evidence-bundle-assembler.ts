@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit phase-dependency-model
+ * @work-item-id WI-369
  */
 
 import type { ArtifactExistenceCheckerPort } from '../../domain/ports/artifact-existence-checker-port.js';
@@ -68,7 +69,7 @@ export class EvidenceBundleAssembler {
         continue;
       }
 
-      const actual = await this.planDocumentReader.readEvidence(node, scope, planningMode);
+      const actual = await this.planDocumentReader.readEvidence(node, scope, planningMode, pathRoots);
       planEvidences.set(node.nodeKey(), actual);
     }
 

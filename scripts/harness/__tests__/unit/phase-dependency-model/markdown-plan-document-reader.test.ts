@@ -1,4 +1,5 @@
 // @layer test
+// @unit phase-dependency-model
 // @story H02-02
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -359,6 +360,70 @@ target("MarkdownPlanDocumentReader.readEvidence", () => {
         expect(actual.exists).toBe(true);
         expect(actual.qaComplete).toBe(true);
         expect(actual.planningModeMatch).toBe(true);
+      });
+    });
+  });
+
+  // WI-369: paths.inceptionDocs を移設した PJ で plan 文書だけが既定パスから
+  // 探されると、成果物は在るのに「plan文書が不足」で落ちる。
+  describe("解決済み pathRoots に追従する", () => {
+    context("pathRoots を渡し plan 文書が移設先に存在する場合", () => {
+      it("移設先の plan 文書を読み取ること", async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const node = PhaseNode.create({
+          skillName: "product-architect",
+          level: PhaseLevel.create(1),
+          artifacts: [
+            Artifact.create({
+              name: "product-overview-plan",
+              path: "{inceptionDocsRoot}/_shared/product_overview_plan.md",
+              required: true,
+            }),
+          ],
+        });
+        writeFile(rootDir, "mydocs/inception/_shared/product_overview_plan.md", "# Plan\n\n## QA\n");
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const mode = PlanningMode.create("interactive");
+
+        // Act
+        const actual = await sut.readEvidence(node, {}, mode, {
+          inceptionDocsRoot: "mydocs/inception",
+          designDocsRoot: "mydocs/product/construction",
+        });
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(true);
+        expect(actual.planningModeMatch).toBe(true);
+      });
+    });
+
+    context("pathRoots を省略し plan 文書が既定パスにのみ存在する場合", () => {
+      it("既定ルートで解決し従来どおり読み取れること", async () => {
+        // Arrange
+        const rootDir = createTmpDir();
+        const node = PhaseNode.create({
+          skillName: "product-architect",
+          level: PhaseLevel.create(1),
+          artifacts: [
+            Artifact.create({
+              name: "product-overview-plan",
+              path: "{inceptionDocsRoot}/_shared/product_overview_plan.md",
+              required: true,
+            }),
+          ],
+        });
+        writeFile(rootDir, "docs/inception/_shared/product_overview_plan.md", "# Plan\n\n## QA\n");
+        const sut = new MarkdownPlanDocumentReader({ rootDir });
+        const mode = PlanningMode.create("interactive");
+
+        // Act
+        const actual = await sut.readEvidence(node, {}, mode);
+
+        // Assert
+        expect(actual.exists).toBe(true);
+        expect(actual.qaComplete).toBe(true);
       });
     });
   });

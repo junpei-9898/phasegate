@@ -2,7 +2,7 @@
 id: WI-369
 type: fix
 severity: medium
-status: drafted
+status: implemented
 affects: [ci-governance]
 source: GitHub issue #42 項目 3（G7: scaffold-design が paths.designDocs を無視）
 ---

@@ -1277,3 +1277,18 @@ scripts/harness/phase-dependency-model/
 <!-- @work-item-id WI-281 -->
 
 phase-dependency-modelがUnit definitionを解決するcanonical pathは`docs/product/units/<kebab-case Unit ID>_unit.md`とする。Unit ID、construction directory、source `@unit`、`{unit}_unit.md` placeholderへ同じkebab-case値を用い、underscore filename aliasや複数candidateのwinner選択を導入しない。定義がmissingまたは重複する場合は明示的なdependency / artifact resolution failureとして扱い、filesystem列挙順で代替しない。
+
+## Plan evidence の pathRoots 追従
+
+<!-- @work-item-id WI-369 -->
+
+`PlanDocumentReaderPort.readEvidence` は解決済み `PathRoots`（`phasegate.config.json` の
+`paths` 由来）を受け取り、`Artifact.resolve(scope, pathRoots)` で plan 文書を解決する。
+`EvidenceBundleAssembler` は成果物存在検査に渡すのと**同一の** pathRoots を plan
+document reader にも渡す。
+
+修正前は plan 文書だけが `DEFAULT_PATH_ROOTS`（`docs/inception` / `docs/product/construction`）で
+解決されており、`paths.inceptionDocs` を移設した PJ では **成果物検査と plan evidence の
+探索先がズレていた**（`{inceptionDocs}/_shared/*_plan.md` は実在するのに
+「plan文書が不足しています」で Level-1 ゲートが落ちる）。引数省略時は既定ルートを
+用いるため、pathRoots を渡さない既存呼び出しの挙動は変わらない。

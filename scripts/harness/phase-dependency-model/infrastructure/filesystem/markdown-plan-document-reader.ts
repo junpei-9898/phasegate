@@ -1,11 +1,13 @@
 /**
  * @layer infrastructure
  * @unit phase-dependency-model
+ * @work-item-id WI-369
  */
 
 import { readFile } from "node:fs/promises";
 import * as path from "node:path";
 import type { PlanDocumentReaderPort } from "../../domain/ports/plan-document-reader-port.js";
+import { DEFAULT_PATH_ROOTS, type PathRoots } from "../../domain/values/artifact.js";
 import type { PhaseNode } from "../../domain/values/phase-node.js";
 import { PlanEvidence } from "../../domain/values/plan-evidence.js";
 import type { PlanningMode } from "../../domain/values/planning-mode.js";
@@ -41,6 +43,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     node: PhaseNode,
     scope: { unitId?: string; storyId?: string },
     expectedMode: PlanningMode,
+    pathRoots: PathRoots = DEFAULT_PATH_ROOTS,
   ): Promise<PlanEvidence> {
     const planArtifacts = node.planArtifacts();
 
@@ -55,7 +58,7 @@ export class MarkdownPlanDocumentReader implements PlanDocumentReaderPort {
     const artifact = planArtifacts[0];
     let resolvedPath: string;
     try {
-      resolvedPath = artifact.resolve(scope);
+      resolvedPath = artifact.resolve(scope, pathRoots);
     } catch {
       return PlanEvidence.create({
         exists: false,
