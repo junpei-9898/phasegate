@@ -77,6 +77,7 @@ The classifier is **path-based, not intent-based**. It never reads your commit m
 
 | Order | Match | Category |
 |---|---|---|
+| 0 | `quickMode.categoryOverrides` glob match (see below) | the configured category |
 | 1 | `*.config.json`, `*.config.ts`, `phasegate.config.json` | `config` |
 | 2 | `.github/workflows/*.yml`, `.github/workflows/*.yaml` | `config` |
 | 3 | Repo-root bootstrap files: `.gitignore`, `.gitattributes`, `.editorconfig`, `.npmrc`, `.nvmrc`, `tsconfig.json`, `tsconfig.*.json`, anything under `.husky/` | `config` |
@@ -95,6 +96,38 @@ Two consequences worth internalising:
 - `feature` is the fallback for **every new non-test source file**. "It's only a tiny helper" does not change the classification.
 
 When the hook blocks a write, the message now names the deciding category and change kind per path (`foo.ts (category=feature, changeKind=CREATE)`), and — for `bugfix` / `docs` / `test` / `config` blocks — points at `allowedCategories` and `config:plan --intent quick-mode-relax` rather than at `/story-implementor`. <!-- @work-item-id WI-352 --> <!-- @work-item-id WI-354 -->
+
+### Overriding the table for project-specific paths
+
+<!-- @work-item-id WI-372 -->
+
+The built-in table has no knowledge of your project's own conventions. A directory such as `results/` or `notes/` holds documents, but the classifier sees an unknown path: `MODIFY` falls through to `bugfix`, and `CREATE` falls through to `feature` — a category that cannot be added to `allowedCategories` at all, so the write is permanently Full Mode.
+
+`quickMode.categoryOverrides` maps a category to a list of globs:
+
+```jsonc
+{
+  "quickMode": {
+    "allowedCategories": ["bugfix", "docs", "test", "config"],
+    "categoryOverrides": {
+      "docs": ["results/**", "notes/**"]
+    }
+  }
+}
+```
+
+Four rules govern how overrides interact with the table above:
+
+1. **Overrides are evaluated first — order 0 in the table.** They are an explicit declaration about your repository, so they beat inference. Without this, `notes/deploy.config.json` would still be caught by rule 1 and the setting would look broken.
+2. **Overrides cannot downgrade `domain` or `api`.** If the built-in rules classify a path as `domain` (rule 7) or `api` (rule 5), an override may only raise the risk, never lower it. `{"docs": ["scripts/**"]}` will *not* turn a domain file into a doc. The weakening vector is closed by construction, not by convention.
+3. **All seven categories are valid override keys**, including `domain`, `api`, and `feature`. Assigning a path to one of those only makes the gate harder to pass, since they sit outside the default `allowedCategories` — it is a hardening lever, e.g. `{"domain": ["packages/core/**"]}`.
+4. **`NEW_DOMAIN` and `API_CONTRACT` still apply.** The three rejection rules stay path-based and ignore overrides entirely, so a misconfigured override cannot let a new domain file or a port/adapter change slip through. Only `MIXED_CHANGES` consumes the override-adjusted category.
+
+If two override categories match the same path, the higher-risk one wins, so the result never depends on JSON key order.
+
+Supported glob syntax is deliberately small: `**` (crosses `/`), `*` (does not cross `/`), and `?` (one non-`/` character). Brace expansion and negation are not supported. Patterns are matched against project-relative POSIX paths.
+
+Overrides apply identically to all three consumers — the PreToolUse hook, `check-change-category`, and `ci-check --quick` — because they share one config load. With `categoryOverrides` unset the classification is exactly what it was before the feature existed.
 
 ### Dry-running the classifier
 
@@ -193,7 +226,9 @@ Stop, commit nothing, and re-launch `/story-implementor`. Don't try to "finish i
 Not by emptying the list — `allowedCategories: []` is rejected as invalid config (`allowedCategories must not be empty`), so it breaks the hook rather than tightening it. Narrow it instead: `allowedCategories: ["docs"]` routes effectively everything through Full Mode while staying valid. Alternatively, leave the categories as-is and set every `quickMode.fullModeRequiredWhen.*` flag to `true` (the default) so any non-trivial scope automatically escalates.
 
 **Q. Can I add custom categories?**
-No. `allowedCategories` accepts only values from a fixed enum — the seven `ChangeCategory` values `bugfix`, `docs`, `test`, `config`, `feature`, `domain`, `api`. The default allow-list is the first four; the remaining three exist so that a project can *deliberately* widen the gate (rarely a good idea), not so you can invent a new label. If your workflow needs a category outside this enum, that is evidence the change is probably Full Mode material.
+No. `allowedCategories` accepts only values from a fixed enum — the seven `ChangeCategory` values `bugfix`, `docs`, `test`, `config`, `feature`, `domain`, `api`. The default allow-list is the first four; the remaining three exist so that a project can *deliberately* widen the gate (rarely a good idea), not so you can invent a new label. The enum is enforced by both the config schema and `QuickModeConfig`, so a misspelling is a loud config error, not a setting that quietly never matches. <!-- @work-item-id WI-373 -->
+
+What you *can* customise is which paths map to which of those seven categories — see [Overriding the table for project-specific paths](#overriding-the-table-for-project-specific-paths). If your workflow needs a category outside the enum, that is evidence the change is probably Full Mode material.
 
 ---
 

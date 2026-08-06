@@ -41,7 +41,8 @@ The plan identifies target fields, managed artifacts, commands, validation, risk
       "mixedCategories": true,
       "newDomainFile": true,
       "apiContractChange": true
-    }
+    },
+    "categoryOverrides": {}    // Optional. e.g. { "docs": ["results/**", "notes/**"] }
   },
   "phaseDependencies": {
     "preset": "standard",      // "full" | "standard" | "minimal" | "custom" ("default" -> "full")
@@ -198,10 +199,11 @@ The five layers are:
 
 | Sub-field              | Type       | Default                                 | Description                                                                 |
 |------------------------|------------|-----------------------------------------|-----------------------------------------------------------------------------|
-| `allowedCategories`    | `string[]` | `["bugfix", "docs", "test", "config"]`  | Change categories permitted under Quick Mode. Any category outside this list requires the full `story-implementor` workflow. |
+| `allowedCategories`    | `string[]` | `["bugfix", "docs", "test", "config"]`  | Change categories permitted under Quick Mode. Any category outside this list requires the full `story-implementor` workflow. **Enum** — only `bugfix`, `docs`, `test`, `config`, `feature`, `domain`, `api` are accepted; anything else is a config error. |
 | `maintainedLayers`     | `string[]` | `["L1", "L2-002", "L2-003", "L2-014", "L3-001"]` | Exact validator IDs that remain enforced in Quick Mode. `L1` is the only layer shorthand; `L2` is not expanded. |
 | `relaxedGates`         | `string[]` | `["L2-001", "L3-002", "L3-003", "L3-004", "L4"]` | Validators/layers relaxed by Quick Mode. `L4` means all L4 validators are skipped. |
 | `fullModeRequiredWhen` | `object`   | all flags `true`                        | Conditions that force a Quick Mode change to escalate to the full `/story-implementor` flow. See below. |
+| `categoryOverrides`    | `object`   | `{}`                                    | Maps a change category to a list of globs, so project-specific paths land in a category the built-in table cannot infer. See below. |
 
 The defaults above come from the defense preset declared in `project.preset`; Quick Mode resolves its effective settings through the same preset resolution as the rest of the config (ADR-040). Sub-fields you declare in `phasegate.config.json` replace the preset value for that sub-field only (arrays are replaced wholesale, not merged); sub-fields you omit keep the preset value. All three shipped presets (`minimal` / `standard` / `strict`) currently declare the same Quick Mode values, so switching the defense preset does not change Quick Mode strength today. <!-- @work-item-id WI-377 -->
 
@@ -218,6 +220,40 @@ Introduced in ISSUE-006 Story A (v0.63.0) and wired into the pre-tool-use hook b
 **Use `npx phasegate check-change-category --paths <csv>`** to dry-run the classifier against an arbitrary file list (see [CLI Reference](cli-reference.md#check-change-category-の使い方)). Combining `--fail-on-full-required` with a CI job makes "Quick Mode PR that should have been Full" a hard build failure.
 
 Set a flag to `false` only when the project intentionally accepts the risk of merging that category of change without the design ceremony -- e.g. an early-stage prototype where new domain files are expected to churn.
+
+##### `allowedCategories` is an enum
+
+<!-- @work-item-id WI-373 -->
+
+`allowedCategories` accepts only the seven `ChangeCategory` values. A misspelling such as `"typoo"` is rejected as a config error rather than silently ignored, and case is not normalised — `"Docs"` is an error, not an alias for `"docs"`, because classification keys are always lowercase and a normalised spelling would only hide the same dead setting.
+
+If the quickMode section is invalid, the pre-tool-use hook fails **closed**: writes are blocked with an explicit "quickMode 設定が不正なため" reason until the config is fixed. (A *missing* config still fails open, so greenfield adoption is unaffected.)
+
+##### `categoryOverrides`
+
+<!-- @work-item-id WI-372 -->
+
+```jsonc
+{
+  "quickMode": {
+    "categoryOverrides": {
+      "docs": ["results/**", "notes/**"]
+    }
+  }
+}
+```
+
+Keys are the seven `ChangeCategory` values; values are lists of globs matched against project-relative POSIX paths. Supported syntax is `**` (crosses `/`), `*` (does not cross `/`), and `?` (one non-`/` character); brace expansion and negation are not supported.
+
+| Rule | Behaviour |
+|------|-----------|
+| Precedence | Overrides are evaluated **before** the built-in classification table, so an explicit declaration beats inference. |
+| Downgrade guard | A path the built-in rules classify as `domain` or `api` cannot be moved to a lower-risk category; an override may only raise the risk. |
+| Valid keys | All seven categories, including `domain` / `api` / `feature`. Assigning a path to those *hardens* the gate, since they sit outside the default `allowedCategories`. |
+| Rejection rules | `NEW_DOMAIN` and `API_CONTRACT` remain path-based and ignore overrides entirely. Only `MIXED_CHANGES` uses the override-adjusted category. |
+| Ties | If two categories match the same path, the higher-risk one wins, so the result never depends on JSON key order. |
+
+Overrides apply identically to the pre-tool-use hook, `check-change-category`, and `ci-check --quick`. Leaving `categoryOverrides` unset reproduces the pre-existing classification exactly. See [Quick vs Full Mode](quick-vs-full-mode.md#overriding-the-table-for-project-specific-paths) for worked reasoning.
 
 <!-- @work-item-id WI-159 -->
 Quick Mode uses exact validator IDs for `maintainedLayers`. To keep all L2 validators active, list `L2-001`, `L2-002`, `L2-003`, `L2-013`, `L2-014`, and `L2-015` explicitly. The default keeps metadata, test-quality, work-item status, and security checks active while skipping phase-gate, CLI E2E coverage, contract traceability coverage, performance, coverage, nyquist, and L4 scheduled validators.
