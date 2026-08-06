@@ -1,7 +1,7 @@
 ---
 id: WI-366
 type: chore
-severity: low
+severity: trivial
 status: drafted
 affects: [docs]
 source: GitHub issue #46（WI-360 自身の description.md 欠落）
