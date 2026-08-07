@@ -29,7 +29,7 @@ Phasegate の `.codex/hooks.json` と bundled template は現在も matcher が 
 
 ## 目的
 
-- Codex native `apply_patch` の Update / Add / Delete を編集前に抽出し、既存の保護ファイル、
+- Codex native `apply_patch` の Update / Add / Delete / Move to を編集前に抽出し、既存の保護ファイル、
   phase-gate、story reflection、Quick / Full Mode 判定へ合流させる。
 - project / template の Codex hook matcher を現在の上流契約へ更新する。
 - 古い matcher を doctor が検出し、install / reconcile / doctor と公開文書が Codex の
@@ -38,27 +38,29 @@ Phasegate の `.codex/hooks.json` と bundled template は現在も matcher が 
 
 ## 受け入れ基準
 
-- [ ] `tool_name: "apply_patch"`、`tool_input.command` に raw patch、`tool_use_id` / `turn_id`
+- [x] `tool_name: "apply_patch"`、`tool_input.command` に raw patch、`tool_use_id` / `turn_id`
   を含む実 payload 形を pre-tool-use hook が受理する。
-- [ ] `*** Update File:` / `*** Add File:` / `*** Delete File:` をそれぞれ
+- [x] `*** Update File:` / `*** Add File:` / `*** Delete File:` をそれぞれ
   `MODIFY` / `CREATE` / `DELETE` として抽出し、複数ファイル混在 patch を順序どおり扱う。
-- [ ] 抽出された全 path が既存の保護ファイル、phase-gate、story reflection、
+- [x] `*** Update File: <source>` 直後の `*** Move to: <destination>` は、移動元を `MODIFY`、
+  移動先を `CREATE` としてこの順に抽出し、移動先も同じ gate で検査する。
+- [x] 抽出された全 path が既存の保護ファイル、phase-gate、story reflection、
   Quick / Full Mode 判定へ渡り、1 件でも違反があれば exit 2 + 非空 stderr で deny される。
-- [ ] 成功経路は exit 0 + 空 stdout とし、`permissionDecision: "ask"` および
+- [x] 成功経路は exit 0 + 空 stdout とし、`permissionDecision: "ask"` および
   `updatedInput` のない `allow` を出力しない。
-- [ ] `.codex/hooks.json` と `templates/.codex/hooks.json` の PreToolUse / PostToolUse が
+- [x] `.codex/hooks.json` と `templates/.codex/hooks.json` の PreToolUse / PostToolUse が
   `Bash|apply_patch` を match する。
-- [ ] PostToolUse は native `apply_patch` 後に既存 lint 経路を実行し、patch target の
+- [x] PostToolUse は native `apply_patch` 後に既存 lint 経路を実行し、patch target の
   再解析を責務に加えない。
-- [ ] doctor は phasegate command の有無だけでなく、PreToolUse / PostToolUse の両方で
+- [x] doctor は phasegate command の有無だけでなく、PreToolUse / PostToolUse の両方で
   canonical `apply_patch` matcher が欠けている状態を red finding として検出する。
-- [ ] init / reconcile / doctor の Codex 対象出力は、Codex CLI >= 0.124.0 と、
+- [x] init / reconcile / doctor の Codex 対象出力は、Codex CLI >= 0.124.0 と、
   `.codex/hooks.json` 更新後に `/hooks` で hook definition hash を再 trust する必要を案内する。
-- [ ] Codex integration guide と README 英日版の coverage matrix が native `apply_patch` の
+- [x] Codex integration guide と README 英日版の coverage matrix が native `apply_patch` の
   編集前 hard block 対応を表し、L2 pre-commit は backstop として残る。
-- [ ] WI-013 の「上流 fix 後の追従」に WI-384 での決着を記録する。
-- [ ] Bash matcher / Bash heredoc apply_patch の既存テストが回帰しない。
-- [ ] template 変更と同じ Phase 2 commit で `phasegate integrity:pin` を再実行し、
+- [x] WI-013 の「上流 fix 後の追従」に WI-384 での決着を記録する。
+- [x] Bash matcher / Bash heredoc apply_patch の既存テストが回帰しない。
+- [x] template 変更と同じ Phase 2 commit で `phasegate integrity:pin` を再実行し、
   `phasegate.integrity.json` を更新する。
 
 ## 非目標
@@ -82,8 +84,8 @@ Phasegate の `.codex/hooks.json` と bundled template は現在も matcher が 
 | unsupported | `permissionDecision: "ask"`、`updatedInput` なし `allow` |
 | trust | non-managed command hook は definition hash 単位。hooks.json 更新後は `/hooks` で再 trust |
 
-## Phase 1 の状態
+## Phase 2 完了状態
 
-本 WI は計画・設計のみ完了させ、実装、テストコード、template、公開ユーザーガイド、
-version、commit、tag は Phase 2 承認後に変更する。
-
+本 WI は v0.336.0 で実装・テスト・template・公開ユーザーガイド・integrity pin まで反映した。
+独立検証の REJECT 対応では `Move to:` 宛先検査、SessionStart 文面、World TestReference 衝突、
+残存リスク記述を修正し、修正コミット用 version を v0.337.0 とする。

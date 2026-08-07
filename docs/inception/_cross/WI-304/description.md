@@ -2,7 +2,7 @@
 id: WI-304
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [agent-integration, world-model]
 source: internal
 ---

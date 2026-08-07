@@ -613,7 +613,7 @@ PATCH`;
       expect(actual).toEqual(["a.ts", "b.ts", "c.ts"]);
     });
 
-    it("heredoc が `<<EOF` (unquoted) でも抽出する", () => {
+    it("非引用の `<<EOF` heredoc でも apply_patch 対象を抽出する", () => {
       // Arrange
       const extractor = new BashWriteTargetExtractor();
       const command = `apply_patch <<EOF
@@ -629,7 +629,7 @@ EOF`;
       expect(result).toEqual(["foo.ts"]);
     });
 
-    it('heredoc が `<<"EOF"` (double-quoted) でも抽出する', () => {
+    it('二重引用の `<<"EOF"` heredoc でも apply_patch 対象を抽出する', () => {
       // Arrange
       const extractor = new BashWriteTargetExtractor();
       const command = `apply_patch <<"EOF"

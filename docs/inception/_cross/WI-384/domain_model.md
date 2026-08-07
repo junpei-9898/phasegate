@@ -8,8 +8,8 @@ raw `apply_patch` document から導出される immutable value object。
 
 | field | type | invariant |
 |---|---|---|
-| `filePath` | `string` | `*** (Update|Add|Delete) File:` の非空 path。trim 後の入力順を保持する |
-| `changeKind` | `CREATE \| MODIFY \| DELETE` | Add→CREATE、Update→MODIFY、Delete→DELETE の全単射 |
+| `filePath` | `string` | file directive または Update 直後の `*** Move to:` の非空 path。trim 後の入力順を保持する |
+| `changeKind` | `CREATE \| MODIFY \| DELETE` | Add→CREATE、Update source→MODIFY、Move destination→CREATE、Delete→DELETE |
 
 同一 `{filePath, changeKind}` は最初の出現だけを保持する。異なる kind で同一 path が現れる
 不正・曖昧な patch は取りこぼしを避けるため全 directive を返し、最終的な patch 妥当性は
@@ -21,7 +21,11 @@ agent-integration domain が所有する副作用のない domain service。入�
 `*** Begin Patch` / `*** End Patch` を含む raw patch text、出力は `PatchWriteTarget[]` とする。
 
 - block 内の `*** Update File:` / `*** Add File:` / `*** Delete File:` だけを解釈する。
+- `*** Update File: <source>` の直後に `*** Move to: <destination>` がある場合、source の
+  `MODIFY` に続けて destination の `CREATE` を返す。移動元を独立した `DELETE` とみなすと
+  update と relocation が一体の Codex 文法を過剰分類するため、元 path は `MODIFY` のまま保持する。
 - hunk 本文中の類似文字列は directive として扱わない。
+- directive は Codex raw patch 文法どおり column 0 のみを認識し、行頭空白付きは抽出しない。
 - `*** End Patch` が欠けた入力は末尾までを block として扱う既存 fail-closed 方針を維持する。
 - path のシェル展開や filesystem mutation は行わない。
 
@@ -59,4 +63,3 @@ installation の既存 `DiagnosticFinding` 集約は新しい型を増やさな�
 
 いずれかを欠けば red finding とする。外部の Codex trust store は Phasegate から観測できないため、
 trust 済みを成功条件として偽装せず、operator notice で `/hooks` による確認・再 trust を要求する。
-

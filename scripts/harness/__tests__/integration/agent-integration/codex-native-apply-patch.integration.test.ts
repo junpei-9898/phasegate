@@ -176,6 +176,28 @@ target("Codex native apply_patch payload compatibility", () => {
       expect(actual.stdout).toBe("");
     }, 60000);
 
+    it("docs から保護対象への Move to patch は移動先の CREATE 検査で exit 2 になること", async () => {
+      // Arrange
+      const projectRoot = createProjectRoot();
+      const stdin = JSON.stringify({
+        session_id: "t",
+        cwd: projectRoot,
+        hook_event_name: "PreToolUse",
+        tool_name: "apply_patch",
+        tool_input: {
+          command: "*** Begin Patch\n*** Update File: docs/x.md\n*** Move to: .husky/post-checkout\n*** End Patch",
+        },
+      });
+
+      // Act
+      const actual = await runPreToolUse(stdin, projectRoot);
+
+      // Assert
+      expect(actual.exitCode).toBe(2);
+      expect(actual.stderr).toContain(".husky/post-checkout");
+      expect(actual.stdout).toBe("");
+    }, 60000);
+
     it("command が欠けた native payload は silent allow せず exit 2 で拒否すること", async () => {
       // Arrange
       const projectRoot = createProjectRoot();

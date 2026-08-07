@@ -127,7 +127,7 @@ target('Codex payload compatibility (ISSUE-013 Wave 2)', () => {
   });
 
   describe('PreToolUse(Bash) - apply_patch heredoc 経由の保護ファイル違反', () => {
-    it('Bash 経由の `apply_patch` が保護ファイルを書き換える場合 exit 2 ブロック', async () => {
+    it('保護ファイルを Bash の `apply_patch` で書き換える場合は exit 2 でブロックする', async () => {
       // Arrange
       const command = `apply_patch <<'PATCH'
 *** Begin Patch
@@ -144,7 +144,7 @@ PATCH`;
       expect(actual.stderr).toContain('biome.json');
     }, 30000);
 
-    it('Bash 経由の `apply_patch` で *** Add File: が保護ファイルを新規作成する場合も exit 2 ブロック', async () => {
+    it('保護ファイルを Bash の Add File で新規作成する場合も exit 2 でブロックする', async () => {
       // Arrange
       const command = `apply_patch <<'PATCH'
 *** Begin Patch

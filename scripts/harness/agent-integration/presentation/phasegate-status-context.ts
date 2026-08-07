@@ -243,7 +243,7 @@ export function buildSessionStartContext(status: PhasegateStatus): string {
     "",
     "- Do NOT write to protected files without going through `/quick-implementor` skill.",
     '- Do NOT create/structurally modify source files under units listed as "blocked" below — the required design docs (logical_design.md / domain_model.md) are missing, and pre-tool-use hooks will block writes.',
-    "- Prefer the native `apply_patch` tool for edits, BUT note that Codex's apply_patch bypasses pre-edit hooks. Violations surface at pre-commit time.",
+    "- Native `apply_patch` edits are phase-gated at PreToolUse; the Codex matcher is `Bash|apply_patch`. L2 pre-commit remains the backstop for skipped or untrusted hooks.",
     "",
   ];
 

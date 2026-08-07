@@ -15,6 +15,8 @@
 | UT-WI384-PATCH-007 | End marker が欠ける | command 末尾まで fail-closed scan |
 | UT-WI384-PATCH-008 | marker 外や hunk 本文の類似行を受ける | target に数えない |
 | UT-WI384-PATCH-009 | 空文字・marker なし patch を受ける | frozen empty result |
+| UT-WI384-PATCH-010 | Update 直後に Move to を受ける | source MODIFY、destination CREATE の順で返す |
+| UT-WI384-PATCH-011 | 行頭空白付き file directive を受ける | Codex 文法外として抽出しない |
 
 ## Bash compatibility
 
@@ -55,4 +57,3 @@
 - 新規・更新テストには `@work-item-id WI-384` を付ける。
 - 同名 TestReference を生まないよう実装前に重複 `it()` 名を検索し、WCR-005 obligation の
   新規発生がないことを World 検証で確認する。
-

@@ -26,9 +26,14 @@
 3. 同じ対象を Bash heredoc payload で送り、従来経路も deny されることを確認する。
 4. 許可対象の native patch を通し、PostToolUse payload が既存 lint 経路へ進むことを確認する。
 
+## Scenario 4: Move to 宛先の編集前 deny
+
+1. `docs/x.md` の Update に `*** Move to: .husky/post-checkout` を続けた native payload を送る。
+2. 移動元は `MODIFY`、移動先は `CREATE` として抽出されることを確認する。
+3. `.husky/post-checkout` の保護ファイル検査により filesystem mutation 前に exit 2 となることを確認する。
+
 ## Acceptance boundary
 
 Codex の trust store は Phasegate の process 外にあり自動 fixture で観測できない。したがって
 「notice が表示されること」は自動検証し、「CLI `/hooks` で current definition を trust 済みにすること」
 は Phase 2 の実機 smoke checklist とする。pre-commit / CI は trust 状態に依存しない backstop として残す。
-

@@ -31,6 +31,7 @@ fixture は upstream の実 payload 形に合わせ、最低限次を含める�
 | IT-WI384-CODEX-006 | `tool_name=apply_patch` で command 欠落 | 非空 stderr + exit 2、fail-open しない |
 | IT-WI384-CODEX-007 | PostToolUse apply_patch payload | payload を受理し既存 lint / skip 経路へ進む |
 | IT-WI384-CODEX-008 | optional agent_id / agent_type 付き payload | 未使用 field を許容して同じ結果 |
+| IT-WI384-CODEX-009 | `docs/x.md` から `.husky/post-checkout` への Move to payload | destination を CREATE 検査し exit 2 |
 
 process integration は `codex-payload-compatibility.integration.test.ts` を拡張し、temp project を使って
 self-repo の open WI や現在の filesystem state に結果を依存させない。
@@ -56,4 +57,3 @@ self-repo の open WI や現在の filesystem state に結果を依存させな�
 | IT-WI384-REG-004 | L2 pre-commit | native hook 対応後も backstop が有効 |
 
 全 test は Vitest、日本語 `it()`、semantic AAA、`actual` 変数、domain non-mock、重複名禁止に従う。
-

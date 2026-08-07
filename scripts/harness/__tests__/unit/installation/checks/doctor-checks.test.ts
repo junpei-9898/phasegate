@@ -151,6 +151,23 @@ target("doctor heuristic checks", () => {
       expect(actual).toStrictEqual(null);
     });
 
+    it("丸括弧付き matcher が Bash と apply_patch を含む場合も finding を返さないこと", async () => {
+      // Arrange
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(currentCodexHooks({
+          preMatcher: "^(Bash|apply_patch)$",
+          postMatcher: "(Bash|apply_patch)",
+        })),
+      });
+
+      // Act
+      const actual = await new CodexHookMissingCheck().run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual).toStrictEqual(null);
+    });
+
     it("phasegate command があっても Bash-only matcher の場合は apply_patch 欠落の red を返すこと", async () => {
       // Arrange
       const inspector = createInspector({

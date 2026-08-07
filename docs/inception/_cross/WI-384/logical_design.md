@@ -45,7 +45,9 @@ compatibility fixture に含めるが、Phasegate の authorization 入力には
 ### Parser
 
 現行 `BashWriteTargetExtractor` 内の private apply_patch block scan を
-`ApplyPatchWriteTargetExtractor` へ切り出し、directive ごとの kind を保持する。
+`ApplyPatchWriteTargetExtractor` へ切り出し、directive ごとの kind を保持する。Update 直後の
+`*** Move to:` は source `MODIFY` の次に destination `CREATE` を追加し、両 path を gate へ渡す。
+移動元は Update directive 自体が表す変更対象なので `MODIFY` を維持し、独立した `DELETE` へは変換しない。
 `BashWriteTargetExtractor.extract(command): readonly string[]` は新 service の結果を path へ map し、
 redirect / tee / sed / cp / mv 等との重複除去と入力順を維持する。
 
@@ -128,9 +130,8 @@ Phase 2 で以下を同時に更新する。
 |---|---|
 | malformed hook JSON payload / tool_name 欠落 | exit 2 + 非空 stderr（既存 fail-closed） |
 | apply_patch command 欠落 / marker なし | 書き込み target を導出できないため exit 2 とし、silent allow しない |
-| patch directive path が workspace 外 | 既存 external path filtering により project gate 対象外 |
+| patch directive / Move to path が workspace 外 | 既存 external path filtering により project gate 対象外 |
 | protected / phase / reflection / full-mode violation | exit 2 + 具体的 stderr |
 | allowed write | exit 0 + 空 stdout |
 | post-tool lint failure | 既存 PostToolUse exit semantics を維持 |
 | trust 未承認 | Codex が hook を skip。Phasegate は検出不能なため lifecycle / doctor / docs で明示 |
-

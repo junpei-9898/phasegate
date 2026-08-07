@@ -60,9 +60,9 @@ The canonical matcher is `Bash|apply_patch` for both events:
 |---|---|---|---|
 | Shell writes (`sed -i`, `tee`, heredoc, `cat >`) | ✅ `PreToolUse(Bash)` | ✅ `PostToolUse(Bash)` | ✅ L2 pre-commit |
 | Bash-invoked `apply_patch <<'PATCH'` | ✅ parsed by `BashWriteTargetExtractor` | ✅ `PostToolUse(Bash)` | ✅ L2 pre-commit |
-| Native `apply_patch` Update/Add/Delete | ✅ `PreToolUse(apply_patch)` | ✅ `PostToolUse(apply_patch)` | ✅ L2 pre-commit |
+| Native `apply_patch` Update/Add/Delete/Move to | ✅ `PreToolUse(apply_patch)` | ✅ `PostToolUse(apply_patch)` | ✅ L2 pre-commit |
 
-For native patches, Phasegate reads raw patch text from `tool_input.command`, preserves directive order, and maps Update/Add/Delete to MODIFY/CREATE/DELETE. All targets join the existing protected-file, phase-gate, story-reflection, and Quick/Full Mode checks. One violating target denies the whole patch before editing.
+For native patches, Phasegate reads raw patch text from `tool_input.command`, preserves directive order, and maps Update/Add/Delete to MODIFY/CREATE/DELETE. An Update followed by `*** Move to:` adds the source as MODIFY and the destination as CREATE. All targets join the existing protected-file, phase-gate, story-reflection, and Quick/Full Mode checks. One violating target denies the whole patch before editing.
 
 PostToolUse intentionally does not parse patch targets again. It sends the event through the existing fast lint path.
 
@@ -77,6 +77,8 @@ PostToolUse intentionally does not parse patch targets again. It sends the event
 ## Layered defense and residual risk
 
 Command hooks are a fast path. They can be skipped until the updated definition is trusted, and project code cannot inspect Codex's external trust store. Keep `.husky/pre-commit` and CI enabled: L2 remains the commit-time backstop and CI remains the authoritative re-check.
+
+Codex CLI 0.144.5 still exposes `unified_exec`, whose interception coverage is incomplete. Commands routed through an unobserved `unified_exec` path may bypass the edit-time hook; L2 pre-commit and CI remain the fallback for that residual risk.
 
 Windows Codex hooks and Codex versions older than 0.124.0 are not supported by this integration.
 

@@ -3,9 +3,9 @@
 // @work-item-id WI-145
 // @work-item-id WI-384
 
-import type { FileInspectorPort } from "../ports/file-inspector-port.js";
-import type { HeuristicCheck } from "../../domain/ports/heuristic-check.js";
 import type { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
+import type { HeuristicCheck } from "../../domain/ports/heuristic-check.js";
+import type { FileInspectorPort } from "../ports/file-inspector-port.js";
 import { containsPhasegateHook, createFinding, projectPath } from "./check-utils.js";
 
 const REQUIRED_MATCHER_TOKENS = ["Bash", "apply_patch"] as const;
@@ -26,7 +26,7 @@ function phasegateCommandFor(entry: unknown, command: "pre-tool-use" | "post-too
 
 function matcherTokens(entry: unknown): ReadonlySet<string> {
   if (!isRecord(entry) || typeof entry.matcher !== "string") return new Set();
-  return new Set(entry.matcher.split("|").map((token) => token.trim()).filter(Boolean));
+  return new Set(entry.matcher.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []);
 }
 
 function missingForEvent(
@@ -51,8 +51,8 @@ function hasUserHookEntry(json: Record<string, unknown>): boolean {
     return json.hooks.some((entry) => !containsPhasegateHook(entry));
   }
   if (!isRecord(json.hooks)) return false;
-  return Object.values(json.hooks).some((entries) =>
-    Array.isArray(entries) && entries.some((entry) => !containsPhasegateHook(entry)),
+  return Object.values(json.hooks).some(
+    (entries) => Array.isArray(entries) && entries.some((entry) => !containsPhasegateHook(entry)),
   );
 }
 

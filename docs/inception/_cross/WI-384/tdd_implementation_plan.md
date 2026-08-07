@@ -44,7 +44,7 @@ input、installation の application check / lifecycle result と presentation f
 
 ### Step 1: Agent integration domain RED → GREEN → REFACTOR
 
-1. `ApplyPatchWriteTargetExtractor` の Update / Add / Delete / mixed / malformed boundary test を追加する。
+1. `ApplyPatchWriteTargetExtractor` の Update / Add / Delete / Move to / mixed / malformed boundary test を追加する。
 2. existing Bash extractor regression test を先に固定する。
 3. current private patch scan を新 domain service へ移し、`PatchWriteTarget` を返す。
 4. Bash extractor を新 service に委譲し、path-only API と既存順序を維持する。
@@ -62,7 +62,7 @@ Domain object はモックせず実体で検証する。
 1. upstream の全必須 field を含む native payload fixture を追加する。
 2. pre adapter で `apply_patch` raw command を parser に渡し、path と kind を構築する。
 3. tool vocabulary を既存 internal Write semantics に normalize して use case へ合流させる。
-4. Update / Add / Delete / mixed violation、stdout-empty allow、exit2+stderr deny を process integration で証明する。
+4. Update / Add / Delete / Move to / mixed violation、stdout-empty allow、exit2+stderr deny を process integration で証明する。
 5. command 欠落 / marker 無しは fail-closed とする。
 
 ### Step 4: PostToolUse and matcher wiring RED → GREEN

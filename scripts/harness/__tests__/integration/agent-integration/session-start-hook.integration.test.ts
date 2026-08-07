@@ -3,6 +3,7 @@
 // @story H11-01
 // @work-item-id WI-013
 // @work-item-id WI-209
+// @work-item-id WI-384
 
 /**
  * ISSUE-013 Wave 3 / C-4: SessionStart hook の動作検証。
@@ -13,8 +14,10 @@
 
 import { spawn } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
+import { execPath } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
@@ -22,6 +25,7 @@ import { target } from '../../helpers/test-helpers.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_ROOT = path.resolve(__dirname, '../../../../..');
 const MAIN_TS = path.join(HARNESS_ROOT, 'scripts/harness/main.ts');
+const TSX_IMPORT = createRequire(import.meta.url).resolve('tsx');
 
 interface CliResult {
   exitCode: number;
@@ -31,7 +35,7 @@ interface CliResult {
 
 function runCli(args: string[], cwd: string, stdin?: string, timeoutMs = 20_000): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['tsx', MAIN_TS, ...args], {
+    const child = spawn(execPath, ['--import', TSX_IMPORT, MAIN_TS, ...args], {
       cwd,
       env: process.env,
     });

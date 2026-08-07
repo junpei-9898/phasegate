@@ -21,6 +21,29 @@ describe("ApplyPatchWriteTargetExtractor", () => {
     expect(actual).toEqual([{ filePath: "src/existing.ts", changeKind: "MODIFY" }]);
   });
 
+  it("Move to 付き Update は移動元を MODIFY、移動先を CREATE として順に抽出すること", () => {
+    // Arrange
+    const extractor = new ApplyPatchWriteTargetExtractor();
+    const patch = [
+      "*** Begin Patch",
+      "*** Update File: docs/x.md",
+      "*** Move to: .husky/post-checkout",
+      "@@",
+      "-old",
+      "+new",
+      "*** End Patch",
+    ].join("\n");
+
+    // Act
+    const actual = extractor.extract(patch);
+
+    // Assert
+    expect(actual).toEqual([
+      { filePath: "docs/x.md", changeKind: "MODIFY" },
+      { filePath: ".husky/post-checkout", changeKind: "CREATE" },
+    ]);
+  });
+
   it("Add directive から作成対象と CREATE 種別を抽出すること", () => {
     // Arrange
     const extractor = new ApplyPatchWriteTargetExtractor();
@@ -130,6 +153,18 @@ describe("ApplyPatchWriteTargetExtractor", () => {
 
     // Assert
     expect(actual).toEqual([{ filePath: "src/real.ts", changeKind: "MODIFY" }]);
+  });
+
+  it("行頭に空白がある file directive は Codex raw patch 文法外として抽出しないこと", () => {
+    // Arrange
+    const extractor = new ApplyPatchWriteTargetExtractor();
+    const patch = ["*** Begin Patch", " *** Update File: src/indented.ts", "*** End Patch"].join("\n");
+
+    // Act
+    const actual = extractor.extract(patch);
+
+    // Assert
+    expect(actual).toEqual([]);
   });
 
   it("空文字または Begin marker のない入力は同じ frozen empty result を返すこと", () => {

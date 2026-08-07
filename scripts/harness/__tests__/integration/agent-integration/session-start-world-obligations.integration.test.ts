@@ -1,6 +1,7 @@
 // @unit agent-integration
 // @layer integration-test
 // @work-item-id WI-304
+// @work-item-id WI-384
 // @story H17-16
 // @ac H17-16-1
 // @ac H17-16-2
@@ -95,6 +96,10 @@ describe("SessionStart World obligations", () => {
     const context = JSON.parse(actual.stdout).hookSpecificOutput.additionalContext as string;
     expect(context).toContain(`Adopted legacy: ${adoptedLegacyCount} (summary only)`);
     expect(context).not.toContain("pgw:v1:violation-fingerprint");
+    expect(context).toContain("phase-gated at PreToolUse");
+    expect(context).toContain("Bash|apply_patch");
+    expect(context).toContain("L2 pre-commit remains the backstop");
+    expect(context).not.toContain("apply_patch bypasses pre-edit hooks");
   }, 60_000);
 
   it("world無効時はWorld sectionを追加しないこと", async () => {
