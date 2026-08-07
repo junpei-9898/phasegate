@@ -3,6 +3,7 @@
  * @unit agent-integration
  * @work-item-id WI-208
  * @work-item-id WI-323
+ * @work-item-id WI-384
  *
  * PostToolUse Hook Adapter
  * Claude Code の PostToolUse Hook エントリポイント

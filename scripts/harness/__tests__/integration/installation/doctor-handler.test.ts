@@ -9,6 +9,7 @@
 // @work-item-id WI-210
 // @work-item-id WI-215
 // @work-item-id WI-330
+// @work-item-id WI-384
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -34,6 +35,15 @@ interface ExpectedFinding {
 }
 
 type FixtureName = "no-phasegate" | "inert-install" | "partial-install" | "full-install" | "claude-only-install";
+
+function currentCodexHooks(): string {
+  return JSON.stringify({
+    hooks: {
+      PreToolUse: [{ matcher: "Bash|apply_patch", hooks: [{ command: "npx phasegate hook pre-tool-use" }] }],
+      PostToolUse: [{ matcher: "Bash|apply_patch", hooks: [{ command: "npx phasegate hook post-tool-use" }] }],
+    },
+  });
+}
 
 let projectRoot: string | null = null;
 
@@ -153,7 +163,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   await writeProjectFile(
     root,
     ".codex/hooks.json",
-    JSON.stringify({ hooks: [{ command: "npx phasegate hook stop" }] }),
+    currentCodexHooks(),
   );
   await writeProjectFile(
     root,
@@ -238,6 +248,7 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
         scopeReason: string;
       }>;
       readonly exitCode: number;
+      readonly operatorNotices?: Array<{ code: string; message: string }>;
     },
   };
 }
@@ -342,6 +353,31 @@ target("DoctorHandler", () => {
   });
 
   describe("doctor --agent", () => {
+    it("Codex scope の JSON output に trust unverifiable advisory を構造化して含めること", async () => {
+      // Arrange
+      // Act
+      const actual = await runDoctorFixture("full-install", false, "codex");
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.operatorNotices).toEqual([
+        expect.objectContaining({ code: "CODEX_HOOK_TRUST_UNVERIFIABLE" }),
+      ]);
+      expect(actual.payload.operatorNotices?.[0]?.message).toContain("Codex CLI >= 0.124.0");
+      expect(actual.payload.operatorNotices?.[0]?.message).toContain("/hooks");
+    });
+
+    it("Codex scope の human output に minimum version と再 trust advisory を含めること", async () => {
+      // Arrange
+      // Act
+      const actual = await runDoctorHumanFixture("full-install", false, "codex");
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.stdout).toContain("Codex CLI >= 0.124.0");
+      expect(actual.stdout).toContain("/hooks");
+    });
+
     it("Claude scope では Codex-only finding を not-applicable として exitCode に含めないこと", async () => {
       const actual = await runDoctorFixture("claude-only-install", false, "claude");
 

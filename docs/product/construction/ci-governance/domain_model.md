@@ -539,3 +539,10 @@ GitHub issue #42 に伴い、ci-governance に以下のドメイン概念を追�
 `DesignPhase` に inception 文書を混ぜない理由: `DesignPhase` は `--unit` 必須を前提とする
 書き込み先解決を持ち、unit 軸を持たない `_shared` / product 直下の文書を表現すると
 「unit 必須なのに unit を使わない phase」という不整合な不変条件になる。VO を分離する。
+## WI-384 Codex hook integrity target
+
+<!-- @work-item-id WI-384 -->
+
+`IntegrityTarget.defaultTargets()` は Claude の hook 設定と同様に root `.codex/hooks.json` を
+既定の pin / verify 対象へ含める。bundled template は root と同値であることを agent-integration
+の integration test が保証し、integrity manifest は実運用時に読み込まれる root 定義を pin する。

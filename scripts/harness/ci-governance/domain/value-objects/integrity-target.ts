@@ -1,5 +1,6 @@
 // @unit ci-governance
 // @layer domain
+// @work-item-id WI-384
 
 export interface IntegrityTargetProps {
   readonly include: readonly string[];
@@ -31,6 +32,7 @@ export class IntegrityTarget {
         "skills/*/SKILL.md",
         ".claude/settings.json",
         ".claude/scripts/*.sh",
+        ".codex/hooks.json",
         ".husky/*",
         "docs/templates/agent-context/**",
       ],

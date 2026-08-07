@@ -2,6 +2,7 @@
  * @layer application
  * @unit quick-mode
  * @story H10-05
+ * @work-item-id WI-384
  *
  * paths から変更カテゴリを分類し fullModeRequired 判定と理由を返す UseCase
  */
@@ -20,6 +21,7 @@ export interface ClassifyChangeCategoryUseCaseInput {
   readonly paths: readonly string[];
   readonly targetChanges?: readonly {
     readonly filePath: string;
+    readonly changeKind?: ChangeKind;
     readonly beforeContent?: string | null;
     readonly afterContent?: string | null;
   }[];
@@ -94,7 +96,7 @@ export class ClassifyChangeCategoryUseCase {
           // 変更前の内容が無く変更後の内容がある場合は新規作成 (CREATE) とみなす。
           // 以前は無条件で MODIFY 固定だったため、新規 domain/ ファイルが
           // NEW_DOMAIN 判定を回避して quick mode をすり抜けていた。
-          changeKind: beforeContent === null && afterContent !== null ? "CREATE" : "MODIFY",
+          changeKind: targetChange?.changeKind ?? (beforeContent === null && afterContent !== null ? "CREATE" : "MODIFY"),
           beforeContent,
           afterContent,
         });

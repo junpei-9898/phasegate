@@ -229,3 +229,13 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 - A fresh TypeScript init followed by L3 validation executes current TypeScript validators.
 - A fresh Python init followed by L3 validation reports TypeScript-only validators as unsupported-language skips instead of dependency or parser failures.
 - Existing config without `project.languages` validates with the previous TypeScript default.
+
+## WI-384 Codex hook lifecycle integration
+
+<!-- @work-item-id WI-384 -->
+
+- root / bundled hook JSON の PreToolUse / PostToolUse がともに `Bash|apply_patch` で一致する。
+- install/init は Codex target 配置時に minimum version と `/hooks` trust notice を human / JSON へ返す。
+- reconcile は Bash-only managed config を更新し、definition hash 変更後の再 trust を案内する。
+- doctor は stale matcher を red とし、current matcher では finding を消すが trust unverifiable advisory を残す。
+- notice は既存 plan / finding / exit code semantics を変更しない。

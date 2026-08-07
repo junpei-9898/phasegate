@@ -1661,3 +1661,22 @@ applicationはblocking (`new-structural` / `invalid-declaration` / `expired-waiv
 ## WI-305: commit-msg design change declaration
 
 SessionStartとは独立したcommit-msg経路で、harness-apiのpre-commit orchestrationがtraceability-modelのchanged fragment DTOとworld-modelのpinned endpoint DTOをvalidator-system policyへ渡す。agent-integrationはhook境界と宣言契約を記録するが、World repositoryやdomain型を直接importしない。local結果はfast-pathで、authoritative判定はL3-008に残す。
+
+## WI-384 Codex native apply_patch hook flow
+
+<!-- @work-item-id WI-384 -->
+
+Codex rust-v0.124.0 以降の `tool_name="apply_patch"` payload は presentation adapter が
+`tool_input.command` の raw patch として受理する。`ApplyPatchWriteTargetExtractor` が Update / Add /
+Delete を path + kind へ変換し、adapter は external tool name を既存 internal `Write` semantics へ
+normalize して `HandlePreToolUseUseCase` の protected-file、phase-gate、story-reflection、Quick / Full
+Mode 判定へ合流させる。deny は非空 stderr + exit 2、continue は空 stdout + exit 0 とし、Codex が
+fail open する `permissionDecision: ask` と `updatedInput` なし `allow` は生成しない。
+
+patch parser は既存 Bash heredoc parsing から独立 service へ抽出して共有する。Bash command 全体と
+native raw patch の入力形を混同せず、Bash extractor の public path-only contract は不変とする。
+`FullModeTargetChange` は optional explicit `changeKind` を加え、native Delete を quick-mode へ伝える。
+
+PostToolUse matcher にも `apply_patch` を追加して既存 lint flow を起動するが、post adapter は affected
+path を use case 入力に使わないため patch を再解析しない。matcher の canonical form は
+`Bash|apply_patch` とし、Codex compatibility aliases `Write` / `Edit` は Codex 専用 config に併記しない。

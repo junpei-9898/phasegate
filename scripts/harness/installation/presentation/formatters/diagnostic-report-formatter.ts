@@ -6,6 +6,7 @@
 // @work-item-id WI-180
 // @work-item-id WI-208
 // @work-item-id WI-330
+// @work-item-id WI-384
 
 import type {
   DoctorAgentScope,
@@ -13,6 +14,7 @@ import type {
 } from "../../application/usecases/run-doctor-diagnostics.js";
 import type { ConfigStatus } from "../../domain/config-status.js";
 import type { DiagnosticReport } from "../../domain/diagnostic-report.js";
+import { CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE } from "../../application/operator-notice.js";
 
 export interface DiagnosticReportFormatterInput {
   readonly report: DiagnosticReport;
@@ -27,6 +29,7 @@ export interface DiagnosticReportFormatterInput {
 
 export class DiagnosticReportFormatter {
   formatJson(input: DiagnosticReportFormatterInput): string {
+    const operatorNotices = input.agent === "claude" ? [] : [CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE];
     return JSON.stringify(
       {
         schemaVersion: "1.0",
@@ -59,6 +62,7 @@ export class DiagnosticReportFormatter {
             scopeReason,
           };
         }),
+        operatorNotices,
         exitCode: input.exitCode,
       },
       null,
@@ -74,6 +78,12 @@ export class DiagnosticReportFormatter {
       `Config: ${input.configStatus}`,
       "",
     ];
+    if (input.agent !== "claude") {
+      lines.push(
+        `Notice [${CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE.code}]: ${CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE.message}`,
+        "",
+      );
+    }
     for (const finding of input.report.findings) {
       lines.push(`[${finding.severity}] ${finding.checkId}: ${finding.message}`);
       lines.push(`  target: ${finding.target}`);

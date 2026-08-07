@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer integration
 // @story H11-03
+// @work-item-id WI-384
 
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -407,11 +408,11 @@ target('phasegate init の hook-config.json 自動検出 (WI-087 Phase B)', () =
         try {
           // Act
           const initResult = await runInitCli(projectRoot);
-          // 任意の harness コマンドを実行して config をロードさせる
-          const statusResult = await new Promise<CliResult>((resolve, reject) => {
+          // L1 の外部 Biome 起動を伴わない harness コマンドで config をロードさせる
+          const actual = await new Promise<CliResult>((resolve, reject) => {
             const child = spawn(
               'node',
-              ['--import', TSX_LOADER, MAIN_TS, 'phasegate:status'],
+              ['--import', TSX_LOADER, MAIN_TS, 'validate', '--layer', 'L2'],
               { cwd: projectRoot, env: process.env },
             );
             let stdout = '';
@@ -433,7 +434,7 @@ target('phasegate init の hook-config.json 自動検出 (WI-087 Phase B)', () =
           expect(initResult.exitCode).toBe(0);
           // v2 schema warning は config-foundation 内で "v2" 文字列を含むメッセージを出力する
           // architecture フィールドが含まれていれば v3 と判定されて warning が出ない想定
-          expect(statusResult.stderr).not.toMatch(/v2.*schema|schema.*v2/i);
+          expect(actual.stderr).not.toMatch(/v2.*schema|schema.*v2/i);
         } finally {
           await rm(projectRoot, { recursive: true, force: true });
         }

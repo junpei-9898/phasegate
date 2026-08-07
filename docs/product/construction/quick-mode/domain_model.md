@@ -271,3 +271,12 @@ Quick Mode consumes a validator ID catalog that matches validator-system for the
 `judge()` の 3 拒否ルールのうち NEW_DOMAIN / API_CONTRACT はパスベースのまま維持し、override の影響を受けない。MIXED_CHANGES のみが override 反映後の分類結果を消費する。これにより override の誤設定があっても構造的な高リスク変更は必ず Full Mode に落ちる二重防御が保たれる。
 
 `allowedCategories` には enum 不変条件を追加する（INV-AC-2）。全要素が ChangeCategory 7 値のいずれかでなければ `QuickModeConfigError` で拒否し、大文字小文字の正規化は行わない（分類結果のキーは常に小文字であり、正規化は「効かない設定」を黙認することになるため）。`.phasegate/session.json` の `normalizeAllowedCategories`（WI-348）は config ではなく実行時セッション成果物の旧形式救済であり、本規則の対象外。
+
+## WI-384 explicit hook changeKind
+
+<!-- @work-item-id WI-384 -->
+
+quick-mode が既に所有する `ChangeKind = CREATE | MODIFY | DELETE` を cross-unit hook input でも使う。
+caller が valid explicit `changeKind` を渡した場合は before/after や file existence による推定より
+優先する。field が無い既存 caller は従来推定を維持する。この加法的契約により native
+apply_patch の Delete を MODIFY へ潰さず、patch 全文から不確かな content snapshot を作らない。

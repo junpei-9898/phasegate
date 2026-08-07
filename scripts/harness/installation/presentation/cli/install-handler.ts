@@ -3,8 +3,10 @@
 // @work-item-id WI-146
 // @work-item-id WI-175
 // @work-item-id WI-207
+// @work-item-id WI-384
 
 import type { RunInstallUseCase } from "../../application/usecases/run-install.js";
+import { CODEX_HOOK_TRUST_REQUIRED_NOTICE } from "../../application/operator-notice.js";
 
 export interface InstallHandlerInput {
   readonly projectRoot: string;
@@ -34,9 +36,12 @@ export class InstallHandler {
 
   async execute(input: InstallHandlerInput): Promise<InstallHandlerResult> {
     const result = await this.useCase.execute(input);
+    const operatorNotices = result.plan.some((item) => item.path === ".codex/hooks.json" && item.changed)
+      ? [CODEX_HOOK_TRUST_REQUIRED_NOTICE]
+      : [];
     if (input.json) {
       return {
-        stdout: JSON.stringify(result, null, 2),
+        stdout: JSON.stringify({ ...result, operatorNotices }, null, 2),
         exitCode: result.refused.length > 0 || result.error !== undefined ? 1 : 0,
       };
     }
@@ -49,6 +54,7 @@ export class InstallHandler {
       }),
     ];
     if (result.backupDir !== null) lines.push(`backups: ${result.backupDir}`);
+    for (const notice of operatorNotices) lines.push(`Notice [${notice.code}]: ${notice.message}`);
     if (result.error !== undefined) {
       lines.push("");
       lines.push(`Apply error: ${result.error.target} ${result.error.operation} failed with ${result.error.code}`);

@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer integration
 // @work-item-id WI-205
+// @work-item-id WI-384
 // @story H11-06
 
 /**
@@ -145,7 +146,7 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
         expect(actual.codexSkillsLink).toBe('../skills');
       }, 60000);
 
-      it('Codex 有効化手順 (codex features enable hooks) が次ステップに案内されること', async () => {
+      it('Codex minimum version と definition hash 再 trust が次ステップに案内されること', async () => {
         // Arrange
         const projectRoot = await createProjectRoot('init-agent-codex-');
 
@@ -154,7 +155,8 @@ target('phasegate init --agent オプション (ISSUE-013 Wave 2)', () => {
 
         // Assert
         expect(actual.exitCode).toBe(0);
-        expect(actual.stdout).toContain('codex features enable hooks');
+        expect(actual.stdout).toContain('Codex CLI >= 0.124.0');
+        expect(actual.stdout).toContain('/hooks');
         expect(actual.stdout).toContain('codex-integration.md');
       }, 60000);
 

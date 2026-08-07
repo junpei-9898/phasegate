@@ -120,6 +120,7 @@ Claude 環境では L0 hook を主防御とするが、Codex 環境では hook �
 - [x] Wave 3 C-5: UserPromptSubmit hook による動的状態注入（v0.61.0）
 - [x] Wave 3 C-6 軽量版: UserPromptSubmit に `git diff` ベースの violation detection を追加（daemon 不採用、v0.62.0）
 - [x] Wave 3 D-7: 上流 fix ([openai/codex#18391](https://github.com/openai/codex/pull/18391)) が既存 approval 済みのため別途 PR 送付は不要と判断、merge 後の追従計画を本 issue に記録
+- [x] WI-384: native `apply_patch` の PreToolUse / PostToolUse、doctor、trust notice、公開 coverage を v0.336.0 で実装
 - [x] 既存 Claude ユーザーへの影響ゼロ（テンプレート追加のみ、既存コード非変更）
 
 ## 非対象（スコープ外）
@@ -161,6 +162,7 @@ Claude 環境では L0 hook を主防御とするが、Codex 環境では hook �
 | Wave 3 C-5 | v0.61.0 | UserPromptSubmit hook で動的状態注入 |
 | Wave 3 C-6 軽量版 | v0.62.0 | UserPromptSubmit に violation detection を追加 (daemon 不採用) |
 | Wave 3 D-7 | - | 上流 PR は [openai/codex#18391](https://github.com/openai/codex/pull/18391) が既存・approval 済みのため送付不要。merge 待ち |
+| WI-384 follow-up | v0.336.0 | native `apply_patch` Update/Add/Delete の編集前 hard block、PostToolUse lint、stale matcher doctor、definition hash 再 trust notice |
 
 ## 上流 fix 後の追従
 
@@ -173,3 +175,17 @@ Phasegate 側の対応:
 3. **docs 更新** — 既知制約セクションから「ネイティブ apply_patch が hook 非経由」を削除
 
 これらは PR merge 後の実 payload を見てから着手する（現時点では推測ベースで実装しない）。
+
+### 2026-08-08 follow-up
+
+<!-- @work-item-id WI-384 -->
+
+PR #18391 は 2026-04-22 に merge され、rust-v0.124.0（2026-04-23）でリリース済みである。
+同版で hooks は stable / default-on となり、native payload は canonical
+`tool_name: "apply_patch"` と raw patch の `tool_input.command` を持つことが確認された。
+
+追従実装は [WI-384](../WI-384/description.md) で完了した。v0.336.0 で matcher を
+`Bash|apply_patch` へ更新し、raw patch parser、CREATE / MODIFY / DELETE forwarding、doctor、
+minimum version / trust notice、英日 coverage matrix を同時にリリースした。L2 pre-commit と CI は
+hook trust 状態に依存しない backstop / authoritative re-check として維持する。これをもって
+WI-013 の「上流 fix 後の追従」を決着とする。

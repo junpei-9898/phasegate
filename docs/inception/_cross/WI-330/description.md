@@ -1,6 +1,7 @@
 ---
 id: WI-330
 type: fix
+status: implemented
 source: exocortex-review P5 (github#40 恒久化)
 ---
 

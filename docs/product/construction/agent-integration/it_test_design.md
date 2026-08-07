@@ -593,3 +593,16 @@ hook JSON schemaと既存integrity / base contextの順序を保持し、World s
 ## WI-305 hook integration
 
 commit-msg subprocessでchanged fragment declaration結果を確認し、local fast-path文言とL3 authorityの分離を固定する。
+
+## WI-384 Codex native payload integration
+
+<!-- @work-item-id WI-384 -->
+
+`codex-payload-compatibility.integration.test.ts` を temp project fixture で拡張し、upstream 必須 field
+（`cwd`, `hook_event_name`, `model`, `permission_mode`, `session_id`, `tool_input`, `tool_name`,
+`tool_use_id`, `transcript_path`, `turn_id`）を含む実 payload 形を使う。
+
+Update / Add / Delete / 複数ファイル混在、protected / phase / full-mode violation、allow 時の空 stdout、
+deny 時の exit 2 + 非空 stderr、command 欠落 fail-closed、optional agent fields を検証する。
+PostToolUse apply_patch は既存 lint / skip flow へ進むことだけを検証し再解析しない。Bash redirect、
+Bash heredoc apply_patch、Claude Write / Edit、L2 pre-commit backstop の既存 suites を回帰実行する。

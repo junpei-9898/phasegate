@@ -1,8 +1,10 @@
 // @unit installation
 // @layer presentation
 // @work-item-id WI-148
+// @work-item-id WI-384
 
 import type { RunReconcileUseCase } from "../../application/usecases/run-reconcile.js";
+import { CODEX_HOOK_TRUST_REQUIRED_NOTICE } from "../../application/operator-notice.js";
 
 export interface ReconcileHandlerInput {
   readonly projectRoot: string;
@@ -24,9 +26,12 @@ export class ReconcileHandler {
 
   async execute(input: ReconcileHandlerInput): Promise<ReconcileHandlerResult> {
     const result = await this.useCase.execute(input);
+    const operatorNotices = result.plan.some((item) => item.path === ".codex/hooks.json" && item.changed)
+      ? [CODEX_HOOK_TRUST_REQUIRED_NOTICE]
+      : [];
     if (input.json) {
       return {
-        stdout: JSON.stringify(result, null, 2),
+        stdout: JSON.stringify({ ...result, operatorNotices }, null, 2),
         exitCode: result.refused.length > 0 ? 1 : 0,
       };
     }
@@ -38,6 +43,7 @@ export class ReconcileHandler {
       }),
     ];
     if (result.backupDir !== null) lines.push(`backups: ${result.backupDir}`);
+    for (const notice of operatorNotices) lines.push(`Notice [${notice.code}]: ${notice.message}`);
     if (result.refused.length > 0) {
       lines.push("");
       lines.push("Refused ai-assisted/manual targets. Re-run with --force after reviewing the hint.");

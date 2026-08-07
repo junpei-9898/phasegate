@@ -1223,3 +1223,12 @@ repo の `scripts/harness/*/domain/**` は外部 npm パッケージを一切 im
 ### LD-11: 設定不正時の hook fail-closed
 
 `QuickModeFullModeRequirementAdapter.check()` は例外を握り潰して `requiresFullMode: false` を返す（WI-333: config 不在時の fail-open）。enum 検証の導入で config の typo が例外になるため、この経路をそのままにすると typo が全書き込み許可に化ける。`QuickModeConfigError`（設定不正）に限り `requiresFullMode: true` へ倒し、それ以外の例外は WI-333 の fail-open を維持する。
+
+## WI-384 explicit changeKind precedence
+
+<!-- @work-item-id WI-384 -->
+
+`ClassifyChangeCategoryUseCaseInput.targetChanges[]` に optional `changeKind` を追加する。
+kind の解決順は explicit kind、before/after による CREATE 推定、targetChanges 未指定 CLI の filesystem
+推定、MODIFY default とする。これにより agent-integration が raw patch directive から導出した DELETE
+を `ChangedFile` へそのまま渡す。既存 adapter / caller は optional field により変更不要である。

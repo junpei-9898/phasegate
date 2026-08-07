@@ -2,7 +2,7 @@
 id: WI-331
 type: fix
 severity: medium
-status: drafted
+status: implemented
 affects: [installation, ci-governance]
 source: exocortex-review P9 (github#35 根本修正)
 ---

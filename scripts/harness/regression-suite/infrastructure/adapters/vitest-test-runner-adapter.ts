@@ -1,7 +1,10 @@
 // @layer infrastructure
-import { execSync } from 'node:child_process';
+// @unit regression-suite
+// @work-item-id WI-384
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { execPath } from 'node:process';
 import { KRequirementTest } from '../../domain/value-objects/k-requirement-test.js';
 import { GngConditionTest } from '../../domain/value-objects/gng-condition-test.js';
 import { AgentIndependenceTest } from '../../domain/value-objects/agent-independence-test.js';
@@ -65,8 +68,15 @@ export class VitestTestRunnerAdapter implements TestRunnerPort {
 
       const testPattern = hasUnitTests ? unitTestDir : unitIntegrationDir;
       try {
-        execSync(
-          `npx tsx node_modules/vitest/vitest.mjs run --config scripts/harness/__tests__/vitest.config.ts "${testPattern}"`,
+        execFileSync(
+          execPath,
+          [
+            'node_modules/vitest/vitest.mjs',
+            'run',
+            '--config',
+            'scripts/harness/__tests__/vitest.config.ts',
+            testPattern,
+          ],
           { cwd: this.rootDir, stdio: 'pipe', timeout: 60_000 },
         );
         unitResults.set(unit, true);

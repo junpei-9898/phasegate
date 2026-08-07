@@ -8,6 +8,7 @@
 // @work-item-id WI-315
 // @work-item-id WI-326
 // @work-item-id WI-331
+// @work-item-id WI-384
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -101,6 +102,7 @@ async function runReconcile(root: string, options: { apply?: boolean; force?: bo
       plan: Array<{ path: string; action: string; repairMode: string; changed: boolean }>;
       refused: Array<{ path: string }>;
       backupDir: string | null;
+      operatorNotices?: Array<{ code: string; message: string }>;
     },
   };
 }
@@ -159,6 +161,19 @@ async function applyVersionReconcileAndReadPackage() {
       devDependencies: Record<string, string>;
     },
   };
+}
+
+async function reconcileBashOnlyCodexHooks() {
+  const root = await createProjectRoot();
+  await runInstall(root, "0.145.3");
+  const staleHooks = {
+    hooks: {
+      PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "npx phasegate hook pre-tool-use" }] }],
+      PostToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "npx phasegate hook post-tool-use" }] }],
+    },
+  };
+  await writeProjectFile(root, ".codex/hooks.json", `${JSON.stringify(staleHooks, null, 2)}\n`);
+  return runReconcile(root, { apply: true, force: true, version: "0.146.0" });
 }
 
 async function applyUnmodifiedCreatedEntryReconcile() {
@@ -469,6 +484,20 @@ afterEach(async () => {
 
 target("ReconcileHandler", () => {
   describe("manifest-driven reconcile", () => {
+    it("Bash-only Codex hooks の更新 result に definition hash 再 trust notice を含めること", async () => {
+      // Arrange
+      // Act
+      const actual = await reconcileBashOnlyCodexHooks();
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      expect(actual.payload.operatorNotices).toEqual([
+        expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" }),
+      ]);
+      expect(actual.payload.operatorNotices?.[0]?.message).toContain("Codex CLI >= 0.124.0");
+      expect(actual.payload.operatorNotices?.[0]?.message).toContain("/hooks");
+    });
+
     it("dry-run は entry ごとの repairMode と diff を返し files を変化させないこと", async () => {
       // Act
       const actual = await dryRunInstalledProject();

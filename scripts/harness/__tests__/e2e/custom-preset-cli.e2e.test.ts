@@ -1,8 +1,12 @@
+// @unit harness-api
+// @story H02-01
+// @work-item-id WI-384
+
 /**
  * @layer e2e-test
  *
  * CLI 呼び出しは `cli-harness.test.ts` と同様に
- * `node_modules/.bin/tsx <repo>/scripts/harness/main.ts ...` を spawnSync する。
+ * Node の `--import tsx` で `<repo>/scripts/harness/main.ts ...` を spawnSync する。
  * `main.ts` は `process.cwd()` を project root として扱うため、
  * 一時ディレクトリを cwd にして custom preset 設定を読ませる。
  */
@@ -11,13 +15,14 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { execPath } from 'node:process';
 
 const ROOT = resolve(process.cwd());
 const MAIN = resolve(ROOT, 'scripts/harness/main.ts');
-const TSX_BIN = resolve(ROOT, 'node_modules/.bin/tsx');
+const TSX_LOADER = resolve(ROOT, 'node_modules/tsx/dist/loader.mjs');
 
 function runInCwd(cwd: string, ...args: string[]) {
-  const result = spawnSync(TSX_BIN, [MAIN, ...args], {
+  const result = spawnSync(execPath, ['--import', TSX_LOADER, MAIN, ...args], {
     cwd,
     encoding: 'utf-8',
     env: { ...process.env, NODE_ENV: 'test' },

@@ -645,3 +645,17 @@ Personal install pre-commit hooks must include a local documentation consistency
 `RunReconcileUseCase` prunes bundled skills that have left the current catalog. After planning shared/personal skill redeployment, it inspects `mode="created"` manifest entries under `skills/`, `.claude/skills/`, and `.codex/skills/` and treats any direct-child skill directory whose name is absent from `getBundledSkillsForSet("all")` as an orphan (a skill removed from the bundle, e.g. by a catalog reduction such as WI-256). Each orphan becomes a `prune` plan item; on `--apply` the on-disk skill directory is removed and the manifest entry is dropped via `DeploymentManifest.removeEntry`.
 
 Pruning is manifest-scoped: only skills phasegate itself deployed and recorded in the manifest are eligible, so user-owned skill directories that were never recorded are never deleted (mirroring the uninstall contract that scopes to manifest-managed skill directories). The `.harness-version` metadata entry is excluded from name extraction and never pruned. Dry-run reports prune plan items without touching disk or manifest, and the operation is idempotent — once an orphan's manifest entry is removed, subsequent reconciles produce no prune items. `update-skills` (the reconcile alias) inherits this prune behavior. @work-item-id WI-264
+
+## WI-384 Codex apply_patch matcher lifecycle
+
+<!-- @work-item-id WI-384 -->
+
+Codex hook template の PreToolUse / PostToolUse matcher は `Bash|apply_patch` を canonical とする。
+`CodexHookMissingCheck` は event、対応する `npx phasegate hook pre-tool-use|post-tool-use` command、
+matcher token を構造的に照合し、Bash-only や片 event だけ current な config を red finding にする。
+別 event / user hook 内の文字列は充足に数えない。
+
+install（init 委譲を含む）と reconcile が Codex hook target を作成・変更した場合、human / JSON result
+へ Codex CLI >= 0.124.0 と `/hooks` 再 trust の operator notice を加える。doctor の Codex scope は
+trust store を検証できない旨と同じ手順を advisory notice として出すが exit status を変えない。
+hooks.json の content hash が変わると再 trust が必要であることを隠さない。

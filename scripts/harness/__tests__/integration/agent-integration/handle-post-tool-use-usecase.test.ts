@@ -1,6 +1,7 @@
 // @unit agent-integration
 // @layer application
 // @story H11-03
+// @work-item-id WI-384
 
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -212,6 +213,37 @@ target('HandlePostToolUseUseCase.execute', () => {
 
         // Assert
         expect(actual.executed).toBe(true);
+      });
+    });
+
+    context('Codex native apply_patch の PostToolUse payload を受ける場合', () => {
+      it('native apply_patch 後も target 再解析なしで既存 lint 経路を実行すること', async () => {
+        // Arrange
+        const mockConfigQueryPort = {
+          isHookEnabled: vi.fn().mockResolvedValue(true),
+          getProtectedFilePatterns: vi.fn(),
+          getProtectedFileExclusions: vi.fn().mockResolvedValue([]),
+          getRelaxedGates: vi.fn().mockResolvedValue([]),
+          getProjectPaths: vi.fn().mockReturnValue({ designDocs: 'docs/product/construction', inceptionDocs: 'docs/inception' }),
+          getBaselineConfig: vi.fn().mockResolvedValue({ enabled: false, path: '.phasegate/baseline.json' }),
+          getStopHookEnforce: vi.fn().mockResolvedValue(false),
+        };
+        const mockCliExecutorPort = {
+          execute: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '', timedOut: false }),
+        };
+        const useCase = createHandlePostToolUseUseCase({
+          configQueryPort: mockConfigQueryPort,
+          cliExecutorPort: mockCliExecutorPort,
+        });
+        const input = buildPostToolUseInput({ toolName: 'apply_patch', affectedFilePaths: [] });
+
+        // Act
+        const actual = await useCase.execute(input);
+
+        // Assert
+        expect(actual.executed).toBe(true);
+        expect(actual.skipReason).toBeUndefined();
+        expect(mockCliExecutorPort.execute).toHaveBeenCalledWith('phasegate:lint', ['--fast'], 500);
       });
     });
   });

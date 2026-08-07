@@ -1761,3 +1761,10 @@ L2 Level-1 ゲートを塞ぐ plan 文書の scaffold 経路を ci-governance �
 `check-phase-gate --level 2`（Level-1 ゲート）を通ることをラウンドトリップテストで機械検証し、
 planning mode `embedded-qa` では逆に**通らない**（人間の `[Answer]` を要する）ことも
 併せて固定する。テンプレートが承認証跡を偽造しないための境界である。
+## WI-384 Codex hook integrity pin
+
+<!-- @work-item-id WI-384 -->
+
+`PinIntegrityUseCase` と `VerifyIntegrityUseCase` が共有する `IntegrityTarget.defaultTargets()` に
+`.codex/hooks.json` を追加する。これにより matcher 更新後の正規 `integrity:pin` が manifest を
+更新し、以後の `integrity:verify` は Codex hook definition drift を検出する。

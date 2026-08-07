@@ -25,6 +25,7 @@
  * @work-item-id WI-300
  * @work-item-id WI-306
  * @work-item-id WI-308
+ * @work-item-id WI-384
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -2312,11 +2313,11 @@ async function main(): Promise<void> {
           console.log("  3. Edit .claude/scripts/hook-config.json to set target directories");
         }
         if (deployCodex) {
-          console.log(`  ${deployClaude ? "4" : "3"}. Enable Codex hooks: codex features enable hooks`);
+          console.log(`  ${deployClaude ? "4" : "3"}. Use Codex CLI >= 0.124.0, then open /hooks and trust the current hook definition hash`);
           console.log(
             `  ${deployClaude ? "5" : "4"}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`,
           );
-          console.log(`     See docs/guide/codex-integration.md for the native apply_patch limitation.`);
+          console.log(`     See docs/guide/codex-integration.md for native apply_patch coverage and trust troubleshooting.`);
         }
         if (skillSet !== "core") {
           console.log("");

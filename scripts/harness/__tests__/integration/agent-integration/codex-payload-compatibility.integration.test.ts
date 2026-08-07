@@ -1,6 +1,8 @@
 // @unit agent-integration
 // @layer integration
-// @story ISSUE-013
+// @story H11-02
+// @story H11-04
+// @work-item-id WI-384
 
 /**
  * Codex CLI の hook stdin JSON ペイロードが既存の Phasegate hook アダプタで
@@ -18,7 +20,9 @@
  */
 
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import * as path from 'node:path';
+import { execPath } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { target } from '../../helpers/test-helpers.js';
@@ -26,6 +30,7 @@ import { target } from '../../helpers/test-helpers.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_ROOT = path.resolve(__dirname, '../../../../..');
 const MAIN_TS = path.join(HARNESS_ROOT, 'scripts/harness/main.ts');
+const TSX_IMPORT = createRequire(import.meta.url).resolve('tsx');
 
 interface CliResult {
   exitCode: number;
@@ -35,7 +40,7 @@ interface CliResult {
 
 function runCli(args: string[], stdin?: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['tsx', MAIN_TS, ...args], {
+    const child = spawn(execPath, ['--import', TSX_IMPORT, MAIN_TS, ...args], {
       cwd: HARNESS_ROOT,
       env: process.env,
     });

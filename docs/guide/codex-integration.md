@@ -1,56 +1,32 @@
 # Codex CLI Integration
 
-Phasegate supports [OpenAI Codex CLI](https://developers.openai.com/codex/cli) through its hooks system, providing quality enforcement similar to the Claude Code experience. Because Codex's hook coverage differs from Claude's, defense is layered across hook-time and commit-time mechanisms.
+<!-- @work-item-id WI-384 -->
+
+Phasegate supports OpenAI Codex CLI through project-local command hooks. Codex rust-v0.124.0 or newer is required for native `apply_patch` coverage; hooks are stable and enabled by default in those releases.
 
 ## Setup
 
-### Quick setup (recommended)
+Install or reconcile the managed Codex artifacts:
 
 ```bash
-# 1. Initialize the project for Codex
-npx phasegate init --name my-project --agent codex --with-husky
-
-# 2. Enable the Codex CLI feature flag manually
-codex features enable hooks
+npx phasegate install --agent codex --with-husky --apply
+npx phasegate doctor --agent codex
 ```
 
-For dual-agent projects (Claude + Codex), use `--agent both`.
+Use `--agent both` for projects shared with Claude Code. After `.codex/hooks.json` is created or changed, open `/hooks` in Codex and trust the current hook definition hash. Trust is stored outside the project and cannot be verified by Phasegate, so install, reconcile, and doctor print an operator notice.
 
-Responsibility split:
+The deprecated `phasegate init --agent codex` path remains available and prints the same minimum-version and re-trust guidance.
 
-- `phasegate init --agent codex` sets up **project-local artifacts** such as `phasegate.config.json`, `skills/`, `.codex/hooks.json`, and `.codex/skills`
-- `codex features enable hooks` updates the **Codex CLI user environment** and is intentionally left as a manual step
+### Manual configuration
 
-### Manual setup
-
-Alternatively, set up Codex integration manually:
-
-#### 1. Enable hooks in Codex config
-
-Add to `~/.codex/config.toml` (or project `.codex/config.toml`):
-
-```toml
-[features]
-hooks = true
-```
-
-#### 2. Install Phasegate hooks
-
-Copy the template into your project:
-
-```bash
-mkdir -p .codex
-cp node_modules/phasegate/templates/.codex/hooks.json .codex/hooks.json
-```
-
-Or merge the following into your existing `.codex/hooks.json`:
+The canonical matcher is `Bash|apply_patch` for both events:
 
 ```json
 {
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -62,7 +38,7 @@ Or merge the following into your existing `.codex/hooks.json`:
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -71,97 +47,56 @@ Or merge the following into your existing `.codex/hooks.json`:
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx phasegate hook stop",
-            "statusMessage": "phasegate: completion check",
-            "timeout": 30
-          }
-        ]
-      }
     ]
   }
 }
 ```
 
-#### 3. Enable the pre-commit hook (critical for Codex)
+`Write` and `Edit` aliases are not included in the Codex-specific template. `apply_patch` is the canonical upstream tool name.
 
-Because Codex's native `apply_patch` tool does not trigger hooks (see [Codex's limitation](#known-limitations)), the pre-commit layer is the primary defense for apply_patch-based edits. Install via husky:
+## Coverage
 
-```bash
-npx phasegate init --with-husky  # or rerun init with this flag
-```
+| Edit path | Pre-edit hard block | Post-edit lint | Commit-time backstop |
+|---|---|---|---|
+| Shell writes (`sed -i`, `tee`, heredoc, `cat >`) | ✅ `PreToolUse(Bash)` | ✅ `PostToolUse(Bash)` | ✅ L2 pre-commit |
+| Bash-invoked `apply_patch <<'PATCH'` | ✅ parsed by `BashWriteTargetExtractor` | ✅ `PostToolUse(Bash)` | ✅ L2 pre-commit |
+| Native `apply_patch` Update/Add/Delete | ✅ `PreToolUse(apply_patch)` | ✅ `PostToolUse(apply_patch)` | ✅ L2 pre-commit |
 
-## Defense Layers in Codex
+For native patches, Phasegate reads raw patch text from `tool_input.command`, preserves directive order, and maps Update/Add/Delete to MODIFY/CREATE/DELETE. All targets join the existing protected-file, phase-gate, story-reflection, and Quick/Full Mode checks. One violating target denies the whole patch before editing.
 
-Compared to Claude Code, the enforcement timing is shifted for `apply_patch`-based edits. Coverage is equivalent overall but arrives at different stages.
+PostToolUse intentionally does not parse patch targets again. It sends the event through the existing fast lint path.
 
-| Concern | Claude Code | Codex |
-|---|---|---|
-| Bash-based file writes (`sed -i`, `tee`, heredoc) | `PreToolUse(Bash)` — hard block | `PreToolUse(Bash)` — hard block (same) |
-| Bash-invoked `apply_patch <<'PATCH'` | `PreToolUse(Bash)` — hard block | `PreToolUse(Bash)` — hard block (via Wave 1 `apply_patch` heredoc detection) |
-| **Native `apply_patch` tool calls** | `PreToolUse(Write\|Edit)` — hard block | ⚠️ **Not intercepted by hooks** — deferred to pre-commit |
-| Protected file writes | hook — immediate block | hook (Bash path) + pre-commit (commit path) |
-| Phase-gate enforcement | hook — immediate block | hook (Bash path) + pre-commit (commit path) |
-| Post-edit formatter / lint | `PostToolUse(Write\|Edit)` | `PostToolUse(Bash)` (partial) |
-| Session completion check | `Stop` hook | `Stop` hook (same) |
+## Hook result contract
 
-## Known Limitations
+- Deny: exit 2 with non-empty stderr.
+- Continue: exit 0 with empty stdout. Informational stderr is allowed.
+- Phasegate does not emit `permissionDecision: "ask"` because that path can fail open.
+- Phasegate does not emit an `allow` response without `updatedInput`.
+- Missing `tool_input.command` or a patch without `*** Begin Patch` fails closed.
 
-### Native `apply_patch` bypasses hooks
+## Layered defense and residual risk
 
-Per [OpenAI Codex docs](https://developers.openai.com/codex/hooks):
+Command hooks are a fast path. They can be skipped until the updated definition is trusted, and project code cannot inspect Codex's external trust store. Keep `.husky/pre-commit` and CI enabled: L2 remains the commit-time backstop and CI remains the authoritative re-check.
 
-> "Currently `PreToolUse` only supports Bash tool interception."
-
-Codex's native `apply_patch` tool is routed through a separate `ApplyPatchHandler` (see [openai/codex#16732](https://github.com/openai/codex/issues/16732)) that never emits hook events. As a result:
-
-- Phasegate cannot pre-block edits made through native `apply_patch`
-- Violations surface at **pre-commit time** instead
-- Feedback is delayed relative to the Claude Code experience
-
-**Mitigation**: commit frequently (e.g., after each logical unit of work). This shortens the window between violation and detection.
-
-### Bash-invoked `apply_patch` is fully covered
-
-If the model invokes `apply_patch` via a Bash command (`apply_patch <<'PATCH' ... PATCH`), `PreToolUse(Bash)` fires and Phasegate's `BashWriteTargetExtractor` parses the heredoc to identify target files. This path is hard-blocked like any other Bash write.
-
-### Windows is not supported
-
-Codex hooks themselves do not support Windows. Phasegate follows the same constraint.
-
-### `unified_exec` interception is incomplete
-
-Codex documents that the newer `unified_exec` mechanism has incomplete interception. Commands routed through `unified_exec` may bypass hooks. Phasegate falls back to pre-commit for any such bypass.
-
-## Recommended Workflow
-
-1. **Enable all three layers**: Codex hooks + pre-commit hook + CI validation
-2. **Commit frequently** to catch native apply_patch violations early
-3. **Review the coverage matrix** above so you understand which edits are hard-blocked vs caught later
+Windows Codex hooks and Codex versions older than 0.124.0 are not supported by this integration.
 
 ## Troubleshooting
 
-### Hooks don't seem to run
+### Native apply_patch is not intercepted
 
-- Verify `hooks = true` is set in `config.toml`
-- Verify `.codex/hooks.json` is in the project root or `~/.codex/`
-- Run `codex --version` to ensure you're on a version that supports hooks
+1. Run `codex --version` and confirm 0.124.0 or newer.
+2. Confirm both matchers in `.codex/hooks.json` are `Bash|apply_patch`.
+3. Run `npx phasegate doctor --agent codex`.
+4. Run `npx phasegate reconcile --apply` if doctor reports stale wiring.
+5. Open `/hooks` and trust the current definition hash.
 
-### False positives on Bash hooks
+### A patch is denied
 
-If non-write Bash commands are being blocked, check your `phasegate.config.json` `protectedFiles.exclude` list. You can also disable the `PostToolUse(Bash)` hook if lint runs too frequently.
+Read stderr for the blocked path and recovery guidance. Full Mode changes require an active `phasegate session begin --mode full ...` authorization. Malformed or target-less native patches are denied rather than silently allowed.
 
-### Native apply_patch violations slipped through
+## See also
 
-This is expected behavior until [openai/codex#16732](https://github.com/openai/codex/issues/16732) is fixed. The pre-commit layer will catch these at commit time. If immediate feedback is critical, consider instructing the model (via project-level context) to prefer Bash-based edits over native `apply_patch`.
-
-## See Also
-
-- [Claude Code Hooks Integration](./hooks-integration.md)
-- [Phasegate Layer Model](./layer-model.md)
-- [Codex Hooks Documentation (official)](https://developers.openai.com/codex/hooks)
+- [Hooks Integration](./hooks-integration.md)
+- [Layer Model](./layer-model.md)
+- [OpenAI Codex hooks documentation](https://developers.openai.com/codex/hooks)
+- [openai/codex PR #18391](https://github.com/openai/codex/pull/18391)

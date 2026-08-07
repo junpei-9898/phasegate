@@ -2,7 +2,7 @@
 id: WI-315
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [installation]
 source: github#35
 ---

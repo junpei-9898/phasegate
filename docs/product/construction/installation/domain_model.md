@@ -541,3 +541,13 @@ Install/init treats language selection as bootstrap metadata. `init --language <
 <!-- @work-item-id WI-264 -->
 
 An orphan skill is a `mode="created"` manifest entry under `skills/`, `.claude/skills/`, or `.codex/skills/` whose direct-child directory name is not in the current bundle catalog (`getBundledSkillsForSet("all")`). Reconcile prune obeys: (P1 manifest-scoped) only manifest-recorded skills are eligible, so user-owned directories absent from the manifest are never removed; (P2 metadata-protected) `.harness-version` is excluded from name extraction and never pruned; (P3 catalog-diff) eligibility is decided by skill-name set difference against the current bundle, not by version; (P4 atomic) each prune removes the on-disk directory and drops the manifest entry together, and dry-run does neither. `DeploymentManifest.removeEntry` provides the immutable manifest transition. @work-item-id WI-264
+
+## WI-384 Codex hook coverage diagnostic invariant
+
+<!-- @work-item-id WI-384 -->
+
+`codex-hook-missing` の healthy state は単なる phasegate 文字列の存在ではない。PreToolUse の
+phasegate pre command と PostToolUse の phasegate post command がそれぞれ同一 entry で `Bash` と
+canonical `apply_patch` を match することを要求する。欠落は既存 `DiagnosticFinding` の red とし、
+malformed / user customization / simple managed config に対する manual / ai-assisted / mechanical の
+既存 repair mode を維持する。Codex trust state は観測不能なので finding state に混ぜない。

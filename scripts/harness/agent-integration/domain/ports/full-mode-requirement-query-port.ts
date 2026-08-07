@@ -1,5 +1,6 @@
 // @unit agent-integration
 // @layer domain
+// @work-item-id WI-384
 
 export interface FullModeRequirementQueryResult {
   readonly requiresFullMode: boolean;
@@ -10,6 +11,7 @@ export interface FullModeRequirementQueryResult {
 
 export interface FullModeTargetChange {
   readonly filePath: string;
+  readonly changeKind?: 'CREATE' | 'MODIFY' | 'DELETE';
   readonly beforeContent?: string | null;
   readonly afterContent?: string | null;
 }

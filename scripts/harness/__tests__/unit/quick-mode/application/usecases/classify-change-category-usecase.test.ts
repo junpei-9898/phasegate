@@ -2,6 +2,7 @@
 // @unit quick-mode
 // @story H10-06
 // @work-item-id WI-345
+// @work-item-id WI-384
 import { describe, expect, it, vi } from "vitest";
 import type { FileExistencePort } from "../../../../../quick-mode/application/ports/file-existence-port.js";
 import type { QuickModeConfigPort } from "../../../../../quick-mode/application/ports/quick-mode-config-port.js";
@@ -324,6 +325,74 @@ target("ClassifyChangeCategoryUseCase", () => {
         // Assert
         expect(actual.perFile).toEqual([{ path, category: "bugfix" }]);
         expect(actual.fullModeRequired).toBe(false);
+      });
+    });
+
+    describe("明示された changeKind を第一情報源として分類する（WI-384）", () => {
+      it("明示 CREATE と既存内容が競合する場合は CREATE を優先して新規 domain 変更を拒否すること", async () => {
+        // Arrange
+        const config = createQuickModeConfig({
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain"],
+        });
+        const { sut } = buildSut({ getConfig: vi.fn().mockResolvedValue(config) });
+        const path = "scripts/harness/quick-mode/domain/value-objects/explicit-create.ts";
+
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{
+            filePath: path,
+            changeKind: "CREATE",
+            beforeContent: "export const before = 1;\n",
+            afterContent: "export const after = 2;\n",
+          }],
+        });
+
+        // Assert
+        expect(actual.fullModeRequired).toBe(true);
+        expect(actual.rejectionRule).toBe("NEW_DOMAIN");
+      });
+
+      it("明示 MODIFY と新規内容推定が競合する場合は MODIFY を優先して NEW_DOMAIN にしないこと", async () => {
+        // Arrange
+        const config = createQuickModeConfig({
+          allowedCategories: ["bugfix", "docs", "test", "config", "domain"],
+        });
+        const { sut } = buildSut({ getConfig: vi.fn().mockResolvedValue(config) });
+        const path = "scripts/harness/quick-mode/domain/value-objects/explicit-modify.ts";
+
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{
+            filePath: path,
+            changeKind: "MODIFY",
+            beforeContent: null,
+            afterContent: "export const created = 1;\n",
+          }],
+        });
+
+        // Assert
+        expect(actual.fullModeRequired).toBe(false);
+        expect(actual.rejectionRule).toBeUndefined();
+      });
+
+      it("明示 DELETE は削除種別のまま path rule を評価して拒否理由へ保持すること", async () => {
+        // Arrange
+        const config = createQuickModeConfig({ allowedCategories: ["docs"] });
+        const { sut } = buildSut({ getConfig: vi.fn().mockResolvedValue(config) });
+        const path = "scripts/harness/quick-mode/application/obsolete-service.ts";
+
+        // Act
+        const actual = await sut.execute({
+          paths: [path],
+          targetChanges: [{ filePath: path, changeKind: "DELETE" }],
+        });
+
+        // Assert
+        expect(actual.fullModeRequired).toBe(true);
+        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionReason).toContain(`${path} (category=bugfix, changeKind=DELETE)`);
       });
     });
   });

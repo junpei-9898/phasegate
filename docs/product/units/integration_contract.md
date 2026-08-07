@@ -506,3 +506,18 @@ Phasegateはローカル開発ツールキットであり、認証認可機構�
 | L4-001 | drift-detect | 設計⇔コード双方向乖離 |
 | L4-002 | consistency-check | 文書間レイヤー整合性破綻 |
 | L4-003 | dead-code | 未使用エクスポート、到達不能コード |
+
+## WI-384 Codex apply_patch write-intent contract
+
+<!-- @work-item-id WI-384 -->
+
+Codex rust-v0.124.0 以降の native `apply_patch` hook payload は agent-integration が所有する。
+agent-integration は raw patch から `{ filePath, changeKind: CREATE|MODIFY|DELETE }` を導出し、
+path を既存 phase-gate / protection checks へ、明示 changeKind を quick-mode の既存分類入力へ渡す。
+quick-mode は explicit kind を before/after・filesystem 推定より優先するが、agent 固有 payload や
+patch parser を所有しない。
+
+installation は `.codex/hooks.json` の PreToolUse / PostToolUse に canonical matcher
+`Bash|apply_patch` を配布し、doctor で両 event の stale matcher を検出する。Codex trust store は
+Unit 境界外で観測不能なため、install/init/reconcile/doctor は CLI >= 0.124.0 と `/hooks` 再 trust を
+operator notice として伝え、trust 済みを診断 success の一部として推測しない。

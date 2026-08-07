@@ -7,6 +7,7 @@
  * @work-item-id WI-345
  * @work-item-id WI-347
  * @work-item-id WI-376
+ * @work-item-id WI-384
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -15,6 +16,7 @@
 
 import { HandlePreToolUseUseCase } from '../application/usecases/handle-pre-tool-use-usecase.js';
 import { BashWriteTargetExtractor } from '../domain/services/bash-write-target-extractor.js';
+import { ApplyPatchWriteTargetExtractor } from '../domain/services/apply-patch-write-target-extractor.js';
 import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
 import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
 import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
@@ -50,6 +52,7 @@ interface PreToolUseHookInput {
 
 interface TargetChange {
   filePath: string;
+  changeKind?: 'CREATE' | 'MODIFY' | 'DELETE';
   beforeContent?: string | null;
   afterContent?: string | null;
 }
@@ -145,6 +148,25 @@ async function main(): Promise<void> {
   // translator の WRITE_TOOLS チェックを通過させる（Bash のままではフェーズゲートが
   // スキップされるため）。
   let effectiveToolName = toolName;
+  if (toolName === 'apply_patch') {
+    const command = input.tool_input?.command;
+    if (typeof command !== 'string' || command.length === 0) {
+      process.stderr.write('apply_patch の tool_input.command が必要です\n');
+      process.exit(2);
+    }
+    const extractor = new ApplyPatchWriteTargetExtractor();
+    const patchTargets = extractor.extract(command);
+    if (patchTargets.length === 0) {
+      process.stderr.write('apply_patch command から書き込み対象を抽出できませんでした\n');
+      process.exit(2);
+    }
+    targetFilePaths.push(...patchTargets.map((target) => toRelative(target.filePath)));
+    targetChanges.push(...patchTargets.map((target) => ({
+      filePath: toRelative(target.filePath),
+      changeKind: target.changeKind,
+    })));
+    effectiveToolName = 'Write';
+  }
   if (toolName === 'Bash' && typeof input.tool_input?.command === 'string') {
     const extractor = new BashWriteTargetExtractor();
     const bashTargets = extractor.extract(input.tool_input.command);

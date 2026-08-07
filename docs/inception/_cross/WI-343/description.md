@@ -2,7 +2,7 @@
 id: WI-343
 type: fix
 severity: trivial
-status: drafted
+status: implemented
 affects: [installation]
 source: bug sweep v0.292.0 (2026-07-21) Bug#10
 ---

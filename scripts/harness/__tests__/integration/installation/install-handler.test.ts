@@ -16,6 +16,7 @@
 // @work-item-id WI-315
 // @work-item-id WI-326
 // @work-item-id WI-331
+// @work-item-id WI-384
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -507,6 +508,22 @@ afterEach(async () => {
 
 target("InstallHandler", () => {
   describe("structured merge", () => {
+    it("Codex hooks を作成する JSON result に minimum version と再 trust notice を含めること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+
+      // Act
+      const actual = await runInstall(root, { apply: true, agent: "codex" });
+      const payload = JSON.parse(actual.stdout) as { operatorNotices?: Array<{ code: string; message: string }> };
+
+      // Assert
+      expect(payload.operatorNotices).toEqual([
+        expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" }),
+      ]);
+      expect(payload.operatorNotices?.[0]?.message).toContain("Codex CLI >= 0.124.0");
+      expect(payload.operatorNotices?.[0]?.message).toContain("/hooks");
+    });
+
     it("既存 JSON hooks を保持して phasegate hooks と manifest を追加すること", async () => {
       // Act
       const actual = await arrangeJsonMergeAndInstall();

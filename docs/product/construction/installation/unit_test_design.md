@@ -128,3 +128,17 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 - `init --language typescript --yes` writes TypeScript language metadata without changing existing TypeScript defaults.
 - `init --language python --yes` writes `project.languages: ["python"]`.
 - `init --yes` without language keeps backward-compatible TypeScript resolution.
+
+## WI-384 Codex hook matcher diagnostics
+
+<!-- @work-item-id WI-384 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI384-DOC-001 | Bash-only phasegate hooks を検査する | apply_patch 欠落 red |
+| UT-WI384-DOC-002..003 | Pre または Post だけ current にする | 欠落 event を特定した red |
+| UT-WI384-DOC-004 | 両 event が Bash と apply_patch を含む | finding なし |
+| UT-WI384-DOC-005 | 別 entry に文字列だけ存在する | false PASS しない |
+| UT-WI384-DOC-006..007 | malformed / customized stale config | manual / ai-assisted repair mode |
+
+Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 変数を用いる。

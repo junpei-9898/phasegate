@@ -1,0 +1,23 @@
+// @unit installation
+// @layer application
+// @work-item-id WI-384
+
+export interface OperatorNotice {
+  readonly code: "CODEX_HOOK_TRUST_REQUIRED" | "CODEX_HOOK_TRUST_UNVERIFIABLE";
+  readonly level: "info";
+  readonly message: string;
+}
+
+export const CODEX_HOOK_TRUST_REQUIRED_NOTICE: OperatorNotice = Object.freeze({
+  code: "CODEX_HOOK_TRUST_REQUIRED",
+  level: "info",
+  message:
+    "Codex CLI >= 0.124.0 is required for native apply_patch hooks. The hook definition hash changed; open /hooks and trust the updated definition before relying on the edit-time gate.",
+});
+
+export const CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE: OperatorNotice = Object.freeze({
+  code: "CODEX_HOOK_TRUST_UNVERIFIABLE",
+  level: "info",
+  message:
+    "Codex CLI >= 0.124.0 is required for native apply_patch hooks. Phasegate cannot verify the external trust store; open /hooks and confirm the current hook definition is trusted.",
+});

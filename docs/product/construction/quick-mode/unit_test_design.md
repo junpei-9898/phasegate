@@ -518,3 +518,17 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | IT-QMA-001..003 | HarnessConfigQuickModeConfigAdapter | config からの categoryOverrides 読み込みと不正 allowedCategories の拒否 | 設定が VO に反映される / 不正時は例外 |
 | IT-OV-001..003 | hook / CLI 経路 | 3 経路での override 一貫性と設定不正時の fail-closed | 全経路で同一分類、設定不正時はブロック |
 | IT-SCH-001..003 | harness-config schema | allowedCategories の enum / categoryOverrides の additionalProperties | 未知値・未知キーは schema 検証エラー |
+
+## WI-384 explicit changeKind tests
+
+<!-- @work-item-id WI-384 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI384-QM-001 | explicit CREATE と content 推定が競合する | CREATE を優先 |
+| UT-WI384-QM-002 | explicit MODIFY を受ける | MODIFY で分類 |
+| UT-WI384-QM-003 | explicit DELETE を受ける | DELETE で分類 |
+| UT-WI384-QM-004 | explicit kind がない hook input を受ける | 従来 before/after 推定 |
+| UT-WI384-QM-005 | targetChanges がない CLI input を受ける | 従来 filesystem 推定 |
+
+日本語・重複なしの `it()`、semantic AAA、`actual` 変数を使い、domain object は実体で検証する。

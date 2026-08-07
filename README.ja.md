@@ -134,7 +134,7 @@ npx phasegate install --personal --agent claude --apply
 | **作るファイル** | `.phasegate-local/phasegate.config.json`（ローカル専用 config）／ runtime から見えるローカル agent context（Claude は `.claude/CLAUDE.md`、Codex は root の `AGENTS.md` が不在または既に PhaseGate 管理下のときのみ `AGENTS.md`）／ `.claude/settings.json` + `.claude/skills/` または `.codex/hooks.json` + `.codex/skills/`（選択した agent の runtime artifact）／ `.git/hooks/pre-commit` + `.git/hooks/commit-msg`（ローカル git hook）／ `.phasegate-local/docs/`（設計原則文書コピー）／ `.phasegate/manifest.json` |
 | **既存 skills の扱い** | 個人用 skills directory がある場合は merge — bundled skills を refresh し、user 所有の skill は保持する |
 | **コミット漏れ対策** | `.git/info/exclude` にローカル専用 block を管理して、個人用ファイルが誤ってチームの commit に混ざらないようにする。commit 時の L2 防御は `.git/hooks/` で発火する |
-| **Codex hook flag** | user-level feature flag の有効化は手動アクションとして残る（`codex features enable hooks`） |
+| **Codex hook trust** | Codex CLI >= 0.124.0 では hooks は stable / default-on。`.codex/hooks.json` 更新後は `/hooks` で current definition hash を再 trust する |
 
 チーム所有の `AGENTS.md` が既に存在する場合、Codex の personal install はそれを変更せず、`doctor --personal --agent codex` が残りの context ステップを（`AGENTS.override.md` に隠すのではなく）報告します。Codex を併用する場合は `--agent codex` または `--agent both` を指定します。アンインストールは team install と同様に `npx phasegate uninstall --apply` を使えば manifest 経由でローカル成果物のみが除去されます。<!-- @work-item-id WI-207 --> <!-- @work-item-id WI-208 --> <!-- @work-item-id WI-209 --> <!-- @work-item-id WI-213 --> <!-- @work-item-id WI-215 -->
 
@@ -159,11 +159,11 @@ npx phasegate reconcile --apply
 ### Codex CLI を使う場合
 
 ```bash
-npx phasegate init --name my-project --agent codex --with-husky
-codex features enable hooks   # Codex 本体の feature flag を手動で有効化
+npx phasegate install --agent codex --with-husky --apply
+npx phasegate doctor --agent codex
 ```
 
-両方使う場合は `--agent both`。Codex のネイティブ `apply_patch` は現時点で事前 hook を発火しないため、pre-commit (L2) で commit 時にブロックします。Bash 経由の書き込みは実行前に止まります。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。
+両方使う場合は `--agent both`。Codex CLI >= 0.124.0 ではネイティブ `apply_patch` の Update/Add/Delete も編集前 hook に入り、違反を hard block します。`.codex/hooks.json` 更新後は `/hooks` で definition hash を再 trust してください。pre-commit (L2) は backstop として維持します。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。<!-- @work-item-id WI-384 -->
 
 ### アップデート
 
@@ -462,15 +462,15 @@ npx phasegate <command> [options]
 
 ### Codex CLI
 
-`init --agent codex` で `.codex/hooks.json` を配置。Codex のネイティブ `apply_patch` ツールは hook を発火しないため（[openai/codex#16732](https://github.com/openai/codex/issues/16732)）、ネイティブ経路は **pre-commit (L2)** で commit 時にブロックされます。
+`install --agent codex --apply` で `.codex/hooks.json` を配置します。Codex CLI >= 0.124.0 の native `apply_patch` payload を受理し、全 target を既存 gate へ合流させます。hook definition 更新後は `/hooks` で再 trust が必要です。<!-- @work-item-id WI-384 -->
 
 | 編集経路 | 事前 hard block | commit 時 block |
 |---|---|---|
 | Bash 書き込み（`sed -i`, `tee`, heredoc, `cat >`） | ✅ PreToolUse(Bash) | ✅ pre-commit |
 | Bash 経由 `apply_patch <<'PATCH'` | ✅ PreToolUse(Bash) | ✅ pre-commit |
-| Codex ネイティブ `apply_patch` | ❌ Codex 側の制約で hook 非発火 | ✅ pre-commit |
+| Codex ネイティブ `apply_patch` Update/Add/Delete | ✅ PreToolUse(apply_patch) | ✅ pre-commit |
 
-**推奨運用**: こまめに commit して pre-commit でネイティブ `apply_patch` 違反を早期に surface する。
+PostToolUse(apply_patch) は既存 lint 経路を実行します。ローカル hook が未 trust / skip の場合に備え、pre-commit と CI を backstop / authoritative re-check として残します。
 
 詳細: [Hooks Integration](docs/guide/hooks-integration.md) ・ [Codex Integration](docs/guide/codex-integration.md)
 

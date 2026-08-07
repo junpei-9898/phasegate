@@ -519,10 +519,17 @@
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 | ID | Scenario | Expected |
 |---|---|---|
 | IT-CG-WI307-001 | aidlc-gate bundled sourceをrender | matrix生成、World enablement検出、derive二回、byte compare、L3を順序どおり含む |
 | IT-CG-WI307-002 | `world.enabled:true` | World derive step conditionが成立する |
 | IT-CG-WI307-003 | false / absent | World deriveだけskipでき、L3 stepは無条件で残る |
 | IT-CG-WI307-004 | invalid config JSON | detector step failureとなりfalseへlaunderしない |
+## WI-384 Codex hook integrity round trip
+
+<!-- @work-item-id WI-384 -->
+
+@story-id H13-01
+| Test | Arrange | Act | Assert |
+|---|---|---|---|
+| Codex hook pin / verify | root `.codex/hooks.json` と bundled template を同値にする | `integrity:pin` 後に `integrity:verify` | manifest に root hook digest が保存され drift なし |

@@ -517,3 +517,17 @@ usecaseはdeterministic fake query portを使い、World domain objectをmockし
 ## WI-305 hook declaration tests
 
 設計変更eventがmatching Work Item declarationで通過し、不一致時だけblockされること、World無効時に従来hook contractを維持することを検証する。
+
+## WI-384 apply_patch parser / hook contract tests
+
+<!-- @work-item-id WI-384 -->
+
+| ID | 日本語テストケース | 期待結果 |
+|---|---|---|
+| UT-WI384-PATCH-001..003 | Update / Add / Delete directive を抽出する | MODIFY / CREATE / DELETE を保持 |
+| UT-WI384-PATCH-004 | 3 kind 混在の複数ファイル patch を抽出する | 入力順の targets |
+| UT-WI384-PATCH-005..009 | path 空白、重複、End 欠落、marker 外、空入力 | 決定的・fail-closed な結果 |
+| UT-WI384-BASH-001..003 | Bash heredoc と既存 shell writers を抽出する | path-only 既存 API が不変 |
+
+Vitest / semantic AAA / 日本語かつ重複しない `it()` 名 / `actual` 変数を用い、domain service を
+モックしない。`@work-item-id WI-384` を付け、新規 WCR-005 obligation を発生させない。

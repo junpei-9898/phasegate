@@ -387,3 +387,12 @@ pnpm test -- --testPathPattern="integration/quick-mode/.*adapter"
 # UseCase ITテストのみ
 pnpm test -- --testPathPattern="integration/quick-mode/usecases"
 ```
+
+## WI-384 hook changeKind integration
+
+<!-- @work-item-id WI-384 -->
+
+agent-integration adapter から渡る explicit CREATE / MODIFY / DELETE を既存
+`QuickModeFullModeRequirementAdapter` が欠落なく classifier へ転送し、DELETE を含む mixed targets の
+dominant category / Full Mode 判定が path rule と一致することを検証する。field を渡さない既存
+Write / Edit / Bash fixture の結果は不変とする。

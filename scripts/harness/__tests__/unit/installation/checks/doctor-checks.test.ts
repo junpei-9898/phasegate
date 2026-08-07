@@ -7,6 +7,7 @@
 // @work-item-id WI-216
 // @work-item-id WI-340
 // @work-item-id WI-343
+// @work-item-id WI-384
 
 import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
@@ -28,6 +29,21 @@ import type { ConfigStatusProbeResult } from "../../../../installation/domain/co
 import { getSkillsForSet } from "../../../../setup/skill-deployer.js";
 import { context, target } from "../../../helpers/test-helpers.js";
 import { createInspector, projectFile } from "./check-test-helpers.js";
+
+function currentCodexHooks(overrides: { preMatcher?: string; postMatcher?: string } = {}) {
+  return {
+    hooks: {
+      PreToolUse: [{
+        matcher: overrides.preMatcher ?? "Bash|apply_patch",
+        hooks: [{ command: "npx phasegate hook pre-tool-use" }],
+      }],
+      PostToolUse: [{
+        matcher: overrides.postMatcher ?? "Bash|apply_patch",
+        hooks: [{ command: "npx phasegate hook post-tool-use" }],
+      }],
+    },
+  };
+}
 
 target("doctor heuristic checks", () => {
   describe("agent context checks", () => {
@@ -123,16 +139,82 @@ target("doctor heuristic checks", () => {
   });
 
   describe("CodexHookMissingCheck", () => {
-    it("phasegate hook が存在する場合は finding を返さないこと", async () => {
+    it("PreToolUse と PostToolUse が canonical matcher を持つ場合は finding を返さないこと", async () => {
       const inspector = createInspector({
         exists: vi.fn().mockResolvedValue(true),
-        readJson: vi.fn().mockResolvedValue({ hooks: [{ command: "npx phasegate hook stop" }] }),
+        readJson: vi.fn().mockResolvedValue(currentCodexHooks()),
       });
       const sut = new CodexHookMissingCheck();
 
       const actual = await sut.run("/tmp/project", inspector);
 
       expect(actual).toStrictEqual(null);
+    });
+
+    it("phasegate command があっても Bash-only matcher の場合は apply_patch 欠落の red を返すこと", async () => {
+      // Arrange
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(currentCodexHooks({ preMatcher: "Bash", postMatcher: "Bash" })),
+      });
+      const sut = new CodexHookMissingCheck();
+
+      // Act
+      const actual = await sut.run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual).toMatchObject({ checkId: "codex-hook-missing", severity: "red", repairMode: "mechanical" });
+      expect(actual?.message).toContain("PreToolUse:apply_patch");
+      expect(actual?.message).toContain("PostToolUse:apply_patch");
+      expect(actual?.repairHint).toContain("phasegate reconcile --apply");
+      expect(actual?.repairHint).toContain("/hooks");
+    });
+
+    it("PreToolUse だけ canonical matcher の場合は PostToolUse 欠落の red を返すこと", async () => {
+      // Arrange
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(currentCodexHooks({ postMatcher: "Bash" })),
+      });
+
+      // Act
+      const actual = await new CodexHookMissingCheck().run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual?.message).toContain("PostToolUse:apply_patch");
+      expect(actual?.message).not.toContain("PreToolUse:apply_patch");
+    });
+
+    it("PostToolUse だけ canonical matcher の場合は PreToolUse 欠落の red を返すこと", async () => {
+      // Arrange
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(currentCodexHooks({ preMatcher: "Bash" })),
+      });
+
+      // Act
+      const actual = await new CodexHookMissingCheck().run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual?.message).toContain("PreToolUse:apply_patch");
+      expect(actual?.message).not.toContain("PostToolUse:apply_patch");
+    });
+
+    it("apply_patch 文字列が別 entry にあるだけでは phasegate entry の matcher 充足とみなさないこと", async () => {
+      // Arrange
+      const config = currentCodexHooks({ preMatcher: "Bash" });
+      config.hooks.PreToolUse.push({ matcher: "apply_patch", hooks: [{ command: "custom hook apply_patch" }] });
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(config),
+      });
+
+      // Act
+      const actual = await new CodexHookMissingCheck().run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual?.message).toContain("PreToolUse:apply_patch");
+      expect(actual?.repairMode).toBe("ai-assisted");
     });
 
     context("JSON として読めない場合", () => {
@@ -159,6 +241,22 @@ target("doctor heuristic checks", () => {
       const actual = await sut.run("/tmp/project", inspector);
 
       expect(actual).toMatchObject({ checkId: "codex-hook-missing", repairMode: "ai-assisted" });
+    });
+
+    it("user hook と stale phasegate entry が共存する場合は ai-assisted red を返すこと", async () => {
+      // Arrange
+      const config = currentCodexHooks({ postMatcher: "Bash" });
+      config.hooks.PostToolUse.push({ matcher: "apply_patch", hooks: [{ command: "custom post hook" }] });
+      const inspector = createInspector({
+        exists: vi.fn().mockResolvedValue(true),
+        readJson: vi.fn().mockResolvedValue(config),
+      });
+
+      // Act
+      const actual = await new CodexHookMissingCheck().run("/tmp/project", inspector);
+
+      // Assert
+      expect(actual).toMatchObject({ severity: "red", repairMode: "ai-assisted" });
     });
   });
 

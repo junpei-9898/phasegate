@@ -350,3 +350,16 @@ Failure classification has two meanings:
 | Execution wiring failure | The hook could not invoke the intended command path, e.g. a missing module or obsolete wrapper path. | `Complete Check execution failed (exitCode=N)` |
 
 This boundary keeps project-specific command wrappers optional extension points rather than runtime prerequisites for the built-in Stop hook.
+
+## 10. Codex native apply_patch write intent
+
+<!-- @work-item-id WI-384 -->
+
+`PatchWriteTarget` は raw patch directive の `filePath` と `changeKind`（Add=`CREATE`、
+Update=`MODIFY`、Delete=`DELETE`）を保持する immutable value object である。
+`ApplyPatchWriteTargetExtractor` は `*** Begin Patch` block 内の file directive だけを入力順に抽出する
+純粋 domain service で、filesystem や agent runtime に依存しない。
+
+既存 `BashWriteTargetExtractor` は同 service の結果を path-only へ射影して Bash API を維持する。
+native hook は kind を失わず `FullModeTargetChange.changeKind?` へ渡す。optional field のため既存
+Write / Edit / Bash caller は互換であり、DELETE を content sentinel で偽装しない。

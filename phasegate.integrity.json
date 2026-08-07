@@ -7,6 +7,7 @@
     ".claude/scripts/format-settings-hook.sh": "d6c7ef7be90aa7e69b37c3c9a1fc3b92ebe5c2312f6a5c9f4aa155418e800576",
     ".claude/scripts/format-typescript-hook.sh": "027c41d00396290edb3aef3a8ae38f29c6f40e26ff0bb93ffc447bb914cb2c31",
     ".claude/settings.json": "80eab6715543b9a2bbfed8fd78fb9123cc52aa714eee76bb03999f67ff26afe7",
+    ".codex/hooks.json": "4b61299539176577145c4d1976870a5fdd4b4b3e1ce0658e75d7aa52ae331daf",
     ".husky/commit-msg": "44c5f25eb0352af55644c7e272e3272ce1842518a28d38b096578025e0025d23",
     ".husky/pre-commit": "e01307c5f90a83e76bd97c7f44fdb23889ec3660b9e0082f6d09af514409a296",
     ".husky/pre-push": "c9ddacba26ab54aaf93f7b138ea24ce05c7e0e200ef50ea22ae38c914a896ae5",

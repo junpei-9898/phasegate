@@ -416,3 +416,10 @@
 | ClaudeMdRefresh | 既存 CLAUDE.md がない | template から新規生成される |
 | AgentContextFreshness | AGENTS.md / CLAUDE.md が存在し threshold 内 | pass |
 | AgentContextFreshness | 片方が存在しない | warning または error を返す |
+## WI-384 Codex hook integrity target
+
+<!-- @work-item-id WI-384 -->
+
+| Test | Arrange | Act | Assert |
+|---|---|---|---|
+| Codex hook default target | `IntegrityTarget.defaultTargets()` | 既定 target を取得 | include に `.codex/hooks.json` が含まれる |

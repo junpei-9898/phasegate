@@ -143,11 +143,11 @@ npx phasegate reconcile --apply
 ### Codex CLI
 
 ```bash
-npx phasegate init --name my-project --agent codex --with-husky
-codex features enable hooks
+npx phasegate install --agent codex --with-husky --apply
+npx phasegate doctor --agent codex
 ```
 
-Use `--agent both` for projects that use Claude Code and Codex together. Codex native `apply_patch` currently cannot be intercepted before the edit, so those violations are caught at pre-commit; Bash-based writes are blocked before execution.
+Use `--agent both` for projects that use Claude Code and Codex together. Codex CLI >= 0.124.0 emits hooks for native `apply_patch`, so Update/Add/Delete targets are hard-blocked before editing when they violate Phasegate rules. After `.codex/hooks.json` changes, open `/hooks` and trust the current definition hash. L2 pre-commit remains the backstop. <!-- @work-item-id WI-384 -->
 
 ### Update
 
@@ -551,28 +551,26 @@ Phasegate also integrates with [OpenAI Codex CLI](https://developers.openai.com/
 ### Quick setup
 
 ```bash
-# 1. Initialize the project for Codex (creates project-local files such as .codex/hooks.json and .codex/skills)
-npx phasegate init --name my-project --agent codex --with-husky
+# 1. Install project-local Codex hooks and the pre-commit backstop
+npx phasegate install --agent codex --with-husky --apply
 
-# 2. Enable the Codex CLI feature flag manually on your machine
-codex features enable hooks
+# 2. Verify wiring, then trust the current definition in Codex /hooks
+npx phasegate doctor --agent codex
 ```
 
 For dual-agent projects (Claude + Codex), use `--agent both`.
 
-`init` sets up files inside the project. The Codex CLI user-level hooks feature remains an explicit manual step.
+Codex CLI >= 0.124.0 is required. Hooks are stable and default-on, but a changed non-managed command hook must be re-trusted by definition hash through `/hooks`.
 
-### Coverage and known limitation
-
-Because Codex's native `apply_patch` tool is routed through an internal `ApplyPatchHandler` and does not emit hook events ([openai/codex#16732](https://github.com/openai/codex/issues/16732)), pre-edit hard-block coverage is limited to Bash-based writes. Native `apply_patch` violations are caught at commit time by the pre-commit layer.
+### Coverage
 
 | Path | Pre-edit hard block | Commit-time block |
 |---|---|---|
 | Shell writes (`sed -i`, `tee`, heredoc, `cat >`) | ✅ `PreToolUse(Bash)` | ✅ pre-commit |
 | Bash-invoked `apply_patch <<'PATCH'` | ✅ `PreToolUse(Bash)` (via `BashWriteTargetExtractor`) | ✅ pre-commit |
-| Native `apply_patch` tool call | ❌ not intercepted by Codex today | ✅ pre-commit |
+| Native `apply_patch` Update/Add/Delete | ✅ `PreToolUse(apply_patch)` | ✅ pre-commit |
 
-**Recommended mitigation**: commit frequently (e.g., after each logical change) so native `apply_patch` violations surface quickly. See the full guide for details.
+`PostToolUse(apply_patch)` runs the existing lint path. L2 pre-commit remains enabled as a backstop for untrusted or skipped local hooks. See the [Codex integration guide](docs/guide/codex-integration.md) for trust troubleshooting. <!-- @work-item-id WI-384 -->
 
 ---
 
