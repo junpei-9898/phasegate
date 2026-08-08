@@ -1,6 +1,7 @@
 // @unit phase-dependency-model
 // @layer application
 // @story H02-06
+// @work-item-id WI-388
 
 import { expect, it } from "vitest";
 import { CheckStoryReflectionUseCase } from "../../../phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
@@ -29,6 +30,7 @@ const createPort = (options: {
 }): StoryReflectionFileSystemPort => ({
   listStoryDirectories: async () => options.storyDirs ?? [],
   storyAffectsUnit: async () => true,
+  storyTouchesUnitLayer: async () => false,
   fileExists: async (path) => (options.existingFiles ?? []).includes(path),
   fileContainsStoryAnnotation: async (productPath, storyId) =>
     (options.annotatedFiles ?? new Map()).get(productPath)?.includes(storyId) ?? false,

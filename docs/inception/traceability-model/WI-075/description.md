@@ -2,7 +2,7 @@
 id: WI-075
 type: story
 severity: normal
-status: tested
+status: reflected
 legacy_id: H03-05
 ---
 

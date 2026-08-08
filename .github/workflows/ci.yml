@@ -24,6 +24,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
       # Coverage configs execute the forks and threads unit/integration suites
       # once and emit coverage/coverage-summary.json for L3-003. E2E is excluded
       # from coverage to avoid ci-check/report circularity, so run only that

@@ -2,7 +2,7 @@
 id: WI-253
 type: fix
 severity: normal
-status: implemented
+status: drafted
 affects: [docs]
 source: internal
 ---

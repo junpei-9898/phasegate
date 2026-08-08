@@ -2,7 +2,7 @@
 id: WI-017
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-017
 affects: [biome-ast-engine（主）]
 ---

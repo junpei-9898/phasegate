@@ -2,7 +2,7 @@
 id: WI-218
 type: issue
 severity: high
-status: drafted
+status: reflected
 affects: [agent-integration]
 source: github#31
 external_ref: https://github.com/junpei-9898/phasegate/issues/31

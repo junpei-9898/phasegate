@@ -2,7 +2,7 @@
 id: WI-305
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [agent-integration, traceability-model, validator-system, harness-api, world-model]
 source: internal
 ---

@@ -2,7 +2,7 @@
 id: WI-026
 type: issue
 severity: high
-status: tested
+status: drafted
 legacy_id: ISSUE-026
 affects: [phase-dependency-model, agent-integration, traceability-model, docs]
 ---

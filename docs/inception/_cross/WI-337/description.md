@@ -2,7 +2,7 @@
 id: WI-337
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [traceability-model]
 source: bug sweep v0.292.0 (2026-07-21) Bug#2
 ---

@@ -2,7 +2,7 @@
 id: WI-348
 type: fix
 severity: critical
-status: drafted
+status: implemented
 affects: [harness-api, agent-integration]
 source: GitHub issue #41 症状③（Full Mode session を張ってもブロックが解けない）
 ---

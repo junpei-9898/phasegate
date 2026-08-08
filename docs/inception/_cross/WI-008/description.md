@@ -2,7 +2,7 @@
 id: WI-008
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-008
 affects: [agent_integration（スキル定義群）, harness_error（メタデータ欠落時の誘導）, biome_ast_engine（L1-001/L1-002 既存ルールとの接続）, ci_governance（新規テンプレ提供）]
 ---

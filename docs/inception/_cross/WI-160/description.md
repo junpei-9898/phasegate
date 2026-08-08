@@ -2,7 +2,7 @@
 id: WI-160
 type: story
 severity: high
-status: tested
+status: reflected
 affects: [documentation]
 source: internal
 ---

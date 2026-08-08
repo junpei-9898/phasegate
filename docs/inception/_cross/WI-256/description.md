@@ -2,7 +2,7 @@
 id: WI-256
 type: chore
 severity: normal
-status: implemented
+status: drafted
 ---
 
 # WI-256: スキルカタログ改編 30→29（planner 統合 / doc-health 統合 / release-publisher 新設）

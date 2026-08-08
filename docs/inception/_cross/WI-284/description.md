@@ -2,7 +2,7 @@
 id: WI-284
 type: story
 severity: high
-status: drafted
+status: reflected
 affects: [world-model, validator-system, phase2-extensions, harness-api, config-foundation, ci-governance]
 source: internal
 ---

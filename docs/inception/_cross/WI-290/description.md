@@ -2,7 +2,7 @@
 id: WI-290
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model]
 source: internal
 ---
@@ -12,7 +12,6 @@ source: internal
 <!-- @work-item-id WI-290 -->
 
 @story-id H17-05
-
 ## 背景
 
 WM-07はSourceFile / TestReference / generated artifactを表現できるWorld IDとcanonicalizationを提供し、WM-09はdesign corpus extractorのfilesystem / diagnostic慣行を確立した。ADR-031はmatrix、attestation、integrityのownerを分離し、ADR-033は各owner向けのvolatile-field除外とsemantic projectionを決定した。

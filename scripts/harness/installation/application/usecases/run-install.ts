@@ -20,6 +20,7 @@
 // @work-item-id WI-326
 // @work-item-id WI-331
 // @work-item-id WI-385
+// @work-item-id WI-387
 
 import {
   access,
@@ -789,6 +790,35 @@ export class RunInstallUseCase {
               strategy: "json" as const,
               templatePath: "templates/.claude/settings.json",
             },
+            {
+              path: ".claude/scripts/deny-check.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/deny-check.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-settings-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/format-settings-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-typescript-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/format-typescript-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/analyze-errors-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/analyze-errors-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/hook-config.json",
+              strategy: "copy" as const,
+              templatePath: "templates/.claude/scripts/hook-config.json",
+            },
             ...(options.claudeContext
               ? [
                   {
@@ -895,6 +925,35 @@ export class RunInstallUseCase {
               path: ".claude/settings.json",
               strategy: "copy" as const,
               templatePath: "templates/.claude/settings.json",
+            },
+            {
+              path: ".claude/scripts/deny-check.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/deny-check.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-settings-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/format-settings-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-typescript-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/format-typescript-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/analyze-errors-hook.sh",
+              strategy: "shell" as const,
+              templatePath: "templates/.claude/scripts/analyze-errors-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/hook-config.json",
+              strategy: "copy" as const,
+              templatePath: "templates/.claude/scripts/hook-config.json",
             },
           ]
         : []),

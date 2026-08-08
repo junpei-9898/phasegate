@@ -2,7 +2,7 @@
 id: WI-248
 type: issue
 severity: high
-status: tested
+status: reflected
 affects: [validator-system]
 ---
 

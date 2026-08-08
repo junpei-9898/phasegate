@@ -2,7 +2,7 @@
 id: WI-094
 type: issue
 severity: high
-status: tested
+status: drafted
 affects: [validator-system, config-foundation, docs]
 github_issue: https://github.com/junpei-9898/phasegate/issues/4
 reporter: nakataj-mti

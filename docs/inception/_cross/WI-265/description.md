@@ -2,7 +2,7 @@
 id: WI-265
 type: fix
 severity: normal
-status: tested
+status: drafted
 affects: [biome-ast-engine]
 ---
 

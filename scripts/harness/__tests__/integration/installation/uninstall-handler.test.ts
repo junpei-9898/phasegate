@@ -8,9 +8,10 @@
 // @work-item-id WI-209
 // @work-item-id WI-210
 // @work-item-id WI-216
+// @work-item-id WI-387
 
 import { createHash } from "node:crypto";
-import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -212,11 +213,18 @@ target("UninstallHandler", () => {
       expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(false);
       expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(false);
       expect(await fileExists(join(root, ".claude/skills"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/scripts/deny-check.sh"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/scripts/format-settings-hook.sh"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/scripts/format-typescript-hook.sh"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/scripts/analyze-errors-hook.sh"))).toBe(false);
+      expect(await fileExists(join(root, ".claude/scripts/hook-config.json"))).toBe(false);
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).toContain("custom stop");
       expect(await readFile(join(root, ".claude/settings.json"), "utf8")).not.toContain("npx phasegate hook stop");
       expect(await readFile(join(root, ".husky/pre-commit"), "utf8")).toContain("echo custom pre-commit");
       expect(await readFile(join(root, ".husky/pre-commit"), "utf8")).not.toContain("phasegate managed");
-      expect(await readdir(join(root, ".phasegate"))).toEqual(expect.arrayContaining([expect.stringContaining("uninstalled-")]));
+      expect(await readdir(join(root, ".phasegate"))).toEqual(
+        expect.arrayContaining([expect.stringContaining("uninstalled-")]),
+      );
     });
 
     it("created entry の hash mismatch は force 無しで refuse して対象を残すこと", async () => {
@@ -228,7 +236,9 @@ target("UninstallHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(1);
-      expect(actual.payload.refused).toEqual(expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]));
+      expect(actual.payload.refused).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: ".github/workflows/phasegate-aidlc-gate.yml" })]),
+      );
       expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(true);
       expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
     });
@@ -241,9 +251,9 @@ target("UninstallHandler", () => {
       const actual = await runUninstall(root);
 
       // Assert
-      expect(actual.payload.plan).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "package.json", protected: true, changed: true }),
-      ]));
+      expect(actual.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "package.json", protected: true, changed: true })]),
+      );
     });
 
     it("package-lock.json candidate も protected marker を返すこと", async () => {
@@ -254,9 +264,9 @@ target("UninstallHandler", () => {
       const actual = await runUninstall(root);
 
       // Assert
-      expect(actual.payload.plan).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "package-lock.json", protected: true }),
-      ]));
+      expect(actual.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "package-lock.json", protected: true })]),
+      );
     });
 
     it("protected file mutation は force 無しの apply で refuse すること", async () => {
@@ -268,9 +278,9 @@ target("UninstallHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(1);
-      expect(actual.payload.refused).toEqual(expect.arrayContaining([
-        expect.objectContaining({ path: "package.json", protected: true }),
-      ]));
+      expect(actual.payload.refused).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: "package.json", protected: true })]),
+      );
       expect(await fileExists(join(root, ".phasegate", "manifest.json"))).toBe(true);
     });
 
@@ -285,7 +295,9 @@ target("UninstallHandler", () => {
       expect(actual.exitCode).toBe(0);
       expect(actual.payload.backupDir).toContain(".phasegate/backups/uninstall-");
       expect(await fileExists(join(root, ".github/workflows/phasegate-aidlc-gate.yml"))).toBe(false);
-      expect(await readFile(join(actual.payload.backupDir ?? "", ".github/workflows/phasegate-aidlc-gate.yml"), "utf8")).toContain("user modified");
+      expect(
+        await readFile(join(actual.payload.backupDir ?? "", ".github/workflows/phasegate-aidlc-gate.yml"), "utf8"),
+      ).toContain("user modified");
     });
 
     it("personal install の uninstall は personal artifact だけを削除して team-owned files を変化させないこと", async () => {

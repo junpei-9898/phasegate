@@ -2,7 +2,7 @@
 id: WI-339
 type: fix
 severity: normal
-status: drafted
+status: implemented
 affects: [harness-api]
 source: bug sweep v0.292.0 (2026-07-21) Bug#4
 ---

@@ -2,7 +2,7 @@
 id: WI-267
 type: chore
 severity: high
-status: completed
+status: drafted
 affects: [validator-system]
 ---
 

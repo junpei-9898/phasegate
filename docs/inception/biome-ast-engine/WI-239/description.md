@@ -2,7 +2,7 @@
 id: WI-239
 type: fix
 severity: normal
-status: tested
+status: reflected
 affects: [biome-ast-engine]
 source: internal
 ---

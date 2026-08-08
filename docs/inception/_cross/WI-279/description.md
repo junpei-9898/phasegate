@@ -2,7 +2,7 @@
 id: WI-279
 type: chore
 severity: medium
-status: tested
+status: drafted
 affects: [harness-error]
 ---
 

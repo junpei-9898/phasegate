@@ -2,7 +2,7 @@
 id: WI-341
 type: fix
 severity: normal
-status: drafted
+status: implemented
 affects: [skill-quality]
 source: bug sweep v0.292.0 (2026-07-21) Bug#3(新規10件中)
 ---

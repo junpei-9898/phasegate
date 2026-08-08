@@ -2,7 +2,7 @@
 id: WI-317
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [validator-system]
 source: github#37
 ---

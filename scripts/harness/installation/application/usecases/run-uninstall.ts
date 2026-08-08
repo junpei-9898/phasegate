@@ -8,6 +8,7 @@
 // @work-item-id WI-209
 // @work-item-id WI-216
 // @work-item-id WI-385
+// @work-item-id WI-387
 
 import { access, copyFile, lstat, mkdir, readdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
@@ -509,6 +510,7 @@ export class RunUninstallUseCase {
     }
     if (path === ".git/info/exclude") return "text-managed";
     if (path === ".agents/hooks.json") return "json-named";
+    if (path.startsWith(".claude/scripts/") && path.endsWith(".sh")) return "shell";
     if (path.endsWith(".json")) return "json";
     if (path.startsWith(".husky/")) return "shell";
     return "unknown";
@@ -518,6 +520,7 @@ export class RunUninstallUseCase {
     if (path === ".claude/settings.json") return "templates/.claude/settings.json";
     if (path === ".codex/hooks.json") return "templates/.codex/hooks.json";
     if (path === ".agents/hooks.json") return "templates/.agents/hooks.json";
+    if (path.startsWith(".claude/scripts/")) return `templates/${path}`;
     if (path === "CLAUDE.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
     if (path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md")
       return "docs/templates/agent-context/CLAUDE.md.template.md";

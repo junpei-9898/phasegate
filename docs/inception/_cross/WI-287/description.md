@@ -2,7 +2,7 @@
 id: WI-287
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model]
 source: internal
 ---
@@ -12,7 +12,6 @@ source: internal
 <!-- @work-item-id WI-287 -->
 
 @story-id H17-02
-
 ## 背景
 
 ADR-032はWorld node identityを`pgw:v1` schema、PathKey、DeclaredKey、明示Fragment / legacy whole-fileの別形式として固定した。ADR-033はcanonical JSON、text normalization、`corpusRoot` / `constraintRoot` / `evaluationId`のpreimageと、consumer-owned hashing portを固定した。

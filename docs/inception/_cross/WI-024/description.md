@@ -2,7 +2,7 @@
 id: WI-024
 type: issue
 severity: normal
-status: tested
+status: reflected
 legacy_id: ISSUE-024
 affects: [biome-ast-engine]
 ---

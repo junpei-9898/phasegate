@@ -2,7 +2,7 @@
 id: WI-270
 type: fix
 severity: high
-status: tested
+status: drafted
 affects: [validator-system]
 ---
 

@@ -2,7 +2,7 @@
 id: WI-289
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model]
 source: internal
 ---
@@ -12,7 +12,6 @@ source: internal
 <!-- @work-item-id WI-289 -->
 
 @story-id H17-04
-
 ## 背景
 
 ADR-031はproductをcanonical、inceptionをproposal / deltaとして別artifactに保ち、ADR / Unit定義をdesign documentとして観測すると決定した。ADR-032はpath-based Artifact、DeclaredKey-based Fragment、legacy whole-file fallback、migration completion、明示reflection、duplicate no-winnerを定義した。WM-07はこれらを表すWorld domain primitive、WM-08はtraceability-modelのplain read facadeを提供した。

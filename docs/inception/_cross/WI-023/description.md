@@ -2,7 +2,7 @@
 id: WI-023
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-023
 affects: [traceability-model]
 ---

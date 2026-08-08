@@ -2,7 +2,7 @@
 id: WI-298
 type: story
 severity: high
-status: drafted
+status: reflected
 affects: [world-model, skill-quality]
 source: internal
 ---

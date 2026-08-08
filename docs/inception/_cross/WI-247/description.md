@@ -2,7 +2,7 @@
 id: WI-247
 type: issue
 severity: high
-status: tested
+status: reflected
 affects: [ci-governance]
 ---
 

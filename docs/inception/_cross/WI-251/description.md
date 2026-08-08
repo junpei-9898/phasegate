@@ -2,7 +2,7 @@
 id: WI-251
 type: story
 severity: normal
-status: tested
+status: reflected
 affects: [phase-dependency-model]
 ---
 

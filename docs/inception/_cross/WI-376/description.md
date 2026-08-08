@@ -2,7 +2,7 @@
 id: WI-376
 type: refactor
 severity: medium
-status: drafted
+status: tested
 affects: [agent-integration]
 source: GitHub issue #44 課題 1（skill-context 伝播 channel）/ ADR-039
 ---

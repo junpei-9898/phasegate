@@ -17,6 +17,7 @@
 // @work-item-id WI-326
 // @work-item-id WI-331
 // @work-item-id WI-384
+// @work-item-id WI-387
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -508,6 +509,38 @@ afterEach(async () => {
 
 target("InstallHandler", () => {
   describe("structured merge", () => {
+    it("fresh Claude install は参照する全 hook script を実行可能な managed file として配置すること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+      const scriptPaths = [
+        ".claude/scripts/deny-check.sh",
+        ".claude/scripts/format-settings-hook.sh",
+        ".claude/scripts/format-typescript-hook.sh",
+        ".claude/scripts/analyze-errors-hook.sh",
+      ];
+
+      // Act
+      const actual = await runInstall(root, { apply: true, agent: "claude" });
+
+      // Assert
+      expect(actual.exitCode).toBe(0);
+      for (const scriptPath of scriptPaths) {
+        expect(await fileExists(join(root, scriptPath))).toBe(true);
+        expect((await lstat(join(root, scriptPath))).mode & 0o111).not.toBe(0);
+      }
+      expect(await fileExists(join(root, ".claude/scripts/hook-config.json"))).toBe(true);
+      const manifest = JSON.parse(await readFile(join(root, ".phasegate/manifest.json"), "utf8")) as {
+        entries: Array<{ path: string; mode: string }>;
+      };
+      expect(manifest.entries).toEqual(
+        expect.arrayContaining(
+          [...scriptPaths, ".claude/scripts/hook-config.json"].map((path) =>
+            expect.objectContaining({ path, mode: "created" }),
+          ),
+        ),
+      );
+    });
+
     it("Codex hooks を作成する JSON result に minimum version と再 trust notice を含めること", async () => {
       // Arrange
       const root = await createProjectRoot();
@@ -517,9 +550,7 @@ target("InstallHandler", () => {
       const payload = JSON.parse(actual.stdout) as { operatorNotices?: Array<{ code: string; message: string }> };
 
       // Assert
-      expect(payload.operatorNotices).toEqual([
-        expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" }),
-      ]);
+      expect(payload.operatorNotices).toEqual([expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" })]);
       expect(payload.operatorNotices?.[0]?.message).toContain("Codex CLI >= 0.124.0");
       expect(payload.operatorNotices?.[0]?.message).toContain("/hooks");
     });

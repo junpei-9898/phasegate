@@ -2,7 +2,7 @@
 id: WI-165
 type: issue
 severity: normal
-status: tested
+status: reflected
 affects: [documentation]
 source: internal
 ---

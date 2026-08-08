@@ -2,7 +2,7 @@
 id: WI-286
 type: story
 severity: high
-status: drafted
+status: implemented
 affects: [attestation, world-model]
 source: internal
 ---
@@ -12,7 +12,6 @@ source: internal
 <!-- @work-item-id WI-286 -->
 
 @story-id H17-01
-
 ## 背景
 
 ADR-033はWorld Modelがattestation内部の`ContentHasherPort`、`Digest`、infrastructure adapterをimportせず、plainなSHA-256 public capabilityを利用すると決定した。現行の`NodeCryptoContentHasherAdapter`は`node:crypto`のSHA-256 primitiveとattestation-local `Digest`変換を同じclassに持つため、別Unitから再利用できない。

@@ -2,7 +2,7 @@
 id: WI-033
 type: refactor
 severity: normal
-status: tested
+status: drafted
 affects: [validator-system, phase2-extensions]
 ---
 

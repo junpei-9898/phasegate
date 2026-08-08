@@ -2,7 +2,7 @@
 id: WI-312
 type: issue
 severity: high
-status: drafted
+status: reflected
 affects: [ci-governance, regression-suite]
 source: internal
 ---

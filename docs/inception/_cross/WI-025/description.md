@@ -2,7 +2,7 @@
 id: WI-025
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-025
 affects: [harness-api / setup, docs]
 ---

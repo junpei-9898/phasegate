@@ -2,7 +2,7 @@
 id: WI-250
 type: story
 severity: normal
-status: implemented
+status: tested
 affects: [harness-api, ci-governance]
 ---
 

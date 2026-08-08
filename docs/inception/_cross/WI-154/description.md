@@ -2,7 +2,7 @@
 id: WI-154
 type: issue
 severity: high
-status: tested
+status: drafted
 affects: [documentation, skills, setup, nyquist-validation, regression-suite, skill-quality]
 source: internal
 ---

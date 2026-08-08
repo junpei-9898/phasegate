@@ -9,6 +9,7 @@
 // @work-item-id WI-326
 // @work-item-id WI-331
 // @work-item-id WI-384
+// @work-item-id WI-387
 
 import { createHash } from "node:crypto";
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -491,9 +492,7 @@ target("ReconcileHandler", () => {
 
       // Assert
       expect(actual.exitCode).toBe(0);
-      expect(actual.payload.operatorNotices).toEqual([
-        expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" }),
-      ]);
+      expect(actual.payload.operatorNotices).toEqual([expect.objectContaining({ code: "CODEX_HOOK_TRUST_REQUIRED" })]);
       expect(actual.payload.operatorNotices?.[0]?.message).toContain("Codex CLI >= 0.124.0");
       expect(actual.payload.operatorNotices?.[0]?.message).toContain("/hooks");
     });
@@ -517,6 +516,29 @@ target("ReconcileHandler", () => {
       // Assert
       expect(actual.exitCode).toBe(0);
       expect(actual.payload.plan.every((item) => !item.changed)).toBe(true);
+    });
+
+    it("旧 manifest に不足する Claude hook script を追加し次回 reconcile は no-op になること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+      const installed = await runInstall(root);
+      expect(installed.exitCode).toBe(0);
+      const scriptPath = ".claude/scripts/deny-check.sh";
+      await rm(join(root, scriptPath));
+      await removeManifestEntry(root, scriptPath);
+
+      // Act
+      const first = await runReconcile(root, { apply: true });
+      const second = await runReconcile(root, { apply: true });
+
+      // Assert
+      expect(first.exitCode).toBe(0);
+      expect(first.payload.plan).toEqual(
+        expect.arrayContaining([expect.objectContaining({ path: scriptPath, action: "add", changed: true })]),
+      );
+      expect(await fileExists(join(root, scriptPath))).toBe(true);
+      expect(second.exitCode).toBe(0);
+      expect(second.payload.plan.find((item) => item.path === scriptPath)?.changed).toBe(false);
     });
 
     it("apply は merged entry の PhaseGate 管理部分を更新し user 部分を保持すること", async () => {

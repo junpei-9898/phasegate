@@ -2,6 +2,7 @@
 // @layer integration
 // @story H11-02
 // @work-item-id WI-385
+// @work-item-id WI-386
 
 import { spawn } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -23,6 +24,12 @@ interface CliResult {
   readonly stdout: string;
   readonly stderr: string;
 }
+
+const PROTECTED_PATH_FORMS = [
+  ["先頭dot相対path", (_projectRoot: string) => "./biome.json"],
+  ["親directory正規化path", (_projectRoot: string) => "docs/../biome.json"],
+  ["project内絶対path", (projectRoot: string) => path.join(projectRoot, "biome.json")],
+] as const;
 
 function createProjectRoot(): string {
   const projectRoot = mkdtempSync(path.join(tmpdir(), "phasegate-wi385-runtime-"));
@@ -101,6 +108,27 @@ function antigravityPayload(projectRoot: string, name: string, args: Record<stri
 
 target("multi-runtime PreToolUse payload compatibility", () => {
   describe("Grok camelCase payload を編集前 gate へ接続する", () => {
+    it.each(PROTECTED_PATH_FORMS)(
+      "camelCase形式の%sで保護設定を狙うと正規化後に拒否すること",
+      async (_label, targetPath) => {
+        // Arrange
+        const projectRoot = createProjectRoot();
+        const payload = grokPayload(projectRoot, "search_replace", {
+          filePath: targetPath(projectRoot),
+          oldString: "{}",
+          newString: '{"x":true}',
+        });
+
+        // Act
+        const actual = await runPreToolUse(payload, projectRoot);
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("biome.json");
+      },
+      60000,
+    );
+
     it("検索置換で保護設定を狙うと互換deny JSONとexit2を返すこと", async () => {
       // Arrange
       const projectRoot = createProjectRoot();
@@ -186,6 +214,26 @@ target("multi-runtime PreToolUse payload compatibility", () => {
   });
 
   describe("Antigravity nested payload を編集前 gate へ接続する", () => {
+    it.each(PROTECTED_PATH_FORMS)(
+      "nested形式の%sで保護設定を狙うと正規化後に拒否すること",
+      async (_label, targetPath) => {
+        // Arrange
+        const projectRoot = createProjectRoot();
+        const payload = antigravityPayload(projectRoot, "write_to_file", {
+          TargetFile: targetPath(projectRoot),
+          CodeContent: "{}",
+        });
+
+        // Act
+        const actual = await runPreToolUse(payload, projectRoot);
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("biome.json");
+      },
+      60000,
+    );
+
     it("対象file候補で保護設定を書くとtopLevel二fieldで拒否すること", async () => {
       // Arrange
       const projectRoot = createProjectRoot();
@@ -287,6 +335,28 @@ target("multi-runtime PreToolUse payload compatibility", () => {
   });
 
   describe("既存 snake_case payload 契約を維持する", () => {
+    it.each(PROTECTED_PATH_FORMS)(
+      "snake_case形式の%sで保護設定を狙うと正規化後に拒否すること",
+      async (_label, targetPath) => {
+        // Arrange
+        const projectRoot = createProjectRoot();
+        const payload = {
+          cwd: projectRoot,
+          hook_event_name: "PreToolUse",
+          tool_name: "Write",
+          tool_input: { file_path: targetPath(projectRoot), content: "{}" },
+        };
+
+        // Act
+        const actual = await runPreToolUse(payload, projectRoot);
+
+        // Assert
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("biome.json");
+      },
+      60000,
+    );
+
     it("Claude形式の保護writeは従来どおり空stdoutと非空stderrで拒否すること", async () => {
       // Arrange
       const projectRoot = createProjectRoot();

@@ -2,7 +2,7 @@
 id: WI-255
 type: chore
 severity: normal
-status: implemented
+status: drafted
 ---
 
 # WI-255: P3 docs バッチ — skill-creator 書き直し・ストーリーID規約統一・story-mapper ハンドオフ接続

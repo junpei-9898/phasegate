@@ -9,6 +9,7 @@
  * @work-item-id WI-376
  * @work-item-id WI-384
  * @work-item-id WI-385
+ * @work-item-id WI-386
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
@@ -90,6 +91,10 @@ function isProjectExternalPath(filePath: string, cwd: string, projectRoot: strin
   const resolvedPath = path.resolve(cwd, filePath);
   const relativePath = path.relative(projectRoot, resolvedPath);
   return relativePath === ".." || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath);
+}
+
+function normalizeProjectPath(filePath: string, cwd: string, projectRoot: string): string {
+  return path.relative(projectRoot, path.resolve(cwd, filePath)).split(path.sep).join("/");
 }
 
 async function main(): Promise<void> {
@@ -197,12 +202,15 @@ async function main(): Promise<void> {
   try {
     const configPath = await findConfigPath(cwd);
     const projectRoot = projectRootForConfig(configPath);
-    const projectTargetFilePaths = targetFilePaths.filter(
-      (filePath) => !isProjectExternalPath(filePath, cwd, projectRoot),
-    );
-    const projectTargetChanges = targetChanges.filter(
-      (change) => !isProjectExternalPath(change.filePath, cwd, projectRoot),
-    );
+    const projectTargetFilePaths = targetFilePaths
+      .filter((filePath) => !isProjectExternalPath(filePath, cwd, projectRoot))
+      .map((filePath) => normalizeProjectPath(filePath, cwd, projectRoot));
+    const projectTargetChanges = targetChanges
+      .filter((change) => !isProjectExternalPath(change.filePath, cwd, projectRoot))
+      .map((change) => ({
+        ...change,
+        filePath: normalizeProjectPath(change.filePath, cwd, projectRoot),
+      }));
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const phaseGateQueryPort = new PhaseGateQueryAdapter();
     const storyReflectionQueryPort = new FileSystemStoryReflectionQueryAdapter({

@@ -2,7 +2,7 @@
 id: WI-274
 type: chore
 severity: normal
-status: completed
+status: drafted
 ---
 
 # WI-274: 過去ドキュメントの L1 ルールコード表記整合

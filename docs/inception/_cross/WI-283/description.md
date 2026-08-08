@@ -2,7 +2,7 @@
 id: WI-283
 type: story
 severity: high
-status: drafted
+status: reflected
 affects: [world-model, attestation, ci-governance, nyquist-validation, config-foundation]
 source: internal
 ---

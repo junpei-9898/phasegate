@@ -2,7 +2,7 @@
 id: WI-258
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [validator-system]
 ---
 

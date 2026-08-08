@@ -1,6 +1,7 @@
 ---
 id: WI-325
 type: fix
+status: reflected
 source: verification-followup
 ---
 

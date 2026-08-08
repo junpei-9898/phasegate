@@ -2,7 +2,7 @@
 id: WI-257
 type: story
 severity: normal
-status: drafted
+status: tested
 affects: [agent-integration]
 ---
 

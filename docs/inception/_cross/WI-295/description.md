@@ -2,7 +2,7 @@
 id: WI-295
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [world-model]
 source: internal
 ---

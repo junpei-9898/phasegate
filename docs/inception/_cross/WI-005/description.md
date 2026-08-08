@@ -2,7 +2,7 @@
 id: WI-005
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-005
 affects: [harness-api（pre-commit, check-phase, detect-drift）, ci-governance（generate-template）, validator-system（layer filter, L4-001）, regression-suite（agent-guard）]
 ---

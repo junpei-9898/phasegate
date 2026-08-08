@@ -2,7 +2,7 @@
 id: WI-153
 type: issue
 severity: high
-status: tested
+status: drafted
 affects: [skills, setup, agent-integration, documentation]
 source: internal
 ---

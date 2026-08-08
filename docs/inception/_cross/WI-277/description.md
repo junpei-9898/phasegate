@@ -2,7 +2,7 @@
 id: WI-277
 type: chore
 severity: high
-status: tested
+status: drafted
 affects: [regression-suite]
 ---
 

@@ -2,7 +2,7 @@
 id: WI-350
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [agent-integration]
 source: GitHub issue #41（Full Mode session が unit を持たないパスに効かない）
 ---

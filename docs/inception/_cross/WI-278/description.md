@@ -2,7 +2,7 @@
 id: WI-278
 type: chore
 severity: medium
-status: tested
+status: drafted
 affects: [traceability-model]
 source: internal
 ---

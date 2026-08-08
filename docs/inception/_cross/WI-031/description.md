@@ -2,7 +2,7 @@
 id: WI-031
 type: story
 severity: normal
-status: tested
+status: reflected
 affects: [ci-governance]
 ---
 

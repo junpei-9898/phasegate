@@ -8,6 +8,7 @@
 // @work-item-id WI-176
 // @work-item-id WI-177
 // @work-item-id WI-205
+// @work-item-id WI-387
 // @story H11-06
 
 import { spawn } from "node:child_process";
@@ -305,7 +306,15 @@ target("agent setup planner CLI", () => {
       expect(parsed.installResult.error).toMatchObject({
         target: ".codex/hooks.json",
         operation: "mkdir",
-        partialChanges: [".claude/settings.json", "CLAUDE.md"],
+        partialChanges: [
+          ".claude/settings.json",
+          ".claude/scripts/deny-check.sh",
+          ".claude/scripts/format-settings-hook.sh",
+          ".claude/scripts/format-typescript-hook.sh",
+          ".claude/scripts/analyze-errors-hook.sh",
+          ".claude/scripts/hook-config.json",
+          "CLAUDE.md",
+        ],
       });
       expect(["EEXIST", "ENOTDIR"]).toContain(parsed.installResult.error.code);
       expect(parsed.installResult.error.likelyCause).toMatch(/parent path|managed target/i);

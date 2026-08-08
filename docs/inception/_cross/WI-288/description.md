@@ -2,7 +2,7 @@
 id: WI-288
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [traceability-model]
 source: internal
 ---
@@ -12,7 +12,6 @@ source: internal
 <!-- @work-item-id WI-288 -->
 
 @story-id H17-03
-
 ## 背景
 
 ADR-031はtraceability-modelをUnit / Story / AC / WorkItem identityとmetadata lifecycleのownerとし、world-modelはprovider domain型を複製せずplain DTO / public facadeから観測すると決定した。ADR-032はcanonical WorkItem ID、provider-owned legacy aliasとTestReference identity tupleを固定した。

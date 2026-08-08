@@ -2,7 +2,7 @@
 id: WI-061
 type: story
 severity: normal
-status: tested
+status: reflected
 legacy_id: H14-01
 ---
 

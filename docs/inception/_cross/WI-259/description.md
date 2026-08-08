@@ -2,7 +2,7 @@
 id: WI-259
 type: story
 severity: medium
-status: drafted
+status: tested
 affects: [validator-system, config-foundation]
 ---
 

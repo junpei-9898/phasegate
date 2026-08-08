@@ -2,7 +2,7 @@
 id: WI-170
 type: issue
 severity: normal
-status: tested
+status: reflected
 affects: [documentation, config-foundation]
 source: internal
 ---

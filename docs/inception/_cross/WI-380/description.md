@@ -2,7 +2,7 @@
 id: WI-380
 type: fix
 severity: medium
-status: drafted
+status: reflected
 affects: [config-foundation]
 source: WI-371〜374（issue #43）と WI-377（ADR-040）の統合時に露見した未定義動作
 ---

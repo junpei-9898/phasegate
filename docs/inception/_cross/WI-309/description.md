@@ -2,7 +2,7 @@
 id: WI-309
 type: fix
 severity: high
-status: drafted
+status: reflected
 affects: [validator-system]
 source: internal
 ---

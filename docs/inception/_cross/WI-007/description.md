@@ -2,7 +2,7 @@
 id: WI-007
 type: issue
 severity: normal
-status: tested
+status: drafted
 legacy_id: ISSUE-007
 affects: [phase_dependency_model（gate 判定ロジック）, harness_error（エラー情報設計）, agent_integration（pre-tool-use hook）, ci_governance（新規 CLI）]
 ---

@@ -1,6 +1,7 @@
 ---
 id: WI-328
 type: fix
+status: implemented
 source: verification-followup (github#39 残課題)
 ---
 

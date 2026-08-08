@@ -2,7 +2,7 @@
 id: WI-282
 type: story
 severity: high
-status: drafted
+status: reflected
 affects: [world-model, traceability-model, nyquist-validation, validator-system, attestation, ci-governance]
 source: internal
 ---

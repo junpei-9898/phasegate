@@ -2,7 +2,7 @@
 id: WI-264
 type: story
 severity: normal
-status: tested
+status: implemented
 affects: [installation]
 ---
 

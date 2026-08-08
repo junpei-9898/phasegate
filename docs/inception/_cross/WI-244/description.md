@@ -2,7 +2,7 @@
 id: WI-244
 type: fix
 severity: normal
-status: drafted
+status: reflected
 ---
 
 # WI-244: スキルの固定モデル名（Sonnet 4.6 / Opus 4.6）を役割ベース表現に置換し、モデル委任レンダラーと同期する

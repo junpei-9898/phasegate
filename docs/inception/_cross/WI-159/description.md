@@ -2,7 +2,7 @@
 id: WI-159
 type: issue
 severity: high
-status: tested
+status: drafted
 affects: [quick-mode, documentation]
 source: internal
 ---

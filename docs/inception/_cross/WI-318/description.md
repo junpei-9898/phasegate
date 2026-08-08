@@ -2,7 +2,7 @@
 id: WI-318
 type: fix
 severity: high
-status: drafted
+status: implemented
 affects: [harness-api]
 source: github#38
 ---

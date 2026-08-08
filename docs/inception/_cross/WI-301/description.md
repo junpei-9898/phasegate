@@ -2,7 +2,7 @@
 id: WI-301
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [validator-system, world-model, config-foundation]
 source: internal
 ---

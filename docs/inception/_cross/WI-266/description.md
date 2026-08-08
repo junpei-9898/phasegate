@@ -2,7 +2,7 @@
 id: WI-266
 type: fix
 severity: medium
-status: tested
+status: reflected
 affects: [biome-ast-engine]
 ---
 

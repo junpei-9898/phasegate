@@ -2,7 +2,7 @@
 id: WI-292
 type: story
 severity: high
-status: drafted
+status: tested
 affects: [nyquist-validation, validator-system, world-model]
 source: internal
 ---

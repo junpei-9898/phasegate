@@ -11,6 +11,7 @@
 // @work-item-id WI-326
 // @work-item-id WI-331
 // @work-item-id WI-385
+// @work-item-id WI-387
 
 import {
   access,
@@ -44,6 +45,7 @@ type StrategyType =
   | "yaml-add"
   | "package-json"
   | "markdown-managed"
+  | "copy"
   | "copy-dir"
   | "symlink"
   | "unknown";
@@ -391,7 +393,8 @@ export class RunReconcileUseCase {
     const includeHusky = input.includeHusky ?? manifest.installationFlags?.includeHusky ?? true;
     const includeCi = input.includeCi ?? manifest.installationFlags?.includeCi ?? true;
     const includeAntigravity = manifest.findEntry(".agents/hooks.json") !== null;
-    const targets = this.createTargets({ includeHusky, includeCi, includeAntigravity });
+    const includeClaudeScripts = manifest.findEntry(".claude/settings.json") !== null;
+    const targets = this.createTargets({ includeHusky, includeCi, includeAntigravity, includeClaudeScripts });
     const targetsByPath = new Map(targets.map((target) => [target.path, target]));
     let nextManifest = DeploymentManifest.reconstitute({
       version: input.phasegateVersion,
@@ -703,9 +706,7 @@ export class RunReconcileUseCase {
       manifest.findEntry(".phasegate-local/phasegate.config.json") !== null ||
       manifest.entries.some(
         (entry) =>
-          (entry.path === ".claude/skills" ||
-            entry.path === ".codex/skills" ||
-            entry.path === ".agents/skills") &&
+          (entry.path === ".claude/skills" || entry.path === ".codex/skills" || entry.path === ".agents/skills") &&
           entry.mode === "created",
       ) ||
       manifest.entries.some(
@@ -960,6 +961,7 @@ export class RunReconcileUseCase {
     if (target.strategy === "yaml-add") return template;
     if (target.strategy === "shell") return reconcileShell(before, template);
     if (target.strategy === "markdown-managed") return reconcileManagedMarkdown(before, template);
+    if (target.strategy === "copy") return before ?? template;
     if (target.strategy === "package-json") {
       const existing = before === null ? {} : (JSON.parse(before) as unknown);
       return `${JSON.stringify(reconcilePackageJson(isRecord(existing) ? existing : {}, version), null, 2)}\n`;
@@ -977,9 +979,43 @@ export class RunReconcileUseCase {
     readonly includeHusky: boolean;
     readonly includeCi: boolean;
     readonly includeAntigravity: boolean;
+    readonly includeClaudeScripts: boolean;
   }): readonly ReconcileTarget[] {
     return [
       { path: ".claude/settings.json", strategy: "json", templatePath: "templates/.claude/settings.json" },
+      ...(options.includeClaudeScripts
+        ? ([
+            {
+              path: ".claude/scripts/deny-check.sh",
+              strategy: "shell",
+              templatePath: "templates/.claude/scripts/deny-check.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-settings-hook.sh",
+              strategy: "shell",
+              templatePath: "templates/.claude/scripts/format-settings-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/format-typescript-hook.sh",
+              strategy: "shell",
+              templatePath: "templates/.claude/scripts/format-typescript-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/analyze-errors-hook.sh",
+              strategy: "shell",
+              templatePath: "templates/.claude/scripts/analyze-errors-hook.sh",
+              executable: true,
+            },
+            {
+              path: ".claude/scripts/hook-config.json",
+              strategy: "copy",
+              templatePath: "templates/.claude/scripts/hook-config.json",
+            },
+          ] as const satisfies readonly ReconcileTarget[])
+        : []),
       {
         path: "CLAUDE.md",
         strategy: "markdown-managed",
