@@ -10,6 +10,7 @@
 // @work-item-id WI-315
 // @work-item-id WI-326
 // @work-item-id WI-331
+// @work-item-id WI-385
 
 import {
   access,
@@ -30,6 +31,7 @@ import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
+import { mergeNamedHookJson } from "../named-hook-json.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
@@ -37,6 +39,7 @@ import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 type ReconcileAction = "missing-manifest" | "update" | "add" | "link" | "skip" | "refuse" | "prune";
 type StrategyType =
   | "json"
+  | "json-named"
   | "shell"
   | "yaml-add"
   | "package-json"
@@ -96,7 +99,7 @@ const USER_SECTION_END = "<!-- phasegate:user-section:end -->";
 const USER_SECTION_PLACEHOLDER = "Project-specific agent instructions go here.";
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const HARNESS_VERSION_BASENAME = ".harness-version";
-const SKILL_ROOT_PREFIXES = ["skills", ".claude/skills", ".codex/skills"] as const;
+const SKILL_ROOT_PREFIXES = ["skills", ".claude/skills", ".codex/skills", ".agents/skills"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -387,7 +390,8 @@ export class RunReconcileUseCase {
 
     const includeHusky = input.includeHusky ?? manifest.installationFlags?.includeHusky ?? true;
     const includeCi = input.includeCi ?? manifest.installationFlags?.includeCi ?? true;
-    const targets = this.createTargets({ includeHusky, includeCi });
+    const includeAntigravity = manifest.findEntry(".agents/hooks.json") !== null;
+    const targets = this.createTargets({ includeHusky, includeCi, includeAntigravity });
     const targetsByPath = new Map(targets.map((target) => [target.path, target]));
     let nextManifest = DeploymentManifest.reconstitute({
       version: input.phasegateVersion,
@@ -507,7 +511,9 @@ export class RunReconcileUseCase {
           }
         } else if (
           outcome.item.strategy === "copy-dir" &&
-          (outcome.item.path === ".claude/skills" || outcome.item.path === ".codex/skills")
+          (outcome.item.path === ".claude/skills" ||
+            outcome.item.path === ".codex/skills" ||
+            outcome.item.path === ".agents/skills")
         ) {
           const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
           nextManifest = nextManifest.addEntry(
@@ -560,7 +566,10 @@ export class RunReconcileUseCase {
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
     const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
     const next =
-      entry.mode === "created" && target.strategy !== "package-json" && target.strategy !== "markdown-managed"
+      entry.mode === "created" &&
+      target.strategy !== "package-json" &&
+      target.strategy !== "markdown-managed" &&
+      target.strategy !== "json-named"
         ? template
         : this.reconcileContent(target, before, template, input.phasegateVersion);
     const changed = before !== next;
@@ -681,6 +690,7 @@ export class RunReconcileUseCase {
     return (
       manifest.findEntry(".claude/skills") !== null ||
       manifest.findEntry(".codex/skills") !== null ||
+      manifest.findEntry(".agents/skills") !== null ||
       manifest.entries.some((entry) => entry.path.startsWith("skills/"))
     );
   }
@@ -692,16 +702,25 @@ export class RunReconcileUseCase {
     return (
       manifest.findEntry(".phasegate-local/phasegate.config.json") !== null ||
       manifest.entries.some(
-        (entry) => (entry.path === ".claude/skills" || entry.path === ".codex/skills") && entry.mode === "created",
+        (entry) =>
+          (entry.path === ".claude/skills" ||
+            entry.path === ".codex/skills" ||
+            entry.path === ".agents/skills") &&
+          entry.mode === "created",
       ) ||
       manifest.entries.some(
-        (entry) => entry.path.startsWith(".claude/skills/") || entry.path.startsWith(".codex/skills/"),
+        (entry) =>
+          entry.path.startsWith(".claude/skills/") ||
+          entry.path.startsWith(".codex/skills/") ||
+          entry.path.startsWith(".agents/skills/"),
       )
     );
   }
 
-  private personalSkillPaths(manifest: DeploymentManifest): Array<".claude/skills" | ".codex/skills"> {
-    const paths = new Set<".claude/skills" | ".codex/skills">();
+  private personalSkillPaths(
+    manifest: DeploymentManifest,
+  ): Array<".claude/skills" | ".codex/skills" | ".agents/skills"> {
+    const paths = new Set<".claude/skills" | ".codex/skills" | ".agents/skills">();
     if (
       manifest.findEntry(".claude/skills") !== null ||
       manifest.entries.some((entry) => entry.path.startsWith(".claude/skills/"))
@@ -712,6 +731,11 @@ export class RunReconcileUseCase {
       manifest.entries.some((entry) => entry.path.startsWith(".codex/skills/"))
     )
       paths.add(".codex/skills");
+    if (
+      manifest.findEntry(".agents/skills") !== null ||
+      manifest.entries.some((entry) => entry.path.startsWith(".agents/skills/"))
+    )
+      paths.add(".agents/skills");
     return [...paths].sort();
   }
 
@@ -783,7 +807,7 @@ export class RunReconcileUseCase {
   private async planPersonalSkills(
     input: RunReconcileInput,
     manifest: DeploymentManifest,
-    relativePath: ".claude/skills" | ".codex/skills",
+    relativePath: ".claude/skills" | ".codex/skills" | ".agents/skills",
     skills: readonly string[],
     skillSet: SkillSet,
   ) {
@@ -942,12 +966,17 @@ export class RunReconcileUseCase {
     }
     const existing = before === null ? {} : (JSON.parse(before) as unknown);
     const incoming = JSON.parse(template) as unknown;
+    if (target.strategy === "json-named") {
+      const merged = mergeNamedHookJson(isRecord(existing) ? existing : {}, isRecord(incoming) ? incoming : {});
+      return `${JSON.stringify(merged, null, 2)}\n`;
+    }
     return `${JSON.stringify(reconcileJsonObject(isRecord(existing) ? existing : {}, isRecord(incoming) ? incoming : {}), null, 2)}\n`;
   }
 
   private createTargets(options: {
     readonly includeHusky: boolean;
     readonly includeCi: boolean;
+    readonly includeAntigravity: boolean;
   }): readonly ReconcileTarget[] {
     return [
       { path: ".claude/settings.json", strategy: "json", templatePath: "templates/.claude/settings.json" },
@@ -958,6 +987,11 @@ export class RunReconcileUseCase {
         block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate CLAUDE.md managed section" },
       },
       { path: ".codex/hooks.json", strategy: "json", templatePath: "templates/.codex/hooks.json" },
+      ...(options.includeAntigravity
+        ? ([
+            { path: ".agents/hooks.json", strategy: "json-named", templatePath: "templates/.agents/hooks.json" },
+          ] as const)
+        : []),
       {
         path: "AGENTS.md",
         strategy: "markdown-managed",
@@ -1001,6 +1035,7 @@ export class RunReconcileUseCase {
       { path: "package.json", strategy: "package-json", templatePath: "package.json" },
       { path: ".claude/skills", strategy: "symlink" },
       { path: ".codex/skills", strategy: "symlink" },
+      ...(options.includeAntigravity ? ([{ path: ".agents/skills", strategy: "symlink" }] as const) : []),
     ];
   }
 
@@ -1014,7 +1049,12 @@ export class RunReconcileUseCase {
 
   private managedBlockFor(path: string, strategy: StrategyType): ManagedBlockInput | null {
     if (strategy === "shell") return { start: SHELL_BEGIN, end: SHELL_END, content: `phasegate ${path} managed block` };
-    if (strategy === "json" || strategy === "package-json" || strategy === "markdown-managed") {
+    if (
+      strategy === "json" ||
+      strategy === "json-named" ||
+      strategy === "package-json" ||
+      strategy === "markdown-managed"
+    ) {
       return { start: "phasegate structured merge", end: "phasegate structured merge", content: `${strategy}:${path}` };
     }
     return null;

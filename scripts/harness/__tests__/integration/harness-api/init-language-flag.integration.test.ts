@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer integration
 // @story H13-04
+// @work-item-id WI-385
 // @work-item-id WI-212
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -26,7 +27,11 @@ interface InitLanguageResult {
 
 function runCli(args: string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env: process.env });
+    const child = spawn(
+      process.execPath,
+      ["--import", path.join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, ...args],
+      { cwd, env: process.env },
+    );
     let stderr = "";
     child.stderr.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();

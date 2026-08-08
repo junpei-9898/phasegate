@@ -19,6 +19,7 @@
 // @work-item-id WI-315
 // @work-item-id WI-326
 // @work-item-id WI-331
+// @work-item-id WI-385
 
 import {
   access,
@@ -34,11 +35,13 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { type AgentTarget, resolveAgentTarget } from "../../domain/agent-target.js";
 import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest, type InstallationFlags } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
 import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
+import { mergeNamedHookJson } from "../named-hook-json.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
@@ -46,6 +49,7 @@ import type { ModelDelegationPort } from "../ports/model-delegation-port.js";
 type InstallAction = "missing" | "will-merge" | "will-skip" | "will-overwrite";
 type StrategyType =
   | "json"
+  | "json-named"
   | "shell"
   | "yaml-add"
   | "package-json"
@@ -83,7 +87,7 @@ export interface RunInstallInput {
   readonly includeCi?: boolean;
   readonly skillSet?: "core" | "all";
   readonly workflow?: "standard" | "strict";
-  readonly agent?: "claude" | "codex" | "both";
+  readonly agent?: AgentTarget;
   readonly personal?: boolean;
 }
 
@@ -130,6 +134,7 @@ const PERSONAL_AGENT_RUNTIME_FILES = new Set([
   ".claude/settings.json",
   "AGENTS.md",
   ".codex/hooks.json",
+  ".agents/hooks.json",
 ]);
 const SHARED_SKILLS_VERSION_PATH = "skills/.harness-version";
 const PERSONAL_PRINCIPLES_DOCS = ".phasegate-local/docs/principles";
@@ -361,7 +366,7 @@ function mergeManagedMarkdown(existing: string | null, incoming: string): string
 function renderAgentContextTemplate(
   template: string,
   options: {
-    readonly agent: "claude" | "codex" | "both";
+    readonly agent: AgentTarget;
     readonly skillSet: "core" | "all";
     readonly workflow: "standard" | "strict";
     readonly includeHusky: boolean;
@@ -407,20 +412,6 @@ function mergePackageJson(existing: Record<string, unknown>, version: string): R
       phasegate: `^${version}`,
     },
   };
-}
-
-function hasCustomJson(content: string | null): boolean {
-  if (content === null) return false;
-  try {
-    const parsed = JSON.parse(content) as unknown;
-    if (!isRecord(parsed)) return true;
-    const withoutEmptyHooks = { ...parsed };
-    if (isRecord(withoutEmptyHooks.hooks) && Object.keys(withoutEmptyHooks.hooks).length === 0)
-      delete withoutEmptyHooks.hooks;
-    return Object.keys(withoutEmptyHooks).length > 0;
-  } catch {
-    return true;
-  }
 }
 
 function errorCode(error: unknown): string {
@@ -471,17 +462,19 @@ export class RunInstallUseCase {
   ) {}
 
   async execute(input: RunInstallInput): Promise<RunInstallResult> {
-    const includeClaude = input.includeClaude ?? true;
-    const includeCodex = input.includeCodex ?? true;
+    const legacyIncludeClaude = input.includeClaude ?? true;
+    const legacyIncludeCodex = input.includeCodex ?? true;
     const includeHusky = input.includeHusky ?? true;
     const includeCi = input.includeCi ?? true;
     const skillSet = input.skillSet ?? "all";
     const workflow = input.workflow ?? "standard";
-    const agent = input.agent ?? (includeClaude && includeCodex ? "both" : includeCodex ? "codex" : "claude");
+    const agent =
+      input.agent ?? (legacyIncludeClaude && legacyIncludeCodex ? "both" : legacyIncludeCodex ? "codex" : "claude");
+    const selection = resolveAgentTarget(agent);
     const personal = input.personal ?? false;
     const targets = personal
-      ? this.createPersonalTargets({ includeClaude, includeCodex })
-      : this.createTargets({ includeClaude, includeCodex, includeHusky, includeCi });
+      ? this.createPersonalTargets(selection)
+      : this.createTargets({ ...selection, includeHusky, includeCi });
     // Persist the effective opt-in state so a later reconcile can honor the
     // original install options. Personal installs never deploy Husky/CI
     // targets, so their effective state is recorded as false regardless of
@@ -584,7 +577,7 @@ export class RunInstallUseCase {
       const mode = before === null ? "created" : "merged";
       const hash = this.hashCalculator.compute(next);
       const manifestEntry = baseManifest.findEntry(target.path);
-      if (manifestEntry !== null && manifestEntry.hash.equals(hash)) {
+      if (manifestEntry?.hash.equals(hash)) {
         manifest = manifest.addEntry(manifestEntry);
       } else {
         manifest = manifest.addEntry(
@@ -600,7 +593,11 @@ export class RunInstallUseCase {
     }
 
     const personalSkillTargets = input.personal
-      ? [...(includeClaude ? [".claude/skills"] : []), ...(includeCodex ? [".codex/skills"] : [])]
+      ? [
+          ...(selection.claudeSkills ? [".claude/skills"] : []),
+          ...(selection.codexSkills ? [".codex/skills"] : []),
+          ...(selection.antigravitySkills ? [".agents/skills"] : []),
+        ]
       : [];
     const selectedPersonalSkills = input.personal ? await listSelectedBundledSkills(input.harnessRoot, skillSet) : [];
     for (const skillPath of personalSkillTargets) {
@@ -644,7 +641,7 @@ export class RunInstallUseCase {
       }
     }
 
-    if (!input.personal && (includeClaude || includeCodex)) {
+    if (!input.personal && (selection.claudeSkills || selection.codexSkills || selection.antigravitySkills)) {
       const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
       const item = await this.planSharedSkillDirectory(input, sharedSkills, baseManifest);
       plan.push(item);
@@ -673,8 +670,9 @@ export class RunInstallUseCase {
     const linkSpecs = input.personal
       ? []
       : [
-          ...(includeClaude ? [{ path: ".claude/skills", target: "../skills" }] : []),
-          ...(includeCodex ? [{ path: ".codex/skills", target: "../skills" }] : []),
+          ...(selection.claudeSkills ? [{ path: ".claude/skills", target: "../skills" }] : []),
+          ...(selection.codexSkills ? [{ path: ".codex/skills", target: "../skills" }] : []),
+          ...(selection.antigravitySkills ? [{ path: ".agents/skills", target: "../skills" }] : []),
         ];
     for (const linkSpec of linkSpecs) {
       const item = await this.planSkillLink(input.projectRoot, linkSpec.path, linkSpec.target);
@@ -703,7 +701,7 @@ export class RunInstallUseCase {
       });
     }
 
-    if (input.personal && includeCodex) {
+    if (input.personal && selection.codexHook) {
       plan.push({
         path: "~/.codex/config.toml",
         action: "will-skip",
@@ -770,8 +768,11 @@ export class RunInstallUseCase {
   }
 
   private createTargets(options: {
-    readonly includeClaude: boolean;
-    readonly includeCodex: boolean;
+    readonly claudeHook: boolean;
+    readonly claudeContext: boolean;
+    readonly codexHook: boolean;
+    readonly agentsContext: boolean;
+    readonly antigravityHook: boolean;
     readonly includeHusky: boolean;
     readonly includeCi: boolean;
   }): readonly InstallTarget[] {
@@ -781,24 +782,39 @@ export class RunInstallUseCase {
         strategy: "copy" as const,
         templatePath: "docs/templates/project/phasegate.config.json",
       },
-      ...(options.includeClaude
+      ...(options.claudeHook
         ? [
             {
               path: ".claude/settings.json",
               strategy: "json" as const,
               templatePath: "templates/.claude/settings.json",
             },
+            ...(options.claudeContext
+              ? [
+                  {
+                    path: "CLAUDE.md",
+                    strategy: "markdown-managed" as const,
+                    templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
+                    block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate CLAUDE.md managed section" },
+                  },
+                ]
+              : []),
+          ]
+        : []),
+      ...(options.codexHook
+        ? [{ path: ".codex/hooks.json", strategy: "json" as const, templatePath: "templates/.codex/hooks.json" }]
+        : []),
+      ...(options.antigravityHook
+        ? [
             {
-              path: "CLAUDE.md",
-              strategy: "markdown-managed" as const,
-              templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
-              block: { start: MARKDOWN_BEGIN, end: MARKDOWN_END, content: "phasegate CLAUDE.md managed section" },
+              path: ".agents/hooks.json",
+              strategy: "json-named" as const,
+              templatePath: "templates/.agents/hooks.json",
             },
           ]
         : []),
-      ...(options.includeCodex
+      ...(options.agentsContext
         ? [
-            { path: ".codex/hooks.json", strategy: "json" as const, templatePath: "templates/.codex/hooks.json" },
             {
               path: "AGENTS.md",
               strategy: "markdown-managed" as const,
@@ -846,8 +862,11 @@ export class RunInstallUseCase {
   }
 
   private createPersonalTargets(options: {
-    readonly includeClaude: boolean;
-    readonly includeCodex: boolean;
+    readonly claudeHook: boolean;
+    readonly claudeContext: boolean;
+    readonly codexHook: boolean;
+    readonly agentsContext: boolean;
+    readonly antigravityHook: boolean;
   }): readonly InstallTarget[] {
     return [
       {
@@ -855,19 +874,23 @@ export class RunInstallUseCase {
         strategy: "copy" as const,
         templatePath: "docs/templates/personal/phasegate-local-config.json",
       },
-      ...(options.includeClaude
+      ...(options.claudeHook
         ? [
-            {
-              path: ".claude/CLAUDE.md",
-              strategy: "markdown-managed" as const,
-              templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
-              block: {
-                start: MARKDOWN_BEGIN,
-                end: MARKDOWN_END,
-                content: "phasegate personal .claude/CLAUDE.md managed section",
-              },
-              personalManualIfUnmanaged: true,
-            },
+            ...(options.claudeContext
+              ? [
+                  {
+                    path: ".claude/CLAUDE.md",
+                    strategy: "markdown-managed" as const,
+                    templatePath: "docs/templates/agent-context/CLAUDE.md.template.md",
+                    block: {
+                      start: MARKDOWN_BEGIN,
+                      end: MARKDOWN_END,
+                      content: "phasegate personal .claude/CLAUDE.md managed section",
+                    },
+                    personalManualIfUnmanaged: true,
+                  },
+                ]
+              : []),
             {
               path: ".claude/settings.json",
               strategy: "copy" as const,
@@ -875,7 +898,7 @@ export class RunInstallUseCase {
             },
           ]
         : []),
-      ...(options.includeCodex
+      ...(options.agentsContext
         ? [
             {
               path: "AGENTS.md",
@@ -888,10 +911,23 @@ export class RunInstallUseCase {
               },
               personalManualIfUnmanaged: true,
             },
+          ]
+        : []),
+      ...(options.codexHook
+        ? [
             {
               path: ".codex/hooks.json",
               strategy: "copy" as const,
               templatePath: "templates/.codex/hooks.json",
+            },
+          ]
+        : []),
+      ...(options.antigravityHook
+        ? [
+            {
+              path: ".agents/hooks.json",
+              strategy: "json-named" as const,
+              templatePath: "templates/.agents/hooks.json",
             },
           ]
         : []),
@@ -943,6 +979,7 @@ export class RunInstallUseCase {
     if (target.strategy === "copy-dir") return "mechanical";
     if (target.strategy === "symlink") return "mechanical";
     if (target.strategy === "json") return jsonRepairMode(before);
+    if (target.strategy === "json-named") return jsonRepairMode(before);
     if (target.strategy === "markdown-managed") return "mechanical";
     return "mechanical";
   }
@@ -966,6 +1003,10 @@ export class RunInstallUseCase {
     }
     const existing = before === null ? {} : (JSON.parse(before) as unknown);
     const incoming = JSON.parse(template) as unknown;
+    if (target.strategy === "json-named") {
+      const merged = mergeNamedHookJson(isRecord(existing) ? existing : {}, isRecord(incoming) ? incoming : {});
+      return `${JSON.stringify(merged, null, 2)}\n`;
+    }
     const merged = mergeJsonObject(isRecord(existing) ? existing : {}, isRecord(incoming) ? incoming : {});
     return `${JSON.stringify(merged, null, 2)}\n`;
   }
@@ -1124,7 +1165,7 @@ export class RunInstallUseCase {
   ): DeploymentManifest {
     const hash = this.hashCalculator.compute(input.contentForHash);
     const existingEntry = baseManifest.findEntry(input.path);
-    if (existingEntry !== null && existingEntry.hash.equals(hash)) {
+    if (existingEntry?.hash.equals(hash)) {
       return manifest.addEntry(existingEntry);
     }
     return manifest.addEntry(

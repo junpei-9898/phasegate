@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer integration
 // @story H13-04
+// @work-item-id WI-385
 // @work-item-id WI-320
 
 // WI-320 (github#39): WI-319 のファイルシステム言語検出が実 CLI 経路で dead code に
@@ -29,7 +30,11 @@ interface CliResult {
 
 function runCli(args: string[], cwd: string, env: NodeJS.ProcessEnv = process.env): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env });
+    const child = spawn(
+      process.execPath,
+      ["--import", path.join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, ...args],
+      { cwd, env },
+    );
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {

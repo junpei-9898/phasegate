@@ -1680,3 +1680,26 @@ native raw patch の入力形を混同せず、Bash extractor の public path-on
 PostToolUse matcher にも `apply_patch` を追加して既存 lint flow を起動するが、post adapter は affected
 path を use case 入力に使わないため patch を再解析しない。matcher の canonical form は
 `Bash|apply_patch` とし、Codex compatibility aliases `Write` / `Edit` は Codex 専用 config に併記しない。
+
+## WI-385 Grok / Antigravity payload adapter
+
+<!-- @work-item-id WI-385 -->
+
+`pre-tool-use-hook` は parsed `unknown` を presentation-owned normalizer へ渡し、root の
+`tool_name/tool_input`、`toolName/toolInput`、nested `toolCall.name/toolCall.args` の構造だけから
+canonical application DTO と response profile を得る。現行 `PreToolUseHookInput` が担う外部 schema と
+内部 input の二重責務は分離する。
+
+runtime tool vocabulary は direct Write / Edit、Bash command、raw apply_patch の既存 4 経路へ正規化する。
+Grok `toolInputTruncated` で command / patch target の完全性を証明できない場合、または Antigravity の
+防御的 args candidate から対象を得られない場合は既存 gate 呼出前に deny result を作る。workspace 外 path
+filtering と gate pipeline は変更しない。snake_case Write / Edit の既存 `tool_input.paths` 配列は canonical
+target 群として保持し、複数 path を gate へ渡す。
+
+deny renderer は input shape から選ぶ。snake_case は stdout empty + stderr + exit 2、flat camelCase は
+top-level deny と Claude-compatible hookSpecificOutput を併記し stderr + exit 2、nested toolCall は
+documented top-level deny + stderr + exit 2 とする。allow は全 shape で stdout empty + exit 0 とし、runtime
+permission を上書きしない。JSON parse 不能は shape 不明のため既存 stderr + exit 2 を維持する。
+`toolCall` record が存在する近傍形状では `name` / `args` の key が未知でも nested profile の top-level deny を
+返す。snake_case と camelCase を同時に満たす payload は値が同じでも deny するため、将来 Grok が alias を
+併記した場合の可用性リスクとして実 payload fixture を継続監視する。

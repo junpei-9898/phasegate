@@ -5,6 +5,7 @@
 
 import { spawn } from "node:child_process";
 import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +15,7 @@ import { context, target } from "../../helpers/test-helpers.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_ROOT = path.resolve(__dirname, "../../../../..");
 const MAIN_TS = path.join(HARNESS_ROOT, "scripts/harness/main.ts");
+const TSX_IMPORT = createRequire(import.meta.url).resolve("tsx");
 
 interface CliResult {
   exitCode: number;
@@ -23,7 +25,7 @@ interface CliResult {
 
 function runCli(args: string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env: process.env });
+    const child = spawn(process.execPath, ["--import", TSX_IMPORT, MAIN_TS, ...args], { cwd, env: process.env });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {

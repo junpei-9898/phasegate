@@ -239,3 +239,14 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 - reconcile は Bash-only managed config を更新し、definition hash 変更後の再 trust を案内する。
 - doctor は stale matcher を red とし、current matcher では finding を消すが trust unverifiable advisory を残す。
 - notice は既存 plan / finding / exit code semantics を変更しない。
+
+## WI-385 Grok / Antigravity installation integration
+
+<!-- @work-item-id WI-385 -->
+
+- `install --agent grok` は Claude-compatible phasegate hook + AGENTS を配り `.grok` を作らない。
+- `install --agent antigravity` は user named hooks を保持して `.agents/hooks.json` を配る。
+- `install --agent both` は既存 Claude + Codex target set を維持し、`all` は Grok duplicate なしで全 target を配る。
+- reconcile 2 回目は no-op、uninstall は `phasegate-gate` だけを除去する。
+- doctor Grok scope は matcher / timeout と trust notice、Antigravity scope は schema / timeout と CLI-only notice を返す。
+- deprecated init / setup:agent / human / JSON output が同じ enum と notice contract を使う。

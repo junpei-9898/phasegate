@@ -426,7 +426,6 @@ Legacy alias names are presentation-level command identities, not separate domai
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 `world:inspect`をharness-api所有のtop-level command identityとして`KNOWN_HARNESS_COMMANDS`へ追加する。catalogは引き続きdependency-free、unique、sortedで、main dispatchのcase集合と完全一致する。Snapshot、diagnostic、exit classificationのdomain意味はworld-modelに属し、harness-apiは複製しない。
 
 ## WI-296 World command catalog completion
@@ -434,7 +433,6 @@ Legacy alias names are presentation-level command identities, not separate domai
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 `world:pin`と`world:derive`をcanonical top-level command identityへ追加し、`world:inspect`と合わせた3 command集合を完成する。harness-apiはcommand名とdispatch集合一致だけを所有し、pin candidate、WCR、obligation classificationを複製しない。
 
 ## WI-300 World config dispatch input
@@ -442,3 +440,12 @@ Legacy alias names are presentation-level command identities, not separate domai
 <!-- @work-item-id WI-300 -->
 
 mainはconfig-foundation public mapperが返すplain World DTOだけをdispatch inputとして扱う。`world.enabled`はautomatic integration用switchであり、三つのexplicit command identityやhandler availabilityを変更しない。
+
+## WI-385 AgentTarget CLI boundary
+
+<!-- @work-item-id WI-385 -->
+
+harness-api は `claude | codex | both | grok | antigravity | all` の CLI token admission と help 表示だけを
+所有する。selection semantics と managed target ownership は installation に委譲し、payload schema / runtime
+agent identity / hook authorization を CliCommand domain に取り込まない。`both` の意味と既存 command defaults は
+後方互換として固定する。

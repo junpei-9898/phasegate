@@ -6,7 +6,9 @@
 // @work-item-id WI-215
 // @work-item-id WI-330
 // @work-item-id WI-343
+// @work-item-id WI-385
 
+import type { AgentTarget } from "../../domain/agent-target.js";
 import type { CheckId } from "../../domain/check-id.js";
 import type { ConfigStatus } from "../../domain/config-status.js";
 import type { DiagnosticFinding } from "../../domain/diagnostic-finding.js";
@@ -16,7 +18,7 @@ import type { ConfigStatusProbePort } from "../ports/config-status-probe-port.js
 import type { FileInspectorPort } from "../ports/file-inspector-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
-export type DoctorAgentScope = "claude" | "codex" | "both";
+export type DoctorAgentScope = AgentTarget;
 
 export interface ScopedOutDiagnosticFinding {
   readonly finding: DiagnosticFinding;
@@ -40,6 +42,8 @@ export interface RunDoctorDiagnosticsOutput {
 
 const CLAUDE_ONLY_CHECKS = new Set<CheckId>(["claude-hook-missing", "claude-context-missing", "claude-skills-symlink"]);
 const CODEX_ONLY_CHECKS = new Set<CheckId>(["codex-hook-missing", "codex-context-missing", "codex-skills-symlink"]);
+const CLAUDE_COMPATIBLE_CHECKS = new Set<CheckId>(["grok-hook-missing"]);
+const ANTIGRAVITY_ONLY_CHECKS = new Set<CheckId>(["antigravity-hook-missing"]);
 const PERSONAL_SCOPED_OUT_CHECKS = new Set<CheckId>([
   "husky-pre-commit-missing",
   "husky-commit-msg-missing",
@@ -65,9 +69,7 @@ export class RunDoctorDiagnosticsUseCase {
         : "project";
     const configStatus = (await this.configStatusProbe.probe(input.projectRoot)).status;
     const rawFindings = (
-      await Promise.all(
-        this.checks.map((check) => check.run(input.projectRoot, this.inspector, { installationMode })),
-      )
+      await Promise.all(this.checks.map((check) => check.run(input.projectRoot, this.inspector, { installationMode })))
     ).filter((finding) => finding !== null);
     const { findings, scopedOutFindings } = this.applyPersonalScope(
       this.applyAgentScope(rawFindings, agent),
@@ -91,12 +93,10 @@ export class RunDoctorDiagnosticsUseCase {
     readonly findings: readonly DiagnosticFinding[];
     readonly scopedOutFindings: readonly ScopedOutDiagnosticFinding[];
   } {
-    if (agent === "both") return { findings, scopedOutFindings: [] };
-    const scopedOutChecks = agent === "claude" ? CODEX_ONLY_CHECKS : CLAUDE_ONLY_CHECKS;
     const applicable: DiagnosticFinding[] = [];
     const scopedOut: ScopedOutDiagnosticFinding[] = [];
     for (const finding of findings) {
-      if (scopedOutChecks.has(finding.checkId)) {
+      if (!this.isApplicableAgentCheck(finding.checkId, agent)) {
         scopedOut.push({
           finding,
           scopeReason: `${finding.checkId} belongs to an unselected agent for doctor --agent ${agent}.`,
@@ -106,6 +106,15 @@ export class RunDoctorDiagnosticsUseCase {
       }
     }
     return { findings: applicable, scopedOutFindings: scopedOut };
+  }
+
+  private isApplicableAgentCheck(checkId: CheckId, agent: DoctorAgentScope): boolean {
+    if (CLAUDE_ONLY_CHECKS.has(checkId)) return agent === "claude" || agent === "both" || agent === "all";
+    if (CODEX_ONLY_CHECKS.has(checkId)) return agent === "codex" || agent === "both" || agent === "all";
+    if (CLAUDE_COMPATIBLE_CHECKS.has(checkId))
+      return agent === "claude" || agent === "both" || agent === "grok" || agent === "all";
+    if (ANTIGRAVITY_ONLY_CHECKS.has(checkId)) return agent === "antigravity" || agent === "all";
+    return true;
   }
 
   private applyPersonalScope(

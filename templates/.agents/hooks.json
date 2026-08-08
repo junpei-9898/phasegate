@@ -1,0 +1,16 @@
+{
+  "phasegate-gate": {
+    "PreToolUse": [
+      {
+        "matcher": "^(write_to_file|replace_file_content|multi_replace_file_content|run_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx phasegate hook pre-tool-use",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

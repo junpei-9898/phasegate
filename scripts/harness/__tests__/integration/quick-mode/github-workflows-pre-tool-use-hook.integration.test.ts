@@ -1,5 +1,7 @@
 // @layer test
 // @unit quick-mode
+// @story H10-02
+// @work-item-id WI-385
 // @work-item-id WI-334
 //
 // pre-tool-use hook 経由で .github/workflows/*.yml の新規 Write が
@@ -27,10 +29,14 @@ interface CliResult {
 
 function runHook(stdin: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, "hook", "pre-tool-use"], {
-      cwd: HARNESS_ROOT,
-      env: process.env,
-    });
+    const child = spawn(
+      process.execPath,
+      ["--import", path.join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, "hook", "pre-tool-use"],
+      {
+        cwd: HARNESS_ROOT,
+        env: process.env,
+      },
+    );
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {

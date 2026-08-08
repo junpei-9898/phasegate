@@ -7,14 +7,20 @@
 // @work-item-id WI-208
 // @work-item-id WI-330
 // @work-item-id WI-384
+// @work-item-id WI-385
 
+import {
+  ANTIGRAVITY_CLI_ONLY_NOTICE,
+  CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE,
+  GROK_HOOK_TRUST_UNVERIFIABLE_NOTICE,
+  type OperatorNotice,
+} from "../../application/operator-notice.js";
 import type {
   DoctorAgentScope,
   ScopedOutDiagnosticFinding,
 } from "../../application/usecases/run-doctor-diagnostics.js";
 import type { ConfigStatus } from "../../domain/config-status.js";
 import type { DiagnosticReport } from "../../domain/diagnostic-report.js";
-import { CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE } from "../../application/operator-notice.js";
 
 export interface DiagnosticReportFormatterInput {
   readonly report: DiagnosticReport;
@@ -29,7 +35,7 @@ export interface DiagnosticReportFormatterInput {
 
 export class DiagnosticReportFormatter {
   formatJson(input: DiagnosticReportFormatterInput): string {
-    const operatorNotices = input.agent === "claude" ? [] : [CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE];
+    const operatorNotices = noticesFor(input.agent);
     return JSON.stringify(
       {
         schemaVersion: "1.0",
@@ -78,11 +84,8 @@ export class DiagnosticReportFormatter {
       `Config: ${input.configStatus}`,
       "",
     ];
-    if (input.agent !== "claude") {
-      lines.push(
-        `Notice [${CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE.code}]: ${CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE.message}`,
-        "",
-      );
+    for (const notice of noticesFor(input.agent)) {
+      lines.push(`Notice [${notice.code}]: ${notice.message}`, "");
     }
     for (const finding of input.report.findings) {
       lines.push(`[${finding.severity}] ${finding.checkId}: ${finding.message}`);
@@ -117,9 +120,23 @@ function scopeDescription(agent: DoctorAgentScope, installationMode: "project" |
       return "Personal Claude Code sandbox; team/project Husky, CI, package, and Codex-only findings are not repair targets.";
     if (agent === "codex")
       return "Personal Codex sandbox; team/project Husky, CI, package, and Claude-only findings are not repair targets.";
+    if (agent === "grok") return "Personal Grok-compatible hook diagnostics; external trust remains operator-verified.";
+    if (agent === "antigravity") return "Personal Antigravity CLI hook diagnostics; IDE/desktop uses the L2 backstop.";
+    if (agent === "all") return "Personal diagnostics for all supported runtime targets.";
     return "Personal sandbox diagnostics; team/project Husky, CI, and package findings are not repair targets.";
   }
   if (agent === "claude") return "Claude Code and shared setup targets; Codex-only findings are not applicable.";
   if (agent === "codex") return "Codex and shared setup targets; Claude-only findings are not applicable.";
+  if (agent === "grok") return "Grok-compatible Claude hook diagnostics; other runtime findings are not applicable.";
+  if (agent === "antigravity") return "Antigravity CLI hook diagnostics; other runtime findings are not applicable.";
+  if (agent === "all") return "Full setup diagnostics for Claude, Codex, Grok, Antigravity, and shared targets.";
   return "Full setup diagnostics for Claude, Codex, and shared targets.";
+}
+
+function noticesFor(agent: DoctorAgentScope): readonly OperatorNotice[] {
+  return [
+    ...(agent === "codex" || agent === "both" || agent === "all" ? [CODEX_HOOK_TRUST_UNVERIFIABLE_NOTICE] : []),
+    ...(agent === "grok" || agent === "all" ? [GROK_HOOK_TRUST_UNVERIFIABLE_NOTICE] : []),
+    ...(agent === "antigravity" || agent === "all" ? [ANTIGRAVITY_CLI_ONLY_NOTICE] : []),
+  ];
 }

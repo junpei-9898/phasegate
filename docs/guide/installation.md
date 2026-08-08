@@ -36,7 +36,7 @@ npm install
 npx phasegate init --name <project-name>
 ```
 
-This deploys 29 skills to `skills/`, creates the agent-facing skill links (for example `.claude/skills/` or `.codex/skills/`), and generates `phasegate.config.json`.
+This deploys 29 skills to `skills/`, creates the selected agent-facing skill links (`.claude/skills/`, `.codex/skills/`, or `.agents/skills/`), and generates `phasegate.config.json`.
 
 `init` is the legacy-compatible bootstrap path for new projects. It also runs the structured install path for the selected agent target so `CLAUDE.md` and/or `AGENTS.md` receive a PhaseGate managed section. Use `install` when the project may already have hooks, package scripts, or CI files that should be preserved. <!-- @work-item-id WI-174 -->
 
@@ -56,7 +56,9 @@ npx phasegate install --apply
 npx phasegate doctor
 ```
 
-`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, deploys selected bundled skills to root `skills/`, creates `.claude/skills` and `.codex/skills` links, writes `CLAUDE.md` / `AGENTS.md` managed sections for selected agent targets, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. Husky hook targets (`.husky/*`) and the GitHub Actions target are opt-in, matching `init` and `setup:agent`: pass `--with-husky` and/or `--with-ci` to include them — without these flags `install` does not touch `.husky/` or `.github/workflows/`. <!-- @work-item-id WI-316 --> Existing skills catalogs are merged: PhaseGate refreshes only bundled skill directories selected by `--skills core|all` and preserves user-owned skills. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 --> <!-- @work-item-id WI-174 --> <!-- @work-item-id WI-216 -->
+`install --dry-run` reports whether each target will be created, merged, skipped, or refused. `install --apply` performs the merge, adds package scripts and the `phasegate` devDependency, deploys selected bundled skills to root `skills/`, creates the selected `.claude/skills`, `.codex/skills`, and `.agents/skills` links, writes `CLAUDE.md` / `AGENTS.md` managed sections for selected agent targets, writes `.github/workflows/phasegate-aidlc-gate.yml` when CI is enabled, and records managed entries in `.phasegate/manifest.json`. Husky hook targets (`.husky/*`) and the GitHub Actions target are opt-in, matching `init` and `setup:agent`: pass `--with-husky` and/or `--with-ci` to include them — without these flags `install` does not touch `.husky/` or `.github/workflows/`. <!-- @work-item-id WI-316 --> Existing skills catalogs are merged: PhaseGate refreshes only bundled skill directories selected by `--skills core|all` and preserves user-owned skills. See [Setup Artifacts](setup-artifacts.md) for the full managed target, generated artifact, runtime state, legacy artifact, and user-level setting inventory. <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 --> <!-- @work-item-id WI-174 --> <!-- @work-item-id WI-216 -->
+
+Agent targets are `claude | codex | both | grok | antigravity | all`. `both` is backward-compatible Claude + Codex. Grok shares `.claude/settings.json` and `.claude/skills`, receives `AGENTS.md` without Claude-only `CLAUDE.md`, and does not receive `.grok/hooks`. Antigravity receives `.agents/hooks.json`, `.agents/skills`, and `AGENTS.md`. `all` installs Claude, Codex, and Antigravity surfaces, with Grok covered once by the Claude-compatible hook. <!-- @work-item-id WI-385 -->
 
 For personal evaluation inside a team-owned repository:
 

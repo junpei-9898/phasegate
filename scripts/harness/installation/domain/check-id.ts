@@ -3,12 +3,15 @@
 // @work-item-id WI-145
 // @work-item-id WI-215
 // @work-item-id WI-330
+// @work-item-id WI-385
 
 export const CHECK_IDS = [
   "claude-hook-missing",
   "claude-context-missing",
   "codex-hook-missing",
   "codex-context-missing",
+  "grok-hook-missing",
+  "antigravity-hook-missing",
   "husky-pre-commit-missing",
   "husky-commit-msg-missing",
   "husky-pre-push-missing",

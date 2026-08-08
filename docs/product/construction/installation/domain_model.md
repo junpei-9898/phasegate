@@ -144,7 +144,7 @@ traceability:
 - team-owned file: `package.json`, `AGENTS.md`, `CLAUDE.md`, `.husky/*`, `.github/workflows/*`, `.gitignore`。
 - personal artifact: `.phasegate-local/phasegate.config.json`, real agent runtime artifacts under `.claude/` / `.codex/`, runtime-visible personal agent context, `.git/info/exclude` の PhaseGate managed block, `.phasegate/manifest.json`。
 - personal sandbox: PhaseGate config fallback is parked under `.phasegate-local/` so team-owned project root files remain untouched.
-- agent runtime surface: Claude Code / Codex discovery requires project-local `.claude/settings.json`, `.claude/skills/`, `.codex/hooks.json`, and `.codex/skills/`.
+- agent runtime surface: Claude Code / Grok / Codex / Antigravity discovery requires project-local `.claude/settings.json`, `.claude/skills/`, `.codex/hooks.json`, `.codex/skills/`, `.agents/hooks.json`, and `.agents/skills/`. @work-item-id WI-385
 - real runtime artifact: personal mode creates agent runtime surface entries as regular files/directories, not symlink shims.
 - 不変条件:
   - install plan / apply に team-owned file を含めない。
@@ -161,14 +161,14 @@ Personal agent context is configured only when the selected agent runtime will d
 
 <!-- @work-item-id WI-216 -->
 
-PhaseGate-owned skills are modeled at bundled skill directory granularity. The parent catalog directory (`skills/`, `.claude/skills/`, `.codex/skills/`) may contain user-owned skills and is not itself proof of ownership.
+PhaseGate-owned skills are modeled at bundled skill directory granularity. The parent catalog directory (`skills/`, `.claude/skills/`, `.codex/skills/`, `.agents/skills/`) may contain user-owned skills and is not itself proof of ownership. @work-item-id WI-385
 
 | Concept | Ownership rule |
 |---|---|
 | Bundled skill directory | May be refreshed when its name is in `getSkillsForSet(core|all)`. |
 | `.harness-version` | Catalog metadata for version and selected skill set; useful for legacy adoption but not sufficient completeness proof. |
 | User-owned skill directory | Any non-bundled or non-manifest skill directory; install/reconcile/uninstall preserve it. |
-| Legacy personal catalog | `.claude/skills` or `.codex/skills` with `.harness-version` but missing per-skill manifest entries; install/reconcile can adopt it. |
+| Legacy personal catalog | `.claude/skills`, `.codex/skills`, or `.agents/skills` with `.harness-version` but missing per-skill manifest entries; install/reconcile can adopt it. |
 
 Uninstall removes manifest-managed bundled skill paths and metadata first. Parent catalog directories are removed only when they become empty after managed content removal.
 
@@ -520,7 +520,7 @@ Doctor JSON exposes whether each finding is repair work for the current scope. A
 
 <!-- @work-item-id WI-210 -->
 
-Project install treats root `skills/` as the shared bundled skill target for Claude and Codex. `.claude/skills` and `.codex/skills` are agent-facing links to that shared directory, but the link is valid only when the target contains PhaseGate skill content such as `SKILL.md` files or `skills/.harness-version`.
+Project install treats root `skills/` as the shared bundled skill target for Claude, Grok, Codex, and Antigravity. `.claude/skills`, `.codex/skills`, and `.agents/skills` are agent-facing links to that shared directory, but the link is valid only when the target contains PhaseGate skill content such as `SKILL.md` files or `skills/.harness-version`. @work-item-id WI-385
 
 Shared skill manifest ownership is recorded per deployed skill directory plus `skills/.harness-version`, not as a single root `skills/` directory. This lets uninstall remove PhaseGate-managed bundled skills while preserving user-owned skill directories under the same root. Personal install remains a separate local-only model with real per-agent skill directories.
 
@@ -551,3 +551,18 @@ phasegate pre command と PostToolUse の phasegate post command がそれぞれ
 canonical `apply_patch` を match することを要求する。欠落は既存 `DiagnosticFinding` の red とし、
 malformed / user customization / simple managed config に対する manual / ai-assisted / mechanical の
 既存 repair mode を維持する。Codex trust state は観測不能なので finding state に混ぜない。
+
+## WI-385 Runtime target selection and named-hook ownership
+
+<!-- @work-item-id WI-385 -->
+
+`AgentTarget` は `claude | codex | both | grok | antigravity | all`。`both` は Claude + Codex の既存意味を
+維持し、`all` だけが全 runtime selection を表す。Grok は Claude-compatible hook surface を共有するため
+`.grok` deployment entry を持たず、同一 command の二重発火を避ける。context / hook / skill target は
+selection set として独立解決し、`grok` が Claude 専用 context を暗黙導入しない。
+
+Antigravity `.agents/hooks.json` は event-map JSON と異なる named definition map である。
+phasegate は top-level `phasegate-gate` key だけを所有し、user-owned sibling keys を保持する。
+install は add/replace、reconcile は canonical replacement、uninstall は owned key removal を行い、全操作を
+idempotent にする。Grok trust と Antigravity runtime surface は観測不能 state として finding health に混ぜず、
+operator notice で扱う。

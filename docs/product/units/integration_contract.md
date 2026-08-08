@@ -521,3 +521,21 @@ installation は `.codex/hooks.json` の PreToolUse / PostToolUse に canonical 
 `Bash|apply_patch` を配布し、doctor で両 event の stale matcher を検出する。Codex trust store は
 Unit 境界外で観測不能なため、install/init/reconcile/doctor は CLI >= 0.124.0 と `/hooks` 再 trust を
 operator notice として伝え、trust 済みを診断 success の一部として推測しない。
+
+## WI-385 Shape-based multi-runtime PreToolUse contract
+
+<!-- @work-item-id WI-385 -->
+
+agent-integration は runtime 名ではなく payload structure を境界で検出し、flat snake_case、flat camelCase、
+nested `toolCall` を canonical write intent へ写像する。external response も同じ shape から profile を導出し、
+Claude / Codex の exit 2 + stderr、Grok の top-level deny + compatibility fields、Antigravity の
+top-level deny を presentation 層で表現する。protected file、phase gate、story reflection、Quick / Full Mode
+policy は形状に依存せず既存 use case を共有する。
+
+installation は `AgentTarget=claude|codex|both|grok|antigravity|all` の selection と managed file ownership を
+持つ。`both` は Claude + Codex の意味を維持する。Grok は公式 Claude compatibility scanner 経由で
+`.claude/settings.json` を単一 hook source とし、`.grok` を重複配布しない。Antigravity は
+`.agents/hooks.json` の phasegate-owned named definition だけを merge / reconcile / uninstall する。
+Grok skill discovery は `.claude/skills`、Antigravity CLI project skill discovery は `.agents/skills` を使い、
+どちらも root `skills/` の bundled catalog を共有する。
+harness-api は enum の CLI parse / help / dispatch のみを所有し、runtime schema や gate policy を持たない。

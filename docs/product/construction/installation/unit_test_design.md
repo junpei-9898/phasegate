@@ -142,3 +142,16 @@ WI-145 / WI-169 の unit test は、manifest / doctor の domain invariant、10 
 | UT-WI384-DOC-006..007 | malformed / customized stale config | manual / ai-assisted repair mode |
 
 Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 変数を用いる。
+
+## WI-385 Runtime selection / doctor tests
+
+<!-- @work-item-id WI-385 -->
+
+| ID range | 観点 | 期待結果 |
+|---|---|---|
+| UT-WI385-INST-001..002 | named map merge / reconcile | user key 保持、idempotent |
+| UT-WI385-INST-003..005 | Grok / Antigravity matcher と timeout | stale は red、current は finding なし |
+| UT-WI385-INST-006..007 | both / all selection | both 不変、all は Grok duplicate なし |
+| UT-WI385-INST-008 | 新 enum parse contract | grok / antigravity / all を受理 |
+
+selection value と JSON ownership logic は実体で検証し、filesystem Port 以外をモックしない。

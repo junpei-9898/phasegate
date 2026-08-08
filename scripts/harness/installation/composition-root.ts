@@ -4,7 +4,9 @@
 // @work-item-id WI-148
 // @work-item-id WI-215
 // @work-item-id WI-330
+// @work-item-id WI-385
 
+import { AntigravityHookMissingCheck } from "./application/checks/antigravity-hook-missing-check.js";
 import { CiWorkflowMissingCheck } from "./application/checks/ci-workflow-missing-check.js";
 import { ClaudeContextMissingCheck } from "./application/checks/claude-context-missing-check.js";
 import { ClaudeHookMissingCheck } from "./application/checks/claude-hook-missing-check.js";
@@ -13,6 +15,7 @@ import { CodexContextMissingCheck } from "./application/checks/codex-context-mis
 import { CodexHookMissingCheck } from "./application/checks/codex-hook-missing-check.js";
 import { CodexSkillsSymlinkCheck } from "./application/checks/codex-skills-symlink-check.js";
 import { ConfigStatusCheck } from "./application/checks/config-status-check.js";
+import { GrokHookMissingCheck } from "./application/checks/grok-hook-missing-check.js";
 import { HuskyCommitMsgMissingCheck } from "./application/checks/husky-commit-msg-missing-check.js";
 import { HuskyPreCommitMissingCheck } from "./application/checks/husky-pre-commit-missing-check.js";
 import { HuskyPrePushMissingCheck } from "./application/checks/husky-pre-push-missing-check.js";
@@ -54,6 +57,8 @@ export function createInstallationModule() {
     new ClaudeContextMissingCheck(),
     new CodexHookMissingCheck(),
     new CodexContextMissingCheck(),
+    new GrokHookMissingCheck(),
+    new AntigravityHookMissingCheck(),
     new HuskyPreCommitMissingCheck(),
     new HuskyCommitMsgMissingCheck(),
     new HuskyPrePushMissingCheck(),

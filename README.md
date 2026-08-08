@@ -84,7 +84,7 @@ claude
 
 - `phasegate.config.json` as the quality settings source of truth
 - `skills/` with 29 AIDLC skills
-- `.claude/skills` and/or `.codex/skills` links for agent use
+- `.claude/skills`, `.codex/skills`, and/or `.agents/skills` links for agent use
 - `.claude/settings.json` and/or `.codex/hooks.json` hook configuration
 - `docs/principles/*.md` and `docs/folder_management_rules.md`
 - `.husky/pre-commit`, `.husky/commit-msg`, and `.husky/pre-push` when `--with-husky` is passed
@@ -149,6 +149,17 @@ npx phasegate doctor --agent codex
 
 Use `--agent both` for projects that use Claude Code and Codex together. Codex CLI >= 0.124.0 emits hooks for native `apply_patch`, so Update/Add/Delete targets are hard-blocked before editing when they violate Phasegate rules. After `.codex/hooks.json` changes, open `/hooks` and trust the current definition hash. L2 pre-commit remains the backstop. <!-- @work-item-id WI-384 -->
 
+### Grok Build / Antigravity CLI
+
+```bash
+npx phasegate install --agent grok --apply
+npx phasegate doctor --agent grok
+npx phasegate install --agent antigravity --apply
+npx phasegate doctor --agent antigravity
+```
+
+Grok requires the hook-capable CLI 1.0.0 series used for verification. It uses its Claude-compatible scanner: Phasegate manages `.claude/settings.json`, exposes skills through `.claude/skills`, and does not create a duplicate `.grok/hooks` source. If the hook is silently inactive, verify loading and trust with `grok inspect`, `/hooks`, and `--trust` or `/hooks-trust`. Antigravity hooks require CLI v1.0.14 or later; Phasegate verification targets `agy` 1.1.x. Antigravity uses the named `phasegate-gate` definition in `.agents/hooks.json` and project skills in `.agents/skills`; if it is silently inactive, confirm the loaded definition with `agy` `/hooks`. Pre-edit hard blocking is supported for the `agy` CLI surface; IDE/desktop hook execution is not guaranteed, so L2 pre-commit remains the primary backstop there. Use `--agent all` for every runtime; `both` intentionally remains Claude + Codex. See the [Grok](docs/guide/grok-integration.md) and [Antigravity](docs/guide/antigravity-integration.md) guides. <!-- @work-item-id WI-385 -->
+
 ### Update
 
 ```bash
@@ -169,7 +180,7 @@ npx phasegate reconcile --apply
 | **5-layer validation** | Runs checks from agent runtime and editor time through pre-commit, CI, and scheduled audits |
 | **29 AIDLC skills** | Guides AI agents through product architecture, story writing, domain design, test design, and TDD implementation |
 | **Quick Mode** | Keeps bugfixes, docs, test-only changes, and config changes lightweight while preserving traceability |
-| **Claude Code / Codex hooks** | Runs checks around Write/Edit/Bash operations and session boundaries |
+| **Multi-runtime hooks** | Runs shape-based pre-edit checks for Claude Code, Codex, Grok Build, and Antigravity CLI |
 | **Agent-readable HarnessError output** | Gives AI agents the reason, missing artifacts, references, and examples needed to self-correct |
 | **Retrofit baseline** | Lets existing repositories adopt Phasegate gradually by grandfathering unchanged files |
 | **Configurable gates** | Supports AIDLC defaults or custom gates such as schema-first API development |
@@ -181,7 +192,7 @@ npx phasegate reconcile --apply
 
 ```
 +------------------------------------------------------------------+
-|  L0  AGENT RUNTIME HOOKS   Claude Code / Codex hooks             |
+|  L0  AGENT RUNTIME HOOKS   Claude / Codex / Grok / Antigravity   |
 |  PreToolUse (Write/Edit/Bash block + guide), PostToolUse         |
 |  (auto lint/format), Stop (ReentryGuard + complete-check),       |
 |  SessionStart, UserPromptSubmit. Plus Husky .husky/pre-commit    |
@@ -586,7 +597,7 @@ README keeps only the entry points most users need. The full public/compatibilit
 
 | Command | Description |
 |---|---|
-| `init --name <name>` | Legacy-compatible bootstrap for new projects. Supports `--skills <core\|all>`, `--agent <claude\|codex\|both>`, `--with-husky`, `--with-ci`, and `--yes`. Prefer `install` when the project may already have hooks, scripts, or CI files. |
+| `init --name <name>` | Legacy-compatible bootstrap for new projects. Supports `--skills <core\|all>`, `--agent <claude\|codex\|both\|grok\|antigravity\|all>`, `--with-husky`, `--with-ci`, and `--yes`. Prefer `install` when the project may already have hooks, scripts, or CI files. |
 | `install --dry-run` / `--apply` | Idempotently merge PhaseGate into the current project, preserve existing user content, add package scripts/devDependency, and write `.phasegate/manifest.json`. Use `--force` only for managed-file replacement. |
 | `doctor` | Diagnose silent or partial installations (`--json`, `--strict`, `--report-out <path>`). `--report-out` is an explicit file path, not `reporting.outputDir`. |
 | `uninstall --dry-run` / `--apply` | Remove PhaseGate-managed files and managed blocks using `.phasegate/manifest.json`, preserving user content. |
@@ -650,6 +661,8 @@ Detailed guides are available under `docs/guide/`:
 - [Contract Traceability](docs/guide/contract-traceability.md) -- `L2-015` public contract, boundary, error, state, and observation annotations
 - [Hooks Integration](docs/guide/hooks-integration.md) -- Claude Code Hooks setup and behavior
 - [Codex Integration](docs/guide/codex-integration.md) -- Codex CLI setup, coverage matrix, and native `apply_patch` limitation
+- [Grok Integration](docs/guide/grok-integration.md) -- Claude-compatible hook setup, payload mapping, and trust checks
+- [Antigravity Integration](docs/guide/antigravity-integration.md) -- `agy` CLI named hooks, payload mapping, and IDE/desktop boundary
 - [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) -- When to use `/story-implementor` vs `/quick-implementor`, with decision flow and case studies
 - [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md) -- Onboard an existing project without getting blocked: `init` → `baseline` → `scaffold-design` in 4 steps
 

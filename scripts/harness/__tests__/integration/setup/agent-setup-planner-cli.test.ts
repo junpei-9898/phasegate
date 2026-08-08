@@ -1,5 +1,6 @@
 // @unit harness-api
 // @layer integration
+// @work-item-id WI-385
 // @work-item-id WI-171
 // @work-item-id WI-172
 // @work-item-id WI-173
@@ -27,7 +28,11 @@ interface CliResult {
 
 function runCli(args: readonly string[], cwd: string): Promise<CliResult> {
   return new Promise((resolveResult, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd });
+    const child = spawn(
+      process.execPath,
+      ["--import", join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, ...args],
+      { cwd },
+    );
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {
@@ -58,7 +63,10 @@ target("agent setup planner CLI", () => {
     it("setup:agent dry-run が検出結果と検証手順を返すこと", async () => {
       // Act
       const actual = await withTempProject(async (projectRoot) => {
-        return await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"], projectRoot);
+        return await runCli(
+          ["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"],
+          projectRoot,
+        );
       });
 
       // Assert
@@ -96,7 +104,10 @@ target("agent setup planner CLI", () => {
     it("setup:agent --agent claude が Claude 固有 readiness と Codex 非対象を返すこと", async () => {
       // Act
       const actual = await withTempProject(async (projectRoot) => {
-        return await runCli(["setup:agent", "--agent", "claude", "--intent", "strict", "--with-husky", "--dry-run", "--json"], projectRoot);
+        return await runCli(
+          ["setup:agent", "--agent", "claude", "--intent", "strict", "--with-husky", "--dry-run", "--json"],
+          projectRoot,
+        );
       });
 
       // Assert
@@ -113,7 +124,8 @@ target("agent setup planner CLI", () => {
           expect.objectContaining({
             agent: "claude",
             status: "planned",
-            nextAction: "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
+            nextAction:
+              "Run setup:agent --agent claude --apply, then ask Claude Code to read CLAUDE.md before planning work.",
           }),
           expect.objectContaining({ agent: "codex", status: "not-applicable", nextAction: null }),
           expect.objectContaining({ agent: "shared", status: "planned" }),
@@ -141,12 +153,16 @@ target("agent setup planner CLI", () => {
       expect(parsed.targets).toContain("AGENTS.md");
       expect(parsed.managedTargets).toContain(".codex/hooks.json");
       expect(parsed.externalActions).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: "codex-hooks-feature", command: "codex features enable hooks" })]),
+        expect.arrayContaining([
+          expect.objectContaining({ id: "codex-hooks-feature", command: "codex features enable hooks" }),
+        ]),
       );
       expect(parsed.commands).toContain("codex features enable hooks");
       expect(parsed.validations).toContain("phasegate doctor --json");
       expect(parsed.configPatch.applicability).toBe("not-applicable");
-      expect(parsed.configPatch.blockedReason).toBe("Selected intent does not require a local phasegate.config.json mutation.");
+      expect(parsed.configPatch.blockedReason).toBe(
+        "Selected intent does not require a local phasegate.config.json mutation.",
+      );
       expect(parsed.configPatch.operations).toEqual([]);
     }, 120000);
 
@@ -158,12 +174,20 @@ target("agent setup planner CLI", () => {
 
       // Assert
       const parsed = JSON.parse(actual.stdout) as {
-        configPatch: { applicability: string; before: unknown; after: unknown; operations: Array<{ op: string; pointer: string; before: unknown; after: unknown }> };
+        configPatch: {
+          applicability: string;
+          before: unknown;
+          after: unknown;
+          operations: Array<{ op: string; pointer: string; before: unknown; after: unknown }>;
+        };
       };
       expect(actual.exitCode).toBe(0);
       expect(parsed.configPatch.applicability).toBe("applicable");
       expect(parsed.configPatch.before).toEqual(null);
-      expect(parsed.configPatch.after).toEqual({ layers: { L4: { enabled: true } }, validate: { failOnWarning: true } });
+      expect(parsed.configPatch.after).toEqual({
+        layers: { L4: { enabled: true } },
+        validate: { failOnWarning: true },
+      });
       expect(parsed.configPatch.operations).toEqual([
         { op: "add", pointer: "/layers/L4/enabled", before: null, after: true },
         { op: "add", pointer: "/validate/failOnWarning", before: null, after: true },
@@ -172,18 +196,12 @@ target("agent setup planner CLI", () => {
 
     it("config:plan --intent l4-strict --apply が生成する config がスキーマ検証を通過すること", async () => {
       // Arrange: 既存の有効な config へ merge するケースを検証する
-      const { createValidSourceDocument } = await import(
-        "../config-foundation/config-foundation-test-fixtures.js"
-      );
+      const { createValidSourceDocument } = await import("../config-foundation/config-foundation-test-fixtures.js");
       const seedConfig = createValidSourceDocument();
 
       // Act
       const actual = await withTempProject(async (projectRoot) => {
-        await writeFile(
-          join(projectRoot, "phasegate.config.json"),
-          `${JSON.stringify(seedConfig, null, 2)}\n`,
-          "utf8",
-        );
+        await writeFile(join(projectRoot, "phasegate.config.json"), `${JSON.stringify(seedConfig, null, 2)}\n`, "utf8");
         const applyResult = await runCli(["config:plan", "--intent", "l4-strict", "--apply", "--json"], projectRoot);
         const written = await readFile(join(projectRoot, "phasegate.config.json"), "utf8");
         return { applyResult, written };
@@ -205,9 +223,18 @@ target("agent setup planner CLI", () => {
     it("setup:agent strict apply 後の再 dry-run が completeness configured と direct install no-diff を返すこと", async () => {
       // Act
       const actual = await withTempProject(async (projectRoot) => {
-        const apply = await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"], projectRoot);
-        const dryRun = await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"], projectRoot);
-        const installDryRun = await runCli(["install", "--agent", "both", "--workflow", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"], projectRoot);
+        const apply = await runCli(
+          ["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"],
+          projectRoot,
+        );
+        const dryRun = await runCli(
+          ["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"],
+          projectRoot,
+        );
+        const installDryRun = await runCli(
+          ["install", "--agent", "both", "--workflow", "strict", "--with-ci", "--with-husky", "--dry-run", "--json"],
+          projectRoot,
+        );
         const claudeMd = await readFile(join(projectRoot, "CLAUDE.md"), "utf8");
         return { apply, dryRun, installDryRun, claudeMd };
       });
@@ -219,7 +246,9 @@ target("agent setup planner CLI", () => {
           agentReadiness: Array<{ agent: string; status: string }>;
         };
       };
-      const install = JSON.parse(actual.installDryRun.stdout) as { plan: Array<{ path: string; action: string; changed: boolean }> };
+      const install = JSON.parse(actual.installDryRun.stdout) as {
+        plan: Array<{ path: string; action: string; changed: boolean }>;
+      };
       expect(actual.apply.exitCode).toBe(0);
       expect(actual.dryRun.exitCode).toBe(0);
       expect(actual.installDryRun.exitCode).toBe(0);
@@ -244,14 +273,19 @@ target("agent setup planner CLI", () => {
         ]),
       );
       expect(actual.claudeMd).toContain("After the `claude` and `shared` rows are `configured`");
-      expect(actual.claudeMd).toContain("Reflect the accepted design into the relevant `docs/product/...` files with `@work-item-id WI-XXX`");
+      expect(actual.claudeMd).toContain(
+        "Reflect the accepted design into the relevant `docs/product/...` files with `@work-item-id WI-XXX`",
+      );
     }, 120000);
 
     it("setup:agent apply が structured install error を返した場合は exit 1 で終了すること", async () => {
       // Act
       const actual = await withTempProject(async (projectRoot) => {
         await writeFile(join(projectRoot, ".codex"), "not a directory", "utf8");
-        return await runCli(["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"], projectRoot);
+        return await runCli(
+          ["setup:agent", "--intent", "strict", "--with-ci", "--with-husky", "--apply", "--json"],
+          projectRoot,
+        );
       });
 
       // Assert

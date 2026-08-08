@@ -363,3 +363,17 @@ Update=`MODIFY`、Delete=`DELETE`）を保持する immutable value object で�
 既存 `BashWriteTargetExtractor` は同 service の結果を path-only へ射影して Bash API を維持する。
 native hook は kind を失わず `FullModeTargetChange.changeKind?` へ渡す。optional field のため既存
 Write / Edit / Bash caller は互換であり、DELETE を content sentinel で偽装しない。
+
+## 11. Shape-based PreToolUse normalization
+
+<!-- @work-item-id WI-385 -->
+
+外部 hook JSON は presentation 境界で `FLAT_SNAKE_CASE` / `FLAT_CAMEL_CASE` /
+`NESTED_TOOL_CALL` のいずれかへ構造分類し、agent-neutral `NormalizedPreToolUseRequest` へ写像する。
+agent 名、model 名、CLI selection は分類・authorization 入力にしない。複数形状を同時に満たす入力と、
+対応 write tool なのに path / command を抽出できない入力は fail-closed とする。
+
+既存 `ApplyPatchWriteTargetExtractor` / `BashWriteTargetExtractor` が target extraction の domain authority を
+維持する。normalizer は外部 field alias を canonical path / content / command / patch へ変換するだけで、
+protected / phase / reflection / Quick / Full Mode rule を複製しない。response profile は runtime protocol の
+adapter concern として presentation に閉じ、domain model に agent-specific decision type を追加しない。

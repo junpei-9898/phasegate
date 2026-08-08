@@ -1,6 +1,7 @@
 // @unit harness-api
 // @layer integration
 // @story H08-01
+// @work-item-id WI-385
 // @work-item-id WI-314
 // @work-item-id WI-330
 // @work-item-id WI-333
@@ -25,7 +26,11 @@ interface CliResult {
 
 function runCli(args: string[], cwd: string, stdin?: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env: process.env });
+    const child = spawn(
+      process.execPath,
+      ["--import", path.join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, ...args],
+      { cwd, env: process.env },
+    );
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {

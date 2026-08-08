@@ -606,3 +606,16 @@ Update / Add / Delete / 複数ファイル混在、protected / phase / full-mode
 deny 時の exit 2 + 非空 stderr、command 欠落 fail-closed、optional agent fields を検証する。
 PostToolUse apply_patch は既存 lint / skip flow へ進むことだけを検証し再解析しない。Bash redirect、
 Bash heredoc apply_patch、Claude Write / Edit、L2 pre-commit backstop の既存 suites を回帰実行する。
+
+## WI-385 Multi-runtime payload compatibility
+
+<!-- @work-item-id WI-385 -->
+
+Grok flat camel fixture は `hookEventName/sessionId/cwd/workspaceRoot/permissionMode/toolName/toolInput/toolUseId`
+を含め、Antigravity nested fixture は `toolCall/conversationId/workspacePaths/transcriptPath/modelName/stepIdx`
+を含める。temp project process で protected / phase / Full Mode deny と allowed write を実行し、shape ごとの
+stdout JSON、stderr reason、exit 0 / 2 を独立に検証する。
+
+Grok patch truncation、Antigravity unknown args key、mixed write target は mutation 前 fail-closed とする。
+同じ gate fixture で Claude Write / Edit / Bash、Codex native apply_patch / Bash heredoc、Quick Mode allow /
+Full Mode deny を回帰実行し、normalization 後の policy が runtime shape で変わらないことを証明する。

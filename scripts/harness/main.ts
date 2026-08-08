@@ -26,6 +26,7 @@
  * @work-item-id WI-306
  * @work-item-id WI-308
  * @work-item-id WI-384
+ * @work-item-id WI-385
  *
  * Phasegate CLI エントリポイント。
  * 各Unitの Composition Root からハンドラーを取得し、コマンドに応じてディスパッチする。
@@ -64,6 +65,7 @@ import {
   SkillDeployerManifestBuilder,
 } from "./installation/application/wrappers/skill-deployer-manifest-builder.js";
 import { createInstallationModule } from "./installation/composition-root.js";
+import { type AgentTarget, isAgentTarget } from "./installation/domain/agent-target.js";
 import { NodeCryptoHashAdapter } from "./installation/infrastructure/adapters/node-crypto-hash-adapter.js";
 import { CheckStoryReflectionUseCase } from "./phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
 import { createPhaseDependencyModelModule } from "./phase-dependency-model/composition-root.js";
@@ -208,14 +210,14 @@ Usage: phasegate <command> [options]
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
-                                --skills <core|all>, --agent <claude|codex|both>, --workflow <standard|strict>,
+                                --skills <core|all>, --agent <claude|codex|both|grok|antigravity|all>, --workflow <standard|strict>,
                                 --language <language>, --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
-  doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both>, --report-out <path>)
+  doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both|grok|antigravity|all>, --report-out <path>)
   scaffold-wi <unit|_cross> <story|issue|fix|refactor|chore>
                                Create docs/inception/{unit}/WI-XXX/description.md
   emit-agent-rules             Print AGENTS.md / CLAUDE.md WI workflow rules block
-  install                      Install phasegate managed files (--dry-run|--apply, --force, --personal, --agent <claude|codex|both>)
+  install                      Install phasegate managed files (--dry-run|--apply, --force, --personal, --agent <claude|codex|both|grok|antigravity|all>)
   uninstall                    Uninstall phasegate managed files (--dry-run|--apply, --force)
   reconcile                    Reconcile phasegate managed files (--dry-run|--apply, --force)
   setup:agent                  Diagnose repo setup and produce/apply an agent-readable setup plan
@@ -272,7 +274,7 @@ Gate semantics:
   ci:auto-refresh-agent-context Refresh AGENTS.md / CLAUDE.md (--dry-run, --apply, --json)
   refresh-claude-md            Refresh CLAUDE.md standard sections (--dry-run, --apply, --json)
   p2:check-agent-context       Check AGENTS.md / CLAUDE.md freshness (--threshold-days <n>, --json)
-  setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both>, --dry-run|--apply, --json)
+  setup:agent                  Plan agent-driven setup (--intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>, --agent <claude|codex|both|grok|antigravity|all>, --dry-run|--apply, --json)
   config:plan                  Plan safe config changes (--intent <l4-strict|codex-hooks|ci-fail-on-warning|baseline-reset|quick-mode-strict|quick-mode-relax|retrofit-bootstrap|planning-mode-relax>, --dry-run|--apply, --json)
   ci:check-repetition          Check error repetition (--code <errorCode>, --reset, --json)
   baseline                     Create retrofit baseline snapshot (--dry-run, --force, --paths <glob,glob,...>, --json)
@@ -706,7 +708,7 @@ Options:
   --name <project-name>           Project name (default: "my-project")
   --preset <full|standard|minimal|custom>   Phase dependency preset (default: "standard")
   --skills <core|all>             Skill set to deploy (default: "all")
-  --agent <claude|codex|both>     Agent integration target (default: "claude")
+  --agent <claude|codex|both|grok|antigravity|all>     Agent integration target (default: "claude")
   --workflow <standard|strict>    Workflow enforcement defaults (default: "standard")
   --language <language>           Project language declaration (default: "typescript")
   --with-husky                    Install Husky pre-commit hooks
@@ -732,7 +734,7 @@ Options:
   --dry-run                       Preview target actions without writing (default)
   --apply                         Write merge results and manifest
   --force                         Force ai-assisted/manual targets after backing up existing files
-  --agent <claude|codex|both>     Agent context and hook targets (default: both)
+  --agent <claude|codex|both|grok|antigravity|all>     Agent context and hook targets (default: both)
   --skills <core|all>             Rendered agent context skill mode (default: all)
   --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
   --with-husky                    Include Husky hook targets (opt-in; omitted by default)
@@ -741,13 +743,24 @@ Options:
                                   With --agent claude, initializes .phasegate-local config/settings/skills and ignored .claude shims.
   --json                          Output machine-readable JSON
   --help, -h                      Show this help`,
+  doctor: `Usage: phasegate doctor [options]
+
+Diagnose silent installation failures for the selected runtime scope.
+
+Options:
+  --json                          Output machine-readable JSON
+  --strict                        Treat warnings as failures
+  --personal                      Diagnose a personal installation
+  --agent <claude|codex|both|grok|antigravity|all>     Diagnostic scope (default: both)
+  --report-out <path>             Write the JSON report to a file
+  --help, -h                      Show this help`,
   "setup:agent": `Usage: phasegate setup:agent [options]
 
 Diagnose repository setup and produce an agent-readable setup plan.
 
 Options:
   --intent <minimal|recommended|strict|ci-only|agent-hooks|retrofit>
-  --agent <claude|codex|both>
+  --agent <claude|codex|both|grok|antigravity|all>
   --workflow <standard|strict>
   --with-husky
   --with-ci
@@ -1076,7 +1089,7 @@ function parseCoverageThreshold(raw: string | undefined): number {
 }
 
 type InitPhasePreset = "full" | "standard" | "minimal" | "custom";
-type AgentTarget = "claude" | "codex" | "both";
+const AGENT_TARGET_USAGE = "claude|codex|both|grok|antigravity|all";
 type SetupIntent = "minimal" | "recommended" | "strict" | "ci-only" | "agent-hooks" | "retrofit";
 type ConfigChangeIntent =
   | "l4-strict"
@@ -1098,7 +1111,7 @@ interface SetupCompletenessEntry {
 }
 
 interface AgentReadinessEntry {
-  readonly agent: "claude" | "codex" | "shared";
+  readonly agent: "claude" | "codex" | "grok" | "antigravity" | "shared";
   readonly status: SetupCompletenessStatus;
   readonly evidence: readonly string[];
   readonly nextAction: string | null;
@@ -1135,14 +1148,9 @@ function parseInitPhasePreset(value: string | undefined): InitPhasePreset | unde
   return undefined;
 }
 
-function parseAgentTarget(value: string | undefined, fallback: AgentTarget = "both"): AgentTarget {
-  if (value === "claude" || value === "codex" || value === "both") return value;
-  return fallback;
-}
-
 function parseRequiredAgentTarget(value: string | undefined, fallback: AgentTarget = "both"): AgentTarget | null {
   if (value === undefined) return fallback;
-  if (value === "claude" || value === "codex" || value === "both") return value;
+  if (isAgentTarget(value)) return value;
   return null;
 }
 
@@ -1235,6 +1243,7 @@ function buildSetupCompleteness(input: {
     readonly phasegateConfig: boolean;
     readonly claudeSettings: boolean;
     readonly codexHooks: boolean;
+    readonly antigravityHooks: boolean;
     readonly agentsMd: boolean;
     readonly claudeMd: boolean;
     readonly huskyPreCommit: boolean;
@@ -1242,12 +1251,19 @@ function buildSetupCompleteness(input: {
     readonly skillsVersion: boolean;
   };
 }): readonly SetupCompletenessEntry[] {
-  const includeClaude = input.agent === "claude" || input.agent === "both";
-  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const includeClaude = input.agent === "claude" || input.agent === "both" || input.agent === "all";
+  const includeCodex = input.agent === "codex" || input.agent === "both" || input.agent === "all";
+  const includeGrok = input.agent === "grok" || input.agent === "all";
+  const includeAntigravity = input.agent === "antigravity" || input.agent === "all";
+  const includeClaudeHook = includeClaude || includeGrok;
+  const includeAgentsContext = includeCodex || includeGrok || includeAntigravity;
   const doctorCommand = doctorValidationCommand(input.agent);
   const agentHooksConfigured =
-    (!includeClaude || input.checks.claudeSettings) && (!includeCodex || input.checks.codexHooks);
-  const agentContextConfigured = (!includeClaude || input.checks.claudeMd) && (!includeCodex || input.checks.agentsMd);
+    (!includeClaudeHook || input.checks.claudeSettings) &&
+    (!includeCodex || input.checks.codexHooks) &&
+    (!includeAntigravity || input.checks.antigravityHooks);
+  const agentContextConfigured =
+    (!includeClaude || input.checks.claudeMd) && (!includeAgentsContext || input.checks.agentsMd);
   const entries: SetupCompletenessEntry[] = [
     setupCompletenessEntry({
       area: "local-config",
@@ -1259,16 +1275,22 @@ function buildSetupCompleteness(input: {
     }),
     setupCompletenessEntry({
       area: "agent-hooks",
-      included: includeClaude || includeCodex,
+      included: includeClaudeHook || includeCodex || includeAntigravity,
       configured: agentHooksConfigured,
       configuredEvidence: "Selected agent hook settings are present.",
       plannedEvidence: "setup:agent will create or refresh selected agent hook settings.",
       nextAction: "Run setup:agent --apply for selected agents.",
-      risk: includeCodex ? "Codex user-level hook feature enablement remains a manual external check." : undefined,
+      risk: includeCodex
+        ? "Codex user-level hook feature enablement remains a manual external check."
+        : includeGrok
+          ? "Grok project-hook trust remains a manual external check."
+          : includeAntigravity
+            ? "Antigravity hard blocking is CLI-only; IDE/desktop relies on L2 pre-commit."
+            : undefined,
     }),
     setupCompletenessEntry({
       area: "agent-context",
-      included: includeClaude || includeCodex,
+      included: includeClaude || includeAgentsContext,
       configured: agentContextConfigured,
       configuredEvidence: "Selected AGENTS.md / CLAUDE.md managed context files are present.",
       plannedEvidence: "setup:agent will create or refresh selected managed agent context sections.",
@@ -1372,6 +1394,7 @@ function buildAgentReadiness(input: {
     readonly phasegateConfig: boolean;
     readonly claudeSettings: boolean;
     readonly codexHooks: boolean;
+    readonly antigravityHooks: boolean;
     readonly agentsMd: boolean;
     readonly claudeMd: boolean;
     readonly huskyPreCommit: boolean;
@@ -1379,8 +1402,10 @@ function buildAgentReadiness(input: {
     readonly skillsVersion: boolean;
   };
 }): readonly AgentReadinessEntry[] {
-  const includeClaude = input.agent === "claude" || input.agent === "both";
-  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const includeClaude = input.agent === "claude" || input.agent === "both" || input.agent === "all";
+  const includeCodex = input.agent === "codex" || input.agent === "both" || input.agent === "all";
+  const includeGrok = input.agent === "grok" || input.agent === "all";
+  const includeAntigravity = input.agent === "antigravity" || input.agent === "all";
   const doctorCommand = doctorValidationCommand(input.agent);
   const sharedConfigured =
     input.checks.packageJson &&
@@ -1425,6 +1450,24 @@ function buildAgentReadiness(input: {
       risk: "Codex user-level hook feature enablement remains a manual external check.",
     }),
     setupReadinessEntry({
+      agent: "grok",
+      included: includeGrok,
+      configured: input.checks.claudeSettings && input.checks.agentsMd,
+      configuredEvidence: [".claude/settings.json and AGENTS.md are present for Grok compatibility."],
+      plannedEvidence: ["setup:agent will deploy the Claude-compatible hook and AGENTS.md without .grok duplication."],
+      nextAction: "Run setup:agent --agent grok --apply, then verify grok inspect and /hooks trust.",
+      risk: "Grok project-hook trust cannot be verified by Phasegate.",
+    }),
+    setupReadinessEntry({
+      agent: "antigravity",
+      included: includeAntigravity,
+      configured: input.checks.antigravityHooks && input.checks.agentsMd,
+      configuredEvidence: [".agents/hooks.json and AGENTS.md are present for Antigravity CLI."],
+      plannedEvidence: ["setup:agent will deploy the Antigravity named hook map and AGENTS.md."],
+      nextAction: "Run setup:agent --agent antigravity --apply, then inspect /hooks in agy.",
+      risk: "IDE/desktop hook execution is not guaranteed; keep the L2 pre-commit backstop.",
+    }),
+    setupReadinessEntry({
       agent: "shared",
       included: true,
       configured: sharedConfigured,
@@ -1453,14 +1496,17 @@ async function buildAgentSetupPlan(
     phasegateConfig: await projectFileExists(rootDir, "phasegate.config.json"),
     claudeSettings: await projectFileExists(rootDir, ".claude/settings.json"),
     codexHooks: await projectFileExists(rootDir, ".codex/hooks.json"),
+    antigravityHooks: await projectFileExists(rootDir, ".agents/hooks.json"),
     agentsMd: await projectFileExists(rootDir, "AGENTS.md"),
     claudeMd: await projectFileExists(rootDir, "CLAUDE.md"),
     huskyPreCommit: await projectFileExists(rootDir, ".husky/pre-commit"),
     ciWorkflow: await projectFileExists(rootDir, ".github/workflows/phasegate-aidlc-gate.yml"),
     skillsVersion: await projectFileExists(rootDir, "skills/.harness-version"),
   };
-  const includeClaude = input.agent === "claude" || input.agent === "both";
-  const includeCodex = input.agent === "codex" || input.agent === "both";
+  const includeClaude = input.agent === "claude" || input.agent === "both" || input.agent === "all";
+  const includeCodex = input.agent === "codex" || input.agent === "both" || input.agent === "all";
+  const includeGrok = input.agent === "grok" || input.agent === "all";
+  const includeAntigravity = input.agent === "antigravity" || input.agent === "all";
   const changes = [
     !checks.packageJson
       ? "Add phasegate devDependency and phasegate scripts to package.json."
@@ -1470,6 +1516,8 @@ async function buildAgentSetupPlan(
       : "Keep existing phasegate.config.json; review config:plan before changing policy.",
     includeClaude ? "Create or refresh .claude/settings.json and CLAUDE.md managed section." : null,
     includeCodex ? "Create or refresh .codex/hooks.json and AGENTS.md managed section." : null,
+    includeGrok ? "Create or refresh the Claude-compatible hook and AGENTS.md without a .grok hook duplicate." : null,
+    includeAntigravity ? "Create or refresh .agents/hooks.json named hook and AGENTS.md managed section." : null,
     input.withHusky
       ? "Create or refresh Husky pre-commit, commit-msg, and pre-push backstops."
       : "Leave Husky hooks unmanaged in this setup run.",
@@ -2101,8 +2149,8 @@ async function main(): Promise<void> {
         }
         const skillSet: SkillSet = skillSetRaw;
         const agentRaw = parseFlag(args, "--agent") ?? "claude";
-        if (agentRaw !== "claude" && agentRaw !== "codex" && agentRaw !== "both") {
-          console.error(`Invalid --agent value: "${agentRaw}". Use "claude", "codex", or "both".`);
+        if (!isAgentTarget(agentRaw)) {
+          console.error(`Invalid --agent value: "${agentRaw}". Use <${AGENT_TARGET_USAGE}>.`);
           process.exit(2);
         }
         const agent = agentRaw;
@@ -2117,8 +2165,8 @@ async function main(): Promise<void> {
           console.error("Invalid --language value: value must not be empty.");
           process.exit(2);
         }
-        const deployClaude = agent === "claude" || agent === "both";
-        const deployCodex = agent === "codex" || agent === "both";
+        const deployClaude = agent === "claude" || agent === "both" || agent === "grok" || agent === "all";
+        const deployCodex = agent === "codex" || agent === "both" || agent === "all";
         const result = await deploySkills(harnessRoot, rootDir, skillSet);
         const packageResult = await ensurePhasegatePackageDependency(rootDir, result.version);
         const skillLinkResult = await deployAgentSkillLinks(rootDir, {
@@ -2313,11 +2361,15 @@ async function main(): Promise<void> {
           console.log("  3. Edit .claude/scripts/hook-config.json to set target directories");
         }
         if (deployCodex) {
-          console.log(`  ${deployClaude ? "4" : "3"}. Use Codex CLI >= 0.124.0, then open /hooks and trust the current hook definition hash`);
+          console.log(
+            `  ${deployClaude ? "4" : "3"}. Use Codex CLI >= 0.124.0, then open /hooks and trust the current hook definition hash`,
+          );
           console.log(
             `  ${deployClaude ? "5" : "4"}. (Recommended) Install pre-commit backstop: rerun with --with-husky or set up husky manually`,
           );
-          console.log(`     See docs/guide/codex-integration.md for native apply_patch coverage and trust troubleshooting.`);
+          console.log(
+            `     See docs/guide/codex-integration.md for native apply_patch coverage and trust troubleshooting.`,
+          );
         }
         if (skillSet !== "core") {
           console.log("");
@@ -2364,7 +2416,7 @@ async function main(): Promise<void> {
         }
         const agent = parseRequiredAgentTarget(parseFlag(args, "--agent"), "both");
         if (agent === null) {
-          console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use "claude", "codex", or "both".`);
+          console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use <${AGENT_TARGET_USAGE}>.`);
           process.exit(2);
         }
         const mod = createInstallationModule();
@@ -2435,7 +2487,11 @@ async function main(): Promise<void> {
         }
         const apply = hasFlag(args, "--apply");
         const dryRun = hasFlag(args, "--dry-run") || !apply;
-        const agent = parseAgentTarget(parseFlag(args, "--agent"), "both");
+        const agent = parseRequiredAgentTarget(parseFlag(args, "--agent"), "both");
+        if (agent === null) {
+          console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use <${AGENT_TARGET_USAGE}>.`);
+          process.exit(2);
+        }
         const skillSetRaw = parseFlag(args, "--skills") ?? "all";
         if (skillSetRaw !== "core" && skillSetRaw !== "all") {
           console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
@@ -2446,8 +2502,8 @@ async function main(): Promise<void> {
           console.error(`Invalid --workflow value: "${workflowRaw}". Use "standard" or "strict".`);
           process.exit(2);
         }
-        const includeClaude = agent === "claude" || agent === "both";
-        const includeCodex = agent === "codex" || agent === "both";
+        const includeClaude = agent === "claude" || agent === "both" || agent === "grok" || agent === "all";
+        const includeCodex = agent === "codex" || agent === "both" || agent === "all";
         const personal = hasFlag(args, "--personal");
         const mod = createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
@@ -2491,7 +2547,11 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         const intent = parseSetupIntent(parseFlag(args, "--intent"));
-        const agent = parseAgentTarget(parseFlag(args, "--agent"), "both");
+        const agent = parseRequiredAgentTarget(parseFlag(args, "--agent"), "both");
+        if (agent === null) {
+          console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use <${AGENT_TARGET_USAGE}>.`);
+          process.exit(2);
+        }
         const workflow = parseWorkflowMode(
           parseFlag(args, "--workflow") ?? (intent === "strict" ? "strict" : "standard"),
         );
@@ -2527,8 +2587,8 @@ async function main(): Promise<void> {
             dryRun: false,
             apply: true,
             force: hasFlag(args, "--force"),
-            includeClaude: agent === "claude" || agent === "both",
-            includeCodex: agent === "codex" || agent === "both",
+            includeClaude: agent === "claude" || agent === "both" || agent === "grok" || agent === "all",
+            includeCodex: agent === "codex" || agent === "both" || agent === "all",
             includeHusky: withHusky,
             includeCi: withCi,
             skillSet: "all",

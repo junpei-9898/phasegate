@@ -10,12 +10,14 @@
 // @work-item-id WI-215
 // @work-item-id WI-330
 // @work-item-id WI-384
+// @work-item-id WI-385
 
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createInstallationModule } from "../../../installation/composition-root.js";
+import type { AgentTarget } from "../../../installation/domain/agent-target.js";
 import { getSkillsForSet } from "../../../setup/skill-deployer.js";
 import { createTraceabilityModelModule } from "../../../traceability-model/composition-root.js";
 import { target } from "../../helpers/test-helpers.js";
@@ -45,6 +47,24 @@ function currentCodexHooks(): string {
   });
 }
 
+function currentClaudeSettings(): string {
+  return JSON.stringify({
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: "Bash|apply_patch",
+          hooks: [{ type: "command", command: "npx phasegate hook pre-tool-use", timeout: 30 }],
+        },
+        {
+          matcher: "Write|Edit",
+          hooks: [{ type: "command", command: "npx phasegate hook pre-tool-use", timeout: 30 }],
+        },
+      ],
+      Stop: [{ command: "npx phasegate hook stop" }],
+    },
+  });
+}
+
 let projectRoot: string | null = null;
 
 const GOLDEN: readonly FixtureExpectation[] = [
@@ -58,6 +78,7 @@ const GOLDEN: readonly FixtureExpectation[] = [
       { checkId: "claude-context-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "codex-hook-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "codex-context-missing", severity: "red", repairMode: "mechanical" },
+      { checkId: "grok-hook-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-pre-commit-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-commit-msg-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-pre-push-missing", severity: "warn", repairMode: "mechanical" },
@@ -135,7 +156,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   await writeProjectFile(
     root,
     ".claude/settings.json",
-    JSON.stringify({ hooks: { Stop: [{ command: "npx phasegate hook stop" }] } }),
+    currentClaudeSettings(),
   );
   await writeProjectFile(
     root,
@@ -160,11 +181,7 @@ async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
     return;
   }
 
-  await writeProjectFile(
-    root,
-    ".codex/hooks.json",
-    currentCodexHooks(),
-  );
+  await writeProjectFile(root, ".codex/hooks.json", currentCodexHooks());
   await writeProjectFile(
     root,
     "AGENTS.md",
@@ -207,7 +224,7 @@ async function runAdHocPlanDriftRepairRegression() {
   };
 }
 
-async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
+async function runDoctor(root: string, strict: boolean, agent: AgentTarget = "both") {
   const mod = createInstallationModule();
   const actual = await mod.doctorHandler.execute({
     projectRoot: root,
@@ -253,11 +270,7 @@ async function runDoctor(root: string, strict: boolean, agent: "claude" | "codex
   };
 }
 
-async function runDoctorHumanFixture(
-  fixture: FixtureName,
-  strict: boolean,
-  agent: "claude" | "codex" | "both" = "both",
-) {
+async function runDoctorHumanFixture(fixture: FixtureName, strict: boolean, agent: AgentTarget = "both") {
   const root = await createProjectRoot();
   await buildFixture(root, fixture);
   const mod = createInstallationModule();
@@ -271,7 +284,7 @@ async function runDoctorHumanFixture(
   });
 }
 
-async function runDoctorFixture(fixture: FixtureName, strict: boolean, agent: "claude" | "codex" | "both" = "both") {
+async function runDoctorFixture(fixture: FixtureName, strict: boolean, agent: AgentTarget = "both") {
   const root = await createProjectRoot();
   await buildFixture(root, fixture);
   return await runDoctor(root, strict, agent);
@@ -390,6 +403,7 @@ target("DoctorHandler", () => {
       ).toEqual([
         { checkId: "codex-hook-missing", applicability: "not-applicable" },
         { checkId: "codex-context-missing", applicability: "not-applicable" },
+        { checkId: "antigravity-hook-missing", applicability: "not-applicable" },
         { checkId: "codex-skills-symlink", applicability: "not-applicable" },
       ]);
       expect(
@@ -409,6 +423,13 @@ target("DoctorHandler", () => {
           }),
         ),
       ).toEqual([
+        {
+          repairHint: null,
+          suggestedSkill: null,
+          currentScopeRepairTarget: false,
+          repairHintApplicability: "only-if-agent-selected",
+          repairModeApplicability: "only-if-agent-selected",
+        },
         {
           repairHint: null,
           suggestedSkill: null,
@@ -476,7 +497,9 @@ target("DoctorHandler", () => {
           repairModeApplicability: "applicable",
         },
       ]);
-      expect(actual.payload.scopedOutFindings).toEqual([]);
+      expect(actual.payload.scopedOutFindings.map(({ checkId }) => checkId)).toEqual([
+        "antigravity-hook-missing",
+      ]);
     });
 
     it("human output では scoped-out finding を repair target ではないと説明すること", async () => {
@@ -484,8 +507,77 @@ target("DoctorHandler", () => {
 
       expect(actual.exitCode).toBe(0);
       expect(actual.stdout).toContain(
-        "Scoped out: 3 informational findings not applicable to --agent claude; not repair targets for this scope: codex-hook-missing, codex-context-missing, codex-skills-symlink.",
+        "Scoped out: 4 informational findings not applicable to --agent claude; not repair targets for this scope: codex-hook-missing, codex-context-missing, antigravity-hook-missing, codex-skills-symlink.",
       );
+    });
+
+    it("既定とClaude診断scopeは互換hookのmatcher欠落をredにすること", async () => {
+      // Arrange
+      const root = await createProjectRoot();
+      await buildFixture(root, "claude-only-install");
+      const settings = JSON.parse(currentClaudeSettings());
+      settings.hooks.PreToolUse[0].matcher = "Bash";
+      await writeProjectFile(root, ".claude/settings.json", JSON.stringify(settings));
+
+      // Act
+      const actual = await Promise.all([runDoctor(root, false), runDoctor(root, false, "claude")]);
+
+      // Assert
+      expect(actual.map(({ payload }) => payload.findings.map(({ checkId }) => checkId))).toEqual([
+        expect.arrayContaining(["grok-hook-missing"]),
+        ["grok-hook-missing"],
+      ]);
+    });
+
+    it("Grok診断scopeは有効な互換hookとtrust noticeをJSONへ含めること", async () => {
+      // Arrange
+      // Act
+      const actual = await runDoctorFixture("full-install", false, "grok");
+
+      // Assert
+      expect(actual.payload.findings.map(({ checkId }) => checkId)).not.toContain("grok-hook-missing");
+      expect(actual.payload.findings.map(({ checkId }) => checkId)).not.toContain("antigravity-hook-missing");
+      expect(actual.payload.operatorNotices).toEqual([
+        expect.objectContaining({ code: "GROK_HOOK_TRUST_UNVERIFIABLE" }),
+      ]);
+      const notices = actual.payload.operatorNotices ?? [];
+      expect(notices[0]?.message).toContain("grok inspect");
+      expect(notices[0]?.message).toContain("/hooks-trust");
+    });
+
+    it("反重力診断scopeはnamed hookだけを適用してCLI制約noticeを返すこと", async () => {
+      // Arrange
+      // Act
+      const actual = await runDoctorFixture("full-install", false, "antigravity");
+
+      // Assert
+      expect(actual.payload.findings.map(({ checkId }) => checkId)).toContain("antigravity-hook-missing");
+      expect(actual.payload.findings.map(({ checkId }) => checkId)).not.toContain("grok-hook-missing");
+      expect(actual.payload.operatorNotices).toEqual([expect.objectContaining({ code: "ANTIGRAVITY_CLI_ONLY" })]);
+      const notices = actual.payload.operatorNotices ?? [];
+      expect(notices[0]?.message).toContain("agy CLI");
+      expect(notices[0]?.message).toContain("L2 pre-commit");
+    });
+
+    it("全診断scopeは四runtime findingと三noticeを同時に適用すること", async () => {
+      // Arrange
+      // Act
+      const actual = await runDoctorFixture("no-phasegate", false, "all");
+
+      // Assert
+      expect(actual.payload.findings.map(({ checkId }) => checkId)).toEqual(
+        expect.arrayContaining([
+          "claude-hook-missing",
+          "codex-hook-missing",
+          "grok-hook-missing",
+          "antigravity-hook-missing",
+        ]),
+      );
+      expect((actual.payload.operatorNotices ?? []).map(({ code }) => code)).toEqual([
+        "CODEX_HOOK_TRUST_UNVERIFIABLE",
+        "GROK_HOOK_TRUST_UNVERIFIABLE",
+        "ANTIGRAVITY_CLI_ONLY",
+      ]);
     });
   });
 

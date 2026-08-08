@@ -134,11 +134,11 @@ For project/team install, `RunInstallUseCase` creates `phasegate.config.json` fr
 
 <!-- @work-item-id WI-216 -->
 
-Install and reconcile manage bundled skills by individual skill directory, not by owning the whole skills catalog. Personal mode writes selected bundled skills into `.claude/skills/<skill>` and `.codex/skills/<skill>`. Project mode writes selected bundled skills into root `skills/<skill>` and keeps agent paths as symlinks to `../skills`.
+Install and reconcile manage bundled skills by individual skill directory, not by owning the whole skills catalog. Personal mode writes selected bundled skills into `.claude/skills/<skill>`, `.codex/skills/<skill>`, or `.agents/skills/<skill>`. Project mode writes selected bundled skills into root `skills/<skill>` and keeps agent paths as symlinks to `../skills`. @work-item-id WI-385
 
 Existing catalog directories are merge targets. PhaseGate overwrites only selected bundled skill names, writes `.harness-version` metadata, and preserves unknown user-owned skill directories. A legacy personal catalog with `.harness-version` but no manifest entry is adoptable: install/reconcile refresh selected bundled skills and record per-skill manifest entries for future uninstall.
 
-`RunUninstallUseCase` removes manifest-managed bundled skill entries and `.harness-version` metadata. Compatibility parent entries for `.claude/skills` or `.codex/skills` are reversed by deleting known bundled skills only, then leaving the catalog directory when user-owned entries remain.
+`RunUninstallUseCase` removes manifest-managed bundled skill entries and `.harness-version` metadata. Compatibility parent entries for `.claude/skills`, `.codex/skills`, or `.agents/skills` are reversed by deleting known bundled skills only, then leaving the catalog directory when user-owned entries remain. @work-item-id WI-385
 
 Doctor skills checks verify required bundled skill completeness and stale metadata instead of accepting any `SKILL.md` or `.harness-version` as sufficient.
 
@@ -610,7 +610,7 @@ Install and reconcile do not manage `scripts/harness/cli/complete-check.ts` as a
 
 <!-- @work-item-id WI-210 -->
 
-`RunInstallUseCase` deploys selected bundled skills into root `skills/` for non-personal installs before creating `.claude/skills` or `.codex/skills` links. The `--skills core|all` option controls which bundled directories are copied and is reflected in deterministic manifest hash inputs for the managed skill entries.
+`RunInstallUseCase` deploys selected bundled skills into root `skills/` for non-personal installs before creating `.claude/skills`, `.codex/skills`, or `.agents/skills` links. The `--skills core|all` option controls which bundled directories are copied and is reflected in deterministic manifest hash inputs for the managed skill entries. @work-item-id WI-385
 
 `RunReconcileUseCase` repairs older project installs that contain managed agent skill links but no root skill bodies. The repair deploys the current bundled shared skills and adds granular manifest entries for `skills/.harness-version` and each bundled skill directory. `update-skills` remains an alias of this reconcile path.
 
@@ -659,3 +659,25 @@ install（init 委譲を含む）と reconcile が Codex hook target を作成�
 へ Codex CLI >= 0.124.0 と `/hooks` 再 trust の operator notice を加える。doctor の Codex scope は
 trust store を検証できない旨と同じ手順を advisory notice として出すが exit status を変えない。
 hooks.json の content hash が変わると再 trust が必要であることを隠さない。
+
+## WI-385 Grok / Antigravity lifecycle and doctor
+
+<!-- @work-item-id WI-385 -->
+
+install / init / setup / doctor の AgentTarget を `grok` / `antigravity` / `all` へ加法拡張し、既存
+`both` の既定・意味・target snapshot を変えない。Grok 単独 selection は Claude-compatible phasegate hook
+entry、Grok が discover する `.claude/skills`、AGENTS context を配るが、`.grok/hooks` と Claude 専用
+`CLAUDE.md` を重複配布しない。
+`all` では Claude target が Grok hook surface を包含する。
+
+Antigravity target は `templates/.agents/hooks.json` の named `phasegate-gate` definition を専用 JSON strategy
+で配る。user-owned named hooks は保持し、manifest / backup / refuse / force / idempotency の既存 lifecycle
+contract を維持する。
+Antigravity CLI の project-scope skill discovery は `.agents/skills` なので、同 path を shared `skills/` への
+symlink として project install / reconcile / uninstall に含め、personal install では実 directory を配る。
+
+doctor の Claude / both / Grok scope は `.claude/settings.json` の phasegate PreToolUse entries が集合として
+Bash / Write / Edit / apply_patch を覆い、command type と timeout 30 を満たすことを構造検査する。
+Antigravity scope は named map と phasegate command を持つ同一 entry の matcher regex、type、timeout 30 を
+検査する。Grok は trust 確認手順、Antigravity は CLI-only hard block と
+IDE / desktop の L2 backstop を human / JSON notice に出し、観測不能 state を偽の PASS にしない。

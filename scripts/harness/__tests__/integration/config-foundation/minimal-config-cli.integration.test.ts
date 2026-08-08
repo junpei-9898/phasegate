@@ -1,6 +1,7 @@
 // @layer test
 // @unit config-foundation
 // @story H04-01
+// @work-item-id WI-385
 // @work-item-id WI-327
 
 // WI-327: 手書きの最小 config（project のみ）で実 CLI（validate --layer L2）が
@@ -28,7 +29,11 @@ interface CliResult {
 
 function runCli(args: string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env: process.env });
+    const child = spawn(
+      process.execPath,
+      ["--import", path.join(HARNESS_ROOT, "node_modules/tsx/dist/loader.mjs"), MAIN_TS, ...args],
+      { cwd, env: process.env },
+    );
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk: Buffer) => {

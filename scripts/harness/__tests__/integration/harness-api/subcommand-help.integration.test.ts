@@ -1,10 +1,12 @@
 // @unit harness-api
 // @layer integration
 // @story H13-04
+// @work-item-id WI-385
 
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +16,7 @@ import { context, target } from "../../helpers/test-helpers.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HARNESS_ROOT = path.resolve(__dirname, "../../../../..");
 const MAIN_TS = path.join(HARNESS_ROOT, "scripts/harness/main.ts");
+const TSX_IMPORT = createRequire(import.meta.url).resolve("tsx");
 
 interface CliResult {
   exitCode: number;
@@ -21,9 +24,14 @@ interface CliResult {
   stderr: string;
 }
 
-function runCli(args: string[], cwd: string, env: NodeJS.ProcessEnv = process.env, timeoutMs = 20_000): Promise<CliResult> {
+function runCli(
+  args: string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv = process.env,
+  timeoutMs = 20_000,
+): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("npx", ["tsx", MAIN_TS, ...args], { cwd, env });
+    const child = spawn(process.execPath, ["--import", TSX_IMPORT, MAIN_TS, ...args], { cwd, env });
     let stdout = "";
     let stderr = "";
     let settled = false;
@@ -31,7 +39,9 @@ function runCli(args: string[], cwd: string, env: NodeJS.ProcessEnv = process.en
       if (settled) return;
       settled = true;
       child.kill("SIGKILL");
-      reject(new Error(`CLI timed out after ${timeoutMs}ms: ${args.join(" ")}\nstdout:\n${stdout}\nstderr:\n${stderr}`));
+      reject(
+        new Error(`CLI timed out after ${timeoutMs}ms: ${args.join(" ")}\nstdout:\n${stdout}\nstderr:\n${stderr}`),
+      );
     }, timeoutMs);
     child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString();

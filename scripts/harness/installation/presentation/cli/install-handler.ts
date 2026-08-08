@@ -4,9 +4,15 @@
 // @work-item-id WI-175
 // @work-item-id WI-207
 // @work-item-id WI-384
+// @work-item-id WI-385
 
+import {
+  ANTIGRAVITY_CLI_ONLY_NOTICE,
+  CODEX_HOOK_TRUST_REQUIRED_NOTICE,
+  GROK_HOOK_TRUST_UNVERIFIABLE_NOTICE,
+} from "../../application/operator-notice.js";
 import type { RunInstallUseCase } from "../../application/usecases/run-install.js";
-import { CODEX_HOOK_TRUST_REQUIRED_NOTICE } from "../../application/operator-notice.js";
+import type { AgentTarget } from "../../domain/agent-target.js";
 
 export interface InstallHandlerInput {
   readonly projectRoot: string;
@@ -22,7 +28,7 @@ export interface InstallHandlerInput {
   readonly includeCi?: boolean;
   readonly skillSet?: "core" | "all";
   readonly workflow?: "standard" | "strict";
-  readonly agent?: "claude" | "codex" | "both";
+  readonly agent?: AgentTarget;
   readonly personal?: boolean;
 }
 
@@ -36,9 +42,13 @@ export class InstallHandler {
 
   async execute(input: InstallHandlerInput): Promise<InstallHandlerResult> {
     const result = await this.useCase.execute(input);
-    const operatorNotices = result.plan.some((item) => item.path === ".codex/hooks.json" && item.changed)
-      ? [CODEX_HOOK_TRUST_REQUIRED_NOTICE]
-      : [];
+    const operatorNotices = [
+      ...(result.plan.some((item) => item.path === ".codex/hooks.json" && item.changed)
+        ? [CODEX_HOOK_TRUST_REQUIRED_NOTICE]
+        : []),
+      ...(input.agent === "grok" || input.agent === "all" ? [GROK_HOOK_TRUST_UNVERIFIABLE_NOTICE] : []),
+      ...(input.agent === "antigravity" || input.agent === "all" ? [ANTIGRAVITY_CLI_ONLY_NOTICE] : []),
+    ];
     if (input.json) {
       return {
         stdout: JSON.stringify({ ...result, operatorNotices }, null, 2),
@@ -46,7 +56,9 @@ export class InstallHandler {
       };
     }
     const lines = [
-      input.apply ? `phasegate install${input.personal ? " --personal" : ""} apply` : `phasegate install${input.personal ? " --personal" : ""} dry-run`,
+      input.apply
+        ? `phasegate install${input.personal ? " --personal" : ""} apply`
+        : `phasegate install${input.personal ? " --personal" : ""} dry-run`,
       ...result.plan.map((item) => {
         const hint = item.skillHint ? `; hint: ${item.skillHint}` : "";
         const warn = item.warning ? `\n  WARNING: ${item.warning}` : "";
@@ -60,7 +72,8 @@ export class InstallHandler {
       lines.push(`Apply error: ${result.error.target} ${result.error.operation} failed with ${result.error.code}`);
       lines.push(`Cause: ${result.error.likelyCause}`);
       lines.push(`Recovery: ${result.error.recovery}`);
-      if (result.error.partialChanges.length > 0) lines.push(`Partial changes: ${result.error.partialChanges.join(", ")}`);
+      if (result.error.partialChanges.length > 0)
+        lines.push(`Partial changes: ${result.error.partialChanges.join(", ")}`);
     }
     if (result.refused.length > 0) {
       lines.push("");

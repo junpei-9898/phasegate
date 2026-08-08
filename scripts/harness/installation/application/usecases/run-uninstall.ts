@@ -7,16 +7,28 @@
 // @work-item-id WI-208
 // @work-item-id WI-209
 // @work-item-id WI-216
+// @work-item-id WI-385
 
-import { access, copyFile, lstat, mkdir, readFile, readdir, readlink, rm, rmdir, writeFile } from "node:fs/promises";
+import { access, copyFile, lstat, mkdir, readdir, readFile, readlink, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import type { DeploymentEntry } from "../../domain/deployment-entry.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
+import { removeNamedHookJson } from "../named-hook-json.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
 
 type UninstallAction = "missing-manifest" | "delete" | "unlink" | "reverse-merge" | "skip" | "refuse";
-type StrategyType = "created" | "json" | "shell" | "package-json" | "markdown-managed" | "symlink" | "yaml-add" | "text-managed" | "unknown";
+type StrategyType =
+  | "created"
+  | "json"
+  | "json-named"
+  | "shell"
+  | "package-json"
+  | "markdown-managed"
+  | "symlink"
+  | "yaml-add"
+  | "text-managed"
+  | "unknown";
 
 export interface UninstallPlanItem {
   readonly path: string;
@@ -115,19 +127,37 @@ export function reverseJsonMerge(currentContent: string, templateContent: string
   return `${JSON.stringify(result, null, 2)}\n`;
 }
 
+export function reverseNamedHookJson(currentContent: string): string {
+  const current = JSON.parse(currentContent) as unknown;
+  const result = removeNamedHookJson(isRecord(current) ? current : {});
+  return `${JSON.stringify(result, null, 2)}\n`;
+}
+
 export function reverseShellMerge(currentContent: string): string {
   const pattern = new RegExp(`\\n?${escapeRegExp(SHELL_BEGIN)}[\\s\\S]*?${escapeRegExp(SHELL_END)}\\n?`);
-  return currentContent.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s*$/, "\n").replace(/^\n/, "");
+  return currentContent
+    .replace(pattern, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s*$/, "\n")
+    .replace(/^\n/, "");
 }
 
 export function reverseManagedMarkdown(currentContent: string): string {
   const pattern = new RegExp(`\\n?${escapeRegExp(MARKDOWN_BEGIN)}[\\s\\S]*?${escapeRegExp(MARKDOWN_END)}\\n?`);
-  return currentContent.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s*$/, "\n").replace(/^\n/, "");
+  return currentContent
+    .replace(pattern, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s*$/, "\n")
+    .replace(/^\n/, "");
 }
 
 export function reverseTextManaged(currentContent: string): string {
   const pattern = new RegExp(`\\n?${escapeRegExp(TEXT_BEGIN)}[\\s\\S]*?${escapeRegExp(TEXT_END)}\\n?`);
-  return currentContent.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").replace(/\s*$/, "\n").replace(/^\n/, "");
+  return currentContent
+    .replace(pattern, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s*$/, "\n")
+    .replace(/^\n/, "");
 }
 
 export function reversePackageJsonMerge(currentContent: string): string {
@@ -140,7 +170,9 @@ export function reversePackageJsonMerge(currentContent: string): string {
     else delete result.devDependencies;
   }
   if (isRecord(result.scripts)) {
-    const scripts = Object.fromEntries(Object.entries(result.scripts).filter(([name]) => !name.startsWith(PHASEGATE_SCRIPT_PREFIX)));
+    const scripts = Object.fromEntries(
+      Object.entries(result.scripts).filter(([name]) => !name.startsWith(PHASEGATE_SCRIPT_PREFIX)),
+    );
     if (Object.keys(scripts).length > 0) result.scripts = scripts;
     else delete result.scripts;
   }
@@ -214,7 +246,10 @@ export class RunUninstallUseCase {
     return { plan, refused, changed, backupDir, archivedManifestPath };
   }
 
-  private async planEntry(input: RunUninstallInput, entry: DeploymentEntry): Promise<{
+  private async planEntry(
+    input: RunUninstallInput,
+    entry: DeploymentEntry,
+  ): Promise<{
     readonly item: UninstallPlanItem;
     readonly needsBackup: boolean;
     readonly apply: () => Promise<void>;
@@ -222,13 +257,22 @@ export class RunUninstallUseCase {
     const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
     const strategy = this.strategyFor(entry.path, entry.mode);
     if (entry.mode === "symlink") return this.planSymlink(input.projectRoot, entry);
-    if (entry.mode === "created" && await this.isDirectory(absolutePath)) {
+    if (entry.mode === "created" && (await this.isDirectory(absolutePath))) {
       return this.planCreatedDirectory(input, entry);
     }
     const currentContent = await readTextOrNull(absolutePath);
     if (currentContent === null && strategy !== "symlink") {
       return {
-        item: this.item(entry.path, "skip", "mechanical", strategy, false, `${entry.path}: already absent`, "no changes", null),
+        item: this.item(
+          entry.path,
+          "skip",
+          "mechanical",
+          strategy,
+          false,
+          `${entry.path}: already absent`,
+          "no changes",
+          null,
+        ),
         needsBackup: false,
         apply: async () => {},
       };
@@ -249,7 +293,16 @@ export class RunUninstallUseCase {
     }
     if (target !== null && this.hashCalculator.compute(target).equals(entry.hash)) {
       return {
-        item: this.item(entry.path, "unlink", "mechanical", "symlink", true, `${entry.path}: remove symlink`, `- symlink ${target}`, null),
+        item: this.item(
+          entry.path,
+          "unlink",
+          "mechanical",
+          "symlink",
+          true,
+          `${entry.path}: remove symlink`,
+          `- symlink ${target}`,
+          null,
+        ),
         needsBackup: false,
         apply: async () => {
           await rm(absolutePath, { force: true });
@@ -257,7 +310,16 @@ export class RunUninstallUseCase {
       };
     }
     return {
-      item: this.item(entry.path, "skip", "manual", "symlink", false, `${entry.path}: non-phasegate symlink/path skipped`, "manual review required", null),
+      item: this.item(
+        entry.path,
+        "skip",
+        "manual",
+        "symlink",
+        false,
+        `${entry.path}: non-phasegate symlink/path skipped`,
+        "manual review required",
+        null,
+      ),
       needsBackup: false,
       apply: async () => {},
     };
@@ -273,7 +335,8 @@ export class RunUninstallUseCase {
   }
 
   private async planCreatedDirectory(input: RunUninstallInput, entry: DeploymentEntry) {
-    if (entry.path === ".claude/skills" || entry.path === ".codex/skills") return this.planLegacyPersonalSkillsDirectory(input, entry);
+    if (entry.path === ".claude/skills" || entry.path === ".codex/skills" || entry.path === ".agents/skills")
+      return this.planLegacyPersonalSkillsDirectory(input, entry);
     const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
     return {
       item: this.item(
@@ -319,13 +382,19 @@ export class RunUninstallUseCase {
 
   private async listBundledSkills(harnessRoot: string): Promise<string[]> {
     const entries = await readdir(join(harnessRoot, "skills"), { withFileTypes: true });
-    return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
   }
 
   private async planCreated(projectRoot: string, entry: DeploymentEntry, currentContent: string) {
     const absolutePath = this.resolveProjectPath(projectRoot, entry.path);
     const currentHash = this.hashCalculator.compute(currentContent);
-    const matchesManifest = currentHash.equals(entry.hash) || entry.path.endsWith("/.harness-version") || entry.path === "skills/.harness-version";
+    const matchesManifest =
+      currentHash.equals(entry.hash) ||
+      entry.path.endsWith("/.harness-version") ||
+      entry.path === "skills/.harness-version";
     const repairMode: RepairMode = matchesManifest ? "mechanical" : "ai-assisted";
     return {
       item: this.item(
@@ -345,14 +414,28 @@ export class RunUninstallUseCase {
     };
   }
 
-  private async planMerged(input: RunUninstallInput, entry: DeploymentEntry, currentContent: string, strategy: StrategyType) {
+  private async planMerged(
+    input: RunUninstallInput,
+    entry: DeploymentEntry,
+    currentContent: string,
+    strategy: StrategyType,
+  ) {
     const currentHash = this.hashCalculator.compute(currentContent);
     const matchesManifest = currentHash.equals(entry.hash);
     try {
       const next = await this.reverseMerged(input.harnessRoot, entry.path, currentContent, strategy);
       if (next === currentContent) {
         return {
-          item: this.item(entry.path, "skip", "mechanical", strategy, false, `${entry.path}: managed portion already absent`, "no changes", null),
+          item: this.item(
+            entry.path,
+            "skip",
+            "mechanical",
+            strategy,
+            false,
+            `${entry.path}: managed portion already absent`,
+            "no changes",
+            null,
+          ),
           needsBackup: false,
           apply: async () => {},
         };
@@ -376,19 +459,38 @@ export class RunUninstallUseCase {
       };
     } catch {
       return {
-        item: this.item(entry.path, "skip", "manual", strategy, false, `${entry.path}: reverse merge requires manual review`, "manual review required", SKILL_HINT),
+        item: this.item(
+          entry.path,
+          "skip",
+          "manual",
+          strategy,
+          false,
+          `${entry.path}: reverse merge requires manual review`,
+          "manual review required",
+          SKILL_HINT,
+        ),
         needsBackup: false,
         apply: async () => {},
       };
     }
   }
 
-  private async reverseMerged(harnessRoot: string, path: string, currentContent: string, strategy: StrategyType): Promise<string> {
-    if (strategy === "shell") return currentContent.includes(SHELL_BEGIN) ? reverseShellMerge(currentContent) : currentContent;
-    if (strategy === "markdown-managed") return currentContent.includes(MARKDOWN_BEGIN) ? reverseManagedMarkdown(currentContent) : currentContent;
-    if (strategy === "text-managed") return currentContent.includes(TEXT_BEGIN) ? reverseTextManaged(currentContent) : currentContent;
+  private async reverseMerged(
+    harnessRoot: string,
+    path: string,
+    currentContent: string,
+    strategy: StrategyType,
+  ): Promise<string> {
+    if (strategy === "shell")
+      return currentContent.includes(SHELL_BEGIN) ? reverseShellMerge(currentContent) : currentContent;
+    if (strategy === "markdown-managed")
+      return currentContent.includes(MARKDOWN_BEGIN) ? reverseManagedMarkdown(currentContent) : currentContent;
+    if (strategy === "text-managed")
+      return currentContent.includes(TEXT_BEGIN) ? reverseTextManaged(currentContent) : currentContent;
     if (strategy === "package-json") return reversePackageJsonMerge(currentContent);
-    if (strategy === "json") return reverseJsonMerge(currentContent, await readFile(join(harnessRoot, this.templateFor(path)), "utf8"));
+    if (strategy === "json-named") return reverseNamedHookJson(currentContent);
+    if (strategy === "json")
+      return reverseJsonMerge(currentContent, await readFile(join(harnessRoot, this.templateFor(path)), "utf8"));
     throw new Error(`Unsupported merged strategy: ${strategy}`);
   }
 
@@ -396,10 +498,17 @@ export class RunUninstallUseCase {
     if (mode === "symlink") return "symlink";
     if (mode === "created") return path.endsWith(".yml") || path.endsWith(".yaml") ? "yaml-add" : "created";
     if (path === "package.json") return "package-json";
-    if (path === "AGENTS.md" || path === "CLAUDE.md" || path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md" || path === ".codex/AGENTS.local.md") {
+    if (
+      path === "AGENTS.md" ||
+      path === "CLAUDE.md" ||
+      path === ".claude/CLAUDE.md" ||
+      path === ".claude/CLAUDE.local.md" ||
+      path === ".codex/AGENTS.local.md"
+    ) {
       return "markdown-managed";
     }
     if (path === ".git/info/exclude") return "text-managed";
+    if (path === ".agents/hooks.json") return "json-named";
     if (path.endsWith(".json")) return "json";
     if (path.startsWith(".husky/")) return "shell";
     return "unknown";
@@ -408,8 +517,10 @@ export class RunUninstallUseCase {
   private templateFor(path: string): string {
     if (path === ".claude/settings.json") return "templates/.claude/settings.json";
     if (path === ".codex/hooks.json") return "templates/.codex/hooks.json";
+    if (path === ".agents/hooks.json") return "templates/.agents/hooks.json";
     if (path === "CLAUDE.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
-    if (path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md") return "docs/templates/agent-context/CLAUDE.md.template.md";
+    if (path === ".claude/CLAUDE.md" || path === ".claude/CLAUDE.local.md")
+      return "docs/templates/agent-context/CLAUDE.md.template.md";
     if (path === "AGENTS.md") return "docs/templates/agent-context/AGENTS.md.template.md";
     if (path === ".codex/AGENTS.local.md") return "docs/templates/agent-context/AGENTS.md.template.md";
     throw new Error(`No template for ${path}`);
@@ -455,7 +566,17 @@ export class RunUninstallUseCase {
     diff: string,
     skillHint: string | null,
   ): UninstallPlanItem {
-    return { path, action, repairMode, strategy, changed, protected: this.isProtectedPath(path), summary, diff, skillHint };
+    return {
+      path,
+      action,
+      repairMode,
+      strategy,
+      changed,
+      protected: this.isProtectedPath(path),
+      summary,
+      diff,
+      skillHint,
+    };
   }
 
   private requiresForce(item: UninstallPlanItem): boolean {

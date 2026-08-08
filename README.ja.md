@@ -83,7 +83,7 @@ claude
 
 - `phasegate.config.json` — 品質設定の Single Source of Truth
 - `skills/` — 29 の AIDLC スキル一式
-- `.claude/skills/` ・ `.codex/skills/` — agent 向けの skill symlink
+- `.claude/skills/` ・ `.codex/skills/` ・ `.agents/skills/` — agent 向けの skill symlink
 - `.claude/settings.json` — PreToolUse / PostToolUse / Stop hook
 - `.codex/hooks.json` — Codex CLI hooks 設定（`--agent codex|both` 時）
 - `docs/principles/*.md` — アーキテクチャ哲学・テスト規約（immutable）
@@ -165,6 +165,17 @@ npx phasegate doctor --agent codex
 
 両方使う場合は `--agent both`。Codex CLI >= 0.124.0 ではネイティブ `apply_patch` の Update/Add/Delete も編集前 hook に入り、違反を hard block します。`.codex/hooks.json` 更新後は `/hooks` で definition hash を再 trust してください。pre-commit (L2) は backstop として維持します。詳細は [Codex Integration Guide](docs/guide/codex-integration.md) を参照。<!-- @work-item-id WI-384 -->
 
+### Grok Build / Antigravity CLI を使う場合
+
+```bash
+npx phasegate install --agent grok --apply
+npx phasegate doctor --agent grok
+npx phasegate install --agent antigravity --apply
+npx phasegate doctor --agent antigravity
+```
+
+Grok は hooks 対応の CLI 1.0.0 系（検証対象）が最低要件です。Claude compatibility scanner を使うため、Phasegate は `.claude/settings.json` と `.claude/skills` を管理し、二重発火する `.grok/hooks` は作りません。hook が静かに効かない場合は `grok inspect`、`/hooks`、`--trust` または `/hooks-trust` で load / trust を確認してください。Antigravity hooks は CLI v1.0.14 以降が最低要件で、Phasegate は `agy` 1.1.x で検証しています。`.agents/hooks.json` の named `phasegate-gate` と `.agents/skills` を使い、静かに効かない場合は `agy` の `/hooks` で load を確認します。編集前 hard block の対応範囲は `agy` CLI で、IDE / desktop の hook 発火は保証しません。その範囲では L2 pre-commit が主防御です。全 runtime は `--agent all`、従来の `both` は Claude + Codex のままです。詳細は [Grok guide](docs/guide/grok-integration.md) と [Antigravity guide](docs/guide/antigravity-integration.md) を参照してください。<!-- @work-item-id WI-385 -->
+
 ### アップデート
 
 ```bash
@@ -185,7 +196,7 @@ npx phasegate reconcile --apply
 | **5 層バリデーション (L0-L4)** | エディタ保存 → pre-commit → CI → 週次まで段階的に品質チェック |
 | **29 AIDLC スキル** | 要求定義 → ドメイン設計 → テスト設計 → TDD 実装をスキルとして提供 |
 | **Quick Mode** | バグ修正・docs・テスト追加など軽微変更ではゲートを緩和して高速化 |
-| **Claude Code / Codex Hooks** | Write/Edit/Bash 時に自動でゲートチェック・lint を実行 |
+| **複数 runtime hooks** | Claude Code / Codex / Grok Build / Antigravity CLI の payload を形状で判定し編集前 gate を実行 |
 | **HarnessError 形式** | 全エラーに ADR 参照 + 修正例が含まれ、AI が自己修正できる |
 | **Baseline (retrofit)** | 既存リポジトリ導入時、`baseline` snapshot に登録した既存ファイルは構造的に編集されるまで gate 対象外 |
 | **カスタム gate** | AIDLC 以外のプロジェクトでも schema-first など独自の前提条件を設定できる |
@@ -613,6 +624,8 @@ L3 Nyquist Validation の `requirement-test-matrix.json` は `phasegate:generate
 - [5-Layer Defense Model](docs/guide/layer-model.md) — L0-L4 詳細・HarnessError 形式
 - [Hooks Integration](docs/guide/hooks-integration.md) — Claude Code Hooks 設定
 - [Codex Integration](docs/guide/codex-integration.md) — Codex CLI セットアップ・カバレッジ
+- [Grok Integration](docs/guide/grok-integration.md) — Claude 互換 hook、payload 対応、trust 確認
+- [Antigravity Integration](docs/guide/antigravity-integration.md) — `agy` CLI named hook、payload 対応、IDE / desktop 境界
 - [Quick Mode vs Full Mode](docs/guide/quick-vs-full-mode.md) — `/story-implementor` vs `/quick-implementor`
 - [Retrofit Adoption Guide](docs/guide/retrofit-adoption.md) — 既存リポジトリへの段階的導入
 - [Preset Selection Guide](docs/guide/preset-selection.md) — 3 系統の preset 選定

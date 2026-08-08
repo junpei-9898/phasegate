@@ -2,6 +2,7 @@
 // @layer domain
 // @work-item-id WI-145
 // @work-item-id WI-215
+// @work-item-id WI-385
 
 import type { CheckId } from "./check-id.js";
 import { SuggestedSkill } from "./suggested-skill.js";
@@ -27,6 +28,8 @@ export class RepairTable {
       ["claude-context-missing", CONFIG_DOCTOR],
       ["codex-hook-missing", CONFIG_DOCTOR],
       ["codex-context-missing", CONFIG_DOCTOR],
+      ["grok-hook-missing", CONFIG_DOCTOR],
+      ["antigravity-hook-missing", CONFIG_DOCTOR],
       ["husky-pre-commit-missing", CONFIG_DOCTOR],
       ["husky-commit-msg-missing", CONFIG_DOCTOR],
       ["husky-pre-push-missing", null],

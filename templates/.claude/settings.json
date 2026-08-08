@@ -2,7 +2,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|apply_patch",
         "hooks": [
           {
             "type": "command",
@@ -10,7 +10,8 @@
           },
           {
             "type": "command",
-            "command": "npx phasegate hook pre-tool-use"
+            "command": "npx phasegate hook pre-tool-use",
+            "timeout": 30
           }
         ]
       },
@@ -19,7 +20,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx phasegate hook pre-tool-use"
+            "command": "npx phasegate hook pre-tool-use",
+            "timeout": 30
           }
         ]
       }

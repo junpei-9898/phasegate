@@ -14,7 +14,7 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 
 | Class | Examples | Owner | Lifecycle |
 |---|---|---|---|
-| Managed target | `phasegate.config.json`, `.claude/settings.json`, `.codex/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, root `skills/` bundled skill bodies, `.claude/skills`, `.codex/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block, real runtime artifact, shared skill body, or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
+| Managed target | `phasegate.config.json`, `.claude/settings.json`, `.codex/hooks.json`, `.agents/hooks.json`, `CLAUDE.md`, `AGENTS.md`, `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`, `.github/workflows/phasegate-aidlc-gate.yml`, root `skills/` bundled skill bodies, `.claude/skills`, `.codex/skills`, `.agents/skills`, `package.json` PhaseGate scripts/devDependency | PhaseGate managed block, real runtime artifact, shared skill body, or symlink plus user content | Created or merged by `install`, refreshed by `reconcile`, removed or reversed by `uninstall` |
 | Configuration | `phasegate.config.json`, `package.json` | User owned, PhaseGate assisted | Created by `init` or project install when absent; `install` may merge scripts/devDependency into `package.json` |
 | Generated artifact | `.phasegate/manifest.json`, `.phasegate/backups/*`, `.phasegate/uninstalled-*.json`, `.phasegate/baseline.json` | PhaseGate | Written by lifecycle commands and validators; safe to regenerate only through the owning command |
 | Runtime state/report | `.phasegate/hook-skip-events.jsonl`, explicit `doctor --report-out <path>` output, `reports/regression/*`, resolved `reporting.outputDir` reports | PhaseGate command output | Produced while hooks, doctor, and validation commands run |
@@ -26,11 +26,11 @@ PhaseGate setup is more than `phasegate.config.json`. A healthy installation is 
 
 `install --apply` and `reconcile --apply` manage only explicit targets. The current structured lifecycle covers:
 
-- Agent hook JSON: `.claude/settings.json`, `.codex/hooks.json`
+- Agent hook JSON: `.claude/settings.json`, `.codex/hooks.json`, `.agents/hooks.json`
 - Agent context files: `CLAUDE.md` and `AGENTS.md` managed sections. `AGENT.md` singular is not a PhaseGate managed target; treat it as user-owned content or migrate it manually. <!-- @work-item-id WI-174 -->
 - Husky scripts when requested: `.husky/pre-commit`, `.husky/commit-msg`, `.husky/pre-push`
 - CI workflow when requested: `.github/workflows/phasegate-aidlc-gate.yml`
-- Agent skill links: `.claude/skills`, `.codex/skills`
+- Agent skill links: `.claude/skills`, `.codex/skills`, `.agents/skills`
 - Project shared bundled skills: selected `skills/<name>/` directories plus `skills/.harness-version`
 - Project config: `phasegate.config.json` when absent, so installed agent hooks have a discoverable runtime config
 - Package metadata: PhaseGate scripts and `devDependencies.phasegate` in `package.json`
@@ -48,7 +48,7 @@ If `.claude/*` or `.codex/*` already exists and is not a PhaseGate-managed perso
 
 Personal agent context is also placed only where the runtime will read it. Claude Code uses `.claude/CLAUDE.md`. Codex uses root `AGENTS.md` when PhaseGate can create or manage it locally; if a team `AGENTS.md` already exists, PhaseGate leaves it unchanged and doctor reports `codex-context-missing` instead of creating `AGENTS.override.md`. <!-- @work-item-id WI-215 -->
 
-Project install uses a different topology: selected bundled skills are deployed once to root `skills/`, and `.claude/skills` / `.codex/skills` point to that shared target. Existing root `skills/` is also a mergeable catalog: selected bundled skill directories are refreshed, selection-excluded or user-owned skills are not removed, and uninstall deletes only manifest-managed bundled skills plus metadata. If an older project install has the links but an empty `skills/` target, `phasegate doctor` reports the selected agent skill check and `phasegate reconcile --apply` repairs the shared skill bodies. <!-- @work-item-id WI-210 --> <!-- @work-item-id WI-216 -->
+Project install uses a different topology: selected bundled skills are deployed once to root `skills/`, and `.claude/skills` / `.codex/skills` / `.agents/skills` point to that shared target. Existing root `skills/` is also a mergeable catalog: selected bundled skill directories are refreshed, selection-excluded or user-owned skills are not removed, and uninstall deletes only manifest-managed bundled skills plus metadata. If an older project install has the links but an empty `skills/` target, `phasegate doctor` reports the selected agent skill check and `phasegate reconcile --apply` repairs the shared skill bodies. <!-- @work-item-id WI-210 --> <!-- @work-item-id WI-216 -->
 
 ## Doctor Findings
 

@@ -429,7 +429,6 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 | ID | 観点 | 入力 | 期待結果 |
 |---|---|---|---|
 | UT-WM291-API-001 | known command | canonical catalog | `world:inspect`を含みunique / sorted |
@@ -441,7 +440,6 @@ WI-141 では `commit-msg` / `bypass:audit` の境界に bypass trailer validati
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 | ID | 観点 | 入力 | 期待結果 |
 |---|---|---|---|
 | UT-WM296-API-001 | known command | catalog | inspect / pin / deriveを含みunique / sorted |
@@ -464,3 +462,11 @@ commitMessage指定時だけdesign declaration validatorを呼び、finding sect
 <!-- @work-item-id WI-307 -->
 
 warning-only raw failureについて、`failOnWarning:false`ではpublic `passed:true` / aggregate passかつwarning保持、`failOnWarning:true`ではpublic `passed:false` / aggregate failかつwarning保持を検証する。error severityまたはdiagnosticなしfailureは既定でもfail-closedとする。command dispatch responseでも同じshapeを固定する。
+
+## WI-385 AgentTarget CLI tests
+
+<!-- @work-item-id WI-385 -->
+
+install / init / setup / doctor の parser が grok / antigravity / all を受理し、未知値を exit 2 にすること、
+root help と subcommand help が同じ enum を表示することを検証する。既存 both の semantic target と各 command
+default は snapshot で不変を固定する。

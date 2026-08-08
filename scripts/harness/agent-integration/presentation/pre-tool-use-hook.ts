@@ -8,25 +8,32 @@
  * @work-item-id WI-347
  * @work-item-id WI-376
  * @work-item-id WI-384
+ * @work-item-id WI-385
  *
  * PreToolUse Hook Adapter
  * Claude Code の PreToolUse Hook エントリポイント
  * stdin からJSON を読み取り、HandlePreToolUseUseCase を呼び出す
  */
 
-import { HandlePreToolUseUseCase } from '../application/usecases/handle-pre-tool-use-usecase.js';
-import { BashWriteTargetExtractor } from '../domain/services/bash-write-target-extractor.js';
-import { ApplyPatchWriteTargetExtractor } from '../domain/services/apply-patch-write-target-extractor.js';
-import { HarnessConfigConfigQueryAdapter } from '../infrastructure/adapters/harness-config-config-query-adapter.js';
-import { PhaseGateQueryAdapter } from '../infrastructure/adapters/phase-gate-query-adapter.js';
-import { FileSystemStoryReflectionQueryAdapter } from '../infrastructure/adapters/file-system-story-reflection-query-adapter.js';
-import { QuickModeFullModeRequirementAdapter } from '../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js';
-import { CiGovernanceBaselineGrandfatherAdapter } from '../infrastructure/adapters/ci-governance-baseline-grandfather-adapter.js';
-import { HarnessErrorGuidanceAdapter } from '../infrastructure/adapters/harness-error-guidance-adapter.js';
-import { FileSystemFullModeSessionQueryAdapter } from '../infrastructure/adapters/file-system-full-mode-session-query-adapter.js';
-import { createQuickModeCompositionRoot } from '../../quick-mode/composition-root.js';
-import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { createQuickModeCompositionRoot } from "../../quick-mode/composition-root.js";
+import type {
+  CanonicalPreToolUseInput,
+  HookResponseProfile,
+} from "../application/dto/normalized-pre-tool-use-request.js";
+import { HandlePreToolUseUseCase } from "../application/usecases/handle-pre-tool-use-usecase.js";
+import { ApplyPatchWriteTargetExtractor } from "../domain/services/apply-patch-write-target-extractor.js";
+import { BashWriteTargetExtractor } from "../domain/services/bash-write-target-extractor.js";
+import { CiGovernanceBaselineGrandfatherAdapter } from "../infrastructure/adapters/ci-governance-baseline-grandfather-adapter.js";
+import { FileSystemFullModeSessionQueryAdapter } from "../infrastructure/adapters/file-system-full-mode-session-query-adapter.js";
+import { FileSystemStoryReflectionQueryAdapter } from "../infrastructure/adapters/file-system-story-reflection-query-adapter.js";
+import { HarnessConfigConfigQueryAdapter } from "../infrastructure/adapters/harness-config-config-query-adapter.js";
+import { HarnessErrorGuidanceAdapter } from "../infrastructure/adapters/harness-error-guidance-adapter.js";
+import { PhaseGateQueryAdapter } from "../infrastructure/adapters/phase-gate-query-adapter.js";
+import { QuickModeFullModeRequirementAdapter } from "../infrastructure/adapters/quick-mode-full-mode-requirement-adapter.js";
+import { PreToolUsePayloadNormalizer } from "./pre-tool-use-payload-normalizer.js";
+import { PreToolUseResponseRenderer } from "./pre-tool-use-response-renderer.js";
 
 /**
  * WI-376 (ADR-039): 呼び出し元 skill 名を受け取るフィールド（caller_skill）は持たない。
@@ -35,24 +42,13 @@ import * as fs from 'node:fs/promises';
  */
 interface PreToolUseHookInput {
   cwd?: string;
-  tool_name?: string;
-  tool_input?: {
-    path?: string;
-    file_path?: string;
-    paths?: string[];
-    command?: string;
-    content?: string;
-    old_string?: string;
-    new_string?: string;
-    old_str?: string;
-    new_str?: string;
-    [key: string]: unknown;
-  };
+  tool_name: string;
+  tool_input: CanonicalPreToolUseInput;
 }
 
 interface TargetChange {
   filePath: string;
-  changeKind?: 'CREATE' | 'MODIFY' | 'DELETE';
+  changeKind?: "CREATE" | "MODIFY" | "DELETE";
   beforeContent?: string | null;
   afterContent?: string | null;
 }
@@ -62,15 +58,15 @@ async function readStdin(): Promise<string> {
   for await (const chunk of process.stdin) {
     chunks.push(chunk as Buffer);
   }
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 async function findConfigPath(startDir: string): Promise<string> {
   let dir = startDir;
   while (true) {
     const candidates = [
-      path.join(dir, 'phasegate.config.json'),
-      path.join(dir, '.phasegate-local', 'phasegate.config.json'),
+      path.join(dir, "phasegate.config.json"),
+      path.join(dir, ".phasegate-local", "phasegate.config.json"),
     ];
     for (const candidate of candidates) {
       try {
@@ -82,18 +78,18 @@ async function findConfigPath(startDir: string): Promise<string> {
     if (parent === dir) break;
     dir = parent;
   }
-  return path.join(startDir, 'phasegate.config.json');
+  return path.join(startDir, "phasegate.config.json");
 }
 
 function projectRootForConfig(configPath: string): string {
   const configDir = path.dirname(configPath);
-  return path.basename(configDir) === '.phasegate-local' ? path.dirname(configDir) : configDir;
+  return path.basename(configDir) === ".phasegate-local" ? path.dirname(configDir) : configDir;
 }
 
 function isProjectExternalPath(filePath: string, cwd: string, projectRoot: string): boolean {
   const resolvedPath = path.resolve(cwd, filePath);
   const relativePath = path.relative(projectRoot, resolvedPath);
-  return relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath);
+  return relativePath === ".." || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath);
 }
 
 async function main(): Promise<void> {
@@ -101,29 +97,41 @@ async function main(): Promise<void> {
   try {
     raw = await readStdin();
   } catch {
-    process.stderr.write('stdin読み取りエラー\n');
+    process.stderr.write("stdin読み取りエラー\n");
     process.exit(2);
   }
 
-  let input: PreToolUseHookInput;
+  let parsed: unknown;
   try {
-    input = JSON.parse(raw) as PreToolUseHookInput;
+    parsed = JSON.parse(raw) as unknown;
   } catch {
     process.stderr.write(`不正なJSONです: ${raw}\n`);
     process.exit(2);
   }
 
-  const toolName = input.tool_name;
-  if (!toolName) {
-    process.stderr.write('tool_nameフィールドが必要です\n');
-    process.exit(2);
+  const normalizer = new PreToolUsePayloadNormalizer();
+  const normalized = normalizer.normalize(parsed);
+  if (!normalized.ok) {
+    if (normalized.responseProfile === undefined) {
+      process.stderr.write(`${normalized.reason}\n`);
+      process.exit(2);
+    }
+    exitWithRenderedResponse(new PreToolUseResponseRenderer().deny(normalized.responseProfile, normalized.reason));
   }
+  const request = normalized.request;
+  const responseProfile = request.responseProfile;
+  const input: PreToolUseHookInput = {
+    cwd: request.cwd,
+    tool_name: request.toolName,
+    tool_input: request.toolInput,
+  };
+  const toolName = input.tool_name;
 
   const cwd = path.resolve(input.cwd ?? process.cwd());
   const toRelative = (p: string): string => {
     if (path.isAbsolute(p)) {
       const rel = path.relative(cwd, p);
-      return rel.startsWith('..') ? p : rel;
+      return rel.startsWith("..") ? p : rel;
     }
     return p;
   };
@@ -148,26 +156,26 @@ async function main(): Promise<void> {
   // translator の WRITE_TOOLS チェックを通過させる（Bash のままではフェーズゲートが
   // スキップされるため）。
   let effectiveToolName = toolName;
-  if (toolName === 'apply_patch') {
+  if (toolName === "apply_patch") {
     const command = input.tool_input?.command;
-    if (typeof command !== 'string' || command.length === 0) {
-      process.stderr.write('apply_patch の tool_input.command が必要です\n');
-      process.exit(2);
+    if (typeof command !== "string" || command.length === 0) {
+      deny(responseProfile, "apply_patch の tool_input.command が必要です");
     }
     const extractor = new ApplyPatchWriteTargetExtractor();
     const patchTargets = extractor.extract(command);
     if (patchTargets.length === 0) {
-      process.stderr.write('apply_patch command から書き込み対象を抽出できませんでした\n');
-      process.exit(2);
+      deny(responseProfile, "apply_patch command から書き込み対象を抽出できませんでした");
     }
     targetFilePaths.push(...patchTargets.map((target) => toRelative(target.filePath)));
-    targetChanges.push(...patchTargets.map((target) => ({
-      filePath: toRelative(target.filePath),
-      changeKind: target.changeKind,
-    })));
-    effectiveToolName = 'Write';
+    targetChanges.push(
+      ...patchTargets.map((target) => ({
+        filePath: toRelative(target.filePath),
+        changeKind: target.changeKind,
+      })),
+    );
+    effectiveToolName = "Write";
   }
-  if (toolName === 'Bash' && typeof input.tool_input?.command === 'string') {
+  if (toolName === "Bash" && typeof input.tool_input?.command === "string") {
     const extractor = new BashWriteTargetExtractor();
     const bashTargets = extractor.extract(input.tool_input.command);
     if (bashTargets.length > 0) {
@@ -182,7 +190,7 @@ async function main(): Promise<void> {
           recordedTargetPaths.add(change.filePath);
         }
       }
-      effectiveToolName = 'Write';
+      effectiveToolName = "Write";
     }
   }
 
@@ -233,31 +241,44 @@ async function main(): Promise<void> {
     });
 
     if (output.shouldBlock) {
-      const msg = output.error?.message
-        ?? `ファイル保護によりブロックされました: ${output.blockedFilePath ?? '不明なファイル'}`;
-      process.stderr.write(`${msg}\n`);
-      process.exit(2);
+      const msg =
+        output.error?.message ?? `ファイル保護によりブロックされました: ${output.blockedFilePath ?? "不明なファイル"}`;
+      deny(responseProfile, msg);
     }
 
     // Quick Mode が write を許可した場合に visibility を上げる informational notice。
     // exit 0 は維持し semantics は変えない。WI-087 finding #3。
     if (output.quickModeAllowed !== undefined) {
       const cat = output.quickModeAllowed.dominantCategory;
-      const suffix = cat !== undefined && cat !== '' ? `, category=${cat}` : '';
+      const suffix = cat !== undefined && cat !== "" ? `, category=${cat}` : "";
       process.stderr.write(`phasegate: write allowed (Quick Mode${suffix})\n`);
     }
     if (output.fullModeSessionAllowed !== undefined) {
       const session = output.fullModeSessionAllowed;
-      const workItem = session.workItemId !== undefined ? `, workItem=${session.workItemId}` : '';
-      const unit = session.unit !== undefined ? `, unit=${session.unit}` : '';
+      const workItem = session.workItemId !== undefined ? `, workItem=${session.workItemId}` : "";
+      const unit = session.unit !== undefined ? `, unit=${session.unit}` : "";
       process.stderr.write(`phasegate: write allowed (Full Mode session${workItem}${unit})\n`);
     }
 
     process.exit(0);
   } catch (error) {
-    process.stderr.write(`実行エラー: ${String(error)}\n`);
-    process.exit(2);
+    deny(responseProfile, `実行エラー: ${String(error)}`);
   }
+}
+
+function exitWithRenderedResponse(response: {
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly exitCode: 0 | 2;
+}): never {
+  if (response.stdout.length > 0) process.stdout.write(response.stdout);
+  if (response.stderr.length > 0) process.stderr.write(response.stderr);
+  process.exit(response.exitCode);
+  throw new Error("process.exit returned unexpectedly");
+}
+
+function deny(profile: HookResponseProfile, reason: string): never {
+  exitWithRenderedResponse(new PreToolUseResponseRenderer().deny(profile, reason));
 }
 
 async function buildTargetChanges(
@@ -266,7 +287,7 @@ async function buildTargetChanges(
   toRelative: (p: string) => string,
 ): Promise<TargetChange[]> {
   const toolInput = input.tool_input;
-  if (toolInput == null || typeof toolInput !== 'object') {
+  if (toolInput == null || typeof toolInput !== "object") {
     return [];
   }
 
@@ -276,18 +297,20 @@ async function buildTargetChanges(
   }
 
   const filePath = toRelative(rawPath);
-  const oldString = typeof toolInput.old_string === 'string' ? toolInput.old_string : toolInput.old_str;
-  const newString = typeof toolInput.new_string === 'string' ? toolInput.new_string : toolInput.new_str;
-  if (typeof oldString === 'string' && typeof newString === 'string') {
+  const oldString = toolInput.old_string;
+  const newString = toolInput.new_string;
+  if (typeof oldString === "string" && typeof newString === "string") {
     return [{ filePath, beforeContent: oldString, afterContent: newString }];
   }
 
-  if (typeof toolInput.content === 'string') {
-    return [{
-      filePath,
-      beforeContent: await readExistingContent(cwd, rawPath),
-      afterContent: toolInput.content,
-    }];
+  if (typeof toolInput.content === "string") {
+    return [
+      {
+        filePath,
+        beforeContent: await readExistingContent(cwd, rawPath),
+        afterContent: toolInput.content,
+      },
+    ];
   }
 
   return [];
@@ -296,7 +319,7 @@ async function buildTargetChanges(
 async function readExistingContent(cwd: string, filePath: string): Promise<string | null> {
   const absolutePath = path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath);
   try {
-    return await fs.readFile(absolutePath, 'utf8');
+    return await fs.readFile(absolutePath, "utf8");
   } catch {
     return null;
   }
@@ -308,7 +331,7 @@ async function buildBashTargetChange(
   toRelative: (p: string) => string,
 ): Promise<TargetChange> {
   const filePath = toRelative(rawPath);
-  if (rawPath.includes('$') || rawPath.includes('`') || rawPath.startsWith('~')) {
+  if (rawPath.includes("$") || rawPath.includes("`") || rawPath.startsWith("~")) {
     // hook ではシェル展開後の実パスを解決できないため、存在チェックを避けて MODIFY 既定にする。
     return { filePath };
   }
@@ -318,10 +341,10 @@ async function buildBashTargetChange(
     return { filePath };
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT' || code === 'ENOTDIR') {
+    if (code === "ENOENT" || code === "ENOTDIR") {
       // Bash では afterContent を取得できないため、空文字を CREATE 判定用の
       // 「変更後内容あり」sentinel として渡す。実ファイルへの書き込みは行わない。
-      return { filePath, beforeContent: null, afterContent: '' };
+      return { filePath, beforeContent: null, afterContent: "" };
     }
     // 権限エラー等で存在を確認できない場合は従来どおり MODIFY 既定（安全側）。
     return { filePath };

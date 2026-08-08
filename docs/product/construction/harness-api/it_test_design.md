@@ -656,7 +656,6 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 | ID | シナリオ | 入力 | 期待結果 |
 |---|---|---|---|
 | IT-WM291-API-001 | dispatch / catalog同期 | main source + `KNOWN_HARNESS_COMMANDS` | case集合が完全一致 |
@@ -670,7 +669,6 @@ Wave 2未完Adapterに関するテストには以下のコメントを付与す�
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 main processを通じてpin preview / apply、derive pure / write、invalid invocation / schema / configを実行し、single JSON envelope、human stderr、exit 0/1/2、filesystem mutation scopeを確認する。known command conformanceは3 world commandをmain case集合と同じcommitで検証する。
 
 ## WI-300 World config CLI integration
@@ -689,7 +687,6 @@ temporary Git index、constraint fixture、commit message fileを用い、matchi
 <!-- @work-item-id WI-306 -->
 
 @story-id H17-18
-
 temp corpusでtop-level `phasegate:attest`を実行し、World public facade由来rootを持つv2 documentとverify exit 0を確認する。programmatic provider未配線fixtureではv1を生成し、旧CLI / repository contractの後方互換を固定する。
 
 ## WI-307 World command regression consumption
@@ -697,5 +694,12 @@ temp corpusでtop-level `phasegate:attest`を実行し、World public facade由�
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 regression-suite E2Eからactual main processを起動し、canonical command catalog、v1 envelope discriminator、command echo、exit 0 / 1 / 2を検証する。main sourceを文字列だけで検査する既存conformanceに加え、process output contractを固定する。
+
+## WI-385 AgentTarget process integration
+
+<!-- @work-item-id WI-385 -->
+
+temp project で install / init / setup:agent / doctor の新 target を main process 経由で実行し、human / JSON
+出力、exit code、filesystem target を検証する。`--agent both` は新 runtime files / notices を追加せず、
+`--agent all` は Claude-compatible Grok hook を重複生成しない。invalid target の usage error は既存 exit 2 を維持する。

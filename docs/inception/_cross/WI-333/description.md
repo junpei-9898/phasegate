@@ -1,6 +1,7 @@
 ---
 id: WI-333
 type: fix
+status: reflected
 source: ADR-038 G1 (github#40 完全解消)
 ---
 

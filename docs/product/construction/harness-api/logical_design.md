@@ -2071,3 +2071,15 @@ harness-api は dispatch と canonical コマンド一覧のみを持つ。
 `KNOWN_HARNESS_COMMANDS` へは `scaffold-inception` / `templates` を
 アルファベット順を保って追加する。main.ts の `case` ラベル集合との集合一致は
 conformance テストが強制するため、片方だけの更新は fail する。
+
+## WI-385 Agent target dispatch wiring
+
+<!-- @work-item-id WI-385 -->
+
+top-level CLI presentation は install / deprecated init / setup:agent / doctor の `--agent` 値として
+`grok` / `antigravity` / `all` を加法的に受理し、root / subcommand help と invalid-value error を同時更新する。
+`both` は Claude + Codex、既定値は各 command の現行値を維持する。
+
+main は parsed target を installation handler へ渡すだけで、`.claude` / `.agents` の target mapping、
+payload shape、trust、IDE capability を判断しない。CLI conformance test は help enum、parser admission、
+install target snapshot を同じ変更で固定する。

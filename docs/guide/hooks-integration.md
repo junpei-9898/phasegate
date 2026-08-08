@@ -6,17 +6,28 @@ Phasegate integrates natively with Claude Code through its hooks system. This en
 
 For new or existing projects, prefer `npx phasegate install --dry-run` followed by `npx phasegate install --apply` so existing hook JSON is merged instead of replaced. Manual editing is still possible, but then `phasegate doctor` may report missing managed targets until the expected PhaseGate entries, skill links, Husky scripts, CI workflow, and manifest are present. See [Setup Artifacts](setup-artifacts.md). <!-- @work-item-id WI-152 --> <!-- @work-item-id WI-169 -->
 
-Add the following to `.claude/settings.json`:
+### Manual hook configuration
+
+If structured install is unavailable, use the same packaged commands and timeout as the distributed `.claude/settings.json`:
 
 ```jsonc
 {
   "hooks": {
     "PreToolUse": [
       {
+        "matcher": "Bash|apply_patch",
+        "hooks": [{
+          "type": "command",
+          "command": "npx phasegate hook pre-tool-use",
+          "timeout": 30
+        }]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [{
           "type": "command",
-          "command": "npx tsx scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts"
+          "command": "npx phasegate hook pre-tool-use",
+          "timeout": 30
         }]
       }
     ],
@@ -25,7 +36,7 @@ Add the following to `.claude/settings.json`:
         "matcher": "Write|Edit",
         "hooks": [{
           "type": "command",
-          "command": "npx tsx scripts/harness/agent-integration/presentation/post-tool-use-hook.ts"
+          "command": "npx phasegate hook post-tool-use"
         }]
       }
     ],
@@ -34,13 +45,25 @@ Add the following to `.claude/settings.json`:
         "matcher": "",
         "hooks": [{
           "type": "command",
-          "command": "npx tsx scripts/harness/agent-integration/presentation/stop-hook.ts"
+          "command": "npx phasegate hook stop"
         }]
       }
     ]
   }
 }
 ```
+
+## Runtime coverage matrix
+
+<!-- @work-item-id WI-385 -->
+
+| Runtime payload | Managed source | Pre-edit deny output | Coverage boundary |
+|---|---|---|---|
+| Claude / Codex flat snake_case | `.claude/settings.json` / `.codex/hooks.json` | empty stdout, stderr, exit 2 | Existing contract unchanged |
+| Grok flat camelCase | Claude-compatible `.claude/settings.json` | top-level deny plus `hookSpecificOutput`, stderr, exit 2 | Trust must be checked with `grok inspect` / `/hooks` |
+| Antigravity nested `toolCall` | named `.agents/hooks.json` | top-level `decision` / `reason`, stderr, exit 2 | Hard block supported for `agy` CLI only |
+
+All allow paths keep stdout empty and do not override runtime permission. Malformed, ambiguous, truncated command/patch, or supported write tools without extractable targets fail closed. L2 pre-commit and CI remain the backstops for untrusted/skipped hooks, Antigravity IDE/desktop, and unverified timeout/crash behavior.
 
 ## Hook Behaviors
 

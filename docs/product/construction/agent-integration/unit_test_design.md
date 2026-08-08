@@ -531,3 +531,17 @@ usecaseはdeterministic fake query portを使い、World domain objectをmockし
 
 Vitest / semantic AAA / 日本語かつ重複しない `it()` 名 / `actual` 変数を用い、domain service を
 モックしない。`@work-item-id WI-384` を付け、新規 WCR-005 obligation を発生させない。
+
+## WI-385 Shape normalizer / response tests
+
+<!-- @work-item-id WI-385 -->
+
+| ID range | 観点 | 期待結果 |
+|---|---|---|
+| UT-WI385-NORM-001..006 | 3 shape、ambiguous、agent/model 非依存、unknown key | structural detection が決定的 |
+| UT-WI385-GROK-001..007 | command / replace / write / patch / truncated | canonical input または fail-closed |
+| UT-WI385-AGY-001..007 | write / replace / multi / command の args 候補 | path / command 抽出、不能時 deny |
+| UT-WI385-RESP-001..005 | profile 別 deny / allow | exact stdout / stderr / exit contract |
+
+payload mapper と既存 extractor は実体で検証し、agent/model field の値で分岐しないことを assertion する。
+Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 命名を維持する。
