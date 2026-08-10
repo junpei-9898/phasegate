@@ -396,3 +396,11 @@ agent-integration adapter から渡る explicit CREATE / MODIFY / DELETE を既�
 `QuickModeFullModeRequirementAdapter` が欠落なく classifier へ転送し、DELETE を含む mixed targets の
 dominant category / Full Mode 判定が path rule と一致することを検証する。field を渡さない既存
 Write / Edit / Bash fixture の結果は不変とする。
+
+## WI-390 Public classification integration
+
+<!-- @work-item-id WI-390 -->
+
+`check-change-category`、pre-tool-use hook、`ci-check --quick` の共有 config 経路で `.md` / `.mdx` の docs
+分類が一致することを確認する。単一不許可カテゴリは JSON / human output とも
+`CATEGORY_NOT_ALLOWED`、カテゴリ混在だけ `MIXED_CHANGES` を表示する。

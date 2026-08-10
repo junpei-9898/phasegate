@@ -5,6 +5,7 @@
 // @work-item-id WI-314
 // @work-item-id WI-330
 // @work-item-id WI-333
+// @work-item-id WI-390
 
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -92,7 +93,7 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
       }
     }, 60000);
 
-    it("phasegate.config.json 自身への Write は許可され自己修復経路が残ること", async () => {
+    it("phasegate.config.json 自身への Write は config が不正でも保護対象として遮断すること", async () => {
       // Arrange
       const workDir = await makeInvalidConfigProject();
       try {
@@ -110,7 +111,8 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
         const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
 
         // Assert
-        expect(actual.exitCode).toBe(0);
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("保護ファイルへの書き込みがブロック");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }
@@ -182,7 +184,7 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
       }
     }, 60000);
 
-    it("config 不在でも config 自身への Write は exit 0 で許可され自己修復経路が開いていること (WI-333)", async () => {
+    it("config 不在でも config 自身への Write は保護対象として遮断すること", async () => {
       // Arrange
       const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-missing-config-"));
       try {
@@ -199,7 +201,8 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
         const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
 
         // Assert
-        expect(actual.exitCode).toBe(0);
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("保護ファイルへの書き込みがブロック");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }
@@ -291,6 +294,28 @@ target("不正 config での hook / doctor fail-open (GitHub #40)", () => {
         const configContent = await readFile(path.join(workDir, "phasegate.config.json"), "utf-8");
         expect(actual.exitCode).toBe(0);
         expect(configContent).toBe("{ broken");
+      } finally {
+        await rm(workDir, { recursive: true, force: true });
+      }
+    }, 60000);
+
+    it("壊れた config 自身への Write は trust root 保護で遮断すること", async () => {
+      const workDir = await mkdtemp(path.join(tmpdir(), "phasegate-broken-json-"));
+      try {
+        await writeFile(path.join(workDir, "phasegate.config.json"), "{ broken", "utf-8");
+        const stdin = JSON.stringify({
+          cwd: workDir,
+          tool_name: "Write",
+          tool_input: {
+            file_path: path.join(workDir, "phasegate.config.json"),
+            content: "{}",
+          },
+        });
+
+        const actual = await runCli(["hook", "pre-tool-use"], workDir, stdin);
+
+        expect(actual.exitCode).toBe(2);
+        expect(actual.stderr).toContain("保護ファイルへの書き込みがブロック");
       } finally {
         await rm(workDir, { recursive: true, force: true });
       }

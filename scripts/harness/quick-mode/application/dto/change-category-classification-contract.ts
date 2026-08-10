@@ -11,6 +11,6 @@ export interface ChangeCategoryClassificationContract {
   readonly dominantCategory: string | null;
   readonly perFile: readonly ChangeCategoryPerFile[];
   readonly fullModeRequired: boolean;
-  readonly rejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+  readonly rejectionRule?: 'CATEGORY_NOT_ALLOWED' | 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
   readonly rejectionReason?: string;
 }

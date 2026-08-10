@@ -1,6 +1,7 @@
 // @unit agent-integration
 // @layer domain
 // @story H11-02
+// @work-item-id WI-390
 
 import { describe, expect, it } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -171,7 +172,7 @@ target('ProtectedFileList', () => {
     });
 
     // UT-PFL-052
-    it('全DEFAULT_PATTERNS除外時にフォールバックで全パターンが復元されること', () => {
+    it('excludable defaults をすべて除外しても trust roots は残ること', () => {
       // Arrange
       const exclusions = [
         'biome.json',
@@ -179,16 +180,14 @@ target('ProtectedFileList', () => {
         'tsconfig.json',
         'package.json',
         'package-lock.json',
-        '.phasegate/baseline.json',
-        '**/.phasegate/baseline.json',
-        '.husky/**',
-        '**/.husky/**',
       ];
       // Act
       const actual = ProtectedFileList.createWithExclusions(exclusions);
       // Assert
-      expect(actual.matches('tsconfig.json')).toBe(true);
-      expect(actual.matches('package.json')).toBe(true);
+      expect(actual.matches('tsconfig.json')).toBe(false);
+      expect(actual.matches('package.json')).toBe(false);
+      expect(actual.matches('phasegate.config.json')).toBe(true);
+      expect(actual.matches('.husky/pre-commit')).toBe(true);
     });
 
     // UT-PFL-053
@@ -215,6 +214,16 @@ target('ProtectedFileList', () => {
       expect(actual.matches('custom.config.js')).toBe(true);
       expect(actual.matches('tsconfig.json')).toBe(false);
       expect(actual.matches('biome.json')).toBe(true);
+    });
+
+    it('追加パターンは exclude で除外できること', () => {
+      const actual = ProtectedFileList.createWithAdditionalAndExclusions(
+        ['custom.config.js'],
+        ['custom.config.js'],
+      );
+
+      expect(actual.matches('custom.config.js')).toBe(false);
+      expect(actual.matches('phasegate.config.json')).toBe(true);
     });
 
     // UT-PFL-061
@@ -290,14 +299,42 @@ target('ProtectedFileList', () => {
     });
 
     // UT-PFL-076
-    it('exclude 指定で .husky 保護を解除できること', () => {
+    it('exclude 指定でも .husky 保護を解除できないこと', () => {
       // Arrange
       const exclusions = ['.husky/**', '**/.husky/**'];
       // Act
       const actual = ProtectedFileList.createWithExclusions(exclusions);
       // Assert
-      expect(actual.matches('.husky/pre-commit')).toBe(false);
+      expect(actual.matches('.husky/pre-commit')).toBe(true);
       expect(actual.matches('package.json')).toBe(true);
+    });
+  });
+
+  context('non-excludable trust roots (WI-390)', () => {
+    it.each([
+      'phasegate.config.json',
+      '.phasegate-local/phasegate.config.json',
+      'packages/app/phasegate.config.json',
+      '.phasegate/baseline.json',
+      'packages/app/.phasegate/baseline.json',
+      'CLAUDE.md',
+      'AGENTS.md',
+      'GEMINI.md',
+    ])('exclude 指定でも %s を保護すること', (filePath) => {
+      const exclusions = [
+        'phasegate.config.json',
+        '.phasegate-local/phasegate.config.json',
+        '**/phasegate.config.json',
+        '.phasegate/baseline.json',
+        '**/.phasegate/baseline.json',
+        'CLAUDE.md',
+        'AGENTS.md',
+        'GEMINI.md',
+      ];
+
+      const actual = ProtectedFileList.createWithExclusions(exclusions);
+
+      expect(actual.matches(filePath)).toBe(true);
     });
   });
 

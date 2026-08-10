@@ -1232,3 +1232,14 @@ repo の `scripts/harness/*/domain/**` は外部 npm パッケージを一切 im
 kind の解決順は explicit kind、before/after による CREATE 推定、targetChanges 未指定 CLI の filesystem
 推定、MODIFY default とする。これにより agent-integration が raw patch directive から導出した DELETE
 を `ChangedFile` へそのまま渡す。既存 adapter / caller は optional field により変更不要である。
+
+## WI-390 Extension-based docs classification
+
+<!-- @work-item-id WI-390 -->
+
+`categorizeFileByBuiltInRules` は config / API / test の後、domain / path-docs / skills / CREATE fallback より前に
+`.md` / `.mdx` suffix を `docs` へ写像する。`judge()` は categorized map size により
+`CATEGORY_NOT_ALLOWED` と `MIXED_CHANGES` を分ける。NEW_DOMAIN / API_CONTRACT の path checks と評価順、
+categoryOverrides の非降格規則は維持する。
+
+public classification / eligibility DTO と agent-integration transport union は同一 release で加法更新する。

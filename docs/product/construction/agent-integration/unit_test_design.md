@@ -545,3 +545,12 @@ Vitest / semantic AAA / 日本語かつ重複しない `it()` 名 / `actual` 変
 
 payload mapper と既存 extractor は実体で検証し、agent/model field の値で分岐しないことを assertion する。
 Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 命名を維持する。
+
+## WI-390 Protected trust-root tests
+
+<!-- @work-item-id WI-390 -->
+
+- config / baseline / Husky / agent instruction が exclusions に含まれても `matches()` は true。
+- biome / package 等の通常 default は従来どおり除外できる。
+- config / Husky guidance は managed route を含み、具体的な exclude recipe を含まない。
+- `CATEGORY_NOT_ALLOWED` が Port / DTO / HookTranslationResult を欠落なく通過する。

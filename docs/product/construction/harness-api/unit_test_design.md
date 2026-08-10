@@ -470,3 +470,10 @@ warning-only raw failureについて、`failOnWarning:false`ではpublic `passed
 install / init / setup / doctor の parser が grok / antigravity / all を受理し、未知値を exit 2 にすること、
 root help と subcommand help が同じ enum を表示することを検証する。既存 both の semantic target と各 command
 default は snapshot で不変を固定する。
+
+## WI-390 Transport contract tests
+
+<!-- @work-item-id WI-390 -->
+
+- `CATEGORY_NOT_ALLOWED` が classification JSON / handler result の有効な rejection rule として保持される。
+- config-state fail-open command set は変更せず、mutation permission と混同しない。

@@ -18,7 +18,7 @@ export interface BlockMetadata {
   readonly scopeLevel?: 1 | 2 | 3;
   readonly unitId?: string;
   readonly storyId?: string;
-  readonly fullModeRejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+  readonly fullModeRejectionRule?: 'CATEGORY_NOT_ALLOWED' | 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
   readonly fullModeRejectionReason?: string;
   readonly fullModeDominantCategory?: string;
 }

@@ -155,3 +155,14 @@ Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 変数�
 | UT-WI385-INST-008 | 新 enum parse contract | grok / antigravity / all を受理 |
 
 selection value と JSON ownership logic は実体で検証し、filesystem Port 以外をモックしない。
+
+## WI-390 Husky runtime diagnostic tests
+
+<!-- @work-item-id WI-390 -->
+
+| ID range | 観点 | 期待結果 |
+|---|---|---|
+| UT-WI390-HUSKY-001..004 | runtime state VO | active / unset / unsupported / shim missing を保持 |
+| UT-WI390-HUSKY-005..008 | doctor check mapping | active は null、inactive / unavailable は red |
+| UT-WI390-HUSKY-009 | personal install scope | finding は scopedOut |
+| UT-WI390-HOOK-001 | bundled script contract | project-wide phasegate lint を使用し raw biome lint を含まない |

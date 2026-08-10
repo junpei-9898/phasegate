@@ -5,6 +5,7 @@
 // @work-item-id WI-215
 // @work-item-id WI-330
 // @work-item-id WI-385
+// @work-item-id WI-390
 
 import { AntigravityHookMissingCheck } from "./application/checks/antigravity-hook-missing-check.js";
 import { CiWorkflowMissingCheck } from "./application/checks/ci-workflow-missing-check.js";
@@ -19,6 +20,7 @@ import { GrokHookMissingCheck } from "./application/checks/grok-hook-missing-che
 import { HuskyCommitMsgMissingCheck } from "./application/checks/husky-commit-msg-missing-check.js";
 import { HuskyPreCommitMissingCheck } from "./application/checks/husky-pre-commit-missing-check.js";
 import { HuskyPrePushMissingCheck } from "./application/checks/husky-pre-push-missing-check.js";
+import { HuskyRuntimeInactiveCheck } from "./application/checks/husky-runtime-inactive-check.js";
 import { PackageJsonDevdepMissingCheck } from "./application/checks/package-json-devdep-missing-check.js";
 import { WiWorkflowDriftCheck } from "./application/checks/wi-workflow-drift-check.js";
 import { RunDoctorDiagnosticsUseCase } from "./application/usecases/run-doctor-diagnostics.js";
@@ -32,6 +34,7 @@ import { ConfigStatusProbeAdapter } from "./infrastructure/adapters/config-statu
 import { FileSystemManifestRepositoryAdapter } from "./infrastructure/adapters/file-system-manifest-repository-adapter.js";
 import { NodeCryptoHashAdapter } from "./infrastructure/adapters/node-crypto-hash-adapter.js";
 import { NodeFsFileInspectorAdapter } from "./infrastructure/adapters/node-fs-file-inspector-adapter.js";
+import { GitHooksRuntimeProbeAdapter } from "./infrastructure/adapters/git-hooks-runtime-probe-adapter.js";
 import { SkillDeployerModelDelegationAdapter } from "./infrastructure/adapters/skill-deployer-model-delegation-adapter.js";
 import { DoctorHandler } from "./presentation/cli/doctor-handler.js";
 import { InstallHandler } from "./presentation/cli/install-handler.js";
@@ -52,6 +55,7 @@ export function createInstallationModule() {
   const hashCalculator = new NodeCryptoHashAdapter();
   const modelDelegation = new SkillDeployerModelDelegationAdapter();
   const configStatusProbe = new ConfigStatusProbeAdapter();
+  const gitHooksRuntimeProbe = new GitHooksRuntimeProbeAdapter();
   const checks = [
     new ClaudeHookMissingCheck(),
     new ClaudeContextMissingCheck(),
@@ -62,6 +66,7 @@ export function createInstallationModule() {
     new HuskyPreCommitMissingCheck(),
     new HuskyCommitMsgMissingCheck(),
     new HuskyPrePushMissingCheck(),
+    new HuskyRuntimeInactiveCheck(gitHooksRuntimeProbe),
     new CiWorkflowMissingCheck(),
     new PackageJsonDevdepMissingCheck(),
     new ClaudeSkillsSymlinkCheck(),

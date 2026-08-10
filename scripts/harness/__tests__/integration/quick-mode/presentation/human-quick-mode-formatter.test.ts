@@ -30,7 +30,9 @@ function createApprovedDecision(): QuickModeDecisionContract {
   };
 }
 
-function createRejectedDecision(rule: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT' = 'MIXED_CHANGES'): QuickModeDecisionContract {
+function createRejectedDecision(
+  rule: 'CATEGORY_NOT_ALLOWED' | 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT' = 'MIXED_CHANGES',
+): QuickModeDecisionContract {
   return {
     eligibility: {
       eligible: false,

@@ -681,3 +681,17 @@ Bash / Write / Edit / apply_patch を覆い、command type と timeout 30 を満
 Antigravity scope は named map と phasegate command を持つ同一 entry の matcher regex、type、timeout 30 を
 検査する。Grok は trust 確認手順、Antigravity は CLI-only hard block と
 IDE / desktop の L2 backstop を human / JSON notice に出し、観測不能 state を偽の PASS にしない。
+
+## WI-390 Husky runtime doctor and PostToolUse alignment
+
+<!-- @work-item-id WI-390 -->
+
+`GitHooksRuntimeProbe` Port と Git CLI infrastructure adapter を追加し、doctor composition root が
+`HuskyRuntimeInactiveCheck` へ注入する。adapter は shell string を使わず `git -C <root> config --get
+core.hooksPath` を argument array で実行し、`.husky/_` では `h` と shim entry を filesystem 検証する。
+finding ID は `husky-runtime-inactive`、severity red、repair は `npx husky` または managed setup command。
+
+bundled / root `analyze-errors-hook.sh` は raw `biome lint` を使わず、編集対象を
+`phasegate lint --json --skip-eslint-removal-check` で project の参照グラフを保ったまま検査する。
+単一-file `--target` は L1-007 の偽陽性を生むため使用しない。formatter は project Biome
+config を正本とし、PhaseGate self repo は single quote を明示する。

@@ -619,3 +619,11 @@ stdout JSON、stderr reason、exit 0 / 2 を独立に検証する。
 Grok patch truncation、Antigravity unknown args key、mixed write target は mutation 前 fail-closed とする。
 同じ gate fixture で Claude Write / Edit / Bash、Codex native apply_patch / Bash heredoc、Quick Mode allow /
 Full Mode deny を回帰実行し、normalization 後の policy が runtime shape で変わらないことを証明する。
+
+## WI-390 Config-state authorization integration
+
+<!-- @work-item-id WI-390 -->
+
+valid / missing / invalid-json / invalid-schema の temp project で config direct Write/Edit を process 実行し、
+すべて exit 2 / PROTECTED_FILE になることを検証する。無関係 Bash、doctor 完走、gated path fail-closed は
+ADR-038 の既存挙動を維持する。config が自分自身や Husky を exclude 済みでも trust root は外れない。

@@ -2,6 +2,7 @@
 // @unit quick-mode
 // @story H10-02
 // @work-item-id WI-140
+// @work-item-id WI-390
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { target, context } from '../../../helpers/test-helpers.js';
 import { JudgeQuickModeEligibilityUseCase } from '../../../../quick-mode/application/usecases/judge-quick-mode-eligibility-usecase.js';
@@ -135,12 +136,12 @@ target('JudgeQuickModeEligibilityUseCase', () => {
         });
         // Assert
         expect(actual.eligible).toBe(false);
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).toBe('CATEGORY_NOT_ALLOWED');
         expect(actual.rejectedFiles!.length).toBeGreaterThanOrEqual(1);
       });
 
       // IT-UC-Judge-006
-      it('domain/配下のCREATEファイルはMIXED_CHANGESが先に検出される', async () => {
+      it('domain/配下の単一CREATEファイルはCATEGORY_NOT_ALLOWEDが先に検出される', async () => {
         // Arrange
         const mockQuickModeConfigPort = {
           getConfig: vi.fn().mockReturnValue(createDefaultQuickModeConfig()),
@@ -160,11 +161,11 @@ target('JudgeQuickModeEligibilityUseCase', () => {
         });
         // Assert
         expect(actual.eligible).toBe(false);
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).toBe('CATEGORY_NOT_ALLOWED');
       });
 
       // IT-UC-Judge-007
-      it('port.tsファイルの変更でMIXED_CHANGESまたはAPI_CONTRACT拒否が返る', async () => {
+      it('allowedCategories外の単一port.ts変更はCATEGORY_NOT_ALLOWEDで拒否される', async () => {
         // Arrange
         const mockQuickModeConfigPort = {
           getConfig: vi.fn().mockReturnValue(createDefaultQuickModeConfig()),
@@ -184,7 +185,7 @@ target('JudgeQuickModeEligibilityUseCase', () => {
         });
         // Assert
         expect(actual.eligible).toBe(false);
-        expect(['MIXED_CHANGES', 'API_CONTRACT']).toContain(actual.rejectionRule);
+        expect(actual.rejectionRule).toBe('CATEGORY_NOT_ALLOWED');
         expect(actual.rejectedFiles!.length).toBeGreaterThanOrEqual(1);
       });
 

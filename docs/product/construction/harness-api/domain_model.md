@@ -449,3 +449,11 @@ harness-api は `claude | codex | both | grok | antigravity | all` の CLI token
 所有する。selection semantics と managed target ownership は installation に委譲し、payload schema / runtime
 agent identity / hook authorization を CliCommand domain に取り込まない。`both` の意味と既存 command defaults は
 後方互換として固定する。
+
+## WI-390 Config recovery process boundary
+
+<!-- @work-item-id WI-390 -->
+
+harness-api の config load fail-open は hook / doctor command の起動可能性を保証するだけで、agent の
+config mutation 権限を表さない。direct Write/Edit authorization は agent-integration の protected trust root、
+managed recovery command dispatch は harness-api / installation / config-foundation の既存境界に従う。

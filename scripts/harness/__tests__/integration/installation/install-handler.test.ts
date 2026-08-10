@@ -18,6 +18,7 @@
 // @work-item-id WI-331
 // @work-item-id WI-384
 // @work-item-id WI-387
+// @work-item-id WI-390
 
 import { access, lstat, mkdir, mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -529,6 +530,9 @@ target("InstallHandler", () => {
         expect((await lstat(join(root, scriptPath))).mode & 0o111).not.toBe(0);
       }
       expect(await fileExists(join(root, ".claude/scripts/hook-config.json"))).toBe(true);
+      const analyzeHook = await readFile(join(root, ".claude/scripts/analyze-errors-hook.sh"), "utf8");
+      expect(analyzeHook).toContain('npx phasegate lint --json --skip-eslint-removal-check');
+      expect(analyzeHook).not.toContain('npx @biomejs/biome lint "$LOCAL_PATH"');
       const manifest = JSON.parse(await readFile(join(root, ".phasegate/manifest.json"), "utf8")) as {
         entries: Array<{ path: string; mode: string }>;
       };

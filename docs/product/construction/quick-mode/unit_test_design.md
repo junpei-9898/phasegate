@@ -532,3 +532,12 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-WI384-QM-005 | targetChanges がない CLI input を受ける | 従来 filesystem 推定 |
 
 日本語・重複なしの `it()`、semantic AAA、`actual` 変数を使い、domain object は実体で検証する。
+
+## WI-390 Markdown / rejection tests
+
+<!-- @work-item-id WI-390 -->
+
+- root / nested / domain path の `.md` と `.mdx` CREATE が docs。
+- 単一不許可カテゴリの1件・複数件が `CATEGORY_NOT_ALLOWED`。
+- 許可 / 不許可を含む複数カテゴリだけが `MIXED_CHANGES`。
+- existing docs path、skills markdown、NEW_DOMAIN、API_CONTRACT、categoryOverrides は回帰不変。

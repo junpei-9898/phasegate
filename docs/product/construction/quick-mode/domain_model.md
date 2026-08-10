@@ -280,3 +280,14 @@ quick-mode が既に所有する `ChangeKind = CREATE | MODIFY | DELETE` を cro
 caller が valid explicit `changeKind` を渡した場合は before/after や file existence による推定より
 優先する。field が無い既存 caller は従来推定を維持する。この加法的契約により native
 apply_patch の Delete を MODIFY へ潰さず、patch 全文から不確かな content snapshot を作らない。
+
+## WI-390 Markdown category and rejection vocabulary
+
+<!-- @work-item-id WI-390 -->
+
+`.md` / `.mdx` は path location と CREATE/MODIFY に依存せず built-in `docs` category とする。
+agent instruction の protection は upstream protected-file policy が担い、category model に security surface
+の例外を混ぜない。
+
+`RejectionRule` は `CATEGORY_NOT_ALLOWED` を追加する。分類カテゴリ数が1で allowedCategories 外なら同 rule、
+2以上なら `MIXED_CHANGES`。file 数ではなく category 集合の cardinality が語彙を決める。

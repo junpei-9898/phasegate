@@ -1,6 +1,7 @@
 /**
  * @layer domain
  * @unit agent-integration
+ * @work-item-id WI-390
  *
  * ProtectedFileList 値オブジェクト
  * 変更をブロックすべきファイルのパターンリスト
@@ -14,13 +15,15 @@ export class ProtectedFileListEmptyError extends Error {
   }
 }
 
-/** デフォルトの保護対象ファイルパターン */
-const DEFAULT_PATTERNS = [
-  'biome.json',
-  '.biome.json',
-  'tsconfig.json',
-  'package.json',
-  'package-lock.json',
+/**
+ * 設定から除外できない agent trust roots。
+ * これらを protectedFiles.exclude で解除できると、防御機構そのものを agent が
+ * 無効化してから書き換えられるため、通常の保護対象とは別の集合で保持する。
+ */
+const NON_EXCLUDABLE_PATTERNS = [
+  'phasegate.config.json',
+  '.phasegate-local/phasegate.config.json',
+  '**/phasegate.config.json',
   // baseline.json は grandfather 判定の信頼基盤。手動追記による protected file の
   // grandfather bypass を防ぐため、書き込み自体を保護対象とする。
   '.phasegate/baseline.json',
@@ -30,7 +33,23 @@ const DEFAULT_PATTERNS = [
   // 入ったため、防御機構そのものの書き換えを protected file として明示的に止める。
   '.husky/**',
   '**/.husky/**',
+  // Root agent instructions determine the permissions and operating procedure
+  // used by coding agents, so direct agent writes must remain blocked.
+  'CLAUDE.md',
+  'AGENTS.md',
+  'GEMINI.md',
 ];
+
+/** 利用者設定で除外可能な通常のデフォルト保護対象。 */
+const EXCLUDABLE_DEFAULT_PATTERNS = [
+  'biome.json',
+  '.biome.json',
+  'tsconfig.json',
+  'package.json',
+  'package-lock.json',
+];
+
+const DEFAULT_PATTERNS = [...NON_EXCLUDABLE_PATTERNS, ...EXCLUDABLE_DEFAULT_PATTERNS];
 
 /**
  * glob パターンのシンプルなマッチング実装
@@ -79,23 +98,21 @@ export class ProtectedFileList {
   }
 
   static createWithExclusions(exclusions: string[]): ProtectedFileList {
-    const filtered = DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
-    if (filtered.length === 0) {
-      return new ProtectedFileList([...DEFAULT_PATTERNS]);
-    }
-    return new ProtectedFileList(filtered);
+    const excludable = EXCLUDABLE_DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
+    return new ProtectedFileList([...NON_EXCLUDABLE_PATTERNS, ...excludable]);
   }
 
   static createWithAdditionalAndExclusions(
     additionalPatterns: string[],
     exclusions: string[],
   ): ProtectedFileList {
-    const base = DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
-    const allPatterns = [...base, ...additionalPatterns];
-    if (allPatterns.length === 0) {
-      return new ProtectedFileList([...DEFAULT_PATTERNS]);
-    }
-    return new ProtectedFileList(allPatterns);
+    const excludableDefaults = EXCLUDABLE_DEFAULT_PATTERNS.filter((p) => !exclusions.includes(p));
+    const excludableAdditional = additionalPatterns.filter((p) => !exclusions.includes(p));
+    return new ProtectedFileList([
+      ...NON_EXCLUDABLE_PATTERNS,
+      ...excludableDefaults,
+      ...excludableAdditional,
+    ]);
   }
 
   matches(filePath: string): boolean {

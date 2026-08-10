@@ -250,3 +250,13 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 - reconcile 2 回目は no-op、uninstall は `phasegate-gate` だけを除去する。
 - doctor Grok scope は matcher / timeout と trust notice、Antigravity scope は schema / timeout と CLI-only notice を返す。
 - deprecated init / setup:agent / human / JSON output が同じ enum と notice contract を使う。
+
+## WI-390 Git runtime / PostToolUse integration
+
+<!-- @work-item-id WI-390 -->
+
+- temp git repo の `core.hooksPath` unset / unsupported / `.husky/_` shim missing で doctor red。
+- current `.husky/_` runtime では `husky-runtime-inactive` finding なし。
+- personal install では project Husky runtime finding を出さない。
+- packed template の analyze hook は raw Biome recommendation を edited-file block にせず、PhaseGate L1
+  violation だけを対象 path の error として返す。

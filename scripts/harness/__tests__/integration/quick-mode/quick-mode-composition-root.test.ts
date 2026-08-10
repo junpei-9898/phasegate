@@ -1,7 +1,9 @@
 // @layer test
 // @unit quick-mode
+// @story H10-02
 // @work-item-id WI-140
 // @work-item-id WI-346
+// @work-item-id WI-390
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
@@ -88,7 +90,7 @@ target('createQuickModeCompositionRoot', () => {
       // Assert
       expect(actual.dominantCategory).toBe('bugfix');
       expect(actual.fullModeRequired).toBe(true);
-      expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+      expect(actual.rejectionRule).toBe('CATEGORY_NOT_ALLOWED');
     });
 
     it('指定した rootDir に対象ファイルが存在する場合は MODIFY として分類すること', async () => {

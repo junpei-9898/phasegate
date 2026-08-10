@@ -2083,3 +2083,12 @@ top-level CLI presentation は install / deprecated init / setup:agent / doctor 
 main は parsed target を installation handler へ渡すだけで、`.claude` / `.agents` の target mapping、
 payload shape、trust、IDE capability を判断しない。CLI conformance test は help enum、parser admission、
 install target snapshot を同じ変更で固定する。
+
+## WI-390 Config-state process contract
+
+<!-- @work-item-id WI-390 -->
+
+`main.ts hook pre-tool-use` は missing / invalid config でも dispatch を継続し、agent-integration の
+non-excludable protected-file result を stdout/stderr/exit contractへ変換する。direct config mutation は exit 2、
+無関係 Bash と doctor は従来どおり fail-open、validate の config-state contract は ADR-038 の既存表を維持する。
+新しい CLI command は追加しない。
