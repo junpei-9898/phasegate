@@ -16,5 +16,10 @@
   },
   "files": {
     "includes": ["scripts/harness/**/*.ts"]
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
   }
 }

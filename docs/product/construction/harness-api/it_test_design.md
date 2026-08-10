@@ -703,3 +703,11 @@ regression-suite E2Eからactual main processを起動し、canonical command ca
 temp project で install / init / setup:agent / doctor の新 target を main process 経由で実行し、human / JSON
 出力、exit code、filesystem target を検証する。`--agent both` は新 runtime files / notices を追加せず、
 `--agent all` は Claude-compatible Grok hook を重複生成しない。invalid target の usage error は既存 exit 2 を維持する。
+
+## WI-390 Invalid/missing config process integration
+
+<!-- @work-item-id WI-390 -->
+
+actual main process と temp project を使い、valid / missing / invalid-json / invalid-schema config への direct Write が
+すべて protected-file exit 2 になることを検証する。同じ fixture で無関係 Bash、doctor、gated path の既存
+fail-open / fail-closed contract を回帰固定する。

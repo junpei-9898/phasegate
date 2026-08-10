@@ -7,6 +7,7 @@
 // @work-item-id WI-330
 // @work-item-id WI-343
 // @work-item-id WI-385
+// @work-item-id WI-390
 
 import type { AgentTarget } from "../../domain/agent-target.js";
 import type { CheckId } from "../../domain/check-id.js";
@@ -48,6 +49,7 @@ const PERSONAL_SCOPED_OUT_CHECKS = new Set<CheckId>([
   "husky-pre-commit-missing",
   "husky-commit-msg-missing",
   "husky-pre-push-missing",
+  "husky-runtime-inactive",
   "ci-workflow-missing",
   "package-json-devdep-missing",
 ]);

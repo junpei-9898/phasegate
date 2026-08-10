@@ -96,10 +96,10 @@ if command -v npx >/dev/null 2>&1; then
     fi
 fi
 
-# Biome lint check
+# PhaseGate lint check (uses the target project's PhaseGate/Biome configuration)
 LINT_OUTPUT=""
 if command -v npx >/dev/null 2>&1; then
-    LINT_RAW=$(npx @biomejs/biome lint "$LOCAL_PATH" 2>&1)
+    LINT_RAW=$(npx phasegate lint --json --skip-eslint-removal-check 2>&1)
     if [ $? -ne 0 ] && [ -n "$LINT_RAW" ]; then
         LINT_OUTPUT=$(echo "$LINT_RAW" | head -5)
     fi

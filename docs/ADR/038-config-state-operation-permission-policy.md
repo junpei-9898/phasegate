@@ -9,6 +9,7 @@ date: 2026-07-18
 
 <!-- @work-item-id WI-330 -->
 <!-- @work-item-id WI-333 -->
+<!-- @work-item-id WI-390 -->
 
 ## Context
 
@@ -41,7 +42,7 @@ config の解決順は project 直下 `phasegate.config.json` → `.phasegate-lo
 
 | 操作クラス ＼ config 状態 | valid | missing | invalid-json | invalid-schema |
 |---|---|---|---|---|
-| **config 自身への編集**（hook 経由 Write/Edit） | ○ fail-open（既定では保護対象外。`protectedFiles.patterns` に含めた場合のみ CLI 誘導 block） | ○ fail-open（WI-333。自己修復経路） | ○ fail-open | ○ fail-open |
+| **config 自身への編集**（hook 経由 Write/Edit） | × protected-file block（WI-390 / ADR-041） | × protected-file block。bootstrap は managed CLI または人間の hook 外編集 | × protected-file block。hook / doctor 自体は fail-open | × protected-file block。doctor 完走後、人間が hook 外で修復 |
 | **gated パス書込**（`scripts/harness/` 等、hook 経由） | ● phase-gate 判定（fail-closed） | ● 既定設定で phase-gate 判定（fail-closed 維持、WI-333） | ● 既定設定で phase-gate 判定（fail-closed 維持） | ● 既定設定で phase-gate 判定（fail-closed 維持） |
 | **無関係パス書込**（hook 経由） | ○ | ○ fail-open（警告付き、WI-333） | ○ fail-open | ○ fail-open |
 | **無関係 Bash**（書込抽出なし、hook 経由） | ○ | ○ fail-open（警告付き、WI-333） | ○ fail-open（警告付き） | ○ fail-open（警告付き） |
@@ -53,7 +54,7 @@ config の解決順は project 直下 `phasegate.config.json` → `.phasegate-lo
 - **CLI dispatch 層の fail-open/fail-closed 分岐**: `scripts/harness/main.ts:1867` `CONFIG_FAIL_OPEN_COMMANDS = new Set(["hook", "doctor"])`、`main.ts:1869-1902` `loadResolvedConfig()` — `ConfigValidationError` は hook/doctor のみ fail-open・他は exit 2（`:1878-1889`）、`ConfigNotFoundError` は全コマンド silent fail-open（`:1891-1893`）、`ConfigParseError`（`instanceof ConfigPersistenceError`）は全コマンド警告付き fail-open（`:1894-1900`）。
 - **hook 実行層の fail-open**: `scripts/harness/agent-integration/infrastructure/adapters/harness-config-config-query-adapter.ts` `loadConfig()` — JSON parse 失敗と `fs.readFileSync` の ENOENT（missing、WI-333）はいずれも警告 + 空 config（既定値）で続行。ENOENT **以外**の fs エラー（EACCES / EISDIR 等の真の異常）は従来どおり throw し、`scripts/harness/agent-integration/presentation/pre-tool-use-hook.ts` の outer catch で「実行エラー」exit 2 になる。fallback config path は `pre-tool-use-hook.ts:58-76` `findConfigPath()`（不在時は `startDir/phasegate.config.json` を返す）。
 - **missing の gated パス fail-closed**: hook 側 config は既定値に縮退するが、gated パス書込は `phase-gate-query-adapter.ts` が config-foundation の `ConfigNotFoundError` を generic catch で「評価不能 = NOT passed」に落とすため、phase-gate block（フェーズゲート違反、exit 2）が維持される。
-- **config 自身が gated/protected でない根拠**: 既定の保護パターンに `phasegate.config.json` は含まれない（`scripts/harness/agent-integration/domain/value-objects/protected-file-list.ts:17-27` `DEFAULT_PATTERNS`）。ユーザーが `protectedFiles.patterns` で保護した場合のみ CLI 誘導付き block（`handle-pre-tool-use-usecase.ts:480-495`）。
+- **config 自身の non-excludable protection（WI-390）**: `phasegate.config.json` と personal config は ADR-041 の trust root pattern であり、`protectedFiles.exclude` より先に合成される。hook / doctor の config load fail-open と direct mutation authorization を分離し、agent Write/Edit は全 config 状態で block する。
 - **doctor の config 状態可視化（WI-330 で追加)**: `scripts/harness/installation/infrastructure/adapters/config-status-probe-adapter.ts`（分類）、`installation/application/checks/config-status-check.ts`（missing → warn / invalid-* → red）、`installation/presentation/formatters/diagnostic-report-formatter.ts`（JSON `configStatus` フィールドと human `Config:` 行）。
 
 ### 3. 設計原則
@@ -61,6 +62,7 @@ config の解決順は project 直下 `phasegate.config.json` → `.phasegate-lo
 1. **自己修復例外は復旧経路の保証であり、検査系の fail-closed は緩めない。** hook（エージェントのツール遮断点）と doctor（自己診断）は config がどんな状態でも起動・完走できなければならない。逆に `validate` / `ci-check` 等の検査系は、設定が壊れた状態の検査結果を「合格」として流通させないため fail-closed を原則とする。
 2. **fail-open は必ず可視化とセットにする。** fail-open で既定設定に落ちた事実は stderr 警告（CLI/hook）と doctor の `configStatus` + `config-status` finding（missing = warn、invalid-* = red）で必ず表面化させる。「不正 config でも doctor GREEN」は本 ADR をもって仕様違反である。
 3. **gated スコープの fail-closed は config 状態に依存しない。** config が壊れていても、gated パスへの書込は既定設定による phase-gate 判定で引き続きブロックされる（fail-open は「遮断の解除」ではなく「既定設定への縮退」）。
+4. **config load fail-open は config mutation の許可を意味しない。** hook / doctor は missing / invalid config でも完走するが、agent hook 経由の config direct Write/Edit は ADR-041 の protected trust root として常に block する。復旧は managed command、または人間の hook 外編集で行う。 <!-- @work-item-id WI-390 -->
 
 ### 4. 既知ギャップ（本 ADR は現状を固定し、修正は別 WI）
 
@@ -76,3 +78,4 @@ config の解決順は project 直下 `phasegate.config.json` → `.phasegate-lo
 - doctor は config 状態を常に報告する（JSON: `configStatus`、human: `Config:` 行、finding: `config-status`）。config 不在・不正のまま GREEN を報告することはなくなる（missing は warn、invalid-* は red で exit 1）。
 - 許可表が仕様となったため、fail-open/fail-closed の変更は本 ADR の改訂を伴う。
 - 経緯: WI-314（hook/doctor fail-open 化）→ WI-323（hook adapter の JSON parse fail-open）→ WI-325（`ConfigParseError` 導入）→ WI-330（本 ADR・doctor 可視化・missing 系テスト固定）→ WI-333（G1 解消: hook adapter の ENOENT fail-open、github#40 完全解消）。
+- WI-390 / ADR-041 で、自己修復経路を「direct agent mutation」から managed CLI / human out-of-band edit へ移し、config 自身を non-excludable protected trust root に改訂した。hook / doctor 起動と無関係操作の fail-open は維持する。

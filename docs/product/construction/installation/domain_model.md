@@ -566,3 +566,13 @@ phasegate は top-level `phasegate-gate` key だけを所有し、user-owned sib
 install は add/replace、reconcile は canonical replacement、uninstall は owned key removal を行い、全操作を
 idempotent にする。Grok trust と Antigravity runtime surface は観測不能 state として finding health に混ぜず、
 operator notice で扱う。
+
+## WI-390 Git-observed Husky runtime state
+
+<!-- @work-item-id WI-390 -->
+
+`HuskyRuntimeState` は `active` / `inactive` / `unavailable` を持ち、active は normalized
+`core.hooksPath` が `.husky` または `.husky/_` で必要 runtime artifact が存在する場合に限る。
+project doctor は active 以外を red とし、personal install は `.git/hooks` 所有のため scope out する。
+`.husky/*` script 本文の freshness と Git runtime activation は独立 finding であり、片方の green が他方を
+代替しない。

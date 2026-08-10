@@ -26,7 +26,7 @@ export interface HandlePreToolUseOutput {
   phaseGateBlockers?: string[];
   storyReflectionBlockers?: string[];
   storyReflectionWarnings?: string[];
-  fullModeRejectionRule?: 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
+  fullModeRejectionRule?: 'CATEGORY_NOT_ALLOWED' | 'MIXED_CHANGES' | 'NEW_DOMAIN' | 'API_CONTRACT';
   fullModeDominantCategory?: string;
   nextAction?: string;
   // Quick Mode が write を許可した際に dominant カテゴリを presentation 層に伝える。

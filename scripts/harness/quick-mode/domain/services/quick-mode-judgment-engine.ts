@@ -5,6 +5,7 @@
  * @work-item-id WI-349
  * @work-item-id WI-352
  * @work-item-id WI-372
+ * @work-item-id WI-390
  *
  * ChangedFile[]をChangeClassificationに変換し、3拒否ルールを評価してQuickModeEligibilityを返すドメインサービス
  */
@@ -90,6 +91,15 @@ function categorizeFileByBuiltInRules(file: ChangedFile): ChangeCategory {
   // test: __tests__/ 配下 or *.test.ts or *.spec.ts（domainより優先）
   if (filePath.includes("__tests__/") || filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts")) {
     return ChangeCategory.fromString("test");
+  }
+
+  // Markdown は配置場所にかかわらず文書として扱う。config / API / test の
+  // 明示ルールは優先しつつ、domain ディレクトリや CREATE フォールバックより
+  // 前に評価して README.md / *.mdx の新規作成を feature/domain に誤分類しない。
+  // 信頼境界となる root agent instructions は protected-file 側で別途保護する。
+  // @work-item-id WI-390
+  if (filePath.endsWith(".md") || filePath.endsWith(".mdx")) {
+    return ChangeCategory.fromString("docs");
   }
 
   // domain: domain/ 配下
@@ -202,7 +212,7 @@ export class QuickModeJudgmentEngine {
   judge(changedFiles: readonly ChangedFile[], config: QuickModeConfig): QuickModeEligibility {
     const classification = this.classify(changedFiles, config);
 
-    // 1. MIXED_CHANGES評価: allowedCategories 外のカテゴリが含まれる場合
+    // 1. カテゴリ評価: 不許可カテゴリを含む単一カテゴリ変更と、複数カテゴリ変更を区別する。
     if (config.isFullModeRequiredFor("mixedCategories")) {
       const notAllowedFiles: ChangedFile[] = [];
       const notAllowedDescriptions: string[] = [];
@@ -216,8 +226,9 @@ export class QuickModeJudgmentEngine {
       });
 
       if (notAllowedFiles.length > 0) {
+        const rejectionRule = classification.categorizedFiles.size >= 2 ? "MIXED_CHANGES" : "CATEGORY_NOT_ALLOWED";
         return QuickModeEligibility.rejected(
-          "MIXED_CHANGES",
+          rejectionRule,
           notAllowedFiles,
           `allowedCategories外のファイルが含まれています: ${notAllowedDescriptions.join(", ")}`,
         );

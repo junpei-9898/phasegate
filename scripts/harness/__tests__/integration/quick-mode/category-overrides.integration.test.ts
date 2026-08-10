@@ -2,10 +2,11 @@
 // @unit quick-mode
 // @story H10-02
 // @work-item-id WI-372
+// @work-item-id WI-390
 //
 // quickMode.categoryOverrides が hook 経路 / check-change-category CLI 経路の
 // 双方で一貫して効くことの統合テスト。
-// override 未設定時に現行分類が維持されることも同時に固定する。
+// override 未設定時も組み込み Markdown 分類が適用されることを固定する。
 
 import { spawn } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
@@ -148,7 +149,7 @@ target("quickMode.categoryOverrides の経路一貫性 (WI-372)", () => {
         expect(actual.fullModeRequired).toBe(false);
       }, 60_000);
 
-      it("override 未設定時は従来どおり feature に分類され Full Mode が必須になること", async () => {
+      it("override 未設定でも Markdown は組み込みルールで docs に分類されること", async () => {
         // Arrange
         const projectRoot = createProjectRoot();
 
@@ -163,8 +164,8 @@ target("quickMode.categoryOverrides の経路一貫性 (WI-372)", () => {
         };
 
         // Assert
-        expect(actual.dominantCategory).toBe("feature");
-        expect(actual.fullModeRequired).toBe(true);
+        expect(actual.dominantCategory).toBe("docs");
+        expect(actual.fullModeRequired).toBe(false);
       }, 60_000);
     });
   });

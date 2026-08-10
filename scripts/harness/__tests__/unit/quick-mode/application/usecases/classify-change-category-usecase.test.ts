@@ -3,6 +3,7 @@
 // @story H10-06
 // @work-item-id WI-345
 // @work-item-id WI-384
+// @work-item-id WI-390
 import { describe, expect, it, vi } from "vitest";
 import type { FileExistencePort } from "../../../../../quick-mode/application/ports/file-existence-port.js";
 import type { QuickModeConfigPort } from "../../../../../quick-mode/application/ports/quick-mode-config-port.js";
@@ -47,7 +48,7 @@ target("ClassifyChangeCategoryUseCase", () => {
       });
 
       // UT-CCC-003
-      it("domain/ 配下のパスが渡された場合に dominantCategory='domain'、fullModeRequired=true、rejectionRule='MIXED_CHANGES' が返ること", async () => {
+      it("domain/ 配下の単一パスは rejectionRule='CATEGORY_NOT_ALLOWED' になること", async () => {
         // Arrange
         const { sut } = buildSut();
         // Act
@@ -57,7 +58,7 @@ target("ClassifyChangeCategoryUseCase", () => {
         // Assert
         expect(actual.dominantCategory).toBe("domain");
         expect(actual.fullModeRequired).toBe(true);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
       });
 
       // UT-CCC-004
@@ -204,7 +205,7 @@ target("ClassifyChangeCategoryUseCase", () => {
         expect(fileExistencePort.exists).toHaveBeenCalledWith(path);
         expect(actual.perFile).toEqual([{ path, category: "feature" }]);
         expect(actual.fullModeRequired).toBe(true);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
       });
 
       // UT-CCC-334-02
@@ -309,7 +310,7 @@ target("ClassifyChangeCategoryUseCase", () => {
         expect(fileExistencePort.exists).not.toHaveBeenCalled();
         expect(actual.perFile).toEqual([{ path, category: "feature" }]);
         expect(actual.fullModeRequired).toBe(true);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
       });
 
       // UT-CCC-345-02
@@ -391,7 +392,7 @@ target("ClassifyChangeCategoryUseCase", () => {
 
         // Assert
         expect(actual.fullModeRequired).toBe(true);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
         expect(actual.rejectionReason).toContain(`${path} (category=bugfix, changeKind=DELETE)`);
       });
     });

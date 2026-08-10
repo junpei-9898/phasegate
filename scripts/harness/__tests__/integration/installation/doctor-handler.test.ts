@@ -11,10 +11,13 @@
 // @work-item-id WI-330
 // @work-item-id WI-384
 // @work-item-id WI-385
+// @work-item-id WI-390
 
+import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 import { createInstallationModule } from "../../../installation/composition-root.js";
 import type { AgentTarget } from "../../../installation/domain/agent-target.js";
@@ -66,6 +69,7 @@ function currentClaudeSettings(): string {
 }
 
 let projectRoot: string | null = null;
+const execFileAsync = promisify(execFile);
 
 const GOLDEN: readonly FixtureExpectation[] = [
   {
@@ -82,6 +86,7 @@ const GOLDEN: readonly FixtureExpectation[] = [
       { checkId: "husky-pre-commit-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-commit-msg-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "husky-pre-push-missing", severity: "warn", repairMode: "mechanical" },
+      { checkId: "husky-runtime-inactive", severity: "red", repairMode: "mechanical" },
       { checkId: "ci-workflow-missing", severity: "warn", repairMode: "manual" },
       { checkId: "package-json-devdep-missing", severity: "red", repairMode: "mechanical" },
       { checkId: "claude-skills-symlink", severity: "red", repairMode: "mechanical" },
@@ -125,6 +130,7 @@ const GOLDEN: readonly FixtureExpectation[] = [
 
 async function createProjectRoot(): Promise<string> {
   projectRoot = await mkdtemp(join(tmpdir(), "phasegate-doctor-"));
+  await execFileAsync("git", ["init"], { cwd: projectRoot });
   return projectRoot;
 }
 
@@ -149,6 +155,8 @@ async function createSharedSkillContent(root: string): Promise<void> {
 async function buildFixture(root: string, fixture: FixtureName): Promise<void> {
   await mkdir(join(root, "skills"), { recursive: true });
   if (fixture === "no-phasegate") return;
+
+  await execFileAsync("git", ["config", "core.hooksPath", ".husky"], { cwd: root });
 
   // WI-330: 実インストール済み PJ には valid config が存在する（config-status check の前提を現実に合わせる）
   await writeProjectFile(root, "phasegate.config.json", validFixtureConfig());

@@ -3,6 +3,7 @@
 // @work-item-id WI-145
 // @work-item-id WI-215
 // @work-item-id WI-385
+// @work-item-id WI-390
 
 import type { CheckId } from "./check-id.js";
 import { SuggestedSkill } from "./suggested-skill.js";
@@ -33,6 +34,7 @@ export class RepairTable {
       ["husky-pre-commit-missing", CONFIG_DOCTOR],
       ["husky-commit-msg-missing", CONFIG_DOCTOR],
       ["husky-pre-push-missing", null],
+      ["husky-runtime-inactive", null],
       ["ci-workflow-missing", TOOLKIT_GUIDE],
       ["package-json-devdep-missing", null],
       ["claude-skills-symlink", null],

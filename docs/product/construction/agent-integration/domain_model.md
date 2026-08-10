@@ -377,3 +377,16 @@ agent 名、model 名、CLI selection は分類・authorization 入力にしな�
 維持する。normalizer は外部 field alias を canonical path / content / command / patch へ変換するだけで、
 protected / phase / reflection / Quick / Full Mode rule を複製しない。response profile は runtime protocol の
 adapter concern として presentation に閉じ、domain model に agent-specific decision type を追加しない。
+
+## 12. Non-excludable protected trust roots
+
+<!-- @work-item-id WI-390 -->
+
+`ProtectedFileList` は config / baseline / Husky runtime / root agent instruction を
+non-excludable trust root として保持する。通常 default と additional pattern だけが
+`protectedFiles.exclude` の対象であり、全 factory path で trust root は必ず残る。
+config load の fail-open と config mutation authorization は別契約で、direct Write/Edit は
+valid / missing / invalid の全状態で protected-file block となる。
+
+Quick Mode rejection vocabulary は単一不許可カテゴリの `CATEGORY_NOT_ALLOWED` と、複数カテゴリの
+`MIXED_CHANGES` を区別して transport する。

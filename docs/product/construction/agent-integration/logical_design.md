@@ -1703,3 +1703,17 @@ permission を上書きしない。JSON parse 不能は shape 不明のため既
 `toolCall` record が存在する近傍形状では `name` / `args` の key が未知でも nested profile の top-level deny を
 返す。snake_case と camelCase を同時に満たす payload は値が同じでも deny するため、将来 Grok が alias を
 併記した場合の可用性リスクとして実 payload fixture を継続監視する。
+
+## WI-390 Config trust root and safe recovery guidance
+
+<!-- @work-item-id WI-390 -->
+
+protected-file composition は non-excludable trust roots と excludable defaults を分離する。
+project / personal config、baseline、Husky runtime、root agent instructions は resolved config の
+`exclude` に依存せず常時 protected とする。protected check は既存順序どおり phase / baseline / Quick Mode
+より前に実行するため、Full Mode session も trust root の直接変更権限にはならない。
+
+config direct Write/Edit は全 config state で block し、managed `config:plan` / setup command と人間の
+hook 外編集だけを recovery とする。Husky block message から exclude recipe を削除する。
+Quick Mode adapter が返す `CATEGORY_NOT_ALLOWED` は既存 transport type に加法追加し、block metadata と
+human output が単一カテゴリを mixed と誤表示しないようにする。

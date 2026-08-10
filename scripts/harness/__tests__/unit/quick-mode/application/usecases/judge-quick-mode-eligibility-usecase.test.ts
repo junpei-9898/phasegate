@@ -1,4 +1,7 @@
 // @layer test
+// @unit quick-mode
+// @story H10-01
+// @work-item-id WI-390
 import { describe, expect, it, vi } from 'vitest';
 import { target, context, createChangedFile, createQuickModeConfig } from '../../../../helpers/test-helpers.js';
 import { JudgeQuickModeEligibilityUseCase } from '../../../../../quick-mode/application/usecases/judge-quick-mode-eligibility-usecase.js';
@@ -64,7 +67,7 @@ target('JudgeQuickModeEligibilityUseCase', () => {
 
     describe('3拒否ルール別', () => {
       // UT-JUC-004
-      it("MIXED_CHANGESルールに該当するファイルが含まれる場合にeligible=false、rejectionRule='MIXED_CHANGES'のcontractが返ること", async () => {
+      it("単一の不許可カテゴリはCATEGORY_NOT_ALLOWEDのcontractを返すこと", async () => {
         // Arrange
         const domainFile = createChangedFile(
           'scripts/harness/quick-mode/domain/value-objects/some-vo.ts',
@@ -77,7 +80,7 @@ target('JudgeQuickModeEligibilityUseCase', () => {
         const actual = await sut.execute({});
         // Assert
         expect(actual.eligible).toBe(false);
-        expect(actual.rejectionRule).toBe('MIXED_CHANGES');
+        expect(actual.rejectionRule).toBe('CATEGORY_NOT_ALLOWED');
       });
 
       // UT-JUC-005

@@ -4,6 +4,7 @@
 // @work-item-id WI-215
 // @work-item-id WI-330
 // @work-item-id WI-385
+// @work-item-id WI-390
 
 export const CHECK_IDS = [
   "claude-hook-missing",
@@ -15,6 +16,7 @@ export const CHECK_IDS = [
   "husky-pre-commit-missing",
   "husky-commit-msg-missing",
   "husky-pre-push-missing",
+  "husky-runtime-inactive",
   "ci-workflow-missing",
   "package-json-devdep-missing",
   "claude-skills-symlink",

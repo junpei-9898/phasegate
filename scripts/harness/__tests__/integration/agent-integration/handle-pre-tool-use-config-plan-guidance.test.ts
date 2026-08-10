@@ -5,6 +5,7 @@
 // @work-item-id WI-202 / WI-204
 // @work-item-id WI-354
 // @work-item-id WI-376
+// @work-item-id WI-390
 
 import { describe, expect, it, vi } from "vitest";
 import { HandlePreToolUseUseCase } from "../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js";
@@ -88,10 +89,11 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     });
     expect(actual.error?.message).toContain("L0 runtime");
     expect(actual.error?.message).toContain("setup:agent --apply --with-husky");
-    expect(actual.error?.message).toContain("protectedFiles.exclude");
+    expect(actual.error?.message).not.toContain("protectedFiles.exclude");
+    expect(actual.error?.message).toContain("人間");
   });
 
-  it("phasegate.config.json の full-mode config ブロックは story 実装ではなく config plan 復旧を案内すること", async () => {
+  it("phasegate.config.json は full-mode 判定より先に trust root として保護し config plan を案内すること", async () => {
     const mockFullModeRequirementQueryPort = {
       check: vi.fn().mockResolvedValue({
         requiresFullMode: true,
@@ -116,9 +118,7 @@ describe("HandlePreToolUseUseCase config-plan guidance", () => {
     expect(actual).toMatchObject({
       shouldBlock: true,
       blockedFilePath: "phasegate.config.json",
-      blockReason: "FULL_MODE_REQUIRED",
-      fullModeRejectionRule: "MIXED_CHANGES",
-      fullModeDominantCategory: "config",
+      blockReason: "PROTECTED_FILE",
     });
     expect(actual.error?.message).toContain("config:plan --intent quick-mode-relax --dry-run --json");
     expect(actual.error?.message).toContain("config:plan --intent quick-mode-relax --apply --json");

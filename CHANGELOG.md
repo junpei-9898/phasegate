@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WI-390 — GitHub #47–#50 の hook / doctor / Quick Mode / trust-root 修正** — Biome の JavaScript formatter を single quote に固定し、Claude PostToolUse analyze hook を raw Biome から project-wide `phasegate lint` へ統一。doctor は `core.hooksPath` と Husky v8/v9 shim の実効状態を検査する。配置場所を問わず `.md` / `.mdx` を docs に分類し、単一の不許可カテゴリは `CATEGORY_NOT_ALLOWED`、複数カテゴリは `MIXED_CHANGES` として区別する。config・baseline・Husky runtime・root agent instructions を `protectedFiles.exclude` で解除できない trust root に格上げし、config 不在／不正時も direct Write/Edit を遮断する。 <!-- @work-item-id WI-390 -->
+
 - **WI-334 — CI workflow ファイルの change-category 分類取りこぼしを修正** — `.github/workflows/*.yml` の新規作成が CREATE→feature フォールバックに落ちて pre-tool-use hook にブロックされ、かつ .github/ は unit を持たないため案内される story-implementor 経路が構造的に完遂不能だった（WI-329 のドッグフードで発見。MODIFY は bugfix で通るため防御としても不整合）。WI-261（skills/**/*.md → docs）と同型の明示ルールで `.github/workflows/` 配下の yml/yaml を config に分類（内容防御は L3-006 + integrity pin が担当）。併せて CLI `check-change-category` の changeKind をファイル存在で推定し hook 判定と一致させた（hook の Bash 経路は従来挙動を完全維持）。
 
 - **WI-333 — config 不在時の hook 全遮断デッドロックを解消（ADR-038 G1 / GitHub #40 完全解消）** — config **不在**（ENOENT）で pre-tool-use hook が未捕捉例外→exit 2 となり、config を作成する Write すら遮断される自己修復デッドロックが missing 状態に残っていた（WI-314 は invalid のみ対応）。hook 用 config adapter で ENOENT を警告+既定値の fail-open に変更（EACCES 等の真の異常は従来どおり throw）。gated パスへの書き込みは phase-gate 側が config-foundation 経由の独立 load で fail-closed を維持することをテストで固定。ADR-038 の許可表と G1 を解消済みに更新。

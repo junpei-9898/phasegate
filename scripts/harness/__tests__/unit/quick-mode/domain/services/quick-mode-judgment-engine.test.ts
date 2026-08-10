@@ -2,6 +2,7 @@
 // @layer test
 // @story H10-06
 // @work-item-id WI-204
+// @work-item-id WI-390
 import { describe, expect, it } from "vitest";
 import { QuickModeJudgmentEngine } from "../../../../../quick-mode/domain/services/quick-mode-judgment-engine.js";
 import { ChangedFile } from "../../../../../quick-mode/domain/value-objects/changed-file.js";
@@ -154,6 +155,21 @@ target("QuickModeJudgmentEngine", () => {
         const actual = engine.classify(files, config);
         // Assert
         expect(actual.hasCategory("feature")).toBe(true);
+      });
+
+      it.each([
+        "README.md",
+        "CHANGELOG.mdx",
+        "notes/release.md",
+        "scripts/harness/quick-mode/domain/README.mdx",
+      ])("場所に関係なく新規 Markdown %s を docs カテゴリに分類すること", (filePath) => {
+        const files = [ChangedFile.create({ filePath, changeKind: "CREATE" })];
+
+        const actual = engine.classify(files, createQuickModeConfig());
+
+        expect(actual.hasCategory("docs")).toBe(true);
+        expect(actual.hasCategory("domain")).toBe(false);
+        expect(actual.hasCategory("feature")).toBe(false);
       });
 
       // UT-JE-025（WI-261）
@@ -385,7 +401,7 @@ target("QuickModeJudgmentEngine", () => {
 
     describe("3拒否ルールの判定", () => {
       // UT-JE-011
-      it("allowedCategories外のファイル（domainカテゴリ）が1件含まれる場合にeligible=false、rejectionRule='MIXED_CHANGES'が返ること", () => {
+      it("allowedCategories外の単一カテゴリ（domain）が含まれる場合にCATEGORY_NOT_ALLOWEDで拒否すること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
@@ -398,11 +414,11 @@ target("QuickModeJudgmentEngine", () => {
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
       });
 
       // UT-JE-012
-      it("allowedCategories外のファイル（featureカテゴリ）が含まれる場合にeligible=false、rejectionRule='MIXED_CHANGES'が返り、rejectedFilesに当該ファイルが含まれること", () => {
+      it("allowedCategories外の単一カテゴリ（feature）が含まれる場合にCATEGORY_NOT_ALLOWEDで拒否すること", () => {
         // Arrange
         const rejectedFile = ChangedFile.create({
           filePath: "scripts/harness/quick-mode/services/new-feature.ts",
@@ -414,7 +430,7 @@ target("QuickModeJudgmentEngine", () => {
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.isEligible()).toBe(false);
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
         expect(actual.rejectedFiles).toContainEqual(expect.objectContaining({ filePath: rejectedFile.filePath }));
       });
 
@@ -439,7 +455,7 @@ target("QuickModeJudgmentEngine", () => {
       });
 
       // UT-JE-014
-      it("'domain/'配下のchangeKind=MODIFYファイルのみが含まれる場合にNEW_DOMAINルールで拒否されないこと（MIXED_CHANGESで拒否される）", () => {
+      it("'domain/'配下のMODIFYのみはNEW_DOMAINではなくCATEGORY_NOT_ALLOWEDで拒否すること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
@@ -452,7 +468,7 @@ target("QuickModeJudgmentEngine", () => {
         const actual = engine.judge(files, config);
         // Assert
         expect(actual.rejectionRule).not.toBe("NEW_DOMAIN");
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
       });
 
       // UT-JE-015
@@ -519,9 +535,9 @@ target("QuickModeJudgmentEngine", () => {
       });
     });
 
-    describe("3拒否ルールをMIXED_CHANGES→NEW_DOMAIN→API_CONTRACTの順で評価する", () => {
+    describe("拒否ルールをカテゴリ判定→NEW_DOMAIN→API_CONTRACTの順で評価する", () => {
       // UT-JE-017
-      it("MIXED_CHANGESとNEW_DOMAINの両条件に該当するファイルが含まれる場合に最初に一致するMIXED_CHANGESルールで拒否されること", () => {
+      it("単一の不許可 domain CREATE はCATEGORY_NOT_ALLOWEDを優先すること", () => {
         // Arrange
         const files = [
           ChangedFile.create({
@@ -533,6 +549,17 @@ target("QuickModeJudgmentEngine", () => {
         // Act
         const actual = engine.judge(files, config);
         // Assert
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
+      });
+
+      it("不許可カテゴリを含む複数カテゴリ変更はMIXED_CHANGESで拒否すること", () => {
+        const files = [
+          ChangedFile.create({ filePath: "README.md", changeKind: "MODIFY" }),
+          ChangedFile.create({ filePath: "src/new-feature.ts", changeKind: "CREATE" }),
+        ];
+
+        const actual = engine.judge(files, createQuickModeConfig());
+
         expect(actual.rejectionRule).toBe("MIXED_CHANGES");
       });
 
@@ -573,7 +600,7 @@ target("QuickModeJudgmentEngine", () => {
     });
 
     // UT-JE-020
-    it("3拒否ルールはallowedCategoriesで上書きできない: allowedCategoriesに全カテゴリを含む設定でdomainカテゴリのファイルを渡した場合にMIXED_CHANGESルールで拒否されること", () => {
+    it("allowedCategories外の単一 domain カテゴリはCATEGORY_NOT_ALLOWEDで拒否されること", () => {
       // Arrange
       const domainFile = ChangedFile.create({
         filePath: "scripts/harness/quick-mode/domain/value-objects/some-vo.ts",
@@ -584,7 +611,7 @@ target("QuickModeJudgmentEngine", () => {
       const actual = engine.judge([domainFile], config);
       // Assert
       expect(actual.isEligible()).toBe(false);
-      expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+      expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
     });
 
     // UT-JE-021（H10-05）
@@ -657,14 +684,14 @@ target("QuickModeJudgmentEngine", () => {
 
     describe("遮断理由に判定根拠（カテゴリと変更種別）を含める", () => {
       // UT-JE-025 (WI-349)
-      it("MIXED_CHANGESの理由にファイルごとのcategoryとchangeKindが含まれること", () => {
+      it("CATEGORY_NOT_ALLOWEDの理由にファイルごとのcategoryとchangeKindが含まれること", () => {
         // Arrange
         const featureFile = ChangedFile.create({ filePath: "results/summary.md.ts", changeKind: "CREATE" });
         const config = createQuickModeConfig({ allowedCategories: ["bugfix", "docs", "test", "config"] });
         // Act
         const actual = engine.judge([featureFile], config);
         // Assert
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
         expect(actual.reason).toContain("results/summary.md.ts (category=feature, changeKind=CREATE)");
       });
 
@@ -712,7 +739,7 @@ target("QuickModeJudgmentEngine", () => {
     const overrideConfig = (categoryOverrides: Record<string, string[]>) =>
       createQuickModeConfig({ categoryOverrides });
 
-    describe("categoryOverrides 未設定時の分類は現行と完全に一致する（回帰固定）", () => {
+    describe("categoryOverrides 未設定時も組み込み分類を適用する", () => {
       // UT-JE-OV-001
       it.each([
         ["phasegate.config.json", "MODIFY" as const, "config"],
@@ -723,8 +750,8 @@ target("QuickModeJudgmentEngine", () => {
         ["scripts/harness/quick-mode/domain/services/engine.ts", "MODIFY" as const, "domain"],
         ["docs/guide/quick-vs-full-mode.md", "MODIFY" as const, "docs"],
         ["skills/quick-implementor/SKILL.md", "MODIFY" as const, "docs"],
-        ["results/2026-08-06/summary.md", "CREATE" as const, "feature"],
-        ["results/2026-08-06/summary.md", "MODIFY" as const, "bugfix"],
+        ["results/2026-08-06/summary.md", "CREATE" as const, "docs"],
+        ["results/2026-08-06/summary.md", "MODIFY" as const, "docs"],
       ])("'%s'(%s) が '%s' に分類されること", (filePath, changeKind, expected) => {
         // Arrange
         const files = [ChangedFile.create({ filePath, changeKind })];
@@ -741,7 +768,7 @@ target("QuickModeJudgmentEngine", () => {
         // Act
         const actual = engine.classify(files);
         // Assert
-        expect(actual.hasCategory("feature")).toBe(true);
+        expect(actual.hasCategory("docs")).toBe(true);
       });
     });
 
@@ -889,14 +916,14 @@ target("QuickModeJudgmentEngine", () => {
       });
 
       // UT-JE-OV-011
-      it("MIXED_CHANGES の遮断理由に override 後のカテゴリが表示されること", () => {
+      it("CATEGORY_NOT_ALLOWED の遮断理由に override 後のカテゴリが表示されること", () => {
         // Arrange
         const files = [ChangedFile.create({ filePath: "vendor/x.md", changeKind: "MODIFY" })];
         const config = overrideConfig({ domain: ["vendor/**"] });
         // Act
         const actual = engine.judge(files, config);
         // Assert
-        expect(actual.rejectionRule).toBe("MIXED_CHANGES");
+        expect(actual.rejectionRule).toBe("CATEGORY_NOT_ALLOWED");
         expect(actual.reason).toContain("vendor/x.md (category=domain, changeKind=MODIFY)");
       });
     });
