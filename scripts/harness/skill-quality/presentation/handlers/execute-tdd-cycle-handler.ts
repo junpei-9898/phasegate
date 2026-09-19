@@ -16,6 +16,7 @@ export class ExecuteTddCycleHandler {
   constructor(private readonly useCase: ExecuteTddCycleUseCase) {}
 
   async handle(args: ExecuteTddCycleArgs): Promise<{ exitCode: number; message: string }> {
+    const evidenceNotice = '\n注意: --passed は呼出元の申告です。このコマンドはテストを実行しません。';
     try {
       const output = await this.useCase.execute({
         unit: args.unit,
@@ -26,12 +27,12 @@ export class ExecuteTddCycleHandler {
       });
 
       if (output.ready) {
-        return { exitCode: 0, message: `Commit successful: ${output.committedMessage}` };
+        return { exitCode: 0, message: `Commit successful: ${output.committedMessage}${evidenceNotice}` };
       }
       const violationMessages = output.violations.map((v) => `  - [${v.ruleId}] ${v.message}`).join('\n');
-      return { exitCode: 1, message: `Validation failed:\n${violationMessages}` };
+      return { exitCode: 1, message: `Validation failed:\n${violationMessages}${evidenceNotice}` };
     } catch (err) {
-      return { exitCode: 2, message: `Error: ${err instanceof Error ? err.message : String(err)}` };
+      return { exitCode: 2, message: `Error: ${err instanceof Error ? err.message : String(err)}${evidenceNotice}` };
     }
   }
 }

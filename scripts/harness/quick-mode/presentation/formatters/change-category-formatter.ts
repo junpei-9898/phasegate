@@ -37,6 +37,13 @@ export class ChangeCategoryFormatter {
       }
     }
 
+    if (contract.riskAdvice !== undefined) {
+      lines.push('riskAdvice (caller snapshots; advisory only, existing gate unchanged):');
+      for (const advice of contract.riskAdvice) {
+        lines.push(`  ${advice.path} -> ${advice.kind}: ${advice.reason}`);
+        lines.push(`    before=${advice.beforeHash ?? 'unknown'} after=${advice.afterHash ?? 'unknown'}`);
+      }
+    }
     return lines.join('\n') + '\n';
   }
 }

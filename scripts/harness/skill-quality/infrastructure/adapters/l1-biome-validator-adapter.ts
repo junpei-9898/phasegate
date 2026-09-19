@@ -5,12 +5,20 @@
 import type { L1ValidatorPort } from '../../domain/ports/l1-validator-port.js';
 import type { CommitMessage } from '../../domain/value-objects/commit-message.js';
 import type { ValidationViolation } from '../../domain/types/validation-violation.js';
+import type { BiomeAstEngineModuleOptions } from '../../../biome-ast-engine/composition-root.js';
+
+export interface L1BiomeValidatorOptions {
+  rootDir?: string;
+  config?: BiomeAstEngineModuleOptions;
+}
 
 export class L1BiomeValidatorAdapter implements L1ValidatorPort {
+  constructor(private readonly options: L1BiomeValidatorOptions = {}) {}
+
   async validate(_commitMessage: CommitMessage): Promise<readonly ValidationViolation[]> {
     try {
       const { createBiomeAstEngineModule } = await import('../../../biome-ast-engine/composition-root.js');
-      const mod = createBiomeAstEngineModule(process.cwd());
+      const mod = createBiomeAstEngineModule(this.options.rootDir ?? process.cwd(), this.options.config);
       const output = await mod.executeLintUseCase.execute({ targets: [] });
 
       return output.report.violations.map((violation) => ({

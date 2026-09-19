@@ -6,7 +6,7 @@
  * HookEvent → CLI実行指示への変換結果
  */
 
-export type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED';
+export type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED' | 'READ_ONLY';
 
 export type BlockReason = 'PROTECTED_FILE' | 'PHASE_GATE' | 'FULL_MODE_REQUIRED';
 

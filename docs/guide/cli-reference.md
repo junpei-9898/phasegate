@@ -39,6 +39,8 @@ Command names in this document are split into three surfaces:
 
 ### Setup JSON and report outputs
 
+`config:plan` does not initialize or reconstruct a missing/unreadable/malformed configuration. For unreadable or malformed input, config-changing previews report `configPatch.applicability: "blocked"`. Missing input retains the legacy preview (`before: null`, `applicability: "applicable"`, partial patch), with `phasegate install --dry-run` listed first; this preview is not permission to create a partial configuration. In all three cases, `--apply` refuses with exit 1 without changing files. For damaged JSON, an authorized operator should restore a known-good copy or repair the JSON before retrying; do not repeatedly attempt protected direct writes. Valid config updates retain a byte-preserving backup. Existing schema-validation failures still exit 2. <!-- @work-item-id WI-220 -->
+
 <!-- @work-item-id WI-158 -->
 
 Setup lifecycle commands support JSON for automation where shown by help: `install --json`, `reconcile --json`, `uninstall --json`, and `doctor --json`. `doctor --agent claude --json` and `doctor --agent codex --json` include `scope` and `scopedOutFindings` so agents can distinguish selected-agent readiness from full-install diagnostics. Scoped-out findings suppress immediate repair guidance with `repairHint: null`, `suggestedSkill: null`, `currentScopeRepairTarget: false`, `repairHintApplicability: "only-if-agent-selected"`, and `repairModeApplicability: "only-if-agent-selected"`; applicable `findings[]` use `currentScopeRepairTarget: true` with applicable repair fields. `doctor --report-out <path>` persists the doctor JSON payload to that exact path. Relative paths are resolved from the project root; absolute paths are used as-is. <!-- @work-item-id WI-178, WI-179, WI-180 -->
@@ -66,6 +68,14 @@ This is separate from `reporting.outputDir`. The configured report directory is 
 | `check-change-category` | `--paths <csv>` `--format human\|json` `--fail-on-full-required` | Classify changed file paths into Quick Mode categories (`api` / `domain` / `feature` / `bugfix` / `test` / `config` / `docs`) and report whether `quickMode.fullModeRequiredWhen` forces escalation to Full Mode. |
 
 ### `check-change-category` の使い方
+
+<!-- @work-item-id WI-220 -->
+
+任意の `--risk-snapshots snapshots.json` は既存分類とは別に `riskAdvice` を追加する。入力は `[{"filePath":"src/foo.ts","beforeContent":"...","afterContent":"..."}]`（内容はstringまたはnull）。filePathは `--paths` と完全一致させる。未指定時の出力・処理は従来どおり。指定しても `fullModeRequired` と `--fail-on-full-required` の終了コードは変えない。
+
+助言は `module-surface-change`（明示されたmodule宣言の差分）、`behavior-review`（宣言不変だが本文の意味は要確認）、`unknown`（情報不足・未対応）、`no-content-change`（提供された同文snapshotのみ）のいずれか。構文比較対象は明示型付きexport関数・interface・typeと、型が明示されたclass method/property/constructor。classの本文・property初期値は宣言比較から分離する。decorator、accessor、型推論、default引数、再export、宣言ファイル、create/delete等の未対応構文は不明になる。内部adapterであることや業務上の同値性をpathだけから認定しない。
+
+snapshotは呼出元の比較資料であり、現在のファイル・上位承認との一致を検証した証拠ではない。出力のbeforeHash/afterHashで比較内容を特定し、実revisionと照合する。契約差分候補は上位契約と利用者への影響、本文変更は認可・不変条件・保存形式を確認する。不明は自動許可・追加の強制拒否のどちらにも変換しない。助言機能だけで意味リスク判定が完成したとは扱わない。
 
 ISSUE-006 Story A で導入。Quick Mode で取り扱おうとしている変更が
 `quickMode.fullModeRequiredWhen` のいずれかをトリガーするか事前に確認したいときに使う。
@@ -374,7 +384,7 @@ The following are binary subcommands (`npx phasegate <command>`). Do not assume 
 | `phasegate:check-phase` | `--unit <unitId>` `--json` | Current phase for a unit |
 | `phasegate:ci-check` | `--json` | Full CI check (L2-L4; disabled L4 is reported as skipped) |
 | `phasegate:detect-drift` | `--json` | Design-code drift report |
-| `phasegate:lint` | `--target <path>` `--json` | Lint via harness-api |
+| `phasegate:lint` | `--target <path>` (repeatable) `--json` | Analyze the full graph; restrict reported diagnostics to targets |
 | `phasegate:complete-check` | `--json` | L2-L4 full check |
 | `phasegate:impact-analysis` | `<storyId>` `--json` | Story impact analysis |
 | `phasegate:generate-matrix` | `--requirements <path>` `--tests <path>` `--out <path>` `--json` | Generate the requirement-test matrix |
@@ -490,11 +500,17 @@ ISSUE-005 P3-10 で明確化された境界:
 
 | Command | Options | Description |
 |---|---|---|
-| `skill:execute-tdd-cycle` | `--unit` `--story` `--desc` `--phase RED\|GREEN\|REFACTOR` `--passed` | Run TDD cycle |
+| `skill:execute-tdd-cycle` | `--unit` `--story` `--desc` `--phase RED\|GREEN\|REFACTOR` `--passed` `--configured-validation` (optional) | Validate commit readiness and commit staged changes |
 | `skill:check-coverage` | `--story <storyId>` `--json` | Coverage check |
 | `skill:collect-lessons` | `--story <storyId>` `--sources <paths>` `--write-artifact` | Collect agent lessons |
-| `skill:apply-cascade-update` | `--story <storyId>` `--dry-run` | Cascade update to upstream docs |
+| `skill:apply-cascade-update` | `--story <storyId>` `--dry-run` | Append traceability tags only; does not perform semantic design review. Counts changed files (planned changes in dry-run), not already-tagged files. |
 | `skill:validate-structure` | `--file <path>` `--json` | Validate skill structure |
+
+`skill:apply-cascade-update --story WI-220` writes `@work-item-id WI-220`; legacy story IDs keep `@story-id`. Existing legacy annotations remain readable and unchanged. IDs are matched exactly, including comma/space-separated lists. Repeated target paths are processed once per invocation, including failed reads; fix the reported cause before explicitly retrying. JS/TS source annotations are comments so tagging does not invalidate source syntax. This command still performs tag updates only, not semantic design review. <!-- @work-item-id WI-220 -->
+
+`skill:execute-tdd-cycle` does not run tests: `--passed` is the caller's assertion that tests passed. Run the relevant tests first. The command requires `REFACTOR` and `--passed`, runs its validation gates, and invokes a normal Git commit without bypassing hooks. With `--story WI-220` (or another `WI-<number>`), the commit includes a `Work-Item` trailer; legacy story IDs retain their existing subject without an inferred WI mapping.
+
+By default, the TDD command preserves its legacy L1/L2/L3 validation profile, including warning-as-blocking behavior. Existing settings previously ignored by this command do not silently introduce new blockers after an upgrade. To explicitly adopt the resolved L1/architecture and L2/L3 settings, use `--configured-validation`. In that profile, coverage thresholds and enabled World checks can add required findings; L2/L3 warnings follow `validate.failOnWarning`, while L1 warnings still block. Neither profile adds L4, runs tests on behalf of `--passed`, or bypasses Git hooks. The selected profile is printed. Review configuration and run the required checks before selecting the configured profile. <!-- @work-item-id WI-220 -->
 
 ---
 

@@ -14,7 +14,7 @@ import { SkillStructureValidator } from './domain/services/skill-structure-valid
 
 // Infrastructure Adapters
 import { GitCommitExecutorAdapter } from './infrastructure/adapters/git-commit-executor-adapter.js';
-import { L1BiomeValidatorAdapter } from './infrastructure/adapters/l1-biome-validator-adapter.js';
+import { L1BiomeValidatorAdapter, type L1BiomeValidatorOptions } from './infrastructure/adapters/l1-biome-validator-adapter.js';
 import { L2ValidatorSystemAdapter } from './infrastructure/adapters/l2-validator-system-adapter.js';
 import { FileSystemLessonSourceReaderAdapter } from './infrastructure/adapters/file-system-lesson-source-reader-adapter.js';
 import { FileSystemLessonArtifactWriterAdapter } from './infrastructure/adapters/file-system-lesson-artifact-writer-adapter.js';
@@ -60,11 +60,18 @@ class NodeFileSystemAdapter implements FileSystemPort {
   }
 }
 
-export function createSkillQualityHandlers() {
+export interface SkillQualityHandlerOptions {
+  rootDir?: string;
+  l1Config?: L1BiomeValidatorOptions['config'];
+  validatorSystemConfig?: object;
+  failOnWarning?: boolean;
+}
+
+export function createSkillQualityHandlers(options: SkillQualityHandlerOptions = {}) {
   // Infrastructure
   const commitExecutorPort = new GitCommitExecutorAdapter();
-  const l1ValidatorPort = new L1BiomeValidatorAdapter();
-  const l2ValidatorPort = new L2ValidatorSystemAdapter();
+  const l1ValidatorPort = new L1BiomeValidatorAdapter({ rootDir: options.rootDir, config: options.l1Config });
+  const l2ValidatorPort = new L2ValidatorSystemAdapter({ config: options.validatorSystemConfig, failOnWarning: options.failOnWarning });
   const lessonSourceReaderPort = new FileSystemLessonSourceReaderAdapter();
   const lessonArtifactWriterPort = new FileSystemLessonArtifactWriterAdapter();
   const lessonArtifactSchemaPort = new AjvLessonArtifactSchemaAdapter();
@@ -87,6 +94,7 @@ export function createSkillQualityHandlers() {
   const checkCoverageUseCase = new CheckCoverageUseCase(requirementTestMatrixPort, coverageRunnerPort, configQueryPort);
   const runPlanCheckerLoopUseCase = new RunPlanCheckerLoopUseCase(
     {
+      supportsRetry: false,
       evaluate: async (planDocument: string) => {
         // チェックボックス形式（- [x] / - [ ]）でカバレッジを評価する
         const checked = (planDocument.match(/- \[x\]/gi) ?? []).length;
@@ -99,8 +107,7 @@ export function createSkillQualityHandlers() {
         const gaps = planDocument
           .split('\n')
           .filter((line) => /- \[ \]/.test(line))
-          .map((line) => line.replace(/^.*- \[ \]\s*/, '').trim())
-          .filter(Boolean);
+          .map((line) => line.replace(/^.*- \[ \]\s*/, '').trim() || '未記入のチェック項目');
         return { coverageRate, gaps, revision: `${checked}/${total}` };
       },
     }
@@ -114,7 +121,7 @@ export function createSkillQualityHandlers() {
   return {
     executeTddCycleHandler: new ExecuteTddCycleHandler(executeTddCycleUseCase),
     checkCoverageHandler: new CheckCoverageHandler(checkCoverageUseCase),
-    runPlanCheckerLoopHandler: new RunPlanCheckerLoopHandler(runPlanCheckerLoopUseCase),
+    runPlanCheckerLoopHandler: new RunPlanCheckerLoopHandler(runPlanCheckerLoopUseCase, fileSystemPort),
     collectLessonsHandler: new CollectLessonsHandler(collectLessonsUseCase, writeLessonArtifactUseCase),
     applyCascadeUpdateHandler: new ApplyCascadeUpdateHandler(applyCascadeUpdateUseCase),
     validateSkillStructureHandler: new ValidateSkillStructureHandler(validateSkillStructureUseCase),

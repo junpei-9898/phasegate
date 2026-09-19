@@ -5,6 +5,13 @@ traceability:
 
 # Logical Design: world-model
 
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+既存の明示依存・pin・review鮮度を再利用し、両端の前提更新で再評価する。タグ、意味レビュー、テスト証拠を区別し、legacy/baseline/waiver/OFFの契約は維持する。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 <!-- @work-item-id WI-285 -->
 
 > **Unit ID**: world-model  
@@ -232,7 +239,6 @@ composition-root以外でconcrete adapterを生成しない。attestation v2へ`
 <!-- @work-item-id WI-286 -->
 
 @story-id H17-01
-
 future world-model infrastructure adapterはattestation root barrelから`Sha256Capability`だけを受け、application/domainのconsumer-owned `WorldHashingPort`へ変換する。
 
 ```text
@@ -268,7 +274,6 @@ constraintはtyped directed factと両endpoint pinを保持しつつendpoint-sym
 <!-- @work-item-id WI-293 -->
 
 @story-id H17-07
-
 WM-12は`domain/{entities,value-objects,services}`だけへConstraintRecord、NodePin、ChangeProvenance、WCR evaluatorを追加する。Snapshot candidate resolutionと明示alias / relationはplain domain inputで受け、repository parser / schema / composition / CLIを先取りしない。
 
 incremental評価はclaimant / premiseいずれのchanged node IDでもrecordをscheduleし、affected recordの旧findingをcurrent findingで置換後canonical sortする。full評価と同じcurrent inputではserialized resultが一致する。`@world-reflects`由来edgeを`refines` relation inputへ変換しない。
@@ -278,7 +283,6 @@ incremental評価はclaimant / premiseいずれのchanged node IDでもrecordを
 <!-- @work-item-id WI-287 -->
 
 @story-id H17-02
-
 最初のworld-model sourceは`domain/{value-objects,entities,services,ports}`だけへ配置する。依存flowは`entities -> canonical projection -> SnapshotRootDeriver -> CanonicalJsonSerializer / WorldHashingPort`で、hash provider injectionはservice boundaryに限定する。
 
 WM-07はthree-rootのcanonical preimage / hashing境界を実装するが、constraint / claim / aliasはID付きplain canonical projectionとしてだけ受ける。declaration admission、WCR evaluation、policyは後続WMが追加する。filesystem、owner adapter、public facade、`index.ts`、composition-root、CLIは作らない。
@@ -290,7 +294,6 @@ set-valued nodes / edges / diagnostics / declarationsはderiverがcopy-sortし�
 <!-- @work-item-id WI-289 -->
 
 @story-id H17-04
-
 `infrastructure/adapters/`へproduct / proposal / ADR / Unit専用extractor、共通Markdown extractor、traceability ACL、cross-corpus coordinatorを追加する。4 scope adapterはfilesystem root / corpus role / canonical Unit exclusionだけを持ち、marker parseとWorld fact生成を共通化する。
 
 coordinatorはtraceability-model public `index.ts`のplain facadeだけをreadし、candidate集合へWorkItem / Unit / Story owner indexを供給する。same-role Fragment duplicate、case-fold path collision、unknown WorkItem、missing / invalid `@world-reflects` endpointをno-winnerで解決し、final node / edge / diagnosticをstable tuple orderで返す。
@@ -302,7 +305,6 @@ WM-09ではextractor classを直接testし、`world-model/composition-root.ts`�
 <!-- @work-item-id WI-290 -->
 
 @story-id H17-05
-
 source metadata / test source / matrix / attestation / integrity manifest extractorを`infrastructure/adapters/`へ分離する。shared TypeScript scannerは`__tests__` predicateでimplementation / testを排他的に分類し、shared JSON supportはoptional presence、strict parse、exact owner field admissionを提供する。
 
 matrixはnyquist public `RequirementTestMatrixDto`、attestationはpublic `AttestationDocument` / verify handlerだけをACL入力にする。World側はcanonical owner projectionをhashしてgenerated / external ArtifactとTestReference nodeを返し、provider内部型をimportしない。
@@ -314,7 +316,6 @@ WM-10もcomposition-root / index / CLIを変更せず、WM-11がWM-09 / 10 extra
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 `BuildSnapshotUseCase`は`WorldFactSourcePort`から全factを読み、global no-winner admission後に`SnapshotRootDeriver`へ渡す。`InspectWorldUseCase`はSnapshotをplain deterministic DTOへ変換し、`WorldInspectCommandHandler`がhuman / JSONとexit 0 / 1 / 2を適用する。
 
 `composition-root.ts`はattestation public `createSha256Capability()`をconsumer-owned hashing adapterへ、traceability public facadeをdesign ACLへ、public attestation verify handlerをevidence extractorへbindする。`index.ts`はplain inspection contract、handler、module factoryだけを公開し、provider内部型を再exportしない。
@@ -332,7 +333,6 @@ matrix extractorは1.2のcoverageStatus / lifecycleをexact owner fieldとして
 <!-- @work-item-id WI-294 -->
 
 @story-id H17-08
-
 application層がconstraints / adoption baseline / waivers / semantic debtsのrepository portを所有し、infrastructure adapterがcanonical root file、strict JSON parse、published schema admission、domain mappingを実装する。read resultは`absent | loaded | invalid`を明示し、file不在だけをcanonical emptyへ変換する。存在するunknown schema、schemaVersion欠落、parse / I/O failureはvalueなしのinvalid resultとしてfail-closedに保つ。
 
 constraintsはsupported envelopeとrecord admissionを分離し、malformed / duplicate recordをWCR-001 inputとしてlosslessに保持する。policy declarationはdocument単位でschema / duplicate identityを検査する。replace portはcomplete JSONをsame-directory temp fileへwriteしてatomic renameするが、mutation use case、`--apply`判断、composition bindはWM-15へ残す。
@@ -342,7 +342,6 @@ constraintsはsupported envelopeとrecord admissionを分離し、malformed / du
 <!-- @work-item-id WI-295 -->
 
 @story-id H17-09
-
 `DeriveObligationsUseCase`はpolicy repositoryをloadし、invalid resultをemptyへfallbackせずreportなしのfail-closed resultへする。valid inputではpolicyInputsDigestを先に導出し、既存`SnapshotRootDeriver`の`phasegate-world-evaluation/v1` preimageへ渡してevaluation IDを確定した後、current findingのfingerprint / classification / reportを構築する。
 
 use caseはreport read portを持たない。pure modeはcanonical bytesを返すだけ、write modeは同一bytesを`ObligationReportWriterPort`へ渡す。filesystem adapterは`.harness/world-obligations.json`をtemp + atomic renameで置換する。composition-rootはWM-13 repositoriesとwriterをbindするが、presentation handler / main dispatchはWM-15へ残す。
@@ -352,7 +351,6 @@ use caseはreport read portを持たない。pure modeはcanonical bytesを返�
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 `PinConstraintEndpointUseCase`はSnapshotとconstraint repositoryだけを消費し、default preview、明示apply時だけcomplete admitted constraints documentをatomic replaceする。`DeriveWorldObligationsUseCase`はSnapshot、constraintRoot、WCR evaluationをWM-14 use caseへ接続し、injectable policy dateをsemantic inputとして渡す。
 
 `WorldPinCommandHandler` / `WorldDeriveCommandHandler`はADR-037のflag、human / JSON、stdout / stderr、exit 0/1/2を実装する。composition-rootがhandlerまで配線し、mainはhelp / dispatchだけを追加する。presentationはbaseline / waiver policyやfingerprintを再計算しない。
@@ -401,7 +399,6 @@ application facadeはconstraint repositoryのread resultからclaimant / premise
 <!-- @work-item-id WI-306 -->
 
 @story-id H17-18
-
 `WorldSnapshotRootFacade`はcurrent `BuildSnapshotUseCase`を実行し、versioned plain DTO `{ schemaVersion, worldSnapshotRoot }`だけを返す。consumerへSnapshot / Sha256Digest VOを露出しない。attestation v2 compositionはtop-levelでこのfacadeをproviderへadaptする。attestation owner projectionはv1 / v2を受理するがv2の`worldSnapshotRoot`をsemantic projectionから除外し、self-referenceを作らない。
 
 ## WI-307 CI pure derivation contract
@@ -409,5 +406,4 @@ application facadeはconstraint repositoryのread resultからclaimant / premise
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 CIはpublic `world:derive --json`をwrite flagなしで二回呼び、同一matrix / corpus / control inputのstdout bytesを比較する。WorldはgeneratedAtや保存reportを出力preimageへ加えず、exit 0 / 1 / 2と`phasegate-world-cli/v1` envelopeを維持する。L3-008が後続でclean re-derivationとblocking policyを所有し、CI shellへWCR分類を複製しない。

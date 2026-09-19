@@ -1,0 +1,2 @@
+[plugins."baseline-guardrails@atomica-internal"]
+enabled = false

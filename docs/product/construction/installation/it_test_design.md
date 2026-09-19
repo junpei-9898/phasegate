@@ -5,6 +5,18 @@ traceability:
 
 # Integration Test Design: installation
 
+## WI-220 中断後のmanifest整合
+
+<!-- @work-item-id WI-220 -->
+
+小さな実template/実filesystemの更新について各write/copy/rename直前・直後でI/O例外を注入し、再実行が正規に完了すること、利用者追記を保持すること、生成済み本文とmanifest hashが一致して次回の通常更新で偽の手編集拒否にならないことを検証する。mockはI/O faultだけとし、domain/handlerは実体を使う。
+
+## WI-220 D08 旧0.335.0の既存保護差
+
+<!-- @work-item-id WI-220 -->
+
+実archiveのpackage versionが0.335.0のときだけ、config直接Writeの旧allow→候補protected blockを既知の0.340.0導入済み差として期待する。他の操作差は許容しない。旧runtimeへ戻した後は元の観測へ一致すること。別の正規config:plan変更→文書編集再開試験を同じ旧archiveで実行し、保護解除なしで復旧を確認する。
+
 > **Unit ID**: installation
 > **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-182 / WI-183 / WI-207
 > **作成日**: 2026-05-11
@@ -260,3 +272,17 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 - personal install では project Husky runtime finding を出さない。
 - packed template の analyze hook は raw Biome recommendation を edited-file block にせず、PhaseGate L1
   violation だけを対象 path の error として返す。
+
+## WI-220 配布互換性の追加検証
+
+<!-- @work-item-id WI-220 -->
+
+旧版で配置した管理workflowを利用者が変更したfixtureで、候補reconcileのdry-run無変更、apply/retryでのrefused報告と本文保持、旧runtimeへ戻した後の本文保持を実CLIで確認する。競合をforceなしで上書きしない既存契約を維持する。
+
+旧版tarballで導入済みの一時docs-onlyプロジェクトについて、候補runtime＋旧配置物、install再実行、旧runtime＋再配置物の順に実CLIを検証する。設定・利用者文書・既存配置物のbyte保持を更新直後に確認し、doctor/validateのJSONと終了状態を旧版基準と比較する。候補版と旧版はSHA-256付き外部入力で固定し、公開や実プロジェクトの更新は行わない。通常suiteはopt-inなしでスキップする。
+
+各段階で公開pre hookへ同じRead／利用者文書Write／保護config Write／拒否後Readを入力する。許可0・候補での保護理由付き拒否2・拒否後の別操作許可0をassertし、旧版で観測した判断とも比較する。旧版がconfig保護導入前でallowの場合も差を検出し、暗黙に互換合格へ変えない。保護config自体は変更しない。全エスカレーション経路の保証とは区別する。
+
+旧配布版でstrict化したfixtureを候補へ更新し、文書拒否→案内された正規config:planの予告→明示apply→文書再開を検証する。backupの旧設定、変更範囲、再apply後の安定性を確認し、設定ファイル直接Writeの保護は復旧後も残ることをassertする。本PJの設定は変更しない。
+
+公開TDD CLIについて、同じ有効なcoverageThreshold付き設定・同じstaged文書を持つ独立した一時Git repositoryへ旧版と候補をそれぞれ導入する。カバレッジ成果物なしの既存操作のexitと履歴を比較し、共通設定伝播による新規拒否を検出する。Git hookのbypassや実PJのcommitは行わない。新規拒否が出たら期待値を新動作へ合わせず、互換方針と正規復旧の扱いを解決する。

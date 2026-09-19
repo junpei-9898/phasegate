@@ -1,5 +1,29 @@
 # ITテスト設計: harness-api
 
+## WI-220 設定書込中断
+
+<!-- @work-item-id WI-220 -->
+
+config:planのbackup・一時設定・rename各直前/直後で実子processを終了し、本体の原子的旧/新状態、backup原文、利用者文書を確認する。後続ユーザー追記を保持してpreview/applyで再開できること。fault injectionは試験専用preloadで一時project内に限定し、製品へ注入設定を追加しない。
+
+## WI-220 runtime pack
+
+<!-- @work-item-id WI-220 -->
+
+実npm packを使った最小fixtureでTS/bin/assets保持、Nodeによる生成JS起動、map、checkout非汚染、既存出力拒否、構文エラー時の非zeroを確認する。実配布のrelease-smoke/upgrade/performanceは別のopt-in suiteで同一archiveを試す。
+
+## WI-220 事前コンパイル配布probe
+
+<!-- @work-item-id WI-220 -->
+
+固定tarballを隔離展開し、TSとassetsを保持した同位置JS生成物を試験専用tarballへpackする。通常公開入口、schema、template、install、hookを既存配布suiteで検証する。入力/出力hashを保存する。開発checkoutや通常配布物を変更せず、prototypeの成功だけで採用・性能合格としない。
+
+## WI-220 事前コンパイル経路の予備比較
+
+<!-- @work-item-id WI-220 -->
+
+既存入口を残す配布方式の採用判断として、明示opt-inの隔離生成物とtsx経路でhelp・実ファイルlintのexit/stdoutを比較し、同じfixtureで交互計測する。schema/presetの相対位置を維持し、生成入力hashとNodeを記録する。通常testではskipし、予備値を配布/hook互換・T21本測定の合格としない。
+
 @story-id H09-01
 @story-id H09-02
 @story-id H09-03
@@ -711,3 +735,21 @@ temp project で install / init / setup:agent / doctor の新 target を main pr
 actual main process と temp project を使い、valid / missing / invalid-json / invalid-schema config への direct Write が
 すべて protected-file exit 2 になることを検証する。同じ fixture で無関係 Bash、doctor、gated path の既存
 fail-open / fail-closed contract を回帰固定する。
+## WI-220 lint報告対象の回帰
+
+<!-- @work-item-id WI-220 -->
+
+既存CLI targetをdispatchからPortへ渡す。adapterの全件解析結果からファイル・directory・絶対パスで報告を絞り、似たprefixの兄弟を除外する。位置なし診断と未指定／空配列の全件結果を維持する。解析自体に対象を渡さないことも確認する。
+## WI-220 CLI起動依存
+
+<!-- @work-item-id WI-220 -->
+
+実CLIにテスト専用module loaderを適用し、無関係compositionを拒否してもhelp/lintが機能することと、必要compositionを拒否した対照で失敗することを検証する。各遅延コマンドの既存E2E、config状態別JSON/exit、型チェック、全体回帰を実行する。
+
+拒否対象にはinstallation／quick-mode／phase-dependency-model／traceability-model／adr-foundation／harness-errorも含める。必要時にのみfactoryを読むことを検証し、各公開コマンドの機能試験を省略しない。
+
+## WI-220 config planの破損入力とbackup
+
+<!-- @work-item-id WI-220 -->
+
+実CLIで破損JSON／未存在のpreview・apply・明示再実行が元データを変えないこと、未存在のpreviewは旧applicable・部分patchを維持して初期化予告を案内するがapplyは拒否することと、権限ある修復／初期化後は同じintentが成功することを検証する。有効JSONの書式を含むbackup原文、非設定intentのnot-applicable、schema-invalidの既存exit 2も確認する。

@@ -31,6 +31,27 @@ const baseV2Document = () => ({
 });
 
 target("AjvConfigSchemaValidator (v2/v3 structure detection)", () => {
+  it.each(['advisory', 'enforce', undefined, 'invalid', true])('依存検査モード%sを明示enumとして検証すること', dependencyReflection => {
+    const sut = new AjvConfigSchemaValidator();
+    const actual = sut.validate({ ...baseV2Document(), architecture: { preset: 'clean' },
+      agentIntegration: { preToolUse: { dependencyReflection } } });
+    if (dependencyReflection === 'invalid' || dependencyReflection === true) {
+      expect(actual).toEqual(expect.arrayContaining([expect.objectContaining({ path: '/agentIntegration/preToolUse/dependencyReflection' })]));
+    } else expect(actual).toEqual([]);
+  });
+  it.each(['preToolUse', 'postToolUse'])('独立した%s設定のbooleanだけを受理する', hook => {
+    // Arrange
+    const validator = new AjvConfigSchemaValidator();
+    const document = { ...baseV2Document(), architecture: { preset: 'clean' } };
+    // Act
+    const actual = [true, false, 'invalid'].map(enabled => validator.validate({
+      ...document, agentIntegration: { [hook]: { enabled } },
+    }));
+    // Assert
+    expect(actual[0]).toEqual([]);
+    expect(actual[1]).toEqual([]);
+    expect(actual[2]).toEqual([expect.objectContaining({ path: `/agentIntegration/${hook}/enabled`, message: expect.stringContaining('must be boolean') })]);
+  });
   describe("architecture キーの有無で schema を切り替える", () => {
     context("architecture キーが無い v2 形式の document", () => {
       it("v2 schema で validate され errors 0 件", () => {

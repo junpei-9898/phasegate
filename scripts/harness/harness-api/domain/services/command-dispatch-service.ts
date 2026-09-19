@@ -312,7 +312,18 @@ export class CommandDispatchService {
       }
 
       case "phasegate:lint": {
-        const lintResult = await this.ports.biomeLintPort.runLint();
+        const target = typeof _flags.target === 'string' && _flags.target.length > 0 ? _flags.target : undefined;
+        let reportTargets: readonly string[] | undefined = target === undefined ? undefined : [target];
+        if (args.reportTargets !== undefined) {
+          const parsed: unknown = JSON.parse(args.reportTargets);
+          if (!Array.isArray(parsed) || !parsed.every((item): item is string => typeof item === 'string' && item.length > 0)) {
+            throw new Error('lint reportTargets must be an array of non-empty paths');
+          }
+          reportTargets = parsed;
+        }
+        const lintResult = reportTargets === undefined
+          ? await this.ports.biomeLintPort.runLint()
+          : await this.ports.biomeLintPort.runLint(reportTargets);
         if (lintResult.passed) {
           const r = HarnessApiResponse.pass({ ...summary, passed: 1 });
           return { status: "pass", errors: [], summary: r.summary, data: undefined, exitCode: 0 };

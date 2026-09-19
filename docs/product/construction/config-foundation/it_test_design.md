@@ -1,5 +1,11 @@
 # ITテスト設計: config-foundation
 
+## WI-220 B3j 明示強制化
+
+<!-- @work-item-id WI-220 -->
+
+dependencyReflectionのadvisory/enforce/不在を受理し、別文字列・booleanを拒否する。旧設定のschema検証を維持する。
+
 @story-id H04-01
 @story-id H04-02
 @story-id H04-03
@@ -427,3 +433,10 @@ resolved configをvalidator-system adapterへ渡し、`world.enabled:false`でL2
 <!-- @work-item-id WI-302 -->
 
 resolved configをvalidator-systemへ渡し、`world.enabled:false`ではL2-017 / L3-008がskip、trueでは双方がselectedになることを検証する。L3-008 registration後もall presetのdefault falseとexplicit World commandの常時実行契約を維持する。
+# WI-220 独立hook設定の回帰
+
+<!-- @work-item-id WI-220 -->
+
+v3 schemaでpreToolUse/postToolUse enabledのbooleanを受理し非booleanを拒否する。既存v2/v3の省略互換・unknown property拒否を維持する。
+
+schema遅延化ではmodule import/constructor時のschema読込0、選択版のみ初回1回、同版の複数instance再利用を確認する。実Ajvで有効/無効の別documentを連続検証し、失敗時のpath/codeが消えないことと結果cacheがないことを確認する。schema読込失敗の伝播と原因解消後の再実行も確認する。

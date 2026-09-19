@@ -82,6 +82,23 @@ function queryInput(overrides: Partial<FullModeSessionQueryInput> = {}): FullMod
 }
 
 target("FileSystemFullModeSessionQueryAdapter.check", () => {
+  it.each([
+    { unit: 'agent-integration', allowed: true },
+    { unit: 'other-unit', allowed: false },
+  ])('直下ファイルと$unitの混在でUnit境界の判定$allowedを守ること', async ({ unit, allowed }) => {
+    // Arrange
+    const sut = await createAdapterWithSession(activeSession());
+    // Act
+    const actual = await sut.check(queryInput({
+      unitId: 'agent-integration',
+      targetFilePaths: ['scripts/harness/main.ts', `scripts/harness/${unit}/domain/file.ts`],
+    }));
+    // Assert
+    expect(actual.allowed).toBe(allowed);
+    expect(actual.active).toBe(true);
+    if (!allowed) expect(actual.reason).toContain('outside session unit');
+  });
+
   context("session.json が存在しない場合", () => {
     it("active=false かつ allowed=false が返ること", async () => {
       // Arrange

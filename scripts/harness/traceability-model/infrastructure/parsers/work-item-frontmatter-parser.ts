@@ -31,6 +31,47 @@ const flowArrayPattern = (key: string): RegExp => new RegExp(`^\\s*${key}\\s*:\\
 const blockArrayPattern = (key: string): RegExp =>
   new RegExp(`^\\s*${key}\\s*:\\s*\\r?\\n((?:[ \\t]+-[ \\t]+.+\\r?\\n?)+)`, "m");
 
+/** Opt-in dependency diagnostics; existing metadata readers keep their old contract. */
+export function parseWorkItemDependencies(content: string): readonly string[] | undefined {
+  const body = FRONTMATTER_PATTERN.exec(content)?.[1];
+  if (body === undefined) return undefined;
+  const lines = body.split(/\r?\n/);
+  const headers = lines.flatMap((line, index) => /^[ \t]*depends_on[ \t]*:/.test(line) ? [index] : []);
+  if (headers.length === 0) return undefined;
+  const invalid = (reason: string): never => {
+    throw new WorkItemFrontmatterValidationError(`depends_on ${reason}`);
+  };
+  if (headers.length !== 1) return invalid('が重複しています');
+  if (!lines[headers[0]].startsWith('depends_on')) return invalid('はfrontmatter直下に指定してください');
+  const withoutComment = (value: string) => value.replace(/[ \t]+#.*$/, '').trim();
+  const declaration = withoutComment(lines[headers[0]].replace(/^[ \t]*depends_on[ \t]*:/, ''));
+  const continuation: string[] = [];
+  for (const line of lines.slice(headers[0] + 1)) {
+    if (line.trim() === '' || line.trimStart().startsWith('#')) continue;
+    if (/^[^\s:#][^:]*:/.test(line)) break;
+    continuation.push(line);
+  }
+  let values: string[];
+  if (declaration.startsWith('[') && declaration.endsWith(']')) {
+    if (continuation.length > 0) return invalid('のflow配列に続く行が不正です');
+    const inner = declaration.slice(1, -1).trim();
+    values = inner === '' ? [] : inner.split(',');
+  } else if (declaration === '') {
+    values = [];
+    for (const line of continuation) {
+      const item = /^[ \t]+-[ \t]+(.+)$/.exec(line);
+      if (!item) return invalid('はWI IDの配列で指定してください');
+      values.push(withoutComment(item[1]));
+    }
+    if (values.length === 0) return invalid('の空宣言には [] を指定してください');
+  } else {
+    return invalid('はWI IDの配列で指定してください');
+  }
+  const ids = values.map((value) => stripYamlQuotes(value.trim()));
+  if (ids.some((id) => !/^WI-\d+$/.test(id))) return invalid('に不正なWI IDまたは空項目があります');
+  return Object.freeze(ids);
+}
+
 export function parseWorkItemFrontmatter(content: string): WorkItemFrontmatter | null {
   const match = FRONTMATTER_PATTERN.exec(content);
   if (!match) return null;

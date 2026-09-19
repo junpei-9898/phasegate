@@ -1,6 +1,7 @@
 /**
  * @layer presentation
  * @unit agent-integration
+ * @work-item-id WI-220
  * @work-item-id WI-208
  * @work-item-id WI-323
  * @work-item-id WI-384
@@ -16,11 +17,7 @@ import { ChildProcessCliExecutorAdapter } from "../infrastructure/adapters/child
 import { HarnessApiCliCommandRegistryAdapter } from "../infrastructure/adapters/harness-api-cli-command-registry-adapter.js";
 import { HarnessConfigConfigQueryAdapter } from "../infrastructure/adapters/harness-config-config-query-adapter.js";
 import { recordHookSkipEvent } from "./hook-skip-event-recorder.js";
-
-interface PostToolUseHookInput {
-  tool_name?: string;
-  tool_response?: unknown;
-}
+import { normalizePostToolUse, renderPostToolUseFeedback } from './post-tool-use-feedback.js';
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -30,8 +27,8 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-async function findConfigPath(): Promise<string> {
-  let dir = process.cwd();
+async function findConfigPath(startDir: string): Promise<string> {
+  let dir = startDir;
   while (true) {
     const candidates = [
       path.join(dir, "phasegate.config.json"),
@@ -47,7 +44,7 @@ async function findConfigPath(): Promise<string> {
     if (parent === dir) break;
     dir = parent;
   }
-  return path.join(process.cwd(), "phasegate.config.json");
+  return path.join(startDir, "phasegate.config.json");
 }
 
 function projectRootForConfig(configPath: string): string {
@@ -64,20 +61,21 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  let input: PostToolUseHookInput;
+  let input: unknown;
   try {
-    input = JSON.parse(raw) as PostToolUseHookInput;
+    input = JSON.parse(raw) as unknown;
   } catch {
     process.stderr.write(`不正なJSONです: ${raw}\n`);
     process.exit(2);
   }
 
-  const toolName = input.tool_name;
+  const request = normalizePostToolUse(input, process.cwd());
+  const toolName = request.toolName;
   if (!toolName) {
     // WI-323: PostToolUse はツール実行後の lint フィードバックでありゲートではないため、
     // tool_name 欠落は fail-open でスキップする（WI-314 / github#40 方針）。
     // ※ pre-tool-use-hook の同ガードは書き込みゲートなので fail-closed (exit 2) を維持する。
-    const configPath = await findConfigPath();
+    const configPath = await findConfigPath(request.cwd);
     await recordHookSkipEvent({
       projectRoot: projectRootForConfig(configPath),
       hookType: "post-tool-use",
@@ -91,10 +89,13 @@ async function main(): Promise<void> {
   }
 
   try {
-    const configPath = await findConfigPath();
+    const configPath = await findConfigPath(request.cwd);
+    const projectRoot = projectRootForConfig(configPath);
+    const affectedFilePaths = request.targets.map((target) => path.relative(projectRoot, target))
+      .filter((target) => target !== '..' && !target.startsWith(`..${path.sep}`) && !path.isAbsolute(target));
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
     const cliCommandRegistryPort = new HarnessApiCliCommandRegistryAdapter();
-    const cliExecutorPort = new ChildProcessCliExecutorAdapter();
+    const cliExecutorPort = new ChildProcessCliExecutorAdapter({ cwd: projectRoot });
 
     const useCase = new HandlePostToolUseUseCase({
       configQueryPort,
@@ -102,27 +103,19 @@ async function main(): Promise<void> {
       cliCommandRegistryPort,
     });
 
-    const output = await useCase.execute({ toolName, affectedFilePaths: [] });
+    const output = await useCase.execute({ toolName, affectedFilePaths });
 
     if (output.skipReason) {
       await recordHookSkipEvent({
         projectRoot: projectRootForConfig(configPath),
         hookType: "post-tool-use",
         reason: output.skipReason,
-        targetPaths: [],
+        targetPaths: affectedFilePaths,
       });
-      process.stderr.write(`スキップ: ${output.skipReason}\n`);
-      process.exit(0);
     }
-
-    if (output.executed && output.cliResult) {
-      if (output.cliResult.exitCode !== 0) {
-        process.stderr.write(`Lint失敗 (exitCode=${output.cliResult.exitCode})\n`);
-      }
-      process.exit(output.cliResult.exitCode);
-    }
-
-    process.exit(0);
+    const feedback = renderPostToolUseFeedback(output);
+    if (feedback.text) process.stderr.write(feedback.text);
+    process.exit(feedback.exitCode);
   } catch (error) {
     process.stderr.write(`実行エラー: ${String(error)}\n`);
     process.exit(2);

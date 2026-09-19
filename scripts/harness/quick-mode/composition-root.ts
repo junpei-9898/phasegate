@@ -13,6 +13,7 @@ import { JudgeQuickModeEligibilityUseCase } from "./application/usecases/judge-q
 import { QuickModeJudgmentEngine } from "./domain/services/quick-mode-judgment-engine.js";
 import { ValidatorRelaxationService } from "./domain/services/validator-relaxation-service.js";
 import { FsFileExistenceAdapter } from "./infrastructure/adapters/fs-file-existence-adapter.js";
+import { SnapshotRiskAdvisoryAdapter } from "./infrastructure/adapters/snapshot-risk-advisory-adapter.js";
 import { GitDiffChangedFilesAdapter } from "./infrastructure/adapters/git-diff-changed-files-adapter.js";
 import { HarnessConfigQuickModeConfigAdapter } from "./infrastructure/adapters/harness-config-quick-mode-config-adapter.js";
 import { ValidatorSystemQuickModeExecutionAdapter } from "./infrastructure/adapters/validator-system-quick-mode-execution-adapter.js";
@@ -86,7 +87,10 @@ export function createQuickModeCompositionRoot(
 
   // Presentation
   const handler = new CiCheckQuickModeHandler({ useCase: executeUseCase });
-  const checkChangeCategoryHandler = new CheckChangeCategoryHandler({ useCase: classifyUseCase });
+  const checkChangeCategoryHandler = new CheckChangeCategoryHandler({
+    useCase: classifyUseCase,
+    riskAdvisoryPort: new SnapshotRiskAdvisoryAdapter(options.rootDir),
+  });
 
   return {
     handler,

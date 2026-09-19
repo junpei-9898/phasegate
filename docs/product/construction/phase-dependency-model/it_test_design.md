@@ -1,5 +1,15 @@
 # ITテスト設計: phase-dependency-model
 
+## WI-220 対象WI catalogと依存解決
+
+<!-- @work-item-id WI-220 -->
+
+独自inception/constructionルートを持つ同一fixtureで、移設先の未反映を検出し、既定パスのタグで誤合格しないことを確認する。移設先への反映後は解消。cross推移依存、construction外mapping、legacy IDのUnit範囲を維持し、旧呼出のパスは不変とする。
+
+解決済み閉包と実反映checkerの結合では、同Unitの無関係draft除外、対象自身の未反映、別Unitへの直接/推移依存、cross affects全Unitのdomain反映（Git履歴なし）、反映後の再評価、optional警告、重複集約を確認する。旧checkでは無関係draftも従来どおり検出することを同fixtureで比較する。空閉包は拒否、OFFはI/Oなしを検証する。hookでの許否や成果物不足の試験と区別する。
+
+実filesystemに単一Unit/cross/別Unitの依存を配置し、到達WIだけ読むcatalogと実resolverを接続する。無関係な破損description、到達先の破損/欠落、id/directory不一致、重複ID、未宣言、循環、custom inceptionRoot、symlink directory、root列挙失敗を検証する。破損した到達先は診断付きunknown、無関係な破損は対象集合へ混ぜない。これはhook試験の代用ではない。
+
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03

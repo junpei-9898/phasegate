@@ -9,4 +9,5 @@ export interface RunPlanCheckerLoopOutput {
   readonly status: LoopStatus;
   readonly loopHistory: readonly LoopAttempt[];
   readonly escalationRequired: boolean;
+  readonly stopReason?: 'UNCHANGED_INPUT';
 }

@@ -1,0 +1,454 @@
+{
+  "workItemId": "WI-220",
+  "candidateSha256": "39b7bcc5f788fef782e386d50327beec88188a41a0f3a783932af6c73146417c",
+  "kind": "selected-vitest-summary-not-full-log",
+  "platform": "darwin",
+  "limitations": [
+    "Raw temporary logs may expire; hashes identify originals but do not archive them",
+    "Separate run counts overlap; do not sum",
+    "Full-suite collection predates opt-in hook-settings file",
+    "Initial hook-settings instrumentation failure retained"
+  ],
+  "runs": [
+    {
+      "file": "full-regression-final.json",
+      "sha256": "19a014f8d4e7019a29f281776a1fa3948fc4797c84654332849dcff2be231b62",
+      "success": true,
+      "passed": 5595,
+      "failed": 0,
+      "pending": 23
+    },
+    {
+      "file": "forks-final.json",
+      "sha256": "36c820f7d09abea3624346958ccba1f0c99f2e405346db083219df8c7a884ce0",
+      "success": true,
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "PhaseGateQueryAdapter custom integration hook adapter が custom gates を通して blocker なしで通過できること",
+          "status": "passed"
+        },
+        {
+          "name": "PhaseGateQueryAdapter custom integration invalid config の場合は fail-fast で blocker を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load configPathを指定した場合 IT-CF-035: 絶対パスとJSONドキュメントを返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load configPathを省略した場合 IT-CF-036: 親ディレクトリを探索して設定ファイルを見つけること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load loadが返すpath形式を確認する場合 IT-CF-037: 常に絶対パスを返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load 対象ファイルが存在しない場合 IT-CF-038: ConfigNotFoundErrorを送出すること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load JSONが壊れている場合 IT-CF-039: ConfigParseErrorをparse失敗メッセージ付きで送出すること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository load JSONが壊れている場合 IT-CF-059: ConfigParseErrorはConfigPersistenceErrorのサブクラスとして扱えること（WI-314 fail-open互換）",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository save 新規保存する場合 IT-CF-040: 2スペースJSONと改行付きで保存すること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository save 既存ファイルを上書きする場合 IT-CF-041: 旧内容を残さず新しいJSONへ置き換えること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemConfigRepository save 書込みに失敗する場合 IT-CF-042: ConfigPersistenceErrorをpersist失敗メッセージ付きで送出すること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read操作を行う場合 有効なJSONファイルパスを渡すと、JSONパース済みのオブジェクトが返ること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read操作を行う場合 存在しないファイルパスを渡すと、エラーがthrowされること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read操作を行う場合 壊れたJSONのファイルパスを渡すと、MatrixValidationFailedErrorがthrowされること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read操作を行う場合 空ファイルを渡すと、MatrixValidationFailedErrorがthrowされること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter write操作を行う場合 有効なファイルパスとデータを渡すと、JSON.stringify(data,null,2)形式で書き込まれること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter write操作を行う場合 存在しない親ディレクトリへの書き込みではエラーがthrowされること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter write操作を行う場合 相対パスを渡した場合、相対パスのまま処理されること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read/write往復を行う場合 write後にreadすると同一データが返ること",
+          "status": "passed"
+        },
+        {
+          "name": "FileSystemMatrixFileAdapter read/write往復を行う場合 writeが途中でエラーになった場合、エラーがthrowされること",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "package-regression.json",
+      "sha256": "ac3662d25b21cd3bcccf6e34196a23f598931f460f81b24e44ec5d11cac5476d",
+      "success": true,
+      "passed": 20,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "既存導入の配布物更新と旧版復旧 既存のcoverage設定を持つ文書TDD操作で更新後だけ拒否を増やさないこと",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 設定の正規変更で文書編集を再開でき直接書込み保護は維持されること",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 利用者が変更した管理ファイルは更新で拒否・保持され明示更新時のバックアップから確認できること",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 runtime更新・再配置・旧版復旧で設定と利用者文書を保持し既存の診断経路が動くこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke: install フラグ有効性 release-smoke(flag): install --apply --with-husky で .husky/pre-commit が作成されること（dead flag 検知）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "upgrade-0335.json",
+      "sha256": "7f08e95914673739bfc794195145b02b23fb9fa1ca99a0b918b6a2c137a88508",
+      "success": true,
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "既存導入の配布物更新と旧版復旧 既存のcoverage設定を持つ文書TDD操作で更新後だけ拒否を増やさないこと",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 設定の正規変更で文書編集を再開でき直接書込み保護は維持されること",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 利用者が変更した管理ファイルは更新で拒否・保持され明示更新時のバックアップから確認できること",
+          "status": "passed"
+        },
+        {
+          "name": "既存導入の配布物更新と旧版復旧 runtime更新・再配置・旧版復旧で設定と利用者文書を保持し既存の診断経路が動くこと",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "release-node18.json",
+      "sha256": "2b88a198fb784fb6eb26b9b052f9f8453b9215c3c0ed5070ba9c60adca828fb1",
+      "success": true,
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke: install フラグ有効性 release-smoke(flag): install --apply --with-husky で .husky/pre-commit が作成されること（dead flag 検知）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "release-node22.json",
+      "sha256": "bc9b31db5d18901b829ab1421acdc55f6a937f2e81657782d1220e12819f032b",
+      "success": true,
+      "passed": 16,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: pure-python release-smoke(pure-python): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: go-monorepo release-smoke(go-monorepo): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): npm install で tarball が exit 0 でインストールされ phasegate bin が配置されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): install --apply --agent claude が exit 0 かつデフォルトで Husky / CI workflow を書き込まないこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): doctor --json がクラッシュせず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): validate --layer L2 --json が config エラー (exit 2) にならず JSON を返すこと",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke fixture: docs-only release-smoke(docs-only): uninstall --apply がクラッシュせず、--force 再実行で install 産物が撤去されること",
+          "status": "passed"
+        },
+        {
+          "name": "release-smoke: tarball 実分布ゲート (WI-329) release-smoke: install フラグ有効性 release-smoke(flag): install --apply --with-husky で .husky/pre-commit が作成されること（dead flag 検知）",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "hook-settings-0340.json",
+      "sha256": "f6dfbe438db86fa8be540cd6fa0458328b9bc70ec3dc28c8a355b875a2b93637",
+      "success": false,
+      "passed": 2,
+      "failed": 2,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=false local=trueで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=true local=falseで既存有効値trueと設定原文を保持すること",
+          "status": "failed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=falseで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=trueで既存有効値trueと設定原文を保持すること",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "file": "hook-settings-0340-final.json",
+      "sha256": "2dc4541db482530ad41b0722e7a6a3ede664250c37f348952a045558ac26fa0f",
+      "success": true,
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=false local=trueで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=true local=falseで既存有効値trueと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=falseで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=trueで既存有効値trueと設定原文を保持すること",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "file": "hook-settings-0335.json",
+      "sha256": "51e634819a866fe2375362226c697117adedc67da4a7658af1b9ba4d7bee990f",
+      "success": true,
+      "passed": 4,
+      "failed": 0,
+      "pending": 0,
+      "assertions": [
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=false local=trueで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=true local=falseで既存有効値trueと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=falseで既存有効値falseと設定原文を保持すること",
+          "status": "passed"
+        },
+        {
+          "name": "旧新配布hookのroot/local設定互換 root=undefined local=trueで既存有効値trueと設定原文を保持すること",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

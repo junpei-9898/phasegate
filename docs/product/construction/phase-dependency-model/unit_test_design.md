@@ -1,5 +1,11 @@
 # ユニットテスト設計: phase-dependency-model
 
+## WI-220 対象WIと推移依存
+
+<!-- @work-item-id WI-220 -->
+
+実体のWI記録と純粋resolverで、無関係WI除外、直接/推移/別Unit依存の保持、複数root、重複edge、循環、明示空依存を検証する。対象なし・不正ID・不在参照・重複ID・Unit不一致・所属不明・依存未宣言では理由付きunknownとし、部分集合を返さない。catalog順を変えても結果順は同じとし、深い依存で再帰stackへ依存しない。これは判定器単体の証拠であり、T14/T15はmetadata/実hook接続・反映後の再開試験を別途要求する。
+
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03

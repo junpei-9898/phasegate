@@ -485,7 +485,7 @@ target('HandlePostToolUseUseCase.execute', () => {
   describe('PostToolUse Hook の CLI 実行制御を行う', () => {
     context('Hook 有効かつ CLI が正常終了する場合', () => {
       // IT-UC-HandlePostToolUse-001
-      it('PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること', async () => {
+      it('PostToolUse Hookが有効な場合、phasegate:lintが対象報告付きで実行されること', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -571,7 +571,7 @@ target('HandlePostToolUseUseCase.execute', () => {
 
     context('タイムアウト超過の場合', () => {
       // IT-UC-HandlePostToolUse-004
-      it('タイムアウト超過（500ms以上）の場合、TIMEOUT_EXCEEDEDでスキップされること', async () => {
+      it('タイムアウト上限（5000ms）超過の場合、TIMEOUT_EXCEEDEDで未検証と示すこと', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -1598,176 +1598,22 @@ target('PreToolUseHookHandler.handle', () => {
 });
 ```
 
-### 5.2 post-tool-use-hook（7件）
+### 5.2 post-tool-use-hook（WI-220 現行ロジック）
 
-```typescript
-// @unit agent-integration
-// @layer presentation
-// @story H11-03
+<!-- @work-item-id WI-220 -->
 
-import { describe, it, expect, vi } from 'vitest';
-import { target, context } from '../../../helpers/test-helpers';
-import { PostToolUseHookHandler } from '../../../../agent-integration/presentation/hooks/post-tool-use-hook';
+旧handler想定の複製コードは実在のpresentation scriptとずれていたため、実行可能テストを正とする参照へ統合する。内部lintの終了コードとhookの終了コードを混同しない。
 
-target('PostToolUseHookHandler.handle', () => {
-  describe('stdin JSON を解析して UseCase を呼び出し exit code を返す', () => {
-    context('不正な JSON が入力された場合', () => {
-      // IT-API-PostToolUse-001
-      it('不正なJSONが exit code 2かつstderrにエラーメッセージで返ること', async () => {
-        // Arrange
-        const mockUseCase = { execute: vi.fn() };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = '{ bad json';
+| 入力・状態 | 現行期待値 | 実行可能な根拠（scripts/harness/__tests__/integration/agent-integration/） |
+|---|---|---|
+| 不正JSON・config I/O例外 | hook exit 2、診断・原状保持、修復後再開 | hook-missing-field-fail-open.integration.test.ts |
+| tool_name欠落 | 既存のfail-open契約でexit 0、正常入力と区別 | hook-missing-field-fail-open.integration.test.ts |
+| Read/Glob/Grep | lint起動0、stdout/stderr空、skipログ追記0 | post-tool-use-read-only.test.ts、hook-skip-event-recorder.test.ts |
+| 有効なWrite | 対象抽出/正規化→全体解析→対象診断。内部lint非zeroでもhook exit 0、診断本文をstderrへ表示 | post-tool-use-feedback.test.ts |
+| HOOK_DISABLED | lint起動0、stdout/stderr空、正常skip記録なし | hook-enabled-compatibility.test.ts、hook-skip-event-recorder.test.ts |
+| timeout | 5000ms上限、子孫回収後TIMEOUT_EXCEEDEDを未検証として表示、hook exit 0 | child-process-lifecycle.test.ts、post-tool-use-feedback.test.ts |
 
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(2);
-        expect(actual.stderr).toBeTruthy();
-      });
-    });
-
-    context('tool_name フィールドが欠落した入力の場合', () => {
-      // IT-API-PostToolUse-002
-      it('tool_nameフィールドなしの入力が exit code 2 を返すこと', async () => {
-        // Arrange
-        const mockUseCase = { execute: vi.fn() };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({ tool_response: {} });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(2);
-      });
-    });
-
-    context('UseCase が executed=true かつ exitCode=0 を返す場合', () => {
-      // IT-API-PostToolUse-003
-      it('正常実行（executed=true, exitCode=0）が exit code 0 を返すこと', async () => {
-        // Arrange
-        const mockUseCase = {
-          execute: vi.fn().mockResolvedValue({
-            executed: true,
-            skipReason: undefined,
-            cliResult: { exitCode: 0 },
-          }),
-        };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({
-          tool_name: 'str_replace_editor',
-          tool_response: {},
-        });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(0);
-      });
-    });
-
-    context('Lint が失敗した場合（exitCode=1）', () => {
-      // IT-API-PostToolUse-004
-      it('Lint失敗（executed=true, cliResult.exitCode=1）が exit code 1かつstderrにLint失敗メッセージで返ること', async () => {
-        // Arrange
-        const mockUseCase = {
-          execute: vi.fn().mockResolvedValue({
-            executed: true,
-            skipReason: undefined,
-            cliResult: { exitCode: 1 },
-          }),
-        };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({
-          tool_name: 'str_replace_editor',
-          tool_response: {},
-        });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(1);
-        expect(actual.stderr).toBeTruthy();
-      });
-    });
-
-    context('Hook が HOOK_DISABLED でスキップされる場合', () => {
-      // IT-API-PostToolUse-005
-      it('HOOK_DISABLEDスキップが exit code 0かつstderrにスキップ理由で返ること', async () => {
-        // Arrange
-        const mockUseCase = {
-          execute: vi.fn().mockResolvedValue({
-            executed: false,
-            skipReason: 'HOOK_DISABLED',
-          }),
-        };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({
-          tool_name: 'str_replace_editor',
-          tool_response: {},
-        });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(0);
-        expect(actual.stderr).toContain('HOOK_DISABLED');
-      });
-    });
-
-    context('タイムアウト超過で TIMEOUT_EXCEEDED になる場合', () => {
-      // IT-API-PostToolUse-006
-      it('TIMEOUT_EXCEEDEDスキップが exit code 0（スキップ扱い）を返すこと', async () => {
-        // Arrange
-        const mockUseCase = {
-          execute: vi.fn().mockResolvedValue({
-            executed: false,
-            skipReason: 'TIMEOUT_EXCEEDED',
-          }),
-        };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({
-          tool_name: 'str_replace_editor',
-          tool_response: {},
-        });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(0);
-      });
-    });
-
-    context('UseCase が例外をスローした場合', () => {
-      // IT-API-PostToolUse-007
-      it('UseCase実行エラーが exit code 2かつstderrに診断情報で返ること', async () => {
-        // Arrange
-        const mockUseCase = {
-          execute: vi.fn().mockRejectedValue(new Error('internal error')),
-        };
-        const handler = new PostToolUseHookHandler({ handlePostToolUseUseCase: mockUseCase });
-        const stdinPayload = JSON.stringify({
-          tool_name: 'str_replace_editor',
-          tool_response: {},
-        });
-
-        // Act
-        const actual = await handler.handle(stdinPayload);
-
-        // Assert
-        expect(actual.exitCode).toBe(2);
-        expect(actual.stderr).toBeTruthy();
-      });
-    });
-  });
-});
-```
+5000msは実行打切り上限であり、500ms応答保証を置き換えた受入れ条件ではない。[性能報告](../../../inception/_cross/WI-220/performance_report.md) の実測と上位未達を参照する。UseCaseは内部cliResultを保持し、presentationだけが編集後feedbackの終了コードを投影する。
 
 ### 5.3 stop-hook（7件）
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.341.0] - 2026-09-20
+
+### Changed
+
+- **WI-220 — Hook and CLI runtime improvements** — Avoid unnecessary read-only/disabled hook work, preserve legacy hook settings, load CLI modules and schemas lazily, and distribute compiled runtime JavaScript through the tested runtime tarball. Improve child-process cleanup, interrupted configuration/reconcile recovery, dependency-scoped reflection diagnostics, and cascade/TDD traceability. <!-- @work-item-id WI-220 -->
+
+### Known limitations
+
+- WI-220 remains incomplete: the absolute 500ms/format-only fast-path target, full semantic impact classification, and the agent reading comparison acceptance criterion remain unmet. This release does not mark those requirements as satisfied. <!-- @work-item-id WI-220 -->
+
+## Previous unreleased notes
+
 ### Added
 
 - **WI-385 — Grok Build / Antigravity pre-edit integration** — PreToolUse now detects flat snake_case, flat camelCase, and nested `toolCall` payloads structurally, maps Grok and Antigravity write vocabularies into the existing gate, and renders runtime-specific deny JSON without changing Claude/Codex stdout contracts. Install/init/setup/doctor accept `grok`, `antigravity`, and `all` while preserving `both=claude+codex`; lifecycle management adds the Antigravity named hook map, Grok/Antigravity structural doctor checks, trust/CLI-only notices, and explicit L2 backstop guidance. <!-- @work-item-id WI-385 -->

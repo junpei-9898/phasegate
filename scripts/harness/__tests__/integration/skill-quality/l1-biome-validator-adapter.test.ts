@@ -1,3 +1,5 @@
+// @work-item-id WI-220
+// @story H12-03
 // @unit skill-quality
 // @layer test
 
@@ -19,6 +21,22 @@ target('L1BiomeValidatorAdapter (fail-closed)', () => {
   });
 
   describe('validate', () => {
+    it('呼出元の解析ルートと設定を維持して検証すること', async () => {
+      // Arrange
+      const config = { l1Config: { enabled: false, rules: {} }, architecture: { preset: 'flat' as const, layers: [], allowedDependencies: {} } };
+      const execute = vi.fn().mockResolvedValue({ report: { violations: [] } });
+      createBiomeAstEngineModuleMock.mockReturnValue({ executeLintUseCase: { execute } });
+      const adapter = new L1BiomeValidatorAdapter({ rootDir: '/fixture/project', config });
+
+      // Act
+      const actual = await adapter.validate(CommitMessage.create('skill-quality', 'WI-220', 'change'));
+
+      // Assert
+      expect(actual).toEqual([]);
+      expect(createBiomeAstEngineModuleMock).toHaveBeenCalledWith('/fixture/project', config);
+      expect(execute).toHaveBeenCalledWith({ targets: [] });
+    });
+
     context('依存する biome-ast-engine の生成が例外を投げる場合', () => {
       it('合格扱いにせず、L1-VALIDATOR-ERROR の違反を1件以上返すこと', async () => {
         // Arrange

@@ -5,6 +5,12 @@ traceability:
 
 # 論理設計: traceability-model
 
+## WI-220 依存専用frontmatter読取
+
+<!-- @work-item-id WI-220 -->
+
+既存parseWorkItemFrontmatterの契約は変えず、同parser moduleにparseWorkItemDependenciesを追加する。depends_on未記載はundefined、明示空配列は[]、flow/block形式のWI-ID列は配列として返す。不正値・空項目・重複keyは既存WorkItemFrontmatterValidationError型で理由を示す。通常metadata検査は従来入口を使い、新規拒否を増やさない。依存aware側だけが追加exportを使い、警告／明示強制化へ診断を渡す。行末コメントと引用符付きIDを受け取り、一般YAML interpreterや新規依存packageは追加しない。
+
 <!-- @work-item-id WI-114 -->
 ## WI-114 Drift Report Traceability Inputs
 
@@ -1124,7 +1130,6 @@ WorkItem projectionはproviderが解決したcanonical `WI-\d+`を返し、`lega
 <!-- @work-item-id WI-288 -->
 
 @story-id H17-03
-
 `TraceabilityWorldReadFacade` は application の公開 facade とし、infrastructure の `FileSystemTraceabilityWorldReadAdapter` が既存 story catalog parser、WorkItem frontmatter parser、Unit definition gateway、source metadata parserを統合する。composition root は adapter を実体で配線し、traceability-model の public `index.ts` は facade と plain DTO contract だけを公開する。
 
 処理境界は `filesystem/parser -> raw source records -> facade admission/deduplication -> TraceabilityWorldReadDto` とする。facade は canonical owner ID の検証、no-winner diagnostic、deterministic sort、Story AC への file-level TestReference 射影を行う。filesystem adapter は project-relative provenance と parser diagnostic を収集するが、World の `pgw:v1` ID や constraint rule を生成しない。

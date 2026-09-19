@@ -2,6 +2,7 @@
  * @layer presentation
  * @unit skill-quality
  * @work-item-id WI-192
+ * @work-item-id WI-220
  */
 import type { ApplyCascadeUpdateUseCase } from '../../application/usecases/apply-cascade-update-usecase.js';
 
@@ -20,12 +21,17 @@ export class ApplyCascadeUpdateHandler {
       if (args.format === 'json') {
         return {
           exitCode: output.errors.length > 0 ? 1 : 0,
-          message: JSON.stringify({ dryRun: args.dryRun === true, ...output }, null, 2),
+          message: JSON.stringify({
+            dryRun: args.dryRun === true,
+            ...output,
+            operation: 'traceability-tag-update',
+            semanticReviewPerformed: false,
+          }, null, 2),
         };
       }
       const tagsLine = output.appliedStoryIds.join(', ');
       const verb = args.dryRun ? 'Would update' : 'Updated';
-      let msg = `${verb} ${output.updatedCount} files with tags: ${tagsLine}`;
+      let msg = `${verb} ${output.updatedCount} files with tags: ${tagsLine}\nタグ追記のみです。意味レビューは未実施であり、設計内容の反映・承認を保証しません。`;
 
       if (output.errors.length > 0) {
         const errLines = output.errors.map((e) => `  - ${e}`).join('\n');

@@ -1,5 +1,73 @@
 # ITテスト設計: agent-integration
 
+## WI-220 Post入力障害と再開の実process確認
+
+<!-- @work-item-id WI-220 -->
+
+不正JSONはexit2/診断、次の正常Readはexit0/無出力とする。configパスがdirectoryであるI/O異常はWrite完了hookでexit2/診断とし、fixture管理者が正常な設定へ修復後は同一payloadで成功する。異常をlint成功と呼ばず、hook自身がconfigを削除・書換えないことを確認する。一時directory内だけで実CLIを動かし、製品にfault設定を導入しない。
+
+配布比較ではroot/localの旧cascadeUpdate ON/OFFが衝突する2条件とroot不在でlocal ON/OFFを使う2条件を固定する。旧/候補の実post entryを同じproject/dependenciesで実行し、root優先とlocal fallback・設定bytes保持・候補OFF lint/ログ0を確認する。tarball source入口と依存共有を明示し、実npm installのrelease-smokeとは区別する。
+
+## WI-220 B3j 明示強制化
+
+<!-- @work-item-id WI-220 -->
+
+必要な下流成果物がまだないinception文書の修復を許可し、保護文書と混在sourceは引き続き拒否する。文書修復時の下流gate循環を実CLIで回帰する。
+
+明示enforceと既定advisoryを比較し、違反拒否、OFF、unknown旧Unit範囲、fix反映、成果物修復、旧Port互換を確認する。標準ゲートの実CLIで依存未反映拒否→設計編集許可→反映→再開を実行する。
+
+## WI-220 session依存警告の互換
+
+<!-- @work-item-id WI-220 -->
+
+refactorのlogical_design、story/issueのlogical_design・domain_model・test設計を同名ディレクトリにした7ケースで、session診断が未検証warningを返すこと。通常ファイルへの修正後に同じadapterで解消すること。通常ファイルを指すsymlinkは維持すること。旧adapterとFull Mode session許可の既存回帰も実行する。
+
+独自ルートの直接/推移/cross依存の未反映と反映後の解消を確認する。既定ルートに誤誘導用タグを置いても合格にしない。不正ルートは具体的な未検証理由を返す。
+
+descriptionだけのrefactor、domain/test設計が不足するstory/issue、fixのproduct未反映、非choreの空mappingをadvisoryでは未検証として報告し、inceptionが存在しないことによる偽合格を防ぐ。
+
+実CLIの警告表示試験では、既存のphase-gate緩和設定を明示した隔離fixtureでsessionを開始し、未反映のexit 0＋stderr warning、反映後のwarning解消を確認する。この試験は標準phase-gate全体の拒否・復旧の証明ではない。
+
+有効sessionの実装編集で対象WI/推移依存の診断を警告として返しallowを維持する。session IDを使用し、Port省略、例外、依存未宣言、期限切れ、inception/product修正、OFFを比較する。実adapterで対象限定、未反映検出、反映後の警告解消、custom rootsの伝播と不正ルートの不明表示を検証する。強制化は別の標準ゲートfixtureで検証する。
+
+## WI-220 直下ファイルとsession照合
+
+<!-- @work-item-id WI-220 -->
+
+main.ts＋同一Unitは実session adapterで許可、main.ts＋別Unit混在は拒否。UseCaseもmain.tsでなく実Unitを照合入力へ渡す。期限切れ／カテゴリ制限の既存回帰を維持する。
+
+## WI-220 post対象と復旧
+
+<!-- @work-item-id WI-220 -->
+
+3payload shape、複数patch、cwd、未知shell、read、不完全入力を確認。翻訳結果は重複なし反復targetと5秒上限。実hookで複数対象の診断表示・対象外報告除外とexit 0を確認。timeoutは未検証のまま手動lintを案内し、OFF/readは無出力。
+
+## WI-220 実子プロセスの回収
+
+<!-- @work-item-id WI-220 -->
+
+canonical子起動でpackage内main.jsありはNode直接、不在はtsx/main.ts、directoryは不採用、extensionは従来wrapperを確認する。compiled失敗を自動再試行しない。試作tarballの既存hook入口から実lint診断を測定し、既存TS配布と比較する。
+
+実scriptがargvとcwdとstdin EOFを観測し、指定exitを返すこと。POSIXではTERM無視の親子をtimeoutで回収し残存しないこと。Windowsと配布物の検証は別途実施する。
+
+## WI-220 復旧案内の実行可能性
+
+<!-- @work-item-id WI-220 -->
+
+_crossの文書を先頭に含むmixed patchでは実装先Unitを案内。対象Unitが複数または不明なら単一Unitや_crossを捏造しない。従来の拒否・session照合入力を維持する。
+
+## WI-220 設定の互換表
+
+<!-- @work-item-id WI-220 -->
+
+pre/postそれぞれ旧false/true/不在×独立false/true/不在を実ファイルで試験。独立boolean優先、不在時旧値、不正型は旧値を維持。既存のmissing/invalid-json診断とstop挙動は変えない。
+
+## WI-220 正常skipと異常診断の回帰
+
+<!-- @work-item-id WI-220 -->
+
+Read/Glob/Grepの対象なしはlint起動0、不明tool/Bash/対象ありは従来経路。正常skip反復はログ未作成または既存bytes不変。異常skipは理由と対象を追記。実hookプロセスの読取り無出力exit 0、欠落fieldの診断・保存、pre gateの拒否を確認する。
+
 @story-id H11-01
 @story-id H11-02
 @story-id H11-03
@@ -93,7 +161,7 @@ WI-209 dogfooding validates that installed personal and project/team agent runti
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待結果 |
 |---------|---------|------|----------|---------|
-| IT-UC-HandlePostToolUse-001 | PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
+| IT-UC-HandlePostToolUse-001 | PostToolUse Hookが有効な場合、phasegate:lint --target src/index.tsが実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0を返す | `{ executed: true, skipReason: undefined, cliResult: { exitCode: 0 } }` |
 | IT-UC-HandlePostToolUse-002 | Lintが失敗した場合（exitCode=1）、executed=trueでcliResult.exitCode=1が返ること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/bad.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=1を返す | `{ executed: true, cliResult: { exitCode: 1 } }` |
 | IT-UC-HandlePostToolUse-003 | Hook無効設定の場合、HOOK_DISABLEDでスキップされること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled('post-tool-use')=false | `{ executed: false, skipReason: 'HOOK_DISABLED' }` |
 
@@ -101,7 +169,7 @@ WI-209 dogfooding validates that installed personal and project/team agent runti
 
 | ケースID | シナリオ | 入力 | モック設定 | 期待エラー |
 |---------|---------|------|----------|----------|
-| IT-UC-HandlePostToolUse-004 | タイムアウト超過（500ms以上）の場合、TIMEOUT_EXCEEDEDでスキップされること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: 500ms超過でTimeoutErrorをthrow | `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` |
+| IT-UC-HandlePostToolUse-004 | タイムアウト超過（5000ms）の場合、TIMEOUT_EXCEEDEDで検証未完了となること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: TimeoutErrorをthrow | `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` |
 | IT-UC-HandlePostToolUse-005 | CliExecutorPortが実行エラーをthrowした場合、例外が伝播すること | `{ toolName: 'str_replace_editor', affectedFilePaths: ['src/index.ts'] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: Errorをthrow | エラーが上位に伝播 |
 | IT-UC-HandlePostToolUse-006 | affectedFilePathsが空配列の場合、Hookが正常に実行されること | `{ toolName: 'str_replace_editor', affectedFilePaths: [] }` | ConfigQueryPort: isHookEnabled=true。CliExecutorPort: exitCode=0 | `{ executed: true }` |
 
@@ -217,8 +285,8 @@ WI-209 dogfooding validates that installed personal and project/team agent runti
 
 | ケースID | 操作 | 入力 | 期待結果 |
 |---------|------|------|---------|
-| IT-REPO-CliExecutor-001 | execute（exitCode=0で正常終了） | command='phasegate:lint', args=['--fast'], timeoutMs=500 | `{ exitCode: 0, timedOut: false }` |
-| IT-REPO-CliExecutor-002 | execute（exitCode=1でLint失敗） | command='phasegate:lint', args=['--fast'] | `{ exitCode: 1, timedOut: false }` |
+| IT-REPO-CliExecutor-001 | execute（exitCode=0で正常終了） | command='phasegate:lint', args=['--target','src/app.ts'], timeoutMs=5000 | `{ exitCode: 0, timedOut: false }` |
+| IT-REPO-CliExecutor-002 | execute（exitCode=1でLint失敗） | command='phasegate:lint', args=['--target','src/app.ts'] | `{ exitCode: 1, timedOut: false }` |
 | IT-REPO-CliExecutor-003 | execute（stdout/stderrが取得できること） | command='phasegate:status', args=[] | `{ stdout: '...', stderr: '...', timedOut: false }` |
 
 #### タイムアウトテスト
@@ -270,21 +338,21 @@ Presentation層のテストは子プロセス（spawnまたはexecFile）経由�
 | ケースID | 入力（stdin JSON） | 期待エラー |
 |---------|-----------------|----------|
 | IT-API-PostToolUse-001 | 不正なJSON | exit code 2、stderrにエラーメッセージ |
-| IT-API-PostToolUse-002 | tool_nameフィールドなし | exit code 2 |
+| IT-API-PostToolUse-002 | tool_nameフィールドなし | exit code 0、警告とTOOL_NAME_MISSING記録（pre hookのfail-closedとは区別） |
 
 #### 正常系
 
 | ケースID | 入力（stdin JSON） | 期待レスポンス |
 |---------|-----------------|--------------|
 | IT-API-PostToolUse-003 | `{ "tool_name": "str_replace_editor", "tool_response": {} }` | UseCase: `executed=true, exitCode=0` → exit code 0 |
-| IT-API-PostToolUse-004 | Lint失敗（exitCode=1）のシナリオ | UseCase: `executed=true, cliResult.exitCode=1` → exit code 1、stderrにLint失敗メッセージ |
-| IT-API-PostToolUse-005 | スキップ（HOOK_DISABLED）のシナリオ | UseCase: `executed=false, skipReason='HOOK_DISABLED'` → exit code 0、stderrにスキップ理由 |
+| IT-API-PostToolUse-004 | Lint失敗（exitCode=1）のシナリオ | UseCase: `executed=true, cliResult.exitCode=1` → hook exit code 0、stderrにLint診断 |
+| IT-API-PostToolUse-005 | スキップ（HOOK_DISABLED）のシナリオ | UseCase: `executed=false, skipReason='HOOK_DISABLED'` → exit code 0、無出力、正常skipログ追記なし |
 
 #### 境界値テスト
 
 | ケースID | 入力 | 期待エラー |
 |---------|------|----------|
-| IT-API-PostToolUse-006 | タイムアウト超過シナリオ | UseCase: `executed=false, skipReason='TIMEOUT_EXCEEDED'` → exit code 0（スキップ扱い） |
+| IT-API-PostToolUse-006 | タイムアウト超過シナリオ | UseCase: `executed=false, skipReason='TIMEOUT_EXCEEDED'` → exit code 0、検証未完了と明示再検証の案内 |
 | IT-API-PostToolUse-007 | UseCase実行エラー | exit code 2、stderrに診断情報 |
 
 ### 4.3 stop-hook.ts
@@ -322,7 +390,7 @@ Presentation層のテストは子プロセス（spawnまたはexecFile）経由�
 |---------|---------|---------|-----------|---------|
 | IT-UC-HookFlow-001 | Stop Hook通常フロー：ReentryGuard inactive → activate → complete-check実行 → deactivate | フラグ未設定 | HandleStopUseCase.execute（ReentryGuardStatePort=実体、CliExecutorPort=モック） | executed=true、フラグが最終的にクリアされている |
 | IT-UC-HookFlow-002 | Stop Hook再入フロー：ReentryGuard active → REENTRY_DETECTED | フラグ設定済み（writeActiveで事前セット） | HandleStopUseCase.execute | `{ executed: false, skipReason: 'REENTRY_DETECTED' }`、フラグ状態は変化しない |
-| IT-UC-HookFlow-003 | PostToolUse Hook正常フロー：Hook有効 → phasegate:lint --fast実行 | ConfigQueryPort=モック（enabled=true） | HandlePostToolUseUseCase.execute（CliExecutorPort=モック） | executed=trueかつcliCommandが正しく渡される |
+| IT-UC-HookFlow-003 | PostToolUse Hook正常フロー：Hook有効 → phasegate:lintと対象指定 | ConfigQueryPort=モック（enabled=true） | HandlePostToolUseUseCase.execute（CliExecutorPort=モック） | executed=trueかつcliCommandと--targetが正しく渡される |
 | IT-UC-HookFlow-004 | PreToolUse Hook保護フロー：biome.json変更 → ブロック | ConfigQueryPort=モック（追加パターンなし） | HandlePreToolUseUseCase.execute | `{ shouldBlock: true, blockedFilePath: 'biome.json' }` |
 | IT-UC-HookFlow-005 | CLI実行エラー時のReentryGuardデアクティベート保証 | フラグ未設定 | HandleStopUseCase.execute（CliExecutorPort: Errorをthrow） | エラー伝播しつつ、フラグが最終的にクリアされている（finally保証） |
 
@@ -538,7 +606,7 @@ afterEach(async () => {
 <!-- @work-item-id WI-166 -->
 ## 15. Hook skip observability integration tests
 
-**テスト方針**: PostToolUse / Stop hook の skip path は実ファイルシステム上の temp project に `.phasegate/hook-skip-events.jsonl` を作り、JSON Lines として読めることを確認する。Recorder の write failure は明示的に注入し、元の hook exit code / result が変わらないことを検証する。
+**テスト方針**: PostToolUse / Stop hook の異常skipはtemp projectの `.phasegate/hook-skip-events.jsonl` に記録しJSON Linesとして確認する。正常なREAD_ONLY／HOOK_DISABLEDは新規作成・追記せず、過去bytesを保持する。Recorderのwrite failureは明示的に注入し、元のhook exit/resultが変わらないことを検証する。
 
 | ケースID | シナリオ | 入力/事前状態 | 期待結果 |
 |---|---|---|---|
@@ -627,3 +695,14 @@ Full Mode deny を回帰実行し、normalization 後の policy が runtime shap
 valid / missing / invalid-json / invalid-schema の temp project で config direct Write/Edit を process 実行し、
 すべて exit 2 / PROTECTED_FILE になることを検証する。無関係 Bash、doctor 完走、gated path fail-closed は
 ADR-038 の既存挙動を維持する。config が自分自身や Husky を exclude 済みでも trust root は外れない。
+## WI-220 post hook性能の計測境界
+
+<!-- @work-item-id WI-220 -->
+
+実配布hookのRead／旧設定OFF／Writeを旧新版交互に各30回測定し、時間・CPU/RSS・lint起動要求・観測子process・ログ量・検証結果を記録する。tsx cacheあり／無効をwarm/coldとして区別し、OS coldや全機種性能の証明としない。子孫回収と無変更fixtureを維持し、品質欠落を高速化と評価しない。
+
+## WI-220 Stop依存の互換
+
+<!-- @work-item-id WI-220 -->
+
+旧registry入力あり／省略の両方でcomplete-check結果・enforce・解除状態を比較する。既存の再入・失敗・例外・session不足と実hook経路を回帰する。

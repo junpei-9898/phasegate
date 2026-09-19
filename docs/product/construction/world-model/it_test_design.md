@@ -187,7 +187,6 @@ WM-05ではfixture / test sourceをまだ作成せず、各実装WIが本設計�
 <!-- @work-item-id WI-286 -->
 
 @story-id H17-01
-
 WM-06のintegration checkpointはattestation public rootからbytes hashing / UTF-8 helperを利用でき、既存attestation adapterと同値であること。World extractor / Snapshotとのintegration testはWM-07以降に行う。
 
 public facade contract testはconsumerがattestation内部pathをimportしなくても完結し、repository source scanで新しいWorld側`node:crypto` call siteがないことを確認する。
@@ -197,7 +196,6 @@ public facade contract testはconsumerがattestation内部pathをimportしなく
 <!-- @work-item-id WI-289 -->
 
 @story-id H17-04
-
 repository-shaped fixtureをtemporary rootへcopyし、product / inception / ADR / Unit extractorとtraceability public facadeを実filesystemで統合する。minimal valid corpus、same-bytes cross-role、duplicate DeclaredKey、malformed / orphan marker、missing reflection、symlink / unsupported fileを検証する。
 
 同じfixtureを作成順・absolute temp root・LF / CRLFだけ変えて抽出し、canonical node / edge / diagnostic projectionが一致することを確認する。World sourceのprovider importはtraceability public `index.ts`だけ、SHA-256はattestation public capability経由、composition-root / indexはWM-11まで不変とする。
@@ -207,7 +205,6 @@ repository-shaped fixtureをtemporary rootへcopyし、product / inception / ADR
 <!-- @work-item-id WI-290 -->
 
 @story-id H17-05
-
 repository-shaped runtime fixtureでimplementation / test SourceFile、matrix、attestation、integrity manifestを同時抽出する。matrix reorder / generatedAt差、attestation volatile差、duplicate TestReference、unknown schema / field、optional file不在を検証する。
 
 integrationはattestation public verify handlerとpublic SHA capabilityを接続し、nyquist public DTO contract以外のprovider deep import、world-modelの`node:crypto`、composition-root / index差分がないことを確認する。WM-10承認後のCP-1でfull suiteとWM-06〜10横断determinismを実行する。
@@ -217,7 +214,6 @@ integrationはattestation public verify handlerとpublic SHA capabilityを接続
 <!-- @work-item-id WI-291 -->
 
 @story-id H17-06
-
 WM-09 / 10 fixtureを全extractor、traceability public facade、attestation public SHA / verify capability、Snapshot assemblyへ接続する。configなしcanonical defaults、resolved existing path mapping、invalid config fail-closed、global duplicate / dangling edge diagnosticを検証する。
 
 CLI E2Eはhuman / JSON、exit 0 / 1 / 2、single envelope、help / known-command conformance、実corpus counts / root、read-only filesystemを検証する。同じcheckoutで`world:inspect --json`を2回実行しbyte-identicalと`generatedAt`不在をassertする。full suiteとmatrix / L2 / L3 / integrityは着地後CP-2で実施する。
@@ -233,7 +229,6 @@ self-repo regenerated matrix 1.2をWorld compositionで読み、planned Storyを
 <!-- @work-item-id WI-294 -->
 
 @story-id H17-08
-
 temp project rootへ4種類のfixtureを配置し、canonical file不在、valid load、schemaVersion欠落 / unknown、parse failure、supported constraints内malformed / duplicate、policy duplicateをreal filesystem + published JSON schemaで検証する。不在だけはcanonical empty、その他のinvalid inputはempty fallbackなしとする。atomic replaceはtemp file + same-directory rename後にcomplete JSONだけが残ることを確認し、CLI mutation flowはWM-15へ残す。
 
 ## WI-295 obligation report integration
@@ -241,7 +236,6 @@ temp project rootへ4種類のfixtureを配置し、canonical file不在、valid
 <!-- @work-item-id WI-295 -->
 
 @story-id H17-09
-
 WM-13 fixture repositories、public SHA capability adapter、canonical serializer、derive use case、filesystem report writerをtemp rootへbindする。同じevaluation / policy inputの二重導出と列挙順variantをgolden bytesで比較し、既存report手編集が再導出へ入らないことを確認する。
 
 pure modeはreportを書かず、write modeは同じraw report bytesを`.harness/world-obligations.json`へatomic renameする。unknown policy schemaとwrite failureはそれぞれreportなし / persistence failureとして観測し、partial fileやempty policy launderingを許さない。
@@ -251,7 +245,6 @@ pure modeはreportを書かず、write modeは同じraw report bytesを`.harness
 <!-- @work-item-id WI-296 -->
 
 @story-id H17-10
-
 process境界でpin preview / apply、derive pure / default write / explicit out、format flags、exit 0/1/2、invalid config / declaration schemaを検証する。pin apply前後は4 control fileとreportを比較してconstraints以外が不変、derive writeではreport以外が不変であることをassertする。
 
 同一fixtureの`world:derive --json`を2回実行しstdoutをbyte比較する。persist fileはCLI envelopeでなく`phasegate-world-obligation-report/v1` raw reportであることをpublished schemaで検証する。
@@ -297,7 +290,6 @@ agent-integration adapterからpublic World compositionを`writeReport:false`で
 <!-- @work-item-id WI-306 -->
 
 @story-id H17-18
-
 repository-shaped corpusからpublic snapshot root facadeを実行し、そのplain rootをattestation v2 producerへ注入する。生成後のv2 recordをWorld extractorが再読込しても`worldSnapshotRoot`自体をroot preimageへ含めないことをfixtureで固定する。
 
 ## WI-307 Production dogfood integration
@@ -305,5 +297,9 @@ repository-shaped corpusからpublic snapshot root facadeを実行し、そのpl
 <!-- @work-item-id WI-307 -->
 
 @story-id H17-19
-
 self-repoのfresh matrixで`world:derive --json`を二回実行し、raw bytesとexit 0を比較する。CIではpersisted reportを書かず、続くL3-008が同じcurrent corpusをauthoritativeに再導出する。regression-suite fixtureではpublic envelopeとexit contractだけを横断固定する。
+## WI-220 両端pinの更新と再開
+
+<!-- @work-item-id WI-220 -->
+
+実ファイルを用いて両端の内容変化が検出され、一方のpin更新だけでは他方の不一致が残り、両端更新後の再導出で解消することを確認する。preview無変更、再pin冪等、後続revision変更の再検出を含む。baseline/waiver/OFFの既存回帰を維持する。pin鮮度と意味レビュー完了は別の証拠として扱う。

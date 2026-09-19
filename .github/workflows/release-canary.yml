@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/tarball"
-          npm pack --pack-destination "$RUNNER_TEMP/tarball"
+          npm run pack:runtime -- --pack-destination "$RUNNER_TEMP/tarball"
 
       - name: Run release-smoke E2E against tarball
         run: |

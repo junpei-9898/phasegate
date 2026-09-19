@@ -1,4 +1,5 @@
 // @unit agent-integration
+// @work-item-id WI-220
 // @layer integration
 // @story H11-02
 // @work-item-id WI-385
@@ -17,7 +18,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,6 +68,64 @@ async function readSkipEvents(projectRoot: string): Promise<Array<{ hookType: st
 }
 
 target("hook 必須フィールド欠落時の fail-open / fail-closed (WI-323)", () => {
+  it('Postの不正JSONを成功にせず次の正常Readで再開できること', async () => {
+    // Arrange
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'wi220-post-invalid-'));
+    try {
+      // Act
+      const invalid = await runHook(['hook', 'post-tool-use'], projectRoot, '{ invalid');
+      const resumed = await runHook(['hook', 'post-tool-use'], projectRoot, JSON.stringify({ tool_name: 'Read' }));
+      // Assert
+      expect(invalid.exitCode).toBe(2);
+      expect(invalid.stderr).toContain('不正なJSON');
+      expect(resumed).toEqual({ exitCode: 0, stdout: '', stderr: '' });
+      await expect(readFile(path.join(projectRoot, '.phasegate/hook-skip-events.jsonl'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  }, 60000);
+
+  it('Postの設定I/O異常は状態を保持して診断し正規修復後に同じpayloadを再開できること', async () => {
+    // Arrange: the fixture owner introduces and repairs the fault, not the hook.
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'wi220-post-io-'));
+    const configPath = path.join(projectRoot, 'phasegate.config.json');
+    const payload = JSON.stringify({ cwd: projectRoot, tool_name: 'Write', tool_input: { file_path: path.join(projectRoot, 'notes.md') } });
+    try {
+      await mkdir(configPath);
+      await writeFile(path.join(projectRoot, 'notes.md'), '# Preserve user notes\n');
+      // Act / Assert
+      const invalid = await runHook(['hook', 'post-tool-use'], projectRoot, payload);
+      expect(invalid.exitCode).toBe(2);
+      expect(invalid.stderr).toContain('EISDIR');
+      expect((await stat(configPath)).isDirectory()).toBe(true);
+      expect(await readFile(path.join(projectRoot, 'notes.md'), 'utf8')).toBe('# Preserve user notes\n');
+      await rm(configPath, { recursive: true });
+      await writeFile(configPath, JSON.stringify({ project: { name: 'post-io', preset: 'standard' }, harnesses: { cascadeUpdate: false } }));
+      const resumed = await runHook(['hook', 'post-tool-use'], projectRoot, payload);
+      expect(resumed.exitCode).toBe(0);
+      expect(resumed.stdout).toBe('');
+      expect(resumed.stderr).not.toContain('EISDIR');
+      expect(resumed.stderr).not.toContain('Lint診断');
+      // The public CLI may retain its existing v2-schema advisory; it is not a hook failure.
+      expect(await readFile(path.join(projectRoot, 'notes.md'), 'utf8')).toBe('# Preserve user notes\n');
+    } finally {
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  }, 60000);
+
+  it('読取り完了はlintの結果を待たず無出力で終了する', async () => {
+    // Arrange
+    const projectRoot = await mkdtemp(path.join(tmpdir(), 'wi220-read-only-'));
+    try {
+      // Act
+      const actual = await runHook(['hook', 'post-tool-use'], projectRoot, JSON.stringify({ tool_name: 'Read' }));
+      // Assert
+      expect(actual).toEqual({ exitCode: 0, stdout: '', stderr: '' });
+      await expect(readFile(path.join(projectRoot, '.phasegate/hook-skip-events.jsonl'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      await rm(projectRoot, { recursive: true, force: true });
+    }
+  }, 60000);
   describe("stop hook - session_id 欠落は fail-open", () => {
     it("stop hook は session_id 欠落 payload でも exit 0 で fail-open する (WI-323)", async () => {
       // Arrange

@@ -26,6 +26,14 @@ export class RunPlanCheckerLoopUseCase {
         revision: result.revision,
       });
       loop.addAttempt(attempt);
+      if (loop.status === 'RUNNING' && this.planCheckExecutorPort.supportsRetry === false) {
+        return {
+          status: 'FAILED_EXCEEDED',
+          loopHistory: loop.loopHistory,
+          escalationRequired: true,
+          stopReason: 'UNCHANGED_INPUT',
+        };
+      }
       attemptNumber++;
     }
 

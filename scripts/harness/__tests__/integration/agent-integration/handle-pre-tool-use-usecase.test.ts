@@ -1088,12 +1088,12 @@ target("HandlePreToolUseUseCase.execute", () => {
   });
 
   describe("Baseline Grandfather (ISSUE-007 Wave 2)", () => {
-    function grandfatherPort(allGrandfathered: boolean) {
+    function grandfatherPort(allGrandfathered: boolean, grandfatheredPath = 'scripts/harness/foo.ts') {
       return {
         check: vi.fn().mockResolvedValue({
           allGrandfathered,
           baselineEnabled: true,
-          grandfatheredPaths: allGrandfathered ? ["scripts/harness/foo.ts"] : [],
+          grandfatheredPaths: allGrandfathered ? [grandfatheredPath] : [],
         }),
       };
     }
@@ -1117,12 +1117,12 @@ target("HandlePreToolUseUseCase.execute", () => {
         const useCase = new HandlePreToolUseUseCase({
           configQueryPort: mockConfigQueryPort,
           phaseGateQueryPort: mockPhaseGateQueryPort,
-          baselineGrandfatherQueryPort: grandfatherPort(true),
+          baselineGrandfatherQueryPort: grandfatherPort(true, 'scripts/harness/foo/domain/entity.ts'),
           grandfatherLogger: logger,
         });
         const input = buildPreToolUseInput({
           toolName: "Write",
-          targetFilePaths: ["scripts/harness/foo.ts"],
+          targetFilePaths: ["scripts/harness/foo/domain/entity.ts"],
         });
 
         // Act
@@ -1130,7 +1130,7 @@ target("HandlePreToolUseUseCase.execute", () => {
 
         // Assert
         expect(actual.shouldBlock).toBe(false);
-        expect(logger).toHaveBeenCalledWith("phase-gate", ["scripts/harness/foo.ts"]);
+        expect(logger).toHaveBeenCalledWith("phase-gate", ["scripts/harness/foo/domain/entity.ts"]);
       });
     });
 

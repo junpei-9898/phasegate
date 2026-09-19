@@ -5,6 +5,19 @@ traceability:
 
 # Logical Design (横断): installation
 
+## WI-220 中断済み生成物の台帳再同期
+
+<!-- @work-item-id WI-220 -->
+
+reconcileのapplyで本文が既に目標状態でも旧manifest hashが残っている場合、配布templateから新規生成した本文への完全一致を確認できるものだけhashを再同期する。package.jsonは管理項目を台帳の旧versionへ戻した内容が旧hashへ一致する場合に限定する。mergeのno-opだけでは利用者編集を承認しない。本文を再書込せず、metadataのみの修復でもmanifestを保存する。dry-runと不明な編集の拒否・明示force・backupは従来どおり。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+旧配置物＋新runtimeの互換と、利用者編集の保全、更新中断からの冪等再実行・復旧を検証する。本WIでは過去WIやWorld Modelの一括移行を必須にしない。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 > **Unit ID**: installation
 > **対応 WI**: WI-145 / WI-146 / WI-147 / WI-148 / WI-169 / WI-181 / WI-182 / WI-183 / WI-207 / WI-208 / WI-209
 > **作成日**: 2026-05-11

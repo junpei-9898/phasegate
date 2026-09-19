@@ -14,6 +14,7 @@ export class StoryReflectionQueryResult {
   readonly blockers: readonly string[];
   readonly warnings: readonly string[];
   readonly skipped: boolean;
+  declare readonly sessionEnforced?: true;
 
   private constructor(
     passed: boolean,
@@ -27,8 +28,8 @@ export class StoryReflectionQueryResult {
     this.skipped = skipped;
   }
 
-  static pass(): StoryReflectionQueryResult {
-    return new StoryReflectionQueryResult(true, [], [], false);
+  static pass(warnings: string[] = []): StoryReflectionQueryResult {
+    return new StoryReflectionQueryResult(true, [], warnings, false);
   }
 
   static skipped(warnings: string[] = []): StoryReflectionQueryResult {
@@ -43,6 +44,13 @@ export class StoryReflectionQueryResult {
     }
 
     return new StoryReflectionQueryResult(false, blockers, warnings, false);
+  }
+
+  /** Only trusted configuration readers may mark the optional session enforcement path. */
+  withSessionEnforcement(): StoryReflectionQueryResult {
+    return Object.assign(new StoryReflectionQueryResult(this.passed, this.blockers, this.warnings, this.skipped), {
+      sessionEnforced: true as const,
+    });
   }
 
   hasPassed(): boolean {

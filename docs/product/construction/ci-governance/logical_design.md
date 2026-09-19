@@ -1,5 +1,13 @@
 # 論理設計: ci-governance
 
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+旧版比較・更新中断復旧・配布物・性能・agent品質の証拠を公開判断に用いる。新規想定外ブロック、復旧不能、必要エスカレーション欠落は公開不可。未検証を合格としない。
+配布CIとcanaryは明示 `pack:runtime` で隔離生成したTS+JS archiveを検査する。通常source packとは区別し、生成失敗をsource packで救済しない。既存5MB上限・同一archiveのrelease-smoke・公開権限境界を維持する。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 # WI-185 L4 Downstream Scan Trust
 
 <!-- @work-item-id WI-185 -->

@@ -1,5 +1,26 @@
 # 論理設計: phase-dependency-model
 
+## WI-220 B3j 明示強制化
+
+<!-- @work-item-id WI-220 -->
+
+旧Unit範囲checkに任意PathRootsを追加する。省略時は完全に従来どおり。依存閉包unknown時の明示強制経路が、同じ文書ルートで従来範囲を評価できるようにする。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+checkResolvedScopeとStoryReflectionMapping.resolveは任意PathRootsを受け、既定inception/constructionのprefixを境界一致で解決する。引数省略の旧呼出は同一パスを保持する。FS adapterの任意designDocsRootはlegacy IDのUnit範囲判定にも用いる。catalog・FSのinceptionRootと同じ設定値を呼出元が渡す。construction外の共有product文書は移設しない。
+
+StoryReflectionChecker.checkResolvedScopeはcompleteな依存閉包を受け、全WIの所属/affects Unitごとに既存mappingの反映を調べる。無関係WIは列挙せず、重複WI/Unitを統合する。明示されたcross依存のdomain反映はcommit前でも検査する。旧checkの列挙・Git帰属による除外は維持し、新経路だけで扱いを分ける。空閉包は入力不正、OFFはI/Oなし。inception成果物の不足検査とunknown時fallbackはこのmethodの成功だけでは保証しない。
+
+WorkItemReflectionScopeResolverは、対象Unit・対象WI群・WI catalogから宣言された推移依存を解決する純粋domain serviceとする。根は対象Unitに所属し、依存は別Unitでも保持する。到達WIの依存宣言が欠落、不在/重複ID、不正ID、所属不明ならunknown理由を返し、部分集合は返さない。明示空依存は有効、循環と重複edgeは一度ずつ処理する。completeは宣言上の閉包であり、意味的反映や承認の証明ではない。既存公開Port/checker契約は保持し、hook接続前の単体成功を対象限定gate完成とはしない。
+
+FileSystemWorkItemDependencyCatalogは全Unit/_crossのWI directoryを索引化し、到達IDだけdescriptionを読む。重複IDを集合で消さずresolverに渡し、既存WI parser＋依存専用parserを使う。ID/path不一致や読取不正は当該recordのdiagnosticと不明な所属として返す。無関係な不正文書は読まない。inceptionRootは任意指定でき、root/Unit列挙失敗は不完全catalogとして例外を伝播する。symlink directoryは追跡しない。
+
+対象WIと共有依存の未反映を検証し、無関係なdraftを一律拒否理由にしない。対象不明・複数WIでも必要な共有契約検出を維持する。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 ## WI-091 / WI-093 Configuration Threading Corrections
 
 <!-- @work-item-id WI-085, WI-091, WI-093 -->

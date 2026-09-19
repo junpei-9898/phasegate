@@ -27,6 +27,7 @@ import type {
 } from "../../domain/ports/full-mode-session-query-port.js";
 import type { PhaseGateQueryPort } from "../../domain/ports/phase-gate-query-port.js";
 import type { StoryReflectionQueryPort } from "../../domain/ports/story-reflection-query-port.js";
+import { StoryReflectionQueryResult } from "../../domain/value-objects/story-reflection-query-result.js";
 import { AsyncHookToCliTranslator } from "../../domain/services/hook-to-cli-translator.js";
 import { HookEvent } from "../../domain/value-objects/hook-event.js";
 import type { BlockMetadata } from "../../domain/value-objects/hook-translation-result.js";
@@ -169,8 +170,15 @@ export class HandlePreToolUseUseCase {
             fullModeResult.dominantCategory,
           );
           if (sessionResult.allowed) {
+            const reflection = await this.checkSessionReflection(input, sessionResult);
+            if (reflection.sessionEnforced && !reflection.passed && !reflection.skipped) {
+              const blocked = HandlePreToolUseUseCase.buildStoryReflectionBlockOutput(input.targetFilePaths[0], reflection.blockers, reflection.warnings);
+              return { ...blocked, error: { message: `[L2-STORY-REFLECTION] 明示設定による依存反映チェック\n${reflection.blockers.join('\n')}\n修正方法: inception/productを単独で編集し、必要な上位判断と設計内容を反映してから同じ操作を再評価してください。タグだけでは意味的承認を証明しません。\n依存不明の場合はdescription.mdのID・所属・depends_onを確認してください。` } };
+            }
+            const warnings = [...reflection.blockers, ...reflection.warnings];
             return {
               shouldBlock: false,
+              ...(warnings.length > 0 ? { storyReflectionWarnings: warnings } : {}),
               fullModeSessionAllowed: {
                 workItemId: sessionResult.workItemId,
                 unit: sessionResult.unit,
@@ -187,7 +195,7 @@ export class HandlePreToolUseUseCase {
               input.targetFilePaths[0],
               fullModeResult,
               guidance,
-              unitIdForGuidance,
+              this.deriveRecoveryUnitId(input.targetFilePaths),
               sessionResult,
             );
           }
@@ -223,6 +231,19 @@ export class HandlePreToolUseUseCase {
       reflectionResult.blockers,
       reflectionResult.warnings,
     );
+  }
+
+  private async checkSessionReflection(
+    input: HandlePreToolUseInput,
+    session: FullModeSessionQueryResult,
+  ): Promise<StoryReflectionQueryResult> {
+    if (!session.active || !session.unit || !session.workItemId ||
+      !this.storyReflectionQueryPort?.checkSessionReflection || !this.resolveStoryReflectionScope(input)) return StoryReflectionQueryResult.skipped();
+    try {
+      return await this.storyReflectionQueryPort.checkSessionReflection(session.unit, session.workItemId);
+    } catch (error) {
+      return StoryReflectionQueryResult.skipped([`WI依存反映は未検証です（既存sessionの許可を維持）: ${error instanceof Error ? error.message : String(error)}`]);
+    }
   }
 
   private async checkGrandfather(targetFilePaths: readonly string[]): Promise<BaselineGrandfatherCheckResult> {
@@ -352,6 +373,7 @@ export class HandlePreToolUseUseCase {
     HandlePreToolUseUseCase.appendJudgmentContextLines(lines, sessionResult);
     const suggestedSkill = guidance?.suggestedSkill ?? "/story-implementor";
     lines.push(`次のアクション: ${suggestedSkill} スキルを使用して設計フェーズから開始してください。`);
+    lines.push('  inceptionの計画編集と実装を分け、実装は対象Unitごとに設計反映とsession開始を行ってください。');
     if (unitId !== undefined && unitId !== "") {
       if (HandlePreToolUseUseCase.isSessionActiveButRejected(sessionResult)) {
         lines.push(
@@ -362,6 +384,8 @@ export class HandlePreToolUseUseCase {
         `  実装フェーズ開始時: phasegate session begin --mode full --unit ${unitId} --work-item <WI-XXX> --reason "<reason>" --duration 1h`,
       );
       lines.push("  実装完了時: phasegate session end --work-item <WI-XXX>");
+    } else {
+      lines.push('  対象Unitが一意に決まりません。実装対象パスのUnitを確認してください（_crossはsessionのUnitに指定できません）。');
     }
     HandlePreToolUseUseCase.appendGuidanceLines(lines, guidance, unitId);
 
@@ -456,6 +480,17 @@ export class HandlePreToolUseUseCase {
       return templatePath;
     }
     return `${templatePath}（未配置なら: npx phasegate skills info ${skillMatch[1]}）`;
+  }
+
+  private deriveRecoveryUnitId(targetFilePaths: readonly string[]): string | undefined {
+    const projectPaths = this.configQueryPort.getProjectPaths();
+    const units = new Set<string>();
+    for (const targetFilePath of targetFilePaths) {
+      if (HandlePreToolUseUseCase.isUnderInception(targetFilePath, projectPaths.getDocsInception())) continue;
+      const unit = WriteTargetScope.fromPath(targetFilePath, projectPaths)?.unitId;
+      if (unit !== undefined && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(unit)) units.add(unit);
+    }
+    return units.size === 1 ? [...units][0] : undefined;
   }
 
   private deriveUnitIdFromPaths(targetFilePaths: readonly string[]): string | undefined {

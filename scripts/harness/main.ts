@@ -45,9 +45,8 @@ import {
 } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createAdrFoundationModule } from "./adr-foundation/composition-root.js";
 import { createBiomeAstEngineModule } from "./biome-ast-engine/composition-root.js";
-import { buildCiGovernance, type CiGovernanceDocPaths } from "./ci-governance/composition-root.js";
+import type { CiGovernanceDocPaths } from "./ci-governance/composition-root.js";
 import { toPhaseConfigSection } from "./config-foundation/application/mappers/phase-config-section-mapper.js";
 import { toValidatorSystemConfig } from "./config-foundation/application/mappers/validator-system-config-mapper.js";
 import { toWorldModelConfig } from "./config-foundation/application/mappers/world-model-config-mapper.js";
@@ -59,16 +58,13 @@ import {
   ConfigPersistenceError,
 } from "./config-foundation/infrastructure/repositories/file-system-config-repository.js";
 import { createHarnessApiModule } from "./harness-api/composition-root.js";
-import { createHarnessErrorModule } from "./harness-error/composition-root.js";
 import {
   type DeployManifestRecord,
   SkillDeployerManifestBuilder,
 } from "./installation/application/wrappers/skill-deployer-manifest-builder.js";
-import { createInstallationModule } from "./installation/composition-root.js";
 import { type AgentTarget, isAgentTarget } from "./installation/domain/agent-target.js";
 import { NodeCryptoHashAdapter } from "./installation/infrastructure/adapters/node-crypto-hash-adapter.js";
 import { CheckStoryReflectionUseCase } from "./phase-dependency-model/application/usecases/check-story-reflection-usecase.js";
-import { createPhaseDependencyModelModule } from "./phase-dependency-model/composition-root.js";
 import { StoryReflectionChecker } from "./phase-dependency-model/domain/services/story-reflection-checker.js";
 import { StoryReflectionResult } from "./phase-dependency-model/domain/values/story-reflection-result.js";
 import {
@@ -77,9 +73,7 @@ import {
 } from "./phase-dependency-model/infrastructure/config/harness-config-phase-config-provider.js";
 import { FileSystemStoryReflectionAdapter } from "./phase-dependency-model/infrastructure/filesystem/file-system-story-reflection-adapter.js";
 import { StoryReflectionStatusPresenter } from "./phase-dependency-model/presentation/cli/story-reflection-status-presenter.js";
-import { buildPhase2Extensions } from "./phase2-extensions/composition-root.js";
-import { createQuickModeCompositionRoot, type QuickModeCompositionRootOptions } from "./quick-mode/composition-root.js";
-import { buildRegressionSuite } from "./regression-suite/composition-root.js";
+import type { QuickModeCompositionRootOptions } from "./quick-mode/composition-root.js";
 import type { SkillSet } from "./setup/skill-deployer.js";
 import {
   deployAgentSkillLinks,
@@ -97,11 +91,7 @@ import {
   initHarnessConfig,
   listAvailableSkillNames,
 } from "./setup/skill-deployer.js";
-import { createSkillQualityHandlers } from "./skill-quality/composition-root.js";
-import { createTraceabilityModelModule } from "./traceability-model/composition-root.js";
-import { createValidatorSystemModule } from "./validator-system/composition-root.js";
-import {
-  createWorldModelModule,
+import type {
   WorldDeriveCommandHandler,
   WorldInspectCommandHandler,
   WorldPinCommandHandler,
@@ -283,7 +273,7 @@ Gate semantics:
   session begin                Start a Full Mode session (--mode full, --unit, --work-item, --reason, --duration)
   session end                  End a Full Mode session (--work-item)
 
-  skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed)
+  skill:execute-tdd-cycle      Execute TDD cycle (--unit, --story, --desc, --phase RED|GREEN|REFACTOR, --passed, optional --configured-validation)
   skill:check-coverage         Check coverage (--story <storyId>, --json)
   skill:collect-lessons        Collect lessons (--story <storyId>, --sources <paths>, --write-artifact)
   skill:apply-cascade-update   Apply cascade update (--story <storyId>, --dry-run)
@@ -495,7 +485,7 @@ async function saveInstallationManifest(
 ): Promise<void> {
   const filteredRecords = (await Promise.all(records)).filter((record) => record !== null);
   if (filteredRecords.length === 0) return;
-  const mod = createInstallationModule();
+  const mod = (await import("./installation/composition-root.js")).createInstallationModule();
   const builder = new SkillDeployerManifestBuilder(new NodeCryptoHashAdapter());
   await mod.manifestRepository.save(rootDir, builder.build(version, filteredRecords));
 }
@@ -902,6 +892,7 @@ Options:
   --paths <csv>              Comma-separated file paths to classify.
   --format <human|json>      Output format. Default: human.
   --fail-on-full-required    Exit with code 1 when Full Mode is required.
+  --risk-snapshots <json>    Optional before/after snapshots for advisory review; does not change gates.
   --help, -h                 Show this help.
 
 Examples:
@@ -1567,11 +1558,7 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
 }
 
 async function readProjectJson(rootDir: string, relativePath: string): Promise<unknown | null> {
-  try {
-    return JSON.parse(await fsReadFile(join(rootDir, relativePath), "utf8")) as unknown;
-  } catch {
-    return null;
-  }
+  return JSON.parse(await fsReadFile(join(rootDir, relativePath), "utf8")) as unknown;
 }
 
 function withNestedValue(source: unknown, path: readonly string[], value: unknown): Record<string, unknown> {
@@ -1595,7 +1582,7 @@ function getNestedValue(source: unknown, path: readonly string[]): unknown {
   return cursor;
 }
 
-function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | null): ConfigPatchPreview {
+function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | null, missing = false): ConfigPatchPreview {
   const configIntents: Record<
     ConfigChangeIntent,
     readonly { readonly pointer: string; readonly path: readonly string[]; readonly value: unknown }[]
@@ -1639,6 +1626,16 @@ function buildConfigPatchPreview(intent: ConfigChangeIntent, before: unknown | n
       operations: [],
     };
   }
+  if (!isPlainRecord(before) && !missing) {
+    return {
+      path: "phasegate.config.json",
+      applicability: "blocked",
+      blockedReason: "An existing JSON object configuration is required. Review phasegate install --dry-run before initialization, or restore a valid configuration before retrying.",
+      before,
+      after: before,
+      operations: [],
+    };
+  }
   let after: unknown = before;
   const operations: ConfigPatchOperation[] = [];
   for (const change of changes) {
@@ -1674,6 +1671,9 @@ async function applyConfigPlan(
   if (patch.applicability !== "applicable") {
     throw new Error(`config plan is not applicable: ${patch.blockedReason ?? patch.applicability}`);
   }
+  if (!isPlainRecord(patch.before)) {
+    throw new Error("phasegate.config.json is missing. Review phasegate install --dry-run before initialization; config:plan does not create a partial configuration.");
+  }
   if (patch.operations.length === 0) {
     throw new Error("config plan has no operations to apply.");
   }
@@ -1682,13 +1682,16 @@ async function applyConfigPlan(
   }
 
   const configPath = join(rootDir, patch.path);
+  const beforeText = await fsReadFile(configPath, "utf8");
+  if (JSON.stringify(JSON.parse(beforeText)) !== JSON.stringify(patch.before)) {
+    throw new Error("phasegate.config.json changed after planning. Review config:plan --dry-run again before applying; no configuration was changed.");
+  }
   const backupPath = configPlanBackupPath(rootDir, new Date());
   await fsMkdir(dirname(backupPath), { recursive: true });
-  const beforeText = patch.before === null ? "" : `${JSON.stringify(patch.before, null, 2)}\n`;
-  await fsWriteFile(backupPath, beforeText, "utf8");
+  await fsWriteFile(backupPath, beforeText, { encoding: "utf8", flag: "wx" });
 
   const tempPath = `${configPath}.tmp-${process.pid}-${Date.now()}`;
-  await fsWriteFile(tempPath, `${JSON.stringify(patch.after, null, 2)}\n`, "utf8");
+  await fsWriteFile(tempPath, `${JSON.stringify(patch.after, null, 2)}\n`, { encoding: "utf8", flag: "wx" });
   await fsRename(tempPath, configPath);
 
   return {
@@ -1829,11 +1832,31 @@ async function buildConfigChangePlan(rootDir: string, intent: ConfigChangeIntent
       ],
     },
   };
-  const before = await readProjectJson(rootDir, "phasegate.config.json");
+  let before: unknown = null;
+  let readFailure: string | undefined;
+  let missing = false;
+  try {
+    before = await readProjectJson(rootDir, "phasegate.config.json");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      missing = true;
+    } else if (error instanceof SyntaxError) {
+      readFailure = "Cannot parse phasegate.config.json. Restore valid JSON from version control or a known-good backup through an authorized recovery path, then preview again. The original file has not been changed.";
+    } else {
+      readFailure = `Cannot read phasegate.config.json. Check file access permissions before retrying. The original file has not been changed. ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+  let configPatch = buildConfigPatchPreview(intent, before, missing);
+  if (readFailure && configPatch.applicability !== "not-applicable") {
+    configPatch = { ...configPatch, applicability: "blocked", blockedReason: readFailure, after: before, operations: [] };
+  }
   return {
     intent,
     ...catalog[intent],
-    configPatch: buildConfigPatchPreview(intent, before),
+    commands: missing && configPatch.applicability === "applicable"
+      ? ["phasegate install --dry-run", ...catalog[intent].commands]
+      : catalog[intent].commands,
+    configPatch,
     diffExplanation:
       "Review the listed targets first, apply through PhaseGate managed commands where possible, then run the validations in order.",
     rollback: "Use git diff for config changes; use phasegate uninstall/reconcile dry-runs for managed setup targets.",
@@ -2226,7 +2249,7 @@ async function main(): Promise<void> {
           huskyPrePushResult?.created ? await createFileManifestRecord(rootDir, join(".husky", "pre-push")) : null,
           ...(ciWorkflowResult?.copiedFiles.map((path) => createFileManifestRecord(rootDir, path)) ?? []),
         ]);
-        const installModule = createInstallationModule();
+        const installModule = (await import("./installation/composition-root.js")).createInstallationModule();
         const installResult = await installModule.runInstallUseCase.execute({
           projectRoot: rootDir,
           harnessRoot,
@@ -2390,7 +2413,7 @@ async function main(): Promise<void> {
         }
         const apply = hasFlag(args, "--apply");
         const dryRun = hasFlag(args, "--dry-run") || !apply;
-        const mod = createInstallationModule();
+        const mod = (await import("./installation/composition-root.js")).createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.reconcileHandler.execute({
           projectRoot: rootDir,
@@ -2419,7 +2442,7 @@ async function main(): Promise<void> {
           console.error(`Invalid --agent value: "${parseFlag(args, "--agent")}". Use <${AGENT_TARGET_USAGE}>.`);
           process.exit(2);
         }
-        const mod = createInstallationModule();
+        const mod = (await import("./installation/composition-root.js")).createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.doctorHandler.execute({
           projectRoot: rootDir,
@@ -2505,7 +2528,7 @@ async function main(): Promise<void> {
         const includeClaude = agent === "claude" || agent === "both" || agent === "grok" || agent === "all";
         const includeCodex = agent === "codex" || agent === "both" || agent === "all";
         const personal = hasFlag(args, "--personal");
-        const mod = createInstallationModule();
+        const mod = (await import("./installation/composition-root.js")).createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.installHandler.execute({
           projectRoot: rootDir,
@@ -2578,7 +2601,7 @@ async function main(): Promise<void> {
             packageDependency: packageResult,
             configCreated: configResult.created,
           };
-          const mod = createInstallationModule();
+          const mod = (await import("./installation/composition-root.js")).createInstallationModule();
           const phasegateVersion = await getHarnessVersion(harnessRoot);
           installResult = await mod.runInstallUseCase.execute({
             projectRoot: rootDir,
@@ -2745,7 +2768,7 @@ async function main(): Promise<void> {
         }
         const apply = hasFlag(args, "--apply");
         const dryRun = hasFlag(args, "--dry-run") || !apply;
-        const mod = createInstallationModule();
+        const mod = (await import("./installation/composition-root.js")).createInstallationModule();
         const result = await mod.uninstallHandler.execute({
           projectRoot: rootDir,
           harnessRoot,
@@ -2768,7 +2791,7 @@ async function main(): Promise<void> {
         }
         const apply = hasFlag(args, "--apply");
         const dryRun = hasFlag(args, "--dry-run") || !apply;
-        const mod = createInstallationModule();
+        const mod = (await import("./installation/composition-root.js")).createInstallationModule();
         const phasegateVersion = await getHarnessVersion(harnessRoot);
         const result = await mod.reconcileHandler.execute({
           projectRoot: rootDir,
@@ -2827,7 +2850,7 @@ async function main(): Promise<void> {
 
       case "migrate": {
         if (args[1] === "work-items") {
-          const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
+          const mod = (await import("./traceability-model/composition-root.js")).createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
           const result = await mod.migrateWorkItemsCommandHandler.execute({
             dryRun: hasFlag(args, "--dry-run"),
             apply: hasFlag(args, "--apply"),
@@ -2851,7 +2874,7 @@ async function main(): Promise<void> {
 
       // ── harness-error ──
       case "render-errors": {
-        const mod = createHarnessErrorModule(rootDir);
+        const mod = (await import("./harness-error/composition-root.js")).createHarnessErrorModule(rootDir);
         const format = toRenderFormat(parseFlag(args, "--format") ?? "human");
         const failOnError = hasFlag(args, "--fail-on-error");
         const result = mod.renderHarnessErrorsHandler.execute({
@@ -2865,7 +2888,7 @@ async function main(): Promise<void> {
       }
 
       case "validate-fix": {
-        const mod = createHarnessErrorModule(rootDir);
+        const mod = (await import("./harness-error/composition-root.js")).createHarnessErrorModule(rootDir);
         const code = parseFlag(args, "--code");
         const failFast = hasFlag(args, "--fail-fast");
         const format = toListFormat(parseFlag(args, "--format") ?? "human");
@@ -2880,7 +2903,7 @@ async function main(): Promise<void> {
       }
 
       case "list-errors": {
-        const mod = createHarnessErrorModule(rootDir);
+        const mod = (await import("./harness-error/composition-root.js")).createHarnessErrorModule(rootDir);
         const format = toListFormat(parseFlag(args, "--format") ?? "human");
         const layer = toLayerFilter(parseFlag(args, "--layer"));
         const result = await mod.listErrorDefinitionsHandler.execute({
@@ -2894,7 +2917,7 @@ async function main(): Promise<void> {
 
       // ── traceability-model ──
       case "validate-metadata": {
-        const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
+        const mod = (await import("./traceability-model/composition-root.js")).createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
         const filePaths = parsePositionalArgs(args.slice(1));
         const result = await mod.validateMetadataCommandHandler.execute({
           filePaths,
@@ -2906,7 +2929,7 @@ async function main(): Promise<void> {
       }
 
       case "work-items:status": {
-        const mod = createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
+        const mod = (await import("./traceability-model/composition-root.js")).createTraceabilityModelModule(rootDir, toTraceabilityModelOptions(resolvedConfig));
         const result = await mod.workItemStatusCommandHandler.execute({
           dryRun: hasFlag(args, "--dry-run"),
           apply: hasFlag(args, "--apply"),
@@ -2925,12 +2948,12 @@ async function main(): Promise<void> {
       case "world:inspect": {
         let handler: WorldInspectCommandHandler;
         try {
-          handler = createWorldModelModule({
+          handler = (await import("./world-model/index.js")).createWorldModelModule({
             rootDir,
             resolvedConfig: await loadWorldResolvedConfig(),
           }).worldInspectCommandHandler;
         } catch (error) {
-          handler = WorldInspectCommandHandler.fromFailure(error);
+          handler = (await import("./world-model/index.js")).WorldInspectCommandHandler.fromFailure(error);
         }
         const result = await handler.execute(args.slice(1));
         if (result.stdout.length > 0) process.stdout.write(result.stdout);
@@ -2942,12 +2965,12 @@ async function main(): Promise<void> {
       case "world:pin": {
         let handler: WorldPinCommandHandler;
         try {
-          handler = createWorldModelModule({
+          handler = (await import("./world-model/index.js")).createWorldModelModule({
             rootDir,
             resolvedConfig: await loadWorldResolvedConfig(),
           }).worldPinCommandHandler;
         } catch (error) {
-          handler = WorldPinCommandHandler.fromFailure(error);
+          handler = (await import("./world-model/index.js")).WorldPinCommandHandler.fromFailure(error);
         }
         const result = await handler.execute(args.slice(1));
         if (result.stdout.length > 0) process.stdout.write(result.stdout);
@@ -2959,12 +2982,12 @@ async function main(): Promise<void> {
       case "world:derive": {
         let handler: WorldDeriveCommandHandler;
         try {
-          handler = createWorldModelModule({
+          handler = (await import("./world-model/index.js")).createWorldModelModule({
             rootDir,
             resolvedConfig: await loadWorldResolvedConfig(),
           }).worldDeriveCommandHandler;
         } catch (error) {
-          handler = WorldDeriveCommandHandler.fromFailure(error);
+          handler = (await import("./world-model/index.js")).WorldDeriveCommandHandler.fromFailure(error);
         }
         const result = await handler.execute(args.slice(1));
         if (result.stdout.length > 0) process.stdout.write(result.stdout);
@@ -2977,7 +3000,7 @@ async function main(): Promise<void> {
       case "check-phase-gate": {
         const phaseConfig = resolvedConfig ? toPhaseConfigSection(resolvedConfig) : undefined;
         const reportOutputDir = resolvedConfig?.reporting.outputDir;
-        const mod = createPhaseDependencyModelModule({
+        const mod = (await import("./phase-dependency-model/composition-root.js")).createPhaseDependencyModelModule({
           rootDir,
           phaseConfig,
           reportOutputDir,
@@ -3003,7 +3026,7 @@ async function main(): Promise<void> {
       // ADR ディレクトリを rootDir として渡す（project root を渡すと readdir が ADR を
       // 一切発見できず vacuous な valid を返す phantom gate になる）。
       case "list-adrs": {
-        const mod = createAdrFoundationModule(join(rootDir, "docs", "ADR"));
+        const mod = (await import("./adr-foundation/composition-root.js")).createAdrFoundationModule(join(rootDir, "docs", "ADR"));
         const statuses = toAdrStatuses(parseFlag(args, "--status"));
         const result = await mod.listAdrsCommandHandler.execute({
           statuses,
@@ -3015,7 +3038,7 @@ async function main(): Promise<void> {
       }
 
       case "validate-adr": {
-        const mod = createAdrFoundationModule(join(rootDir, "docs", "ADR"));
+        const mod = (await import("./adr-foundation/composition-root.js")).createAdrFoundationModule(join(rootDir, "docs", "ADR"));
         const all = hasFlag(args, "--all");
         const adrRef = args.find((a) => !a.startsWith("--") && a !== command);
         const result = await mod.validateAdrCommandHandler.execute({
@@ -3041,7 +3064,7 @@ async function main(): Promise<void> {
 
       // ── validator-system ──
       case "validate": {
-        const mod = createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig));
+        const mod = (await import("./validator-system/composition-root.js")).createValidatorSystemModule(toValidatorSystemConfig(resolvedConfig));
         const layer = parseValidateLayer(args);
         const unit = parseFlag(args, "--unit");
         const phase = parseFlag(args, "--phase");
@@ -3074,7 +3097,7 @@ async function main(): Promise<void> {
           // WI-364: check-change-category (WI-351) と同様に解決済み configPath / rootDir を注入する。
           // 無指定だと quickMode 設定を cwd 基準でしか探せず、サブディレクトリ実行で
           // HarnessConfigNotFoundError → exit 2 になっていた。
-          const mod = createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
+          const mod = (await import("./quick-mode/composition-root.js")).createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
           const failOnReject = hasFlag(args, "--fail-on-reject");
           const dryRun = hasFlag(args, "--dry-run");
           const files = parseFlag(args, "--files");
@@ -3103,6 +3126,7 @@ async function main(): Promise<void> {
               "  --paths <csv>              Comma-separated file paths to classify.",
               "  --format <human|json>      Output format. Default: human.",
               "  --fail-on-full-required    Exit with code 1 when Full Mode is required.",
+              "  --risk-snapshots <json>    Optional before/after snapshots for advisory review; does not change gates.",
               "  --help                     Show this help.",
               "",
               "Examples:",
@@ -3113,14 +3137,19 @@ async function main(): Promise<void> {
           );
           return;
         }
-        const mod = createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
+        const mod = (await import("./quick-mode/composition-root.js")).createQuickModeCompositionRoot(await resolveQuickModeCompositionOptions());
         const paths = parseFlag(args, "--paths");
         const format = parseFlag(args, "--format") as "human" | "json" | undefined;
         const failOnFullRequired = hasFlag(args, "--fail-on-full-required");
+        const riskSnapshots = parseFlag(args, "--risk-snapshots");
+        if (hasFlag(args, "--risk-snapshots") && !riskSnapshots) {
+          throw new Error("--risk-snapshots requires a JSON file path.");
+        }
         const result = await mod.checkChangeCategoryHandler.handle({
           paths,
           format,
           failOnFullRequired,
+          riskSnapshots,
         });
         await finishCliExit(result.exitCode);
         return;
@@ -3206,9 +3235,8 @@ async function main(): Promise<void> {
         const mod = createHarnessApiModule();
         const flags: Record<string, boolean | string> = {};
         if (json) flags.json = true;
-        const target = parseFlag(args, "--target");
-        if (target) flags.target = target;
-        await mod.handlers.lint.handle({}, flags);
+        const targets = args.flatMap((arg, index) => arg === '--target' && args[index + 1] !== undefined ? [args[index + 1]] : []);
+        await mod.handlers.lint.handle(targets.length > 0 ? { reportTargets: JSON.stringify(targets) } : {}, flags);
         break;
       }
 
@@ -3283,7 +3311,7 @@ async function main(): Promise<void> {
         }
         const { createAttestationModule } = await import("./attestation/index.js");
         const pkgVersion = await getHarnessVersion(harnessRoot);
-        const worldModule = createWorldModelModule({
+        const worldModule = (await import("./world-model/index.js")).createWorldModelModule({
           rootDir,
           resolvedConfig: await loadWorldResolvedConfig(),
         });
@@ -3350,7 +3378,7 @@ Examples:
           console.error(flagError);
           process.exit(2);
         }
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const presetId = parseFlag(args, "--preset") ?? "standard";
         const templateType = parseFlag(args, "--type") ?? "aidlc-gate";
         const render = hasFlag(args, "--render");
@@ -3362,7 +3390,7 @@ Examples:
       }
 
       case "ci:migrate-agents-md": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const validateOnly = hasFlag(args, "--validate-only");
         const format = json ? "json" : "human";
@@ -3373,7 +3401,7 @@ Examples:
       }
 
       case "ci:auto-refresh-agent-context": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const apply = hasFlag(args, "--apply");
         const format = json ? "json" : "human";
@@ -3384,7 +3412,7 @@ Examples:
       }
 
       case "refresh-claude-md": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const apply = hasFlag(args, "--apply");
         const format = json ? "json" : "human";
@@ -3395,7 +3423,7 @@ Examples:
       }
 
       case "p2:check-agent-context": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const thresholdRaw = parseFlag(args, "--threshold-days");
         const thresholdDays = thresholdRaw === undefined ? undefined : Number(thresholdRaw);
         const format = json ? "json" : "human";
@@ -3406,7 +3434,7 @@ Examples:
       }
 
       case "ci:check-repetition": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const errorCode = parseFlag(args, "--code") ?? "";
         const reset = hasFlag(args, "--reset");
         const format = json ? "json" : "human";
@@ -3417,7 +3445,7 @@ Examples:
       }
 
       case "baseline": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const force = hasFlag(args, "--force");
         const pathsFlag = parseFlag(args, "--paths");
@@ -3440,7 +3468,7 @@ Examples:
       }
 
       case "scaffold-design": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const unit = parseFlag(args, "--unit") ?? "";
         const phase = parseFlag(args, "--phase") ?? "";
         const dryRun = hasFlag(args, "--dry-run");
@@ -3461,7 +3489,7 @@ Examples:
       }
 
       case "scaffold-inception": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const kind = parseFlag(args, "--kind") ?? "";
         const dryRun = hasFlag(args, "--dry-run");
         const apply = hasFlag(args, "--apply");
@@ -3480,7 +3508,7 @@ Examples:
       }
 
       case "templates": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const subCommand = args[1];
         const emit = async (result: { exitCode: number; output: string; errorOutput: string }): Promise<void> => {
           if (result.output.length > 0) console.log(result.output);
@@ -3503,7 +3531,7 @@ Examples:
       }
 
       case "integrity:pin": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const dryRun = hasFlag(args, "--dry-run");
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.pin({ dryRun, format });
@@ -3513,7 +3541,7 @@ Examples:
       }
 
       case "integrity:verify": {
-        const mod = buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
+        const mod = (await import("./ci-governance/composition-root.js")).buildCiGovernance(rootDir, harnessRoot, toCiGovernanceDocPaths(resolvedConfig));
         const format = json ? "json" : "human";
         const result = await mod.integrityHandler.verify({ format });
         console.log(result.output);
@@ -3523,7 +3551,15 @@ Examples:
 
       // ── skill-quality ──
       case "skill:execute-tdd-cycle": {
-        const mod = createSkillQualityHandlers();
+        const configuredValidation = hasFlag(args, "--configured-validation");
+        const mod = (await import("./skill-quality/composition-root.js")).createSkillQualityHandlers(configuredValidation ? {
+          rootDir,
+          l1Config: resolvedConfig
+            ? { l1Config: toL1Config(resolvedConfig), architecture: toArchitectureInput(resolvedConfig) }
+            : undefined,
+          validatorSystemConfig: toValidatorSystemConfig(resolvedConfig),
+          failOnWarning: resolvedConfig?.validate.failOnWarning,
+        } : {});
         const unit = parseFlag(args, "--unit") ?? "";
         const storyId = parseFlag(args, "--story") ?? "";
         const description = parseFlag(args, "--desc") ?? "";
@@ -3533,12 +3569,13 @@ Examples:
         const passed = hasFlag(args, "--passed");
         const result = await mod.executeTddCycleHandler.handle({ unit, storyId, description, phase, passed });
         console.log(result.message);
+        console.log(`Validation profile: ${configuredValidation ? "configured" : "legacy (use --configured-validation to explicitly adopt resolved project validation settings)"}`);
         await finishCliExit(result.exitCode);
         return;
       }
 
       case "skill:check-coverage": {
-        const mod = createSkillQualityHandlers();
+        const mod = (await import("./skill-quality/composition-root.js")).createSkillQualityHandlers();
         const storyId = parseFlag(args, "--story") ?? "";
         const format = json ? "json" : "human";
         const result = await mod.checkCoverageHandler.handle({ storyId, format });
@@ -3548,7 +3585,7 @@ Examples:
       }
 
       case "skill:collect-lessons": {
-        const mod = createSkillQualityHandlers();
+        const mod = (await import("./skill-quality/composition-root.js")).createSkillQualityHandlers();
         const storyId = parseFlag(args, "--story") ?? "";
         const sourcesRaw = parseFlag(args, "--sources") ?? "";
         const sources = sourcesRaw ? sourcesRaw.split(",") : [];
@@ -3560,7 +3597,7 @@ Examples:
       }
 
       case "skill:apply-cascade-update": {
-        const mod = createSkillQualityHandlers();
+        const mod = (await import("./skill-quality/composition-root.js")).createSkillQualityHandlers();
         const storyId = parseFlag(args, "--story") ?? "";
         const dryRun = hasFlag(args, "--dry-run");
         const result = await mod.applyCascadeUpdateHandler.handle({ storyId, dryRun, format: json ? "json" : "human" });
@@ -3570,7 +3607,7 @@ Examples:
       }
 
       case "skill:validate-structure": {
-        const mod = createSkillQualityHandlers();
+        const mod = (await import("./skill-quality/composition-root.js")).createSkillQualityHandlers();
         const skillFile = parseFlag(args, "--file") ?? "";
         const format = json ? "json" : "human";
         const result = await mod.validateSkillStructureHandler.handle({ skillFile, format });
@@ -3581,7 +3618,7 @@ Examples:
 
       // ── regression-suite ──
       case "regression:run-k-requirements": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const result = await mod.runKRequirementsRegressionUseCase.execute();
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -3592,7 +3629,7 @@ Examples:
       }
 
       case "regression:run-gng-gate": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const result = await mod.runGngGateRegressionUseCase.execute();
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -3603,7 +3640,7 @@ Examples:
       }
 
       case "regression:run-agent-guard": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const result = await mod.runAgentIndependenceGuardUseCase.execute();
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -3614,7 +3651,7 @@ Examples:
       }
 
       case "regression:run-k14-k15": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const result = await mod.runK14K15RegressionUseCase.execute();
         const output = json
           ? JSON.stringify(result, null, 2)
@@ -3625,7 +3662,7 @@ Examples:
       }
 
       case "regression:configure-ci-gate": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const requiredSuiteIds = parseSuiteIds(parseFlag(args, "--suites") ?? DEFAULT_REGRESSION_SUITES);
         const threshold = parseCoverageThreshold(parseFlag(args, "--threshold"));
         const result = await mod.configureCiGateUseCase.execute({
@@ -3642,7 +3679,7 @@ Examples:
       }
 
       case "regression:analyze-migration": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const dryRun = !hasFlag(args, "--no-dry-run");
         const result = await mod.analyzeV0MigrationUseCase.execute({ dryRun });
         const output = json
@@ -3654,7 +3691,7 @@ Examples:
       }
 
       case "regression:migrate-v0-tests": {
-        const mod = buildRegressionSuite(rootDir);
+        const mod = (await import("./regression-suite/composition-root.js")).buildRegressionSuite(rootDir);
         const confirm = hasFlag(args, "--confirm");
         const result = await mod.migrateV0TestsUseCase.execute({ confirmExecute: confirm });
         const output = json
@@ -3667,7 +3704,7 @@ Examples:
 
       // ── phase2-extensions ──
       case "p2:check-freshness": {
-        const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
+        const mod = (await import("./phase2-extensions/composition-root.js")).buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.checkFreshnessHandler.handle(p2args);
         console.log(result.stdout);
@@ -3676,7 +3713,7 @@ Examples:
       }
 
       case "p2:validate-pointers": {
-        const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
+        const mod = (await import("./phase2-extensions/composition-root.js")).buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.validatePointersHandler.handle(p2args);
         console.log(result.stdout);
@@ -3685,7 +3722,7 @@ Examples:
       }
 
       case "p2:generate-e2e-template": {
-        const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
+        const mod = (await import("./phase2-extensions/composition-root.js")).buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.generateE2ETemplateHandler.handle(p2args);
         console.log(result.stdout);
@@ -3694,7 +3731,7 @@ Examples:
       }
 
       case "p2:check-initial-creation": {
-        const mod = buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
+        const mod = (await import("./phase2-extensions/composition-root.js")).buildPhase2Extensions(rootDir, resolvedConfig ?? undefined);
         const p2args = args.slice(1);
         const result = await mod.checkInitialCreationExpirationHandler.handle(p2args);
         console.log(result.stdout);

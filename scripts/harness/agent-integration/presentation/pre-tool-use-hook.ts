@@ -266,6 +266,9 @@ async function main(): Promise<void> {
       const workItem = session.workItemId !== undefined ? `, workItem=${session.workItemId}` : "";
       const unit = session.unit !== undefined ? `, unit=${session.unit}` : "";
       process.stderr.write(`phasegate: write allowed (Full Mode session${workItem}${unit})\n`);
+      for (const warning of output.storyReflectionWarnings ?? []) {
+        process.stderr.write(`phasegate: dependency reflection warning (advisory): ${warning}\n`);
+      }
     }
 
     process.exit(0);

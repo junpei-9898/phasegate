@@ -1,6 +1,7 @@
 // @unit world-model
 // @layer e2e-test
 // @work-item-id WI-297
+// @work-item-id WI-220
 // @story H17-11
 // @ac H17-11-1
 // @ac H17-11-2
@@ -61,6 +62,7 @@ interface CliEnvelope {
         readonly ruleId: string;
         readonly constraintId: string | null;
         readonly classification: string;
+        readonly subject: { readonly endpointRole: string };
       }[];
       readonly policyDiagnostics: readonly { readonly code: string }[];
       readonly summary: { readonly structuralObligations: number };
@@ -329,6 +331,72 @@ afterEach(async () => {
 });
 
 describe("World synthetic mutation E2E", () => {
+  it("両端変更は片側のpin更新では解消せず両側更新後に解消し後続変更を再検出すること", async () => {
+    // Arrange: real files, declarations, hashing, and public composition.
+    const rootDir = await prepareRoot();
+    const baseline = await buildBaseline(rootDir);
+    const constraintId = "pgw:v1:constraint:world.fixture-source";
+    await configureScenario("base", rootDir, baseline);
+    const module = createWorldModelModule({ rootDir, policyDate: { currentUtcDate: () => "2026-09-19" } });
+    const handler = module.worldDeriveCommandHandler;
+    const derive = async () => {
+      const actual = await handler.execute(["--json"]);
+      return { exitCode: actual.exitCode, envelope: JSON.parse(actual.stdout) as CliEnvelope };
+    };
+
+    // Act / Assert: original pins match both ends.
+    const initial = await derive();
+    expect(initial.exitCode).toBe(0);
+    expect(initial.envelope.data?.report.structuralObligations).toEqual([]);
+
+    // Act / Assert: changing both ends makes two distinct stale-pin obligations.
+    await mutateSource(rootDir, "claimant");
+    await mutateSource(rootDir, "premise");
+    const stale = await derive();
+    expect(stale.exitCode).toBe(1);
+    expect(stale.envelope.data?.report.structuralObligations.map((item) => ({ ruleId: item.ruleId, constraintId: item.constraintId })))
+      .toEqual([{ ruleId: "WCR-008", constraintId }, { ruleId: "WCR-008", constraintId }]);
+    expect(new Set(fingerprints(stale.envelope)).size).toBe(2);
+    expect(stale.envelope.data?.report.structuralObligations.map((item) => item.subject.endpointRole).sort())
+      .toEqual(["claimant", "premise"]);
+
+    // Act / Assert: preview preserves declarations and does not resolve obligations.
+    const declarationPath = path.join(rootDir, "phasegate.world-constraints.json");
+    const beforePreview = await readFile(declarationPath, "utf8");
+    const preview = await module.pinConstraintEndpointUseCase.execute({ constraintId, endpoint: "claimant", apply: false });
+    expect(preview).toMatchObject({ status: "preview", candidate: { endpoint: "claimant", changed: true } });
+    expect(await readFile(declarationPath, "utf8")).toBe(beforePreview);
+    expect(await derive()).toEqual(stale);
+
+    // Act / Assert: updating one pin cannot clear the other stale endpoint.
+    const claimantPin = await module.pinConstraintEndpointUseCase.execute({ constraintId, endpoint: "claimant", apply: true });
+    expect(claimantPin).toMatchObject({ status: "applied", candidate: { endpoint: "claimant", changed: true } });
+    const partial = await derive();
+    expect(partial.exitCode).toBe(1);
+    expect(partial.envelope.data?.report.structuralObligations.map((item) => item.ruleId)).toEqual(["WCR-008"]);
+    expect(partial.envelope.data?.report.structuralObligations[0].subject.endpointRole).toBe("premise");
+
+    // Act / Assert: resolving both pins permits re-derivation; identical pin is a no-op.
+    const premisePin = await module.pinConstraintEndpointUseCase.execute({ constraintId, endpoint: "premise", apply: true });
+    expect(premisePin).toMatchObject({ status: "applied", candidate: { endpoint: "premise", changed: true } });
+    const resolved = await derive();
+    expect(resolved.exitCode).toBe(0);
+    expect(resolved.envelope.data?.report.structuralObligations).toEqual([]);
+    const afterResolution = await readFile(declarationPath, "utf8");
+    const repeated = await module.pinConstraintEndpointUseCase.execute({ constraintId, endpoint: "premise", apply: true });
+    expect(repeated).toMatchObject({ status: "unchanged", candidate: { changed: false } });
+    expect(await readFile(declarationPath, "utf8")).toBe(afterResolution);
+
+    // Act / Assert: later revision cannot borrow the resolved state.
+    const sourcePath = path.join(rootDir, "scripts/harness/sample/domain/premise.ts");
+    await writeFile(sourcePath, (await readFile(sourcePath, "utf8")).replace('"drifted"', '"changed-again"'), "utf8");
+    const later = await derive();
+    expect(later.exitCode).toBe(1);
+    expect(later.envelope.data?.report.structuralObligations.map((item) => item.ruleId)).toEqual(["WCR-008"]);
+    expect(later.envelope.data?.report.structuralObligations[0].subject.endpointRole).toBe("premise");
+    expect(later.envelope.data?.report.evaluationId).not.toBe(resolved.envelope.data?.report.evaluationId);
+  });
+
   it("baseと全structural mutationを期待rule・fingerprint・classification・exitへ決定的に分類すること", async () => {
     // Arrange
     const scenarios = await readScenarios();

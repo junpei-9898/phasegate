@@ -1,5 +1,23 @@
 # 論理設計: skill-quality
 
+## WI-220 検証設定の注入
+
+<!-- @work-item-id WI-220 -->
+
+createSkillQualityHandlersの任意optionsでrootDir、L1 module options、validatorSystemConfig、failOnWarningを受ける。既定CLIと引数なし利用は従来動作を維持する。CLIの共通設定注入は明示的な `--configured-validation` の場合のみ。設定の存在だけで追加検査を強制せず、選択profileを出力に表示する。L1 adapterはroot/configをBiome moduleへ渡し、通常lint同様に全診断を拒否する。L2 adapterは共通validator設定とfailOnWarningを渡しL2＋L3を維持。非拒否warningはstderrへ表示し、拒否診断は既存Portへ返す。severity判定は既存effective-severity-policyを利用する。設定なしのwarning拒否、例外時のfail-closedを維持する。どちらもGit hookを省略しない。
+
+## WI-220 TDDコミットの追跡契約
+
+<!-- @work-item-id WI-220 -->
+
+ExecuteTddCycleUseCaseはstoryIdが厳密なWI-<数字>の場合だけ既存CommitMessageのworkItemIdへ渡し、従来subjectにWork-Item trailerを追加する。旧story IDはメッセージを維持する。handlerは全exit結果でpassedが呼出元の申告でありテスト未実行であることを表示する。REFACTOR＋passed条件、validator拒否、Git hookとexit codeは維持し、追加の必須オプションや自動テスト実行は導入しない。
+
+## WI-220 PlanCheckerの評価契約
+
+<!-- @work-item-id WI-220 -->
+
+factoryのhandlerはFileSystemPort.readを注入してplanFile本文を評価する。直接構築した旧handlerの文字列入力互換は保持する。Portの任意supportsRetry=falseは同じ入力の再評価で改善しないことを表し、未達は1回で終了する。未指定の外部executorは最大3回を維持する。早期終了は既存FAILED_EXCEEDEDに追加stopReason=UNCHANGED_INPUTを付け、実履歴のみ返す。チェックリスト充足は意味的設計承認ではない。空の未チェック項目も未達扱いとする。
+
 ## WI-036 Git Commit Executor Hardening
 
 <!-- @work-item-id WI-036 -->
@@ -1085,7 +1103,7 @@ advisory = ['frontmatter', 'languageMetadata', 'purpose']   # lifecycle の真�
 
 ### 3.4 RunPlanCheckerLoopUseCase（H12-03）
 
-**責務**: `PlanCheckerLoop` の生成からループ実行・終了判定までを調停する。最大 3 回の Plan 検証→修正ループを制御する。
+**責務**: `PlanCheckerLoop` の生成から評価終了までを調停する。再評価能力のあるexecutorは最大3回、決定的な既定評価器は1回で終了する（WI-220）。
 
 **コンストラクタ依存**
 
@@ -1517,7 +1535,7 @@ advisory = ['frontmatter', 'languageMetadata', 'purpose']   # lifecycle の真�
 
 **処理**
 
-1. `RunPlanCheckerLoopUseCase.execute()` を呼ぶ
+1. factoryで注入されたreaderでplanFile本文を読み、`RunPlanCheckerLoopUseCase.execute()` を呼ぶ。旧constructor直接利用の文字列互換は維持する。
 2. 各ループ試行の結果（attempt 番号・カバレッジ率・gaps）を出力する
 3. `status=PASSED` なら成功メッセージを出力する
 4. `escalationRequired=true` なら人間への警告メッセージを出力して終了コード 1 で終了する
@@ -1702,7 +1720,7 @@ advisory = ['frontmatter', 'languageMetadata', 'purpose']   # lifecycle の真�
          ↓
   RunPlanCheckerLoopOutput { status, loopHistory, escalationRequired }
          ↓
-[CLI 出力: PASSED → 計画承認済み / FAILED_EXCEEDED → 人間へのエスカレーション警告]
+[handler出力: PASSED → チェックリスト充足（意味的承認ではない） / FAILED_EXCEEDED → 修正・判断が必要。UNCHANGED_INPUTなら同一入力を再試行しない]
 ```
 
 ---
@@ -2029,3 +2047,17 @@ Skill-quality reads `languages` frontmatter from bundled `SKILL.md` files and ex
 <!-- @work-item-id WI-298 -->
 
 `coverage_report.md`のfile-level metadataへ`@world-semantic-debt pgw:v1:semantic-debt:skill-quality.coverage-attestation-legacy`を追加し、既存`@coverage-gating: ungated-legacy`と併存させる。debtの説明は`phasegate.world-debts.json`を正本とし、annotationへ複製しない。L2-016のwarning / repayment contractは変更しない。
+## WI-220 cascadeの証拠境界
+
+<!-- @work-item-id WI-220 -->
+
+既存cascade CLIはタグ追記のみであり、設計内容の意味レビューを行わない。human／JSONにその境界を示し、JSONへoperation=traceability-tag-update、semanticReviewPerformed=falseを加法追加する。updatedCountは変更本文の件数（dry-runは予定件数）、appliedStoryIdsは変更対象タグのみとし、既存タグの無変更再実行は0件とする。公開入力とexit 0/1/2は維持し、新たなブロックを導入しない。
+
+IDはstory-id／issue-id／work-item-id注釈の空白・カンマ区切りから完全一致で照合し、prefix一致による偽の無変更を避ける。WI形式の新規タグはwork-item-id、非WIは従来のstory-idを生成する。既存legacyタグは読み取り互換を保持して書換えない。同一展開済みfilePathはapply/dry-runとも一実行一回だけ処理し、失敗した重複対象も自動再試行しない。別表記パスやsymlinkの解決はこのUseCaseに持ち込まない。
+
+JS/TS系ソースへは行コメントとしてタグを追記し、裸タグで構文を壊さない。Markdownの既存テキスト形式とJSONタグ識別子は維持する。
+## WI-220 cascade skillの判断と再開
+
+<!-- @work-item-id WI-220 -->
+
+合意済み意味の整合修正は既存依頼の範囲で進め、一律の計画承認・モデル委任を要求しない。目的・外部契約・認可・不変条件・Unit境界を変える発見はWIに根拠／対象revision／停止範囲／判断者／再開条件を残し上位判断へ戻す。承認は上位から下位へ反映・検証、却下は案の終了または旧契約内で再計画、代替案は未承認なら勝手に採用しない。productは現行本文へ統合し、履歴はWI／ADR／Gitへ残す。タグのみ・機械検証・意味レビューの証拠を区別し、World Modelの新規導入や既存例外削除を要求しない。

@@ -5,6 +5,12 @@ traceability:
 
 # ユニットテスト設計: quick-mode
 
+## WI-220 T20b class snapshot助言
+
+<!-- @work-item-id WI-220 -->
+
+明示型付きadapter内部抽出・同signatureの認可削除はbehavior-review、method引数/返却値・property型・constructor引数・heritageの変更はmodule-surface-change。推論型property・decorator・default引数・未対応memberはunknown。既存corpusと実CLI許否不変を回帰する。
+
 > **作成日**: 2026-03-19
 > **対応ストーリー**: H10-01, H10-02, H10-03
 > **前提ドキュメント**: `domain_model.md`、`logical_design.md`、`unit_test_design_plan.md`
@@ -532,6 +538,18 @@ ChangeClassificationはQuickModeJudgmentEngine内部でのみ生成されるた�
 | UT-WI384-QM-005 | targetChanges がない CLI input を受ける | 従来 filesystem 推定 |
 
 日本語・重複なしの `it()`、semantic AAA、`actual` 変数を使い、domain object は実体で検証する。
+
+## WI-220 リスク分類の比較基準
+
+<!-- @work-item-id WI-220 -->
+
+実ChangedFile・QuickModeConfig・QuickModeJudgmentEngineへ、内部抽出、adapter新設/内部変更、公開API、認可、業務不変条件、データ形式、未知の固定corpusを渡す。旧categoryとeligibilityを正確に観測し、期待する意味ラベルと混同しない。labelに必要な前提・理由を併記し、未知を安全と扱わない。比較器実装前のbaseline試験成功はT20未達を解消しない。
+
+### snapshot助言の観測
+
+<!-- @work-item-id WI-220 -->
+
+同文、export関数signature、interface/type差分、認可/保存形式の本文のみ差分、型推論・class・構文エラー・snapshot欠落/重複を実parserで確認する。元内容は出力せずhashで対象を識別する。実CLIの同一pathsで助言なし/ありの既存category・fullModeRequired・exitが一致すること、助言なしには追加fieldがないこと、不正入力が成功に化けないことを確認する。corpusの内部adapterを未対応とする限界は残件として記録する。
 
 ## WI-390 Markdown / rejection tests
 

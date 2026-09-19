@@ -61,6 +61,9 @@ export class WriteTargetScope {
       if (sourceMatch !== null) {
         const [unitId] = sourceMatch;
         if (unitId !== undefined) {
+          // A source-root file (e.g. main.ts) is not a Unit directory.
+          // Keep nested paths, including dotted directory names, under the gate.
+          if (sourceMatch.length === 1 && unitId.includes('.')) continue;
           return WriteTargetScope.create({ level: 3, unitId });
         }
       }
@@ -122,6 +125,15 @@ export class WriteTargetScope {
     }
 
     return null;
+  }
+
+  /** Phase-1 Markdown repair is not implementation; source-root overlaps remain gated. */
+  static isInceptionDocument(filePath: string, projectPaths: ProjectPaths): boolean {
+    const normalized = normalize(filePath);
+    return normalized.toLowerCase().endsWith('.md')
+      && matchPrefix(normalized, projectPaths.getDocsInception()) !== null
+      && !projectPaths.getSource().some(root => matchPrefix(normalized, root) !== null)
+      && WriteTargetScope.fromPath(normalized, projectPaths)?.level === 3;
   }
 
   equals(other: WriteTargetScope): boolean {

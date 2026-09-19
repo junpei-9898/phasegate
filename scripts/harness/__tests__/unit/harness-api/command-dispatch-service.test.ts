@@ -98,6 +98,38 @@ function createMockPorts(options: MockPortOptions = {}) {
   return ports;
 }
 
+it('lint対象を報告範囲として渡すこと', async () => {
+  // Arrange
+  const ports = createMockPorts({ lintResult: { passed: true, errors: [], warnings: [] } });
+  const service = new CommandDispatchService(ports);
+
+  // Act
+  const actual = await service.dispatch({ commandName: 'phasegate:lint', args: {}, flags: { target: 'src/a.ts' } });
+
+  // Assert
+  expect(actual.exitCode).toBe(0);
+  expect(ports.biomeLintPort.runLint).toHaveBeenCalledWith(['src/a.ts']);
+});
+
+it('複数のlint対象を先頭だけに切り詰めず渡すこと', async () => {
+  // Arrange
+  const ports = createMockPorts({ lintResult: { passed: true, errors: [], warnings: [] } });
+  const service = new CommandDispatchService(ports);
+  // Act
+  const actual = await service.dispatch({ commandName: 'phasegate:lint', args: { reportTargets: JSON.stringify(['a.ts', 'b.ts']) }, flags: {} });
+  // Assert
+  expect(actual.exitCode).toBe(0);
+  expect(ports.biomeLintPort.runLint).toHaveBeenCalledWith(['a.ts', 'b.ts']);
+});
+
+it.each(['null', '[1]', '[""]', '{broken'])('不正な報告対象 %s を黙って省略しないこと', async (reportTargets) => {
+  const ports = createMockPorts({ lintResult: { passed: true, errors: [], warnings: [] } });
+  const service = new CommandDispatchService(ports);
+  const actual = await service.dispatch({ commandName: 'phasegate:lint', args: { reportTargets }, flags: {} });
+  expect(actual.exitCode).toBe(2);
+  expect(ports.biomeLintPort.runLint).not.toHaveBeenCalled();
+});
+
 target("CommandDispatchService", () => {
   describe("dispatch: check-ready", () => {
     // UT-DS-001

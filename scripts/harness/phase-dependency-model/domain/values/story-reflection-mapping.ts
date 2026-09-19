@@ -3,6 +3,8 @@
  * @unit phase-dependency-model
  */
 
+import type { PathRoots } from './artifact.js';
+
 export interface StoryReflectionMappingCreateArgs {
   readonly inception: string;
   readonly product: string;
@@ -69,7 +71,7 @@ export class StoryReflectionMapping {
     });
   }
 
-  resolve(scope: { unitId: string; storyId: string }): { inception: string; product: string } {
+  resolve(scope: { unitId: string; storyId: string }, roots?: PathRoots): { inception: string; product: string } {
     const inception = this.inception
       .replaceAll('{unit}', scope.unitId)
       .replaceAll('{storyId}', scope.storyId);
@@ -78,7 +80,11 @@ export class StoryReflectionMapping {
       .replaceAll('{unit}', scope.unitId)
       .replaceAll('{storyId}', scope.storyId);
 
-    return { inception, product };
+    if (!roots) return { inception, product };
+    return {
+      inception: inception.replace(/^docs\/inception\//, () => `${roots.inceptionDocsRoot}/`),
+      product: product.replace(/^docs\/product\/construction\//, () => `${roots.designDocsRoot}/`),
+    };
   }
 
   equals(other: StoryReflectionMapping): boolean {

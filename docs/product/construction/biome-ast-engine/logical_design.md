@@ -1,5 +1,11 @@
 # 論理設計: biome-ast-engine
 
+## WI-220 ローカルBiome起動
+
+<!-- @work-item-id WI-220 -->
+
+POSIXのBiomeCliExecutorAdapterはcwdから祖先のnode_modules/.bin/biomeを近い順に確認し、実行可能な既存binを直接呼ぶ。明示biomeBinは優先し、Windows/未検出/実行権限なしは旧npx経路へ戻す。check引数・対象全件・cwd・exit >=2の例外は維持する。Biome native検査自体の削除、依存の自動追加、結果のcacheは行わない。
+
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
@@ -1174,3 +1180,8 @@ The adapter does not decide fail/pass policy. It returns source facts and locati
 <!-- @work-item-id WI-212 -->
 
 `TypeScriptSourceModuleAnalyzerAdapter` registers as the TypeScript implementation of source-fact extraction. The adapter remains unchanged internally for WI-212; the new boundary is that caller-side dispatch must only invoke it for `typescript` sources. Future Python/Go/Rust analyzers can implement the same source-fact contracts without changing validator policy.
+## WI-220 構文抽出のI/O境界
+
+<!-- @work-item-id WI-220 -->
+
+TypeScriptSourceModuleAnalyzerAdapterは型checkerを使わず列挙済みworkspace root filesの構文を抽出する。createProgramのnoLib/noResolveを有効にし、抽出に使わない標準libraryと未列挙依存の読込みを省く。root fileの採否・encoding・AST抽出・全workspaceのimport graphは維持し、明示対象と相対import edgeを減らさない。型検査を行う他adapterは変更しない。

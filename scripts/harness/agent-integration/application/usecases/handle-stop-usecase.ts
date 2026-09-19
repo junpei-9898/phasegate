@@ -2,14 +2,12 @@
  * @layer application
  * @unit agent-integration
  * @story H11-04
+ * @work-item-id WI-220
  *
  * HandleStopUseCase
  * Stop Hook処理のオーケストレーション。ReentryGuardライフサイクル管理の唯一の制御点
  */
 
-import { HookEvent } from '../../domain/value-objects/hook-event.js';
-import { ReentryGuard } from '../../domain/entities/reentry-guard.js';
-import { AsyncHookToCliTranslator } from '../../domain/services/hook-to-cli-translator.js';
 import type { ReentryGuardStatePort } from '../../domain/ports/reentry-guard-state-port.js';
 import type { ConfigQueryPort } from '../../domain/ports/config-query-port.js';
 import type { CliExecutorPort } from '../ports/cli-executor-port.js';
@@ -19,7 +17,8 @@ export interface HandleStopUseCasePorts {
   reentryGuardStatePort: ReentryGuardStatePort;
   cliExecutorPort: CliExecutorPort;
   configQueryPort: ConfigQueryPort;
-  cliCommandRegistryPort: {
+  /** Legacy constructor input; Stop dispatches complete-check directly. */
+  cliCommandRegistryPort?: {
     hasCommand(commandName: string): Promise<boolean>;
     listCommands(): Promise<readonly string[]>;
   };
@@ -37,16 +36,11 @@ export class HandleStopUseCase {
   private readonly reentryGuardStatePort: ReentryGuardStatePort;
   private readonly cliExecutorPort: CliExecutorPort;
   private readonly configQueryPort: ConfigQueryPort;
-  private readonly cliCommandRegistryPort: {
-    hasCommand(commandName: string): Promise<boolean>;
-    listCommands(): Promise<readonly string[]>;
-  };
 
   constructor(ports: HandleStopUseCasePorts) {
     this.reentryGuardStatePort = ports.reentryGuardStatePort;
     this.cliExecutorPort = ports.cliExecutorPort;
     this.configQueryPort = ports.configQueryPort;
-    this.cliCommandRegistryPort = ports.cliCommandRegistryPort;
   }
 
   async execute(input: HandleStopInput): Promise<HandleStopOutput> {

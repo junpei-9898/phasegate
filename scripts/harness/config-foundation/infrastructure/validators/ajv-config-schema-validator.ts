@@ -109,13 +109,16 @@ function toHarnessError(error: ErrorObject): HarnessErrorWithPath {
   });
 }
 
-const validateSchemaV2 = createValidateFunction(SCHEMA_V2_PATH);
-const validateSchemaV3 = createValidateFunction(SCHEMA_V3_PATH);
+// Compile only the selected schema, once per module. Failed compilation is not cached.
+let validateSchemaV2: ValidateFunction | undefined;
+let validateSchemaV3: ValidateFunction | undefined;
 
 export class AjvConfigSchemaValidator implements ConfigSchemaValidatorPort {
   validate(document: unknown): readonly HarnessError[] {
     const schemaVersion = detectSchemaVersion(document);
-    const validateSchema = schemaVersion === 'v3' ? validateSchemaV3 : validateSchemaV2;
+    const validateSchema = schemaVersion === 'v3'
+      ? (validateSchemaV3 ??= createValidateFunction(SCHEMA_V3_PATH))
+      : (validateSchemaV2 ??= createValidateFunction(SCHEMA_V2_PATH));
     const valid = validateSchema(document);
 
     if (valid) {

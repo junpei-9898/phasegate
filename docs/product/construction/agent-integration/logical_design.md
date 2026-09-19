@@ -1,5 +1,70 @@
 # 論理設計: agent-integration
 
+## WI-220 B3j 明示強制化
+
+<!-- @work-item-id WI-220 -->
+
+inception Markdownの設計修復を下流実装gateで循環拒否しない。Async translatorは保護ファイル検査後、source rootと重ならないLevel 3のWI inception Markdown設計文書だけをphase-gate対象選択から除外し、共有計画・descriptionの既存gateと混在するsourceは残す。WriteTargetScopeの既存分類値は維持する。
+
+設定preToolUse.dependencyReflectionの明示enforceだけで認証済みsession反映違反を拒否する。旧結果のshapeと既定許可は保持。unknownは旧Unit範囲＋不明警告、成果物不足は修正先付き拒否、fixは所属Unitごとに設定済みproduct候補の一つへの反映を確認する。設計単独編集を追加拒否せず、タグだけで意味承認としない。詳細はWI-220/reflection_scope_design_plan.md B3j。
+
+## WI-220 session依存警告
+
+<!-- @work-item-id WI-220 -->
+
+session専用の必要inception成果物はstatで通常ファイルであることを確認する。同名ディレクトリを文書ありとしない。symlinkは参照先が通常ファイルなら扱う。旧共有fileExistsと旧checkReflectionは変更しない。修正後の再評価で未検証warningを解消するが、内容の十分性の証明ではない。
+
+session診断はpaths.inceptionDocs/designDocsを読み、catalog・成果物存在・mapping・legacy検索へ共通伝播する。空文字・絶対パス・親参照・不正型は未検証として診断し、既定パスへfallbackしない。既存checkReflection経路は変更しない。
+
+成果物不足を検査成功としないため、refactorのlogical_design、story/issueのlogical_design・domain_model・test設計の存在を確認する。fixは各所属Unitで設定済みproduct候補の一つへの反映を確認する。非choreの空mapping・不足成果物はadvisoryでは未検証warning、明示enforceでは修正先付きの拒否とする。内容の承認やtest範囲の十分性は別途レビューが必要。
+
+有効Full Mode sessionが許可した実装編集に限り、任意Port checkSessionReflectionへsession由来のUnit/WIを渡す。既定advisoryでは到達catalog・閉包・対象反映checkerによる診断を警告へ変換し、許可を維持する。Port省略・inception/product修正・既存OFFは追加拒否しない。不明/読取失敗/不正ルートは未検証理由を明示し、成功と区別する。advisoryのpre hookはwarningをstderrへ表示するがexitは0。旧checkReflectionは保持し、明示enforce時だけ本章の強制化経路を適用する。
+
+## WI-220 source直下ファイル
+
+<!-- @work-item-id WI-220 -->
+
+WriteTargetScopeはsource rootからの残りが単一ドット付き要素ならUnit名を推定しない。Unit配下path、拡張子なしdirectory、traversal防御は従来どおり。main.ts＋同一Unit編集でsessionのUnit照合が誤拒否しないようにする。全対象のUnit照合・期限・category・保護ファイル判定は維持する。
+
+## WI-220 post入力と報告
+
+<!-- @work-item-id WI-220 -->
+
+既存payload normalizerを解釈に利用し、直接編集／完全patchの対象をcwd基準で抽出する。shell／未知／不完全入力は全件fallback、readは早期終了。設定のproject rootを子processのcwdにし、反復--targetで対象を伝播。未実装--fastを廃止し、起動実測を超える5秒上限へ変更。postのlint失敗／timeoutは拒否ではなくexit 0の診断とし、本文と明示lintの再検証手順を示す。自動再試行しない。pre・commit・CIは変更しない。
+
+## WI-220 子プロセスの寿命
+
+<!-- @work-item-id WI-220 -->
+
+canonical phasegate:*は同じpackageのmain.jsが通常ファイルならNode直接起動、不在なら従来tsx/main.ts。cwdの偽main.jsは対象外。extension/direct scriptは旧経路を維持。compiled実行失敗をTS再実行で隠さず、同じtimeout/exit/回収規約を使う。
+
+executorはpackageから解決したtsx/cliを現在のNodeで直接起動し、npxの起動・取得を省く。既存command／argvを保ち任意cwdを受ける。stdinを閉じ、signal終了を成功扱いにしない。timeoutではPOSIX専用groupのTERM→250ms後KILL、Windowsの対象PID tree回収を行い、close確認後にTimeoutErrorを返す。Postの実行上限は5000ms。性能基準の合格を意味せず、WI-220の性能測定は別途判定する。
+
+## WI-220 Full Mode復旧案内
+
+<!-- @work-item-id WI-220 -->
+
+復旧コマンドのUnitはinception以外の対象から一意に求め、_cross等の擬似Unitを提示しない。複数／不明ならUnit別に設計反映とsession開始を案内し、無効なコマンドを再試行させない。この案内用解決は認可判定に流用しない。
+
+## WI-220 hook設定解決
+
+<!-- @work-item-id WI-220 -->
+
+HarnessConfigConfigQueryAdapterはagentIntegration.preToolUse.enabled / postToolUse.enabledのboolean明示値を優先する。不在・不正型では旧agentLessonCollection / cascadeUpdateの値（不在時true）を維持する。stopの既定値は不変。設定を読み取るだけで移行書込みは行わない。
+
+## WI-220 読取りとskipログ
+
+<!-- @work-item-id WI-220 -->
+
+PostToolUse usecaseはRead/Glob/Grepで変更対象なしの場合のみREAD_ONLYを返し、lintを起動しない。不明toolやBashを読取りと推定しない。正常HOOK_DISABLED/READ_ONLYはskip recorderで保存せず、過去ログは維持する。異常payload・timeoutの記録は残す。READ_ONLYのpost hookは無出力exit 0。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+hook入力から実書込対象を伝え、既知の読取と無効設定ではlintを起動しない。正常skipの反復記録を削減するが異常診断と保護判定を維持する。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 ## WI-001 WriteTargetScope による work-item パス認識
 
 <!-- @work-item-id WI-001 -->
@@ -360,7 +425,7 @@ package-lock.json
 | cliArgs | `readonly string[]` | CLIコマンドの引数 | Yes（空配列可） |
 | expectedExitCode | `ExitCode` | 期待する終了コード | Yes |
 | skipReason | `SkipReason \| undefined` | スキップ理由 | No |
-| timeoutMs | `number \| undefined` | タイムアウト（ms）。PostToolUse は500ms固定 | No |
+| timeoutMs | `number \| undefined` | タイムアウト（ms）。PostToolUse は5000ms | No |
 
 **生成ルール**
 
@@ -506,12 +571,13 @@ type HookType = 'pre-tool-use' | 'post-tool-use' | 'stop'
 #### SkipReason
 
 ```text
-type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
+type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED' | 'READ_ONLY'
 ```
 
 - `REENTRY_DETECTED`: ReentryGuard が active 状態での Stop Hook 再入
 - `HOOK_DISABLED`: HarnessConfigV2 でHookが無効化されている
-- `TIMEOUT_EXCEEDED`: PostToolUse が 500ms 制限を超過した（将来対応）
+- `TIMEOUT_EXCEEDED`: PostToolUse が5000ms制限を超過し検証未完了。明示再検証を案内し、自動再試行しない
+- `READ_ONLY`: 対象pathなしの既知Read/Glob/Grep。lint起動・正常skipログ追記なし
 
 ### 2.4 ドメインサービス
 
@@ -549,7 +615,7 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
   1. `configQueryPort.isHookEnabled('post-tool-use')` で有効/無効を確認する
   2. 無効の場合は `HookTranslationResult.skip('HOOK_DISABLED')` を返す
   3. `cliCommandRegistryPort.hasCommand('phasegate:lint')` でコマンド存在を確認する
-  4. `HookTranslationResult.execute('phasegate:lint', ['--fast'], 0, 500)` を返す
+  4. 対象pathを重複除去し、反復 `--target <path>` のargvとtimeoutMs=5000で `HookTranslationResult.execute` を返す。対象不明なら空argvで全体報告する（解析自体は常に全体）
 - 処理フロー（Stop）:
   1. `reentryGuard.isActive()` を呼び出す
   2. `isActive=true` の場合は `HookTranslationResult.skip('REENTRY_DETECTED')` を返す
@@ -568,7 +634,7 @@ type SkipReason = 'REENTRY_DETECTED' | 'HOOK_DISABLED' | 'TIMEOUT_EXCEEDED'
 | PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=false` | `{ shouldBlock: true }` |
 | PreToolUseEvent | Step 2: `phaseGateQueryPort.checkGate().hasPassed()=true` | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | `isEnabled('post-tool-use')=false` | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
-| PostToolUseEvent | 通常 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| PostToolUseEvent | 通常 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: 対象ごとの--targetまたは[], expectedExitCode: 0, timeoutMs: 5000 }` |
 | StopEvent | `reentryGuard.isActive()=true` | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
 | StopEvent | `reentryGuard.isActive()=false` | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }` |
 
@@ -806,7 +872,7 @@ export interface PhaseGateQueryPort {
 
 ### 4.4 HandlePostToolUseUseCase（H11-03対応）
 
-**責務**: H11-03「PostToolUse Hook処理」のオーケストレーション。`phasegate:lint --fast` を500ms以内で実行し、Lint結果を返す。
+**責務**: H11-03「PostToolUse Hook処理」のオーケストレーション。既知読取りは早期終了し、編集時は `phasegate:lint` を5000ms上限で実行する。対象pathは報告範囲にのみ反映し、Lint結果を返す。<!-- @work-item-id WI-220 -->
 
 **コンストラクタ依存**
 
@@ -840,22 +906,23 @@ export interface PhaseGateQueryPort {
 
 **例外**
 
-- `cliExecutorPort` のタイムアウト（500ms超過）
+- `cliExecutorPort` のタイムアウト（5000ms超過）
 
 **タイムアウト制御**
 
-- `HookTranslationResult.timeoutMs=500` をそのまま `cliExecutorPort.execute()` に渡す
+- `HookTranslationResult.timeoutMs=5000` をそのまま `cliExecutorPort.execute()` に渡す
 - タイムアウト超過時は `cliExecutorPort` が `TimeoutError` を投げ、UseCase はそれをキャッチして `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` を返す
 
 ### 4.5 HandleStopUseCase（H11-04対応）
 
-**責務**: H11-04「Stop Hook処理」のオーケストレーション。ReentryGuard による無限ループ防止と `phasegate:complete-check` の実行を管理する。ReentryGuard のライフサイクル（activate/deactivate）の唯一の制御点である。
+**責務**: H11-04「Stop Hook処理」のオーケストレーション。ReentryGuardStatePort経由の再入防止と `phasegate:complete-check` を直接管理し、finallyで状態を解除する。translator実体は使用しない。<!-- @work-item-id WI-220 -->
 
 **コンストラクタ依存**
 
-- `hookToCliTranslator: HookToCliTranslator`
-- `reentryGuard: ReentryGuard`
-- `cliExecutorPort: CliExecutorPort`（infrastructure層ポート）
+- `reentryGuardStatePort: ReentryGuardStatePort`
+- `configQueryPort: ConfigQueryPort`（Stop enforce設定）
+- `cliExecutorPort: CliExecutorPort`（application層ポート）
+- `cliCommandRegistryPort` は旧constructor入力互換のため任意で受けるが保持・使用しない
 
 **入力**
 
@@ -875,27 +942,21 @@ export interface PhaseGateQueryPort {
 
 **処理フロー**
 
-1. `HookEvent.createStop(sessionId)` でHookEventを生成する
-2. `hookToCliTranslator.translate(hookEvent)` を呼び出す
-   - `isActive=true` の場合: `result.skipReason='REENTRY_DETECTED'` となる
-   - `isActive=false` の場合: `result.cliCommand='phasegate:complete-check'` となる
-3. `result.shouldSkip()=true` の場合は `{ executed: false, skipReason: result.skipReason }` を返す
-4. `result.shouldSkip()=false` の場合（`isActive=false`）:
-   a. `reentryGuard.activate()` を呼び出す（フラグを active に設定）
-   b. `cliExecutorPort.execute('phasegate:complete-check', [], undefined)` を呼び出す
-   c. CLI実行完了後（成否問わず）に `reentryGuard.deactivate()` を呼び出す
-   d. CLI実行結果を `HandleStopOutput` に投影する
-5. CLI実行中に例外が発生した場合も `finally` ブロックで必ず `deactivate()` を呼ぶ
+1. sessionIdが非空であることを検証する
+2. `reentryGuardStatePort.readActive()` がtrueなら `{ executed: false, skipReason: 'REENTRY_DETECTED' }` を返す
+3. `writeActive()` 後、`cliExecutorPort.execute('phasegate:complete-check', [])` を直接呼ぶ
+4. `getStopHookEnforce()` とCLI非0結果から `shouldEnforceFailure` を算出して返す
+5. CLI／設定読込の成否を問わずfinallyで `clearActive()` を呼ぶ
 
 **例外**
 
-- `ReentryGuardAlreadyActiveError`: `hookToCliTranslator` が translate 後に activate が呼ばれた時点で既に active（競合状態）
-- `cliExecutorPort` の実行エラー（必ず deactivate してから再スロー）
+- `HandleStopInputValidationError`: sessionIdが空
+- Portの実行エラー。active設定後のCLI／設定読込エラーでもfinallyで解除する
 
 **ReentryGuardライフサイクル管理の制約**
 
-- `reentryGuard.activate()` と `reentryGuard.deactivate()` の呼び出しは `HandleStopUseCase` のみに許可する
-- `HookToCliTranslator` は `isActive()` の参照のみ行い、状態変更を行ってはならない
+- Stopの `writeActive()`／`clearActive()` はUseCaseで調停する
+- 公開HookToCliTranslatorのStop変換は互換のため残すが、現行Stopの呼出依存とはしない
 
 ---
 
@@ -996,8 +1057,8 @@ export interface PhaseGateQueryPort {
 **実装方針**
 
 - `HarnessConfigV2` の `harnesses` セクションから Hook 有効/無効設定を読み取る
-- `isHookEnabled('pre-tool-use')`: `config.harnesses.agentLessonCollection` を参照（Wave 2でのマッピング）
-- `isHookEnabled('post-tool-use')`: `config.harnesses.cascadeUpdate` を参照（Wave 2でのマッピング）
+- `isHookEnabled('pre-tool-use')`: `agentIntegration.preToolUse.enabled` の明示booleanを優先し、不在時は旧 `harnesses.agentLessonCollection`（不在時true）を維持
+- `isHookEnabled('post-tool-use')`: `agentIntegration.postToolUse.enabled` の明示booleanを優先し、不在時は旧 `harnesses.cascadeUpdate`（不在時true）を維持
 - `getProtectedFilePatterns()`: Wave 2 ではカスタムパターンは空配列を返す（拡張ポイントとして定義のみ）
 - `getProjectPaths()`: `project.paths` セクションから `ProjectPaths` VOを同期的に返す。未設定時はデフォルト値にフォールバック（v2.2.0追加）
 
@@ -1071,7 +1132,7 @@ export interface CliExecutionResult {
 
 **実装方針**
 
-- `CommandName` を `npx tsx scripts/harness/cli/{command-slug}.ts` のようなCLI呼び出しに変換する
+- canonical `phasegate:*` は現在Node＋package内tsx/cli＋main.tsへ渡す。旧extensionはproject-local wrapper、直接scriptは指定pathを維持し、shell評価しない
 - `timeoutMs` が指定された場合、`AbortController` でタイムアウト制御を行う
 - stdout を JSON として解析し `HarnessApiResponse<T>` に変換する（失敗時は `response: undefined`）
 - 終了コードを `ExitCode` として返す
@@ -1194,19 +1255,14 @@ Claude Code が渡すPostToolUse Hookペイロード:
 1. stdin から JSON を読み取る
 2. `toolName` と `affectedFilePaths` を抽出する
 3. `HandlePostToolUseUseCase.execute({ toolName, affectedFilePaths })` を呼び出す
-4. `output.skipReason` がある場合:
-   - stderr にスキップ理由を出力する
-   - exit code 0 で終了する（スキップはエラーではない）
-5. `output.executed=true` の場合:
-   - CLI実行結果の `exitCode` をそのまま返す
-   - `cliResult.exitCode=1` の場合はLint失敗を stderr に出力する
+4. `output.skipReason` がある場合、Read/OFFは無出力・ログ追記なし。timeoutは検証未完了と明示再検証の手順をstderrへ出し、exit 0で終了する
+5. `output.executed=true` なら、lintの非0結果はstdout/stderrを診断として表示し、hook自体はexit 0で終了する。検査成功や完了を偽装せず、pre/commit/CIの判定は変更しない
 
 **終了コード**
 
 | コード | 意味 |
 |--------|------|
-| 0 | 正常終了（スキップ含む）、またはLint Pass |
-| 1 | Lint Fail（`phasegate:lint --fast` が失敗） |
+| 0 | Lint診断の通知、正常skip、timeoutの未完了通知、またはLint Pass |
 | 2 | 実行エラー |
 
 ### 6.4 Stop Hook Adapter
@@ -1335,12 +1391,12 @@ sequenceDiagram
         POT->>CC: exit code 0（スキップ）
     else Hook有効
         CQ-->>TR: true
-        TR-->>UC: HookTranslationResult { cliCommand: 'phasegate:lint', cliArgs: ['--fast'], timeoutMs: 500 }
-        UC->>CLI: execute('phasegate:lint', ['--fast'], 500)
-        note over CLI: 500ms タイムアウト制御
+        TR-->>UC: HookTranslationResult { cliCommand: 'phasegate:lint', cliArgs: targets, timeoutMs: 5000 }
+        UC->>CLI: execute('phasegate:lint', targets, 5000)
+        note over CLI: 全体解析・対象報告、5000ms上限
         CLI-->>UC: CliExecutionResult { exitCode, response }
         UC-->>POT: { executed: true, cliResult }
-        POT->>CC: exit code (Lint結果)
+        POT->>CC: exit 0、Lint結果は診断として通知
     end
 ```
 
@@ -1351,34 +1407,27 @@ sequenceDiagram
     participant CC as Claude Code
     participant SH as StopHook (Presentation)
     participant UC as HandleStopUseCase
-    participant TR as HookToCliTranslator
-    participant RG as ReentryGuard
     participant RSP as ReentryGuardStatePort
+    participant CQ as ConfigQueryPort
     participant CLI as ChildProcessCliExecutorAdapter
 
     CC->>SH: Stop { session_id }
     SH->>UC: execute({ sessionId })
-    UC->>TR: translate(HookEvent.createStop(sessionId))
-    TR->>RG: isActive()
-    RG->>RSP: readActive()
-    RSP-->>RG: boolean
+    UC->>RSP: readActive()
+    RSP-->>UC: boolean
     alt ReentryGuard active（再入）
-        RG-->>TR: true
-        TR-->>UC: HookTranslationResult.skip('REENTRY_DETECTED')
         UC-->>SH: { executed: false, skipReason: 'REENTRY_DETECTED' }
         SH->>CC: exit code 0（スキップ）
     else ReentryGuard inactive（通常実行）
-        RG-->>TR: false
-        TR-->>UC: HookTranslationResult { cliCommand: 'phasegate:complete-check' }
-        UC->>RG: activate()
-        RG->>RSP: writeActive()
+        UC->>RSP: writeActive()
         UC->>CLI: execute('phasegate:complete-check', [], undefined)
         note over CLI: phasegate:complete-check 実行（L1-L4全バリデータ）
         CLI-->>UC: CliExecutionResult { exitCode, response }
-        UC->>RG: deactivate()
-        RG->>RSP: clearActive()
-        UC-->>SH: { executed: true, cliResult }
-        SH->>CC: exit code (Complete Check結果)
+        UC->>CQ: getStopHookEnforce()
+        CQ-->>UC: enforce
+        UC->>RSP: clearActive() in finally
+        UC-->>SH: { executed: true, cliResult, shouldEnforceFailure }
+        SH->>CC: enforce設定に従った結果通知
     end
 ```
 
@@ -1435,7 +1484,7 @@ sequenceDiagram
 
 ### LD-4: HarnessConfigV2のHook設定マッピングの暫定性を明示した理由
 
-Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用フィールドが存在しないため、`cascadeUpdate` / `agentLessonCollection` を暫定マッピングとして使用する。`HarnessConfigConfigQueryAdapter` にコメントでこの暫定性を明示し、Wave 3 でのスキーマ拡張時に差し替え箇所が明確になるよう設計する。Port インターフェース（`ConfigQueryPort`）は変更せず、adapter の内部実装のみ差し替えればよい構造を維持する。
+WI-220でHook専用の明示設定を加法追加した。旧 `cascadeUpdate` / `agentLessonCollection` はfallbackとして残す。設定不在時の既存ON/OFFとPort契約を保持し、自動migrationで利用者設定を書き換えない。
 
 ### LD-5: ProtectedFileListのデフォルトパターンをドメイン層にハードコードした理由（domain_model.md D3を継承）
 
@@ -1453,13 +1502,13 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 - glob パターン（`*.json`、`**/.biome.json` 等）の将来的な追加パターン対応に備える
 - 正規表現よりも設定ファイル指定に親しみやすい記法
 
-### LD-8: StopフローでのReentryGuard activate前にtranslateを呼ぶ理由
+### LD-8: Stopフローの再入状態を直接調停する理由
 
-`HandleStopUseCase` のフローでは `hookToCliTranslator.translate()` を先に呼び、`isActive=false` であることを確認してから `reentryGuard.activate()` を呼ぶ。これは translate が `isActive()` を読み取り専用で参照するためであり、translate の結果に基づいて UseCase がライフサイクルを制御する責務分離を実現する。この順序により、「スキップするかどうかの判断」と「ライフサイクル管理」が明確に分離される。
+`HandleStopUseCase` は状態Portから再入を確認し、active設定→complete-check→enforce判定→finally解除を直接調停する。未使用translator／registry生成は除去し、公開constructorの任意registry入力とtranslator exportだけ互換用に残す。これにより実行されない依存を現行構造として記載しない（WI-220）。
 
 ### LD-9: PostToolUseのタイムアウト超過をSKIP（TIMEOUT_EXCEEDED）として扱う設計
 
-`HandlePostToolUseUseCase` では `cliExecutorPort.execute()` が500msタイムアウトを超過した場合、例外をキャッチして `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` を返す。タイムアウトを「失敗」ではなく「スキップ」として扱う理由:
+`HandlePostToolUseUseCase` では `cliExecutorPort.execute()` が5000msタイムアウトを超過した場合、例外をキャッチして `{ executed: false, skipReason: 'TIMEOUT_EXCEEDED' }` を返す。Presentationでは「検証未完了」と明示し、成功扱いや同一状態の自動再試行をしない。作業を強制拒否しない理由:
 
 - Claude Code の作業フローを止めないことを最優先とする（Hook によるエージェント作業ブロックの回避）
 - PostToolUse Hook は「品質フィードバック提供」が目的であり、Lint が間に合わない場合はスキップして続行する
@@ -1536,10 +1585,10 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 - `HandlePreToolUseUseCase`
 - `pre-tool-use-hook.ts`（Presentation）
 
-### 10.3 H11-03 PostToolUse Hook処理（phasegate:lint --fast 500ms以内）
+### 10.3 H11-03 PostToolUse Hook処理（phasegate:lint、5000ms上限）
 
 - `HookEvent`（createPostToolUse）
-- `HookTranslationResult`（timeoutMs=500）
+- `HookTranslationResult`（timeoutMs=5000）
 - `HookToCliTranslator`（PostToolUse変換ルール）
 - `CliExecutorPort`, `ChildProcessCliExecutorAdapter`
 - `HandlePostToolUseUseCase`
@@ -1549,8 +1598,7 @@ Wave 2 時点では `HarnessConfigV2.harnesses` セクションに Hook 専用�
 
 - `ReentryGuard`（activate/isActive/deactivate）
 - `ReentryGuardStatePort`, `EnvFileReentryGuardStateAdapter`
-- `HookEvent`（createStop）
-- `HookToCliTranslator`（Stop変換ルール）
+- `HookEvent`／`HookToCliTranslator` のStop公開契約は互換用。現行Stop実行経路からは呼ばない
 - `HandleStopUseCase`（ReentryGuardライフサイクル制御の唯一の制御点）
 - `stop-hook.ts`（Presentation）
 <!-- @work-item-id WI-141 -->
@@ -1717,3 +1765,9 @@ config direct Write/Edit は全 config state で block し、managed `config:pla
 hook 外編集だけを recovery とする。Husky block message から exclude recipe を削除する。
 Quick Mode adapter が返す `CATEGORY_NOT_ALLOWED` は既存 transport type に加法追加し、block metadata と
 human output が単一カテゴリを mixed と誤表示しないようにする。
+
+## WI-220 Stopの依存整理
+
+<!-- @work-item-id WI-220 -->
+
+Stopはexecutorでcomplete-checkを直接実行するため、未使用のtranslator／イベント／guard実体importとregistry保持・生成を行わない。公開portsのregistry入力は任意として旧呼出互換を残す。再入状態Port、enforce判定、finallyでの解除、既存終了契約は維持する。

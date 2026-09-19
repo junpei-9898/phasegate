@@ -1,3 +1,6 @@
+// @work-item-id WI-220
+// @unit harness-api
+// @story H11-01
 // @layer test
 // @work-item-id WI-311
 
@@ -16,6 +19,29 @@ const fixtureRoot = resolve(
 );
 
 target('BiomeAstEngineLintAdapter', () => {
+  it.each([
+    { targets: ['src/a.ts'], expected: ['src/a.ts', ''] },
+    { targets: ['src/lib'], expected: ['src/lib/b.ts', ''] },
+    { targets: [resolve(fixtureRoot, 'src/a.ts')], expected: ['src/a.ts', ''] },
+    { targets: ['src/a.ts', 'src/lib'], expected: ['src/a.ts', 'src/lib/b.ts', ''] },
+    { targets: [], expected: ['src/a.ts', 'src/lib/b.ts', 'src/library/c.ts', ''] },
+  ])('報告対象 $targets だけを全体解析結果から返すこと', async ({ targets, expected }) => {
+    // Arrange
+    const paths = ['src/a.ts', 'src/lib/b.ts', 'src/library/c.ts', ''];
+    const stub = { runLint: vi.fn().mockResolvedValue({ violations: paths.map((filePath) => ({
+      filePath, line: 1, column: 1, ruleName: 'rule', message: filePath || 'global', severity: 'error',
+    })) }) };
+    const adapter = new BiomeAstEngineLintAdapter(stub, fixtureRoot);
+
+    // Act
+    const actual = await adapter.runLint(targets);
+
+    // Assert
+    expect(actual.errors.map((error) => error.message)).toEqual(expected.map((filePath) => `${filePath || 'global'} (${filePath}:1:1)`));
+    expect(actual.passed).toBe(false);
+    expect(stub.runLint).toHaveBeenCalledWith();
+  });
+
   // ─── IT-Adapter-BiomeLint-001 ───
   describe('スタブが違反なしを返す場合、passed=trueが返されること', () => {
     context('stubが{violations:[]}を返す場合', () => {

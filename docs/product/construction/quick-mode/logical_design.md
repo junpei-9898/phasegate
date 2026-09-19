@@ -1,5 +1,18 @@
 # 論理設計: quick-mode
 
+## WI-220 T20b class snapshot助言
+
+<!-- @work-item-id WI-220 -->
+
+明示型付きclassのmethod/property/constructorを本文なしの宣言として比較する。宣言不変ならbehavior-review、変更ありならmodule-surface-change。decorator、推論型、引数initializer、未対応memberはunknown。内部/公開や意味同値性を推測で認定せず、既存分類とgate許否は維持する。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+内部構造整理と外部契約変更を区別する。新分類の不確実性はまず助言として比較し、未知変更を保護迂回や新規一律ブロックへ変換しない。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 ## WI-086 / WI-087 Quick Mode Hook Visibility
 
 <!-- @work-item-id WI-086, WI-087 -->
@@ -1223,6 +1236,18 @@ repo の `scripts/harness/*/domain/**` は外部 npm パッケージを一切 im
 ### LD-11: 設定不正時の hook fail-closed
 
 `QuickModeFullModeRequirementAdapter.check()` は例外を握り潰して `requiresFullMode: false` を返す（WI-333: config 不在時の fail-open）。enum 検証の導入で config の typo が例外になるため、この経路をそのままにすると typo が全書き込み許可に化ける。`QuickModeConfigError`（設定不正）に限り `requiresFullMode: true` へ倒し、それ以外の例外は WI-333 の fail-open を維持する。
+
+## WI-220 意味リスクの評価境界
+
+<!-- @work-item-id WI-220 -->
+
+現行分類はパス・変更種別を中心とする。内部adapter整理と外部契約変更は同じapi判定になり得る一方、通常名のAPI・認可変更はbugfixになり得る。before/afterと前提を含むラベル付きcorpusで既存分類を測定し、新しい助言分類との比較基準にする。既存のclassify/judge、設定、hook許否はこの評価追加では変更しない。旧挙動再現テストを意味分類の品質合格と誤記しない。
+
+### 明示snapshotの助言経路
+
+<!-- @work-item-id WI-220 -->
+
+check-change-categoryの任意risk-snapshots入力だけで助言Portを呼ぶ。infraがJSONとTS ASTを扱い、module表面差分／本文レビュー／不明／完全同文と比較内容hashを返す。明示型付きexport関数・interface・type・classの対応構文を比較し、それ以外の表面は未対応として不明にする。既存分類・eligibility・終了値は維持し、snapshotは自己申告資料として現revisionの保証に使わない。既定呼出は追加解析しない。契約変更候補は上位契約確認、本文変更は認可・不変条件・保存形式の確認へ導くが、どちらも自動承認や新規強制blockではない。
 
 ## WI-384 explicit changeKind precedence
 

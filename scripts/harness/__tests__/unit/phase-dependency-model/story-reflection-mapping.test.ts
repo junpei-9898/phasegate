@@ -1,3 +1,5 @@
+// @work-item-id WI-220
+// @story H02-05
 // @unit phase-dependency-model
 // @layer domain
 import { describe, expect, it } from 'vitest';
@@ -14,6 +16,23 @@ const defaultArgs: StoryReflectionMappingCreateArgs = {
 };
 
 target('StoryReflectionMapping', () => {
+  it('任意ルートを指定した場合だけinceptionとconstructionの配置先を解決すること', () => {
+    const mapping = StoryReflectionMapping.create(defaultArgs);
+    const actual = mapping.resolve({ unitId: 'order', storyId: 'WI-1' }, {
+      inceptionDocsRoot: 'design/proposals', designDocsRoot: 'design/approved',
+    });
+    expect(actual).toEqual({ inception: 'design/proposals/order/WI-1/logical_design.md', product: 'design/approved/order/logical_design.md' });
+    expect(mapping.resolve({ unitId: 'order', storyId: 'WI-1' })).toEqual({
+      inception: 'docs/inception/order/WI-1/logical_design.md', product: 'docs/product/construction/order/logical_design.md',
+    });
+  });
+
+  it.each(['docs/product/units/{unit}.md', 'docs/product/construction-notes/{unit}.md'])('construction外のmapping %sは移設しないこと', (product) => {
+    const mapping = StoryReflectionMapping.create({ ...defaultArgs, product });
+    const actual = mapping.resolve({ unitId: 'order', storyId: 'WI-1' }, { inceptionDocsRoot: 'proposals', designDocsRoot: 'approved' });
+    expect(actual.product).toBe(product.replace('{unit}', 'order'));
+    expect(actual.inception).toBe('proposals/order/WI-1/logical_design.md');
+  });
   describe('create', () => {
     it('正常な mapping を生成できる', () => {
       // Arrange & Act

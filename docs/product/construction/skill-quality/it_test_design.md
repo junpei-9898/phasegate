@@ -1,5 +1,27 @@
 # ITテスト設計: skill-quality
 
+## WI-220 検証設定の互換性
+
+<!-- @work-item-id WI-220 -->
+
+adapterの設定伝播を観測し、L2/L3 errorとwarningをfailOnWarning=false/true/未指定で比較する。非拒否warningの診断とL3対象維持を確認。L1のroot・設定・architectureを渡し全診断拒否を保持。既存の依存生成／実行失敗試験でfail-closedを確認する。
+
+CLIの設定伝播試験は--configured-validationを明示する。無指定時は旧配布物と同一のcoverageThreshold付きfixtureでexit/commitを比較する。明示指定時は同じcoverage不足を拒否し、未commitのstaged文書を保持する。指定有無によるprofile表示と、通常Git hookが維持されることを確認する。
+
+独自World product rootの重複fragmentを用い、world ON/OFF × configured明示有無を実CLIで確認する。既定legacyは新たにWorld拒否を追加せず、configuredかつONだけL3-008を保持する。拒否時はcommitなし・staged保持、重複解消後は同じ設定で再開する。標準rootを正常に保つことで独自配置への設定伝播も検証する。
+
+## WI-220 TDD追跡と表示
+
+<!-- @work-item-id WI-220 -->
+
+一時Git repositoryで実UseCase・AtomicCommitService・Git adapterを通し、WI trailerと旧story subjectを履歴で確認する。外部validator Portだけ制御し、Git hookは無効化しない。handlerは成功0／検証拒否1／サイクル不完全2を維持し、全結果にテスト未実行・自己申告を表示する。拒否時はcommit未実行。CLI全経路／共通設定は別途検証する。
+
+## WI-220 既定評価器と公開入口の回帰
+
+<!-- @work-item-id WI-220 -->
+
+決定的評価器は未達1回で実履歴とUNCHANGED_INPUTを返す。旧executorの2回目成功／3回失敗は維持する。factoryのhandlerで実ファイル本文を評価し、不存在はexit 2。空の未チェック項目は未達、全充足も意味的承認とは表示しない。旧constructor文字列入力も確認する。
+
 @story-id H12-01
 @story-id H12-02
 @story-id H12-03
@@ -581,3 +603,17 @@ const target = new AtomicCommitService(
 <!-- @work-item-id WI-298 -->
 
 実coverage reportのannotationと`phasegate.world-debts.json`のdebt IDを照合し、World dogfood reportが同じdebtを`declaredSemanticDebts`へ一件importすることを検証する。structural obligation / baseline / waiverへの変換は行わない。
+## WI-220 cascadeの事実性
+
+<!-- @work-item-id WI-220 -->
+
+既存タグの無変更、初回追記、同一入力再実行、dry-run本文保持を確認する。handlerのhuman／JSONは意味レビュー未実施を明示し、既存の成功・部分失敗・例外の終了コードを保つ。
+
+IDのprefix衝突、カンマ／空白列挙、HTMLコメント、旧タグと新WIタグを確認する。重複glob／明示パスでも件数・本文が一回分になり、read失敗は一度だけ報告し、解消後の明示実行が成功することを検証する。
+
+実CLIのdry-run→apply→再実行で本文と件数を確認し、TypeScriptの構文診断0でタグがソースを壊さないことを検証する。
+## WI-220 cascade skillの維持する境界
+
+<!-- @work-item-id WI-220 -->
+
+実配布skillに既存lifecycle validatorを適用する。判断シナリオの文書レビューでは局所整合修正の自律実行と、契約変更の上位判断・承認／却下／代替案後の有限な次行動を確認する。構造適合だけで意味品質や実agent性能を合格扱いにしない。

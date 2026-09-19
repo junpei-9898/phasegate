@@ -1,0 +1,81 @@
+[
+  {
+    "id": "internal-extraction",
+    "name": "内部関数の抽出を既存分類では修正として扱うこと",
+    "path": "src/format.ts", "kind": "MODIFY",
+    "before": "export function format(value: string): string { return value.trim(); }",
+    "after": "function clean(value: string): string { return value.trim(); }\nexport function format(value: string): string { return clean(value); }",
+    "semanticLabel": "internal",
+    "rationale": "このfixtureの契約は文字列のtrimのみ。公開signature・返り値・副作用は不変。",
+    "legacyCategory": "bugfix", "legacyEligible": true
+  },
+  {
+    "id": "internal-adapter-change",
+    "name": "内部adapter整理も既存分類ではAPIとして扱うこと",
+    "path": "src/infrastructure/cache-adapter.ts", "kind": "MODIFY",
+    "before": "export class Cache { read(key: string): string { return key.trim(); } }",
+    "after": "const normalize = (key: string): string => key.trim();\nexport class Cache { read(key: string): string { return normalize(key); } }",
+    "semanticLabel": "internal",
+    "rationale": "このadapterは内部実装で、利用中のread契約はtrimのみ。外部公開なし。",
+    "legacyCategory": "api", "legacyEligible": false
+  },
+  {
+    "id": "internal-adapter-addition",
+    "name": "未接続の内部adapter追加も既存分類ではAPIとして扱うこと",
+    "path": "src/infrastructure/memory-adapter.ts", "kind": "CREATE",
+    "before": null,
+    "after": "export class MemoryReader { read(): string { return 'cached'; } }",
+    "semanticLabel": "internal",
+    "rationale": "このfixtureでは既存Readerの代替実装を追加するだけで、接続・公開・データ形式の変更はない。この前提はpathから推定不可。",
+    "legacyCategory": "api", "legacyEligible": false
+  },
+  {
+    "id": "public-signature",
+    "name": "通常名の公開signature変更が既存分類では修正になること",
+    "path": "src/client.ts", "kind": "MODIFY",
+    "before": "export function fetchUser(id: string): string { return id; }",
+    "after": "export function fetchUser(id: number): string { return String(id); }",
+    "semanticLabel": "escalation",
+    "rationale": "公開APIの引数型変更。既存の文字列呼出元の契約が破綻する。",
+    "legacyCategory": "bugfix", "legacyEligible": true
+  },
+  {
+    "id": "authorization",
+    "name": "認可条件の削除が既存分類では修正になること",
+    "path": "src/access.ts", "kind": "MODIFY",
+    "before": "export function canDelete(role: string): boolean { return role === 'admin'; }",
+    "after": "export function canDelete(role: string): boolean { return true; }",
+    "semanticLabel": "escalation",
+    "rationale": "管理者だけが削除できる承認済み認可契約を撤廃する。signatureは不変。",
+    "legacyCategory": "bugfix", "legacyEligible": true
+  },
+  {
+    "id": "business-invariant",
+    "name": "業務不変条件の緩和を既存分類ではdomainとして扱うこと",
+    "path": "src/domain/balance.ts", "kind": "MODIFY",
+    "before": "export function debit(balance: number, amount: number): number { if (amount > balance) throw new Error('insufficient'); return balance - amount; }",
+    "after": "export function debit(balance: number, amount: number): number { return balance - amount; }",
+    "semanticLabel": "escalation",
+    "rationale": "残高非負という業務不変条件を撤廃する。返り値型が同じでも上位判断が必要。",
+    "legacyCategory": "domain", "legacyEligible": false
+  },
+  {
+    "id": "persisted-format",
+    "name": "保存形式変更が既存分類では修正になること",
+    "path": "src/encode.ts", "kind": "MODIFY",
+    "before": "export function encode(id: string): string { return JSON.stringify({ id }); }",
+    "after": "export function encode(id: string): string { return JSON.stringify({ identifier: id }); }",
+    "semanticLabel": "escalation",
+    "rationale": "既存読取側はidキーを必要とする永続化契約。関数signatureは不変。",
+    "legacyCategory": "bugfix", "legacyEligible": true
+  },
+  {
+    "id": "missing-content",
+    "name": "内容不明の既存ファイルを既存分類では修正として扱うこと",
+    "path": "src/unknown.ts", "kind": "MODIFY",
+    "before": null, "after": null,
+    "semanticLabel": "unknown",
+    "rationale": "pathとMODIFYだけでは契約影響も安全性も判定できない。",
+    "legacyCategory": "bugfix", "legacyEligible": true
+  }
+]

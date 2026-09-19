@@ -7,6 +7,7 @@
 @work-item-id WI-097
 @story-id H11-06
 @work-item-id WI-218
+@work-item-id WI-220
 > **Unit ID**: agent-integration
 > **作成日**: 2026-03-19
 > **最終更新**: 2026-03-28（ISSUE-001 issueパス認識追加）
@@ -122,7 +123,7 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 
 | サービス | 責務 | 参照するポート |
 |---------|------|--------------|
-| HookToCliTranslator | HookEvent → HookTranslationResult変換。Hook種別ごとの変換ルールを担う:<br>・PreToolUse Step 1: ProtectedFileList照合 → ブロック判定<br>・PreToolUse Step 2: WriteTargetScope推定 → PhaseGateQueryPort.checkGate() → フェーズゲートブロック判定（v2.2.0追加）<br>・PostToolUse: `phasegate:lint` / `phasegate:lint --fast` コマンド指定（timeoutMs: 500）<br>・Stop: ReentryGuard.isActive()チェック → `phasegate:complete-check` コマンド指定 | ReentryGuardStatePort, CliCommandRegistryPort, ConfigQueryPort, PhaseGateQueryPort |
+| HookToCliTranslator | HookEvent → HookTranslationResult変換。PreToolUseは保護・フェーズ判定。PostToolUseは `phasegate:lint` と対象ごとの `--target`、timeoutMs=5000を指定。Stop変換は公開互換用に保持するが、現行Stop UseCaseは状態Portとexecutorを直接調停する | CliCommandRegistryPort, ConfigQueryPort, PhaseGateQueryPort（Stop互換経路はReentryGuard） |
 | FallbackVerificationService | FallbackCapabilitySpecに基づくcoreモジュールのエージェント非依存性検証。violation時にHarnessError[]を返す | ImportAnalyzerPort |
 
 ---
@@ -171,11 +172,11 @@ agent-integrationはunit定義§1/§8が示す通り「薄いAdapter層」であ
 | PreToolUseEvent | Step 2: WriteTargetScope.fromPath()でスコープ推定 → PhaseGateQueryPort.checkGate()でゲート不通過ならブロック（v2.2.0追加） | `{ shouldBlock: true, cliCommand: undefined }` |
 | PreToolUseEvent | Step 2: スコープ外（fromPath()がnull）またはゲート通過の場合 | `{ shouldBlock: false, cliCommand: undefined }` |
 | PostToolUseEvent | ConfigQueryPort.isEnabled('post-tool-use')がfalseの場合 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
-| PostToolUseEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| PostToolUseEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: 対象ごとの--targetまたは[], expectedExitCode: 0, timeoutMs: 5000 }` |
 | StopEvent | ReentryGuard.isActive()がtrueの場合 | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED' }` |
 | StopEvent | 通常の場合 | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }` |
 
-**PostToolUse timeoutMs**: 500ms固定。infrastructure層のCliExecutorPortがこの値を使ってタイムアウト制御を実施する。ドメイン層は「このコマンドは500ms以内に完了すべき」という宣言のみを持つ。
+**PostToolUse timeoutMs**: WI-220候補の実行上限は5000ms。applicationのCliExecutorPortを介してinfrastructure実装が回収まで制御する。これは応答時間の合格条件ではない。従来500msでは検査が完了しない問題への候補変更であり、性能要件との未解決差はD5とWI-220性能報告に残す。
 
 ### ReentryGuardのライフサイクル
 
@@ -233,7 +234,7 @@ HookToCliTranslator.translate(hookEvent)
   │
   ├── [PostToolUse]
   │   ConfigQueryPort → Hook有効/無効チェック
-  │   → HookTranslationResult { cliCommand: 'phasegate:lint', timeoutMs: 500 }
+  │   → HookTranslationResult { cliCommand: 'phasegate:lint', timeoutMs: 5000 }
   │      または { skipReason: 'HOOK_DISABLED' }
   │
   └── [Stop]
@@ -279,7 +280,7 @@ H11-01のcoreモジュールimport解析は「何を検証すべきか（エー�
 
 ### D5: timeoutMsをHookTranslationResultのフィールドとして定義
 
-500msタイムアウトはH11-03の受け入れ基準で定義された業務要件（「PostToolUse Hookは500ms以内に完了すべき」）であり、ドメイン層での宣言的定義が適切。実際のタイムアウト制御はinfrastructure層のCliExecutorPort実装が担う。
+従来のH11-03は500ms以内の完了を要求した。WI-220では旧上限による検証未完了を再現し、候補の実行上限を5000msへ変更したが、上位の応答性能要求を満たしたとは扱わない。B5aはT21の旧新相対比較基準を満たした一方、絶対500msは未達であり、性能改善と上位判断の対象として [WI-220性能報告](../../../inception/_cross/WI-220/performance_report.md) に記録する。実行打切り上限と性能受け入れ基準を混同しない。制御と子孫回収はinfrastructure実装が担う。
 
 ### D6: WriteTargetScopeをVOとして定義（v2.2.0）
 

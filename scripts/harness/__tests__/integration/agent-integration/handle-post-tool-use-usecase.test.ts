@@ -38,7 +38,7 @@ target('HandlePostToolUseUseCase.execute', () => {
   describe('PostToolUse Hook の CLI 実行制御を行う', () => {
     context('Hook 有効かつ CLI が正常終了する場合', () => {
       // IT-UC-HandlePostToolUse-001
-      it('PostToolUse Hookが有効な場合、phasegate:lint --fastが実行されること', async () => {
+      it('PostToolUse Hookが有効な場合、対象のlintが実行されること', async () => {
         // Arrange
         const mockConfigQueryPort = {
           isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -243,7 +243,7 @@ target('HandlePostToolUseUseCase.execute', () => {
         // Assert
         expect(actual.executed).toBe(true);
         expect(actual.skipReason).toBeUndefined();
-        expect(mockCliExecutorPort.execute).toHaveBeenCalledWith('phasegate:lint', ['--fast'], 500);
+        expect(mockCliExecutorPort.execute).toHaveBeenCalledWith('phasegate:lint', [], 5000);
       });
     });
   });

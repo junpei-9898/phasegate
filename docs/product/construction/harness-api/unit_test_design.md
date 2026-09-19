@@ -477,3 +477,9 @@ default は snapshot で不変を固定する。
 
 - `CATEGORY_NOT_ALLOWED` が classification JSON / handler result の有効な rejection rule として保持される。
 - config-state fail-open command set は変更せず、mutation permission と混同しない。
+## WI-220 lint対象の伝播
+
+<!-- @work-item-id WI-220 -->
+
+dispatchは既存target flagを任意reportTargetsとしてlint Portへ渡す。未指定は全件であり、完了／CI経路の呼出は変更しない。対象指定で新しい認可を与えない。
+複数reportTargetsの内部JSON配列も全件を渡す。不正な型／空文字要素はCLI errorとして返し、黙って対象を落とさない。

@@ -82,7 +82,7 @@ This separation is intentional:
 - **Post = "is what was written valid?"** — concerns the resulting code's quality.
 - **Stop = "is the session ready to end?"** — concerns the cumulative state across the session.
 
-If you expect L1 lint (e.g., missing `@unit` annotation) to **block** a Write before it happens, that is by design **not** the case. The PreToolUse hook intentionally does not run lint, because lint requires the resulting file content (which only exists after the write). Lint violations surface as **PostToolUse** decision JSON (`decision: "block"`) and trigger Claude Code to retry.
+The PreToolUse hook does not run lint, because lint requires the resulting file content. The packaged `phasegate hook post-tool-use` command reports lint failures as advisory stderr with exit 0; it does not emit a block decision or request automatic retries. Separate shell hooks such as `analyze-errors-hook.sh` have their own output contract and are not changed by this packaged-command behavior. Commit and CI checks remain independent enforcement points.
 
 ### PreToolUse (before file write)
 - Enforces Phase Gate: blocks writing to source files if required design documents don't exist
@@ -113,6 +113,12 @@ Use /quick-implementor skill for version changes in package.json.
 ### PostToolUse (after file write)
 - Runs Biome AST rules automatically
 - Provides immediate feedback on violations
+
+<!-- @work-item-id WI-220 -->
+
+The packaged command resolves direct-edit and complete patch targets relative to the payload's working directory, then runs lint from the project's configuration root. Multiple targets are retained. Analysis keeps the full dependency graph; only the reported diagnostics are scoped. Unknown shell commands and incomplete targets retain full lint rather than a potentially incomplete target list.
+
+Read/Glob/Grep and disabled hooks finish silently without starting lint. The lint subprocess has a five-second limit; timeout is reported as **validation incomplete**, not a pass. It does not automatically retry. Run `phasegate lint` explicitly when ready to complete validation. This timeout covers the child lint process, not the host runtime's own hook timeout.
 
 ### Stop (before session end)
 - Runs `phasegate:complete-check` (L2-L4 full validation)

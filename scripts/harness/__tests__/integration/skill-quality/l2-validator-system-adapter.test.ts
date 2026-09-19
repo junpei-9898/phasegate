@@ -1,3 +1,5 @@
+// @work-item-id WI-220
+// @story H12-03
 // @unit skill-quality
 // @layer test
 
@@ -19,6 +21,32 @@ target('L2ValidatorSystemAdapter (fail-closed)', () => {
   });
 
   describe('validate', () => {
+    it.each([false, true, undefined])('警告の拒否設定 %s と必要な両レイヤーを維持すること', async (failOnWarning) => {
+      // Arrange
+      const config = { paths: { designDocs: 'custom/design' }, layers: { L2: { enabled: false }, L3: { enabled: true } } };
+      const diagnostics = ['L2', 'L3'].flatMap((layer) => ['error', 'warning'].map((severity) => ({
+        code: `${layer}-${severity}`, severity, message: `${layer} ${severity}`, suggestion: 'fix',
+      })));
+      const execute = vi.fn().mockResolvedValue({ allErrors: diagnostics });
+      createValidatorSystemModuleMock.mockReturnValue({ runFullValidationUseCase: { execute } });
+      const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const adapter = new L2ValidatorSystemAdapter({ config, failOnWarning });
+
+      // Act
+      const actual = await adapter.validate(CommitMessage.create('skill-quality', 'WI-220', 'change'));
+
+      // Assert
+      expect(createValidatorSystemModuleMock).toHaveBeenCalledWith(config);
+      expect(execute).toHaveBeenCalledWith({ targetPaths: [], unitName: '', currentPhase: '', includeL4: false, failOnWarning: failOnWarning ?? true });
+      expect(actual).toEqual(diagnostics.filter((error) => failOnWarning !== false || error.severity !== 'warning')
+        .map((error) => ({ ruleId: error.code, message: error.message, location: '' })));
+      if (failOnWarning === false) {
+        expect(warning).toHaveBeenCalledWith(expect.stringContaining('L3-warning'));
+      } else {
+        expect(warning).not.toHaveBeenCalled();
+      }
+    });
+
     context('依存する validator-system の生成が例外を投げる場合', () => {
       it('合格扱いにせず、L2-VALIDATOR-ERROR の違反を1件以上返すこと', async () => {
         // Arrange

@@ -87,7 +87,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm pack
+      - run: npm run pack:runtime
       - name: Verify package size under 5MB
         run: |
           SIZE=$(stat -c%s phasegate-*.tgz)

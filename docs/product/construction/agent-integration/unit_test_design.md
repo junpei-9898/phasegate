@@ -137,7 +137,7 @@
 | ケースID | 入力 | 期待結果 |
 |---------|------|---------|
 | UT-HTR-001 | `{ shouldBlock: true, cliArgs: [], expectedExitCode: 1 }`（ブロック結果） | 生成成功 |
-| UT-HTR-002 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` | 生成成功 |
+| UT-HTR-002 | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--target', 'src/app.ts'], expectedExitCode: 0, timeoutMs: 5000 }` | 生成成功 |
 | UT-HTR-003 | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED', cliArgs: [], expectedExitCode: 0 }` | 生成成功 |
 | UT-HTR-004 | `{ shouldBlock: false, skipReason: 'REENTRY_DETECTED', cliArgs: [], expectedExitCode: 0 }` | 生成成功 |
 | UT-HTR-005 | `{ shouldBlock: false, cliCommand: 'phasegate:complete-check', cliArgs: [], expectedExitCode: 0 }`（timeoutMs省略） | 生成成功（timeoutMs = undefined） |
@@ -210,7 +210,7 @@
 
 | ケースID | 前提条件（ポートモック） | 入力HookEvent | 期待HookTranslationResult |
 |---------|-------------------|-------------|--------------------------|
-| UT-HTC-010 | ConfigQueryPort.isEnabled('post-tool-use') = true | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--fast'], expectedExitCode: 0, timeoutMs: 500 }` |
+| UT-HTC-010 | ConfigQueryPort.isEnabled('post-tool-use') = true | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, cliCommand: 'phasegate:lint', cliArgs: ['--target', 'src/app.ts'], expectedExitCode: 0, timeoutMs: 5000 }` |
 | UT-HTC-011 | ConfigQueryPort.isEnabled('post-tool-use') = false | `PostToolUseEvent { toolName: 'Write', affectedFilePaths: ['src/app.ts'] }` | `{ shouldBlock: false, skipReason: 'HOOK_DISABLED' }` |
 
 #### StopEventの変換テスト
@@ -554,3 +554,12 @@ Vitest、semantic AAA、日本語かつ重複しない `it()`、`actual` 命名�
 - biome / package 等の通常 default は従来どおり除外できる。
 - config / Husky guidance は managed route を含み、具体的な exclude recipe を含まない。
 - `CATEGORY_NOT_ALLOWED` が Port / DTO / HookTranslationResult を欠落なく通過する。
+## WI-220 CLI起動契約
+
+<!-- @work-item-id WI-220 -->
+
+source直下main.ts／Windows区切り／正規化pathをUnitと誤認しない。ドット付きUnit directory配下は検証対象を維持し、拡張子なしdirectory指定も維持する。
+
+<!-- @work-item-id WI-220 -->
+
+canonicalと旧wrapperをpackage-local tsx/cliへargv配列で渡す。shell評価やnpx解決を使わず、signal終了をexit 0へ変換しない。

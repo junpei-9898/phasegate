@@ -8,6 +8,37 @@ import { WriteTargetScope } from "../../../agent-integration/domain/value-object
 import { context, createProjectPaths, createWriteTargetScope, target } from "../../helpers/test-helpers.js";
 
 target("WriteTargetScope", () => {
+  it.each([
+    ['docs/inception/order/WI-1/logical_design.md', true],
+    ['docs/inception/_cross/WI-1/logical_design.md', true],
+    ['DOCS/INCEPTION/order/WI-1/logical_design.MD', true],
+    ['docs/inception/order/WI-1/description.md', false],
+    ['docs/inception/_shared/product_overview_plan.md', false],
+    ['docs/inception/order/WI-1/code.ts', false],
+    ['docs/inception/../../scripts/harness/order/domain/source.md', false],
+    ['docs/inception-other/order/WI-1/logical_design.md', false],
+  ])('修復対象%sを実装や上位計画と区別すること', (path, expected) => {
+    const actual = WriteTargetScope.isInceptionDocument(path, createProjectPaths());
+    expect(actual).toBe(expected);
+  });
+
+  it('source rootと重なる文書を修復例外に含めないこと', () => {
+    const actual = WriteTargetScope.isInceptionDocument('docs/inception/order/WI-1/logical_design.md', createProjectPaths({ source: ['docs'] }));
+    expect(actual).toBe(false);
+  });
+  it.each(['scripts/harness/main.ts', 'scripts\\harness\\main.ts', 'scripts/harness/unit/../main.ts'])('直下ファイル %s をUnit名と誤認しないこと', (filePath) => {
+    const actual = WriteTargetScope.fromPath(filePath, createProjectPaths());
+    expect(actual).toBeNull();
+  });
+
+  it.each([
+    { filePath: 'scripts/harness/unit.name/domain/file.ts', unitId: 'unit.name' },
+    { filePath: 'scripts/harness/unit', unitId: 'unit' },
+  ])('Unit directory $filePath の検証対象を維持すること', ({ filePath, unitId }) => {
+    const actual = WriteTargetScope.fromPath(filePath, createProjectPaths());
+    expect(actual).toEqual(createWriteTargetScope({ level: 3, unitId }));
+  });
+
   target("fromPath()", () => {
     describe("書き込み先パスからスコープを推定する", () => {
       context("__tests__/ を含むパスの場合", () => {

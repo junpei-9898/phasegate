@@ -8,6 +8,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { HandlePreToolUseUseCase } from "../../../agent-integration/application/usecases/handle-pre-tool-use-usecase.js";
 import { PhaseGateQueryResult } from "../../../agent-integration/domain/value-objects/phase-gate-query-result.js";
+import { StoryReflectionQueryResult } from "../../../agent-integration/domain/value-objects/story-reflection-query-result.js";
 
 function createConfigQueryPort() {
   return {
@@ -47,6 +48,90 @@ function createFullModeRequirementQueryPort(dominantCategory = "domain") {
 }
 
 describe("Full Mode session PreToolUse integration", () => {
+  it.each(['blocked', 'unknown', 'exception'] as const)('追加診断が%sでも認証済みsessionの許可を維持すること', async (kind) => {
+    const checkSessionReflection = kind === 'exception'
+      ? vi.fn().mockRejectedValue(new Error('read failure'))
+      : vi.fn().mockResolvedValue(kind === 'blocked'
+        ? StoryReflectionQueryResult.block(['WI-2: product未反映'], [])
+        : StoryReflectionQueryResult.skipped(['UNDECLARED_DEPENDENCIES: WI-1']));
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(), phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: { check: vi.fn().mockResolvedValue({ active: true, allowed: true, unit: 'some-unit', workItemId: 'WI-1' }) },
+      storyReflectionQueryPort: { checkReflection: vi.fn(), checkSessionReflection },
+    });
+    const actual = await useCase.execute({ toolName: 'Write', targetFilePaths: ['scripts/harness/some-unit/domain/new.ts'] });
+    expect(actual.shouldBlock).toBe(false);
+    expect(actual.fullModeSessionAllowed?.workItemId).toBe('WI-1');
+    expect(checkSessionReflection).toHaveBeenCalledWith('some-unit', 'WI-1');
+    expect(actual.storyReflectionWarnings?.join('\n')).toContain(kind === 'blocked' ? 'WI-2: product未反映' : kind === 'unknown' ? 'UNDECLARED_DEPENDENCIES' : 'read failure');
+  });
+
+  it.each(['docs/inception/some-unit/WI-1/logical_design.md', 'docs/product/construction/some-unit/logical_design.md'])('設計修正%sにはsession依存診断を追加しないこと', async (file) => {
+    const checkSessionReflection = vi.fn();
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(), phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: { check: vi.fn().mockResolvedValue({ active: true, allowed: true, unit: 'some-unit', workItemId: 'WI-1' }) },
+      storyReflectionQueryPort: { checkReflection: vi.fn(), checkSessionReflection },
+    });
+    const actual = await useCase.execute({ toolName: 'Write', targetFilePaths: [file] });
+    expect(actual.shouldBlock).toBe(false);
+    expect(checkSessionReflection).not.toHaveBeenCalled();
+  });
+
+  it('期限切れsessionから対象限定チェックへ進まないこと', async () => {
+    const checkSessionReflection = vi.fn();
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(), phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: { check: vi.fn().mockResolvedValue({ active: false, allowed: false, reason: 'session expired', unit: 'some-unit', workItemId: 'WI-1' }) },
+      storyReflectionQueryPort: { checkReflection: vi.fn(), checkSessionReflection },
+    });
+    const actual = await useCase.execute({ toolName: 'Write', targetFilePaths: ['scripts/harness/some-unit/domain/new.ts'] });
+    expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+    expect(checkSessionReflection).not.toHaveBeenCalled();
+  });
+  it('直下ファイルが先頭でも実Unitをsessionへ照合すること', async () => {
+    // Arrange
+    const check = vi.fn().mockResolvedValue({ active: true, allowed: true, workItemId: 'WI-220', unit: 'harness-api' });
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(),
+      phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: { check },
+    });
+    const targetFilePaths = ['scripts/harness/main.ts', 'scripts/harness/harness-api/domain/service.ts'];
+    // Act
+    const actual = await useCase.execute({ toolName: 'Write', targetFilePaths });
+    // Assert
+    expect(actual.shouldBlock).toBe(false);
+    expect(check).toHaveBeenCalledWith(expect.objectContaining({ unitId: 'harness-api', targetFilePaths }));
+  });
+
+  it.each([
+    { paths: ['docs/inception/_cross/WI-220/validation_report.md', 'scripts/harness/some-unit/domain/new.ts'], unit: 'some-unit' },
+    { paths: ['docs/inception/_cross/WI-220/validation_report.md', 'scripts/harness/some-unit/domain/new.ts', 'scripts/harness/other-unit/domain/new.ts'], unit: undefined },
+    { paths: ['docs/inception/_cross/WI-220/validation_report.md'], unit: undefined },
+  ])('対象$pathsに実行可能なUnit別復旧を案内する', async ({ paths, unit }) => {
+    // Arrange
+    const sessionCheck = vi.fn().mockResolvedValue({ active: false, allowed: false });
+    const useCase = new HandlePreToolUseUseCase({
+      configQueryPort: createConfigQueryPort(),
+      phaseGateQueryPort: createPhaseGateQueryPort(false),
+      fullModeRequirementQueryPort: createFullModeRequirementQueryPort(),
+      fullModeSessionQueryPort: { check: sessionCheck },
+    });
+    // Act
+    const actual = await useCase.execute({ toolName: 'Write', targetFilePaths: paths });
+    // Assert
+    expect(actual.blockReason).toBe('FULL_MODE_REQUIRED');
+    expect(actual.error?.message).not.toContain('--unit _cross');
+    expect(actual.error?.message).toContain('inception');
+    if (unit) expect(actual.error?.message).toContain(`session begin --mode full --unit ${unit}`);
+    else expect(actual.error?.message).not.toContain('session begin --mode full --unit');
+    expect(sessionCheck).toHaveBeenCalledWith(expect.objectContaining({ unitId: '_cross', targetFilePaths: paths }));
+  });
   it("対象Unitとカテゴリに一致するsessionがある場合はfull-mode-required変更を許可する", async () => {
     // Arrange
     const useCase = new HandlePreToolUseUseCase({

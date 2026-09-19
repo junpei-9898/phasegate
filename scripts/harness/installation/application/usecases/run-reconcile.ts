@@ -12,6 +12,7 @@
 // @work-item-id WI-331
 // @work-item-id WI-385
 // @work-item-id WI-387
+// @work-item-id WI-220
 
 import {
   access,
@@ -407,11 +408,13 @@ export class RunReconcileUseCase {
     const changed: ReconcilePlanItem[] = [];
     const backupStamp = `reconcile-${new Date().toISOString().replace(/[:.]/g, "-")}`;
     let backupDir: string | null = null;
+    let repairedMetadata = false;
 
     const outcomes: Array<{
       readonly item: ReconcilePlanItem;
       readonly needsBackup: boolean;
       readonly prune?: boolean;
+      readonly recoveredContent?: string;
       readonly apply: () => Promise<string | null>;
     }> = [];
 
@@ -431,7 +434,7 @@ export class RunReconcileUseCase {
         plan.push(item);
         continue;
       }
-      const outcome = await this.planManagedEntry(input, entry, target);
+      const outcome = await this.planManagedEntry(input, entry, target, manifest.version);
       outcomes.push(outcome);
       plan.push(outcome.item);
       if (
@@ -485,7 +488,17 @@ export class RunReconcileUseCase {
     }
 
     for (const outcome of outcomes) {
-      if (!outcome.item.changed) continue;
+      if (!outcome.item.changed) {
+        const previous = nextManifest.findEntry(outcome.item.path);
+        if (previous !== null && outcome.recoveredContent !== undefined) {
+          nextManifest = nextManifest.addEntry(DeploymentEntry.create({
+            ...previous,
+            hash: this.hashCalculator.compute(outcome.recoveredContent),
+          }));
+          repairedMetadata = true;
+        }
+        continue;
+      }
       if (outcome.prune === true) {
         await outcome.apply();
         nextManifest = nextManifest.removeEntry(outcome.item.path);
@@ -553,13 +566,13 @@ export class RunReconcileUseCase {
       }
     }
 
-    if (changed.length > 0 || manifest.version !== input.phasegateVersion) {
+    if (changed.length > 0 || repairedMetadata || manifest.version !== input.phasegateVersion) {
       await this.manifestRepository.save(input.projectRoot, nextManifest);
     }
     return { plan, refused, changed, backupDir };
   }
 
-  private async planManagedEntry(input: RunReconcileInput, entry: DeploymentEntry, target: ReconcileTarget) {
+  private async planManagedEntry(input: RunReconcileInput, entry: DeploymentEntry, target: ReconcileTarget, previousVersion: string) {
     if (target.strategy === "symlink") return this.planSymlink(input.projectRoot, target.path);
     const absolutePath = this.resolveProjectPath(input.projectRoot, entry.path);
     const before = await readTextOrNull(absolutePath);
@@ -576,6 +589,15 @@ export class RunReconcileUseCase {
         ? template
         : this.reconcileContent(target, before, template, input.phasegateVersion);
     const changed = before !== next;
+    // A no-op merge alone cannot attest user-edited content. Recover only a
+    // complete canonical output, or a package version-only change whose prior
+    // bytes can be reconstructed and matched against the recorded hash.
+    const recoveredContent = !changed && !matchesManifest && (
+      target.strategy === "package-json"
+        ? this.hashCalculator.compute(this.reconcileContent(target, before, template, previousVersion)).equals(entry.hash)
+        : before === (entry.mode === "created" && target.strategy !== "markdown-managed" && target.strategy !== "json-named"
+          ? template : this.reconcileContent(target, null, template, input.phasegateVersion))
+    ) ? before : undefined;
     const repairMode: RepairMode = matchesManifest ? "mechanical" : "ai-assisted";
     return {
       item: this.item(
@@ -584,11 +606,13 @@ export class RunReconcileUseCase {
         repairMode,
         target.strategy,
         changed,
-        changed ? `${entry.path}: update managed portion` : `${entry.path}: already up to date`,
+        changed ? `${entry.path}: update managed portion` : recoveredContent !== undefined
+          ? `${entry.path}: content already current; recover interrupted manifest hash` : `${entry.path}: already up to date`,
         this.diffSummary(before, next),
         repairMode === "ai-assisted" ? SKILL_HINT : null,
       ),
       needsBackup: !matchesManifest || input.force,
+      recoveredContent,
       apply: async () => {
         await mkdir(dirname(absolutePath), { recursive: true });
         await writeFile(absolutePath, next, "utf8");

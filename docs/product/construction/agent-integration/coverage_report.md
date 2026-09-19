@@ -20,9 +20,13 @@
 
 ## 1. サマリー
 
+<!-- @work-item-id WI-220 -->
+
+以下の件数は初期設計時のテストケース対応数であり、現在の実測カバレッジや全AC達成率ではない。WI-220の実行結果は [検証報告](../../../inception/_cross/WI-220/validation_report.md) を参照。特にH11-03の500ms保証は未達で、timeout値をassertするだけでは保証を証明できない。
+
 | 観点 | 状態 | 備考 |
 |------|------|------|
-| 受け入れ基準カバレッジ | 概ね良好（AC-4のみ部分的） | 16ACのうち15ACがカバー済み。AC-4（ドキュメント）はテストケース対象外 |
+| 受け入れ基準カバレッジ | H11-03に未達あり | AC-8のfast-path要求と現行経路の差、AC-9の500ms未達を下表へ明示。AC-4は文書要件 |
 | ドメインロジックカバレッジ | 良好 | 5つの不変条件（INV-1〜5）すべてにテストケースが存在 |
 | UseCaseカバレッジ | 良好 | 4UseCaseの正常系/異常系/境界値が網羅されている |
 | APIカバレッジ | 良好 | Hook Adapter 3本すべてにUT/ITテストケースが存在 |
@@ -65,12 +69,12 @@
 
 | AC | 内容 | 対応テストケース | カバー状態 |
 |----|------|----------------|-----------|
-| AC-8 | 正規経路として `phasegate:lint --fast` を呼び出す | UT-HTC-010（`cliCommand: 'phasegate:lint', cliArgs: ['--fast']`）、IT-UC-HandlePostToolUse-001（phasegate:lint --fast実行）、IT-UC-HookFlow-003 | カバー済み |
-| AC-9 | 500msタイムアウト内での完了を保証 | UT-HTC-010（`timeoutMs: 500`のHookTranslationResult）、IT-UC-HandlePostToolUse-004（TIMEOUT_EXCEEDED）、IT-REPO-CliExecutor-004〜005 | カバー済み |
+| AC-8 | 上位要求の `phasegate:lint --fast` と正規lint経路 | 現行は未実装fast指定を除き `phasegate:lint`＋対象報告。`post-tool-use-feedback.test.ts`等で全体解析を保った診断到達を確認 | 正規lintは検証済み。上位fast-path要求との同一性は未証明 |
+| AC-9 | 500msタイムアウト内での完了を保証 | B5a性能720標本、子孫回収/timeout試験。実行上限5000msと相対基準合格は絶対500ms達成とは別 | 未達・上位判断対象 |
 | AC-10 | Hook未使用時はCLI（`phasegate:lint`）で同等機能が実行可能 | IT-UC-HandlePostToolUse-003（HOOK_DISABLED）、IT-API-PostToolUse-005（スキップシナリオ） | カバー済み |
 | AC-11 | Hook実行テストの存在 | IT-API-PostToolUse-003〜004（Presentation層でHookスクリプト実行テスト）、IT-UC-HookFlow-003 | カバー済み |
 
-**H11-03 カバレッジ**: 4/4完全カバー
+**H11-03**: AC-8の上位要求との差、AC-9の未達があるため4/4完全カバーとは判定しない。
 
 ---
 
@@ -97,10 +101,10 @@
 | AC-5（H11-02） | 完全カバー |
 | AC-6（H11-02ブロックメッセージ） | 部分的カバー |
 | AC-7（H11-02） | 完全カバー |
-| AC-8〜AC-11（H11-03） | 完全カバー |
+| AC-8〜AC-11（H11-03） | AC-8要照合、AC-9未達。AC-10/11は試験あり |
 | AC-12〜AC-16（H11-04） | 完全カバー |
 
-**完全カバー: 14/15テスト可能AC。部分的: 1件（AC-6）。**
+**全AC完全カバーという従来集計は撤回。** AC-6の部分カバーに加え、上記H11-03の未達を保持する。実行成功件数をAC達成数へ換算しない。
 
 ---
 
@@ -134,7 +138,7 @@
 | PreToolUse: ProtectedFileList一致→ブロック | `{ shouldBlock: true }` | UT-HTC-001、UT-HTC-003（複数パスの1件一致） | カバー済み |
 | PreToolUse: 非一致→通過 | `{ shouldBlock: false }` | UT-HTC-002 | カバー済み |
 | PreToolUse: 空パス→通過 | `{ shouldBlock: false }` | UT-HTC-004、UT-BV-008 | カバー済み |
-| PostToolUse: 有効→lint実行 | `{ cliCommand: 'phasegate:lint', timeoutMs: 500 }` | UT-HTC-010 | カバー済み |
+| PostToolUse: 有効な書込→lint実行 | `{ cliCommand: 'phasegate:lint', timeoutMs: 5000 }`、既知読取はREAD_ONLY | `hook-to-cli-translator.test.ts`、`post-tool-use-read-only.test.ts` | 分岐を検証。500ms保証ではない |
 | PostToolUse: 無効→HOOK_DISABLED | `{ skipReason: 'HOOK_DISABLED' }` | UT-HTC-011、UT-BV-009 | カバー済み |
 | Stop: inactive→complete-check実行 | `{ cliCommand: 'phasegate:complete-check' }` | UT-HTC-020 | カバー済み |
 | Stop: active→REENTRY_DETECTED | `{ skipReason: 'REENTRY_DETECTED' }` | UT-HTC-021、UT-BV-010 | カバー済み |
@@ -235,10 +239,10 @@
 | カテゴリ | テストケース | 状態 |
 |---------|-----------|------|
 | 入力バリデーション: 不正JSON → exit 2 | IT-API-PostToolUse-001 | カバー済み |
-| 入力バリデーション: tool_nameなし → exit 2 | IT-API-PostToolUse-002 | カバー済み |
+| 入力バリデーション: tool_nameなし → 既存fail-open exit 0 | `hook-missing-field-fail-open.integration.test.ts` | 実hookで検証 |
 | 正常系: lint成功 → exit 0 | IT-API-PostToolUse-003 | カバー済み |
-| 正常系: lint失敗 → exit 1 + stderr | IT-API-PostToolUse-004 | カバー済み |
-| 正常系: HOOK_DISABLED → exit 0 + stderr | IT-API-PostToolUse-005 | カバー済み |
+| 正常系: lint診断 → hook exit 0 + stderr本文 | `post-tool-use-feedback.test.ts` | WI-220で検証済み。内部lint exitと区別 |
+| 正常系: HOOK_DISABLED → exit 0、正常出力・ログなし | `hook-enabled-compatibility.test.ts`、`hook-skip-event-recorder.test.ts` | WI-220で検証 |
 | 境界値: タイムアウト → exit 0（スキップ） | IT-API-PostToolUse-006 | カバー済み |
 | 異常系: UseCase実行エラー → exit 2 | IT-API-PostToolUse-007 | カバー済み |
 
@@ -399,7 +403,7 @@ WI-123 hook skip observability is now reflected across domain, logical design, i
 
 Remaining risk is operational rather than design coverage: corrupted or partially-written JSON Lines entries must be skipped without failing status output.
 
-Additional low-priority follow-up: `HarnessConfigConfigQueryAdapter` still maps `cascadeUpdate` to PostToolUse and `agentLessonCollection` to PreToolUse until a future hooks subsection exists in config. This remains an adapter-only follow-up and does not change current test design.
+WI-220 implements optional independent `agentIntegration.preToolUse.enabled` / `postToolUse.enabled` keys. Absent keys retain the legacy `agentLessonCollection` / `cascadeUpdate` values. `hook-enabled-compatibility.test.ts` verifies the combinations; no automatic settings migration is required. Expected READ_ONLY/HOOK_DISABLED no longer append skip records; abnormal diagnostic records remain.
 
 ---
 

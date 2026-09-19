@@ -208,6 +208,25 @@ target('HookToCliTranslator', () => {
     });
 
     describe('AsyncHookToCliTranslator Step 2: フェーズゲートチェックを行う', () => {
+      it.each([
+        { paths: ['docs/inception/order/WI-1/logical_design.md'], protectedPatterns: [], reason: undefined },
+        { paths: ['docs/inception/order/WI-1/logical_design.md', 'scripts/harness/order/domain/new.ts'], protectedPatterns: [], reason: 'PHASE_GATE' },
+        { paths: ['docs/inception/order/WI-1/logical_design.md'], protectedPatterns: ['docs/inception/**'], reason: 'PROTECTED_FILE' },
+      ])('設計修復でも混在実装と保護対象の拒否を維持すること（$reason）', async ({ paths, protectedPatterns, reason }) => {
+        const ports = buildTranslatorPorts({ protectedPatterns, phaseGateResult: { passed: false, blockers: ['missing design'], warnings: [] } });
+        const sut = new AsyncHookToCliTranslator({
+          configQueryPort: ports.configQueryPort as any,
+          reentryGuard: { isActive: vi.fn().mockReturnValue(false) } as any,
+          cliCommandRegistryPort: ports.cliCommandRegistryPort,
+          phaseGateQueryPort: ports.phaseGateQueryPort as any,
+        });
+        const actual = await sut.translate(createPreToolUseEvent({ targetFilePaths: paths }));
+        expect(actual.shouldBlock).toBe(reason !== undefined);
+        expect(actual.blockMetadata?.reason).toBe(reason);
+        if (reason === 'PHASE_GATE') expect(ports.phaseGateQueryPort.checkGate).toHaveBeenCalledWith(
+          expect.objectContaining({ level: 3, unitId: 'order' }), 'scripts/harness/order/domain/new.ts');
+        else expect(ports.phaseGateQueryPort.checkGate).not.toHaveBeenCalled();
+      });
       context('スコープ外ファイル（src/index.ts）が変更対象の場合', () => {
         // UT-HTC-040
         it('WriteTargetScope.fromPath()がnullのとき フェーズゲートチェックをスキップしshouldBlock=falseを返すこと', async () => {

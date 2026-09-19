@@ -1,5 +1,6 @@
 // @layer test
 // @unit skill-quality
+// @work-item-id WI-220
 // @story H12-03
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -18,6 +19,21 @@ function createMockPlanCheckExecutorPort(
 }
 
 target('RunPlanCheckerLoopUseCase', () => {
+
+  it('同じ入力を再評価しても改善しない場合は一度で修正判断を求める', async () => {
+    // Arrange
+    const executor = {
+      supportsRetry: false,
+      evaluate: vi.fn().mockResolvedValue({ coverageRate: 50, gaps: ['未完了'], revision: '1/2' }),
+    };
+    const usecase = new RunPlanCheckerLoopUseCase(executor);
+    // Act
+    const actual = await usecase.execute({ planDocument: '- [ ] 未完了', storyId: 'WI-220' });
+    // Assert
+    expect(actual).toMatchObject({ status: 'FAILED_EXCEEDED', escalationRequired: true, stopReason: 'UNCHANGED_INPUT' });
+    expect(actual.loopHistory.map(a => ({ attempt: a.attemptNumber, gaps: a.gaps }))).toEqual([{ attempt: 1, gaps: ['未完了'] }]);
+    expect(executor.evaluate).toHaveBeenCalledTimes(1);
+  });
 
   // IT-UC-PlanLoop-001
   describe('execute: 1 回目評価で gaps=[] になり PASSED で終了すること', () => {

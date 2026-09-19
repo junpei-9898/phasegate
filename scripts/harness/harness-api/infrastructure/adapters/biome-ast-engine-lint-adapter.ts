@@ -1,3 +1,4 @@
+// @unit harness-api
 // @layer infrastructure
 // biome-ast-engine-lint-adapter.ts — BiomeAstEngineLintAdapter
 // Wave 2完了後にリアル実装へ差し替え（旧: @stub: wave2-pending）
@@ -5,6 +6,7 @@
 
 import type { BiomeLintPort } from '../../domain/ports/biome-lint-port.js';
 import type { HarnessError } from '../../domain/value-objects/harness-api-response.js';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 interface RuleViolation {
   filePath: string;
@@ -37,7 +39,7 @@ function violationToHarnessError(v: RuleViolation): HarnessError {
 export class BiomeAstEngineLintAdapter implements BiomeLintPort {
   private readonly stub: IBiomeAstEngineStub;
 
-  constructor(stub?: IBiomeAstEngineStub, rootDir = process.cwd()) {
+  constructor(stub?: IBiomeAstEngineStub, private readonly rootDir = process.cwd()) {
     this.stub = stub ?? BiomeAstEngineLintAdapter.createRealImpl(rootDir);
   }
 
@@ -62,12 +64,18 @@ export class BiomeAstEngineLintAdapter implements BiomeLintPort {
     };
   }
 
-  async runLint(): Promise<{ passed: boolean; errors: HarnessError[]; warnings: HarnessError[] }> {
+  async runLint(reportTargets?: readonly string[]): Promise<{ passed: boolean; errors: HarnessError[]; warnings: HarnessError[] }> {
+    // Always analyze the complete graph; targets restrict reporting, never analysis.
     const result = await this.stub.runLint();
+    const targets = reportTargets?.map((target) => resolve(this.rootDir, target)) ?? [];
     const errors: HarnessError[] = [];
     const warnings: HarnessError[] = [];
 
     for (const v of result.violations) {
+      if (v.filePath && targets.length > 0 && !targets.some((target) => {
+        const rel = relative(target, resolve(this.rootDir, v.filePath));
+        return rel === '' || (rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel));
+      })) continue;
       const harnessError = violationToHarnessError(v);
       if (v.severity === 'warning') {
         warnings.push(harnessError);

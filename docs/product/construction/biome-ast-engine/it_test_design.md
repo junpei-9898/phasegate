@@ -1,5 +1,11 @@
 # ITテスト設計: biome-ast-engine
 
+## WI-220 ローカルbin選択と検査保全
+
+<!-- @work-item-id WI-220 -->
+
+隔離directoryでcwd/祖先に実行可能shimを配置し、nearest優先・ancestor fallback・非実行可能binのfallback・明示bin保持を確認する。spawn境界を観測しnpxを省ける条件だけ直接binであること、引数/cwd/出力上限が同じこと、exit 0/1/2の既存契約を確認する。POSIX専用ケースをWindows成功に数えない。配布/compiled試験では実lint診断の同一性を確認し、性能閾値は別に評価する。
+
 @story-id H01-01
 @story-id H01-02
 @story-id H01-03
@@ -661,3 +667,10 @@ scripts/harness/__tests__/unit/biome-ast-engine/
 
 - TypeScript analyzer capability is exposed to validator-system dispatch.
 - Non-TypeScript language dispatch does not instantiate or call the TypeScript source analyzer.
+## WI-220 構文抽出の旧新比較
+
+<!-- @work-item-id WI-220 -->
+
+実compilerの従来／noLib・noResolveオプションで同じadapterと入力を比較し、metadata・import・export・型数・comment・entrypointを含むsnapshotが一致することを検証する。非対象library／依存ファイルを読まず、相対edgeと明示全ファイルは残ること、TSX・MTS・CTS・宣言・BOM/CRLF・未存在・JS除外も確認する。既存ルールと全workspace lintを回帰実行する。
+
+実repositoryの全workspaceファイルでも旧新snapshotを全フィールド比較し、列挙対象と解析結果のファイル集合が一致することを確認する。

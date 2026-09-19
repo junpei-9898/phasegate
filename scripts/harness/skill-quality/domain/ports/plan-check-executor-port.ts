@@ -11,5 +11,7 @@ export interface PlanCheckResult {
 }
 
 export interface PlanCheckExecutorPort {
+  /** False for deterministic evaluators; omitted preserves legacy retry behavior. */
+  readonly supportsRetry?: boolean;
   evaluate(planDocument: string, previousAttempts: readonly LoopAttempt[]): Promise<PlanCheckResult>;
 }

@@ -27,6 +27,7 @@ export interface FileSystemStoryReflectionAdapterDeps {
   readonly rootDir: string;
   /** inception ディレクトリのルート（デフォルト: docs/inception） */
   readonly inceptionRoot?: string;
+  readonly designDocsRoot?: string;
 }
 
 /**
@@ -43,11 +44,13 @@ export interface FileSystemStoryReflectionAdapterDeps {
 export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSystemPort {
   private readonly rootDir: string;
   private readonly inceptionRoot: string;
+  private readonly designDocsRoot: string;
   private readonly changedPathsByStoryId = new Map<string, Promise<ReadonlySet<string>>>();
 
   constructor(deps: FileSystemStoryReflectionAdapterDeps) {
     this.rootDir = deps.rootDir;
     this.inceptionRoot = deps.inceptionRoot ?? "docs/inception";
+    this.designDocsRoot = deps.designDocsRoot ?? "docs/product/construction";
   }
 
   async listStoryDirectories(unitId: string): Promise<readonly string[]> {
@@ -325,7 +328,9 @@ export class FileSystemStoryReflectionAdapter implements StoryReflectionFileSyst
 
   private extractProductUnitId(productPath: string): string | null {
     const normalized = productPath.split(path.sep).join("/");
-    const match = /^docs\/product\/construction\/([^/]+)\//.exec(normalized);
+    const prefix = `${this.designDocsRoot}/`;
+    if (!normalized.startsWith(prefix)) return null;
+    const match = /^([^/]+)\//.exec(normalized.slice(prefix.length));
     return match?.[1] ?? null;
   }
 

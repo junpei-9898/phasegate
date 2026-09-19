@@ -5,6 +5,12 @@ traceability:
 
 # ユニットテスト設計: traceability-model
 
+## WI-220 depends_on読取互換
+
+<!-- @work-item-id WI-220 -->
+
+既存parserと依存専用parserを同入力で比較し、未記載・[]・flow/block・引用符・CRLF・行末コメントを確認する。scalar、空宣言、空項目、重複key、不正WI ID、anchor、不正block行を追加入口で拒否し、旧入口は依存field追加前と同じ返却値を保つ。本文中のdepends_onはfrontmatterとして読まない。
+
 @story-id H03-04
 拡張: ISSUE-026 Phase A-2 で `parseWorkItemFrontmatter` に対するユニットテスト UT-TM-W01〜W08 を追加。
 @story-id H03-05
@@ -508,7 +514,6 @@ TraceabilityChainBuilderのArrange複雑性を緩和するため、以下のオ�
 ## 8. WI-288 World read facade 単体テスト設計
 
 @story-id H17-03
-
 | ケース ID | テストケース名 | AAA 概要 |
 |----------|--------------|---------|
 | UT-TM-WR01 | plain DTO だけを公開する | Arrange: raw source recordを決定的stubで用意する。Act: facadeを読む。Assert: JSON化可能なplain object/array/scalarだけで、domain prototypeを含まない |

@@ -1,5 +1,21 @@
 # 論理設計: harness-api
 
+## WI-220 コンパイル配布生成
+
+<!-- @work-item-id WI-220 -->
+
+開発用 `pack:runtime` は隔離stagingだけにTypeScriptからESM JS/mapを生成し、元TS/bin/assetsを保った配布archiveを出す。通常source packと利用者CLI入口は保持する。checkoutには生成JSを置かず、既存出力の上書き・生成失敗後の暗黙fallback・publishは行わない。ビルドは直接dev dependencyのTypeScriptを使い、実配布物で互換と性能を検証する。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+post hookの対象伝播と全体解析／対象報告を区別する。公開CLIを維持し、未実装の高速化フラグで実行保証を示さない。
+phasegate:lintの既存target flagはBiomeLintPortの任意reportTargetsへ渡す。実adapterは全体解析後に違反の位置をrootDirで正規化して報告集合だけ絞る。ファイル／directory境界を守り、位置なし診断は残す。引数なし／空配列とcomplete-check／ci-checkは全件のまま。
+反復--targetは内部args.reportTargets（JSON配列）で文字列map境界を通し、dispatchで配列の非空文字列を検証してPortへ渡す。既存単一flags.targetの直接呼出は維持する。
+TDD CLIは `--configured-validation` 明示時だけ通常lintのtoL1Config/toArchitectureInput、validateのtoValidatorSystemConfigを再利用し、解決済み設定をskill-quality factoryへ注入する。既定CLIは設定の有無にかかわらず旧検査profileを維持し、設定読込エラーの既存方針は変更しない。profile選択によってGit hookを省略しない。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 <!-- @work-item-id WI-090 -->
 ## WI-090 CLI Unknown Flag Contract
 
@@ -2092,3 +2108,18 @@ install target snapshot を同じ変更で固定する。
 non-excludable protected-file result を stdout/stderr/exit contractへ変換する。direct config mutation は exit 2、
 無関係 Bash と doctor は従来どおり fail-open、validate の config-state contract は ADR-038 の既存表を維持する。
 新しい CLI command は追加しない。
+## WI-220 コマンド固有依存の遅延読込み
+
+<!-- @work-item-id WI-220 -->
+
+D08後の事前コンパイル検証は隔離fixtureで行う。採用まではpackage files、公開bin、runtime TS入口とchild executorを変えない。既存module配置と相対JSON資産を維持する非bundleのESM生成から測定し、配布方式確定前にCLI出力/exit同一性と起動費用を確認する。
+
+mainはci-governance／regression-suite／phase2-extensions／skill-quality／validator-system／world-modelのcompositionを利用分岐で読む。既存の設定解決・公開handler・exit契約と全体lint解析を維持し、不要moduleをlint起動の依存にしない。選択コマンドに必要なmoduleの読込失敗を成功へ隠さない。
+
+同じ契約でinstallation／quick-mode／phase-dependency-model／traceability-model／adr-foundation／harness-errorのfactory読込もmainの利用分岐へ配置する。Unit内部や公開factoryの契約は変えず、型参照と必要時のエラー伝播を保持する。
+
+## WI-220 config planの原文保全
+
+<!-- @work-item-id WI-220 -->
+
+設定変更を伴うplanは破損・I/Oエラーならblocked previewとrefused apply（exit 1）を返す。未存在の場合だけ旧preview（before=null、applicable、部分patch）を保持し、commandsの先頭でinstall --dry-runを案内する。applyは既存設定がなければexit 1で拒否し、不完全な設定を生成しない。非設定intentとschema-invalidの上流契約は維持する。有効設定のbackupは原文を保存し、適用直前のJSON差分は再計画を案内して拒否する。backup／一時ファイルは排他的に作成する。これは保護解除や新設計要求ではなく、復旧操作によるデータ消失防止である。

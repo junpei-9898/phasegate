@@ -1,6 +1,7 @@
 /**
  * @layer application
  * @unit agent-integration
+ * @work-item-id WI-220
  * @story H11-03
  *
  * HandlePostToolUseUseCase
@@ -39,6 +40,9 @@ export class HandlePostToolUseUseCase {
   }
 
   async execute(input: HandlePostToolUseInput): Promise<HandlePostToolUseOutput> {
+    if (input.affectedFilePaths.length === 0 && ['Read', 'Glob', 'Grep'].includes(input.toolName)) {
+      return { executed: false, skipReason: 'READ_ONLY' };
+    }
     const hookEvent = HookEvent.createPostToolUse(input.toolName, input.affectedFilePaths);
     const translationResult = await this.translator.translate(hookEvent);
 

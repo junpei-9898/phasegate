@@ -1,5 +1,13 @@
 # 論理設計: validator-system
 
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+共通の解決済み設定を検証経路へ渡し、severityと検証対象を保持する。L2入口の整理で従来必要だったL3検出を失わない。
+TDDの既定profileは従来互換であり、共通設定の注入は `--configured-validation` 明示時だけ行う。設定の存在を理由に既存TDD利用者へ新検査を自動適用しない。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 <!-- @work-item-id WI-275 -->
 ## WI-275 coverage_report の ✅ 意味論（規約）
 
@@ -2036,7 +2044,6 @@ Validator-system owns `ValidatorLanguageRegistry`, which maps `validatorId + lan
 <!-- @work-item-id WI-222 -->
 
 @story-id HF2-05
-
 L4-007（`ac-level-traceability`）は AC 単位トレーサビリティを advisory として surface する L4 バリデータである。以下の 3 つの不変条件を満たす:
 
 - **default-OFF**: registry には登録するが、`DEFAULT_CONFIG.layers.L4.validators`（および standard/strict の enabled validator set）には **含めない**。runtime では enabled set に無いため常に `skipped=true` になる（`ci-check --json` で確認済み）。ci-governance の scheduled-audit metadata（`ValidatorIdRegistryAdapter.listForPreset`）からも `ADVISORY_DEFAULT_OFF_IDS` で除外する。

@@ -685,6 +685,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "preToolUse": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "dependencyReflection": { "type": "string", "enum": ["advisory", "enforce"] }
+          }
+        },
+        "postToolUse": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" }
+          }
+        },
         "stopHook": {
           "type": "object",
           "additionalProperties": false,

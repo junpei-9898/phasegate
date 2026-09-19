@@ -4,6 +4,7 @@
  * @work-item-id WI-203
  * @work-item-id WI-208
  * @work-item-id WI-323
+ * @work-item-id WI-220
  *
  * Stop Hook Adapter
  * Claude Code の Stop Hook エントリポイント
@@ -14,7 +15,6 @@ import * as path from "node:path";
 import { HandleStopUseCase } from "../application/usecases/handle-stop-usecase.js";
 import { ChildProcessCliExecutorAdapter } from "../infrastructure/adapters/child-process-cli-executor-adapter.js";
 import { EnvFileReentryGuardStateAdapter } from "../infrastructure/adapters/env-file-reentry-guard-state-adapter.js";
-import { HarnessApiCliCommandRegistryAdapter } from "../infrastructure/adapters/harness-api-cli-command-registry-adapter.js";
 import { HarnessConfigConfigQueryAdapter } from "../infrastructure/adapters/harness-config-config-query-adapter.js";
 import { recordHookSkipEvent } from "./hook-skip-event-recorder.js";
 
@@ -106,14 +106,12 @@ async function main(): Promise<void> {
     const configPath = await findConfigPath();
     const reentryGuardStatePort = new EnvFileReentryGuardStateAdapter({ strategy: "env" });
     const configQueryPort = new HarnessConfigConfigQueryAdapter(configPath);
-    const cliCommandRegistryPort = new HarnessApiCliCommandRegistryAdapter();
     const cliExecutorPort = new ChildProcessCliExecutorAdapter();
 
     const useCase = new HandleStopUseCase({
       reentryGuardStatePort,
       cliExecutorPort,
       configQueryPort,
-      cliCommandRegistryPort,
     });
 
     const output = await useCase.execute({ sessionId });

@@ -1,6 +1,7 @@
 /**
  * @layer infrastructure
  * @unit agent-integration
+ * @work-item-id WI-220
  *
  * HarnessConfigConfigQueryAdapter
  * HarnessConfigV2 の harnesses セクションから Hook 設定を読み取る
@@ -51,6 +52,8 @@ interface AgentIntegrationStopHookSection {
 
 interface AgentIntegrationSection {
   stopHook?: AgentIntegrationStopHookSection;
+  preToolUse?: { enabled?: boolean };
+  postToolUse?: { enabled?: boolean };
 }
 
 interface HarnessConfigDocument {
@@ -119,15 +122,14 @@ export class HarnessConfigConfigQueryAdapter implements ConfigQueryPort {
     const config = this.loadConfig();
     const harnesses = config.harnesses ?? {};
 
-    // Wave 2 マッピング:
-    // pre-tool-use → agentLessonCollection
-    // post-tool-use → cascadeUpdate
-    // stop → デフォルト有効
+    // Explicit hook settings take precedence; absent keys preserve legacy behavior.
     if (hookType === "pre-tool-use") {
-      return harnesses.agentLessonCollection ?? true;
+      const enabled = config.agentIntegration?.preToolUse?.enabled;
+      return typeof enabled === 'boolean' ? enabled : harnesses.agentLessonCollection ?? true;
     }
     if (hookType === "post-tool-use") {
-      return harnesses.cascadeUpdate ?? true;
+      const enabled = config.agentIntegration?.postToolUse?.enabled;
+      return typeof enabled === 'boolean' ? enabled : harnesses.cascadeUpdate ?? true;
     }
     // stop はデフォルト有効
     return true;

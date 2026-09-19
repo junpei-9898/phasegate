@@ -1,6 +1,9 @@
 // @unit quick-mode
 // @layer application
 // @story H10-05
+// @work-item-id WI-220
+
+import type { ChangeRiskAdvice } from '../ports/change-risk-advisory-port.js';
 
 export interface ChangeCategoryPerFile {
   readonly path: string;
@@ -8,6 +11,7 @@ export interface ChangeCategoryPerFile {
 }
 
 export interface ChangeCategoryClassificationContract {
+  readonly riskAdvice?: readonly ChangeRiskAdvice[];
   readonly dominantCategory: string | null;
   readonly perFile: readonly ChangeCategoryPerFile[];
   readonly fullModeRequired: boolean;

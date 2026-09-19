@@ -1,5 +1,24 @@
 # 論理設計: config-foundation
 
+## WI-220 B3j 明示強制化
+
+<!-- @work-item-id WI-220 -->
+
+agentIntegration.preToolUse.dependencyReflectionを任意enum advisory/enforceとしてschemaへ追加する。不在時default注入や自動移行をしない。明示enforce以外は新規拒否の根拠にしない。
+
+## WI-220 独立hook設定のschema契約
+
+<!-- @work-item-id WI-220 -->
+
+v3 agentIntegrationに任意preToolUse/postToolUse objectを追加し、enabledは任意boolean、unknown propertyは拒否する。default挿入はしない。旧v2と新キー不在のdocumentは従来どおり扱い、利用者設定の自動更新は行わない。新キーの管理intentは現時点で提供せず、人間のレビュー付き編集と更新前設定による復旧を案内する。
+
+## WI-220 安全網整理の境界契約
+
+<!-- @work-item-id WI-220 -->
+
+hook独立設定の導入時は旧agentLessonCollection/cascadeUpdateの有効値を入口で解決する。新キー不在時に旧OFFをONへ変えず、新schemaを旧readerへ自動配布しない。
+段階別の実装・検証状況は docs/inception/_cross/WI-220/validation_report.md を参照する。本節は設計契約であり、実装済みの宣言ではない。
+
 <!-- @work-item-id WI-259 -->
 ## WI-259 L3-006 Validator Threading
 
@@ -1492,6 +1511,12 @@ v2 / v3 schemaと三presetへ同じ`world` contractを追加する。全preset�
 <!-- @work-item-id WI-301 -->
 
 `toValidatorSystemConfig()`と`HarnessConfigValidatorConfigAdapter`はresolved `world.enabled`をautomatic L2 selectionへ反映する。trueの場合だけ`L2-017`をforce-includeし、false / absentではforce-excludeしてdefinitionを明示skipさせる。schema / preset defaultは変更せず、self-repo configもfalseのままとする。L3-008はWM-20まで追加しない。
+
+## WI-220 スキーマの必要時コンパイル
+
+<!-- @work-item-id WI-220 -->
+
+Ajvのv2/v3検証関数は選択版の初回validate時に作成し、同一module内で版別に再利用する。import/constructorではschemaを読まない。既存detectSchemaVersion・allErrors・schema定義・診断形式は維持し、各documentは毎回検証する。読込/compile失敗は成功扱いもcacheもせず、明示再実行で復旧可能にする。未使用版の処理だけを省き、schema更新監視などの新機構は導入しない。
 
 ## WI-380 quickMode.categoryOverrides の merge 単位
 

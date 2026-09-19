@@ -2,6 +2,7 @@
  * @layer application
  * @unit skill-quality
  * @work-item-id WI-192
+ * @work-item-id WI-220
  */
 import { CascadeUpdateResult } from '../../domain/value-objects/cascade-update-result.js';
 import type { CascadeUpdateService } from '../../domain/services/cascade-update-service.js';
@@ -21,6 +22,7 @@ export class ApplyCascadeUpdateUseCase {
     let updatedCount = 0;
     const appliedStoryIds: string[] = [];
     const errors: string[] = [];
+    const visitedFiles = new Set<string>();
 
     for (const target of targets) {
       try {
@@ -30,13 +32,16 @@ export class ApplyCascadeUpdateUseCase {
           : [target.filePath];
 
         for (const filePath of filePaths) {
+          if (visitedFiles.has(filePath)) continue;
+          visitedFiles.add(filePath);
           try {
             const content = await this.fileSystemPort.read(filePath);
-            // Append story-id tag if not already present
-            const updatedContent = content.includes(target.storyIdTag)
+            // This is exact tag presence, not proof of semantic reflection.
+            const updatedContent = target.hasAnnotationIn(content)
               ? content
-              : `${content}\n${target.storyIdTag}`;
-            if (!input.dryRun && updatedContent !== content) {
+              : `${content}\n${target.renderAnnotation(filePath)}`;
+            if (updatedContent === content) continue;
+            if (!input.dryRun) {
               await this.fileSystemPort.write(filePath, updatedContent);
             }
             updatedCount++;

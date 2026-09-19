@@ -1,6 +1,7 @@
 // @unit agent-integration
 // @layer application
 // @story H11-04
+// @work-item-id WI-220
 
 import { describe, expect, it, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
@@ -14,6 +15,7 @@ function createHandleStopUseCase(ports: {
   };
   cliExecutorPort: { execute: ReturnType<typeof vi.fn> };
   stopHookEnforce?: boolean;
+  omitRegistry?: boolean;
 }) {
   const configQueryPort = {
     isHookEnabled: vi.fn().mockResolvedValue(true),
@@ -32,7 +34,7 @@ function createHandleStopUseCase(ports: {
     reentryGuardStatePort: ports.reentryGuardStatePort,
     cliExecutorPort: ports.cliExecutorPort,
     configQueryPort,
-    cliCommandRegistryPort,
+    ...(ports.omitRegistry ? {} : { cliCommandRegistryPort }),
   });
 }
 
@@ -44,6 +46,30 @@ function buildHandleStopInput(overrides: Partial<{ sessionId: string }> = {}) {
 }
 
 target('HandleStopUseCase.execute', () => {
+  it.each([false, true])('旧registry入力の有無で完了検査の失敗・強制判定・解除状態が変わらないこと（省略=%s）', async (omitRegistry) => {
+    let active = false;
+    const useCase = createHandleStopUseCase({
+      omitRegistry,
+      stopHookEnforce: true,
+      reentryGuardStatePort: {
+        readActive: vi.fn(async () => active),
+        writeActive: vi.fn(async () => { active = true; }),
+        clearActive: vi.fn(async () => { active = false; }),
+      },
+      cliExecutorPort: { execute: vi.fn(async (command, args) => {
+        expect(command).toBe('phasegate:complete-check');
+        expect(args).toEqual([]);
+        expect(active).toBe(true);
+        return { exitCode: 1, stdout: '', stderr: 'design missing', timedOut: false };
+      }) },
+    });
+
+    const actual = await useCase.execute({ sessionId: 'compatibility-session' });
+
+    expect(actual).toEqual({ executed: true, cliResult: { exitCode: 1, stdout: '', stderr: 'design missing', timedOut: false }, shouldEnforceFailure: true });
+    expect(active).toBe(false);
+  });
+
   describe('Stop Hook の ReentryGuard ライフサイクルと CLI 実行を管理する', () => {
     context('ReentryGuard が非アクティブな場合（通常フロー）', () => {
       // IT-UC-HandleStop-001

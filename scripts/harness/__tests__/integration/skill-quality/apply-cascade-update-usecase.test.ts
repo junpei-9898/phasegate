@@ -2,6 +2,7 @@
 // @layer test
 // @story H12-05
 // @work-item-id WI-192
+// @work-item-id WI-220
 import { describe, it, expect, vi } from 'vitest';
 import { target, context } from '../../helpers/test-helpers.js';
 import { ApplyCascadeUpdateUseCase } from '../../../skill-quality/application/usecases/apply-cascade-update-usecase.js';
@@ -29,6 +30,126 @@ function createMockFileSystemPort(content = '# content') {
 }
 
 target('ApplyCascadeUpdateUseCase', () => {
+
+  describe('変更の事実と意味レビューの境界', () => {
+    it.each([
+      { storyId: 'WI-22', existing: '@story-id WI-220', added: '@work-item-id WI-22' },
+      { storyId: 'H12-05', existing: '@story-id H12-050', added: '@story-id H12-05' },
+    ])('似たIDを対象IDの反映と誤認せず正しいタグを追記すること（$storyId）', async ({ storyId, existing, added }) => {
+      const fs = createMockFileSystemPort(existing);
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/a.md']));
+      const usecase = new ApplyCascadeUpdateUseCase(service, fs);
+
+      const actual = await usecase.execute({ storyId });
+
+      expect(actual).toEqual({ updatedCount: 1, appliedStoryIds: [added], errors: [] });
+      expect(fs.write).toHaveBeenCalledWith('docs/a.md', `${existing}\n${added}`);
+    });
+
+    it.each([
+      { storyId: 'WI-22', content: '<!-- @work-item-id WI-220, WI-22 -->' },
+      { storyId: 'WI-22', content: '@story-id WI-22' },
+      { storyId: 'WI-22', content: '@work-item-id\tWI-22\r\n' },
+      { storyId: 'H12-05', content: '<!-- @story-id H12-01, H12-05 -->' },
+      { storyId: 'ISSUE-21', content: '@issue-id ISSUE-20 ISSUE-21' },
+    ])('列挙や旧形式の対象タグは書き換えず保持すること（$content）', async ({ storyId, content }) => {
+      const fs = createMockFileSystemPort(content);
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/a.md']));
+
+      const actual = await new ApplyCascadeUpdateUseCase(service, fs).execute({ storyId });
+
+      expect(actual).toEqual({ updatedCount: 0, appliedStoryIds: [], errors: [] });
+      expect(fs.write).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('対象が重複しても一つのファイルの変更として報告すること（dryRun=%s）', async (dryRun) => {
+      let content = '# original';
+      const fs = {
+        read: vi.fn(async () => content),
+        write: vi.fn(async (_path: string, updated: string) => { content = updated; }),
+        glob: async () => ['docs/a.md', 'docs/a.md'],
+      };
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/*.md', 'docs/a.md']));
+
+      const actual = await new ApplyCascadeUpdateUseCase(service, fs).execute({ storyId: 'H12-05', dryRun });
+
+      expect(actual).toEqual({ updatedCount: 1, appliedStoryIds: ['@story-id H12-05'], errors: [] });
+      expect(content).toBe(dryRun ? '# original' : '# original\n@story-id H12-05');
+      expect(fs.read).toHaveBeenCalledTimes(1);
+      expect(fs.write).toHaveBeenCalledTimes(dryRun ? 0 : 1);
+    });
+
+    it('重複対象の失敗を反復せず原因解消後の明示実行で追記できること', async () => {
+      let readable = false;
+      let content = '# original';
+      const fs = {
+        read: vi.fn(async () => { if (!readable) throw new Error('read denied'); return content; }),
+        write: async (_path: string, updated: string) => { content = updated; },
+        glob: async () => ['docs/a.md', 'docs/a.md'],
+      };
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/*.md', 'docs/a.md']));
+      const usecase = new ApplyCascadeUpdateUseCase(service, fs);
+
+      const failed = await usecase.execute({ storyId: 'H12-05' });
+      expect(failed).toEqual({ updatedCount: 0, appliedStoryIds: [], errors: ['Failed to update docs/a.md: read denied'] });
+      expect(content).toBe('# original');
+      expect(fs.read).toHaveBeenCalledTimes(1);
+
+      readable = true;
+      const actual = await usecase.execute({ storyId: 'H12-05' });
+      expect(actual).toEqual({ updatedCount: 1, appliedStoryIds: ['@story-id H12-05'], errors: [] });
+      expect(content).toBe('# original\n@story-id H12-05');
+    });
+
+    it.each([false, true])('すでにタグがある本文は更新件数に含めず保持すること（dryRun=%s）', async (dryRun) => {
+      const mockFs = createMockFileSystemPort('# content\n@story-id H12-05');
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/a.md']));
+      const usecase = new ApplyCascadeUpdateUseCase(service, mockFs);
+
+      const actual = await usecase.execute({ storyId: 'H12-05', dryRun });
+
+      expect(actual).toEqual({ updatedCount: 0, appliedStoryIds: [], errors: [] });
+      expect(mockFs.write).not.toHaveBeenCalled();
+    });
+
+    it('追記後の再実行は更新0件となり本文を重複させないこと', async () => {
+      let content = '# content';
+      const fs = {
+        read: async () => content,
+        write: async (_path: string, updated: string) => { content = updated; },
+        glob: async () => [],
+      };
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/a.md']));
+      const usecase = new ApplyCascadeUpdateUseCase(service, fs);
+
+      const first = await usecase.execute({ storyId: 'H12-05' });
+      expect(first.updatedCount).toBe(1);
+      expect(content).toBe('# content\n@story-id H12-05');
+      const actual = await usecase.execute({ storyId: 'H12-05' });
+      expect(actual).toEqual({ updatedCount: 0, appliedStoryIds: [], errors: [] });
+      expect(content).toBe('# content\n@story-id H12-05');
+    });
+
+    it.each([{ errors: [] }, { errors: ['read failed'] }])('JSONでタグ操作と意味レビュー未実施を明示し終了状態を保持すること（errors=$errors）', async ({ errors }) => {
+      const usecase = { execute: vi.fn().mockResolvedValue({ updatedCount: 0, appliedStoryIds: [], errors }) };
+      const handler = new ApplyCascadeUpdateHandler(usecase as unknown as ApplyCascadeUpdateUseCase);
+
+      const actual = await handler.handle({ storyId: 'H12-05', format: 'json' });
+
+      expect(actual.exitCode).toBe(errors.length ? 1 : 0);
+      expect(JSON.parse(actual.message)).toMatchObject({ operation: 'traceability-tag-update', semanticReviewPerformed: false, errors });
+    });
+
+    it('human出力は設計の意味的反映を保証しないと説明すること', async () => {
+      const service = new CascadeUpdateService(createMockValidatorIdRegistryPort(), createMockConfigQueryPort(['docs/a.md']));
+      const handler = new ApplyCascadeUpdateHandler(new ApplyCascadeUpdateUseCase(service, createMockFileSystemPort()));
+
+      const actual = await handler.handle({ storyId: 'H12-05' });
+
+      expect(actual.exitCode).toBe(0);
+      expect(actual.message).toContain('意味レビューは未実施');
+    });
+  });
 
   // IT-UC-CascUpd-001
   describe('execute: 対象ファイルに @story-id が付与されること', () => {

@@ -4,6 +4,8 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { accessSync, constants, statSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import type { FilePath } from '../../domain/value-objects/file-path.js';
 import type { BiomeExecutorPort } from '../../domain/ports/biome-executor-port.js';
 
@@ -34,7 +36,25 @@ export class BiomeCliExecutorAdapter implements BiomeExecutorPort {
 
   constructor(deps: BiomeCliExecutorAdapterDeps) {
     this.cwd = deps.cwd;
-    this.biomeBin = deps.biomeBin ?? 'npx';
+    this.biomeBin = deps.biomeBin ?? this.findLocalBin(deps.cwd) ?? 'npx';
+  }
+
+  private findLocalBin(cwd: string): string | undefined {
+    // .cmd execution has different quoting/shell requirements; retain its old route.
+    if (process.platform === 'win32') return undefined;
+    let directory = resolve(cwd);
+    while (true) {
+      const candidate = join(directory, 'node_modules', '.bin', 'biome');
+      try {
+        accessSync(candidate, constants.X_OK);
+        if (statSync(candidate).isFile()) return candidate;
+      } catch {
+        // Match local npm-bin lookup from the working directory toward the root.
+      }
+      const parent = dirname(directory);
+      if (parent === directory) return undefined;
+      directory = parent;
+    }
   }
 
   async executeCheck(files: readonly FilePath[]): Promise<void> {

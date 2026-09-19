@@ -2,6 +2,7 @@
  * @layer infrastructure
  * @unit biome-ast-engine
  * @work-item-id WI-109
+ * @work-item-id WI-220
  */
 
 import * as ts from 'typescript';
@@ -74,6 +75,10 @@ export class TypeScriptSourceModuleAnalyzerAdapter implements SourceModuleAnalyz
       moduleResolution: ts.ModuleResolutionKind.Node16,
       allowJs: false,
       noEmit: true,
+      // Snapshots use syntax only. The workspace scanner already supplies every
+      // graph node; libraries and transitive imports are not snapshot inputs.
+      noLib: true,
+      noResolve: true,
     });
 
     const snapshots: SourceModuleSnapshot[] = [];

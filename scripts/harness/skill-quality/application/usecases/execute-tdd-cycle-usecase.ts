@@ -13,7 +13,8 @@ export class ExecuteTddCycleUseCase {
 
   async execute(input: ExecuteTddCycleInput): Promise<ExecuteTddCycleOutput> {
     const tddCycle = TddCycle.create(input.phase, input.passed);
-    const commitMessage = CommitMessage.create(input.unit, input.storyId, input.description);
+    const workItemId = /^WI-\d+$/.test(input.storyId) ? input.storyId : undefined;
+    const commitMessage = CommitMessage.create(input.unit, input.storyId, input.description, workItemId);
 
     const readiness = await this.atomicCommitService.execute(tddCycle, commitMessage);
 

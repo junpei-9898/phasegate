@@ -140,7 +140,7 @@ export class HookToCliTranslator {
       throw new CommandNotRegisteredError(commandName);
     }
 
-    return HookTranslationResult.execute(commandName, ['--fast'], 0, 500);
+    return HookTranslationResult.execute(commandName, [...new Set(event.affectedFilePaths)].flatMap((target) => ['--target', target]), 0, 5000);
   }
 
   private translateStop(_event: StopEvent): HookTranslationResult {
@@ -248,7 +248,10 @@ export class AsyncHookToCliTranslator {
     const projectPaths = await (this.configQueryPort as ConfigQueryPort & {
       getProjectPaths(): unknown;
     }).getProjectPaths();
-    const detectedScope = event.targetFilePaths
+    const gatePaths = event.targetFilePaths.filter(filePath => !WriteTargetScope.isInceptionDocument(
+      filePath, projectPaths as Parameters<typeof WriteTargetScope.fromPath>[1],
+    ));
+    const detectedScope = gatePaths
       .map((filePath) => WriteTargetScope.fromPath(filePath, projectPaths as Parameters<typeof WriteTargetScope.fromPath>[1]))
       .find((scope): scope is WriteTargetScope => scope !== null);
 
@@ -272,7 +275,7 @@ export class AsyncHookToCliTranslator {
 
     const phaseGateResult = await this.phaseGateQueryPort.checkGate(
       detectedScope,
-      event.targetFilePaths[0],
+      gatePaths.find(filePath => WriteTargetScope.fromPath(filePath, projectPaths as Parameters<typeof WriteTargetScope.fromPath>[1]) !== null),
     );
     if (!phaseGateResult.hasPassed()) {
       return HookTranslationResult.block({
@@ -292,7 +295,7 @@ export class AsyncHookToCliTranslator {
     });
   }
 
-  private async translatePostToolUse(_event: PostToolUseEvent): Promise<HookTranslationResult> {
+  private async translatePostToolUse(event: PostToolUseEvent): Promise<HookTranslationResult> {
     const isEnabled = await this.configQueryPort.isHookEnabled('post-tool-use');
     if (!isEnabled) {
       return HookTranslationResult.skip('HOOK_DISABLED');
@@ -304,7 +307,7 @@ export class AsyncHookToCliTranslator {
       throw new CommandNotRegisteredError(commandName);
     }
 
-    return HookTranslationResult.execute(commandName, ['--fast'], 0, 500);
+    return HookTranslationResult.execute(commandName, [...new Set(event.affectedFilePaths)].flatMap((target) => ['--target', target]), 0, 5000);
   }
 
   private async translateStop(_event: StopEvent): Promise<HookTranslationResult> {

@@ -1,5 +1,11 @@
 # ドメインモデル: phase-dependency-model
 
+## WI-220 対象WI依存の解決
+
+<!-- @work-item-id WI-220 -->
+
+WorkItemReflectionScopeResolverはWI記録のID・所属Unit群・宣言された直接依存を辿る。根の対象Unit一致と到達集合の一意性・宣言完全性を確かめ、complete（ID順のWI記録）またはunknown（コードと該当ID）を返す。循環は有限回で評価する。unknownに部分集合を付けず、未申告依存の不存在や設計の意味的承認は扱わない。ファイル読取・session認証・強制化方針はこのdomain serviceに混ぜない。
+
 @story-id H02-01
 @story-id H02-02
 @story-id H02-03
