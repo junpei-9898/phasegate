@@ -708,3 +708,7 @@ bundled / root `analyze-errors-hook.sh` は raw `biome lint` を使わず、編�
 `phasegate lint --json --skip-eslint-removal-check` で project の参照グラフを保ったまま検査する。
 単一-file `--target` は L1-007 の偽陽性を生むため使用しない。formatter は project Biome
 config を正本とし、PhaseGate self repo は single quote を明示する。
+## WI-223 配布セットの単一正本
+
+<!-- @work-item-id WI-223 -->
+既存bundled-skill-selectionがカテゴリ・セット選択・配備記録のセット解決を所有する。core/all/既定allを維持しconsumerはallから本体用release-publisher/skill-creatorだけ除く。reconcileは各rootの.harness-versionのセットを保存し配備とmanifestへ同じ値を使う。欠落/不正/未知値は旧all。doctorも同じ解決を使用。セット縮小による自動削除は行わない。

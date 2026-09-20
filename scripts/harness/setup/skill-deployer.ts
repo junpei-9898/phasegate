@@ -10,6 +10,8 @@
 
 import { promises as fs } from "node:fs";
 import { dirname, join } from "node:path";
+import { getBundledSkillsForSet, SKILL_CATEGORIES, type SkillCategory, type SkillSet } from "../installation/application/bundled-skill-selection.js";
+export { SKILL_CATEGORIES, type SkillCategory, type SkillSet } from "../installation/application/bundled-skill-selection.js";
 
 const HARNESS_VERSION_FILE = ".harness-version";
 const SKILLS_SOURCE_DIR = "skills";
@@ -25,52 +27,8 @@ const DEFAULT_FOLDER_RULES_DOC = join("docs", "folder_management_rules.md");
 
 // ── Skill Category Map ──
 
-export type SkillCategory = "core" | "aidlc" | "utility" | "guidance";
-export type SkillSet = "core" | "all";
-
-export const SKILL_CATEGORIES: Record<SkillCategory, readonly string[]> = {
-  core: [
-    "cascade-updater",
-    "codebase-mapper",
-    "consistency-checker",
-    "doc-health-checker",
-    "engineering-perspective",
-    "implementation-readiness-checker",
-    "test-coverage-checker",
-  ],
-  aidlc: [
-    "domain-designer",
-    "environment-designer",
-    "it-test-designer",
-    "it-test-logic-designer",
-    "logical-designer",
-    "mock-designer",
-    "product-architect",
-    "quick-implementor",
-    "scenario-test-designer",
-    "scenario-test-logic-designer",
-    "story-implementor",
-    "story-mapper",
-    "story-writer",
-    "uiux-designer",
-    "unit-designer",
-    "unit-test-designer",
-    "unit-test-logic-designer",
-  ],
-  utility: ["codex-delegator", "skill-creator"],
-  guidance: ["phasegate-toolkit-guide", "phasegate-config-doctor", "release-publisher"],
-} as const;
-
 export function getSkillsForSet(skillSet: SkillSet): string[] {
-  if (skillSet === "core") {
-    return [...SKILL_CATEGORIES.core];
-  }
-  return [
-    ...SKILL_CATEGORIES.core,
-    ...SKILL_CATEGORIES.aidlc,
-    ...SKILL_CATEGORIES.utility,
-    ...SKILL_CATEGORIES.guidance,
-  ];
+  return getBundledSkillsForSet(skillSet);
 }
 
 export function getCategoryForSkill(skillName: string): SkillCategory | null {

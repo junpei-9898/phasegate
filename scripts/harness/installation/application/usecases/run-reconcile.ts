@@ -32,7 +32,7 @@ import { DeploymentEntry } from "../../domain/deployment-entry.js";
 import { DeploymentManifest } from "../../domain/deployment-manifest.js";
 import type { ManagedBlockInput } from "../../domain/managed-block.js";
 import type { RepairMode } from "../../domain/repair-mode.js";
-import { getBundledSkillsForSet, type SkillSet } from "../bundled-skill-selection.js";
+import { getBundledSkillsForSet, resolveInstalledSkillSet, type SkillSet } from "../bundled-skill-selection.js";
 import { mergeNamedHookJson } from "../named-hook-json.js";
 import type { HashCalculatorPort } from "../ports/hash-calculator-port.js";
 import type { ManifestRepositoryPort } from "../ports/manifest-repository-port.js";
@@ -328,7 +328,7 @@ function reconcileManagedMarkdown(existing: string | null, incoming: string): st
   return next.replace(/\s*$/, "\n");
 }
 
-function renderAgentContextTemplate(template: string): string {
+function renderAgentContextTemplate(template: string, skillSet: SkillSet): string {
   const commands = [
     "phasegate doctor",
     "phasegate phasegate:check-ready",
@@ -340,12 +340,12 @@ function renderAgentContextTemplate(template: string): string {
     .join("\n");
   return template
     .replaceAll("{{PHASEGATE_AGENT}}", "both")
-    .replaceAll("{{PHASEGATE_SKILLS_MODE}}", "all")
+    .replaceAll("{{PHASEGATE_SKILLS_MODE}}", skillSet)
     .replaceAll("{{PHASEGATE_WORKFLOW}}", "standard")
     .replaceAll("{{PHASEGATE_HUSKY_STATE}}", "managed")
     .replaceAll("{{PHASEGATE_CI_STATE}}", "managed")
     .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
-    .replaceAll("{{PHASEGATE_SKILLS}}", "- `all bundled skills`")
+    .replaceAll("{{PHASEGATE_SKILLS}}", skillSet === "all" ? "- `all bundled skills`" : `- \`${skillSet} skills\``)
     .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
     .replaceAll("{{PHASEGATE_USER_SECTION}}", USER_SECTION_PLACEHOLDER);
 }
@@ -463,16 +463,22 @@ export class RunReconcileUseCase {
     }
 
     const personalInstall = this.isPersonalManifest(manifest);
+    const skillSets = new Map<string, SkillSet>();
+    for (const root of personalInstall ? this.personalSkillPaths(manifest) : ["skills"]) {
+      skillSets.set(root, resolveInstalledSkillSet(await readTextOrNull(join(input.projectRoot, root, HARNESS_VERSION_BASENAME))));
+    }
     if (!personalInstall && this.manifestIntendsSharedSkills(manifest)) {
-      const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
-      const outcome = await this.planSharedSkills(input, manifest, sharedSkills, "all");
+      const skillSet = skillSets.get("skills") ?? "all";
+      const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
+      const outcome = await this.planSharedSkills(input, manifest, sharedSkills, skillSet);
       outcomes.push(outcome);
       plan.push(outcome.item);
     }
     if (personalInstall) {
-      const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
       for (const skillPath of this.personalSkillPaths(manifest)) {
-        const outcome = await this.planPersonalSkills(input, manifest, skillPath, personalSkills, "all");
+        const skillSet = skillSets.get(skillPath) ?? "all";
+        const personalSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
+        const outcome = await this.planPersonalSkills(input, manifest, skillPath, personalSkills, skillSet);
         outcomes.push(outcome);
         plan.push(outcome.item);
       }
@@ -513,16 +519,17 @@ export class RunReconcileUseCase {
       changed.push(outcome.item);
       if (hashContent !== null) {
         if (outcome.item.strategy === "copy-dir" && outcome.item.path === "skills") {
-          const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+          const skillSet = skillSets.get("skills") ?? "all";
+          const sharedSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
           nextManifest = nextManifest.addEntry(
             this.createdEntry(
               SHARED_SKILLS_VERSION_PATH,
-              this.sharedSkillsVersionHashInput(input.phasegateVersion, "all", sharedSkills),
+              this.sharedSkillsVersionHashInput(input.phasegateVersion, skillSet, sharedSkills),
             ),
           );
           for (const skill of sharedSkills) {
             nextManifest = nextManifest.addEntry(
-              this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, "all")),
+              this.createdEntry(`skills/${skill}`, this.sharedSkillHashInput(skill, input.phasegateVersion, skillSet)),
             );
           }
         } else if (
@@ -531,18 +538,19 @@ export class RunReconcileUseCase {
             outcome.item.path === ".codex/skills" ||
             outcome.item.path === ".agents/skills")
         ) {
-          const personalSkills = await listSelectedBundledSkills(input.harnessRoot, "all");
+          const skillSet = skillSets.get(outcome.item.path) ?? "all";
+          const personalSkills = await listSelectedBundledSkills(input.harnessRoot, skillSet);
           nextManifest = nextManifest.addEntry(
             this.createdEntry(
               `${outcome.item.path}/.harness-version`,
-              this.personalSkillsVersionHashInput(outcome.item.path, input.phasegateVersion, "all", personalSkills),
+              this.personalSkillsVersionHashInput(outcome.item.path, input.phasegateVersion, skillSet, personalSkills),
             ),
           );
           for (const skill of personalSkills) {
             nextManifest = nextManifest.addEntry(
               this.createdEntry(
                 `${outcome.item.path}/${skill}`,
-                this.personalSkillHashInput(outcome.item.path, skill, input.phasegateVersion, "all"),
+                this.personalSkillHashInput(outcome.item.path, skill, input.phasegateVersion, skillSet),
               ),
             );
           }
@@ -580,7 +588,8 @@ export class RunReconcileUseCase {
     const currentHash = this.hashCalculator.compute(before);
     const matchesManifest = currentHash.equals(entry.hash);
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
-    const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
+    const template = target.strategy === "markdown-managed"
+      ? renderAgentContextTemplate(rawTemplate, await this.contextSkillSet(input.projectRoot, target.path)) : rawTemplate;
     const next =
       entry.mode === "created" &&
       target.strategy !== "package-json" &&
@@ -622,12 +631,20 @@ export class RunReconcileUseCase {
     };
   }
 
+  private async contextSkillSet(projectRoot: string, contextPath: string): Promise<SkillSet> {
+    const agentRoot = contextPath.includes("CLAUDE") ? ".claude/skills" : ".codex/skills";
+    const metadata = await readTextOrNull(join(projectRoot, agentRoot, HARNESS_VERSION_BASENAME))
+      ?? await readTextOrNull(join(projectRoot, SHARED_SKILLS_VERSION_PATH));
+    return resolveInstalledSkillSet(metadata);
+  }
+
   private async planMissingTarget(input: RunReconcileInput, target: ReconcileTarget) {
     if (target.strategy === "symlink") return this.planSymlink(input.projectRoot, target.path);
     const absolutePath = this.resolveProjectPath(input.projectRoot, target.path);
     const before = await readTextOrNull(absolutePath);
     const rawTemplate = target.templatePath ? await readFile(join(input.harnessRoot, target.templatePath), "utf8") : "";
-    const template = target.strategy === "markdown-managed" ? renderAgentContextTemplate(rawTemplate) : rawTemplate;
+    const template = target.strategy === "markdown-managed"
+      ? renderAgentContextTemplate(rawTemplate, await this.contextSkillSet(input.projectRoot, target.path)) : rawTemplate;
     const next =
       before === null && target.strategy !== "package-json"
         ? template

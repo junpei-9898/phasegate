@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 kind: advisory
-description: phasegate バンドルのスキルを新規作成・改訂するための著者向けガイド。phasegate 固有の frontmatter 契約・正規見出し（skill-structure バリデータ）・モデル委任レンダリング・カタログ登録・日本語規約を扱う。スキルを追加/編集する際に使用する。
+description: Phasegate本体のバンドルスキルを追加・改訂するときのメンテナー向けガイド。利用者プロジェクト独自のスキル作成には適用しない。
 model: opus
 languages: [typescript]
 ---
@@ -57,8 +57,8 @@ phasegate のスキル frontmatter は `name` / `description` に加えて、他
 
 新規スキルは skill-structure バリデータ（`scripts/harness/skill-quality/domain/services/skill-structure-validator.ts`）に**必ず合格**する。バリデータはスキルの **kind** ごとに必須セクションを決める:
 
-- **lifecycle**（既定・23 スキル）: `frontmatter` / `languageMetadata` / `purpose` / `inputs` / `outputs` / `prerequisites` / `executionFlow` の 7 セクションを全保有すること。
-- **advisory**（allowlist の 7 スキル。本スキル含む）: `frontmatter` / `languageMetadata` / `purpose` の 3 セクションのみ必須。
+- **lifecycle**（既定）: `frontmatter` / `languageMetadata` / `purpose` / `inputs` / `outputs` / `prerequisites` / `executionFlow` の 7 セクションを全保有すること。
+- **advisory**（allowlist。本スキル含む）: `frontmatter` / `languageMetadata` / `purpose` の 3 セクションのみ必須。件数の正本は以下のcorpusテスト。
 
 ### セクション名 → 見出しの対応（sectionMap）
 
@@ -77,16 +77,15 @@ phasegate のスキル frontmatter は `name` / `description` に加えて、他
 ### kind の登録場所（allowlist / taxonomy）
 
 - kind 型と必須セクションの定義: `scripts/harness/skill-quality/domain/types/skill-kind.ts` と `.../value-objects/skill-structure.ts`。
-- **advisory allowlist の pin**: `scripts/harness/__tests__/integration/skill-quality/skill-corpus-conformance.test.ts` の `ADVISORY_SKILLS` 配列。ここに列挙された 7 件だけが `kind: advisory` を宣言でき、8 件目の自己宣言はテストが fail する。**advisory を増やす場合はこのテストの allowlist を意図的に更新すること**（lifecycle 要求の回避を防ぐ pin）。lifecycle スキルを追加する場合は allowlist 変更不要だが、7 セクションを全て満たす必要がある。
+- **advisory allowlist の pin**: `scripts/harness/__tests__/integration/skill-quality/skill-corpus-conformance.test.ts` の `ADVISORY_SKILLS` 配列。列挙されていない自己宣言はテストが fail する。**advisory を増やす場合はこのテストの allowlist を意図的に更新すること**（lifecycle 要求の回避を防ぐ pin）。lifecycle スキルを追加する場合は allowlist 変更不要だが、7 セクションを全て満たす必要がある。
 
 ## カタログ登録（新規スキル追加時に必須）
 
 新規スキルは SKILL.md を書くだけでは配信されない。以下のカタログ・件数 pin を必ず更新する:
 
-1. `scripts/harness/setup/skill-deployer.ts` の `SKILL_CATEGORIES`（`core` / `aidlc` / `utility` / `guidance` のいずれかに追加）。ここに載らないスキルは `getSkillsForSet` の配信対象にならない。
-2. `scripts/harness/installation/application/bundled-skill-selection.ts`（インストール時の選択ロジック）。
-3. 件数 pin: `skills/README.md`（"30 skills" の記述）・`docs/guide/skills-overview.md`（"30 skills"）。スキル総数を変えたら両方を同期更新する。
-4. advisory を追加する場合は前述の `skill-corpus-conformance.test.ts` の `ADVISORY_SKILLS` と、テスト内の件数期待値（`skills.length` / lifecycle・advisory の内訳）も更新する。
+1. 単一正本 `scripts/harness/installation/application/bundled-skill-selection.ts` のカテゴリと配布選択。setup側は委譲するためカタログを複製しない。consumerには本体用のrelease-publisher/skill-creatorを含めず、旧core/allの互換は維持する。
+2. `skills/README.md`・`docs/guide/skills-overview.md`の配布説明と件数を実体に合わせる。
+3. advisoryを追加する場合は前述のcorpusテストのallowlistと件数期待値も更新する。
 
 > なお `scripts/harness/` 配下のソース（`skill-deployer.ts` / `bundled-skill-selection.ts` 等）の変更はフェーズゲート対象であり、`quick-implementor` / `story-implementor` スキル経由で行う（CLAUDE.md 参照）。スキル本文（`skills/**` の docs）編集はゲート緩和対象。
 
@@ -113,5 +112,5 @@ phasegate のスキル frontmatter は `name` / `description` に加えて、他
 3. **雛形の用意** — 同種の既存スキル（lifecycle は例えば `unit-designer`、advisory は `phasegate-config-doctor`）の SKILL.md を土台にコピーし、frontmatter・見出しを埋める。
 4. **本文作成** — 日本語散文で。3 フェーズ系なら結合文字列をバイト単位で流用。詳細は `references/` へ切り出す。
 5. **構造検証** — `npx vitest run scripts/harness/__tests__/integration/skill-quality`（corpus-conformance）で宣言 kind の必須セクションに合格することを確認。
-6. **カタログ登録** — `SKILL_CATEGORIES` / `bundled-skill-selection.ts` / 件数 pin（README・skills-overview）を更新。
+6. **カタログ登録** — `bundled-skill-selection.ts`と関連する配布説明・corpus期待値を更新。
 7. **反復** — 実タスクで使い、SKILL.md / references を改善する。

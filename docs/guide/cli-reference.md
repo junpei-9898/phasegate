@@ -573,3 +573,7 @@ phasegate validate --layer L3
 ```
 
 Use `--json` to inspect `missingTests`, `orphanTests`, preserved references, and intent coverage.
+## Consumer skill selection
+
+<!-- @work-item-id WI-223 -->
+`init --skills consumer` and `install --skills consumer --dry-run` select 27 bundled skills, excluding Phasegate's own release-publisher and skill-creator. Apply install explicitly with `--apply`. The existing core/all sets and default all remain supported. Reconcile preserves the recorded set independently for shared/personal skill roots. No automatic deletion or migration of existing skills occurs when selecting a smaller set.

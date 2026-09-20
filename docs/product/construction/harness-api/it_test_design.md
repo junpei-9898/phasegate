@@ -753,3 +753,7 @@ fail-open / fail-closed contract を回帰固定する。
 <!-- @work-item-id WI-220 -->
 
 実CLIで破損JSON／未存在のpreview・apply・明示再実行が元データを変えないこと、未存在のpreviewは旧applicable・部分patchを維持して初期化予告を案内するがapplyは拒否することと、権限ある修復／初期化後は同じintentが成功することを検証する。有効JSONの書式を含むbackup原文、非設定intentのnot-applicable、schema-invalidの既存exit 2も確認する。
+## WI-223 セット選択CLI
+
+<!-- @work-item-id WI-223 -->
+実CLIでinit/installのconsumer受理と未知値拒否を確認する。setupの旧core/all配列の順序を固定し、installationとの一致とconsumer除外が本体用2件だけであることを確認する。

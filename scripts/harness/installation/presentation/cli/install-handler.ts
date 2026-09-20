@@ -13,6 +13,7 @@ import {
 } from "../../application/operator-notice.js";
 import type { RunInstallUseCase } from "../../application/usecases/run-install.js";
 import type { AgentTarget } from "../../domain/agent-target.js";
+import type { SkillSet } from "../../application/bundled-skill-selection.js";
 
 export interface InstallHandlerInput {
   readonly projectRoot: string;
@@ -26,7 +27,7 @@ export interface InstallHandlerInput {
   readonly includeCodex?: boolean;
   readonly includeHusky?: boolean;
   readonly includeCi?: boolean;
-  readonly skillSet?: "core" | "all";
+  readonly skillSet?: SkillSet;
   readonly workflow?: "standard" | "strict";
   readonly agent?: AgentTarget;
   readonly personal?: boolean;

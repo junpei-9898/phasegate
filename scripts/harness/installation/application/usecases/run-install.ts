@@ -86,7 +86,7 @@ export interface RunInstallInput {
   readonly includeCodex?: boolean;
   readonly includeHusky?: boolean;
   readonly includeCi?: boolean;
-  readonly skillSet?: "core" | "all";
+  readonly skillSet?: SkillSet;
   readonly workflow?: "standard" | "strict";
   readonly agent?: AgentTarget;
   readonly personal?: boolean;
@@ -368,7 +368,7 @@ function renderAgentContextTemplate(
   template: string,
   options: {
     readonly agent: AgentTarget;
-    readonly skillSet: "core" | "all";
+    readonly skillSet: SkillSet;
     readonly workflow: "standard" | "strict";
     readonly includeHusky: boolean;
     readonly includeCi: boolean;
@@ -388,7 +388,7 @@ function renderAgentContextTemplate(
     .replaceAll("{{PHASEGATE_HUSKY_STATE}}", options.includeHusky ? "managed" : "not managed by this setup run")
     .replaceAll("{{PHASEGATE_CI_STATE}}", options.includeCi ? "managed" : "not managed by this setup run")
     .replaceAll("{{PHASEGATE_COMMANDS}}", commands)
-    .replaceAll("{{PHASEGATE_SKILLS}}", options.skillSet === "core" ? "- `core skills`" : "- `all bundled skills`")
+    .replaceAll("{{PHASEGATE_SKILLS}}", options.skillSet === "all" ? "- `all bundled skills`" : `- \`${options.skillSet} skills\``)
     .replaceAll("{{PHASEGATE_PRESETS}}", "- `minimal`\n- `standard`\n- `full`\n- `custom`")
     .replaceAll("{{PHASEGATE_USER_SECTION}}", USER_SECTION_PLACEHOLDER);
 }
@@ -1146,13 +1146,13 @@ export class RunInstallUseCase {
   private personalSkillsVersionHashInput(
     path: string,
     version: string,
-    skillSet: "core" | "all",
+    skillSet: SkillSet,
     skills: readonly string[],
   ): string {
     return `personal-skills-version:${path}:${version}:${skillSet}:${skills.join(",")}`;
   }
 
-  private personalSkillHashInput(path: string, skill: string, version: string, skillSet: "core" | "all"): string {
+  private personalSkillHashInput(path: string, skill: string, version: string, skillSet: SkillSet): string {
     return `personal-skill:${path}:${skill}:${version}:${skillSet}`;
   }
 

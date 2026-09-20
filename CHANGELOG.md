@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.342.0] - 2026-09-20
+
+### Changed
+
+- **WI-223 — Simpler skill distribution** — Unify the bundled skill catalog and add an explicit `consumer` selection excluding the two Phasegate-maintainer skills. Preserve existing `core` / `all` selections and the default `all`; narrow maintainer skill triggers to Phasegate itself. <!-- @work-item-id WI-223 -->
+
+### Fixed
+
+- Preserve the installed skill selection during reconcile instead of restoring every installation to `all`. Keep user skills and existing files; do not add new gate restrictions. <!-- @work-item-id WI-223 -->
+
+### Known limitations
+
+- This is a distribution-focused improvement, not full language-neutralization of the skill corpus. Missing or invalid selection metadata retains the legacy `all` fallback. WI-220 limitations listed below still apply. <!-- @work-item-id WI-223 -->
+
 ## [0.341.0] - 2026-09-20
 
 ### Changed

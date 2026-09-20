@@ -2123,3 +2123,7 @@ mainはci-governance／regression-suite／phase2-extensions／skill-quality／va
 <!-- @work-item-id WI-220 -->
 
 設定変更を伴うplanは破損・I/Oエラーならblocked previewとrefused apply（exit 1）を返す。未存在の場合だけ旧preview（before=null、applicable、部分patch）を保持し、commandsの先頭でinstall --dry-runを案内する。applyは既存設定がなければexit 1で拒否し、不完全な設定を生成しない。非設定intentとschema-invalidの上流契約は維持する。有効設定のbackupは原文を保存し、適用直前のJSON差分は再計画を案内して拒否する。backup／一時ファイルは排他的に作成する。これは保護解除や新設計要求ではなく、復旧操作によるデータ消失防止である。
+## WI-223 配布入口の互換
+
+<!-- @work-item-id WI-223 -->
+init/installの--skillsはcore/allに加えてconsumerを受理する。省略時allと未知値拒否は維持。setupのカテゴリ/選択関数はinstallationの正本へ委譲し公開名を保持する。既存のgate/モデル委任の意味は変えない。

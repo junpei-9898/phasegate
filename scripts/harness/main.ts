@@ -75,6 +75,7 @@ import { FileSystemStoryReflectionAdapter } from "./phase-dependency-model/infra
 import { StoryReflectionStatusPresenter } from "./phase-dependency-model/presentation/cli/story-reflection-status-presenter.js";
 import type { QuickModeCompositionRootOptions } from "./quick-mode/composition-root.js";
 import type { SkillSet } from "./setup/skill-deployer.js";
+import { isSkillSet } from "./installation/application/bundled-skill-selection.js";
 import {
   deployAgentSkillLinks,
   deployCiWorkflows,
@@ -200,7 +201,7 @@ Usage: phasegate <command> [options]
 Setup:
   init                         Initialize project: deploy skills + design docs + phasegate.config.json
                                (--name <project-name>, --preset <full|standard|minimal|custom>,
-                                --skills <core|all>, --agent <claude|codex|both|grok|antigravity|all>, --workflow <standard|strict>,
+                                --skills <core|consumer|all>, --agent <claude|codex|both|grok|antigravity|all>, --workflow <standard|strict>,
                                 --language <language>, --with-husky, --with-ci, --yes)
   update-skills                Alias for reconcile (kept for compatibility)
   doctor                       Diagnose silent installation failures (--json, --strict, --personal, --agent <claude|codex|both|grok|antigravity|all>, --report-out <path>)
@@ -697,7 +698,7 @@ Initialize phasegate in the current project: deploy skills + design docs + phase
 Options:
   --name <project-name>           Project name (default: "my-project")
   --preset <full|standard|minimal|custom>   Phase dependency preset (default: "standard")
-  --skills <core|all>             Skill set to deploy (default: "all")
+  --skills <core|consumer|all>    Skill set to deploy (default: "all"; consumer excludes maintainer skills)
   --agent <claude|codex|both|grok|antigravity|all>     Agent integration target (default: "claude")
   --workflow <standard|strict>    Workflow enforcement defaults (default: "standard")
   --language <language>           Project language declaration (default: "typescript")
@@ -725,7 +726,7 @@ Options:
   --apply                         Write merge results and manifest
   --force                         Force ai-assisted/manual targets after backing up existing files
   --agent <claude|codex|both|grok|antigravity|all>     Agent context and hook targets (default: both)
-  --skills <core|all>             Rendered agent context skill mode (default: all)
+  --skills <core|consumer|all>    Skill set to deploy (default: all; consumer excludes maintainer skills)
   --workflow <standard|strict>    Rendered agent context workflow mode (default: standard)
   --with-husky                    Include Husky hook targets (opt-in; omitted by default)
   --with-ci                       Include GitHub Actions target (opt-in; omitted by default)
@@ -2166,8 +2167,8 @@ async function main(): Promise<void> {
         }
         const phasePreset = parseInitPhasePreset(rawPhasePreset);
         const skillSetRaw = parseFlag(args, "--skills") ?? "all";
-        if (skillSetRaw !== "core" && skillSetRaw !== "all") {
-          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
+        if (!isSkillSet(skillSetRaw)) {
+          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core", "consumer", or "all".`);
           process.exit(2);
         }
         const skillSet: SkillSet = skillSetRaw;
@@ -2516,8 +2517,8 @@ async function main(): Promise<void> {
           process.exit(2);
         }
         const skillSetRaw = parseFlag(args, "--skills") ?? "all";
-        if (skillSetRaw !== "core" && skillSetRaw !== "all") {
-          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core" or "all".`);
+        if (!isSkillSet(skillSetRaw)) {
+          console.error(`Invalid --skills value: "${skillSetRaw}". Use "core", "consumer", or "all".`);
           process.exit(2);
         }
         const workflowRaw = parseFlag(args, "--workflow");

@@ -20,4 +20,11 @@
 
 ## 新しいスキルの追加
 
+### 利用者向けの選択
+
+<!-- @work-item-id WI-223 -->
+`phasegate install --skills consumer --dry-run`で本体メンテナー用の`release-publisher`と`skill-creator`を除く27件を確認できる。適用は`--apply`を明示する。既存の`core`は7件、`all`と省略時は29件のまま。reconcileは各配置先の`.harness-version`に記録したセットを維持する。セット変更だけで以前のスキルやユーザー作成スキルを削除しないため、既存allからの切替は削除移行ではない。
+
+配布カタログの正本は`installation/application/bundled-skill-selection.ts`の一箇所。consumerは言語非依存化済みという意味ではなく、Vitest/Playwright等の技術固有スキルは引き続き含まれる。
+
 新しいスキルを追加する場合は、この `skills` ディレクトリに直接追加してください。あわせて `docs/guide/skills-overview.md`、README の skill 数、必要なら `skills/phasegate-toolkit-guide/SKILL.md` の参照先を更新します。シンボリックリンクを通じて、対応エージェントから利用可能になります。<!-- @work-item-id WI-154 -->

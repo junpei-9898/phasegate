@@ -1,5 +1,8 @@
 # Skills Overview
 
+<!-- @work-item-id WI-223 -->
+For consumer projects, explicitly select `phasegate install --skills consumer --dry-run` (then `--apply` after review). This deploys a 27-entry subset of the full catalog, excluding the Phasegate-maintainer-only `release-publisher` and `skill-creator`. Legacy `core` (7), `all` (29), and the omitted-option default (`all`) remain unchanged. `init` also accepts `consumer`. Reconcile preserves the set recorded in each skill root's `.harness-version`; missing/invalid/unknown metadata retains the legacy `all` fallback. Changing sets does not delete previously installed or user-owned skills. This is audience separation, not a claim of language-independent test tooling.
+
 Phasegate provides 29 skills covering the full AIDLC (AI-Driven Development Life Cycle). `npx phasegate init` and project `npx phasegate install` deploy skill bodies to root `skills/` and expose them to enabled agents through `.claude/skills/`, `.codex/skills/`, or `.agents/skills/` links. Personal install instead writes real local-only per-agent skill directories. <!-- @work-item-id WI-210 --> <!-- @work-item-id WI-385 -->
 
 Bundled `SKILL.md` files include `languages: [typescript]` frontmatter so PhaseGate can distinguish current TypeScript-oriented guidance from future language-specific skill variants. The metadata is advisory for applicability and does not prevent non-TypeScript projects from installing the catalog. <!-- @work-item-id WI-212 -->

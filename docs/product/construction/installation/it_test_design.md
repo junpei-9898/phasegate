@@ -286,3 +286,7 @@ WI-146 / WI-147 / WI-148 are implemented lifecycle commands, not future-only tes
 旧配布版でstrict化したfixtureを候補へ更新し、文書拒否→案内された正規config:planの予告→明示apply→文書再開を検証する。backupの旧設定、変更範囲、再apply後の安定性を確認し、設定ファイル直接Writeの保護は復旧後も残ることをassertする。本PJの設定は変更しない。
 
 公開TDD CLIについて、同じ有効なcoverageThreshold付き設定・同じstaged文書を持つ独立した一時Git repositoryへ旧版と候補をそれぞれ導入する。カバレッジ成果物なしの既存操作のexitと履歴を比較し、共通設定伝播による新規拒否を検出する。Git hookのbypassや実PJのcommitは行わない。新規拒否が出たら期待値を新動作へ合わせず、互換方針と正規復旧の扱いを解決する。
+## WI-223 配布セットの維持
+
+<!-- @work-item-id WI-223 -->
+project/personalでconsumerをinstallしreconcile後も本体用2件が増えずユーザースキルが残ることを実filesystemで検証する。core/allと既定all、欠落/不正記録fallback、doctor、preview非変更、既存の手編集拒否・中断回復も確認する。

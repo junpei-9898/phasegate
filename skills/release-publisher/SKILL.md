@@ -1,7 +1,7 @@
 ---
 name: release-publisher
 kind: advisory
-description: phasegate のリリース手順（version bump / git tag / npm publish）の厳格ガイド。この npm アカウントは security key (FIDO/WebAuthn) 認証のため publish は必ず `npm publish --auth-type=web`。使用タイミング:「リリースして」「publish して」「npm に上げて」「バージョンを上げてタグを打って」「EOTP エラーが出た」「npm publish が認証で失敗する」など、version bump・タグ付与・npm publish・publish 認証トラブルに関わる場面。
+description: Phasegate本体パッケージのリリースを依頼されたときのメンテナー向け手順。利用者プロジェクトのリリースや一般的なnpm認証相談には適用しない。
 model: sonnet
 review: opus
 languages: [typescript]
@@ -10,6 +10,8 @@ languages: [typescript]
 # Release Publisher
 
 ## 目的
+
+対象はPhasegate本体のリポジトリだけ。以下の認証・バージョニング規則を利用者プロジェクトへ適用しない。publish、tag、pushはユーザーが依頼した範囲だけ実施する。対象や現行の公開手順が確認できない場合は先に確認する。
 
 phasegate パッケージのリリース（version bump → git tag → npm publish）を、誤操作・認証事故なしに完遂するための厳格手順ガイド（advisory）。正となる規範は `CLAUDE.md` の「バージョニングルール」「npm publish ルール」節、および `DEVELOPMENT.md` の「Versioning and Release」「Troubleshooting npm publish authentication」節。本スキルはそれらを実行手順として展開する。
 
